@@ -4,6 +4,7 @@ import com.facetlauncher.app.data.local.toEntity
 import com.facetlauncher.app.data.local.toFacet
 import com.facetlauncher.app.data.model.Facet
 import com.facetlauncher.app.data.model.LauncherSettings
+import com.facetlauncher.app.data.model.WeatherIconStyle
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -57,5 +58,21 @@ class ClockAccessorySwitchesTest {
         val facet = facet(overrideClock = true)
 
         assertEquals(facet, facet.toEntity().toFacet())
+    }
+
+    @Test
+    fun `a facet that overrides the clock uses its own weather icon style and one that does not inherits the launcher's`() {
+        val monochromeFacet = facet(overrideClock = true).copy(clockWeatherIconStyle = WeatherIconStyle.MONOCHROME)
+        val launcherColoured = launcher.copy(weatherIconStyle = WeatherIconStyle.COLORED)
+
+        assertEquals(WeatherIconStyle.MONOCHROME, resolveFacetStyle(monochromeFacet, launcherColoured).clock.weatherIconStyle)
+        assertEquals(WeatherIconStyle.COLORED, resolveFacetStyle(monochromeFacet.copy(overrideClock = false), launcherColoured).clock.weatherIconStyle)
+        assertEquals(WeatherIconStyle.COLORED, resolveFacetStyle(null, launcherColoured).clock.weatherIconStyle)
+    }
+
+    @Test
+    fun `weather icons are coloured by default for the launcher and for a new facet`() {
+        assertEquals(WeatherIconStyle.COLORED, LauncherSettings().weatherIconStyle)
+        assertEquals(WeatherIconStyle.COLORED, Facet(name = "New", position = 0).clockWeatherIconStyle)
     }
 }

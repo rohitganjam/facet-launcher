@@ -8,6 +8,7 @@ import com.facetlauncher.app.data.model.BackupFacet
 import com.facetlauncher.app.data.model.ClockAlignment
 import com.facetlauncher.app.data.model.ClockColorOption
 import com.facetlauncher.app.data.model.ClockDateStyle
+import com.facetlauncher.app.data.model.WeatherIconStyle
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
@@ -64,6 +65,19 @@ class BackupMappingTest {
 
         // Then none of them is reset
         assertEquals(original, restored)
+    }
+
+    @Test
+    fun `a facet's weather icon style survives a backup round trip and an unknown name falls back to coloured`() {
+        // Given a facet with its own monochrome icons
+        val original = facet.copy(clockWeatherIconStyle = WeatherIconStyle.MONOCHROME)
+
+        // When it goes out and comes back
+        val backup = original.toBackupFacet(favorites = emptyList(), dockApps = emptyList())
+
+        // Then the style is kept, and a name this version doesn't know restores to the coloured default
+        assertEquals(WeatherIconStyle.MONOCHROME, backup.toFacet().clockWeatherIconStyle)
+        assertEquals(WeatherIconStyle.COLORED, backup.copy(clockWeatherIconStyle = "SKETCH").toFacet().clockWeatherIconStyle)
     }
 
     @Test

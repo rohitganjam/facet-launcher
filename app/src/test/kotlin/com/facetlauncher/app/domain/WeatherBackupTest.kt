@@ -62,7 +62,7 @@ class WeatherBackupTest {
     @Test
     fun `export writes the accessory switches, units, mode and city for the launcher and the switches for each facet`() = runTest {
         // Given weather configured, and a facet that overrides the accessories
-        val facet = Facet(id = 7, name = "Work", position = 0, clockShowAlarm = false, clockShowBattery = false, clockShowWeather = true)
+        val facet = Facet(id = 7, name = "Work", position = 0, clockShowAlarm = false, clockShowBattery = false, clockShowWeather = true, clockWeatherIconStyle = WeatherIconStyle.MONOCHROME)
         `when`(settingsRepository.settings).thenReturn(
             flowOf(
                 LauncherSettings(
@@ -97,6 +97,7 @@ class WeatherBackupTest {
         assertFalse(exported.clockShowAlarm)
         assertFalse(exported.clockShowBattery)
         assertTrue(exported.clockShowWeather)
+        assertEquals("MONOCHROME", exported.clockWeatherIconStyle)
     }
 
     // --- restore ---

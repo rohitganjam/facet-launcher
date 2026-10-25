@@ -17,6 +17,7 @@ import com.facetlauncher.app.data.model.ClockFontOption
 import com.facetlauncher.app.data.model.ClockTemplateId
 import com.facetlauncher.app.data.model.LauncherFontOption
 import com.facetlauncher.app.data.model.NO_ACTIVE_FACET_ID
+import com.facetlauncher.app.data.model.WeatherIconStyle
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.SharingStarted
@@ -50,6 +51,7 @@ data class ClockStyleGalleryUiState(
     val showMeridiem: Boolean get() = clock.showMeridiem
     val dateStyle: ClockDateStyle get() = clock.dateStyle
     val showWeather: Boolean get() = clock.showWeather
+    val weatherIconStyle: WeatherIconStyle get() = clock.weatherIconStyle
     /** Home clock's horizontal placement, in the same Clock+Calendar design bundle as [templateId]; it also positions the calendar events strip. */
     val clockAlignment: ClockAlignment get() = clock.alignment
 }
@@ -172,6 +174,7 @@ class ClockStyleGalleryViewModel @Inject constructor(
                 showAlarm = if (overriding) state.settings.showNextAlarm else facet.clockShowAlarm,
                 showBattery = if (overriding) state.settings.showBatteryPercentage else facet.clockShowBattery,
                 showWeather = if (overriding) state.settings.showWeather else facet.clockShowWeather,
+                weatherIconStyle = if (overriding) state.settings.weatherIconStyle else facet.clockWeatherIconStyle,
             )
         }
     }

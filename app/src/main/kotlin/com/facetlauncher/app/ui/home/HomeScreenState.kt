@@ -94,7 +94,7 @@ data class HomeWeatherState(
     val precipitationMm: Double?,
     val temperatureC: Double,
     val temperatureUnit: TemperatureUnit,
-    val iconStyle: WeatherIconStyle = WeatherIconStyle.MONOCHROME,
+    val iconStyle: WeatherIconStyle = WeatherIconStyle.COLORED,
 )
 
 /** The data behind a [HomeItemStyle]: its label colour and weight are options here, resolved to themed values where they are drawn. */

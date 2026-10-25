@@ -47,7 +47,7 @@ class WeatherSettingsTest {
         assertEquals(RainUnit.AUTO, settings.rainUnit)
         assertEquals(PressureUnit.AUTO, settings.pressureUnit)
         assertEquals(WeatherLocationMode.CURRENT, settings.weatherLocationMode)
-        assertEquals(WeatherIconStyle.MONOCHROME, settings.weatherIconStyle)
+        assertEquals(WeatherIconStyle.COLORED, settings.weatherIconStyle)
         assertNull(settings.weatherCity)
     }
 

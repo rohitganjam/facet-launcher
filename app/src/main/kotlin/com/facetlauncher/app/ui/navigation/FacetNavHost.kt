@@ -249,7 +249,6 @@ fun FacetNavHost(
                 onNavigateToDockAppsAppearance = { navController.navigate(FacetDestinations.dockAppsAppearance(facetId)) },
                 onNavigateToAppDrawerSettings = { navController.navigate(FacetDestinations.APP_DRAWER_SETTINGS) },
                 onNavigateToFontsThemesIcons = { navController.navigate(FacetDestinations.FONTS_THEMES_ICONS) },
-                onNavigateToClockAccessories = { navController.navigate(FacetDestinations.clockAccessories(facetId)) },
             )
         }
         settingsComposable(
@@ -266,6 +265,7 @@ fun FacetNavHost(
                     },
                     onOpenLocation = { navController.navigate(FacetDestinations.WEATHER_LOCATION) },
                     onOpenPermissions = { navController.navigate(FacetDestinations.PERMISSIONS) },
+                    onOpenDefaults = { navController.navigate(FacetDestinations.clockAccessories()) },
                 ),
             )
         }
@@ -308,13 +308,20 @@ fun FacetNavHost(
             AppDrawerSettingsScreen(onBack = { navController.popBackStackSafely() })
         }
         settingsComposable(FacetDestinations.CLOCK_STYLE_GALLERY) {
-            ClockStyleGalleryRoute(onBack = { navController.popBackStackSafely() })
+            ClockStyleGalleryRoute(
+                onBack = { navController.popBackStackSafely() },
+                onOpenClockAccessories = { navController.navigate(FacetDestinations.clockAccessories()) },
+            )
         }
         settingsComposable(
             FacetDestinations.FACET_CLOCK_STYLE_GALLERY,
             arguments = listOf(navArgument("facetId") { type = NavType.LongType }),
-        ) {
-            FacetClockStyleGalleryScreen(onBack = { navController.popBackStackSafely() })
+        ) { backStackEntry ->
+            val facetId = backStackEntry.arguments?.getLong("facetId") ?: NO_ACTIVE_FACET_ID
+            FacetClockStyleGalleryScreen(
+                onBack = { navController.popBackStackSafely() },
+                onOpenClockAccessories = { navController.navigate(FacetDestinations.clockAccessories(facetId)) },
+            )
         }
         settingsComposable(FacetDestinations.PERMISSIONS) {
             PermissionsScreen(

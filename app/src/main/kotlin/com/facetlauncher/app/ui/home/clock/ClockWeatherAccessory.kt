@@ -37,7 +37,7 @@ data class ClockWeatherAccessory(
     val iconKind: WeatherIconKind,
     val temperatureText: String,
     val contentDescription: String,
-    val iconStyle: WeatherIconStyle = WeatherIconStyle.MONOCHROME,
+    val iconStyle: WeatherIconStyle = WeatherIconStyle.COLORED,
     val onClick: () -> Unit,
 )
 

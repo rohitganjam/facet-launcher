@@ -53,6 +53,8 @@ import com.facetlauncher.app.ui.components.LabeledDropdownRow
 import com.facetlauncher.app.ui.components.LocalSettingsRowInset
 import com.facetlauncher.app.ui.components.SettingsCard
 import com.facetlauncher.app.ui.components.StickyHeaderLayout
+import com.facetlauncher.app.ui.settings.ClickableRow
+import com.facetlauncher.app.ui.settings.NavigationChevron
 import com.facetlauncher.app.ui.home.weather.WeatherIconKind
 import com.facetlauncher.app.ui.theme.Accent
 import com.facetlauncher.app.ui.theme.Hairline
@@ -74,7 +76,7 @@ import java.time.ZoneId
  * to Home via [com.facetlauncher.app.ui.home.ClockBlock].
  */
 @Composable
-fun ClockStyleGalleryRoute(onBack: () -> Unit, viewModel: ClockStyleGalleryViewModel = hiltViewModel()) {
+fun ClockStyleGalleryRoute(onBack: () -> Unit, onOpenClockAccessories: () -> Unit = {}, viewModel: ClockStyleGalleryViewModel = hiltViewModel()) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     ClockStyleGalleryScreen(
         onBack = onBack,
@@ -86,7 +88,8 @@ fun ClockStyleGalleryRoute(onBack: () -> Unit, viewModel: ClockStyleGalleryViewM
         showMeridiem = uiState.showMeridiem,
         dateStyle = uiState.dateStyle,
         showWeather = uiState.showWeather,
-        weatherIconStyle = uiState.settings.weatherIconStyle,
+        weatherIconStyle = uiState.weatherIconStyle,
+        onOpenClockAccessories = onOpenClockAccessories,
         launcherFontOption = uiState.launcherFontOption,
         onTemplateSelect = viewModel::setClockTemplateId,
         onFontOptionChange = viewModel::setClockFontOption,
@@ -114,8 +117,8 @@ fun ClockStyleGalleryRoute(onBack: () -> Unit, viewModel: ClockStyleGalleryViewM
  * if the user chooses to override.
  */
 @Composable
-fun FacetClockStyleGalleryScreen(onBack: () -> Unit, viewModel: ClockStyleGalleryViewModel = hiltViewModel()) {
-    ClockStyleGalleryRoute(onBack = onBack, viewModel = viewModel)
+fun FacetClockStyleGalleryScreen(onBack: () -> Unit, onOpenClockAccessories: () -> Unit = {}, viewModel: ClockStyleGalleryViewModel = hiltViewModel()) {
+    ClockStyleGalleryRoute(onBack = onBack, onOpenClockAccessories = onOpenClockAccessories, viewModel = viewModel)
 }
 
 /**
@@ -162,7 +165,8 @@ private fun ClockStyleGalleryScreen(
     onOverridingChange: (Boolean) -> Unit = {},
     inheritSubtitle: String = "",
     showWeather: Boolean = false,
-    weatherIconStyle: WeatherIconStyle = WeatherIconStyle.MONOCHROME,
+    weatherIconStyle: WeatherIconStyle = WeatherIconStyle.COLORED,
+    onOpenClockAccessories: () -> Unit = {},
 ) {
     val controlsEnabled = !isFacetScoped || isOverriding
     val textColor = colorOption.resolve()
@@ -299,6 +303,18 @@ private fun ClockStyleGalleryScreen(
                     onSelect = onClockAlignmentChange,
                     enabled = controlsEnabled,
                     testTag = "clock_alignment_row",
+                )
+            }
+        }
+
+        item {
+            SettingsCard(fullBleedRows = true) {
+                ClickableRow(
+                    title = stringResource(R.string.clock_accessories_title),
+                    subtitle = stringResource(R.string.clock_accessories_summary),
+                    onClick = onOpenClockAccessories,
+                    testTag = "clock_accessories_row",
+                    trailing = { NavigationChevron() },
                 )
             }
         }

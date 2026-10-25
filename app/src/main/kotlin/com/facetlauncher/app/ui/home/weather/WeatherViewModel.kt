@@ -45,7 +45,7 @@ data class WeatherUiState(
     val isRefreshing: Boolean = false,
     /** The launcher's 12 or 24-hour setting, for the hourly labels. */
     val use24HourTime: Boolean = false,
-    val iconStyle: WeatherIconStyle = WeatherIconStyle.MONOCHROME,
+    val iconStyle: WeatherIconStyle = WeatherIconStyle.COLORED,
 )
 
 /**

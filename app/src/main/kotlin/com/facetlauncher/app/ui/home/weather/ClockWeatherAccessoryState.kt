@@ -25,7 +25,7 @@ fun rememberClockWeatherAccessory(weather: HomeWeatherState?, onClick: () -> Uni
     }
     val currentOnClick by rememberUpdatedState(onClick)
     val kind = weatherIconKind(condition, isNightSymbol(weather?.symbolCode))
-    val iconStyle = weather?.iconStyle ?: WeatherIconStyle.MONOCHROME
+    val iconStyle = weather?.iconStyle ?: WeatherIconStyle.COLORED
     return remember(temperature, description, kind, iconStyle) {
         if (temperature == null || description == null) null else ClockWeatherAccessory(kind, temperature, description, iconStyle) { currentOnClick() }
     }

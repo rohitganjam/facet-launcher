@@ -782,6 +782,23 @@ class FacetDatabaseMigrationTest {
         }
     }
 
+    @Test
+    fun migration33To34GivesExistingFacetsTheColouredWeatherIconStyle() {
+        // Given a v32 database with a facet (a v33 row needs the accessory columns, which the 32 to 33 step adds)
+        val dbV32 = helper.createDatabase(TEST_DB, 32)
+        insertFacetV27(dbV32, id = 1, name = "Work")
+        dbV32.close()
+
+        // When migrating through v33 to v34 (Room also validates the result against the exported v34 schema)
+        val dbV34 = helper.runMigrationsAndValidate(TEST_DB, 34, true, Migrations.MIGRATION_32_33, Migrations.MIGRATION_33_34)
+
+        // Then the facet carries the coloured default
+        val facet = dbV34.query("SELECT clockWeatherIconStyle FROM facets WHERE id = 1")
+        facet.moveToFirst()
+        assertEquals("COLORED", facet.getString(0))
+        facet.close()
+    }
+
     /** A v27 facet row — the v25 shape plus the two calendar-display columns, which a freshly created database has no defaults for. */
     private fun insertFacetV27(db: androidx.sqlite.db.SupportSQLiteDatabase, id: Long, name: String) {
         insertFacetV25Columns(db, id, name, extraColumns = ", showCalendarIndicator, calendarItemsToShow", extraValues = ", 1, 3")

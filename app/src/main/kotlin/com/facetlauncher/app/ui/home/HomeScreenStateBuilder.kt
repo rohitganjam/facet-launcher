@@ -6,6 +6,7 @@ import com.facetlauncher.app.data.model.Folder
 import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.data.model.MediaPlayerState
 import com.facetlauncher.app.data.model.PlacedItem
+import com.facetlauncher.app.data.model.WeatherIconStyle
 import com.facetlauncher.app.domain.ClockAccessoryState
 import com.facetlauncher.app.domain.ResolvedFacetStyle
 import com.facetlauncher.app.domain.WeatherState
@@ -105,15 +106,15 @@ fun ResolvedFacetStyle.toHomeScreenState(
         nextAlarmMillis = content.clockAccessories?.nextAlarmMillis?.takeIf { clock.showAlarm },
         batteryPercent = content.clockAccessories?.batteryPercent?.takeIf { clock.showBattery },
         isCharging = content.clockAccessories?.isCharging ?: false,
-        weather = content.weather?.takeIf { clock.showWeather && !it.isOutdated }?.toHomeWeather(settings),
+        weather = content.weather?.takeIf { clock.showWeather && !it.isOutdated }?.toHomeWeather(settings, clock.weatherIconStyle),
     ),
     media = HomeMediaState(player = content.mediaPlayer, showSkipButtons = settings.showMediaSkipButtons),
 )
 
-private fun WeatherState.toHomeWeather(settings: LauncherSettings) = HomeWeatherState(
+private fun WeatherState.toHomeWeather(settings: LauncherSettings, iconStyle: WeatherIconStyle) = HomeWeatherState(
     symbolCode = now.symbolCode,
     precipitationMm = now.precipitationMm,
     temperatureC = now.temperatureC,
     temperatureUnit = WeatherUnits.resolve(settings.temperatureUnit, Locale.getDefault()),
-    iconStyle = settings.weatherIconStyle,
+    iconStyle = iconStyle,
 )

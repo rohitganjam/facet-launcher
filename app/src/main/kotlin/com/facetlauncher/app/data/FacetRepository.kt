@@ -21,6 +21,7 @@ import com.facetlauncher.app.data.model.DockDisplayMode
 import com.facetlauncher.app.data.model.Facet
 import com.facetlauncher.app.data.model.LandscapeOverrides
 import com.facetlauncher.app.data.model.ListContentMode
+import com.facetlauncher.app.data.model.WeatherIconStyle
 import com.facetlauncher.app.data.model.landscape
 import com.facetlauncher.app.data.model.withLandscape
 import javax.inject.Inject
@@ -118,6 +119,11 @@ class FacetRepository @Inject constructor(private val facetDao: FacetDao) {
         update(facetId) { it.copy(clockShowWeather = enabled) }
     }
 
+    /** See [Facet.clockWeatherIconStyle]. */
+    suspend fun setClockWeatherIconStyle(facetId: Long, style: WeatherIconStyle) {
+        update(facetId) { it.copy(clockWeatherIconStyle = style) }
+    }
+
     suspend fun setClockAlignment(facetId: Long, alignment: ClockAlignment) {
         update(facetId) { it.copy(clockAlignment = alignment) }
     }
@@ -206,6 +212,7 @@ class FacetRepository @Inject constructor(private val facetDao: FacetDao) {
         showAlarm: Boolean = true,
         showBattery: Boolean = true,
         showWeather: Boolean = false,
+        weatherIconStyle: WeatherIconStyle = WeatherIconStyle.COLORED,
     ) {
         update(facetId) {
             it.copy(
@@ -213,6 +220,7 @@ class FacetRepository @Inject constructor(private val facetDao: FacetDao) {
                 clockShowAlarm = showAlarm,
                 clockShowBattery = showBattery,
                 clockShowWeather = showWeather,
+                clockWeatherIconStyle = weatherIconStyle,
                 clockTemplateId = templateId,
                 clockFontOption = fontOption,
                 clockColorOption = colorOption,

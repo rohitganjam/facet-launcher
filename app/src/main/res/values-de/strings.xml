@@ -972,6 +972,8 @@
     <string name="weather_location_none">Noch keine</string>
     <string name="weather_permission_location_subtitle">Nötig, um das Wetter an deinem Standort anzuzeigen. Facet liest nur eine ungefähre Position, und nur solange Home geöffnet ist.</string>
     <string name="clock_accessories_icons">Symbole</string>
+    <string name="clock_accessories_defaults_title">Wetter-Standards</string>
+    <string name="clock_accessories_defaults_subtitle">Einheiten und Ort, für alle Facetten</string>
     <string name="weather_icon_style">Wettersymbole</string>
     <string name="weather_icon_style_monochrome">Einfarbig</string>
     <string name="weather_icon_style_colored">Farbig</string>

@@ -972,6 +972,8 @@
     <string name="weather_location_none">Aucune pour l\'instant</string>
     <string name="weather_permission_location_subtitle">Nécessaire pour afficher la météo là où vous êtes. Facet ne lit qu\'une position approximative, et seulement quand Home est ouvert.</string>
     <string name="clock_accessories_icons">Icônes</string>
+    <string name="clock_accessories_defaults_title">Réglages météo par défaut</string>
+    <string name="clock_accessories_defaults_subtitle">Unités et lieu, pour toutes les facettes</string>
     <string name="weather_icon_style">Icônes météo</string>
     <string name="weather_icon_style_monochrome">Monochrome</string>
     <string name="weather_icon_style_colored">En couleur</string>

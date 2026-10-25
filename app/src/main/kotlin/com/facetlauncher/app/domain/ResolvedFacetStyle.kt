@@ -22,6 +22,7 @@ import com.facetlauncher.app.data.model.ListContentMode
 import com.facetlauncher.app.data.model.effectiveCalendarDisplay
 import com.facetlauncher.app.data.model.landscape
 import com.facetlauncher.app.data.model.resolveLandscape
+import com.facetlauncher.app.data.model.WeatherIconStyle
 import com.facetlauncher.app.data.model.resolveOverride
 import com.facetlauncher.app.data.model.resolveSentinel
 
@@ -38,6 +39,7 @@ data class ResolvedClockStyle(
     val showAlarm: Boolean,
     val showBattery: Boolean,
     val showWeather: Boolean,
+    val weatherIconStyle: WeatherIconStyle,
     val alignment: ClockAlignment,
     val zoneHeightDp: Float?,
     val scale: Float,
@@ -105,6 +107,7 @@ private fun resolveClockStyle(facet: Facet?, settings: LauncherSettings) = Resol
     showAlarm = facet.resolveOverride({ it.overrideClock }, { it.clockShowAlarm }, settings.showNextAlarm),
     showBattery = facet.resolveOverride({ it.overrideClock }, { it.clockShowBattery }, settings.showBatteryPercentage),
     showWeather = facet.resolveOverride({ it.overrideClock }, { it.clockShowWeather }, settings.showWeather),
+    weatherIconStyle = facet.resolveOverride({ it.overrideClock }, { it.clockWeatherIconStyle }, settings.weatherIconStyle),
     alignment = facet.resolveOverride({ it.overrideClock }, { it.clockAlignment }, settings.clockAlignment),
     zoneHeightDp = facet.resolveOverride({ it.overrideClock }, { it.clockZoneHeightDp }, settings.clockZoneHeightDp),
     scale = facet.resolveOverride({ it.overrideClock }, { it.clockScale }, settings.clockScale),

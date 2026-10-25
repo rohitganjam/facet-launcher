@@ -432,7 +432,7 @@ fun HomeDrawerRoute(
         }
         if (overlays.showWeatherSheet) {
             WeatherSheet(
-                uiState = weatherUiState,
+                uiState = weatherUiState.copy(iconStyle = homeUiState.style.clock.weatherIconStyle),
                 onRefresh = { weatherViewModel.refresh() },
                 onDismiss = { overlays.showWeatherSheet = false },
                 onChooseCity = {

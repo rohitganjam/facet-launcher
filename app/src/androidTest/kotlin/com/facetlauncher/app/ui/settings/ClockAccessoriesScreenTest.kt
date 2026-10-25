@@ -55,26 +55,71 @@ class ClockAccessoriesScreenTest {
     }
 
     @Test
-    fun theIconsCardPreviewFollowsTheSelectedIconStyle() {
-        // Given weather on with the default monochrome icons
+    fun theIconsCardPreviewShowsColouredIconsByDefault() {
+        // Given weather on with the default icon style
         setContent(ClockAccessoriesUiState(settings = LauncherSettings(showWeather = true), weatherEnabledAnywhere = true))
+
+        // Then the preview row shows the coloured set
+        composeRule.onNodeWithTag("weather_icons_preview_COLORED").assertExists()
+        composeRule.onNodeWithTag("weather_icons_preview_MONOCHROME").assertDoesNotExist()
+    }
+
+    @Test
+    fun theIconsCardPreviewShowsMonochromeIconsWhenMonochromeIsSelected() {
+        // Given weather on with monochrome icons chosen
+        setContent(
+            ClockAccessoriesUiState(
+                settings = LauncherSettings(showWeather = true, weatherIconStyle = WeatherIconStyle.MONOCHROME),
+                weatherEnabledAnywhere = true,
+            ),
+        )
+
+        // Then the preview row shows the monochrome set, not the coloured one
         composeRule.onNodeWithTag("weather_icons_preview_MONOCHROME").assertExists()
         composeRule.onNodeWithTag("weather_icons_preview_COLORED").assertDoesNotExist()
     }
 
     @Test
-    fun theIconsCardPreviewShowsColouredIconsWhenColouredIsSelected() {
-        // Given weather on with coloured icons chosen
+    fun aFacetThatOverridesTheClockEditsItsOwnIconStyleAndLinksToTheDefaults() {
+        // Given a facet that overrides the clock with weather on and its own monochrome icons
+        var openedDefaults = false
+        val facet = Facet(
+            id = 1L, name = "Work", position = 1, overrideClock = true, clockShowWeather = true,
+            clockWeatherIconStyle = WeatherIconStyle.MONOCHROME,
+        )
+        setContent(
+            ClockAccessoriesUiState(facet = facet, settings = LauncherSettings(showWeather = true), weatherEnabledAnywhere = true),
+            navigation = ClockAccessoriesNavigation(
+                onBack = {}, onOpenClockStyle = {}, onOpenLocation = {}, onOpenPermissions = {}, onOpenDefaults = { openedDefaults = true },
+            ),
+        )
+
+        // Then its own icon style shows and can be edited, units and location stay off this screen
+        composeRule.onNodeWithTag("icon_style_row").assertIsEnabled()
+        composeRule.onNodeWithTag("weather_icons_preview_MONOCHROME").assertExists()
+        composeRule.onNodeWithTag("unit_temperature_row").assertDoesNotExist()
+        composeRule.onNodeWithTag("accessory_location_row").assertDoesNotExist()
+
+        // And the link to the launcher defaults opens them
+        composeRule.onNodeWithTag("accessory_weather_defaults_row").performScrollTo().performClick()
+        assertEquals(true, openedDefaults)
+    }
+
+    @Test
+    fun aFacetThatInheritsShowsTheLaunchersIconStyle() {
+        // Given a facet that inherits the clock, with the launcher on monochrome icons
+        val facet = Facet(id = 1L, name = "Work", position = 1, overrideClock = false, clockWeatherIconStyle = WeatherIconStyle.COLORED)
         setContent(
             ClockAccessoriesUiState(
-                settings = LauncherSettings(showWeather = true, weatherIconStyle = WeatherIconStyle.COLORED),
+                facet = facet,
+                settings = LauncherSettings(showWeather = true, weatherIconStyle = WeatherIconStyle.MONOCHROME),
                 weatherEnabledAnywhere = true,
             ),
         )
 
-        // Then the preview row shows the coloured set, not the monochrome one
-        composeRule.onNodeWithTag("weather_icons_preview_COLORED").assertExists()
-        composeRule.onNodeWithTag("weather_icons_preview_MONOCHROME").assertDoesNotExist()
+        // Then the launcher's style shows, not the facet's own
+        composeRule.onNodeWithTag("weather_icons_preview_MONOCHROME").assertExists()
+        composeRule.onNodeWithTag("weather_icons_preview_COLORED").assertDoesNotExist()
     }
 
     @Test

@@ -23,6 +23,8 @@ data class Facet(
     val clockShowAlarm: Boolean = true,
     val clockShowBattery: Boolean = true,
     val clockShowWeather: Boolean = false,
+    /** The weather picture style this facet uses while it overrides the clock block; see `LauncherSettings.weatherIconStyle`. */
+    val clockWeatherIconStyle: WeatherIconStyle = WeatherIconStyle.COLORED,
     val clockAlignment: ClockAlignment = ClockAlignment.LEFT,
     /** `null` until the facet drags the clock's grab handle for the first time. */
     val clockZoneHeightDp: Float? = null,

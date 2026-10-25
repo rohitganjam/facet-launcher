@@ -4318,3 +4318,10 @@ Design agreed in chat (mocks: accessory bar, weather sheet, Clock accessories sc
 ## Weather icons preview row (direct request)
 
 - [x] `WeatherIconsPreviewRow` (`ui/settings/`) under the "Weather icons" dropdown in Clock accessories → Icons: the nine weather pictures in the selected style (monochrome in `Ink`). Tests: `ClockAccessoriesScreenTest` (preview follows the style).
+
+## Clock accessories: per-facet icon style (direct request)
+
+- [x] Weather icons default to coloured. The icon style is facet-overridable with the clock (`clockWeatherIconStyle`, Room v34 `MIGRATION_33_34`, `BackupFacet.clockWeatherIconStyle`, `ResolvedClockStyle.weatherIconStyle`); Home and the weather sheet use the active facet's style, and Override seeds it from the default.
+- [x] Clock accessories screen: the Icons card (with the icon preview row) sits above Units and Location; a facet shows it dimmed while inheriting and gets a *Weather defaults* link to the launcher-default screen instead of Units and Location.
+- [x] The *Clock accessories* row moved from Appearance to the Clock style screen (default and facet).
+- Tests: `ClockAccessoriesUiStateTest`, `ClockAccessorySwitchesTest`, `BackupMappingTest`, `WeatherBackupTest`, `WeatherSettingsTest`, `FacetDatabaseMigrationTest.migration33To34…`, `ClockAccessoriesScreenTest`, `ClockStyleGalleryScreenTest`.

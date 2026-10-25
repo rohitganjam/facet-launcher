@@ -39,8 +39,8 @@ internal fun ClockAccessoriesPreview(uiState: ClockAccessoriesUiState, modifier:
     }
     val color = clock.colorOption.resolve()
     val weather = if (clock.showWeather) {
-        remember(settings.weatherIconStyle) {
-            ClockWeatherAccessory(WeatherIconKind.PARTLY_SUN, "21°", "21°, Partly cloudy", settings.weatherIconStyle) {}
+        remember(clock.weatherIconStyle) {
+            ClockWeatherAccessory(WeatherIconKind.PARTLY_SUN, "21°", "21°, Partly cloudy", clock.weatherIconStyle) {}
         }
     } else {
         null

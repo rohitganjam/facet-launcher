@@ -178,12 +178,14 @@ chooses which three are usable. Disabled means:
 The accessory row under the date has three items, each with its own switch: `showNextAlarm`, `showBatteryPercentage`
 and `showWeather` (DataStore defaults; weather off). A facet has its own three (`clockShowAlarm/Battery/Weather`),
 used while `overrideClock` is on and resolved with the rest of the clock in `resolveFacetStyle`
-(`ResolvedClockStyle.showAlarm/showBattery/showWeather`). Settings → Appearance → *Clock accessories*
-(`ClockAccessoriesScreen`, route `clockAccessories?facetId=`) edits them: card 1 alarm and battery, card 2 weather;
-launcher-wide Units (card 3) and Location (card 4, `WeatherLocationScreen`) only on the default screen and only while
-weather is on in the default or any facet. A facet that inherits shows the inherited values dimmed with a link to its
-clock style, where the Inherit/Override switch lives; turning Override on seeds the three switches from the defaults
-(`ClockStyleGalleryViewModel.setOverridingClock`).
+(`ResolvedClockStyle.showAlarm/showBattery/showWeather`), and its own weather picture style (`clockWeatherIconStyle`, resolved
+into `ResolvedClockStyle.weatherIconStyle`). Settings → Clock style → *Clock accessories* (a row after the clock options; the
+screen is `ClockAccessoriesScreen`, route `clockAccessories?facetId=`) edits them: card 1 alarm and battery, card 2 weather,
+card 3 Icons (while weather is on for that scope), then launcher-wide Units and Location (`WeatherLocationScreen`) only on the
+default screen and only while weather is on in the default or any facet. A facet gets a *Weather defaults* link to the default
+screen instead of Units and Location. A facet that inherits shows the inherited values dimmed with a link to its
+clock style, where the Inherit/Override switch lives; turning Override on seeds the three switches and the icon style from the
+defaults (`ClockStyleGalleryViewModel.setOverridingClock`).
 
 `HomeScreenStateBuilder` gates the items: the alarm and battery only when their switch is on, the weather
 (`HomeWeatherState`, from `ObserveWeatherUseCase`) only when its switch is on and the forecast is not outdated.
@@ -202,10 +204,11 @@ ahead, and an "Updated" footer with the MET Norway credit and a refresh button. 
 busy-try-later, offline, location permission needed, no city, and already up to date. Its place line opens Clock
 accessories to choose another place. The About screen carries the MET and GeoNames credit too.
 
-Weather pictures come in two styles, the launcher-wide `weatherIconStyle` (Settings → Clock accessories → Icons): monochrome,
+Weather pictures come in two styles, the launcher default `weatherIconStyle` (coloured unless changed) or a facet's own while it
+overrides the clock (Settings → Clock accessories → Icons): monochrome,
 drawn in code in the clock's accessory colour (`WeatherIcon`), or coloured, one bundled PNG per picture
 (`res/drawable-nodpi/weather_color_*`, mapped by `coloredRes()`). The style applies to the accessory row and the sheet;
-`HomeWeatherState.iconStyle` and `WeatherUiState.iconStyle` carry it. The Clock accessories screen opens with
+`HomeWeatherState.iconStyle` carries it, and `HomeDrawerRoute` hands the active facet's style to the sheet (`WeatherUiState.iconStyle`). The Clock accessories screen opens with
 `ClockAccessoriesPreview`: the clock of that scope (template, font, colour, alignment) with a sample alarm, battery and
 weather, following the switches and the icon style as they change. The Icons card also carries `WeatherIconsPreviewRow`:
 all nine weather pictures in the selected style. The alarm, battery and weather icons carry the same

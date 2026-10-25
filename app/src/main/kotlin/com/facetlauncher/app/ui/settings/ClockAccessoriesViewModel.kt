@@ -43,9 +43,16 @@ data class ClockAccessoriesUiState(
     val showAlarm: Boolean get() = clockStyle.showAlarm
     val showBattery: Boolean get() = clockStyle.showBattery
     val showWeather: Boolean get() = clockStyle.showWeather
+    val weatherIconStyle: WeatherIconStyle get() = clockStyle.weatherIconStyle
 
     /** The Units and Location cards: launcher-wide, so only on the default screen, and only while weather is on somewhere. */
     val showGlobalCards: Boolean get() = !isFacetScoped && weatherEnabledAnywhere
+
+    /** The Icons card: on the default screen while weather is on somewhere, on a facet's while that facet shows weather. */
+    val showIconStyleCard: Boolean get() = if (isFacetScoped) showWeather else weatherEnabledAnywhere
+
+    /** A facet has no units or location of its own, so it links to the defaults while weather is on somewhere. */
+    val showDefaultsLink: Boolean get() = isFacetScoped && weatherEnabledAnywhere
 }
 
 @HiltViewModel
@@ -91,7 +98,7 @@ class ClockAccessoriesViewModel @Inject constructor(
 
     fun setPressureUnit(unit: PressureUnit) = launch { settingsRepository.setPressureUnit(unit) }
 
-    fun setWeatherIconStyle(style: WeatherIconStyle) = launch { settingsRepository.setWeatherIconStyle(style) }
+    fun setWeatherIconStyle(style: WeatherIconStyle) = write({ setWeatherIconStyle(style) }, { setClockWeatherIconStyle(it, style) })
 
     /** Writes to this facet when the screen is scoped to one, else to the launcher defaults. */
     private fun write(global: suspend SettingsRepository.() -> Unit, facet: suspend FacetRepository.(Long) -> Unit) = launch {

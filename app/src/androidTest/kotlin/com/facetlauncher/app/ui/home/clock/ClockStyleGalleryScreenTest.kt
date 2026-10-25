@@ -39,7 +39,7 @@ class ClockStyleGalleryScreenTest {
     @get:Rule
     val composeRule = createComposeRule()
 
-    private fun setContent(onBack: () -> Unit = {}, facetId: Long? = null): Pair<SettingsRepository, FacetRepository> {
+    private fun setContent(onBack: () -> Unit = {}, facetId: Long? = null, onOpenClockAccessories: () -> Unit = {}): Pair<SettingsRepository, FacetRepository> {
         lateinit var settingsRepository: SettingsRepository
         lateinit var facetRepository: FacetRepository
         composeRule.setContent {
@@ -59,11 +59,25 @@ class ClockStyleGalleryScreenTest {
                 ClockStyleGalleryViewModel(savedStateHandle, settingsRepository, facetRepository)
             }
             FacetLauncherTheme {
-                ClockStyleGalleryRoute(onBack = onBack, viewModel = viewModel)
+                ClockStyleGalleryRoute(onBack = onBack, onOpenClockAccessories = onOpenClockAccessories, viewModel = viewModel)
             }
         }
         composeRule.waitForIdle()
         return settingsRepository to facetRepository
+    }
+
+    @Test
+    fun clockAccessoriesRowOpensTheAccessoriesScreen() {
+        // Given the gallery
+        var opened = false
+        setContent(onOpenClockAccessories = { opened = true })
+
+        // When tapping the Clock accessories row
+        composeRule.onNodeWithTag("clock_style_gallery_list").performScrollToNode(hasTestTag("clock_accessories_row"))
+        composeRule.onNodeWithTag("clock_accessories_row").performClick()
+
+        // Then it opens the accessories screen
+        assertEquals(true, opened)
     }
 
     @Test

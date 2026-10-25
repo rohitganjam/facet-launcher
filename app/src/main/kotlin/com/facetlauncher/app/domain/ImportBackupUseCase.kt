@@ -216,7 +216,7 @@ class ImportBackupUseCase @Inject constructor(
             setRainUnit(settings.rainUnit.toEnumOrDefault(RainUnit.AUTO))
             setPressureUnit(settings.pressureUnit.toEnumOrDefault(PressureUnit.AUTO))
             setWeatherLocationMode(settings.weatherLocationMode.toEnumOrDefault(WeatherLocationMode.CURRENT))
-            setWeatherIconStyle(settings.weatherIconStyle.toEnumOrDefault(WeatherIconStyle.MONOCHROME))
+            setWeatherIconStyle(settings.weatherIconStyle.toEnumOrDefault(WeatherIconStyle.COLORED))
             setSavedWeatherCities(settings.savedWeatherCities.map { WeatherCity(it.name, it.latitude, it.longitude, it.timezone) })
             setWeatherCity(weatherCityOrNull(settings.weatherCityName, settings.weatherCityLatitude, settings.weatherCityLongitude, settings.weatherCityTimezone))
         }
