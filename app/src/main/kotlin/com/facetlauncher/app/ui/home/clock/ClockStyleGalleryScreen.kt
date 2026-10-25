@@ -72,8 +72,9 @@ import java.time.LocalDateTime
 import java.time.ZoneId
 
 /**
- * Global entry point (Settings' "Default clock style" row) — real, persisted, actually applied
- * to Home via [com.facetlauncher.app.ui.home.ClockBlock].
+ * Entry point for the launcher default (Settings' "Default clock style" row) and, with a `facetId` in the ViewModel's
+ * `SavedStateHandle`, for a facet's own clock — real, persisted, actually applied to Home via
+ * [com.facetlauncher.app.ui.home.ClockBlock].
  */
 @Composable
 fun ClockStyleGalleryRoute(onBack: () -> Unit, onOpenClockAccessories: () -> Unit = {}, viewModel: ClockStyleGalleryViewModel = hiltViewModel()) {
@@ -110,15 +111,6 @@ fun ClockStyleGalleryRoute(onBack: () -> Unit, onOpenClockAccessories: () -> Uni
             stringResource(if (uiState.settings.use24HourTime) R.string.settings_time_format_24h else R.string.settings_time_format_12h),
         ),
     )
-}
-
-/**
- * Facet-scoped entry point (a facet's Clock card) — now uses a ViewModel to persist changes
- * if the user chooses to override.
- */
-@Composable
-fun FacetClockStyleGalleryScreen(onBack: () -> Unit, onOpenClockAccessories: () -> Unit = {}, viewModel: ClockStyleGalleryViewModel = hiltViewModel()) {
-    ClockStyleGalleryRoute(onBack = onBack, onOpenClockAccessories = onOpenClockAccessories, viewModel = viewModel)
 }
 
 /**

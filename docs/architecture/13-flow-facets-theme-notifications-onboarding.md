@@ -63,7 +63,7 @@ flowchart TB
   switch of its own (see the `LOOK` subgraph above).
 - **`AppearanceSettingsScreen` is a hub of short sections**, each a card of one or two rows that open their own screen — "Clock &
   calendar" (the Clock Style row, shown in both scopes — in facet scope it opens that facet's own
-  `FacetClockStyleGalleryScreen`, and its subtitle and the preview clock resolve through
+  `ClockStyleGalleryRoute` (with a `facetId`), and its subtitle and the preview clock resolve through
   `overrideClock` via `AppearanceSettingsUiState.clockSettings` — plus "Calendars to display", whose subtext is the
   selection summary, or "Needs calendar access" while `READ_CALENDAR` isn't granted, like the Notifications row below;
   `AppearanceSettingsViewModel` re-reads both grants on resume), "Dock & home" (one

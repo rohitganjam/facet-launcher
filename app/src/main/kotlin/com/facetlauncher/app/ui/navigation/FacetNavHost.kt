@@ -25,7 +25,6 @@ import com.facetlauncher.app.ui.facets.FacetSettingsScreen
 import com.facetlauncher.app.ui.facets.FavoritesPickerScreen
 import com.facetlauncher.app.ui.facets.ManageFacetsScreen
 import com.facetlauncher.app.ui.home.clock.ClockStyleGalleryRoute
-import com.facetlauncher.app.ui.home.clock.FacetClockStyleGalleryScreen
 import com.facetlauncher.app.ui.launcher.HomeDrawerRoute
 import com.facetlauncher.app.ui.launcher.LauncherViewModel
 import com.facetlauncher.app.ui.pro.FacetProScreen
@@ -318,7 +317,7 @@ fun FacetNavHost(
             arguments = listOf(navArgument("facetId") { type = NavType.LongType }),
         ) { backStackEntry ->
             val facetId = backStackEntry.arguments?.getLong("facetId") ?: NO_ACTIVE_FACET_ID
-            FacetClockStyleGalleryScreen(
+            ClockStyleGalleryRoute(
                 onBack = { navController.popBackStackSafely() },
                 onOpenClockAccessories = { navController.navigate(FacetDestinations.clockAccessories(facetId)) },
             )
