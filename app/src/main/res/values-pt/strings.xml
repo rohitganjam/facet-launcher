@@ -626,6 +626,9 @@
     <string name="about_check_for_updates_subtitle">Abrir o Facet Launcher no Google Play</string>
     <string name="about_join_discord">Entrar no Discord</string>
     <string name="about_join_discord_subtitle">Converse com a comunidade, dê feedback, acompanhe as novidades</string>
+    <string name="whats_new_pill_title">Atualizado para %1$s</string>
+    <string name="whats_new_pill_action">Ver novidades</string>
+    <string name="whats_new_pill_description">Atualizado para %1$s. Abre as novidades</string>
     <string name="about_whats_new">Novidades</string>
     <string name="about_whats_new_subtitle">Novos recursos e melhorias em cada versão</string>
     <string name="whats_new_header_title">Novidades</string>

@@ -4,7 +4,7 @@ Complete inventories of the two injectable layers, generated from constructor si
 `@Inject` sites in `app/src/main`. If a class is not in these tables it does not exist; if a
 dependency is not listed the class does not have it.
 
-## 1. Repositories and data singletons (48) — all `@Singleton`, all constructor-injected, and the weather seams (`WeatherApi`, `WeatherStore`, `PlaceGeocoder`) are the only interfaces
+## 1. Repositories and data singletons (49) — all `@Singleton`, all constructor-injected, and the weather seams (`WeatherApi`, `WeatherStore`, `PlaceGeocoder`) are the only interfaces
 
 | Repository | Wraps (source of truth) | Injects | Public API shape | Injected by |
 |---|---|---|---|---|
@@ -33,7 +33,9 @@ dependency is not listed the class does not have it.
 | `HeadphonesRepository` | `AudioManager` output devices + `AudioDeviceCallback` | `Context` | `observeHeadphonesPluggedIn(): Flow<Boolean>` | `DeviceStateRepository` |
 | `LocationRepository` | `LocationManager`: one approximate fix (network provider's current location, else the last known), `ACCESS_COARSE_LOCATION` or fine | `Context`, `@IoDispatcher` | `isPermissionGranted()`, `currentLocation(): DeviceLocation?` (10-second timeout; an altitude of exactly 0 counts as unknown). Never continuous and never in the background | `RefreshWeatherUseCase` |
 | `MediaSessionRepository` (`open`) | `MediaSessionManager.getActiveSessions` via the notification-listener grant, `MediaController` callbacks and transport controls; sessions only count while `NotificationBadgeRepository.mediaNotificationPackages` has their package; art falls back to a `content:`/`file:` art URI decoded off the main thread | `Context`, `NotificationBadgeRepository` | `observe(): Flow<MediaPlayerState?>` (cold), `skipToPrevious()`, `togglePlayPause()`, `skipToNext()`, `openPlayer()` | `ObserveHomeScreenStateUseCase`, `HomeViewModel` |
-| `ReleaseNotesRepository` (`open`) | bundled `assets/whats_new/<version>.md` (user-facing New/Improved bullets per release, drafted and signed off by `scripts/release.sh` before the build); `ReleaseNotesParser` parses each file | `Context` | `releases(): List<ReleaseNotes>` (IO, one-shot, newest first) | `WhatsNewViewModel` |
+| `ReleaseNotesRepository` (`open`) | bundled `assets/whats_new/<version>.md` (user-facing New/Improved bullets per release, drafted and signed off by `scripts/release.sh` before the build); `ReleaseNotesParser` parses each file | `Context` | `releases(): List<ReleaseNotes>` (IO, one-shot, newest first) | `WhatsNewPillViewModel` | the What's new pill over Home (`WhatsNewPillHost`): the version to announce, and `onShown` | — |
+| `AppVersion` (`open`) | `BuildConfig.VERSION_NAME`, behind a class so tests can supply their own | — | `name` | `WhatsNewPillViewModel`, `WhatsNewViewModel` |
+| `WhatsNewViewModel`, `WhatsNewPillViewModel` |
 | `NextAlarmRepository` | `AlarmManager.nextAlarmClock` + `ACTION_NEXT_ALARM_CLOCK_CHANGED` | `Context`, `Clock` | `observeNextAlarmMillis(): Flow<Long?>` | `ObserveClockAccessoriesUseCase` |
 | `NotificationActionController` | the connected `FacetNotificationListenerService`, which attaches a `cancelNotifications` lambda while bound | — | `attach(canceller)`, `detach()`, `dismiss(keys): Boolean` | `DrawerViewModel` (callers); `FacetNotificationListenerService` (attach/detach) |
 | `NotificationAccessRepository` (`open`) | `NotificationManagerCompat.getEnabledListenerPackages` | `Context` | `isGranted()` | `ObserveHomeScreenStateUseCase`, `DrawerViewModel`, 3 settings ViewModels |
@@ -138,7 +140,7 @@ Non-use-case files in `domain/`: `FlowCombine.kt` (6/7-ary `combine`), `HubGridC
 (`HUB_COLUMNS`, `HUB_MAX_ROWS`, `HUB_MAX_WIDGETS`, `calculateHubCellWidth(context)` — see F4),
 `BackupMapping.kt` (entity ⇄ `Backup*` DTO extension functions).
 
-## 3. ViewModels (36) — `@HiltViewModel`, one per screen
+## 3. ViewModels (37) — `@HiltViewModel`, one per screen
 
 | ViewModel | Screen / surface | Nav arg (`SavedStateHandle`) |
 |---|---|---|
@@ -177,4 +179,4 @@ Non-use-case files in `domain/`: `FlowCombine.kt` (6/7-ary `combine`), `HubGridC
 | `FolderDetailViewModel` | `FolderDetailScreen` | `folderId` |
 | `FolderAppPickerViewModel` | `FolderAppPickerScreen` | `folderId` |
 | `BackupRestoreViewModel` | `BackupRestoreScreen` | — |
-| `WhatsNewViewModel` | `WhatsNewScreen` | — |
+| `WhatsNewViewModel` | `WhatsNewScreen` (opening it marks the running version's notes seen) | — |

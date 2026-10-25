@@ -1,6 +1,10 @@
 package com.facetlauncher.app.ui.launcher
 
+import com.facetlauncher.app.data.AppVersion
+import com.facetlauncher.app.data.ReleaseNotesRepository
 import com.facetlauncher.app.domain.GroupAppsByLetterUseCase
+import com.facetlauncher.app.domain.ObserveWeatherUseCase
+import com.facetlauncher.app.domain.RefreshWeatherUseCase
 import com.facetlauncher.app.ui.drawer.DrawerListUseCases
 import android.app.AppOpsManager
 import android.app.usage.UsageStatsManager
@@ -116,6 +120,8 @@ import com.facetlauncher.app.ui.facets.FacetCarouselViewModel
 import com.facetlauncher.app.ui.home.ClockWidgetFacetController
 import com.facetlauncher.app.ui.home.ClockWidgetHostController
 import com.facetlauncher.app.ui.home.HomeViewModel
+import com.facetlauncher.app.ui.home.WhatsNewPillViewModel
+import com.facetlauncher.app.ui.home.weather.WeatherViewModel
 import com.facetlauncher.app.ui.home.widget.ClockWidgetPickerViewModel
 import com.facetlauncher.app.ui.hub.HubViewModel
 import com.facetlauncher.app.ui.hub.picker.HubWidgetPickerViewModel
@@ -428,6 +434,14 @@ class HomeDrawerRouteTest {
                 )
             }
 
+            // The weather sheet's and the What's new pill's state: nothing to show here, but HomeDrawerRoute needs both.
+            val weatherViewModel = remember {
+                val observeWeather = mock(ObserveWeatherUseCase::class.java)
+                `when`(observeWeather()).thenReturn(flowOf(null))
+                WeatherViewModel(observeWeather, settingsRepository, mock(RefreshWeatherUseCase::class.java))
+            }
+            val whatsNewPillViewModel = remember { WhatsNewPillViewModel(settingsRepository, ReleaseNotesRepository(context), AppVersion()) }
+
             // LauncherActivity provides the Home-press signal the sheets close on; this harness has to as well.
             CompositionLocalProvider(
                 LocalHomeSwipeGate provides remember { HomeSwipeGate() },
@@ -443,6 +457,8 @@ class HomeDrawerRouteTest {
                         onNavigateToFacetPro = onNavigateToFacetPro,
                         onNavigateToUsageAccessExplanation = {},
                         homeViewModel = homeViewModel,
+                        weatherViewModel = weatherViewModel,
+                        whatsNewPillViewModel = whatsNewPillViewModel,
                         drawerViewModel = drawerViewModel,
                         privateSpaceViewModel = privateSpaceViewModel,
                         hubViewModel = hubViewModel,

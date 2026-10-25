@@ -680,6 +680,9 @@
     <string name="about_check_for_updates_subtitle">Open Facet Launcher on Google Play</string>
     <string name="about_join_discord">Join the Discord</string>
     <string name="about_join_discord_subtitle">Chat with the community, share feedback, follow along</string>
+    <string name="whats_new_pill_title">Updated to %1$s</string>
+    <string name="whats_new_pill_action">See what\'s new</string>
+    <string name="whats_new_pill_description">Updated to %1$s. Opens what\'s new</string>
     <string name="about_whats_new">What\'s new</string>
     <string name="about_whats_new_subtitle">Features and improvements in each release</string>
     <string name="whats_new_header_title">What\'s new</string>

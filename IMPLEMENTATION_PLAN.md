@@ -4340,3 +4340,7 @@ Design agreed in chat (mocks: accessory bar, weather sheet, Clock accessories sc
 ## Pinned headers on the older settings screens (direct request)
 
 - [x] `StickyHeaderScrollColumn` (`ui/components/`): a scrolling settings column under a pinned back button and title, on `StickyHeaderLayout`. Clock accessories, Units and location, Weather location and Notifications now use it (their header used to scroll away). Each has a test that the back button is outside the scrolling content. The two access-explanation screens already scroll only their body; Folders now scrolls too, with its Create button in the pinned header (`headerAction`).
+
+## What's new pill after an update (direct request)
+
+- [x] A pill ("Updated to x.y.z · See what's new") drops in from the top, over Home, once per version after an update: `WhatsNewPill`/`WhatsNewPillHost`, `WhatsNewPillViewModel`, `AppVersion`, coach-mark id `WHATS_NEW_<version>` (`whatsNewSeenId`). Fresh installs are marked at the end of onboarding; opening What's new from anywhere marks it too; it waits for the first-run prompts and a resting Home. Tests: `WhatsNewPillViewModelTest`, `WhatsNewViewModelTest`, `SettingsRepositoryTest`, `HomeUiStateTest`, `WhatsNewPillTest`.

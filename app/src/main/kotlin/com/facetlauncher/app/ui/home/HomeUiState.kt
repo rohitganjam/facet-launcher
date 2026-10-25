@@ -143,6 +143,10 @@ data class HomeUiState(
     val showGestureHint: Boolean
         get() = settings.onboardingCompleted && HOME_GESTURES_COACH_MARK_ID !in settings.coachMarksSeen && setDefaultStepDone
 
+    /** The first-run prompts are behind the user, so a later announcement (the What's new pill) may show without crowding them. */
+    val firstRunPromptsDone: Boolean
+        get() = settings.onboardingCompleted && HOME_GESTURES_COACH_MARK_ID in settings.coachMarksSeen && setDefaultStepDone
+
     /**
      * The "make Facet your home screen" prompt — shown once, the first time real Home renders after onboarding
      * completes, and only when Facet is confirmed *not* to hold the role: a device that already does skips it

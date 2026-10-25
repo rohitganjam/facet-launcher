@@ -1,12 +1,20 @@
 package com.facetlauncher.app.ui.launcher
 
 import androidx.activity.compose.LocalActivity
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.unit.dp
 import com.facetlauncher.app.ui.home.HomeLayoutMode
 import com.facetlauncher.app.ui.home.HomeLiveState
 import com.facetlauncher.app.ui.home.HomeScreenContent
 import com.facetlauncher.app.ui.home.HomeWidgetSizing
+import com.facetlauncher.app.ui.home.WhatsNewPillHost
+import com.facetlauncher.app.ui.home.WhatsNewPillViewModel
 import com.facetlauncher.app.ui.home.toHomeScreenState
 import android.provider.Settings
 import androidx.activity.compose.BackHandler
@@ -99,8 +107,11 @@ fun HomeDrawerRoute(
     /** Opens the Units and location settings (where the weather location is chosen), from the weather sheet. */
     onNavigateToUnitsAndLocation: () -> Unit = {},
     onNavigateToPermissions: () -> Unit = {},
+    /** Opens What's new, from the pill that announces an update. */
+    onNavigateToWhatsNew: () -> Unit = {},
     modifier: Modifier = Modifier,
     homeViewModel: HomeViewModel = hiltViewModel(),
+    whatsNewPillViewModel: WhatsNewPillViewModel = hiltViewModel(),
     weatherViewModel: WeatherViewModel = hiltViewModel(),
     drawerViewModel: DrawerViewModel = hiltViewModel(),
     privateSpaceViewModel: PrivateSpaceViewModel = hiltViewModel(),
@@ -112,6 +123,7 @@ fun HomeDrawerRoute(
 ) {
     val homeUiState by homeViewModel.uiState.collectAsStateWithLifecycle()
     val weatherUiState by weatherViewModel.uiState.collectAsStateWithLifecycle()
+    val whatsNewVersion by whatsNewPillViewModel.version.collectAsStateWithLifecycle()
     val clockWidgetIsPro by homeViewModel.clockWidgetFacet.isPro.collectAsStateWithLifecycle()
     val launcherUiState by launcherViewModel.uiState.collectAsStateWithLifecycle()
     val folders by drawerViewModel.folders.collectAsStateWithLifecycle()
@@ -452,6 +464,14 @@ fun HomeDrawerRoute(
             requestDefaultLauncherIntent = homeViewModel::requestDefaultLauncherIntent,
             onFinishSetDefault = homeViewModel::dismissSetDefaultPrompt,
             onDismissGestureHint = homeViewModel::dismissGestureHint,
+        )
+        // Hovers over Home, below the status bar, without moving anything; waits for the first-run prompts and a resting Home.
+        WhatsNewPillHost(
+            version = whatsNewVersion,
+            ready = homeUiState.firstRunPromptsDone && !isDrawerOpen && !isHubOpen && !isFacetOpen,
+            onShow = whatsNewPillViewModel::onShown,
+            onOpen = onNavigateToWhatsNew,
+            modifier = Modifier.align(Alignment.TopCenter).windowInsetsPadding(WindowInsets.statusBars).padding(top = 12.dp),
         )
     }
 }

@@ -626,6 +626,9 @@
     <string name="about_check_for_updates_subtitle">Facet Launcher im Google Play Store öffnen</string>
     <string name="about_join_discord">Discord beitreten</string>
     <string name="about_join_discord_subtitle">Chatte mit der Community, gib Feedback, bleib auf dem Laufenden</string>
+    <string name="whats_new_pill_title">Aktualisiert auf %1$s</string>
+    <string name="whats_new_pill_action">Neuigkeiten ansehen</string>
+    <string name="whats_new_pill_description">Aktualisiert auf %1$s. Öffnet die Neuigkeiten</string>
     <string name="about_whats_new">Neuigkeiten</string>
     <string name="about_whats_new_subtitle">Neue Funktionen und Verbesserungen in jeder Version</string>
     <string name="whats_new_header_title">Neuigkeiten</string>

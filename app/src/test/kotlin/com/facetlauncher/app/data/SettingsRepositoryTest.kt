@@ -1,5 +1,6 @@
 package com.facetlauncher.app.data
 
+import com.facetlauncher.app.BuildConfig
 import com.facetlauncher.app.data.model.LandscapeOverrides
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
@@ -35,10 +36,12 @@ import com.facetlauncher.app.data.model.SearchBarPosition
 import com.facetlauncher.app.data.model.SystemBarIconStyle
 import com.facetlauncher.app.data.model.ThemeMode
 import com.facetlauncher.app.data.model.WallpaperAccentRole
+import com.facetlauncher.app.data.model.whatsNewSeenId
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
@@ -154,6 +157,21 @@ class SettingsRepositoryTest {
         val settings = repository.settings.first()
         assertEquals(true, settings.onboardingCompleted)
         assertFalse(settings.defaultsSeeded)
+    }
+
+    @Test
+    fun `completing onboarding marks this build's whats new as seen, and un-completing does not`() = runTest {
+        // Given a repository
+        val repository = createRepository()
+
+        // When onboarding is completed
+        repository.setOnboardingCompleted(true)
+
+        // Then a fresh install has nothing new to announce
+        assertTrue(whatsNewSeenId(BuildConfig.VERSION_NAME) in repository.settings.first().coachMarksSeen)
+
+        // And resetting onboarding for another repository leaves the set empty
+        assertEquals(emptySet<String>(), createRepository().also { it.setOnboardingCompleted(false) }.settings.first().coachMarksSeen)
     }
 
     @Test

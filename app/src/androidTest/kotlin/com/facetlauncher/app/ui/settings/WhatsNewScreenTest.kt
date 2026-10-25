@@ -1,16 +1,21 @@
 package com.facetlauncher.app.ui.settings
 
 import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.test.platform.app.InstrumentationRegistry
 import com.facetlauncher.app.BuildConfig
+import com.facetlauncher.app.data.AppVersion
 import com.facetlauncher.app.data.ReleaseNotesRepository
+import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.model.ReleaseNotes
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
+import java.io.File
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -28,7 +33,13 @@ class WhatsNewScreenTest {
     private fun setContent(releases: List<ReleaseNotes>, onBack: () -> Unit = {}) {
         composeRule.setContent {
             FacetLauncherTheme {
-                val viewModel = remember { WhatsNewViewModel(FakeReleaseNotesRepository(releases)) }
+                val context = LocalContext.current
+                val viewModel = remember {
+                    val settingsRepository = SettingsRepository(
+                        PreferenceDataStoreFactory.create(produceFile = { File(context.cacheDir, "whats-new-test-${System.nanoTime()}.preferences_pb") }),
+                    )
+                    WhatsNewViewModel(FakeReleaseNotesRepository(releases), settingsRepository, AppVersion())
+                }
                 WhatsNewScreen(onBack = onBack, viewModel = viewModel)
             }
         }

@@ -14,6 +14,8 @@ import com.facetlauncher.app.data.model.ClockFontOption
 import com.facetlauncher.app.data.model.FontWeightOption
 import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.data.model.ListContentMode
+import com.facetlauncher.app.ui.components.HOME_GESTURES_COACH_MARK_ID
+import com.facetlauncher.app.ui.components.HOME_SET_DEFAULT_PROMPT_ID
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -415,5 +417,22 @@ class HomeUiStateTest {
 
         assertEquals(null, state.clockWidgetSizeDp(landscape))
         assertEquals(null, HomeUiState().clockWidgetSizeDp(portrait))
+    }
+
+    @Test
+    fun `first run prompts are done once onboarding, the set default step and the gesture hint are behind the user`() {
+        val done = HomeUiState(
+            settings = LauncherSettings(onboardingCompleted = true, coachMarksSeen = setOf(HOME_GESTURES_COACH_MARK_ID, HOME_SET_DEFAULT_PROMPT_ID)),
+        )
+
+        assertEquals(true, done.firstRunPromptsDone)
+        assertEquals(false, done.copy(settings = done.settings.copy(onboardingCompleted = false)).firstRunPromptsDone)
+        assertEquals(false, done.copy(settings = done.settings.copy(coachMarksSeen = setOf(HOME_SET_DEFAULT_PROMPT_ID))).firstRunPromptsDone)
+        assertEquals(false, done.copy(settings = done.settings.copy(coachMarksSeen = setOf(HOME_GESTURES_COACH_MARK_ID))).firstRunPromptsDone)
+        // Already the default launcher: the set default step needs no answer of its own
+        assertEquals(
+            true,
+            done.copy(settings = done.settings.copy(coachMarksSeen = setOf(HOME_GESTURES_COACH_MARK_ID)), isDefaultLauncher = true).firstRunPromptsDone,
+        )
     }
 }

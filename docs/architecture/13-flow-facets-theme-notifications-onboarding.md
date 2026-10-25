@@ -438,6 +438,14 @@ flowchart LR
 - The set-default prompt is a `ThemedModalBottomSheet` ([12 §4](12-flow-drawer-search-and-app-actions.md)): its content
   clears the nav bar via the sheet's own inset plus 24dp under the button, and scrim / swipe-down / Back / Home all count
   as "Later".
+- **What's new pill** (`WhatsNewPill`, hosted by `WhatsNewPillHost` in `HomeDrawerRoute`). After an update, the first resting Home
+  drops a small pill in from the top, under the status bar, over Home (it moves nothing): "Updated to 0.1.32 · See what's new".
+  `WhatsNewPillViewModel.version` is the running version when onboarding is done, `assets/whats_new/<version>.md` exists and
+  the coach-mark id `WHATS_NEW_<version>` is not in `coachMarksSeen` (`whatsNewSeenId`). A fresh install never qualifies:
+  `SettingsRepository.setOnboardingCompleted(true)` adds the running version's id, and opening What's new
+  (`WhatsNewViewModel`, from About or from the pill) adds it too. The pill waits for `HomeUiState.firstRunPromptsDone`
+  (set-default step and gesture hint behind the user) and a Home at rest, marks the version seen as it appears, and
+  leaves after 8 seconds, when swiped up, or when tapped (which opens What's new).
 - `GestureHintOverlay` (coach mark `HOME_GESTURES`) shows four hints at proportional offsets, each on the side its
   gesture starts from: clock hold (top-left, under the default clock), Switch facets (right edge), Widgets (left edge),
   All your apps (bottom-right). Its "Got it" is a `SurfaceButton` with a 1.5dp `Muted` border and a soft shadow, because

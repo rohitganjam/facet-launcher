@@ -11,6 +11,7 @@ import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
+import com.facetlauncher.app.BuildConfig
 import com.facetlauncher.app.data.model.AppListColumnAlignment
 import com.facetlauncher.app.data.model.AppListGridColumns
 import com.facetlauncher.app.data.model.AppListGridDisplayMode
@@ -56,6 +57,7 @@ import com.facetlauncher.app.data.model.decodeWeatherCities
 import com.facetlauncher.app.data.model.encodeWeatherCities
 import com.facetlauncher.app.data.model.isSamePlaceAs
 import com.facetlauncher.app.data.model.weatherCityOrNull
+import com.facetlauncher.app.data.model.whatsNewSeenId
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.flow.Flow
@@ -614,8 +616,12 @@ class SettingsRepository @Inject constructor(
         dataStore.edit { it[Keys.APP_LIST_GRID_DISPLAY_MODE] = mode.name }
     }
 
+    /** Completing onboarding on a build also marks that version's What's new as seen: a fresh install has nothing new to announce. */
     suspend fun setOnboardingCompleted(completed: Boolean) {
-        dataStore.edit { it[Keys.ONBOARDING_COMPLETED] = completed }
+        dataStore.edit {
+            it[Keys.ONBOARDING_COMPLETED] = completed
+            if (completed) it[Keys.COACH_MARKS_SEEN] = (it[Keys.COACH_MARKS_SEEN] ?: emptySet()) + whatsNewSeenId(BuildConfig.VERSION_NAME)
+        }
     }
 
     suspend fun setDefaultsSeeded(seeded: Boolean) {
