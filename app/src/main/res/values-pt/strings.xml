@@ -294,7 +294,7 @@
     <string name="drawer_presentation_grid">Grade</string>
     <string name="drawer_grid_density_compact">Compacta</string>
     <string name="drawer_grid_density_regular">Normal</string>
-    <string name="drawer_grid_density_airy">Espaçosa</string>
+    <string name="drawer_grid_density_spacious">Espaçoso</string>
     <string name="drawer_list_item_size_compact">Compacto</string>
     <string name="drawer_list_item_size_regular">Regular</string>
     <string name="drawer_list_item_size_spacious">Espaçoso</string>

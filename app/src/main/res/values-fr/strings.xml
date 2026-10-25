@@ -294,7 +294,7 @@
     <string name="drawer_presentation_grid">Grille</string>
     <string name="drawer_grid_density_compact">Compacte</string>
     <string name="drawer_grid_density_regular">Normale</string>
-    <string name="drawer_grid_density_airy">Aérée</string>
+    <string name="drawer_grid_density_spacious">Spacieux</string>
     <string name="drawer_list_item_size_compact">Compact</string>
     <string name="drawer_list_item_size_regular">Normal</string>
     <string name="drawer_list_item_size_spacious">Spacieux</string>

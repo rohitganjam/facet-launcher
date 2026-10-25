@@ -29,18 +29,18 @@ enum class DrawerPresentation(@param:StringRes val displayNameRes: Int) {
  * App Drawer grid density — the grid's column and row counts are computed from the window size
  * (`ui/drawer/DrawerGridLayout.kt`), so one setting fits a phone, a foldable or a tablet.
  * Persisted under the old `drawer_grid_size` key / `drawerGridSize` backup field; [fromStored]
- * also maps the retired column×row names.
+ * also maps the retired column×row names and `AIRY`, the old name of [SPACIOUS].
  */
 enum class DrawerGridDensity(@param:StringRes val displayNameRes: Int) {
     COMPACT(R.string.drawer_grid_density_compact),
     REGULAR(R.string.drawer_grid_density_regular),
-    AIRY(R.string.drawer_grid_density_airy);
+    SPACIOUS(R.string.drawer_grid_density_spacious);
 
     companion object {
         fun fromStored(name: String): DrawerGridDensity? = when (name) {
             "FIVE_BY_SIX" -> COMPACT
             "FOUR_BY_FIVE", "FIVE_BY_FIVE" -> REGULAR
-            "FOUR_BY_FOUR" -> AIRY
+            "FOUR_BY_FOUR", "AIRY" -> SPACIOUS
             else -> entries.firstOrNull { it.name == name }
         }
     }

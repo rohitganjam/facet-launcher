@@ -117,7 +117,7 @@ either, just the row's own position in its flat `LazyColumn`. The row there
 
 ### 1c. Grid density (`DrawerGridDensity`)
 
-Grid presentation only. `COMPACT`/`REGULAR`/`AIRY` pick a target cell width and row pitch
+Grid presentation only. `COMPACT`/`REGULAR`/`SPACIOUS` pick a target cell width and row pitch
 (`ui/drawer/DrawerGridLayout.kt`); the column and row counts are computed from the viewport, so one
 setting fits a phone, a foldable and a tablet (a typical phone gets 5/4/4 columns and 6/5/4 rows).
 `DrawerGridContent` derives both counts from its own constraints and divides the height into equal

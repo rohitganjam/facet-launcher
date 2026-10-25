@@ -294,7 +294,7 @@
     <string name="drawer_presentation_grid">Raster</string>
     <string name="drawer_grid_density_compact">Kompakt</string>
     <string name="drawer_grid_density_regular">Normal</string>
-    <string name="drawer_grid_density_airy">Luftig</string>
+    <string name="drawer_grid_density_spacious">Geräumig</string>
     <string name="drawer_list_item_size_compact">Kompakt</string>
     <string name="drawer_list_item_size_regular">Standard</string>
     <string name="drawer_list_item_size_spacious">Geräumig</string>

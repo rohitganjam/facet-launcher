@@ -11,7 +11,12 @@ class DrawerGridDensityTest {
         assertEquals(DrawerGridDensity.COMPACT, DrawerGridDensity.fromStored("FIVE_BY_SIX"))
         assertEquals(DrawerGridDensity.REGULAR, DrawerGridDensity.fromStored("FIVE_BY_FIVE"))
         assertEquals(DrawerGridDensity.REGULAR, DrawerGridDensity.fromStored("FOUR_BY_FIVE"))
-        assertEquals(DrawerGridDensity.AIRY, DrawerGridDensity.fromStored("FOUR_BY_FOUR"))
+        assertEquals(DrawerGridDensity.SPACIOUS, DrawerGridDensity.fromStored("FOUR_BY_FOUR"))
+    }
+
+    @Test
+    fun `the old airy name maps to spacious`() {
+        assertEquals(DrawerGridDensity.SPACIOUS, DrawerGridDensity.fromStored("AIRY"))
     }
 
     @Test

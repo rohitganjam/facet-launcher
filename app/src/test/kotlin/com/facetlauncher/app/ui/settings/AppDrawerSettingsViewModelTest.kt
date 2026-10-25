@@ -76,10 +76,10 @@ class AppDrawerSettingsViewModelTest {
         val settingsRepository = mock(SettingsRepository::class.java)
         val viewModel = createViewModel(settingsRepository = settingsRepository)
 
-        viewModel.setDrawerGridDensity(DrawerGridDensity.AIRY)
+        viewModel.setDrawerGridDensity(DrawerGridDensity.SPACIOUS)
         testDispatcher.scheduler.advanceUntilIdle()
 
-        verify(settingsRepository).setDrawerGridDensity(DrawerGridDensity.AIRY)
+        verify(settingsRepository).setDrawerGridDensity(DrawerGridDensity.SPACIOUS)
     }
 
     @Test

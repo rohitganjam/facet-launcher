@@ -561,17 +561,17 @@ class AppDrawerScreenTest {
 
     @Test
     fun gridDensityControlsTileHeight() {
-        // Given the drawer in Grid presentation at Airy density (fewer rows, so tiles get more of the
+        // Given the drawer in Grid presentation at Spacious density (fewer rows, so tiles get more of the
         // viewport's height each) — a single setContent with reactive state driving [gridDensity],
         // not two separate setContent calls on the same Activity (no longer permitted by the
         // current compose-ui-test/activity libraries — see chat history).
-        var gridDensity by mutableStateOf(DrawerGridDensity.AIRY)
+        var gridDensity by mutableStateOf(DrawerGridDensity.SPACIOUS)
         composeRule.setContent {
             FacetLauncherTheme {
                 AppDrawerScreen(apps = apps, onAppClick = {}, presentation = DrawerPresentation.GRID, gridDensity = gridDensity)
             }
         }
-        val airyHeight = composeRule.onNodeWithTag("drawer_grid_tile_com.example.A").fetchSemanticsNode().boundsInRoot.height
+        val spaciousHeight = composeRule.onNodeWithTag("drawer_grid_tile_com.example.A").fetchSemanticsNode().boundsInRoot.height
 
         // When the same drawer instead uses Compact density (more rows, so tiles get less height each,
         // since more rows must fit in the same viewport)
@@ -582,8 +582,8 @@ class AppDrawerScreenTest {
         // Then tile height tracks the selected density — this is the
         // regression this test guards: before the fix, the density never reached the grid, so
         // tile height was purely content-intrinsic and identical regardless of row count.
-        assert(airyHeight > compactHeight) {
-            "expected Airy to produce taller tiles than Compact: $airyHeight vs $compactHeight"
+        assert(spaciousHeight > compactHeight) {
+            "expected Spacious to produce taller tiles than Compact: $spaciousHeight vs $compactHeight"
         }
     }
 
