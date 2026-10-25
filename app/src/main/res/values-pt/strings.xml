@@ -373,6 +373,18 @@
     <string name="app_drawer_folders_in_drawer">Pastas na gaveta</string>
     <string name="app_drawer_recently_installed_position">Instalados recentemente</string>
     <string name="app_drawer_opacity_label">Opacidade da gaveta</string>
+    <string name="app_drawer_preview_description">Pré-visualização da gaveta de apps</string>
+    <string name="drawer_preview_folder_name">Trabalho</string>
+    <string-array name="drawer_preview_app_labels">
+        <item>Agenda</item>
+        <item>Câmera</item>
+        <item>Fotos</item>
+        <item>Mapas</item>
+        <item>Música</item>
+        <item>Notas</item>
+        <item>Relógio</item>
+        <item>Tempo</item>
+    </string-array>
     <string name="drawer_recently_installed_label">Instalados recentemente</string>
 
     <!-- ThemeMode -->

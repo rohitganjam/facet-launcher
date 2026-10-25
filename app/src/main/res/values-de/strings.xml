@@ -373,6 +373,18 @@
     <string name="app_drawer_folders_in_drawer">Ordner im Drawer</string>
     <string name="app_drawer_recently_installed_position">Kürzlich installiert</string>
     <string name="app_drawer_opacity_label">Drawer-Deckkraft</string>
+    <string name="app_drawer_preview_description">Vorschau des App-Drawers</string>
+    <string name="drawer_preview_folder_name">Arbeit</string>
+    <string-array name="drawer_preview_app_labels">
+        <item>Fotos</item>
+        <item>Kalender</item>
+        <item>Kamera</item>
+        <item>Karten</item>
+        <item>Musik</item>
+        <item>Notizen</item>
+        <item>Uhr</item>
+        <item>Wetter</item>
+    </string-array>
     <string name="drawer_recently_installed_label">Kürzlich installiert</string>
 
     <!-- ThemeMode -->

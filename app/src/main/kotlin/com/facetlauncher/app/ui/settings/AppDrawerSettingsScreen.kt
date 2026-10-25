@@ -39,6 +39,7 @@ import com.facetlauncher.app.data.model.DrawerFolderDisplayMode
 import com.facetlauncher.app.data.model.DrawerGridDensity
 import com.facetlauncher.app.data.model.DrawerListItemSize
 import com.facetlauncher.app.data.model.DrawerPresentation
+import com.facetlauncher.app.data.model.HomeWallpaper
 import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.data.model.RecentlyInstalledPosition
 import com.facetlauncher.app.data.model.SearchBarPosition
@@ -64,6 +65,7 @@ fun AppDrawerSettingsScreen(
     viewModel: AppDrawerSettingsViewModel = hiltViewModel(),
 ) {
     val settings by viewModel.settings.collectAsState()
+    val homeWallpaper by viewModel.homeWallpaper.collectAsState()
 
     val requestContactsPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
         viewModel.setSearchContactsEnabled(granted)
@@ -71,6 +73,7 @@ fun AppDrawerSettingsScreen(
 
     AppDrawerSettingsContent(
         settings = settings,
+        homeWallpaper = homeWallpaper,
         onBack = onBack,
         onDrawerPresentationChange = viewModel::setDrawerPresentation,
         onDrawerGridDensityChange = viewModel::setDrawerGridDensity,
@@ -95,6 +98,7 @@ fun AppDrawerSettingsScreen(
 @Composable
 private fun AppDrawerSettingsContent(
     settings: LauncherSettings,
+    homeWallpaper: HomeWallpaper,
     onBack: () -> Unit,
     onDrawerPresentationChange: (DrawerPresentation) -> Unit,
     onDrawerGridDensityChange: (DrawerGridDensity) -> Unit,
@@ -109,8 +113,6 @@ private fun AppDrawerSettingsContent(
     onRecentlyInstalledPositionChange: (RecentlyInstalledPosition) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val presentation = settings.drawerPresentation
-
     StickyHeaderLayout(
         modifier = modifier,
         header = { AppDrawerSettingsHeader(onBack = onBack) },
@@ -124,6 +126,9 @@ private fun AppDrawerSettingsContent(
                     .padding(horizontal = 24.dp),
                 contentPadding = PaddingValues(top = headerHeight, bottom = 24.dp),
             ) {
+                item {
+                    AppDrawerSettingsPreview(settings = settings, wallpaper = homeWallpaper, modifier = Modifier.padding(bottom = 16.dp))
+                }
                 item {
                     AppDrawerSettingsCard(
                         settings = settings,
@@ -344,6 +349,7 @@ private fun AppDrawerSettingsScreenPreview() {
     FacetLauncherTheme {
         AppDrawerSettingsContent(
             settings = LauncherSettings(),
+            homeWallpaper = HomeWallpaper.Unavailable,
             onBack = {},
             onDrawerPresentationChange = {},
             onDrawerGridDensityChange = {},

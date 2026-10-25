@@ -1,6 +1,8 @@
 package com.facetlauncher.app.ui.settings
 
 import com.facetlauncher.app.data.SettingsRepository
+import com.facetlauncher.app.data.WallpaperRepository
+import com.facetlauncher.app.data.model.HomeWallpaper
 import com.facetlauncher.app.data.model.DrawerFolderDisplayMode
 import com.facetlauncher.app.data.model.DrawerGridDensity
 import com.facetlauncher.app.data.model.DrawerListItemSize
@@ -16,6 +18,7 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
+import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
 import org.mockito.Mockito.mock
@@ -33,9 +36,28 @@ class AppDrawerSettingsViewModelTest {
     @After
     fun tearDown() { Dispatchers.resetMain() }
 
-    private fun createViewModel(settingsRepository: SettingsRepository = mock(SettingsRepository::class.java)): AppDrawerSettingsViewModel {
+    /** A real (not Mockito) stub — plain Mockito can't reliably stub a `suspend` return. */
+    private fun fakeWallpaperRepository(value: HomeWallpaper = HomeWallpaper.Unavailable) =
+        object : WallpaperRepository(mock(android.app.WallpaperManager::class.java)) {
+            override suspend fun currentHomeWallpaper(): HomeWallpaper = value
+        }
+
+    private fun createViewModel(
+        settingsRepository: SettingsRepository = mock(SettingsRepository::class.java),
+        wallpaper: HomeWallpaper = HomeWallpaper.Unavailable,
+    ): AppDrawerSettingsViewModel {
         `when`(settingsRepository.settings).thenReturn(flowOf(LauncherSettings()))
-        return AppDrawerSettingsViewModel(settingsRepository)
+        return AppDrawerSettingsViewModel(settingsRepository, fakeWallpaperRepository(wallpaper))
+    }
+
+    @Test
+    fun `home wallpaper for the preview comes from the wallpaper repository`() = runTest {
+        val tones = HomeWallpaper.Tones(listOf(0xFF112233.toInt()))
+        val viewModel = createViewModel(wallpaper = tones)
+
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(tones, viewModel.homeWallpaper.value)
     }
 
     @Test

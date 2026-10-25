@@ -4310,3 +4310,7 @@ Design agreed in chat (mocks: accessory bar, weather sheet, Clock accessories sc
 - **MET's aggregate limit** (over 20 requests per second across all clients of one application) is far above one install per hour, but check it if the user base grows; a proxy is the escape hatch.
 - **Narrow templates:** the weather item widens the accessory row. Check the pill, box and band templates at larger font scales.
 - **Not specified:** feels-like, UV, alerts, a weather widget on the lock screen.
+
+## App drawer settings preview (direct request)
+
+- [x] `AppDrawerSettingsPreview` (`ui/settings/`) at the top of Settings → App Drawer: the real `AppDrawerScreen` on sample apps and a sample folder over the system wallpaper, fed the current `LauncherSettings`, inert, so presentation, density, sizes, icons, labels, folders, recently installed, search bar position and opacity show as they change. `AppDrawerSettingsViewModel` gained `homeWallpaper` (via `WallpaperRepository`). Strings in en/de/es/fr/pt. Tests: `AppDrawerSettingsPreviewTest`, `AppDrawerSettingsViewModelTest`, `AppDrawerSettingsScreenTest`. Docs: `12 §1d`, `07`, `03`.

@@ -373,6 +373,18 @@
     <string name="app_drawer_folders_in_drawer">Dossiers dans le tiroir</string>
     <string name="app_drawer_recently_installed_position">Installées récemment</string>
     <string name="app_drawer_opacity_label">Opacité du tiroir</string>
+    <string name="app_drawer_preview_description">Aperçu du tiroir d\'apps</string>
+    <string name="drawer_preview_folder_name">Travail</string>
+    <string-array name="drawer_preview_app_labels">
+        <item>Agenda</item>
+        <item>Appareil photo</item>
+        <item>Cartes</item>
+        <item>Horloge</item>
+        <item>Météo</item>
+        <item>Musique</item>
+        <item>Notes</item>
+        <item>Photos</item>
+    </string-array>
     <string name="drawer_recently_installed_label">Installées récemment</string>
 
     <!-- ThemeMode -->

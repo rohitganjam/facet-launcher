@@ -411,6 +411,18 @@
     <string name="app_drawer_folders_in_drawer">Folders in drawer</string>
     <string name="app_drawer_recently_installed_position">Recently installed</string>
     <string name="app_drawer_opacity_label">Drawer opacity</string>
+    <string name="app_drawer_preview_description">App drawer preview</string>
+    <string name="drawer_preview_folder_name">Work</string>
+    <string-array name="drawer_preview_app_labels">
+        <item>Calendar</item>
+        <item>Camera</item>
+        <item>Clock</item>
+        <item>Maps</item>
+        <item>Music</item>
+        <item>Notes</item>
+        <item>Photos</item>
+        <item>Weather</item>
+    </string-array>
     <string name="drawer_recently_installed_label">Recently installed</string>
 
     <!-- ThemeMode -->

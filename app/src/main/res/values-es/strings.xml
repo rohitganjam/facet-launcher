@@ -373,6 +373,18 @@
     <string name="app_drawer_folders_in_drawer">Carpetas en el cajón</string>
     <string name="app_drawer_recently_installed_position">Instaladas recientemente</string>
     <string name="app_drawer_opacity_label">Opacidad del cajón</string>
+    <string name="app_drawer_preview_description">Vista previa del cajón de apps</string>
+    <string name="drawer_preview_folder_name">Trabajo</string>
+    <string-array name="drawer_preview_app_labels">
+        <item>Calendario</item>
+        <item>Cámara</item>
+        <item>Fotos</item>
+        <item>Mapas</item>
+        <item>Música</item>
+        <item>Notas</item>
+        <item>Reloj</item>
+        <item>Tiempo</item>
+    </string-array>
     <string name="drawer_recently_installed_label">Instaladas recientemente</string>
 
     <!-- ThemeMode -->
