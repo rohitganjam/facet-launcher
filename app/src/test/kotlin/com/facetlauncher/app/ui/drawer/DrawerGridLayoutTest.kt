@@ -16,7 +16,7 @@ class DrawerGridLayoutTest {
         // Then the old 5 and 4 column presets are kept
         assertEquals(5, drawerGridColumns(width, DrawerGridDensity.COMPACT))
         assertEquals(4, drawerGridColumns(width, DrawerGridDensity.REGULAR))
-        assertEquals(4, drawerGridColumns(width, DrawerGridDensity.AIRY))
+        assertEquals(4, drawerGridColumns(width, DrawerGridDensity.SPACIOUS))
     }
 
     @Test
@@ -50,7 +50,7 @@ class DrawerGridLayoutTest {
 
         assertEquals(6, drawerGridRows(height, DrawerGridDensity.COMPACT))
         assertEquals(5, drawerGridRows(height, DrawerGridDensity.REGULAR))
-        assertEquals(4, drawerGridRows(height, DrawerGridDensity.AIRY))
+        assertEquals(4, drawerGridRows(height, DrawerGridDensity.SPACIOUS))
     }
 
     @Test
@@ -61,12 +61,21 @@ class DrawerGridLayoutTest {
 
         assertEquals(12 to 5, drawerGridColumns(width, DrawerGridDensity.COMPACT) to drawerGridRows(height, DrawerGridDensity.COMPACT))
         assertEquals(10 to 4, drawerGridColumns(width, DrawerGridDensity.REGULAR) to drawerGridRows(height, DrawerGridDensity.REGULAR))
-        assertEquals(9 to 3, drawerGridColumns(width, DrawerGridDensity.AIRY) to drawerGridRows(height, DrawerGridDensity.AIRY))
+        assertEquals(9 to 3, drawerGridColumns(width, DrawerGridDensity.SPACIOUS) to drawerGridRows(height, DrawerGridDensity.SPACIOUS))
     }
 
     @Test
     fun `tiny windows still get a minimum grid`() {
-        assertEquals(3, drawerGridColumns(60.dp, DrawerGridDensity.AIRY))
-        assertEquals(3, drawerGridRows(60.dp, DrawerGridDensity.AIRY))
+        assertEquals(3, drawerGridColumns(60.dp, DrawerGridDensity.SPACIOUS))
+        assertEquals(2, drawerGridRows(60.dp, DrawerGridDensity.SPACIOUS))
+    }
+
+    @Test
+    fun `a short card shows more rows at compact than at regular`() {
+        // Given the grid area of the settings preview card
+        val height = 320.dp
+
+        assertEquals(3, drawerGridRows(height, DrawerGridDensity.COMPACT))
+        assertEquals(2, drawerGridRows(height, DrawerGridDensity.REGULAR))
     }
 }

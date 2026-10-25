@@ -755,6 +755,33 @@ class FacetDatabaseMigrationTest {
         cursor.close()
     }
 
+    @Test
+    fun migration32To33KeepsFacetsLookingTheSameAndAddsEmptyWeatherTables() {
+        // Given a v32 database with a facet
+        val dbV32 = helper.createDatabase(TEST_DB, 32)
+        insertFacetV27(dbV32, id = 1, name = "Work")
+        dbV32.close()
+
+        // When migrating to v33 (Room also validates the result against the exported v33 schema)
+        val dbV33 = helper.runMigrationsAndValidate(TEST_DB, 33, true, Migrations.MIGRATION_32_33)
+
+        // Then the facet shows the alarm and battery and not weather, as before
+        val facet = dbV33.query("SELECT clockShowAlarm, clockShowBattery, clockShowWeather FROM facets WHERE id = 1")
+        facet.moveToFirst()
+        assertEquals(1, facet.getInt(0))
+        assertEquals(1, facet.getInt(1))
+        assertEquals(0, facet.getInt(2))
+        facet.close()
+
+        // And both weather tables exist and are empty
+        for (table in listOf("weather_hours", "weather_meta")) {
+            val rows = dbV33.query("SELECT COUNT(*) FROM $table")
+            rows.moveToFirst()
+            assertEquals(0, rows.getInt(0))
+            rows.close()
+        }
+    }
+
     /** A v27 facet row — the v25 shape plus the two calendar-display columns, which a freshly created database has no defaults for. */
     private fun insertFacetV27(db: androidx.sqlite.db.SupportSQLiteDatabase, id: Long, name: String) {
         insertFacetV25Columns(db, id, name, extraColumns = ", showCalendarIndicator, calendarItemsToShow", extraValues = ", 1, 3")

@@ -70,7 +70,7 @@ BACKUP AND RESTORE
 Export your facets and settings to a file and restore them on any device.
 
 PRIVATE BY DESIGN
-Facet Launcher has no internet access. No accounts, no analytics, no ads: everything stays on your device. Optional features ask for permission only when you turn them on: Calendar for events on your home screen, Contacts for contact search, Usage access for Recents and Most Used, Notification access for badges and the media player, Bluetooth for Bluetooth rules, and Location only so Android lets the app read a Wi-Fi network name for named-network rules. Say no to any of them and the rest of the launcher works normally.
+Facet Launcher uses the internet only for the optional weather feature, which is off until you turn it on and then asks for an approximate location. No accounts, no analytics, no ads: everything else stays on your device. Optional features ask for permission only when you turn them on: Calendar for events on your home screen, Contacts for contact search, Usage access for Recents and Most Used, Notification access for badges and the media player, Bluetooth for Bluetooth rules, and Location for the weather at your position and so Android lets the app read a Wi-Fi network name for named-network rules. Say no to any of them and the rest of the launcher works normally.
 
 REQUIREMENTS
 Android 11 or later. Set Facet Launcher as your default home app in Settings to get the full experience.

@@ -29,6 +29,7 @@ import com.facetlauncher.app.data.model.FontWeightOption
 import com.facetlauncher.app.data.model.LauncherFontOption
 import com.facetlauncher.app.ui.home.clock.CalendarEventsBlock
 import com.facetlauncher.app.ui.home.clock.ClockDisplay
+import com.facetlauncher.app.ui.home.clock.ClockWeatherAccessory
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import com.facetlauncher.app.ui.theme.fontFamily
 import com.facetlauncher.app.ui.theme.resolve
@@ -94,6 +95,8 @@ fun ClockBlock(
     /** `null` until the first real battery reading arrives. */
     batteryPercent: Int? = null,
     isCharging: Boolean = false,
+    /** The weather accessory, or `null` for none. */
+    weather: ClockWeatherAccessory? = null,
     /**
      * PRD F15 — non-null when the active facet has a hosted third-party `AppWidget` bound as its
      * clock, replacing every param above (`templateId`, `fontOption`, `clockScale`, ...) with that
@@ -151,6 +154,7 @@ fun ClockBlock(
                 nextAlarmMillis = nextAlarmMillis,
                 batteryPercent = batteryPercent,
                 isCharging = isCharging,
+                weather = weather,
                 clockWidgetAppWidgetId = clockWidgetAppWidgetId,
                 createClockWidgetHostView = createClockWidgetHostView,
                 clockWidgetWidthDp = clockWidgetWidthDp,
@@ -205,6 +209,7 @@ private fun ClockOrWidgetContent(
     nextAlarmMillis: Long?,
     batteryPercent: Int?,
     isCharging: Boolean,
+    weather: ClockWeatherAccessory?,
     clockWidgetAppWidgetId: Int?,
     createClockWidgetHostView: (Context, Int) -> AppWidgetHostView?,
     clockWidgetWidthDp: Dp?,
@@ -255,6 +260,7 @@ private fun ClockOrWidgetContent(
                 nextAlarmMillis = nextAlarmMillis,
                 batteryPercent = batteryPercent,
                 isCharging = isCharging,
+                weather = weather,
             )
         }
     }

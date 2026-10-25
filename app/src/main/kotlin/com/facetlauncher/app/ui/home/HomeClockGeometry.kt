@@ -8,6 +8,9 @@ import com.facetlauncher.app.data.model.ClockAlignment
 /** The handle's position (measured from the top of the content area) can never exceed this fraction of the content height. */
 internal const val HOME_CLOCK_ZONE_MAX_FRACTION = 0.5f
 
+/** Where the handle (the divider above the app list) sits, as a fraction of the content height, until the user moves it. */
+internal const val HOME_CLOCK_DEFAULT_ZONE_FRACTION = 0.4f
+
 /** The clamp for the clock's scale factor, shared by the live render, the handle positioning and the committed value. */
 internal const val HOME_CLOCK_MIN_SCALE = 0.5f
 internal const val HOME_CLOCK_MAX_SCALE = 2.0f
@@ -15,7 +18,6 @@ internal const val HOME_CLOCK_MAX_SCALE = 2.0f
 /** The fixed measures the clock geometry works in, already in px. */
 internal data class ClockMetrics(
     val topInsetPx: Float,
-    val defaultTopOffsetPx: Float,
     val minGapPx: Float,
     /** Headroom above the clock's pinned bottom: past the status bar, plus room for the resize handle. */
     val topReservePx: Float,
@@ -153,7 +155,7 @@ internal fun computeClockGeometry(i: ClockGeometryInputs): ClockGeometry {
 /** One formula covers the persisted and default (`null`) cases: the default places the handle so the block's own offset resolves to its original position. */
 internal fun portraitHandleBounds(i: ClockGeometryInputs): HandleBounds {
     val m = i.metrics
-    val base = i.zoneHeightPx ?: (m.defaultTopOffsetPx + i.clockNaturalHeightPx + m.minGapPx)
+    val base = i.zoneHeightPx ?: (HOME_CLOCK_DEFAULT_ZONE_FRACTION * i.contentHeightPx)
     val floor = clockHandleFloorPx(
         blockHeightPx = i.clockNaturalHeightPx,
         clockBoxHeightPx = i.boxSize?.height?.toFloat() ?: i.clockNaturalHeightPx,

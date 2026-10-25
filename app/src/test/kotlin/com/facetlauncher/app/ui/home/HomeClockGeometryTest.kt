@@ -12,7 +12,6 @@ class HomeClockGeometryTest {
 
     private val metrics = ClockMetrics(
         topInsetPx = 40f,
-        defaultTopOffsetPx = 20f,
         minGapPx = 10f,
         topReservePx = 100f,
         sideMarginPx = 20f,
@@ -68,12 +67,22 @@ class HomeClockGeometryTest {
     // --- portraitHandleBounds ---
 
     @Test
-    fun `an unset zone places the handle below the default top offset and the clock`() {
-        // Given no saved zone height
+    fun `an unset zone places the handle at 40 percent of the content height`() {
+        // Given no saved zone height and a 1000px content area
         val bounds = portraitHandleBounds(inputs(zoneHeightPx = null))
 
-        // Then the base is default offset + natural height + gap
-        assertEquals(130f, bounds.basePx, 0.01f)
+        // Then the base and the resting handle are at 400px
+        assertEquals(400f, bounds.basePx, 0.01f)
+        assertEquals(400f, bounds.handlePx, 0.01f)
+    }
+
+    @Test
+    fun `an unset zone never puts the handle above the clock`() {
+        // Given a content area so short that 40 percent would sit inside the clock
+        val bounds = portraitHandleBounds(inputs(zoneHeightPx = null, contentHeightPx = 200f))
+
+        // Then the handle is held at the floor
+        assertEquals(bounds.floorPx, bounds.handlePx, 0.01f)
     }
 
     @Test

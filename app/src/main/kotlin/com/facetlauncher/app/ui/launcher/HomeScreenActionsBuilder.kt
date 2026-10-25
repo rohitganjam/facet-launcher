@@ -36,6 +36,7 @@ internal class HomeRouteHooks(
     val setClockWidgetBounds: (Rect?) -> Unit,
     val setAppListBounds: (Rect?) -> Unit,
     val openClockWidgetPicker: (facetId: Long) -> Unit,
+    val openWeather: () -> Unit = {},
 )
 
 /** What [homeScreenActions] reads: the values Home's actions act on. */
@@ -82,6 +83,7 @@ private fun homeClockActions(
     val mode = inputs.layoutMode
     return HomeClockActions(
         onClockClick = { inputs.context.openClockApp() },
+        onWeatherClick = hooks.openWeather,
         onEditClockStyles = {
             hooks.setAdjustMode(ClockAdjustMode.NONE)
             navigation.toClockStyleGallery(state.clockPositionOwningFacet?.id)

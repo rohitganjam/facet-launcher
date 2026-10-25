@@ -294,7 +294,7 @@
     <string name="drawer_presentation_grid">Grille</string>
     <string name="drawer_grid_density_compact">Compacte</string>
     <string name="drawer_grid_density_regular">Normale</string>
-    <string name="drawer_grid_density_airy">Aérée</string>
+    <string name="drawer_grid_density_spacious">Spacieux</string>
     <string name="drawer_list_item_size_compact">Compact</string>
     <string name="drawer_list_item_size_regular">Normal</string>
     <string name="drawer_list_item_size_spacious">Spacieux</string>
@@ -373,6 +373,18 @@
     <string name="app_drawer_folders_in_drawer">Dossiers dans le tiroir</string>
     <string name="app_drawer_recently_installed_position">Installées récemment</string>
     <string name="app_drawer_opacity_label">Opacité du tiroir</string>
+    <string name="app_drawer_preview_description">Aperçu du tiroir d\'apps</string>
+    <string name="drawer_preview_folder_name">Travail</string>
+    <string-array name="drawer_preview_app_labels">
+        <item>Agenda</item>
+        <item>Appareil photo</item>
+        <item>Cartes</item>
+        <item>Horloge</item>
+        <item>Météo</item>
+        <item>Musique</item>
+        <item>Notes</item>
+        <item>Photos</item>
+    </string-array>
     <string name="drawer_recently_installed_label">Installées récemment</string>
 
     <!-- ThemeMode -->
@@ -445,7 +457,7 @@
     <string name="permission_bluetooth_title">Bluetooth</string>
     <string name="permission_bluetooth_subtitle">Permet aux règles d\'automatisation des facettes de réagir à un appareil Bluetooth associé, comme la voiture, et liste les appareils associés lors de la création d\'une règle.</string>
     <string name="permission_location_title">Localisation</string>
-    <string name="permission_location_subtitle">Android l\'exige pour lire le nom du réseau Wi-Fi dans les règles liées à un réseau précis. Facet ne l\'utilise que pour cela, jamais pour savoir où vous êtes.</string>
+    <string name="permission_location_subtitle">Android l\'exige pour lire le nom du réseau Wi-Fi dans les règles liées à un réseau précis, et pour trouver la météo là où vous êtes quand vous choisissez Utiliser la position actuelle. Facet ne l\'utilise pour rien d\'autre.</string>
 
     <!-- FacetAutomationScreen (Settings → Facets → Facet automation) -->
     <string name="settings_facet_automation_title">Automatisation des facettes</string>
@@ -869,4 +881,112 @@
     <string name="clock_adjust_switch_to_launcher_clock">Passer au widget d\'horloge du launcher</string>
     <string name="clock_adjust_switch_to_launcher_clock_subtitle">Utiliser l\'horloge propre à Facet</string>
     <string name="clock_widget_picker_title">Choisir un widget d\'horloge</string>
+
+    <!-- Météo -->
+    <string name="weather_condition_clear">Dégagé</string>
+    <string name="weather_condition_mostly_clear">Plutôt dégagé</string>
+    <string name="weather_condition_partly_cloudy">Partiellement nuageux</string>
+    <string name="weather_condition_cloudy">Nuageux</string>
+    <string name="weather_condition_fog">Brouillard</string>
+    <string name="weather_condition_light_rain">Pluie faible</string>
+    <string name="weather_condition_rain">Pluie</string>
+    <string name="weather_condition_heavy_rain">Forte pluie</string>
+    <string name="weather_condition_sleet">Neige fondue</string>
+    <string name="weather_condition_snow">Neige</string>
+    <string name="weather_condition_thunderstorm">Orage</string>
+    <string name="weather_temperature_format">%1$d°</string>
+    <string name="weather_accessory_description">%1$s, %2$s. Ouvre les détails météo</string>
+    <string name="weather_accessory_description_no_condition">%1$s. Ouvre les détails météo</string>
+    <string name="weather_sheet_now">Maintenant</string>
+    <string name="weather_sheet_today">Aujourd\'hui</string>
+    <string name="weather_sheet_high_low">Max %1$s · Min %2$s</string>
+    <string name="weather_place_near">Près de %1$s</string>
+    <string name="weather_next_24_hours">24 prochaines heures</string>
+    <string name="weather_legend_rain">Pluie, %1$s</string>
+    <string name="weather_legend_wind">Vent, %1$s</string>
+    <string name="weather_detail_humidity">Humidité</string>
+    <string name="weather_detail_pressure">Pression</string>
+    <string name="weather_detail_cloud_cover">Couverture nuageuse</string>
+    <string name="weather_detail_wind">Vent</string>
+    <string name="weather_updated">Mis à jour %1$s</string>
+    <string name="weather_updated_outdated">Mis à jour %1$s, périmé</string>
+    <string name="weather_credit">Données météo de MET Norway</string>
+    <string name="weather_refresh">Actualiser</string>
+    <string name="weather_refresh_updated">Météo actualisée</string>
+    <string name="weather_refresh_up_to_date">Déjà à jour</string>
+    <string name="weather_refresh_too_soon">Mis à jour à l\'instant. Réessayez dans quelques minutes.</string>
+    <string name="weather_refresh_busy">Le service météo est saturé. Réessayez plus tard.</string>
+    <string name="weather_refresh_offline">Vous êtes hors ligne. Réessayez plus tard.</string>
+    <string name="weather_refresh_failed">Impossible d\'actualiser la météo. Réessayez plus tard.</string>
+    <string name="weather_needs_location">Autorisez la localisation pour voir la météo là où vous êtes.</string>
+    <string name="weather_allow_location">Autoriser la localisation</string>
+    <string name="weather_no_location">Activez la localisation pour voir la météo ici.</string>
+    <string name="weather_no_city">Choisissez une ville pour voir sa météo.</string>
+    <string name="weather_choose_city">Choisir une ville</string>
+    <string name="weather_empty">Pas encore de météo</string>
+    <string name="weather_empty_hint">Elle apparaît après la première mise à jour.</string>
+    <string name="weather_summary_dry">Pas de pluie prévue dans les 24 prochaines heures.</string>
+    <string name="weather_summary_now_until">%1$s jusqu\'à %2$s, environ %3$s.</string>
+    <string name="weather_summary_now_continues">%1$s pendant les 24 prochaines heures, environ %2$s.</string>
+    <string name="weather_summary_later">%1$s de %2$s à %3$s, environ %4$s.</string>
+    <string name="weather_summary_later_open">%1$s à partir de %2$s, environ %3$s.</string>
+    <string name="weather_direction_n">N</string>
+    <string name="weather_direction_ne">NE</string>
+    <string name="weather_direction_e">E</string>
+    <string name="weather_direction_se">SE</string>
+    <string name="weather_direction_s">S</string>
+    <string name="weather_direction_sw">SO</string>
+    <string name="weather_direction_w">O</string>
+    <string name="weather_direction_nw">NO</string>
+    <string name="clock_accessories_title">Accessoires de l\'horloge</string>
+    <string name="clock_accessories_summary">Alarme, batterie et météo</string>
+    <string name="clock_accessories_show_alarm">Afficher la prochaine alarme</string>
+    <string name="clock_accessories_show_battery">Afficher le pourcentage de batterie</string>
+    <string name="clock_accessories_show_weather">Afficher la météo</string>
+    <string name="clock_accessories_units">Unités</string>
+    <string name="clock_accessories_unit_temperature">Température</string>
+    <string name="clock_accessories_unit_wind">Vitesse du vent</string>
+    <string name="clock_accessories_unit_rain">Pluie</string>
+    <string name="clock_accessories_unit_pressure">Pression</string>
+    <string name="clock_accessories_location">Position</string>
+    <string name="clock_accessories_global_note">Les unités et la position s\'appliquent à toutes les facettes.</string>
+    <string name="clock_accessories_facet_note">Les unités et la position se règlent dans les paramètres du launcher.</string>
+    <string name="weather_unit_auto">Automatique</string>
+    <string name="weather_unit_option_kmh">Kilomètres par heure (km/h)</string>
+    <string name="weather_unit_option_mph">Miles par heure (mph)</string>
+    <string name="weather_unit_option_ms">Mètres par seconde (m/s)</string>
+    <string name="weather_unit_option_mm">Millimètres (mm)</string>
+    <string name="weather_unit_option_inch">Pouces (in)</string>
+    <string name="weather_unit_option_hpa">Hectopascals (hPa)</string>
+    <string name="weather_unit_option_inhg">Pouces de mercure (inHg)</string>
+    <string name="weather_unit_option_mmhg">Millimètres de mercure (mmHg)</string>
+    <string name="weather_location_title">Position</string>
+    <string name="weather_location_current">Utiliser la position actuelle</string>
+    <string name="weather_location_current_hint">Approximative, lue à l\'ouverture de Home</string>
+    <string name="weather_location_city">Choisir une ville</string>
+    <string name="weather_location_city_hint">Aucune autorisation de localisation nécessaire</string>
+    <string name="weather_location_showing_for">Météo affichée pour</string>
+    <string name="weather_location_search">Rechercher une ville</string>
+    <string name="weather_location_search_hint">Saisissez le nom d\'une ville</string>
+    <string name="weather_location_no_results">Aucune ville trouvée</string>
+    <string name="weather_location_none">Aucune pour l\'instant</string>
+    <string name="weather_permission_location_subtitle">Nécessaire pour afficher la météo là où vous êtes. Facet ne lit qu\'une position approximative, et seulement quand Home est ouvert.</string>
+    <string name="clock_accessories_icons">Icônes</string>
+    <string name="weather_icon_style">Icônes météo</string>
+    <string name="weather_icon_style_monochrome">Monochrome</string>
+    <string name="weather_icon_style_colored">En couleur</string>
+    <string name="weather_location_saved_title">Vos villes</string>
+    <string name="weather_location_pick_prompt">Cherchez une ville ci-dessous, puis touchez-la pour l\'ajouter ici.</string>
+    <string name="weather_location_tick_prompt">Sélectionnez une ville pour afficher sa météo.</string>
+    <string name="weather_location_remove">Retirer %1$s</string>
+    <string name="weather_location_limit">Vous pouvez garder jusqu\'à %1$d villes. Retirez-en une pour en ajouter une autre.</string>
+    <string name="weather_leave_title">Aucune ville sélectionnée</string>
+    <string name="weather_leave_message">La météo a besoin d\'une ville. Que voulez-vous faire ?</string>
+    <string name="weather_leave_turn_off">Désactiver la météo</string>
+    <string name="weather_leave_use_current">Utiliser la position actuelle</string>
+    <string name="weather_leave_choose_city">Choisir une ville</string>
+    <string name="clock_accessories_inheriting">Cette facette utilise les réglages d\'horloge du launcher. Activez « Personnaliser » dans Style de l\'horloge pour les modifier.</string>
+    <string name="clock_accessories_open_clock_style">Style de l\'horloge</string>
+    <string name="weather_location_current_short">Position actuelle</string>
+    <string name="about_weather_credit">Données météo de MET Norway (CC BY 4.0). Noms de villes de GeoNames (CC BY 4.0).</string>
 </resources>

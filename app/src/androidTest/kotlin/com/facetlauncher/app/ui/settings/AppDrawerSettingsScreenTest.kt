@@ -1,5 +1,6 @@
 package com.facetlauncher.app.ui.settings
 
+import android.app.WallpaperManager
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.test.assertIsDisplayed
@@ -11,8 +12,11 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToNode
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.swipeUp
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import com.facetlauncher.app.data.SettingsRepository
+import com.facetlauncher.app.data.WallpaperRepository
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import java.io.File
 import org.junit.Assert.assertEquals
@@ -33,11 +37,46 @@ class AppDrawerSettingsScreenTest {
                         produceFile = { File(context.cacheDir, "app-drawer-settings-test-${System.nanoTime()}.preferences_pb") },
                     ),
                 )
-                AppDrawerSettingsViewModel(settingsRepository)
+                AppDrawerSettingsViewModel(settingsRepository, WallpaperRepository(WallpaperManager.getInstance(context)))
             }
             FacetLauncherTheme {
                 AppDrawerSettingsScreen(onBack = onBack, viewModel = viewModel)
             }
+        }
+    }
+
+    @Test
+    fun previewShowsListRowsThenGridTilesWhenPresentationChangesToGrid() {
+        // Given the screen with the default List presentation
+        setContent()
+        composeRule.onNodeWithTag("app_drawer_preview").assertIsDisplayed()
+        composeRule.onNodeWithTag("drawer_app_row_preview.sample.0", useUnmergedTree = true).assertExists()
+        composeRule.onNodeWithTag("drawer_grid_tile_preview.sample.0", useUnmergedTree = true).assertDoesNotExist()
+
+        // When switching Presentation to Grid (Popup root-registration note — see below)
+        composeRule.onNodeWithTag("drawer_presentation_row").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("drawer_presentation_row_option_GRID").performClick()
+
+        // Then the preview swaps its rows for tiles
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            composeRule.onAllNodesWithTag("drawer_grid_tile_preview.sample.0", useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onNodeWithTag("drawer_app_row_preview.sample.0", useUnmergedTree = true).assertDoesNotExist()
+    }
+
+    @Test
+    fun draggingThePreviewScrollsTheSampleApps() {
+        // Given the preview, whose last sample app (Weather) is below the card's visible area
+        setContent()
+        composeRule.onNodeWithTag("drawer_app_row_preview.sample.7", useUnmergedTree = true).assertDoesNotExist()
+
+        // When swiping up on the preview
+        composeRule.onNodeWithTag("app_drawer_preview").performTouchInput { swipeUp() }
+
+        // Then the list inside it scrolled and the last app is now there
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            composeRule.onAllNodesWithTag("drawer_app_row_preview.sample.7", useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
         }
     }
 

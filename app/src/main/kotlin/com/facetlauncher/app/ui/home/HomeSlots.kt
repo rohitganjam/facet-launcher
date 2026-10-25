@@ -38,6 +38,7 @@ import com.facetlauncher.app.ui.components.dashedBorder
 import com.facetlauncher.app.ui.home.ClockAdjustMode
 import com.facetlauncher.app.ui.home.DockIcon
 import com.facetlauncher.app.ui.home.MediaPlayerRow
+import com.facetlauncher.app.ui.home.weather.rememberClockWeatherAccessory
 import com.facetlauncher.app.ui.theme.Accent
 import com.facetlauncher.app.ui.theme.Ink
 import com.facetlauncher.app.ui.theme.Muted
@@ -91,6 +92,7 @@ internal fun HomeClockSlot(frame: HomeFrame, alignment: ClockAlignment, scaleOri
         nextAlarmMillis = state.calendar.nextAlarmMillis,
         batteryPercent = state.calendar.batteryPercent,
         isCharging = state.calendar.isCharging,
+        weather = rememberClockWeatherAccessory(state.calendar.weather, actions.clock.onWeatherClick),
         clockWidgetAppWidgetId = widget?.appWidgetId,
         createClockWidgetHostView = actions.widget.createHostView,
         clockWidgetWidthDp = widgetSize?.let { with(density) { it.x.toDp() } } ?: widget?.widthDp,

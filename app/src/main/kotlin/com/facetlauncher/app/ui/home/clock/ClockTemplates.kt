@@ -17,6 +17,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -91,6 +92,8 @@ fun ClockDisplay(
     /** `null` until the first real battery reading arrives — treated the same as "nothing to show" until then. */
     batteryPercent: Int? = null,
     isCharging: Boolean = false,
+    /** The weather accessory next to the alarm and battery, or `null` for none (weather off, outdated, or no data). */
+    weather: ClockWeatherAccessory? = null,
     /** "Full" vs "Condensed" — see [ClockDateStyle]. */
     dateStyle: ClockDateStyle = ClockDateStyle.FULL,
     modifier: Modifier = Modifier,
@@ -115,8 +118,11 @@ fun ClockDisplay(
         },
         batteryPercent = batteryPercent,
         isCharging = isCharging,
+        hasWeather = weather != null,
     )
-    ClockTemplateRenderers.getValue(templateId)(data, modifier)
+    CompositionLocalProvider(LocalClockWeather provides weather) {
+        ClockTemplateRenderers.getValue(templateId)(data, modifier)
+    }
 }
 
 /** One renderer per [ClockTemplateId]; `ClockTemplateRenderersTest` fails if an id is missing. */
@@ -617,7 +623,7 @@ private fun ClockTemplateData.BracketMinimalTemplate(
             color = mutedTextColor,
             modifier = Modifier.padding(top = 10.dp)
         )
-        if (nextAlarmText != null || batteryPercent != null) {
+        if (hasAccessories) {
             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 6.dp)) {
                 Text(text = stringResource(R.string.clock_template_bracket_open), style = TextStyle(fontFamily = family, fontWeight = FontWeight.ExtraLight, fontSize = 17.sp, shadow = homeTextShadow(mutedTextColor)), color = mutedTextColor)
                 ClockAccessoryRow(nextAlarmText, batteryPercent, isCharging, family, mutedTextColor, accentColor, fontSize = 17.sp)
@@ -674,7 +680,7 @@ private fun ClockTemplateData.TwoLineDividerTemplate(
             color = mutedTextColor,
             modifier = Modifier.padding(top = 12.dp)
         )
-        if (nextAlarmText != null || batteryPercent != null) {
+        if (hasAccessories) {
             Box(modifier = Modifier.padding(top = 10.dp).width(48.dp).height(1.dp).background(textColor.copy(alpha = 0.4f)))
             ClockAccessoryRow(nextAlarmText, batteryPercent, isCharging, family, mutedTextColor, accentColor, modifier = Modifier.padding(top = 10.dp), fontSize = 19.sp)
         }
@@ -730,15 +736,22 @@ private fun ClockTemplateData.BoldColonTemplate(
             color = mutedTextColor,
             modifier = Modifier.padding(top = 5.dp)
         )
-        if (nextAlarmText != null || batteryPercent != null) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.padding(top = 5.dp)) {
-                AlarmAccessoryContent(nextAlarmText, mutedTextColor, family, fontSize = 20.sp)
-                if (nextAlarmText != null && batteryPercent != null) {
-                    Text(text = stringResource(R.string.clock_template_colon), style = TextStyle(fontFamily = RobotoFlexBlack, fontSize = 20.sp, shadow = homeTextShadow(textColor)), color = textColor)
-                }
-                BatteryAccessoryContent(batteryPercent, isCharging, mutedTextColor, accentColor, family, fontSize = 20.sp)
-            }
-        }
+        if (hasAccessories) ColonAccessoryRow()
+    }
+}
+
+/** [BoldColonTemplate]'s accessories, set apart by the template's own bold colon. */
+@Composable
+private fun ClockTemplateData.ColonAccessoryRow() {
+    val colon: @Composable () -> Unit = {
+        Text(text = stringResource(R.string.clock_template_colon), style = TextStyle(fontFamily = RobotoFlexBlack, fontSize = 20.sp, shadow = homeTextShadow(textColor)), color = textColor)
+    }
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.padding(top = 5.dp)) {
+        AlarmAccessoryContent(nextAlarmText, mutedTextColor, family, fontSize = 20.sp)
+        if (nextAlarmText != null && batteryPercent != null) colon()
+        BatteryAccessoryContent(batteryPercent, isCharging, mutedTextColor, accentColor, family, fontSize = 20.sp)
+        if ((nextAlarmText != null || batteryPercent != null) && hasWeather) colon()
+        WeatherAccessoryContent(mutedTextColor, family, fontSize = 20.sp)
     }
 }
 
@@ -790,13 +803,17 @@ private fun ClockTemplateData.VariableDividerTemplate(
             color = mutedTextColor,
             modifier = Modifier.padding(top = 5.dp)
         )
-        if (nextAlarmText != null || batteryPercent != null) {
+        if (hasAccessories) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.padding(top = 5.dp)) {
                 AlarmAccessoryContent(nextAlarmText, mutedTextColor, family, fontSize = 22.sp)
                 if (nextAlarmText != null && batteryPercent != null) {
                     Box(modifier = Modifier.width(1.dp).height(12.dp).background(mutedTextColor.copy(alpha = 0.5f)))
                 }
                 BatteryAccessoryContent(batteryPercent, isCharging, mutedTextColor, accentColor, family, fontSize = 22.sp)
+                if ((nextAlarmText != null || batteryPercent != null) && hasWeather) {
+                    Box(modifier = Modifier.width(1.dp).height(12.dp).background(mutedTextColor.copy(alpha = 0.5f)))
+                }
+                WeatherAccessoryContent(mutedTextColor, family, fontSize = 22.sp)
             }
         }
     }
@@ -866,13 +883,17 @@ private fun ClockTemplateData.FluidStackTemplate(
         // history).
         if (accentHour) {
             // `8r`/`8s` — accent hour, accent alarm time; nothing else takes colour.
-            if (nextAlarmText != null || batteryPercent != null) {
+            if (hasAccessories) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 16.dp)) {
                     AlarmAccessoryContent(nextAlarmText, accentColor, family, fontSize = 19.sp)
                     if (nextAlarmText != null && batteryPercent != null) {
                         Text(text = stringResource(R.string.clock_accessory_separator_dot), style = TextStyle(fontFamily = family, fontWeight = FontWeight.Medium, fontSize = 19.sp, shadow = homeTextShadow(mutedTextColor)), color = mutedTextColor)
                     }
                     BatteryAccessoryContent(batteryPercent, isCharging, mutedTextColor, accentColor, family, fontSize = 19.sp)
+                    if ((nextAlarmText != null || batteryPercent != null) && hasWeather) {
+                        Text(text = stringResource(R.string.clock_accessory_separator_dot), style = TextStyle(fontFamily = family, fontWeight = FontWeight.Medium, fontSize = 19.sp, shadow = homeTextShadow(mutedTextColor)), color = mutedTextColor)
+                    }
+                    WeatherAccessoryContent(mutedTextColor, family, fontSize = 19.sp)
                 }
             }
         } else {
@@ -970,6 +991,7 @@ private fun ClockTemplateData.RobotoFlexNarrowTemplate(
             ) {
                 AlarmAccessoryContent(nextAlarmText, mutedTextColor, family, fontSize = 19.sp)
                 BatteryAccessoryContent(batteryPercent, isCharging, mutedTextColor, accentColor, family, fontSize = 19.sp)
+                WeatherAccessoryContent(mutedTextColor, family, fontSize = 19.sp)
             }
         }
     }
@@ -1059,13 +1081,17 @@ private fun ClockTemplateData.AccentContrastTemplate(
             fontWeight = FontWeight.SemiBold,
             letterSpacing = 1.3.sp,
         )
-        if (nextAlarmText != null || batteryPercent != null) {
+        if (hasAccessories) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 AlarmAccessoryContent(nextAlarmText, accentColor, family, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
                 if (nextAlarmText != null && batteryPercent != null) {
                     Text(text = stringResource(R.string.clock_accessory_separator_dot), style = TextStyle(fontFamily = family, fontWeight = FontWeight.SemiBold, fontSize = 16.sp, shadow = homeTextShadow(mutedTextColor)), color = mutedTextColor)
                 }
                 BatteryAccessoryContent(batteryPercent, isCharging, mutedTextColor, accentColor, family, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+                if ((nextAlarmText != null || batteryPercent != null) && hasWeather) {
+                    Text(text = stringResource(R.string.clock_accessory_separator_dot), style = TextStyle(fontFamily = family, fontWeight = FontWeight.SemiBold, fontSize = 16.sp, shadow = homeTextShadow(mutedTextColor)), color = mutedTextColor)
+                }
+                WeatherAccessoryContent(mutedTextColor, family, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
             }
         }
     }
@@ -1093,13 +1119,14 @@ private fun ClockTemplateData.AccentFieldTemplate(
             if (meridiem != null) MeridiemText(meridiem, family, textColor, Modifier.padding(bottom = 12.dp))
         }
         TemplateDateText(now.format(dateFormatter(locale, dateStyle)), family, mutedTextColor)
-        if (nextAlarmText != null || batteryPercent != null) {
+        if (hasAccessories) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 AlarmAccessoryContent(
                     nextAlarmText, Surface, family,
                     modifier = Modifier.clip(RoundedCornerShape(7.dp)).background(accentColor, RoundedCornerShape(7.dp)).padding(horizontal = 10.dp, vertical = 4.dp),
                 )
                 BatteryAccessoryContent(batteryPercent, isCharging, mutedTextColor, accentColor, family)
+                WeatherAccessoryContent(mutedTextColor, family)
             }
         }
     }
@@ -1128,13 +1155,17 @@ private fun ClockTemplateData.HourTileTemplate(
             if (meridiem != null) MeridiemText(meridiem, family, textColor)
         }
         TemplateDateText(now.format(dateFormatter(locale, dateStyle)).uppercase(locale), family, mutedTextColor, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 1.3.sp)
-        if (nextAlarmText != null || batteryPercent != null) {
+        if (hasAccessories) {
             Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 AlarmAccessoryContent(nextAlarmText, mutedTextColor, family, fontSize = 14.sp)
                 if (nextAlarmText != null && batteryPercent != null) {
                     Box(modifier = Modifier.width(40.dp).height(1.dp).background(Hairline))
                 }
                 BatteryAccessoryContent(batteryPercent, isCharging, mutedTextColor, accentColor, family, fontSize = 14.sp)
+                if ((nextAlarmText != null || batteryPercent != null) && hasWeather) {
+                    Box(modifier = Modifier.width(40.dp).height(1.dp).background(Hairline))
+                }
+                WeatherAccessoryContent(mutedTextColor, family, fontSize = 14.sp)
             }
         }
     }
@@ -1160,11 +1191,12 @@ private fun ClockTemplateData.ChipTemplate(
             if (meridiem != null) MeridiemText(meridiem, family, mutedTextColor)
         }
         TemplateDateText(now.format(dateFormatter(locale, dateStyle)), family, mutedTextColor)
-        if (nextAlarmText != null || batteryPercent != null) {
+        if (hasAccessories) {
             val pillModifier = Modifier.clip(CircleShape).background(SurfaceContainer, CircleShape).border(1.dp, Hairline, CircleShape).padding(horizontal = 14.dp, vertical = 6.dp)
             Row(horizontalArrangement = Arrangement.spacedBy(7.dp)) {
                 AlarmAccessoryContent(nextAlarmText, mutedTextColor, family, fontSize = 14.sp, modifier = pillModifier)
                 BatteryAccessoryContent(batteryPercent, isCharging, mutedTextColor, accentColor, family, fontSize = 14.sp, modifier = pillModifier)
+                WeatherAccessoryContent(mutedTextColor, family, fontSize = 14.sp, modifier = pillModifier)
             }
         }
     }
@@ -1184,13 +1216,17 @@ private fun ClockTemplateData.DuotoneOverlapTemplate(
             if (meridiem != null) MeridiemText(meridiem, family, textColor, Modifier.padding(start = 5.dp, bottom = 17.dp))
         }
         TemplateDateText(now.format(dateFormatter(locale, dateStyle)), family, mutedTextColor)
-        if (nextAlarmText != null || batteryPercent != null) {
+        if (hasAccessories) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 AlarmAccessoryContent(nextAlarmText, accentColor, family, fontSize = 19.sp)
                 if (nextAlarmText != null && batteryPercent != null) {
                     Text(text = stringResource(R.string.clock_accessory_separator_dot), style = TextStyle(fontFamily = family, fontWeight = FontWeight.Medium, fontSize = 19.sp, shadow = homeTextShadow(mutedTextColor)), color = mutedTextColor)
                 }
                 BatteryAccessoryContent(batteryPercent, isCharging, mutedTextColor, accentColor, family, fontSize = 19.sp)
+                if ((nextAlarmText != null || batteryPercent != null) && hasWeather) {
+                    Text(text = stringResource(R.string.clock_accessory_separator_dot), style = TextStyle(fontFamily = family, fontWeight = FontWeight.Medium, fontSize = 19.sp, shadow = homeTextShadow(mutedTextColor)), color = mutedTextColor)
+                }
+                WeatherAccessoryContent(mutedTextColor, family, fontSize = 19.sp)
             }
         }
     }
@@ -1221,7 +1257,7 @@ private fun ClockTemplateData.CornerFrameTemplate(
             }
         }
         TemplateDateText(now.format(dateFormatter(locale, dateStyle)), family, mutedTextColor)
-        if (nextAlarmText != null || batteryPercent != null) {
+        if (hasAccessories) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 Box(
                     modifier = Modifier.size(9.dp).drawBehind {
@@ -1289,7 +1325,7 @@ private fun ClockTemplateData.StubTemplate(
                     ClockGlyphText(now.format(DateTimeFormatter.ofPattern("d", locale)), textColor, 31.sp, family, FontWeight.Light)
                 }
             }
-            if (nextAlarmText != null || batteryPercent != null) StubAccessoryRow()
+            if (hasAccessories) StubAccessoryRow()
         }
     }
 }
@@ -1309,6 +1345,7 @@ private fun ClockTemplateData.StubAccessoryRow() {
         verticalAlignment = Alignment.CenterVertically,
     ) {
         AlarmAccessoryContent(nextAlarmText, mutedTextColor, family)
+        WeatherAccessoryContent(mutedTextColor, family)
         BatteryAccessoryContent(batteryPercent, isCharging, mutedTextColor, accentColor, family)
     }
 }
@@ -1354,11 +1391,12 @@ private fun ClockTemplateData.DigitCellsTemplate(
             if (meridiem != null) MeridiemText(meridiem, family, textColor, Modifier.padding(start = 7.dp))
         }
         TemplateDateText(now.format(dateFormatter(locale, dateStyle)).uppercase(locale), family, mutedTextColor, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 1.3.sp)
-        if (nextAlarmText != null || batteryPercent != null) {
+        if (hasAccessories) {
             val cellModifier = Modifier.clip(RoundedCornerShape(8.dp)).background(SurfaceContainer, RoundedCornerShape(8.dp)).border(1.dp, Hairline, RoundedCornerShape(8.dp)).padding(horizontal = 9.dp, vertical = 6.dp)
             Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 AlarmAccessoryContent(nextAlarmText, mutedTextColor, family, fontSize = 14.sp, modifier = cellModifier)
                 BatteryAccessoryContent(batteryPercent, isCharging, mutedTextColor, accentColor, family, fontSize = 14.sp, modifier = cellModifier)
+                WeatherAccessoryContent(mutedTextColor, family, fontSize = 14.sp, modifier = cellModifier)
             }
         }
     }
@@ -1431,11 +1469,12 @@ private fun ClockTemplateData.HollowHourTemplate(
             if (meridiem != null) MeridiemText(meridiem, family, textColor, Modifier.padding(start = 7.dp, bottom = 17.dp))
         }
         TemplateDateText(now.format(dateFormatter(locale, dateStyle)), family, mutedTextColor)
-        if (nextAlarmText != null || batteryPercent != null) {
+        if (hasAccessories) {
             val boxModifier = Modifier.clip(RoundedCornerShape(9.dp)).border(1.dp, Hairline, RoundedCornerShape(9.dp)).padding(horizontal = 11.dp, vertical = 5.dp)
             Row(horizontalArrangement = Arrangement.spacedBy(7.dp)) {
                 AlarmAccessoryContent(nextAlarmText, mutedTextColor, family, fontSize = 14.sp, modifier = boxModifier)
                 BatteryAccessoryContent(batteryPercent, isCharging, mutedTextColor, accentColor, family, fontSize = 14.sp, modifier = boxModifier)
+                WeatherAccessoryContent(mutedTextColor, family, fontSize = 14.sp, modifier = boxModifier)
             }
         }
     }
@@ -1468,7 +1507,7 @@ private fun ClockTemplateData.HighlighterTemplate(
             if (meridiem != null) MeridiemText(meridiem, family, textColor, Modifier.padding(start = 7.dp, bottom = 7.dp))
         }
         TemplateDateText(now.format(dateFormatter(locale, dateStyle)), family, mutedTextColor)
-        if (nextAlarmText != null || batteryPercent != null) {
+        if (hasAccessories) {
             val bandModifier = Modifier.drawBehind {
                 val bandTop = size.height * 0.55f
                 drawRoundRect(color = bandColor, topLeft = Offset(-2.dp.toPx(), bandTop), size = Size(size.width + 4.dp.toPx(), size.height - bandTop), cornerRadius = CornerRadius(2.dp.toPx()))
@@ -1476,6 +1515,7 @@ private fun ClockTemplateData.HighlighterTemplate(
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 AlarmAccessoryContent(nextAlarmText, mutedTextColor, family, modifier = bandModifier, fontSize = 19.sp)
                 BatteryAccessoryContent(batteryPercent, isCharging, mutedTextColor, accentColor, family, modifier = bandModifier, fontSize = 19.sp)
+                WeatherAccessoryContent(mutedTextColor, family, fontSize = 19.sp, modifier = bandModifier)
             }
         }
     }
@@ -1548,13 +1588,17 @@ private fun ClockTemplateData.ColonMarkTemplate(
             if (meridiem != null) MeridiemText(meridiem, family, textColor, Modifier.padding(start = 7.dp))
         }
         TemplateDateText(now.format(dateFormatter(locale, dateStyle)), family, mutedTextColor)
-        if (nextAlarmText != null || batteryPercent != null) {
+        if (hasAccessories) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 AlarmAccessoryContent(nextAlarmText, mutedTextColor, family, fontSize = 19.sp)
                 if (nextAlarmText != null && batteryPercent != null) {
                     Box(modifier = Modifier.size(4.dp).clip(RoundedCornerShape(1.dp)).background(accentColor))
                 }
                 BatteryAccessoryContent(batteryPercent, isCharging, mutedTextColor, accentColor, family, fontSize = 19.sp)
+                if ((nextAlarmText != null || batteryPercent != null) && hasWeather) {
+                    Box(modifier = Modifier.size(4.dp).clip(RoundedCornerShape(1.dp)).background(accentColor))
+                }
+                WeatherAccessoryContent(mutedTextColor, family, fontSize = 19.sp)
             }
         }
     }
@@ -1583,11 +1627,12 @@ private fun ClockTemplateData.PillPairTemplate(
             }
         }
         TemplateDateText(now.format(dateFormatter(locale, dateStyle)), family, mutedTextColor)
-        if (nextAlarmText != null || batteryPercent != null) {
+        if (hasAccessories) {
             val pillModifier = Modifier.clip(CircleShape).background(SurfaceContainer, CircleShape).border(1.dp, Hairline, CircleShape).padding(horizontal = 14.dp, vertical = 6.dp)
             Row(horizontalArrangement = Arrangement.spacedBy(7.dp)) {
                 AlarmAccessoryContent(nextAlarmText, mutedTextColor, family, fontSize = 14.sp, modifier = pillModifier)
                 BatteryAccessoryContent(batteryPercent, isCharging, mutedTextColor, accentColor, family, fontSize = 14.sp, modifier = pillModifier)
+                WeatherAccessoryContent(mutedTextColor, family, fontSize = 14.sp, modifier = pillModifier)
             }
         }
     }
@@ -1636,13 +1681,14 @@ private fun ClockTemplateData.ShelfTemplate(
                 ClockGlyphText(now.format(DateTimeFormatter.ofPattern("d", locale)), textColor, 26.sp, family, FontWeight.Light)
             }
         }
-        if (nextAlarmText != null || batteryPercent != null) {
+        if (hasAccessories) {
             Row(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 22.dp, vertical = 12.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 AlarmAccessoryContent(nextAlarmText, mutedTextColor, family)
+                WeatherAccessoryContent(mutedTextColor, family)
                 BatteryAccessoryContent(batteryPercent, isCharging, mutedTextColor, accentColor, family)
             }
         }
@@ -1679,7 +1725,7 @@ private fun ClockTemplateData.HalfImmersedTemplate(
             if (meridiem != null) MeridiemText(meridiem, family, textColor, Modifier.padding(start = 7.dp, bottom = 10.dp))
         }
         TemplateDateText(now.format(dateFormatter(locale, dateStyle)), family, mutedTextColor)
-        if (nextAlarmText != null || batteryPercent != null) {
+        if (hasAccessories) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 Box(modifier = Modifier.size(width = 10.dp, height = 3.dp).clip(RoundedCornerShape(2.dp)).background(accentColor))
                 ClockAccessoryRow(nextAlarmText, batteryPercent, isCharging, family, mutedTextColor, accentColor, fontSize = 19.sp)

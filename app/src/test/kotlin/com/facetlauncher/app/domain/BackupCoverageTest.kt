@@ -49,8 +49,10 @@ class BackupCoverageTest {
             "landscapeClockAlignment", "landscapeClockZoneHeightDp", "landscapeClockScale",
             "landscapeAppRowPosition", "landscapeAppListVerticalAlignment", "landscapeAppListColumnAlignment",
         )
-        val expected = (fieldNames(LauncherSettings::class.java) - notBackedUp - "landscape")
-            .map { renamed[it] ?: it }.toSet() + landscapeGroup
+        // the chosen weather city is saved as four flat fields (the current location never is)
+        val weatherCityGroup = setOf("weatherCityName", "weatherCityLatitude", "weatherCityLongitude", "weatherCityTimezone")
+        val expected = (fieldNames(LauncherSettings::class.java) - notBackedUp - "landscape" - "weatherCity")
+            .map { renamed[it] ?: it }.toSet() + landscapeGroup + weatherCityGroup
         val exported = fieldNames(BackupSettings::class.java) - "activeFacetIndex"
 
         // Then the backup holds exactly those

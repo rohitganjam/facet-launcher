@@ -1,8 +1,8 @@
 {
   "app/build.gradle.kts": {
-    "mtime": 1792612053.0593789,
-    "seen": 1792639458.214762,
-    "ast_hash": "1933985253748b6615ca43ab1b7f4105",
+    "mtime": 1792828520.110614,
+    "seen": 1792828905.588306,
+    "ast_hash": "58e115aad1c24f47d2c3ce18d9cfc548",
     "semantic_hash": ""
   },
   "build.gradle.kts": {
@@ -36,15 +36,15 @@
     "semantic_hash": ""
   },
   "CLAUDE.md": {
-    "mtime": 1791984038.6217477,
-    "seen": 1792030196.2584782,
-    "ast_hash": "7c5bcc1ad402c7551999856b9eb6fc8b",
+    "mtime": 1792828559.6214035,
+    "seen": 1792828905.588741,
+    "ast_hash": "369f9743e71aa6353f1954e249af02ce",
     "semantic_hash": ""
   },
   "IMPLEMENTATION_PLAN.md": {
-    "mtime": 1792612053.0586197,
-    "seen": 1792639458.21514,
-    "ast_hash": "9f56289b1af47a14193f11e585414b6e",
+    "mtime": 1792834757.7997844,
+    "seen": 1792834771.404587,
+    "ast_hash": "325983cea219340c57ab8c7fa4a07cb8",
     "semantic_hash": ""
   },
   "THIRD_PARTY_FONT_LICENSES/manrope_OFL.txt": {
@@ -372,9 +372,9 @@
     "semantic_hash": ""
   },
   "app/src/androidTest/kotlin/com/facetlauncher/app/data/local/FacetDatabaseMigrationTest.kt": {
-    "mtime": 1792612053.0609825,
-    "seen": 1792639458.214785,
-    "ast_hash": "3ba84e76ff739feca2ce7c8ef106af73",
+    "mtime": 1792829777.9839413,
+    "seen": 1792829951.9270642,
+    "ast_hash": "180877956fde84f232d89581dae21720",
     "semantic_hash": ""
   },
   "app/src/androidTest/kotlin/com/facetlauncher/app/ui/components/AppContextMenuTest.kt": {
@@ -630,9 +630,9 @@
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/data/SettingsRepository.kt": {
-    "mtime": 1792612053.0711548,
-    "seen": 1792639458.214848,
-    "ast_hash": "ca492feaa446bca3db9e6f6d990978a1",
+    "mtime": 1792829898.8929496,
+    "seen": 1792829951.9271412,
+    "ast_hash": "4ed6dd89b86a4c4c717fe39584613fde",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/data/UsageAccessRepository.kt": {
@@ -672,9 +672,9 @@
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/data/di/DatabaseModule.kt": {
-    "mtime": 1791983659.1416943,
-    "seen": 1792030196.258208,
-    "ast_hash": "4a3ae6d8bae63f0da1cddb74622f58c6",
+    "mtime": 1792829777.9843895,
+    "seen": 1792829951.927148,
+    "ast_hash": "3ba03c7389e12c6af7338bab6e2901c1",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/data/di/WidgetModule.kt": {
@@ -690,15 +690,15 @@
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/data/local/FacetDatabase.kt": {
-    "mtime": 1792612053.072489,
-    "seen": 1792639458.21486,
-    "ast_hash": "54bb0d80bde81c4188e3b9351e1fb24d",
+    "mtime": 1792829777.984615,
+    "seen": 1792829951.927155,
+    "ast_hash": "2a75ddae7d3a1e4207333caf0c5c02fa",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/data/local/Migrations.kt": {
-    "mtime": 1792612053.072974,
-    "seen": 1792639458.2148638,
-    "ast_hash": "e927c867d71612676d3fcaa33704b139",
+    "mtime": 1792829777.9850507,
+    "seen": 1792829951.92716,
+    "ast_hash": "076d9b371eb14d6975005f7ba487d4da",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/data/local/WidgetPlacementDao.kt": {
@@ -726,9 +726,9 @@
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/data/model/BackupBundle.kt": {
-    "mtime": 1792612053.0737455,
-    "seen": 1792639458.21487,
-    "ast_hash": "555ac4a0922c073c4c53d88af78319b6",
+    "mtime": 1792829777.9851944,
+    "seen": 1792829951.927167,
+    "ast_hash": "b1f58625f31725d0531f375664da9d36",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/data/model/BatteryStatus.kt": {
@@ -804,9 +804,9 @@
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/data/model/LauncherSettings.kt": {
-    "mtime": 1792612053.0745504,
-    "seen": 1792639458.2148821,
-    "ast_hash": "08cd8395876cf7c68c51f48c7daf709b",
+    "mtime": 1792829777.9854574,
+    "seen": 1792829951.92718,
+    "ast_hash": "d0aa5afea91ea583fba7806f8969b748",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/data/model/ListContentMode.kt": {
@@ -852,9 +852,9 @@
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/domain/BackupMapping.kt": {
-    "mtime": 1792612053.0752478,
-    "seen": 1792639458.214893,
-    "ast_hash": "78390a9af5d30ce812007daf4b1c4d5d",
+    "mtime": 1792829777.9856021,
+    "seen": 1792829951.927197,
+    "ast_hash": "ddec32509210c3360ed2bc039c27b40f",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/domain/CleanUpUninstalledAppsUseCase.kt": {
@@ -876,9 +876,9 @@
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/domain/ExportBackupUseCase.kt": {
-    "mtime": 1792612053.0758274,
-    "seen": 1792639458.2148979,
-    "ast_hash": "0db8f7d23f52e3939ce8dad5c10093be",
+    "mtime": 1792829892.7627325,
+    "seen": 1792829951.927201,
+    "ast_hash": "ed635d3d266d147609eacb7ade8c3628",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/domain/FlowCombine.kt": {
@@ -906,9 +906,9 @@
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/domain/ImportBackupUseCase.kt": {
-    "mtime": 1792612053.0764182,
-    "seen": 1792639458.214901,
-    "ast_hash": "c66e4ea977e9c1beb8910df9bffb5cd5",
+    "mtime": 1792829898.874461,
+    "seen": 1792829951.927205,
+    "ast_hash": "5a0f166aa36d7081b439e22a0cdc58bf",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/domain/ObserveClockAccessoriesUseCase.kt": {
@@ -1146,9 +1146,9 @@
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/home/ClockBlock.kt": {
-    "mtime": 1792612053.081033,
-    "seen": 1792639458.214954,
-    "ast_hash": "b66d9af4733e89f0b148acf99d591066",
+    "mtime": 1792833416.2174945,
+    "seen": 1792834771.4043689,
+    "ast_hash": "b1f3759899d902947e44d51cdabae382",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/home/ClockCornerHandle.kt": {
@@ -1164,9 +1164,9 @@
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/home/HomeScreen.kt": {
-    "mtime": 1792612053.0839193,
-    "seen": 1792639458.214964,
-    "ast_hash": "0cea982c26f779d0fb726b9ba7af0be9",
+    "mtime": 1792820223.8200674,
+    "seen": 1792820347.370142,
+    "ast_hash": "2c3e081a469b44fb511a22cf885100c5",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/home/HomeUiState.kt": {
@@ -1200,27 +1200,27 @@
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/home/clock/ClockAccessoryRow.kt": {
-    "mtime": 1789799333.8527997,
-    "seen": 1789804989.075799,
-    "ast_hash": "3bff15d617c7c63d12ffc0b0d4c81be1",
+    "mtime": 1792833385.869459,
+    "seen": 1792834771.4043882,
+    "ast_hash": "d237ead53e905e02192e7f22d0d617b2",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/home/clock/ClockStyleGalleryScreen.kt": {
-    "mtime": 1792612053.0865996,
-    "seen": 1792639458.214972,
-    "ast_hash": "4d5e9f87f473478366c681f7612792de",
+    "mtime": 1792834430.7234294,
+    "seen": 1792834771.4043882,
+    "ast_hash": "4ad4a4c632d631fca250499ab10f52f8",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/home/clock/ClockStyleGalleryViewModel.kt": {
-    "mtime": 1792612053.0869176,
-    "seen": 1792639458.214972,
-    "ast_hash": "f6ca53c9aeaeed0b7375a52fd10ffd6f",
+    "mtime": 1792834430.7228007,
+    "seen": 1792834771.4043891,
+    "ast_hash": "4171228926ae602f4f81f55ca5db4cdd",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/home/clock/ClockTemplates.kt": {
-    "mtime": 1792640088.1989403,
-    "seen": 1792640590.879392,
-    "ast_hash": "35692835d189e08755815aa40a5410c4",
+    "mtime": 1792833708.8957317,
+    "seen": 1792834771.4043899,
+    "ast_hash": "fc6497df8a63ddef3448accf144bf4a6",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/home/clock/TimeInWords.kt": {
@@ -1314,9 +1314,9 @@
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/launcher/HomeDrawerRoute.kt": {
-    "mtime": 1792612053.0885704,
-    "seen": 1792639458.214984,
-    "ast_hash": "d0619ec862a78a8da185e2b7411fca53",
+    "mtime": 1792833665.7184439,
+    "seen": 1792834771.404407,
+    "ast_hash": "0ee989ad86bd31a39d13f0a64b1c436a",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/launcher/LauncherLocals.kt": {
@@ -1332,9 +1332,9 @@
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/navigation/FacetNavHost.kt": {
-    "mtime": 1792640200.4955504,
-    "seen": 1792640590.8794081,
-    "ast_hash": "63d5bce2508b9795fcc593b612cfed31",
+    "mtime": 1792833972.0113268,
+    "seen": 1792834771.4044118,
+    "ast_hash": "63ebd7d5aea0a3b1142d7b7292542bc8",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/onboarding/OnboardingDots.kt": {
@@ -1386,9 +1386,9 @@
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/settings/AppearanceSettingsScreen.kt": {
-    "mtime": 1792640200.495761,
-    "seen": 1792640590.8794188,
-    "ast_hash": "19bb22cd5a1327bd545737105061e99b",
+    "mtime": 1792833953.8565714,
+    "seen": 1792834771.4044218,
+    "ast_hash": "b8bdf4a4c333030f368659b93682670b",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/settings/AppearanceSettingsViewModel.kt": {
@@ -1938,15 +1938,15 @@
     "semantic_hash": ""
   },
   "play-store-assets/permission-disclosures.md": {
-    "mtime": 1791897975.1755302,
-    "seen": 1791897982.249693,
-    "ast_hash": "dde7a9e08e9fd8456b2440342706b8bd",
+    "mtime": 1792828579.8919647,
+    "seen": 1792828905.58878,
+    "ast_hash": "97515dc77e44461802742b790bfa2f89",
     "semantic_hash": ""
   },
   "play-store-assets/store-listing.md": {
-    "mtime": 1791897975.175876,
-    "seen": 1791897982.2496939,
-    "ast_hash": "b210aa5eab10dd1a40fc59163fa54455",
+    "mtime": 1792828569.3781483,
+    "seen": 1792828905.588781,
+    "ast_hash": "eace364078e6e9b15510aa66fb9bcc2f",
     "semantic_hash": ""
   },
   "play-store-assets/screenshots/03_clock_styles.png": {
@@ -1986,9 +1986,9 @@
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/data/FacetRepository.kt": {
-    "mtime": 1792612053.0702884,
-    "seen": 1792639458.214837,
-    "ast_hash": "457b219262a328a71ca6f7b3cc48585e",
+    "mtime": 1792829777.9840999,
+    "seen": 1792829951.9271302,
+    "ast_hash": "c895d0b3f874f1d4ab33ddfd48feab2d",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/data/local/FacetDao.kt": {
@@ -1998,9 +1998,9 @@
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/data/local/FacetEntity.kt": {
-    "mtime": 1792612053.0727684,
-    "seen": 1792639458.21486,
-    "ast_hash": "325fc7157f7ad6bdc5b848c0c107e5eb",
+    "mtime": 1792829777.9847448,
+    "seen": 1792829951.927156,
+    "ast_hash": "b6dc58025a7bdd2d9db211a459ceefaa",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/domain/EnsureActiveFacetUseCase.kt": {
@@ -2352,15 +2352,15 @@
     "semantic_hash": ""
   },
   "docs/architecture/01-architecture-and-layers.md": {
-    "mtime": 1792685021.2427275,
-    "seen": 1792685104.097267,
-    "ast_hash": "1d9ce92978494f3b62fd65b63d71518b",
+    "mtime": 1792834733.2608514,
+    "seen": 1792834771.404605,
+    "ast_hash": "d9a6762b68eb55f22af9e130b970279f",
     "semantic_hash": ""
   },
   "docs/architecture/02-persistence-room.md": {
-    "mtime": 1792684645.4506736,
-    "seen": 1792684680.921987,
-    "ast_hash": "fffb90a61355cbc6d79787efdeaaa436",
+    "mtime": 1792830593.6876526,
+    "seen": 1792830645.1414442,
+    "ast_hash": "62bab7ecacfac4bd31f44b66a293d204",
     "semantic_hash": ""
   },
   "docs/architecture/03-reactive-data-flow.md": {
@@ -2370,9 +2370,9 @@
     "semantic_hash": ""
   },
   "docs/architecture/04-package-structure.md": {
-    "mtime": 1792684657.4283264,
-    "seen": 1792684680.9219892,
-    "ast_hash": "8126ca554aa629f253699a47fd6b95d8",
+    "mtime": 1792834737.8541713,
+    "seen": 1792834771.404607,
+    "ast_hash": "742d6ea88f16fed8227ae0835862cd48",
     "semantic_hash": ""
   },
   "docs/architecture/05-findings.md": {
@@ -2382,9 +2382,9 @@
     "semantic_hash": ""
   },
   "docs/architecture/README.md": {
-    "mtime": 1792684657.4279819,
-    "seen": 1792684680.922008,
-    "ast_hash": "e2eee651232477a67019ca7123482d30",
+    "mtime": 1792834733.2620258,
+    "seen": 1792834771.4046159,
+    "ast_hash": "6f8ab51e008f08e430023d9e2d6eaf73",
     "semantic_hash": ""
   },
   "scripts/gen-test-registry.py": {
@@ -2400,9 +2400,9 @@
     "semantic_hash": ""
   },
   "docs/architecture/07-registries.md": {
-    "mtime": 1792684825.7733786,
-    "seen": 1792684834.504006,
-    "ast_hash": "11ef3a625ece72314d96b7415cc8b339",
+    "mtime": 1792834752.5560768,
+    "seen": 1792834771.404609,
+    "ast_hash": "99b201574a04c66abda3af6f3885ff3b",
     "semantic_hash": ""
   },
   "docs/architecture/08-flow-placements.md": {
@@ -2412,9 +2412,9 @@
     "semantic_hash": ""
   },
   "docs/architecture/09-flow-backup-restore.md": {
-    "mtime": 1792685098.0866961,
-    "seen": 1792685104.097271,
-    "ast_hash": "9a92cc406c37bbd00284c76e30ee396c",
+    "mtime": 1792829849.002589,
+    "seen": 1792829951.927496,
+    "ast_hash": "8e47745289d0285196a519c3d6e39945",
     "semantic_hash": ""
   },
   "docs/architecture/10-flow-hub-widgets.md": {
@@ -2436,21 +2436,21 @@
     "semantic_hash": ""
   },
   "docs/architecture/13-flow-facets-theme-notifications-onboarding.md": {
-    "mtime": 1792685826.2254798,
-    "seen": 1792688159.29751,
-    "ast_hash": "1e8783265243a89a2f12216ae0ed6d06",
+    "mtime": 1792834733.2584708,
+    "seen": 1792834771.404612,
+    "ast_hash": "e7f0b338e676b44b1f5e00f168b494eb",
     "semantic_hash": ""
   },
   "docs/architecture/TEST_REGISTRY.md": {
-    "mtime": 1792721101.9319487,
-    "seen": 1792721170.261421,
-    "ast_hash": "2ac608d5c466645238bddaf788f8441b",
+    "mtime": 1792834758.355658,
+    "seen": 1792834771.4046159,
+    "ast_hash": "37d497dec62b2c52203c9dcafc026ce3",
     "semantic_hash": ""
   },
   "scripts/last-release.json": {
-    "mtime": 1792612053.1359363,
-    "seen": 1792639458.21513,
-    "ast_hash": "69277091383ce0f1c490841643d7b4df",
+    "mtime": 1792721559.1894734,
+    "seen": 1792721595.168921,
+    "ast_hash": "27c3ea7f6380c9fea1bb23d344a1da04",
     "semantic_hash": ""
   },
   "scripts/gen-release-notes.py": {
@@ -2460,9 +2460,9 @@
     "semantic_hash": ""
   },
   "RELEASE_NOTES.md": {
-    "mtime": 1792612053.0592532,
-    "seen": 1792639458.215143,
-    "ast_hash": "1e98afa6fa7bd423ed7bd874b6356be8",
+    "mtime": 1792721559.1673388,
+    "seen": 1792721595.1689339,
+    "ast_hash": "bd57987f05fb6538248995be9e086b33",
     "semantic_hash": ""
   },
   "app/src/androidTest/kotlin/com/facetlauncher/app/ui/settings/AboutScreenTest.kt": {
@@ -2496,9 +2496,9 @@
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/settings/AboutScreen.kt": {
-    "mtime": 1791897975.1454248,
-    "seen": 1791897982.2494998,
-    "ast_hash": "d59fa4a2d62b0cb5f958b8617dd38c23",
+    "mtime": 1792833986.9532316,
+    "seen": 1792834771.4044201,
+    "ast_hash": "216144396b1227e64fd6465fa470c48b",
     "semantic_hash": ""
   },
   "app/src/test/kotlin/com/facetlauncher/app/domain/SortAppsForPickerUseCaseTest.kt": {
@@ -3642,9 +3642,9 @@
     "semantic_hash": ""
   },
   "docs/architecture/16-flow-billing.md": {
-    "mtime": 1792612053.108696,
-    "seen": 1792639458.215167,
-    "ast_hash": "db6f25820c67376968e279f7440c593a",
+    "mtime": 1792828559.6572776,
+    "seen": 1792828905.5887759,
+    "ast_hash": "7bbba0e28916f3dfaa7c0e4ff85d2f5b",
     "semantic_hash": ""
   },
   "release_notes/0.1.18.md": {
@@ -4524,9 +4524,9 @@
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/components/SettingsToggleRow.kt": {
-    "mtime": 1792612053.0782933,
-    "seen": 1792639458.214937,
-    "ast_hash": "d0f42b95430f4b959eef770086076258",
+    "mtime": 1792833863.691998,
+    "seen": 1792834771.404351,
+    "ast_hash": "c61bf9ad3ea5bd894ea1f7a0485199fe",
     "semantic_hash": ""
   },
   "LANDSCAPE_SIMPLIFICATION_PLAN.md": {
@@ -4602,9 +4602,9 @@
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/home/HomeScreenState.kt": {
-    "mtime": 1792612053.0844846,
-    "seen": 1792639458.214966,
-    "ast_hash": "30b5741e4d3c01463cdfeccede0e1854",
+    "mtime": 1792833434.9781399,
+    "seen": 1792834771.404382,
+    "ast_hash": "915594d7758504d124180fa7d1a40127",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/home/HomeScreenLayout.kt": {
@@ -4614,15 +4614,15 @@
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/home/HomeClockGeometry.kt": {
-    "mtime": 1792612053.082534,
-    "seen": 1792639458.21496,
-    "ast_hash": "a80efe183c53b0c403d450c544f3bc1f",
+    "mtime": 1792820223.7904694,
+    "seen": 1792820347.370135,
+    "ast_hash": "2257d33a1455abdfa3fd20c01f096b19",
     "semantic_hash": ""
   },
   "app/src/test/kotlin/com/facetlauncher/app/ui/home/HomeClockGeometryTest.kt": {
-    "mtime": 1792612053.0994654,
-    "seen": 1792639458.2150981,
-    "ast_hash": "b6a69064e46bc40ed87dcb3084d8cab6",
+    "mtime": 1792820223.855756,
+    "seen": 1792820347.370285,
+    "ast_hash": "86faa4082fd9e921145f1f23890962d1",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/home/ClockAdjustControls.kt": {
@@ -4644,9 +4644,9 @@
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/home/HomeFrame.kt": {
-    "mtime": 1792612053.0830977,
-    "seen": 1792639458.214962,
-    "ast_hash": "0a2c03cd1a55ad9ffd7066125065efc0",
+    "mtime": 1792820223.8037145,
+    "seen": 1792820347.3701382,
+    "ast_hash": "3e3fe8453e5e8de44909d1cf7327fec8",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/home/HomeScreenEffects.kt": {
@@ -4656,9 +4656,9 @@
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/home/HomeSlots.kt": {
-    "mtime": 1792612053.0850704,
-    "seen": 1792639458.214967,
-    "ast_hash": "cdf5a9d1cb2a9f51ebaa5535a824e671",
+    "mtime": 1792833466.4998515,
+    "seen": 1792834771.404383,
+    "ast_hash": "554f6058be6816a659a5dd19ed993d71",
     "semantic_hash": ""
   },
   "app/src/androidTest/kotlin/com/facetlauncher/app/ui/home/ScaledHomeScreenTest.kt": {
@@ -4686,15 +4686,15 @@
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/data/local/FacetMapping.kt": {
-    "mtime": 1792612053.0728498,
-    "seen": 1792639458.2148612,
-    "ast_hash": "1b66b8c2d3a57f8b2ed06d141a3dbf7c",
+    "mtime": 1792829777.9848487,
+    "seen": 1792829951.927156,
+    "ast_hash": "cd3329a5be3497ecee63c4bce456cbcb",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/data/model/Facet.kt": {
-    "mtime": 1792612053.0740194,
-    "seen": 1792639458.214876,
-    "ast_hash": "85ba165906e43ccefe62aa0af81b3126",
+    "mtime": 1792829777.985312,
+    "seen": 1792829951.9271739,
+    "ast_hash": "94504e064778b0f2c85c122c2831dae6",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/domain/HomePlacement.kt": {
@@ -4704,15 +4704,15 @@
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/domain/ResolvedFacetStyle.kt": {
-    "mtime": 1792612053.0775816,
-    "seen": 1792639458.214912,
-    "ast_hash": "9f1fbb9c5757b86cc658fd41f10600be",
+    "mtime": 1792829777.9860198,
+    "seen": 1792829951.927217,
+    "ast_hash": "e16f4d45b8d4034918232371659573a2",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/home/HomeScreenStateBuilder.kt": {
-    "mtime": 1792612053.0847251,
-    "seen": 1792639458.214966,
-    "ast_hash": "8885e684bc8ef25155d01366baacd51e",
+    "mtime": 1792833708.8960934,
+    "seen": 1792834771.404382,
+    "ast_hash": "466c73ff09ac428596a0dc887ad881c4",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/home/HomeTags.kt": {
@@ -4734,9 +4734,9 @@
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/launcher/HomeOverlayState.kt": {
-    "mtime": 1792612053.0888062,
-    "seen": 1792639458.214984,
-    "ast_hash": "587feef5838b02ae134d11c9384c2b74",
+    "mtime": 1792833665.620546,
+    "seen": 1792834771.404408,
+    "ast_hash": "06d8cb21a813db6ad6d4060b2cc75d47",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/launcher/HomeOverlays.kt": {
@@ -4746,9 +4746,9 @@
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/launcher/HomeScreenActionsBuilder.kt": {
-    "mtime": 1792612053.089292,
-    "seen": 1792639458.214985,
-    "ast_hash": "c552c13b7ecba1ee74117b961b697e88",
+    "mtime": 1792833665.6019573,
+    "seen": 1792834771.4044092,
+    "ast_hash": "39b0362937a63c6623781a718f5f6c34",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/launcher/HomeSwipeController.kt": {
@@ -4776,9 +4776,9 @@
     "semantic_hash": ""
   },
   "app/src/test/kotlin/com/facetlauncher/app/domain/BackupCoverageTest.kt": {
-    "mtime": 1792612053.095509,
-    "seen": 1792639458.215067,
-    "ast_hash": "a07cba3405f7293f4469ae009222112c",
+    "mtime": 1792829777.986459,
+    "seen": 1792829951.927388,
+    "ast_hash": "af55033ebe5b10ffc5adc048c0dc734d",
     "semantic_hash": ""
   },
   "app/src/test/kotlin/com/facetlauncher/app/domain/ResolvedFacetStyleTest.kt": {
@@ -4842,9 +4842,9 @@
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/home/clock/ClockTemplateData.kt": {
-    "mtime": 1792640032.4308193,
-    "seen": 1792640590.879391,
-    "ast_hash": "c7c5ea5c0decd30a74959e04aa5807d1",
+    "mtime": 1792833306.7084684,
+    "seen": 1792834771.4043891,
+    "ast_hash": "0c982d71bb85c44b684ff7018daf2792",
     "semantic_hash": ""
   },
   "app/src/main/kotlin/com/facetlauncher/app/ui/settings/AppDrawerSettingsScreen.kt": {
@@ -4875,6 +4875,414 @@
     "mtime": 1792684995.222605,
     "seen": 1792685104.09704,
     "ast_hash": "7ff10962e947ad341103b94d2158099d",
+    "semantic_hash": ""
+  },
+  "app/src/main/assets/whats_new/0.1.29.md": {
+    "mtime": 1792721424.2322583,
+    "seen": 1792721595.16895,
+    "ast_hash": "f0078f005e1c2324bdcd39123f10a814",
+    "semantic_hash": ""
+  },
+  "release_notes/0.1.29.md": {
+    "mtime": 1792721559.167932,
+    "seen": 1792721595.1689742,
+    "ast_hash": "bd57987f05fb6538248995be9e086b33",
+    "semantic_hash": ""
+  },
+  "app/src/main/kotlin/com/facetlauncher/app/data/di/WeatherModule.kt": {
+    "mtime": 1792830353.2073677,
+    "seen": 1792830645.141114,
+    "ast_hash": "97cec1e2dafa2def665fb5f358742c8e",
+    "semantic_hash": ""
+  },
+  "app/src/main/kotlin/com/facetlauncher/app/data/model/WeatherForecast.kt": {
+    "mtime": 1792828650.6220505,
+    "seen": 1792828905.58846,
+    "ast_hash": "d7b033e5abd0acc4fdbb62519797817a",
+    "semantic_hash": ""
+  },
+  "app/src/main/kotlin/com/facetlauncher/app/data/weather/MetForecastParser.kt": {
+    "mtime": 1792828877.7989373,
+    "seen": 1792828905.588462,
+    "ast_hash": "1739faba86607c21852a89b840f034d9",
+    "semantic_hash": ""
+  },
+  "app/src/main/kotlin/com/facetlauncher/app/data/weather/WeatherApi.kt": {
+    "mtime": 1792828664.4208543,
+    "seen": 1792828905.588462,
+    "ast_hash": "20b23e85fea152c124a004de5d172ef9",
+    "semantic_hash": ""
+  },
+  "app/src/main/kotlin/com/facetlauncher/app/data/weather/WeatherRefreshPolicy.kt": {
+    "mtime": 1792830153.2207327,
+    "seen": 1792830645.141155,
+    "ast_hash": "9480cec54d262a0aa2ddf399c31791ae",
+    "semantic_hash": ""
+  },
+  "app/src/main/kotlin/com/facetlauncher/app/data/weather/WeatherRepository.kt": {
+    "mtime": 1792830164.6734834,
+    "seen": 1792830645.141155,
+    "ast_hash": "2509aee3657d58ad20b5580283035d76",
+    "semantic_hash": ""
+  },
+  "app/src/main/kotlin/com/facetlauncher/app/data/weather/WeatherStore.kt": {
+    "mtime": 1792828696.1305358,
+    "seen": 1792828905.588463,
+    "ast_hash": "0f1db7e80767403c3142efbf49c8f538",
+    "semantic_hash": ""
+  },
+  "app/src/test/kotlin/com/facetlauncher/app/data/weather/MetForecastParserTest.kt": {
+    "mtime": 1792828737.1506026,
+    "seen": 1792828905.5886521,
+    "ast_hash": "90955bfd22fd802d890fa1dacdca07fe",
+    "semantic_hash": ""
+  },
+  "app/src/test/kotlin/com/facetlauncher/app/data/weather/MetWeatherApiTest.kt": {
+    "mtime": 1792828737.1822524,
+    "seen": 1792828905.588653,
+    "ast_hash": "418d8b89a413b850c6491484636680f1",
+    "semantic_hash": ""
+  },
+  "app/src/test/kotlin/com/facetlauncher/app/data/weather/WeatherRefreshPolicyTest.kt": {
+    "mtime": 1792828737.1676323,
+    "seen": 1792828905.588653,
+    "ast_hash": "2997586d66ea269d5d26df81e7460e88",
+    "semantic_hash": ""
+  },
+  "app/src/test/kotlin/com/facetlauncher/app/data/weather/WeatherRepositoryTest.kt": {
+    "mtime": 1792830252.1518223,
+    "seen": 1792830645.14134,
+    "ast_hash": "0d2fdd5aa939881d58fb083ad0809ef9",
+    "semantic_hash": ""
+  },
+  "app/src/test/resources/weather/locationforecast_compact.json": {
+    "mtime": 1792828709.5764487,
+    "seen": 1792828905.5887191,
+    "ast_hash": "aaeb6fdf5f5fc564306168c0af289680",
+    "semantic_hash": ""
+  },
+  "docs/architecture/18-flow-weather.md": {
+    "mtime": 1792834752.5570426,
+    "seen": 1792834771.404615,
+    "ast_hash": "bcbe1f4cf19b12b4542464659a7097fb",
+    "semantic_hash": ""
+  },
+  "app/schemas/com.facetlauncher.app.data.local.FacetDatabase/33.json": {
+    "mtime": 1792829228.30671,
+    "seen": 1792829951.927058,
+    "ast_hash": "e744c90cd73afe331ab1b2dc0543403b",
+    "semantic_hash": ""
+  },
+  "app/src/main/kotlin/com/facetlauncher/app/data/local/WeatherDao.kt": {
+    "mtime": 1792829117.5676987,
+    "seen": 1792829951.92716,
+    "ast_hash": "9142f139a9670b57118e30e213a90a12",
+    "semantic_hash": ""
+  },
+  "app/src/main/kotlin/com/facetlauncher/app/data/local/WeatherEntities.kt": {
+    "mtime": 1792829117.545985,
+    "seen": 1792829951.927161,
+    "ast_hash": "11dff4b9fbdd755441b5c5465e69ad09",
+    "semantic_hash": ""
+  },
+  "app/src/main/kotlin/com/facetlauncher/app/data/model/WeatherSettings.kt": {
+    "mtime": 1792829892.7858427,
+    "seen": 1792829951.927188,
+    "ast_hash": "46699f638a84728dcdd3f6e147b89b95",
+    "semantic_hash": ""
+  },
+  "app/src/main/kotlin/com/facetlauncher/app/data/weather/RoomWeatherStore.kt": {
+    "mtime": 1792830153.2212257,
+    "seen": 1792830645.141154,
+    "ast_hash": "c2ee88711a7c1ccd960e84449a28f9d9",
+    "semantic_hash": ""
+  },
+  "app/src/test/kotlin/com/facetlauncher/app/data/WeatherSettingsTest.kt": {
+    "mtime": 1792829308.832258,
+    "seen": 1792829951.9273689,
+    "ast_hash": "debe1a0d46b5b879b8b5902b3e949742",
+    "semantic_hash": ""
+  },
+  "app/src/test/kotlin/com/facetlauncher/app/data/weather/RoomWeatherStoreTest.kt": {
+    "mtime": 1792830164.792811,
+    "seen": 1792830645.1413388,
+    "ast_hash": "50f42bf2d9f89dc776f76b02aacd040d",
+    "semantic_hash": ""
+  },
+  "app/src/test/kotlin/com/facetlauncher/app/domain/ClockAccessorySwitchesTest.kt": {
+    "mtime": 1792829362.344568,
+    "seen": 1792829951.9273899,
+    "ast_hash": "4b546c8e4cc788551a402aa5a4c63124",
+    "semantic_hash": ""
+  },
+  "app/src/test/kotlin/com/facetlauncher/app/domain/WeatherBackupTest.kt": {
+    "mtime": 1792829352.0300686,
+    "seen": 1792829951.9274108,
+    "ast_hash": "3744f1191f7cbe4a4d19c9c959e769f8",
+    "semantic_hash": ""
+  },
+  "app/src/main/kotlin/com/facetlauncher/app/data/LocationRepository.kt": {
+    "mtime": 1792830343.4491847,
+    "seen": 1792830645.141094,
+    "ast_hash": "104902ffa077ab03764788801e8f2601",
+    "semantic_hash": ""
+  },
+  "app/src/main/kotlin/com/facetlauncher/app/data/places/CityList.kt": {
+    "mtime": 1792830305.5678833,
+    "seen": 1792830645.141151,
+    "ast_hash": "e754c8578171a6f79d8938d8cb0b5a6b",
+    "semantic_hash": ""
+  },
+  "app/src/main/kotlin/com/facetlauncher/app/data/places/CityRepository.kt": {
+    "mtime": 1792830305.5835993,
+    "seen": 1792830645.141151,
+    "ast_hash": "5989397310138e8aac2d4e95cbd9a777",
+    "semantic_hash": ""
+  },
+  "app/src/main/kotlin/com/facetlauncher/app/data/places/GeoDistance.kt": {
+    "mtime": 1792830305.5471303,
+    "seen": 1792830645.141152,
+    "ast_hash": "8b60d51c5bc92cea64ec0ad5b7795d73",
+    "semantic_hash": ""
+  },
+  "app/src/main/kotlin/com/facetlauncher/app/data/places/PlaceGeocoder.kt": {
+    "mtime": 1792830326.8973565,
+    "seen": 1792830645.141153,
+    "ast_hash": "b8f92282230edf644f6270c2c97c54d4",
+    "semantic_hash": ""
+  },
+  "app/src/main/kotlin/com/facetlauncher/app/domain/ObserveWeatherUseCase.kt": {
+    "mtime": 1792830518.59306,
+    "seen": 1792830645.141175,
+    "ast_hash": "a10b153dbd6a2312130fcdde4c2f495c",
+    "semantic_hash": ""
+  },
+  "app/src/main/kotlin/com/facetlauncher/app/domain/RainSummary.kt": {
+    "mtime": 1792830111.1636317,
+    "seen": 1792830645.141176,
+    "ast_hash": "7c41f384a691b01f29e6d84d86341aed",
+    "semantic_hash": ""
+  },
+  "app/src/main/kotlin/com/facetlauncher/app/domain/RefreshWeatherUseCase.kt": {
+    "mtime": 1792830393.4841797,
+    "seen": 1792830645.1411781,
+    "ast_hash": "02050e184eb4899797e6eff6e93e547b",
+    "semantic_hash": ""
+  },
+  "app/src/main/kotlin/com/facetlauncher/app/domain/ResolvePlaceUseCase.kt": {
+    "mtime": 1792830372.1915472,
+    "seen": 1792830645.1411798,
+    "ast_hash": "35440f98b3fb399e374faf2153ba3552",
+    "semantic_hash": ""
+  },
+  "app/src/main/kotlin/com/facetlauncher/app/domain/SearchPlacesUseCase.kt": {
+    "mtime": 1792830393.4601796,
+    "seen": 1792830645.141184,
+    "ast_hash": "8332028f9a6e1bb5730ad14a096a62bf",
+    "semantic_hash": ""
+  },
+  "app/src/main/kotlin/com/facetlauncher/app/domain/WeatherDay.kt": {
+    "mtime": 1792830000.4026875,
+    "seen": 1792830645.1411881,
+    "ast_hash": "cf1372d23ae6719eefc261706aef0031",
+    "semantic_hash": ""
+  },
+  "app/src/main/kotlin/com/facetlauncher/app/domain/WeatherUnits.kt": {
+    "mtime": 1792830000.3819675,
+    "seen": 1792830645.1411881,
+    "ast_hash": "fc8734e7933a8510797cd7a6a07d0434",
+    "semantic_hash": ""
+  },
+  "app/src/test/kotlin/com/facetlauncher/app/data/places/CityListTest.kt": {
+    "mtime": 1792830417.5801835,
+    "seen": 1792830645.1413372,
+    "ast_hash": "62f74845acfa87234290906dc74b8a3f",
+    "semantic_hash": ""
+  },
+  "app/src/test/kotlin/com/facetlauncher/app/domain/ObserveWeatherUseCaseTest.kt": {
+    "mtime": 1792830530.9233005,
+    "seen": 1792830645.1413581,
+    "ast_hash": "76e86e8865d8489bdbae65dcb3e95371",
+    "semantic_hash": ""
+  },
+  "app/src/test/kotlin/com/facetlauncher/app/domain/RainSummaryTest.kt": {
+    "mtime": 1792830081.083915,
+    "seen": 1792830645.141359,
+    "ast_hash": "204bc621b0789a9ff4c41c6c12f445c1",
+    "semantic_hash": ""
+  },
+  "app/src/test/kotlin/com/facetlauncher/app/domain/RefreshWeatherUseCaseTest.kt": {
+    "mtime": 1792830461.5634553,
+    "seen": 1792830645.14136,
+    "ast_hash": "d8a196b8b54cbd8b09f8518a037ba37b",
+    "semantic_hash": ""
+  },
+  "app/src/test/kotlin/com/facetlauncher/app/domain/ResolvePlaceUseCaseTest.kt": {
+    "mtime": 1792830461.5236804,
+    "seen": 1792830645.141363,
+    "ast_hash": "7ad235d37ada2a0f1c71eacab8a3af1b",
+    "semantic_hash": ""
+  },
+  "app/src/test/kotlin/com/facetlauncher/app/domain/SearchPlacesUseCaseTest.kt": {
+    "mtime": 1792830461.544406,
+    "seen": 1792830645.141366,
+    "ast_hash": "c80c92923d5187732c9529a477a7c58b",
+    "semantic_hash": ""
+  },
+  "app/src/test/kotlin/com/facetlauncher/app/domain/WeatherDayTest.kt": {
+    "mtime": 1792830111.3296425,
+    "seen": 1792830645.14137,
+    "ast_hash": "bd96cca1cf4cbf789d2f0327417ce7fa",
+    "semantic_hash": ""
+  },
+  "app/src/test/kotlin/com/facetlauncher/app/domain/WeatherUnitsTest.kt": {
+    "mtime": 1792830030.424474,
+    "seen": 1792830645.1413708,
+    "ast_hash": "4caf7826851e0a6f87618e471f7a892f",
+    "semantic_hash": ""
+  },
+  "app/src/test/kotlin/com/facetlauncher/app/data/places/CityRepositoryTest.kt": {
+    "mtime": 1792832972.7334783,
+    "seen": 1792832993.7563891,
+    "ast_hash": "f2279ff23e8f661ba596c09b796bd880",
+    "semantic_hash": ""
+  },
+  "scripts/gen-cities.py": {
+    "mtime": 1792832960.2010574,
+    "seen": 1792832993.756475,
+    "ast_hash": "1e9135c9ef58ef4a2614522d20ae582b",
+    "semantic_hash": ""
+  },
+  "app/src/androidTest/kotlin/com/facetlauncher/app/ui/home/clock/ClockWeatherAccessoryTest.kt": {
+    "mtime": 1792834674.1966279,
+    "seen": 1792834771.40419,
+    "ast_hash": "8f0f3dc91a0221d889e7f0bf4ef8be4b",
+    "semantic_hash": ""
+  },
+  "app/src/androidTest/kotlin/com/facetlauncher/app/ui/settings/ClockAccessoriesScreenTest.kt": {
+    "mtime": 1792834529.134276,
+    "seen": 1792834771.404199,
+    "ast_hash": "86106904ffa8caafb40c78bb7fb34192",
+    "semantic_hash": ""
+  },
+  "app/src/androidTest/kotlin/com/facetlauncher/app/ui/settings/WeatherLocationScreenTest.kt": {
+    "mtime": 1792834501.245728,
+    "seen": 1792834771.4042099,
+    "ast_hash": "33f379bc98c5c26f89a008c48d4d4bd3",
+    "semantic_hash": ""
+  },
+  "app/src/main/kotlin/com/facetlauncher/app/domain/WeatherCondition.kt": {
+    "mtime": 1792833091.4057963,
+    "seen": 1792834771.404329,
+    "ast_hash": "de10cf07130d781f4da9f4c0adf4c0c5",
+    "semantic_hash": ""
+  },
+  "app/src/main/kotlin/com/facetlauncher/app/ui/home/clock/ClockWeatherAccessory.kt": {
+    "mtime": 1792833743.694888,
+    "seen": 1792834771.4043899,
+    "ast_hash": "eb97a8ee0da640643c2f7f130721bf45",
+    "semantic_hash": ""
+  },
+  "app/src/main/kotlin/com/facetlauncher/app/ui/home/weather/ClockWeatherAccessoryState.kt": {
+    "mtime": 1792833462.004097,
+    "seen": 1792834771.404392,
+    "ast_hash": "0b5b32c3f8a7a385b3cbe2bdb38b5df8",
+    "semantic_hash": ""
+  },
+  "app/src/main/kotlin/com/facetlauncher/app/ui/home/weather/RainSummaryText.kt": {
+    "mtime": 1792833730.734306,
+    "seen": 1792834771.404392,
+    "ast_hash": "beb07abb6fb6d11ce84e80f48462b55c",
+    "semantic_hash": ""
+  },
+  "app/src/main/kotlin/com/facetlauncher/app/ui/home/weather/WeatherCompass.kt": {
+    "mtime": 1792833723.9185224,
+    "seen": 1792834771.404393,
+    "ast_hash": "6da0ea41d9e2c40e1543df46195e5da6",
+    "semantic_hash": ""
+  },
+  "app/src/main/kotlin/com/facetlauncher/app/ui/home/weather/WeatherConditionText.kt": {
+    "mtime": 1792833723.9184413,
+    "seen": 1792834771.404393,
+    "ast_hash": "7d5dac5825d8a9b5cd891b948e34f563",
+    "semantic_hash": ""
+  },
+  "app/src/main/kotlin/com/facetlauncher/app/ui/home/weather/WeatherFormat.kt": {
+    "mtime": 1792833723.918608,
+    "seen": 1792834771.404394,
+    "ast_hash": "9edbc287d9ec312c6a2d9e6d65009d23",
+    "semantic_hash": ""
+  },
+  "app/src/main/kotlin/com/facetlauncher/app/ui/home/weather/WeatherIconKind.kt": {
+    "mtime": 1792833723.9176438,
+    "seen": 1792834771.404394,
+    "ast_hash": "2c474b74d35534211a6e620efd3fb279",
+    "semantic_hash": ""
+  },
+  "app/src/main/kotlin/com/facetlauncher/app/ui/home/weather/WeatherSheet.kt": {
+    "mtime": 1792833743.6950765,
+    "seen": 1792834771.404395,
+    "ast_hash": "efd82d1c0a0a6a65b26e7f79f31708d4",
+    "semantic_hash": ""
+  },
+  "app/src/main/kotlin/com/facetlauncher/app/ui/home/weather/WeatherSheetParts.kt": {
+    "mtime": 1792833743.695212,
+    "seen": 1792834771.404395,
+    "ast_hash": "f9a8dff35c2b0ac3427568ed31fac6cc",
+    "semantic_hash": ""
+  },
+  "app/src/main/kotlin/com/facetlauncher/app/ui/home/weather/WeatherViewModel.kt": {
+    "mtime": 1792833583.1552157,
+    "seen": 1792834771.404396,
+    "ast_hash": "6c665bd58a9ac4cf1c538ee01ec61447",
+    "semantic_hash": ""
+  },
+  "app/src/main/kotlin/com/facetlauncher/app/ui/home/weather/WindArrow.kt": {
+    "mtime": 1792833723.9180346,
+    "seen": 1792834771.404396,
+    "ast_hash": "b53bcaf906b349554ca2fbf166abdb73",
+    "semantic_hash": ""
+  },
+  "app/src/main/kotlin/com/facetlauncher/app/ui/settings/ClockAccessoriesScreen.kt": {
+    "mtime": 1792834037.6443856,
+    "seen": 1792834771.404425,
+    "ast_hash": "073240eafdeaf8eae8f331aebecdb0a3",
+    "semantic_hash": ""
+  },
+  "app/src/main/kotlin/com/facetlauncher/app/ui/settings/ClockAccessoriesViewModel.kt": {
+    "mtime": 1792833826.258043,
+    "seen": 1792834771.404425,
+    "ast_hash": "83c13765fccc7f21f5a55adb815525e0",
+    "semantic_hash": ""
+  },
+  "app/src/main/kotlin/com/facetlauncher/app/ui/settings/WeatherLocationScreen.kt": {
+    "mtime": 1792834037.6448522,
+    "seen": 1792834771.404441,
+    "ast_hash": "e60ce4e9dc548441cddbbb38dd6850f0",
+    "semantic_hash": ""
+  },
+  "app/src/main/kotlin/com/facetlauncher/app/ui/settings/WeatherLocationViewModel.kt": {
+    "mtime": 1792833836.2358458,
+    "seen": 1792834771.404441,
+    "ast_hash": "beab62450b708e2d8c0c40678d6ad87b",
+    "semantic_hash": ""
+  },
+  "app/src/main/kotlin/com/facetlauncher/app/ui/settings/WeatherUnitLabels.kt": {
+    "mtime": 1792834037.6445415,
+    "seen": 1792834771.404442,
+    "ast_hash": "51132be3e8025164431c35b738e8353f",
+    "semantic_hash": ""
+  },
+  "app/src/test/kotlin/com/facetlauncher/app/domain/WeatherConditionTest.kt": {
+    "mtime": 1792833091.429558,
+    "seen": 1792834771.4045289,
+    "ast_hash": "e307b70486e19b45431db3b554ed8145",
+    "semantic_hash": ""
+  },
+  "app/src/test/kotlin/com/facetlauncher/app/ui/home/weather/WeatherViewModelTest.kt": {
+    "mtime": 1792833551.8089166,
+    "seen": 1792834771.4045482,
+    "ast_hash": "fc0270fc920cf85298641e33961af82f",
     "semantic_hash": ""
   }
 }

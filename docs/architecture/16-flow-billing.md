@@ -1,8 +1,8 @@
 # 16 — Flow: Billing and Facet Pro (one-time Google Play purchase)
 
 How a user becomes Pro, how the app remembers it, and what changes when they are not. There is one
-non-consumable product, `facet_pro`, bought once through Google Play. No subscription, no backend, and no
-`INTERNET` permission. The price is never in the code: it is a Play Console setting and the app shows what
+non-consumable product, `facet_pro`, bought once through Google Play. No subscription and no backend; billing
+needs no `INTERNET` of its own (the weather feature declares it, see §6). The price is never in the code: it is a Play Console setting and the app shows what
 Play returns. What Pro unlocks is in [13 §1a](13-flow-facets-theme-notifications-onboarding.md) (10 facets
 instead of 3) and [15](15-flow-facet-automation.md) (device triggers, more than 2 rules).
 
@@ -123,12 +123,13 @@ A lapse is only a refund, a revocation or a different Google account; it cannot 
 
 Buttons are pills like every other button in the app (`ProGradientButton`, the Settings card's Upgrade chip); `TriggerPill` is a chip, so it uses M3's small shape (8dp). The Settings `ProSettingsCard` uses the 28dp extra-large shape, matching the `SettingsCard`s below it.
 
-## 6. No `INTERNET`
+## 6. Billing and `INTERNET`
 
-The billing library pulls `INTERNET` in through its telemetry dependency. `AndroidManifest.xml` removes it
-(`tools:node="remove"`) and the `verifyNoInternetPermission` Gradle task, part of `check` and the release
-build, fails if it ever returns. Play Billing talks to the Play Store app over IPC, so purchases should not
-need it; confirming that on a real Play account is part of the release checklist.
+The billing library pulls `INTERNET` in through its telemetry dependency. Until weather, `AndroidManifest.xml`
+removed it; now it declares `INTERNET` itself, for weather only ([18](18-flow-weather.md)), and the
+`verifyInternetPermission` Gradle task, part of `check` and the release build, fails if it goes missing. Play
+Billing talks to the Play Store app over IPC, so purchases need no network permission of their own;
+confirming that on a real Play account is part of the release checklist.
 
 ## 7. Testing
 

@@ -585,6 +585,28 @@ object Migrations {
         }
     }
 
+    /**
+     * Adds the per-facet clock accessory switches (alarm and battery on, weather off, so a facet looks as it did) and the
+     * two weather tables: the stored forecast hours and the single row of fetch state.
+     */
+    val MIGRATION_32_33: Migration = object : Migration(32, 33) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("ALTER TABLE facets ADD COLUMN clockShowAlarm INTEGER NOT NULL DEFAULT 1")
+            db.execSQL("ALTER TABLE facets ADD COLUMN clockShowBattery INTEGER NOT NULL DEFAULT 1")
+            db.execSQL("ALTER TABLE facets ADD COLUMN clockShowWeather INTEGER NOT NULL DEFAULT 0")
+            db.execSQL(
+                "CREATE TABLE IF NOT EXISTS `weather_hours` (`timeEpochSecond` INTEGER NOT NULL, `temperatureC` REAL NOT NULL, " +
+                    "`humidityPercent` REAL, `pressureHpa` REAL, `cloudPercent` REAL, `windSpeedMps` REAL, `windFromDegrees` REAL, " +
+                    "`precipitationMm` REAL, `symbolCode` TEXT, PRIMARY KEY(`timeEpochSecond`))",
+            )
+            db.execSQL(
+                "CREATE TABLE IF NOT EXISTS `weather_meta` (`id` INTEGER NOT NULL, `latitude` REAL, `longitude` REAL, `altitudeM` INTEGER, " +
+                    "`fetchedAtEpochSecond` INTEGER, `expiresAtEpochSecond` INTEGER, `lastModified` TEXT, `lastAttemptAtEpochSecond` INTEGER, " +
+                    "`blockedUntilEpochSecond` INTEGER, `placeName` TEXT, `placeNameSource` TEXT, PRIMARY KEY(`id`))",
+            )
+        }
+    }
+
     val ALL: Array<Migration> = arrayOf(
         MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15, MIGRATION_15_16,
         MIGRATION_16_17, MIGRATION_17_18, MIGRATION_18_19, MIGRATION_19_20, MIGRATION_20_21, MIGRATION_21_22,
@@ -593,5 +615,6 @@ object Migrations {
         MIGRATION_29_30,
         MIGRATION_30_31,
         MIGRATION_31_32,
+        MIGRATION_32_33,
     )
 }

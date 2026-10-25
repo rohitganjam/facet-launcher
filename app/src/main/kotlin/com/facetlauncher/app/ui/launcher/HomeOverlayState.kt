@@ -21,6 +21,9 @@ internal class HomeOverlayState {
     /** Set when the clock widget flow starts and fixed for its duration, like `ClockWidgetPickerViewModel`'s own pending facet. */
     var clockWidgetPickerFacetId by mutableStateOf<Long?>(null)
 
+    /** The weather sheet, opened from the clock's weather accessory. It is its own bottom sheet window, so it is not part of [anyOpen]. */
+    var showWeatherSheet by mutableStateOf(false)
+
     /** Private Space, over the app drawer. */
     var showPrivateSpace by mutableStateOf(false)
 

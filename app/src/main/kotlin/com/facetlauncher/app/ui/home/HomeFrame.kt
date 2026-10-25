@@ -127,7 +127,6 @@ private fun clockMetrics(density: Density): ClockMetrics {
     val headroomPx = with(density) { (HOME_CLOCK_RESIZE_HANDLE_INSET + 12.dp).toPx() }
     return ClockMetrics(
         topInsetPx = topInsetPx.toFloat(),
-        defaultTopOffsetPx = with(density) { HOME_CLOCK_DEFAULT_TOP_OFFSET.toPx() },
         minGapPx = with(density) { HOME_CLOCK_MIN_GAP.toPx() },
         topReservePx = topInsetPx + headroomPx,
         sideMarginPx = with(density) { 24.dp.toPx() },

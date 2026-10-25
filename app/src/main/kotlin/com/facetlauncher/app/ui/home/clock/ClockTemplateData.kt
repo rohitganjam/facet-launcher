@@ -29,4 +29,9 @@ internal data class ClockTemplateData(
     val nextAlarmText: String?,
     val batteryPercent: Int?,
     val isCharging: Boolean,
-)
+    /** Whether the weather accessory is shown (the item itself comes through [LocalClockWeather]). */
+    val hasWeather: Boolean = false,
+) {
+    /** Whether any of the alarm, battery and weather accessories is shown, so a template knows whether to lay out its accessory area at all. */
+    val hasAccessories: Boolean get() = nextAlarmText != null || batteryPercent != null || hasWeather
+}

@@ -29,18 +29,18 @@ enum class DrawerPresentation(@param:StringRes val displayNameRes: Int) {
  * App Drawer grid density — the grid's column and row counts are computed from the window size
  * (`ui/drawer/DrawerGridLayout.kt`), so one setting fits a phone, a foldable or a tablet.
  * Persisted under the old `drawer_grid_size` key / `drawerGridSize` backup field; [fromStored]
- * also maps the retired column×row names.
+ * also maps the retired column×row names and `AIRY`, the old name of [SPACIOUS].
  */
 enum class DrawerGridDensity(@param:StringRes val displayNameRes: Int) {
     COMPACT(R.string.drawer_grid_density_compact),
     REGULAR(R.string.drawer_grid_density_regular),
-    AIRY(R.string.drawer_grid_density_airy);
+    SPACIOUS(R.string.drawer_grid_density_spacious);
 
     companion object {
         fun fromStored(name: String): DrawerGridDensity? = when (name) {
             "FIVE_BY_SIX" -> COMPACT
             "FOUR_BY_FIVE", "FIVE_BY_FIVE" -> REGULAR
-            "FOUR_BY_FOUR" -> AIRY
+            "FOUR_BY_FOUR", "AIRY" -> SPACIOUS
             else -> entries.firstOrNull { it.name == name }
         }
     }
@@ -348,6 +348,21 @@ data class LauncherSettings(
     val clockShowMeridiem: Boolean = false,
     /** "Full" ("Thursday, 27 August") vs "Condensed" ("Thu, 27 Aug") — applies to every template that renders its date line through `ClockTemplates.kt`'s shared `dateFormatter()`. */
     val clockDateStyle: ClockDateStyle = ClockDateStyle.FULL,
+    /** The clock accessories: the launcher-wide defaults, overridden per facet through its clock block (`overrideClock`). */
+    val showNextAlarm: Boolean = true,
+    val showBatteryPercentage: Boolean = true,
+    val showWeather: Boolean = false,
+    /** Launcher-wide only, never per facet: the units weather is shown in, and where it is for. */
+    val temperatureUnit: TemperatureUnit = TemperatureUnit.AUTO,
+    val windSpeedUnit: WindSpeedUnit = WindSpeedUnit.AUTO,
+    val rainUnit: RainUnit = RainUnit.AUTO,
+    val pressureUnit: PressureUnit = PressureUnit.AUTO,
+    val weatherLocationMode: WeatherLocationMode = WeatherLocationMode.CURRENT,
+    /** The chosen city; only read under [WeatherLocationMode.CITY]. */
+    val weatherIconStyle: WeatherIconStyle = WeatherIconStyle.MONOCHROME,
+    val weatherCity: WeatherCity? = null,
+    /** Cities kept for quick switching, [weatherCity] among them while one is chosen. */
+    val savedWeatherCities: List<WeatherCity> = emptyList(),
     /**
      * Settings → Appearance → "Text weight" — Home's app list/Dock/App Drawer labels apply it
      * directly (see `ui/home/HomeScreen.kt`'s `AppRow`/`DockIcon`, `ui/drawer/AppDrawerScreen.kt`'s

@@ -81,16 +81,7 @@ fun HomeScreen(
     }
 }
 
-/**
- * The clock's original, unchanged top inset — reused as the anchor the default
- * (`clockZoneHeightDp == null`) case resolves to. Not private: reused by
- * [com.facetlauncher.app.ui.facets.FacetCarouselScreen]'s own preview card so it reproduces
- * the same zone-height positioning at its own (scaled-down) size, rather than ignoring
- * `clockZoneHeightDp` entirely.
- */
-internal val HOME_CLOCK_DEFAULT_TOP_OFFSET = 52.dp
-
-/** Minimum gap always kept between the clock+calendar block's bottom edge and its grab handle. Not private — see [HOME_CLOCK_DEFAULT_TOP_OFFSET]'s own doc. */
+/** Minimum gap always kept between the clock+calendar block's bottom edge and its grab handle. */
 internal val HOME_CLOCK_MIN_GAP = 24.dp
 
 /** Gap between the clock block's bottom edge and the media row, and between the media row and the app list below it. */

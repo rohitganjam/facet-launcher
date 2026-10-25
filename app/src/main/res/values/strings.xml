@@ -320,7 +320,7 @@
     <string name="drawer_presentation_grid">Grid</string>
     <string name="drawer_grid_density_compact">Compact</string>
     <string name="drawer_grid_density_regular">Regular</string>
-    <string name="drawer_grid_density_airy">Airy</string>
+    <string name="drawer_grid_density_spacious">Spacious</string>
     <string name="drawer_list_item_size_compact">Compact</string>
     <string name="drawer_list_item_size_regular">Regular</string>
     <string name="drawer_list_item_size_spacious">Spacious</string>
@@ -411,6 +411,18 @@
     <string name="app_drawer_folders_in_drawer">Folders in drawer</string>
     <string name="app_drawer_recently_installed_position">Recently installed</string>
     <string name="app_drawer_opacity_label">Drawer opacity</string>
+    <string name="app_drawer_preview_description">App drawer preview</string>
+    <string name="drawer_preview_folder_name">Work</string>
+    <string-array name="drawer_preview_app_labels">
+        <item>Calendar</item>
+        <item>Camera</item>
+        <item>Clock</item>
+        <item>Maps</item>
+        <item>Music</item>
+        <item>Notes</item>
+        <item>Photos</item>
+        <item>Weather</item>
+    </string-array>
     <string name="drawer_recently_installed_label">Recently installed</string>
 
     <!-- ThemeMode -->
@@ -494,7 +506,7 @@
     <string name="permission_bluetooth_title">Bluetooth</string>
     <string name="permission_bluetooth_subtitle">Lets facet automation rules react to a paired Bluetooth device, such as your car, and lists paired devices when you set one up.</string>
     <string name="permission_location_title">Location</string>
-    <string name="permission_location_subtitle">Android requires it to read the Wi-Fi network name for rules about a named network. Facet only uses it for that, never to find where you are.</string>
+    <string name="permission_location_subtitle">Android requires it to read the Wi-Fi network name for rules about a named network, and to find the weather where you are when you pick Use current location. Facet uses it for nothing else.</string>
 
     <!-- FacetAutomationScreen (Settings → Facets → Facet automation) -->
     <string name="settings_facet_automation_title">Facet automation</string>
@@ -924,4 +936,139 @@
 
     <!-- ClockZoneHandle -->
     <string name="clock_zone_handle_drag_to_resize">Drag to resize</string>
+
+    <!-- Weather: conditions (also the accessibility text of the accessory) -->
+    <string name="weather_condition_clear">Clear</string>
+    <string name="weather_condition_mostly_clear">Mostly clear</string>
+    <string name="weather_condition_partly_cloudy">Partly cloudy</string>
+    <string name="weather_condition_cloudy">Cloudy</string>
+    <string name="weather_condition_fog">Fog</string>
+    <string name="weather_condition_light_rain">Light rain</string>
+    <string name="weather_condition_rain">Rain</string>
+    <string name="weather_condition_heavy_rain">Heavy rain</string>
+    <string name="weather_condition_sleet">Sleet</string>
+    <string name="weather_condition_snow">Snow</string>
+    <string name="weather_condition_thunderstorm">Thunderstorm</string>
+
+    <!-- Weather: the accessory next to the alarm and battery -->
+    <string name="weather_temperature_format">%1$d°</string>
+    <string name="weather_accessory_description">%1$s, %2$s. Opens the weather details</string>
+    <string name="weather_accessory_description_no_condition">%1$s. Opens the weather details</string>
+
+    <!-- Weather: the sheet -->
+    <string name="weather_sheet_now">Now</string>
+    <string name="weather_sheet_today">Today</string>
+    <string name="weather_sheet_high_low">H %1$s · L %2$s</string>
+    <string name="weather_place_near">Near %1$s</string>
+    <string name="weather_next_24_hours">Next 24 hours</string>
+    <string name="weather_legend_rain">Rain, %1$s</string>
+    <string name="weather_legend_wind">Wind, %1$s</string>
+    <string name="weather_detail_humidity">Humidity</string>
+    <string name="weather_detail_pressure">Pressure</string>
+    <string name="weather_detail_cloud_cover">Cloud cover</string>
+    <string name="weather_detail_wind">Wind</string>
+    <string name="weather_wind_with_direction">%1$s %2$s</string>
+    <string name="weather_updated">Updated %1$s</string>
+    <string name="weather_updated_outdated">Updated %1$s, out of date</string>
+    <string name="weather_credit">Weather data from MET Norway</string>
+    <string name="weather_refresh">Refresh</string>
+    <string name="weather_refresh_updated">Weather updated</string>
+    <string name="weather_refresh_up_to_date">Already up to date</string>
+    <string name="weather_refresh_too_soon">Updated a moment ago. Try again in a few minutes.</string>
+    <string name="weather_refresh_busy">Weather is busy. Try again later.</string>
+    <string name="weather_refresh_offline">You\'re offline. Try again later.</string>
+    <string name="weather_refresh_failed">Couldn\'t update the weather. Try again later.</string>
+    <string name="weather_needs_location">Allow location to see the weather where you are.</string>
+    <string name="weather_allow_location">Allow location</string>
+    <string name="weather_no_location">Turn on location to see the weather here.</string>
+    <string name="weather_no_city">Choose a city to see its weather.</string>
+    <string name="weather_choose_city">Choose a city</string>
+    <string name="weather_empty">No weather yet</string>
+    <string name="weather_empty_hint">It appears after the first update.</string>
+
+    <!-- Weather: the one-line rain summary (%1$s is a condition name such as "Heavy rain", the last argument an amount such as "63 mm") -->
+    <string name="weather_summary_dry">No rain expected in the next 24 hours.</string>
+    <string name="weather_summary_now_until">%1$s until %2$s, about %3$s.</string>
+    <string name="weather_summary_now_continues">%1$s through the next 24 hours, about %2$s.</string>
+    <string name="weather_summary_later">%1$s from %2$s to %3$s, about %4$s.</string>
+    <string name="weather_summary_later_open">%1$s from %2$s, about %3$s.</string>
+
+    <!-- Weather: compass points and units -->
+    <string name="weather_direction_n">N</string>
+    <string name="weather_direction_ne">NE</string>
+    <string name="weather_direction_e">E</string>
+    <string name="weather_direction_se">SE</string>
+    <string name="weather_direction_s">S</string>
+    <string name="weather_direction_sw">SW</string>
+    <string name="weather_direction_w">W</string>
+    <string name="weather_direction_nw">NW</string>
+    <string name="weather_value_with_unit">%1$s %2$s</string>
+    <string name="weather_unit_short_mm">mm</string>
+    <string name="weather_unit_short_inch">in</string>
+    <string name="weather_unit_short_kmh">km/h</string>
+    <string name="weather_unit_short_mph">mph</string>
+    <string name="weather_unit_short_ms">m/s</string>
+    <string name="weather_unit_short_hpa">hPa</string>
+    <string name="weather_unit_short_inhg">inHg</string>
+    <string name="weather_unit_short_mmhg">mmHg</string>
+
+    <!-- Settings: Clock accessories -->
+    <string name="clock_accessories_title">Clock accessories</string>
+    <string name="clock_accessories_summary">Alarm, battery and weather</string>
+    <string name="clock_accessories_show_alarm">Show next alarm</string>
+    <string name="clock_accessories_show_battery">Show battery percentage</string>
+    <string name="clock_accessories_show_weather">Show weather</string>
+    <string name="clock_accessories_units">Units</string>
+    <string name="clock_accessories_unit_temperature">Temperature</string>
+    <string name="clock_accessories_unit_wind">Wind speed</string>
+    <string name="clock_accessories_unit_rain">Rain</string>
+    <string name="clock_accessories_unit_pressure">Pressure</string>
+    <string name="clock_accessories_location">Location</string>
+    <string name="clock_accessories_global_note">Units and location apply to every facet.</string>
+    <string name="clock_accessories_facet_note">Units and location are in the launcher settings.</string>
+    <string name="weather_unit_auto">Automatic</string>
+    <string name="weather_unit_celsius">Celsius (°C)</string>
+    <string name="weather_unit_fahrenheit">Fahrenheit (°F)</string>
+    <string name="weather_unit_option_kmh">Kilometres per hour (km/h)</string>
+    <string name="weather_unit_option_mph">Miles per hour (mph)</string>
+    <string name="weather_unit_option_ms">Metres per second (m/s)</string>
+    <string name="weather_unit_option_mm">Millimetres (mm)</string>
+    <string name="weather_unit_option_inch">Inches (in)</string>
+    <string name="weather_unit_option_hpa">Hectopascals (hPa)</string>
+    <string name="weather_unit_option_inhg">Inches of mercury (inHg)</string>
+    <string name="weather_unit_option_mmhg">Millimetres of mercury (mmHg)</string>
+
+    <!-- Settings: weather location -->
+    <string name="weather_location_title">Location</string>
+    <string name="weather_location_current">Use current location</string>
+    <string name="weather_location_current_hint">Approximate, read when you open Home</string>
+    <string name="weather_location_city">Choose a city</string>
+    <string name="weather_location_city_hint">No location permission needed</string>
+    <string name="weather_location_showing_for">Showing weather for</string>
+    <string name="weather_location_search">Search cities</string>
+    <string name="weather_location_search_hint">Type a city name</string>
+    <string name="weather_location_no_results">No cities found</string>
+    <string name="weather_location_none">None yet</string>
+    <string name="weather_permission_location_subtitle">Needed to show the weather where you are. Facet only reads an approximate position, and only while Home is open.</string>
+    <string name="clock_accessories_icons">Icons</string>
+    <string name="weather_icon_style">Weather icons</string>
+    <string name="weather_icon_style_monochrome">Monochrome</string>
+    <string name="weather_icon_style_colored">Colored</string>
+    <string name="weather_location_saved_title">Your cities</string>
+    <string name="weather_location_pick_prompt">Search for a city below, then tap it to add it here.</string>
+    <string name="weather_location_tick_prompt">Select a city to show its weather.</string>
+    <string name="weather_location_remove">Remove %1$s</string>
+    <string name="weather_location_limit">You can keep up to %1$d cities. Remove one to add another.</string>
+    <string name="weather_leave_title">No city selected</string>
+    <string name="weather_leave_message">Weather needs a city to show. What would you like to do?</string>
+    <string name="weather_leave_turn_off">Turn off weather</string>
+    <string name="weather_leave_use_current">Use current location</string>
+    <string name="weather_leave_choose_city">Choose a city</string>
+
+    <string name="clock_accessories_inheriting">This facet uses the launcher\'s clock settings. Turn on Override in Clock style to change these.</string>
+    <string name="clock_accessories_open_clock_style">Clock style</string>
+    <string name="weather_location_current_short">Current location</string>
+
+    <!-- About: credits -->
+    <string name="about_weather_credit">Weather data from MET Norway (CC BY 4.0). City names from GeoNames (CC BY 4.0).</string>
 </resources>

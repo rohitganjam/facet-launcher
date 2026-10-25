@@ -13,11 +13,11 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 
-/** Default size for [AlarmClockIcon] and [WeatherMark] — a square glyph matching the design's `viewBox="0 0 12 12"` mark. */
-val ClockAccessoryIconSize = 11.dp
+/** Size of the alarm, battery and weather glyphs in the accessory row: all share this height so the items read as one set. */
+val ClockAccessoryIconSize = 14.dp
 
-/** Default size for [BatteryIcon] — matches the design's `viewBox="0 0 16 11"` mark's own aspect ratio. */
-val BatteryIconSize = DpSize(15.dp, 11.dp)
+/** [BatteryIcon]: [ClockAccessoryIconSize] high, at the design's `viewBox="0 0 16 11"` aspect ratio. */
+val BatteryIconSize = DpSize(19.dp, ClockAccessoryIconSize)
 
 /**
  * The clock accessory row's alarm-clock glyph — a static decorative mark (not a time indicator

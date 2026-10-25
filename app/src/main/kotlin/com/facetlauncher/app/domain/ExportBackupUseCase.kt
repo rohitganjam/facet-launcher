@@ -8,6 +8,7 @@ import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.WidgetPlacementRepository
 import com.facetlauncher.app.data.model.BackupBundle
 import com.facetlauncher.app.data.model.BackupSettings
+import com.facetlauncher.app.data.model.BackupWeatherCity
 import com.facetlauncher.app.data.model.LauncherSettings
 import javax.inject.Inject
 import kotlinx.coroutines.flow.first
@@ -127,4 +128,22 @@ private fun LauncherSettings.toBackupSettings(activeFacetIndex: Int?): BackupSet
     landscapeClockZoneHeightDp = landscape.clockZoneHeightDp,
     landscapeClockScale = landscape.clockScale,
     landscapeAppListVerticalAlignment = landscape.appListVerticalAlignment?.name,
+).withAccessoriesAndWeather(this)
+
+/** The clock accessory switches and weather options; the chosen city goes out as four flat fields, the current location never. */
+private fun BackupSettings.withAccessoriesAndWeather(settings: LauncherSettings): BackupSettings = copy(
+    showNextAlarm = settings.showNextAlarm,
+    showBatteryPercentage = settings.showBatteryPercentage,
+    showWeather = settings.showWeather,
+    temperatureUnit = settings.temperatureUnit.name,
+    windSpeedUnit = settings.windSpeedUnit.name,
+    rainUnit = settings.rainUnit.name,
+    pressureUnit = settings.pressureUnit.name,
+    weatherLocationMode = settings.weatherLocationMode.name,
+    weatherIconStyle = settings.weatherIconStyle.name,
+    weatherCityName = settings.weatherCity?.name,
+    weatherCityLatitude = settings.weatherCity?.latitude,
+    weatherCityLongitude = settings.weatherCity?.longitude,
+    weatherCityTimezone = settings.weatherCity?.timezone,
+    savedWeatherCities = settings.savedWeatherCities.map { BackupWeatherCity(it.name, it.latitude, it.longitude, it.timezone) },
 )

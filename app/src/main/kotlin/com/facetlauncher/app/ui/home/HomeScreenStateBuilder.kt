@@ -8,7 +8,10 @@ import com.facetlauncher.app.data.model.MediaPlayerState
 import com.facetlauncher.app.data.model.PlacedItem
 import com.facetlauncher.app.domain.ClockAccessoryState
 import com.facetlauncher.app.domain.ResolvedFacetStyle
+import com.facetlauncher.app.domain.WeatherState
+import com.facetlauncher.app.domain.WeatherUnits
 import com.facetlauncher.app.ui.components.AppMenuNotifications
+import java.util.Locale
 
 /** What a Home screen shows besides the facet's look. */
 data class HomeScreenContent(
@@ -21,6 +24,7 @@ data class HomeScreenContent(
     val showUsageAccessPrompt: Boolean = false,
     val clockAccessories: ClockAccessoryState? = null,
     val mediaPlayer: MediaPlayerState? = null,
+    val weather: WeatherState? = null,
 )
 
 /** Where a hosted clock widget gets its size when its facet never resized it, and its smallest size. Both are `null` for an unknown provider. */
@@ -98,9 +102,18 @@ fun ResolvedFacetStyle.toHomeScreenState(
         events = content.calendarEvents,
         colors = settings.calendarColors,
         display = calendarDisplay,
-        nextAlarmMillis = content.clockAccessories?.nextAlarmMillis,
-        batteryPercent = content.clockAccessories?.batteryPercent,
+        nextAlarmMillis = content.clockAccessories?.nextAlarmMillis?.takeIf { clock.showAlarm },
+        batteryPercent = content.clockAccessories?.batteryPercent?.takeIf { clock.showBattery },
         isCharging = content.clockAccessories?.isCharging ?: false,
+        weather = content.weather?.takeIf { clock.showWeather && !it.isOutdated }?.toHomeWeather(settings),
     ),
     media = HomeMediaState(player = content.mediaPlayer, showSkipButtons = settings.showMediaSkipButtons),
+)
+
+private fun WeatherState.toHomeWeather(settings: LauncherSettings) = HomeWeatherState(
+    symbolCode = now.symbolCode,
+    precipitationMm = now.precipitationMm,
+    temperatureC = now.temperatureC,
+    temperatureUnit = WeatherUnits.resolve(settings.temperatureUnit, Locale.getDefault()),
+    iconStyle = settings.weatherIconStyle,
 )

@@ -9,15 +9,17 @@ permissions — so this is prepared in case Console asks anyway, per-permission 
 
 ## Data Safety section — top-level answer
 
-**Recommended: "No data collected."**
+**Needs review before release: weather changes this answer.** The earlier "No data collected" rested on
+having no `INTERNET` permission. The optional weather feature now declares it and sends a rounded
+(about 1 km) location to MET Norway, and the device's geocoder may receive it to look up a place name.
+Decide in Play Console how to answer *Approximate location* (collected, shared with a weather service for
+app functionality, optional, not stored by the developer); everything else below is unchanged. Nothing is
+sent while weather is off.
 
-Facet Launcher has no `INTERNET` permission at all — it cannot transmit anything off-device,
-under any circumstance. Play's own definition of "collection" is data *transmitted off the
-device*; purely local, on-device processing (reading calendar, contacts, usage stats, media
-session info, Bluetooth connection state or the Wi-Fi network name to render UI or evaluate a
-rule, never stored beyond that or sent anywhere) does not meet that bar. This is a stronger,
-more literally true claim than most apps can make, since it's not just policy — it's
-structurally impossible given the manifest.
+Everything other than weather is still on-device only: reading calendar, contacts, usage stats,
+media session info, Bluetooth connection state or the Wi-Fi network name to render UI or evaluate a
+rule, never stored beyond that or sent anywhere. That is not "transmitted off the device", so it
+does not count as collection under Play's definition.
 
 If Console's flow forces you to itemize data types anyway (some versions of the form ask you
 to walk through categories even when the answer is "not collected" for all of them), the
@@ -71,8 +73,8 @@ per-permission text below explains *why* each one is accessed, for use in whiche
 ## Network and Wi-Fi state — `ACCESS_NETWORK_STATE`, `ACCESS_WIFI_STATE` (normal permissions)
 
 > Lets Wi-Fi automation rules tell whether the device is currently connected to Wi-Fi. These
-> permissions do not give the app internet access, and the app declares no `INTERNET`
-> permission.
+> permissions do not give the app internet access. The app's only network use is the optional
+> weather feature, which has its own disclosure below.
 
 ## Status bar — `EXPAND_STATUS_BAR` (normal permission)
 
@@ -89,8 +91,21 @@ per-permission text below explains *why* each one is accessed, for use in whiche
 > The app offers an optional one-time purchase. Payment, receipts and refunds are handled
 > entirely by Google Play: the app asks the Play Store app on the phone whether the Google
 > account owns the purchase and stores only that yes/no entitlement on the device. The app has
-> no server and declares no `INTERNET` permission. Declare in-app purchases in Play Console
+> no server of its own. Declare in-app purchases in Play Console
 > as usual; Google processes the purchase data, not the app.
+
+## Weather — `INTERNET` and approximate location (optional feature, off by default)
+
+> The weather feature is optional and off until the user turns it on. When on, the app asks for
+> approximate location (`ACCESS_COARSE_LOCATION`) once, reads one position when the home screen
+> opens and the forecast is out of date, rounds it to about 1 km, and sends that rounded position
+> to MET Norway (the Norwegian Meteorological Institute) over HTTPS to get a forecast. The app
+> declares `INTERNET` for this and uses it for nothing else. It has no server and no accounts, and
+> does not store the position off the device. To show a place name the app asks the device's
+> geocoding service (the Android `Geocoder`, usually provided by Google Play services) for the
+> name of the rounded position, and falls back to an offline list of cities if it is unavailable.
+> The user can instead choose a city by name and grant no location permission. Turning weather
+> off stops all of this.
 
 ## Calendar — `READ_CALENDAR` (normal runtime permission, lower scrutiny)
 

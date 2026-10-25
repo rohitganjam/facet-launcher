@@ -34,10 +34,18 @@ import com.facetlauncher.app.data.model.IconShape
 import com.facetlauncher.app.data.model.LauncherFontOption
 import com.facetlauncher.app.data.model.ListContentMode
 import com.facetlauncher.app.data.model.NotificationBadgeStyle
+import com.facetlauncher.app.data.model.PressureUnit
+import com.facetlauncher.app.data.model.RainUnit
 import com.facetlauncher.app.data.model.SearchBarPosition
 import com.facetlauncher.app.data.model.SystemBarIconStyle
+import com.facetlauncher.app.data.model.TemperatureUnit
 import com.facetlauncher.app.data.model.ThemeMode
 import com.facetlauncher.app.data.model.WallpaperAccentRole
+import com.facetlauncher.app.data.model.WeatherIconStyle
+import com.facetlauncher.app.data.model.WeatherLocationMode
+import com.facetlauncher.app.data.model.WindSpeedUnit
+import com.facetlauncher.app.data.model.WeatherCity
+import com.facetlauncher.app.data.model.weatherCityOrNull
 import javax.inject.Inject
 import com.facetlauncher.app.data.PlacementRepository
 import com.facetlauncher.app.data.model.PlacementTarget
@@ -197,11 +205,29 @@ class ImportBackupUseCase @Inject constructor(
         }
     }
 
+    /** The clock accessory switches and the weather options; the chosen city comes back only when all four of its fields are present. */
+    private suspend fun applyAccessoriesAndWeather(settings: BackupSettings) {
+        with(settingsRepository) {
+            setShowNextAlarm(settings.showNextAlarm)
+            setShowBatteryPercentage(settings.showBatteryPercentage)
+            setShowWeather(settings.showWeather)
+            setTemperatureUnit(settings.temperatureUnit.toEnumOrDefault(TemperatureUnit.AUTO))
+            setWindSpeedUnit(settings.windSpeedUnit.toEnumOrDefault(WindSpeedUnit.AUTO))
+            setRainUnit(settings.rainUnit.toEnumOrDefault(RainUnit.AUTO))
+            setPressureUnit(settings.pressureUnit.toEnumOrDefault(PressureUnit.AUTO))
+            setWeatherLocationMode(settings.weatherLocationMode.toEnumOrDefault(WeatherLocationMode.CURRENT))
+            setWeatherIconStyle(settings.weatherIconStyle.toEnumOrDefault(WeatherIconStyle.MONOCHROME))
+            setSavedWeatherCities(settings.savedWeatherCities.map { WeatherCity(it.name, it.latitude, it.longitude, it.timezone) })
+            setWeatherCity(weatherCityOrNull(settings.weatherCityName, settings.weatherCityLatitude, settings.weatherCityLongitude, settings.weatherCityTimezone))
+        }
+    }
+
     /** The clock's look and placement, and the whole landscape group, which a full restore replaces. */
     private suspend fun applyClockPlacement(settings: BackupSettings) {
         with(settingsRepository) {
             setClockAccentColorOption(settings.clockAccentColorOption.toEnumOrDefault(ClockColorOption.ACCENT_PRIMARY))
             setClockDateStyle(settings.clockDateStyle.toEnumOrDefault(ClockDateStyle.FULL))
+            applyAccessoriesAndWeather(settings)
             setClockAlignment(settings.clockAlignment.toEnumOrDefault(ClockAlignment.LEFT))
             setClockScale(settings.clockScale)
             // A null height means the divider was never dragged; a restore must clear a height set since.

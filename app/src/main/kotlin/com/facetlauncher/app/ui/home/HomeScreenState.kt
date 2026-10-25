@@ -1,5 +1,6 @@
 package com.facetlauncher.app.ui.home
 
+import com.facetlauncher.app.data.model.WeatherIconStyle
 import com.facetlauncher.app.domain.ListAlignment
 import com.facetlauncher.app.domain.ClockPlacement
 import android.appwidget.AppWidgetHostView
@@ -27,6 +28,7 @@ import com.facetlauncher.app.data.model.DockDisplayMode
 import com.facetlauncher.app.data.model.DrawerPresentation
 import com.facetlauncher.app.data.model.Folder
 import com.facetlauncher.app.data.model.FontWeightOption
+import com.facetlauncher.app.data.model.TemperatureUnit
 import com.facetlauncher.app.data.model.LauncherFontOption
 import com.facetlauncher.app.data.model.MediaPlayerState
 import com.facetlauncher.app.data.model.NotificationBadgeStyle
@@ -73,7 +75,7 @@ data class HomeClockWidgetState(
     val minHeightDp: Dp?,
 )
 
-/** What sits with the clock: the calendar strip and the alarm, battery and charging accessories. */
+/** What sits with the clock: the calendar strip and the alarm, battery, charging and weather accessories. */
 @Immutable
 data class HomeCalendarState(
     val events: List<CalendarEvent> = emptyList(),
@@ -82,6 +84,17 @@ data class HomeCalendarState(
     val nextAlarmMillis: Long? = null,
     val batteryPercent: Int? = null,
     val isCharging: Boolean = false,
+    val weather: HomeWeatherState? = null,
+)
+
+/** What the weather accessory shows: the current hour's symbol and temperature, with the unit already resolved. `null` hides it. */
+@Immutable
+data class HomeWeatherState(
+    val symbolCode: String?,
+    val precipitationMm: Double?,
+    val temperatureC: Double,
+    val temperatureUnit: TemperatureUnit,
+    val iconStyle: WeatherIconStyle = WeatherIconStyle.MONOCHROME,
 )
 
 /** The data behind a [HomeItemStyle]: its label colour and weight are options here, resolved to themed values where they are drawn. */
@@ -137,6 +150,7 @@ data class HomeScreenState(
 @Immutable
 data class HomeClockActions(
     val onClockClick: () -> Unit = {},
+    val onWeatherClick: () -> Unit = {},
     val onEditClockStyles: () -> Unit = {},
     val onNavigateToSettings: () -> Unit = {},
     val onNavigateToFacetSettings: () -> Unit = {},

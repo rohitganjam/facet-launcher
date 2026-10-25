@@ -226,4 +226,4 @@ sequenceDiagram
 | Widget host | `LauncherAppWidgetHost.providerChanges: SharedFlow<Int>` merged with a `refreshTrigger` in `ObserveHubStateUseCase` | `HubViewModel` |
 | Work Profile state | `WorkProfileRepository.observeWorkProfiles()` — `callbackFlow` over profile broadcasts mapped through `UserManager.isQuietModeEnabled` | `LauncherViewModel`, `SettingsViewModel` |
 | Private Space | `PrivateSpaceRepository.observePrivateSpaceState()` (sealed `PrivateSpaceState`) + `observePrivateSpaceApps()` (= `observeAppsForProfile(PRIVATE)`) | `PrivateSpaceViewModel`, `DrawerViewModel` |
-| Wallpaper | `WallpaperRepository` via `WallpaperManager` | `FacetCarouselViewModel`, `AppearanceSettingsViewModel`, dock/home settings previews |
+| Wallpaper | `WallpaperRepository` via `WallpaperManager` | `FacetCarouselViewModel`, `AppearanceSettingsViewModel`, dock/home/app-drawer settings previews |

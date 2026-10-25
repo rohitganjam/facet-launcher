@@ -6,13 +6,23 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.Shadow
+import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
+import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import com.facetlauncher.app.data.model.WallpaperAccentRole
+import kotlin.math.cos
+import kotlin.math.sin
 
 // Light/dark pairs — transcribed from design_handoff_minimal_launcher/README.md's Design
 // Tokens table (`### Light`/`### Dark`). Every public color below resolves through
@@ -237,6 +247,36 @@ private fun homeShadow(textColor: Color, blurRadius: Float): Shadow {
 @Composable
 fun homeTextShadow(textColor: Color, blurRadius: Float = CLOCK_SHADOW_BLUR_RADIUS): Shadow =
     homeShadow(textColor, blurRadius)
+
+private const val ICON_SHADOW_SAMPLES = 8
+private const val ICON_SHADOW_SAMPLE_ALPHA = 0.14f
+
+/**
+ * [homeTextShadow]'s drop shadow for an icon: the glyph is drawn again in the shadow tone, offset like the text's shadow
+ * and spread over a ring of samples to soften it, since a canvas has no blur for arbitrary shapes. Use it on clock,
+ * calendar and accessory icons so they read on the wallpaper the way the text beside them does.
+ */
+@Composable
+fun Modifier.homeIconShadow(contentColor: Color, blurRadius: Float = CLOCK_SHADOW_BLUR_RADIUS): Modifier {
+    val shadow = homeShadow(contentColor, blurRadius)
+    val tint = remember(shadow.color) {
+        Paint().apply {
+            colorFilter = ColorFilter.tint(shadow.color.copy(alpha = 1f), BlendMode.SrcIn)
+            alpha = ICON_SHADOW_SAMPLE_ALPHA * shadow.color.alpha / HOME_SHADOW_ALPHA
+        }
+    }
+    return drawWithContent {
+        val spread = shadow.blurRadius / 2f
+        val bounds = Rect(-shadow.blurRadius, -shadow.blurRadius, size.width + shadow.blurRadius, size.height + shadow.blurRadius)
+        repeat(ICON_SHADOW_SAMPLES) { index ->
+            val angle = 2.0 * Math.PI * index / ICON_SHADOW_SAMPLES
+            drawIntoCanvas { it.saveLayer(bounds, tint) }
+            translate(shadow.offset.x + spread * cos(angle).toFloat(), shadow.offset.y + spread * sin(angle).toFloat()) { this@drawWithContent.drawContent() }
+            drawIntoCanvas { it.restore() }
+        }
+        drawContent()
+    }
+}
 
 /**
  * The knocked-out content color for text/icons painted directly on a solid, non-wallpaper panel

@@ -132,6 +132,22 @@ data class BackupSettings(
     val searchSettingsEnabled: Boolean = false,
     val clockAccentColorOption: String = ClockColorOption.ACCENT_PRIMARY.name,
     val clockDateStyle: String = ClockDateStyle.FULL.name,
+    /** The clock accessories and weather options, all defaulted. The chosen city is saved; the current location never is. */
+    val showNextAlarm: Boolean = true,
+    val showBatteryPercentage: Boolean = true,
+    val showWeather: Boolean = false,
+    val temperatureUnit: String = TemperatureUnit.AUTO.name,
+    val windSpeedUnit: String = WindSpeedUnit.AUTO.name,
+    val rainUnit: String = RainUnit.AUTO.name,
+    val pressureUnit: String = PressureUnit.AUTO.name,
+    val weatherLocationMode: String = WeatherLocationMode.CURRENT.name,
+    val weatherIconStyle: String = WeatherIconStyle.MONOCHROME.name,
+    val weatherCityName: String? = null,
+    val weatherCityLatitude: Double? = null,
+    val weatherCityLongitude: Double? = null,
+    val weatherCityTimezone: String? = null,
+    /** Cities kept for quick switching; an older file has none. */
+    val savedWeatherCities: List<BackupWeatherCity> = emptyList(),
     val clockAlignment: String = ClockAlignment.LEFT.name,
     /** `null` until the clock's divider was first dragged. */
     val clockZoneHeightDp: Float? = null,
@@ -162,6 +178,9 @@ data class BackupFacet(
      */
     val clockAccentColorOption: String = ClockColorOption.ACCENT_PRIMARY.name,
     val clockDateStyle: String = ClockDateStyle.FULL.name,
+    val clockShowAlarm: Boolean = true,
+    val clockShowBattery: Boolean = true,
+    val clockShowWeather: Boolean = false,
     val clockAlignment: String = ClockAlignment.LEFT.name,
     val clockZoneHeightDp: Float? = null,
     val clockScale: Float = 0.8f,
@@ -255,3 +274,7 @@ data class BackupWidgetPlacement(
     /** The widget's place in the landscape Hub's flow order, if it had one — defaulted so older backups import as "no order" (landscape then follows portrait's reading order). */
     val landscapeOrder: Int? = null,
 )
+
+/** A saved weather city in a backup file. */
+@Serializable
+data class BackupWeatherCity(val name: String, val latitude: Double, val longitude: Double, val timezone: String)
