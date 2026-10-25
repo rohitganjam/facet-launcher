@@ -130,7 +130,7 @@ names still load (`DrawerGridDensity.fromStored`) and map to the nearest density
 
 `AppDrawerSettingsScreen` opens with `AppDrawerSettingsPreview` (`ui/settings/`): the real `AppDrawerScreen` on eight sample
 apps (null icons, so the tile placeholder; labels from `R.array.drawer_preview_app_labels`) and one sample folder, in a
-350dp card over the system wallpaper (`AppDrawerSettingsViewModel.homeWallpaper`, so the opacity slider shows). It is fed the
+380dp card over the system wallpaper (`AppDrawerSettingsViewModel.homeWallpaper`, so the opacity slider shows). It is fed the
 current `LauncherSettings`, so presentation, grid density, list size, icons, labels, folders in drawer, recently installed,
 search bar position and opacity all show as they change. `drawerPreviewSample` builds the sample (two apps installed an hour
 ago for the "Recently installed" row). The card is inert (an empty `pointerInput` overlay takes the touches, so the settings
