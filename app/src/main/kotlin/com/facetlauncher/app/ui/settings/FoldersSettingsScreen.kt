@@ -37,7 +37,7 @@ import com.facetlauncher.app.R
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.facetlauncher.app.data.model.Folder
-import com.facetlauncher.app.ui.components.BackButton
+import com.facetlauncher.app.ui.components.StickyHeaderScrollColumn
 import com.facetlauncher.app.ui.components.CardDivider
 import com.facetlauncher.app.ui.components.ConfirmDialog
 import com.facetlauncher.app.ui.components.RenameDialog
@@ -94,29 +94,20 @@ internal fun FoldersSettingsContent(
     var pendingDeleteFolder by remember { mutableStateOf<Folder?>(null) }
     var showCreateDialog by remember { mutableStateOf(false) }
 
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .background(SurfaceContainer)
-            .testTag("folders_settings_screen")
-            .windowInsetsPadding(WindowInsets.systemBars)
-            .padding(horizontal = 24.dp),
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(top = 24.dp, bottom = 16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            BackButton(onClick = onBack)
-            Text(text = stringResource(R.string.settings_folders_title), style = MaterialTheme.typography.headlineSmall, color = Ink, modifier = Modifier.weight(1f))
+    StickyHeaderScrollColumn(
+        title = stringResource(R.string.settings_folders_title),
+        onBack = onBack,
+        testTag = "folders_settings_screen",
+        modifier = modifier,
+        headerAction = {
             TextActionButton(
                 text = stringResource(R.string.folders_settings_create_folder),
                 onClick = { showCreateDialog = true },
                 leadingIcon = Icons.Default.Add,
                 modifier = Modifier.testTag("folders_settings_create_button"),
             )
-        }
-
+        },
+    ) {
         if (uiState.folders.isEmpty()) {
             Text(
                 text = stringResource(R.string.app_picker_no_folders_yet),

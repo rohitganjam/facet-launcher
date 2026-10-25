@@ -27,7 +27,8 @@ import com.facetlauncher.app.ui.theme.SurfaceContainer
 
 /**
  * A settings screen of plain content in a scrolling [Column] under a pinned back button and [title] (via [StickyHeaderLayout]), so
- * the header stays put while the content scrolls beneath it, like every other settings screen. [testTag] goes on the scrolling column.
+ * the header stays put while the content scrolls beneath it, like every other settings screen. [testTag] goes on the scrolling column;
+ * [headerAction] sits at the end of the header row.
  */
 @Composable
 fun StickyHeaderScrollColumn(
@@ -36,6 +37,8 @@ fun StickyHeaderScrollColumn(
     testTag: String,
     modifier: Modifier = Modifier,
     verticalArrangement: Arrangement.Vertical = Arrangement.Top,
+    /** An action at the end of the header row, such as a create button. */
+    headerAction: (@Composable () -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     StickyHeaderLayout(
@@ -52,7 +55,8 @@ fun StickyHeaderScrollColumn(
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 BackButton(onClick = onBack)
-                Text(text = title, style = MaterialTheme.typography.headlineSmall, color = Ink)
+                Text(text = title, style = MaterialTheme.typography.headlineSmall, color = Ink, modifier = Modifier.weight(1f))
+                headerAction?.invoke()
             }
         },
         content = { headerHeight ->

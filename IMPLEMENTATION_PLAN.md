@@ -4339,4 +4339,4 @@ Design agreed in chat (mocks: accessory bar, weather sheet, Clock accessories sc
 
 ## Pinned headers on the older settings screens (direct request)
 
-- [x] `StickyHeaderScrollColumn` (`ui/components/`): a scrolling settings column under a pinned back button and title, on `StickyHeaderLayout`. Clock accessories, Units and location, Weather location and Notifications now use it (their header used to scroll away). Each has a test that the back button is outside the scrolling content. The two access-explanation screens already scroll only their body; Folders has no scrolling list (a separate gap).
+- [x] `StickyHeaderScrollColumn` (`ui/components/`): a scrolling settings column under a pinned back button and title, on `StickyHeaderLayout`. Clock accessories, Units and location, Weather location and Notifications now use it (their header used to scroll away). Each has a test that the back button is outside the scrolling content. The two access-explanation screens already scroll only their body; Folders now scrolls too, with its Create button in the pinned header (`headerAction`).

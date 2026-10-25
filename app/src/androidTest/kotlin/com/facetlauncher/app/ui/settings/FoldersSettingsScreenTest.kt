@@ -1,6 +1,11 @@
 package com.facetlauncher.app.ui.settings
 
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.hasAnyAncestor
+import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -36,6 +41,30 @@ class FoldersSettingsScreenTest {
                 )
             }
         }
+    }
+
+    @Test
+    fun theHeaderIsPinnedOutsideTheScrollingContent() {
+        // Given the screen
+        setContent()
+
+        // Then the back button and the create button are not inside the scrolling content, so they stay pinned
+        composeRule.onAllNodes(hasTestTag("back_button") and hasAnyAncestor(hasTestTag("folders_settings_screen"))).assertCountEquals(0)
+        composeRule.onAllNodes(hasTestTag("folders_settings_create_button") and hasAnyAncestor(hasTestTag("folders_settings_screen"))).assertCountEquals(0)
+        composeRule.onNodeWithTag("folders_settings_create_button").assertExists()
+    }
+
+    @Test
+    fun aLongFolderListScrollsToTheLastFolder() {
+        // Given far more folders than fit on screen
+        val many = (1L..40L).map { Folder(id = it, name = "Folder $it", apps = listOf(app)) }
+        setContent(folders = many)
+
+        // When scrolling to the last one
+        composeRule.onNodeWithTag("folder_row_40").performScrollTo()
+
+        // Then it is reachable
+        composeRule.onNodeWithTag("folder_row_40").assertIsDisplayed()
     }
 
     @Test
