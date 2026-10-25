@@ -1863,47 +1863,37 @@ private fun DrawerGridTile(
     modifier: Modifier = Modifier,
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
-    // NOT restructured to move `modifier` onto this Box like the other ModifierNotUsedAtRoot
-    // fixes in this file — `modifier` carries DrawerGridContent's explicit per-row height, and
-    // that height has to land on the SAME node as the clickable/testTag (this Column) so the
-    // touch target and the grid's own row-height math still span the real rendered tile size.
-    // Moving it to the Box left the Column content-intrinsic height again — caught by
-    // gridDensityControlsTileHeight, which guards against tile height going back to being
-    // row-count-independent. Fills the cell width so the icon centers in its column and the
-    // whole cell is tappable.
-    Box {
-        Column(
-            modifier = modifier
-                .fillMaxWidth()
-                .longPressReleaseClickable(onClick = onClick, onLongPress = { menuExpanded = true })
-                .testTag("drawer_grid_tile_${app.packageName}"),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            // The tile is now given an explicit row height (see DrawerGridContent's row
-            // computation) that can be taller than the icon+label's own intrinsic height — center
-            // them within it instead of letting them sit pinned to the top.
-            verticalArrangement = Arrangement.Center,
-        ) {
-            AppIcon(
-                icon = app.icon,
-                size = AppIconSize.TILE,
-                contentDescription = null,
-                notificationCount = badgeCount,
-                badgeStyle = badgeStyle,
-                isWorkApp = app.profile == AppProfile.WORK,
-                isOtherProfileApp = app.profile == AppProfile.OTHER,
+    // `modifier` carries DrawerGridContent's explicit per-row height; fillMaxWidth centres the icon in its cell.
+    // The context menu is a sheet in its own window, so it takes no space inside this Column.
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .longPressReleaseClickable(onClick = onClick, onLongPress = { menuExpanded = true })
+            .testTag("drawer_grid_tile_${app.packageName}"),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        // The row height can exceed the icon+label's own height — center them within it.
+        verticalArrangement = Arrangement.Center,
+    ) {
+        AppIcon(
+            icon = app.icon,
+            size = AppIconSize.TILE,
+            contentDescription = null,
+            notificationCount = badgeCount,
+            badgeStyle = badgeStyle,
+            isWorkApp = app.profile == AppProfile.WORK,
+            isOtherProfileApp = app.profile == AppProfile.OTHER,
+        )
+        if (showLabel) {
+            Spacer(modifier = Modifier.height(7.dp))
+            Text(
+                text = app.label,
+                style = MaterialTheme.typography.labelSmall.copy(fontWeight = labelFontWeight),
+                color = DrawerAppTextColor,
+                textAlign = TextAlign.Center,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.widthIn(max = 56.dp),
             )
-            if (showLabel) {
-                Spacer(modifier = Modifier.height(7.dp))
-                Text(
-                    text = app.label,
-                    style = MaterialTheme.typography.labelSmall.copy(fontWeight = labelFontWeight),
-                    color = DrawerAppTextColor,
-                    textAlign = TextAlign.Center,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.widthIn(max = 56.dp),
-                )
-            }
         }
         AppContextMenu(
             app = app,
@@ -1941,29 +1931,27 @@ private fun DrawerFolderTile(
 ) {
     var sheetOpen by remember { mutableStateOf(false) }
     var menuExpanded by remember { mutableStateOf(false) }
-    // NOT restructured — see DrawerGridTile's identical comment.
-    Box {
-        Column(
-            modifier = modifier
-                .fillMaxWidth()
-                .longPressReleaseClickable(onClick = { sheetOpen = true }, onLongPress = { menuExpanded = true })
-                .testTag("drawer_grid_folder_tile_${folder.id}"),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center,
-        ) {
-            FolderTileGlyph(folder = folder, modifier = Modifier.size(AppIconSize.TILE))
-            if (showLabel) {
-                Spacer(modifier = Modifier.height(7.dp))
-                Text(
-                    text = folder.name,
-                    style = MaterialTheme.typography.labelSmall.copy(fontWeight = labelFontWeight),
-                    color = DrawerAppTextColor,
-                    textAlign = TextAlign.Center,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.widthIn(max = 56.dp),
-                )
-            }
+    // See DrawerGridTile: the sheets are separate windows, so they sit inside the Column.
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .longPressReleaseClickable(onClick = { sheetOpen = true }, onLongPress = { menuExpanded = true })
+            .testTag("drawer_grid_folder_tile_${folder.id}"),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+    ) {
+        FolderTileGlyph(folder = folder, modifier = Modifier.size(AppIconSize.TILE))
+        if (showLabel) {
+            Spacer(modifier = Modifier.height(7.dp))
+            Text(
+                text = folder.name,
+                style = MaterialTheme.typography.labelSmall.copy(fontWeight = labelFontWeight),
+                color = DrawerAppTextColor,
+                textAlign = TextAlign.Center,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.widthIn(max = 56.dp),
+            )
         }
         if (sheetOpen) {
             FolderContentsSheet(
