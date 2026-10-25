@@ -15,8 +15,25 @@ Compose:
   ComposableNaming: { active: true }
   ComposableNestingDepth: { active: true }
   ComposableParamOrder: { active: true }
-  # LocalHomeTagPrefix: lets a scaled preview of Home keep its test tags apart from the real Home's.
-  CompositionLocalAllowlist: { active: true, allowedCompositionLocals: ['LocalHomeTagPrefix', 'LocalClockWidgetHost'] }
+  # LocalHomeTagPrefix: lets a scaled preview of Home keep its test tags apart from the real Home's. The rest are the app-wide
+  # theme and window locals (theme/accent/icon settings, system bar state, the Home-press event and swipe gate), each provided once at
+  # the root so a leaf composable never takes them as a parameter.
+  CompositionLocalAllowlist:
+    active: true
+    allowedCompositionLocals:
+      - LocalHomeTagPrefix
+      - LocalClockWidgetHost
+      - LocalHomePressedEvent
+      - LocalHomeSwipeGate
+      - LocalSystemBarsState
+      - LocalLightStatusBarIcons
+      - LocalDynamicColorRefreshSignal
+      - LocalAccentFromSystem
+      - LocalIconRenderMode
+      - LocalIconShape
+      - LocalIsDarkTheme
+      - LocalWallpaperAccentRole
+      - LocalCustomAccentSwatch
   CompositionLocalNaming: { active: true }
   ConditionHoist: { active: true }
   ContentEmitterReturningValues: { active: true }
@@ -50,6 +67,8 @@ Compose:
   StateParam: { active: true }
   UnnecessaryComposable: { active: true }
   UnnecessaryLaunchedEffect: { active: true }
+  # Kept on: `compose-stability.conf` makes Compose treat List, Set and Map as stable, but a collection mutated in place would still go
+  # unnoticed, so a new List parameter should be flagged. The existing ones are in the baseline, to be worked off one at a time.
   UnstableCollections: { active: true }
   VarsWithoutStateBacking: { active: true }
   ViewModelForwarding: { active: true }
@@ -76,12 +95,23 @@ potential-bugs:
 complexity:
   active: true
   LongMethod: { active: true }
-  TooManyFunctions: { active: true }
+  # Private helpers don't count, and the limit is 20 (not 11): a screen file or class that reads well can hold that many. The data
+  # repositories and `Converters` are exempt: one setter per setting or column is their design (SettingsRepository has ~80).
+  TooManyFunctions:
+    active: true
+    ignorePrivate: true
+    allowedFunctionsPerFile: 20
+    allowedFunctionsPerClass: 20
+    allowedFunctionsPerInterface: 20
+    allowedFunctionsPerObject: 20
+    allowedFunctionsPerEnum: 20
+    excludes: ['**/data/*Repository.kt', '**/data/local/Converters.kt']
   CyclomaticComplexMethod: { active: true }
   ComplexCondition: { active: true }
 style:
   active: true
-  ReturnCount: { active: true }
+  # Early-return guard clauses at the top of a function are a readable pattern; only returns past the guards count.
+  ReturnCount: { active: true, excludeGuardClauses: true }
   LoopWithTooManyJumpStatements: { active: true }
   UnusedParameter: { active: true }
   MaxLineLength: { active: false }

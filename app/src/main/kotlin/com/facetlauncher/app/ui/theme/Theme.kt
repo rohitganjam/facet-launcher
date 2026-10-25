@@ -1,3 +1,5 @@
+@file:Suppress("Material2") // RippleAlpha is from material-ripple, the library Material 3 itself builds on; there is no M3 copy
+
 package com.facetlauncher.app.ui.theme
 
 import androidx.compose.foundation.isSystemInDarkTheme
