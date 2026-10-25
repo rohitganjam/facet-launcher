@@ -43,6 +43,8 @@ import com.facetlauncher.app.ui.settings.NotificationAccessExplanationScreen
 import com.facetlauncher.app.ui.settings.ClockAccessoriesNavigation
 import com.facetlauncher.app.ui.settings.ClockAccessoriesScreen
 import com.facetlauncher.app.ui.settings.NotificationSettingsScreen
+import com.facetlauncher.app.ui.settings.UnitsAndLocationNavigation
+import com.facetlauncher.app.ui.settings.UnitsAndLocationScreen
 import com.facetlauncher.app.ui.settings.WeatherLocationScreen
 import com.facetlauncher.app.ui.settings.PermissionsScreen
 import com.facetlauncher.app.ui.settings.SettingsScreen
@@ -72,6 +74,7 @@ object FacetDestinations {
     const val FOLDER_APP_PICKER = "folderAppPicker/{folderId}"
     const val NOTIFICATION_ACCESS_EXPLANATION = "notificationAccessExplanation"
     const val CLOCK_ACCESSORIES = "clockAccessories?facetId={facetId}"
+    const val UNITS_AND_LOCATION = "unitsAndLocation"
     const val WEATHER_LOCATION = "weatherLocation"
     const val CLOCK_STYLE_GALLERY = "clockStyleGallery"
     const val FACET_CLOCK_STYLE_GALLERY = "facetClockStyleGallery/{facetId}"
@@ -123,7 +126,7 @@ object FacetDestinations {
     fun calendarSettings(facetId: Long? = null) =
         if (facetId != null && facetId != NO_ACTIVE_FACET_ID) "calendarSettings?facetId=$facetId" else "calendarSettings"
 
-    /** Omitting [facetId] (or passing [NO_ACTIVE_FACET_ID]) opens the launcher-wide Clock accessories (the only one with units and location). */
+    /** Omitting [facetId] (or passing [NO_ACTIVE_FACET_ID]) opens the launcher-wide Clock accessories. */
     fun clockAccessories(facetId: Long? = null) =
         if (facetId != null && facetId != NO_ACTIVE_FACET_ID) "clockAccessories?facetId=$facetId" else "clockAccessories"
 }
@@ -193,7 +196,7 @@ fun FacetNavHost(
                 onNavigateToNotificationAccessExplanation = {
                     navController.navigate(FacetDestinations.NOTIFICATION_ACCESS_EXPLANATION)
                 },
-                onNavigateToClockAccessories = { navController.navigate(FacetDestinations.clockAccessories()) },
+                onNavigateToUnitsAndLocation = { navController.navigate(FacetDestinations.UNITS_AND_LOCATION) },
                 onNavigateToPermissions = { navController.navigate(FacetDestinations.PERMISSIONS) },
                 onNavigateToClockStyleGallery = { facetId ->
                     val dest = if (facetId != null) FacetDestinations.facetClockStyleGallery(facetId) else FacetDestinations.CLOCK_STYLE_GALLERY
@@ -262,9 +265,16 @@ fun FacetNavHost(
                         val dest = if (facetId != NO_ACTIVE_FACET_ID) FacetDestinations.facetClockStyleGallery(facetId) else FacetDestinations.CLOCK_STYLE_GALLERY
                         navController.navigate(dest)
                     },
+                    onOpenUnitsAndLocation = { navController.navigate(FacetDestinations.UNITS_AND_LOCATION) },
+                ),
+            )
+        }
+        settingsComposable(FacetDestinations.UNITS_AND_LOCATION) {
+            UnitsAndLocationScreen(
+                navigation = UnitsAndLocationNavigation(
+                    onBack = { navController.popBackStackSafely() },
                     onOpenLocation = { navController.navigate(FacetDestinations.WEATHER_LOCATION) },
                     onOpenPermissions = { navController.navigate(FacetDestinations.PERMISSIONS) },
-                    onOpenDefaults = { navController.navigate(FacetDestinations.clockAccessories()) },
                 ),
             )
         }

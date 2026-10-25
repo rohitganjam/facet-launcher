@@ -4325,3 +4325,14 @@ Design agreed in chat (mocks: accessory bar, weather sheet, Clock accessories sc
 - [x] Clock accessories screen: the Icons card (with the icon preview row) sits above Units and Location; a facet shows it dimmed while inheriting and gets a *Weather defaults* link to the launcher-default screen instead of Units and Location.
 - [x] The *Clock accessories* row moved from Appearance to the Clock style screen (default and facet).
 - Tests: `ClockAccessoriesUiStateTest`, `ClockAccessorySwitchesTest`, `BackupMappingTest`, `WeatherBackupTest`, `WeatherSettingsTest`, `FacetDatabaseMigrationTest.migration33To34…`, `ClockAccessoriesScreenTest`, `ClockStyleGalleryScreenTest`.
+
+## Units and location screen (direct request)
+
+- [x] Units and Location left the Clock accessories screen for their own `UnitsAndLocationScreen` (route `unitsAndLocation`, `UnitsAndLocationViewModel`), linked from the default screen and from every facet's, and from the weather sheet's place line. The note that they apply to every facet sits at its top. The facet note and the interim *Weather defaults* link are gone.
+- [x] Hour tile template: accessories follow the clock alignment (left, centre, right) and, right aligned, put each icon after its text (`iconAtEnd` on the three accessory items). Test: `ClockDisplayTest`.
+- Tests: `UnitsAndLocationViewModelTest`, `UnitsAndLocationScreenTest`, `ClockAccessoriesUiStateTest`, `ClockAccessoriesScreenTest`.
+
+## Weather units on every number (direct request)
+
+- [x] The temperature carries its unit letter everywhere (accessory row, sheet header, high and low, hourly strip, outlook): "21°C" or "70°F" (`temperatureText`, `weather_temperature_format` with the untranslated `weather_temperature_unit_*` letters). The hourly strip's rain and wind numbers carry theirs too ("0.4 mm", "11 km/h") in a wider column; humidity, cloud cover, pressure and the wind and rain totals already did. The Clock accessories preview sample follows the chosen unit.
+- Tests: `WeatherUnitsTextTest`, `ClockAccessoriesScreenTest`.

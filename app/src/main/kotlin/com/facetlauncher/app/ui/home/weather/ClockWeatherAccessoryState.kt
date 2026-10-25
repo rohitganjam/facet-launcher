@@ -12,7 +12,7 @@ import com.facetlauncher.app.domain.isNightSymbol
 import com.facetlauncher.app.ui.home.HomeWeatherState
 import com.facetlauncher.app.ui.home.clock.ClockWeatherAccessory
 
-/** The clock's weather accessory for [weather], or `null` for none: a picture and "27°", with the spoken text and the tap. */
+/** The clock's weather accessory for [weather], or `null` for none: a picture and "27°C", with the spoken text and the tap. */
 @Composable
 fun rememberClockWeatherAccessory(weather: HomeWeatherState?, onClick: () -> Unit): ClockWeatherAccessory? {
     val condition = weather?.let { conditionOf(it.symbolCode, it.precipitationMm) }

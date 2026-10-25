@@ -894,7 +894,7 @@
     <string name="weather_condition_sleet">Aguanieve</string>
     <string name="weather_condition_snow">Nieve</string>
     <string name="weather_condition_thunderstorm">Tormenta</string>
-    <string name="weather_temperature_format">%1$d°</string>
+    <string name="weather_temperature_format">%1$d°%2$s</string>
     <string name="weather_accessory_description">%1$s, %2$s. Abre los detalles del tiempo</string>
     <string name="weather_accessory_description_no_condition">%1$s. Abre los detalles del tiempo</string>
     <string name="weather_sheet_now">Ahora</string>
@@ -949,8 +949,7 @@
     <string name="clock_accessories_unit_rain">Lluvia</string>
     <string name="clock_accessories_unit_pressure">Presión</string>
     <string name="clock_accessories_location">Ubicación</string>
-    <string name="clock_accessories_global_note">Las unidades y la ubicación se aplican a todas las facetas.</string>
-    <string name="clock_accessories_facet_note">Las unidades y la ubicación están en los ajustes del launcher.</string>
+    <string name="units_and_location_note">Las unidades y la ubicación se aplican a todas las facetas.</string>
     <string name="weather_unit_auto">Automático</string>
     <string name="weather_unit_option_kmh">Kilómetros por hora (km/h)</string>
     <string name="weather_unit_option_mph">Millas por hora (mph)</string>
@@ -972,8 +971,8 @@
     <string name="weather_location_none">Ninguna aún</string>
     <string name="weather_permission_location_subtitle">Necesario para mostrar el tiempo de donde estás. Facet solo lee una posición aproximada, y solo mientras Home está abierto.</string>
     <string name="clock_accessories_icons">Iconos</string>
-    <string name="clock_accessories_defaults_title">Ajustes del tiempo por defecto</string>
-    <string name="clock_accessories_defaults_subtitle">Unidades y ubicación, para todas las facetas</string>
+    <string name="units_and_location_title">Unidades y ubicación</string>
+    <string name="units_and_location_subtitle">Se aplica a todas las facetas</string>
     <string name="weather_icon_style">Iconos del tiempo</string>
     <string name="weather_icon_style_monochrome">Monocromo</string>
     <string name="weather_icon_style_colored">En color</string>

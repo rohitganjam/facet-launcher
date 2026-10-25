@@ -96,8 +96,8 @@ fun HomeDrawerRoute(
     onNavigateToClockStyleGallery: (Long?) -> Unit = { _ -> },
     /** Opens the screen that explains and grants notification access, from an app menu's "Enable notifications". */
     onNavigateToNotificationAccessExplanation: () -> Unit = {},
-    /** Opens the Clock accessories settings (where the weather location is chosen), from the weather sheet. */
-    onNavigateToClockAccessories: () -> Unit = {},
+    /** Opens the Units and location settings (where the weather location is chosen), from the weather sheet. */
+    onNavigateToUnitsAndLocation: () -> Unit = {},
     onNavigateToPermissions: () -> Unit = {},
     modifier: Modifier = Modifier,
     homeViewModel: HomeViewModel = hiltViewModel(),
@@ -437,7 +437,7 @@ fun HomeDrawerRoute(
                 onDismiss = { overlays.showWeatherSheet = false },
                 onChooseCity = {
                     overlays.showWeatherSheet = false
-                    onNavigateToClockAccessories()
+                    onNavigateToUnitsAndLocation()
                 },
                 onOpenPermissions = {
                     overlays.showWeatherSheet = false

@@ -34,12 +34,8 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.facetlauncher.app.R
 import com.facetlauncher.app.data.model.LauncherSettings
-import com.facetlauncher.app.data.model.PressureUnit
-import com.facetlauncher.app.data.model.RainUnit
-import com.facetlauncher.app.data.model.TemperatureUnit
 import com.facetlauncher.app.data.model.WeatherIconStyle
 import com.facetlauncher.app.data.model.WeatherLocationMode
-import com.facetlauncher.app.data.model.WindSpeedUnit
 import com.facetlauncher.app.ui.components.BackButton
 import com.facetlauncher.app.ui.components.CardDivider
 import com.facetlauncher.app.ui.components.LabeledDropdownRow
@@ -52,21 +48,18 @@ import com.facetlauncher.app.ui.theme.Ink
 import com.facetlauncher.app.ui.theme.Muted
 import com.facetlauncher.app.ui.theme.SurfaceContainer
 
-/** What this screen does beyond editing: open the clock style (which owns a facet's Inherit/Override switch) and the location screen. */
+/** What this screen does beyond editing: open the clock style (which owns a facet's Inherit/Override switch) and the units and location screen. */
 data class ClockAccessoriesNavigation(
     val onBack: () -> Unit,
     val onOpenClockStyle: () -> Unit,
-    val onOpenLocation: () -> Unit,
-    val onOpenPermissions: () -> Unit,
-    /** From a facet: the launcher-default Clock accessories screen, where the units and the location live. */
-    val onOpenDefaults: () -> Unit = {},
+    val onOpenUnitsAndLocation: () -> Unit = {},
 )
 
 /**
  * "Clock accessories": the next alarm, the battery percentage and the weather next to the clock. Cards: the alarm and
- * battery switches, the weather switch, Icons (while weather is on), then Units and Location (launcher-wide, so only on the default
- * screen and only while weather is on somewhere). Scoped to a facet it shows the switches and Icons, which apply while that facet
- * overrides the clock, and a link to the defaults for the rest.
+ * battery switches, the weather switch, Icons (while weather is on), then a link to Units and location (launcher-wide, so the same
+ * screen for the default and for every facet, shown while weather is on somewhere). Scoped to a facet the switches and Icons
+ * apply while that facet overrides the clock.
  */
 @Composable
 fun ClockAccessoriesScreen(
@@ -94,10 +87,6 @@ fun ClockAccessoriesScreen(
                 val needsPermission = enabled && uiState.settings.weatherLocationMode == WeatherLocationMode.CURRENT && !uiState.locationPermissionGranted
                 if (needsPermission) requestLocation.launch(Manifest.permission.ACCESS_COARSE_LOCATION)
             },
-            onTemperatureUnit = viewModel::setTemperatureUnit,
-            onWindSpeedUnit = viewModel::setWindSpeedUnit,
-            onRainUnit = viewModel::setRainUnit,
-            onPressureUnit = viewModel::setPressureUnit,
             onIconStyle = viewModel::setWeatherIconStyle,
         ),
         modifier = modifier,
@@ -108,10 +97,6 @@ data class ClockAccessoriesActions(
     val onShowAlarm: (Boolean) -> Unit = {},
     val onShowBattery: (Boolean) -> Unit = {},
     val onShowWeather: (Boolean) -> Unit = {},
-    val onTemperatureUnit: (TemperatureUnit) -> Unit = {},
-    val onWindSpeedUnit: (WindSpeedUnit) -> Unit = {},
-    val onRainUnit: (RainUnit) -> Unit = {},
-    val onPressureUnit: (PressureUnit) -> Unit = {},
     val onIconStyle: (WeatherIconStyle) -> Unit = {},
 )
 
@@ -144,15 +129,7 @@ internal fun ClockAccessoriesContent(
         if (uiState.isInheriting) InheritingNote(navigation.onOpenClockStyle)
         SwitchesCards(uiState, actions)
         if (uiState.showIconStyleCard) IconStyleCard(uiState, actions)
-        if (uiState.showGlobalCards) {
-            Text(stringResource(R.string.clock_accessories_global_note), style = MaterialTheme.typography.bodyMedium, color = Muted, modifier = Modifier.padding(horizontal = 4.dp))
-            UnitsCard(uiState.settings, actions)
-            LocationCard(uiState, navigation.onOpenLocation, navigation.onOpenPermissions)
-        }
-        if (uiState.showDefaultsLink) WeatherDefaultsCard(navigation.onOpenDefaults)
-        if (uiState.isFacetScoped && uiState.weatherEnabledAnywhere) {
-            Text(stringResource(R.string.clock_accessories_facet_note), style = MaterialTheme.typography.bodyMedium, color = Muted, modifier = Modifier.padding(horizontal = 4.dp))
-        }
+        if (uiState.showUnitsAndLocationLink) UnitsAndLocationCard(navigation.onOpenUnitsAndLocation)
     }
 }
 
@@ -178,49 +155,6 @@ private fun SwitchesCards(uiState: ClockAccessoriesUiState, actions: ClockAccess
     }
 }
 
-/** Card three: how weather numbers are written. Global, never per facet. */
-@Composable
-private fun UnitsCard(settings: LauncherSettings, actions: ClockAccessoriesActions) {
-    SettingsSectionHeader(stringResource(R.string.clock_accessories_units))
-    SettingsCard {
-        LabeledDropdownRow(
-            title = stringResource(R.string.clock_accessories_unit_temperature),
-            options = TemperatureUnit.entries,
-            selected = settings.temperatureUnit,
-            label = { stringResource(temperatureUnitLabel(it)) },
-            onSelect = actions.onTemperatureUnit,
-            testTag = "unit_temperature_row",
-        )
-        CardDivider()
-        LabeledDropdownRow(
-            title = stringResource(R.string.clock_accessories_unit_wind),
-            options = WindSpeedUnit.entries,
-            selected = settings.windSpeedUnit,
-            label = { stringResource(windSpeedUnitLabel(it)) },
-            onSelect = actions.onWindSpeedUnit,
-            testTag = "unit_wind_row",
-        )
-        CardDivider()
-        LabeledDropdownRow(
-            title = stringResource(R.string.clock_accessories_unit_rain),
-            options = RainUnit.entries,
-            selected = settings.rainUnit,
-            label = { stringResource(rainUnitLabel(it)) },
-            onSelect = actions.onRainUnit,
-            testTag = "unit_rain_row",
-        )
-        CardDivider()
-        LabeledDropdownRow(
-            title = stringResource(R.string.clock_accessories_unit_pressure),
-            options = PressureUnit.entries,
-            selected = settings.pressureUnit,
-            label = { stringResource(pressureUnitLabel(it)) },
-            onSelect = actions.onPressureUnit,
-            testTag = "unit_pressure_row",
-        )
-    }
-}
-
 /** Monochrome or coloured weather pictures, with every picture shown in the chosen style. A facet's own while it overrides the clock. */
 @Composable
 private fun IconStyleCard(uiState: ClockAccessoriesUiState, actions: ClockAccessoriesActions) {
@@ -240,41 +174,17 @@ private fun IconStyleCard(uiState: ClockAccessoriesUiState, actions: ClockAccess
     }
 }
 
-/** From a facet: a link to the launcher defaults, where the units and the weather location are set for every facet. */
+/** A link to the launcher-wide units and weather location, from the default screen and from every facet. */
 @Composable
-private fun WeatherDefaultsCard(onOpenDefaults: () -> Unit) {
+private fun UnitsAndLocationCard(onOpenUnitsAndLocation: () -> Unit) {
     SettingsCard(fullBleedRows = true) {
         ClickableRow(
-            title = stringResource(R.string.clock_accessories_defaults_title),
-            subtitle = stringResource(R.string.clock_accessories_defaults_subtitle),
-            onClick = onOpenDefaults,
-            testTag = "accessory_weather_defaults_row",
+            title = stringResource(R.string.units_and_location_title),
+            subtitle = stringResource(R.string.units_and_location_subtitle),
+            onClick = onOpenUnitsAndLocation,
+            testTag = "accessory_units_and_location_row",
             trailing = { NavigationChevron() },
         )
-    }
-}
-
-/** Card five: a link to where the weather is for, and the permission it needs while it follows the phone. Global, never per facet. */
-@Composable
-private fun LocationCard(uiState: ClockAccessoriesUiState, onOpenLocation: () -> Unit, onOpenPermissions: () -> Unit) {
-    val settings = uiState.settings
-    SettingsSectionHeader(stringResource(R.string.clock_accessories_location))
-    SettingsCard(fullBleedRows = true) {
-        ClickableRow(
-            title = stringResource(R.string.weather_location_title),
-            subtitle = if (settings.weatherLocationMode == WeatherLocationMode.CITY) {
-                settings.weatherCity?.name ?: stringResource(R.string.weather_location_none)
-            } else {
-                stringResource(R.string.weather_location_current_short)
-            },
-            onClick = onOpenLocation,
-            testTag = "accessory_location_row",
-            trailing = { NavigationChevron() },
-        )
-        if (settings.weatherLocationMode == WeatherLocationMode.CURRENT) {
-            CardDivider()
-            WeatherLocationPermissionRow(uiState.locationPermissionGranted, onOpenPermissions)
-        }
     }
 }
 
@@ -285,7 +195,7 @@ private fun ClockAccessoriesScreenPreview() {
     FacetLauncherTheme {
         ClockAccessoriesContent(
             uiState = ClockAccessoriesUiState(settings = LauncherSettings(showWeather = true), weatherEnabledAnywhere = true, locationPermissionGranted = true),
-            navigation = ClockAccessoriesNavigation(onBack = {}, onOpenClockStyle = {}, onOpenLocation = {}, onOpenPermissions = {}),
+            navigation = ClockAccessoriesNavigation(onBack = {}, onOpenClockStyle = {}),
             actions = ClockAccessoriesActions(),
         )
     }

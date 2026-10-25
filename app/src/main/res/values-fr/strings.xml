@@ -894,7 +894,7 @@
     <string name="weather_condition_sleet">Neige fondue</string>
     <string name="weather_condition_snow">Neige</string>
     <string name="weather_condition_thunderstorm">Orage</string>
-    <string name="weather_temperature_format">%1$d°</string>
+    <string name="weather_temperature_format">%1$d°%2$s</string>
     <string name="weather_accessory_description">%1$s, %2$s. Ouvre les détails météo</string>
     <string name="weather_accessory_description_no_condition">%1$s. Ouvre les détails météo</string>
     <string name="weather_sheet_now">Maintenant</string>
@@ -949,8 +949,7 @@
     <string name="clock_accessories_unit_rain">Pluie</string>
     <string name="clock_accessories_unit_pressure">Pression</string>
     <string name="clock_accessories_location">Position</string>
-    <string name="clock_accessories_global_note">Les unités et la position s\'appliquent à toutes les facettes.</string>
-    <string name="clock_accessories_facet_note">Les unités et la position se règlent dans les paramètres du launcher.</string>
+    <string name="units_and_location_note">Les unités et la position s\'appliquent à toutes les facettes.</string>
     <string name="weather_unit_auto">Automatique</string>
     <string name="weather_unit_option_kmh">Kilomètres par heure (km/h)</string>
     <string name="weather_unit_option_mph">Miles par heure (mph)</string>
@@ -972,8 +971,8 @@
     <string name="weather_location_none">Aucune pour l\'instant</string>
     <string name="weather_permission_location_subtitle">Nécessaire pour afficher la météo là où vous êtes. Facet ne lit qu\'une position approximative, et seulement quand Home est ouvert.</string>
     <string name="clock_accessories_icons">Icônes</string>
-    <string name="clock_accessories_defaults_title">Réglages météo par défaut</string>
-    <string name="clock_accessories_defaults_subtitle">Unités et lieu, pour toutes les facettes</string>
+    <string name="units_and_location_title">Unités et position</string>
+    <string name="units_and_location_subtitle">S\'applique à toutes les facettes</string>
     <string name="weather_icon_style">Icônes météo</string>
     <string name="weather_icon_style_monochrome">Monochrome</string>
     <string name="weather_icon_style_colored">En couleur</string>

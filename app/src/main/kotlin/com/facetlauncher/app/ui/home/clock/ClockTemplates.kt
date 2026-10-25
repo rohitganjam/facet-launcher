@@ -1156,16 +1156,18 @@ private fun ClockTemplateData.HourTileTemplate(
         }
         TemplateDateText(now.format(dateFormatter(locale, dateStyle)).uppercase(locale), family, mutedTextColor, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 1.3.sp)
         if (hasAccessories) {
-            Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                AlarmAccessoryContent(nextAlarmText, mutedTextColor, family, fontSize = 14.sp)
+            // Left and centre line the items up with the clock; right lines them up to the right, with each icon after its text.
+            val iconAtEnd = horizontalAlignment == Alignment.End
+            Column(horizontalAlignment = horizontalAlignment, verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                AlarmAccessoryContent(nextAlarmText, mutedTextColor, family, fontSize = 14.sp, iconAtEnd = iconAtEnd)
                 if (nextAlarmText != null && batteryPercent != null) {
                     Box(modifier = Modifier.width(40.dp).height(1.dp).background(Hairline))
                 }
-                BatteryAccessoryContent(batteryPercent, isCharging, mutedTextColor, accentColor, family, fontSize = 14.sp)
+                BatteryAccessoryContent(batteryPercent, isCharging, mutedTextColor, accentColor, family, fontSize = 14.sp, iconAtEnd = iconAtEnd)
                 if ((nextAlarmText != null || batteryPercent != null) && hasWeather) {
                     Box(modifier = Modifier.width(40.dp).height(1.dp).background(Hairline))
                 }
-                WeatherAccessoryContent(mutedTextColor, family, fontSize = 14.sp)
+                WeatherAccessoryContent(mutedTextColor, family, fontSize = 14.sp, iconAtEnd = iconAtEnd)
             }
         }
     }

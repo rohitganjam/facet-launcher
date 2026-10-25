@@ -138,7 +138,7 @@ Non-use-case files in `domain/`: `FlowCombine.kt` (6/7-ary `combine`), `HubGridC
 (`HUB_COLUMNS`, `HUB_MAX_ROWS`, `HUB_MAX_WIDGETS`, `calculateHubCellWidth(context)` — see F4),
 `BackupMapping.kt` (entity ⇄ `Backup*` DTO extension functions).
 
-## 3. ViewModels (35) — `@HiltViewModel`, one per screen
+## 3. ViewModels (36) — `@HiltViewModel`, one per screen
 
 | ViewModel | Screen / surface | Nav arg (`SavedStateHandle`) |
 |---|---|---|
@@ -158,7 +158,8 @@ Non-use-case files in `domain/`: `FlowCombine.kt` (6/7-ary `combine`), `HubGridC
 | `ClockWidgetPickerViewModel` | `ClockWidgetPickerScreen` | — |
 | `ClockStyleGalleryViewModel` | `ClockStyleGalleryScreen` | `facetId?` |
 | `WeatherViewModel` | the weather sheet over Home (`WeatherSheet`): `WeatherUiState`, refresh, `onHomeResumed` | — |
-| `ClockAccessoriesViewModel` | `ClockAccessoriesScreen` (switches, units, location summary) | `facetId?` |
+| `ClockAccessoriesViewModel` | `ClockAccessoriesScreen` (switches, icon style, location permission for the weather switch) | `facetId?` |
+| `UnitsAndLocationViewModel` | `UnitsAndLocationScreen` (the four units, the location row and its permission) | — |
 | `WeatherLocationViewModel` | `WeatherLocationScreen` (mode, permission, debounced city search) | — |
 | `OnboardingViewModel` | `OnboardingScreen` | — |
 | `SettingsViewModel` | `SettingsScreen` | — |

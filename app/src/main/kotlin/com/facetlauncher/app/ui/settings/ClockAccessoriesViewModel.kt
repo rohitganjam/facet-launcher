@@ -9,11 +9,7 @@ import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.model.Facet
 import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.data.model.NO_ACTIVE_FACET_ID
-import com.facetlauncher.app.data.model.PressureUnit
-import com.facetlauncher.app.data.model.RainUnit
-import com.facetlauncher.app.data.model.TemperatureUnit
 import com.facetlauncher.app.data.model.WeatherIconStyle
-import com.facetlauncher.app.data.model.WindSpeedUnit
 import com.facetlauncher.app.domain.resolveFacetStyle
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -25,13 +21,12 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 /**
- * The Clock accessories screen: alarm, battery and weather switches, and (launcher-wide only) the weather units and where
- * the weather is for. [facet] is the facet this screen is scoped to, `null` for the launcher defaults.
+ * The Clock accessories screen: alarm, battery and weather switches and the weather icon style. [facet] is the facet this screen is scoped to, `null` for the launcher defaults.
  */
 data class ClockAccessoriesUiState(
     val facet: Facet? = null,
     val settings: LauncherSettings = LauncherSettings(),
-    /** Whether any facet (or the launcher default) shows weather: the Units and Location cards only exist then. */
+    /** Whether any facet (or the launcher default) shows weather: the Icons card and the Units and location link only exist then. */
     val weatherEnabledAnywhere: Boolean = false,
     val locationPermissionGranted: Boolean = false,
 ) {
@@ -45,14 +40,12 @@ data class ClockAccessoriesUiState(
     val showWeather: Boolean get() = clockStyle.showWeather
     val weatherIconStyle: WeatherIconStyle get() = clockStyle.weatherIconStyle
 
-    /** The Units and Location cards: launcher-wide, so only on the default screen, and only while weather is on somewhere. */
-    val showGlobalCards: Boolean get() = !isFacetScoped && weatherEnabledAnywhere
 
     /** The Icons card: on the default screen while weather is on somewhere, on a facet's while that facet shows weather. */
     val showIconStyleCard: Boolean get() = if (isFacetScoped) showWeather else weatherEnabledAnywhere
 
-    /** A facet has no units or location of its own, so it links to the defaults while weather is on somewhere. */
-    val showDefaultsLink: Boolean get() = isFacetScoped && weatherEnabledAnywhere
+    /** Units and location are launcher-wide, so the default screen and every facet link to the same screen while weather is on somewhere. */
+    val showUnitsAndLocationLink: Boolean get() = weatherEnabledAnywhere
 }
 
 @HiltViewModel
@@ -89,14 +82,6 @@ class ClockAccessoriesViewModel @Inject constructor(
     fun setShowBattery(enabled: Boolean) = write({ setShowBatteryPercentage(enabled) }, { setClockShowBattery(it, enabled) })
 
     fun setShowWeather(enabled: Boolean) = write({ setShowWeather(enabled) }, { setClockShowWeather(it, enabled) })
-
-    fun setTemperatureUnit(unit: TemperatureUnit) = launch { settingsRepository.setTemperatureUnit(unit) }
-
-    fun setWindSpeedUnit(unit: WindSpeedUnit) = launch { settingsRepository.setWindSpeedUnit(unit) }
-
-    fun setRainUnit(unit: RainUnit) = launch { settingsRepository.setRainUnit(unit) }
-
-    fun setPressureUnit(unit: PressureUnit) = launch { settingsRepository.setPressureUnit(unit) }
 
     fun setWeatherIconStyle(style: WeatherIconStyle) = write({ setWeatherIconStyle(style) }, { setClockWeatherIconStyle(it, style) })
 

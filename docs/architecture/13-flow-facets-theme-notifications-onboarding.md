@@ -181,16 +181,16 @@ used while `overrideClock` is on and resolved with the rest of the clock in `res
 (`ResolvedClockStyle.showAlarm/showBattery/showWeather`), and its own weather picture style (`clockWeatherIconStyle`, resolved
 into `ResolvedClockStyle.weatherIconStyle`). Settings → Clock style → *Clock accessories* (a row after the clock options; the
 screen is `ClockAccessoriesScreen`, route `clockAccessories?facetId=`) edits them: card 1 alarm and battery, card 2 weather,
-card 3 Icons (while weather is on for that scope), then launcher-wide Units and Location (`WeatherLocationScreen`) only on the
-default screen and only while weather is on in the default or any facet. A facet gets a *Weather defaults* link to the default
-screen instead of Units and Location. A facet that inherits shows the inherited values dimmed with a link to its
+card 3 Icons (while weather is on for that scope), then a *Units and location* link (default screen and every facet alike, while
+weather is on in the default or any facet) to `UnitsAndLocationScreen` (route `unitsAndLocation`): the four units and the
+Location card, launcher-wide, never per facet (`UnitsAndLocationViewModel`). A facet that inherits shows the inherited values dimmed with a link to its
 clock style, where the Inherit/Override switch lives; turning Override on seeds the three switches and the icon style from the
 defaults (`ClockStyleGalleryViewModel.setOverridingClock`).
 
 `HomeScreenStateBuilder` gates the items: the alarm and battery only when their switch is on, the weather
 (`HomeWeatherState`, from `ObserveWeatherUseCase`) only when its switch is on and the forecast is not outdated.
-`HomeSlots` turns that into a `ClockWeatherAccessory` (`rememberClockWeatherAccessory`: icon, "27°", and the spoken text
-"27°, Light rain. Opens the weather details") and `ClockDisplay` hands it to every template through
+`HomeSlots` turns that into a `ClockWeatherAccessory` (`rememberClockWeatherAccessory`: icon, "27°C", and the spoken text
+"27°C, Light rain. Opens the weather details") and `ClockDisplay` hands it to every template through
 `LocalClockWeather`; `ClockAccessoryRow` and the templates that lay their accessories out one by one
 (`WeatherAccessoryContent`) draw it, and `hasAccessories` decides whether the row exists at all. The item's touch area is
 smaller than 48 dp on purpose (a bigger one would shift the clock's rows); it is one merged TalkBack button. The style

@@ -92,7 +92,7 @@ class ScaledHomeScreenTest {
         setContent { settings().copy(showWeather = true, temperatureUnit = TemperatureUnit.CELSIUS) }
 
         // Then the sample weather sits in the accessory row
-        composeRule.onNodeWithContentDescription("21°, Partly cloudy", substring = true, useUnmergedTree = true).assertExists()
+        composeRule.onNodeWithContentDescription("21°C, Partly cloudy", substring = true, useUnmergedTree = true).assertExists()
     }
 
     @Test
@@ -101,7 +101,7 @@ class ScaledHomeScreenTest {
         setContent { settings() }
 
         // Then there is none
-        composeRule.onNodeWithContentDescription("21°, Partly cloudy", substring = true, useUnmergedTree = true).assertDoesNotExist()
+        composeRule.onNodeWithContentDescription("21°C, Partly cloudy", substring = true, useUnmergedTree = true).assertDoesNotExist()
     }
 
     @Test

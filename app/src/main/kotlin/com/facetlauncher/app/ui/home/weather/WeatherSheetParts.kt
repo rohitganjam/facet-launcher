@@ -57,7 +57,7 @@ import java.time.format.TextStyle as DateTextStyle
 import java.util.Locale
 import kotlin.math.roundToInt
 
-private val HOUR_COLUMN_WIDTH = 52.dp
+private val HOUR_COLUMN_WIDTH = 68.dp
 private val HOUR_ICON_SIZE = 24.dp
 
 @Composable
@@ -97,7 +97,7 @@ internal fun HourColumn(hour: WeatherHour, isNow: Boolean, timeFormat: DateTimeF
         Text(temperatureText(hour.temperatureC, units.temperature), style = MaterialTheme.typography.bodyMedium, color = Ink)
         val rain = hour.precipitationMm?.takeIf { it > 0.0 }
         Text(
-            text = if (rain != null) rainNumber(rain, units.rain) else " ",
+            text = if (rain != null) rainWithUnit(rain, units.rain) else " ",
             style = MaterialTheme.typography.labelSmall,
             color = Accent,
             modifier = Modifier.height(16.dp),
@@ -110,7 +110,7 @@ internal fun HourColumn(hour: WeatherHour, isNow: Boolean, timeFormat: DateTimeF
                     // MET gives the direction the wind comes *from*, so the arrow points the other way
                     WindArrow((direction + 180.0).toFloat(), Muted, Modifier.size(12.dp))
                 }
-                Text(windNumber(speed, units.wind), style = MaterialTheme.typography.labelSmall, color = Muted)
+                Text(windWithUnit(speed, units.wind), style = MaterialTheme.typography.labelSmall, color = Muted, maxLines = 1)
             }
         }
     }

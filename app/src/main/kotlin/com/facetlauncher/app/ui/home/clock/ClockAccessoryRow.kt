@@ -32,11 +32,25 @@ fun AlarmAccessoryContent(
     modifier: Modifier = Modifier,
     fontSize: TextUnit = 14.sp,
     fontWeight: FontWeight = FontWeight.Medium,
+    iconAtEnd: Boolean = false,
 ) {
     if (text == null) return
+    IconAndText(
+        modifier = modifier,
+        iconAtEnd = iconAtEnd,
+        icon = { AlarmClockIcon(tint = color, modifier = Modifier.size(ClockAccessoryIconSize).homeIconShadow(color)) },
+        text = { Text(text = text, style = TextStyle(fontFamily = family, fontWeight = fontWeight, fontSize = fontSize, shadow = homeTextShadow(color)), color = color) },
+    )
+}
+
+/** An accessory's icon and its text side by side: the icon first, or after the text when [iconAtEnd] (a right-aligned layout). */
+@Composable
+internal fun IconAndText(icon: @Composable () -> Unit, text: @Composable () -> Unit, iconAtEnd: Boolean, modifier: Modifier = Modifier) {
     Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-        AlarmClockIcon(tint = color, modifier = Modifier.size(ClockAccessoryIconSize).homeIconShadow(color))
-        Text(text = text, style = TextStyle(fontFamily = family, fontWeight = fontWeight, fontSize = fontSize, shadow = homeTextShadow(color)), color = color)
+        val first = if (iconAtEnd) text else icon
+        val second = if (iconAtEnd) icon else text
+        first()
+        second()
     }
 }
 
@@ -59,12 +73,15 @@ fun BatteryAccessoryContent(
     modifier: Modifier = Modifier,
     fontSize: TextUnit = 14.sp,
     fontWeight: FontWeight = FontWeight.Medium,
+    iconAtEnd: Boolean = false,
 ) {
     if (percent == null) return
-    Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-        BatteryIcon(tint = mutedColor, state = batteryIconState(percent, isCharging), modifier = Modifier.size(BatteryIconSize).homeIconShadow(mutedColor))
-        Text(text = stringResource(R.string.percent_format, percent), style = TextStyle(fontFamily = family, fontWeight = fontWeight, fontSize = fontSize, shadow = homeTextShadow(mutedColor)), color = mutedColor)
-    }
+    IconAndText(
+        modifier = modifier,
+        iconAtEnd = iconAtEnd,
+        icon = { BatteryIcon(tint = mutedColor, state = batteryIconState(percent, isCharging), modifier = Modifier.size(BatteryIconSize).homeIconShadow(mutedColor)) },
+        text = { Text(text = stringResource(R.string.percent_format, percent), style = TextStyle(fontFamily = family, fontWeight = fontWeight, fontSize = fontSize, shadow = homeTextShadow(mutedColor)), color = mutedColor) },
+    )
 }
 
 /**

@@ -14,14 +14,18 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import com.facetlauncher.app.ui.home.clock.ClockDisplay
 import com.facetlauncher.app.ui.home.clock.ClockWeatherAccessory
+import com.facetlauncher.app.domain.WeatherUnits
 import com.facetlauncher.app.ui.home.weather.WeatherIconKind
+import com.facetlauncher.app.ui.home.weather.temperatureText
 import com.facetlauncher.app.ui.theme.Hairline
 import com.facetlauncher.app.ui.theme.Surface
 import com.facetlauncher.app.ui.theme.resolve
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.ZoneId
+import java.util.Locale
 
+private const val SAMPLE_TEMPERATURE_C = 21.0
 private const val SAMPLE_BATTERY_PERCENT = 64
 private const val SAMPLE_ALARM_HOUR = 7
 private val SAMPLE_NOW: LocalDateTime = LocalDateTime.of(2026, 8, 27, 9, 5)
@@ -38,9 +42,10 @@ internal fun ClockAccessoriesPreview(uiState: ClockAccessoriesUiState, modifier:
         LocalDate.now().plusDays(1).atTime(SAMPLE_ALARM_HOUR, 0).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
     }
     val color = clock.colorOption.resolve()
+    val temperature = temperatureText(SAMPLE_TEMPERATURE_C, WeatherUnits.resolve(settings.temperatureUnit, Locale.getDefault()))
     val weather = if (clock.showWeather) {
-        remember(clock.weatherIconStyle) {
-            ClockWeatherAccessory(WeatherIconKind.PARTLY_SUN, "21°", "21°, Partly cloudy", clock.weatherIconStyle) {}
+        remember(clock.weatherIconStyle, temperature) {
+            ClockWeatherAccessory(WeatherIconKind.PARTLY_SUN, temperature, "$temperature, Partly cloudy", clock.weatherIconStyle) {}
         }
     } else {
         null

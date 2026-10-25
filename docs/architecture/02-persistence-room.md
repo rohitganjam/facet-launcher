@@ -498,8 +498,8 @@ DataStore serialises writes and is main-safe; callers `viewModelScope.launch { }
 | `setUse24HourTime(Boolean)` | `use_24_hour_time` | set | `ClockStyleGalleryViewModel` |
 | `setClockShowMeridiem(Boolean)` | `clock_show_meridiem` | set | `ClockStyleGalleryViewModel` |
 | `setClockDateStyle(ClockDateStyle)` | `clock_date_style` | set | `ClockStyleGalleryViewModel` |
-| `setShowNextAlarm(Boolean)`, `setShowBatteryPercentage(Boolean)`, `setShowWeather(Boolean)` | `show_next_alarm`, `show_battery_percentage`, `show_weather` | set | none yet (the Clock accessories screen, weather plan step 6) |
-| `setTemperatureUnit`, `setWindSpeedUnit`, `setRainUnit`, `setPressureUnit` | `temperature_unit`, `wind_speed_unit`, `rain_unit`, `pressure_unit` | set | none yet (same screen) |
+| `setShowNextAlarm(Boolean)`, `setShowBatteryPercentage(Boolean)`, `setShowWeather(Boolean)` | `show_next_alarm`, `show_battery_percentage`, `show_weather` | set | `ClockAccessoriesViewModel` |
+| `setTemperatureUnit`, `setWindSpeedUnit`, `setRainUnit`, `setPressureUnit` | `temperature_unit`, `wind_speed_unit`, `rain_unit`, `pressure_unit` | set | `UnitsAndLocationViewModel` |
 | `setWeatherIconStyle(WeatherIconStyle)` | `weather_icon_style` | set | `ClockAccessoriesViewModel` (default screen; a facet uses `FacetRepository.setClockWeatherIconStyle`) |
 | `setWeatherLocationMode(WeatherLocationMode)` | `weather_location_mode` | set | none yet |
 | `setWeatherCity(WeatherCity?)` | `weather_city_name`, `weather_city_latitude`, `weather_city_longitude`, `weather_city_timezone` | set the four together, or remove all four on `null` | none yet |

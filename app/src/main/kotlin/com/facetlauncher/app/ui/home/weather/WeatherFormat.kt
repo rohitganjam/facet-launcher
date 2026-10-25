@@ -14,10 +14,18 @@ import kotlin.math.roundToInt
 
 private const val WHOLE_AMOUNT_FROM = 10.0
 
-/** "27°" in a resolved [unit]. */
+/** "27°C" or "81°F" in a resolved [unit]. */
 @Composable
 internal fun temperatureText(celsius: Double, unit: TemperatureUnit): String =
-    stringResource(R.string.weather_temperature_format, WeatherUnits.temperature(celsius, unit).roundToInt())
+    stringResource(
+        R.string.weather_temperature_format,
+        WeatherUnits.temperature(celsius, unit).roundToInt(),
+        stringResource(temperatureUnitLetterRes(unit)),
+    )
+
+@StringRes
+internal fun temperatureUnitLetterRes(unit: TemperatureUnit): Int =
+    if (unit == TemperatureUnit.FAHRENHEIT) R.string.weather_temperature_unit_fahrenheit else R.string.weather_temperature_unit_celsius
 
 @StringRes
 internal fun windUnitRes(unit: WindSpeedUnit): Int = when (unit) {

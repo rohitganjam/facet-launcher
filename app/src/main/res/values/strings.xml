@@ -951,7 +951,9 @@
     <string name="weather_condition_thunderstorm">Thunderstorm</string>
 
     <!-- Weather: the accessory next to the alarm and battery -->
-    <string name="weather_temperature_format">%1$d°</string>
+    <string name="weather_temperature_format">%1$d°%2$s</string>
+    <string name="weather_temperature_unit_celsius" translatable="false">C</string>
+    <string name="weather_temperature_unit_fahrenheit" translatable="false">F</string>
     <string name="weather_accessory_description">%1$s, %2$s. Opens the weather details</string>
     <string name="weather_accessory_description_no_condition">%1$s. Opens the weather details</string>
 
@@ -1024,8 +1026,7 @@
     <string name="clock_accessories_unit_rain">Rain</string>
     <string name="clock_accessories_unit_pressure">Pressure</string>
     <string name="clock_accessories_location">Location</string>
-    <string name="clock_accessories_global_note">Units and location apply to every facet.</string>
-    <string name="clock_accessories_facet_note">Units and location are in the launcher settings.</string>
+    <string name="units_and_location_note">Units and location apply to every facet.</string>
     <string name="weather_unit_auto">Automatic</string>
     <string name="weather_unit_celsius">Celsius (°C)</string>
     <string name="weather_unit_fahrenheit">Fahrenheit (°F)</string>
@@ -1051,8 +1052,8 @@
     <string name="weather_location_none">None yet</string>
     <string name="weather_permission_location_subtitle">Needed to show the weather where you are. Facet only reads an approximate position, and only while Home is open.</string>
     <string name="clock_accessories_icons">Icons</string>
-    <string name="clock_accessories_defaults_title">Weather defaults</string>
-    <string name="clock_accessories_defaults_subtitle">Units and location, for every facet</string>
+    <string name="units_and_location_title">Units and location</string>
+    <string name="units_and_location_subtitle">Applies to every facet</string>
     <string name="weather_icon_style">Weather icons</string>
     <string name="weather_icon_style_monochrome">Monochrome</string>
     <string name="weather_icon_style_colored">Colored</string>

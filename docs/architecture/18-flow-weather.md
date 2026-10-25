@@ -138,12 +138,13 @@ header, when sent, sets the earliest next attempt.
   (`WeatherLocationPermissionRow`), and tapping it opens Settings → Permissions (so does the sheet's "Allow"), where the
   request is made, or App info once Android stops asking. Settings → Permissions → Location now says it serves both the
   Wi-Fi network name and weather. Switching weather on, or choosing "Use current location", still asks once inline.
-- **`ClockAccessoriesScreen`** (`clockAccessories?facetId=`) and **`WeatherLocationScreen`** (`weatherLocation`) edit the
-  switches, units, location mode and city. The permission is requested with `ACCESS_COARSE_LOCATION` only, from the
+- **`ClockAccessoriesScreen`** (`clockAccessories?facetId=`) edits the switches and the icon style; **`UnitsAndLocationScreen`**
+  (`unitsAndLocation`, linked from it for the default and every facet) edits the units and links to **`WeatherLocationScreen`**
+  (`weatherLocation`) for the location mode and city. The permission is requested with `ACCESS_COARSE_LOCATION` only, from the
   Location card, and its state is re-read on resume. The city search runs 400 ms after the last keystroke
   (`WeatherLocationViewModel`) through `SearchPlacesUseCase`.
-- **Icons.** `weatherIconStyle` (monochrome by default, coloured optional) is a launcher-wide setting; the coloured set is
-  nine PNGs (192 px) from a third-party pack whose licence is unconfirmed (see `IMPLEMENTATION_PLAN.md`).
+- **Icons.** `weatherIconStyle` (coloured by default, monochrome optional) is a launcher default that a facet overrides with the clock
+  (`clockWeatherIconStyle`); the coloured set is nine PNGs (192 px), original artwork inspired by Google's Weather Icons v4.
 - **Credits:** About lists MET Norway and GeoNames.
 
 Tests: `WeatherConditionTest`, `WeatherViewModelTest` (JVM); `ClockAccessoriesScreenTest`, `WeatherLocationScreenTest` and

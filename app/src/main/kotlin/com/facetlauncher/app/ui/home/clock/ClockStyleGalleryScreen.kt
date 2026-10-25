@@ -174,7 +174,7 @@ private fun ClockStyleGalleryScreen(
     val samplePreviewBatteryPercent = 64
     val samplePreviewIsCharging = false
     val sampleWeather = if (showWeather) {
-        remember(weatherIconStyle) { ClockWeatherAccessory(WeatherIconKind.PARTLY_SUN, "21°", "21°, Partly cloudy", onClick = {}, iconStyle = weatherIconStyle) }
+        remember(weatherIconStyle) { ClockWeatherAccessory(WeatherIconKind.PARTLY_SUN, "21°C", "21°C, Partly cloudy", onClick = {}, iconStyle = weatherIconStyle) }
     } else {
         null
     }

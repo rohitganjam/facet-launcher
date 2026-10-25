@@ -16,6 +16,7 @@ import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.testTag
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -30,7 +31,7 @@ import com.facetlauncher.app.ui.theme.homeTextShadow
 
 /**
  * The weather item of the clock's accessory row: a picture and the temperature, nothing else. [contentDescription] is the whole
- * spoken text ("27°, Light rain. Opens the weather details"). Tapping it calls [onClick], which opens the sheet.
+ * spoken text ("27°C, Light rain. Opens the weather details"). Tapping it calls [onClick], which opens the sheet.
  */
 @Immutable
 data class ClockWeatherAccessory(
@@ -63,24 +64,25 @@ fun WeatherAccessoryContent(
     modifier: Modifier = Modifier,
     fontSize: TextUnit = 14.sp,
     fontWeight: FontWeight = FontWeight.Medium,
+    iconAtEnd: Boolean = false,
 ) {
     val weather = LocalClockWeather.current ?: return
-    Row(
+    IconAndText(
         modifier = modifier
             .clickable(role = Role.Button, onClick = weather.onClick)
             .semantics(mergeDescendants = true) {
                 role = Role.Button
                 contentDescription = weather.contentDescription
             },
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
-    ) {
-        WeatherIcon(weather.iconKind, color, Modifier.size(WeatherIconBoxSize).homeIconShadow(color).clearAndSetSemantics { }, weather.iconStyle)
-        Text(
-            text = weather.temperatureText,
-            style = TextStyle(fontFamily = family, fontWeight = fontWeight, fontSize = fontSize, shadow = homeTextShadow(color)),
-            color = color,
-            modifier = Modifier.clearAndSetSemantics { },
-        )
-    }
+        iconAtEnd = iconAtEnd,
+        icon = { WeatherIcon(weather.iconKind, color, Modifier.size(WeatherIconBoxSize).homeIconShadow(color).clearAndSetSemantics { }, weather.iconStyle) },
+        text = {
+            Text(
+                text = weather.temperatureText,
+                style = TextStyle(fontFamily = family, fontWeight = fontWeight, fontSize = fontSize, shadow = homeTextShadow(color)),
+                color = color,
+                modifier = Modifier.clearAndSetSemantics { testTag = "clock_weather_text" },
+            )
+        },
+    )
 }

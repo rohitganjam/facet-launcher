@@ -894,7 +894,7 @@
     <string name="weather_condition_sleet">Schneeregen</string>
     <string name="weather_condition_snow">Schnee</string>
     <string name="weather_condition_thunderstorm">Gewitter</string>
-    <string name="weather_temperature_format">%1$d°</string>
+    <string name="weather_temperature_format">%1$d°%2$s</string>
     <string name="weather_accessory_description">%1$s, %2$s. Öffnet die Wetterdetails</string>
     <string name="weather_accessory_description_no_condition">%1$s. Öffnet die Wetterdetails</string>
     <string name="weather_sheet_now">Jetzt</string>
@@ -949,8 +949,7 @@
     <string name="clock_accessories_unit_rain">Regen</string>
     <string name="clock_accessories_unit_pressure">Luftdruck</string>
     <string name="clock_accessories_location">Standort</string>
-    <string name="clock_accessories_global_note">Einheiten und Standort gelten für alle Facetten.</string>
-    <string name="clock_accessories_facet_note">Einheiten und Standort stehen in den Launcher-Einstellungen.</string>
+    <string name="units_and_location_note">Einheiten und Standort gelten für alle Facetten.</string>
     <string name="weather_unit_auto">Automatisch</string>
     <string name="weather_unit_option_kmh">Kilometer pro Stunde (km/h)</string>
     <string name="weather_unit_option_mph">Meilen pro Stunde (mph)</string>
@@ -972,8 +971,8 @@
     <string name="weather_location_none">Noch keine</string>
     <string name="weather_permission_location_subtitle">Nötig, um das Wetter an deinem Standort anzuzeigen. Facet liest nur eine ungefähre Position, und nur solange Home geöffnet ist.</string>
     <string name="clock_accessories_icons">Symbole</string>
-    <string name="clock_accessories_defaults_title">Wetter-Standards</string>
-    <string name="clock_accessories_defaults_subtitle">Einheiten und Ort, für alle Facetten</string>
+    <string name="units_and_location_title">Einheiten und Standort</string>
+    <string name="units_and_location_subtitle">Gilt für alle Facetten</string>
     <string name="weather_icon_style">Wettersymbole</string>
     <string name="weather_icon_style_monochrome">Einfarbig</string>
     <string name="weather_icon_style_colored">Farbig</string>
