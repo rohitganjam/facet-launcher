@@ -1945,6 +1945,7 @@ private fun DrawerFolderTile(
     Box {
         Column(
             modifier = modifier
+                .fillMaxWidth()
                 .longPressReleaseClickable(onClick = { sheetOpen = true }, onLongPress = { menuExpanded = true })
                 .testTag("drawer_grid_folder_tile_${folder.id}"),
             horizontalAlignment = Alignment.CenterHorizontally,

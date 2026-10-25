@@ -538,6 +538,28 @@ class AppDrawerScreenTest {
     }
 
     @Test
+    fun gridFolderTileIsAsWideAsAnAppTile() {
+        // Given the drawer in Grid presentation with a folder pinned first
+        val folder = Folder(id = 1, name = "Zeta Folder", apps = emptyList())
+        composeRule.setContent {
+            FacetLauncherTheme {
+                AppDrawerScreen(
+                    apps = apps,
+                    onAppClick = {},
+                    presentation = DrawerPresentation.GRID,
+                    folderCandidates = listOf(folder),
+                    folderDisplayMode = DrawerFolderDisplayMode.SHOW_FIRST,
+                )
+            }
+        }
+
+        // Then the folder tile fills its cell like an app tile, so its glyph centres in the column
+        val folderWidth = composeRule.onNodeWithTag("drawer_grid_folder_tile_1").fetchSemanticsNode().boundsInRoot.width
+        val appWidth = composeRule.onNodeWithTag("drawer_grid_tile_com.example.A").fetchSemanticsNode().boundsInRoot.width
+        assertEquals(appWidth, folderWidth, 1f)
+    }
+
+    @Test
     fun gridDensityControlsTileHeight() {
         // Given the drawer in Grid presentation at Airy density (fewer rows, so tiles get more of the
         // viewport's height each) — a single setContent with reactive state driving [gridDensity],
