@@ -4344,3 +4344,4 @@ Design agreed in chat (mocks: accessory bar, weather sheet, Clock accessories sc
 ## What's new pill after an update (direct request)
 
 - [x] A pill ("Updated to x.y.z · See what's new") drops in from the top, over Home, once per version after an update: `WhatsNewPill`/`WhatsNewPillHost`, `WhatsNewPillViewModel`, `AppVersion`, coach-mark id `WHATS_NEW_<version>` (`whatsNewSeenId`). Fresh installs are marked at the end of onboarding; opening What's new from anywhere marks it too; it waits for the first-run prompts and a resting Home. Tests: `WhatsNewPillViewModelTest`, `WhatsNewViewModelTest`, `SettingsRepositoryTest`, `HomeUiStateTest`, `WhatsNewPillTest`.
+- [x] Debug build only: a *What's new pill* row under the Pro switch at the bottom of Settings clears the running version's seen mark so the pill shows again on the next resting Home (`DebugSettingsEntryImpl`, `SettingsRepository.clearCoachMarkSeen`).

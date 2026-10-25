@@ -189,6 +189,17 @@ class SettingsRepositoryTest {
     }
 
     @Test
+    fun `clearCoachMarkSeen removes only that id`() = runTest {
+        val repository = createRepository()
+        repository.markCoachMarkSeen("HOME_GESTURES")
+        repository.markCoachMarkSeen("SOME_OTHER_MARK")
+
+        repository.clearCoachMarkSeen("HOME_GESTURES")
+
+        assertEquals(setOf("SOME_OTHER_MARK"), repository.settings.first().coachMarksSeen)
+    }
+
+    @Test
     fun `setClockAlignment and setAppListVerticalAlignment round-trip independently`() = runTest {
         // Given a repository
         val repository = createRepository()

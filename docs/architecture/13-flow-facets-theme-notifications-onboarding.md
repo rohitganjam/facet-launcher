@@ -445,7 +445,9 @@ flowchart LR
   `SettingsRepository.setOnboardingCompleted(true)` adds the running version's id, and opening What's new
   (`WhatsNewViewModel`, from About or from the pill) adds it too. The pill waits for `HomeUiState.firstRunPromptsDone`
   (set-default step and gesture hint behind the user) and a Home at rest, marks the version seen as it appears, and
-  leaves after 8 seconds, when swiped up, or when tapped (which opens What's new).
+  leaves after 8 seconds, when swiped up, or when tapped (which opens What's new). A debug build's Settings (bottom, under
+  the Pro switch) has a *What's new pill* row that clears the running version's seen mark, to see the pill again without an update
+  (`SettingsRepository.clearCoachMarkSeen`; the row lives in `app/src/debug`).
 - `GestureHintOverlay` (coach mark `HOME_GESTURES`) shows four hints at proportional offsets, each on the side its
   gesture starts from: clock hold (top-left, under the default clock), Switch facets (right edge), Widgets (left edge),
   All your apps (bottom-right). Its "Got it" is a `SurfaceButton` with a 1.5dp `Muted` border and a soft shadow, because

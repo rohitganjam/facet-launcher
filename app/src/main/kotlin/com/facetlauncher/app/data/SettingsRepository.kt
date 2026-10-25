@@ -628,6 +628,11 @@ class SettingsRepository @Inject constructor(
         dataStore.edit { it[Keys.DEFAULTS_SEEDED] = seeded }
     }
 
+    /** Takes [id] back out of the dismissed-coach-marks set, so that prompt can show again. Used by the debug build's Settings tools. */
+    suspend fun clearCoachMarkSeen(id: String) {
+        dataStore.edit { it[Keys.COACH_MARKS_SEEN] = (it[Keys.COACH_MARKS_SEEN] ?: emptySet()) - id }
+    }
+
     /** Additive — adds [id] to the dismissed-coach-marks set without disturbing any other id already in it. */
     suspend fun markCoachMarkSeen(id: String) {
         dataStore.edit { it[Keys.COACH_MARKS_SEEN] = (it[Keys.COACH_MARKS_SEEN] ?: emptySet()) + id }
