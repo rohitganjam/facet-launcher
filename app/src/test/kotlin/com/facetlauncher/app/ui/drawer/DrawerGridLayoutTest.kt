@@ -67,6 +67,15 @@ class DrawerGridLayoutTest {
     @Test
     fun `tiny windows still get a minimum grid`() {
         assertEquals(3, drawerGridColumns(60.dp, DrawerGridDensity.SPACIOUS))
-        assertEquals(3, drawerGridRows(60.dp, DrawerGridDensity.SPACIOUS))
+        assertEquals(2, drawerGridRows(60.dp, DrawerGridDensity.SPACIOUS))
+    }
+
+    @Test
+    fun `a short card shows more rows at compact than at regular`() {
+        // Given the grid area of the settings preview card
+        val height = 320.dp
+
+        assertEquals(3, drawerGridRows(height, DrawerGridDensity.COMPACT))
+        assertEquals(2, drawerGridRows(height, DrawerGridDensity.REGULAR))
     }
 }

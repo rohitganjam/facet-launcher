@@ -6,7 +6,7 @@ import com.facetlauncher.app.data.model.DrawerGridDensity
 import kotlin.math.roundToInt
 
 private const val MIN_COLUMNS = 3
-private const val MIN_ROWS = 3
+private const val MIN_ROWS = 2
 
 /** Ideal cell width per density; the real width stretches to fill the available space. */
 private fun DrawerGridDensity.targetCellWidth(): Dp = when (this) {
