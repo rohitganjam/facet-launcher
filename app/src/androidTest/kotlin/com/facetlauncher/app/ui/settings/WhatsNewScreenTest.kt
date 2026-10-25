@@ -1,5 +1,6 @@
 package com.facetlauncher.app.ui.settings
 
+import androidx.compose.runtime.remember
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
@@ -27,7 +28,8 @@ class WhatsNewScreenTest {
     private fun setContent(releases: List<ReleaseNotes>, onBack: () -> Unit = {}) {
         composeRule.setContent {
             FacetLauncherTheme {
-                WhatsNewScreen(onBack = onBack, viewModel = WhatsNewViewModel(FakeReleaseNotesRepository(releases)))
+                val viewModel = remember { WhatsNewViewModel(FakeReleaseNotesRepository(releases)) }
+                WhatsNewScreen(onBack = onBack, viewModel = viewModel)
             }
         }
         composeRule.waitForIdle()

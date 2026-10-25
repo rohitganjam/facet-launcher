@@ -31,6 +31,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.LocalConfiguration
 import com.facetlauncher.app.data.model.WeatherIconStyle
 import com.facetlauncher.app.R
 import com.facetlauncher.app.data.model.RainUnit
@@ -54,7 +55,6 @@ import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle as DateTextStyle
-import java.util.Locale
 import kotlin.math.roundToInt
 
 private val HOUR_COLUMN_WIDTH = 68.dp
@@ -158,7 +158,7 @@ internal fun OutlookRow(day: WeatherDay, isToday: Boolean, unit: com.facetlaunch
     val label = if (isToday) {
         stringResource(R.string.weather_sheet_today)
     } else {
-        day.date.dayOfWeek.getDisplayName(DateTextStyle.SHORT, Locale.getDefault()) + " " + day.date.dayOfMonth
+        day.date.dayOfWeek.getDisplayName(DateTextStyle.SHORT, LocalConfiguration.current.locales[0]) + " " + day.date.dayOfMonth
     }
     Row(modifier = Modifier.fillMaxWidth().padding(vertical = 10.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
         Text(label, style = MaterialTheme.typography.bodyMedium, color = Ink, modifier = Modifier.width(72.dp))

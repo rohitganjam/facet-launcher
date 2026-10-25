@@ -4,6 +4,7 @@ import android.content.Context
 import android.location.Address
 import android.location.Geocoder
 import android.os.Build
+import androidx.annotation.RequiresApi
 import com.facetlauncher.app.data.di.IoDispatcher
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.IOException
@@ -75,6 +76,7 @@ class AndroidPlaceGeocoder @Inject constructor(
             }
         }
 
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     private fun listener(deliver: (List<Address>) -> Unit) = object : Geocoder.GeocodeListener {
         override fun onGeocode(addresses: MutableList<Address>) = deliver(addresses)
         override fun onError(errorMessage: String?) = deliver(emptyList())

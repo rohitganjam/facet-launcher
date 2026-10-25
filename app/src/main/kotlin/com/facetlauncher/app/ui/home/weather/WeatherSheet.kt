@@ -28,6 +28,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.LocalConfiguration
 import com.facetlauncher.app.data.model.WeatherIconStyle
 import com.facetlauncher.app.R
 import com.facetlauncher.app.data.model.RainUnit
@@ -165,7 +166,7 @@ private fun NoticeLine(notice: WeatherNotice?, onAllowLocation: () -> Unit, onCh
 private fun FooterRow(uiState: WeatherUiState, onRefresh: () -> Unit) {
     val weather = uiState.weather
     val updated = weather?.updatedAt?.let { fetched ->
-        val time = DateTimeFormatter.ofPattern(if (uiState.use24HourTime) "HH:mm" else "h:mm a", Locale.getDefault()).withZone(weather.zone).format(fetched)
+        val time = DateTimeFormatter.ofPattern(if (uiState.use24HourTime) "HH:mm" else "h:mm a", LocalConfiguration.current.locales[0]).withZone(weather.zone).format(fetched)
         stringResource(if (weather.isOutdated) R.string.weather_updated_outdated else R.string.weather_updated, time)
     }
     Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {

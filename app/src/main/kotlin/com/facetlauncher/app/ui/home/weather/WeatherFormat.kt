@@ -3,6 +3,7 @@ package com.facetlauncher.app.ui.home.weather
 import androidx.annotation.StringRes
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.platform.LocalConfiguration
 import com.facetlauncher.app.R
 import com.facetlauncher.app.data.model.PressureUnit
 import com.facetlauncher.app.data.model.RainUnit
@@ -73,6 +74,7 @@ internal fun windWithUnit(metresPerSecond: Double, unit: WindSpeedUnit, fromDegr
 @Composable
 internal fun pressureWithUnit(hectopascals: Double, unit: PressureUnit): String {
     val value = WeatherUnits.pressure(hectopascals, unit)
-    val number = if (unit == PressureUnit.INHG) String.format(Locale.getDefault(), "%.2f", value) else value.roundToInt().toString()
+    val locale = LocalConfiguration.current.locales[0]
+    val number = if (unit == PressureUnit.INHG) String.format(locale, "%.2f", value) else value.roundToInt().toString()
     return stringResource(R.string.weather_value_with_unit, number, stringResource(pressureUnitRes(unit)))
 }

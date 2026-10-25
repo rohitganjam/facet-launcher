@@ -969,7 +969,7 @@
     <string name="weather_detail_pressure">Pressure</string>
     <string name="weather_detail_cloud_cover">Cloud cover</string>
     <string name="weather_detail_wind">Wind</string>
-    <string name="weather_wind_with_direction">%1$s %2$s</string>
+    <string name="weather_wind_with_direction" translatable="false">%1$s %2$s</string>
     <string name="weather_updated">Updated %1$s</string>
     <string name="weather_updated_outdated">Updated %1$s, out of date</string>
     <string name="weather_credit">Weather data from MET Norway</string>
@@ -1004,15 +1004,15 @@
     <string name="weather_direction_sw">SW</string>
     <string name="weather_direction_w">W</string>
     <string name="weather_direction_nw">NW</string>
-    <string name="weather_value_with_unit">%1$s %2$s</string>
-    <string name="weather_unit_short_mm">mm</string>
-    <string name="weather_unit_short_inch">in</string>
-    <string name="weather_unit_short_kmh">km/h</string>
-    <string name="weather_unit_short_mph">mph</string>
-    <string name="weather_unit_short_ms">m/s</string>
-    <string name="weather_unit_short_hpa">hPa</string>
-    <string name="weather_unit_short_inhg">inHg</string>
-    <string name="weather_unit_short_mmhg">mmHg</string>
+    <string name="weather_value_with_unit" translatable="false">%1$s %2$s</string>
+    <string name="weather_unit_short_mm" translatable="false">mm</string>
+    <string name="weather_unit_short_inch" translatable="false">in</string>
+    <string name="weather_unit_short_kmh" translatable="false">km/h</string>
+    <string name="weather_unit_short_mph" translatable="false">mph</string>
+    <string name="weather_unit_short_ms" translatable="false">m/s</string>
+    <string name="weather_unit_short_hpa" translatable="false">hPa</string>
+    <string name="weather_unit_short_inhg" translatable="false">inHg</string>
+    <string name="weather_unit_short_mmhg" translatable="false">mmHg</string>
 
     <!-- Settings: Clock accessories -->
     <string name="clock_accessories_title">Clock accessories</string>
@@ -1028,8 +1028,8 @@
     <string name="clock_accessories_location">Location</string>
     <string name="units_and_location_note">Units and location apply to every facet.</string>
     <string name="weather_unit_auto">Automatic</string>
-    <string name="weather_unit_celsius">Celsius (°C)</string>
-    <string name="weather_unit_fahrenheit">Fahrenheit (°F)</string>
+    <string name="weather_unit_celsius" translatable="false">Celsius (°C)</string>
+    <string name="weather_unit_fahrenheit" translatable="false">Fahrenheit (°F)</string>
     <string name="weather_unit_option_kmh">Kilometres per hour (km/h)</string>
     <string name="weather_unit_option_mph">Miles per hour (mph)</string>
     <string name="weather_unit_option_ms">Metres per second (m/s)</string>

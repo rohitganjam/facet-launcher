@@ -11,6 +11,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.dp
 import com.facetlauncher.app.ui.home.clock.ClockDisplay
 import com.facetlauncher.app.ui.home.clock.ClockWeatherAccessory
@@ -23,7 +24,6 @@ import com.facetlauncher.app.ui.theme.resolve
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.ZoneId
-import java.util.Locale
 
 private const val SAMPLE_TEMPERATURE_C = 21.0
 private const val SAMPLE_BATTERY_PERCENT = 64
@@ -42,7 +42,7 @@ internal fun ClockAccessoriesPreview(uiState: ClockAccessoriesUiState, modifier:
         LocalDate.now().plusDays(1).atTime(SAMPLE_ALARM_HOUR, 0).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
     }
     val color = clock.colorOption.resolve()
-    val temperature = temperatureText(SAMPLE_TEMPERATURE_C, WeatherUnits.resolve(settings.temperatureUnit, Locale.getDefault()))
+    val temperature = temperatureText(SAMPLE_TEMPERATURE_C, WeatherUnits.resolve(settings.temperatureUnit, LocalConfiguration.current.locales[0]))
     val weather = if (clock.showWeather) {
         remember(clock.weatherIconStyle, temperature) {
             ClockWeatherAccessory(WeatherIconKind.PARTLY_SUN, temperature, "$temperature, Partly cloudy", clock.weatherIconStyle) {}
