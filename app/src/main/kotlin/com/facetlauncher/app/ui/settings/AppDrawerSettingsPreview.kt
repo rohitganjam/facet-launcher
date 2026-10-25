@@ -3,12 +3,16 @@ package com.facetlauncher.app.ui.settings
 import android.content.res.Configuration
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.ScrollableState
+import androidx.compose.foundation.gestures.rememberScrollableState
 import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -17,7 +21,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
@@ -38,7 +44,7 @@ import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import com.facetlauncher.app.ui.theme.Hairline
 import com.facetlauncher.app.ui.theme.resolve
 
-private val PREVIEW_HEIGHT = 380.dp
+private val PREVIEW_VIEWPORT_HEIGHT = 400.dp
 private const val RECENT_SAMPLE_COUNT = 2
 private const val FOLDER_SAMPLE_APP_COUNT = 2
 private const val HOUR_MILLIS = 60 * 60 * 1000L
@@ -75,47 +81,57 @@ internal fun AppDrawerSettingsPreview(settings: LauncherSettings, wallpaper: Hom
     val gridState = rememberLazyGridState()
     val shape = MaterialTheme.shapes.extraLarge
     val description = stringResource(R.string.app_drawer_preview_description)
-    Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(PREVIEW_HEIGHT)
-            .clip(shape)
-            .border(1.dp, Hairline, shape)
-            .testTag("app_drawer_preview")
-            .clearAndSetSemantics { contentDescription = description },
-    ) {
-        WallpaperBackground(wallpaper, Modifier.matchParentSize())
-        AppDrawerScreen(
-            apps = sample.apps,
-            onAppClick = {},
-            modifier = Modifier.consumeWindowInsets(WindowInsets.systemBars),
-            listState = listState,
-            gridState = gridState,
-            presentation = settings.drawerPresentation,
-            gridDensity = settings.drawerGridDensity,
-            listItemSize = settings.drawerListItemSize,
-            showIcons = settings.showDrawerIcons,
-            showLabels = settings.showDrawerLabels,
-            labelFontWeight = settings.homeAppsFontWeight.resolve(),
-            opacity = settings.drawerOpacity,
-            notificationBadgeStyle = settings.notificationBadgeStyle,
-            searchBarPosition = settings.searchBarPosition,
-            folderCandidates = sample.folders,
-            folderDisplayMode = settings.drawerFolderDisplayMode,
-            recentlyInstalledPosition = settings.recentlyInstalledPosition,
-        )
-        // A later sibling takes the touches first, so taps never reach the drawer. Vertical drags scroll its list or grid, and
-        // what they can't consume (the ends) passes on to the settings list.
+    val screenWidth = LocalConfiguration.current.screenWidthDp.dp
+    val isGrid = settings.drawerPresentation == DrawerPresentation.GRID
+    BoxWithConstraints(modifier = modifier.fillMaxWidth()) {
+        // The drawer is laid out at the real screen width and shrunk to the card, so its columns and rows are the ones a phone gets.
+        val scale = maxWidth / screenWidth
+        // A drag moves the card's pixels, the list scrolls its own, so convert.
+        val scrollState = rememberScrollableState { delta ->
+            val state: ScrollableState = if (isGrid) gridState else listState
+            -state.dispatchRawDelta(-delta / scale) * scale
+        }
         Box(
-            Modifier
-                .matchParentSize()
-                .scrollable(
-                    state = if (settings.drawerPresentation == DrawerPresentation.GRID) gridState else listState,
-                    orientation = Orientation.Vertical,
-                    reverseDirection = true,
-                )
-                .pointerInput(Unit) {},
-        )
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(PREVIEW_VIEWPORT_HEIGHT * scale)
+                .clip(shape)
+                .border(1.dp, Hairline, shape)
+                .testTag("app_drawer_preview")
+                .clearAndSetSemantics { contentDescription = description },
+        ) {
+            WallpaperBackground(wallpaper, Modifier.matchParentSize())
+            AppDrawerScreen(
+                apps = sample.apps,
+                onAppClick = {},
+                modifier = Modifier
+                    .requiredSize(screenWidth, PREVIEW_VIEWPORT_HEIGHT)
+                    .graphicsLayer { scaleX = scale; scaleY = scale }
+                    .consumeWindowInsets(WindowInsets.systemBars),
+                listState = listState,
+                gridState = gridState,
+                presentation = settings.drawerPresentation,
+                gridDensity = settings.drawerGridDensity,
+                listItemSize = settings.drawerListItemSize,
+                showIcons = settings.showDrawerIcons,
+                showLabels = settings.showDrawerLabels,
+                labelFontWeight = settings.homeAppsFontWeight.resolve(),
+                opacity = settings.drawerOpacity,
+                notificationBadgeStyle = settings.notificationBadgeStyle,
+                searchBarPosition = settings.searchBarPosition,
+                folderCandidates = sample.folders,
+                folderDisplayMode = settings.drawerFolderDisplayMode,
+                recentlyInstalledPosition = settings.recentlyInstalledPosition,
+            )
+            // A later sibling takes the touches first, so taps never reach the drawer. Vertical drags scroll its list or grid, and
+            // what they can't consume (the ends) passes on to the settings list.
+            Box(
+                Modifier
+                    .matchParentSize()
+                    .scrollable(state = scrollState, orientation = Orientation.Vertical)
+                    .pointerInput(Unit) {},
+            )
+        }
     }
 }
 

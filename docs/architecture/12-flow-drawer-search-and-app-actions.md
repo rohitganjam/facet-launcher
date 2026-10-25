@@ -130,7 +130,10 @@ names still load (`DrawerGridDensity.fromStored`) and map to the nearest density
 
 `AppDrawerSettingsScreen` opens with `AppDrawerSettingsPreview` (`ui/settings/`): the real `AppDrawerScreen` on eight sample
 apps (null icons, so the tile placeholder; labels from `R.array.drawer_preview_app_labels`) and one sample folder, in a
-380dp card over the system wallpaper (`AppDrawerSettingsViewModel.homeWallpaper`, so the opacity slider shows). It is fed the
+card over the system wallpaper. The drawer is laid out at the real screen width and 400dp of height, then scaled down to the
+card's width (about 350dp tall on a phone), so its columns and rows are the ones a phone gets (`DrawerGridLayout`'s
+two-row minimum lets a short viewport show Compact 3, Regular 2, Spacious 2 rows). The wallpaper is
+`AppDrawerSettingsViewModel.homeWallpaper`, so the opacity slider shows. It is fed the
 current `LauncherSettings`, so presentation, grid density, list size, icons, labels, folders in drawer, recently installed,
 search bar position and opacity all show as they change. `drawerPreviewSample` builds the sample (two apps installed an hour
 ago for the "Recently installed" row). Taps do nothing (an overlay takes them, and its vertical drags scroll the drawer's own list or grid state, passing what they can't consume on to the settings
