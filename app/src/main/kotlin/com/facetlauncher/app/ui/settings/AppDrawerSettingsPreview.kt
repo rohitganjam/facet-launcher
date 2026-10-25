@@ -2,12 +2,16 @@ package com.facetlauncher.app.ui.settings
 
 import android.content.res.Configuration
 import androidx.compose.foundation.border
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -59,14 +63,16 @@ internal fun drawerPreviewSample(appLabels: List<String>, folderName: String, no
 
 /**
  * The real [AppDrawerScreen] on sample apps over the wallpaper, set up from [settings], so presentation, sizes, icons, labels,
- * folders, recently installed, search bar position and opacity all show their effect as they change. Inert: touches fall through
- * to the settings list.
+ * folders, recently installed, search bar position and opacity all show their effect as they change. Taps do nothing; a vertical
+ * drag scrolls the sample apps, and what it can't scroll passes on to the settings list.
  */
 @Composable
 internal fun AppDrawerSettingsPreview(settings: LauncherSettings, wallpaper: HomeWallpaper, modifier: Modifier = Modifier) {
     val labels = stringArrayResource(R.array.drawer_preview_app_labels).toList()
     val folderName = stringResource(R.string.drawer_preview_folder_name)
     val sample = remember(labels, folderName) { drawerPreviewSample(labels, folderName, System.currentTimeMillis()) }
+    val listState = rememberLazyListState()
+    val gridState = rememberLazyGridState()
     val shape = MaterialTheme.shapes.extraLarge
     val description = stringResource(R.string.app_drawer_preview_description)
     Box(
@@ -83,6 +89,8 @@ internal fun AppDrawerSettingsPreview(settings: LauncherSettings, wallpaper: Hom
             apps = sample.apps,
             onAppClick = {},
             modifier = Modifier.consumeWindowInsets(WindowInsets.systemBars),
+            listState = listState,
+            gridState = gridState,
             presentation = settings.drawerPresentation,
             gridDensity = settings.drawerGridDensity,
             listItemSize = settings.drawerListItemSize,
@@ -96,8 +104,18 @@ internal fun AppDrawerSettingsPreview(settings: LauncherSettings, wallpaper: Hom
             folderDisplayMode = settings.drawerFolderDisplayMode,
             recentlyInstalledPosition = settings.recentlyInstalledPosition,
         )
-        // A later sibling takes the touches first, so the drawer underneath stays inert while the list still scrolls.
-        Box(Modifier.matchParentSize().pointerInput(Unit) {})
+        // A later sibling takes the touches first, so taps never reach the drawer. Vertical drags scroll its list or grid, and
+        // what they can't consume (the ends) passes on to the settings list.
+        Box(
+            Modifier
+                .matchParentSize()
+                .scrollable(
+                    state = if (settings.drawerPresentation == DrawerPresentation.GRID) gridState else listState,
+                    orientation = Orientation.Vertical,
+                    reverseDirection = true,
+                )
+                .pointerInput(Unit) {},
+        )
     }
 }
 

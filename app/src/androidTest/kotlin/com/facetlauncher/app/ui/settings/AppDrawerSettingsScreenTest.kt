@@ -12,6 +12,8 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToNode
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.swipeUp
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.WallpaperRepository
@@ -61,6 +63,21 @@ class AppDrawerSettingsScreenTest {
             composeRule.onAllNodesWithTag("drawer_grid_tile_preview.sample.0", useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
         }
         composeRule.onNodeWithTag("drawer_app_row_preview.sample.0", useUnmergedTree = true).assertDoesNotExist()
+    }
+
+    @Test
+    fun draggingThePreviewScrollsTheSampleApps() {
+        // Given the preview, whose last sample app (Weather) is below the card's visible area
+        setContent()
+        composeRule.onNodeWithTag("drawer_app_row_preview.sample.7", useUnmergedTree = true).assertDoesNotExist()
+
+        // When swiping up on the preview
+        composeRule.onNodeWithTag("app_drawer_preview").performTouchInput { swipeUp() }
+
+        // Then the list inside it scrolled and the last app is now there
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            composeRule.onAllNodesWithTag("drawer_app_row_preview.sample.7", useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
+        }
     }
 
     @Test

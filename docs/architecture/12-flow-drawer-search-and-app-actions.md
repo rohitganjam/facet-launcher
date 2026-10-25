@@ -133,8 +133,8 @@ apps (null icons, so the tile placeholder; labels from `R.array.drawer_preview_a
 380dp card over the system wallpaper (`AppDrawerSettingsViewModel.homeWallpaper`, so the opacity slider shows). It is fed the
 current `LauncherSettings`, so presentation, grid density, list size, icons, labels, folders in drawer, recently installed,
 search bar position and opacity all show as they change. `drawerPreviewSample` builds the sample (two apps installed an hour
-ago for the "Recently installed" row). The card is inert (an empty `pointerInput` overlay takes the touches, so the settings
-list still scrolls), `consumeWindowInsets(systemBars)` stops the drawer padding for the status bar, and
+ago for the "Recently installed" row). Taps do nothing (an overlay takes them, and its vertical drags scroll the drawer's own list or grid state, passing what they can't consume on to the settings
+list), `consumeWindowInsets(systemBars)` stops the drawer padding for the status bar, and
 `clearAndSetSemantics` keeps the sample apps out of the accessibility tree.
 
 ## 2. Search pipeline
