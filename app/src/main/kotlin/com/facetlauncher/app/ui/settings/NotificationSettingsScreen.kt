@@ -33,7 +33,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.facetlauncher.app.R
 import com.facetlauncher.app.data.model.NotificationBadgeStyle
-import com.facetlauncher.app.ui.components.BackButton
+import com.facetlauncher.app.ui.components.StickyHeaderScrollColumn
 import com.facetlauncher.app.ui.components.CardDivider
 import com.facetlauncher.app.ui.components.LabeledDropdownRow
 import com.facetlauncher.app.ui.components.SettingsCard
@@ -116,23 +116,12 @@ private fun NotificationSettingsContent(
     val mediaEnabled = uiState.settings.showMediaPlayerOnHome && uiState.isAccessGranted
     val inAppMenuEnabled = uiState.settings.showNotificationsInAppMenu && uiState.isAccessGranted
 
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .background(SurfaceContainer)
-            .testTag("notification_settings_screen")
-            .windowInsetsPadding(WindowInsets.systemBars)
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 24.dp),
+    StickyHeaderScrollColumn(
+        title = stringResource(R.string.settings_notifications_title),
+        onBack = onBack,
+        testTag = "notification_settings_screen",
+        modifier = modifier,
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(top = 24.dp, bottom = 16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            BackButton(onClick = onBack)
-            Text(text = stringResource(R.string.settings_notifications_title), style = MaterialTheme.typography.headlineSmall, color = Ink)
-        }
 
         BadgeSettingsCard(
             badgesEnabled = enabled,

@@ -1,6 +1,9 @@
 package com.facetlauncher.app.ui.settings
 
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.hasAnyAncestor
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
@@ -24,6 +27,16 @@ class UnitsAndLocationScreenTest {
             FacetLauncherTheme { UnitsAndLocationContent(uiState, navigation, UnitsAndLocationActions()) }
         }
         composeRule.waitForIdle()
+    }
+
+    @Test
+    fun theHeaderIsPinnedOutsideTheScrollingContent() {
+        // Given the screen
+        setContent()
+
+        // Then the back button is not inside the scrolling content, so it stays pinned while that scrolls
+        composeRule.onAllNodes(hasTestTag("back_button") and hasAnyAncestor(hasTestTag("units_and_location_screen"))).assertCountEquals(0)
+        composeRule.onNodeWithTag("back_button").assertExists()
     }
 
     @Test

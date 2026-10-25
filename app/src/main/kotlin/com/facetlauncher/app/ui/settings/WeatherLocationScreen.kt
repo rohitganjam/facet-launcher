@@ -55,7 +55,7 @@ import com.facetlauncher.app.data.model.WeatherCity
 import com.facetlauncher.app.data.model.WeatherLocationMode
 import com.facetlauncher.app.data.model.isSamePlaceAs
 import com.facetlauncher.app.domain.PlaceCandidate
-import com.facetlauncher.app.ui.components.BackButton
+import com.facetlauncher.app.ui.components.StickyHeaderScrollColumn
 import com.facetlauncher.app.ui.components.CardDivider
 import com.facetlauncher.app.ui.components.LocalSettingsRowInset
 import com.facetlauncher.app.ui.components.SettingsCard
@@ -136,24 +136,13 @@ internal fun WeatherLocationContent(
     onRemoveCity: (WeatherCity) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .background(SurfaceContainer)
-            .testTag("weather_location_screen")
-            .windowInsetsPadding(WindowInsets.systemBars)
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 24.dp),
+    StickyHeaderScrollColumn(
+        title = stringResource(R.string.weather_location_title),
+        onBack = onBack,
+        testTag = "weather_location_screen",
+        modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(top = 24.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            BackButton(onClick = onBack)
-            Text(text = stringResource(R.string.weather_location_title), style = MaterialTheme.typography.headlineSmall, color = Ink)
-        }
         SettingsCard(fullBleedRows = true) {
             ModeRow(
                 title = stringResource(R.string.weather_location_current),

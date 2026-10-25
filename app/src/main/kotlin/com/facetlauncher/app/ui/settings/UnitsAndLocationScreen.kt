@@ -36,7 +36,7 @@ import com.facetlauncher.app.data.model.RainUnit
 import com.facetlauncher.app.data.model.TemperatureUnit
 import com.facetlauncher.app.data.model.WeatherLocationMode
 import com.facetlauncher.app.data.model.WindSpeedUnit
-import com.facetlauncher.app.ui.components.BackButton
+import com.facetlauncher.app.ui.components.StickyHeaderScrollColumn
 import com.facetlauncher.app.ui.components.CardDivider
 import com.facetlauncher.app.ui.components.LabeledDropdownRow
 import com.facetlauncher.app.ui.components.SettingsCard
@@ -97,24 +97,13 @@ internal fun UnitsAndLocationContent(
     actions: UnitsAndLocationActions,
     modifier: Modifier = Modifier,
 ) {
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .background(SurfaceContainer)
-            .testTag("units_and_location_screen")
-            .windowInsetsPadding(WindowInsets.systemBars)
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 24.dp),
+    StickyHeaderScrollColumn(
+        title = stringResource(R.string.units_and_location_title),
+        onBack = navigation.onBack,
+        testTag = "units_and_location_screen",
+        modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(top = 24.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            BackButton(onClick = navigation.onBack)
-            Text(text = stringResource(R.string.units_and_location_title), style = MaterialTheme.typography.headlineSmall, color = Ink)
-        }
         Text(
             stringResource(R.string.units_and_location_note),
             style = MaterialTheme.typography.bodyMedium,

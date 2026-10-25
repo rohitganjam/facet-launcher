@@ -4336,3 +4336,7 @@ Design agreed in chat (mocks: accessory bar, weather sheet, Clock accessories sc
 
 - [x] The temperature carries its unit letter everywhere (accessory row, sheet header, high and low, hourly strip, outlook): "21°C" or "70°F" (`temperatureText`, `weather_temperature_format` with the untranslated `weather_temperature_unit_*` letters). The hourly strip's rain and wind numbers carry theirs too ("0.4 mm", "11 km/h") in a wider column; humidity, cloud cover, pressure and the wind and rain totals already did. The Clock accessories preview sample follows the chosen unit.
 - Tests: `WeatherUnitsTextTest`, `ClockAccessoriesScreenTest`.
+
+## Pinned headers on the older settings screens (direct request)
+
+- [x] `StickyHeaderScrollColumn` (`ui/components/`): a scrolling settings column under a pinned back button and title, on `StickyHeaderLayout`. Clock accessories, Units and location, Weather location and Notifications now use it (their header used to scroll away). Each has a test that the back button is outside the scrolling content. The two access-explanation screens already scroll only their body; Folders has no scrolling list (a separate gap).

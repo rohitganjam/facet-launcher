@@ -3,6 +3,9 @@ package com.facetlauncher.app.ui.settings
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.hasAnyAncestor
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
@@ -30,6 +33,16 @@ class ClockAccessoriesScreenTest {
             FacetLauncherTheme { ClockAccessoriesContent(uiState, navigation, actions) }
         }
         composeRule.waitForIdle()
+    }
+
+    @Test
+    fun theHeaderIsPinnedOutsideTheScrollingContent() {
+        // Given the screen
+        setContent(ClockAccessoriesUiState())
+
+        // Then the back button is not inside the scrolling content, so it stays pinned while that scrolls
+        composeRule.onAllNodes(hasTestTag("back_button") and hasAnyAncestor(hasTestTag("clock_accessories_screen"))).assertCountEquals(0)
+        composeRule.onNodeWithTag("back_button").assertExists()
     }
 
     @Test

@@ -36,7 +36,7 @@ import com.facetlauncher.app.R
 import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.data.model.WeatherIconStyle
 import com.facetlauncher.app.data.model.WeatherLocationMode
-import com.facetlauncher.app.ui.components.BackButton
+import com.facetlauncher.app.ui.components.StickyHeaderScrollColumn
 import com.facetlauncher.app.ui.components.CardDivider
 import com.facetlauncher.app.ui.components.LabeledDropdownRow
 import com.facetlauncher.app.ui.components.SettingsCard
@@ -107,24 +107,13 @@ internal fun ClockAccessoriesContent(
     actions: ClockAccessoriesActions,
     modifier: Modifier = Modifier,
 ) {
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .background(SurfaceContainer)
-            .testTag("clock_accessories_screen")
-            .windowInsetsPadding(WindowInsets.systemBars)
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 24.dp),
+    StickyHeaderScrollColumn(
+        title = stringResource(R.string.clock_accessories_title),
+        onBack = navigation.onBack,
+        testTag = "clock_accessories_screen",
+        modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(top = 24.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            BackButton(onClick = navigation.onBack)
-            Text(text = stringResource(R.string.clock_accessories_title), style = MaterialTheme.typography.headlineSmall, color = Ink)
-        }
         ClockAccessoriesPreview(uiState)
         if (uiState.isInheriting) InheritingNote(navigation.onOpenClockStyle)
         SwitchesCards(uiState, actions)

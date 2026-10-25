@@ -2,6 +2,8 @@ package com.facetlauncher.app.ui.settings
 
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
@@ -51,6 +53,16 @@ class WeatherLocationScreenTest {
     }
 
     private val cityMode = WeatherLocationUiState(mode = WeatherLocationMode.CITY)
+
+    @Test
+    fun theHeaderIsPinnedOutsideTheScrollingContent() {
+        // Given the screen
+        setContent(WeatherLocationUiState())
+
+        // Then the back button is not inside the scrolling content, so it stays pinned while that scrolls
+        composeRule.onAllNodes(hasTestTag("back_button") and hasAnyAncestor(hasTestTag("weather_location_screen"))).assertCountEquals(0)
+        composeRule.onNodeWithTag("back_button").assertExists()
+    }
 
     @Test
     fun tappingASearchResultChoosesThatCity() {
