@@ -2,7 +2,6 @@
 <SmellBaseline>
   <ManuallySuppressedIssues/>
   <CurrentIssues>
-    <ID>ComplexCondition:AppDrawerScreen.kt:apps.isEmpty() &amp;&amp; contacts.isEmpty() &amp;&amp; settingsEntries.isEmpty() &amp;&amp; !showContactsPermissionPrompt &amp;&amp; !showContactsSettingPrompt</ID>
     <ID>ComplexCondition:HubViewModel.kt:HubViewModel$existing.row != placement.row || existing.col != placement.col || existing.colSpan != placement.colSpan || existing.rowSpan != placement.rowSpan</ID>
     <ID>ComplexCondition:PlaceWidgetUseCase.kt:PlaceWidgetUseCase$preferredRow != null &amp;&amp; preferredCol != null &amp;&amp; preferredRow in 0..(HUB_MAX_ROWS - rowSpan) &amp;&amp; preferredCol in 0..(HUB_COLUMNS - colSpan) &amp;&amp; existing.none { placed -&gt; rectanglesOverlap(preferredRow, preferredCol, colSpan, rowSpan, placed.row, placed.col, placed.colSpan, placed.rowSpan) }</ID>
     <ID>ComposableNestingDepth:AppDrawerScreen.kt:@Composable fun AppDrawerScreen</ID>
@@ -14,7 +13,6 @@
     <ID>ComposableNestingDepth:FolderContentsSheet.kt:@Composable fun FolderContentsSheet</ID>
     <ID>ComposableNestingDepth:HubGrid.kt:@Composable fun HubGrid</ID>
     <ID>ComposableNestingDepth:HubWidgetPickerScreen.kt:@Composable internal fun HubWidgetPickerContent</ID>
-    <ID>ComposableParamOrder:AppDrawerScreen.kt:@Composable fun AppDrawerScreen</ID>
     <ID>ComposableParamOrder:ClockAccessoryIcons.kt:@Composable fun BatteryIcon</ID>
     <ID>ComposableParamOrder:ClockTemplates.kt:@Composable fun ClockDisplay</ID>
     <ID>ComposableParamOrder:ClockTemplates.kt:@Composable private fun ClockGlyphText</ID>
@@ -25,15 +23,12 @@
     <ID>ComposableParamOrder:HomeDrawerRoute.kt:@Composable fun HomeDrawerRoute</ID>
     <ID>ComposableParamOrder:StickyHeaderLayout.kt:@Composable fun StickyHeaderLayout</ID>
     <ID>CyclomaticComplexMethod:AppContextMenu.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun AppContextMenu</ID>
-    <ID>CyclomaticComplexMethod:AppDrawerScreen.kt:@Composable fun AppDrawerScreen</ID>
-    <ID>CyclomaticComplexMethod:AppDrawerScreen.kt:@Composable private fun DrawerSearchResults</ID>
     <ID>CyclomaticComplexMethod:ContactRepository.kt:ContactRepository$private fun dynamicConnections: List&lt;ContactConnection&gt;</ID>
     <ID>CyclomaticComplexMethod:HomeDrawerRoute.kt:@Composable fun HomeDrawerRoute</ID>
     <ID>CyclomaticComplexMethod:HubGrid.kt:@Composable fun HubGrid</ID>
     <ID>CyclomaticComplexMethod:ImportBackupUseCase.kt:ImportBackupUseCase$suspend operator fun invoke: ImportBackupResult</ID>
     <ID>CyclomaticComplexMethod:OnboardingScreen.kt:@Composable fun OnboardingScreen</ID>
     <ID>LambdaParameterInRestartableEffect:AppContextMenu.kt:onRequestQuickAddState: suspend (AppInfo) -&gt; QuickAddState = { QuickAddState() }</ID>
-    <ID>LambdaParameterInRestartableEffect:AppDrawerScreen.kt:onRequestConnections: suspend (ContactInfo) -&gt; List&lt;ContactConnection&gt; = { emptyList() }</ID>
     <ID>LambdaParameterInRestartableEffect:AppPickerScreen.kt:onResume: () -&gt; Unit = {}</ID>
     <ID>LambdaParameterInRestartableEffect:ClockWidgetPickerScreen.kt:onDone: () -&gt; Unit</ID>
     <ID>LambdaParameterInRestartableEffect:FolderTileContextMenu.kt:onRequestQuickAddState: suspend (Folder) -&gt; QuickAddState = { QuickAddState() }</ID>
@@ -42,8 +37,6 @@
     <ID>LambdaParameterInRestartableEffect:UsageAccessExplanationScreen.kt:onBack: () -&gt; Unit</ID>
     <ID>LongMethod:AppContextMenu.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun AppContextMenu</ID>
     <ID>LongMethod:AppDrawerScreen.kt:@Composable fun AppDrawerScreen</ID>
-    <ID>LongMethod:AppDrawerScreen.kt:@Composable private fun DrawerListContent</ID>
-    <ID>LongMethod:AppDrawerScreen.kt:@Composable private fun DrawerSearchResults</ID>
     <ID>LongMethod:AppPickerScreen.kt:@Composable fun AppPickerScreen</ID>
     <ID>LongMethod:AppSortControl.kt:@Composable fun AppSortControl</ID>
     <ID>LongMethod:BackupRestoreScreen.kt:@Composable private fun BackupRestoreContent</ID>
@@ -70,7 +63,6 @@
     <ID>LongMethod:OnboardingHomeSetupPage.kt:@Composable fun OnboardingHomeSetupPage</ID>
     <ID>LongMethod:OnboardingScreen.kt:@Composable fun OnboardingScreen</ID>
     <ID>LongMethod:SettingsScreen.kt:@Composable private fun SettingsContent</ID>
-    <ID>LoopWithTooManyJumpStatements:AppDrawerScreen.kt:while</ID>
     <ID>LoopWithTooManyJumpStatements:CalendarRepository.kt:CalendarRepository$while</ID>
     <ID>LoopWithTooManyJumpStatements:ContactRepository.kt:ContactRepository$while</ID>
     <ID>LoopWithTooManyJumpStatements:WidgetGrabGesture.kt:while</ID>
