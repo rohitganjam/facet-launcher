@@ -2,8 +2,6 @@
 <SmellBaseline>
   <ManuallySuppressedIssues/>
   <CurrentIssues>
-    <ID>ComposableNestingDepth:CalendarSettingsScreen.kt:@Composable private fun CalendarSettingsContent</ID>
-    <ID>ComposableNestingDepth:ClockStyleGalleryScreen.kt:@Composable private fun ClockStyleGalleryScreen</ID>
     <ID>ComposableNestingDepth:ContactConnectionsSheet.kt:@Composable fun ContactConnectionsSheet</ID>
     <ID>ComposableNestingDepth:FacetCarouselScreen.kt:@Composable private fun AddFacetPage</ID>
     <ID>ComposableNestingDepth:FacetCarouselScreen.kt:@Composable private fun FacetPreviewPage</ID>
@@ -33,30 +31,16 @@
     <ID>LongMethod:AppContextMenu.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun AppContextMenu</ID>
     <ID>LongMethod:AppPickerScreen.kt:@Composable fun AppPickerScreen</ID>
     <ID>LongMethod:AppSortControl.kt:@Composable fun AppSortControl</ID>
-    <ID>LongMethod:BackupRestoreScreen.kt:@Composable private fun BackupRestoreContent</ID>
-    <ID>LongMethod:CalendarSettingsScreen.kt:@Composable private fun CalendarSettingsContent</ID>
-    <ID>LongMethod:ClockStyleGalleryScreen.kt:@Composable private fun ClockStyleGalleryScreen</ID>
     <ID>LongMethod:ContactConnectionsSheet.kt:@Composable fun ContactConnectionsSheet</ID>
-    <ID>LongMethod:DockAppsAppearanceScreen.kt:@Composable private fun DockAppsAppearanceContent</ID>
-    <ID>LongMethod:DockSettingsScreen.kt:@Composable private fun DockSettingsContent</ID>
     <ID>LongMethod:FacetCarouselScreen.kt:@Composable private fun FacetCarouselContent</ID>
     <ID>LongMethod:FacetCarouselScreen.kt:@Composable private fun FacetPreviewPage</ID>
-    <ID>LongMethod:FacetNavHost.kt:@Composable fun FacetNavHost</ID>
-    <ID>LongMethod:FacetSettingsScreen.kt:@Composable private fun FacetSettingsContent</ID>
     <ID>LongMethod:FolderContentsSheet.kt:@Composable fun FolderContentsSheet</ID>
     <ID>LongMethod:FolderTileContextMenu.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun FolderTileContextMenu</ID>
-    <ID>LongMethod:FoldersSettingsScreen.kt:@Composable internal fun FoldersSettingsContent</ID>
-    <ID>LongMethod:FontsThemesIconsScreen.kt:@Composable private fun FontsThemesIconsContent</ID>
-    <ID>LongMethod:HomeAppsListSettingsScreen.kt:@Composable private fun DefaultFavoritesReorderList</ID>
-    <ID>LongMethod:HomeAppsListSettingsScreen.kt:@Composable private fun HomeAppsListSettingsContent</ID>
     <ID>LongMethod:HomeDrawerRoute.kt:@Composable fun HomeDrawerRoute</ID>
     <ID>LongMethod:HomeSurfacePreview.kt:@Composable fun HomeSurfacePreview</ID>
     <ID>LongMethod:HubGrid.kt:@Composable fun HubGrid</ID>
-    <ID>LongMethod:Migrations.kt:Migrations.&lt;no name provided&gt;$override fun migrate</ID>
     <ID>LongMethod:OnboardingFacetsPage.kt:@Composable private fun FacetSwitchDemo</ID>
-    <ID>LongMethod:OnboardingHomeSetupPage.kt:@Composable fun OnboardingHomeSetupPage</ID>
     <ID>LongMethod:OnboardingScreen.kt:@Composable fun OnboardingScreen</ID>
-    <ID>LongMethod:SettingsScreen.kt:@Composable private fun SettingsContent</ID>
     <ID>LoopWithTooManyJumpStatements:WidgetGrabGesture.kt:while</ID>
     <ID>MatchingDeclarationName:FacetNavHost.kt:FacetDestinations</ID>
     <ID>MatchingDeclarationName:FolderContentsSheet.kt:FolderSheetHeaderAction</ID>
