@@ -1,10 +1,12 @@
 package com.facetlauncher.app.ui.components
 
+import android.content.Context
 import android.content.Intent
 import android.content.res.Configuration
 import android.net.Uri
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.ContentTransform
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -40,9 +42,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -137,45 +141,20 @@ fun AppContextMenu(
     removeFromFolderId: Long? = null,
     onRemoveFromFolder: (AppInfo, Long) -> Unit = { _, _ -> },
 ) {
-    val context = LocalContext.current
-    var quickAddState by remember(app.packageName, app.activityName) { mutableStateOf(QuickAddState()) }
-    var addingToFolder by remember { mutableStateOf(false) }
-    var showCreateFolderDialog by remember { mutableStateOf(false) }
-    var previewingFolder by remember { mutableStateOf<Folder?>(null) }
-
-    LaunchedEffect(expanded, app) {
-        if (expanded) quickAddState = onRequestQuickAddState(app)
-    }
-
-    // Every fresh open starts back on the main page, regardless of where a previous open left off.
-    LaunchedEffect(expanded) {
-        if (!expanded) {
-            addingToFolder = false
-            showCreateFolderDialog = false
-            previewingFolder = null
-        }
-    }
-
-    // System back dismisses the whole sheet from the main page, or returns to it from the folder
-    // page — mutually exclusive via `enabled` so which one fires never depends on registration order.
-    BackHandler(enabled = expanded && !addingToFolder, onBack = onDismissRequest)
-    BackHandler(enabled = expanded && addingToFolder) { addingToFolder = false }
+    val menu = rememberAppMenuState(app, expanded, onDismissRequest, onRequestQuickAddState)
 
     if (!expanded) return
 
-    val notificationsFlow = remember(app.packageName, app.userHandle, appMenuNotifications) { appMenuNotifications.observe(app) }
-    val notificationsState by notificationsFlow.collectAsStateWithLifecycle(initialValue = AppNotificationsState(enabled = false))
-
     val placementActions = placementActionsFor(
         app = app,
-        quickAddState = quickAddState,
+        quickAddState = menu.quickAddState,
         hasFolders = folderCandidates != null,
         removeFromFolderId = removeFromFolderId,
         onDismissRequest = onDismissRequest,
         onFavoritesAction = onFavoritesAction,
         onDockAction = onDockAction,
         onRemoveFromFolder = onRemoveFromFolder,
-        onAddToFolder = { addingToFolder = true },
+        onAddToFolder = { menu.addingToFolder = true },
     )
 
     ThemedModalBottomSheet(
@@ -183,92 +162,188 @@ fun AppContextMenu(
         modifier = modifier.testTag("app_context_menu"),
         skipPartiallyExpanded = true,
     ) {
-        AnimatedContent(
-            targetState = addingToFolder,
-            transitionSpec = {
-                if (targetState) {
-                    (slideInHorizontally(animationSpec = tween(280)) { it } + fadeIn())
-                        .togetherWith(slideOutHorizontally(animationSpec = tween(280)) { -it } + fadeOut())
-                } else {
-                    (slideInHorizontally(animationSpec = tween(280)) { -it } + fadeIn())
-                        .togetherWith(slideOutHorizontally(animationSpec = tween(280)) { it } + fadeOut())
-                }
-            },
-            label = "app_context_menu_page",
-        ) { onFolderPage ->
-            if (!onFolderPage) {
-                AppMenuMainPage(
-                    app = app,
-                    notifications = notificationsState,
-                    placementActions = placementActions,
-                    onAppInfo = {
-                        onDismissRequest()
-                        onAppInfo(app)
-                    },
-                    onUninstall = {
-                        onDismissRequest()
-                        // Unlike App Info (LauncherApps.startAppDetailsActivity, see
-                        // AppRepository.openAppDetails), there's no public per-profile-targeted
-                        // uninstall API for a third-party launcher — the OS resolves this by
-                        // ambient calling context, same as every other launcher. A genuine
-                        // platform limitation, not an oversight.
-                        val intent = Intent(Intent.ACTION_DELETE, Uri.fromParts("package", app.packageName, null))
-                        runCatching { context.startActivity(intent) }
-                    },
-                    onOpenNotification = { notification ->
-                        onDismissRequest()
-                        appMenuNotifications.onOpen(notification)
-                    },
-                    onDismissNotifications = appMenuNotifications.onDismiss,
-                    onEnableNotificationAccess = {
-                        onDismissRequest()
-                        appMenuNotifications.onEnableAccess()
-                    },
-                )
-            } else {
-                AppMenuFolderPage(
-                    onBack = { addingToFolder = false },
-                    onCreateFolder = { showCreateFolderDialog = true },
-                ) {
-                    folderCandidates.orEmpty().forEach { folder ->
-                        FolderCandidateRow(folder = folder, onClick = { previewingFolder = folder })
-                    }
+        AppMenuPages(
+            menu = menu,
+            app = app,
+            placementActions = placementActions,
+            appMenuNotifications = appMenuNotifications,
+            folderCandidates = folderCandidates,
+            onDismissRequest = onDismissRequest,
+            onAppInfo = onAppInfo,
+        )
+    }
+
+    AppMenuFolderOverlays(menu, app, drawerPresentation, onDismissRequest, onCreateFolder, onAddToFolder)
+}
+
+/** The sheet's two pages: the app's actions, or the folders to add it to. */
+@Composable
+private fun AppMenuPages(
+    menu: AppMenuState,
+    app: AppInfo,
+    placementActions: ImmutableList<PlacementActionUi>,
+    appMenuNotifications: AppMenuNotifications,
+    folderCandidates: ImmutableList<Folder>?,
+    onDismissRequest: () -> Unit,
+    onAppInfo: (AppInfo) -> Unit,
+) {
+    val context = LocalContext.current
+    val notificationsFlow = remember(app.packageName, app.userHandle, appMenuNotifications) { appMenuNotifications.observe(app) }
+    val notificationsState by notificationsFlow.collectAsStateWithLifecycle(initialValue = AppNotificationsState(enabled = false))
+    AnimatedContent(
+        targetState = menu.addingToFolder,
+        transitionSpec = { appMenuPageTransition(slidingToFolderPage = targetState) },
+        label = "app_context_menu_page",
+    ) { onFolderPage ->
+        if (!onFolderPage) {
+            AppMenuMainPage(
+                app = app,
+                notifications = notificationsState,
+                placementActions = placementActions,
+                onAppInfo = {
+                    onDismissRequest()
+                    onAppInfo(app)
+                },
+                onUninstall = {
+                    onDismissRequest()
+                    context.startUninstall(app)
+                },
+                onOpenNotification = { notification ->
+                    onDismissRequest()
+                    appMenuNotifications.onOpen(notification)
+                },
+                onDismissNotifications = appMenuNotifications.onDismiss,
+                onEnableNotificationAccess = {
+                    onDismissRequest()
+                    appMenuNotifications.onEnableAccess()
+                },
+            )
+        } else {
+            AppMenuFolderPage(
+                onBack = { menu.addingToFolder = false },
+                onCreateFolder = { menu.showCreateFolderDialog = true },
+            ) {
+                folderCandidates.orEmpty().forEach { folder ->
+                    FolderCandidateRow(folder = folder, onClick = { menu.previewingFolder = folder })
                 }
             }
         }
     }
+}
 
-    if (showCreateFolderDialog) {
-        RenameDialog(
-            title = stringResource(R.string.folder_new_folder_title),
-            explanation = stringResource(R.string.folder_name_this_folder),
-            initialValue = "",
+/** The create-folder dialog and the folder preview, shown over the sheet. */
+@Composable
+private fun AppMenuFolderOverlays(
+    menu: AppMenuState,
+    app: AppInfo,
+    drawerPresentation: DrawerPresentation,
+    onDismissRequest: () -> Unit,
+    onCreateFolder: (AppInfo, String) -> Unit,
+    onAddToFolder: (AppInfo, Long) -> Unit,
+) {
+    if (menu.showCreateFolderDialog) {
+        CreateFolderDialog(
             onSave = { name ->
-                showCreateFolderDialog = false
+                menu.showCreateFolderDialog = false
                 onDismissRequest()
                 onCreateFolder(app, name)
             },
-            onDismiss = { showCreateFolderDialog = false },
+            onDismiss = { menu.showCreateFolderDialog = false },
         )
     }
 
-    previewingFolder?.let { folder ->
-        FolderContentsSheet(
+    menu.previewingFolder?.let { folder ->
+        FolderPreviewSheet(
             folder = folder,
-            onDismissRequest = { previewingFolder = null },
-            onAppClick = {},
             presentation = drawerPresentation,
-            onRemoveFromFolder = { _, _ -> },
-            headerAction = FolderSheetHeaderAction.AddHere(
-                onAdd = {
-                    previewingFolder = null
-                    onDismissRequest()
-                    onAddToFolder(app, folder.id)
-                },
-                onBack = { previewingFolder = null },
-            ),
+            onAdd = {
+                menu.previewingFolder = null
+                onDismissRequest()
+                onAddToFolder(app, folder.id)
+            },
+            onBack = { menu.previewingFolder = null },
         )
     }
+}
+
+/** Which page the menu is on, plus the quick-add state fetched for [rememberAppMenuState]'s app. */
+@Stable
+private class AppMenuState {
+    var quickAddState by mutableStateOf(QuickAddState())
+    var addingToFolder by mutableStateOf(false)
+    var showCreateFolderDialog by mutableStateOf(false)
+    var previewingFolder by mutableStateOf<Folder?>(null)
+}
+
+@Composable
+private fun rememberAppMenuState(
+    app: AppInfo,
+    expanded: Boolean,
+    onDismissRequest: () -> Unit,
+    onRequestQuickAddState: suspend (AppInfo) -> QuickAddState,
+): AppMenuState {
+    val menu = remember(app.packageName, app.activityName) { AppMenuState() }
+    val currentRequestQuickAddState by rememberUpdatedState(onRequestQuickAddState)
+
+    LaunchedEffect(expanded, app) {
+        if (expanded) menu.quickAddState = currentRequestQuickAddState(app)
+    }
+
+    // Every fresh open starts back on the main page, regardless of where a previous open left off.
+    LaunchedEffect(expanded) {
+        if (!expanded) {
+            menu.addingToFolder = false
+            menu.showCreateFolderDialog = false
+            menu.previewingFolder = null
+        }
+    }
+
+    // System back dismisses the whole sheet from the main page, or returns to it from the folder
+    // page — mutually exclusive via `enabled` so which one fires never depends on registration order.
+    BackHandler(enabled = expanded && !menu.addingToFolder, onBack = onDismissRequest)
+    BackHandler(enabled = expanded && menu.addingToFolder) { menu.addingToFolder = false }
+    return menu
+}
+
+/** The main page slides out to the left as the folder page slides in from the right, and back the other way. */
+private fun appMenuPageTransition(slidingToFolderPage: Boolean): ContentTransform {
+    val direction = if (slidingToFolderPage) 1 else -1
+    return (slideInHorizontally(animationSpec = tween(280)) { it * direction } + fadeIn())
+        .togetherWith(slideOutHorizontally(animationSpec = tween(280)) { -it * direction } + fadeOut())
+}
+
+private fun Context.startUninstall(app: AppInfo) {
+    // Unlike App Info (LauncherApps.startAppDetailsActivity, see
+    // AppRepository.openAppDetails), there's no public per-profile-targeted
+    // uninstall API for a third-party launcher — the OS resolves this by
+    // ambient calling context, same as every other launcher. A genuine
+    // platform limitation, not an oversight.
+    val intent = Intent(Intent.ACTION_DELETE, Uri.fromParts("package", app.packageName, null))
+    runCatching { startActivity(intent) }
+}
+
+@Composable
+private fun CreateFolderDialog(onSave: (String) -> Unit, onDismiss: () -> Unit) {
+    RenameDialog(
+        title = stringResource(R.string.folder_new_folder_title),
+        explanation = stringResource(R.string.folder_name_this_folder),
+        initialValue = "",
+        onSave = onSave,
+        onDismiss = onDismiss,
+    )
+}
+
+/** An existing folder's real contents, with an Add action in the header: tapping it is what actually adds the app. */
+@Composable
+private fun FolderPreviewSheet(folder: Folder, presentation: DrawerPresentation, onAdd: () -> Unit, onBack: () -> Unit) {
+    FolderContentsSheet(
+        folder = folder,
+        onDismissRequest = onBack,
+        onAppClick = {},
+        presentation = presentation,
+        onRemoveFromFolder = { _, _ -> },
+        headerAction = FolderSheetHeaderAction.AddHere(onAdd = onAdd, onBack = onBack),
+    )
 }
 
 /** The tiles under the notifications zone: Favorites and Dock when offered, then "Add to folder" or "Remove from folder". */
