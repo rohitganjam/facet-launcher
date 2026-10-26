@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -113,19 +114,7 @@ private fun DockAppsAppearanceContent(
                     )
                 }
                 // Launcher-wide, so only on the global screen. Off hides the landscape alignment below.
-                if (!uiState.isFacetScoped) {
-                    item {
-                        SettingsCard(modifier = Modifier.padding(bottom = 16.dp)) {
-                            SettingsToggleRow(
-                                title = stringResource(R.string.appearance_allow_landscape_title),
-                                subtitle = stringResource(R.string.appearance_allow_landscape_subtitle),
-                                checked = uiState.allowLandscape,
-                                onCheckedChange = onAllowLandscapeChange,
-                                testTag = "appearance_allow_landscape_row",
-                            )
-                        }
-                    }
-                }
+                if (!uiState.isFacetScoped) allowLandscapeItem(uiState.allowLandscape, onAllowLandscapeChange)
                 item {
                     // Always shown at both scopes: LAUNCHER_DEFAULT itself (filtered from the option list in
                     // global mode) is what lets a facet revert to inheriting, so no Inherit/Override switch.
@@ -149,20 +138,48 @@ private fun DockAppsAppearanceContent(
                     )
                 }
                 if (uiState.allowLandscape) {
-                    item { SettingsSectionHeader(stringResource(R.string.appearance_alignment_landscape_title)) }
-                    item {
-                        AlignmentCard(
-                            uiState = uiState,
-                            landscape = true,
-                            onRowPositionChange = onLandscapeAppRowPositionChange,
-                            onColumnAlignmentChange = onLandscapeAppListColumnAlignmentChange,
-                            onVerticalAlignmentChange = onLandscapeAppListVerticalAlignmentChange,
-                        )
-                    }
+                    landscapeAlignmentItems(
+                        uiState,
+                        onLandscapeAppRowPositionChange,
+                        onLandscapeAppListColumnAlignmentChange,
+                        onLandscapeAppListVerticalAlignmentChange,
+                    )
                 }
             }
         },
     )
+}
+
+private fun LazyListScope.allowLandscapeItem(allowLandscape: Boolean, onAllowLandscapeChange: (Boolean) -> Unit) {
+    item {
+        SettingsCard(modifier = Modifier.padding(bottom = 16.dp)) {
+            SettingsToggleRow(
+                title = stringResource(R.string.appearance_allow_landscape_title),
+                subtitle = stringResource(R.string.appearance_allow_landscape_subtitle),
+                checked = allowLandscape,
+                onCheckedChange = onAllowLandscapeChange,
+                testTag = "appearance_allow_landscape_row",
+            )
+        }
+    }
+}
+
+private fun LazyListScope.landscapeAlignmentItems(
+    uiState: AppearanceSettingsUiState,
+    onRowPositionChange: (AppRowPosition?) -> Unit,
+    onColumnAlignmentChange: (AppListColumnAlignment?) -> Unit,
+    onVerticalAlignmentChange: (AppListVerticalAlignment?) -> Unit,
+) {
+    item { SettingsSectionHeader(stringResource(R.string.appearance_alignment_landscape_title)) }
+    item {
+        AlignmentCard(
+            uiState = uiState,
+            landscape = true,
+            onRowPositionChange = onRowPositionChange,
+            onColumnAlignmentChange = onColumnAlignmentChange,
+            onVerticalAlignmentChange = onVerticalAlignmentChange,
+        )
+    }
 }
 
 /** The look shared by both orientations: dock style, list layout, and the presentation or grid rows that layout has. */

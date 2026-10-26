@@ -155,101 +155,140 @@ private fun FontsThemesIconsContent(
                 }
                 item { SettingsSectionHeader(stringResource(R.string.appearance_section_theme)) }
                 item {
-                    SettingsCard {
-                        LabeledDropdownRow(
-                            title = stringResource(R.string.appearance_launcher_theme),
-                            options = ThemeMode.entries,
-                            selected = settings.themeMode,
-                            label = { stringResource(it.displayNameRes) },
-                            onSelect = onThemeModeChange,
-                            testTag = "theme_mode_dropdown",
-                        )
-                        CardDivider()
-                        LabeledDropdownRow(
-                            title = stringResource(R.string.appearance_system_bar_icons),
-                            options = SystemBarIconStyle.entries,
-                            selected = settings.systemBarIconStyle,
-                            label = { stringResource(it.displayNameRes) },
-                            onSelect = onSystemBarIconStyleChange,
-                            testTag = "appearance_system_bar_icons_row",
-                        )
-                        CardDivider()
-                        AccentColorSection(
-                            accentFromSystem = settings.accentFromSystem,
-                            customAccentSwatch = settings.customAccentSwatch,
-                            wallpaperAccentRole = settings.wallpaperAccentRole,
-                            onAccentFromSystemChange = onAccentFromSystemChange,
-                            onCustomAccentSwatchChange = onCustomAccentSwatchChange,
-                            onWallpaperAccentRoleChange = onWallpaperAccentRoleChange,
-                        )
-                    }
+                    ThemeCard(
+                        settings = settings,
+                        onThemeModeChange = onThemeModeChange,
+                        onSystemBarIconStyleChange = onSystemBarIconStyleChange,
+                        onAccentFromSystemChange = onAccentFromSystemChange,
+                        onCustomAccentSwatchChange = onCustomAccentSwatchChange,
+                        onWallpaperAccentRoleChange = onWallpaperAccentRoleChange,
+                    )
                 }
                 item { SettingsSectionHeader(stringResource(R.string.appearance_section_icons)) }
-                item {
-                    SettingsCard {
-                        LabeledDropdownRow(
-                            title = stringResource(R.string.appearance_icon_style),
-                            options = IconRenderMode.entries,
-                            selected = settings.iconRenderMode,
-                            label = { stringResource(it.displayNameRes) },
-                            onSelect = onIconRenderModeChange,
-                            testTag = "appearance_icons_row",
-                        )
-                        CardDivider()
-                        IconShapePicker(selected = settings.iconShape, onSelect = onIconShapeChange)
-                    }
-                }
+                item { IconsCard(settings, onIconRenderModeChange, onIconShapeChange) }
                 item { SettingsSectionHeader(stringResource(R.string.appearance_section_fonts)) }
                 item {
-                    SettingsCard {
-                        LabeledDropdownRow(
-                            title = stringResource(R.string.appearance_launcher_font),
-                            options = LauncherFontOption.entries,
-                            selected = settings.launcherFontOption,
-                            label = { stringResource(it.displayNameRes) },
-                            onSelect = onLauncherFontOptionChange,
-                            testTag = "appearance_font_row",
-                        )
-                        CardDivider()
-                        LabeledDropdownRow(
-                            title = stringResource(R.string.appearance_font_color),
-                            options = ClockColorOption.entries,
-                            selected = settings.appLabelColorOption,
-                            label = { stringResource(it.displayNameRes) },
-                            onSelect = onAppLabelColorOptionChange,
-                            testTag = "appearance_app_label_color_row",
-                        )
-                        CardDivider()
-                        FontSizeSlider(
-                            selected = settings.fontScaleOption,
-                            onSelectedChange = onFontScaleOptionChange,
-                            label = stringResource(R.string.appearance_font_size),
-                            showPreview = false,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 13.dp)
-                                .testTag("appearance_font_size_slider"),
-                            sliderTestTag = "appearance_font_size_slider_control",
-                        )
-                        CardDivider()
-                        FontWeightSlider(
-                            selected = settings.homeAppsFontWeight,
-                            onSelectedChange = onHomeAppsFontWeightChange,
-                            label = stringResource(R.string.appearance_font_weight),
-                            showPreview = false,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 13.dp)
-                                .testTag("appearance_font_weight_slider"),
-                            sliderTestTag = "appearance_font_weight_slider_control",
-                        )
-                        CardDivider()
-                        FontPreviewRow(settings = settings)
-                    }
+                    FontsCard(
+                        settings = settings,
+                        onLauncherFontOptionChange = onLauncherFontOptionChange,
+                        onAppLabelColorOptionChange = onAppLabelColorOptionChange,
+                        onHomeAppsFontWeightChange = onHomeAppsFontWeightChange,
+                        onFontScaleOptionChange = onFontScaleOptionChange,
+                    )
                 }
             }
         },
     )
+}
+
+@Composable
+private fun ThemeCard(
+    settings: LauncherSettings,
+    onThemeModeChange: (ThemeMode) -> Unit,
+    onSystemBarIconStyleChange: (SystemBarIconStyle) -> Unit,
+    onAccentFromSystemChange: (Boolean) -> Unit,
+    onCustomAccentSwatchChange: (AccentSwatch) -> Unit,
+    onWallpaperAccentRoleChange: (WallpaperAccentRole) -> Unit,
+) {
+    SettingsCard {
+        LabeledDropdownRow(
+            title = stringResource(R.string.appearance_launcher_theme),
+            options = ThemeMode.entries,
+            selected = settings.themeMode,
+            label = { stringResource(it.displayNameRes) },
+            onSelect = onThemeModeChange,
+            testTag = "theme_mode_dropdown",
+        )
+        CardDivider()
+        LabeledDropdownRow(
+            title = stringResource(R.string.appearance_system_bar_icons),
+            options = SystemBarIconStyle.entries,
+            selected = settings.systemBarIconStyle,
+            label = { stringResource(it.displayNameRes) },
+            onSelect = onSystemBarIconStyleChange,
+            testTag = "appearance_system_bar_icons_row",
+        )
+        CardDivider()
+        AccentColorSection(
+            accentFromSystem = settings.accentFromSystem,
+            customAccentSwatch = settings.customAccentSwatch,
+            wallpaperAccentRole = settings.wallpaperAccentRole,
+            onAccentFromSystemChange = onAccentFromSystemChange,
+            onCustomAccentSwatchChange = onCustomAccentSwatchChange,
+            onWallpaperAccentRoleChange = onWallpaperAccentRoleChange,
+        )
+    }
+}
+
+@Composable
+private fun IconsCard(settings: LauncherSettings, onIconRenderModeChange: (IconRenderMode) -> Unit, onIconShapeChange: (IconShape) -> Unit) {
+    SettingsCard {
+        LabeledDropdownRow(
+            title = stringResource(R.string.appearance_icon_style),
+            options = IconRenderMode.entries,
+            selected = settings.iconRenderMode,
+            label = { stringResource(it.displayNameRes) },
+            onSelect = onIconRenderModeChange,
+            testTag = "appearance_icons_row",
+        )
+        CardDivider()
+        IconShapePicker(selected = settings.iconShape, onSelect = onIconShapeChange)
+    }
+}
+
+@Composable
+private fun FontsCard(
+    settings: LauncherSettings,
+    onLauncherFontOptionChange: (LauncherFontOption) -> Unit,
+    onAppLabelColorOptionChange: (ClockColorOption) -> Unit,
+    onHomeAppsFontWeightChange: (FontWeightOption) -> Unit,
+    onFontScaleOptionChange: (FontScaleOption) -> Unit,
+) {
+    SettingsCard {
+        LabeledDropdownRow(
+            title = stringResource(R.string.appearance_launcher_font),
+            options = LauncherFontOption.entries,
+            selected = settings.launcherFontOption,
+            label = { stringResource(it.displayNameRes) },
+            onSelect = onLauncherFontOptionChange,
+            testTag = "appearance_font_row",
+        )
+        CardDivider()
+        LabeledDropdownRow(
+            title = stringResource(R.string.appearance_font_color),
+            options = ClockColorOption.entries,
+            selected = settings.appLabelColorOption,
+            label = { stringResource(it.displayNameRes) },
+            onSelect = onAppLabelColorOptionChange,
+            testTag = "appearance_app_label_color_row",
+        )
+        CardDivider()
+        FontSizeSlider(
+            selected = settings.fontScaleOption,
+            onSelectedChange = onFontScaleOptionChange,
+            label = stringResource(R.string.appearance_font_size),
+            showPreview = false,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 13.dp)
+                .testTag("appearance_font_size_slider"),
+            sliderTestTag = "appearance_font_size_slider_control",
+        )
+        CardDivider()
+        FontWeightSlider(
+            selected = settings.homeAppsFontWeight,
+            onSelectedChange = onHomeAppsFontWeightChange,
+            label = stringResource(R.string.appearance_font_weight),
+            showPreview = false,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 13.dp)
+                .testTag("appearance_font_weight_slider"),
+            sliderTestTag = "appearance_font_weight_slider_control",
+        )
+        CardDivider()
+        FontPreviewRow(settings = settings)
+    }
 }
 
 @Preview(showBackground = true, widthDp = 390, heightDp = 844)

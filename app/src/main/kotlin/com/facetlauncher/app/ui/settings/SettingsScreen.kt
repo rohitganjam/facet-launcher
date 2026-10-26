@@ -165,132 +165,24 @@ private fun SettingsContent(
             ) {
                 item { ProSettingsCard(isPro = uiState.isPro, facetCount = uiState.facetCount, triggersRunning = uiState.triggersRunning, onClick = onViewFacetPro) }
                 item { SettingsSectionHeader(stringResource(R.string.settings_section_facets)) }
-                item {
-                    SettingsCard(fullBleedRows = true) {
-                        ClickableRow(
-                            title = stringResource(R.string.settings_facets_title),
-                            subtitle = stringResource(R.string.settings_facets_subtitle),
-                            onClick = onViewFacets,
-                            testTag = "view_facets_row",
-                            leadingIcon = iconBadge(Icons.Default.Layers, SettingsSectionHue.FACETS),
-                        )
-                        CardDivider(startInset = SettingsIconBadgeInset)
-                        ClickableRow(
-                            title = stringResource(R.string.settings_facet_automation_title),
-                            subtitle = if (uiState.automationRuleCount == 0) {
-                                stringResource(R.string.settings_facet_automation_none)
-                            } else {
-                                pluralStringResource(R.plurals.settings_facet_automation_rules, uiState.automationRuleCount, uiState.automationRuleCount)
-                            },
-                            onClick = onViewFacetAutomation,
-                            testTag = "facet_automation_row",
-                            leadingIcon = iconBadge(Icons.Outlined.AutoMode, SettingsSectionHue.FACETS),
-                        )
-                    }
-                }
+                item { FacetsCard(uiState.automationRuleCount, onViewFacets, onViewFacetAutomation) }
 
                 item { SettingsSectionHeader(stringResource(R.string.settings_section_appearance)) }
-                item {
-                    SettingsCard(fullBleedRows = true) {
-                        ClickableRow(
-                            title = stringResource(R.string.settings_change_wallpaper_title),
-                            subtitle = stringResource(R.string.settings_change_wallpaper_subtitle),
-                            onClick = { runCatching { context.startActivity(Intent(Intent.ACTION_SET_WALLPAPER)) } },
-                            testTag = "change_wallpaper_row",
-                            leadingIcon = iconBadge(Icons.Outlined.Wallpaper, SettingsSectionHue.APPEARANCE),
-                        )
-                        CardDivider(startInset = SettingsIconBadgeInset)
-                        ClickableRow(
-                            title = stringResource(R.string.settings_appearance_title),
-                            subtitle = stringResource(R.string.settings_appearance_subtitle),
-                            onClick = onNavigateToAppearance,
-                            testTag = "appearance_row",
-                            leadingIcon = iconBadge(Icons.Outlined.Palette, SettingsSectionHue.APPEARANCE),
-                        )
-                    }
-                }
+                item { AppearanceCard(onNavigateToAppearance) }
 
                 item { SettingsSectionHeader(stringResource(R.string.settings_section_home_apps)) }
-                item {
-                    SettingsCard(fullBleedRows = true) {
-                        ClickableRow(
-                            title = stringResource(R.string.settings_dock_title),
-                            subtitle = dockSummary(uiState.dockItems),
-                            onClick = onNavigateToDockSettings,
-                            testTag = "dock_settings_row",
-                            leadingIcon = iconBadge(Icons.Outlined.Dock, SettingsSectionHue.HOME_APPS),
-                        )
-                        CardDivider(startInset = SettingsIconBadgeInset)
-                        ClickableRow(
-                            title = stringResource(R.string.settings_home_apps_list_title),
-                            subtitle = appsListSummary(uiState.settings.listContentMode, uiState.defaultFavorites.size, uiState.settings.appsToShowCount),
-                            onClick = onNavigateToHomeAppsListSettings,
-                            testTag = "home_apps_list_settings_row",
-                            leadingIcon = iconBadge(Icons.Outlined.FormatListBulleted, SettingsSectionHue.HOME_APPS),
-                        )
-                        CardDivider(startInset = SettingsIconBadgeInset)
-                        ClickableRow(
-                            title = stringResource(R.string.settings_folders_title),
-                            subtitle = folderCountSummary(uiState.folderCount),
-                            onClick = onNavigateToFolders,
-                            testTag = "folders_settings_row",
-                            leadingIcon = iconBadge(Icons.Outlined.Folder, SettingsSectionHue.HOME_APPS),
-                        )
-                    }
-                }
+                item { HomeAppsCard(uiState, onNavigateToDockSettings, onNavigateToHomeAppsListSettings, onNavigateToFolders) }
 
                 item { SettingsSectionHeader(stringResource(R.string.settings_section_system)) }
                 item {
-                    SettingsCard(fullBleedRows = true) {
-                        ClickableRow(
-                            title = stringResource(R.string.settings_permissions_title),
-                            subtitle = stringResource(R.string.settings_permissions_subtitle),
-                            onClick = onNavigateToPermissions,
-                            testTag = "view_permissions_row",
-                            leadingIcon = iconBadge(Icons.Outlined.Shield, SettingsSectionHue.SYSTEM),
-                        )
-                        CardDivider(startInset = SettingsIconBadgeInset)
-                        ClickableRow(
-                            title = stringResource(R.string.settings_backup_restore_title),
-                            subtitle = stringResource(R.string.settings_backup_restore_subtitle),
-                            onClick = onNavigateToBackupRestore,
-                            testTag = "backup_restore_row",
-                            leadingIcon = iconBadge(Icons.Outlined.SettingsBackupRestore, SettingsSectionHue.SYSTEM),
-                        )
-                        CardDivider(startInset = SettingsIconBadgeInset)
-                        ClickableRow(
-                            title = stringResource(R.string.settings_set_default_launcher_title),
-                            subtitle = stringResource(if (uiState.isDefaultLauncher) R.string.settings_status_active else R.string.settings_status_not_set),
-                            onClick = { defaultLauncherLauncher.launch(onRequestDefaultLauncherIntent()) },
-                            testTag = "set_default_launcher_row",
-                            leadingIcon = iconBadge(Icons.Outlined.Home, SettingsSectionHue.SYSTEM),
-                        )
-                        // Read-only: this app reflects the Work Profile's state, it doesn't
-                        // control it — Android already owns a pause/resume toggle (system
-                        // Settings, and usually a Quick Settings tile); see WorkProfileRepository's
-                        // own doc for why this app doesn't add a second one. One row per entry —
-                        // almost always 0 or 1 in practice, since stock Android only provisions one
-                        // real Work Profile per user, but list-shaped so it stays correct if that
-                        // ever isn't true.
-                        uiState.workProfiles.forEach { workProfile ->
-                            CardDivider(startInset = SettingsIconBadgeInset)
-                            ClickableRow(
-                                title = workProfile.label,
-                                subtitle = stringResource(if (workProfile.isPaused) R.string.settings_status_paused else R.string.settings_status_active),
-                                onClick = { runCatching { context.startActivity(onRequestWorkProfileSettingsIntent()) } },
-                                testTag = "work_profile_row",
-                                leadingIcon = iconBadge(Icons.Outlined.Work, SettingsSectionHue.SYSTEM),
-                            )
-                        }
-                        CardDivider(startInset = SettingsIconBadgeInset)
-                        ClickableRow(
-                            title = stringResource(R.string.settings_about_title),
-                            subtitle = stringResource(R.string.settings_about_subtitle),
-                            onClick = onNavigateToAbout,
-                            testTag = "about_row",
-                            leadingIcon = iconBadge(Icons.Outlined.Info, SettingsSectionHue.SYSTEM),
-                        )
-                    }
+                    SystemCard(
+                        uiState = uiState,
+                        onNavigateToPermissions = onNavigateToPermissions,
+                        onNavigateToBackupRestore = onNavigateToBackupRestore,
+                        onNavigateToAbout = onNavigateToAbout,
+                        onSetDefaultLauncher = { defaultLauncherLauncher.launch(onRequestDefaultLauncherIntent()) },
+                        onRequestWorkProfileSettingsIntent = onRequestWorkProfileSettingsIntent,
+                    )
                 }
 
                 debugEntry?.let { entry -> item { entry.Content() } }
@@ -299,6 +191,149 @@ private fun SettingsContent(
             }
         },
     )
+}
+
+@Composable
+private fun FacetsCard(automationRuleCount: Int, onViewFacets: () -> Unit, onViewFacetAutomation: () -> Unit) {
+    SettingsCard(fullBleedRows = true) {
+        ClickableRow(
+            title = stringResource(R.string.settings_facets_title),
+            subtitle = stringResource(R.string.settings_facets_subtitle),
+            onClick = onViewFacets,
+            testTag = "view_facets_row",
+            leadingIcon = iconBadge(Icons.Default.Layers, SettingsSectionHue.FACETS),
+        )
+        CardDivider(startInset = SettingsIconBadgeInset)
+        ClickableRow(
+            title = stringResource(R.string.settings_facet_automation_title),
+            subtitle = if (automationRuleCount == 0) {
+                stringResource(R.string.settings_facet_automation_none)
+            } else {
+                pluralStringResource(R.plurals.settings_facet_automation_rules, automationRuleCount, automationRuleCount)
+            },
+            onClick = onViewFacetAutomation,
+            testTag = "facet_automation_row",
+            leadingIcon = iconBadge(Icons.Outlined.AutoMode, SettingsSectionHue.FACETS),
+        )
+    }
+}
+
+@Composable
+private fun AppearanceCard(onNavigateToAppearance: () -> Unit) {
+    val context = LocalContext.current
+    SettingsCard(fullBleedRows = true) {
+        ClickableRow(
+            title = stringResource(R.string.settings_change_wallpaper_title),
+            subtitle = stringResource(R.string.settings_change_wallpaper_subtitle),
+            onClick = { runCatching { context.startActivity(Intent(Intent.ACTION_SET_WALLPAPER)) } },
+            testTag = "change_wallpaper_row",
+            leadingIcon = iconBadge(Icons.Outlined.Wallpaper, SettingsSectionHue.APPEARANCE),
+        )
+        CardDivider(startInset = SettingsIconBadgeInset)
+        ClickableRow(
+            title = stringResource(R.string.settings_appearance_title),
+            subtitle = stringResource(R.string.settings_appearance_subtitle),
+            onClick = onNavigateToAppearance,
+            testTag = "appearance_row",
+            leadingIcon = iconBadge(Icons.Outlined.Palette, SettingsSectionHue.APPEARANCE),
+        )
+    }
+}
+
+@Composable
+private fun HomeAppsCard(
+    uiState: SettingsUiState,
+    onNavigateToDockSettings: () -> Unit,
+    onNavigateToHomeAppsListSettings: () -> Unit,
+    onNavigateToFolders: () -> Unit,
+) {
+    SettingsCard(fullBleedRows = true) {
+        ClickableRow(
+            title = stringResource(R.string.settings_dock_title),
+            subtitle = dockSummary(uiState.dockItems),
+            onClick = onNavigateToDockSettings,
+            testTag = "dock_settings_row",
+            leadingIcon = iconBadge(Icons.Outlined.Dock, SettingsSectionHue.HOME_APPS),
+        )
+        CardDivider(startInset = SettingsIconBadgeInset)
+        ClickableRow(
+            title = stringResource(R.string.settings_home_apps_list_title),
+            subtitle = appsListSummary(uiState.settings.listContentMode, uiState.defaultFavorites.size, uiState.settings.appsToShowCount),
+            onClick = onNavigateToHomeAppsListSettings,
+            testTag = "home_apps_list_settings_row",
+            leadingIcon = iconBadge(Icons.Outlined.FormatListBulleted, SettingsSectionHue.HOME_APPS),
+        )
+        CardDivider(startInset = SettingsIconBadgeInset)
+        ClickableRow(
+            title = stringResource(R.string.settings_folders_title),
+            subtitle = folderCountSummary(uiState.folderCount),
+            onClick = onNavigateToFolders,
+            testTag = "folders_settings_row",
+            leadingIcon = iconBadge(Icons.Outlined.Folder, SettingsSectionHue.HOME_APPS),
+        )
+    }
+}
+
+@Composable
+private fun SystemCard(
+    uiState: SettingsUiState,
+    onNavigateToPermissions: () -> Unit,
+    onNavigateToBackupRestore: () -> Unit,
+    onNavigateToAbout: () -> Unit,
+    onSetDefaultLauncher: () -> Unit,
+    onRequestWorkProfileSettingsIntent: () -> Intent,
+) {
+    val context = LocalContext.current
+    SettingsCard(fullBleedRows = true) {
+        ClickableRow(
+            title = stringResource(R.string.settings_permissions_title),
+            subtitle = stringResource(R.string.settings_permissions_subtitle),
+            onClick = onNavigateToPermissions,
+            testTag = "view_permissions_row",
+            leadingIcon = iconBadge(Icons.Outlined.Shield, SettingsSectionHue.SYSTEM),
+        )
+        CardDivider(startInset = SettingsIconBadgeInset)
+        ClickableRow(
+            title = stringResource(R.string.settings_backup_restore_title),
+            subtitle = stringResource(R.string.settings_backup_restore_subtitle),
+            onClick = onNavigateToBackupRestore,
+            testTag = "backup_restore_row",
+            leadingIcon = iconBadge(Icons.Outlined.SettingsBackupRestore, SettingsSectionHue.SYSTEM),
+        )
+        CardDivider(startInset = SettingsIconBadgeInset)
+        ClickableRow(
+            title = stringResource(R.string.settings_set_default_launcher_title),
+            subtitle = stringResource(if (uiState.isDefaultLauncher) R.string.settings_status_active else R.string.settings_status_not_set),
+            onClick = onSetDefaultLauncher,
+            testTag = "set_default_launcher_row",
+            leadingIcon = iconBadge(Icons.Outlined.Home, SettingsSectionHue.SYSTEM),
+        )
+        // Read-only: this app reflects the Work Profile's state, it doesn't
+        // control it — Android already owns a pause/resume toggle (system
+        // Settings, and usually a Quick Settings tile); see WorkProfileRepository's
+        // own doc for why this app doesn't add a second one. One row per entry —
+        // almost always 0 or 1 in practice, since stock Android only provisions one
+        // real Work Profile per user, but list-shaped so it stays correct if that
+        // ever isn't true.
+        uiState.workProfiles.forEach { workProfile ->
+            CardDivider(startInset = SettingsIconBadgeInset)
+            ClickableRow(
+                title = workProfile.label,
+                subtitle = stringResource(if (workProfile.isPaused) R.string.settings_status_paused else R.string.settings_status_active),
+                onClick = { runCatching { context.startActivity(onRequestWorkProfileSettingsIntent()) } },
+                testTag = "work_profile_row",
+                leadingIcon = iconBadge(Icons.Outlined.Work, SettingsSectionHue.SYSTEM),
+            )
+        }
+        CardDivider(startInset = SettingsIconBadgeInset)
+        ClickableRow(
+            title = stringResource(R.string.settings_about_title),
+            subtitle = stringResource(R.string.settings_about_subtitle),
+            onClick = onNavigateToAbout,
+            testTag = "about_row",
+            leadingIcon = iconBadge(Icons.Outlined.Info, SettingsSectionHue.SYSTEM),
+        )
+    }
 }
 
 @Composable

@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -114,21 +115,7 @@ private fun DockSettingsContent(
                     .padding(horizontal = 24.dp),
                 contentPadding = PaddingValues(top = headerHeight, bottom = 24.dp),
             ) {
-                if (uiState.isFacetScoped) {
-                    item {
-                        InheritOverrideCard(
-                            overriding = uiState.isOverriding,
-                            onOverridingChange = onOverridingChange,
-                            testTagPrefix = "dock_settings",
-                            inheritSubtitle = stringResource(
-                                R.string.dot_join_2,
-                                stringResource(uiState.settings.dockDisplayMode.displayNameRes),
-                                pluralStringResource(R.plurals.format_count_apps, uiState.globalDockItems.size, uiState.globalDockItems.size),
-                            ),
-                        )
-                    }
-                    item { Spacer(modifier = Modifier.height(16.dp)) }
-                }
+                if (uiState.isFacetScoped) inheritOverrideItems(uiState, onOverridingChange)
                 item {
                     HomeSurfacePreview(
                         appList = persistentListOf(),
@@ -140,27 +127,54 @@ private fun DockSettingsContent(
                         modifier = Modifier.padding(bottom = 20.dp).testTag("dock_settings_preview_card"),
                     )
                 }
-                item {
-                    SettingsCard(fullBleedRows = true) {
-                        DockClickableRow(
-                            title = stringResource(R.string.dock_select_apps),
-                            subtitle = stringResource(R.string.format_count_of_max, uiState.dockItems.size, AppListLimits.MAX_DOCK_APPS),
-                            onClick = onAddDockApp,
-                            enabled = controlsEnabled,
-                            testTag = "add_dock_app_row",
-                        )
-                        if (uiState.dockItems.isNotEmpty()) {
-                            CardDivider()
-                            DockAppsRow(
-                                dockItems = uiState.dockItems,
-                                onReorder = if (controlsEnabled) onReorderDockItems else { {} },
-                            )
-                        }
-                    }
-                }
+                dockAppsItem(uiState, controlsEnabled, onAddDockApp, onReorderDockItems)
             }
         },
     )
+}
+
+/** A facet's Inherit/Override card, summarising the launcher-wide dock it inherits, and the gap under it. */
+private fun LazyListScope.inheritOverrideItems(uiState: DockSettingsUiState, onOverridingChange: (Boolean) -> Unit) {
+    item {
+        InheritOverrideCard(
+            overriding = uiState.isOverriding,
+            onOverridingChange = onOverridingChange,
+            testTagPrefix = "dock_settings",
+            inheritSubtitle = stringResource(
+                R.string.dot_join_2,
+                stringResource(uiState.settings.dockDisplayMode.displayNameRes),
+                pluralStringResource(R.plurals.format_count_apps, uiState.globalDockItems.size, uiState.globalDockItems.size),
+            ),
+        )
+    }
+    item { Spacer(modifier = Modifier.height(16.dp)) }
+}
+
+/** The "Select apps" row and, once there are dock apps, the reorderable row under it. */
+private fun LazyListScope.dockAppsItem(
+    uiState: DockSettingsUiState,
+    controlsEnabled: Boolean,
+    onAddDockApp: () -> Unit,
+    onReorderDockItems: (List<PlacedItem>) -> Unit,
+) {
+    item {
+        SettingsCard(fullBleedRows = true) {
+            DockClickableRow(
+                title = stringResource(R.string.dock_select_apps),
+                subtitle = stringResource(R.string.format_count_of_max, uiState.dockItems.size, AppListLimits.MAX_DOCK_APPS),
+                onClick = onAddDockApp,
+                enabled = controlsEnabled,
+                testTag = "add_dock_app_row",
+            )
+            if (uiState.dockItems.isNotEmpty()) {
+                CardDivider()
+                DockAppsRow(
+                    dockItems = uiState.dockItems,
+                    onReorder = if (controlsEnabled) onReorderDockItems else { {} },
+                )
+            }
+        }
+    }
 }
 
 @Composable

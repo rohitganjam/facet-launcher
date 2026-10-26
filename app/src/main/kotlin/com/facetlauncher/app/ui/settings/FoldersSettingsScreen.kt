@@ -108,32 +108,12 @@ internal fun FoldersSettingsContent(
             )
         },
     ) {
-        if (uiState.folders.isEmpty()) {
-            Text(
-                text = stringResource(R.string.app_picker_no_folders_yet),
-                style = MaterialTheme.typography.bodyMedium,
-                color = Muted,
-                modifier = Modifier.padding(top = 8.dp),
-            )
-        } else {
-            SettingsCard(fullBleedRows = true) {
-                uiState.folders.forEachIndexed { index, folder ->
-                    if (index > 0) CardDivider(startInset = SettingsIconBadgeInset)
-                    FolderRow(
-                        folder = folder,
-                        onClick = { onOpenFolder(folder.id) },
-                        onDelete = { pendingDeleteFolder = folder },
-                    )
-                }
-            }
-        }
+        FoldersList(uiState, onOpenFolder, onRequestDelete = { pendingDeleteFolder = it })
     }
 
     pendingDeleteFolder?.let { folder ->
-        ConfirmDialog(
-            title = stringResource(R.string.folders_settings_delete_folder),
-            message = stringResource(R.string.folders_settings_delete_message, folder.name),
-            confirmLabel = stringResource(R.string.action_delete),
+        DeleteFolderDialog(
+            folder = folder,
             onConfirm = {
                 pendingDeleteFolder = null
                 onDelete(folder.id)
@@ -143,12 +123,7 @@ internal fun FoldersSettingsContent(
     }
 
     if (showCreateDialog) {
-        // Genuinely empty on creation — no app is required, unlike the Drawer/Dock's own "Add
-        // to folder" flow, which always names a folder alongside adding its first member.
-        RenameDialog(
-            title = stringResource(R.string.folder_new_folder_title),
-            explanation = stringResource(R.string.folder_name_this_folder),
-            initialValue = "",
+        CreateFolderDialog(
             onSave = { name ->
                 showCreateDialog = false
                 onCreate(name)
@@ -156,6 +131,53 @@ internal fun FoldersSettingsContent(
             onDismiss = { showCreateDialog = false },
         )
     }
+}
+
+@Composable
+private fun FoldersList(uiState: FoldersSettingsUiState, onOpenFolder: (Long) -> Unit, onRequestDelete: (Folder) -> Unit) {
+    if (uiState.folders.isEmpty()) {
+        Text(
+            text = stringResource(R.string.app_picker_no_folders_yet),
+            style = MaterialTheme.typography.bodyMedium,
+            color = Muted,
+            modifier = Modifier.padding(top = 8.dp),
+        )
+    } else {
+        SettingsCard(fullBleedRows = true) {
+            uiState.folders.forEachIndexed { index, folder ->
+                if (index > 0) CardDivider(startInset = SettingsIconBadgeInset)
+                FolderRow(
+                    folder = folder,
+                    onClick = { onOpenFolder(folder.id) },
+                    onDelete = { onRequestDelete(folder) },
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun DeleteFolderDialog(folder: Folder, onConfirm: () -> Unit, onDismiss: () -> Unit) {
+    ConfirmDialog(
+        title = stringResource(R.string.folders_settings_delete_folder),
+        message = stringResource(R.string.folders_settings_delete_message, folder.name),
+        confirmLabel = stringResource(R.string.action_delete),
+        onConfirm = onConfirm,
+        onDismiss = onDismiss,
+    )
+}
+
+// Genuinely empty on creation — no app is required, unlike the Drawer/Dock's own "Add
+// to folder" flow, which always names a folder alongside adding its first member.
+@Composable
+private fun CreateFolderDialog(onSave: (String) -> Unit, onDismiss: () -> Unit) {
+    RenameDialog(
+        title = stringResource(R.string.folder_new_folder_title),
+        explanation = stringResource(R.string.folder_name_this_folder),
+        initialValue = "",
+        onSave = onSave,
+        onDismiss = onDismiss,
+    )
 }
 
 @Composable

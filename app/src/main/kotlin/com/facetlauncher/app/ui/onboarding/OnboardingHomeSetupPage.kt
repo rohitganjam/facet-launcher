@@ -85,15 +85,7 @@ fun OnboardingHomeSetupPage(
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier.fillMaxSize().testTag("onboarding_home_setup_page")) {
-        Column(modifier = Modifier.padding(horizontal = 24.dp).padding(top = 48.dp)) {
-            Text(text = stringResource(R.string.onboarding_home_setup_headline), style = MaterialTheme.typography.headlineSmall, color = Ink)
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = stringResource(R.string.onboarding_home_setup_subhead),
-                style = MaterialTheme.typography.bodyLarge,
-                color = Muted,
-            )
-        }
+        HomeSetupHeader()
 
         LazyColumn(modifier = Modifier.weight(1f).fillMaxWidth().padding(horizontal = 24.dp)) {
             item {
@@ -146,6 +138,19 @@ fun OnboardingHomeSetupPage(
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun HomeSetupHeader() {
+    Column(modifier = Modifier.padding(horizontal = 24.dp).padding(top = 48.dp)) {
+        Text(text = stringResource(R.string.onboarding_home_setup_headline), style = MaterialTheme.typography.headlineSmall, color = Ink)
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(
+            text = stringResource(R.string.onboarding_home_setup_subhead),
+            style = MaterialTheme.typography.bodyLarge,
+            color = Muted,
+        )
     }
 }
 

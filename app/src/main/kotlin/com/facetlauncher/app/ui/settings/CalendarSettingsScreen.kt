@@ -160,116 +160,132 @@ private fun CalendarSettingsContent(
                     item { Spacer(modifier = Modifier.height(16.dp)) }
                 }
 
-                item {
-                    SettingsCard {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 13.dp)
-                                .alpha(if (controlsEnabled) 1f else 0.4f),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Text(text = stringResource(R.string.calendar_settings_show_all_day_events), style = MaterialTheme.typography.bodyLarge, color = Ink)
-                            Switch(
-                                checked = uiState.effectiveShowAllDayEvents,
-                                onCheckedChange = onShowAllDayEventsChange,
-                                enabled = controlsEnabled,
-                                modifier = Modifier.testTag("show_all_day_events_toggle"),
-                            )
-                        }
-                        CardDivider()
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 13.dp)
-                                .alpha(if (controlsEnabled) 1f else 0.4f),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Text(text = stringResource(R.string.calendar_settings_show_indicator), style = MaterialTheme.typography.bodyLarge, color = Ink)
-                            Switch(
-                                checked = uiState.calendarDisplay.showIndicator,
-                                onCheckedChange = onShowCalendarIndicatorChange,
-                                enabled = controlsEnabled,
-                                modifier = Modifier.testTag("show_calendar_indicator_toggle"),
-                            )
-                        }
-                        CardDivider()
-                        LabeledDropdownRow(
-                            title = stringResource(R.string.calendar_settings_items_to_display),
-                            options = (CalendarDisplayOptions.MIN_ITEMS..CalendarDisplayOptions.MAX_ITEMS).toList(),
-                            selected = uiState.calendarDisplay.itemsToShow,
-                            label = { it.toString() },
-                            onSelect = onItemsToShowChange,
-                            enabled = controlsEnabled,
-                            testTag = "calendar_items_to_display_row",
-                        )
-                    }
-                }
+                item { DisplayOptionsCard(uiState, controlsEnabled, onShowAllDayEventsChange, onShowCalendarIndicatorChange, onItemsToShowChange) }
 
                 item { Spacer(modifier = Modifier.height(16.dp)) }
 
-                item {
-                    SettingsCard(fullBleedRows = true) {
-                        Column(modifier = Modifier.padding(vertical = 13.dp)) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth().padding(horizontal = LocalSettingsRowInset.current).padding(bottom = 10.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically,
-                            ) {
-                                Text(text = stringResource(R.string.settings_calendars_title), style = MaterialTheme.typography.bodyLarge, color = Ink)
-                                // Selects/deselects every calendar in one tap instead of one-by-one — real
-                                // pain with a lot of calendars (see chat history). Indeterminate when only
-                                // some are selected, matching the standard "select all" checkbox convention.
-                                if (uiState.isCalendarAccessGranted && uiState.calendars.isNotEmpty()) {
-                                    val selectedCount = uiState.calendars.count { uiState.isCalendarSelected(it.id) }
-                                    val allState = when (selectedCount) {
-                                        uiState.calendars.size -> ToggleableState.On
-                                        0 -> ToggleableState.Off
-                                        else -> ToggleableState.Indeterminate
-                                    }
-                                    TriStateCheckbox(
-                                        state = allState,
-                                        onClick = { onSelectAllCalendarsChange(allState != ToggleableState.On) },
-                                        modifier = Modifier.testTag("calendar_select_all_checkbox"),
-                                    )
-                                }
-                            }
-                            if (uiState.isCalendarAccessGranted) {
-                                if (uiState.calendars.isEmpty()) {
-                                    Text(
-                                        text = stringResource(R.string.calendar_settings_no_calendars_found),
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = Muted,
-                                        modifier = Modifier.padding(horizontal = LocalSettingsRowInset.current),
-                                    )
-                                } else {
-                                    uiState.calendars.forEach { calendar ->
-                                        CalendarPickerRow(
-                                            calendar = calendar,
-                                            swatch = uiState.calendarSwatch(calendar.id),
-                                            checked = uiState.isCalendarSelected(calendar.id),
-                                            onToggle = { onCalendarToggle(calendar.id, !uiState.isCalendarSelected(calendar.id)) },
-                                        )
-                                    }
-                                }
-                            } else {
-                                PermissionDeniedStrip(
-                                    message = stringResource(R.string.calendar_settings_access_off),
-                                    actionLabel = stringResource(R.string.permission_turn_on),
-                                    testTag = "calendar_permission_strip",
-                                    onClick = onTurnOnClick,
-                                    modifier = Modifier.padding(horizontal = LocalSettingsRowInset.current),
-                                )
-                            }
-                        }
-                    }
-                }
-
+                item { CalendarsCard(uiState, onSelectAllCalendarsChange, onCalendarToggle, onTurnOnClick) }
             }
         },
     )
+}
+
+/** All-day events, the calendar indicator and how many items to show; read-only while a facet inherits. */
+@Composable
+private fun DisplayOptionsCard(
+    uiState: CalendarSettingsUiState,
+    controlsEnabled: Boolean,
+    onShowAllDayEventsChange: (Boolean) -> Unit,
+    onShowCalendarIndicatorChange: (Boolean) -> Unit,
+    onItemsToShowChange: (Int) -> Unit,
+) {
+    SettingsCard {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 13.dp)
+                .alpha(if (controlsEnabled) 1f else 0.4f),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(text = stringResource(R.string.calendar_settings_show_all_day_events), style = MaterialTheme.typography.bodyLarge, color = Ink)
+            Switch(
+                checked = uiState.effectiveShowAllDayEvents,
+                onCheckedChange = onShowAllDayEventsChange,
+                enabled = controlsEnabled,
+                modifier = Modifier.testTag("show_all_day_events_toggle"),
+            )
+        }
+        CardDivider()
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 13.dp)
+                .alpha(if (controlsEnabled) 1f else 0.4f),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(text = stringResource(R.string.calendar_settings_show_indicator), style = MaterialTheme.typography.bodyLarge, color = Ink)
+            Switch(
+                checked = uiState.calendarDisplay.showIndicator,
+                onCheckedChange = onShowCalendarIndicatorChange,
+                enabled = controlsEnabled,
+                modifier = Modifier.testTag("show_calendar_indicator_toggle"),
+            )
+        }
+        CardDivider()
+        LabeledDropdownRow(
+            title = stringResource(R.string.calendar_settings_items_to_display),
+            options = (CalendarDisplayOptions.MIN_ITEMS..CalendarDisplayOptions.MAX_ITEMS).toList(),
+            selected = uiState.calendarDisplay.itemsToShow,
+            label = { it.toString() },
+            onSelect = onItemsToShowChange,
+            enabled = controlsEnabled,
+            testTag = "calendar_items_to_display_row",
+        )
+    }
+}
+
+/** The calendars to include: a select-all checkbox, then one row per calendar, or the access prompt when permission is off. */
+@Composable
+private fun CalendarsCard(
+    uiState: CalendarSettingsUiState,
+    onSelectAllCalendarsChange: (Boolean) -> Unit,
+    onCalendarToggle: (String, Boolean) -> Unit,
+    onTurnOnClick: () -> Unit,
+) {
+    SettingsCard(fullBleedRows = true) {
+        Column(modifier = Modifier.padding(vertical = 13.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = LocalSettingsRowInset.current).padding(bottom = 10.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(text = stringResource(R.string.settings_calendars_title), style = MaterialTheme.typography.bodyLarge, color = Ink)
+                // Selects/deselects every calendar in one tap instead of one-by-one — real
+                // pain with a lot of calendars (see chat history). Indeterminate when only
+                // some are selected, matching the standard "select all" checkbox convention.
+                if (uiState.isCalendarAccessGranted && uiState.calendars.isNotEmpty()) {
+                    val selectedCount = uiState.calendars.count { uiState.isCalendarSelected(it.id) }
+                    val allState = when (selectedCount) {
+                        uiState.calendars.size -> ToggleableState.On
+                        0 -> ToggleableState.Off
+                        else -> ToggleableState.Indeterminate
+                    }
+                    TriStateCheckbox(
+                        state = allState,
+                        onClick = { onSelectAllCalendarsChange(allState != ToggleableState.On) },
+                        modifier = Modifier.testTag("calendar_select_all_checkbox"),
+                    )
+                }
+            }
+            if (!uiState.isCalendarAccessGranted) {
+                PermissionDeniedStrip(
+                    message = stringResource(R.string.calendar_settings_access_off),
+                    actionLabel = stringResource(R.string.permission_turn_on),
+                    testTag = "calendar_permission_strip",
+                    onClick = onTurnOnClick,
+                    modifier = Modifier.padding(horizontal = LocalSettingsRowInset.current),
+                )
+            } else if (uiState.calendars.isEmpty()) {
+                Text(
+                    text = stringResource(R.string.calendar_settings_no_calendars_found),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Muted,
+                    modifier = Modifier.padding(horizontal = LocalSettingsRowInset.current),
+                )
+            } else {
+                uiState.calendars.forEach { calendar ->
+                    CalendarPickerRow(
+                        calendar = calendar,
+                        swatch = uiState.calendarSwatch(calendar.id),
+                        checked = uiState.isCalendarSelected(calendar.id),
+                        onToggle = { onCalendarToggle(calendar.id, !uiState.isCalendarSelected(calendar.id)) },
+                    )
+                }
+            }
+        }
+    }
 }
 
 @Composable

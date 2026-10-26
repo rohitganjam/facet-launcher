@@ -19,6 +19,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyItemScope
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -63,6 +65,7 @@ import com.facetlauncher.app.ui.components.ReorderRowDefaults
 import com.facetlauncher.app.ui.components.LocalSettingsRowInset
 import com.facetlauncher.app.ui.components.SettingsCard
 import com.facetlauncher.app.ui.components.StickyHeaderLayout
+import com.facetlauncher.app.ui.components.DragReorderState
 import com.facetlauncher.app.ui.components.rememberDragReorderState
 import com.facetlauncher.app.ui.home.FolderTileGlyph
 import com.facetlauncher.app.ui.theme.Faint
@@ -122,25 +125,7 @@ private fun HomeAppsListSettingsContent(
                     .padding(horizontal = 24.dp),
                 contentPadding = PaddingValues(top = headerHeight, bottom = 24.dp),
             ) {
-                if (uiState.isFacetScoped) {
-                    item {
-                        InheritOverrideCard(
-                            overriding = uiState.isOverriding,
-                            onOverridingChange = onOverridingChange,
-                            testTagPrefix = "home_apps_list",
-                            inheritSubtitle = if (uiState.settings.listContentMode != ListContentMode.FAVORITES) {
-                                stringResource(
-                                    R.string.dot_join_2,
-                                    stringResource(uiState.settings.listContentMode.displayNameRes),
-                                    pluralStringResource(R.plurals.format_count_apps, uiState.settings.appsToShowCount, uiState.settings.appsToShowCount),
-                                )
-                            } else {
-                                stringResource(uiState.settings.listContentMode.displayNameRes)
-                            },
-                        )
-                    }
-                    item { Spacer(modifier = Modifier.height(16.dp)) }
-                }
+                if (uiState.isFacetScoped) inheritOverrideItems(uiState, onOverridingChange)
                 item {
                     HomeSurfacePreview(
                         appList = uiState.previewApps,
@@ -157,49 +142,82 @@ private fun HomeAppsListSettingsContent(
                         modifier = Modifier.padding(bottom = 20.dp).testTag("home_apps_list_preview_card"),
                     )
                 }
-                item {
-                    SettingsCard(fullBleedRows = true) {
-                        LabeledDropdownRow(
-                            title = stringResource(if (uiState.isFacetScoped) R.string.home_apps_list_content_facet else R.string.home_apps_list_content_default),
-                            options = ListContentMode.entries,
-                            selected = uiState.listContentMode,
-                            label = { stringResource(it.displayNameRes) },
-                            onSelect = onListContentModeChange,
-                            enabled = controlsEnabled,
-                            testTag = "default_list_content_row",
-                        )
-                        if (uiState.listContentMode != ListContentMode.FAVORITES) {
-                            CardDivider()
-                            LabeledDropdownRow(
-                                title = stringResource(R.string.home_apps_list_apps_to_show),
-                                options = AppListLimits.APPS_TO_SHOW_OPTIONS,
-                                selected = uiState.appsToShowCount,
-                                label = { it.toString() },
-                                onSelect = onAppsToShowCountChange,
-                                enabled = controlsEnabled,
-                                testTag = "default_apps_to_show_row",
-                            )
-                        }
-                        CardDivider()
-                        HomeAppsListClickableRow(
-                            title = stringResource(if (uiState.isFacetScoped) R.string.home_apps_list_favorites_facet else R.string.home_apps_list_favorites_default),
-                            subtitle = uiState.favoritesLabel,
-                            onClick = onEditFavorites,
-                            enabled = controlsEnabled,
-                            testTag = "default_favorites_row",
-                        )
-                        if (uiState.favorites.isNotEmpty()) {
-                            CardDivider()
-                            DefaultFavoritesReorderList(
-                                favorites = uiState.favorites,
-                                onReorder = if (controlsEnabled) onReorderFavorites else { {} },
-                            )
-                        }
-                    }
-                }
+                listContentItem(uiState, controlsEnabled, onListContentModeChange, onAppsToShowCountChange, onEditFavorites, onReorderFavorites)
             }
         },
     )
+}
+
+/** A facet's Inherit/Override card, summarising the launcher-wide list it inherits, and the gap under it. */
+private fun LazyListScope.inheritOverrideItems(uiState: HomeAppsListUiState, onOverridingChange: (Boolean) -> Unit) {
+    item {
+        InheritOverrideCard(
+            overriding = uiState.isOverriding,
+            onOverridingChange = onOverridingChange,
+            testTagPrefix = "home_apps_list",
+            inheritSubtitle = if (uiState.settings.listContentMode != ListContentMode.FAVORITES) {
+                stringResource(
+                    R.string.dot_join_2,
+                    stringResource(uiState.settings.listContentMode.displayNameRes),
+                    pluralStringResource(R.plurals.format_count_apps, uiState.settings.appsToShowCount, uiState.settings.appsToShowCount),
+                )
+            } else {
+                stringResource(uiState.settings.listContentMode.displayNameRes)
+            },
+        )
+    }
+    item { Spacer(modifier = Modifier.height(16.dp)) }
+}
+
+/** What the list shows, how many apps, and (for favorites) which apps and their order. */
+private fun LazyListScope.listContentItem(
+    uiState: HomeAppsListUiState,
+    controlsEnabled: Boolean,
+    onListContentModeChange: (ListContentMode) -> Unit,
+    onAppsToShowCountChange: (Int) -> Unit,
+    onEditFavorites: () -> Unit,
+    onReorderFavorites: (List<PlacedItem>) -> Unit,
+) {
+    item {
+        SettingsCard(fullBleedRows = true) {
+            LabeledDropdownRow(
+                title = stringResource(if (uiState.isFacetScoped) R.string.home_apps_list_content_facet else R.string.home_apps_list_content_default),
+                options = ListContentMode.entries,
+                selected = uiState.listContentMode,
+                label = { stringResource(it.displayNameRes) },
+                onSelect = onListContentModeChange,
+                enabled = controlsEnabled,
+                testTag = "default_list_content_row",
+            )
+            if (uiState.listContentMode != ListContentMode.FAVORITES) {
+                CardDivider()
+                LabeledDropdownRow(
+                    title = stringResource(R.string.home_apps_list_apps_to_show),
+                    options = AppListLimits.APPS_TO_SHOW_OPTIONS,
+                    selected = uiState.appsToShowCount,
+                    label = { it.toString() },
+                    onSelect = onAppsToShowCountChange,
+                    enabled = controlsEnabled,
+                    testTag = "default_apps_to_show_row",
+                )
+            }
+            CardDivider()
+            HomeAppsListClickableRow(
+                title = stringResource(if (uiState.isFacetScoped) R.string.home_apps_list_favorites_facet else R.string.home_apps_list_favorites_default),
+                subtitle = uiState.favoritesLabel,
+                onClick = onEditFavorites,
+                enabled = controlsEnabled,
+                testTag = "default_favorites_row",
+            )
+            if (uiState.favorites.isNotEmpty()) {
+                CardDivider()
+                DefaultFavoritesReorderList(
+                    favorites = uiState.favorites,
+                    onReorder = if (controlsEnabled) onReorderFavorites else { {} },
+                )
+            }
+        }
+    }
 }
 
 @Composable
@@ -276,50 +294,53 @@ private fun DefaultFavoritesReorderList(favorites: ImmutableList<PlacedItem>, on
         modifier = modifier.fillMaxWidth().padding(horizontal = LocalSettingsRowInset.current).height(ReorderRowDefaults.FAVORITE_ROW_HEIGHT * order.size),
         userScrollEnabled = false,
     ) {
-        items(order, key = { it.reorderKey() }) { item ->
-            val isDragging = reorderState.isDragging(item)
-            val testTagSuffix = when (item) {
-                is PlacedItem.SingleApp -> item.app.packageName
-                is PlacedItem.FolderItem -> "folder_${item.folder.id}"
+        items(order, key = { it.reorderKey() }) { item -> FavoriteReorderRow(item, reorderState) }
+    }
+}
+
+@Composable
+private fun LazyItemScope.FavoriteReorderRow(item: PlacedItem, reorderState: DragReorderState<PlacedItem>) {
+    val isDragging = reorderState.isDragging(item)
+    val testTagSuffix = when (item) {
+        is PlacedItem.SingleApp -> item.app.packageName
+        is PlacedItem.FolderItem -> "folder_${item.folder.id}"
+    }
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(ReorderRowDefaults.FAVORITE_ROW_HEIGHT)
+            .testTag("default_favorite_reorder_row_$testTagSuffix")
+            .zIndex(if (isDragging) 1f else 0f)
+            .graphicsLayer {
+                translationY = if (isDragging) reorderState.dragOffset else 0f
+                scaleX = if (isDragging) ReorderRowDefaults.DRAG_SCALE else 1f
+                scaleY = if (isDragging) ReorderRowDefaults.DRAG_SCALE else 1f
+                shadowElevation = if (isDragging) ReorderRowDefaults.DRAG_ELEVATION.toPx() else 0f
+                shape = DEFAULT_FAVORITE_ROW_SHAPE
+                clip = false
             }
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(ReorderRowDefaults.FAVORITE_ROW_HEIGHT)
-                    .testTag("default_favorite_reorder_row_$testTagSuffix")
-                    .zIndex(if (isDragging) 1f else 0f)
-                    .graphicsLayer {
-                        translationY = if (isDragging) reorderState.dragOffset else 0f
-                        scaleX = if (isDragging) ReorderRowDefaults.DRAG_SCALE else 1f
-                        scaleY = if (isDragging) ReorderRowDefaults.DRAG_SCALE else 1f
-                        shadowElevation = if (isDragging) ReorderRowDefaults.DRAG_ELEVATION.toPx() else 0f
-                        shape = DEFAULT_FAVORITE_ROW_SHAPE
-                        clip = false
-                    }
-                    .then(if (isDragging) Modifier.background(Surface, DEFAULT_FAVORITE_ROW_SHAPE) else Modifier)
-                    .then(if (isDragging) Modifier else Modifier.animateItem())
-                    .padding(horizontal = if (isDragging) 10.dp else 0.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(14.dp),
-            ) {
-                Icon(
-                    Icons.Default.DragHandle,
-                    contentDescription = stringResource(R.string.drag_to_reorder_content_description),
-                    tint = Faint,
-                    modifier = Modifier
-                        .testTag("default_favorite_reorder_handle_$testTagSuffix")
-                        .then(reorderState.dragModifier(item)),
-                )
-                when (item) {
-                    is PlacedItem.SingleApp -> {
-                        AppIcon(app = item.app, size = AppIconSize.ROW_COMPACT, contentDescription = null)
-                        Text(text = item.app.label, style = MaterialTheme.typography.bodyLarge, color = Ink, modifier = Modifier.weight(1f))
-                    }
-                    is PlacedItem.FolderItem -> {
-                        FolderTileGlyph(folder = item.folder)
-                        Text(text = item.folder.name, style = MaterialTheme.typography.bodyLarge, color = Ink, modifier = Modifier.weight(1f))
-                    }
-                }
+            .then(if (isDragging) Modifier.background(Surface, DEFAULT_FAVORITE_ROW_SHAPE) else Modifier)
+            .then(if (isDragging) Modifier else Modifier.animateItem())
+            .padding(horizontal = if (isDragging) 10.dp else 0.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(14.dp),
+    ) {
+        Icon(
+            Icons.Default.DragHandle,
+            contentDescription = stringResource(R.string.drag_to_reorder_content_description),
+            tint = Faint,
+            modifier = Modifier
+                .testTag("default_favorite_reorder_handle_$testTagSuffix")
+                .then(reorderState.dragModifier(item)),
+        )
+        when (item) {
+            is PlacedItem.SingleApp -> {
+                AppIcon(app = item.app, size = AppIconSize.ROW_COMPACT, contentDescription = null)
+                Text(text = item.app.label, style = MaterialTheme.typography.bodyLarge, color = Ink, modifier = Modifier.weight(1f))
+            }
+            is PlacedItem.FolderItem -> {
+                FolderTileGlyph(folder = item.folder)
+                Text(text = item.folder.name, style = MaterialTheme.typography.bodyLarge, color = Ink, modifier = Modifier.weight(1f))
             }
         }
     }

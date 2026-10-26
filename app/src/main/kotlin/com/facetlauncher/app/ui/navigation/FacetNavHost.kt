@@ -150,6 +150,8 @@ fun NavHostController.popBackStackSafely() {
  * drive; see `HomeDrawerRoute` for the full rationale. Every other screen (Settings, pickers,
  * Facets) stays a real `NavHost` destination, reached from Home the same way as before.
  */
+// The nav graph: one `composable(...)` entry per destination, so its length is the destination count.
+@Suppress("LongMethod")
 @Composable
 fun FacetNavHost(
     apps: ImmutableList<AppInfo>,

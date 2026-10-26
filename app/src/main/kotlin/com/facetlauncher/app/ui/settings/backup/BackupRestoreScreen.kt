@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.FileDownload
@@ -150,8 +151,6 @@ private fun BackupRestoreContent(
     onSkipWidget: (Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val actionablePending = uiState.pendingWidgets.withIndex().filter { !it.value.done }
-
     StickyHeaderLayout(
         modifier = modifier,
         header = { BackupRestoreHeader(onBack = onBack) },
@@ -202,39 +201,44 @@ private fun BackupRestoreContent(
                     }
                 }
 
-                if (actionablePending.isNotEmpty()) {
-                    item {
-                        Text(
-                            text = stringResource(R.string.backup_restore_widgets_to_readd_header),
-                            style = MaterialTheme.typography.labelMedium,
-                            color = Muted,
-                            modifier = Modifier.padding(top = 24.dp, bottom = 8.dp),
-                        )
-                    }
-                    item {
-                        Text(
-                            text = stringResource(R.string.backup_restore_widgets_to_readd_explanation),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = Muted,
-                            modifier = Modifier.padding(bottom = 8.dp),
-                        )
-                    }
-                    item {
-                        SettingsCard {
-                            actionablePending.forEachIndexed { position, (index, widget) ->
-                                PendingWidgetRow(
-                                    widget = widget,
-                                    onReadd = { onReimportWidget(index) },
-                                    onSkip = { onSkipWidget(index) },
-                                )
-                                if (position != actionablePending.lastIndex) CardDivider()
-                            }
-                        }
-                    }
-                }
+                pendingWidgetsItems(uiState, onReimportWidget, onSkipWidget)
             }
         },
     )
+}
+
+/** The widgets a restore couldn't re-bind: a heading, an explanation, then one row per widget that is still to do. */
+private fun LazyListScope.pendingWidgetsItems(uiState: BackupRestoreUiState, onReimportWidget: (Int) -> Unit, onSkipWidget: (Int) -> Unit) {
+    val actionablePending = uiState.pendingWidgets.withIndex().filter { !it.value.done }
+    if (actionablePending.isEmpty()) return
+    item {
+        Text(
+            text = stringResource(R.string.backup_restore_widgets_to_readd_header),
+            style = MaterialTheme.typography.labelMedium,
+            color = Muted,
+            modifier = Modifier.padding(top = 24.dp, bottom = 8.dp),
+        )
+    }
+    item {
+        Text(
+            text = stringResource(R.string.backup_restore_widgets_to_readd_explanation),
+            style = MaterialTheme.typography.bodySmall,
+            color = Muted,
+            modifier = Modifier.padding(bottom = 8.dp),
+        )
+    }
+    item {
+        SettingsCard {
+            actionablePending.forEachIndexed { position, (index, widget) ->
+                PendingWidgetRow(
+                    widget = widget,
+                    onReadd = { onReimportWidget(index) },
+                    onSkip = { onSkipWidget(index) },
+                )
+                if (position != actionablePending.lastIndex) CardDivider()
+            }
+        }
+    }
 }
 
 @Composable

@@ -186,6 +186,8 @@ object Migrations {
      * A 0-app folder is valid and persists — nothing here auto-deletes on empty membership.
      */
     val MIGRATION_17_18: Migration = object : Migration(17, 18) {
+        // A flat run of CREATE statements; splitting it would only scatter one schema step.
+        @Suppress("LongMethod")
         override fun migrate(db: SupportSQLiteDatabase) {
             db.execSQL(
                 "CREATE TABLE IF NOT EXISTS `folders` (" +

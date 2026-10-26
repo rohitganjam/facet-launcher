@@ -118,47 +118,10 @@ private fun FacetSettingsContent(
                 }
 
                 item { SettingsSectionHeader(stringResource(R.string.settings_section_appearance)) }
-                item {
-                    SettingsCard(fullBleedRows = true) {
-                        FacetSettingsRow(
-                            title = stringResource(R.string.facet_settings_appearance_title),
-                            subtitle = stringResource(
-                                R.string.dot_join_3,
-                                stringResource(R.string.facet_settings_appearance_clock_label, stringResource(uiState.clockTemplateId.displayNameRes)),
-                                uiState.dockDisplayMode.appearanceSummaryLabel(),
-                                uiState.appRowPresentation.appearanceSummaryLabel(),
-                            ),
-                            onClick = onAppearanceClick,
-                            testTag = "facet_appearance_row",
-                            leadingIcon = { SettingsIconBadge(Icons.Outlined.Palette, SettingsSectionHue.APPEARANCE) },
-                        )
-                    }
-                }
+                item { AppearanceCard(uiState, onAppearanceClick) }
 
                 item { SettingsSectionHeader(stringResource(R.string.settings_section_home_apps)) }
-                item {
-                    SettingsCard(fullBleedRows = true) {
-                        FacetSettingsRow(
-                            title = stringResource(R.string.facet_settings_apps_list_settings_title),
-                            subtitle = appsSubtitle(uiState),
-                            onClick = onAppsListClick,
-                            testTag = "facet_apps_list_row",
-                            leadingIcon = { SettingsIconBadge(Icons.Outlined.FormatListBulleted, SettingsSectionHue.HOME_APPS) },
-                        )
-                        CardDivider(startInset = SettingsIconBadgeInset)
-                        FacetSettingsRow(
-                            title = stringResource(R.string.facet_settings_dock_settings_title),
-                            subtitle = stringResource(
-                                R.string.dot_join_2,
-                                uiState.dockDisplayMode.displayLabel(),
-                                pluralStringResource(R.plurals.format_count_apps, uiState.effectiveDockApps.size, uiState.effectiveDockApps.size),
-                            ),
-                            onClick = onDockClick,
-                            testTag = "facet_dock_settings_row",
-                            leadingIcon = { SettingsIconBadge(Icons.Outlined.Dock, SettingsSectionHue.HOME_APPS) },
-                        )
-                    }
-                }
+                item { HomeAppsCard(uiState, onAppsListClick, onDockClick) }
             }
         },
     )
@@ -170,6 +133,49 @@ private fun FacetSettingsContent(
             initialValue = facet.name,
             onSave = { newName -> onRename(newName); showRenameDialog = false },
             onDismiss = { showRenameDialog = false },
+        )
+    }
+}
+
+@Composable
+private fun AppearanceCard(uiState: FacetSettingsUiState, onAppearanceClick: () -> Unit) {
+    SettingsCard(fullBleedRows = true) {
+        FacetSettingsRow(
+            title = stringResource(R.string.facet_settings_appearance_title),
+            subtitle = stringResource(
+                R.string.dot_join_3,
+                stringResource(R.string.facet_settings_appearance_clock_label, stringResource(uiState.clockTemplateId.displayNameRes)),
+                uiState.dockDisplayMode.appearanceSummaryLabel(),
+                uiState.appRowPresentation.appearanceSummaryLabel(),
+            ),
+            onClick = onAppearanceClick,
+            testTag = "facet_appearance_row",
+            leadingIcon = { SettingsIconBadge(Icons.Outlined.Palette, SettingsSectionHue.APPEARANCE) },
+        )
+    }
+}
+
+@Composable
+private fun HomeAppsCard(uiState: FacetSettingsUiState, onAppsListClick: () -> Unit, onDockClick: () -> Unit) {
+    SettingsCard(fullBleedRows = true) {
+        FacetSettingsRow(
+            title = stringResource(R.string.facet_settings_apps_list_settings_title),
+            subtitle = appsSubtitle(uiState),
+            onClick = onAppsListClick,
+            testTag = "facet_apps_list_row",
+            leadingIcon = { SettingsIconBadge(Icons.Outlined.FormatListBulleted, SettingsSectionHue.HOME_APPS) },
+        )
+        CardDivider(startInset = SettingsIconBadgeInset)
+        FacetSettingsRow(
+            title = stringResource(R.string.facet_settings_dock_settings_title),
+            subtitle = stringResource(
+                R.string.dot_join_2,
+                uiState.dockDisplayMode.displayLabel(),
+                pluralStringResource(R.plurals.format_count_apps, uiState.effectiveDockApps.size, uiState.effectiveDockApps.size),
+            ),
+            onClick = onDockClick,
+            testTag = "facet_dock_settings_row",
+            leadingIcon = { SettingsIconBadge(Icons.Outlined.Dock, SettingsSectionHue.HOME_APPS) },
         )
     }
 }
