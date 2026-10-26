@@ -17,8 +17,12 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
@@ -114,10 +118,13 @@ private fun BoxScope.PortraitClockZone(frame: HomeFrame) {
 @Composable
 internal fun HomeLandscapeContent(frame: HomeFrame) {
     val layout = frame.layout
+    val currentOnClockPaneBoundsChange by rememberUpdatedState(frame.actions.onClockPaneBoundsChange)
+    DisposableEffect(Unit) { onDispose { currentOnClockPaneBoundsChange(null) } }
     HomeLandscapeLayout(
         hasDock = frame.state.dock.items.isNotEmpty(),
         dockAtBottom = frame.dockAtBottom,
         onDockRowHeightChange = { layout.landscapeDockRowHeightPx = it.toFloat() },
+        onClockPaneBoundsChange = { currentOnClockPaneBoundsChange(it.translate(-(layout.rootOriginInRoot ?: Offset.Zero))) },
         clockPaneAlignment = when (frame.state.clock.placement.alignment) {
             ClockAlignment.LEFT -> Alignment.TopStart
             ClockAlignment.CENTER -> Alignment.CenterStart
@@ -133,7 +140,13 @@ internal fun HomeLandscapeContent(frame: HomeFrame) {
             layout.appsPaneWidthPx = it.width.toFloat()
         },
         clock = {
-            HomeClockSlot(frame, ClockAlignment.LEFT, frame.geometry.landscape.originY, Modifier.graphicsLayer { alpha = frame.clockAppearAlpha.value })
+            HomeClockSlot(
+                frame,
+                ClockAlignment.LEFT,
+                frame.geometry.landscape.originY,
+                Modifier.graphicsLayer { alpha = frame.clockAppearAlpha.value },
+                scaledFootprint = true,
+            )
         },
         apps = { LandscapeAppsPane(frame) },
         // The side column is icons only; the roomy bottom row follows the user's dock style, as portrait does.

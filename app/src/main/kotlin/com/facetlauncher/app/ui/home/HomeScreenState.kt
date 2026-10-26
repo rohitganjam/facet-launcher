@@ -198,4 +198,6 @@ data class HomeScreenActions(
     val media: HomeMediaActions = HomeMediaActions(),
     val onUsageAccessPromptClick: () -> Unit = {},
     val onAppListBoundsChange: (Rect?) -> Unit = {},
+    /** Landscape's clock pane, `null` in portrait: its vertical drags scroll the pane instead of opening the drawer. */
+    val onClockPaneBoundsChange: (Rect?) -> Unit = {},
 )

@@ -2,6 +2,7 @@ package com.facetlauncher.app.ui.home
 
 import android.appwidget.AppWidgetHostView
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.center
 import androidx.compose.ui.test.down
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
@@ -13,6 +14,7 @@ import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.up
 import androidx.compose.foundation.layout.width
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.height
 import com.facetlauncher.app.data.model.CalendarEvent
 import com.facetlauncher.app.data.model.ClockAlignment
 import com.facetlauncher.app.data.model.ClockColorOption
@@ -783,6 +785,44 @@ class ClockBlockTest {
 
         // Then the accessory row starts below the date's bottom edge (it used to share the date's line)
         assertTrue("battery top ${battery.top} should be below date bottom ${date.bottom}", battery.top >= date.bottom)
+    }
+
+    @Test
+    fun scaledFootprintPullsTheCalendarUpToTheDrawnClock() {
+        // Given a half size clock, anchored at its top, with one calendar event, once with the footprint following the scale and once not
+        val fixedClock = Clock.fixed(Instant.parse("2026-08-27T09:05:00Z"), ZoneOffset.UTC)
+        val event = CalendarEvent(
+            id = 1,
+            calendarId = "1",
+            title = "Standup",
+            startTimeMillis = Instant.parse("2026-08-27T10:00:00Z").toEpochMilli(),
+            endTimeMillis = Instant.parse("2026-08-27T10:30:00Z").toEpochMilli(),
+            isAllDay = false,
+        )
+        composeRule.setContent {
+            FacetLauncherTheme {
+                androidx.compose.foundation.layout.Row {
+                    for ((tag, follows) in listOf("natural" to false, "drawn" to true)) {
+                        ClockBlock(
+                            modifier = androidx.compose.ui.Modifier.width(200.dp).testTag(tag),
+                            clock = fixedClock,
+                            locale = Locale.US,
+                            events = listOf(event).toImmutableList(),
+                            clockScale = 0.5f,
+                            clockScaleOriginY = 0f,
+                            scaledFootprint = follows,
+                        )
+                    }
+                }
+            }
+        }
+
+        // When measuring both blocks
+        val natural = composeRule.onNodeWithTag("natural").getUnclippedBoundsInRoot()
+        val drawn = composeRule.onNodeWithTag("drawn").getUnclippedBoundsInRoot()
+
+        // Then the one following the scale is shorter, by about the space the scaled-down clock leaves empty
+        assertTrue("drawn block ${drawn.height} should be shorter than natural ${natural.height}", drawn.height < natural.height - 10.dp)
     }
 
     @Test

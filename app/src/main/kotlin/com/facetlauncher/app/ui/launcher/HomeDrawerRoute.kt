@@ -205,6 +205,8 @@ fun HomeDrawerRoute(
     // Reported by HomeScreen's own onAppListBoundsChange — same reasoning as
     // clockWidgetBoundsInHomeRoot above, for the favorites/recents/most-used list's own scroll.
     var appListBoundsInHomeRoot by remember { mutableStateOf<Rect?>(null) }
+    // Landscape only: the clock pane scrolls its own content, so swiping up to open the drawer works on the apps side only.
+    var clockPaneBoundsInHomeRoot by remember { mutableStateOf<Rect?>(null) }
     // A long-press sheet (app/folder context menu) is open — Home's swipes must not act on the
     // still-down finger that opened it, or on anything else, until it closes (back still works).
     val homeSwipeBlocked = LocalHomeSwipeGate.current?.isBlocked == true
@@ -330,6 +332,7 @@ fun HomeDrawerRoute(
                     setDraggingHandle = { draggingHandle = it },
                     setClockWidgetBounds = { clockWidgetBoundsInHomeRoot = it },
                     setAppListBounds = { appListBoundsInHomeRoot = it },
+                    setClockPaneBounds = { clockPaneBoundsInHomeRoot = it },
                     openClockWidgetPicker = { facetId ->
                         overlays.clockWidgetPickerFacetId = facetId
                         overlays.showClockWidgetPicker = true
@@ -372,10 +375,13 @@ fun HomeDrawerRoute(
                     detectHomeSwipeGestures(
                         shouldClaim = { position ->
                             clockWidgetBoundsInHomeRoot?.contains(position) != true &&
-                                appListBoundsInHomeRoot?.contains(position) != true
+                                appListBoundsInHomeRoot?.contains(position) != true &&
+                                clockPaneBoundsInHomeRoot?.contains(position) != true
                         },
-                        // App list: vertical drags belong to its own scroll, horizontal ones to Hub/carousel.
-                        claimHorizontalOnly = { position -> appListBoundsInHomeRoot?.contains(position) == true },
+                        // App list and landscape clock pane: vertical drags belong to their own scroll, horizontal ones to Hub/carousel.
+                        claimHorizontalOnly = { position ->
+                            appListBoundsInHomeRoot?.contains(position) == true || clockPaneBoundsInHomeRoot?.contains(position) == true
+                        },
                         onDragStart = swipe::onPointerDragStart,
                         onDragEnd = swipe::onPointerDragEnd,
                         onDragCancel = swipe::cancel,

@@ -22,11 +22,27 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.toSize
+
+/** Swallows what the clock pane's scroll can't use, so it never reaches Home's swipe-up-to-open-drawer handoff, which belongs to the apps side. */
+private val ConsumeLeftoverScroll = object : NestedScrollConnection {
+    override fun onPostScroll(consumed: Offset, available: Offset, source: NestedScrollSource): Offset = available
+
+    override suspend fun onPostFling(consumed: Velocity, available: Velocity): Velocity = available
+}
 
 /** Share of the width the clock pane takes until the divider handle saves a width. */
 internal const val HOME_LANDSCAPE_CLOCK_PANE_FRACTION = 0.4f
@@ -70,21 +86,15 @@ internal fun HomeLandscapeLayout(
     dockAtBottom: Boolean = false,
     onAppsPaneSizeChange: (IntSize) -> Unit = {},
     onDockRowHeightChange: (Int) -> Unit = {},
+    /** The whole clock pane's bounds in root coordinates, so the caller can leave its vertical drags to the pane's own scroll. */
+    onClockPaneBoundsChange: (Rect) -> Unit = {},
     dock: @Composable () -> Unit,
 ) {
     // One movable slot for the dock, so it keeps its state whichever branch below places it.
     val currentDock by rememberUpdatedState(dock)
     val dockContent = remember { movableContentOf { currentDock() } }
     val panes: @Composable RowScope.() -> Unit = {
-        Box(
-            modifier = Modifier
-                .width(clockPaneWidth)
-                .fillMaxHeight()
-                .testTag(homeTag("home_clock_pane"))
-                .padding(start = HOME_LANDSCAPE_CLOCK_PANE_START_PADDING),
-            contentAlignment = clockPaneAlignment,
-            content = clock,
-        )
+        ClockPane(clockPaneWidth, clockPaneAlignment, onClockPaneBoundsChange, clock)
         Spacer(modifier = Modifier.width(HOME_LANDSCAPE_PANE_GAP))
         Box(
             modifier = Modifier
@@ -131,6 +141,33 @@ internal fun HomeLandscapeLayout(
                 ) { dockContent() }
             }
         }
+    }
+}
+
+/**
+ * The clock pane: [content] placed by [alignment], scrolling only when the clock and calendar are taller than the pane so a short
+ * landscape window can't clip them. Reports its bounds through [onBoundsChange].
+ */
+@Composable
+private fun ClockPane(width: Dp, alignment: Alignment, onBoundsChange: (Rect) -> Unit, content: @Composable BoxScope.() -> Unit) {
+    val scroll = rememberScrollState()
+    Box(
+        modifier = Modifier
+            .width(width)
+            .fillMaxHeight()
+            .onGloballyPositioned { onBoundsChange(Rect(it.positionInRoot(), it.size.toSize())) }
+            .testTag(homeTag("home_clock_pane"))
+            .padding(start = HOME_LANDSCAPE_CLOCK_PANE_START_PADDING),
+        contentAlignment = alignment,
+    ) {
+        Box(
+            // Full width, so a swipe anywhere in the pane scrolls it, not only on the clock's own text.
+            modifier = Modifier
+                .fillMaxWidth()
+                .nestedScroll(ConsumeLeftoverScroll)
+                .verticalScroll(scroll, enabled = scroll.maxValue > 0),
+            content = content,
+        )
     }
 }
 

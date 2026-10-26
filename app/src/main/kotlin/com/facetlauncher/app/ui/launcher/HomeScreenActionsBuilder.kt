@@ -35,6 +35,7 @@ internal class HomeRouteHooks(
     val setDraggingHandle: (Boolean) -> Unit,
     val setClockWidgetBounds: (Rect?) -> Unit,
     val setAppListBounds: (Rect?) -> Unit,
+    val setClockPaneBounds: (Rect?) -> Unit,
     val openClockWidgetPicker: (facetId: Long) -> Unit,
     val openWeather: () -> Unit = {},
 )
@@ -71,6 +72,7 @@ internal fun homeScreenActions(
         navigation.toUsageAccessExplanation()
     },
     onAppListBoundsChange = hooks.setAppListBounds,
+    onClockPaneBoundsChange = hooks.setClockPaneBounds,
 )
 
 private fun homeClockActions(

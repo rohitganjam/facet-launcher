@@ -247,6 +247,11 @@ scroll). `swipeSettleTarget` is the pure open/closed decision. `HomeSwipeControl
 | right | Hub | drag left on the Hub |
 | left | Facet carousel | drag right on the carousel (empty space or first card) |
 
+In landscape the whole clock pane is treated like the app list for this: it scrolls its own content, so a
+vertical drag that starts there is not Home's (swiping up opens the Drawer from the apps side only), while a
+horizontal one still opens the Hub or carousel. `HomeDrawerRoute` gets the pane's bounds through
+`HomeScreenActions.onClockPaneBoundsChange`.
+
 A drag locks to an axis only after 16dp of travel (`HOME_SWIPE_SLOP`), and counts as vertical only
 if its vertical movement exceeds `VERTICAL_DOMINANCE` (1.2x) the horizontal — anything else is
 horizontal. A touch that starts inside the app list's own region is still watched, but only a

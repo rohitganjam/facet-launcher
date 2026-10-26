@@ -50,7 +50,7 @@ import com.facetlauncher.app.ui.theme.Muted
  * so a long-press in the empty space beside it still reaches the facet carousel's own gesture.
  */
 @Composable
-internal fun HomeClockSlot(frame: HomeFrame, alignment: ClockAlignment, scaleOriginY: Float, modifier: Modifier = Modifier) {
+internal fun HomeClockSlot(frame: HomeFrame, alignment: ClockAlignment, scaleOriginY: Float, modifier: Modifier = Modifier, scaledFootprint: Boolean = false) {
     val state = frame.state
     val clock = state.clock
     val widget = state.widget
@@ -82,6 +82,7 @@ internal fun HomeClockSlot(frame: HomeFrame, alignment: ClockAlignment, scaleOri
         clockAlignment = alignment,
         clockScale = frame.geometry.effectiveScale,
         clockScaleOriginY = scaleOriginY,
+        scaledFootprint = scaledFootprint,
         events = state.calendar.events,
         calendarColors = state.calendar.colors,
         calendarDisplay = state.calendar.display,

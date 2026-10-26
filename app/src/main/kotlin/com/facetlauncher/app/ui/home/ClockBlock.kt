@@ -37,6 +37,7 @@ import java.time.Clock
 import java.time.Instant
 import java.time.ZoneId
 import java.util.Locale
+import kotlin.math.roundToInt
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.ImmutableMap
 import kotlinx.collections.immutable.persistentListOf
@@ -94,6 +95,8 @@ fun ClockBlock(
     clockScale: Float = 0.8f,
     /** Vertical anchor of the scale: 1 (the default) grows the clock up from its bottom edge, 0 grows it down from its top, 0.5 from its middle. */
     clockScaleOriginY: Float = 1f,
+    /** When true the block's height follows the clock's drawn size, so the calendar sits right under it instead of under the unscaled footprint. Landscape sets this; its scale is clamped to fit. */
+    scaledFootprint: Boolean = false,
     /** Millis since epoch of the system's next alarm, or `null` when none is set — see [com.facetlauncher.app.domain.ObserveClockAccessoriesUseCase]. */
     nextAlarmMillis: Long? = null,
     /** `null` until the first real battery reading arrives. */
@@ -139,6 +142,7 @@ fun ClockBlock(
                 // Measure the clock at its natural width even when the column is narrower (a narrow
                 // landscape pane): otherwise the box size, which the resize maths relies on, is clamped.
                 .wrapContentWidth(align = clockAlignment.resolve(), unbounded = true)
+                .scaledFootprint(scaledFootprint && clockWidgetAppWidgetId == null, clockScale, clockScaleOriginY)
                 .then(clockBoxModifier),
         ) {
             ClockOrWidgetContent(
@@ -325,6 +329,26 @@ private fun Modifier.uniformScale(
         }
     }
 }
+
+/** How far below the top of its natural box of [naturalHeight] a clock is drawn once [uniformScale] has scaled it by [scale] about [originY]. Negative when it is scaled up past the top. */
+internal fun scaledClockTop(naturalHeight: Int, scale: Float, originY: Float): Int =
+    (naturalHeight * originY * (1f - scale)).roundToInt()
+
+/** The height of the drawn clock, once [uniformScale] has scaled its natural box of [naturalHeight] by [scale]. */
+internal fun scaledClockHeight(naturalHeight: Int, scale: Float): Int =
+    (naturalHeight * scale).roundToInt().coerceAtLeast(0)
+
+/**
+ * Makes the wrapped box occupy exactly the rectangle the scaled clock is drawn in: its height is the drawn height and it is
+ * shifted up by the empty space above the drawn clock. What sits below then follows the clock, and no blank space is left above it.
+ * Measurements taken inside this modifier still see the natural box.
+ */
+private fun Modifier.scaledFootprint(enabled: Boolean, scale: Float, originY: Float) =
+    if (!enabled) this else this.layout { measurable, constraints ->
+        val placeable = measurable.measure(constraints)
+        val top = scaledClockTop(placeable.height, scale, originY)
+        layout(placeable.width, scaledClockHeight(placeable.height, scale)) { placeable.place(0, -top) }
+    }
 
 @Preview(showBackground = true)
 @Preview(name = "Dark", showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES)

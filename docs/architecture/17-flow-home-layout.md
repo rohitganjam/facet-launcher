@@ -103,6 +103,19 @@ Long-pressing the clock opens the same menu, now with "Adjust clock size & posit
 `ClockBlock` measures its clock box at the clock's natural width even when the column is narrower (a
 narrow pane), because the resize maths relies on that size; clamping it let the divider go past the clock.
 
+The clock's scale is draw-only, so in portrait it keeps its natural height and the calendar sits below that.
+Landscape clamps the scale to the pane, which would leave the calendar far below a clock drawn smaller than
+its box, and off the bottom in a short window. So landscape passes `scaledFootprint = true`: the clock box
+reports the *drawn* height (`scaledClockHeight`) and shifts up by the empty space above it
+(`scaledClockTop`), so the calendar follows the clock. The box inside still measures the natural size, which
+the resize maths and `landscapeVisualClockRect` rely on.
+
+The clock pane (`ClockPane` in `HomeLandscapeLayout`) is the whole left pane and scrolls vertically, only
+when the clock and calendar are taller than it. Its bounds go to `HomeDrawerRoute`, which leaves vertical
+drags there to the pane (see [12](12-flow-drawer-search-and-app-actions.md)), so swiping up opens the Drawer
+from the apps side only. The pane swallows what its scroll cannot use, so it never reaches the app list's
+leftover-scroll handoff.
+
 A hosted clock widget adjusts too, by real size rather than scale: the corner handles (bottom corners
 for a top-aligned widget, top corners otherwise) resize it between one landscape Hub cell (64dp square, not the portrait cell) and the pane
 (`landscapeMaxWidgetSize`, `landscapeWidgetSizeAtTouch`), and the divider stops at that one-cell
