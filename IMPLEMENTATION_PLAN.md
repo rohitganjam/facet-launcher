@@ -4348,6 +4348,6 @@ Design agreed in chat (mocks: accessory bar, weather sheet, Clock accessories sc
 
 ## Detekt baseline: 160 → 128 (direct request)
 
-- [x] Config: `CompositionLocalAllowlist` lists the 11 app-wide theme and window locals; `ReturnCount` ignores guard clauses; `TooManyFunctions` ignores private functions, allows 20, and exempts the data repositories and `Converters`; the `Material2` import in `Theme.kt` is suppressed in the file (`RippleAlpha` is from material-ripple, which Material 3 uses). `compose-stability.conf` marks `List`, `Set` and `Map` stable for the Compose compiler (verified in the compiler report; nothing in `ui/` mutates a collection in place).
-- `UnstableCollections` stays on, with its 37 entries kept in the baseline, to be worked off one at a time.
+- [x] Config: `CompositionLocalAllowlist` lists the 11 app-wide theme and window locals; `ReturnCount` ignores guard clauses; `TooManyFunctions` ignores private functions, allows 20, and exempts the data repositories and `Converters`; the `Material2` import in `Theme.kt` is suppressed in the file (`RippleAlpha` is from material-ripple, which Material 3 uses).  A Compose stability config marking `List`, `Set` and `Map` stable was tried and then dropped, so Compose again compares those parameters by instance.
+- `UnstableCollections` stays on, with its 37 entries kept in the baseline; the aim is to remove as many as possible, one at a time.
 - Left: LongMethod (30), ComposableParamOrder (10), ComposableNestingDepth (9), LambdaParameterInRestartableEffect (8), CyclomaticComplexMethod (8), ViewModelForwarding (5) and a few single entries.

@@ -111,11 +111,6 @@ android {
     }
 }
 
-composeCompiler {
-    // List, Set and Map count as stable: nothing in ui/ mutates a collection in place (see the file).
-    stabilityConfigurationFiles.add(layout.projectDirectory.file("compose-stability.conf"))
-}
-
 dependencies {
     detektPlugins(project(":detekt-rules"))
     // Third-party Compose best-practice rules (Modifier placement/ordering, state hoisting,

@@ -67,8 +67,8 @@ Compose:
   StateParam: { active: true }
   UnnecessaryComposable: { active: true }
   UnnecessaryLaunchedEffect: { active: true }
-  # Kept on: `compose-stability.conf` makes Compose treat List, Set and Map as stable, but a collection mutated in place would still go
-  # unnoticed, so a new List parameter should be flagged. The existing ones are in the baseline, to be worked off one at a time.
+  # On: Compose treats a List parameter as unstable (it compares by instance), so a new one is flagged. The existing ones are in the
+  # baseline, to be worked off one at a time.
   UnstableCollections: { active: true }
   VarsWithoutStateBacking: { active: true }
   ViewModelForwarding: { active: true }
