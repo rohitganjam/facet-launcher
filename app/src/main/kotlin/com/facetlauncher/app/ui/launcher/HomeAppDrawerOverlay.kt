@@ -46,7 +46,11 @@ import com.facetlauncher.app.data.model.RecentlyInstalledPosition
 import com.facetlauncher.app.data.model.SettingsSearchEntry
 import com.facetlauncher.app.ui.components.AppMenuNotifications
 import com.facetlauncher.app.ui.drawer.AppDrawerScreen
+import com.facetlauncher.app.ui.drawer.DrawerAppearance
+import com.facetlauncher.app.ui.drawer.DrawerItemActions
 import com.facetlauncher.app.ui.drawer.DrawerListUseCases
+import com.facetlauncher.app.ui.drawer.DrawerSearchBarConfig
+import com.facetlauncher.app.ui.drawer.DrawerSearchSources
 import com.facetlauncher.app.ui.drawer.DrawerViewModel
 import com.facetlauncher.app.ui.drawer.PrivateSpaceScreen
 import com.facetlauncher.app.ui.drawer.PrivateSpaceViewModel
@@ -206,58 +210,71 @@ private fun HomeDrawerScreen(
     AppDrawerScreen(
         apps = state.apps,
         workProfiles = state.workProfiles,
-        onAppClick = itemActions.onAppClick,
         listState = scroll.list,
         gridState = scroll.grid,
         searchListState = scroll.search,
-        presentation = settings.drawerPresentation,
-        gridDensity = settings.drawerGridDensity,
-        listItemSize = settings.drawerListItemSize,
-        showIcons = settings.showDrawerIcons,
-        showLabels = settings.showDrawerLabels,
-        labelFontWeight = settings.homeAppsFontWeight.resolve(),
-        opacity = settings.drawerOpacity,
-        notificationBadgeStyle = settings.notificationBadgeStyle,
-        badgeCounts = state.badgeCounts,
+        actions = itemActions.toDrawerItemActions(),
+        appearance = settings.toDrawerAppearance(state.badgeCounts),
         query = query,
         onQueryChange = onQueryChange,
-        searchBarPosition = settings.searchBarPosition,
-        onNavigateToSettings = onNavigateToSettings,
-        secureFolderIntent = state.secureFolderIntent,
-        onOpenSecureFolder = { intent -> runCatching { context.startActivity(intent) } },
-        showPrivateSpaceRow = state.privateSpaceState !is PrivateSpaceState.NotConfigured,
-        onPrivateSpaceRowClick = { state.privateSpaceState.onRowClick(onOpenPrivateSpace, actions.onRequestUnlockPrivateSpace) },
-        contacts = state.contacts,
+        searchBar = DrawerSearchBarConfig(
+            position = settings.searchBarPosition,
+            onNavigateToSettings = onNavigateToSettings,
+            secureFolderIntent = state.secureFolderIntent,
+            onOpenSecureFolder = { intent -> runCatching { context.startActivity(intent) } },
+            showPrivateSpaceRow = state.privateSpaceState !is PrivateSpaceState.NotConfigured,
+            onPrivateSpaceRowClick = { state.privateSpaceState.onRowClick(onOpenPrivateSpace, actions.onRequestUnlockPrivateSpace) },
+        ),
+        searchSources = DrawerSearchSources(
+            contacts = state.contacts,
+            onRequestConnections = actions.onRequestConnections,
+            showContactsPermissionPrompt = state.showContactsPermissionPrompt,
+            onContactsPermissionPromptClick = {
+                actions.onDismissContactsPermissionPrompt()
+                context.openAppDetailsSettings()
+            },
+            showContactsSettingPrompt = state.showContactsSettingPrompt,
+            onContactsSettingPromptClick = actions.onEnableContactSearch,
+            settingsEntries = state.settingsEntries,
+            onSettingsEntryClick = { entry -> runCatching { context.startActivity(Intent(entry.action)) } },
+        ),
         appMenuNotifications = state.appMenuNotifications,
-        onAppInfo = itemActions.onAppInfo,
-        onRequestQuickAddState = itemActions.onRequestQuickAddState,
-        onFavoritesAction = itemActions.onFavoritesAction,
-        onDockAction = itemActions.onDockAction,
         folderCandidates = state.folders,
-        onCreateFolder = itemActions.onCreateFolder,
-        onAddToFolder = itemActions.onAddToFolder,
-        folderDisplayMode = settings.drawerFolderDisplayMode,
-        recentlyInstalledPosition = settings.recentlyInstalledPosition,
-        onRemoveFromFolder = itemActions.onRemoveFromFolder,
-        onRenameFolder = itemActions.onRenameFolder,
-        onRequestFolderQuickAddState = itemActions.onRequestFolderQuickAddState,
-        onFolderFavoritesAction = itemActions.onFolderFavoritesAction,
-        onFolderDockAction = itemActions.onFolderDockAction,
-        onRequestConnections = actions.onRequestConnections,
-        showContactsPermissionPrompt = state.showContactsPermissionPrompt,
-        onContactsPermissionPromptClick = {
-            actions.onDismissContactsPermissionPrompt()
-            context.openAppDetailsSettings()
-        },
-        showContactsSettingPrompt = state.showContactsSettingPrompt,
-        onContactsSettingPromptClick = actions.onEnableContactSearch,
-        settingsEntries = state.settingsEntries,
-        onSettingsEntryClick = { entry -> runCatching { context.startActivity(Intent(entry.action)) } },
         isDrawerOpen = isDrawerOpen,
         listUseCases = state.listUseCases,
         modifier = modifier,
     )
 }
+
+private fun HomeItemActions.toDrawerItemActions() = DrawerItemActions(
+    onAppClick = onAppClick,
+    onAppInfo = onAppInfo,
+    onRequestQuickAddState = onRequestQuickAddState,
+    onFavoritesAction = onFavoritesAction,
+    onDockAction = onDockAction,
+    onCreateFolder = onCreateFolder,
+    onAddToFolder = onAddToFolder,
+    onRemoveFromFolder = onRemoveFromFolder,
+    onRenameFolder = onRenameFolder,
+    onRequestFolderQuickAddState = onRequestFolderQuickAddState,
+    onFolderFavoritesAction = onFolderFavoritesAction,
+    onFolderDockAction = onFolderDockAction,
+)
+
+@Composable
+private fun LauncherSettings.toDrawerAppearance(badgeCounts: ImmutableMap<String, Int>) = DrawerAppearance(
+    presentation = drawerPresentation,
+    gridDensity = drawerGridDensity,
+    listItemSize = drawerListItemSize,
+    showIcons = showDrawerIcons,
+    showLabels = showDrawerLabels,
+    labelFontWeight = homeAppsFontWeight.resolve(),
+    opacity = drawerOpacity,
+    notificationBadgeStyle = notificationBadgeStyle,
+    badgeCounts = badgeCounts,
+    folderDisplayMode = drawerFolderDisplayMode,
+    recentlyInstalledPosition = recentlyInstalledPosition,
+)
 
 /** What Private Space shows. */
 @Immutable

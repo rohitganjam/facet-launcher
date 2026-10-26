@@ -71,6 +71,7 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -189,7 +190,6 @@ private const val EDGE_ZONE_WIDTH_DP = 48
 @Composable
 fun AppDrawerScreen(
     apps: ImmutableList<AppInfo>,
-    onAppClick: (AppInfo) -> Unit,
     modifier: Modifier = Modifier,
     /** Every genuine Work Profile currently on this device — see [com.facetlauncher.app.ui.launcher.LauncherUiState.workProfiles]'s own doc for why this isn't just inferred from [apps]. One tab per entry, in addition to the always-present Personal tab (which also carries [AppProfile.OTHER] apps — an unclassifiable profile, like an OEM clone/dual-app profile, badged but not split into its own tab). */
     workProfiles: ImmutableList<WorkProfileInfo> = persistentListOf(),
@@ -197,59 +197,19 @@ fun AppDrawerScreen(
     gridState: LazyGridState = rememberLazyGridState(),
     /** Search results' own scroll position — distinct from [listState]/[gridState] (the browse-mode lists), so the caller's swipe-down-to-close nested scroll connection can tell whether the *visible* list is actually at its top while searching. */
     searchListState: LazyListState = rememberLazyListState(),
-    presentation: DrawerPresentation = DrawerPresentation.LIST,
-    gridDensity: DrawerGridDensity = DrawerGridDensity.COMPACT,
-    listItemSize: DrawerListItemSize = DrawerListItemSize.REGULAR,
-    showIcons: Boolean = true,
-    showLabels: Boolean = true,
-    labelFontWeight: FontWeight = FontWeight.Normal,
-    opacity: Float = 0.6f,
-    notificationBadgeStyle: NotificationBadgeStyle = NotificationBadgeStyle.DOT,
-    badgeCounts: ImmutableMap<String, Int> = persistentMapOf(),
+    actions: DrawerItemActions = DrawerItemActions(),
+    appearance: DrawerAppearance = DrawerAppearance(),
     query: String = "",
     onQueryChange: (String) -> Unit = {},
-    searchBarPosition: SearchBarPosition = SearchBarPosition.TOP,
-    onNavigateToSettings: () -> Unit = {},
-    /** `null` when Secure Folder isn't installed — see [DrawerSearchBar]'s own doc for why this isn't Work-Profile-style enumeration. */
-    secureFolderIntent: Intent? = null,
-    onOpenSecureFolder: (Intent) -> Unit = {},
-    /** Shown for [com.facetlauncher.app.data.PrivateSpaceState.Locked]/`.Unlocked`, hidden for `.NotConfigured`. */
-    showPrivateSpaceRow: Boolean = false,
-    onPrivateSpaceRowClick: () -> Unit = {},
-    contacts: ImmutableList<ContactInfo> = persistentListOf(),
+    searchBar: DrawerSearchBarConfig = DrawerSearchBarConfig(),
+    searchSources: DrawerSearchSources = DrawerSearchSources(),
     appMenuNotifications: AppMenuNotifications = AppMenuNotifications.None,
-    onAppInfo: (AppInfo) -> Unit = {},
-    /** F12's long-press "Add to Favorites"/"Add to Dock" rows — see [com.facetlauncher.app.domain.ObserveQuickAddStateUseCase]'s own doc for what `null` vs each [Boolean] means. */
-    onRequestQuickAddState: suspend (AppInfo) -> QuickAddState = { QuickAddState() },
-    onFavoritesAction: (AppInfo, QuickPlacementAction) -> Unit = { _, _ -> },
-    onDockAction: (AppInfo, QuickPlacementAction) -> Unit = { _, _ -> },
     /**
      * The full folder library — both the long-press "Add to folder" row's candidate list and,
-     * per [folderDisplayMode], the browse-mode content this screen renders as its own drawer
+     * per [DrawerAppearance.folderDisplayMode], the browse-mode content this screen renders as its own drawer
      * entries. `null`/empty either way just means no folders exist yet.
      */
     folderCandidates: ImmutableList<Folder>? = null,
-    onCreateFolder: (AppInfo, String) -> Unit = { _, _ -> },
-    onAddToFolder: (AppInfo, Long) -> Unit = { _, _ -> },
-    /** Settings → App Drawer → "Folders in drawer" — browse-mode only; search results never include folders (see chat history: scoped out of this pass). */
-    folderDisplayMode: DrawerFolderDisplayMode = DrawerFolderDisplayMode.DO_NOT_SHOW,
-    /** Settings → App Drawer → "Recently installed" — `SHOW_FIRST`/`SHOW_LAST` place the category above/below everything (including a same-side pinned folder section); `DO_NOT_SHOW` hides it. Browse-mode only, same as [folderDisplayMode]. */
-    recentlyInstalledPosition: RecentlyInstalledPosition = RecentlyInstalledPosition.SHOW_FIRST,
-    onRemoveFromFolder: (Long, AppInfo) -> Unit = { _, _ -> },
-    onRenameFolder: (Long, String) -> Unit = { _, _ -> },
-    onRequestFolderQuickAddState: suspend (Folder) -> QuickAddState = { QuickAddState() },
-    onFolderFavoritesAction: (Folder, QuickPlacementAction) -> Unit = { _, _ -> },
-    onFolderDockAction: (Folder, QuickPlacementAction) -> Unit = { _, _ -> },
-    onRequestConnections: suspend (ContactInfo) -> List<ContactConnection> = { emptyList() },
-    /** True while the search wants to show contacts but `READ_CONTACTS` isn't granted — see `DrawerViewModel.showContactsPermissionPrompt`'s own doc for the exact condition. */
-    showContactsPermissionPrompt: Boolean = false,
-    onContactsPermissionPromptClick: () -> Unit = {},
-    /** True while `READ_CONTACTS` is granted but the "Search contacts" setting is off — see `DrawerViewModel.showContactsSettingPrompt`'s own doc for the exact condition. */
-    showContactsSettingPrompt: Boolean = false,
-    onContactsSettingPromptClick: () -> Unit = {},
-    /** Search's system Settings section (Settings → App Drawer → "Search settings") — see `DrawerViewModel.settingsResults`. */
-    settingsEntries: ImmutableList<SettingsSearchEntry> = persistentListOf(),
-    onSettingsEntryClick: (SettingsSearchEntry) -> Unit = {},
     /** True while the drawer itself is open/opening (caller's own `isDrawerOpen`). Used only to reset the connections sheet once the drawer is fully closed — see the `LaunchedEffect` below. */
     isDrawerOpen: Boolean = true,
     /** Injected into `DrawerViewModel`; the default serves previews and tests, which have none. */
@@ -261,33 +221,13 @@ fun AppDrawerScreen(
         workProfiles = workProfiles,
         query = query,
         folderCandidates = folderCandidates,
-        presentation = presentation,
-        folderDisplayMode = folderDisplayMode,
-        recentlyInstalledPosition = recentlyInstalledPosition,
+        presentation = appearance.presentation,
+        folderDisplayMode = appearance.folderDisplayMode,
+        recentlyInstalledPosition = appearance.recentlyInstalledPosition,
         listUseCases = listUseCases,
     )
-    val groupedItems = browse.groupedItems
-    val pinnedFolders = browse.pinnedFolders
-    val coroutineScope = rememberCoroutineScope()
     val focusManager = LocalFocusManager.current
-    var draggingSelection by remember { mutableStateOf<RailSelection?>(null) }
-    var railHeightPx by remember { mutableFloatStateOf(0f) }
-    // Phase 9's connections sheet — hoisted here (not down in DrawerSearchResults/ContactRow) so
-    // it can overlay the *whole* screen.
-    var connectionsSheetContact by remember { mutableStateOf<ContactInfo?>(null) }
-    var connections by remember { mutableStateOf<ImmutableList<ContactConnection>>(persistentListOf()) }
-    val currentOnRequestConnections by rememberUpdatedState(onRequestConnections)
-    LaunchedEffect(connectionsSheetContact) {
-        val contact = connectionsSheetContact
-        connections = if (contact != null) currentOnRequestConnections(contact).toImmutableList() else persistentListOf()
-    }
-    // Otherwise this composable never leaves composition when the drawer closes (it's only
-    // translated off-screen), so a contact left open here would still be showing the next time
-    // the drawer reopens.
-    LaunchedEffect(isDrawerOpen) {
-        if (!isDrawerOpen) connectionsSheetContact = null
-    }
-    DismissOnHomePress(enabled = connectionsSheetContact != null) { connectionsSheetContact = null }
+    val connectionsSheet = rememberConnectionsSheet(searchSources.onRequestConnections, isDrawerOpen)
 
     // First back-press while searching clears the query and stays in the drawer (browse mode,
     // unfiltered); only a second, empty-query back-press falls through to the caller's own
@@ -297,205 +237,174 @@ fun AppDrawerScreen(
         onQueryChange("")
     }
 
-    val scrollToIndex: suspend (Int) -> Unit = if (presentation == DrawerPresentation.GRID) {
-        { index -> gridState.scrollToItem(index) }
-    } else {
-        { index -> listState.scrollToItem(index) }
+    // Outer Box so the connections sheet can overlay the entire screen.
+    Box(modifier = modifier.fillMaxSize()) {
+        // Edge-to-edge is enforced unconditionally at this app's targetSdk (36) — without this, the
+        // drawer's content (notably a TOP search bar) draws straight under the status bar/notch.
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(SurfaceContainer.copy(alpha = appearance.opacity))
+                .windowInsetsPadding(WindowInsets.systemBars),
+        ) {
+            if (searchBar.position == SearchBarPosition.TOP) DrawerSearchBar(query, onQueryChange, searchBar)
+
+            // Browse-mode only — hidden entirely on a device with no Work Profile, so this is a genuine
+            // no-op for the common case.
+            if (workProfiles.isNotEmpty() && !isSearching) {
+                DrawerProfileTabRow(
+                    tabs = browse.tabs,
+                    selected = browse.selectedTab,
+                    onSelect = browse.onSelectTab,
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+                )
+            }
+
+            Box(modifier = Modifier.weight(1f)) {
+                if (isSearching) {
+                    DrawerSearchResults(
+                        query = query,
+                        apps = browse.searchResultApps,
+                        listState = searchListState,
+                        appearance = appearance,
+                        actions = actions,
+                        sources = searchSources,
+                        onClearSearch = { onQueryChange("") },
+                        appMenuNotifications = appMenuNotifications,
+                        folderCandidates = folderCandidates,
+                        // Closing the keyboard here (not just clearing text-field focus): the user was very
+                        // likely still typing when they tapped a contact, and it looked stuck behind the sheet.
+                        onContactClick = { focusManager.clearFocus(); connectionsSheet.open(it) },
+                        modifier = Modifier.fillMaxSize().testTag("drawer_search_results"),
+                    )
+                } else {
+                    DrawerBrowseBody(browse, listState, gridState, appearance, actions, appMenuNotifications, folderCandidates)
+                }
+            }
+
+            if (searchBar.position == SearchBarPosition.BOTTOM) {
+                DrawerSearchBar(query, onQueryChange, searchBar, Modifier.imePadding())
+            }
+        }
+
+        ContactConnectionsOverlay(connectionsSheet.contact, connectionsSheet.connections, connectionsSheet.dismiss)
     }
+}
+
+/** The connections sheet's state: the contact it is open for and that contact's ways to reach them. */
+@Stable
+private class ConnectionsSheet(
+    val contact: ContactInfo?,
+    val connections: ImmutableList<ContactConnection>,
+    val open: (ContactInfo) -> Unit,
+    val dismiss: () -> Unit,
+)
+
+/**
+ * Hoisted to the screen (not down in the results) so the sheet can overlay the whole drawer. The screen never leaves composition
+ * when the drawer closes (it is only translated off-screen), so it is reset once the drawer is closed or Home is pressed.
+ */
+@Composable
+private fun rememberConnectionsSheet(onRequestConnections: suspend (ContactInfo) -> List<ContactConnection>, isDrawerOpen: Boolean): ConnectionsSheet {
+    var contact by remember { mutableStateOf<ContactInfo?>(null) }
+    var connections by remember { mutableStateOf<ImmutableList<ContactConnection>>(persistentListOf()) }
+    val currentOnRequestConnections by rememberUpdatedState(onRequestConnections)
+    LaunchedEffect(contact) {
+        val selected = contact
+        connections = if (selected != null) currentOnRequestConnections(selected).toImmutableList() else persistentListOf()
+    }
+    LaunchedEffect(isDrawerOpen) {
+        if (!isDrawerOpen) contact = null
+    }
+    DismissOnHomePress(enabled = contact != null) { contact = null }
+    return ConnectionsSheet(contact, connections, open = { contact = it }, dismiss = { contact = null })
+}
+
+/** Browse mode: the app list or grid with the alphabet rail beside it, the left-edge jump zone and the rail's selection popup. */
+@Composable
+private fun BoxScope.DrawerBrowseBody(
+    browse: DrawerBrowseModel,
+    listState: LazyListState,
+    gridState: LazyGridState,
+    appearance: DrawerAppearance,
+    actions: DrawerItemActions,
+    appMenuNotifications: AppMenuNotifications,
+    folderCandidates: ImmutableList<Folder>?,
+) {
+    val coroutineScope = rememberCoroutineScope()
+    var draggingSelection by remember { mutableStateOf<RailSelection?>(null) }
+    var railHeightPx by remember { mutableFloatStateOf(0f) }
+    val isGrid = appearance.presentation == DrawerPresentation.GRID
 
     // The pure index math lives in [railScrollTarget]; this only scrolls there.
     fun onRailSelectionChanged(selection: RailSelection?) {
         draggingSelection = selection
         val target = selection?.let {
-            railScrollTarget(it, presentation, groupedItems, folderDisplayMode, pinnedFolders.size, recentlyInstalledPosition, browse.recentlyInstalledOffset)
+            railScrollTarget(
+                selection = it,
+                presentation = appearance.presentation,
+                groupedItems = browse.groupedItems,
+                folderDisplayMode = appearance.folderDisplayMode,
+                pinnedFolderCount = browse.pinnedFolders.size,
+                recentlyInstalledPosition = appearance.recentlyInstalledPosition,
+                recentlyInstalledOffset = browse.recentlyInstalledOffset,
+            )
         } ?: return
-        coroutineScope.launch { scrollToIndex(target) }
+        coroutineScope.launch { if (isGrid) gridState.scrollToItem(target) else listState.scrollToItem(target) }
     }
 
-    // Outer Box so the connections sheet (below) can overlay the entire screen — the Column
-    // itself keeps its previous fillMaxSize/background/inset treatment unchanged.
-    Box(modifier = modifier.fillMaxSize()) {
-    // Edge-to-edge is enforced unconditionally at this app's targetSdk (36) — without this, the
-    // drawer's content (notably a TOP search bar) draws straight under the status bar/notch.
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(SurfaceContainer.copy(alpha = opacity))
-            .windowInsetsPadding(WindowInsets.systemBars),
-    ) {
-        if (searchBarPosition == SearchBarPosition.TOP) {
-            DrawerSearchBar(
-                query = query,
-                onQueryChange = onQueryChange,
-                onNavigateToSettings = onNavigateToSettings,
-                secureFolderIntent = secureFolderIntent,
-                onOpenSecureFolder = onOpenSecureFolder,
-                showPrivateSpaceRow = showPrivateSpaceRow,
-                onPrivateSpaceRowClick = onPrivateSpaceRowClick,
-            )
-        }
-
-        // Browse-mode only (see isSearching's own doc above) — hidden entirely on a device with
-        // no Work Profile, so this is a genuine no-op for the common case.
-        if (workProfiles.isNotEmpty() && !isSearching) {
-            DrawerProfileTabRow(
-                tabs = browse.tabs,
-                selected = browse.selectedTab,
-                onSelect = browse.onSelectTab,
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
-            )
-        }
-
-        Box(modifier = Modifier.weight(1f)) {
-        if (isSearching) {
-            DrawerSearchResults(
-                query = query,
-                apps = browse.searchResultApps,
-                contacts = contacts,
-                listState = searchListState,
-                presentation = presentation,
-                gridDensity = gridDensity,
-                showIcons = showIcons,
-                showLabels = showLabels,
-                labelFontWeight = labelFontWeight,
-                itemSize = listItemSize,
-                badgeStyle = notificationBadgeStyle,
-                badgeCounts = badgeCounts,
-                onAppClick = onAppClick,
-                onClearSearch = { onQueryChange("") },
+    Row(modifier = Modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically) {
+        if (isGrid) {
+            DrawerGridContent(
+                groupedItems = browse.groupedItems,
+                pinnedFolders = browse.pinnedFolders,
+                gridState = gridState,
+                appearance = appearance,
+                actions = actions,
                 appMenuNotifications = appMenuNotifications,
-                onAppInfo = onAppInfo,
-                onRequestQuickAddState = onRequestQuickAddState,
-                onFavoritesAction = onFavoritesAction,
-                onDockAction = onDockAction,
                 folderCandidates = folderCandidates,
-                onCreateFolder = onCreateFolder,
-                onAddToFolder = onAddToFolder,
-                // Closing the keyboard here (not just clearing text-field focus) matters
-                // specifically because the user was very likely still typing their search query
-                // when they tapped a contact result — leaving it open behind the sheet looked
-                // like a stuck/forgotten keyboard (see chat history).
-                onContactClick = { focusManager.clearFocus(); connectionsSheetContact = it },
-                showContactsPermissionPrompt = showContactsPermissionPrompt,
-                onContactsPermissionPromptClick = onContactsPermissionPromptClick,
-                showContactsSettingPrompt = showContactsSettingPrompt,
-                onContactsSettingPromptClick = onContactsSettingPromptClick,
-                settingsEntries = settingsEntries,
-                onSettingsEntryClick = { focusManager.clearFocus(); onSettingsEntryClick(it) },
-                modifier = Modifier.fillMaxSize().testTag("drawer_search_results"),
+                modifier = Modifier.weight(1f).fillMaxHeight().testTag("drawer_grid"),
             )
         } else {
-        Row(
-            modifier = Modifier.fillMaxSize(),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            if (presentation == DrawerPresentation.GRID) {
-                DrawerGridContent(
-                    groupedItems = groupedItems,
-                    pinnedFolders = pinnedFolders,
-                    folderDisplayMode = folderDisplayMode,
-                    gridState = gridState,
-                    density = gridDensity,
-                    onAppClick = onAppClick,
-                    showLabels = showLabels,
-                    labelFontWeight = labelFontWeight,
-                    badgeStyle = notificationBadgeStyle,
-                    badgeCounts = badgeCounts,
-                    appMenuNotifications = appMenuNotifications,
-                    onAppInfo = onAppInfo,
-                    onRequestQuickAddState = onRequestQuickAddState,
-                    onFavoritesAction = onFavoritesAction,
-                    onDockAction = onDockAction,
-                    folderCandidates = folderCandidates,
-                    onCreateFolder = onCreateFolder,
-                    onAddToFolder = onAddToFolder,
-                    onRemoveFromFolder = onRemoveFromFolder,
-                    onRenameFolder = onRenameFolder,
-                    onRequestFolderQuickAddState = onRequestFolderQuickAddState,
-                    onFolderFavoritesAction = onFolderFavoritesAction,
-                    onFolderDockAction = onFolderDockAction,
-                    modifier = Modifier.weight(1f).fillMaxHeight().testTag("drawer_grid"),
-                )
-            } else {
-                DrawerListContent(
-                    groupedItems = groupedItems,
-                    pinnedFolders = pinnedFolders,
-                    folderDisplayMode = folderDisplayMode,
-                    recentlyInstalledApps = browse.recentlyInstalledApps,
-                    recentlyInstalledPosition = recentlyInstalledPosition,
-                    listState = listState,
-                    itemSize = listItemSize,
-                    onAppClick = onAppClick,
-                    showIcons = showIcons,
-                    labelFontWeight = labelFontWeight,
-                    badgeStyle = notificationBadgeStyle,
-                    badgeCounts = badgeCounts,
-                    appMenuNotifications = appMenuNotifications,
-                    onAppInfo = onAppInfo,
-                    onRequestQuickAddState = onRequestQuickAddState,
-                    onFavoritesAction = onFavoritesAction,
-                    onDockAction = onDockAction,
-                    folderCandidates = folderCandidates,
-                    onCreateFolder = onCreateFolder,
-                    onAddToFolder = onAddToFolder,
-                    onRemoveFromFolder = onRemoveFromFolder,
-                    onRenameFolder = onRenameFolder,
-                    onRequestFolderQuickAddState = onRequestFolderQuickAddState,
-                    onFolderFavoritesAction = onFolderFavoritesAction,
-                    onFolderDockAction = onFolderDockAction,
-                    modifier = Modifier.weight(1f).fillMaxHeight().testTag("drawer_list"),
-                )
-            }
-            LetterJumpZone(
-                letters = browse.railLetters,
-                activeSelection = draggingSelection,
-                folderPosition = browse.railFolderPosition,
-                recentlyInstalledPosition = browse.railRecentlyInstalledPosition,
-                onSelectionChange = ::onRailSelectionChanged,
-                showRail = true,
-                railHeightPx = railHeightPx,
-                onRailHeightMeasure = { railHeightPx = it },
-                modifier = Modifier.testTag("alphabet_rail"),
+            DrawerListContent(
+                groupedItems = browse.groupedItems,
+                pinnedFolders = browse.pinnedFolders,
+                recentlyInstalledApps = browse.recentlyInstalledApps,
+                listState = listState,
+                appearance = appearance,
+                actions = actions,
+                appMenuNotifications = appMenuNotifications,
+                folderCandidates = folderCandidates,
+                modifier = Modifier.weight(1f).fillMaxHeight().testTag("drawer_list"),
             )
         }
-
         LetterJumpZone(
             letters = browse.railLetters,
             activeSelection = draggingSelection,
             folderPosition = browse.railFolderPosition,
             recentlyInstalledPosition = browse.railRecentlyInstalledPosition,
             onSelectionChange = ::onRailSelectionChanged,
-            showRail = false,
+            showRail = true,
             railHeightPx = railHeightPx,
-            onRailHeightMeasure = {},
-            modifier = Modifier.align(Alignment.CenterStart).testTag("left_edge_letter_jump_zone"),
-            requireDrag = true,
+            onRailHeightMeasure = { railHeightPx = it },
+            modifier = Modifier.testTag("alphabet_rail"),
         )
-
-        draggingSelection?.let { RailSelectionIndicator(it, Modifier.align(Alignment.Center)) }
-        }
-        }
-
-        if (searchBarPosition == SearchBarPosition.BOTTOM) {
-            DrawerSearchBar(
-                query = query,
-                onQueryChange = onQueryChange,
-                onNavigateToSettings = onNavigateToSettings,
-                secureFolderIntent = secureFolderIntent,
-                onOpenSecureFolder = onOpenSecureFolder,
-                showPrivateSpaceRow = showPrivateSpaceRow,
-                onPrivateSpaceRowClick = onPrivateSpaceRowClick,
-                modifier = Modifier.imePadding(),
-            )
-        }
     }
 
-    ContactConnectionsOverlay(
-        contact = connectionsSheetContact,
-        connections = connections,
-        onDismiss = { connectionsSheetContact = null },
+    LetterJumpZone(
+        letters = browse.railLetters,
+        activeSelection = draggingSelection,
+        folderPosition = browse.railFolderPosition,
+        recentlyInstalledPosition = browse.railRecentlyInstalledPosition,
+        onSelectionChange = ::onRailSelectionChanged,
+        showRail = false,
+        railHeightPx = railHeightPx,
+        onRailHeightMeasure = {},
+        modifier = Modifier.align(Alignment.CenterStart).testTag("left_edge_letter_jump_zone"),
+        requireDrag = true,
     )
-    }
+
+    draggingSelection?.let { RailSelectionIndicator(it, Modifier.align(Alignment.Center)) }
 }
 
 /** The popup naming the letter, folder glyph or "Recently installed" glyph the rail is currently on. A fixed footprint, so a wide letter like "W" doesn't resize it versus a narrow one like "I". */
@@ -643,11 +552,7 @@ private fun DrawerProfileTabRow(tabs: ImmutableList<DrawerTab>, selected: Drawer
 private fun DrawerSearchBar(
     query: String,
     onQueryChange: (String) -> Unit,
-    onNavigateToSettings: () -> Unit,
-    secureFolderIntent: Intent? = null,
-    onOpenSecureFolder: (Intent) -> Unit = {},
-    showPrivateSpaceRow: Boolean = false,
-    onPrivateSpaceRowClick: () -> Unit = {},
+    config: DrawerSearchBarConfig,
     modifier: Modifier = Modifier,
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
@@ -689,11 +594,11 @@ private fun DrawerSearchBar(
             DrawerSearchOverflowMenu(
                 expanded = menuExpanded,
                 onDismiss = { menuExpanded = false },
-                onNavigateToSettings = onNavigateToSettings,
-                secureFolderIntent = secureFolderIntent,
-                onOpenSecureFolder = onOpenSecureFolder,
-                showPrivateSpaceRow = showPrivateSpaceRow,
-                onPrivateSpaceRowClick = onPrivateSpaceRowClick,
+                onNavigateToSettings = config.onNavigateToSettings,
+                secureFolderIntent = config.secureFolderIntent,
+                onOpenSecureFolder = config.onOpenSecureFolder,
+                showPrivateSpaceRow = config.showPrivateSpaceRow,
+                onPrivateSpaceRowClick = config.onPrivateSpaceRowClick,
             )
         }
     }
@@ -757,78 +662,37 @@ private fun DrawerSearchOverflowMenu(
 private fun DrawerSearchResults(
     query: String,
     apps: ImmutableList<AppInfo>,
-    contacts: ImmutableList<ContactInfo>,
     listState: LazyListState,
-    presentation: DrawerPresentation,
-    gridDensity: DrawerGridDensity,
-    showIcons: Boolean,
-    showLabels: Boolean,
-    labelFontWeight: FontWeight,
-    itemSize: DrawerListItemSize,
-    badgeStyle: NotificationBadgeStyle,
-    badgeCounts: ImmutableMap<String, Int>,
-    onAppClick: (AppInfo) -> Unit,
+    appearance: DrawerAppearance,
+    actions: DrawerItemActions,
+    sources: DrawerSearchSources,
     onClearSearch: () -> Unit,
     appMenuNotifications: AppMenuNotifications,
-    onAppInfo: (AppInfo) -> Unit = {},
-    onRequestQuickAddState: suspend (AppInfo) -> QuickAddState,
-    onFavoritesAction: (AppInfo, QuickPlacementAction) -> Unit,
-    onDockAction: (AppInfo, QuickPlacementAction) -> Unit,
     folderCandidates: ImmutableList<Folder>?,
-    onCreateFolder: (AppInfo, String) -> Unit,
-    onAddToFolder: (AppInfo, Long) -> Unit,
     onContactClick: (ContactInfo) -> Unit,
-    showContactsPermissionPrompt: Boolean,
-    onContactsPermissionPromptClick: () -> Unit,
-    showContactsSettingPrompt: Boolean,
-    onContactsSettingPromptClick: () -> Unit,
-    settingsEntries: ImmutableList<SettingsSearchEntry>,
-    onSettingsEntryClick: (SettingsSearchEntry) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val hasContactsSection = contacts.isNotEmpty() || showContactsPermissionPrompt || showContactsSettingPrompt
-    if (apps.isEmpty() && settingsEntries.isEmpty() && !hasContactsSection) {
+    val focusManager = LocalFocusManager.current
+    val hasContactsSection = sources.contacts.isNotEmpty() || sources.showContactsPermissionPrompt || sources.showContactsSettingPrompt
+    if (apps.isEmpty() && sources.settingsEntries.isEmpty() && !hasContactsSection) {
         DrawerSearchEmptyState(query = query, onClearSearch = onClearSearch, modifier = modifier)
         return
     }
     LazyColumn(state = listState, modifier = modifier.padding(horizontal = 24.dp)) {
         if (apps.isNotEmpty()) {
-            appsSection(
-                apps = apps,
-                presentation = presentation,
-                gridDensity = gridDensity,
-                showIcons = showIcons,
-                showLabels = showLabels,
-                labelFontWeight = labelFontWeight,
-                itemSize = itemSize,
-                badgeStyle = badgeStyle,
-                badgeCounts = badgeCounts,
-                onAppClick = onAppClick,
-                appMenuNotifications = appMenuNotifications,
-                onAppInfo = onAppInfo,
-                onRequestQuickAddState = onRequestQuickAddState,
-                onFavoritesAction = onFavoritesAction,
-                onDockAction = onDockAction,
-                folderCandidates = folderCandidates,
-                onCreateFolder = onCreateFolder,
-                onAddToFolder = onAddToFolder,
-            )
+            appsSection(apps, appearance, actions, appMenuNotifications, folderCandidates)
         }
         if (hasContactsSection) {
-            contactsSection(
-                contacts = contacts,
-                itemSize = itemSize,
-                showPermissionPrompt = showContactsPermissionPrompt,
-                onPermissionPromptClick = onContactsPermissionPromptClick,
-                showSettingPrompt = showContactsSettingPrompt,
-                onSettingPromptClick = onContactsSettingPromptClick,
-                onContactClick = onContactClick,
-            )
+            contactsSection(sources, appearance.listItemSize, onContactClick)
         }
-        if (settingsEntries.isNotEmpty()) {
+        if (sources.settingsEntries.isNotEmpty()) {
             item { SearchSectionHeader(R.string.drawer_search_section_settings) }
-            items(settingsEntries, key = { "settings_" + it.id }) { entry ->
-                SettingsResultRow(entry = entry, itemSize = itemSize, onClick = { onSettingsEntryClick(entry) })
+            items(sources.settingsEntries, key = { "settings_" + it.id }) { entry ->
+                SettingsResultRow(
+                    entry = entry,
+                    itemSize = appearance.listItemSize,
+                    onClick = { focusManager.clearFocus(); sources.onSettingsEntryClick(entry) },
+                )
             }
         }
     }
@@ -837,63 +701,24 @@ private fun DrawerSearchResults(
 /** The apps section: its header, then the matches as tiles (Grid) or rows (List). */
 private fun LazyListScope.appsSection(
     apps: ImmutableList<AppInfo>,
-    presentation: DrawerPresentation,
-    gridDensity: DrawerGridDensity,
-    showIcons: Boolean,
-    showLabels: Boolean,
-    labelFontWeight: FontWeight,
-    itemSize: DrawerListItemSize,
-    badgeStyle: NotificationBadgeStyle,
-    badgeCounts: ImmutableMap<String, Int>,
-    onAppClick: (AppInfo) -> Unit,
+    appearance: DrawerAppearance,
+    actions: DrawerItemActions,
     appMenuNotifications: AppMenuNotifications,
-    onAppInfo: (AppInfo) -> Unit,
-    onRequestQuickAddState: suspend (AppInfo) -> QuickAddState,
-    onFavoritesAction: (AppInfo, QuickPlacementAction) -> Unit,
-    onDockAction: (AppInfo, QuickPlacementAction) -> Unit,
     folderCandidates: ImmutableList<Folder>?,
-    onCreateFolder: (AppInfo, String) -> Unit,
-    onAddToFolder: (AppInfo, Long) -> Unit,
 ) {
     item { SearchSectionHeader(R.string.drawer_search_section_apps) }
-    if (presentation == DrawerPresentation.GRID) {
-        item {
-            SearchAppsGrid(
-                apps = apps,
-                density = gridDensity,
-                showLabels = showLabels,
-                labelFontWeight = labelFontWeight,
-                badgeStyle = badgeStyle,
-                badgeCounts = badgeCounts,
-                onAppClick = onAppClick,
-                appMenuNotifications = appMenuNotifications,
-                onAppInfo = onAppInfo,
-                onRequestQuickAddState = onRequestQuickAddState,
-                onFavoritesAction = onFavoritesAction,
-                onDockAction = onDockAction,
-                folderCandidates = folderCandidates,
-                onCreateFolder = onCreateFolder,
-                onAddToFolder = onAddToFolder,
-            )
-        }
+    if (appearance.presentation == DrawerPresentation.GRID) {
+        item { SearchAppsGrid(apps, appearance, actions, appMenuNotifications, folderCandidates) }
     } else {
         items(apps, key = { "app_" + it.packageName + it.activityName + it.userHandle.hashCode() }) { app ->
             DrawerAppRow(
                 app = app,
-                onClick = { onAppClick(app) },
-                showIcon = showIcons,
-                itemSize = itemSize,
-                labelFontWeight = labelFontWeight,
-                badgeCount = badgeCounts[app.packageName],
-                badgeStyle = badgeStyle,
+                onClick = { actions.onAppClick(app) },
+                appearance = appearance,
+                badgeCount = appearance.badgeCounts[app.packageName],
                 appMenuNotifications = appMenuNotifications,
-                onAppInfo = onAppInfo,
-                onRequestQuickAddState = onRequestQuickAddState,
-                onFavoritesAction = onFavoritesAction,
-                onDockAction = onDockAction,
+                actions = actions,
                 folderCandidates = folderCandidates,
-                onCreateFolder = onCreateFolder,
-                onAddToFolder = onAddToFolder,
             )
         }
     }
@@ -912,21 +737,17 @@ private fun SearchSectionHeader(@StringRes textRes: Int) {
 
 /** The contacts section: its header, the permission or setting prompt when one applies, then the matching contacts. */
 private fun LazyListScope.contactsSection(
-    contacts: ImmutableList<ContactInfo>,
+    sources: DrawerSearchSources,
     itemSize: DrawerListItemSize,
-    showPermissionPrompt: Boolean,
-    onPermissionPromptClick: () -> Unit,
-    showSettingPrompt: Boolean,
-    onSettingPromptClick: () -> Unit,
     onContactClick: (ContactInfo) -> Unit,
 ) {
     item { SearchSectionHeader(R.string.drawer_search_section_contacts) }
-    if (showPermissionPrompt) {
-        item { ContactsAccessStrip(onClick = onPermissionPromptClick, modifier = Modifier.padding(bottom = 4.dp)) }
-    } else if (showSettingPrompt) {
-        item { ContactsSettingOffStrip(onClick = onSettingPromptClick, modifier = Modifier.padding(bottom = 4.dp)) }
+    if (sources.showContactsPermissionPrompt) {
+        item { ContactsAccessStrip(onClick = sources.onContactsPermissionPromptClick, modifier = Modifier.padding(bottom = 4.dp)) }
+    } else if (sources.showContactsSettingPrompt) {
+        item { ContactsSettingOffStrip(onClick = sources.onContactsSettingPromptClick, modifier = Modifier.padding(bottom = 4.dp)) }
     }
-    items(contacts, key = { "contact_" + it.id }) { contact ->
+    items(sources.contacts, key = { "contact_" + it.id }) { contact ->
         ContactRow(contact = contact, itemSize = itemSize, onClick = { onContactClick(contact) })
     }
 }
@@ -939,23 +760,13 @@ private fun LazyListScope.contactsSection(
 @Composable
 private fun SearchAppsGrid(
     apps: ImmutableList<AppInfo>,
-    density: DrawerGridDensity,
-    showLabels: Boolean,
-    labelFontWeight: FontWeight,
-    badgeStyle: NotificationBadgeStyle,
-    badgeCounts: ImmutableMap<String, Int>,
-    onAppClick: (AppInfo) -> Unit,
+    appearance: DrawerAppearance,
+    actions: DrawerItemActions,
     appMenuNotifications: AppMenuNotifications,
-    onAppInfo: (AppInfo) -> Unit,
-    onRequestQuickAddState: suspend (AppInfo) -> QuickAddState,
-    onFavoritesAction: (AppInfo, QuickPlacementAction) -> Unit,
-    onDockAction: (AppInfo, QuickPlacementAction) -> Unit,
     folderCandidates: ImmutableList<Folder>?,
-    onCreateFolder: (AppInfo, String) -> Unit,
-    onAddToFolder: (AppInfo, Long) -> Unit,
 ) {
     BoxWithConstraints {
-        val columns = drawerGridColumns(maxWidth, density)
+        val columns = drawerGridColumns(maxWidth, appearance.gridDensity)
         Column {
             apps.chunked(columns).forEach { rowApps ->
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(bottom = 20.dp)) {
@@ -963,19 +774,12 @@ private fun SearchAppsGrid(
                         Box(modifier = Modifier.weight(1f)) {
                             DrawerGridTile(
                                 app = app,
-                                onClick = { onAppClick(app) },
-                                showLabel = showLabels,
-                                labelFontWeight = labelFontWeight,
-                                badgeCount = badgeCounts[app.packageName],
-                                badgeStyle = badgeStyle,
+                                onClick = { actions.onAppClick(app) },
+                                appearance = appearance,
+                                badgeCount = appearance.badgeCounts[app.packageName],
                                 appMenuNotifications = appMenuNotifications,
-                                onAppInfo = onAppInfo,
-                                onRequestQuickAddState = onRequestQuickAddState,
-                                onFavoritesAction = onFavoritesAction,
-                                onDockAction = onDockAction,
+                                actions = actions,
                                 folderCandidates = folderCandidates,
-                                onCreateFolder = onCreateFolder,
-                                onAddToFolder = onAddToFolder,
                             )
                         }
                     }
@@ -1238,48 +1042,21 @@ private fun LetterJumpZone(
 private fun DrawerListContent(
     groupedItems: GroupedItems<DrawerItem>,
     pinnedFolders: ImmutableList<Folder>,
-    folderDisplayMode: DrawerFolderDisplayMode,
     recentlyInstalledApps: ImmutableList<AppInfo>,
-    recentlyInstalledPosition: RecentlyInstalledPosition,
     listState: LazyListState,
-    itemSize: DrawerListItemSize,
-    onAppClick: (AppInfo) -> Unit,
-    showIcons: Boolean,
-    labelFontWeight: FontWeight,
-    badgeStyle: NotificationBadgeStyle,
-    badgeCounts: ImmutableMap<String, Int>,
+    appearance: DrawerAppearance,
+    actions: DrawerItemActions,
     appMenuNotifications: AppMenuNotifications,
-    onAppInfo: (AppInfo) -> Unit = {},
-    onRequestQuickAddState: suspend (AppInfo) -> QuickAddState,
-    onFavoritesAction: (AppInfo, QuickPlacementAction) -> Unit,
-    onDockAction: (AppInfo, QuickPlacementAction) -> Unit,
     folderCandidates: ImmutableList<Folder>?,
-    onCreateFolder: (AppInfo, String) -> Unit,
-    onAddToFolder: (AppInfo, Long) -> Unit,
-    onRemoveFromFolder: (Long, AppInfo) -> Unit,
-    onRenameFolder: (Long, String) -> Unit,
-    onRequestFolderQuickAddState: suspend (Folder) -> QuickAddState,
-    onFolderFavoritesAction: (Folder, QuickPlacementAction) -> Unit,
-    onFolderDockAction: (Folder, QuickPlacementAction) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val folderDisplayMode = appearance.folderDisplayMode
+    val recentlyInstalledPosition = appearance.recentlyInstalledPosition
     val pinnedFolderContent: LazyListScope.() -> Unit = {
-        drawerFolderSection(
-            folders = pinnedFolders,
-            onAppClick = onAppClick,
-            itemSize = itemSize,
-            labelFontWeight = labelFontWeight,
-            appMenuNotifications = appMenuNotifications,
-            onAppInfo = onAppInfo,
-            onRemoveFromFolder = onRemoveFromFolder,
-            onRenameFolder = onRenameFolder,
-            onRequestFolderQuickAddState = onRequestFolderQuickAddState,
-            onFolderFavoritesAction = onFolderFavoritesAction,
-            onFolderDockAction = onFolderDockAction,
-        )
+        drawerFolderSection(pinnedFolders, appearance, actions, appMenuNotifications)
     }
     val recentlyInstalledContent: LazyListScope.() -> Unit = {
-        recentlyInstalledSection(recentlyInstalledApps, onAppClick, itemSize, labelFontWeight, appMenuNotifications, onAppInfo)
+        recentlyInstalledSection(recentlyInstalledApps, appearance, actions, appMenuNotifications)
     }
     LazyColumn(
         state = listState,
@@ -1292,28 +1069,7 @@ private fun DrawerListContent(
     ) {
         if (recentlyInstalledPosition == RecentlyInstalledPosition.SHOW_FIRST) recentlyInstalledContent()
         if (folderDisplayMode == DrawerFolderDisplayMode.SHOW_FIRST) pinnedFolderContent()
-        letterGroups(
-            groupedItems = groupedItems,
-            itemSize = itemSize,
-            onAppClick = onAppClick,
-            showIcons = showIcons,
-            labelFontWeight = labelFontWeight,
-            badgeStyle = badgeStyle,
-            badgeCounts = badgeCounts,
-            appMenuNotifications = appMenuNotifications,
-            onAppInfo = onAppInfo,
-            onRequestQuickAddState = onRequestQuickAddState,
-            onFavoritesAction = onFavoritesAction,
-            onDockAction = onDockAction,
-            folderCandidates = folderCandidates,
-            onCreateFolder = onCreateFolder,
-            onAddToFolder = onAddToFolder,
-            onRemoveFromFolder = onRemoveFromFolder,
-            onRenameFolder = onRenameFolder,
-            onRequestFolderQuickAddState = onRequestFolderQuickAddState,
-            onFolderFavoritesAction = onFolderFavoritesAction,
-            onFolderDockAction = onFolderDockAction,
-        )
+        letterGroups(groupedItems, appearance, actions, appMenuNotifications, folderCandidates)
         if (folderDisplayMode == DrawerFolderDisplayMode.SHOW_LAST) pinnedFolderContent()
         if (recentlyInstalledPosition == RecentlyInstalledPosition.SHOW_LAST) recentlyInstalledContent()
     }
@@ -1322,48 +1078,24 @@ private fun DrawerListContent(
 /** The "Recently installed" category, when there are apps for it: the icon header, then its one row. */
 private fun LazyListScope.recentlyInstalledSection(
     apps: ImmutableList<AppInfo>,
-    onAppClick: (AppInfo) -> Unit,
-    itemSize: DrawerListItemSize,
-    labelFontWeight: FontWeight,
+    appearance: DrawerAppearance,
+    actions: DrawerItemActions,
     appMenuNotifications: AppMenuNotifications,
-    onAppInfo: (AppInfo) -> Unit,
 ) {
     if (apps.isEmpty()) return
     item(key = "header_recently_installed") { DrawerRecentlyInstalledHeader() }
     item(key = "recently_installed") {
-        DrawerRecentlyInstalledRow(
-            apps = apps,
-            onAppClick = onAppClick,
-            itemSize = itemSize,
-            labelFontWeight = labelFontWeight,
-            appMenuNotifications = appMenuNotifications,
-            onAppInfo = onAppInfo,
-        )
+        DrawerRecentlyInstalledRow(apps, appearance, actions, appMenuNotifications)
     }
 }
 
 /** The alphabetical content: a letter header, then its apps (and, in `INLINE` folder mode, folders), for every letter. */
 private fun LazyListScope.letterGroups(
     groupedItems: GroupedItems<DrawerItem>,
-    itemSize: DrawerListItemSize,
-    onAppClick: (AppInfo) -> Unit,
-    showIcons: Boolean,
-    labelFontWeight: FontWeight,
-    badgeStyle: NotificationBadgeStyle,
-    badgeCounts: ImmutableMap<String, Int>,
+    appearance: DrawerAppearance,
+    actions: DrawerItemActions,
     appMenuNotifications: AppMenuNotifications,
-    onAppInfo: (AppInfo) -> Unit,
-    onRequestQuickAddState: suspend (AppInfo) -> QuickAddState,
-    onFavoritesAction: (AppInfo, QuickPlacementAction) -> Unit,
-    onDockAction: (AppInfo, QuickPlacementAction) -> Unit,
     folderCandidates: ImmutableList<Folder>?,
-    onCreateFolder: (AppInfo, String) -> Unit,
-    onAddToFolder: (AppInfo, Long) -> Unit,
-    onRemoveFromFolder: (Long, AppInfo) -> Unit,
-    onRenameFolder: (Long, String) -> Unit,
-    onRequestFolderQuickAddState: suspend (Folder) -> QuickAddState,
-    onFolderFavoritesAction: (Folder, QuickPlacementAction) -> Unit,
-    onFolderDockAction: (Folder, QuickPlacementAction) -> Unit,
 ) {
     for ((letter, itemsInGroup) in groupedItems.groups) {
         item(key = "header_$letter") {
@@ -1380,34 +1112,14 @@ private fun LazyListScope.letterGroups(
             when (item) {
                 is DrawerItem.AppEntry -> DrawerAppRow(
                     app = item.app,
-                    onClick = { onAppClick(item.app) },
-                    showIcon = showIcons,
-                    itemSize = itemSize,
-                    labelFontWeight = labelFontWeight,
-                    badgeCount = badgeCounts[item.app.packageName],
-                    badgeStyle = badgeStyle,
+                    onClick = { actions.onAppClick(item.app) },
+                    appearance = appearance,
+                    badgeCount = appearance.badgeCounts[item.app.packageName],
                     appMenuNotifications = appMenuNotifications,
-                    onAppInfo = onAppInfo,
-                    onRequestQuickAddState = onRequestQuickAddState,
-                    onFavoritesAction = onFavoritesAction,
-                    onDockAction = onDockAction,
+                    actions = actions,
                     folderCandidates = folderCandidates,
-                    onCreateFolder = onCreateFolder,
-                    onAddToFolder = onAddToFolder,
                 )
-                is DrawerItem.FolderEntry -> DrawerFolderRow(
-                    folder = item.folder,
-                    onAppClick = onAppClick,
-                    itemSize = itemSize,
-                    labelFontWeight = labelFontWeight,
-                    appMenuNotifications = appMenuNotifications,
-                    onAppInfo = onAppInfo,
-                    onRemoveFromFolder = onRemoveFromFolder,
-                    onRenameFolder = onRenameFolder,
-                    onRequestQuickAddState = onRequestFolderQuickAddState,
-                    onFavoritesAction = onFolderFavoritesAction,
-                    onDockAction = onFolderDockAction,
-                )
+                is DrawerItem.FolderEntry -> DrawerFolderRow(item.folder, appearance, actions, appMenuNotifications)
             }
         }
     }
@@ -1422,16 +1134,9 @@ private fun DrawerItem.itemKey(): String = when (this) {
 /** [DrawerFolderDisplayMode.SHOW_FIRST]/`SHOW_LAST`'s pinned section — its own "Folders" header (List only; Grid renders no headers at all, same as the lettered content) followed by every folder, outside alphabetical order. A no-op when [folders] is empty, so callers don't need to gate on [DrawerFolderDisplayMode] themselves beyond picking where to call it. */
 private fun LazyListScope.drawerFolderSection(
     folders: List<Folder>,
-    onAppClick: (AppInfo) -> Unit,
-    itemSize: DrawerListItemSize,
-    labelFontWeight: FontWeight,
+    appearance: DrawerAppearance,
+    actions: DrawerItemActions,
     appMenuNotifications: AppMenuNotifications,
-    onAppInfo: (AppInfo) -> Unit,
-    onRemoveFromFolder: (Long, AppInfo) -> Unit,
-    onRenameFolder: (Long, String) -> Unit,
-    onRequestFolderQuickAddState: suspend (Folder) -> QuickAddState,
-    onFolderFavoritesAction: (Folder, QuickPlacementAction) -> Unit,
-    onFolderDockAction: (Folder, QuickPlacementAction) -> Unit,
 ) {
     if (folders.isEmpty()) return
     item(key = "header_folders") {
@@ -1445,19 +1150,7 @@ private fun LazyListScope.drawerFolderSection(
         )
     }
     items(folders, key = { "folder_${it.id}" }) { folder ->
-        DrawerFolderRow(
-            folder = folder,
-            onAppClick = onAppClick,
-            itemSize = itemSize,
-            labelFontWeight = labelFontWeight,
-            appMenuNotifications = appMenuNotifications,
-            onAppInfo = onAppInfo,
-            onRemoveFromFolder = onRemoveFromFolder,
-            onRenameFolder = onRenameFolder,
-            onRequestQuickAddState = onRequestFolderQuickAddState,
-            onFavoritesAction = onFolderFavoritesAction,
-            onDockAction = onFolderDockAction,
-        )
+        DrawerFolderRow(folder, appearance, actions, appMenuNotifications)
     }
 }
 
@@ -1485,13 +1178,12 @@ private fun DrawerRecentlyInstalledHeader(modifier: Modifier = Modifier) {
 @Composable
 private fun DrawerRecentlyInstalledRow(
     apps: ImmutableList<AppInfo>,
-    onAppClick: (AppInfo) -> Unit,
-    itemSize: DrawerListItemSize,
-    labelFontWeight: FontWeight,
+    appearance: DrawerAppearance,
+    actions: DrawerItemActions,
     appMenuNotifications: AppMenuNotifications,
-    onAppInfo: (AppInfo) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val itemSize = appearance.listItemSize
     var sheetOpen by remember { mutableStateOf(false) }
     Box(modifier = modifier) {
         Row(
@@ -1507,7 +1199,7 @@ private fun DrawerRecentlyInstalledRow(
             RecentlyInstalledGlyph(modifier = Modifier.size(itemSize.iconSizeDp.dp))
             Text(
                 text = stringResource(R.string.drawer_recently_installed_label),
-                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = labelFontWeight),
+                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = appearance.labelFontWeight),
                 color = DrawerAppTextColor,
             )
         }
@@ -1515,13 +1207,13 @@ private fun DrawerRecentlyInstalledRow(
             FolderContentsSheet(
                 folder = Folder(id = -1L, name = stringResource(R.string.drawer_recently_installed_label), apps = apps),
                 onDismissRequest = { sheetOpen = false },
-                onAppClick = onAppClick,
+                onAppClick = actions.onAppClick,
                 presentation = DrawerPresentation.LIST,
                 onRemoveFromFolder = { _, _ -> },
                 headerAction = FolderSheetHeaderAction.None,
                 showRecencyBadge = true,
                 appMenuNotifications = appMenuNotifications,
-                onAppInfo = onAppInfo,
+                onAppInfo = actions.onAppInfo,
             )
         }
     }
@@ -1563,18 +1255,13 @@ private fun RecentlyInstalledGlyph(modifier: Modifier = Modifier) {
 @Composable
 private fun DrawerFolderRow(
     folder: Folder,
-    onAppClick: (AppInfo) -> Unit,
-    itemSize: DrawerListItemSize,
-    labelFontWeight: FontWeight,
+    appearance: DrawerAppearance,
+    actions: DrawerItemActions,
     appMenuNotifications: AppMenuNotifications,
-    onAppInfo: (AppInfo) -> Unit,
-    onRemoveFromFolder: (Long, AppInfo) -> Unit,
-    onRenameFolder: (Long, String) -> Unit,
-    onRequestQuickAddState: suspend (Folder) -> QuickAddState,
-    onFavoritesAction: (Folder, QuickPlacementAction) -> Unit,
-    onDockAction: (Folder, QuickPlacementAction) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val itemSize = appearance.listItemSize
+    val labelFontWeight = appearance.labelFontWeight
     var sheetOpen by remember { mutableStateOf(false) }
     var menuExpanded by remember { mutableStateOf(false) }
     Box(modifier = modifier) {
@@ -1595,22 +1282,22 @@ private fun DrawerFolderRow(
             FolderContentsSheet(
                 folder = folder,
                 onDismissRequest = { sheetOpen = false },
-                onAppClick = onAppClick,
+                onAppClick = actions.onAppClick,
                 presentation = DrawerPresentation.LIST,
-                onRemoveFromFolder = onRemoveFromFolder,
-                headerAction = FolderSheetHeaderAction.Rename(onRename = onRenameFolder),
+                onRemoveFromFolder = actions.onRemoveFromFolder,
+                headerAction = FolderSheetHeaderAction.Rename(onRename = actions.onRenameFolder),
                 appMenuNotifications = appMenuNotifications,
-                onAppInfo = onAppInfo,
+                onAppInfo = actions.onAppInfo,
             )
         }
         FolderTileContextMenu(
             folder = folder,
             expanded = menuExpanded,
             onDismissRequest = { menuExpanded = false },
-            onRename = onRenameFolder,
-            onRequestQuickAddState = onRequestQuickAddState,
-            onFavoritesAction = onFavoritesAction,
-            onDockAction = onDockAction,
+            onRename = actions.onRenameFolder,
+            onRequestQuickAddState = actions.onRequestFolderQuickAddState,
+            onFavoritesAction = actions.onFolderFavoritesAction,
+            onDockAction = actions.onFolderDockAction,
         )
     }
 }
@@ -1620,21 +1307,15 @@ private fun DrawerFolderRow(
 private fun DrawerAppRow(
     app: AppInfo,
     onClick: () -> Unit,
-    showIcon: Boolean,
-    itemSize: DrawerListItemSize = DrawerListItemSize.COMPACT,
-    labelFontWeight: FontWeight = FontWeight.Normal,
+    appearance: DrawerAppearance,
     badgeCount: Int?,
-    badgeStyle: NotificationBadgeStyle,
     appMenuNotifications: AppMenuNotifications,
-    onAppInfo: (AppInfo) -> Unit = {},
-    onRequestQuickAddState: suspend (AppInfo) -> QuickAddState = { QuickAddState() },
-    onFavoritesAction: (AppInfo, QuickPlacementAction) -> Unit = { _, _ -> },
-    onDockAction: (AppInfo, QuickPlacementAction) -> Unit = { _, _ -> },
-    folderCandidates: ImmutableList<Folder>? = null,
-    onCreateFolder: (AppInfo, String) -> Unit = { _, _ -> },
-    onAddToFolder: (AppInfo, Long) -> Unit = { _, _ -> },
+    actions: DrawerItemActions,
+    folderCandidates: ImmutableList<Folder>?,
     modifier: Modifier = Modifier,
 ) {
+    val itemSize = appearance.listItemSize
+    val labelFontWeight = appearance.labelFontWeight
     var menuExpanded by remember { mutableStateOf(false) }
     Box(modifier = modifier) {
         Row(
@@ -1652,7 +1333,7 @@ private fun DrawerAppRow(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(14.dp),
         ) {
-            if (showIcon) {
+            if (appearance.showIcons) {
                 // Icon grows alongside the row height for Regular/Spacious (see
                 // DrawerListItemSize's own doc) — corner radius follows from size via AppIcon's
                 // own M3 shape-scale default, not a hand-picked ratio (see chat history).
@@ -1665,20 +1346,20 @@ private fun DrawerAppRow(
                 )
             }
             Text(text = app.label, style = MaterialTheme.typography.bodyLarge.copy(fontWeight = labelFontWeight), color = DrawerAppTextColor)
-            if (badgeCount != null && badgeCount > 0) NotificationBadge(count = badgeCount, style = badgeStyle)
+            if (badgeCount != null && badgeCount > 0) NotificationBadge(count = badgeCount, style = appearance.notificationBadgeStyle)
         }
         AppContextMenu(
             app = app,
             expanded = menuExpanded,
             onDismissRequest = { menuExpanded = false },
             appMenuNotifications = appMenuNotifications,
-            onAppInfo = onAppInfo,
-            onRequestQuickAddState = onRequestQuickAddState,
-            onFavoritesAction = onFavoritesAction,
-            onDockAction = onDockAction,
+            onAppInfo = actions.onAppInfo,
+            onRequestQuickAddState = actions.onRequestQuickAddState,
+            onFavoritesAction = actions.onFavoritesAction,
+            onDockAction = actions.onDockAction,
             folderCandidates = folderCandidates,
-            onCreateFolder = onCreateFolder,
-            onAddToFolder = onAddToFolder,
+            onCreateFolder = actions.onCreateFolder,
+            onAddToFolder = actions.onAddToFolder,
             drawerPresentation = DrawerPresentation.LIST,
         )
     }
@@ -1708,29 +1389,15 @@ private val GRID_START_PADDING = 48.dp
 private fun DrawerGridContent(
     groupedItems: GroupedItems<DrawerItem>,
     pinnedFolders: ImmutableList<Folder>,
-    folderDisplayMode: DrawerFolderDisplayMode,
     gridState: LazyGridState,
-    density: DrawerGridDensity,
-    onAppClick: (AppInfo) -> Unit,
-    showLabels: Boolean,
-    labelFontWeight: FontWeight,
-    badgeStyle: NotificationBadgeStyle,
-    badgeCounts: ImmutableMap<String, Int>,
+    appearance: DrawerAppearance,
+    actions: DrawerItemActions,
     appMenuNotifications: AppMenuNotifications,
-    onAppInfo: (AppInfo) -> Unit = {},
-    onRequestQuickAddState: suspend (AppInfo) -> QuickAddState,
-    onFavoritesAction: (AppInfo, QuickPlacementAction) -> Unit,
-    onDockAction: (AppInfo, QuickPlacementAction) -> Unit,
     folderCandidates: ImmutableList<Folder>?,
-    onCreateFolder: (AppInfo, String) -> Unit,
-    onAddToFolder: (AppInfo, Long) -> Unit,
-    onRemoveFromFolder: (Long, AppInfo) -> Unit,
-    onRenameFolder: (Long, String) -> Unit,
-    onRequestFolderQuickAddState: suspend (Folder) -> QuickAddState,
-    onFolderFavoritesAction: (Folder, QuickPlacementAction) -> Unit,
-    onFolderDockAction: (Folder, QuickPlacementAction) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val density = appearance.gridDensity
+    val folderDisplayMode = appearance.folderDisplayMode
     val items = remember(groupedItems) { groupedItems.groups.values.flatten() }
     BoxWithConstraints(modifier = modifier) {
         val availableHeight = maxHeight - GRID_CONTENT_TOP_PADDING - GRID_CONTENT_BOTTOM_PADDING
@@ -1749,45 +1416,31 @@ private fun DrawerGridContent(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             if (folderDisplayMode == DrawerFolderDisplayMode.SHOW_FIRST) {
-                drawerFolderTiles(pinnedFolders, rowHeight, onAppClick, showLabels, labelFontWeight, appMenuNotifications, onAppInfo, onRemoveFromFolder, onRenameFolder, onRequestFolderQuickAddState, onFolderFavoritesAction, onFolderDockAction)
+                drawerFolderTiles(pinnedFolders, rowHeight, appearance, actions, appMenuNotifications)
             }
             items(items, key = { it.itemKey() }) { item ->
                 when (item) {
                     is DrawerItem.AppEntry -> DrawerGridTile(
                         app = item.app,
-                        onClick = { onAppClick(item.app) },
-                        showLabel = showLabels,
-                        labelFontWeight = labelFontWeight,
-                        badgeCount = badgeCounts[item.app.packageName],
-                        badgeStyle = badgeStyle,
+                        onClick = { actions.onAppClick(item.app) },
+                        appearance = appearance,
+                        badgeCount = appearance.badgeCounts[item.app.packageName],
                         appMenuNotifications = appMenuNotifications,
-                        onAppInfo = onAppInfo,
-                        onRequestQuickAddState = onRequestQuickAddState,
-                        onFavoritesAction = onFavoritesAction,
-                        onDockAction = onDockAction,
+                        actions = actions,
                         folderCandidates = folderCandidates,
-                        onCreateFolder = onCreateFolder,
-                        onAddToFolder = onAddToFolder,
                         modifier = Modifier.height(rowHeight),
                     )
                     is DrawerItem.FolderEntry -> DrawerFolderTile(
                         folder = item.folder,
-                        onAppClick = onAppClick,
-                        showLabel = showLabels,
-                        labelFontWeight = labelFontWeight,
+                        appearance = appearance,
+                        actions = actions,
                         appMenuNotifications = appMenuNotifications,
-                        onAppInfo = onAppInfo,
-                        onRemoveFromFolder = onRemoveFromFolder,
-                        onRenameFolder = onRenameFolder,
-                        onRequestQuickAddState = onRequestFolderQuickAddState,
-                        onFavoritesAction = onFolderFavoritesAction,
-                        onDockAction = onFolderDockAction,
                         modifier = Modifier.height(rowHeight),
                     )
                 }
             }
             if (folderDisplayMode == DrawerFolderDisplayMode.SHOW_LAST) {
-                drawerFolderTiles(pinnedFolders, rowHeight, onAppClick, showLabels, labelFontWeight, appMenuNotifications, onAppInfo, onRemoveFromFolder, onRenameFolder, onRequestFolderQuickAddState, onFolderFavoritesAction, onFolderDockAction)
+                drawerFolderTiles(pinnedFolders, rowHeight, appearance, actions, appMenuNotifications)
             }
         }
     }
@@ -1797,32 +1450,12 @@ private fun DrawerGridContent(
 private fun LazyGridScope.drawerFolderTiles(
     folders: List<Folder>,
     rowHeight: Dp,
-    onAppClick: (AppInfo) -> Unit,
-    showLabels: Boolean,
-    labelFontWeight: FontWeight,
+    appearance: DrawerAppearance,
+    actions: DrawerItemActions,
     appMenuNotifications: AppMenuNotifications,
-    onAppInfo: (AppInfo) -> Unit,
-    onRemoveFromFolder: (Long, AppInfo) -> Unit,
-    onRenameFolder: (Long, String) -> Unit,
-    onRequestFolderQuickAddState: suspend (Folder) -> QuickAddState,
-    onFolderFavoritesAction: (Folder, QuickPlacementAction) -> Unit,
-    onFolderDockAction: (Folder, QuickPlacementAction) -> Unit,
 ) {
     items(folders, key = { "folder_${it.id}" }) { folder ->
-        DrawerFolderTile(
-            folder = folder,
-            onAppClick = onAppClick,
-            showLabel = showLabels,
-            labelFontWeight = labelFontWeight,
-            appMenuNotifications = appMenuNotifications,
-            onAppInfo = onAppInfo,
-            onRemoveFromFolder = onRemoveFromFolder,
-            onRenameFolder = onRenameFolder,
-            onRequestQuickAddState = onRequestFolderQuickAddState,
-            onFavoritesAction = onFolderFavoritesAction,
-            onDockAction = onFolderDockAction,
-            modifier = Modifier.height(rowHeight),
-        )
+        DrawerFolderTile(folder, appearance, actions, appMenuNotifications, Modifier.height(rowHeight))
     }
 }
 
@@ -1831,20 +1464,14 @@ private fun LazyGridScope.drawerFolderTiles(
 private fun DrawerGridTile(
     app: AppInfo,
     onClick: () -> Unit,
-    showLabel: Boolean,
-    labelFontWeight: FontWeight = FontWeight.Normal,
+    appearance: DrawerAppearance,
     badgeCount: Int?,
-    badgeStyle: NotificationBadgeStyle,
     appMenuNotifications: AppMenuNotifications,
-    onAppInfo: (AppInfo) -> Unit = {},
-    onRequestQuickAddState: suspend (AppInfo) -> QuickAddState = { QuickAddState() },
-    onFavoritesAction: (AppInfo, QuickPlacementAction) -> Unit = { _, _ -> },
-    onDockAction: (AppInfo, QuickPlacementAction) -> Unit = { _, _ -> },
-    folderCandidates: ImmutableList<Folder>? = null,
-    onCreateFolder: (AppInfo, String) -> Unit = { _, _ -> },
-    onAddToFolder: (AppInfo, Long) -> Unit = { _, _ -> },
+    actions: DrawerItemActions,
+    folderCandidates: ImmutableList<Folder>?,
     modifier: Modifier = Modifier,
 ) {
+    val labelFontWeight = appearance.labelFontWeight
     var menuExpanded by remember { mutableStateOf(false) }
     // `modifier` carries DrawerGridContent's explicit per-row height; fillMaxWidth centres the icon in its cell.
     // The context menu is a sheet in its own window, so it takes no space inside this Column.
@@ -1862,11 +1489,11 @@ private fun DrawerGridTile(
             size = AppIconSize.TILE,
             contentDescription = null,
             notificationCount = badgeCount,
-            badgeStyle = badgeStyle,
+            badgeStyle = appearance.notificationBadgeStyle,
             isWorkApp = app.profile == AppProfile.WORK,
             isOtherProfileApp = app.profile == AppProfile.OTHER,
         )
-        if (showLabel) {
+        if (appearance.showLabels) {
             Spacer(modifier = Modifier.height(7.dp))
             Text(
                 text = app.label,
@@ -1883,13 +1510,13 @@ private fun DrawerGridTile(
             expanded = menuExpanded,
             onDismissRequest = { menuExpanded = false },
             appMenuNotifications = appMenuNotifications,
-            onAppInfo = onAppInfo,
-            onRequestQuickAddState = onRequestQuickAddState,
-            onFavoritesAction = onFavoritesAction,
-            onDockAction = onDockAction,
+            onAppInfo = actions.onAppInfo,
+            onRequestQuickAddState = actions.onRequestQuickAddState,
+            onFavoritesAction = actions.onFavoritesAction,
+            onDockAction = actions.onDockAction,
             folderCandidates = folderCandidates,
-            onCreateFolder = onCreateFolder,
-            onAddToFolder = onAddToFolder,
+            onCreateFolder = actions.onCreateFolder,
+            onAddToFolder = actions.onAddToFolder,
             drawerPresentation = DrawerPresentation.GRID,
         )
     }
@@ -1900,18 +1527,12 @@ private fun DrawerGridTile(
 @Composable
 private fun DrawerFolderTile(
     folder: Folder,
-    onAppClick: (AppInfo) -> Unit,
-    showLabel: Boolean,
-    labelFontWeight: FontWeight = FontWeight.Normal,
+    appearance: DrawerAppearance,
+    actions: DrawerItemActions,
     appMenuNotifications: AppMenuNotifications,
-    onAppInfo: (AppInfo) -> Unit = {},
-    onRemoveFromFolder: (Long, AppInfo) -> Unit,
-    onRenameFolder: (Long, String) -> Unit,
-    onRequestQuickAddState: suspend (Folder) -> QuickAddState = { QuickAddState() },
-    onFavoritesAction: (Folder, QuickPlacementAction) -> Unit = { _, _ -> },
-    onDockAction: (Folder, QuickPlacementAction) -> Unit = { _, _ -> },
     modifier: Modifier = Modifier,
 ) {
+    val labelFontWeight = appearance.labelFontWeight
     var sheetOpen by remember { mutableStateOf(false) }
     var menuExpanded by remember { mutableStateOf(false) }
     // See DrawerGridTile: the sheets are separate windows, so they sit inside the Column.
@@ -1924,7 +1545,7 @@ private fun DrawerFolderTile(
         verticalArrangement = Arrangement.Center,
     ) {
         FolderTileGlyph(folder = folder, modifier = Modifier.size(AppIconSize.TILE))
-        if (showLabel) {
+        if (appearance.showLabels) {
             Spacer(modifier = Modifier.height(7.dp))
             Text(
                 text = folder.name,
@@ -1940,22 +1561,22 @@ private fun DrawerFolderTile(
             FolderContentsSheet(
                 folder = folder,
                 onDismissRequest = { sheetOpen = false },
-                onAppClick = onAppClick,
+                onAppClick = actions.onAppClick,
                 presentation = DrawerPresentation.GRID,
-                onRemoveFromFolder = onRemoveFromFolder,
-                headerAction = FolderSheetHeaderAction.Rename(onRename = onRenameFolder),
+                onRemoveFromFolder = actions.onRemoveFromFolder,
+                headerAction = FolderSheetHeaderAction.Rename(onRename = actions.onRenameFolder),
                 appMenuNotifications = appMenuNotifications,
-                onAppInfo = onAppInfo,
+                onAppInfo = actions.onAppInfo,
             )
         }
         FolderTileContextMenu(
             folder = folder,
             expanded = menuExpanded,
             onDismissRequest = { menuExpanded = false },
-            onRename = onRenameFolder,
-            onRequestQuickAddState = onRequestQuickAddState,
-            onFavoritesAction = onFavoritesAction,
-            onDockAction = onDockAction,
+            onRename = actions.onRenameFolder,
+            onRequestQuickAddState = actions.onRequestFolderQuickAddState,
+            onFavoritesAction = actions.onFolderFavoritesAction,
+            onDockAction = actions.onFolderDockAction,
         )
     }
 }
@@ -1976,7 +1597,6 @@ private fun AppDrawerScreenPreview() {
                     ),
                 )
             }.toImmutableList(),
-            onAppClick = {},
         )
     }
 }
@@ -1997,8 +1617,7 @@ private fun AppDrawerScreenGridPreview() {
                     ),
                 )
             }.toImmutableList(),
-            onAppClick = {},
-            presentation = DrawerPresentation.GRID,
+            appearance = DrawerAppearance(presentation = DrawerPresentation.GRID),
         )
     }
 }

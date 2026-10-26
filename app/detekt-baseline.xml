@@ -4,7 +4,6 @@
   <CurrentIssues>
     <ID>ComplexCondition:HubViewModel.kt:HubViewModel$existing.row != placement.row || existing.col != placement.col || existing.colSpan != placement.colSpan || existing.rowSpan != placement.rowSpan</ID>
     <ID>ComplexCondition:PlaceWidgetUseCase.kt:PlaceWidgetUseCase$preferredRow != null &amp;&amp; preferredCol != null &amp;&amp; preferredRow in 0..(HUB_MAX_ROWS - rowSpan) &amp;&amp; preferredCol in 0..(HUB_COLUMNS - colSpan) &amp;&amp; existing.none { placed -&gt; rectanglesOverlap(preferredRow, preferredCol, colSpan, rowSpan, placed.row, placed.col, placed.colSpan, placed.rowSpan) }</ID>
-    <ID>ComposableNestingDepth:AppDrawerScreen.kt:@Composable fun AppDrawerScreen</ID>
     <ID>ComposableNestingDepth:CalendarSettingsScreen.kt:@Composable private fun CalendarSettingsContent</ID>
     <ID>ComposableNestingDepth:ClockStyleGalleryScreen.kt:@Composable private fun ClockStyleGalleryScreen</ID>
     <ID>ComposableNestingDepth:ContactConnectionsSheet.kt:@Composable fun ContactConnectionsSheet</ID>
@@ -36,7 +35,6 @@
     <ID>LambdaParameterInRestartableEffect:NotificationAccessExplanationScreen.kt:onBack: () -&gt; Unit</ID>
     <ID>LambdaParameterInRestartableEffect:UsageAccessExplanationScreen.kt:onBack: () -&gt; Unit</ID>
     <ID>LongMethod:AppContextMenu.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun AppContextMenu</ID>
-    <ID>LongMethod:AppDrawerScreen.kt:@Composable fun AppDrawerScreen</ID>
     <ID>LongMethod:AppPickerScreen.kt:@Composable fun AppPickerScreen</ID>
     <ID>LongMethod:AppSortControl.kt:@Composable fun AppSortControl</ID>
     <ID>LongMethod:BackupRestoreScreen.kt:@Composable private fun BackupRestoreContent</ID>

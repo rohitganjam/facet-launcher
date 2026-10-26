@@ -40,6 +40,8 @@ import com.facetlauncher.app.data.model.HomeWallpaper
 import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.ui.components.WallpaperBackground
 import com.facetlauncher.app.ui.drawer.AppDrawerScreen
+import com.facetlauncher.app.ui.drawer.DrawerAppearance
+import com.facetlauncher.app.ui.drawer.DrawerSearchBarConfig
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import com.facetlauncher.app.ui.theme.Hairline
 import com.facetlauncher.app.ui.theme.resolve
@@ -106,25 +108,26 @@ internal fun AppDrawerSettingsPreview(settings: LauncherSettings, wallpaper: Hom
             WallpaperBackground(wallpaper, Modifier.matchParentSize())
             AppDrawerScreen(
                 apps = sample.apps,
-                onAppClick = {},
                 modifier = Modifier
                     .requiredSize(screenWidth, PREVIEW_VIEWPORT_HEIGHT)
                     .graphicsLayer { scaleX = scale; scaleY = scale }
                     .consumeWindowInsets(WindowInsets.systemBars),
                 listState = listState,
                 gridState = gridState,
-                presentation = settings.drawerPresentation,
-                gridDensity = settings.drawerGridDensity,
-                listItemSize = settings.drawerListItemSize,
-                showIcons = settings.showDrawerIcons,
-                showLabels = settings.showDrawerLabels,
-                labelFontWeight = settings.homeAppsFontWeight.resolve(),
-                opacity = settings.drawerOpacity,
-                notificationBadgeStyle = settings.notificationBadgeStyle,
-                searchBarPosition = settings.searchBarPosition,
+                appearance = DrawerAppearance(
+                    presentation = settings.drawerPresentation,
+                    gridDensity = settings.drawerGridDensity,
+                    listItemSize = settings.drawerListItemSize,
+                    showIcons = settings.showDrawerIcons,
+                    showLabels = settings.showDrawerLabels,
+                    labelFontWeight = settings.homeAppsFontWeight.resolve(),
+                    opacity = settings.drawerOpacity,
+                    notificationBadgeStyle = settings.notificationBadgeStyle,
+                    folderDisplayMode = settings.drawerFolderDisplayMode,
+                    recentlyInstalledPosition = settings.recentlyInstalledPosition,
+                ),
+                searchBar = DrawerSearchBarConfig(position = settings.searchBarPosition),
                 folderCandidates = sample.folders,
-                folderDisplayMode = settings.drawerFolderDisplayMode,
-                recentlyInstalledPosition = settings.recentlyInstalledPosition,
             )
             // A later sibling takes the touches first, so taps never reach the drawer. Vertical drags scroll its list or grid, and
             // what they can't consume (the ends) passes on to the settings list.
