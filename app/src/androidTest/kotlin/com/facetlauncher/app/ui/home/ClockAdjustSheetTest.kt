@@ -1,6 +1,8 @@
 package com.facetlauncher.app.ui.home
 
+import androidx.compose.foundation.layout.height
 import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.hasAnyDescendant
@@ -9,6 +11,8 @@ import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.unit.dp
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import org.junit.Rule
 import org.junit.Test
@@ -140,6 +144,33 @@ class ClockAdjustSheetTest {
 
         composeRule.onNodeWithTag("clock_adjust_switch_to_launcher_clock").performClick()
 
+        assert(clicked)
+    }
+
+    @Test
+    fun theLastRowIsReachableInAWindowShorterThanTheSheet() {
+        // Given the sheet in a window far shorter than its content, as a landscape phone gives it
+        var clicked = false
+        composeRule.setContent {
+            FacetLauncherTheme {
+                androidx.compose.foundation.layout.Box(androidx.compose.ui.Modifier.height(220.dp)) {
+                    ClockAdjustSheet(
+                        onAdjustClick = {},
+                        onEditStylesClick = {},
+                        onFacetSettingsClick = {},
+                        onLauncherSettingsClick = { clicked = true },
+                        onUseCustomWidgetClick = {},
+                        onSwitchToLauncherClockClick = {},
+                        overrideFacetName = null,
+                    )
+                }
+            }
+        }
+
+        // When scrolling to the last row and tapping it
+        composeRule.onNodeWithTag("clock_adjust_launcher_settings").performScrollTo().assertIsDisplayed().performClick()
+
+        // Then it was reachable and fired
         assert(clicked)
     }
 

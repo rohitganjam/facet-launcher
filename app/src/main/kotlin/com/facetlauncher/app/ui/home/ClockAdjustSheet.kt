@@ -6,6 +6,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.AccessTime
 import androidx.compose.material.icons.outlined.OpenInFull
@@ -78,6 +80,7 @@ fun ClockAdjustSheet(
     Column(
         modifier = modifier
             .fillMaxWidth()
+            .verticalScroll(rememberScrollState())
             .padding(start = 24.dp, end = 24.dp, top = 4.dp, bottom = 16.dp)
             .testTag("clock_adjust_sheet"),
         verticalArrangement = Arrangement.spacedBy(12.dp),
