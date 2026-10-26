@@ -11,6 +11,9 @@ import com.facetlauncher.app.domain.RankBySearchRelevanceUseCase
 import com.facetlauncher.app.domain.RecentlyInstalledAppsUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -39,18 +42,18 @@ class PrivateSpaceViewModel @Inject constructor(
 
     private val query = MutableStateFlow("")
 
-    val filteredApps: StateFlow<List<AppInfo>> = combine(apps, query) { apps, query ->
-        rankBySearchRelevance(apps, query) { it.label }
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+    val filteredApps: StateFlow<ImmutableList<AppInfo>> = combine(apps, query) { apps, query ->
+        rankBySearchRelevance(apps, query) { it.label }.toImmutableList()
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), persistentListOf())
 
     /** Same global "Recently installed" position setting the main Drawer uses — see `AppDrawerScreen`'s own field for the reasoning (one shared setting, not two). Independent of [filteredApps]/[query]: hidden while searching, same as the main Drawer's own item. */
-    val recentlyInstalledApps: StateFlow<List<AppInfo>> = combine(apps, query, settingsRepository.settings) { apps, query, settings ->
+    val recentlyInstalledApps: StateFlow<ImmutableList<AppInfo>> = combine(apps, query, settingsRepository.settings) { apps, query, settings ->
         if (settings.recentlyInstalledPosition != RecentlyInstalledPosition.DO_NOT_SHOW && query.isBlank()) {
-            recentlyInstalledAppsUseCase(apps)
+            recentlyInstalledAppsUseCase(apps).toImmutableList()
         } else {
-            emptyList()
+            persistentListOf()
         }
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), persistentListOf())
 
     fun onQueryChange(newQuery: String) {
         query.value = newQuery

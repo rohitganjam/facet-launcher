@@ -37,6 +37,10 @@ import java.time.Clock
 import java.time.Instant
 import java.time.ZoneId
 import java.util.Locale
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.ImmutableMap
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.persistentMapOf
 
 /**
  * Home clock — real, persisted [templateId]/[fontOption]/[colorOption]/[showMeridiem] (Settings'
@@ -75,8 +79,8 @@ fun ClockBlock(
     accentColorOption: ClockColorOption = ClockColorOption.ACCENT_PRIMARY,
     showMeridiem: Boolean = false,
     dateStyle: ClockDateStyle = ClockDateStyle.FULL,
-    events: List<CalendarEvent> = emptyList(),
-    calendarColors: Map<String, String> = emptyMap(),
+    events: ImmutableList<CalendarEvent> = persistentListOf(),
+    calendarColors: ImmutableMap<String, String> = persistentMapOf(),
     calendarDisplay: CalendarDisplayOptions = CalendarDisplayOptions(),
     /** Settings → Appearance → "Text weight" — see [com.facetlauncher.app.data.model.LauncherSettings.homeAppsFontWeight]; also styles [CalendarEventsBlock] now. */
     homeAppsFontWeight: FontWeightOption = FontWeightOption.REGULAR,
@@ -330,7 +334,7 @@ private fun ClockBlockPreview() {
         val fixedClock = Clock.fixed(Instant.parse("2026-08-27T09:05:00Z"), ZoneId.of("UTC"))
         ClockBlock(
             clock = fixedClock,
-            events = listOf(
+            events = persistentListOf(
                 CalendarEvent(id = 1, calendarId = "1", title = "Team standup", startTimeMillis = fixedClock.millis() + 3_600_000, endTimeMillis = fixedClock.millis() + 5_400_000, isAllDay = false),
                 CalendarEvent(id = 2, calendarId = "1", title = "Design review", startTimeMillis = fixedClock.millis() + 7_200_000, endTimeMillis = fixedClock.millis() + 9_000_000, isAllDay = false),
             ),

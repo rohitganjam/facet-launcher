@@ -165,6 +165,9 @@ dependencies {
     // navigation resolve to one kotlinx-serialization; an older version crashes room-testing with AbstractMethodError.
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.11.0")
 
+    // Stable collection types for composable parameters (ImmutableList, ImmutableMap, ImmutableSet), so detekt's UnstableCollections rule stays quiet.
+    implementation("org.jetbrains.kotlinx:kotlinx-collections-immutable:0.5.2")
+
     // Google Play Billing for the one-time Facet Pro purchase (docs/architecture/16-flow-billing.md)
     implementation("com.android.billingclient:billing-ktx:9.1.0")
 

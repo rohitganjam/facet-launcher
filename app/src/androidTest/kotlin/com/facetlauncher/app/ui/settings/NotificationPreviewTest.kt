@@ -7,6 +7,7 @@ import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import kotlinx.collections.immutable.toImmutableList
 import org.junit.Assert.assertTrue
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.AppRowPresentation
@@ -36,8 +37,8 @@ class NotificationPreviewTest {
                     uiState = NotificationSettingsUiState(
                         settings = settings,
                         isAccessGranted = accessGranted,
-                        homePreviewApps = listOf(app("Mail"), app("Maps")),
-                        dockPreviewApps = listOf(app("Phone"), app("Camera")),
+                        homePreviewApps = listOf(app("Mail"), app("Maps")).toImmutableList(),
+                        dockPreviewApps = listOf(app("Phone"), app("Camera")).toImmutableList(),
                     ),
                     onGrantAccess = onGrantAccess,
                 )

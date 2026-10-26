@@ -19,6 +19,7 @@ import com.facetlauncher.app.data.model.NotificationInfo
 import com.facetlauncher.app.domain.AppNotificationsState
 import com.facetlauncher.app.domain.QuickAddState
 import com.facetlauncher.app.domain.QuickPlacementAction
+import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.flow.flowOf
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import org.junit.After
@@ -81,7 +82,7 @@ class AppContextMenuScalingTest {
                         )
                     },
                     onFavoritesAction = { _, _ -> onFavoritesAction() },
-                    folderCandidates = folderCandidates,
+                    folderCandidates = folderCandidates?.toImmutableList(),
                     appMenuNotifications = AppMenuNotifications(observe = { flowOf(AppNotificationsState(notifications(notificationCount))) }),
                 )
             }

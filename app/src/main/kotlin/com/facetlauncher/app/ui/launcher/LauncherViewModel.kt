@@ -26,6 +26,9 @@ import com.facetlauncher.app.domain.SeedDefaultDockUseCase
 import com.facetlauncher.app.domain.SyncFacetShortcutsUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -52,7 +55,7 @@ import kotlinx.coroutines.launch
  * the actual home screen.
  */
 data class LauncherUiState(
-    val apps: List<AppInfo> = emptyList(),
+    val apps: ImmutableList<AppInfo> = persistentListOf(),
     val isLoading: Boolean = true,
     /** F11 — all threaded into [com.facetlauncher.app.ui.theme.FacetLauncherTheme] so it resolves correctly app-wide. */
     val themeMode: ThemeMode = ThemeMode.SYSTEM,
@@ -80,7 +83,7 @@ data class LauncherUiState(
      * just because its apps momentarily aren't enumerable. List-shaped (not a boolean) so it stays
      * correct even in the (today, rare) case of more than one — see [WorkProfileInfo]'s own doc.
      */
-    val workProfiles: List<WorkProfileInfo> = emptyList(),
+    val workProfiles: ImmutableList<WorkProfileInfo> = persistentListOf(),
 )
 
 @HiltViewModel
@@ -130,7 +133,7 @@ class LauncherViewModel @Inject constructor(
         // requiring a process restart; see AppRepository.observeInstalledApps.
         combine(getInstalledApps.observe(), settingsRepository.settings, workProfileRepository.observeWorkProfiles()) { apps, settings, workProfiles ->
             _uiState.value.copy(
-                apps = apps,
+                apps = apps.toImmutableList(),
                 isLoading = false,
                 themeMode = settings.themeMode,
                 systemBarIconStyle = settings.systemBarIconStyle,
@@ -143,7 +146,7 @@ class LauncherViewModel @Inject constructor(
                 homeAppsFontWeight = settings.homeAppsFontWeight,
                 fontScaleOption = settings.fontScaleOption,
                 allowLandscape = settings.allowLandscape,
-                workProfiles = workProfiles,
+                workProfiles = workProfiles.toImmutableList(),
             )
         }.onEach { combined -> _uiState.update { combined.copy(onboardingCompleted = it.onboardingCompleted) } }.launchIn(viewModelScope)
         // Own collector: the onboarding gate must not wait on the app list or work profiles.

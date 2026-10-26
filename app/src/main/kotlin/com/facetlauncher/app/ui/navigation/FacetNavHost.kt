@@ -55,6 +55,7 @@ import com.facetlauncher.app.ui.settings.backup.BackupRestoreScreen
 import com.facetlauncher.app.ui.theme.FACET_TRANSITION_DURATION_MS
 import com.facetlauncher.app.ui.theme.FacetTransitionEasing
 import com.facetlauncher.app.ui.theme.UnscaledTypography
+import kotlinx.collections.immutable.ImmutableList
 
 object FacetDestinations {
     const val HOME = "home"
@@ -151,7 +152,7 @@ fun NavHostController.popBackStackSafely() {
  */
 @Composable
 fun FacetNavHost(
-    apps: List<AppInfo>,
+    apps: ImmutableList<AppInfo>,
     onAppClick: (AppInfo) -> Unit,
     modifier: Modifier = Modifier,
     navController: NavHostController = rememberNavController(),

@@ -1,5 +1,8 @@
 package com.facetlauncher.app.ui.settings
 
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
+
 /** One row on the Permissions screen. */
 enum class PermissionKind {
     CALENDAR,
@@ -28,5 +31,5 @@ data class PermissionRowState(
 )
 
 data class PermissionsUiState(
-    val permissions: List<PermissionRowState> = emptyList(),
+    val permissions: ImmutableList<PermissionRowState> = persistentListOf(),
 )

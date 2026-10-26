@@ -64,6 +64,8 @@ import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import com.facetlauncher.app.ui.theme.Muted
 import com.facetlauncher.app.ui.theme.Surface
 import com.facetlauncher.app.ui.theme.SurfaceContainer
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.toImmutableList
 
 /**
  * Settings → Folders → one folder — a real, dedicated screen rather than the shared
@@ -153,7 +155,7 @@ internal fun FolderDetailContent(
                 } else {
                     item {
                         SettingsCard {
-                            FolderAppsReorderList(apps = folder.apps, onReorder = onReorder, onRemoveApp = onRemoveApp)
+                            FolderAppsReorderList(apps = remember(folder.apps) { folder.apps.toImmutableList() }, onReorder = onReorder, onRemoveApp = onRemoveApp)
                         }
                     }
                 }
@@ -221,13 +223,13 @@ private val FOLDER_APP_ROW_SHAPE = RoundedCornerShape(12.dp)
  */
 @Composable
 private fun FolderAppsReorderList(
-    apps: List<AppInfo>,
+    apps: ImmutableList<AppInfo>,
     onReorder: (List<AppInfo>) -> Unit,
     onRemoveApp: (AppInfo) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val componentsKey = apps.map { it.listKey }
-    var order by remember(componentsKey) { mutableStateOf(apps) }
+    var order by remember(componentsKey) { mutableStateOf<List<AppInfo>>(apps) }
     val rowHeightPx = with(LocalDensity.current) { ReorderRowDefaults.FAVORITE_ROW_HEIGHT.toPx() }
     val reorderState = rememberDragReorderState(
         items = order,

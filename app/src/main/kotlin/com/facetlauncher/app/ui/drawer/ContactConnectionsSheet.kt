@@ -66,6 +66,8 @@ import com.facetlauncher.app.ui.theme.IconTile
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import com.facetlauncher.app.ui.theme.Muted
 import com.facetlauncher.app.ui.theme.Surface
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
 
 /**
  * Phase 9's connections sheet — replaces the old tap-to-expand chip row (dividers between rows, a
@@ -79,7 +81,7 @@ import com.facetlauncher.app.ui.theme.Surface
 @Composable
 fun ContactConnectionsSheet(
     contactName: String,
-    connections: List<ContactConnection>,
+    connections: ImmutableList<ContactConnection>,
     onConnectionClick: (Intent) -> Unit,
     onViewContactClick: () -> Unit,
     modifier: Modifier = Modifier,
@@ -286,7 +288,7 @@ private fun ContactConnectionsSheetPreview() {
     FacetLauncherTheme {
         ContactConnectionsSheet(
             contactName = "Jamie Rivera",
-            connections = listOf(
+            connections = persistentListOf(
                 ContactConnection(
                     ContactConnectionType.CALL,
                     "Call",

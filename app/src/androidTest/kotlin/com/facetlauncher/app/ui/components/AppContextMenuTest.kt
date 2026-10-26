@@ -39,6 +39,7 @@ import com.facetlauncher.app.domain.QuickAddState
 import com.facetlauncher.app.domain.QuickPlacementAction
 import com.facetlauncher.app.ui.launcher.LocalHomePressedEvent
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
+import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -88,7 +89,7 @@ class AppContextMenuTest {
                         onRequestQuickAddState = onRequestQuickAddState,
                         onFavoritesAction = onFavoritesAction,
                         onDockAction = onDockAction,
-                        folderCandidates = folderCandidates,
+                        folderCandidates = folderCandidates?.toImmutableList(),
                         onCreateFolder = onCreateFolder,
                         onAddToFolder = onAddToFolder,
                         removeFromFolderId = removeFromFolderId,

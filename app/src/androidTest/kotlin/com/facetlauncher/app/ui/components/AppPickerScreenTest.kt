@@ -20,6 +20,9 @@ import com.facetlauncher.app.data.model.AppProfile
 import com.facetlauncher.app.data.model.AppSortOption
 import com.facetlauncher.app.data.model.SortDirection
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.persistentSetOf
+import kotlinx.collections.immutable.toImmutableList
 import org.junit.Rule
 import org.junit.Test
 
@@ -54,9 +57,9 @@ class AppPickerScreenTest {
                 AppPickerScreen(
                     title = "Pick apps",
                     query = "",
-                    selectedResults = selectedResults,
-                    otherResults = otherResults,
-                    selectedComponents = emptySet(),
+                    selectedResults = selectedResults.toImmutableList(),
+                    otherResults = otherResults.toImmutableList(),
+                    selectedComponents = persistentSetOf(),
                     canAddMore = true,
                     canRemove = true,
                     sortOption = AppSortOption.ALPHABETICAL,
@@ -119,9 +122,9 @@ class AppPickerScreenTest {
                 AppPickerScreen(
                     title = "Pick apps",
                     query = query,
-                    selectedResults = emptyList(),
-                    otherResults = listOf(personalCalendar),
-                    selectedComponents = emptySet(),
+                    selectedResults = persistentListOf(),
+                    otherResults = listOf(personalCalendar).toImmutableList(),
+                    selectedComponents = persistentSetOf(),
                     canAddMore = true,
                     canRemove = true,
                     sortOption = sortOption,

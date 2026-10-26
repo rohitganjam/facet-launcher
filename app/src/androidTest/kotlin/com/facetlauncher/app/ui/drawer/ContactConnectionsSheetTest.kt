@@ -12,6 +12,7 @@ import com.facetlauncher.app.data.model.ConnectionOption
 import com.facetlauncher.app.data.model.ContactConnection
 import com.facetlauncher.app.data.model.ContactConnectionType
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
+import kotlinx.collections.immutable.toImmutableList
 import org.junit.Rule
 import org.junit.Test
 
@@ -37,7 +38,7 @@ class ContactConnectionsSheetTest {
             FacetLauncherTheme {
                 ContactConnectionsSheet(
                     contactName = "Jane Doe",
-                    connections = listOf(callConnection),
+                    connections = listOf(callConnection).toImmutableList(),
                     onConnectionClick = {},
                     onViewContactClick = {},
                 )

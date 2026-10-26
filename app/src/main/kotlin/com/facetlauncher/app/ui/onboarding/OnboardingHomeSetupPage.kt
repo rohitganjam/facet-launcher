@@ -56,6 +56,8 @@ import com.facetlauncher.app.ui.theme.Ink
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import com.facetlauncher.app.ui.theme.Muted
 import com.facetlauncher.app.ui.theme.Surface
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.toImmutableList
 
 /**
  * Onboarding step 2 (`4g`, extended) — the launcher-wide default HOME APPS content mode and DOCK.
@@ -149,7 +151,7 @@ fun OnboardingHomeSetupPage(
 
 @Composable
 private fun DockSection(
-    dockApps: List<AppInfo>,
+    dockApps: ImmutableList<AppInfo>,
     countLabel: String,
     onReorder: (List<AppInfo>) -> Unit,
     onManageClick: () -> Unit,
@@ -246,9 +248,9 @@ private val FAVORITE_ROW_SHAPE = RoundedCornerShape(12.dp)
  * doesn't have to compete with the drag gesture on the same tile.
  */
 @Composable
-private fun DockAppsReorderRow(dockApps: List<AppInfo>, onReorder: (List<AppInfo>) -> Unit, modifier: Modifier = Modifier) {
+private fun DockAppsReorderRow(dockApps: ImmutableList<AppInfo>, onReorder: (List<AppInfo>) -> Unit, modifier: Modifier = Modifier) {
     val componentsKey = dockApps.map { it.listKey }
-    var order by remember(componentsKey) { mutableStateOf(dockApps) }
+    var order by remember(componentsKey) { mutableStateOf<List<AppInfo>>(dockApps) }
     val slotWidthPx = with(LocalDensity.current) { (AppIconSize.TILE + ReorderRowDefaults.DOCK_TILE_SPACING).toPx() }
     val reorderState = rememberDragReorderState(
         items = order,
@@ -293,7 +295,7 @@ private fun HomeAppsSection(
     onListContentModeChange: (ListContentMode) -> Unit,
     appsToShowCount: Int,
     onAppsToShowCountChange: (Int) -> Unit,
-    favoriteApps: List<AppInfo>,
+    favoriteApps: ImmutableList<AppInfo>,
     favoriteCountLabel: String,
     onEditFavoritesClick: () -> Unit,
     onReorderFavorites: (List<AppInfo>) -> Unit,
@@ -386,9 +388,9 @@ private fun FavoritesClickableRow(countLabel: String, onClick: () -> Unit, modif
 
 /** Drag-to-reorder for the favorites list — mirrors `HomeAppsListSettingsScreen`'s `DefaultFavoritesReorderList`. */
 @Composable
-private fun FavoritesReorderList(favorites: List<AppInfo>, onReorder: (List<AppInfo>) -> Unit, modifier: Modifier = Modifier) {
+private fun FavoritesReorderList(favorites: ImmutableList<AppInfo>, onReorder: (List<AppInfo>) -> Unit, modifier: Modifier = Modifier) {
     val componentsKey = favorites.map { it.listKey }
-    var order by remember(componentsKey) { mutableStateOf(favorites) }
+    var order by remember(componentsKey) { mutableStateOf<List<AppInfo>>(favorites) }
     val rowHeightPx = with(LocalDensity.current) { ReorderRowDefaults.FAVORITE_ROW_HEIGHT.toPx() }
     val reorderState = rememberDragReorderState(
         items = order,
@@ -447,8 +449,8 @@ private fun OnboardingHomeSetupPagePreview() {
     FacetLauncherTheme {
         OnboardingHomeSetupPage(
             uiState = OnboardingUiState(
-                dockApps = (1..4).map { AppInfo("com.example.$it", ".Main", "D$it", null) },
-                favoriteApps = (1..3).map { AppInfo("com.example.f$it", ".Main", "Favorite $it", null) },
+                dockApps = (1..4).map { AppInfo("com.example.$it", ".Main", "D$it", null) }.toImmutableList(),
+                favoriteApps = (1..3).map { AppInfo("com.example.f$it", ".Main", "Favorite $it", null) }.toImmutableList(),
             ),
             onReorderDockApps = {},
             onOpenDockPicker = {},

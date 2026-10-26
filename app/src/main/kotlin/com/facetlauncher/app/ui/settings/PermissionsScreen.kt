@@ -55,6 +55,8 @@ import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import com.facetlauncher.app.ui.theme.Muted
 import com.facetlauncher.app.ui.theme.SurfaceContainer
 import com.facetlauncher.app.ui.theme.SuccessColor
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
 
 /**
  * Settings → Permissions — every permission Facet uses in one place, each explaining why it's
@@ -145,7 +147,7 @@ private class RuntimePermissionRequest(val manifestName: String, val launch: (St
 
 @Composable
 private fun PermissionsContent(
-    permissions: List<PermissionRowState>,
+    permissions: ImmutableList<PermissionRowState>,
     onBack: () -> Unit,
     onTurnOnClick: (PermissionRowState) -> Unit,
     modifier: Modifier = Modifier,
@@ -236,7 +238,7 @@ internal fun PermissionRow(permission: PermissionRowState, onTurnOnClick: () -> 
 private fun PermissionsScreenPreview() {
     FacetLauncherTheme {
         PermissionsContent(
-            permissions = listOf(
+            permissions = persistentListOf(
                 PermissionRowState(
                     kind = PermissionKind.CALENDAR,
                     title = stringResource(R.string.permission_calendar_title),

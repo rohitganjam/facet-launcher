@@ -4,6 +4,8 @@ import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.AppListLimits
 import com.facetlauncher.app.data.model.DrawerPresentation
 import com.facetlauncher.app.data.model.ListContentMode
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
 
 /**
  * Home-setup step (`ONBOARDING_FLOW.md` step 2) state — the launcher-wide default Dock and
@@ -15,9 +17,9 @@ import com.facetlauncher.app.data.model.ListContentMode
  */
 data class OnboardingUiState(
     /** Dock apps in their current order (the seeded defaults, until edited). */
-    val dockApps: List<AppInfo> = emptyList(),
+    val dockApps: ImmutableList<AppInfo> = persistentListOf(),
     /** Favorited apps, in their favorites order. */
-    val favoriteApps: List<AppInfo> = emptyList(),
+    val favoriteApps: ImmutableList<AppInfo> = persistentListOf(),
     /** Which source populates Home's app list — see `HomeAppsListSettingsScreen` for the same choice in Settings. */
     val listContentMode: ListContentMode = ListContentMode.FAVORITES,
     /** Only meaningful when [listContentMode] isn't [ListContentMode.FAVORITES] — see `HomeAppsListSettingsScreen`'s own identical row. */

@@ -71,6 +71,9 @@ import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import com.facetlauncher.app.ui.theme.Faint
 import com.facetlauncher.app.ui.theme.Ink
 import com.facetlauncher.app.ui.theme.Muted
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toImmutableList
 
 /** M3's own modal-bottom-sheet corner treatment — top corners only, [MaterialTheme.shapes.extraLarge]'s
  * 28dp (see `CLAUDE.md`'s Material 3 shape section) — written as a literal [RoundedCornerShape]
@@ -125,7 +128,7 @@ fun AppContextMenu(
     onRequestQuickAddState: suspend (AppInfo) -> QuickAddState = { QuickAddState() },
     onFavoritesAction: (AppInfo, QuickPlacementAction) -> Unit = { _, _ -> },
     onDockAction: (AppInfo, QuickPlacementAction) -> Unit = { _, _ -> },
-    folderCandidates: List<Folder>? = null,
+    folderCandidates: ImmutableList<Folder>? = null,
     onCreateFolder: (AppInfo, String) -> Unit = { _, _ -> },
     onAddToFolder: (AppInfo, Long) -> Unit = { _, _ -> },
     /** Follows the App Drawer's own List/Grid setting for the "Add to folder" preview's [FolderContentsSheet]. */
@@ -223,7 +226,7 @@ fun AppContextMenu(
                 ),
             )
         }
-    }
+    }.toImmutableList()
 
     ThemedModalBottomSheet(
         onDismissRequest = onDismissRequest,
@@ -323,7 +326,7 @@ fun AppContextMenu(
 internal fun AppMenuMainPage(
     app: AppInfo,
     notifications: AppNotificationsState,
-    placementActions: List<PlacementActionUi>,
+    placementActions: ImmutableList<PlacementActionUi>,
     onAppInfo: () -> Unit,
     onUninstall: () -> Unit,
     onOpenNotification: (NotificationInfo) -> Unit,
@@ -495,7 +498,7 @@ private fun previewNotifications(): List<NotificationInfo> = listOf(
 }
 
 @Composable
-private fun previewPlacementActions() = listOf(
+private fun previewPlacementActions() = persistentListOf(
     PlacementActionUi("p_fav", Icons.Outlined.StarBorder, "Add to Favorites", PlacementScope(null), isRemove = false, onClick = {}),
     PlacementActionUi("p_dock", Icons.Outlined.Dock, "Remove from Dock", PlacementScope("Work"), isRemove = true, onClick = {}),
     PlacementActionUi("p_folder", Icons.Outlined.FolderIcon, stringResource(R.string.folder_add_to_folder), scope = null, isRemove = false, onClick = {}),

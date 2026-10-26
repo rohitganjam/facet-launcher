@@ -85,43 +85,8 @@
     <ID>SwallowedException:LauncherAppWidgetHost.kt:LauncherAppWidgetHost$e: Exception</ID>
     <ID>TooGenericExceptionCaught:LauncherAppWidgetHost.kt:LauncherAppWidgetHost$e: Exception</ID>
     <ID>TooManyFunctions:AppearanceSettingsViewModel.kt:AppearanceSettingsViewModel : ViewModel</ID>
-    <ID>UnstableCollections:AlphabetRail.kt:List&lt;String&gt;</ID>
-    <ID>UnstableCollections:AppContextMenu.kt:List&lt;Folder&gt;?</ID>
-    <ID>UnstableCollections:AppContextMenu.kt:List&lt;PlacementActionUi&gt;</ID>
-    <ID>UnstableCollections:AppDrawerScreen.kt:List&lt;AppInfo&gt;</ID>
-    <ID>UnstableCollections:AppDrawerScreen.kt:List&lt;ContactInfo&gt;</ID>
-    <ID>UnstableCollections:AppDrawerScreen.kt:List&lt;DrawerTab&gt;</ID>
-    <ID>UnstableCollections:AppDrawerScreen.kt:List&lt;Folder&gt;</ID>
-    <ID>UnstableCollections:AppDrawerScreen.kt:List&lt;Folder&gt;?</ID>
-    <ID>UnstableCollections:AppDrawerScreen.kt:List&lt;SettingsSearchEntry&gt;</ID>
-    <ID>UnstableCollections:AppDrawerScreen.kt:List&lt;String&gt;</ID>
-    <ID>UnstableCollections:AppDrawerScreen.kt:List&lt;WorkProfileInfo&gt;</ID>
-    <ID>UnstableCollections:AppDrawerScreen.kt:Map&lt;String, Int&gt;</ID>
-    <ID>UnstableCollections:AppPickerScreen.kt:List&lt;AppInfo&gt;</ID>
-    <ID>UnstableCollections:AppPickerScreen.kt:List&lt;Folder&gt;</ID>
-    <ID>UnstableCollections:AppPickerScreen.kt:Set&lt;Long&gt;</ID>
-    <ID>UnstableCollections:AppPickerScreen.kt:Set&lt;String&gt;</ID>
-    <ID>UnstableCollections:CalendarEventsBlock.kt:List&lt;CalendarEvent&gt;</ID>
-    <ID>UnstableCollections:CalendarEventsBlock.kt:Map&lt;String, String&gt;</ID>
-    <ID>UnstableCollections:ClockBlock.kt:List&lt;CalendarEvent&gt;</ID>
-    <ID>UnstableCollections:ClockBlock.kt:Map&lt;String, String&gt;</ID>
-    <ID>UnstableCollections:ContactConnectionsSheet.kt:List&lt;ContactConnection&gt;</ID>
-    <ID>UnstableCollections:DockSettingsScreen.kt:List&lt;PlacedItem&gt;</ID>
     <ID>UnstableCollections:DragReorderState.kt:List&lt;T&gt;</ID>
-    <ID>UnstableCollections:FacetNavHost.kt:List&lt;AppInfo&gt;</ID>
-    <ID>UnstableCollections:FolderDetailScreen.kt:List&lt;AppInfo&gt;</ID>
-    <ID>UnstableCollections:FolderTileContextMenu.kt:List&lt;PlacementActionUi&gt;</ID>
-    <ID>UnstableCollections:HomeAppsListSettingsScreen.kt:List&lt;PlacedItem&gt;</ID>
-    <ID>UnstableCollections:HomeDrawerRoute.kt:List&lt;AppInfo&gt;</ID>
-    <ID>UnstableCollections:HomeSurfacePreview.kt:List&lt;PlacedItem&gt;</ID>
-    <ID>UnstableCollections:HubGrid.kt:List&lt;HubWidgetUi&gt;</ID>
-    <ID>UnstableCollections:HubLandscapeGrid.kt:List&lt;HubLandscapeWidgetUi&gt;</ID>
     <ID>UnstableCollections:LabeledDropdownRow.kt:List&lt;T&gt;</ID>
-    <ID>UnstableCollections:OnboardingHomeSetupPage.kt:List&lt;AppInfo&gt;</ID>
-    <ID>UnstableCollections:PermissionsScreen.kt:List&lt;PermissionRowState&gt;</ID>
-    <ID>UnstableCollections:PlacementActions.kt:List&lt;PlacementActionUi&gt;</ID>
-    <ID>UnstableCollections:PrivateSpaceScreen.kt:List&lt;AppInfo&gt;</ID>
-    <ID>UnstableCollections:SettingsScreen.kt:List&lt;PlacedItem&gt;</ID>
     <ID>UnusedParameter:ClockAccessoryRow.kt:accentColor: Color</ID>
     <ID>UnusedParameter:HubHeader.kt:columns: Int</ID>
     <ID>UnusedParameter:OnboardingFacetsPage.kt:uiState: OnboardingUiState</ID>

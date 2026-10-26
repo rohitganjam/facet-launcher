@@ -56,6 +56,7 @@ import com.facetlauncher.app.ui.components.ThemedDropdownMenu
 import com.facetlauncher.app.ui.components.ThemedDropdownMenuItem
 import com.facetlauncher.app.ui.theme.Accent
 import kotlin.math.roundToInt
+import kotlinx.collections.immutable.ImmutableList
 import kotlinx.coroutines.launch
 
 internal val HUB_GRID_GAP = 4.dp
@@ -109,7 +110,7 @@ private enum class ResizeEdge { START, END }
  */
 @Composable
 fun HubGrid(
-    widgets: List<HubWidgetUi>,
+    widgets: ImmutableList<HubWidgetUi>,
     columns: Int,
     createHostView: (Context, Int) -> AppWidgetHostView?,
     onWidgetSizeChange: (appWidgetId: Int, widthDp: Int, heightDp: Int) -> Unit,

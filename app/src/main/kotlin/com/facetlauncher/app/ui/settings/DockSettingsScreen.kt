@@ -67,6 +67,9 @@ import com.facetlauncher.app.ui.theme.Muted
 import com.facetlauncher.app.ui.theme.SurfaceContainer
 import com.facetlauncher.app.ui.theme.resolve
 import com.facetlauncher.app.data.model.AppListLimits
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toImmutableList
 
 /** Settings → Home & Apps → Dock — also a facet's own Dock screen when `viewModel` is facet-scoped, with its own Inherit/Override switch at the top in that case. */
 @Composable
@@ -128,7 +131,7 @@ private fun DockSettingsContent(
                 }
                 item {
                     HomeSurfacePreview(
-                        appList = emptyList(),
+                        appList = persistentListOf(),
                         dockApps = uiState.dockItems,
                         dockDisplayMode = uiState.dockDisplayMode,
                         labelColor = uiState.appLabelColorOption.resolve(),
@@ -208,7 +211,7 @@ private fun PlacedItem.reorderKey(): Any = when (this) {
 
 @Composable
 private fun DockAppsRow(
-    dockItems: List<PlacedItem>,
+    dockItems: ImmutableList<PlacedItem>,
     onReorder: (List<PlacedItem>) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -217,7 +220,7 @@ private fun DockAppsRow(
         // is a freshly-decoded bitmap on every LauncherApps re-emission, so keying `remember` on
         // the raw list would reset drag state mid-drag on re-emissions unrelated to the dock.
         val componentsKey = dockItems.map { it.reorderKey() }
-        var order by remember(componentsKey) { mutableStateOf(dockItems) }
+        var order by remember(componentsKey) { mutableStateOf<List<PlacedItem>>(dockItems) }
         val slotWidthPx = with(LocalDensity.current) { (AppIconSize.TILE + ReorderRowDefaults.DOCK_TILE_SPACING).toPx() }
         val reorderState = rememberDragReorderState(
             items = order,
@@ -281,7 +284,7 @@ private fun DockSettingsScreenPreview() {
             uiState = DockSettingsUiState(
                 globalDockItems = (1..4).map {
                     PlacedItem.SingleApp(AppInfo(packageName = "com.example.$it", activityName = ".Main", label = "App $it", icon = null))
-                },
+                }.toImmutableList(),
             ),
             onBack = {},
             onAddDockApp = {},

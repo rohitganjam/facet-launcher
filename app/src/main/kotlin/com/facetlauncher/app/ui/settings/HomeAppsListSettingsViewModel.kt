@@ -30,6 +30,9 @@ import com.facetlauncher.app.domain.GetInstalledAppsUseCase
 import com.facetlauncher.app.domain.SelectPreviewAppsUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -55,11 +58,11 @@ data class HomeAppsListUiState(
     val facet: Facet? = null,
     val settings: LauncherSettings = LauncherSettings(),
     /** The launcher-wide default Favorites list — shown (read-only) while inheriting, and copied into the facet's own list the moment it starts overriding with an empty list. */
-    val globalFavorites: List<PlacedItem> = emptyList(),
+    val globalFavorites: ImmutableList<PlacedItem> = persistentListOf(),
     /** This facet's own favorites — only meaningful/edited while [isOverriding]. */
-    val facetFavorites: List<PlacedItem> = emptyList(),
+    val facetFavorites: ImmutableList<PlacedItem> = persistentListOf(),
     /** What the preview renders in a non-Favorites mode — a recognizable app sample, independent of facet/override. */
-    val previewSourceApps: List<PlacedItem> = emptyList(),
+    val previewSourceApps: ImmutableList<PlacedItem> = persistentListOf(),
     val homeWallpaper: HomeWallpaper = HomeWallpaper.Unavailable,
     /** Home's app label color/weight — global only, no per-facet override; drives the preview's label rendering. */
     val appLabelColorOption: ClockColorOption = ClockColorOption.THEME,
@@ -79,10 +82,10 @@ data class HomeAppsListUiState(
     val appListGridColumns: AppListGridColumns get() = style.appList.gridColumns
     val appListGridDisplayMode: AppListGridDisplayMode get() = style.appList.gridDisplayMode
     /** This scope's effective favorites — the facet's own while overriding, the launcher-wide default otherwise. Apps and folders interleaved, same as Home's own list. */
-    val favorites: List<PlacedItem> get() = if (isOverriding) facetFavorites else globalFavorites
+    val favorites: ImmutableList<PlacedItem> get() = if (isOverriding) facetFavorites else globalFavorites
     val favoritesLabel: String get() = "${favorites.size} of ${AppListLimits.MAX_FAVORITES}"
     /** What the preview renders — [favorites] in Favorites mode, a recognizable app sample otherwise. */
-    val previewApps: List<PlacedItem> get() = if (listContentMode == ListContentMode.FAVORITES) favorites else previewSourceApps
+    val previewApps: ImmutableList<PlacedItem> get() = if (listContentMode == ListContentMode.FAVORITES) favorites else previewSourceApps
 }
 
 /**
@@ -125,9 +128,9 @@ class HomeAppsListSettingsViewModel @Inject constructor(
         HomeAppsListUiState(
             facet = facets.find { it.id == facetId },
             settings = settings,
-            globalFavorites = globalFavorites,
-            facetFavorites = facetFavorites,
-            previewSourceApps = selectPreviewApps(installed, preferred, PREVIEW_APP_COUNT).map { PlacedItem.SingleApp(it) },
+            globalFavorites = globalFavorites.toImmutableList(),
+            facetFavorites = facetFavorites.toImmutableList(),
+            previewSourceApps = selectPreviewApps(installed, preferred, PREVIEW_APP_COUNT).map { PlacedItem.SingleApp(it) }.toImmutableList(),
             homeWallpaper = wallpaper,
             appLabelColorOption = settings.appLabelColorOption,
             homeAppsFontWeight = settings.homeAppsFontWeight,

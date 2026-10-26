@@ -12,6 +12,7 @@ import com.facetlauncher.app.domain.ObserveSettingsScreenStateUseCase
 import com.facetlauncher.app.domain.combine
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
+import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -46,7 +47,7 @@ class SettingsViewModel @Inject constructor(
     ) { screenState, isDefaultLauncher, workProfiles, automationRules, isPro, facets ->
         SettingsUiState(
             settings = screenState.settings,
-            dockItems = screenState.dockItems,
+            dockItems = screenState.dockItems.toImmutableList(),
             defaultFavorites = screenState.defaultFavorites,
             folderCount = screenState.folderCount,
             isDefaultLauncher = isDefaultLauncher,

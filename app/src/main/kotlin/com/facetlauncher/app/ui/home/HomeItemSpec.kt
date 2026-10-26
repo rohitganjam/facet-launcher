@@ -22,6 +22,7 @@ import com.facetlauncher.app.ui.components.FolderSheetHeaderAction
 import com.facetlauncher.app.ui.components.FolderTileContextMenu
 import com.facetlauncher.app.ui.home.HomeItemActions
 import com.facetlauncher.app.ui.home.HomeItemStyle
+import kotlinx.collections.immutable.ImmutableList
 
 /**
  * What every app and folder tile on Home does when tapped, long-pressed or edited. One group, so the
@@ -53,7 +54,7 @@ data class HomeItemStyle(
     val badgeStyle: NotificationBadgeStyle = NotificationBadgeStyle.DOT,
     val appMenuNotifications: AppMenuNotifications = AppMenuNotifications.None,
     /** The full folder library: see [AppContextMenu]'s own doc for what non-null means. */
-    val folderCandidates: List<Folder>? = null,
+    val folderCandidates: ImmutableList<Folder>? = null,
     val drawerPresentation: DrawerPresentation = DrawerPresentation.LIST,
     val labelFontWeight: FontWeight = FontWeight.Normal,
 )

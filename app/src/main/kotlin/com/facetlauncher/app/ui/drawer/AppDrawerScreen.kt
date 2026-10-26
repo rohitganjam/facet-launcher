@@ -149,6 +149,11 @@ import com.facetlauncher.app.ui.theme.Muted
 import com.facetlauncher.app.ui.theme.Scrim
 import com.facetlauncher.app.ui.theme.Surface
 import com.facetlauncher.app.ui.theme.SurfaceContainer
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.ImmutableMap
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.persistentMapOf
+import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.launch
 
 private const val MAX_APP_SEARCH_RESULTS = 5
@@ -182,10 +187,10 @@ private const val EDGE_ZONE_WIDTH_DP = 48
  */
 @Composable
 fun AppDrawerScreen(
-    apps: List<AppInfo>,
+    apps: ImmutableList<AppInfo>,
     onAppClick: (AppInfo) -> Unit,
     /** Every genuine Work Profile currently on this device — see [com.facetlauncher.app.ui.launcher.LauncherUiState.workProfiles]'s own doc for why this isn't just inferred from [apps]. One tab per entry, in addition to the always-present Personal tab (which also carries [AppProfile.OTHER] apps — an unclassifiable profile, like an OEM clone/dual-app profile, badged but not split into its own tab). */
-    workProfiles: List<WorkProfileInfo> = emptyList(),
+    workProfiles: ImmutableList<WorkProfileInfo> = persistentListOf(),
     modifier: Modifier = Modifier,
     listState: LazyListState = rememberLazyListState(),
     gridState: LazyGridState = rememberLazyGridState(),
@@ -199,7 +204,7 @@ fun AppDrawerScreen(
     labelFontWeight: FontWeight = FontWeight.Normal,
     opacity: Float = 0.6f,
     notificationBadgeStyle: NotificationBadgeStyle = NotificationBadgeStyle.DOT,
-    badgeCounts: Map<String, Int> = emptyMap(),
+    badgeCounts: ImmutableMap<String, Int> = persistentMapOf(),
     query: String = "",
     onQueryChange: (String) -> Unit = {},
     searchBarPosition: SearchBarPosition = SearchBarPosition.TOP,
@@ -210,7 +215,7 @@ fun AppDrawerScreen(
     /** Shown for [com.facetlauncher.app.data.PrivateSpaceState.Locked]/`.Unlocked`, hidden for `.NotConfigured`. */
     showPrivateSpaceRow: Boolean = false,
     onPrivateSpaceRowClick: () -> Unit = {},
-    contacts: List<ContactInfo> = emptyList(),
+    contacts: ImmutableList<ContactInfo> = persistentListOf(),
     appMenuNotifications: AppMenuNotifications = AppMenuNotifications.None,
     onAppInfo: (AppInfo) -> Unit = {},
     /** F12's long-press "Add to Favorites"/"Add to Dock" rows — see [com.facetlauncher.app.domain.ObserveQuickAddStateUseCase]'s own doc for what `null` vs each [Boolean] means. */
@@ -222,7 +227,7 @@ fun AppDrawerScreen(
      * per [folderDisplayMode], the browse-mode content this screen renders as its own drawer
      * entries. `null`/empty either way just means no folders exist yet.
      */
-    folderCandidates: List<Folder>? = null,
+    folderCandidates: ImmutableList<Folder>? = null,
     onCreateFolder: (AppInfo, String) -> Unit = { _, _ -> },
     onAddToFolder: (AppInfo, Long) -> Unit = { _, _ -> },
     /** Settings → App Drawer → "Folders in drawer" — browse-mode only; search results never include folders (see chat history: scoped out of this pass). */
@@ -242,7 +247,7 @@ fun AppDrawerScreen(
     showContactsSettingPrompt: Boolean = false,
     onContactsSettingPromptClick: () -> Unit = {},
     /** Search's system Settings section (Settings → App Drawer → "Search settings") — see `DrawerViewModel.settingsResults`. */
-    settingsEntries: List<SettingsSearchEntry> = emptyList(),
+    settingsEntries: ImmutableList<SettingsSearchEntry> = persistentListOf(),
     onSettingsEntryClick: (SettingsSearchEntry) -> Unit = {},
     /** True while the drawer itself is open/opening (caller's own `isDrawerOpen`). Used only to reset the connections sheet once the drawer is fully closed — see the `LaunchedEffect` below. */
     isDrawerOpen: Boolean = true,
@@ -254,7 +259,7 @@ fun AppDrawerScreen(
     // Browse mode is scoped to the selected tab; search spans every profile regardless of which
     // tab is active — the tab is a browsing filter, not a search filter (decided explicitly: the
     // whole point of switching tabs is narrowing what you scroll through, not what you can find).
-    val drawerTabs = remember(workProfiles) { listOf(DrawerTab.Personal) + workProfiles.map { DrawerTab.Work(it.handle, it.label) } }
+    val drawerTabs = remember(workProfiles) { (listOf(DrawerTab.Personal) + workProfiles.map { DrawerTab.Work(it.handle, it.label) }).toImmutableList() }
     var selectedTab by remember { mutableStateOf<DrawerTab>(DrawerTab.Personal) }
     // A Work Profile can vanish (unenrolled) while its tab is selected — fall back to Personal
     // rather than keep filtering by a handle that no longer resolves to anything.
@@ -277,18 +282,18 @@ fun AppDrawerScreen(
     val sortedFolders = remember(folderCandidates) { folderCandidates.orEmpty().sortedBy { it.name } }
     val pinnedFolders = remember(sortedFolders, folderDisplayMode) {
         if (folderDisplayMode == DrawerFolderDisplayMode.SHOW_FIRST || folderDisplayMode == DrawerFolderDisplayMode.SHOW_LAST) {
-            sortedFolders
+            sortedFolders.toImmutableList()
         } else {
-            emptyList()
+            persistentListOf()
         }
     }
     // Scoped to tabScopedApps, not the raw apps param — unlike pinnedFolders, deliberately NOT tab-filtered.
     val recentlyInstalledUseCase = listUseCases.recentlyInstalled
     val recentlyInstalledApps = remember(tabScopedApps, isSearching, recentlyInstalledPosition) {
         if (recentlyInstalledPosition != RecentlyInstalledPosition.DO_NOT_SHOW && !isSearching) {
-            recentlyInstalledUseCase(tabScopedApps)
+            recentlyInstalledUseCase(tabScopedApps).toImmutableList()
         } else {
-            emptyList()
+            persistentListOf()
         }
     }
     // Leading-slot count only (List-only, and only when SHOW_FIRST) — index math below adds this
@@ -311,6 +316,7 @@ fun AppDrawerScreen(
     // DrawerGridContent have a single item type to render regardless of folderDisplayMode; only
     // INLINE actually merges folders into this same alphabetical grouping (SHOW_FIRST/SHOW_LAST
     // keep folders out of it entirely, in their own pinned section via [pinnedFolders]).
+    val searchResultApps = remember(filteredApps) { filteredApps.take(MAX_APP_SEARCH_RESULTS).toImmutableList() }
     val groupedItems: GroupedItems<DrawerItem> = remember(filteredApps, sortedFolders, folderDisplayMode) {
         val appItems: List<DrawerItem> = filteredApps.map { DrawerItem.AppEntry(it) }
         val items = if (folderDisplayMode == DrawerFolderDisplayMode.INLINE) {
@@ -328,6 +334,7 @@ fun AppDrawerScreen(
         }
         groupUseCase(items) { it.displayName }
     }
+    val railLetters = remember(groupedItems) { groupedItems.letters.toImmutableList() }
     val railFolderPosition = when {
         pinnedFolders.isEmpty() -> RailFolderPosition.NONE
         folderDisplayMode == DrawerFolderDisplayMode.SHOW_FIRST -> RailFolderPosition.TOP
@@ -346,10 +353,10 @@ fun AppDrawerScreen(
     // Phase 9's connections sheet — hoisted here (not down in DrawerSearchResults/ContactRow) so
     // it can overlay the *whole* screen.
     var connectionsSheetContact by remember { mutableStateOf<ContactInfo?>(null) }
-    var connections by remember { mutableStateOf<List<ContactConnection>>(emptyList()) }
+    var connections by remember { mutableStateOf<ImmutableList<ContactConnection>>(persistentListOf()) }
     LaunchedEffect(connectionsSheetContact) {
         val contact = connectionsSheetContact
-        connections = if (contact != null) onRequestConnections(contact) else emptyList()
+        connections = if (contact != null) onRequestConnections(contact).toImmutableList() else persistentListOf()
     }
     // Otherwise this composable never leaves composition when the drawer closes (it's only
     // translated off-screen), so a contact left open here would still be showing the next time
@@ -470,7 +477,7 @@ fun AppDrawerScreen(
         if (isSearching) {
             DrawerSearchResults(
                 query = query,
-                apps = filteredApps.take(MAX_APP_SEARCH_RESULTS),
+                apps = searchResultApps,
                 contacts = contacts,
                 listState = searchListState,
                 presentation = presentation,
@@ -567,7 +574,7 @@ fun AppDrawerScreen(
                 )
             }
             LetterJumpZone(
-                letters = groupedItems.letters,
+                letters = railLetters,
                 activeSelection = draggingSelection,
                 folderPosition = railFolderPosition,
                 recentlyInstalledPosition = railRecentlyInstalledPosition,
@@ -580,7 +587,7 @@ fun AppDrawerScreen(
         }
 
         LetterJumpZone(
-            letters = groupedItems.letters,
+            letters = railLetters,
             activeSelection = draggingSelection,
             folderPosition = railFolderPosition,
             recentlyInstalledPosition = railRecentlyInstalledPosition,
@@ -714,7 +721,7 @@ private sealed class DrawerTab {
  * reads as the same visual language rather than a one-off.
  */
 @Composable
-private fun DrawerProfileTabRow(tabs: List<DrawerTab>, selected: DrawerTab, onSelect: (DrawerTab) -> Unit, modifier: Modifier = Modifier) {
+private fun DrawerProfileTabRow(tabs: ImmutableList<DrawerTab>, selected: DrawerTab, onSelect: (DrawerTab) -> Unit, modifier: Modifier = Modifier) {
     val selectedIndex = tabs.indexOf(selected).coerceAtLeast(0)
     val density = LocalDensity.current
     var rowSizePx by remember { mutableStateOf(IntSize.Zero) }
@@ -893,8 +900,8 @@ private fun DrawerSearchOverflowMenu(
 @Composable
 private fun DrawerSearchResults(
     query: String,
-    apps: List<AppInfo>,
-    contacts: List<ContactInfo>,
+    apps: ImmutableList<AppInfo>,
+    contacts: ImmutableList<ContactInfo>,
     listState: LazyListState,
     presentation: DrawerPresentation,
     gridDensity: DrawerGridDensity,
@@ -903,7 +910,7 @@ private fun DrawerSearchResults(
     labelFontWeight: FontWeight,
     itemSize: DrawerListItemSize,
     badgeStyle: NotificationBadgeStyle,
-    badgeCounts: Map<String, Int>,
+    badgeCounts: ImmutableMap<String, Int>,
     onAppClick: (AppInfo) -> Unit,
     onClearSearch: () -> Unit,
     appMenuNotifications: AppMenuNotifications,
@@ -911,7 +918,7 @@ private fun DrawerSearchResults(
     onRequestQuickAddState: suspend (AppInfo) -> QuickAddState,
     onFavoritesAction: (AppInfo, QuickPlacementAction) -> Unit,
     onDockAction: (AppInfo, QuickPlacementAction) -> Unit,
-    folderCandidates: List<Folder>?,
+    folderCandidates: ImmutableList<Folder>?,
     onCreateFolder: (AppInfo, String) -> Unit,
     onAddToFolder: (AppInfo, Long) -> Unit,
     onContactClick: (ContactInfo) -> Unit,
@@ -919,7 +926,7 @@ private fun DrawerSearchResults(
     onContactsPermissionPromptClick: () -> Unit,
     showContactsSettingPrompt: Boolean,
     onContactsSettingPromptClick: () -> Unit,
-    settingsEntries: List<SettingsSearchEntry>,
+    settingsEntries: ImmutableList<SettingsSearchEntry>,
     onSettingsEntryClick: (SettingsSearchEntry) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -1207,7 +1214,7 @@ private fun DrawerSearchEmptyState(query: String, onClearSearch: () -> Unit, mod
  */
 @Composable
 private fun LetterJumpZone(
-    letters: List<String>,
+    letters: ImmutableList<String>,
     activeSelection: RailSelection?,
     onSelectionChange: (RailSelection?) -> Unit,
     showRail: Boolean,
@@ -1290,9 +1297,9 @@ private fun LetterJumpZone(
 @Composable
 private fun DrawerListContent(
     groupedItems: GroupedItems<DrawerItem>,
-    pinnedFolders: List<Folder>,
+    pinnedFolders: ImmutableList<Folder>,
     folderDisplayMode: DrawerFolderDisplayMode,
-    recentlyInstalledApps: List<AppInfo>,
+    recentlyInstalledApps: ImmutableList<AppInfo>,
     recentlyInstalledPosition: RecentlyInstalledPosition,
     listState: LazyListState,
     itemSize: DrawerListItemSize,
@@ -1300,13 +1307,13 @@ private fun DrawerListContent(
     showIcons: Boolean,
     labelFontWeight: FontWeight,
     badgeStyle: NotificationBadgeStyle,
-    badgeCounts: Map<String, Int>,
+    badgeCounts: ImmutableMap<String, Int>,
     appMenuNotifications: AppMenuNotifications,
     onAppInfo: (AppInfo) -> Unit = {},
     onRequestQuickAddState: suspend (AppInfo) -> QuickAddState,
     onFavoritesAction: (AppInfo, QuickPlacementAction) -> Unit,
     onDockAction: (AppInfo, QuickPlacementAction) -> Unit,
-    folderCandidates: List<Folder>?,
+    folderCandidates: ImmutableList<Folder>?,
     onCreateFolder: (AppInfo, String) -> Unit,
     onAddToFolder: (AppInfo, Long) -> Unit,
     onRemoveFromFolder: (Long, AppInfo) -> Unit,
@@ -1501,7 +1508,7 @@ private fun DrawerRecentlyInstalledHeader(modifier: Modifier = Modifier) {
  */
 @Composable
 private fun DrawerRecentlyInstalledRow(
-    apps: List<AppInfo>,
+    apps: ImmutableList<AppInfo>,
     onAppClick: (AppInfo) -> Unit,
     itemSize: DrawerListItemSize,
     labelFontWeight: FontWeight,
@@ -1647,7 +1654,7 @@ private fun DrawerAppRow(
     onRequestQuickAddState: suspend (AppInfo) -> QuickAddState = { QuickAddState() },
     onFavoritesAction: (AppInfo, QuickPlacementAction) -> Unit = { _, _ -> },
     onDockAction: (AppInfo, QuickPlacementAction) -> Unit = { _, _ -> },
-    folderCandidates: List<Folder>? = null,
+    folderCandidates: ImmutableList<Folder>? = null,
     onCreateFolder: (AppInfo, String) -> Unit = { _, _ -> },
     onAddToFolder: (AppInfo, Long) -> Unit = { _, _ -> },
     modifier: Modifier = Modifier,
@@ -1724,7 +1731,7 @@ private val GRID_START_PADDING = 48.dp
 @Composable
 private fun DrawerGridContent(
     groupedItems: GroupedItems<DrawerItem>,
-    pinnedFolders: List<Folder>,
+    pinnedFolders: ImmutableList<Folder>,
     folderDisplayMode: DrawerFolderDisplayMode,
     gridState: LazyGridState,
     density: DrawerGridDensity,
@@ -1732,13 +1739,13 @@ private fun DrawerGridContent(
     showLabels: Boolean,
     labelFontWeight: FontWeight,
     badgeStyle: NotificationBadgeStyle,
-    badgeCounts: Map<String, Int>,
+    badgeCounts: ImmutableMap<String, Int>,
     appMenuNotifications: AppMenuNotifications,
     onAppInfo: (AppInfo) -> Unit = {},
     onRequestQuickAddState: suspend (AppInfo) -> QuickAddState,
     onFavoritesAction: (AppInfo, QuickPlacementAction) -> Unit,
     onDockAction: (AppInfo, QuickPlacementAction) -> Unit,
-    folderCandidates: List<Folder>?,
+    folderCandidates: ImmutableList<Folder>?,
     onCreateFolder: (AppInfo, String) -> Unit,
     onAddToFolder: (AppInfo, Long) -> Unit,
     onRemoveFromFolder: (Long, AppInfo) -> Unit,
@@ -1857,7 +1864,7 @@ private fun DrawerGridTile(
     onRequestQuickAddState: suspend (AppInfo) -> QuickAddState = { QuickAddState() },
     onFavoritesAction: (AppInfo, QuickPlacementAction) -> Unit = { _, _ -> },
     onDockAction: (AppInfo, QuickPlacementAction) -> Unit = { _, _ -> },
-    folderCandidates: List<Folder>? = null,
+    folderCandidates: ImmutableList<Folder>? = null,
     onCreateFolder: (AppInfo, String) -> Unit = { _, _ -> },
     onAddToFolder: (AppInfo, Long) -> Unit = { _, _ -> },
     modifier: Modifier = Modifier,
@@ -1992,7 +1999,7 @@ private fun AppDrawerScreenPreview() {
                         icon = null,
                     ),
                 )
-            },
+            }.toImmutableList(),
             onAppClick = {},
         )
     }
@@ -2013,7 +2020,7 @@ private fun AppDrawerScreenGridPreview() {
                         icon = null,
                     ),
                 )
-            },
+            }.toImmutableList(),
             onAppClick = {},
             presentation = DrawerPresentation.GRID,
         )

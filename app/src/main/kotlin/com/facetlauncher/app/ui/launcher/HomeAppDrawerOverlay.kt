@@ -54,18 +54,21 @@ import com.facetlauncher.app.ui.home.HomeItemActions
 import com.facetlauncher.app.ui.theme.FACET_TRANSITION_DURATION_MS
 import com.facetlauncher.app.ui.theme.FacetTransitionEasing
 import com.facetlauncher.app.ui.theme.resolve
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.ImmutableMap
+import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.launch
 
 /** What the app drawer shows, collected from its view model so [HomeAppDrawerOverlay] stays stateless. */
 @Immutable
 internal data class HomeDrawerState(
-    val apps: List<AppInfo>,
-    val workProfiles: List<WorkProfileInfo>,
-    val folders: List<Folder>,
+    val apps: ImmutableList<AppInfo>,
+    val workProfiles: ImmutableList<WorkProfileInfo>,
+    val folders: ImmutableList<Folder>,
     val settings: LauncherSettings,
-    val badgeCounts: Map<String, Int>,
-    val contacts: List<ContactInfo>,
-    val settingsEntries: List<SettingsSearchEntry>,
+    val badgeCounts: ImmutableMap<String, Int>,
+    val contacts: ImmutableList<ContactInfo>,
+    val settingsEntries: ImmutableList<SettingsSearchEntry>,
     val showContactsPermissionPrompt: Boolean,
     val showContactsSettingPrompt: Boolean,
     val privateSpaceState: PrivateSpaceState,
@@ -87,9 +90,9 @@ internal data class HomeDrawerActions(
 /** The drawer's own state from its view model. The lists Home already holds (apps, work profiles, folders) are added by the caller with `copy`. */
 @Composable
 internal fun rememberHomeDrawerState(viewModel: DrawerViewModel, appMenuNotifications: AppMenuNotifications): HomeDrawerState = HomeDrawerState(
-    apps = emptyList(),
-    workProfiles = emptyList(),
-    folders = emptyList(),
+    apps = persistentListOf(),
+    workProfiles = persistentListOf(),
+    folders = persistentListOf(),
     settings = viewModel.settings.collectAsStateWithLifecycle().value,
     badgeCounts = viewModel.badgeCounts.collectAsStateWithLifecycle().value,
     contacts = viewModel.contactResults.collectAsStateWithLifecycle().value,
@@ -260,8 +263,8 @@ private fun HomeDrawerScreen(
 @Immutable
 internal data class HomePrivateSpaceState(
     val state: PrivateSpaceState,
-    val apps: List<AppInfo>,
-    val recentlyInstalledApps: List<AppInfo>,
+    val apps: ImmutableList<AppInfo>,
+    val recentlyInstalledApps: ImmutableList<AppInfo>,
     val recentlyInstalledPosition: RecentlyInstalledPosition,
 )
 

@@ -23,6 +23,7 @@ import java.time.Clock
 import java.time.Instant
 import java.time.ZoneOffset
 import java.util.Locale
+import kotlinx.collections.immutable.toImmutableList
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -222,7 +223,7 @@ class ClockBlockTest {
                 ClockBlock(
                     clock = fixedClock,
                     locale = Locale.US,
-                    events = listOf(later, earlier),
+                    events = listOf(later, earlier).toImmutableList(),
                     onEventClick = { clicked = it },
                 )
             }
@@ -285,7 +286,7 @@ class ClockBlockTest {
         // When the ClockBlock is composed with all three
         composeRule.setContent {
             FacetLauncherTheme {
-                ClockBlock(clock = fixedClock, locale = Locale.US, events = listOf(finished, ongoing, allDay))
+                ClockBlock(clock = fixedClock, locale = Locale.US, events = listOf(finished, ongoing, allDay).toImmutableList())
             }
         }
 
@@ -433,7 +434,7 @@ class ClockBlockTest {
                 ClockBlock(
                     clock = fixedClock,
                     locale = Locale.US,
-                    events = listOf(event),
+                    events = listOf(event).toImmutableList(),
                     clockAlignment = ClockAlignment.RIGHT,
                 )
             }
@@ -467,7 +468,7 @@ class ClockBlockTest {
                 ClockBlock(
                     clock = fixedClock,
                     locale = Locale.US,
-                    events = listOf(event),
+                    events = listOf(event).toImmutableList(),
                     clockAlignment = ClockAlignment.RIGHT,
                 )
             }
@@ -500,7 +501,7 @@ class ClockBlockTest {
         // When the ClockBlock is composed with the default calendar alignment
         composeRule.setContent {
             FacetLauncherTheme {
-                ClockBlock(clock = fixedClock, locale = Locale.US, events = listOf(event))
+                ClockBlock(clock = fixedClock, locale = Locale.US, events = listOf(event).toImmutableList())
             }
         }
 
@@ -529,7 +530,7 @@ class ClockBlockTest {
 
         // When the ClockBlock is composed with all five
         composeRule.setContent {
-            FacetLauncherTheme { ClockBlock(clock = fixedClock, locale = Locale.US, events = events) }
+            FacetLauncherTheme { ClockBlock(clock = fixedClock, locale = Locale.US, events = events.toImmutableList()) }
         }
 
         // Then only the first three (soonest) render, not the whole day's agenda

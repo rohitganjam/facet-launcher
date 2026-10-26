@@ -19,6 +19,7 @@ import androidx.compose.ui.unit.height
 import androidx.compose.ui.unit.width
 import androidx.test.platform.app.InstrumentationRegistry
 import com.facetlauncher.app.data.model.FontScaleOption
+import kotlinx.collections.immutable.toImmutableList
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
@@ -48,7 +49,7 @@ class PlacementActionsTest {
     ) {
         composeRule.setContent {
             WithTextScale(systemFontScale, appTextSize) {
-                Box(Modifier.width(360.dp).padding(24.dp)) { PlacementActions(actions) }
+                Box(Modifier.width(360.dp).padding(24.dp)) { PlacementActions(actions.toImmutableList()) }
             }
         }
         composeRule.waitForIdle()

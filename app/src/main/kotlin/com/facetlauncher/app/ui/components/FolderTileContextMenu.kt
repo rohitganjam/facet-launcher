@@ -37,6 +37,9 @@ import com.facetlauncher.app.ui.home.FolderTileGlyph
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import com.facetlauncher.app.ui.theme.Ink
 import com.facetlauncher.app.ui.theme.Muted
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toImmutableList
 
 /**
  * Long-pressing a folder *tile* itself (on Home, in the Dock, or in a Favorites list) — distinct
@@ -106,7 +109,7 @@ fun FolderTileContextMenu(
                 ),
             )
         }
-    }
+    }.toImmutableList()
 
     ThemedModalBottomSheet(
         onDismissRequest = onDismissRequest,
@@ -134,7 +137,7 @@ fun FolderTileContextMenu(
 @Composable
 internal fun FolderMenuContent(
     folder: Folder,
-    placementActions: List<PlacementActionUi>,
+    placementActions: ImmutableList<PlacementActionUi>,
     onRename: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -183,7 +186,7 @@ private fun FolderMenuContentPreview() {
     FacetLauncherTheme {
         FolderMenuContent(
             folder = Folder(id = 1L, name = "Games", apps = emptyList()),
-            placementActions = listOf(
+            placementActions = persistentListOf(
                 PlacementActionUi("p_fav", Icons.Outlined.StarBorder, "Remove from Favorites", PlacementScope(null), isRemove = true, onClick = {}),
                 PlacementActionUi("p_dock", Icons.Outlined.Dock, "Remove from Dock", PlacementScope(null), isRemove = true, onClick = {}),
             ),

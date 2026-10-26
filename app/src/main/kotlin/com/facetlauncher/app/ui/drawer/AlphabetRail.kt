@@ -32,6 +32,9 @@ import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import com.facetlauncher.app.ui.theme.SurfaceContainer
 import kotlin.math.abs
 import kotlin.math.cos
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toImmutableList
 
 /** Vertical gap between rail letters when there's room for it — see [AlphabetRail]'s own doc. */
 private val RAIL_LETTER_SPACING = 6.dp
@@ -95,7 +98,7 @@ sealed interface RailSelection {
  */
 @Composable
 fun AlphabetRail(
-    letters: List<String>,
+    letters: ImmutableList<String>,
     modifier: Modifier = Modifier,
     activeLetter: String? = null,
     folderPosition: RailFolderPosition = RailFolderPosition.NONE,
@@ -222,7 +225,7 @@ internal fun railSelectionAt(
     }
 }
 
-private val PREVIEW_LETTERS = listOf("A", "B", "C", "D", "E", "F", "G", "H")
+private val PREVIEW_LETTERS = persistentListOf("A", "B", "C", "D", "E", "F", "G", "H")
 
 @Composable
 private fun AlphabetRailPreviewSurface(content: @Composable () -> Unit) {
@@ -278,7 +281,7 @@ private fun AlphabetRailFolderActivePreview() {
 private fun AlphabetRailFontScalePreview() {
     AlphabetRailPreviewSurface {
         AlphabetRail(
-            letters = ('A'..'Z').map { it.toString() },
+            letters = ('A'..'Z').map { it.toString() }.toImmutableList(),
             activeLetter = "M",
             folderPosition = RailFolderPosition.TOP,
         )

@@ -65,6 +65,11 @@ import com.facetlauncher.app.ui.theme.Ink
 import com.facetlauncher.app.ui.theme.Muted
 import com.facetlauncher.app.ui.theme.Surface
 import com.facetlauncher.app.ui.theme.SurfaceContainer
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.ImmutableSet
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.persistentSetOf
+import kotlinx.collections.immutable.toImmutableList
 
 /** Shared by the panel's slide and the tab indicator's own slide so both move in lockstep. */
 private const val TAB_TRANSITION_DURATION_MS = 220
@@ -85,9 +90,9 @@ private enum class AppPickerTab { APPS, FOLDERS }
 fun AppPickerScreen(
     title: String,
     query: String,
-    selectedResults: List<AppInfo>,
-    otherResults: List<AppInfo>,
-    selectedComponents: Set<String>,
+    selectedResults: ImmutableList<AppInfo>,
+    otherResults: ImmutableList<AppInfo>,
+    selectedComponents: ImmutableSet<String>,
     canAddMore: Boolean,
     canRemove: Boolean,
     sortOption: AppSortOption,
@@ -101,8 +106,8 @@ fun AppPickerScreen(
     onToggleApp: (AppInfo) -> Unit,
     onDone: () -> Unit,
     modifier: Modifier = Modifier,
-    folders: List<Folder> = emptyList(),
-    placedFolderIds: Set<Long> = emptySet(),
+    folders: ImmutableList<Folder> = persistentListOf(),
+    placedFolderIds: ImmutableSet<Long> = persistentSetOf(),
     showFoldersTab: Boolean = false,
     onToggleFolder: (Folder) -> Unit = {},
     onResume: () -> Unit = {},
@@ -213,9 +218,9 @@ fun AppPickerScreen(
 @Composable
 private fun AppPickerAppsList(
     query: String,
-    selectedResults: List<AppInfo>,
-    otherResults: List<AppInfo>,
-    selectedComponents: Set<String>,
+    selectedResults: ImmutableList<AppInfo>,
+    otherResults: ImmutableList<AppInfo>,
+    selectedComponents: ImmutableSet<String>,
     canAddMore: Boolean,
     canRemove: Boolean,
     sortOption: AppSortOption,
@@ -280,8 +285,8 @@ private fun AppPickerAppsList(
 
 @Composable
 private fun AppPickerFoldersList(
-    folders: List<Folder>,
-    placedFolderIds: Set<Long>,
+    folders: ImmutableList<Folder>,
+    placedFolderIds: ImmutableSet<Long>,
     canAddMore: Boolean,
     canRemove: Boolean,
     tagPrefix: String,
@@ -422,9 +427,9 @@ private fun AppPickerScreenPreview() {
         AppPickerScreen(
             title = stringResource(R.string.list_content_mode_favorites),
             query = "",
-            selectedResults = (1..3).map { AppInfo("com.example.$it", ".Main", "App $it", null) },
-            otherResults = (4..8).map { AppInfo("com.example.$it", ".Main", "App $it", null) },
-            selectedComponents = emptySet(),
+            selectedResults = (1..3).map { AppInfo("com.example.$it", ".Main", "App $it", null) }.toImmutableList(),
+            otherResults = (4..8).map { AppInfo("com.example.$it", ".Main", "App $it", null) }.toImmutableList(),
+            selectedComponents = persistentSetOf(),
             canAddMore = true,
             canRemove = true,
             sortOption = AppSortOption.ALPHABETICAL,

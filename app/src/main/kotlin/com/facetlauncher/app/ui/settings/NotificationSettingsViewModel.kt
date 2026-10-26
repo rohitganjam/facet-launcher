@@ -17,6 +17,9 @@ import com.facetlauncher.app.domain.ObservePlacedItemsUseCase
 import com.facetlauncher.app.domain.SelectPreviewAppsUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -29,8 +32,8 @@ data class NotificationSettingsUiState(
     val settings: LauncherSettings = LauncherSettings(),
     val isAccessGranted: Boolean = false,
     /** What the preview's Home list and Dock render: the user's own placements, or sample apps when a list is empty. */
-    val homePreviewApps: List<PlacedItem> = emptyList(),
-    val dockPreviewApps: List<PlacedItem> = emptyList(),
+    val homePreviewApps: ImmutableList<PlacedItem> = persistentListOf(),
+    val dockPreviewApps: ImmutableList<PlacedItem> = persistentListOf(),
     val homeWallpaper: HomeWallpaper = HomeWallpaper.Unavailable,
 )
 
@@ -81,8 +84,8 @@ class NotificationSettingsViewModel @Inject constructor(
         NotificationSettingsUiState(
             settings = settings,
             isAccessGranted = granted,
-            homePreviewApps = homeApps,
-            dockPreviewApps = dock.ifEmpty { sample.drop(HOME_SAMPLE_COUNT) },
+            homePreviewApps = homeApps.toImmutableList(),
+            dockPreviewApps = dock.ifEmpty { sample.drop(HOME_SAMPLE_COUNT) }.toImmutableList(),
             homeWallpaper = wallpaper,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), NotificationSettingsUiState())

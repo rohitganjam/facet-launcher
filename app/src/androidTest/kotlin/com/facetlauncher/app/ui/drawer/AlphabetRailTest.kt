@@ -3,6 +3,7 @@ package com.facetlauncher.app.ui.drawer
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
+import kotlinx.collections.immutable.toImmutableList
 import org.junit.Rule
 import org.junit.Test
 
@@ -17,7 +18,7 @@ class AlphabetRailTest {
         val letters = listOf("A", "F", "M", "Z")
         composeRule.setContent {
             FacetLauncherTheme {
-                AlphabetRail(letters = letters)
+                AlphabetRail(letters = letters.toImmutableList())
             }
         }
 

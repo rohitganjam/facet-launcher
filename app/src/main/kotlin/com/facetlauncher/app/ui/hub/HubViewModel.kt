@@ -16,6 +16,8 @@ import com.facetlauncher.app.domain.ResolveWidgetDropUseCase
 import com.facetlauncher.app.domain.ResolveWidgetResizeUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
@@ -53,7 +55,7 @@ class HubViewModel @Inject constructor(
                     isOrphaned = widget.isOrphaned,
                     landscapeOrder = widget.landscapeOrder,
                 )
-            },
+            }.toImmutableList(),
             landscapeWidgets = if (rows > 0) {
                 landscapeHub.layout(domainState.widgets, rows).mapNotNull { packed ->
                     byId[packed.id]?.let { widget ->
@@ -67,9 +69,9 @@ class HubViewModel @Inject constructor(
                             isOrphaned = widget.isOrphaned,
                         )
                     }
-                }
+                }.toImmutableList()
             } else {
-                emptyList()
+                persistentListOf()
             },
             isLoading = false,
         )

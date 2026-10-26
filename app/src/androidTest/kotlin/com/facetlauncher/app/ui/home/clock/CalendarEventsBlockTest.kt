@@ -9,6 +9,7 @@ import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import java.time.Clock
 import java.time.Instant
 import java.time.ZoneOffset
+import kotlinx.collections.immutable.toImmutableList
 import org.junit.Rule
 import org.junit.Test
 
@@ -32,7 +33,7 @@ class CalendarEventsBlockTest {
 
     private fun setBlock(display: CalendarDisplayOptions) {
         composeRule.setContent {
-            FacetLauncherTheme { CalendarEventsBlock(events = events, clock = clock, display = display) }
+            FacetLauncherTheme { CalendarEventsBlock(events = events.toImmutableList(), clock = clock, display = display) }
         }
     }
 
@@ -74,7 +75,7 @@ class CalendarEventsBlockTest {
         val today = events.first()
         val tomorrow = today.copy(id = 9, title = "Tomorrow thing", startTimeMillis = clock.millis() + 24 * 3_600_000, endTimeMillis = clock.millis() + 25 * 3_600_000)
         composeRule.setContent {
-            FacetLauncherTheme { CalendarEventsBlock(events = listOf(today, tomorrow), clock = clock, locale = java.util.Locale.US, use24HourTime = true) }
+            FacetLauncherTheme { CalendarEventsBlock(events = listOf(today, tomorrow).toImmutableList(), clock = clock, locale = java.util.Locale.US, use24HourTime = true) }
         }
 
         // Then tomorrow's row is prefixed with Fri and today's row is not

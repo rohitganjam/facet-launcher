@@ -17,6 +17,12 @@ import com.facetlauncher.app.domain.SortAppsForPickerUseCase
 import com.facetlauncher.app.domain.combine
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.ImmutableSet
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.persistentSetOf
+import kotlinx.collections.immutable.toImmutableList
+import kotlinx.collections.immutable.toImmutableSet
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -37,14 +43,14 @@ data class FavoritesPickerUiState(
      * exactly this set/order for the rest of this visit no matter what gets checked/unchecked
      * below; only re-latches the next time the screen is freshly opened. Not reorderable here —
      * that lives in this facet's own Settings page. */
-    val selectedResults: List<AppInfo> = emptyList(),
+    val selectedResults: ImmutableList<AppInfo> = persistentListOf(),
     /** Every other matching, not-already-placed app, sorted by [sortOption]/[sortDirection] — a member of a folder currently placed here is excluded (see [placedFolderMemberComponents]) rather than offered as a second, standalone placement. */
-    val otherResults: List<AppInfo> = emptyList(),
-    val favoriteComponents: Set<String> = emptySet(),
+    val otherResults: ImmutableList<AppInfo> = persistentListOf(),
+    val favoriteComponents: ImmutableSet<String> = persistentSetOf(),
     /** The full folder library — every folder, regardless of where (if anywhere) it's placed. */
-    val folders: List<Folder> = emptyList(),
+    val folders: ImmutableList<Folder> = persistentListOf(),
     /** Which of [folders] are currently placed in *this* Favorites list — the Folders tab's own checkbox state. */
-    val placedFolderIds: Set<Long> = emptySet(),
+    val placedFolderIds: ImmutableSet<Long> = persistentSetOf(),
     val canAddMore: Boolean = true,
     val sortOption: AppSortOption = AppSortOption.ALPHABETICAL,
     val sortDirection: SortDirection = SortDirection.ASCENDING,
@@ -118,11 +124,11 @@ class FavoritesPickerViewModel @Inject constructor(
         FavoritesPickerUiState(
             isFacetScoped = facetId != null,
             query = query,
-            selectedResults = selected.sortedBy { order.indexOf(it.listKey) },
-            otherResults = sortAppsForPicker(other, sortOption, sortDirection),
-            favoriteComponents = liveOrder.toSet(),
-            folders = folders,
-            placedFolderIds = placedFolderIds,
+            selectedResults = selected.sortedBy { order.indexOf(it.listKey) }.toImmutableList(),
+            otherResults = sortAppsForPicker(other, sortOption, sortDirection).toImmutableList(),
+            favoriteComponents = liveOrder.toImmutableSet(),
+            folders = folders.toImmutableList(),
+            placedFolderIds = placedFolderIds.toImmutableSet(),
             canAddMore = itemCount < maxFavorites,
             sortOption = sortOption,
             sortDirection = sortDirection,

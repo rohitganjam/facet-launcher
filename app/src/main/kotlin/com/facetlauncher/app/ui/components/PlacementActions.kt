@@ -43,6 +43,8 @@ import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
 import com.facetlauncher.app.R
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
 
 /** Which list a placement action edits: the launcher-wide default when [facetName] is null, or that facet's own. */
 internal data class PlacementScope(val facetName: String?)
@@ -86,7 +88,7 @@ internal fun placementFitsTiles(
  * translation or facet name switches it at any size. All actions switch together.
  */
 @Composable
-internal fun PlacementActions(actions: List<PlacementActionUi>, modifier: Modifier = Modifier) {
+internal fun PlacementActions(actions: ImmutableList<PlacementActionUi>, modifier: Modifier = Modifier) {
     if (actions.isEmpty()) return
     BoxWithConstraints(modifier = modifier.fillMaxWidth()) {
         if (rememberFitsTiles(actions, constraints.maxWidth)) PlacementTiles(actions) else PlacementRows(actions)
@@ -94,7 +96,7 @@ internal fun PlacementActions(actions: List<PlacementActionUi>, modifier: Modifi
 }
 
 @Composable
-private fun rememberFitsTiles(actions: List<PlacementActionUi>, availableWidth: Int): Boolean {
+private fun rememberFitsTiles(actions: ImmutableList<PlacementActionUi>, availableWidth: Int): Boolean {
     val measurer = rememberTextMeasurer()
     val density = LocalDensity.current
     val labelStyle = MaterialTheme.typography.labelLarge
@@ -119,7 +121,7 @@ private fun rememberFitsTiles(actions: List<PlacementActionUi>, availableWidth: 
 }
 
 @Composable
-private fun PlacementTiles(actions: List<PlacementActionUi>) {
+private fun PlacementTiles(actions: ImmutableList<PlacementActionUi>) {
     // Folder has no pill, but its tile keeps the pill's height so every icon lines up.
     val reservesPillSlot = actions.any { it.scope != null }
     Row(
@@ -168,7 +170,7 @@ private fun PlacementTile(action: PlacementActionUi, reservesPillSlot: Boolean, 
 }
 
 @Composable
-private fun PlacementRows(actions: List<PlacementActionUi>) {
+private fun PlacementRows(actions: ImmutableList<PlacementActionUi>) {
     Column(verticalArrangement = Arrangement.spacedBy(TILE_GAP)) {
         actions.forEach { action ->
             val description = placementDescription(action)
@@ -204,7 +206,7 @@ private fun PlacementActionsPreview() {
     FacetLauncherTheme {
         Box(Modifier.padding(24.dp)) {
             PlacementActions(
-                actions = listOf(
+                actions = persistentListOf(
                     PlacementActionUi("p_fav", Icons.Outlined.StarBorder, "Add to Favorites", PlacementScope(null), isRemove = false, onClick = {}),
                     PlacementActionUi("p_dock", Icons.Outlined.Dock, "Remove from Dock", PlacementScope("Work"), isRemove = true, onClick = {}),
                     PlacementActionUi("p_folder", Icons.Outlined.Folder, "Add to folder", scope = null, isRemove = false, onClick = {}),
@@ -220,7 +222,7 @@ private fun PlacementActionsRowsPreview() {
     FacetLauncherTheme {
         Box(Modifier.padding(24.dp)) {
             PlacementActions(
-                actions = listOf(
+                actions = persistentListOf(
                     PlacementActionUi("p_fav", Icons.Outlined.StarBorder, "Add to Favorites with a very long label here", PlacementScope(null), isRemove = false, onClick = {}),
                     PlacementActionUi("p_dock", Icons.Outlined.Dock, "Remove from Dock", PlacementScope("Weekend reading"), isRemove = true, onClick = {}),
                     PlacementActionUi("p_folder", Icons.Outlined.Folder, "Add to folder", scope = null, isRemove = false, onClick = {}),

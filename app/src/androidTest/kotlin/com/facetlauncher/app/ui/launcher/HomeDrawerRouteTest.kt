@@ -130,6 +130,7 @@ import com.facetlauncher.app.ui.testAutomation
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import java.io.File
 import java.time.Clock
+import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.runBlocking
@@ -449,7 +450,7 @@ class HomeDrawerRouteTest {
             ) {
                 FacetLauncherTheme {
                     HomeDrawerRoute(
-                        apps = apps,
+                        apps = apps.toImmutableList(),
                         onAppClick = {},
                         onNavigateToSettings = {},
                         onNavigateToFacetSettings = onNavigateToFacetSettings,

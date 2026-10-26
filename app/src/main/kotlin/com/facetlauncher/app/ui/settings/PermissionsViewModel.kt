@@ -15,6 +15,7 @@ import com.facetlauncher.app.data.model.AutomationPermission
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
+import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -48,7 +49,7 @@ class PermissionsViewModel @Inject constructor(
 
     val uiState: StateFlow<PermissionsUiState> = combine(settingsRepository.settings, refreshTick) { settings, _ ->
         PermissionsUiState(
-            permissions = listOf(
+            permissions = persistentListOf(
                 PermissionRowState(
                     kind = PermissionKind.CALENDAR,
                     title = context.getString(R.string.permission_calendar_title),

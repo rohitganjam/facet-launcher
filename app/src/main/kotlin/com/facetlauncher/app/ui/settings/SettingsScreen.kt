@@ -73,6 +73,8 @@ import com.facetlauncher.app.ui.theme.Ink
 import com.facetlauncher.app.ui.theme.Muted
 import com.facetlauncher.app.ui.theme.SettingsSectionHue
 import com.facetlauncher.app.ui.theme.SurfaceContainer
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.toImmutableList
 
 /**
  * Canonical Launcher Settings screen (`3c`) — purely a directory of navigation rows now (see chat
@@ -329,7 +331,7 @@ private fun appsListSummary(mode: ListContentMode, favoritesCount: Int, appsToSh
 
 /** "4 Dock Apps" / "3 Dock Apps, 1 Folder" — Dock capacity is counted by item (a folder costs one slot regardless of how many apps it holds), so this mirrors that rather than the old flat app count, which silently dropped folder members entirely. */
 @Composable
-private fun dockSummary(items: List<PlacedItem>): String {
+private fun dockSummary(items: ImmutableList<PlacedItem>): String {
     val folderCount = items.count { it is PlacedItem.FolderItem }
     val appCount = items.size - folderCount
     val appsPart = pluralStringResource(R.plurals.settings_dock_apps_count, appCount, appCount)
@@ -400,7 +402,7 @@ private fun SettingsScreenPreview() {
             uiState = SettingsUiState(
                 dockItems = (1..4).map {
                     PlacedItem.SingleApp(AppInfo(packageName = "com.example.$it", activityName = ".Main", label = "App $it", icon = null))
-                },
+                }.toImmutableList(),
             ),
             onBack = {},
             onViewFacets = {},

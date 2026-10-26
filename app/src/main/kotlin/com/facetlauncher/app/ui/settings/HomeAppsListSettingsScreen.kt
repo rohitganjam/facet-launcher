@@ -72,6 +72,8 @@ import com.facetlauncher.app.ui.theme.Muted
 import com.facetlauncher.app.ui.theme.Surface
 import com.facetlauncher.app.ui.theme.SurfaceContainer
 import com.facetlauncher.app.ui.theme.resolve
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
 
 /** Settings → Home & Apps → Home Apps List — also a facet's own Apps-list screen when `viewModel` is facet-scoped, with its own Inherit/Override switch at the top in that case. */
 @Composable
@@ -142,7 +144,7 @@ private fun HomeAppsListSettingsContent(
                 item {
                     HomeSurfacePreview(
                         appList = uiState.previewApps,
-                        dockApps = emptyList(),
+                        dockApps = persistentListOf(),
                         appRowPosition = uiState.appRowPosition,
                         appRowPresentation = uiState.appRowPresentation,
                         appListLayout = uiState.appListLayout,
@@ -257,9 +259,9 @@ private fun PlacedItem.reorderKey(): Any = when (this) {
  * row above this list, never here.
  */
 @Composable
-private fun DefaultFavoritesReorderList(favorites: List<PlacedItem>, onReorder: (List<PlacedItem>) -> Unit, modifier: Modifier = Modifier) {
+private fun DefaultFavoritesReorderList(favorites: ImmutableList<PlacedItem>, onReorder: (List<PlacedItem>) -> Unit, modifier: Modifier = Modifier) {
     val componentsKey = favorites.map { it.reorderKey() }
-    var order by remember(componentsKey) { mutableStateOf(favorites) }
+    var order by remember(componentsKey) { mutableStateOf<List<PlacedItem>>(favorites) }
     val rowHeightPx = with(LocalDensity.current) { ReorderRowDefaults.FAVORITE_ROW_HEIGHT.toPx() }
     val reorderState = rememberDragReorderState(
         items = order,

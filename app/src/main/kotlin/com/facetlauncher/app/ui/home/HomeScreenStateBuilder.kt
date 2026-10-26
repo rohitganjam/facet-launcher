@@ -13,6 +13,8 @@ import com.facetlauncher.app.domain.WeatherState
 import com.facetlauncher.app.domain.WeatherUnits
 import com.facetlauncher.app.ui.components.AppMenuNotifications
 import java.util.Locale
+import kotlinx.collections.immutable.toImmutableList
+import kotlinx.collections.immutable.toImmutableMap
 
 /** What a Home screen shows besides the facet's look. */
 data class HomeScreenContent(
@@ -60,7 +62,7 @@ fun ResolvedFacetStyle.toHomeScreenState(
             badgeCounts = content.badgeCounts,
             badgeStyle = settings.notificationBadgeStyle,
             appMenuNotifications = content.appMenuNotifications,
-            folderCandidates = content.folderCandidates,
+            folderCandidates = content.folderCandidates?.toImmutableList(),
             labelColorOption = settings.appLabelColorOption,
             labelFontWeightOption = settings.homeAppsFontWeight,
         ),
@@ -100,8 +102,8 @@ fun ResolvedFacetStyle.toHomeScreenState(
         )
     },
     calendar = HomeCalendarState(
-        events = content.calendarEvents,
-        colors = settings.calendarColors,
+        events = content.calendarEvents.toImmutableList(),
+        colors = settings.calendarColors.toImmutableMap(),
         display = calendarDisplay,
         nextAlarmMillis = content.clockAccessories?.nextAlarmMillis?.takeIf { clock.showAlarm },
         batteryPercent = content.clockAccessories?.batteryPercent?.takeIf { clock.showBattery },

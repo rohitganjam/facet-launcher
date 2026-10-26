@@ -24,6 +24,9 @@ import com.facetlauncher.app.ui.theme.Hairline
 import com.facetlauncher.app.ui.theme.fontFamily
 import com.facetlauncher.app.ui.theme.resolve
 import java.time.Clock
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toImmutableList
+import kotlinx.collections.immutable.toImmutableMap
 
 private const val HOUR_MILLIS = 3_600_000L
 
@@ -53,11 +56,11 @@ internal fun CalendarPreviewStrip(uiState: CalendarSettingsUiState, modifier: Mo
                 endTimeMillis = now + (index + 2) * HOUR_MILLIS,
                 isAllDay = false,
             )
-        }
+        }.toImmutableList()
     }
     val showSamples = uiState.isCalendarAccessGranted && uiState.previewEvents.isEmpty()
     val events = when {
-        !uiState.isCalendarAccessGranted -> emptyList()
+        !uiState.isCalendarAccessGranted -> persistentListOf()
         showSamples -> sampleEvents
         else -> uiState.previewEvents
     }
@@ -76,7 +79,7 @@ internal fun CalendarPreviewStrip(uiState: CalendarSettingsUiState, modifier: Mo
             modifier = Modifier.padding(horizontal = 18.dp),
             clock = Clock.systemDefaultZone(),
             use24HourTime = uiState.previewUse24HourTime,
-            calendarColors = settings.calendarColors,
+            calendarColors = remember(settings.calendarColors) { settings.calendarColors.toImmutableMap() },
             fontFamily = settings.launcherFontOption.fontFamily,
             fontWeight = settings.homeAppsFontWeight.resolve(),
             textColor = settings.appLabelColorOption.resolve(),

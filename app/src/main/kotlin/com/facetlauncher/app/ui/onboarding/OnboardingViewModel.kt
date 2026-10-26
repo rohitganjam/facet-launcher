@@ -10,6 +10,7 @@ import com.facetlauncher.app.data.model.ListContentMode
 import com.facetlauncher.app.data.model.PlacedItem
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
+import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
@@ -42,8 +43,8 @@ class OnboardingViewModel @Inject constructor(
         settingsRepository.settings,
     ) { favorites, dockApps, settings ->
         OnboardingUiState(
-            dockApps = dockApps,
-            favoriteApps = favorites,
+            dockApps = dockApps.toImmutableList(),
+            favoriteApps = favorites.toImmutableList(),
             listContentMode = settings.listContentMode,
             appsToShowCount = settings.appsToShowCount,
             drawerPresentation = settings.drawerPresentation,

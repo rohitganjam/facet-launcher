@@ -1,6 +1,10 @@
 package com.facetlauncher.app.ui.launcher
 
+import com.facetlauncher.app.data.AppVersion
+import com.facetlauncher.app.data.ReleaseNotesRepository
 import com.facetlauncher.app.domain.GroupAppsByLetterUseCase
+import com.facetlauncher.app.domain.ObserveWeatherUseCase
+import com.facetlauncher.app.domain.RefreshWeatherUseCase
 import com.facetlauncher.app.ui.drawer.DrawerListUseCases
 import android.app.AppOpsManager
 import android.app.usage.UsageStatsManager
@@ -89,6 +93,8 @@ import com.facetlauncher.app.ui.facets.FacetCarouselViewModel
 import com.facetlauncher.app.ui.home.ClockWidgetFacetController
 import com.facetlauncher.app.ui.home.ClockWidgetHostController
 import com.facetlauncher.app.ui.home.HomeViewModel
+import com.facetlauncher.app.ui.home.WhatsNewPillViewModel
+import com.facetlauncher.app.ui.home.weather.WeatherViewModel
 import com.facetlauncher.app.ui.home.widget.ClockWidgetPickerViewModel
 import com.facetlauncher.app.ui.hub.HubViewModel
 import com.facetlauncher.app.ui.hub.picker.HubWidgetPickerViewModel
@@ -96,6 +102,8 @@ import com.facetlauncher.app.ui.testAutomation
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import java.io.File
 import java.time.Clock
+import kotlinx.collections.immutable.toImmutableList
+import kotlinx.coroutines.flow.flowOf
 import org.junit.Rule
 import org.junit.Test
 import com.facetlauncher.app.data.PlacementRepository
@@ -103,6 +111,8 @@ import com.facetlauncher.app.domain.ObservePlacedItemsUseCase
 import com.facetlauncher.app.domain.AddToActiveListUseCase
 import com.facetlauncher.app.domain.RemoveFromActiveListUseCase
 import com.facetlauncher.app.domain.ResolveActivePlacementTargetUseCase
+import org.mockito.Mockito.`when`
+import org.mockito.Mockito.mock
 
 class KeyboardDismissalTest {
 
@@ -337,9 +347,20 @@ class KeyboardDismissalTest {
                 )
             }
 
+            // The weather sheet's and the What's new pill's state: nothing to show here, but HomeDrawerRoute needs both.
+            val extraSettings = remember {
+                SettingsRepository(PreferenceDataStoreFactory.create(produceFile = { File(context.cacheDir, "test-extra-${System.nanoTime()}.preferences_pb") }))
+            }
+            val weatherViewModel = remember {
+                val observeWeather = mock(ObserveWeatherUseCase::class.java)
+                `when`(observeWeather()).thenReturn(flowOf(null))
+                WeatherViewModel(observeWeather, extraSettings, mock(RefreshWeatherUseCase::class.java))
+            }
+            val whatsNewPillViewModel = remember { WhatsNewPillViewModel(extraSettings, ReleaseNotesRepository(context), AppVersion()) }
+
             FacetLauncherTheme {
                 HomeDrawerRoute(
-                    apps = apps,
+                    apps = apps.toImmutableList(),
                     onAppClick = {},
                     onNavigateToSettings = {},
                     onNavigateToFacetSettings = {},
@@ -347,6 +368,8 @@ class KeyboardDismissalTest {
                     onNavigateToFacetPro = {},
                     onNavigateToUsageAccessExplanation = {},
                     homeViewModel = homeViewModel,
+                    weatherViewModel = weatherViewModel,
+                    whatsNewPillViewModel = whatsNewPillViewModel,
                     drawerViewModel = drawerViewModel,
                     privateSpaceViewModel = privateSpaceViewModel,
                     hubViewModel = hubViewModel,

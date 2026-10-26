@@ -42,6 +42,9 @@ import java.time.LocalDateTime
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.util.Locale
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.ImmutableMap
+import kotlinx.collections.immutable.persistentMapOf
 
 /**
  * Upcoming calendar events (F1; midnight today to noon tomorrow), deliberately independent of [com.facetlauncher.app.ui.home.ClockBlock]/
@@ -75,12 +78,12 @@ import java.util.Locale
  */
 @Composable
 fun CalendarEventsBlock(
-    events: List<CalendarEvent>,
+    events: ImmutableList<CalendarEvent>,
     modifier: Modifier = Modifier,
     clock: Clock = Clock.systemDefaultZone(),
     locale: Locale = Locale.getDefault(),
     use24HourTime: Boolean = false,
-    calendarColors: Map<String, String> = emptyMap(),
+    calendarColors: ImmutableMap<String, String> = persistentMapOf(),
     fontFamily: FontFamily = FontFamily.SansSerif,
     fontWeight: FontWeight = FontWeight.SemiBold,
     textColor: Color = Ink,

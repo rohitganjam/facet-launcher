@@ -18,6 +18,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.key
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -53,6 +54,8 @@ import com.facetlauncher.app.ui.home.stableKey
 import com.facetlauncher.app.ui.theme.Hairline
 import com.facetlauncher.app.ui.theme.LauncherScaledTypography
 import com.facetlauncher.app.ui.theme.Muted
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.toImmutableList
 
 /**
  * "This is how Home looks" preview card, shared by Settings → Appearance / Home Apps List / Dock
@@ -68,8 +71,8 @@ import com.facetlauncher.app.ui.theme.Muted
  */
 @Composable
 fun HomeSurfacePreview(
-    appList: List<PlacedItem>,
-    dockApps: List<PlacedItem>,
+    appList: ImmutableList<PlacedItem>,
+    dockApps: ImmutableList<PlacedItem>,
     labelColor: Color,
     labelFontWeight: FontWeight,
     homeWallpaper: HomeWallpaper,
@@ -86,7 +89,7 @@ fun HomeSurfacePreview(
     /** Sample unread count for a package; the default draws no badges. */
     badgeCountFor: (String) -> Int? = { null },
 ) {
-    val items = appList.take(maxAppItems)
+    val items = remember(appList, maxAppItems) { appList.take(maxAppItems).toImmutableList() }
     val shape = RoundedCornerShape(14.dp)
     Box(
         modifier = modifier
@@ -162,7 +165,7 @@ fun HomeSurfacePreview(
 /** [HomeSurfacePreview]'s [AppListLayout.TWO_COLUMN] region — same interleaved split and [AppListColumnAlignment.toColumnPositions] mapping as [HomeScreen][com.facetlauncher.app.ui.home.HomeScreen]'s own `HomeAppTwoColumnList`. */
 @Composable
 private fun HomeSurfacePreviewTwoColumns(
-    items: List<PlacedItem>,
+    items: ImmutableList<PlacedItem>,
     columnAlignment: AppListColumnAlignment,
     appRowPresentation: AppRowPresentation,
     labelColor: Color,
@@ -254,7 +257,7 @@ private fun HomeSurfacePreviewRow(
 /** [HomeSurfacePreview]'s [AppListLayout.GRID] region — read-only, so a plain centered icon-or-label tile rather than [HomeScreen][com.facetlauncher.app.ui.home.HomeScreen]'s own clickable/long-pressable one. */
 @Composable
 private fun HomeSurfacePreviewGrid(
-    items: List<PlacedItem>,
+    items: ImmutableList<PlacedItem>,
     columns: Int,
     displayMode: AppListGridDisplayMode,
     labelColor: Color,

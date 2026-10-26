@@ -46,6 +46,8 @@ import com.facetlauncher.app.ui.components.FolderContentsSheet
 import com.facetlauncher.app.ui.components.FolderSheetHeaderAction
 import com.facetlauncher.app.ui.components.RecencyIcon
 import com.facetlauncher.app.ui.theme.PrivateSpaceTheme
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
 
 /**
  * Private Space's own drawer — browse + launch + search only (v1 scope, see the implementation
@@ -57,13 +59,13 @@ import com.facetlauncher.app.ui.theme.PrivateSpaceTheme
 @Composable
 fun PrivateSpaceScreen(
     state: PrivateSpaceState,
-    apps: List<AppInfo>,
+    apps: ImmutableList<AppInfo>,
     query: String,
     onQueryChange: (String) -> Unit,
     onAppClick: (AppInfo) -> Unit,
     modifier: Modifier = Modifier,
     /** Its own copy of the main Drawer's "Recently installed" category — same global setting, computed independently over Private Space's own [apps] (see [PrivateSpaceViewModel.recentlyInstalledApps]'s own doc). Already empty while [query] is non-blank. */
-    recentlyInstalledApps: List<AppInfo> = emptyList(),
+    recentlyInstalledApps: ImmutableList<AppInfo> = persistentListOf(),
     recentlyInstalledPosition: RecentlyInstalledPosition = RecentlyInstalledPosition.SHOW_FIRST,
 ) {
     PrivateSpaceTheme {
@@ -180,7 +182,7 @@ private fun PrivateSpaceRecentlyInstalledHeader(modifier: Modifier = Modifier) {
  * own no-op defaults — [PrivateSpaceScreen] doesn't wire those up for its own rows either.
  */
 @Composable
-private fun PrivateSpaceRecentlyInstalledRow(apps: List<AppInfo>, onAppClick: (AppInfo) -> Unit, modifier: Modifier = Modifier) {
+private fun PrivateSpaceRecentlyInstalledRow(apps: ImmutableList<AppInfo>, onAppClick: (AppInfo) -> Unit, modifier: Modifier = Modifier) {
     var sheetOpen by remember { mutableStateOf(false) }
     Box(modifier = modifier) {
         Row(

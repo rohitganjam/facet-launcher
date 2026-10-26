@@ -3,10 +3,12 @@ package com.facetlauncher.app.ui.settings
 import com.facetlauncher.app.data.WorkProfileInfo
 import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.data.model.PlacedItem
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
 
 data class SettingsUiState(
     val settings: LauncherSettings = LauncherSettings(),
-    val dockItems: List<PlacedItem> = emptyList(),
+    val dockItems: ImmutableList<PlacedItem> = persistentListOf(),
     val defaultFavorites: List<PlacedItem> = emptyList(),
     val folderCount: Int = 0,
     /** How many facet automation rules exist; drives the entry row's subtitle. */

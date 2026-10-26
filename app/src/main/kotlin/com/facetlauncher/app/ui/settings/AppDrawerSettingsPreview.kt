@@ -43,6 +43,9 @@ import com.facetlauncher.app.ui.drawer.AppDrawerScreen
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import com.facetlauncher.app.ui.theme.Hairline
 import com.facetlauncher.app.ui.theme.resolve
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toImmutableList
 
 private val PREVIEW_VIEWPORT_HEIGHT = 400.dp
 private const val RECENT_SAMPLE_COUNT = 2
@@ -51,7 +54,7 @@ private const val HOUR_MILLIS = 60 * 60 * 1000L
 private const val SAMPLE_FOLDER_ID = 1L
 
 /** Sample apps and a folder for [AppDrawerSettingsPreview]; icons are null, so the drawer draws its tile placeholder. */
-internal data class DrawerPreviewSample(val apps: List<AppInfo>, val folders: List<Folder>)
+internal data class DrawerPreviewSample(val apps: ImmutableList<AppInfo>, val folders: ImmutableList<Folder>)
 
 /** The first [RECENT_SAMPLE_COUNT] labels are installed an hour ago, so the "Recently installed" row has something in it. */
 internal fun drawerPreviewSample(appLabels: List<String>, folderName: String, nowMillis: Long): DrawerPreviewSample {
@@ -63,8 +66,8 @@ internal fun drawerPreviewSample(appLabels: List<String>, folderName: String, no
             icon = null,
             firstInstallTime = if (index < RECENT_SAMPLE_COUNT) nowMillis - HOUR_MILLIS else 0L,
         )
-    }.sortedBy { it.label.lowercase() }
-    return DrawerPreviewSample(apps, listOf(Folder(SAMPLE_FOLDER_ID, folderName, apps.takeLast(FOLDER_SAMPLE_APP_COUNT))))
+    }.sortedBy { it.label.lowercase() }.toImmutableList()
+    return DrawerPreviewSample(apps, persistentListOf(Folder(SAMPLE_FOLDER_ID, folderName, apps.takeLast(FOLDER_SAMPLE_APP_COUNT))))
 }
 
 /**

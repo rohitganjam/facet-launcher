@@ -13,6 +13,12 @@ import com.facetlauncher.app.domain.SortAppsForPickerUseCase
 import com.facetlauncher.app.domain.combine
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.ImmutableSet
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.persistentSetOf
+import kotlinx.collections.immutable.toImmutableList
+import kotlinx.collections.immutable.toImmutableSet
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -28,10 +34,10 @@ data class FolderAppPickerUiState(
      * exactly this set/order for the rest of this visit no matter what gets checked/unchecked below;
      * only re-latches the next time the screen is freshly opened. Not reorderable here — that lives
      * on [FolderDetailScreen] itself. */
-    val selectedResults: List<AppInfo> = emptyList(),
+    val selectedResults: ImmutableList<AppInfo> = persistentListOf(),
     /** Every other matching app, sorted by [sortOption]/[sortDirection]. */
-    val otherResults: List<AppInfo> = emptyList(),
-    val folderAppComponents: Set<String> = emptySet(),
+    val otherResults: ImmutableList<AppInfo> = persistentListOf(),
+    val folderAppComponents: ImmutableSet<String> = persistentSetOf(),
     val sortOption: AppSortOption = AppSortOption.ALPHABETICAL,
     val sortDirection: SortDirection = SortDirection.ASCENDING,
 )
@@ -81,9 +87,9 @@ class FolderAppPickerViewModel @Inject constructor(
         FolderAppPickerUiState(
             folderName = folder?.name.orEmpty(),
             query = query,
-            selectedResults = selected.sortedBy { order.indexOf(it.listKey) },
-            otherResults = sortAppsForPicker(other, sortOption, sortDirection),
-            folderAppComponents = liveOrder.toSet(),
+            selectedResults = selected.sortedBy { order.indexOf(it.listKey) }.toImmutableList(),
+            otherResults = sortAppsForPicker(other, sortOption, sortDirection).toImmutableList(),
+            folderAppComponents = liveOrder.toImmutableSet(),
             sortOption = sortOption,
             sortDirection = sortDirection,
         )

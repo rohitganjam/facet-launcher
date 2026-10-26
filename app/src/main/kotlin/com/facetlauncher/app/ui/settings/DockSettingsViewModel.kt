@@ -18,6 +18,9 @@ import com.facetlauncher.app.data.model.NO_ACTIVE_FACET_ID
 import com.facetlauncher.app.data.model.PlacedItem
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -39,9 +42,9 @@ import com.facetlauncher.app.data.model.PlacementList
 data class DockSettingsUiState(
     val facet: Facet? = null,
     val settings: LauncherSettings = LauncherSettings(),
-    val globalDockItems: List<PlacedItem> = emptyList(),
+    val globalDockItems: ImmutableList<PlacedItem> = persistentListOf(),
     /** This facet's own dock — only meaningful/edited while [isOverriding]. */
-    val facetDockItems: List<PlacedItem> = emptyList(),
+    val facetDockItems: ImmutableList<PlacedItem> = persistentListOf(),
     /** Home's app label color/weight — global only, no per-facet override; used only to render the preview exactly as Home would. */
     val appLabelColorOption: ClockColorOption = ClockColorOption.THEME,
     val homeAppsFontWeight: FontWeightOption = FontWeightOption.REGULAR,
@@ -52,7 +55,7 @@ data class DockSettingsUiState(
     /** Look, not content: resolved independently of [isOverriding] through its own `LAUNCHER_DEFAULT` sentinel. The preview needs it here. */
     val dockDisplayMode: DockDisplayMode get() = resolveFacetStyle(facet, settings).dockDisplayMode
     /** This scope's effective dock — the facet's own while overriding, the launcher-wide default otherwise. */
-    val dockItems: List<PlacedItem> get() = if (isOverriding) facetDockItems else globalDockItems
+    val dockItems: ImmutableList<PlacedItem> get() = if (isOverriding) facetDockItems else globalDockItems
 }
 
 /**
@@ -90,8 +93,8 @@ class DockSettingsViewModel @Inject constructor(
         DockSettingsUiState(
             facet = facets.find { it.id == facetId },
             settings = settings,
-            globalDockItems = globalDockItems,
-            facetDockItems = facetDockItems,
+            globalDockItems = globalDockItems.toImmutableList(),
+            facetDockItems = facetDockItems.toImmutableList(),
             appLabelColorOption = settings.appLabelColorOption,
             homeAppsFontWeight = settings.homeAppsFontWeight,
             homeWallpaper = wallpaper,

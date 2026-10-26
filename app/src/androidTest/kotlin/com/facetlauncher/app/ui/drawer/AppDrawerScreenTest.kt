@@ -46,6 +46,8 @@ import com.facetlauncher.app.data.model.SearchBarPosition
 import com.facetlauncher.app.data.model.SettingsSearchEntry
 import com.facetlauncher.app.ui.launcher.LocalHomePressedEvent
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.flow.MutableSharedFlow
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -84,7 +86,7 @@ class AppDrawerScreenTest {
         // Given the drawer rendered with one app per letter
         composeRule.setContent {
             FacetLauncherTheme {
-                AppDrawerScreen(apps = apps, onAppClick = {})
+                AppDrawerScreen(apps = apps.toImmutableList(), onAppClick = {})
             }
         }
 
@@ -100,7 +102,7 @@ class AppDrawerScreenTest {
         // Given a drawer with 26 letter groups (more content than fits on screen)
         composeRule.setContent {
             FacetLauncherTheme {
-                AppDrawerScreen(apps = apps, onAppClick = {})
+                AppDrawerScreen(apps = apps.toImmutableList(), onAppClick = {})
             }
         }
 
@@ -120,7 +122,7 @@ class AppDrawerScreenTest {
         }
         composeRule.setContent {
             FacetLauncherTheme {
-                AppDrawerScreen(apps = sparseApps, onAppClick = {})
+                AppDrawerScreen(apps = sparseApps.toImmutableList(), onAppClick = {})
             }
         }
 
@@ -137,7 +139,7 @@ class AppDrawerScreenTest {
         }
         composeRule.setContent {
             FacetLauncherTheme {
-                AppDrawerScreen(apps = sparseApps, onAppClick = {})
+                AppDrawerScreen(apps = sparseApps.toImmutableList(), onAppClick = {})
             }
         }
         composeRule.onNodeWithTag("drawer_list").performTouchInput { swipeUp() }
@@ -158,7 +160,7 @@ class AppDrawerScreenTest {
         // Given the drawer rendered
         composeRule.setContent {
             FacetLauncherTheme {
-                AppDrawerScreen(apps = apps, onAppClick = {})
+                AppDrawerScreen(apps = apps.toImmutableList(), onAppClick = {})
             }
         }
 
@@ -183,7 +185,7 @@ class AppDrawerScreenTest {
         // Given the drawer — left-edge letter jump is always on, not a setting
         composeRule.setContent {
             FacetLauncherTheme {
-                AppDrawerScreen(apps = apps, onAppClick = {})
+                AppDrawerScreen(apps = apps.toImmutableList(), onAppClick = {})
             }
         }
 
@@ -201,7 +203,7 @@ class AppDrawerScreenTest {
         // Given a drawer, scrolled away from the top
         composeRule.setContent {
             FacetLauncherTheme {
-                AppDrawerScreen(apps = apps, onAppClick = {})
+                AppDrawerScreen(apps = apps.toImmutableList(), onAppClick = {})
             }
         }
         composeRule.onNodeWithTag("drawer_list").performTouchInput { swipeUp() }
@@ -222,7 +224,7 @@ class AppDrawerScreenTest {
         // Given a drawer, scrolled away from the top
         composeRule.setContent {
             FacetLauncherTheme {
-                AppDrawerScreen(apps = apps, onAppClick = {})
+                AppDrawerScreen(apps = apps.toImmutableList(), onAppClick = {})
             }
         }
         composeRule.onNodeWithTag("drawer_list").performTouchInput { swipeUp() }
@@ -244,7 +246,7 @@ class AppDrawerScreenTest {
         var query by mutableStateOf("")
         composeRule.setContent {
             FacetLauncherTheme {
-                AppDrawerScreen(apps = apps, onAppClick = {}, query = query, onQueryChange = { query = it })
+                AppDrawerScreen(apps = apps.toImmutableList(), onAppClick = {}, query = query, onQueryChange = { query = it })
             }
         }
 
@@ -270,7 +272,7 @@ class AppDrawerScreenTest {
         var query by mutableStateOf("")
         composeRule.setContent {
             FacetLauncherTheme {
-                AppDrawerScreen(apps = apps, onAppClick = {}, query = query, onQueryChange = { query = it })
+                AppDrawerScreen(apps = apps.toImmutableList(), onAppClick = {}, query = query, onQueryChange = { query = it })
             }
         }
         composeRule.onNodeWithTag("drawer_search_field").performTextInput("M App")
@@ -291,7 +293,7 @@ class AppDrawerScreenTest {
         var query by mutableStateOf("")
         composeRule.setContent {
             FacetLauncherTheme {
-                AppDrawerScreen(apps = manyMatches, onAppClick = {}, query = query, onQueryChange = { query = it })
+                AppDrawerScreen(apps = manyMatches.toImmutableList(), onAppClick = {}, query = query, onQueryChange = { query = it })
             }
         }
 
@@ -319,7 +321,7 @@ class AppDrawerScreenTest {
         composeRule.setContent {
             FacetLauncherTheme {
                 AppDrawerScreen(
-                    apps = matches, onAppClick = {}, presentation = DrawerPresentation.GRID,
+                    apps = matches.toImmutableList(), onAppClick = {}, presentation = DrawerPresentation.GRID,
                     query = query, onQueryChange = { query = it },
                 )
             }
@@ -344,7 +346,7 @@ class AppDrawerScreenTest {
         var query by mutableStateOf("")
         composeRule.setContent {
             FacetLauncherTheme {
-                AppDrawerScreen(apps = apps, onAppClick = {}, query = query, onQueryChange = { query = it })
+                AppDrawerScreen(apps = apps.toImmutableList(), onAppClick = {}, query = query, onQueryChange = { query = it })
             }
         }
         composeRule.onNodeWithTag("drawer_search_field").performTextInput("zqx")
@@ -366,7 +368,7 @@ class AppDrawerScreenTest {
         var settingsClicked = false
         composeRule.setContent {
             FacetLauncherTheme {
-                AppDrawerScreen(apps = apps, onAppClick = {}, onNavigateToSettings = { settingsClicked = true })
+                AppDrawerScreen(apps = apps.toImmutableList(), onAppClick = {}, onNavigateToSettings = { settingsClicked = true })
             }
         }
 
@@ -382,7 +384,7 @@ class AppDrawerScreenTest {
     fun overflowMenuShowsSystemSettingsRow() {
         // Given the drawer rendered
         composeRule.setContent {
-            FacetLauncherTheme { AppDrawerScreen(apps = apps, onAppClick = {}) }
+            FacetLauncherTheme { AppDrawerScreen(apps = apps.toImmutableList(), onAppClick = {}) }
         }
 
         // When opening the overflow menu
@@ -397,7 +399,7 @@ class AppDrawerScreenTest {
         // Given Secure Folder isn't installed (no launch intent available)
         composeRule.setContent {
             FacetLauncherTheme {
-                AppDrawerScreen(apps = apps, onAppClick = {}, secureFolderIntent = null)
+                AppDrawerScreen(apps = apps.toImmutableList(), onAppClick = {}, secureFolderIntent = null)
             }
         }
 
@@ -416,7 +418,7 @@ class AppDrawerScreenTest {
         composeRule.setContent {
             FacetLauncherTheme {
                 AppDrawerScreen(
-                    apps = apps,
+                    apps = apps.toImmutableList(),
                     onAppClick = {},
                     secureFolderIntent = secureFolderIntent,
                     onOpenSecureFolder = { openedIntent = it },
@@ -437,7 +439,7 @@ class AppDrawerScreenTest {
         // Given Private Space isn't configured on this device
         composeRule.setContent {
             FacetLauncherTheme {
-                AppDrawerScreen(apps = apps, onAppClick = {}, showPrivateSpaceRow = false)
+                AppDrawerScreen(apps = apps.toImmutableList(), onAppClick = {}, showPrivateSpaceRow = false)
             }
         }
 
@@ -455,7 +457,7 @@ class AppDrawerScreenTest {
         composeRule.setContent {
             FacetLauncherTheme {
                 AppDrawerScreen(
-                    apps = apps,
+                    apps = apps.toImmutableList(),
                     onAppClick = {},
                     showPrivateSpaceRow = true,
                     onPrivateSpaceRowClick = { clicked = true },
@@ -477,7 +479,7 @@ class AppDrawerScreenTest {
         // Given the drawer rendered with the search bar at the top
         composeRule.setContent {
             FacetLauncherTheme {
-                AppDrawerScreen(apps = apps, onAppClick = {}, searchBarPosition = SearchBarPosition.TOP)
+                AppDrawerScreen(apps = apps.toImmutableList(), onAppClick = {}, searchBarPosition = SearchBarPosition.TOP)
             }
         }
 
@@ -492,7 +494,7 @@ class AppDrawerScreenTest {
         // Given the drawer rendered with the search bar at the bottom
         composeRule.setContent {
             FacetLauncherTheme {
-                AppDrawerScreen(apps = apps, onAppClick = {}, searchBarPosition = SearchBarPosition.BOTTOM)
+                AppDrawerScreen(apps = apps.toImmutableList(), onAppClick = {}, searchBarPosition = SearchBarPosition.BOTTOM)
             }
         }
 
@@ -507,7 +509,7 @@ class AppDrawerScreenTest {
         // Given the drawer in Grid presentation
         composeRule.setContent {
             FacetLauncherTheme {
-                AppDrawerScreen(apps = apps, onAppClick = {}, presentation = DrawerPresentation.GRID)
+                AppDrawerScreen(apps = apps.toImmutableList(), onAppClick = {}, presentation = DrawerPresentation.GRID)
             }
         }
 
@@ -524,7 +526,7 @@ class AppDrawerScreenTest {
         // Given the drawer in Grid presentation with 26 letters, no headers to scroll to
         composeRule.setContent {
             FacetLauncherTheme {
-                AppDrawerScreen(apps = apps, onAppClick = {}, presentation = DrawerPresentation.GRID)
+                AppDrawerScreen(apps = apps.toImmutableList(), onAppClick = {}, presentation = DrawerPresentation.GRID)
             }
         }
 
@@ -544,10 +546,10 @@ class AppDrawerScreenTest {
         composeRule.setContent {
             FacetLauncherTheme {
                 AppDrawerScreen(
-                    apps = apps,
+                    apps = apps.toImmutableList(),
                     onAppClick = {},
                     presentation = DrawerPresentation.GRID,
-                    folderCandidates = listOf(folder),
+                    folderCandidates = listOf(folder).toImmutableList(),
                     folderDisplayMode = DrawerFolderDisplayMode.SHOW_FIRST,
                 )
             }
@@ -568,7 +570,7 @@ class AppDrawerScreenTest {
         var gridDensity by mutableStateOf(DrawerGridDensity.SPACIOUS)
         composeRule.setContent {
             FacetLauncherTheme {
-                AppDrawerScreen(apps = apps, onAppClick = {}, presentation = DrawerPresentation.GRID, gridDensity = gridDensity)
+                AppDrawerScreen(apps = apps.toImmutableList(), onAppClick = {}, presentation = DrawerPresentation.GRID, gridDensity = gridDensity)
             }
         }
         val spaciousHeight = composeRule.onNodeWithTag("drawer_grid_tile_com.example.A").fetchSemanticsNode().boundsInRoot.height
@@ -595,7 +597,7 @@ class AppDrawerScreenTest {
         var itemSize by mutableStateOf(DrawerListItemSize.COMPACT)
         composeRule.setContent {
             FacetLauncherTheme {
-                AppDrawerScreen(apps = apps, onAppClick = {}, listItemSize = itemSize)
+                AppDrawerScreen(apps = apps.toImmutableList(), onAppClick = {}, listItemSize = itemSize)
             }
         }
         val compactHeight = composeRule.onNodeWithTag("drawer_app_row_com.example.A").fetchSemanticsNode().boundsInRoot.height
@@ -619,7 +621,7 @@ class AppDrawerScreenTest {
         var query by mutableStateOf("")
         composeRule.setContent {
             FacetLauncherTheme {
-                AppDrawerScreen(apps = apps, onAppClick = {}, query = query, onQueryChange = { query = it }, contacts = emptyList())
+                AppDrawerScreen(apps = apps.toImmutableList(), onAppClick = {}, query = query, onQueryChange = { query = it }, contacts = persistentListOf())
             }
         }
 
@@ -640,11 +642,11 @@ class AppDrawerScreenTest {
         composeRule.setContent {
             FacetLauncherTheme {
                 AppDrawerScreen(
-                    apps = apps,
+                    apps = apps.toImmutableList(),
                     onAppClick = {},
                     query = query,
                     onQueryChange = { query = it },
-                    contacts = emptyList(),
+                    contacts = persistentListOf(),
                     showContactsPermissionPrompt = showPrompt,
                     onContactsPermissionPromptClick = { clicked = true; showPrompt = false },
                 )
@@ -682,11 +684,11 @@ class AppDrawerScreenTest {
         composeRule.setContent {
             FacetLauncherTheme {
                 AppDrawerScreen(
-                    apps = apps,
+                    apps = apps.toImmutableList(),
                     onAppClick = {},
                     query = query,
                     onQueryChange = { query = it },
-                    contacts = emptyList(),
+                    contacts = persistentListOf(),
                     showContactsSettingPrompt = showPrompt,
                     onContactsSettingPromptClick = { clicked = true; showPrompt = false },
                 )
@@ -729,11 +731,11 @@ class AppDrawerScreenTest {
         composeRule.setContent {
             FacetLauncherTheme {
                 AppDrawerScreen(
-                    apps = apps,
+                    apps = apps.toImmutableList(),
                     onAppClick = {},
                     query = query,
                     onQueryChange = { query = it },
-                    contacts = listOf(contact),
+                    contacts = listOf(contact).toImmutableList(),
                     onRequestConnections = { listOf(callConnection) },
                 )
             }
@@ -779,11 +781,11 @@ class AppDrawerScreenTest {
             FacetLauncherTheme {
                 CompositionLocalProvider(LocalHomePressedEvent provides homePressedEvent) {
                     AppDrawerScreen(
-                        apps = apps,
+                        apps = apps.toImmutableList(),
                         onAppClick = {},
                         query = query,
                         onQueryChange = { query = it },
-                        contacts = listOf(contact),
+                        contacts = listOf(contact).toImmutableList(),
                         onRequestConnections = { listOf(callConnection) },
                     )
                 }
@@ -811,7 +813,7 @@ class AppDrawerScreenTest {
         var query by mutableStateOf("")
         composeRule.setContent {
             FacetLauncherTheme {
-                AppDrawerScreen(apps = apps, onAppClick = {}, query = query, onQueryChange = { query = it }, settingsEntries = emptyList())
+                AppDrawerScreen(apps = apps.toImmutableList(), onAppClick = {}, query = query, onQueryChange = { query = it }, settingsEntries = persistentListOf())
             }
         }
 
@@ -832,11 +834,11 @@ class AppDrawerScreenTest {
         composeRule.setContent {
             FacetLauncherTheme {
                 AppDrawerScreen(
-                    apps = apps,
+                    apps = apps.toImmutableList(),
                     onAppClick = {},
                     query = query,
                     onQueryChange = { query = it },
-                    settingsEntries = listOf(entry),
+                    settingsEntries = listOf(entry).toImmutableList(),
                     onSettingsEntryClick = { clickedEntry = it },
                 )
             }
@@ -860,7 +862,7 @@ class AppDrawerScreenTest {
         var query by mutableStateOf("")
         composeRule.setContent {
             FacetLauncherTheme {
-                AppDrawerScreen(apps = apps, onAppClick = {}, query = query, onQueryChange = { query = it })
+                AppDrawerScreen(apps = apps.toImmutableList(), onAppClick = {}, query = query, onQueryChange = { query = it })
             }
         }
         composeRule.onNodeWithTag("drawer_search_field").performTextInput("M App")
@@ -891,7 +893,7 @@ class AppDrawerScreenTest {
         // Given List presentation (the default)
         composeRule.setContent {
             FacetLauncherTheme {
-                AppDrawerScreen(apps = apps, onAppClick = {})
+                AppDrawerScreen(apps = apps.toImmutableList(), onAppClick = {})
             }
         }
         composeRule.onNodeWithTag("app_context_menu").assertDoesNotExist()
@@ -908,7 +910,7 @@ class AppDrawerScreenTest {
         // Given List presentation (the default)
         composeRule.setContent {
             FacetLauncherTheme {
-                AppDrawerScreen(apps = apps, onAppClick = {})
+                AppDrawerScreen(apps = apps.toImmutableList(), onAppClick = {})
             }
         }
         composeRule.onNodeWithTag("app_context_menu").assertDoesNotExist()
@@ -933,7 +935,7 @@ class AppDrawerScreenTest {
         // Given Grid presentation
         composeRule.setContent {
             FacetLauncherTheme {
-                AppDrawerScreen(apps = apps, onAppClick = {}, presentation = DrawerPresentation.GRID)
+                AppDrawerScreen(apps = apps.toImmutableList(), onAppClick = {}, presentation = DrawerPresentation.GRID)
             }
         }
         composeRule.onNodeWithTag("app_context_menu").assertDoesNotExist()
@@ -950,7 +952,7 @@ class AppDrawerScreenTest {
         // Given the default, no-Work-Profile case (hasWorkProfile defaults to false)
         composeRule.setContent {
             FacetLauncherTheme {
-                AppDrawerScreen(apps = apps, onAppClick = {})
+                AppDrawerScreen(apps = apps.toImmutableList(), onAppClick = {})
             }
         }
 
@@ -972,7 +974,7 @@ class AppDrawerScreenTest {
         val workProfiles = listOf(WorkProfileInfo(handle = workHandle, isPaused = false, label = "Work"))
         composeRule.setContent {
             FacetLauncherTheme {
-                AppDrawerScreen(apps = mixedApps, onAppClick = {}, workProfiles = workProfiles)
+                AppDrawerScreen(apps = mixedApps.toImmutableList(), onAppClick = {}, workProfiles = workProfiles.toImmutableList())
             }
         }
 
@@ -1000,7 +1002,7 @@ class AppDrawerScreenTest {
         var query by mutableStateOf("")
         composeRule.setContent {
             FacetLauncherTheme {
-                AppDrawerScreen(apps = mixedApps, onAppClick = {}, workProfiles = workProfiles, query = query, onQueryChange = { query = it })
+                AppDrawerScreen(apps = mixedApps.toImmutableList(), onAppClick = {}, workProfiles = workProfiles.toImmutableList(), query = query, onQueryChange = { query = it })
             }
         }
 
@@ -1018,7 +1020,7 @@ class AppDrawerScreenTest {
         val folder = Folder(id = 1, name = "Zeta Folder", apps = emptyList())
         composeRule.setContent {
             FacetLauncherTheme {
-                AppDrawerScreen(apps = apps, onAppClick = {}, folderCandidates = listOf(folder))
+                AppDrawerScreen(apps = apps.toImmutableList(), onAppClick = {}, folderCandidates = listOf(folder).toImmutableList())
             }
         }
 
@@ -1034,9 +1036,9 @@ class AppDrawerScreenTest {
         composeRule.setContent {
             FacetLauncherTheme {
                 AppDrawerScreen(
-                    apps = apps,
+                    apps = apps.toImmutableList(),
                     onAppClick = {},
-                    folderCandidates = listOf(folder),
+                    folderCandidates = listOf(folder).toImmutableList(),
                     folderDisplayMode = DrawerFolderDisplayMode.SHOW_FIRST,
                 )
             }
@@ -1055,9 +1057,9 @@ class AppDrawerScreenTest {
         composeRule.setContent {
             FacetLauncherTheme {
                 AppDrawerScreen(
-                    apps = apps,
+                    apps = apps.toImmutableList(),
                     onAppClick = {},
-                    folderCandidates = listOf(folder),
+                    folderCandidates = listOf(folder).toImmutableList(),
                     folderDisplayMode = DrawerFolderDisplayMode.SHOW_LAST,
                 )
             }
@@ -1078,9 +1080,9 @@ class AppDrawerScreenTest {
         composeRule.setContent {
             FacetLauncherTheme {
                 AppDrawerScreen(
-                    apps = apps,
+                    apps = apps.toImmutableList(),
                     onAppClick = {},
-                    folderCandidates = listOf(folder),
+                    folderCandidates = listOf(folder).toImmutableList(),
                     folderDisplayMode = DrawerFolderDisplayMode.INLINE,
                 )
             }
@@ -1108,7 +1110,7 @@ class AppDrawerScreenTest {
         // Given the default setting (on) and one recently-installed app
         composeRule.setContent {
             FacetLauncherTheme {
-                AppDrawerScreen(apps = apps + recentApp(), onAppClick = {})
+                AppDrawerScreen(apps = (apps + recentApp()).toImmutableList(), onAppClick = {})
             }
         }
 
@@ -1122,7 +1124,7 @@ class AppDrawerScreenTest {
         // Given a qualifying app, but the setting turned off
         composeRule.setContent {
             FacetLauncherTheme {
-                AppDrawerScreen(apps = apps + recentApp(), onAppClick = {}, recentlyInstalledPosition = RecentlyInstalledPosition.DO_NOT_SHOW)
+                AppDrawerScreen(apps = (apps + recentApp()).toImmutableList(), onAppClick = {}, recentlyInstalledPosition = RecentlyInstalledPosition.DO_NOT_SHOW)
             }
         }
 
@@ -1135,7 +1137,7 @@ class AppDrawerScreenTest {
         // Given a qualifying app and the setting set to show it last
         composeRule.setContent {
             FacetLauncherTheme {
-                AppDrawerScreen(apps = apps + recentApp(), onAppClick = {}, recentlyInstalledPosition = RecentlyInstalledPosition.SHOW_LAST)
+                AppDrawerScreen(apps = (apps + recentApp()).toImmutableList(), onAppClick = {}, recentlyInstalledPosition = RecentlyInstalledPosition.SHOW_LAST)
             }
         }
 
@@ -1152,7 +1154,7 @@ class AppDrawerScreenTest {
         // Given the setting on, but no app installed recently (all firstInstallTime = 0L)
         composeRule.setContent {
             FacetLauncherTheme {
-                AppDrawerScreen(apps = apps, onAppClick = {})
+                AppDrawerScreen(apps = apps.toImmutableList(), onAppClick = {})
             }
         }
 
@@ -1166,9 +1168,9 @@ class AppDrawerScreenTest {
         composeRule.setContent {
             FacetLauncherTheme {
                 AppDrawerScreen(
-                    apps = apps + recentApp(),
+                    apps = (apps + recentApp()).toImmutableList(),
                     onAppClick = {},
-                    folderCandidates = listOf(folder),
+                    folderCandidates = listOf(folder).toImmutableList(),
                     folderDisplayMode = DrawerFolderDisplayMode.SHOW_FIRST,
                 )
             }
@@ -1185,7 +1187,7 @@ class AppDrawerScreenTest {
         // Given one recently-installed app
         composeRule.setContent {
             FacetLauncherTheme {
-                AppDrawerScreen(apps = apps + recentApp('Z'), onAppClick = {})
+                AppDrawerScreen(apps = (apps + recentApp('Z')).toImmutableList(), onAppClick = {})
             }
         }
 
@@ -1206,7 +1208,7 @@ class AppDrawerScreenTest {
         // Given Grid presentation and one recently-installed app — the feature is List-only
         composeRule.setContent {
             FacetLauncherTheme {
-                AppDrawerScreen(apps = apps + recentApp(), onAppClick = {}, presentation = DrawerPresentation.GRID)
+                AppDrawerScreen(apps = (apps + recentApp()).toImmutableList(), onAppClick = {}, presentation = DrawerPresentation.GRID)
             }
         }
 
@@ -1223,7 +1225,7 @@ class AppDrawerScreenTest {
         val workProfiles = listOf(WorkProfileInfo(handle = workHandle, isPaused = false, label = "Work"))
         composeRule.setContent {
             FacetLauncherTheme {
-                AppDrawerScreen(apps = apps + personalRecent + workRecent, onAppClick = {}, workProfiles = workProfiles)
+                AppDrawerScreen(apps = (apps + personalRecent + workRecent).toImmutableList(), onAppClick = {}, workProfiles = workProfiles.toImmutableList())
             }
         }
 

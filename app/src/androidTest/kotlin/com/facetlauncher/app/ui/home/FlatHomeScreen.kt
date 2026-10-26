@@ -20,6 +20,7 @@ import com.facetlauncher.app.data.model.ClockAlignment
 import com.facetlauncher.app.data.model.DockDisplayMode
 import com.facetlauncher.app.data.model.MediaPlayerState
 import com.facetlauncher.app.data.model.PlacedItem
+import kotlinx.collections.immutable.toImmutableList
 
 /**
  * `HomeScreen` with the flat parameters the tests set, so a test names only what it cares about instead of
@@ -91,7 +92,7 @@ internal fun FlatHomeScreen(
             widget = clockWidgetAppWidgetId?.let {
                 HomeClockWidgetState(it, clockWidgetWidthDp, clockWidgetHeightDp, clockWidgetMinWidthDp, clockWidgetMinHeightDp)
             },
-            calendar = HomeCalendarState(events = calendarEvents),
+            calendar = HomeCalendarState(events = calendarEvents.toImmutableList()),
             media = HomeMediaState(player = mediaPlayer),
         ),
         actions = HomeScreenActions(

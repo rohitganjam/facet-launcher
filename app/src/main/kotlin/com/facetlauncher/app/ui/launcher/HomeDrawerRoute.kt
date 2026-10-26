@@ -76,6 +76,7 @@ import com.facetlauncher.app.ui.launcher.HomeDrawerRoute
 import com.facetlauncher.app.ui.launcher.LauncherViewModel
 import com.facetlauncher.app.ui.theme.SystemBarsBackdrop
 import com.facetlauncher.app.ui.theme.SystemBarsBackdropEffect
+import kotlinx.collections.immutable.ImmutableList
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
@@ -93,7 +94,7 @@ import kotlinx.coroutines.launch
  */
 @Composable
 fun HomeDrawerRoute(
-    apps: List<AppInfo>,
+    apps: ImmutableList<AppInfo>,
     onAppClick: (AppInfo) -> Unit,
     onNavigateToSettings: () -> Unit,
     onNavigateToFacetSettings: (facetId: Long) -> Unit,

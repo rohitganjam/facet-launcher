@@ -36,6 +36,10 @@ import com.facetlauncher.app.data.model.PlacedItem
 import com.facetlauncher.app.ui.components.AppMenuNotifications
 import com.facetlauncher.app.ui.home.ClockAdjustMode
 import com.facetlauncher.app.ui.home.HomeItemActions
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.ImmutableMap
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.persistentMapOf
 
 /*
  * What `HomeScreen` shows (the `*State` classes) and what it does about it (the `*Actions` classes), grouped by
@@ -78,8 +82,8 @@ data class HomeClockWidgetState(
 /** What sits with the clock: the calendar strip and the alarm, battery, charging and weather accessories. */
 @Immutable
 data class HomeCalendarState(
-    val events: List<CalendarEvent> = emptyList(),
-    val colors: Map<String, String> = emptyMap(),
+    val events: ImmutableList<CalendarEvent> = persistentListOf(),
+    val colors: ImmutableMap<String, String> = persistentMapOf(),
     val display: CalendarDisplayOptions = CalendarDisplayOptions(),
     val nextAlarmMillis: Long? = null,
     val batteryPercent: Int? = null,
@@ -103,7 +107,7 @@ data class HomeItemLook(
     val badgeCounts: Map<String, Int> = emptyMap(),
     val badgeStyle: NotificationBadgeStyle = NotificationBadgeStyle.DOT,
     val appMenuNotifications: AppMenuNotifications = AppMenuNotifications.None,
-    val folderCandidates: List<Folder>? = null,
+    val folderCandidates: ImmutableList<Folder>? = null,
     val drawerPresentation: DrawerPresentation = DrawerPresentation.LIST,
     val labelColorOption: ClockColorOption = ClockColorOption.THEME,
     val labelFontWeightOption: FontWeightOption = FontWeightOption.REGULAR,

@@ -35,6 +35,7 @@ checked against source, not against planning docs; where the code diverges from
 | DI | Hilt `2.60.1` via KSP — `@HiltAndroidApp` / `@AndroidEntryPoint` / `@HiltViewModel` |
 | Navigation | `navigation-compose 2.10.2` + `hilt-navigation-compose` — one `NavHost` (`FacetNavHost`) |
 | Persistence | Room `2.8.5` (`facet.db`, v32, schema export on) + `datastore-preferences 1.2.1` (`facet_settings`) |
+| Collections in UI state | `kotlinx-collections-immutable` `0.5.2`: composable parameters and UI state carry `ImmutableList`/`ImmutableMap`/`ImmutableSet`, so Compose can skip on them (detekt's `UnstableCollections`) |
 | Async | Coroutines + `Flow`/`StateFlow` only; `collectAsStateWithLifecycle()` in Compose; no `LiveData` |
 | Serialization | `kotlinx-serialization-json` (backup bundle only) |
 | Billing | Google Play Billing `billing-ktx 9.1.0` for the one-time `facet_pro` purchase ([16](16-flow-billing.md)); the library also merges in `INTERNET`, which the manifest now declares for weather ([18](18-flow-weather.md)) |

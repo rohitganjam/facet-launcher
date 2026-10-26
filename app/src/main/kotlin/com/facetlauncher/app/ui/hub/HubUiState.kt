@@ -2,6 +2,8 @@ package com.facetlauncher.app.ui.hub
 
 import com.facetlauncher.app.domain.HUB_COLUMNS
 import com.facetlauncher.app.domain.HUB_MAX_WIDGETS
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
 
 /**
  * A single placed widget, ready to render — a stable immutable projection of [com.facetlauncher.app.domain.HubWidgetState],
@@ -31,9 +33,9 @@ data class HubLandscapeWidgetUi(
 )
 
 data class HubUiState(
-    val widgets: List<HubWidgetUi> = emptyList(),
+    val widgets: ImmutableList<HubWidgetUi> = persistentListOf(),
     /** The widgets laid out for landscape in the number of rows the screen last reported; empty until it has. */
-    val landscapeWidgets: List<HubLandscapeWidgetUi> = emptyList(),
+    val landscapeWidgets: ImmutableList<HubLandscapeWidgetUi> = persistentListOf(),
     val isLoading: Boolean = true,
 ) {
     val columns: Int get() = HUB_COLUMNS

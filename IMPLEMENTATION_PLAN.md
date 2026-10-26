@@ -4351,3 +4351,9 @@ Design agreed in chat (mocks: accessory bar, weather sheet, Clock accessories sc
 - [x] Config: `CompositionLocalAllowlist` lists the 11 app-wide theme and window locals; `ReturnCount` ignores guard clauses; `TooManyFunctions` ignores private functions, allows 20, and exempts the data repositories and `Converters`; the `Material2` import in `Theme.kt` is suppressed in the file (`RippleAlpha` is from material-ripple, which Material 3 uses).  A Compose stability config marking `List`, `Set` and `Map` stable was tried and then dropped, so Compose again compares those parameters by instance.
 - `UnstableCollections` stays on, with its 37 entries kept in the baseline; the aim is to remove as many as possible, one at a time.
 - Left: LongMethod (30), ComposableParamOrder (10), ComposableNestingDepth (9), LambdaParameterInRestartableEffect (8), CyclomaticComplexMethod (8), ViewModelForwarding (5) and a few single entries.
+
+## Unstable collections: 37 baseline entries to 2 (direct request)
+
+- [x] Composable parameters that took `List`, `Set` or `Map` now take `ImmutableList`, `ImmutableSet` or `ImmutableMap` (`kotlinx-collections-immutable` 0.5.2): the app drawer, pickers, context menus, placement actions, Hub grids, Home calendar and the settings screens. The lists are built once where state is produced (`LauncherViewModel`, `DrawerViewModel`, the pickers, Hub, Dock/Home apps/Notifications/Calendar settings, `HomeScreenStateBuilder`), not on each recomposition, and sample data in previews uses `persistentListOf`/`toImmutableList`.
+- Left in the baseline: `LabeledDropdownRow.options` and `DragReorderState.items` (generic `List<T>` helpers, called with enum `entries` from about 40 places).
+- Baseline: 128 → 93.

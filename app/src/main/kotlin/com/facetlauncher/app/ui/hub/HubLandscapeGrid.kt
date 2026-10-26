@@ -56,6 +56,7 @@ import com.facetlauncher.app.R
 import com.facetlauncher.app.ui.components.ThemedDropdownMenu
 import com.facetlauncher.app.ui.components.ThemedDropdownMenuItem
 import com.facetlauncher.app.ui.theme.Accent
+import kotlinx.collections.immutable.ImmutableList
 import kotlinx.coroutines.launch
 
 private val HUB_LANDSCAPE_VERTICAL_PADDING = 8.dp
@@ -199,7 +200,7 @@ private class LandscapeGridState(val scrollState: ScrollState) {
  */
 @Composable
 fun HubLandscapeGrid(
-    widgets: List<HubLandscapeWidgetUi>,
+    widgets: ImmutableList<HubLandscapeWidgetUi>,
     createHostView: (Context, Int) -> AppWidgetHostView?,
     onWidgetSizeChange: (appWidgetId: Int, widthDp: Int, heightDp: Int) -> Unit,
     onRowsChange: (Int) -> Unit,

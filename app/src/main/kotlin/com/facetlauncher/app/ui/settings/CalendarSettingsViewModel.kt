@@ -22,6 +22,9 @@ import com.facetlauncher.app.domain.AssignCalendarColorsUseCase
 import com.facetlauncher.app.ui.theme.AccentSwatch
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -43,7 +46,7 @@ data class CalendarSettingsUiState(
     val isCalendarAccessGranted: Boolean = false,
     val calendars: List<CalendarInfo> = emptyList(),
     /** Real upcoming events (midnight today to noon tomorrow) for the effective selection; empty when access is off or none are due. */
-    val previewEvents: List<CalendarEvent> = emptyList(),
+    val previewEvents: ImmutableList<CalendarEvent> = persistentListOf(),
     /** Calendar id -> `AccentSwatch` enum name — see [com.facetlauncher.app.data.model.LauncherSettings.calendarColors]. Always global, never facet-scoped (a bar color isn't a "which calendars"/"show all-day" kind of decision). */
     val calendarColors: Map<String, String> = emptyMap(),
 ) {
@@ -108,7 +111,7 @@ class CalendarSettingsViewModel @Inject constructor(
         globalSelectedCalendarIds = settings.selectedCalendarIds,
         isCalendarAccessGranted = granted,
         calendars = calendarList,
-        previewEvents = events,
+        previewEvents = events.toImmutableList(),
         calendarColors = settings.calendarColors,
     )
 

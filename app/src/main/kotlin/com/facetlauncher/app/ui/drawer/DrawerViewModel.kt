@@ -32,6 +32,12 @@ import com.facetlauncher.app.domain.QuickPlacementAction
 import com.facetlauncher.app.domain.RankBySearchRelevanceUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.ImmutableMap
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.persistentMapOf
+import kotlinx.collections.immutable.toImmutableList
+import kotlinx.collections.immutable.toImmutableMap
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -41,6 +47,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -97,12 +104,12 @@ class DrawerViewModel @Inject constructor(
     }
 
     /** F13 — empty unless both the "Notification badges" setting is on and access is granted; see `ObserveHomeScreenStateUseCase`'s identical gating for Home. */
-    val badgeCounts: StateFlow<Map<String, Int>> = combine(
+    val badgeCounts: StateFlow<ImmutableMap<String, Int>> = combine(
         settingsRepository.settings,
         notificationBadgeRepository.badgeCounts,
     ) { settings, counts ->
-        if (settings.notificationDotsEnabled && notificationAccessRepository.isGranted()) counts else emptyMap()
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyMap())
+        if (settings.notificationDotsEnabled && notificationAccessRepository.isGranted()) counts.toImmutableMap() else persistentMapOf()
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), persistentMapOf())
 
     private val searchQuery = MutableStateFlow("")
 
@@ -112,7 +119,7 @@ class DrawerViewModel @Inject constructor(
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    val contactResults: StateFlow<List<ContactInfo>> = combine(searchQuery, settingsRepository.settings) { query, settings ->
+    val contactResults: StateFlow<ImmutableList<ContactInfo>> = combine(searchQuery, settingsRepository.settings) { query, settings ->
         query to settings.searchContactsEnabled
     }.flatMapLatest { (query, enabled) ->
         if (!enabled || !contactPermissionRepository.isGranted() || query.isBlank()) {
@@ -127,11 +134,11 @@ class DrawerViewModel @Inject constructor(
                 emit(rankBySearchRelevance(matches, query) { it.displayName })
             }
         }
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+    }.map { it.toImmutableList() }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), persistentListOf())
 
     /** Search's system Settings section — no permission gating (unlike [contactResults]), just the "Search settings" toggle and a real query. */
     @OptIn(ExperimentalCoroutinesApi::class)
-    val settingsResults: StateFlow<List<SettingsSearchEntry>> = combine(searchQuery, settingsRepository.settings) { query, settings ->
+    val settingsResults: StateFlow<ImmutableList<SettingsSearchEntry>> = combine(searchQuery, settingsRepository.settings) { query, settings ->
         query to settings.searchSettingsEnabled
     }.flatMapLatest { (query, enabled) ->
         if (!enabled || query.isBlank()) {
@@ -150,7 +157,7 @@ class DrawerViewModel @Inject constructor(
                 emit(ranked.take(MAX_SETTINGS_RESULTS))
             }
         }
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+    }.map { it.toImmutableList() }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), persistentListOf())
 
     private val contactsPermissionPromptDismissed = MutableStateFlow(false)
 
@@ -245,8 +252,9 @@ class DrawerViewModel @Inject constructor(
      * one list every long-press context (Drawer, Search) offers to, regardless of where (if
      * anywhere) each folder is currently placed.
      */
-    val folders: StateFlow<List<Folder>> = folderRepository.observeFolders()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+    val folders: StateFlow<ImmutableList<Folder>> = folderRepository.observeFolders()
+        .map { it.toImmutableList() }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), persistentListOf())
 
     /** Creates a brand-new folder and adds [app] as its first member. Membership only — placing the folder onto a Dock/Favorites list is a separate, explicit action (the picker). */
     fun createFolder(app: AppInfo, name: String) {
