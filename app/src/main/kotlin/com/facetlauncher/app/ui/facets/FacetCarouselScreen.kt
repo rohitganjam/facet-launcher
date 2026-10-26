@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
@@ -26,6 +27,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.outlined.Tune
 import androidx.compose.material3.Icon
@@ -55,6 +57,7 @@ import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -70,6 +73,8 @@ import com.facetlauncher.app.ui.components.ProPill
 import com.facetlauncher.app.ui.components.ScreenHeader
 import com.facetlauncher.app.ui.components.SettingsCard
 import com.facetlauncher.app.ui.components.SettingsIconBadge
+import com.facetlauncher.app.ui.components.ThemedDropdownMenu
+import com.facetlauncher.app.ui.components.ThemedDropdownMenuItem
 import com.facetlauncher.app.ui.components.TonalButton
 import com.facetlauncher.app.ui.home.AppRow
 import com.facetlauncher.app.data.model.LauncherSettings
@@ -108,6 +113,15 @@ private val CAROUSEL_MIN_CARD_HEIGHT = 120.dp
 
 /** The facet-name row above the card + the gear/trash row below it, inside every page. */
 private val CAROUSEL_PAGE_CHROME_HEIGHT = 104.dp
+
+/** Windows shorter than this (a landscape phone) put the gear/trash icons in the name row, so each page has no bottom row to lose. */
+private const val CAROUSEL_COMPACT_HEIGHT_BELOW_DP = 480
+
+/** In a short window the name row (now holding the gear/trash icons) is all the chrome a page has. */
+private val CAROUSEL_COMPACT_NAME_ROW_HEIGHT = 48.dp
+
+/** The Add facet card's full content (glyph, title, subtitle) needs about this much height; a shorter card switches to the compact layout. */
+private val ADD_FACET_FULL_CONTENT_HEIGHT = 130.dp
 
 /** The carousel sits over Home as a translucent overlay — Home (and the wallpaper) show through. */
 private const val CAROUSEL_SCRIM_ALPHA = 0.6f
@@ -250,9 +264,11 @@ private fun FacetCarouselContent(
         val screenAspectRatio = config.screenWidthDp.toFloat() / config.screenHeightDp.toFloat()
         // The dots and Launcher-settings row are measured first, so this box only gets what they
         // leave; the card is shrunk to fit it (never grown past CAROUSEL_CARD_SCALE).
+        val compact = config.screenHeightDp < CAROUSEL_COMPACT_HEIGHT_BELOW_DP
+        val pageChromeHeight = if (compact) CAROUSEL_COMPACT_NAME_ROW_HEIGHT else CAROUSEL_PAGE_CHROME_HEIGHT
         BoxWithConstraints(modifier = Modifier.fillMaxWidth().weight(1f, fill = false)) {
             val idealCardHeight = (config.screenHeightDp * CAROUSEL_CARD_SCALE).dp
-            val cardHeight = minOf(idealCardHeight, maxHeight - CAROUSEL_PAGE_CHROME_HEIGHT)
+            val cardHeight = minOf(idealCardHeight, maxHeight - pageChromeHeight)
                 .coerceAtLeast(CAROUSEL_MIN_CARD_HEIGHT)
             val cardWidth = cardHeight * screenAspectRatio
             val pageInset = ((maxWidth - cardWidth) / 2).coerceAtLeast(0.dp)
@@ -264,7 +280,7 @@ private fun FacetCarouselContent(
             // transition (HubScreen.kt's content starts exactly at headerHeight, zero padding).
             modifier = Modifier
                 .fillMaxWidth()
-                .height(cardHeight + CAROUSEL_PAGE_CHROME_HEIGHT)
+                .height(cardHeight + pageChromeHeight)
                 .testTag("facet_carousel_pager"),
         ) { page ->
             if (page < facets.size) {
@@ -289,6 +305,7 @@ private fun FacetCarouselContent(
                     onCardClick = if (locked) onLockedFacetClick else ({ onSelect(facet.id) }),
                     homeWallpaper = uiState.homeWallpaper,
                     screenAspectRatio = screenAspectRatio,
+                    compact = compact,
                     modifier = Modifier
                         .fillMaxSize()
                         .testTag("facet_page_${facet.id}"),
@@ -297,6 +314,7 @@ private fun FacetCarouselContent(
                 AddFacetPage(
                     onClick = onAddFacet,
                     showProPill = !uiState.canAddFacet,
+                    compact = compact,
                     modifier = Modifier.fillMaxSize().testTag("facet_carousel_add_page"),
                 )
             }
@@ -403,6 +421,8 @@ private fun FacetPreviewPage(
     homeWallpaper: HomeWallpaper,
     /** The device's own width:height — the card is locked to it so it stays a true scale model of the screen. */
     screenAspectRatio: Float,
+    /** A short window: the gear/trash icons sit in the name row instead of in a row below the card. */
+    compact: Boolean,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier.fillMaxSize()) {
@@ -413,7 +433,11 @@ private fun FacetPreviewPage(
         // moved back down from here, mirroring this screen's original gear/trash row below the
         // pager), so this row is name-only now.
         Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 6.dp, vertical = 8.dp),
+            modifier = if (compact) {
+                Modifier.fillMaxWidth().height(CAROUSEL_COMPACT_NAME_ROW_HEIGHT).padding(horizontal = 6.dp)
+            } else {
+                Modifier.fillMaxWidth().padding(horizontal = 6.dp, vertical = 8.dp)
+            },
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -440,6 +464,10 @@ private fun FacetPreviewPage(
                     tint = Accent,
                     modifier = Modifier.padding(start = 6.dp).testTag("facet_page_active_${facet.id}"),
                 )
+            }
+            if (compact) {
+                Spacer(modifier = Modifier.weight(1f))
+                FacetPageMenu(facet, canDelete, onEditFacetClick, onDeleteClick)
             }
         }
 
@@ -470,48 +498,84 @@ private fun FacetPreviewPage(
         // to a shared "centered facet" concept. Two direct icon buttons, not a "..." overflow
         // menu — with only two actions and both worth surfacing at a glance, the extra tap to
         // open a menu added nothing (see chat history).
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
-            horizontalArrangement = Arrangement.Center,
-        ) {
-            Row(horizontalArrangement = Arrangement.spacedBy(26.dp)) {
-                IconButton(
-                    onClick = onEditFacetClick,
-                    modifier = Modifier.testTag("facet_page_settings_${facet.id}"),
-                ) {
-                    Icon(Icons.Default.Settings, contentDescription = stringResource(R.string.facet_carousel_facet_settings), tint = Muted)
-                }
-                IconButton(
-                    onClick = onDeleteClick,
-                    enabled = canDelete,
-                    modifier = Modifier.testTag("facet_page_delete_${facet.id}"),
-                ) {
-                    Icon(
-                        Icons.Default.Delete,
-                        contentDescription = stringResource(R.string.facet_carousel_delete_facet),
-                        tint = if (canDelete) Muted else Faint,
-                    )
-                }
+        if (!compact) {
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                horizontalArrangement = Arrangement.Center,
+            ) {
+                FacetPageActions(facet, canDelete, onEditFacetClick, onDeleteClick, spacing = 26.dp)
             }
         }
     }
 }
 
+/** The facet's settings and delete actions behind a three-dot button — for a short window, where the name row is the only room for them. */
 @Composable
-private fun AddFacetPage(onClick: () -> Unit, showProPill: Boolean, modifier: Modifier = Modifier) {
+internal fun FacetPageMenu(facet: Facet, canDelete: Boolean, onEditFacetClick: () -> Unit, onDeleteClick: () -> Unit) {
+    var expanded by remember { mutableStateOf(false) }
+    Box {
+        IconButton(onClick = { expanded = true }, modifier = Modifier.testTag("facet_page_menu_${facet.id}")) {
+            Icon(Icons.Default.MoreVert, contentDescription = stringResource(R.string.drawer_search_more_options), tint = Muted)
+        }
+        ThemedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            ThemedDropdownMenuItem(
+                label = stringResource(R.string.facet_carousel_facet_settings),
+                onClick = { expanded = false; onEditFacetClick() },
+                modifier = Modifier.testTag("facet_page_settings_${facet.id}"),
+            )
+            ThemedDropdownMenuItem(
+                label = stringResource(R.string.facet_carousel_delete_facet),
+                onClick = { expanded = false; onDeleteClick() },
+                enabled = canDelete,
+                destructive = true,
+                modifier = Modifier.testTag("facet_page_delete_${facet.id}"),
+            )
+        }
+    }
+}
+
+/** The facet's settings and delete buttons, [spacing] apart. */
+@Composable
+private fun FacetPageActions(facet: Facet, canDelete: Boolean, onEditFacetClick: () -> Unit, onDeleteClick: () -> Unit, spacing: Dp) {
+    Row(horizontalArrangement = Arrangement.spacedBy(spacing)) {
+        IconButton(
+            onClick = onEditFacetClick,
+            modifier = Modifier.testTag("facet_page_settings_${facet.id}"),
+        ) {
+            Icon(Icons.Default.Settings, contentDescription = stringResource(R.string.facet_carousel_facet_settings), tint = Muted)
+        }
+        IconButton(
+            onClick = onDeleteClick,
+            enabled = canDelete,
+            modifier = Modifier.testTag("facet_page_delete_${facet.id}"),
+        ) {
+            Icon(
+                Icons.Default.Delete,
+                contentDescription = stringResource(R.string.facet_carousel_delete_facet),
+                tint = if (canDelete) Muted else Faint,
+            )
+        }
+    }
+}
+
+@Composable
+internal fun AddFacetPage(onClick: () -> Unit, showProPill: Boolean, compact: Boolean, modifier: Modifier = Modifier) {
     Column(modifier = modifier.fillMaxSize()) {
-        // Invisible stand-in for FacetPreviewPage's own name row — same Text structure so it
-        // measures to the exact same height, without hardcoding a dp guess. Without this, the
-        // Add-facet card (which has no header of its own) would start higher up than its
-        // neighboring facet cards and read as a different, taller size (see chat history). Any
-        // single line of this style measures the same; it's hidden and cleared from accessibility.
-        Text(
-            text = stringResource(R.string.facet_carousel_add_facet),
-            style = MaterialTheme.typography.titleMedium,
-            maxLines = 1,
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 6.dp, vertical = 8.dp).alpha(0f).clearAndSetSemantics { },
-        )
-        Column(
+        // Invisible stand-in for FacetPreviewPage's own name row — same height, so the Add-facet card (which has no
+        // header of its own) starts level with its neighbouring facet cards instead of reading as a different size.
+        // A short window's name row is a fixed height (it holds the gear/trash icons); otherwise a hidden line of
+        // the same text style measures the same, and is cleared from accessibility.
+        if (compact) {
+            Spacer(modifier = Modifier.fillMaxWidth().height(CAROUSEL_COMPACT_NAME_ROW_HEIGHT))
+        } else {
+            Text(
+                text = stringResource(R.string.facet_carousel_add_facet),
+                style = MaterialTheme.typography.titleMedium,
+                maxLines = 1,
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 6.dp, vertical = 8.dp).alpha(0f).clearAndSetSemantics { },
+            )
+        }
+        BoxWithConstraints(
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth()
@@ -524,45 +588,74 @@ private fun AddFacetPage(onClick: () -> Unit, showProPill: Boolean, modifier: Mo
                 .border(1.dp, Hairline, MaterialTheme.shapes.extraLarge)
                 .clickable(onClick = onClick)
                 .padding(18.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center,
+            contentAlignment = Alignment.Center,
         ) {
-            Box(
-                modifier = Modifier
-                    .size(width = 96.dp, height = 70.dp)
-                    .clip(RoundedCornerShape(12.dp)),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(text = stringResource(R.string.facet_carousel_add_glyph), style = FacetType.clock.copy(fontSize = 34.sp), color = Faint)
+            // Too short for the full content (a landscape phone's card): glyph beside the text, no subtitle.
+            if (maxHeight < ADD_FACET_FULL_CONTENT_HEIGHT) {
+                AddFacetCompactContent(showProPill)
+            } else {
+                AddFacetFullContent(showProPill)
             }
-            Row(modifier = Modifier.padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-                Text(text = stringResource(R.string.facet_carousel_add_facet), style = MaterialTheme.typography.bodyLarge, color = Ink)
-                if (showProPill) ProPill(modifier = Modifier.padding(start = 8.dp))
-            }
-            Text(
-                text = stringResource(R.string.facet_carousel_add_facet_subtitle),
-                style = MaterialTheme.typography.bodyMedium,
-                color = Muted,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.padding(top = 4.dp),
-            )
         }
 
-        // Invisible stand-in for FacetPreviewPage's own bottom menu row — same reasoning as the
-        // header spacer above, now that the menu lives below the card instead of beside the name.
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp).alpha(0f),
-            horizontalArrangement = Arrangement.Center,
-        ) {
-            Row(horizontalArrangement = Arrangement.spacedBy(26.dp)) {
-                IconButton(onClick = {}, enabled = false) {
-                    Icon(Icons.Default.Settings, contentDescription = null)
-                }
-                IconButton(onClick = {}, enabled = false) {
-                    Icon(Icons.Default.Delete, contentDescription = null)
-                }
+        // A short window has no bottom row: its menu is in the name row.
+        if (!compact) AddFacetFooterSpacer()
+    }
+}
+
+/** Invisible stand-in for FacetPreviewPage's own bottom gear/trash row — same reasoning as the header spacer in [AddFacetPage]. */
+@Composable
+private fun AddFacetFooterSpacer() {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp).alpha(0f),
+        horizontalArrangement = Arrangement.Center,
+    ) {
+        Row(horizontalArrangement = Arrangement.spacedBy(26.dp)) {
+            IconButton(onClick = {}, enabled = false) {
+                Icon(Icons.Default.Settings, contentDescription = null)
+            }
+            IconButton(onClick = {}, enabled = false) {
+                Icon(Icons.Default.Delete, contentDescription = null)
             }
         }
+    }
+}
+
+@Composable
+private fun AddFacetFullContent(showProPill: Boolean) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Box(
+            modifier = Modifier
+                .size(width = 96.dp, height = 70.dp)
+                .clip(RoundedCornerShape(12.dp)),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(text = stringResource(R.string.facet_carousel_add_glyph), style = FacetType.clock.copy(fontSize = 34.sp), color = Faint)
+        }
+        AddFacetTitle(showProPill, modifier = Modifier.padding(top = 8.dp))
+        Text(
+            text = stringResource(R.string.facet_carousel_add_facet_subtitle),
+            style = MaterialTheme.typography.bodyMedium,
+            color = Muted,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.padding(top = 4.dp),
+        )
+    }
+}
+
+@Composable
+private fun AddFacetCompactContent(showProPill: Boolean) {
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        Text(text = stringResource(R.string.facet_carousel_add_glyph), style = FacetType.clock.copy(fontSize = 34.sp), color = Faint)
+        AddFacetTitle(showProPill)
+    }
+}
+
+@Composable
+private fun AddFacetTitle(showProPill: Boolean, modifier: Modifier = Modifier) {
+    Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically) {
+        Text(text = stringResource(R.string.facet_carousel_add_facet), style = MaterialTheme.typography.bodyLarge, color = Ink)
+        if (showProPill) ProPill(modifier = Modifier.padding(start = 8.dp))
     }
 }
 

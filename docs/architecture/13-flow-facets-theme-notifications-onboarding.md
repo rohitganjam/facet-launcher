@@ -93,7 +93,10 @@ flowchart TB
   previews the clock pane, apps pane and dock of the landscape layout). In the carousel `0.55f` is an upper
   bound: the dots and Launcher-settings row are measured first and the card shrinks, keeping the screen's
   aspect ratio, to fit the height left (floor `CAROUSEL_MIN_CARD_HEIGHT`), so tablets and foldables never
-  push the settings row off screen; the neighbour peek is the width the fitted card leaves. Its state comes from
+  push the settings row off screen; the neighbour peek is the width the fitted card leaves. In a window shorter
+  than 480dp (a landscape phone) each page drops its gear/trash row below the card: Facet settings and Delete facet
+  move behind a three-dot menu in the name row (`FacetPageMenu`), which leaves the card room to be its true size, and
+  the Add facet card switches to a compact glyph-beside-title layout when it is too short for its subtitle. Its state comes from
   `ResolvedFacetStyle.toHomeScreenState(landscape, ...)`, the builder `HomeDrawerRoute` uses too, with
   no-op actions. A transparent layer above takes every tap: the carousel passes `onClick` (apply the
   facet), the Appearance card passes none and stays read-only without blocking the screen's scroll.
