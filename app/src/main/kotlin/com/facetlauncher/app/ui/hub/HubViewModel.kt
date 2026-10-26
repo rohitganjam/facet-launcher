@@ -211,15 +211,16 @@ class HubViewModel @Inject constructor(
     private suspend fun commitEntities(placements: List<WidgetPlacementEntity>) {
         placements.forEach { placement ->
             val existing = widgetPlacementRepository.getById(placement.appWidgetId) ?: return@forEach
-            if (existing.row != placement.row || existing.col != placement.col ||
-                existing.colSpan != placement.colSpan || existing.rowSpan != placement.rowSpan
-            ) {
+            if (!existing.hasSameFrame(placement)) {
                 widgetPlacementRepository.upsert(
                     existing.copy(row = placement.row, col = placement.col, colSpan = placement.colSpan, rowSpan = placement.rowSpan),
                 )
             }
         }
     }
+
+    private fun WidgetPlacementEntity.hasSameFrame(other: WidgetPlacementEntity): Boolean =
+        row == other.row && col == other.col && colSpan == other.colSpan && rowSpan == other.rowSpan
 
     /**
      * A minimal, throwaway [WidgetPlacementEntity] projection of the latest known widgets —

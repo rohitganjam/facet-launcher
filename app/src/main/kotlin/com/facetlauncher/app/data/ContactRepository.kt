@@ -191,28 +191,7 @@ class ContactRepository @Inject constructor(
      * only after the fragile path was tried and failed).
      */
     private fun dynamicConnections(contactId: String, phoneNumbers: List<LabeledValue>): List<ContactConnection> {
-        data class Row(val dataId: Long, val mimeType: String, val rawContactId: Long, val data1: String?)
-
-        val dataProjection = arrayOf(ContactsContract.Data._ID, ContactsContract.Data.MIMETYPE, ContactsContract.Data.RAW_CONTACT_ID, ContactsContract.Data.DATA1)
-        val rows = contentResolver.query(
-            ContactsContract.Data.CONTENT_URI,
-            dataProjection,
-            "${ContactsContract.Data.CONTACT_ID} = ?",
-            arrayOf(contactId),
-            null,
-        )?.use { cursor ->
-            val idCol = cursor.getColumnIndexOrThrow(ContactsContract.Data._ID)
-            val mimeCol = cursor.getColumnIndexOrThrow(ContactsContract.Data.MIMETYPE)
-            val rawCol = cursor.getColumnIndexOrThrow(ContactsContract.Data.RAW_CONTACT_ID)
-            val data1Col = cursor.getColumnIndexOrThrow(ContactsContract.Data.DATA1)
-            buildList {
-                while (cursor.moveToNext()) {
-                    val mimeType = cursor.getString(mimeCol) ?: continue
-                    if (mimeType in STANDARD_MIMETYPES) continue
-                    add(Row(cursor.getLong(idCol), mimeType, cursor.getLong(rawCol), cursor.getString(data1Col)))
-                }
-            }
-        }.orEmpty()
+        val rows = queryCustomDataRows(contactId)
         if (rows.isEmpty()) return emptyList()
 
         val rawContactIds = rows.map { it.rawContactId }.distinct()
@@ -226,47 +205,77 @@ class ContactRepository @Inject constructor(
                 Triple(packageName, row.dataId, row.data1)
             }
             .distinctBy { (packageName, _, _) -> packageName } // one connection per contributing app, not per data row
-            .mapNotNull { (packageName, dataId, data1) ->
-                val packageManager = context.packageManager
-                val appInfo = runCatching { packageManager.getApplicationInfo(packageName, 0) }.getOrNull() ?: return@mapNotNull null
-                val uri = Uri.withAppendedPath(ContactsContract.Data.CONTENT_URI, dataId.toString())
-                val intent = Intent(Intent.ACTION_VIEW, uri).setPackage(packageName)
-                // The account-owning app isn't necessarily a *messaging* connection — Google
-                // Play services and Meet, for instance, both own auxiliary Data rows Google's own
-                // sync adapter attaches to any Google-account contact (capability/metadata bits,
-                // not a real "way to reach this person"), and neither actually registers a
-                // handler for its own row's ACTION_VIEW — tapping them did nothing (confirmed
-                // on-device, see chat history). Requiring the owning app itself to resolve this
-                // exact intent is what tells a genuine contact-method integration (WhatsApp,
-                // Telegram, Signal — anything that registers to open its own facet row) apart
-                // from incidental sync metadata, with no hardcoded app allow/deny list either way.
-                val resolved = packageManager.resolveActivity(intent, 0) ?: return@mapNotNull null
-                // resolveActivity finding a match only means an intent-filter exists — it says
-                // nothing about whether *this* caller is allowed to actually start it. Meet's own
-                // audio-call action activity resolves fine but requires the caller to hold
-                // CALL_PHONE, which this launcher deliberately doesn't request (its own Call
-                // action already avoids that by using ACTION_DIAL, not ACTION_CALL) — starting it
-                // anyway throws a SecurityException at launch time, which reads as "does nothing"
-                // to the user (confirmed on-device via a Permission Denial in logcat — see chat
-                // history). Checking the resolved activity's own required permission up front
-                // catches this before it's ever shown, rather than failing silently on tap.
-                val requiredPermission = resolved.activityInfo?.permission
-                if (requiredPermission != null && context.checkSelfPermission(requiredPermission) != PackageManager.PERMISSION_GRANTED) {
-                    return@mapNotNull null
+            .mapNotNull { (packageName, dataId, data1) -> connectionFor(packageName, dataId, data1, phoneNumbers) }
+    }
+
+    private data class CustomDataRow(val dataId: Long, val mimeType: String, val rawContactId: Long, val data1: String?)
+
+    /** The contact's Data rows that an app's sync adapter added — everything outside [STANDARD_MIMETYPES]. */
+    private fun queryCustomDataRows(contactId: String): List<CustomDataRow> {
+        val dataProjection = arrayOf(ContactsContract.Data._ID, ContactsContract.Data.MIMETYPE, ContactsContract.Data.RAW_CONTACT_ID, ContactsContract.Data.DATA1)
+        return contentResolver.query(
+            ContactsContract.Data.CONTENT_URI,
+            dataProjection,
+            "${ContactsContract.Data.CONTACT_ID} = ?",
+            arrayOf(contactId),
+            null,
+        )?.use { cursor ->
+            val idCol = cursor.getColumnIndexOrThrow(ContactsContract.Data._ID)
+            val mimeCol = cursor.getColumnIndexOrThrow(ContactsContract.Data.MIMETYPE)
+            val rawCol = cursor.getColumnIndexOrThrow(ContactsContract.Data.RAW_CONTACT_ID)
+            val data1Col = cursor.getColumnIndexOrThrow(ContactsContract.Data.DATA1)
+            buildList {
+                while (cursor.moveToNext()) {
+                    val mimeType = cursor.getString(mimeCol)
+                    if (mimeType != null && mimeType !in STANDARD_MIMETYPES) {
+                        add(CustomDataRow(cursor.getLong(idCol), mimeType, cursor.getLong(rawCol), cursor.getString(data1Col)))
+                    }
                 }
-                val label = packageManager.getApplicationLabel(appInfo).toString()
-                val icon = runCatching { packageManager.getApplicationIcon(packageName).toBitmap().asImageBitmap() }.getOrNull()
-                // WhatsApp gets its own type purely so it sorts at its designated fixed-order
-                // position (matching the approved Phase 9 spec) — it's discovered through the
-                // exact same Data-row mechanism as every other app here, no special-casing of
-                // *whether* it appears, only of *where in the list* it lands once it does.
-                val type = if (packageName == "com.whatsapp") ContactConnectionType.WHATSAPP else ContactConnectionType.OTHER
-                // WhatsApp's identity is the phone number it's tied to; anything else falls back
-                // to the row's own DATA1 (many sync adapters store a readable handle/username
-                // there), or no subtitle at all when neither is available.
-                val labeledValue = if (type == ContactConnectionType.WHATSAPP) phoneNumbers.firstOrNull() else data1?.let { LabeledValue(it, null) }
-                ContactConnection(type, label, icon, ConnectionDetail.Single(labeledValue?.value.orEmpty(), labeledValue?.typeLabel, intent))
             }
+        }.orEmpty()
+    }
+
+    /** The connection [packageName] offers for one of its Data rows, or `null` when that app can't actually open it. */
+    private fun connectionFor(packageName: String, dataId: Long, data1: String?, phoneNumbers: List<LabeledValue>): ContactConnection? {
+        val packageManager = context.packageManager
+        val appInfo = runCatching { packageManager.getApplicationInfo(packageName, 0) }.getOrNull() ?: return null
+        val uri = Uri.withAppendedPath(ContactsContract.Data.CONTENT_URI, dataId.toString())
+        val intent = Intent(Intent.ACTION_VIEW, uri).setPackage(packageName)
+        // The account-owning app isn't necessarily a *messaging* connection — Google
+        // Play services and Meet, for instance, both own auxiliary Data rows Google's own
+        // sync adapter attaches to any Google-account contact (capability/metadata bits,
+        // not a real "way to reach this person"), and neither actually registers a
+        // handler for its own row's ACTION_VIEW — tapping them did nothing (confirmed
+        // on-device, see chat history). Requiring the owning app itself to resolve this
+        // exact intent is what tells a genuine contact-method integration (WhatsApp,
+        // Telegram, Signal — anything that registers to open its own facet row) apart
+        // from incidental sync metadata, with no hardcoded app allow/deny list either way.
+        val resolved = packageManager.resolveActivity(intent, 0) ?: return null
+        // resolveActivity finding a match only means an intent-filter exists — it says
+        // nothing about whether *this* caller is allowed to actually start it. Meet's own
+        // audio-call action activity resolves fine but requires the caller to hold
+        // CALL_PHONE, which this launcher deliberately doesn't request (its own Call
+        // action already avoids that by using ACTION_DIAL, not ACTION_CALL) — starting it
+        // anyway throws a SecurityException at launch time, which reads as "does nothing"
+        // to the user (confirmed on-device via a Permission Denial in logcat — see chat
+        // history). Checking the resolved activity's own required permission up front
+        // catches this before it's ever shown, rather than failing silently on tap.
+        val requiredPermission = resolved.activityInfo?.permission
+        if (requiredPermission != null && context.checkSelfPermission(requiredPermission) != PackageManager.PERMISSION_GRANTED) {
+            return null
+        }
+        val label = packageManager.getApplicationLabel(appInfo).toString()
+        val icon = runCatching { packageManager.getApplicationIcon(packageName).toBitmap().asImageBitmap() }.getOrNull()
+        // WhatsApp gets its own type purely so it sorts at its designated fixed-order
+        // position (matching the approved Phase 9 spec) — it's discovered through the
+        // exact same Data-row mechanism as every other app here, no special-casing of
+        // *whether* it appears, only of *where in the list* it lands once it does.
+        val type = if (packageName == "com.whatsapp") ContactConnectionType.WHATSAPP else ContactConnectionType.OTHER
+        // WhatsApp's identity is the phone number it's tied to; anything else falls back
+        // to the row's own DATA1 (many sync adapters store a readable handle/username
+        // there), or no subtitle at all when neither is available.
+        val labeledValue = if (type == ContactConnectionType.WHATSAPP) phoneNumbers.firstOrNull() else data1?.let { LabeledValue(it, null) }
+        return ContactConnection(type, label, icon, ConnectionDetail.Single(labeledValue?.value.orEmpty(), labeledValue?.typeLabel, intent))
     }
 
     private fun queryAccountTypes(rawContactIds: List<Long>): Map<Long, String> {

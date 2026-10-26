@@ -76,9 +76,9 @@ open class CalendarRepository @Inject constructor(
                 while (cursor.moveToNext()) {
                     val calendarId = cursor.getLong(calendarIdCol).toString()
                     val isAllDay = cursor.getInt(allDayCol) != 0
-                    if (calendarIds != null && calendarId !in calendarIds) continue
-                    if (isAllDay && !includeAllDay) continue
-                    if (isAllDay && !isOnTodayOrTomorrow(cursor.getLong(beginCol), today)) continue
+                    val inSelectedCalendar = calendarIds == null || calendarId in calendarIds
+                    val inAllDayWindow = !isAllDay || (includeAllDay && isOnTodayOrTomorrow(cursor.getLong(beginCol), today))
+                    if (!inSelectedCalendar || !inAllDayWindow) continue
                     add(
                         CalendarEvent(
                             id = cursor.getLong(eventIdCol),

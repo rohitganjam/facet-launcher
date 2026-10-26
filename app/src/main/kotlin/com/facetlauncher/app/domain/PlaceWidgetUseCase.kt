@@ -29,20 +29,19 @@ class PlaceWidgetUseCase @Inject constructor() {
         preferredCol: Int? = null,
     ): PlaceWidgetResult {
         if (existing.size >= HUB_MAX_WIDGETS) return PlaceWidgetResult.HubFull
-        if (preferredRow != null && preferredCol != null &&
-            preferredRow in 0..(HUB_MAX_ROWS - rowSpan) && preferredCol in 0..(HUB_COLUMNS - colSpan) &&
-            existing.none { placed -> rectanglesOverlap(preferredRow, preferredCol, colSpan, rowSpan, placed.row, placed.col, placed.colSpan, placed.rowSpan) }
-        ) {
+        if (preferredRow != null && preferredCol != null && isFree(existing, preferredRow, preferredCol, colSpan, rowSpan)) {
             return PlaceWidgetResult.Placed(preferredRow, preferredCol)
         }
         for (row in 0..(HUB_MAX_ROWS - rowSpan)) {
             for (col in 0..(HUB_COLUMNS - colSpan)) {
-                val fits = existing.none { placed ->
-                    rectanglesOverlap(row, col, colSpan, rowSpan, placed.row, placed.col, placed.colSpan, placed.rowSpan)
-                }
-                if (fits) return PlaceWidgetResult.Placed(row, col)
+                if (isFree(existing, row, col, colSpan, rowSpan)) return PlaceWidgetResult.Placed(row, col)
             }
         }
         return PlaceWidgetResult.HubFull
     }
+
+    /** Whether a [colSpan]×[rowSpan] rectangle at [row],[col] lies inside the grid and overlaps none of [existing]. */
+    private fun isFree(existing: List<WidgetPlacementEntity>, row: Int, col: Int, colSpan: Int, rowSpan: Int): Boolean =
+        row in 0..(HUB_MAX_ROWS - rowSpan) && col in 0..(HUB_COLUMNS - colSpan) &&
+            existing.none { placed -> rectanglesOverlap(row, col, colSpan, rowSpan, placed.row, placed.col, placed.colSpan, placed.rowSpan) }
 }

@@ -166,67 +166,17 @@ fun AppContextMenu(
     val notificationsFlow = remember(app.packageName, app.userHandle, appMenuNotifications) { appMenuNotifications.observe(app) }
     val notificationsState by notificationsFlow.collectAsStateWithLifecycle(initialValue = AppNotificationsState(enabled = false))
 
-    val favoritesName = stringResource(R.string.quick_placement_favorites)
-    val dockName = stringResource(R.string.quick_placement_dock)
-    val placementActions = buildList {
-        quickAddState.favoritesAction?.let { action ->
-            add(
-                PlacementActionUi(
-                    tag = "app_context_menu_add_to_favorites",
-                    icon = Icons.Outlined.StarBorder,
-                    label = quickPlacementLabel(action, favoritesName),
-                    scope = PlacementScope(action.facetName),
-                    isRemove = action is QuickPlacementAction.Remove,
-                    onClick = {
-                        onDismissRequest()
-                        onFavoritesAction(app, action)
-                    },
-                ),
-            )
-        }
-        quickAddState.dockAction?.let { action ->
-            add(
-                PlacementActionUi(
-                    tag = "app_context_menu_add_to_dock",
-                    icon = Icons.Outlined.Dock,
-                    label = quickPlacementLabel(action, dockName),
-                    scope = PlacementScope(action.facetName),
-                    isRemove = action is QuickPlacementAction.Remove,
-                    onClick = {
-                        onDismissRequest()
-                        onDockAction(app, action)
-                    },
-                ),
-            )
-        }
-        if (folderCandidates != null) {
-            add(
-                PlacementActionUi(
-                    tag = "app_context_menu_add_to_folder",
-                    icon = Icons.Outlined.FolderIcon,
-                    label = stringResource(R.string.folder_add_to_folder),
-                    scope = null,
-                    isRemove = false,
-                    onClick = { addingToFolder = true },
-                ),
-            )
-        }
-        if (removeFromFolderId != null) {
-            add(
-                PlacementActionUi(
-                    tag = "app_context_menu_remove_from_folder",
-                    icon = Icons.Outlined.FolderIcon,
-                    label = stringResource(R.string.folder_remove_from_folder),
-                    scope = null,
-                    isRemove = true,
-                    onClick = {
-                        onDismissRequest()
-                        onRemoveFromFolder(app, removeFromFolderId)
-                    },
-                ),
-            )
-        }
-    }.toImmutableList()
+    val placementActions = placementActionsFor(
+        app = app,
+        quickAddState = quickAddState,
+        hasFolders = folderCandidates != null,
+        removeFromFolderId = removeFromFolderId,
+        onDismissRequest = onDismissRequest,
+        onFavoritesAction = onFavoritesAction,
+        onDockAction = onDockAction,
+        onRemoveFromFolder = onRemoveFromFolder,
+        onAddToFolder = { addingToFolder = true },
+    )
 
     ThemedModalBottomSheet(
         onDismissRequest = onDismissRequest,
@@ -320,6 +270,86 @@ fun AppContextMenu(
         )
     }
 }
+
+/** The tiles under the notifications zone: Favorites and Dock when offered, then "Add to folder" or "Remove from folder". */
+@Composable
+private fun placementActionsFor(
+    app: AppInfo,
+    quickAddState: QuickAddState,
+    hasFolders: Boolean,
+    removeFromFolderId: Long?,
+    onDismissRequest: () -> Unit,
+    onFavoritesAction: (AppInfo, QuickPlacementAction) -> Unit,
+    onDockAction: (AppInfo, QuickPlacementAction) -> Unit,
+    onRemoveFromFolder: (AppInfo, Long) -> Unit,
+    onAddToFolder: () -> Unit,
+): ImmutableList<PlacementActionUi> {
+    val favoritesName = stringResource(R.string.quick_placement_favorites)
+    val dockName = stringResource(R.string.quick_placement_dock)
+    val addToFolderLabel = stringResource(R.string.folder_add_to_folder)
+    val removeFromFolderLabel = stringResource(R.string.folder_remove_from_folder)
+    return buildList {
+        quickAddState.favoritesAction?.let { action ->
+            add(
+                quickPlacementTile("app_context_menu_add_to_favorites", Icons.Outlined.StarBorder, quickPlacementLabel(action, favoritesName), action) {
+                    onDismissRequest()
+                    onFavoritesAction(app, action)
+                },
+            )
+        }
+        quickAddState.dockAction?.let { action ->
+            add(
+                quickPlacementTile("app_context_menu_add_to_dock", Icons.Outlined.Dock, quickPlacementLabel(action, dockName), action) {
+                    onDismissRequest()
+                    onDockAction(app, action)
+                },
+            )
+        }
+        if (hasFolders) {
+            add(
+                PlacementActionUi(
+                    tag = "app_context_menu_add_to_folder",
+                    icon = Icons.Outlined.FolderIcon,
+                    label = addToFolderLabel,
+                    scope = null,
+                    isRemove = false,
+                    onClick = onAddToFolder,
+                ),
+            )
+        }
+        if (removeFromFolderId != null) {
+            add(
+                PlacementActionUi(
+                    tag = "app_context_menu_remove_from_folder",
+                    icon = Icons.Outlined.FolderIcon,
+                    label = removeFromFolderLabel,
+                    scope = null,
+                    isRemove = true,
+                    onClick = {
+                        onDismissRequest()
+                        onRemoveFromFolder(app, removeFromFolderId)
+                    },
+                ),
+            )
+        }
+    }.toImmutableList()
+}
+
+/** A Favorites or Dock tile: filled "Remove" or an add, with a pill naming the list's scope. */
+private fun quickPlacementTile(
+    tag: String,
+    icon: ImageVector,
+    label: String,
+    action: QuickPlacementAction,
+    onClick: () -> Unit,
+) = PlacementActionUi(
+    tag = tag,
+    icon = icon,
+    label = label,
+    scope = PlacementScope(action.facetName),
+    isRemove = action is QuickPlacementAction.Remove,
+    onClick = onClick,
+)
 
 /** The sheet's main page: header, then the notifications zone and the placement actions, each behind a hairline and each left out when empty. */
 @Composable
