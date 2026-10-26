@@ -129,6 +129,7 @@ import com.facetlauncher.app.ui.components.AppContextMenu
 import com.facetlauncher.app.ui.components.AppIcon
 import com.facetlauncher.app.ui.components.AppIconSize
 import com.facetlauncher.app.ui.components.AppMenuNotifications
+import com.facetlauncher.app.ui.components.BlockHomeSwipesWhileShown
 import com.facetlauncher.app.ui.components.DismissOnHomePress
 import com.facetlauncher.app.ui.components.FolderContentsSheet
 import com.facetlauncher.app.ui.components.FolderSheetHeaderAction
@@ -439,6 +440,8 @@ private fun RailSelectionIndicator(selection: RailSelection, modifier: Modifier 
 /** Phase 9's connections sheet — a scrim and a slide-up-from-bottom sheet over the whole drawer while [contact] is set. */
 @Composable
 private fun BoxScope.ContactConnectionsOverlay(contact: ContactInfo?, connections: ImmutableList<ContactConnection>, onDismiss: () -> Unit) {
+    // Drags on the sheet belong to its own list; without this the drawer's pull-to-close takes a downward drag before the list can scroll back up.
+    if (contact != null) BlockHomeSwipesWhileShown()
     AnimatedVisibility(
         visible = contact != null,
         enter = fadeIn(animationSpec = tween(240)),

@@ -45,6 +45,7 @@ import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.data.model.RecentlyInstalledPosition
 import com.facetlauncher.app.data.model.SettingsSearchEntry
 import com.facetlauncher.app.ui.components.AppMenuNotifications
+import com.facetlauncher.app.ui.components.LocalHomeSwipeGate
 import com.facetlauncher.app.ui.drawer.AppDrawerScreen
 import com.facetlauncher.app.ui.drawer.DrawerAppearance
 import com.facetlauncher.app.ui.drawer.DrawerItemActions
@@ -150,8 +151,9 @@ internal fun HomeAppDrawerOverlay(
         }
     }
     val isSearching = query.isNotBlank()
-    val scrollConnection = remember(listState, gridState, searchListState, state.settings.drawerPresentation, isSearching) {
-        drawerNestedScroll(drawer, state.settings.drawerPresentation, isSearching, listState, gridState, searchListState)
+    val swipeGate = LocalHomeSwipeGate.current
+    val scrollConnection = remember(listState, gridState, searchListState, state.settings.drawerPresentation, isSearching, swipeGate) {
+        drawerNestedScroll(drawer, state.settings.drawerPresentation, isSearching, listState, gridState, searchListState) { swipeGate?.isBlocked == true }
     }
 
     HomeDrawerScreen(
@@ -332,15 +334,17 @@ internal fun HomePrivateSpaceOverlay(
 /**
  * Pulls the drawer shut when a downward drag meets the top of its list. Only real finger movement
  * drives it: fling deltas are the list's own deceleration, and letting them call `dragBy` would
- * re-arm the drag and snap over the settle animation, stranding the drawer partway.
+ * re-arm the drag and snap over the settle animation, stranding the drawer partway. It stands down while
+ * [swipeBlocked] (a sheet is open over the drawer), so a drag on that sheet's own list is not taken as a pull-to-close.
  */
-private fun drawerNestedScroll(
+internal fun drawerNestedScroll(
     drawer: SwipeAxisState,
     presentation: DrawerPresentation,
     isSearching: Boolean,
     listState: LazyListState,
     gridState: LazyGridState,
     searchListState: LazyListState,
+    swipeBlocked: () -> Boolean = { false },
 ): NestedScrollConnection = object : NestedScrollConnection {
     override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
         // Search results are always their own LazyColumn, whatever the browse presentation: check
@@ -350,7 +354,7 @@ private fun drawerNestedScroll(
             presentation == DrawerPresentation.GRID -> gridState.firstVisibleItemIndex == 0 && gridState.firstVisibleItemScrollOffset == 0
             else -> listState.firstVisibleItemIndex == 0 && listState.firstVisibleItemScrollOffset == 0
         }
-        val pullsClosed = source == NestedScrollSource.Drag && available.y > 0f && atTop && drawer.progress.value > 0f
+        val pullsClosed = source == NestedScrollSource.Drag && available.y > 0f && atTop && drawer.progress.value > 0f && !swipeBlocked()
         if (pullsClosed) drawer.dragBy(-available.y)
         return if (pullsClosed) available else Offset.Zero
     }
