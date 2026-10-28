@@ -105,7 +105,7 @@ flowchart TB
             ENM["EntitlementModule\n@Binds PlayEntitlementRepository\n+ 2 @BindsOptionalOf hooks"]
             WTM["WeatherModule\n@Binds MetWeatherApi to WeatherApi\n@Binds RoomWeatherStore to WeatherStore\n@Binds AndroidPlaceGeocoder to PlaceGeocoder"]
         end
-        REPOS["47 @Singleton data classes (42 repositories)\n@Singleton class X @Inject constructor(...)\n(no module — constructor injection)"]
+        REPOS["48 @Singleton data classes (42 repositories)\n@Singleton class X @Inject constructor(...)\n(no module — constructor injection)"]
         MODS --> REPOS
     end
 
@@ -137,6 +137,7 @@ flowchart TB
 | `FacetDatabase` | `@Singleton` | `DatabaseModule` — `Room.databaseBuilder(..., "facet.db").addMigrations(*Migrations.ALL).fallbackToDestructiveMigrationOnDowngrade(true)` | One DB instance; **no** destructive fallback on upgrade (a missing migration crashes loudly by design). |
 | DAOs (7) | unscoped | `@Provides fun provideXDao(db) = db.xDao()` | Room caches DAO instances internally, so unscoped is free. |
 | `DataStore<Preferences>` (3) | `@Singleton` | `DataStoreModule` via `preferencesDataStore(name = "facet_settings")` (unqualified) and `preferencesDataStore(name = "facet_automation")` (`@AutomationDataStore`) and `preferencesDataStore(name = "facet_entitlement")` (`@EntitlementDataStore`) delegates | DataStore requires exactly one instance per file. Automation state lives in its own file so it stays out of `LauncherSettings` re-emissions and backups. |
+| `StyledIconCache` | `@Singleton` | Constructor injection; `LauncherActivity` injects it and provides it as `LocalStyledIconCache` | Makes the glyph-only and outline icon pictures on demand and holds each weakly, keyed by the icon bitmap, so a rescan that decodes fresh icons recomputes only what is on screen. A bare instance is the local's default, for previews and tests. |
 | `EntitlementRepository` | `@Singleton` | `EntitlementModule` `@Binds` `PlayEntitlementRepository`; two `@BindsOptionalOf` hooks (`EntitlementOverride`, `DebugSettingsEntry`) | The debug source set (`DebugBindingsModule`) fills the optional hooks; a release build leaves them empty, so the override and its Settings row exist only in debug. The benchmark source set provides an `EntitlementOverride` that always forces Pro (a measurement build, never shipped). |
 | `WeatherApi`, `WeatherStore`, `PlaceGeocoder` | `@Singleton` | `WeatherModule` `@Binds` `MetWeatherApi`, `RoomWeatherStore` and `AndroidPlaceGeocoder` | The seams the weather code is tested through: tests pass a fake API, an in-memory store and a fake geocoder, so no test touches the network. |
 | Repositories (42; with `NotificationOpener`, `NotificationActionController`, `MetWeatherApi`, `RoomWeatherStore` and `AndroidPlaceGeocoder`, 47 `@Singleton` classes in `data/`) | `@Singleton` | Constructor injection, no module | They hold `callbackFlow` registrations and in-memory state (`NotificationBadgeRepository.badgeCounts`); a single instance is required for that state to be shared. |

@@ -55,6 +55,8 @@
     <string name="icon_render_system_default">System default</string>
     <string name="icon_render_monochrome_black_white">Monochrome (Black &amp; white)</string>
     <string name="icon_render_monochrome_accent">Monochrome (Accent)</string>
+    <string name="icon_render_glyph_accent">Glyph (Accent)</string>
+    <string name="icon_render_outline_accent">Outline (Accent)</string>
     <string name="icon_shape_squircle">Squircle</string>
     <string name="icon_shape_rounded">Rounded</string>
     <string name="icon_shape_circle">Circle</string>

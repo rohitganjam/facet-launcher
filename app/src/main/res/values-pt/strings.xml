@@ -49,6 +49,8 @@
     <string name="icon_render_system_default">Padrão do sistema</string>
     <string name="icon_render_monochrome_black_white">Monocromático (preto e branco)</string>
     <string name="icon_render_monochrome_accent">Monocromático (destaque)</string>
+    <string name="icon_render_glyph_accent">Glifo (destaque)</string>
+    <string name="icon_render_outline_accent">Contorno (destaque)</string>
 
     <!-- ClockTemplateId -->
     <string name="clock_template_light_stack">Pilha leve</string>

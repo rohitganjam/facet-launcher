@@ -72,7 +72,7 @@ flowchart TB
   The two moved-out screens each show the same live `AppearancePreviewCard` above their controls and share
   `AppearanceSettingsViewModel` (a separate instance per back-stack entry). `DockAppsAppearanceScreen` holds the `LOOK`
   fields above, always shown, in four cards on the global screen (three on a facet's): an "Allow landscape mode" switch (global only, `SettingsToggleRow`; off hides the Landscape alignment card), the shared look (dock style, list layout, presentation or grid rows), then "Portrait alignment" and "Landscape alignment" under `SettingsSectionHeader`s. Each alignment card has the layout's horizontal row (row position, or column alignment for two columns, none for a grid) and the list position. Landscape's rows add a "Same as portrait" choice, stored as `null`; the preview card stays portrait-shaped; `FontsThemesIconsScreen` holds three cards, each under a `SettingsSectionHeader`: "Theme"
-  (launcher theme, status bar icons, accent), "Icons" (icon style and shape) and "Fonts" (launcher font style, font color, size, weight, then a `FontPreviewRow` of sample text in
+  (launcher theme, status bar icons, accent), "Icons" (icon style and shape; the style is system default, monochrome black and white or accent, or glyph or outline in the accent — those two draw from the app's themed monochrome layer when it ships one, else from the plain icon by plate removal (a flat colour, else an edge-walled fill that follows gradients) or edge detection, and draw the whole icon where neither works, its lightness anchored so the accent sits at the accent's own lightness among the icon's tones, such as art-heavy icons, see `IconStyler`) and "Fonts" (launcher font style, font color, size, weight, then a `FontPreviewRow` of sample text in
   Home's styles as the card's last row). Row titles on the dock screen:
   `dockDisplayMode` → "Show Dock apps as", `appRowPosition` → "Home Apps Alignment",
   `appRowPresentation` → "Show Home apps as", `appListVerticalAlignment` → "Home Apps list
@@ -238,7 +238,7 @@ flowchart LR
     SW --> CS
     T --> TYPO["facetTypography(launcherFontOption.fontFamily,\nhomeAppsFontWeight.resolve(), fontScaleOption.scale)"]
     CS --> MT["MaterialTheme(colorScheme, typography, shapes = M3 defaults)"]
-    T --> LOCALS["CompositionLocals: LocalAccentFromSystem, LocalCustomAccentSwatch,\nLocalWallpaperAccentRole, LocalDynamicColorRefreshSignal, LocalIconRenderMode, LocalIconShape"]
+    T --> LOCALS["CompositionLocals: LocalAccentFromSystem, LocalCustomAccentSwatch,\nLocalWallpaperAccentRole, LocalDynamicColorRefreshSignal, LocalIconRenderMode, LocalIconShape\n(LocalStyledIconCache is provided by LauncherActivity)"]
     MT --> APP[every screen]
     LOCALS --> APP
 ```

@@ -11,6 +11,7 @@ app/src/main/kotlin/com/facetlauncher/app/
 ├── data/                          (49)  @Singleton Repositories — the only layer that touches
 │   │                                    Room, DataStore, or Android framework services
 │   ├── di/                        (8)   Hilt modules: AppModule, DatabaseModule, DataStoreModule, WidgetModule, EntitlementModule, WeatherModule + the @AutomationDataStore and @EntitlementDataStore qualifiers
+│   ├── icon/                      (4)   The glyph-only and outline icon pictures: IconMasks and IconStyler (pure pixel code), IconLayers (reads an app's themed monochrome layer), StyledIconCache (makes them on demand, off the main thread)
 │   ├── local/                     (18)  Room: FacetDatabase, 9 entities, 7 DAOs, Converters, Migrations
 │   ├── places/                    (4)   Place names and cities: CityRepository over the bundled CityList (assets/cities.tsv), PlaceGeocoder + AndroidPlaceGeocoder (the device Geocoder), GeoDistance
 │   ├── weather/                   (6)   The weather forecast: MetWeatherApi (the only network code), MetForecastParser, WeatherRefreshPolicy (the refresh gate), WeatherRepository, WeatherStore + RoomWeatherStore (see 18)
@@ -85,6 +86,7 @@ Both test source sets mirror `main`'s packages; the class under test and its tes
 ```
 app/src/test/kotlin/com/facetlauncher/app/          JVM (JUnit4 + Robolectric + coroutines-test)
 ├── data/          39   one *RepositoryTest per repository + shared fakes (FolderTestFakes.kt — FakeFolderDao, FakeAppPlacementDao, FakeFolderPlacementDao, …)
+│   ├── icon/       3   IconMasksTest, IconStylerTest (JVM, no Android), StyledIconCacheTest (Robolectric)
 │   ├── local/      7   Converters, entities, DAO-level behaviour via in-memory Room (AppPlacementDaoTest, FolderPlacementDaoTest, FolderDaoTest, FacetDaoTest, AutomationRuleDaoTest, …)
 │   ├── model/     11   FacetLimitsTest, FacetDeepLinkTest (build/parse round-trip + rejection cases), AutomationStateTest, AutomationTriggerTest (schedule windows and battery levels), AutomationRuleValidationTest, AutomationLimitsTest, DeviceStateTest (every trigger's truth)
 │   └── widget/     1
@@ -93,7 +95,7 @@ app/src/test/kotlin/com/facetlauncher/app/          JVM (JUnit4 + Robolectric + 
 
 app/src/androidTest/kotlin/com/facetlauncher/app/   Instrumented (Compose UI tests, AVD only)
 ├── data/local/     1   FacetDatabaseMigrationTest (MigrationTestHelper over app/schemas)
-└── ui/            67   one *ScreenTest per screen + component/route/theme tests (settings/automation: FacetAutomationScreenTest, RuleEditorSheetTest) and shared fakes
+└── ui/            68   one *ScreenTest per screen + component/route/theme tests (settings/automation: FacetAutomationScreenTest, RuleEditorSheetTest) and shared fakes
 ```
 
 Rule of thumb from `CLAUDE.md`, and what the tree shows in practice: everything in `data/` and

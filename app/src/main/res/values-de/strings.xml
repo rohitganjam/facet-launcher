@@ -49,6 +49,8 @@
     <string name="icon_render_system_default">Systemstandard</string>
     <string name="icon_render_monochrome_black_white">Monochrom (Schwarz-Weiß)</string>
     <string name="icon_render_monochrome_accent">Monochrom (Akzent)</string>
+    <string name="icon_render_glyph_accent">Symbol (Akzent)</string>
+    <string name="icon_render_outline_accent">Kontur (Akzent)</string>
 
     <!-- ClockTemplateId -->
     <string name="clock_template_light_stack">Leichter Stapel</string>

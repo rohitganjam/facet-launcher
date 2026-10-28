@@ -49,6 +49,8 @@
     <string name="icon_render_system_default">Par défaut du système</string>
     <string name="icon_render_monochrome_black_white">Monochrome (noir et blanc)</string>
     <string name="icon_render_monochrome_accent">Monochrome (accent)</string>
+    <string name="icon_render_glyph_accent">Glyphe (accent)</string>
+    <string name="icon_render_outline_accent">Contour (accent)</string>
 
     <!-- ClockTemplateId -->
     <string name="clock_template_light_stack">Pile légère</string>

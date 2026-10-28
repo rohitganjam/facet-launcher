@@ -12,18 +12,23 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.ColorMatrix
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.facetlauncher.app.data.icon.IconStyler
+import com.facetlauncher.app.data.icon.StyledIcon
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.AppProfile
 import com.facetlauncher.app.data.model.DrawerListItemSize
@@ -34,6 +39,7 @@ import com.facetlauncher.app.ui.theme.IconTile
 import com.facetlauncher.app.ui.theme.Ink
 import com.facetlauncher.app.ui.theme.LocalIconRenderMode
 import com.facetlauncher.app.ui.theme.LocalIconShape
+import com.facetlauncher.app.ui.theme.LocalStyledIconCache
 import com.facetlauncher.app.ui.theme.Muted
 import com.facetlauncher.app.ui.theme.Surface
 
@@ -79,6 +85,7 @@ fun AppIcon(
 ) {
     AppIcon(
         icon = app.icon,
+        monochromeIcon = app.monochromeIcon,
         size = size,
         contentDescription = contentDescription,
         modifier = modifier,
@@ -109,6 +116,8 @@ fun AppIcon(
     size: Dp,
     contentDescription: String?,
     modifier: Modifier = Modifier,
+    /** The app's themed-icon layer, for the glyph and outline icon styles; see [AppInfo.monochromeIcon]. */
+    monochromeIcon: ImageBitmap? = null,
     notificationCount: Int? = null,
     badgeStyle: NotificationBadgeStyle = NotificationBadgeStyle.DOT,
     isWorkApp: Boolean = false,
@@ -121,10 +130,10 @@ fun AppIcon(
     Box(modifier = modifier) {
         if (notificationCount != null && notificationCount > 0) {
             BadgedBox(badge = { NotificationBadge(count = notificationCount, style = badgeStyle) }) {
-                AppIconGlyph(icon = icon, size = size, contentDescription = contentDescription)
+                AppIconGlyph(icon = icon, monochromeIcon = monochromeIcon, size = size, contentDescription = contentDescription)
             }
         } else {
-            AppIconGlyph(icon = icon, size = size, contentDescription = contentDescription)
+            AppIconGlyph(icon = icon, monochromeIcon = monochromeIcon, size = size, contentDescription = contentDescription)
         }
         // Bottom-start, not stacked with the notification dot above (top-end, via BadgedBox) —
         // matches every other Android launcher's own convention for where a Work Profile badge
@@ -171,34 +180,35 @@ private fun OtherProfileBadge(modifier: Modifier = Modifier) {
 }
 
 /**
- * [LocalIconRenderMode] picks what actually gets drawn: [IconRenderMode.SYSTEM_DEFAULT] renders
- * [icon] unchanged; either monochrome mode tints [icon] itself with [ColorFilter.tint] using
- * [BlendMode.Color] — deliberately *not* [BlendMode.SrcIn], and deliberately *not* the app's own
- * `Icon.getMonochrome()` layer even when it provides one. `Color` keeps the icon's own luminosity
- * (shading/gradients) and only replaces its hue+saturation with [tintColor], so recolored icons
- * stay visually distinguishable from each other by their own real detail. A real monochrome layer
- * has no such detail to preserve — it's a flat single-color glyph by its own convention (drawn as
- * plain black/near-black on transparent, RGB carrying no information) — so rendering it (with
- * either blend mode) always looks flat and undetailed next to every other icon; tried and reverted
- * (see chat history) in favor of one consistent, detailed look for every app regardless of what
- * icon assets it happens to ship.
+ * [LocalIconRenderMode] picks what gets drawn. [IconRenderMode.SYSTEM_DEFAULT] draws [icon]
+ * unchanged. The monochrome modes tint it with [BlendMode.Color], which keeps the icon's own
+ * luminosity and swaps only hue and saturation, so recolored icons stay told apart by their detail
+ * (the app's own monochrome layer is a flat glyph and looked out of place beside them). The glyph
+ * and outline modes draw the [StyledIcon] for [icon] and [monochromeIcon] (its shaded whole-icon
+ * fallback where it has no glyph or outline); while it is being made the accent tint stands in.
  */
 @Composable
-private fun AppIconGlyph(icon: ImageBitmap?, size: Dp, contentDescription: String?, modifier: Modifier = Modifier) {
+private fun AppIconGlyph(icon: ImageBitmap?, monochromeIcon: ImageBitmap?, size: Dp, contentDescription: String?, modifier: Modifier = Modifier) {
     val renderMode = LocalIconRenderMode.current
     val shapeSetting = LocalIconShape.current
     val iconShape = remember(shapeSetting) { shapeSetting.toComposeShape() }
     if (icon != null) {
-        val tintColor = when (renderMode) {
-            IconRenderMode.SYSTEM_DEFAULT -> null
-            IconRenderMode.MONOCHROME_BLACK_WHITE -> Ink
-            IconRenderMode.MONOCHROME_ACCENT -> Accent
-        }
+        val styled = rememberStyledIcon(renderMode, icon, monochromeIcon)
+        val styledPicture = renderMode.pictureOf(styled)
+        val shadedIcon = styled?.fallback
+        val accent = Accent
+        val shadeFilter = remember(accent) { accentShadeFilter(accent) }
+        val fallbackFilter = remember(accent, styled) { styled?.let { anchoredShadeFilter(accent, it.fallbackAnchor(accent.lightness())) } }
+        val tintColor = renderMode.tint(accent = accent, ink = Ink)
         Image(
-            bitmap = icon,
+            bitmap = styledPicture ?: shadedIcon ?: icon,
             contentDescription = contentDescription,
-            colorFilter = tintColor?.let { ColorFilter.tint(it, BlendMode.Color) },
-            modifier = modifier.size(size).clip(iconShape),
+            colorFilter = when {
+                styledPicture != null -> shadeFilter
+                shadedIcon != null -> fallbackFilter
+                else -> tintColor?.let { ColorFilter.tint(it, BlendMode.Color) }
+            },
+            modifier = if (styledPicture != null) modifier.size(size) else modifier.size(size).clip(iconShape),
         )
     } else {
         Box(
@@ -214,4 +224,58 @@ private fun AppIconGlyph(icon: ImageBitmap?, size: Dp, contentDescription: Strin
                 ),
         )
     }
+}
+
+/** Paints a styled picture (a shade around mid grey, see `IconStyler`) as the accent: mid grey is the accent exactly, lighter and darker greys lift and lower it. */
+private fun accentShadeFilter(accent: Color): ColorFilter {
+    fun shift(channel: Float) = (channel - 0.5f) * 255f
+    return ColorFilter.colorMatrix(
+        ColorMatrix(
+            floatArrayOf(
+                1f, 0f, 0f, 0f, shift(accent.red),
+                0f, 1f, 0f, 0f, shift(accent.green),
+                0f, 0f, 1f, 0f, shift(accent.blue),
+                0f, 0f, 0f, 1f, 0f,
+            ),
+        ),
+    )
+}
+
+/** The glyph or outline pictures for [icon] under the styles that draw them, null for every other style and while they are being made. */
+@Composable
+private fun rememberStyledIcon(renderMode: IconRenderMode, icon: ImageBitmap, monochromeIcon: ImageBitmap?): StyledIcon? {
+    val cache = LocalStyledIconCache.current
+    if (renderMode != IconRenderMode.GLYPH_ACCENT && renderMode != IconRenderMode.OUTLINE_ACCENT) return null
+    return produceState<StyledIcon?>(initialValue = null, icon, monochromeIcon) { value = cache.styled(icon, monochromeIcon) }.value
+}
+
+private fun IconRenderMode.pictureOf(styled: StyledIcon?): ImageBitmap? = when (this) {
+    IconRenderMode.GLYPH_ACCENT -> styled?.glyph
+    IconRenderMode.OUTLINE_ACCENT -> styled?.outline
+    else -> null
+}
+
+/** The `BlendMode.Color` tint for the styles that tint the whole icon, which is also what stands in while a glyph or outline is being made. */
+private fun IconRenderMode.tint(accent: Color, ink: Color): Color? = when (this) {
+    IconRenderMode.SYSTEM_DEFAULT -> null
+    IconRenderMode.MONOCHROME_BLACK_WHITE -> ink
+    IconRenderMode.MONOCHROME_ACCENT, IconRenderMode.GLYPH_ACCENT, IconRenderMode.OUTLINE_ACCENT -> accent
+}
+
+private fun Color.lightness() = 0.299f * red + 0.587f * green + 0.114f * blue
+
+/** Paints a whole icon's own lightness as the accent, with the icon's [anchor] tone landing on the accent itself and lighter and darker tones lifted and lowered around it. */
+private fun anchoredShadeFilter(accent: Color, anchor: Float): ColorFilter {
+    val spread = IconStyler.SHADE_SPREAD
+    fun shift(channel: Float) = (channel - spread * anchor) * 255f
+    return ColorFilter.colorMatrix(
+        ColorMatrix(
+            floatArrayOf(
+                spread, 0f, 0f, 0f, shift(accent.red),
+                0f, spread, 0f, 0f, shift(accent.green),
+                0f, 0f, spread, 0f, shift(accent.blue),
+                0f, 0f, 0f, 1f, 0f,
+            ),
+        ),
+    )
 }

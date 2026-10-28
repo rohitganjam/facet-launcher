@@ -1,0 +1,16 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Themed-icon layer (Android 13+): the gem's five panels as one-colour shapes, with a thin
+         gap between panels so the facets still read once the system tints it. The colour is
+         ignored; only the shape's coverage is used. -->
+
+    <path android:pathData="M55.09,23.69L82.48,43.59L67.08,48.60L55.09,39.89Z" android:fillColor="#000000" />
+    <path android:pathData="M83.16,45.68L72.70,77.87L63.18,64.77L67.75,50.68Z" android:fillColor="#000000" />
+    <path android:pathData="M70.93,79.16L37.07,79.16L46.59,66.05L61.41,66.05Z" android:fillColor="#000000" />
+    <path android:pathData="M35.30,77.87L24.84,45.68L40.25,50.68L44.82,64.77Z" android:fillColor="#000000" />
+    <path android:pathData="M25.52,43.59L52.91,23.69L52.91,39.89L40.92,48.60Z" android:fillColor="#000000" />
+</vector>

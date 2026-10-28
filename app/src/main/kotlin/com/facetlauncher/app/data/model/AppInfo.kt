@@ -20,6 +20,8 @@ data class AppInfo(
     val activityName: String,
     val label: String,
     val icon: ImageBitmap?,
+    /** The app's themed-icon layer's coverage (alpha only, small), or null when it ships none. */
+    val monochromeIcon: ImageBitmap? = null,
     val profile: AppProfile = AppProfile.PERSONAL,
     val userHandle: UserHandle = Process.myUserHandle(),
     val firstInstallTime: Long = 0L,

@@ -18,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import com.facetlauncher.app.data.EntitlementRepository
+import com.facetlauncher.app.data.icon.StyledIconCache
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.ui.components.HomeSwipeGate
 import com.facetlauncher.app.ui.components.LocalHomeSwipeGate
@@ -33,6 +34,7 @@ import com.facetlauncher.app.ui.theme.AccentSwatch
 import com.facetlauncher.app.ui.home.ClockWidgetHostController
 import com.facetlauncher.app.ui.home.LocalClockWidgetHost
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
+import com.facetlauncher.app.ui.theme.LocalStyledIconCache
 import com.facetlauncher.app.ui.theme.ProvideSystemBars
 import com.facetlauncher.app.ui.theme.SystemBarsState
 import dagger.hilt.android.AndroidEntryPoint
@@ -50,6 +52,8 @@ class LauncherActivity : ComponentActivity() {
     @Inject lateinit var entitlementRepository: EntitlementRepository
 
     @Inject lateinit var clockWidgetHost: ClockWidgetHostController
+
+    @Inject lateinit var styledIconCache: StyledIconCache
 
     /** Only a debug build provides one (see `EntitlementModule`): the extra Settings rows it adds. */
     @Inject lateinit var debugSettingsEntry: Optional<DebugSettingsEntry>
@@ -77,6 +81,7 @@ class LauncherActivity : ComponentActivity() {
                 LocalDebugSettingsEntry provides debugSettingsEntry.orElse(null),
                 LocalAllowLandscape provides uiState.allowLandscape,
                 LocalClockWidgetHost provides clockWidgetHost,
+                LocalStyledIconCache provides styledIconCache,
             ) {
                 FacetLauncherTheme(
                     themeMode = uiState.themeMode,

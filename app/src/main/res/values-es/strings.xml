@@ -49,6 +49,8 @@
     <string name="icon_render_system_default">Predeterminado del sistema</string>
     <string name="icon_render_monochrome_black_white">Monocromo (blanco y negro)</string>
     <string name="icon_render_monochrome_accent">Monocromo (acento)</string>
+    <string name="icon_render_glyph_accent">Glifo (acento)</string>
+    <string name="icon_render_outline_accent">Contorno (acento)</string>
 
     <!-- ClockTemplateId -->
     <string name="clock_template_light_stack">Pila ligera</string>
