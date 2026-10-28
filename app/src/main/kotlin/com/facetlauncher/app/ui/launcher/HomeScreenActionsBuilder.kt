@@ -86,6 +86,7 @@ private fun homeClockActions(
     return HomeClockActions(
         onClockClick = { inputs.context.openClockApp() },
         onWeatherClick = hooks.openWeather,
+        onBatteryClick = { inputs.context.openBatterySettings() },
         onEditClockStyles = {
             hooks.setAdjustMode(ClockAdjustMode.NONE)
             navigation.toClockStyleGallery(state.clockPositionOwningFacet?.id)
@@ -136,6 +137,11 @@ private fun homeClockWidgetActions(
         onNestedScrollStop = swipe.widgetScroll::stop,
         onLeftoverFling = swipe.widgetScroll::leftoverFling,
     )
+}
+
+/** Opens system Settings > Battery. */
+private fun Context.openBatterySettings() {
+    runCatching { startActivity(Intent(Intent.ACTION_POWER_USAGE_SUMMARY).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
 }
 
 /**

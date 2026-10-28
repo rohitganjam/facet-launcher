@@ -155,6 +155,7 @@ data class HomeScreenState(
 data class HomeClockActions(
     val onClockClick: () -> Unit = {},
     val onWeatherClick: () -> Unit = {},
+    val onBatteryClick: () -> Unit = {},
     val onEditClockStyles: () -> Unit = {},
     val onNavigateToSettings: () -> Unit = {},
     val onNavigateToFacetSettings: () -> Unit = {},

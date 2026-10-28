@@ -1,14 +1,17 @@
 package com.facetlauncher.app.ui.home.clock
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -42,6 +45,10 @@ fun AlarmAccessoryContent(
         text = { Text(text = text, style = TextStyle(fontFamily = family, fontWeight = fontWeight, fontSize = fontSize, shadow = homeTextShadow(color)), color = color) },
     )
 }
+
+/** What tapping the battery item does (opens Settings > Battery); a local so the templates' accessory rows need no extra parameter. */
+@Suppress("CompositionLocalAllowlist") // Read by every template's accessory row; threading it as a parameter would touch all of them.
+internal val LocalBatteryClick = compositionLocalOf<() -> Unit> { {} }
 
 /** An accessory's icon and its text side by side: the icon first, or after the text when [iconAtEnd] (a right-aligned layout). */
 @Composable
@@ -77,7 +84,7 @@ fun BatteryAccessoryContent(
 ) {
     if (percent == null) return
     IconAndText(
-        modifier = modifier,
+        modifier = modifier.clickable(role = Role.Button, onClick = LocalBatteryClick.current),
         iconAtEnd = iconAtEnd,
         icon = { BatteryIcon(tint = mutedColor, state = batteryIconState(percent, isCharging), modifier = Modifier.size(BatteryIconSize).homeIconShadow(mutedColor)) },
         text = { Text(text = stringResource(R.string.percent_format, percent), style = TextStyle(fontFamily = family, fontWeight = fontWeight, fontSize = fontSize, shadow = homeTextShadow(mutedColor)), color = mutedColor) },
