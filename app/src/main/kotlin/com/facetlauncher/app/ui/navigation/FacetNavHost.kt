@@ -35,6 +35,7 @@ import com.facetlauncher.app.ui.settings.CalendarSettingsScreen
 import com.facetlauncher.app.ui.settings.DockAppsAppearanceScreen
 import com.facetlauncher.app.ui.settings.DockSettingsScreen
 import com.facetlauncher.app.ui.settings.FontsThemesIconsScreen
+import com.facetlauncher.app.ui.settings.IconsScreen
 import com.facetlauncher.app.ui.settings.FolderAppPickerScreen
 import com.facetlauncher.app.ui.settings.FolderDetailScreen
 import com.facetlauncher.app.ui.settings.FoldersSettingsScreen
@@ -83,6 +84,7 @@ object FacetDestinations {
     const val APPEARANCE_SETTINGS = "appearanceSettings?facetId={facetId}"
     const val DOCK_APPS_APPEARANCE = "dockAppsAppearance?facetId={facetId}"
     const val FONTS_THEMES_ICONS = "fontsThemesIcons"
+    const val ICONS = "icons"
     const val DOCK_SETTINGS = "dockSettings?facetId={facetId}"
     const val HOME_APPS_LIST_SETTINGS = "homeAppsListSettings?facetId={facetId}"
     const val APP_DRAWER_SETTINGS = "appDrawerSettings"
@@ -295,7 +297,13 @@ fun FacetNavHost(
             DockAppsAppearanceScreen(onBack = { navController.popBackStackSafely() })
         }
         settingsComposable(FacetDestinations.FONTS_THEMES_ICONS) {
-            FontsThemesIconsScreen(onBack = { navController.popBackStackSafely() })
+            FontsThemesIconsScreen(
+                onBack = { navController.popBackStackSafely() },
+                onNavigateToIcons = { navController.navigate(FacetDestinations.ICONS) },
+            )
+        }
+        settingsComposable(FacetDestinations.ICONS) {
+            IconsScreen(onBack = { navController.popBackStackSafely() })
         }
         settingsComposable(
             FacetDestinations.DOCK_SETTINGS,

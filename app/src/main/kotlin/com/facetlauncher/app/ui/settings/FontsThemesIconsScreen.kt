@@ -88,6 +88,7 @@ import com.facetlauncher.app.ui.theme.toneOf
 @Composable
 fun FontsThemesIconsScreen(
     onBack: () -> Unit,
+    onNavigateToIcons: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: AppearanceSettingsViewModel = hiltViewModel(),
 ) {
@@ -99,13 +100,12 @@ fun FontsThemesIconsScreen(
         uiState = uiState,
         homeWallpaper = homeWallpaper,
         onBack = onBack,
+        onNavigateToIcons = onNavigateToIcons,
         onThemeModeChange = viewModel::setThemeMode,
         onSystemBarIconStyleChange = viewModel::setSystemBarIconStyle,
         onAccentFromSystemChange = viewModel::setAccentFromSystem,
         onCustomAccentSwatchChange = viewModel::setCustomAccentSwatch,
         onWallpaperAccentRoleChange = viewModel::setWallpaperAccentRole,
-        onIconRenderModeChange = viewModel::setIconRenderMode,
-        onIconShapeChange = viewModel::setIconShape,
         onLauncherFontOptionChange = viewModel::setLauncherFontOption,
         onAppLabelColorOptionChange = viewModel::setAppLabelColorOption,
         onHomeAppsFontWeightChange = viewModel::setHomeAppsFontWeight,
@@ -120,13 +120,12 @@ private fun FontsThemesIconsContent(
     uiState: AppearanceSettingsUiState,
     homeWallpaper: HomeWallpaper,
     onBack: () -> Unit,
+    onNavigateToIcons: () -> Unit,
     onThemeModeChange: (ThemeMode) -> Unit,
     onSystemBarIconStyleChange: (SystemBarIconStyle) -> Unit,
     onAccentFromSystemChange: (Boolean) -> Unit,
     onCustomAccentSwatchChange: (AccentSwatch) -> Unit,
     onWallpaperAccentRoleChange: (WallpaperAccentRole) -> Unit,
-    onIconRenderModeChange: (IconRenderMode) -> Unit,
-    onIconShapeChange: (IconShape) -> Unit,
     onLauncherFontOptionChange: (LauncherFontOption) -> Unit,
     onAppLabelColorOptionChange: (ClockColorOption) -> Unit,
     onHomeAppsFontWeightChange: (FontWeightOption) -> Unit,
@@ -165,7 +164,7 @@ private fun FontsThemesIconsContent(
                     )
                 }
                 item { SettingsSectionHeader(stringResource(R.string.appearance_section_icons)) }
-                item { IconsCard(settings, onIconRenderModeChange, onIconShapeChange) }
+                item { IconsCard(settings, onNavigateToIcons) }
                 item { SettingsSectionHeader(stringResource(R.string.appearance_section_fonts)) }
                 item {
                     FontsCard(
@@ -221,18 +220,14 @@ private fun ThemeCard(
 }
 
 @Composable
-private fun IconsCard(settings: LauncherSettings, onIconRenderModeChange: (IconRenderMode) -> Unit, onIconShapeChange: (IconShape) -> Unit) {
-    SettingsCard {
-        LabeledDropdownRow(
+private fun IconsCard(settings: LauncherSettings, onNavigateToIcons: () -> Unit) {
+    SettingsCard(fullBleedRows = true) {
+        ClickableRow(
             title = stringResource(R.string.appearance_icon_style),
-            options = IconRenderMode.entries,
-            selected = settings.iconRenderMode,
-            label = { stringResource(it.displayNameRes) },
-            onSelect = onIconRenderModeChange,
+            subtitle = stringResource(settings.iconRenderMode.style.displayNameRes),
+            onClick = onNavigateToIcons,
             testTag = "appearance_icons_row",
         )
-        CardDivider()
-        IconShapePicker(selected = settings.iconShape, onSelect = onIconShapeChange)
     }
 }
 
@@ -301,13 +296,12 @@ private fun FontsThemesIconsScreenPreview() {
             uiState = AppearanceSettingsUiState(globalFavorites = DesignTimeFavorites, globalDockItems = DesignTimeDockItems),
             homeWallpaper = HomeWallpaper.Unavailable,
             onBack = {},
+            onNavigateToIcons = {},
             onThemeModeChange = {},
             onSystemBarIconStyleChange = {},
             onAccentFromSystemChange = {},
             onCustomAccentSwatchChange = {},
             onWallpaperAccentRoleChange = {},
-            onIconRenderModeChange = {},
-            onIconShapeChange = {},
             onLauncherFontOptionChange = {},
             onAppLabelColorOptionChange = {},
             onHomeAppsFontWeightChange = {},
@@ -391,7 +385,7 @@ private val ICON_SHAPE_RING_GAP = 2.dp
 
 /** Icon outline picker — each option drawn in its own shape so Squircle vs Rounded square is visible, not just named. */
 @Composable
-private fun IconShapePicker(selected: IconShape, onSelect: (IconShape) -> Unit, modifier: Modifier = Modifier) {
+internal fun IconShapePicker(selected: IconShape, onSelect: (IconShape) -> Unit, modifier: Modifier = Modifier) {
     Column(modifier = modifier.padding(vertical = 8.dp).testTag("appearance_icon_shape_row")) {
         Text(
             text = stringResource(R.string.appearance_icon_shape),

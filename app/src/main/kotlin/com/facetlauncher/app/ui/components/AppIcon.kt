@@ -22,6 +22,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.ColorMatrix
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -32,16 +33,21 @@ import com.facetlauncher.app.data.icon.StyledIcon
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.AppProfile
 import com.facetlauncher.app.data.model.DrawerListItemSize
+import com.facetlauncher.app.data.model.IconBackground
+import com.facetlauncher.app.data.model.IconColour
 import com.facetlauncher.app.data.model.IconRenderMode
+import com.facetlauncher.app.data.model.IconStyle
 import com.facetlauncher.app.data.model.NotificationBadgeStyle
 import com.facetlauncher.app.ui.theme.Accent
 import com.facetlauncher.app.ui.theme.IconTile
 import com.facetlauncher.app.ui.theme.Ink
+import com.facetlauncher.app.ui.theme.InkInverted
 import com.facetlauncher.app.ui.theme.LocalIconRenderMode
 import com.facetlauncher.app.ui.theme.LocalIconShape
 import com.facetlauncher.app.ui.theme.LocalStyledIconCache
 import com.facetlauncher.app.ui.theme.Muted
 import com.facetlauncher.app.ui.theme.Surface
+import kotlin.math.abs
 
 /** F13's badge count is capped at a single digit for legibility at these icon sizes — "9+" beyond that, not the more common "99+". */
 private fun badgeLabel(count: Int): String = if (count > 9) "9+" else count.toString()
@@ -185,7 +191,7 @@ private fun OtherProfileBadge(modifier: Modifier = Modifier) {
  * luminosity and swaps only hue and saturation, so recolored icons stay told apart by their detail
  * (the app's own monochrome layer is a flat glyph and looked out of place beside them). The glyph
  * and outline modes draw the [StyledIcon] for [icon] and [monochromeIcon] (its shaded whole-icon
- * fallback where it has no glyph or outline); while it is being made the accent tint stands in.
+ * fallback where it has no glyph or outline); while it is being made the tint stands in.
  */
 @Composable
 private fun AppIconGlyph(icon: ImageBitmap?, monochromeIcon: ImageBitmap?, size: Dp, contentDescription: String?, modifier: Modifier = Modifier) {
@@ -196,19 +202,22 @@ private fun AppIconGlyph(icon: ImageBitmap?, monochromeIcon: ImageBitmap?, size:
         val styled = rememberStyledIcon(renderMode, icon, monochromeIcon)
         val styledPicture = renderMode.pictureOf(styled)
         val shadedIcon = styled?.fallback
-        val accent = Accent
-        val shadeFilter = remember(accent) { accentShadeFilter(accent) }
-        val fallbackFilter = remember(accent, styled) { styled?.let { anchoredShadeFilter(accent, it.fallbackAnchor(accent.lightness())) } }
-        val tintColor = renderMode.tint(accent = accent, ink = Ink)
+        val paint = renderMode.paint(accent = Accent, ink = Ink, inkInverted = InkInverted)
+        val tintColor = paint.tone
+        val shadeColor = tintColor ?: Accent
+        val pending = paint.tile != null && (styledPicture ?: shadedIcon) == null
+        val shadeFilter = remember(shadeColor) { toneShadeFilter(shadeColor) }
+        val fallbackFilter = remember(shadeColor, styled) { styled?.let { anchoredShadeFilter(shadeColor, it.fallbackAnchor(shadeColor.lightness())) } }
         Image(
             bitmap = styledPicture ?: shadedIcon ?: icon,
             contentDescription = contentDescription,
             colorFilter = when {
                 styledPicture != null -> shadeFilter
                 shadedIcon != null -> fallbackFilter
-                else -> tintColor?.let { ColorFilter.tint(it, BlendMode.Color) }
+                else -> tintColor.asColorTint()
             },
-            modifier = if (styledPicture != null) modifier.size(size) else modifier.size(size).clip(iconShape),
+            alpha = if (pending) 0f else 1f,
+            modifier = modifier.size(size).iconClip(iconShape, paint.tile, unclipped = styledPicture != null),
         )
     } else {
         Box(
@@ -226,15 +235,24 @@ private fun AppIconGlyph(icon: ImageBitmap?, monochromeIcon: ImageBitmap?, size:
     }
 }
 
-/** Paints a styled picture (a shade around mid grey, see `IconStyler`) as the accent: mid grey is the accent exactly, lighter and darker greys lift and lower it. */
-private fun accentShadeFilter(accent: Color): ColorFilter {
+private fun Color?.asColorTint(): ColorFilter? = this?.let { ColorFilter.tint(it, BlendMode.Color) }
+
+/** A tile is clipped and filled, a styled picture is left unclipped (its own shape is the point), anything else is clipped to the icon shape. */
+private fun Modifier.iconClip(shape: Shape, tile: Color?, unclipped: Boolean): Modifier = when {
+    tile != null -> clip(shape).background(tile)
+    unclipped -> this
+    else -> clip(shape)
+}
+
+/** Paints a styled picture (a shade around mid grey, see `IconStyler`) as the tone colour: mid grey is the tone exactly, lighter and darker greys lift and lower it. */
+private fun toneShadeFilter(tone: Color): ColorFilter {
     fun shift(channel: Float) = (channel - 0.5f) * 255f
     return ColorFilter.colorMatrix(
         ColorMatrix(
             floatArrayOf(
-                1f, 0f, 0f, 0f, shift(accent.red),
-                0f, 1f, 0f, 0f, shift(accent.green),
-                0f, 0f, 1f, 0f, shift(accent.blue),
+                1f, 0f, 0f, 0f, shift(tone.red),
+                0f, 1f, 0f, 0f, shift(tone.green),
+                0f, 0f, 1f, 0f, shift(tone.blue),
                 0f, 0f, 0f, 1f, 0f,
             ),
         ),
@@ -245,35 +263,46 @@ private fun accentShadeFilter(accent: Color): ColorFilter {
 @Composable
 private fun rememberStyledIcon(renderMode: IconRenderMode, icon: ImageBitmap, monochromeIcon: ImageBitmap?): StyledIcon? {
     val cache = LocalStyledIconCache.current
-    if (renderMode != IconRenderMode.GLYPH_ACCENT && renderMode != IconRenderMode.OUTLINE_ACCENT) return null
+    if (!renderMode.isStyled()) return null
     return produceState<StyledIcon?>(initialValue = null, icon, monochromeIcon) { value = cache.styled(icon, monochromeIcon) }.value
 }
 
-private fun IconRenderMode.pictureOf(styled: StyledIcon?): ImageBitmap? = when (this) {
-    IconRenderMode.GLYPH_ACCENT -> styled?.glyph
-    IconRenderMode.OUTLINE_ACCENT -> styled?.outline
+private fun IconRenderMode.pictureOf(styled: StyledIcon?): ImageBitmap? = when (style) {
+    IconStyle.GLYPH -> styled?.glyph
+    IconStyle.OUTLINE -> styled?.outline
     else -> null
 }
 
-/** The `BlendMode.Color` tint for the styles that tint the whole icon, which is also what stands in while a glyph or outline is being made. */
-private fun IconRenderMode.tint(accent: Color, ink: Color): Color? = when (this) {
-    IconRenderMode.SYSTEM_DEFAULT -> null
-    IconRenderMode.MONOCHROME_BLACK_WHITE -> ink
-    IconRenderMode.MONOCHROME_ACCENT, IconRenderMode.GLYPH_ACCENT, IconRenderMode.OUTLINE_ACCENT -> accent
+private fun IconRenderMode.isStyled() = style == IconStyle.GLYPH || style == IconStyle.OUTLINE
+
+/** What an icon is painted with: [tone] colours the icon (null leaves it as it is) and [tile], where there is one, fills the icon shape behind it. */
+private class IconPaint(val tone: Color?, val tile: Color? = null)
+
+/** The `BlendMode.Color` tone for the styles that tint the whole icon, which is also what stands in while a glyph or outline is being made; a tiled mode adds a tile in the colour and a tone readable on it. */
+private fun IconRenderMode.paint(accent: Color, ink: Color, inkInverted: Color): IconPaint {
+    val colour = when (colour) {
+        null -> return IconPaint(tone = null)
+        IconColour.ACCENT -> accent
+        IconColour.THEME -> ink
+        IconColour.THEME_INVERTED -> inkInverted
+    }
+    if (background == IconBackground.NONE) return IconPaint(tone = colour)
+    val readable = if (abs(ink.lightness() - colour.lightness()) > abs(inkInverted.lightness() - colour.lightness())) ink else inkInverted
+    return if (background == IconBackground.TILE) IconPaint(tone = readable, tile = colour) else IconPaint(tone = colour, tile = readable)
 }
 
 private fun Color.lightness() = 0.299f * red + 0.587f * green + 0.114f * blue
 
-/** Paints a whole icon's own lightness as the accent, with the icon's [anchor] tone landing on the accent itself and lighter and darker tones lifted and lowered around it. */
-private fun anchoredShadeFilter(accent: Color, anchor: Float): ColorFilter {
+/** Paints a whole icon's own lightness as the accent, with the icon's [anchor] tone landing on the tone colour itself and lighter and darker tones lifted and lowered around it. */
+private fun anchoredShadeFilter(tone: Color, anchor: Float): ColorFilter {
     val spread = IconStyler.SHADE_SPREAD
     fun shift(channel: Float) = (channel - spread * anchor) * 255f
     return ColorFilter.colorMatrix(
         ColorMatrix(
             floatArrayOf(
-                spread, 0f, 0f, 0f, shift(accent.red),
-                0f, spread, 0f, 0f, shift(accent.green),
-                0f, 0f, spread, 0f, shift(accent.blue),
+                spread, 0f, 0f, 0f, shift(tone.red),
+                0f, spread, 0f, 0f, shift(tone.green),
+                0f, 0f, spread, 0f, shift(tone.blue),
                 0f, 0f, 0f, 1f, 0f,
             ),
         ),

@@ -45,6 +45,7 @@ class FontsThemesIconsScreenTest {
 
     private fun setContent(
         onBack: () -> Unit = {},
+        onNavigateToIcons: () -> Unit = {},
         facetId: Long? = null,
         calendarGranted: Boolean = false,
         notificationAccessGranted: Boolean = true,
@@ -52,7 +53,7 @@ class FontsThemesIconsScreenTest {
         seed: suspend (FacetRepository, Long?) -> Unit = { _, _ -> },
         seedApps: suspend (AppRepository, PlacementRepository, Long?) -> Unit = { _, _, _ -> },
     ): SettingsRepository = host.setContent(facetId, calendarGranted, notificationAccessGranted, calendarEvents, seed, seedApps) { viewModel ->
-        FontsThemesIconsScreen(onBack = onBack, viewModel = viewModel)
+        FontsThemesIconsScreen(onBack = onBack, onNavigateToIcons = onNavigateToIcons, viewModel = viewModel)
     }
 
     @Test
@@ -248,38 +249,18 @@ class FontsThemesIconsScreenTest {
     }
 
     @Test
-    fun iconRenderModeRowChangesTheSetting() {
-        // Given the screen, "System default" selected by default (F11) — scrolled into view
-        setContent()
+    fun iconsRowNamesTheCurrentStyleAndOpensTheIconsScreen() {
+        // Given the screen, with the default icon style
+        var opened = false
+        setContent(onNavigateToIcons = { opened = true })
         composeRule.onNodeWithTag("fonts_themes_icons_screen").performScrollToNode(hasTestTag("appearance_icons_row"))
-        composeRule.onNodeWithText("System default").assertExists()
+        composeRule.onNodeWithTag("appearance_icons_row").assertTextContains("Default", substring = true)
 
-        // When picking "Monochrome (Accent)"
+        // When tapping the Icons row
         composeRule.onNodeWithTag("appearance_icons_row").performClick()
-        composeRule.waitForIdle()
-        composeRule.onNodeWithTag("appearance_icons_row_option_MONOCHROME_ACCENT").performClick()
 
-        // Then the row reflects the new selection
-        composeRule.waitUntil(timeoutMillis = 3_000) {
-            composeRule.onAllNodesWithText("Monochrome (Accent)").fetchSemanticsNodes().isNotEmpty()
-        }
-        composeRule.onNodeWithText("Monochrome (Accent)").assertExists()
-    }
-
-    @Test
-    fun iconShapePickerPersistsTheSelectedShape() {
-        // Given the screen, with the picker scrolled into view
-        val settingsRepository = setContent()
-        composeRule.onNodeWithTag("fonts_themes_icons_screen").performScrollToNode(hasTestTag("appearance_icon_shape_row"))
-
-        // When picking Circle
-        composeRule.onNodeWithTag("icon_shape_CIRCLE").performClick()
-
-        // Then it's selected and persisted to the real repository
-        composeRule.waitUntil(timeoutMillis = 3_000) {
-            runBlocking { settingsRepository.settings.first().iconShape == com.facetlauncher.app.data.model.IconShape.CIRCLE }
-        }
-        composeRule.onNodeWithTag("icon_shape_CIRCLE").assertIsSelected()
+        // Then the Icons screen is requested
+        assertEquals(true, opened)
     }
 
     @Test

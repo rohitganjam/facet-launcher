@@ -51,6 +51,37 @@
     <string name="icon_render_monochrome_accent">Monochrome (accent)</string>
     <string name="icon_render_glyph_accent">Glyphe (accent)</string>
     <string name="icon_render_outline_accent">Contour (accent)</string>
+    <string name="icon_render_glyph_ink">Glyphe (thème)</string>
+    <string name="icon_render_outline_ink">Contour (thème)</string>
+    <string name="icon_render_glyph_inverted">Glyphe (thème inversé)</string>
+    <string name="icon_render_outline_inverted">Contour (thème inversé)</string>
+    <string name="icon_style_default">Par défaut</string>
+    <string name="icon_style_monochrome">Monochrome</string>
+    <string name="icon_style_glyph">Glyphe</string>
+    <string name="icon_style_outline">Contour</string>
+    <string name="icon_colour_accent">Accent</string>
+    <string name="icon_colour_theme">Thème</string>
+    <string name="icon_colour_theme_inverted">Thème inversé</string>
+    <string name="icons_screen_title">Icônes</string>
+    <string name="icons_screen_subtitle">Style, couleur et forme</string>
+    <string name="icons_screen_style">Style</string>
+    <string name="icons_screen_colour">Couleur</string>
+    <string name="icon_render_glyph_tile_accent">Glyphe sur tuile (accent)</string>
+    <string name="icon_render_glyph_tile_ink">Glyphe sur tuile (thème)</string>
+    <string name="icon_render_glyph_tile_inverted">Glyphe sur tuile (thème inversé)</string>
+    <string name="icon_render_outline_tile_accent">Contour sur tuile (accent)</string>
+    <string name="icon_render_outline_tile_ink">Contour sur tuile (thème)</string>
+    <string name="icon_render_outline_tile_inverted">Contour sur tuile (thème inversé)</string>
+    <string name="icon_background_none">Aucun</string>
+    <string name="icon_background_tile">Tuile</string>
+    <string name="icon_render_glyph_reversed_accent">Glyphe sur tuile inversée (accent)</string>
+    <string name="icon_render_glyph_reversed_ink">Glyphe sur tuile inversée (thème)</string>
+    <string name="icon_render_glyph_reversed_inverted">Glyphe sur tuile inversée (thème inversé)</string>
+    <string name="icon_render_outline_reversed_accent">Contour sur tuile inversée (accent)</string>
+    <string name="icon_render_outline_reversed_ink">Contour sur tuile inversée (thème)</string>
+    <string name="icon_render_outline_reversed_inverted">Contour sur tuile inversée (thème inversé)</string>
+    <string name="icon_background_reversed_tile">Tuile inversée</string>
+    <string name="icons_screen_background">Arrière-plan</string>
 
     <!-- ClockTemplateId -->
     <string name="clock_template_light_stack">Pile légère</string>

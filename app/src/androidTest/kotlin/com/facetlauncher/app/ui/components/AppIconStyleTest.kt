@@ -79,6 +79,58 @@ class AppIconStyleTest {
     }
 
     @Test
+    fun `glyph theme style paints the glyph in the text colour not the accent`() {
+        // Given a logo shown in the glyph theme style under the light theme
+        show(IconRenderMode.GLYPH_INK)
+
+        // When the styled picture has replaced the placeholder tint
+        waitForPixels { it.corner().near(backdrop) }
+
+        // Then the glyph is dark ink, not the blue accent
+        val centre = pixels().centre()
+        assertTrue("centre $centre", !centre.near(accent) && centre.red + centre.green + centre.blue < 1.2f)
+    }
+
+    @Test
+    fun `glyph inverted style paints the glyph in the opposite text colour and drops the plate`() {
+        // Given a logo shown in the glyph inverted style under the light theme
+        show(IconRenderMode.GLYPH_INVERTED)
+
+        // When the styled picture has replaced the placeholder tint
+        waitForPixels { it.corner().near(backdrop) }
+
+        // Then the glyph is the light opposite of the dark text colour, and there is no tile
+        assertTrue("centre ${pixels().centre()}", pixels().centre().red > 0.8f)
+        assertTrue(pixels().corner().near(backdrop))
+    }
+
+    @Test
+    fun `glyph tile style paints a text coloured tile with the glyph in the opposite colour`() {
+        // Given a logo shown in the glyph tile theme style under the light theme
+        show(IconRenderMode.GLYPH_TILE_INK)
+
+        // When the styled picture has replaced the placeholder
+        waitForPixels { it.corner().red < 0.2f && it.centre().red > 0.8f }
+
+        // Then the tile is the dark text colour and the glyph on it the light opposite
+        assertTrue("corner ${pixels().corner()}", pixels().corner().red < 0.2f)
+        assertTrue("centre ${pixels().centre()}", pixels().centre().red > 0.8f)
+    }
+
+    @Test
+    fun `glyph reversed tile style swaps the tile and the glyph colours`() {
+        // Given a logo shown in the glyph reversed tile theme style under the light theme
+        show(IconRenderMode.GLYPH_REVERSED_INK)
+
+        // When the styled picture has replaced the placeholder
+        waitForPixels { it.corner().red > 0.8f && it.centre().red < 0.2f }
+
+        // Then the tile is the light text tone and the glyph on it the dark text colour
+        assertTrue("corner ${pixels().corner()}", pixels().corner().red > 0.8f)
+        assertTrue("centre ${pixels().centre()}", pixels().centre().red < 0.2f)
+    }
+
+    @Test
     fun `outline style leaves the inside of the shape empty`() {
         // Given a logo shown in the outline style
         show(IconRenderMode.OUTLINE_ACCENT)

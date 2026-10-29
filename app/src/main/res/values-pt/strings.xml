@@ -51,6 +51,37 @@
     <string name="icon_render_monochrome_accent">Monocromático (destaque)</string>
     <string name="icon_render_glyph_accent">Glifo (destaque)</string>
     <string name="icon_render_outline_accent">Contorno (destaque)</string>
+    <string name="icon_render_glyph_ink">Glifo (tema)</string>
+    <string name="icon_render_outline_ink">Contorno (tema)</string>
+    <string name="icon_render_glyph_inverted">Glifo (tema invertido)</string>
+    <string name="icon_render_outline_inverted">Contorno (tema invertido)</string>
+    <string name="icon_style_default">Padrão</string>
+    <string name="icon_style_monochrome">Monocromático</string>
+    <string name="icon_style_glyph">Glifo</string>
+    <string name="icon_style_outline">Contorno</string>
+    <string name="icon_colour_accent">Destaque</string>
+    <string name="icon_colour_theme">Tema</string>
+    <string name="icon_colour_theme_inverted">Tema invertido</string>
+    <string name="icons_screen_title">Ícones</string>
+    <string name="icons_screen_subtitle">Estilo, cor e forma</string>
+    <string name="icons_screen_style">Estilo</string>
+    <string name="icons_screen_colour">Cor</string>
+    <string name="icon_render_glyph_tile_accent">Glifo em bloco (destaque)</string>
+    <string name="icon_render_glyph_tile_ink">Glifo em bloco (tema)</string>
+    <string name="icon_render_glyph_tile_inverted">Glifo em bloco (tema invertido)</string>
+    <string name="icon_render_outline_tile_accent">Contorno em bloco (destaque)</string>
+    <string name="icon_render_outline_tile_ink">Contorno em bloco (tema)</string>
+    <string name="icon_render_outline_tile_inverted">Contorno em bloco (tema invertido)</string>
+    <string name="icon_background_none">Nenhum</string>
+    <string name="icon_background_tile">Bloco</string>
+    <string name="icon_render_glyph_reversed_accent">Glifo em bloco invertido (destaque)</string>
+    <string name="icon_render_glyph_reversed_ink">Glifo em bloco invertido (tema)</string>
+    <string name="icon_render_glyph_reversed_inverted">Glifo em bloco invertido (tema invertido)</string>
+    <string name="icon_render_outline_reversed_accent">Contorno em bloco invertido (destaque)</string>
+    <string name="icon_render_outline_reversed_ink">Contorno em bloco invertido (tema)</string>
+    <string name="icon_render_outline_reversed_inverted">Contorno em bloco invertido (tema invertido)</string>
+    <string name="icon_background_reversed_tile">Bloco invertido</string>
+    <string name="icons_screen_background">Fundo</string>
 
     <!-- ClockTemplateId -->
     <string name="clock_template_light_stack">Pilha leve</string>

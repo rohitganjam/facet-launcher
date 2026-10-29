@@ -51,6 +51,37 @@
     <string name="icon_render_monochrome_accent">Monochrom (Akzent)</string>
     <string name="icon_render_glyph_accent">Symbol (Akzent)</string>
     <string name="icon_render_outline_accent">Kontur (Akzent)</string>
+    <string name="icon_render_glyph_ink">Symbol (Design)</string>
+    <string name="icon_render_outline_ink">Kontur (Design)</string>
+    <string name="icon_render_glyph_inverted">Symbol (Design invertiert)</string>
+    <string name="icon_render_outline_inverted">Kontur (Design invertiert)</string>
+    <string name="icon_style_default">Standard</string>
+    <string name="icon_style_monochrome">Monochrom</string>
+    <string name="icon_style_glyph">Symbol</string>
+    <string name="icon_style_outline">Kontur</string>
+    <string name="icon_colour_accent">Akzent</string>
+    <string name="icon_colour_theme">Design</string>
+    <string name="icon_colour_theme_inverted">Design invertiert</string>
+    <string name="icons_screen_title">Symbole</string>
+    <string name="icons_screen_subtitle">Stil, Farbe und Form</string>
+    <string name="icons_screen_style">Stil</string>
+    <string name="icons_screen_colour">Farbe</string>
+    <string name="icon_render_glyph_tile_accent">Symbol-Kachel (Akzent)</string>
+    <string name="icon_render_glyph_tile_ink">Symbol-Kachel (Design)</string>
+    <string name="icon_render_glyph_tile_inverted">Symbol-Kachel (Design invertiert)</string>
+    <string name="icon_render_outline_tile_accent">Kontur-Kachel (Akzent)</string>
+    <string name="icon_render_outline_tile_ink">Kontur-Kachel (Design)</string>
+    <string name="icon_render_outline_tile_inverted">Kontur-Kachel (Design invertiert)</string>
+    <string name="icon_background_none">Keine</string>
+    <string name="icon_background_tile">Kachel</string>
+    <string name="icon_render_glyph_reversed_accent">Symbol, umgekehrte Kachel (Akzent)</string>
+    <string name="icon_render_glyph_reversed_ink">Symbol, umgekehrte Kachel (Design)</string>
+    <string name="icon_render_glyph_reversed_inverted">Symbol, umgekehrte Kachel (Design invertiert)</string>
+    <string name="icon_render_outline_reversed_accent">Kontur, umgekehrte Kachel (Akzent)</string>
+    <string name="icon_render_outline_reversed_ink">Kontur, umgekehrte Kachel (Design)</string>
+    <string name="icon_render_outline_reversed_inverted">Kontur, umgekehrte Kachel (Design invertiert)</string>
+    <string name="icon_background_reversed_tile">Umgekehrte Kachel</string>
+    <string name="icons_screen_background">Hintergrund</string>
 
     <!-- ClockTemplateId -->
     <string name="clock_template_light_stack">Leichter Stapel</string>
