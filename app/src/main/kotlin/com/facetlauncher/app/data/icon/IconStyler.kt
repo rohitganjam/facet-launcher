@@ -7,6 +7,9 @@ package com.facetlauncher.app.data.icon
  * draw in its place (null when neither is missing). The fallback carries the icon's own lightness
  * rather than a shade, with [fallbackTones] to place it: see [IconStyler.anchorFor].
  */
+/** Which of an icon's two pictures is being made or kept. */
+enum class StyledPicture { GLYPH, OUTLINE }
+
 class StyledMasks(val glyph: IntArray?, val outline: IntArray?, val fallback: IntArray?, val fallbackTones: FloatArray?)
 
 /** Builds the glyph-only and outline pictures from an icon's pixels: themed layer first, then the plain icon (the outline is the edges of the glyph alone, or of the whole icon where there is no glyph), then the whole icon shaded. */
@@ -29,22 +32,30 @@ object IconStyler {
     private const val GREY = 128
     private const val OUTLINE_DIVISOR = 48
 
-    /** [icon] is the flattened icon and [themed] the app's monochrome layer, both [size] pixels square. */
-    fun style(icon: IntArray, themed: IntArray?, size: Int): StyledMasks {
+    /**
+     * [icon] is the flattened icon and [themed] the app's monochrome layer, both [size] pixels square. With [only] set just that
+     * picture is made, and the whole-icon fallback only if that one is missing.
+     */
+    fun style(icon: IntArray, themed: IntArray?, size: Int, only: StyledPicture? = null): StyledMasks {
         val layer = themed?.let { IconMasks.fromAlpha(it, size, size) }?.takeIf { coverage(it) in MIN_THEMED_COVERAGE..MAX_THEMED_COVERAGE }
         if (layer != null) {
-            return StyledMasks(flat(layer), flat(IconMasks.contour(layer, size / OUTLINE_DIVISOR)), fallback = null, fallbackTones = null)
+            val outline = if (only != StyledPicture.GLYPH) flat(IconMasks.contour(layer, size / OUTLINE_DIVISOR)) else null
+            return StyledMasks(if (only != StyledPicture.OUTLINE) flat(layer) else null, outline, fallback = null, fallbackTones = null)
         }
         val plateless = IconMasks.removePlate(icon, size, size) ?: IconMasks.removePlateByEdges(icon, size, size)
-        val glyph = plateless?.let { shaded(icon, it) }
-        val outline = if (plateless != null) {
+        val glyph = if (only != StyledPicture.OUTLINE) plateless?.let { shaded(icon, it) } else null
+        val outline = if (only != StyledPicture.GLYPH) plainOutline(icon, plateless, size) else null
+        val missing = (only != StyledPicture.OUTLINE && glyph == null) || (only != StyledPicture.GLYPH && outline == null)
+        return StyledMasks(glyph, outline, if (missing) lightness(icon) else null, if (missing) tones(icon) else null)
+    }
+
+    /** The outline of a plain icon: the edges of its glyph alone where it has one, else the whole icon's edges unless they are art. */
+    private fun plainOutline(icon: IntArray, plateless: AlphaMask?, size: Int): IntArray? =
+        if (plateless != null) {
             flat(IconMasks.edges(onGrey(icon, plateless), size, size, thickness = 0))
         } else {
             IconMasks.edges(icon, size, size, thickness = 1).takeIf { coverage(it, threshold = ART_EDGE_OPACITY) <= ART_EDGE_COVERAGE }?.let { flat(it) }
         }
-        val needsFallback = glyph == null || outline == null
-        return StyledMasks(glyph, outline, if (needsFallback) lightness(icon) else null, if (needsFallback) tones(icon) else null)
-    }
 
     /**
      * Where along an icon's own tones the accent should sit: [tones] are its lightness at each

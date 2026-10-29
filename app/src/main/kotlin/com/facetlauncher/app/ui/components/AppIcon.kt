@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.facetlauncher.app.data.icon.IconStyler
 import com.facetlauncher.app.data.icon.StyledIcon
+import com.facetlauncher.app.data.icon.StyledPicture
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.AppProfile
 import com.facetlauncher.app.data.model.DrawerListItemSize
@@ -191,7 +192,7 @@ private fun OtherProfileBadge(modifier: Modifier = Modifier) {
  * luminosity and swaps only hue and saturation, so recolored icons stay told apart by their detail
  * (the app's own monochrome layer is a flat glyph and looked out of place beside them). The glyph
  * and outline modes draw the [StyledIcon] for [icon] and [monochromeIcon] (its shaded whole-icon
- * fallback where it has no glyph or outline); while it is being made the tint stands in.
+ * fallback where it has no glyph or outline); while it is being made nothing is drawn.
  */
 @Composable
 private fun AppIconGlyph(icon: ImageBitmap?, monochromeIcon: ImageBitmap?, size: Dp, contentDescription: String?, modifier: Modifier = Modifier) {
@@ -205,7 +206,7 @@ private fun AppIconGlyph(icon: ImageBitmap?, monochromeIcon: ImageBitmap?, size:
         val paint = renderMode.paint(accent = Accent, ink = Ink, inkInverted = InkInverted)
         val tintColor = paint.tone
         val shadeColor = tintColor ?: Accent
-        val pending = paint.tile != null && (styledPicture ?: shadedIcon) == null
+        val pending = renderMode.isStyled() && styled == null
         val shadeFilter = remember(shadeColor) { toneShadeFilter(shadeColor) }
         val fallbackFilter = remember(shadeColor, styled) { styled?.let { anchoredShadeFilter(shadeColor, it.fallbackAnchor(shadeColor.lightness())) } }
         Image(
@@ -217,7 +218,7 @@ private fun AppIconGlyph(icon: ImageBitmap?, monochromeIcon: ImageBitmap?, size:
                 else -> tintColor.asColorTint()
             },
             alpha = if (pending) 0f else 1f,
-            modifier = modifier.size(size).iconClip(iconShape, paint.tile, unclipped = styledPicture != null),
+            modifier = modifier.size(size).iconClip(iconShape, paint.tile.takeUnless { pending }, unclipped = styledPicture != null),
         )
     } else {
         Box(
@@ -259,12 +260,18 @@ private fun toneShadeFilter(tone: Color): ColorFilter {
     )
 }
 
-/** The glyph or outline pictures for [icon] under the styles that draw them, null for every other style and while they are being made. */
+/**
+ * The glyph or outline picture for [icon] under the styles that draw one, null for every other style and while it is being
+ * made. One already made is used on the first frame, so a built icon never shows unstyled.
+ */
 @Composable
 private fun rememberStyledIcon(renderMode: IconRenderMode, icon: ImageBitmap, monochromeIcon: ImageBitmap?): StyledIcon? {
     val cache = LocalStyledIconCache.current
-    if (!renderMode.isStyled()) return null
-    return produceState<StyledIcon?>(initialValue = null, icon, monochromeIcon) { value = cache.styled(icon, monochromeIcon) }.value
+    val picture = renderMode.styledPicture() ?: return null
+    val made = produceState<Pair<ImageBitmap, StyledIcon>?>(initialValue = null, icon, monochromeIcon, picture) {
+        value = icon to cache.styled(icon, monochromeIcon, picture)
+    }.value
+    return cache.cached(icon, picture) ?: made?.takeIf { it.first === icon && it.second.picture == picture }?.second
 }
 
 private fun IconRenderMode.pictureOf(styled: StyledIcon?): ImageBitmap? = when (style) {
@@ -273,10 +280,17 @@ private fun IconRenderMode.pictureOf(styled: StyledIcon?): ImageBitmap? = when (
     else -> null
 }
 
-private fun IconRenderMode.isStyled() = style == IconStyle.GLYPH || style == IconStyle.OUTLINE
+private fun IconRenderMode.isStyled() = styledPicture() != null
 
 /** What an icon is painted with: [tone] colours the icon (null leaves it as it is) and [tile], where there is one, fills the icon shape behind it. */
 private class IconPaint(val tone: Color?, val tile: Color? = null)
+
+/** The picture a style draws, null for the styles that draw no glyph or outline. */
+private fun IconRenderMode.styledPicture(): StyledPicture? = when (style) {
+    IconStyle.GLYPH -> StyledPicture.GLYPH
+    IconStyle.OUTLINE -> StyledPicture.OUTLINE
+    else -> null
+}
 
 /** The `BlendMode.Color` tone for the styles that tint the whole icon, which is also what stands in while a glyph or outline is being made; a tiled mode adds a tile in the colour and a tone readable on it. */
 private fun IconRenderMode.paint(accent: Color, ink: Color, inkInverted: Color): IconPaint {

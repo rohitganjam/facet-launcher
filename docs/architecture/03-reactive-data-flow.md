@@ -13,7 +13,7 @@ caller via `shareIn(applicationScope, SharingStarted.WhileSubscribed(5_000), rep
 `LauncherApps.Callback`/`BroadcastReceiver` registration and one profile scan + icon decode per
 event, no matter how many repositories are hydrating against it at once (previously ~7 while Home
 was showing; this was finding F1, now fixed — see the `git blame` on `AppRepository.kt` for the
-change). Each scan also reads an adaptive icon's themed monochrome layer into `AppInfo.monochromeIcon`, a small alpha-only bitmap (API 33+, null when the app ships none); the glyph and outline pictures built from it are not made here but on demand by `StyledIconCache` (see 13).
+change). Each scan also reads an adaptive icon's themed monochrome layer into `AppInfo.monochromeIcon`, a small alpha-only bitmap (API 33+, null when the app ships none); the glyph and outline pictures built from it are not made here but by `StyledIconCache`, on demand and warmed in the background for all apps (see 13).
 
 ```mermaid
 sequenceDiagram

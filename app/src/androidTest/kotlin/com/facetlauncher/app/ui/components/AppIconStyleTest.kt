@@ -70,8 +70,8 @@ class AppIconStyleTest {
         // Given a logo shown in the glyph style
         show(IconRenderMode.GLYPH_ACCENT)
 
-        // When the styled picture has replaced the placeholder tint
-        waitForPixels { it.corner().near(backdrop) }
+        // When the styled picture has been made and drawn
+        waitForPixels { !it.centre().near(backdrop) }
 
         // Then the glyph is the accent and the plate is gone
         assertTrue("centre ${pixels().centre()} vs accent $accent", pixels().centre().near(accent))
@@ -83,8 +83,8 @@ class AppIconStyleTest {
         // Given a logo shown in the glyph theme style under the light theme
         show(IconRenderMode.GLYPH_INK)
 
-        // When the styled picture has replaced the placeholder tint
-        waitForPixels { it.corner().near(backdrop) }
+        // When the styled picture has been made and drawn
+        waitForPixels { !it.centre().near(backdrop) }
 
         // Then the glyph is dark ink, not the blue accent
         val centre = pixels().centre()
@@ -96,8 +96,8 @@ class AppIconStyleTest {
         // Given a logo shown in the glyph inverted style under the light theme
         show(IconRenderMode.GLYPH_INVERTED)
 
-        // When the styled picture has replaced the placeholder tint
-        waitForPixels { it.corner().near(backdrop) }
+        // When the styled picture has been made and drawn
+        waitForPixels { !it.centre().near(backdrop) }
 
         // Then the glyph is the light opposite of the dark text colour, and there is no tile
         assertTrue("centre ${pixels().centre()}", pixels().centre().red > 0.8f)
@@ -135,8 +135,8 @@ class AppIconStyleTest {
         // Given a logo shown in the outline style
         show(IconRenderMode.OUTLINE_ACCENT)
 
-        // When the styled picture has replaced the placeholder tint
-        waitForPixels { it.centre().near(backdrop) }
+        // When the styled picture has been made and drawn
+        waitForPixels { map -> (0 until map.height).sumOf { y -> (0 until map.width).count { x -> map[x, y].convert(ColorSpaces.Srgb).near(accent) } } > 20 }
 
         // Then some line art is drawn in the accent
         val map = pixels()

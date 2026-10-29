@@ -144,6 +144,21 @@ class IconStylerTest {
     }
 
     @Test
+    fun `asking for one picture makes only that one and no fallback when it is there`() {
+        // When styling a plain logo for each picture alone
+        val glyphOnly = IconStyler.style(logo(), null, side, only = StyledPicture.GLYPH)
+        val outlineOnly = IconStyler.style(logo(), null, side, only = StyledPicture.OUTLINE)
+
+        // Then each has just its own picture and needs no fallback
+        assertNotNull(glyphOnly.glyph)
+        assertNull(glyphOnly.outline)
+        assertNull(glyphOnly.fallback)
+        assertNotNull(outlineOnly.outline)
+        assertNull(outlineOnly.glyph)
+        assertNull(outlineOnly.fallback)
+    }
+
+    @Test
     fun `an icon that gets no glyph or outline gets its whole self shaded as a fallback`() {
         // Given noise, which has neither a plain plate nor tidy edges
         val random = Random(1)

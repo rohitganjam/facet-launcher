@@ -26,6 +26,7 @@ import com.facetlauncher.app.ui.home.LocalAllowLandscape
 import com.facetlauncher.app.ui.home.homeRequestedOrientation
 import com.facetlauncher.app.ui.launcher.LauncherViewModel
 import com.facetlauncher.app.ui.launcher.LocalHomePressedEvent
+import com.facetlauncher.app.ui.components.WarmStyledIcons
 import com.facetlauncher.app.ui.navigation.FacetNavHost
 import com.facetlauncher.app.ui.onboarding.OnboardingScreen
 import com.facetlauncher.app.ui.settings.DebugSettingsEntry
@@ -94,6 +95,7 @@ class LauncherActivity : ComponentActivity() {
                     homeAppsFontWeight = uiState.homeAppsFontWeight,
                     fontScaleOption = uiState.fontScaleOption,
                 ) {
+                    WarmStyledIcons(uiState.apps, uiState.iconRenderMode)
                     ProvideSystemBars(uiState.systemBarIconStyle, systemBarsState) {
                         when {
                             uiState.isLoading || uiState.onboardingCompleted == null -> {

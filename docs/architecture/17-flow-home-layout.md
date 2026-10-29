@@ -74,7 +74,7 @@ The live drag value is clamped too, so the handle follows the finger as soon as 
 ## 3. Portrait-only logic that landscape must not run
 
 The scale re-clamp (`ClockScaleReclampEffect`, using `ClockFit.maxScale`) is portrait geometry, and in
-landscape it would persist a wrong `clockScale`, so it is skipped. The compact-spacing check reserves
+landscape it would persist a wrong `clockScale`, so it is skipped. It also waits for a measured content height (`isClockGeometryMeasured`): before that the handle sits at its floor and the fit reads as the minimum scale. The compact-spacing check reserves
 nothing above the list in landscape (`HomeMediaLayout.listTopTargetPx` is 0).
 
 ## 4. Landscape adjust mode
