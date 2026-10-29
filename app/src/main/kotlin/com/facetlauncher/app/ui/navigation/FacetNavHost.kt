@@ -34,7 +34,9 @@ import com.facetlauncher.app.ui.settings.AppearanceSettingsScreen
 import com.facetlauncher.app.ui.settings.CalendarSettingsScreen
 import com.facetlauncher.app.ui.settings.DockAppsAppearanceScreen
 import com.facetlauncher.app.ui.settings.DockSettingsScreen
-import com.facetlauncher.app.ui.settings.FontsThemesIconsScreen
+import com.facetlauncher.app.ui.settings.FontsScreen
+import com.facetlauncher.app.ui.settings.IconsScreen
+import com.facetlauncher.app.ui.settings.ThemesAndColorsScreen
 import com.facetlauncher.app.ui.settings.FolderAppPickerScreen
 import com.facetlauncher.app.ui.settings.FolderDetailScreen
 import com.facetlauncher.app.ui.settings.FoldersSettingsScreen
@@ -82,7 +84,9 @@ object FacetDestinations {
     const val BACKUP_RESTORE = "backupRestore"
     const val APPEARANCE_SETTINGS = "appearanceSettings?facetId={facetId}"
     const val DOCK_APPS_APPEARANCE = "dockAppsAppearance?facetId={facetId}"
-    const val FONTS_THEMES_ICONS = "fontsThemesIcons"
+    const val THEMES_AND_COLORS = "themesAndColors"
+    const val FONTS = "fonts"
+    const val ICONS = "icons"
     const val DOCK_SETTINGS = "dockSettings?facetId={facetId}"
     const val HOME_APPS_LIST_SETTINGS = "homeAppsListSettings?facetId={facetId}"
     const val APP_DRAWER_SETTINGS = "appDrawerSettings"
@@ -254,7 +258,9 @@ fun FacetNavHost(
                 onNavigateToNotificationSettings = { navController.navigate(FacetDestinations.NOTIFICATION_SETTINGS) },
                 onNavigateToDockAppsAppearance = { navController.navigate(FacetDestinations.dockAppsAppearance(facetId)) },
                 onNavigateToAppDrawerSettings = { navController.navigate(FacetDestinations.APP_DRAWER_SETTINGS) },
-                onNavigateToFontsThemesIcons = { navController.navigate(FacetDestinations.FONTS_THEMES_ICONS) },
+                onNavigateToThemesAndColors = { navController.navigate(FacetDestinations.THEMES_AND_COLORS) },
+                onNavigateToFonts = { navController.navigate(FacetDestinations.FONTS) },
+                onNavigateToIcons = { navController.navigate(FacetDestinations.ICONS) },
             )
         }
         settingsComposable(
@@ -294,8 +300,14 @@ fun FacetNavHost(
         ) {
             DockAppsAppearanceScreen(onBack = { navController.popBackStackSafely() })
         }
-        settingsComposable(FacetDestinations.FONTS_THEMES_ICONS) {
-            FontsThemesIconsScreen(onBack = { navController.popBackStackSafely() })
+        settingsComposable(FacetDestinations.THEMES_AND_COLORS) {
+            ThemesAndColorsScreen(onBack = { navController.popBackStackSafely() })
+        }
+        settingsComposable(FacetDestinations.FONTS) {
+            FontsScreen(onBack = { navController.popBackStackSafely() })
+        }
+        settingsComposable(FacetDestinations.ICONS) {
+            IconsScreen(onBack = { navController.popBackStackSafely() })
         }
         settingsComposable(
             FacetDestinations.DOCK_SETTINGS,

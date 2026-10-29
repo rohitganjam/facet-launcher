@@ -78,6 +78,7 @@ class AppContextMenuTest {
         onRemoveFromFolder: (AppInfo, Long) -> Unit = { _, _ -> },
         appMenuNotifications: AppMenuNotifications = AppMenuNotifications.None,
         onAppInfo: (AppInfo) -> Unit = {},
+        onOpenApp: (AppInfo) -> Unit = {},
     ) {
         composeRule.setContent {
             FacetLauncherTheme {
@@ -95,6 +96,7 @@ class AppContextMenuTest {
                         removeFromFolderId = removeFromFolderId,
                         onRemoveFromFolder = onRemoveFromFolder,
                         onAppInfo = onAppInfo,
+                        onOpenApp = onOpenApp,
                         appMenuNotifications = appMenuNotifications,
                     )
                 }
@@ -118,6 +120,34 @@ class AppContextMenuTest {
         composeRule.onNodeWithTag("app_context_menu_work_badge").assertDoesNotExist()
         composeRule.onNodeWithTag("app_context_menu_other_badge").assertDoesNotExist()
         composeRule.onNodeWithText("Mail").assertExists()
+    }
+
+    @Test
+    fun tappingTheAppNameOpensTheAppAndClosesTheSheet() {
+        // Given the menu open on an app
+        var opened: AppInfo? = null
+        var sheetDismissed = false
+        setContent(onOpenApp = { opened = it }, onDismissRequest = { sheetDismissed = true })
+
+        // When the app name is tapped
+        composeRule.onNodeWithTag("app_context_menu_name", useUnmergedTree = true).performClick()
+
+        // Then the app is opened and the sheet asked to close
+        assertEquals(app, opened)
+        assert(sheetDismissed)
+    }
+
+    @Test
+    fun tappingTheAppIconOpensTheApp() {
+        // Given the menu open on an app
+        var opened: AppInfo? = null
+        setContent(onOpenApp = { opened = it })
+
+        // When the header row's icon area is tapped (the row is one tap target with the name)
+        composeRule.onNodeWithTag("app_context_menu_open").performClick()
+
+        // Then the app is opened
+        assertEquals(app, opened)
     }
 
     @Test
@@ -433,7 +463,8 @@ class AppContextMenuTest {
 
         composeRule.onNodeWithTag("app_context_menu_folder_page_title", useUnmergedTree = true).assertTextEquals("Add to folder")
         val titleHeight = composeRule.onNodeWithTag("app_context_menu_folder_page_title", useUnmergedTree = true).getUnclippedBoundsInRoot().height
-        assertEquals(appNameHeight, titleHeight)
+        // Bounds are differences of float coordinates, so allow rounding noise.
+        assertEquals(appNameHeight.value, titleHeight.value, 0.01f)
     }
 
     @Test
@@ -603,13 +634,13 @@ class AppContextMenuTest {
 
     @Test
     fun clearAllDismissesEveryListedNotificationAndKeepsTheSheetOpen() {
-        var dismissedKeys: List<String>? = null
+        val dismissedKeys = mutableListOf<String>()
         var sheetDismissed = false
         setContent(
             onDismissRequest = { sheetDismissed = true },
             appMenuNotifications = AppMenuNotifications(
                 observe = { flowOf(AppNotificationsState(twoNotifications)) },
-                onDismiss = { dismissedKeys = it; true },
+                onDismiss = { dismissedKeys += it; true },
             ),
         )
 
@@ -618,6 +649,7 @@ class AppContextMenuTest {
         }
         composeRule.onNodeWithTag("app_notifications_clear_all").performClick()
 
+        composeRule.waitUntil(timeoutMillis = 3_000) { dismissedKeys.size == 2 }
         assertEquals(listOf("k1", "k2"), dismissedKeys)
         assert(!sheetDismissed)
     }
@@ -785,11 +817,11 @@ class AppContextMenuTest {
 
     @Test
     fun clearAllLeavesPersistentNotificationsOut() {
-        var dismissedKeys: List<String>? = null
+        val dismissedKeys = mutableListOf<String>()
         setContent(
             appMenuNotifications = AppMenuNotifications(
                 observe = { flowOf(AppNotificationsState(listOf(persistent) + twoNotifications)) },
-                onDismiss = { dismissedKeys = it; true },
+                onDismiss = { dismissedKeys += it; true },
             ),
         )
         composeRule.waitUntil(timeoutMillis = 3_000) {
@@ -798,6 +830,7 @@ class AppContextMenuTest {
 
         composeRule.onNodeWithTag("app_notifications_clear_all").assertIsEnabled().performClick()
 
+        composeRule.waitUntil(timeoutMillis = 3_000) { dismissedKeys.size == 2 }
         assertEquals(listOf("k1", "k2"), dismissedKeys)
     }
 

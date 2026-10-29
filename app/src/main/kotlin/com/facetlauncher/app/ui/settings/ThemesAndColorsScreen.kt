@@ -3,7 +3,6 @@ package com.facetlauncher.app.ui.settings
 import android.annotation.SuppressLint
 import android.content.res.Configuration
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -19,7 +18,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -38,7 +36,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
@@ -47,46 +44,31 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.facetlauncher.app.R
-import com.facetlauncher.app.data.model.ClockColorOption
-import com.facetlauncher.app.data.model.FontScaleOption
-import com.facetlauncher.app.data.model.FontWeightOption
 import com.facetlauncher.app.data.model.HomeWallpaper
-import com.facetlauncher.app.data.model.IconRenderMode
-import com.facetlauncher.app.data.model.IconShape
-import com.facetlauncher.app.data.model.LauncherFontOption
 import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.data.model.SystemBarIconStyle
 import com.facetlauncher.app.data.model.ThemeMode
 import com.facetlauncher.app.data.model.WallpaperAccentRole
-import com.facetlauncher.app.ui.components.AppIconSize
 import com.facetlauncher.app.ui.components.CardDivider
-import com.facetlauncher.app.ui.components.FontSizeSlider
-import com.facetlauncher.app.ui.components.FontWeightSlider
 import com.facetlauncher.app.ui.components.LabeledDropdownRow
 import com.facetlauncher.app.ui.components.SettingsCard
-import com.facetlauncher.app.ui.components.SettingsSectionHeader
 import com.facetlauncher.app.ui.components.StickyHeaderLayout
-import com.facetlauncher.app.ui.components.toComposeShape
 import com.facetlauncher.app.ui.theme.Accent
 import com.facetlauncher.app.ui.theme.AccentSwatch
-import com.facetlauncher.app.ui.theme.Hairline
-import com.facetlauncher.app.ui.theme.IconTile
 import com.facetlauncher.app.ui.theme.Ink
 import com.facetlauncher.app.ui.theme.LocalDynamicColorRefreshSignal
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
-import com.facetlauncher.app.ui.theme.Muted
 import com.facetlauncher.app.ui.theme.Surface
 import com.facetlauncher.app.ui.theme.SurfaceContainer
 import com.facetlauncher.app.ui.theme.dynamicColorSupported
 import com.facetlauncher.app.ui.theme.toneOf
 
 /**
- * Settings → Appearance → Fonts, themes and icons — theme, status bar icons, accent color, icon style and shape, launcher font,
- * font color, size and weight. Global only: a facet has no override for any of these, so a facet's Appearance screen has no link here.
- * Moved off the main Appearance screen. Shares [AppearanceSettingsViewModel] with [AppearanceSettingsScreen].
+ * Settings → Appearance → Themes and colors — theme, status bar icons and accent color. Global only: a facet has no override
+ * for any of these, so a facet's Appearance screen has no link here. Shares [AppearanceSettingsViewModel] with [AppearanceSettingsScreen].
  */
 @Composable
-fun FontsThemesIconsScreen(
+fun ThemesAndColorsScreen(
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: AppearanceSettingsViewModel = hiltViewModel(),
@@ -94,7 +76,7 @@ fun FontsThemesIconsScreen(
     val settings by viewModel.settings.collectAsState()
     val uiState by viewModel.uiState.collectAsState()
     val homeWallpaper by viewModel.homeWallpaper.collectAsState()
-    FontsThemesIconsContent(
+    ThemesAndColorsContent(
         settings = settings,
         uiState = uiState,
         homeWallpaper = homeWallpaper,
@@ -104,18 +86,12 @@ fun FontsThemesIconsScreen(
         onAccentFromSystemChange = viewModel::setAccentFromSystem,
         onCustomAccentSwatchChange = viewModel::setCustomAccentSwatch,
         onWallpaperAccentRoleChange = viewModel::setWallpaperAccentRole,
-        onIconRenderModeChange = viewModel::setIconRenderMode,
-        onIconShapeChange = viewModel::setIconShape,
-        onLauncherFontOptionChange = viewModel::setLauncherFontOption,
-        onAppLabelColorOptionChange = viewModel::setAppLabelColorOption,
-        onHomeAppsFontWeightChange = viewModel::setHomeAppsFontWeight,
-        onFontScaleOptionChange = viewModel::setFontScaleOption,
         modifier = modifier,
     )
 }
 
 @Composable
-private fun FontsThemesIconsContent(
+private fun ThemesAndColorsContent(
     settings: LauncherSettings,
     uiState: AppearanceSettingsUiState,
     homeWallpaper: HomeWallpaper,
@@ -125,23 +101,17 @@ private fun FontsThemesIconsContent(
     onAccentFromSystemChange: (Boolean) -> Unit,
     onCustomAccentSwatchChange: (AccentSwatch) -> Unit,
     onWallpaperAccentRoleChange: (WallpaperAccentRole) -> Unit,
-    onIconRenderModeChange: (IconRenderMode) -> Unit,
-    onIconShapeChange: (IconShape) -> Unit,
-    onLauncherFontOptionChange: (LauncherFontOption) -> Unit,
-    onAppLabelColorOptionChange: (ClockColorOption) -> Unit,
-    onHomeAppsFontWeightChange: (FontWeightOption) -> Unit,
-    onFontScaleOptionChange: (FontScaleOption) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     StickyHeaderLayout(
         modifier = modifier,
-        header = { AppearanceSettingsHeader(title = stringResource(R.string.appearance_fonts_themes_icons_title), onBack = onBack) },
+        header = { AppearanceSettingsHeader(title = stringResource(R.string.appearance_themes_colors_title), onBack = onBack) },
         content = { headerHeight ->
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
                     .background(SurfaceContainer)
-                    .testTag("fonts_themes_icons_screen")
+                    .testTag("themes_colors_screen")
                     .windowInsetsPadding(WindowInsets.systemBars)
                     .padding(horizontal = 24.dp),
                 contentPadding = PaddingValues(top = headerHeight, bottom = 24.dp),
@@ -153,7 +123,6 @@ private fun FontsThemesIconsContent(
                         modifier = Modifier.padding(bottom = 20.dp).testTag("appearance_preview_card"),
                     )
                 }
-                item { SettingsSectionHeader(stringResource(R.string.appearance_section_theme)) }
                 item {
                     ThemeCard(
                         settings = settings,
@@ -162,18 +131,6 @@ private fun FontsThemesIconsContent(
                         onAccentFromSystemChange = onAccentFromSystemChange,
                         onCustomAccentSwatchChange = onCustomAccentSwatchChange,
                         onWallpaperAccentRoleChange = onWallpaperAccentRoleChange,
-                    )
-                }
-                item { SettingsSectionHeader(stringResource(R.string.appearance_section_icons)) }
-                item { IconsCard(settings, onIconRenderModeChange, onIconShapeChange) }
-                item { SettingsSectionHeader(stringResource(R.string.appearance_section_fonts)) }
-                item {
-                    FontsCard(
-                        settings = settings,
-                        onLauncherFontOptionChange = onLauncherFontOptionChange,
-                        onAppLabelColorOptionChange = onAppLabelColorOptionChange,
-                        onHomeAppsFontWeightChange = onHomeAppsFontWeightChange,
-                        onFontScaleOptionChange = onFontScaleOptionChange,
                     )
                 }
             }
@@ -220,83 +177,13 @@ private fun ThemeCard(
     }
 }
 
-@Composable
-private fun IconsCard(settings: LauncherSettings, onIconRenderModeChange: (IconRenderMode) -> Unit, onIconShapeChange: (IconShape) -> Unit) {
-    SettingsCard {
-        LabeledDropdownRow(
-            title = stringResource(R.string.appearance_icon_style),
-            options = IconRenderMode.entries,
-            selected = settings.iconRenderMode,
-            label = { stringResource(it.displayNameRes) },
-            onSelect = onIconRenderModeChange,
-            testTag = "appearance_icons_row",
-        )
-        CardDivider()
-        IconShapePicker(selected = settings.iconShape, onSelect = onIconShapeChange)
-    }
-}
-
-@Composable
-private fun FontsCard(
-    settings: LauncherSettings,
-    onLauncherFontOptionChange: (LauncherFontOption) -> Unit,
-    onAppLabelColorOptionChange: (ClockColorOption) -> Unit,
-    onHomeAppsFontWeightChange: (FontWeightOption) -> Unit,
-    onFontScaleOptionChange: (FontScaleOption) -> Unit,
-) {
-    SettingsCard {
-        LabeledDropdownRow(
-            title = stringResource(R.string.appearance_launcher_font),
-            options = LauncherFontOption.entries,
-            selected = settings.launcherFontOption,
-            label = { stringResource(it.displayNameRes) },
-            onSelect = onLauncherFontOptionChange,
-            testTag = "appearance_font_row",
-        )
-        CardDivider()
-        LabeledDropdownRow(
-            title = stringResource(R.string.appearance_font_color),
-            options = ClockColorOption.entries,
-            selected = settings.appLabelColorOption,
-            label = { stringResource(it.displayNameRes) },
-            onSelect = onAppLabelColorOptionChange,
-            testTag = "appearance_app_label_color_row",
-        )
-        CardDivider()
-        FontSizeSlider(
-            selected = settings.fontScaleOption,
-            onSelectedChange = onFontScaleOptionChange,
-            label = stringResource(R.string.appearance_font_size),
-            showPreview = false,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 13.dp)
-                .testTag("appearance_font_size_slider"),
-            sliderTestTag = "appearance_font_size_slider_control",
-        )
-        CardDivider()
-        FontWeightSlider(
-            selected = settings.homeAppsFontWeight,
-            onSelectedChange = onHomeAppsFontWeightChange,
-            label = stringResource(R.string.appearance_font_weight),
-            showPreview = false,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 13.dp)
-                .testTag("appearance_font_weight_slider"),
-            sliderTestTag = "appearance_font_weight_slider_control",
-        )
-        CardDivider()
-        FontPreviewRow(settings = settings)
-    }
-}
 
 @Preview(showBackground = true, widthDp = 390, heightDp = 844)
 @Preview(name = "Dark", showBackground = true, widthDp = 390, heightDp = 844, uiMode = Configuration.UI_MODE_NIGHT_YES)
 @Composable
-private fun FontsThemesIconsScreenPreview() {
+private fun ThemesAndColorsScreenPreview() {
     FacetLauncherTheme {
-        FontsThemesIconsContent(
+        ThemesAndColorsContent(
             settings = LauncherSettings(),
             uiState = AppearanceSettingsUiState(globalFavorites = DesignTimeFavorites, globalDockItems = DesignTimeDockItems),
             homeWallpaper = HomeWallpaper.Unavailable,
@@ -306,12 +193,6 @@ private fun FontsThemesIconsScreenPreview() {
             onAccentFromSystemChange = {},
             onCustomAccentSwatchChange = {},
             onWallpaperAccentRoleChange = {},
-            onIconRenderModeChange = {},
-            onIconShapeChange = {},
-            onLauncherFontOptionChange = {},
-            onAppLabelColorOptionChange = {},
-            onHomeAppsFontWeightChange = {},
-            onFontScaleOptionChange = {},
         )
     }
 }
@@ -383,61 +264,6 @@ private fun PillOption(label: String, selected: Boolean, onClick: () -> Unit, te
         // Ink for both — selection is already conveyed by the pill's own background tint above;
         // dimming the unselected label's text on top of that read as disabled (see chat history).
         Text(text = label, style = MaterialTheme.typography.bodyMedium, color = Ink)
-    }
-}
-
-private val ICON_SHAPE_RING_WIDTH = 2.dp
-private val ICON_SHAPE_RING_GAP = 2.dp
-
-/** Icon outline picker — each option drawn in its own shape so Squircle vs Rounded square is visible, not just named. */
-@Composable
-private fun IconShapePicker(selected: IconShape, onSelect: (IconShape) -> Unit, modifier: Modifier = Modifier) {
-    Column(modifier = modifier.padding(vertical = 8.dp).testTag("appearance_icon_shape_row")) {
-        Text(
-            text = stringResource(R.string.appearance_icon_shape),
-            style = MaterialTheme.typography.bodyLarge,
-            color = Ink,
-            modifier = Modifier.padding(bottom = 10.dp),
-        )
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            IconShape.entries.forEach { shape ->
-                IconShapeOption(shape = shape, isSelected = shape == selected, onSelect = { onSelect(shape) })
-            }
-        }
-    }
-}
-
-@Composable
-private fun IconShapeOption(shape: IconShape, isSelected: Boolean, onSelect: () -> Unit, modifier: Modifier = Modifier) {
-    Column(
-        modifier = modifier
-            .testTag("icon_shape_${shape.name}")
-            .clip(MaterialTheme.shapes.small)
-            .selectable(selected = isSelected, role = Role.RadioButton, onClick = onSelect)
-            .padding(horizontal = 6.dp, vertical = 4.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        // Selected: an Accent ring with a transparent gap around the icon. The ring's space is
-        // reserved on every option so selecting one doesn't shift the row.
-        Box(
-            modifier = Modifier
-                .size(AppIconSize.TILE + (ICON_SHAPE_RING_WIDTH + ICON_SHAPE_RING_GAP) * 2)
-                .then(if (isSelected) Modifier.border(ICON_SHAPE_RING_WIDTH, Accent, shape.toComposeShape()) else Modifier),
-            contentAlignment = Alignment.Center,
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(AppIconSize.TILE)
-                    .background(IconTile, shape.toComposeShape())
-                    .then(if (isSelected) Modifier else Modifier.border(1.dp, Hairline, shape.toComposeShape())),
-            )
-        }
-        Text(
-            text = stringResource(shape.displayNameRes),
-            style = MaterialTheme.typography.labelSmall,
-            color = if (isSelected) Ink else Muted,
-            modifier = Modifier.padding(top = 6.dp),
-        )
     }
 }
 

@@ -10,8 +10,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.toSize
 import com.facetlauncher.app.ui.components.ThemedModalBottomSheet
 import com.facetlauncher.app.ui.home.ClockAdjustMode
@@ -50,20 +52,32 @@ internal fun HomeScreenEffects(frame: HomeFrame) {
 private fun ClockScaleReclampEffect(frame: HomeFrame) {
     val layout = frame.layout
     val clock = frame.state.clock
+    // The effect outlives the composition it launched in, so it reads the latest frame, not the one it captured.
+    val latestFrame by rememberUpdatedState(frame)
     LaunchedEffect(clock.templateId, clock.placement.alignment, clock.dateStyle, clock.placement.zoneHeightDp, clock.positionOwnerFacetId, frame.isLandscape) {
         // The fit maths is portrait geometry; running it in landscape would save a wrong scale.
         if (frame.isLandscape) return@LaunchedEffect
+        // Never settling means no trustworthy measurement, so leave the saved scale alone.
         withTimeoutOrNull(GEOMETRY_SETTLE_TIMEOUT_MS) {
-            snapshotFlow { Triple(layout.clockBoxSize, layout.clockBoxOriginInRoot, layout.rootSize) }
-                .filter { it.first != null && it.second != null && it.third != null }
+            snapshotFlow {
+                listOf(layout.clockBoxSize, layout.clockBoxOriginInRoot, layout.rootSize, latestFrame.geometry.handle, latestFrame.metrics)
+            }
+                .filter { isClockGeometryMeasured(layout.clockBoxSize, layout.clockBoxOriginInRoot, layout.rootSize, latestFrame.geometry.handle) }
                 .debounce(GEOMETRY_SETTLE_DEBOUNCE_MS)
                 .first()
-        }
+        } ?: return@LaunchedEffect
         val box = layout.measureClockBox() ?: return@LaunchedEffect
-        val fit = frame.geometry.fit.maxScale(box.size, box.topLeft, box.rootWidthPx)
+        val fit = latestFrame.geometry.fit.maxScale(box.size, box.topLeft, box.rootWidthPx)
         if (clock.placement.scale > fit + 0.01f) frame.actions.clock.onScaleCommit(fit)
     }
 }
+
+/**
+ * Until the content height reaches the geometry, the height handle's ceiling collapses onto its floor and the clock
+ * sits at the top, so a fit taken then reads as the minimum scale.
+ */
+internal fun isClockGeometryMeasured(boxSize: IntSize?, boxOrigin: Offset?, rootSize: IntSize?, handle: HandleBounds): Boolean =
+    boxSize != null && boxOrigin != null && rootSize != null && handle.ceilingPx > handle.floorPx
 
 /**
  * Reports the hosted widget's bounds and the app list's viewport to the route, so its swipe-to-open-drawer gesture

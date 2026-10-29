@@ -171,7 +171,7 @@ flowchart LR
 
 | Action | Path | Notes |
 |---|---|---|
-| Launch | `onAppClick` → `LauncherActivity.launchApp` | other-profile apps via `LauncherApps.startMainActivity` |
+| Launch | `onAppClick` → `LauncherActivity.launchApp` | other-profile apps via `LauncherApps.startMainActivity`; also fired by tapping the sheet header's icon or name (`onOpenApp`, sheet closes first) |
 | Notifications zone | `DrawerViewModel.observeAppNotifications(app)` → `ObserveAppNotificationsUseCase` (setting `show_notifications_in_app_menu` + `NotificationAccessRepository.isGranted()` + `NotificationBadgeRepository.notificationsFor(pkg, handle)`) → `AppNotificationsState(notifications, needsAccess)` | live while the sheet is open; only this app in this profile; see below |
 | Open / dismiss a notification | `DrawerViewModel.openNotification(n)` → `NotificationOpener.open(contentIntent)`, then `NotificationActionController.dismiss` if the notification asked for `autoCancel`; swipe and "Clear all" → `dismissNotifications(keys)` → the listener's `cancelNotifications` | a dismiss with no connected listener is a no-op that returns false |
 | Add/remove to Favorites / Dock | `QuickAddState` from `ObserveQuickAddStateUseCase` decides which action is offered; `DrawerViewModel.onFavoritesAction / onDockAction` → the 4 app use cases | routing in [08 §1](08-flow-placements.md) |
@@ -183,7 +183,7 @@ flowchart LR
 App shortcuts (`LauncherApps.getShortcuts`) are no longer shown in the menu.
 
 **Sheet layout.** `AppContextMenu` is one scrolling page with three zones, each behind a 1dp
-`CardDivider`: a header (icon, name, and App info and
+`CardDivider`: a header (icon and name, one tap target that opens the app, and App info and
 Uninstall as 48dp icon buttons), the notifications zone (left out only when the setting is off), and the
 placement actions. It opens at its full
 content height (`skipPartiallyExpanded`) and scrolls when the zones don't fit.
@@ -194,8 +194,7 @@ content height (`skipPartiallyExpanded`) and scrolls when the zones don't fit.
   granted but nothing posted), or the list. The list is a `LazyColumn` window sized from the measured first
   card to two cards plus a 40% peek of the next, and never over a third of the screen. Each card shows the
   title, a compact age (`1s`, `2m`, `3h`, `4d`; `ShortAge.kt`, localised unit strings) and up to two lines
-  of text. Cards open on tap (the sheet closes first) and swipe away singly; "Clear all" dismisses every
-  clearable listed key and leaves the sheet open. A persistent (ongoing, non-clearable) notification is listed
+  of text. Cards open on tap (the sheet closes first) and swipe away singly; "Clear all" swipes every visible clearable card off to the right together (each asks the listener once its swipe ends), dismisses the off-screen ones in one batch, and leaves the sheet open. Rows animate out (`animateItem`) and the zone's height animates (`animateContentSize`). A persistent (ongoing, non-clearable) notification is listed
   and tappable but has no swipe, is left out of "Clear all" (which greys out when only persistent ones remain),
   and is never dismissed after opening. With the setting on but no notification access the body is one
   "Enable notifications" row that closes the sheet and calls

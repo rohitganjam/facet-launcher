@@ -2,6 +2,7 @@ package com.facetlauncher.app.ui.theme
 
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.staticCompositionLocalOf
+import com.facetlauncher.app.data.icon.StyledIconCache
 import com.facetlauncher.app.data.model.IconRenderMode
 import com.facetlauncher.app.data.model.IconShape
 import com.facetlauncher.app.data.model.WallpaperAccentRole
@@ -46,3 +47,6 @@ val LocalIconRenderMode = staticCompositionLocalOf { IconRenderMode.SYSTEM_DEFAU
 
 /** Global app-icon outline, provided alongside [LocalIconRenderMode] for the same reason. */
 val LocalIconShape = staticCompositionLocalOf { IconShape.SQUIRCLE }
+
+/** Makes the glyph and outline icon pictures; the root provides the app-wide one, a bare one serves previews and tests. */
+val LocalStyledIconCache = staticCompositionLocalOf { StyledIconCache() }

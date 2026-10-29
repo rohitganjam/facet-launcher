@@ -22,6 +22,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.toBitmap
 import com.facetlauncher.app.data.di.ApplicationScope
 import com.facetlauncher.app.data.di.DefaultDispatcher
+import com.facetlauncher.app.data.icon.monochromeCoverage
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.AppProfile
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -58,15 +59,15 @@ import kotlinx.coroutines.withContext
  * (legacy) icons already come back as whatever raw shape the app itself baked into its PNG — there's
  * no equivalent "unmask" possible for those, so they're flattened as-is.
  */
-private const val ADAPTIVE_ICON_CANVAS_SIZE = 108
+internal const val ADAPTIVE_ICON_CANVAS_SIZE = 108
 
 /** Undoes ~66%'s worth of built-in safe-zone inset (1 / 0.66 ≈ 1.5) — see [ADAPTIVE_ICON_CANVAS_SIZE]'s doc. */
-private const val ADAPTIVE_ICON_SCALE = 1.5f
+internal const val ADAPTIVE_ICON_SCALE = 1.5f
 
 /** How long [AppRepository.installedApps] keeps its [LauncherApps] registration alive with zero collectors — long enough to survive a Home↔Drawer transition or a brief config change without a full re-scan, short enough to actually release it when the launcher is genuinely backgrounded. */
 private const val SHARE_STOP_TIMEOUT_MILLIS = 5_000L
 
-private fun flattenIcon(drawable: Drawable): Bitmap {
+internal fun flattenIcon(drawable: Drawable): Bitmap {
     if (drawable !is AdaptiveIconDrawable) return drawable.toBitmap()
     val width = drawable.intrinsicWidth.takeIf { it > 0 } ?: ADAPTIVE_ICON_CANVAS_SIZE
     val height = drawable.intrinsicHeight.takeIf { it > 0 } ?: ADAPTIVE_ICON_CANVAS_SIZE
@@ -201,11 +202,13 @@ class AppRepository @Inject constructor(
                     // cleanly in this process — confirmed via a real Techno Spark 20 Pro crash.
                     // One bad entry should drop just itself, not the whole list.
                     runCatching {
+                        val drawable = runCatching { info.getIcon(0) }.getOrNull()
                         AppInfo(
                             packageName = info.applicationInfo.packageName,
                             activityName = info.componentName.className,
                             label = info.label.toString(),
-                            icon = runCatching { flattenIcon(info.getIcon(0)).asImageBitmap() }.getOrNull(),
+                            icon = drawable?.let { runCatching { flattenIcon(it).asImageBitmap() }.getOrNull() },
+                            monochromeIcon = drawable?.let { runCatching { monochromeCoverage(it)?.asImageBitmap() }.getOrNull() },
                             profile = profileFor(handle),
                             userHandle = handle,
                             firstInstallTime = info.firstInstallTime,

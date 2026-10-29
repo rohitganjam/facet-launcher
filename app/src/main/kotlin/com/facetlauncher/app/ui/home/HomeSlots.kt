@@ -15,6 +15,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -38,6 +39,7 @@ import com.facetlauncher.app.ui.components.dashedBorder
 import com.facetlauncher.app.ui.home.ClockAdjustMode
 import com.facetlauncher.app.ui.home.DockIcon
 import com.facetlauncher.app.ui.home.MediaPlayerRow
+import com.facetlauncher.app.ui.home.clock.LocalBatteryClick
 import com.facetlauncher.app.ui.home.weather.rememberClockWeatherAccessory
 import com.facetlauncher.app.ui.theme.Accent
 import com.facetlauncher.app.ui.theme.Ink
@@ -58,56 +60,58 @@ internal fun HomeClockSlot(frame: HomeFrame, alignment: ClockAlignment, scaleOri
     val layout = frame.layout
     val density = frame.density
     val widgetSize = frame.geometry.effectiveWidgetSizePx
-    ClockBlock(
-        modifier = modifier,
-        clockContentModifier = Modifier
-            .pointerInput(Unit) {
-                detectTapGestures(
-                    onTap = { actions.clock.onClockClick() },
-                    onLongPress = { actions.clock.onAdjustModeChange(ClockAdjustMode.MENU) },
-                )
-            }
-            .testTag(homeTag("home_clock_block")),
-        clockBoxModifier = Modifier.onGloballyPositioned {
-            layout.clockBoxSize = it.size
-            layout.clockBoxOriginInRoot = it.positionInRoot()
-        },
-        use24HourTime = clock.use24HourTime,
-        templateId = clock.templateId,
-        fontOption = clock.fontOption,
-        colorOption = clock.colorOption,
-        accentColorOption = clock.accentColorOption,
-        showMeridiem = clock.showMeridiem,
-        dateStyle = clock.dateStyle,
-        clockAlignment = alignment,
-        clockScale = frame.geometry.effectiveScale,
-        clockScaleOriginY = scaleOriginY,
-        scaledFootprint = scaledFootprint,
-        events = state.calendar.events,
-        calendarColors = state.calendar.colors,
-        calendarDisplay = state.calendar.display,
-        homeAppsFontWeight = state.list.look.labelFontWeightOption,
-        appLabelColorOption = state.list.look.labelColorOption,
-        onEventClick = actions.clock.onEventClick,
-        launcherFontOption = clock.launcherFontOption,
-        nextAlarmMillis = state.calendar.nextAlarmMillis,
-        batteryPercent = state.calendar.batteryPercent,
-        isCharging = state.calendar.isCharging,
-        weather = rememberClockWeatherAccessory(state.calendar.weather, actions.clock.onWeatherClick),
-        clockWidgetAppWidgetId = widget?.appWidgetId,
-        createClockWidgetHostView = actions.widget.createHostView,
-        clockWidgetWidthDp = widgetSize?.let { with(density) { it.x.toDp() } } ?: widget?.widthDp,
-        clockWidgetHeightDp = widgetSize?.let { with(density) { it.y.toDp() } } ?: widget?.heightDp,
-        // The saved size, not the live drag: it only changes once a commit round-trips through Room, and the real provider push must not track every drag frame.
-        clockWidgetCommittedWidthDp = widget?.widthDp,
-        clockWidgetCommittedHeightDp = widget?.heightDp,
-        onClockWidgetSizeChange = actions.widget.onSizeChange,
-        onClockWidgetLongPress = { actions.clock.onAdjustModeChange(ClockAdjustMode.MENU) },
-        onClockWidgetNestedScrollStart = actions.widget.onNestedScrollStart,
-        onClockWidgetLeftoverScroll = actions.widget.onLeftoverScroll,
-        onClockWidgetNestedScrollStop = actions.widget.onNestedScrollStop,
-        onClockWidgetLeftoverFling = actions.widget.onLeftoverFling,
-    )
+    CompositionLocalProvider(LocalBatteryClick provides actions.clock.onBatteryClick) {
+        ClockBlock(
+            modifier = modifier,
+            clockContentModifier = Modifier
+                .pointerInput(Unit) {
+                    detectTapGestures(
+                        onTap = { actions.clock.onClockClick() },
+                        onLongPress = { actions.clock.onAdjustModeChange(ClockAdjustMode.MENU) },
+                    )
+                }
+                .testTag(homeTag("home_clock_block")),
+            clockBoxModifier = Modifier.onGloballyPositioned {
+                layout.clockBoxSize = it.size
+                layout.clockBoxOriginInRoot = it.positionInRoot()
+            },
+            use24HourTime = clock.use24HourTime,
+            templateId = clock.templateId,
+            fontOption = clock.fontOption,
+            colorOption = clock.colorOption,
+            accentColorOption = clock.accentColorOption,
+            showMeridiem = clock.showMeridiem,
+            dateStyle = clock.dateStyle,
+            clockAlignment = alignment,
+            clockScale = frame.geometry.effectiveScale,
+            clockScaleOriginY = scaleOriginY,
+            scaledFootprint = scaledFootprint,
+            events = state.calendar.events,
+            calendarColors = state.calendar.colors,
+            calendarDisplay = state.calendar.display,
+            homeAppsFontWeight = state.list.look.labelFontWeightOption,
+            appLabelColorOption = state.list.look.labelColorOption,
+            onEventClick = actions.clock.onEventClick,
+            launcherFontOption = clock.launcherFontOption,
+            nextAlarmMillis = state.calendar.nextAlarmMillis,
+            batteryPercent = state.calendar.batteryPercent,
+            isCharging = state.calendar.isCharging,
+            weather = rememberClockWeatherAccessory(state.calendar.weather, actions.clock.onWeatherClick),
+            clockWidgetAppWidgetId = widget?.appWidgetId,
+            createClockWidgetHostView = actions.widget.createHostView,
+            clockWidgetWidthDp = widgetSize?.let { with(density) { it.x.toDp() } } ?: widget?.widthDp,
+            clockWidgetHeightDp = widgetSize?.let { with(density) { it.y.toDp() } } ?: widget?.heightDp,
+            // The saved size, not the live drag: it only changes once a commit round-trips through Room, and the real provider push must not track every drag frame.
+            clockWidgetCommittedWidthDp = widget?.widthDp,
+            clockWidgetCommittedHeightDp = widget?.heightDp,
+            onClockWidgetSizeChange = actions.widget.onSizeChange,
+            onClockWidgetLongPress = { actions.clock.onAdjustModeChange(ClockAdjustMode.MENU) },
+            onClockWidgetNestedScrollStart = actions.widget.onNestedScrollStart,
+            onClockWidgetLeftoverScroll = actions.widget.onLeftoverScroll,
+            onClockWidgetNestedScrollStop = actions.widget.onNestedScrollStop,
+            onClockWidgetLeftoverFling = actions.widget.onLeftoverFling,
+        )
+    }
 }
 
 @Composable

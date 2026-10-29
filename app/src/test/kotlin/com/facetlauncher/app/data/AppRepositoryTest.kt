@@ -14,6 +14,7 @@ import android.os.UserHandle
 import android.os.UserManager
 import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.test.core.app.ApplicationProvider
+import com.facetlauncher.app.data.icon.STORED_ICON_SIZE
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.AppProfile
 import kotlinx.coroutines.channels.Channel
@@ -22,6 +23,8 @@ import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertNotEquals
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -108,6 +111,40 @@ class AppRepositoryTest {
         // Then the flattened icon's corner pixel is opaque, not masked away
         val bitmap = result[0].icon!!.asAndroidBitmap()
         assertNotEquals(0, Color.alpha(bitmap.getPixel(0, 0)))
+    }
+
+    @Test
+    @Config(sdk = [33])
+    fun `keeps an adaptive icon's themed layer as a small coverage bitmap`() = runTest {
+        // Given an adaptive icon that ships a monochrome layer
+        val launcherApps = mock(LauncherApps::class.java)
+        val activity = fakeActivity("com.example.themed", ".Main", "Themed")
+        val icon = AdaptiveIconDrawable(ColorDrawable(Color.RED), ColorDrawable(Color.BLUE), ColorDrawable(Color.BLACK))
+        `when`(activity.getIcon(0)).thenReturn(icon)
+        `when`(launcherApps.getActivityList(eq(null), any())).thenReturn(listOf(activity))
+
+        // When fetching installed apps
+        val result = AppRepository(launcherApps, personalOnlyUserManager(), context).getInstalledApps()
+
+        // Then the themed layer is kept at the stored size
+        assertEquals(STORED_ICON_SIZE, result[0].monochromeIcon!!.asAndroidBitmap().width)
+    }
+
+    @Test
+    @Config(sdk = [33])
+    fun `has no themed layer for an adaptive icon without one`() = runTest {
+        // Given an adaptive icon with no monochrome layer
+        val launcherApps = mock(LauncherApps::class.java)
+        val activity = fakeActivity("com.example.plain", ".Main", "Plain")
+        `when`(activity.getIcon(0)).thenReturn(AdaptiveIconDrawable(ColorDrawable(Color.RED), ColorDrawable(Color.BLUE)))
+        `when`(launcherApps.getActivityList(eq(null), any())).thenReturn(listOf(activity))
+
+        // When fetching installed apps
+        val result = AppRepository(launcherApps, personalOnlyUserManager(), context).getInstalledApps()
+
+        // Then only the flattened icon is kept
+        assertNull(result[0].monochromeIcon)
+        assertNotNull(result[0].icon)
     }
 
     @Test

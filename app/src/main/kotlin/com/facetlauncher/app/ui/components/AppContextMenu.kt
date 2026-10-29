@@ -50,12 +50,14 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -128,6 +130,8 @@ fun AppContextMenu(
     onDismissRequest: () -> Unit,
     modifier: Modifier = Modifier,
     appMenuNotifications: AppMenuNotifications = AppMenuNotifications.None,
+    /** Tapping the header's icon or name launches the app and closes the sheet. */
+    onOpenApp: (AppInfo) -> Unit = {},
     onAppInfo: (AppInfo) -> Unit = {},
     onRequestQuickAddState: suspend (AppInfo) -> QuickAddState = { QuickAddState() },
     onFavoritesAction: (AppInfo, QuickPlacementAction) -> Unit = { _, _ -> },
@@ -169,6 +173,7 @@ fun AppContextMenu(
             appMenuNotifications = appMenuNotifications,
             folderCandidates = folderCandidates,
             onDismissRequest = onDismissRequest,
+            onOpenApp = onOpenApp,
             onAppInfo = onAppInfo,
         )
     }
@@ -185,6 +190,7 @@ private fun AppMenuPages(
     appMenuNotifications: AppMenuNotifications,
     folderCandidates: ImmutableList<Folder>?,
     onDismissRequest: () -> Unit,
+    onOpenApp: (AppInfo) -> Unit,
     onAppInfo: (AppInfo) -> Unit,
 ) {
     val context = LocalContext.current
@@ -200,6 +206,10 @@ private fun AppMenuPages(
                 app = app,
                 notifications = notificationsState,
                 placementActions = placementActions,
+                onOpenApp = {
+                    onDismissRequest()
+                    onOpenApp(app)
+                },
                 onAppInfo = {
                     onDismissRequest()
                     onAppInfo(app)
@@ -426,27 +436,24 @@ private fun quickPlacementTile(
     onClick = onClick,
 )
 
-/** The sheet's main page: header, then the notifications zone and the placement actions, each behind a hairline and each left out when empty. */
+/** The app's icon and name (one tap target that opens it), then the App info and Uninstall actions. */
 @Composable
-internal fun AppMenuMainPage(
-    app: AppInfo,
-    notifications: AppNotificationsState,
-    placementActions: ImmutableList<PlacementActionUi>,
-    onAppInfo: () -> Unit,
-    onUninstall: () -> Unit,
-    onOpenNotification: (NotificationInfo) -> Unit,
-    onDismissNotifications: (List<String>) -> Boolean,
-    onEnableNotificationAccess: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    // Scrolls when the zones don't fit, as at the largest text sizes on a small screen.
-    Column(modifier = modifier.fillMaxWidth().verticalScroll(rememberScrollState())) {
+private fun AppMenuHeader(app: AppInfo, onOpenApp: () -> Unit, onAppInfo: () -> Unit, onUninstall: () -> Unit) {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(start = MENU_SIDE_PADDING, end = MENU_SIDE_PADDING - 12.dp, top = 8.dp, bottom = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(start = MENU_SIDE_PADDING, end = MENU_SIDE_PADDING - 12.dp, top = 8.dp, bottom = 8.dp),
+            modifier = Modifier
+                .weight(1f)
+                .clip(MaterialTheme.shapes.medium)
+                .clickable(role = Role.Button, onClick = onOpenApp)
+                .testTag("app_context_menu_open"),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             AppIcon(
                 icon = app.icon,
+                monochromeIcon = app.monochromeIcon,
                 size = AppIconSize.ROW_SPACIOUS,
                 contentDescription = null,
                 isWorkApp = app.profile == AppProfile.WORK,
@@ -460,21 +467,41 @@ internal fun AppMenuMainPage(
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.weight(1f).padding(horizontal = 16.dp).testTag("app_context_menu_name"),
             )
-            MenuIconButton(
-                icon = Icons.Outlined.Info,
-                contentDescription = stringResource(R.string.app_context_menu_app_info),
-                tint = Muted,
-                onClick = onAppInfo,
-                modifier = Modifier.testTag("app_context_menu_app_info"),
-            )
-            MenuIconButton(
-                icon = Icons.Outlined.DeleteOutline,
-                contentDescription = stringResource(R.string.app_context_menu_uninstall),
-                tint = ErrorColor,
-                onClick = onUninstall,
-                modifier = Modifier.testTag("app_context_menu_uninstall"),
-            )
         }
+        MenuIconButton(
+            icon = Icons.Outlined.Info,
+            contentDescription = stringResource(R.string.app_context_menu_app_info),
+            tint = Muted,
+            onClick = onAppInfo,
+            modifier = Modifier.testTag("app_context_menu_app_info"),
+        )
+        MenuIconButton(
+            icon = Icons.Outlined.DeleteOutline,
+            contentDescription = stringResource(R.string.app_context_menu_uninstall),
+            tint = ErrorColor,
+            onClick = onUninstall,
+            modifier = Modifier.testTag("app_context_menu_uninstall"),
+        )
+    }
+}
+
+/** The sheet's main page: header, then the notifications zone and the placement actions, each behind a hairline and each left out when empty. */
+@Composable
+internal fun AppMenuMainPage(
+    app: AppInfo,
+    notifications: AppNotificationsState,
+    placementActions: ImmutableList<PlacementActionUi>,
+    onOpenApp: () -> Unit,
+    onAppInfo: () -> Unit,
+    onUninstall: () -> Unit,
+    onOpenNotification: (NotificationInfo) -> Unit,
+    onDismissNotifications: (List<String>) -> Boolean,
+    onEnableNotificationAccess: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    // Scrolls when the zones don't fit, as at the largest text sizes on a small screen.
+    Column(modifier = modifier.fillMaxWidth().verticalScroll(rememberScrollState())) {
+        AppMenuHeader(app = app, onOpenApp = onOpenApp, onAppInfo = onAppInfo, onUninstall = onUninstall)
         if (notifications.hasZone) {
             CardDivider()
             AppNotificationsSection(
@@ -618,6 +645,7 @@ private fun AppMenuMainPageWithNotificationsPreview() {
             app = previewApp,
             notifications = AppNotificationsState(previewNotifications()),
             placementActions = previewPlacementActions(),
+            onOpenApp = {},
             onAppInfo = {},
             onUninstall = {},
             onOpenNotification = {},
@@ -635,6 +663,7 @@ private fun AppMenuMainPageEmptyPreview() {
             app = previewApp,
             notifications = AppNotificationsState(),
             placementActions = previewPlacementActions(),
+            onOpenApp = {},
             onAppInfo = {},
             onUninstall = {},
             onOpenNotification = {},

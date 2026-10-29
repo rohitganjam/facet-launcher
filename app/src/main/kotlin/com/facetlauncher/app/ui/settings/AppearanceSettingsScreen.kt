@@ -18,6 +18,8 @@ import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.Apps
+import androidx.compose.material.icons.outlined.Category
+import androidx.compose.material.icons.outlined.Palette
 import androidx.compose.material.icons.outlined.Dock
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.Schedule
@@ -59,7 +61,7 @@ import com.facetlauncher.app.ui.theme.SurfaceContainer
 /**
  * Settings → Appearance (`3c`) — a live preview of Home, then a section per area, each a short list of rows that open their own screen:
  * Clock & calendar (clock style, calendars to display), Dock & home ("Dock & Apps appearance" → [DockAppsAppearanceScreen]),
- * Notifications (global only → the Notifications page) and General (global only, "Fonts, themes and icons" → [FontsThemesIconsScreen]).
+ * Notifications (global only → the Notifications page) and General (global only: "Themes and colors" → [ThemesAndColorsScreen], "Fonts" → [FontsScreen], "Icons" → [IconsScreen]).
  * With a `facetId` it is a facet's own Appearance screen: the same layout minus the global-only sections.
  */
 @Composable
@@ -70,7 +72,9 @@ fun AppearanceSettingsScreen(
     onNavigateToNotificationSettings: () -> Unit,
     onNavigateToDockAppsAppearance: () -> Unit,
     onNavigateToAppDrawerSettings: () -> Unit,
-    onNavigateToFontsThemesIcons: () -> Unit,
+    onNavigateToThemesAndColors: () -> Unit,
+    onNavigateToFonts: () -> Unit,
+    onNavigateToIcons: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: AppearanceSettingsViewModel = hiltViewModel(),
 ) {
@@ -100,7 +104,9 @@ fun AppearanceSettingsScreen(
         onNavigateToNotificationSettings = onNavigateToNotificationSettings,
         onNavigateToDockAppsAppearance = onNavigateToDockAppsAppearance,
         onNavigateToAppDrawerSettings = onNavigateToAppDrawerSettings,
-        onNavigateToFontsThemesIcons = onNavigateToFontsThemesIcons,
+        onNavigateToThemesAndColors = onNavigateToThemesAndColors,
+        onNavigateToFonts = onNavigateToFonts,
+        onNavigateToIcons = onNavigateToIcons,
         modifier = modifier,
     )
 }
@@ -116,7 +122,9 @@ private fun AppearanceSettingsContent(
     onNavigateToNotificationSettings: () -> Unit,
     onNavigateToDockAppsAppearance: () -> Unit,
     onNavigateToAppDrawerSettings: () -> Unit,
-    onNavigateToFontsThemesIcons: () -> Unit,
+    onNavigateToThemesAndColors: () -> Unit,
+    onNavigateToFonts: () -> Unit,
+    onNavigateToIcons: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     StickyHeaderLayout(
@@ -144,7 +152,7 @@ private fun AppearanceSettingsContent(
                 // Global only — no per-facet override exists for notifications, theme, accent, icons or fonts.
                 if (!uiState.isFacetScoped) {
                     notificationsSection(settings, uiState.notificationAccessGranted, onNavigateToNotificationSettings)
-                    generalSection(onNavigateToFontsThemesIcons)
+                    generalSection(settings, onNavigateToThemesAndColors, onNavigateToFonts, onNavigateToIcons)
                 }
             }
         },
@@ -274,17 +282,38 @@ private fun appDrawerSummary(presentation: DrawerPresentation, searchContactsEna
     )
 }
 
-/** Global only — one row into [FontsThemesIconsScreen]. */
-private fun LazyListScope.generalSection(onNavigateToFontsThemesIcons: () -> Unit) {
+/** Global only — a row each into [ThemesAndColorsScreen], [FontsScreen] and [IconsScreen], each naming its current value. */
+private fun LazyListScope.generalSection(
+    settings: LauncherSettings,
+    onNavigateToThemesAndColors: () -> Unit,
+    onNavigateToFonts: () -> Unit,
+    onNavigateToIcons: () -> Unit,
+) {
     item { SettingsSectionHeader(stringResource(R.string.appearance_section_general)) }
     item {
         SettingsCard(fullBleedRows = true) {
             ClickableRow(
-                title = stringResource(R.string.appearance_fonts_themes_icons_title),
-                subtitle = stringResource(R.string.appearance_fonts_themes_icons_subtitle),
-                onClick = onNavigateToFontsThemesIcons,
-                testTag = "appearance_fonts_themes_icons_row",
+                title = stringResource(R.string.appearance_themes_colors_title),
+                subtitle = stringResource(settings.themeMode.displayNameRes),
+                onClick = onNavigateToThemesAndColors,
+                testTag = "general_themes_colors_row",
+                leadingIcon = iconBadge(Icons.Outlined.Palette, SettingsSectionHue.APPEARANCE),
+            )
+            CardDivider()
+            ClickableRow(
+                title = stringResource(R.string.appearance_section_fonts),
+                subtitle = stringResource(settings.launcherFontOption.displayNameRes),
+                onClick = onNavigateToFonts,
+                testTag = "general_fonts_row",
                 leadingIcon = iconBadge(Icons.Outlined.TextFields, SettingsSectionHue.APPEARANCE),
+            )
+            CardDivider()
+            ClickableRow(
+                title = stringResource(R.string.appearance_section_icons),
+                subtitle = stringResource(settings.iconRenderMode.style.displayNameRes),
+                onClick = onNavigateToIcons,
+                testTag = "general_icons_row",
+                leadingIcon = iconBadge(Icons.Outlined.Category, SettingsSectionHue.APPEARANCE),
             )
         }
     }
@@ -322,7 +351,9 @@ private fun AppearanceSettingsScreenPreview() {
             onNavigateToNotificationSettings = {},
             onNavigateToDockAppsAppearance = {},
             onNavigateToAppDrawerSettings = {},
-            onNavigateToFontsThemesIcons = {},
+            onNavigateToThemesAndColors = {},
+            onNavigateToFonts = {},
+            onNavigateToIcons = {},
         )
     }
 }
@@ -345,7 +376,9 @@ private fun AppearanceSettingsScreenFacetScopedPreview() {
             onNavigateToNotificationSettings = {},
             onNavigateToDockAppsAppearance = {},
             onNavigateToAppDrawerSettings = {},
-            onNavigateToFontsThemesIcons = {},
+            onNavigateToThemesAndColors = {},
+            onNavigateToFonts = {},
+            onNavigateToIcons = {},
         )
     }
 }

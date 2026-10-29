@@ -154,7 +154,7 @@ private fun PrivateSpaceAppRow(app: AppInfo, onClick: () -> Unit, modifier: Modi
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        AppIcon(icon = app.icon, size = AppIconSize.ROW_REGULAR, contentDescription = null)
+        AppIcon(icon = app.icon, monochromeIcon = app.monochromeIcon, size = AppIconSize.ROW_REGULAR, contentDescription = null)
         Text(text = app.label, color = MaterialTheme.colorScheme.onSurface)
     }
 }

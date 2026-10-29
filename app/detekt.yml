@@ -16,7 +16,7 @@ Compose:
   ComposableNestingDepth: { active: true }
   ComposableParamOrder: { active: true }
   # LocalHomeTagPrefix: lets a scaled preview of Home keep its test tags apart from the real Home's. The rest are the app-wide
-  # theme and window locals (theme/accent/icon settings, system bar state, the Home-press event and swipe gate), each provided once at
+  # theme and window locals (theme/accent/icon settings, the styled-icon cache, system bar state, the Home-press event and swipe gate), each provided once at
   # the root so a leaf composable never takes them as a parameter.
   CompositionLocalAllowlist:
     active: true
@@ -31,6 +31,7 @@ Compose:
       - LocalAccentFromSystem
       - LocalIconRenderMode
       - LocalIconShape
+      - LocalStyledIconCache
       - LocalIsDarkTheme
       - LocalWallpaperAccentRole
       - LocalCustomAccentSwatch

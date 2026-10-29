@@ -1342,6 +1342,7 @@ private fun DrawerAppRow(
                 // own M3 shape-scale default, not a hand-picked ratio (see chat history).
                 AppIcon(
                     icon = app.icon,
+                    monochromeIcon = app.monochromeIcon,
                     size = itemSize.iconSizeDp.dp,
                     contentDescription = null,
                     isWorkApp = app.profile == AppProfile.WORK,
@@ -1356,6 +1357,7 @@ private fun DrawerAppRow(
             expanded = menuExpanded,
             onDismissRequest = { menuExpanded = false },
             appMenuNotifications = appMenuNotifications,
+            onOpenApp = actions.onAppClick,
             onAppInfo = actions.onAppInfo,
             onRequestQuickAddState = actions.onRequestQuickAddState,
             onFavoritesAction = actions.onFavoritesAction,
@@ -1489,6 +1491,7 @@ private fun DrawerGridTile(
     ) {
         AppIcon(
             icon = app.icon,
+            monochromeIcon = app.monochromeIcon,
             size = AppIconSize.TILE,
             contentDescription = null,
             notificationCount = badgeCount,
@@ -1513,6 +1516,7 @@ private fun DrawerGridTile(
             expanded = menuExpanded,
             onDismissRequest = { menuExpanded = false },
             appMenuNotifications = appMenuNotifications,
+            onOpenApp = actions.onAppClick,
             onAppInfo = actions.onAppInfo,
             onRequestQuickAddState = actions.onRequestQuickAddState,
             onFavoritesAction = actions.onFavoritesAction,

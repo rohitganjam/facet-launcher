@@ -1,6 +1,7 @@
 package com.facetlauncher.app.ui.components
 
 import android.content.res.Configuration
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -14,6 +15,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.NotificationsNone
@@ -25,9 +28,12 @@ import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -49,6 +55,9 @@ import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import com.facetlauncher.app.ui.theme.Ink
 import com.facetlauncher.app.ui.theme.Muted
 import com.facetlauncher.app.ui.theme.SurfaceContainer
+import kotlinx.collections.immutable.ImmutableSet
+import kotlinx.collections.immutable.persistentSetOf
+import kotlinx.collections.immutable.toImmutableSet
 
 /** Cards in view at once; a sliver of the next one shows below them so the list reads as scrollable. */
 internal const val VISIBLE_NOTIFICATION_CARDS = 2
@@ -82,16 +91,26 @@ internal fun AppNotificationsSection(
     val notifications = state.notifications
     // Persistent notifications are listed but can't be dismissed, so they don't count toward "Clear all".
     val clearableKeys = notifications.filter { it.isClearable }.map { it.key }
-    Column(modifier = modifier) {
+    val listState = rememberLazyListState()
+    // Keys Clear all told to swipe away; each card dismisses itself once its swipe finishes.
+    var swipingKeys by remember { mutableStateOf<ImmutableSet<String>>(persistentSetOf()) }
+    // Animates the zone's height as rows leave and the list gives way to the empty state.
+    Column(modifier = modifier.animateContentSize()) {
         NotificationsHeader(
             count = notifications.size,
             canClear = clearableKeys.isNotEmpty(),
-            onClearAll = { onDismiss(clearableKeys) },
+            onClearAll = {
+                val visibleKeys = listState.layoutInfo.visibleItemsInfo.map { it.key }
+                swipingKeys = clearableKeys.filter { it in visibleKeys }.toImmutableSet()
+                // Off-screen cards have no swipe to play.
+                val offScreen = clearableKeys.filter { it !in swipingKeys }
+                if (offScreen.isNotEmpty()) onDismiss(offScreen)
+            },
         )
         when {
             state.needsAccess -> EnableNotificationsRow(onClick = onEnableAccess)
             notifications.isEmpty() -> EmptyNotificationsState()
-            else -> NotificationsWindow(state, onOpen, onDismiss)
+            else -> NotificationsWindow(state, listState, swipingKeys, onOpen) { key -> onDismiss(listOf(key)) }
         }
     }
 }
@@ -122,8 +141,10 @@ private fun NotificationsHeader(count: Int, canClear: Boolean, onClearAll: () ->
 @Composable
 private fun NotificationsWindow(
     state: AppNotificationsState,
+    listState: LazyListState,
+    swipingKeys: ImmutableSet<String>,
     onOpen: (NotificationInfo) -> Unit,
-    onDismiss: (List<String>) -> Boolean,
+    onDismissOne: (String) -> Boolean,
 ) {
     val notifications = state.notifications
     val density = LocalDensity.current
@@ -136,6 +157,7 @@ private fun NotificationsWindow(
     val screenCap = LocalConfiguration.current.screenHeightDp.dp * MAX_WINDOW_SCREEN_FRACTION
     val windowMax = if (notifications.size > VISIBLE_NOTIFICATION_CARDS) notificationWindowHeight(cardHeight) else Dp.Infinity
     LazyColumn(
+        state = listState,
         modifier = Modifier.heightIn(max = minOf(windowMax, screenCap)).testTag("app_notifications_list"),
         verticalArrangement = Arrangement.spacedBy(CARD_GAP),
     ) {
@@ -143,8 +165,11 @@ private fun NotificationsWindow(
             NotificationCard(
                 notification = notification,
                 onOpen = { onOpen(notification) },
-                onDismissOne = { onDismiss(listOf(notification.key)) },
-                modifier = if (index == 0) Modifier.onSizeChanged { measuredCardHeight = it.height } else Modifier,
+                swipeAway = notification.key in swipingKeys,
+                onDismissOne = { onDismissOne(notification.key) },
+                modifier = Modifier.animateItem().then(
+                    if (index == 0) Modifier.onSizeChanged { measuredCardHeight = it.height } else Modifier,
+                ),
             )
         }
     }
@@ -183,14 +208,32 @@ private const val CARD_BODY_LINES = 2
 private fun NotificationCard(
     notification: NotificationInfo,
     onOpen: () -> Unit,
+    swipeAway: Boolean,
     onDismissOne: () -> Boolean,
     modifier: Modifier = Modifier,
 ) {
     val tag = "app_notification_${notification.key}"
     if (notification.isClearable) {
+        // Clear all drives the swipe itself and asks the listener after it, so the card is seen leaving.
+        var drivenByClearAll by remember { mutableStateOf(false) }
         val dismissState = rememberSwipeToDismissBoxState(
-            confirmValueChange = { target -> target == SwipeToDismissBoxValue.Settled || onDismissOne() },
+            confirmValueChange = { target -> target == SwipeToDismissBoxValue.Settled || drivenByClearAll || onDismissOne() },
         )
+        val currentDismissOne by rememberUpdatedState(onDismissOne)
+        LaunchedEffect(swipeAway) {
+            if (!swipeAway) return@LaunchedEffect
+            drivenByClearAll = true
+            var asked = false
+            try {
+                dismissState.dismiss(SwipeToDismissBoxValue.StartToEnd)
+                asked = true
+                // The listener refused: bring the card back rather than leave a hidden row.
+                if (!currentDismissOne()) dismissState.reset()
+            } finally {
+                // The sheet closed mid-swipe: still clear the notification.
+                if (!asked) currentDismissOne()
+            }
+        }
         SwipeToDismissBox(state = dismissState, backgroundContent = {}, modifier = modifier.testTag(tag)) {
             NotificationCardBody(notification, onOpen)
         }
