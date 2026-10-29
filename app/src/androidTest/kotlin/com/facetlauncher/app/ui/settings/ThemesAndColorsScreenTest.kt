@@ -34,7 +34,7 @@ import org.junit.Test
 import com.facetlauncher.app.data.PlacementRepository
 import com.facetlauncher.app.data.model.PlacementTarget
 
-class FontsThemesIconsScreenTest {
+class ThemesAndColorsScreenTest {
 
     @get:Rule
     val composeRule = createComposeRule()
@@ -45,7 +45,6 @@ class FontsThemesIconsScreenTest {
 
     private fun setContent(
         onBack: () -> Unit = {},
-        onNavigateToIcons: () -> Unit = {},
         facetId: Long? = null,
         calendarGranted: Boolean = false,
         notificationAccessGranted: Boolean = true,
@@ -53,23 +52,7 @@ class FontsThemesIconsScreenTest {
         seed: suspend (FacetRepository, Long?) -> Unit = { _, _ -> },
         seedApps: suspend (AppRepository, PlacementRepository, Long?) -> Unit = { _, _, _ -> },
     ): SettingsRepository = host.setContent(facetId, calendarGranted, notificationAccessGranted, calendarEvents, seed, seedApps) { viewModel ->
-        FontsThemesIconsScreen(onBack = onBack, onNavigateToIcons = onNavigateToIcons, viewModel = viewModel)
-    }
-
-    @Test
-    fun settingsAreGroupedIntoThemeIconsAndFontsCards() {
-        // Given the screen
-        setContent()
-
-        // Then each group has its own section header, with the launcher font row renamed to "style"
-        listOf("Theme", "Icons", "Fonts").forEach { header ->
-            composeRule.onNodeWithTag("fonts_themes_icons_screen").performScrollToNode(hasText(header))
-            composeRule.onNodeWithText(header).assertIsDisplayed()
-        }
-        composeRule.onNodeWithTag("fonts_themes_icons_screen").performScrollToNode(hasTestTag("appearance_font_row"))
-        composeRule.onNodeWithText("Launcher Font Style").assertIsDisplayed()
-        composeRule.onNodeWithTag("fonts_themes_icons_screen").performScrollToNode(hasTestTag("font_preview_card"))
-        composeRule.onNodeWithTag("font_preview_card").assertIsDisplayed()
+        ThemesAndColorsScreen(onBack = onBack, viewModel = viewModel)
     }
 
     @Test
@@ -78,7 +61,7 @@ class FontsThemesIconsScreenTest {
         // below the "Dock & Home" and "Clock" cards (see chat history), so it needs scrolling into
         // view first.
         setContent()
-        composeRule.onNodeWithTag("fonts_themes_icons_screen").performScrollToNode(hasTestTag("theme_mode_dropdown"))
+        composeRule.onNodeWithTag("themes_colors_screen").performScrollToNode(hasTestTag("theme_mode_dropdown"))
         composeRule.onNodeWithTag("theme_mode_dropdown").assertTextContains("System")
 
         // When opening the dropdown and choosing "Dark"
@@ -96,7 +79,7 @@ class FontsThemesIconsScreenTest {
     fun statusBarIconsDropdownDefaultsToDefaultAndSwitchesToDark() {
         // Given the screen, "Default" selected by default, in the Theme card under "Launcher theme"
         setContent()
-        composeRule.onNodeWithTag("fonts_themes_icons_screen").performScrollToNode(hasTestTag("appearance_system_bar_icons_row"))
+        composeRule.onNodeWithTag("themes_colors_screen").performScrollToNode(hasTestTag("appearance_system_bar_icons_row"))
         composeRule.onNodeWithTag("appearance_system_bar_icons_row").assertTextContains("Default")
 
         // When opening the dropdown and choosing "Dark"
@@ -117,7 +100,7 @@ class FontsThemesIconsScreenTest {
         // Given the screen, "Wallpaper colors" selected by default — now in the "General" card,
         // below "Dock & Home"/"Clock" (see chat history), so it needs scrolling into view first.
         setContent()
-        composeRule.onNodeWithTag("fonts_themes_icons_screen").performScrollToNode(hasTestTag("accent_source_basic"))
+        composeRule.onNodeWithTag("themes_colors_screen").performScrollToNode(hasTestTag("accent_source_basic"))
         composeRule.onNodeWithTag("accent_swatch_grid").assertDoesNotExist()
 
         // When switching to "Basic colors"
@@ -130,7 +113,7 @@ class FontsThemesIconsScreenTest {
         composeRule.onNodeWithContentDescription("Blue").assertExists()
 
         // When picking a different swatch (Teal) — its row sits below the fold, so scroll it in first
-        composeRule.onNodeWithTag("fonts_themes_icons_screen").performScrollToNode(hasTestTag("accent_swatch_TEAL"))
+        composeRule.onNodeWithTag("themes_colors_screen").performScrollToNode(hasTestTag("accent_swatch_TEAL"))
         composeRule.onNodeWithTag("accent_swatch_TEAL").performClick()
 
         // Then that swatch shows as checked instead — poll, since the pick round-trips through
@@ -201,7 +184,7 @@ class FontsThemesIconsScreenTest {
         // Given the screen, "Wallpaper colors" selected by default — scrolled into view (see
         // themeModeDropdownSwitchesBetweenLightDarkAndSystem's own comment)
         setContent()
-        composeRule.onNodeWithTag("fonts_themes_icons_screen").performScrollToNode(hasTestTag("wallpaper_accent_role_grid"))
+        composeRule.onNodeWithTag("themes_colors_screen").performScrollToNode(hasTestTag("wallpaper_accent_role_grid"))
 
         // Then the wallpaper-role grid is shown, and the Basic-colors grid is not
         composeRule.onNodeWithTag("wallpaper_accent_role_grid").assertIsDisplayed()
@@ -214,7 +197,7 @@ class FontsThemesIconsScreenTest {
     fun wallpaperAccentRoleGridDisappearsWhenBasicColorsIsSelected() {
         // Given the screen, "Wallpaper colors" selected by default — scrolled into view
         setContent()
-        composeRule.onNodeWithTag("fonts_themes_icons_screen").performScrollToNode(hasTestTag("wallpaper_accent_role_grid"))
+        composeRule.onNodeWithTag("themes_colors_screen").performScrollToNode(hasTestTag("wallpaper_accent_role_grid"))
         composeRule.onNodeWithTag("wallpaper_accent_role_grid").assertIsDisplayed()
 
         // When switching to "Basic colors"
@@ -233,7 +216,7 @@ class FontsThemesIconsScreenTest {
     fun tappingAWallpaperAccentRoleSwatchPersistsTheChoice() {
         // Given the screen, "Wallpaper colors" selected by default (PRIMARY role) — scrolled into view
         val settingsRepository = setContent()
-        composeRule.onNodeWithTag("fonts_themes_icons_screen").performScrollToNode(hasTestTag("wallpaper_accent_role_SECONDARY"))
+        composeRule.onNodeWithTag("themes_colors_screen").performScrollToNode(hasTestTag("wallpaper_accent_role_SECONDARY"))
 
         // When picking the Secondary wallpaper role
         composeRule.onNodeWithTag("wallpaper_accent_role_SECONDARY").performClick()
@@ -249,139 +232,13 @@ class FontsThemesIconsScreenTest {
     }
 
     @Test
-    fun iconsRowNamesTheCurrentStyleAndOpensTheIconsScreen() {
-        // Given the screen, with the default icon style
-        var opened = false
-        setContent(onNavigateToIcons = { opened = true })
-        composeRule.onNodeWithTag("fonts_themes_icons_screen").performScrollToNode(hasTestTag("appearance_icons_row"))
-        composeRule.onNodeWithTag("appearance_icons_row").assertTextContains("Default", substring = true)
-
-        // When tapping the Icons row
-        composeRule.onNodeWithTag("appearance_icons_row").performClick()
-
-        // Then the Icons screen is requested
-        assertEquals(true, opened)
-    }
-
-    @Test
-    fun launcherFontRowChangesTheSetting() {
-        // Given the screen, "Font" row, System selected by default — scoped to this row's own
-        // tag, not a global text search, since the "Launcher theme" dropdown also defaults to
-        // "System" (see chat history)
-        setContent()
-        // The new "look fields" card (dock display style/app row position/presentation/vertical
-        // alignment) pushed this row further down — see chat history: those moved in from Dock's/
-        // Home Apps List's own screens — so it needs an explicit scroll into view now, otherwise
-        // its dropdown popup can open off the visible viewport.
-        composeRule.onNodeWithTag("fonts_themes_icons_screen").performScrollToNode(hasTestTag("appearance_font_row"))
-        composeRule.onNodeWithTag("appearance_font_row").assertTextContains("System")
-
-        // When picking "Manrope"
-        composeRule.onNodeWithTag("appearance_font_row").performClick()
-        composeRule.waitForIdle()
-        composeRule.onNodeWithTag("appearance_font_row_option_MANROPE").performClick()
-
-        // Then the row reflects the new selection
-        composeRule.waitUntil(timeoutMillis = 3_000) {
-            runCatching { composeRule.onNodeWithTag("appearance_font_row").assertTextContains("Manrope") }.isSuccess
-        }
-    }
-
-    @Test
-    fun appLabelColorRowChangesTheSetting() {
-        // Given the screen, "Font Color" row, Theme selected by default — scoped to this
-        // row's own tag, consistent with the Font row above
-        setContent()
-        // See launcherFontRowChangesTheSetting's own comment — this row moved further down too.
-        composeRule.onNodeWithTag("fonts_themes_icons_screen").performScrollToNode(hasTestTag("appearance_app_label_color_row"))
-        composeRule.onNodeWithTag("appearance_app_label_color_row").assertTextContains("Theme")
-
-        // When picking "Theme Inverted"
-        composeRule.onNodeWithTag("appearance_app_label_color_row").performClick()
-        composeRule.waitForIdle()
-        composeRule.onNodeWithTag("appearance_app_label_color_row_option_THEME_INVERTED").performClick()
-
-        // Then the row reflects the new selection
-        composeRule.waitUntil(timeoutMillis = 3_000) {
-            runCatching { composeRule.onNodeWithTag("appearance_app_label_color_row").assertTextContains("Theme Inverted") }.isSuccess
-        }
-    }
-
-    @Test
-    fun homeAppsFontWeightSliderChangesTheSetting() {
-        // Given the screen, Regular weight by default — scrolled into view
-        val settingsRepository = setContent()
-        composeRule.onNodeWithTag("fonts_themes_icons_screen").performScrollToNode(hasTestTag("appearance_font_weight_slider_control"))
-
-        // When dragging the Home Apps weight slider to its last stop (Semi Bold)
-        composeRule.onNodeWithTag("appearance_font_weight_slider_control")
-            .performSemanticsAction(SemanticsActions.SetProgress) { it((FontWeightOption.entries.size - 1).toFloat()) }
-
-        // Then it's persisted to the real repository
-        composeRule.waitUntil(timeoutMillis = 3_000) {
-            runBlocking { settingsRepository.settings.first().homeAppsFontWeight == FontWeightOption.SEMI_BOLD }
-        }
-    }
-
-    @Test
-    fun fontSizeSliderChangesTheSetting() {
-        // Given the screen, Default text size by default — scrolled into view
-        val settingsRepository = setContent()
-        composeRule.onNodeWithTag("fonts_themes_icons_screen").performScrollToNode(hasTestTag("appearance_font_size_slider_control"))
-
-        // When dragging the Text Size slider to its last stop (Huge)
-        composeRule.onNodeWithTag("appearance_font_size_slider_control")
-            .performSemanticsAction(SemanticsActions.SetProgress) { it((FontScaleOption.entries.size - 1).toFloat()) }
-
-        // Then it's persisted to the real repository
-        composeRule.waitUntil(timeoutMillis = 3_000) {
-            runBlocking { settingsRepository.settings.first().fontScaleOption == FontScaleOption.HUGE }
-        }
-    }
-
-    @Test
-    fun previewCardStillRendersAfterChangingAppLabelColor() {
-        // Given the screen, App label color at its default, one real (installed) favorite seeded
-        var favoriteLabel = ""
-        setContent(
-            seedApps = { appRepository, placementRepository, _ ->
-                val app = appRepository.getInstalledApps()[0]
-                favoriteLabel = app.label
-                placementRepository.addApp(PlacementTarget.GlobalFavorites, app, position = 0)
-            },
-        )
-        composeRule.onNodeWithTag("appearance_preview_card").assertIsDisplayed()
-
-        // When changing App label color — the same value the preview's AppRow/DockIcon labelColor
-        // is wired from. See launcherFontRowChangesTheSetting's own comment — this row moved
-        // further down now, so it needs scrolling into view first.
-        composeRule.onNodeWithTag("fonts_themes_icons_screen").performScrollToNode(hasTestTag("appearance_app_label_color_row"))
-        composeRule.onNodeWithTag("appearance_app_label_color_row").performClick()
-        composeRule.waitForIdle()
-        composeRule.onNodeWithTag("appearance_app_label_color_row_option_THEME_INVERTED").performClick()
-        composeRule.waitForIdle()
-
-        // Then the preview keeps rendering its content correctly through the recomposition (a
-        // wiring mistake here — e.g. a wrong param — would otherwise crash or blank the card).
-        // The preview card is now far above the row just edited (see chat history — the "Dock &
-        // Home"/"Clock" cards sit between them), so it's scrolled out of the LazyColumn's composed
-        // range; scroll back up to it before asserting, rather than waiting on a node that's been
-        // disposed entirely.
-        composeRule.onNodeWithTag("fonts_themes_icons_screen").performScrollToNode(hasTestTag("appearance_preview_card"))
-        composeRule.waitUntil(timeoutMillis = 5_000) {
-            runCatching { composeRule.onNodeWithText(favoriteLabel).assertExists() }.isSuccess
-        }
-        composeRule.onNodeWithTag("appearance_preview_card").assertIsDisplayed()
-    }
-
-    @Test
     fun headerNamesTheScreenAndTheBackButtonLeaves() {
         // Given the screen
         var backPressed = false
         setContent(onBack = { backPressed = true })
 
         // Then its own title shows, with the live preview card above the controls
-        composeRule.onNodeWithText("Fonts, themes and icons").assertIsDisplayed()
+        composeRule.onNodeWithText("Themes and colors").assertIsDisplayed()
         composeRule.onNodeWithTag("appearance_preview_card").assertExists()
 
         // When tapping back

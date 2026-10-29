@@ -432,9 +432,7 @@
     <string name="appearance_header_title">Aparência</string>
     <string name="appearance_launcher_theme">Tema do launcher</string>
     <string name="appearance_system_bar_icons">Ícones da barra de status</string>
-    <string name="appearance_icon_style">Estilo de ícone</string>
     <string name="appearance_launcher_font">Estilo da fonte do launcher</string>
-    <string name="appearance_section_theme">Tema</string>
     <string name="appearance_section_icons">Ícones</string>
     <string name="appearance_section_fonts">Fontes</string>
     <string name="font_preview_row">Lista de apps da tela inicial</string>
@@ -901,8 +899,7 @@
     <string name="appearance_section_dock_home">Dock e início</string>
     <string name="appearance_section_clock">Relógio e calendário</string>
     <string name="appearance_dock_apps_title">Aparência do dock e dos apps</string>
-    <string name="appearance_fonts_themes_icons_title">Fontes, temas e ícones</string>
-    <string name="appearance_fonts_themes_icons_subtitle">Tema, destaque, estilo de ícones, fontes</string>
+    <string name="appearance_themes_colors_title">Temas e cores</string>
     <string name="appearance_section_general">Geral</string>
     <string name="appearance_icon_shape">Formato dos ícones</string>
     <string name="facet_settings_appearance_title">Aparência</string>

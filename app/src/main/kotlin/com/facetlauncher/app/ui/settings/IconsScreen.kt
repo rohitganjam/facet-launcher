@@ -12,10 +12,13 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.selection.selectable
+import androidx.compose.material.icons.Icons
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -43,19 +46,24 @@ import com.facetlauncher.app.data.model.IconStyle
 import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.data.model.PlacedItem
 import com.facetlauncher.app.ui.components.AppIcon
+import com.facetlauncher.app.ui.components.AppIconSize
 import com.facetlauncher.app.ui.components.CardDivider
 import com.facetlauncher.app.ui.components.LabeledDropdownRow
 import com.facetlauncher.app.ui.components.SettingsCard
 import com.facetlauncher.app.ui.components.SettingsSectionHeader
 import com.facetlauncher.app.ui.components.StickyHeaderLayout
+import com.facetlauncher.app.ui.components.toComposeShape
 import com.facetlauncher.app.ui.theme.Accent
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
+import com.facetlauncher.app.ui.theme.Hairline
+import com.facetlauncher.app.ui.theme.IconTile
 import com.facetlauncher.app.ui.theme.Ink
 import com.facetlauncher.app.ui.theme.LocalIconRenderMode
 import com.facetlauncher.app.ui.theme.Muted
 import com.facetlauncher.app.ui.theme.SurfaceContainer
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
+
 
 private const val SAMPLE_ICON_COUNT = 4
 private val SAMPLE_ICON_SIZE = 26.dp
@@ -243,6 +251,61 @@ private fun IconsScreenPreview() {
             onBack = {},
             onIconRenderModeChange = {},
             onIconShapeChange = {},
+        )
+    }
+}
+
+private val ICON_SHAPE_RING_WIDTH = 2.dp
+private val ICON_SHAPE_RING_GAP = 2.dp
+
+/** Icon outline picker — each option drawn in its own shape so Squircle vs Rounded square is visible, not just named. */
+@Composable
+internal fun IconShapePicker(selected: IconShape, onSelect: (IconShape) -> Unit, modifier: Modifier = Modifier) {
+    Column(modifier = modifier.padding(vertical = 8.dp).testTag("appearance_icon_shape_row")) {
+        Text(
+            text = stringResource(R.string.appearance_icon_shape),
+            style = MaterialTheme.typography.bodyLarge,
+            color = Ink,
+            modifier = Modifier.padding(bottom = 10.dp),
+        )
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            IconShape.entries.forEach { shape ->
+                IconShapeOption(shape = shape, isSelected = shape == selected, onSelect = { onSelect(shape) })
+            }
+        }
+    }
+}
+
+@Composable
+private fun IconShapeOption(shape: IconShape, isSelected: Boolean, onSelect: () -> Unit, modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier
+            .testTag("icon_shape_${shape.name}")
+            .clip(MaterialTheme.shapes.small)
+            .selectable(selected = isSelected, role = Role.RadioButton, onClick = onSelect)
+            .padding(horizontal = 6.dp, vertical = 4.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        // Selected: an Accent ring with a transparent gap around the icon. The ring's space is
+        // reserved on every option so selecting one doesn't shift the row.
+        Box(
+            modifier = Modifier
+                .size(AppIconSize.TILE + (ICON_SHAPE_RING_WIDTH + ICON_SHAPE_RING_GAP) * 2)
+                .then(if (isSelected) Modifier.border(ICON_SHAPE_RING_WIDTH, Accent, shape.toComposeShape()) else Modifier),
+            contentAlignment = Alignment.Center,
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(AppIconSize.TILE)
+                    .background(IconTile, shape.toComposeShape())
+                    .then(if (isSelected) Modifier else Modifier.border(1.dp, Hairline, shape.toComposeShape())),
+            )
+        }
+        Text(
+            text = stringResource(shape.displayNameRes),
+            style = MaterialTheme.typography.labelSmall,
+            color = if (isSelected) Ink else Muted,
+            modifier = Modifier.padding(top = 6.dp),
         )
     }
 }

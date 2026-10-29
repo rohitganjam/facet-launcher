@@ -52,7 +52,7 @@ app/src/main/kotlin/com/facetlauncher/app/
     ├── facets/                    (9)   FacetCarousel, FacetSettings, ManageFacets, FavoritesPicker (screen + VM each)
     ├── dock/                      (2)   DockAppPickerScreen / DockAppPickerViewModel
     ├── onboarding/                (8)   OnboardingScreen / ViewModel / UiState + 3 pages, dots, SetDefaultLauncherSheet
-    └── settings/                  (44)  20 `*Screen.kt` and 16 `*ViewModel.kt` — most settings screens are an `XScreen.kt` + `XViewModel.kt` pair; Appearance is a hub of four screens (`AppearanceSettingsScreen`, `DockAppsAppearanceScreen`, `FontsThemesIconsScreen`, `IconsScreen`) sharing `AppearanceSettingsViewModel` and the `AppearancePreviewCard` wrapper (`AppearancePreview.kt`) over `ui/home/ScaledHomeScreen`
+    └── settings/                  (45)  21 `*Screen.kt` and 16 `*ViewModel.kt` — most settings screens are an `XScreen.kt` + `XViewModel.kt` pair; Appearance is a hub of five screens (`AppearanceSettingsScreen`, `DockAppsAppearanceScreen`, `ThemesAndColorsScreen`, `FontsScreen`, `IconsScreen`) sharing `AppearanceSettingsViewModel` and the `AppearancePreviewCard` wrapper (`AppearancePreview.kt`) over `ui/home/ScaledHomeScreen`
         ├── automation/            (13)  Facet automation: FacetAutomationScreen / ViewModel (rule list), AutomationStrips, RuleEditorSheet / ViewModel / State (draft rule, permission gate), ScheduleFields, TriggerFields, EditorControls, UpgradeSheet, ProPill, PermissionRequest, formatting, previews (`ProPill` lives in `components/`; the Facet Pro screen they open is in `pro/`)
         └── backup/                (3)   BackupRestoreScreen / ViewModel / UiState
 ```

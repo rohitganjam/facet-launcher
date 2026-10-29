@@ -42,7 +42,9 @@ class AppearanceSettingsScreenTest {
         onNavigateToNotificationSettings: () -> Unit = {},
         onNavigateToDockAppsAppearance: () -> Unit = {},
         onNavigateToAppDrawerSettings: () -> Unit = {},
-        onNavigateToFontsThemesIcons: () -> Unit = {},
+        onNavigateToThemesAndColors: () -> Unit = {},
+        onNavigateToFonts: () -> Unit = {},
+        onNavigateToIcons: () -> Unit = {},
         facetId: Long? = null,
         calendarGranted: Boolean = false,
         notificationAccessGranted: Boolean = true,
@@ -57,7 +59,9 @@ class AppearanceSettingsScreenTest {
             onNavigateToNotificationSettings = onNavigateToNotificationSettings,
             onNavigateToDockAppsAppearance = onNavigateToDockAppsAppearance,
             onNavigateToAppDrawerSettings = onNavigateToAppDrawerSettings,
-            onNavigateToFontsThemesIcons = onNavigateToFontsThemesIcons,
+            onNavigateToThemesAndColors = onNavigateToThemesAndColors,
+            onNavigateToFonts = onNavigateToFonts,
+            onNavigateToIcons = onNavigateToIcons,
             viewModel = viewModel,
         )
     }
@@ -66,7 +70,7 @@ class AppearanceSettingsScreenTest {
     fun headerStaysVisibleAfterScrollingToTheBottom() {
         // Given the screen, scrolled all the way down
         setContent()
-        composeRule.onNodeWithTag("appearance_settings_screen").performScrollToNode(hasTestTag("appearance_fonts_themes_icons_row"))
+        composeRule.onNodeWithTag("appearance_settings_screen").performScrollToNode(hasTestTag("general_icons_row"))
 
         // Then the pinned header (title + back button) is still on screen, not scrolled away
         composeRule.onNodeWithText("Appearance").assertIsDisplayed()
@@ -171,7 +175,9 @@ class AppearanceSettingsScreenTest {
         // ...but the purely-global rows (notifications, fonts / themes / icons) are gone — no
         // per-facet override exists for those yet (see this screen's own doc comment)
         composeRule.onNodeWithTag("notification_settings_row").assertDoesNotExist()
-        composeRule.onNodeWithTag("appearance_fonts_themes_icons_row").assertDoesNotExist()
+        composeRule.onNodeWithTag("general_themes_colors_row").assertDoesNotExist()
+        composeRule.onNodeWithTag("general_fonts_row").assertDoesNotExist()
+        composeRule.onNodeWithTag("general_icons_row").assertDoesNotExist()
     }
 
     @Test
@@ -219,7 +225,7 @@ class AppearanceSettingsScreenTest {
         composeRule.onNodeWithText("Dock & home").assertIsDisplayed()
         composeRule.onNodeWithTag("appearance_settings_screen").performScrollToNode(hasTestTag("notification_settings_row"))
         composeRule.onNodeWithTag("notification_settings_row").assertIsDisplayed()
-        composeRule.onNodeWithTag("appearance_settings_screen").performScrollToNode(hasTestTag("appearance_fonts_themes_icons_row"))
+        composeRule.onNodeWithTag("appearance_settings_screen").performScrollToNode(hasTestTag("general_icons_row"))
         composeRule.onNodeWithText("General").assertIsDisplayed()
     }
 
@@ -537,18 +543,26 @@ class AppearanceSettingsScreenTest {
     }
 
     @Test
-    fun fontsThemesAndIconsRowNavigates() {
+    fun generalRowsNameTheirCurrentValueAndNavigate() {
         // Given the global screen
-        var navigated = false
-        setContent(onNavigateToFontsThemesIcons = { navigated = true })
-        composeRule.onNodeWithTag("appearance_settings_screen").performScrollToNode(hasTestTag("appearance_fonts_themes_icons_row"))
-        composeRule.onNodeWithTag("appearance_fonts_themes_icons_row").assertTextContains("Fonts, themes and icons", substring = true)
+        val navigated = mutableListOf<String>()
+        setContent(
+            onNavigateToThemesAndColors = { navigated += "themes" },
+            onNavigateToFonts = { navigated += "fonts" },
+            onNavigateToIcons = { navigated += "icons" },
+        )
+        composeRule.onNodeWithTag("appearance_settings_screen").performScrollToNode(hasTestTag("general_icons_row"))
 
-        // When tapping it
-        composeRule.onNodeWithTag("appearance_fonts_themes_icons_row").performClick()
+        // Then each row names its page and its current value
+        composeRule.onNodeWithTag("general_themes_colors_row").assertTextContains("Themes and colors", substring = true)
+        composeRule.onNodeWithTag("general_fonts_row").assertTextContains("Fonts", substring = true)
+        composeRule.onNodeWithTag("general_icons_row").assertTextContains("Default", substring = true)
 
-        // Then its callback fires
-        assertEquals(true, navigated)
+        // When tapping each
+        listOf("general_themes_colors_row", "general_fonts_row", "general_icons_row").forEach { composeRule.onNodeWithTag(it).performClick() }
+
+        // Then its callback fires, in order
+        assertEquals(listOf("themes", "fonts", "icons"), navigated)
     }
 
     @Test

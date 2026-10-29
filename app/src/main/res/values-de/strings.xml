@@ -432,9 +432,7 @@
     <string name="appearance_header_title">Design</string>
     <string name="appearance_launcher_theme">Launcher-Design</string>
     <string name="appearance_system_bar_icons">Symbole der Statusleiste</string>
-    <string name="appearance_icon_style">Symbolstil</string>
     <string name="appearance_launcher_font">Launcher-Schriftstil</string>
-    <string name="appearance_section_theme">Design</string>
     <string name="appearance_section_icons">Symbole</string>
     <string name="appearance_section_fonts">Schriften</string>
     <string name="font_preview_row">Startbildschirm-App-Liste</string>
@@ -901,8 +899,7 @@
     <string name="appearance_section_dock_home">Dock &amp; Startseite</string>
     <string name="appearance_section_clock">Uhr &amp; Kalender</string>
     <string name="appearance_dock_apps_title">Dock- &amp; App-Darstellung</string>
-    <string name="appearance_fonts_themes_icons_title">Schriften, Designs und Symbole</string>
-    <string name="appearance_fonts_themes_icons_subtitle">Design, Akzent, Symbolstil, Schriften</string>
+    <string name="appearance_themes_colors_title">Designs und Farben</string>
     <string name="appearance_section_general">Allgemein</string>
     <string name="appearance_icon_shape">Symbolform</string>
     <string name="facet_settings_appearance_title">Darstellung</string>

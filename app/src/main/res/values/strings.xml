@@ -471,15 +471,12 @@
     <string name="appearance_section_dock_home">Dock &amp; home</string>
     <string name="appearance_section_clock">Clock &amp; calendar</string>
     <string name="appearance_dock_apps_title">Dock &amp; Apps appearance</string>
-    <string name="appearance_fonts_themes_icons_title">Fonts, themes and icons</string>
-    <string name="appearance_fonts_themes_icons_subtitle">Theme, accent, icon style, fonts</string>
+    <string name="appearance_themes_colors_title">Themes and colors</string>
     <string name="appearance_section_general">General</string>
     <string name="appearance_launcher_theme">Launcher theme</string>
     <string name="appearance_system_bar_icons">Status bar icons</string>
-    <string name="appearance_icon_style">Icon Style</string>
     <string name="appearance_icon_shape">Icon Shape</string>
     <string name="appearance_launcher_font">Launcher Font Style</string>
-    <string name="appearance_section_theme">Theme</string>
     <string name="appearance_section_icons">Icons</string>
     <string name="appearance_section_fonts">Fonts</string>
     <!-- Font preview rows: each names where Home uses that text style -->
