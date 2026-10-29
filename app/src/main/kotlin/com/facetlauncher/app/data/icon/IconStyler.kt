@@ -9,7 +9,7 @@ package com.facetlauncher.app.data.icon
  */
 class StyledMasks(val glyph: IntArray?, val outline: IntArray?, val fallback: IntArray?, val fallbackTones: FloatArray?)
 
-/** Builds the glyph-only and outline pictures from an icon's pixels: themed layer first, then the plain icon, then the whole icon shaded. */
+/** Builds the glyph-only and outline pictures from an icon's pixels: themed layer first, then the plain icon (the outline is the edges of the glyph alone, or of the whole icon where there is no glyph), then the whole icon shaded. */
 object IconStyler {
     /** How strongly an icon's own light and dark carry over around the accent. */
     const val SHADE_SPREAD = 0.9f
@@ -17,12 +17,16 @@ object IconStyler {
     /** Share of an icon that may be edges before it counts as art (a game, a photo) rather than a logo. */
     private const val ART_EDGE_COVERAGE = 0.30f
 
+    /** Opacity (of 255) an edge pixel needs to count toward [ART_EDGE_COVERAGE]: strength about 0.33 on `IconMasks.edges`' ramp. */
+    private const val ART_EDGE_OPACITY = 130
+
     /** A themed layer filling more than this is a block, not a glyph. */
     private const val MAX_THEMED_COVERAGE = 0.6f
 
     private const val MIN_THEMED_COVERAGE = 0.02f
     private const val TONE_STEPS = 20
     private const val FLAT_SHADE = 0x808080
+    private const val GREY = 128
     private const val OUTLINE_DIVISOR = 48
 
     /** [icon] is the flattened icon and [themed] the app's monochrome layer, both [size] pixels square. */
@@ -31,9 +35,13 @@ object IconStyler {
         if (layer != null) {
             return StyledMasks(flat(layer), flat(IconMasks.contour(layer, size / OUTLINE_DIVISOR)), fallback = null, fallbackTones = null)
         }
-        val edges = IconMasks.edges(icon, size, size, thickness = 1)
-        val glyph = (IconMasks.removePlate(icon, size, size) ?: IconMasks.removePlateByEdges(icon, size, size))?.let { shaded(icon, it) }
-        val outline = if (coverage(edges, threshold = 100) <= ART_EDGE_COVERAGE) flat(edges) else null
+        val plateless = IconMasks.removePlate(icon, size, size) ?: IconMasks.removePlateByEdges(icon, size, size)
+        val glyph = plateless?.let { shaded(icon, it) }
+        val outline = if (plateless != null) {
+            flat(IconMasks.edges(onGrey(icon, plateless), size, size, thickness = 0))
+        } else {
+            IconMasks.edges(icon, size, size, thickness = 1).takeIf { coverage(it, threshold = ART_EDGE_OPACITY) <= ART_EDGE_COVERAGE }?.let { flat(it) }
+        }
         val needsFallback = glyph == null || outline == null
         return StyledMasks(glyph, outline, if (needsFallback) lightness(icon) else null, if (needsFallback) tones(icon) else null)
     }
@@ -65,6 +73,13 @@ object IconStyler {
     }
 
     private fun coverage(mask: AlphaMask, threshold: Int = 128) = mask.alpha.count { it >= threshold }.toFloat() / mask.alpha.size
+
+    /** The glyph alone over mid grey, so edge detection sees its silhouette whatever its own lightness, and none of the plate. */
+    private fun onGrey(icon: IntArray, glyph: AlphaMask) = IntArray(icon.size) {
+        val cover = glyph.alpha[it] / 255f
+        fun channel(shift: Int) = (((icon[it] shr shift) and 0xFF) * cover + GREY * (1 - cover)).toInt()
+        (0xFF shl 24) or (channel(16) shl 16) or (channel(8) shl 8) or channel(0)
+    }
 
     private fun flat(mask: AlphaMask) = IntArray(mask.alpha.size) { (mask.alpha[it] shl 24) or FLAT_SHADE }
 

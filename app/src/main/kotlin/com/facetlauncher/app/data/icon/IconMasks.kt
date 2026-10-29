@@ -29,7 +29,7 @@ object IconMasks {
     private const val MIN_REMOVED = 0.25f
     private const val MAX_REMOVED = 0.95f
     private const val EDGE_FLOOR = 0.15f
-    private const val EDGE_FULL = 0.6f
+    private const val EDGE_FULL = 0.5f
 
     /** The icon's own alpha, e.g. a themed monochrome layer. */
     fun fromAlpha(argb: IntArray, width: Int, height: Int) =

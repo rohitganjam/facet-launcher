@@ -128,6 +128,22 @@ class IconStylerTest {
     }
 
     @Test
+    fun `a striped logo gets a hollow outline of its glyph and needs no fallback`() {
+        // Given a logo made of many thin stripes
+        val striped = solid(plate)
+        for (x in 3 until side - 3 step 6) striped.fill(x, x + 2, 3, side - 3, white)
+
+        // When styling
+        val masks = IconStyler.style(striped, null, side)
+
+        // Then it still gets an outline, hollow inside a stripe, and needs no fallback
+        val outline = masks.outline
+        assertNotNull(outline)
+        assertNull(masks.fallback)
+        assertTrue(outline!!.any { it ushr 24 > 0 })
+    }
+
+    @Test
     fun `an icon that gets no glyph or outline gets its whole self shaded as a fallback`() {
         // Given noise, which has neither a plain plate nor tidy edges
         val random = Random(1)
