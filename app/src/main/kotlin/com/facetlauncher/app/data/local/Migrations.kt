@@ -616,6 +616,30 @@ object Migrations {
         }
     }
 
+    /**
+     * Adds `clock_stack_items` and moves each facet's existing hosted clock widget into it as one WIDGET row at
+     * position 0 (its size and alignment carried over), so a facet with a custom widget becomes a one-item stack.
+     * The old `facets.clockWidget*` columns stay in place, unused from here on.
+     */
+    val MIGRATION_34_35: Migration = object : Migration(34, 35) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL(
+                "CREATE TABLE IF NOT EXISTS `clock_stack_items` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `facetId` INTEGER NOT NULL, " +
+                    "`position` INTEGER NOT NULL, `kind` TEXT NOT NULL, `appWidgetId` INTEGER, `widthDp` INTEGER, `heightDp` INTEGER, " +
+                    "`alignment` TEXT, `landscapeWidthDp` INTEGER, `landscapeHeightDp` INTEGER, `landscapeAlignment` TEXT, " +
+                    "FOREIGN KEY(`facetId`) REFERENCES `facets`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE)",
+            )
+            db.execSQL("CREATE INDEX IF NOT EXISTS `index_clock_stack_items_facetId_position` ON `clock_stack_items` (`facetId`, `position`)")
+            db.execSQL(
+                "INSERT INTO clock_stack_items (facetId, position, kind, appWidgetId, widthDp, heightDp, alignment, " +
+                    "landscapeWidthDp, landscapeHeightDp, landscapeAlignment) " +
+                    "SELECT id, 0, 'WIDGET', clockWidgetAppWidgetId, clockWidgetWidthDp, clockWidgetHeightDp, clockAlignment, " +
+                    "landscapeClockWidgetWidthDp, landscapeClockWidgetHeightDp, landscapeClockAlignment " +
+                    "FROM facets WHERE clockWidgetAppWidgetId IS NOT NULL",
+            )
+        }
+    }
+
     val ALL: Array<Migration> = arrayOf(
         MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15, MIGRATION_15_16,
         MIGRATION_16_17, MIGRATION_17_18, MIGRATION_18_19, MIGRATION_19_20, MIGRATION_20_21, MIGRATION_21_22,
@@ -626,5 +650,6 @@ object Migrations {
         MIGRATION_31_32,
         MIGRATION_32_33,
         MIGRATION_33_34,
+        MIGRATION_34_35,
     )
 }

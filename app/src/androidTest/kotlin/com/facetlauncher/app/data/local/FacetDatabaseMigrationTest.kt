@@ -799,6 +799,50 @@ class FacetDatabaseMigrationTest {
         facet.close()
     }
 
+    @Test
+    fun migration34To35MovesEachHostedClockWidgetIntoAOneItemStackAndLeavesClockOnlyFacetsEmpty() {
+        // Given a v32 database with one facet that hosts a clock widget (sized, with landscape values) and one on the native clock
+        val dbV32 = helper.createDatabase(TEST_DB, 32)
+        insertFacetV27(dbV32, id = 1, name = "Work")
+        insertFacetV27(dbV32, id = 2, name = "Home")
+        dbV32.execSQL(
+            "UPDATE facets SET clockWidgetAppWidgetId = 77, clockWidgetWidthDp = 300, clockWidgetHeightDp = 150, " +
+                "clockAlignment = 'CENTER', landscapeClockWidgetWidthDp = 400, landscapeClockWidgetHeightDp = 120, " +
+                "landscapeClockAlignment = 'RIGHT' WHERE id = 1",
+        )
+        dbV32.close()
+
+        // When migrating through v33 and v34 to v35 (Room also validates the result against the exported v35 schema)
+        val dbV35 = helper.runMigrationsAndValidate(
+            TEST_DB, 35, true, Migrations.MIGRATION_32_33, Migrations.MIGRATION_33_34, Migrations.MIGRATION_34_35,
+        )
+
+        // Then the widget facet has one WIDGET item at position 0 carrying its size and alignment
+        val items = dbV35.query(
+            "SELECT facetId, position, kind, appWidgetId, widthDp, heightDp, alignment, landscapeWidthDp, landscapeHeightDp, landscapeAlignment " +
+                "FROM clock_stack_items",
+        )
+        assertEquals(1, items.count)
+        items.moveToFirst()
+        assertEquals(1, items.getInt(0))
+        assertEquals(0, items.getInt(1))
+        assertEquals("WIDGET", items.getString(2))
+        assertEquals(77, items.getInt(3))
+        assertEquals(300, items.getInt(4))
+        assertEquals(150, items.getInt(5))
+        assertEquals("CENTER", items.getString(6))
+        assertEquals(400, items.getInt(7))
+        assertEquals(120, items.getInt(8))
+        assertEquals("RIGHT", items.getString(9))
+        items.close()
+
+        // And the native-clock facet has no items, so it stays the plain clock
+        val clockOnly = dbV35.query("SELECT COUNT(*) FROM clock_stack_items WHERE facetId = 2")
+        clockOnly.moveToFirst()
+        assertEquals(0, clockOnly.getInt(0))
+        clockOnly.close()
+    }
+
     /** A v27 facet row — the v25 shape plus the two calendar-display columns, which a freshly created database has no defaults for. */
     private fun insertFacetV27(db: androidx.sqlite.db.SupportSQLiteDatabase, id: Long, name: String) {
         insertFacetV25Columns(db, id, name, extraColumns = ", showCalendarIndicator, calendarItemsToShow", extraValues = ", 1, 3")

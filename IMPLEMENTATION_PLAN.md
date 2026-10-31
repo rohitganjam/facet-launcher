@@ -4390,7 +4390,7 @@ Design agreed in chat. The clock slot can hold a stack of up to 5 items (the nat
 
 ### Steps
 
-- [ ] 1. Data model: table, DAO, migration, `FacetRepository` methods, backup (`02`, `09`).
+- [x] 1. Data model: `clock_stack_items` table, DAO, migration 34→35 (moves each hosted widget into a one-item stack), `ClockStackRepository` (cap 5, one clock, reorder, per-item size and alignment). Backup (`09`) and the Facet-side wiring come with step 3. Tests: `ClockStackRepositoryTest`, `FacetDatabaseMigrationTest.migration34To35…`.
 - [ ] 2. Pro gating: custom widget free, stack Pro, lapsed behaviour (`13`).
 - [ ] 3. Home: stack pager, swipe routing, page dots, per-item size and alignment, adjust mode (`12`, `13`).
 - [ ] 4. Sheet states and the stack screen with Configure.
