@@ -267,19 +267,14 @@ fun HomeDrawerRoute(
         }
     }
 
-    // PRD F15 — the provider's own declared default (getAppWidgetInfo is a real system query, so
-    // resolved once per bound widget id, not every recomposition). The persisted
-    // size (homeUiState.clockWidgetWidthDp/HeightDp) — once the user has actually dragged a resize
-    // handle — takes precedence over this default; see HomeScreen's own effectiveClockWidgetSize.
-    val clockWidgetDefaultSizeDp = homeUiState.clockWidgetAppWidgetId?.let { appWidgetId ->
-        remember(appWidgetId) { homeViewModel.clockWidgetHost.defaultSizeDp(appWidgetId) }
-    }
-    val clockWidgetResizeFloorDp = homeUiState.clockWidgetAppWidgetId?.let { appWidgetId ->
-        remember(appWidgetId) { homeViewModel.clockWidgetHost.resizeFloorDp(context, appWidgetId) }
-    }
+    // Resolved once per widget id of the stack (getAppWidgetInfo is a real system query), so a neighboring page is sized like the visible one.
+    val stackWidgetIds = homeUiState.clockStackWidgetIds
+    val widgetHost = homeViewModel.clockWidgetHost
+    val widgetDefaultSizesDp = remember(stackWidgetIds) { stackWidgetIds.associateWith { widgetHost.defaultSizeDp(it) } }
+    val widgetResizeFloorsDp = remember(stackWidgetIds) { stackWidgetIds.associateWith { widgetHost.resizeFloorDp(context, it) } }
+    val widgetOrphans = remember(stackWidgetIds, resumeCount) { stackWidgetIds.associateWith { widgetHost.isOrphaned(it) } }
     // Every widget page stays built, so a swipe re-attaches a view instead of inflating one.
     val widgetHosts = remember { ClockWidgetHostCache { viewContext, id -> homeViewModel.clockWidgetHost.createHostView(viewContext, id) } }
-    val stackWidgetIds = homeUiState.clockStackWidgetIds
     LaunchedEffect(stackWidgetIds) {
         widgetHosts.retainOnly(stackWidgetIds.toSet())
         // One per frame, so building them never lands inside a swipe.
@@ -289,9 +284,6 @@ fun HomeDrawerRoute(
         }
     }
     DisposableEffect(widgetHosts) { onDispose { widgetHosts.clear() } }
-    val clockWidgetOrphaned = homeUiState.clockWidgetAppWidgetId?.let { appWidgetId ->
-        remember(appWidgetId, resumeCount) { homeViewModel.clockWidgetHost.isOrphaned(appWidgetId) }
-    } == true
     // The persisted size (once the user has actually resized) wins over the provider's own default.
     // The layout mode, and everything that differs between orientations, resolved once: landscape's own
     // values where saved, the portrait ones otherwise.
@@ -348,9 +340,9 @@ fun HomeDrawerRoute(
                     weather = weatherUiState.weather,
                 ),
                 widgetSizing = HomeWidgetSizing(
-                    defaultSizeDp = { clockWidgetDefaultSizeDp },
-                    resizeFloorDp = { clockWidgetResizeFloorDp },
-                    isOrphaned = { clockWidgetOrphaned },
+                    defaultSizeDp = { widgetDefaultSizesDp[it] },
+                    resizeFloorDp = { widgetResizeFloorsDp[it] },
+                    isOrphaned = { widgetOrphans[it] == true },
                 ),
                 live = HomeLiveState(
                     adjustMode = clockAdjustMode,

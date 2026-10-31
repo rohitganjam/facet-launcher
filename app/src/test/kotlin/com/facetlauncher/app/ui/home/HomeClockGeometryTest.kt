@@ -163,12 +163,14 @@ class HomeClockGeometryTest {
     }
 
     @Test
-    fun `portrait clamps a widget to the room measured around its box`() {
-        // Given a box of 200x100 at (100, 300): centred, so 360px wide at most, and (300 + 100) - 100 = 300px tall at most
+    fun `portrait clamps a widget to the room between the margins whatever its box measures`() {
+        // Given a 400px root with 20px margins, a 500px target bottom and a 100px top reserve: 360 x 400 of room
         val size = effectiveWidgetSize(inputs(widget = widget(saved = Offset(900f, 900f))), fit(), Size(0f, 0f))
+        val moved = effectiveWidgetSize(inputs(widget = widget(saved = Offset(900f, 900f)), boxOriginInRoot = Offset(103f, 340f)), fit(), Size(0f, 0f))
 
-        // Then it is held to that room
-        assertEquals(Offset(360f, 300f), size)
+        // Then it is held to that room, and a box that shifts a few pixels does not change it
+        assertEquals(Offset(360f, 400f), size)
+        assertEquals(size, moved)
     }
 
     @Test
@@ -289,5 +291,24 @@ class HomeClockGeometryTest {
         // Then the fit's target bottom is top inset + handle - gap and the widget keeps its saved size
         assertEquals(40f + geometry.handle.handlePx - 10f, geometry.fit.targetBottomPx, 0.01f)
         assertEquals(Offset(100f, 100f), geometry.effectiveWidgetSizePx)
+    }
+
+    // --- widgetRoom ---
+
+    @Test
+    fun `a widget has the width between the margins and the height down to the target bottom whichever page it is`() {
+        // Given a 400px wide root, 20px margins, a 100px top reserve and a 500px target bottom
+        val room = widgetRoom(inputs(), fit(), Size.Zero)
+
+        // Then the room does not depend on any box
+        assertEquals(Offset(360f, 400f), room)
+        assertEquals(room, widgetRoom(inputs(boxSize = null, boxOriginInRoot = null), fit(ClockAlignment.LEFT), Size.Zero))
+    }
+
+    @Test
+    fun `the room is unknown before the root is measured and landscape's own pane when landscape`() {
+        assertNull(widgetRoom(inputs(rootWidthPx = null), fit(), Size.Zero))
+        assertEquals(Offset(300f, 700f), widgetRoom(inputs(landscape = true), fit(), Size(300f, 700f)))
+        assertNull(widgetRoom(inputs(landscape = true), fit(), Size(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY)))
     }
 }

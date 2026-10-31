@@ -340,8 +340,9 @@ class HomeScreenWiringTest {
         )
         setHome(state, actions)
 
-        // Then at rest only the clock is drawn
-        composeRule.onNodeWithTag("clock_widget_host_42").assertDoesNotExist()
+        // Then at rest the widget page is already built, parked far to the side where it can be neither seen nor touched
+        val rootWidth = composeRule.onRoot().getUnclippedBoundsInRoot().width
+        assertTrue(composeRule.onNodeWithTag("clock_widget_host_42").getUnclippedBoundsInRoot().left > rootWidth * 2)
 
         // When the clock is dragged towards the next page
         composeRule.runOnIdle { offset = -0.3f }
@@ -351,13 +352,68 @@ class HomeScreenWiringTest {
         composeRule.onNodeWithTag("home_clock_block", useUnmergedTree = true).assertExists()
         composeRule.onNodeWithTag("clock_widget_host_42").assertExists()
         val widgetLeft = composeRule.onNodeWithTag("clock_widget_host_42").getUnclippedBoundsInRoot().left
-        val rootWidth = composeRule.onRoot().getUnclippedBoundsInRoot().width
-        assertTrue("widget left $widgetLeft in $rootWidth", widgetLeft > rootWidth * 0.5f)
+        assertTrue("widget left $widgetLeft in $rootWidth", widgetLeft > rootWidth * 0.5f && widgetLeft < rootWidth)
 
-        // And back at rest it is gone again
+        // And back at rest it is parked again, still built
         composeRule.runOnIdle { offset = 0f }
         composeRule.waitForIdle()
-        composeRule.onNodeWithTag("clock_widget_host_42").assertDoesNotExist()
+        assertTrue(composeRule.onNodeWithTag("clock_widget_host_42").getUnclippedBoundsInRoot().left > rootWidth * 2)
+    }
+
+    @Test
+    fun aWidgetSlidingInHasItsRestingSizeAndKeepsItsViewWhenItLands() {
+        // Given a clock with a widget page after it whose saved width is more than the screen has room for
+        var offset by mutableStateOf(0f)
+        var anchor by mutableStateOf(-1)
+        var landed by mutableStateOf(false)
+        var hostsBuilt = 0
+        val widget = HomeClockWidgetState(itemId = 2L, appWidgetId = 42, widthDp = 2000.dp, heightDp = 90.dp, minWidthDp = 64.dp, minHeightDp = 64.dp)
+        val beside = appState(PlacedItem.SingleApp(mail)).copy(
+            clockStack = HomeClockStackState(
+                pageCount = 2, pageIndex = 0, hasClock = true, visibleItemId = 1L,
+                next = HomeClockNeighbor(itemId = 2L, widget = widget, alignment = ClockAlignment.LEFT),
+            ),
+        )
+        val shown = beside.copy(widget = widget, clockStack = HomeClockStackState(pageCount = 2, pageIndex = 1, hasClock = true, visibleItemId = 2L))
+        composeRule.setContent {
+            FacetLauncherTheme {
+                HomeScreen(
+                    state = if (landed) shown else beside,
+                    actions = HomeScreenActions(
+                        item = HomeItemActions(onAppClick = {}),
+                        clock = HomeClockActions(pageOffset = { offset }, pageAnchorIndex = { anchor }),
+                        widget = HomeClockWidgetActions(createHostView = { context, _ -> hostsBuilt++.let { AppWidgetHostView(context) } }),
+                    ),
+                    layoutMode = HomeLayoutMode.PORTRAIT,
+                )
+            }
+        }
+
+        // When the swipe is part-way
+        composeRule.runOnIdle {
+            anchor = 0
+            offset = -0.3f
+        }
+        composeRule.waitForIdle()
+        val slidingWidth = composeRule.onNodeWithTag("clock_widget_host_42").getUnclippedBoundsInRoot().width
+
+        // Then it is already clamped to the room beside the screen's margins
+        val rootWidth = composeRule.onRoot().getUnclippedBoundsInRoot().width
+        assertTrue("sliding width $slidingWidth in $rootWidth", slidingWidth.value <= rootWidth.value - 48f + 0.5f)
+
+        // When the swipe lands: the page change arrives while the offset is still at the edge, then the offset resets
+        composeRule.runOnIdle { offset = -1f }
+        composeRule.runOnIdle { landed = true }
+        composeRule.waitForIdle()
+        composeRule.runOnIdle {
+            offset = 0f
+            anchor = -1
+        }
+        composeRule.waitForIdle()
+
+        // Then it is the same size, and the view it had while sliding in is still the one on screen
+        assertEquals(slidingWidth.value, composeRule.onNodeWithTag("clock_widget_host_42").getUnclippedBoundsInRoot().width.value, 0.5f)
+        assertEquals(1, hostsBuilt)
     }
 
     @Test

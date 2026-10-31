@@ -126,6 +126,8 @@ internal data class ClockGeometry(
     val effectiveScale: Float,
     /** The hosted widget's rendered size, `null` while there is none. */
     val effectiveWidgetSizePx: Offset?,
+    /** The most a hosted widget on any page may take, `null` until Home is measured: what a page not yet shown is sized by. */
+    val widgetRoomPx: Offset?,
     val landscapePaneWidthPx: Float,
 )
 
@@ -148,6 +150,7 @@ internal fun computeClockGeometry(i: ClockGeometryInputs): ClockGeometry {
         landscape = landscape,
         effectiveScale = effectiveScale,
         effectiveWidgetSizePx = effectiveWidget,
+        widgetRoomPx = widgetRoom(i, fit, landscape.maxWidgetSize),
         landscapePaneWidthPx = landscapePaneWidth(i, landscape, effectiveScale, effectiveWidget),
     )
 }
@@ -217,7 +220,8 @@ internal fun effectiveClockScale(i: ClockGeometryInputs, fit: ClockFit, landscap
 
 /**
  * A hosted widget's rendered size: real width and height clamped to what fits (landscape's pane, or portrait's
- * measured room, in read mode too, so a size saved at a larger window can't spill out). The saved size is untouched.
+ * [widgetRoom], in read mode too, so a size saved at a larger window can't spill out). The saved size is untouched.
+ * The room does not read the widget's own measured box, so the size cannot feed back into itself and jitter.
  */
 internal fun effectiveWidgetSize(i: ClockGeometryInputs, fit: ClockFit, landscapeMax: Size): Offset? {
     val widget = i.widget
@@ -225,17 +229,18 @@ internal fun effectiveWidgetSize(i: ClockGeometryInputs, fit: ClockFit, landscap
     if (widget == null || saved == null) return null
     val width = widget.liveWidthPx ?: saved.x
     val height = widget.liveHeightPx ?: saved.y
-    val size = i.boxSize
-    val origin = i.boxOriginInRoot
-    val rootW = i.rootWidthPx
     return when {
         i.landscape -> clampWidget(widget, width, height, landscapeMax.width, landscapeMax.height)
-        size != null && origin != null && rootW != null -> {
-            val max = fit.maxWidgetSize(size, origin - (i.rootOriginInRoot ?: Offset.Zero), rootW)
-            clampWidget(widget, width, height, max.x, max.y)
-        }
-        else -> Offset(width.coerceAtLeast(widget.minWidthPx), height.coerceAtLeast(widget.minHeightPx))
+        else -> widgetRoom(i, fit, landscapeMax)?.let { clampWidget(widget, width, height, it.x, it.y) }
+            ?: Offset(width.coerceAtLeast(widget.minWidthPx), height.coerceAtLeast(widget.minHeightPx))
     }
+}
+
+/** The room a hosted widget has beside the clock's anchor, whichever page it is: nothing sits under it, so it spans the margins and runs down to the block's target bottom. */
+internal fun widgetRoom(i: ClockGeometryInputs, fit: ClockFit, landscapeMax: Size): Offset? = when {
+    i.landscape -> landscapeMax.takeIf { it.width.isFinite() && it.height.isFinite() }?.let { Offset(it.width, it.height) }
+    i.rootWidthPx != null -> Offset(i.rootWidthPx - 2f * fit.sideMarginPx, fit.targetBottomPx - fit.topReservePx)
+    else -> null
 }
 
 private fun clampWidget(widget: ClockWidgetMeasure, width: Float, height: Float, maxWidth: Float, maxHeight: Float) = Offset(

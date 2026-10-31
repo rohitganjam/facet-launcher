@@ -138,7 +138,7 @@ private fun clockMetrics(density: Density): ClockMetrics {
 }
 
 /** The resize floor is one Hub cell in landscape, where cells are a fixed size; in portrait it is the provider's own minimum. */
-private fun clockWidgetMinPx(widget: HomeClockWidgetState?, landscape: Boolean, density: Density): Offset {
+internal fun clockWidgetMinPx(widget: HomeClockWidgetState?, landscape: Boolean, density: Density): Offset {
     if (landscape) return with(density) { HUB_LANDSCAPE_CELL_SIZE.toPx() }.let { Offset(it, it) }
     return Offset(
         widget?.minWidthDp?.let { with(density) { it.toPx() } } ?: 1f,
@@ -297,3 +297,17 @@ internal const val GEOMETRY_SETTLE_TIMEOUT_MS = 3_000L
 
 /** M3 emphasized-decelerate easing (`cubic-bezier(.05,.7,.1,1)`) — an element coming to rest as it enters. */
 internal val EmphasizedDecelerateEasing = CubicBezierEasing(0.05f, 0.7f, 0.1f, 1f)
+
+/** A widget page beside the visible one, at the size it will have once shown, so it never resizes as it lands. `null` while its size or Home's room is unknown. */
+internal fun HomeFrame.neighborWidgetSizePx(widget: HomeClockWidgetState): Offset? {
+    val width = widget.widthDp ?: return null
+    val height = widget.heightDp ?: return null
+    val room = geometry.widgetRoomPx ?: return null
+    val min = clockWidgetMinPx(widget, isLandscape, density)
+    val widthPx = with(density) { width.toPx() }
+    val heightPx = with(density) { height.toPx() }
+    return Offset(
+        widthPx.coerceIn(min.x, maxOf(min.x, room.x)),
+        heightPx.coerceIn(min.y, maxOf(min.y, room.y)),
+    )
+}

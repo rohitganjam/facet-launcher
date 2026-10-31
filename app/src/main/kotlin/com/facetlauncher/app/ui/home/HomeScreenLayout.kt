@@ -30,6 +30,9 @@ internal class HomeScreenLayout {
     var landscapeContentWidthPx by mutableFloatStateOf(0f)
     var landscapeDockRowHeightPx by mutableFloatStateOf(0f)
 
+    /** Landscape: the clock pane's height, which a page is aligned within (top, middle or bottom). */
+    var landscapeClockPaneHeightPx by mutableFloatStateOf(0f)
+
     /**
      * The app list's natural (unconstrained) content height, measured inside its scroll region, and whether its
      * rows therefore drop to the drawer's compact density (8dp padding instead of 16dp).

@@ -95,10 +95,14 @@ fun ClockWidgetTile(
             val view = gate.getChildAt(0) as? AppWidgetHostView ?: return@AndroidView
             val widthDp = committedWidthDp.value.toInt()
             val heightDp = committedHeightDp.value.toInt()
-            if (widthDp > 0 && heightDp > 0) {
+            // Each push makes the provider redraw, so a widget that only changes page is not told its size again.
+            if (widthDp > 0 && heightDp > 0 && pushedSizes.put(view, widthDp to heightDp) != (widthDp to heightDp)) {
                 view.updateAppWidgetSize(null, widthDp, heightDp, widthDp, heightDp)
                 onSizeChange(appWidgetId, widthDp, heightDp)
             }
         },
     )
 }
+
+/** The size each hosted view was last told, so a view moved between pages (or rebuilt around the same view) is not pushed it again. */
+private val pushedSizes = java.util.WeakHashMap<AppWidgetHostView, Pair<Int, Int>>()

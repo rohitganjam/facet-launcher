@@ -58,6 +58,10 @@ internal class ClockPagerState(
         private set
     private var dragTarget = 0f
 
+    /** The page the swipe started from, or `-1` between swipes: pages are displaced relative to it, so the one that arrives stays put as it becomes the visible one. */
+    var anchorIndex by mutableIntStateOf(-1)
+        private set
+
     /** Whether a finger moving by [dx] (positive is right) has a page to move to: left needs a next page, right a previous one. */
     fun canMove(dx: Float): Boolean = when {
         dx < 0f -> pageIndex() < pageCount() - 1
@@ -70,6 +74,7 @@ internal class ClockPagerState(
         if (width <= 0f) return
         if (!dragActive) {
             dragActive = true
+            if (anchorIndex < 0) anchorIndex = pageIndex()
             dragTarget = offset.value
         }
         val towardsNext = if (pageIndex() < pageCount() - 1) -1f else 0f
@@ -91,9 +96,11 @@ internal class ClockPagerState(
         }
         // Moving left (direction -1) goes to the next page, so the index moves by the opposite sign.
         val target = pageIndex() - direction
+        if (anchorIndex < 0) anchorIndex = pageIndex()
         coroutineScope.launch {
             if (direction == 0 || target !in 0 until pageCount()) {
                 offset.animateTo(0f, PAGE_SETTLE_SPEC)
+                anchorIndex = -1
                 return@launch
             }
             offset.animateTo(direction.toFloat(), PAGE_SETTLE_SPEC)
@@ -101,6 +108,7 @@ internal class ClockPagerState(
             awaitPage(target)
             // The page that slid in beside the old one is now the visible one, exactly where the offset puts it.
             offset.snapTo(0f)
+            anchorIndex = -1
         }
     }
 

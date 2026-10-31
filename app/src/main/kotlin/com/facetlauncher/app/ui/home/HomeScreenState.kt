@@ -195,6 +195,8 @@ data class HomeClockActions(
     val onDraggingHandleChange: (Boolean) -> Unit = {},
     /** How far a swipe has displaced the visible page, as a fraction of the zone's width; read while drawing so a swipe does not recompose Home. */
     val pageOffset: () -> Float = { 0f },
+    /** The page index the swipe started from, `-1` when none is under way. */
+    val pageAnchorIndex: () -> Int = { -1 },
     /** True while a swipe between pages is in progress, so the dots show. */
     val pageDragging: () -> Boolean = { false },
 )

@@ -199,4 +199,31 @@ class ClockPagerStateTest {
         assertEquals(2, landed)
         assertEquals(0f, pager.offset.value, 0f)
     }
+
+    @Test
+    fun `swipes are measured from the page they began on until the page has landed`() {
+        // Given the middle page, where a drag begins
+        val pager = pager()
+        assertEquals(-1, pager.anchorIndex)
+        pager.dragBy(-100f)
+
+        // Then the swipe is anchored to that page
+        assertEquals(1, pager.anchorIndex)
+
+        // And once it has settled on the next page the anchor is cleared
+        pager.settle(-5000f)
+        assertEquals(2, pageIndex)
+        assertEquals(-1, pager.anchorIndex)
+    }
+
+    @Test
+    fun `a swipe that springs back clears the anchor`() {
+        val pager = pager()
+
+        pager.dragBy(-100f)
+        pager.settle(0f)
+
+        assertEquals(1, pageIndex)
+        assertEquals(-1, pager.anchorIndex)
+    }
 }

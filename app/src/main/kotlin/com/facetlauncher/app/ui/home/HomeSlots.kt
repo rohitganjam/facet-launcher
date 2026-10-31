@@ -3,6 +3,7 @@ package com.facetlauncher.app.ui.home
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -23,10 +24,14 @@ import androidx.compose.runtime.key
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import kotlin.math.roundToInt
 import kotlin.math.sign
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.unit.constrainHeight
 import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.layout.Measurable
+import androidx.compose.ui.layout.layoutId
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
@@ -91,50 +96,85 @@ private fun ClockSlotBlock(
     val pageOffset = frame.actions.clock.pageOffset
     // Only the side is read here, so a swipe recomposes when it changes side, not on every frame.
     val side by remember(pageOffset) { derivedStateOf { sign(pageOffset()) } }
-    val incoming = when {
-        side < 0f -> stack.next
-        side > 0f -> stack.previous
+    // Once the page has changed under a swipe still at its edge, the old page is gone and nothing is beside the new one.
+    val swiping = frame.actions.clock.pageAnchorIndex().let { it < 0 || it == stack.pageIndex }
+    val incomingId = when {
+        !swiping -> null
+        side < 0f -> stack.next?.itemId
+        side > 0f -> stack.previous?.itemId
         else -> null
     }
     CompositionLocalProvider(LocalBatteryClick provides frame.actions.clock.onBatteryClick) {
-        PageStack(
-            anchor = anchor,
-            modifier = modifier,
-            visible = {
-                key(stack.visibleItemId) {
-                    ClockPage(frame, ClockPageSpec(PageRole.VISIBLE, alignment, frame.state.widget), scaleOriginY, scaledFootprint)
+        // The pages either side stay composed (parked out of sight), so a widget is never detached and re-attached as a swipe reaches it.
+        PageStack(anchor = anchor, landscapePaneHeightPx = if (frame.isLandscape) frame.layout.landscapeClockPaneHeightPx.toInt() else 0, modifier = modifier) {
+            val beside = { neighbor: HomeClockNeighbor?, index: Int ->
+                neighbor?.let {
+                    val role = if (it.itemId == incomingId) PageRole.INCOMING else PageRole.PARKED
+                    PageToDraw(it.itemId, role, index, if (frame.isLandscape) ClockAlignment.LEFT else it.alignment, it.widget, it.alignment.verticalOrigin())
                 }
-            },
-            incoming = incoming?.let { page ->
-                {
-                    key(page.itemId) {
-                        val pageAlignment = if (frame.isLandscape) ClockAlignment.LEFT else page.alignment
-                        ClockPage(frame, ClockPageSpec(PageRole.INCOMING, pageAlignment, page.widget), scaleOriginY, scaledFootprint)
+            }
+            val pages = listOfNotNull(
+                beside(stack.previous, stack.pageIndex - 1),
+                PageToDraw(stack.visibleItemId, PageRole.VISIBLE, stack.pageIndex, alignment, frame.state.widget, frame.geometry.landscape.originY),
+                beside(stack.next, stack.pageIndex + 1),
+            )
+            pages.forEach { page ->
+                key(page.itemId) {
+                    Box(Modifier.layoutId(PageSlot(page.role, page.originY))) {
+                        ClockPage(frame, ClockPageSpec(page.role, page.alignment, page.widget, page.index), scaleOriginY, scaledFootprint)
                     }
                 }
-            },
-        )
-    }
-}
-
-/** The visible page, with the page a swipe is bringing in drawn beside it (without adding to its size) while there is one. */
-@Composable
-private fun PageStack(anchor: Alignment, visible: @Composable () -> Unit, incoming: (@Composable () -> Unit)?, modifier: Modifier = Modifier) {
-    Layout(content = { visible(); incoming?.invoke() }, modifier = modifier) { measurables, constraints ->
-        val shown = measurables.first().measure(constraints)
-        val beside = measurables.getOrNull(1)?.measure(Constraints(maxWidth = constraints.maxWidth))
-        layout(shown.width, shown.height) {
-            shown.place(0, 0)
-            beside?.place(anchor.align(IntSize(beside.width, beside.height), IntSize(shown.width, shown.height), layoutDirection))
+            }
         }
     }
 }
 
-/** Which of the two drawn pages a swipe shifts: the visible one (which leaves), or the one coming in beside it. */
-private enum class PageRole { VISIBLE, INCOMING }
+private class PageToDraw(val itemId: Long?, val role: PageRole, val index: Int, val alignment: ClockAlignment, val widget: HomeClockWidgetState?, val originY: Float)
+
+/** What [PageStack] reads from a page: its role, and in landscape where in the pane its own alignment rests it (0 top, 1 bottom). */
+private data class PageSlot(val role: PageRole, val originY: Float)
+
+private fun ClockAlignment.verticalOrigin() = when (this) {
+    ClockAlignment.LEFT -> 0f
+    ClockAlignment.CENTER -> 0.5f
+    ClockAlignment.RIGHT -> 1f
+}
+
+/**
+ * The visible page, with the page a swipe is bringing in drawn beside it (without adding to its size) while there is one, and the others parked far out of sight.
+ * In landscape ([landscapePaneHeightPx] above 0) the stack fills the pane and each page sits where its own alignment puts it, so one that
+ * is taller or lower than the visible page is not clipped as it slides in.
+ */
+@Composable
+private fun PageStack(anchor: Alignment, landscapePaneHeightPx: Int, modifier: Modifier = Modifier, content: @Composable () -> Unit) {
+    Layout(content = content, modifier = modifier) { measurables, constraints ->
+        val slot = { m: Measurable -> m.layoutId as PageSlot }
+        val visible = measurables.first { slot(it).role == PageRole.VISIBLE }
+        val shown = visible.measure(constraints)
+        val others = measurables.filter { slot(it).role != PageRole.VISIBLE }.map { it to it.measure(Constraints(maxWidth = constraints.maxWidth)) }
+        val fillsPane = landscapePaneHeightPx > 0
+        val height = if (fillsPane) constraints.constrainHeight(maxOf(landscapePaneHeightPx, shown.height)) else shown.height
+        val restingTop = { originY: Float, pageHeight: Int -> (originY * (height - pageHeight)).roundToInt().coerceAtLeast(0) }
+        layout(shown.width, height) {
+            shown.place(0, if (fillsPane) restingTop(slot(visible).originY, shown.height) else 0)
+            others.forEach { (measurable, placeable) ->
+                val at = anchor.align(IntSize(placeable.width, placeable.height), IntSize(shown.width, shown.height), layoutDirection)
+                val y = if (fillsPane) restingTop(slot(measurable).originY, placeable.height) else at.y
+                val x = if (slot(measurable).role == PageRole.INCOMING) at.x else at.x + PARKED_OFFSET_PX
+                placeable.place(x, y)
+            }
+        }
+    }
+}
+
+/** Far enough off to the side that a parked page is never drawn or touched, yet still attached to the window. */
+private const val PARKED_OFFSET_PX = 1 shl 20
+
+/** What a composed page is doing: the visible one, the one a swipe is bringing in beside it, or one waiting out of sight. */
+private enum class PageRole { VISIBLE, INCOMING, PARKED }
 
 /** One drawn page: what it is (the clock when [widget] is `null`), where it sits and which role it plays in the swipe. */
-private class ClockPageSpec(val role: PageRole, val alignment: ClockAlignment, val widget: HomeClockWidgetState?)
+private class ClockPageSpec(val role: PageRole, val alignment: ClockAlignment, val widget: HomeClockWidgetState?, val index: Int)
 
 @Composable
 private fun ClockPage(frame: HomeFrame, page: ClockPageSpec, scaleOriginY: Float, scaledFootprint: Boolean) {
@@ -144,16 +184,16 @@ private fun ClockPage(frame: HomeFrame, page: ClockPageSpec, scaleOriginY: Float
     val actions = frame.actions
     val layout = frame.layout
     val visible = page.role == PageRole.VISIBLE
-    val widgetSize = if (visible) frame.geometry.effectiveWidgetSizePx else null
+    val widgetSize = if (visible) frame.geometry.effectiveWidgetSizePx else widget?.let(frame::neighborWidgetSizePx)
     val callbacks = widgetPageCallbacks(actions, visible)
     ClockBlock(
-        modifier = Modifier.pageShift(frame, page.role),
+        modifier = Modifier.pageShift(frame, page.index),
         clockContentModifier = if (visible) clockTapModifier(actions.clock) else Modifier,
         clockBoxModifier = if (visible) {
             Modifier.onGloballyPositioned {
                 layout.clockBoxSize = it.size
                 // Without the page swipe's own shift, or the room left of the box would shrink a hosted widget as the page slides.
-                layout.clockBoxOriginInRoot = it.positionInRoot() - Offset(pageShiftPx(frame, PageRole.VISIBLE), 0f)
+                layout.clockBoxOriginInRoot = it.positionInRoot() - Offset(pageShiftPx(frame, page.index), 0f)
             }
         } else {
             Modifier
@@ -232,17 +272,15 @@ private fun clockTapModifier(clock: HomeClockActions): Modifier = Modifier
     }
     .testTag(homeTag("home_clock_block"))
 
-/** Slides the page with the swipe: the visible one out, the incoming one in from the other side. Read in the draw phase, so a swipe does not recompose Home. */
-private fun Modifier.pageShift(frame: HomeFrame, role: PageRole): Modifier = graphicsLayer { translationX = pageShiftPx(frame, role) }
+/** Slides the page with the swipe: the one it started from out, the one beside it in from the other side. Read in the draw phase, so a swipe does not recompose Home. */
+private fun Modifier.pageShift(frame: HomeFrame, pageIndex: Int): Modifier = graphicsLayer { translationX = pageShiftPx(frame, pageIndex) }
 
-/** How far [role]'s page is displaced right now: the swipe's offset (a fraction of the zone's width), the incoming page one zone behind it. */
-private fun pageShiftPx(frame: HomeFrame, role: PageRole): Float {
+/** How far page [pageIndex] is displaced right now: one zone per page from the one the swipe started on, plus the swipe's offset (a fraction of the zone's width). */
+private fun pageShiftPx(frame: HomeFrame, pageIndex: Int): Float {
     val offset = frame.actions.clock.pageOffset()
     val zone = if (frame.isLandscape) frame.geometry.landscapePaneWidthPx else frame.layout.rootSize?.width?.toFloat() ?: 0f
-    return when (role) {
-        PageRole.VISIBLE -> offset * zone
-        PageRole.INCOMING -> (offset - sign(offset)) * zone
-    }
+    val anchor = frame.actions.clock.pageAnchorIndex().takeIf { it >= 0 } ?: frame.state.clockStack.pageIndex
+    return (pageIndex - anchor + offset) * zone
 }
 
 @Composable

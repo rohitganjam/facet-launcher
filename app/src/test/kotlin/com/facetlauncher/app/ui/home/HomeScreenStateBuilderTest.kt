@@ -255,4 +255,28 @@ class HomeScreenStateBuilderTest {
 
         assertEquals(player, state.media.player)
     }
+
+    @Test
+    fun `each page is sized by its own widget, not the visible one`() {
+        // Given a clock and two widgets whose providers declare different sizes, with the clock visible
+        val facet = Facet(
+            id = 1L, name = "A", position = 0,
+            clockStack = listOf(clockItem(id = 10L, position = 0), widgetItem(41, id = 11L, position = 1), widgetItem(42, id = 12L, position = 2)),
+        )
+        val sizing = HomeWidgetSizing(
+            defaultSizeDp = { mapOf(41 to (250 to 110), 42 to (300 to 200))[it] },
+            resizeFloorDp = { 60 to 60 },
+            isOrphaned = { it == 42 },
+        )
+
+        // When Home's state is built around the middle page
+        val stack = resolveFacetStyle(facet, settings)
+            .toHomeScreenState(false, settings, content, widgetSizing = sizing, live = HomeLiveState(visibleClockItemId = 11L))
+            .clockStack
+
+        // Then the widget after it has its own size and orphan flag, ready before it slides in
+        assertEquals(300.dp, stack.next?.widget?.widthDp)
+        assertEquals(200.dp, stack.next?.widget?.heightDp)
+        assertEquals(true, stack.next?.widget?.isOrphaned)
+    }
 }

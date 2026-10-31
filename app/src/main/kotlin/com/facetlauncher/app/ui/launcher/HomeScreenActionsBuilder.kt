@@ -113,6 +113,7 @@ private fun homeClockActions(
         onAdjustModeChange = hooks.setAdjustMode,
         onDraggingHandleChange = hooks.setDraggingHandle,
         pageOffset = { swipe.clockPager.offset.value },
+        pageAnchorIndex = { swipe.clockPager.anchorIndex },
         pageDragging = { swipe.clockPager.dragActive },
     )
 }

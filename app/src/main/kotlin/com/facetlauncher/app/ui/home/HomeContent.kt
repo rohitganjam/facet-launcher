@@ -24,6 +24,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.layout.positionInRoot
@@ -83,7 +84,11 @@ private fun BoxScope.PortraitClockZone(frame: HomeFrame) {
     HomeClockSlot(
         frame = frame,
         modifier = Modifier
-            .offset { IntOffset(0, (handlePx - frame.metrics.minGapPx - layout.clockNaturalHeightPx).roundToInt()) }
+            // Placed from the height measured in this very pass, so a page of another height never shows a frame at the old one's place.
+            .layout { measurable, constraints ->
+                val placeable = measurable.measure(constraints)
+                layout(placeable.width, placeable.height) { placeable.place(0, (handlePx - frame.metrics.minGapPx - placeable.height).roundToInt()) }
+            }
             .onGloballyPositioned {
                 layout.clockNaturalHeightPx = it.size.height.toFloat()
                 layout.clockBlockBottomInRoot = it.positionInRoot().y + it.size.height
@@ -142,7 +147,10 @@ internal fun HomeLandscapeContent(frame: HomeFrame) {
         hasDock = frame.state.dock.items.isNotEmpty(),
         dockAtBottom = frame.dockAtBottom,
         onDockRowHeightChange = { layout.landscapeDockRowHeightPx = it.toFloat() },
-        onClockPaneBoundsChange = { currentOnClockPaneBoundsChange(it.translate(-(layout.rootOriginInRoot ?: Offset.Zero))) },
+        onClockPaneBoundsChange = {
+            layout.landscapeClockPaneHeightPx = it.height
+            currentOnClockPaneBoundsChange(it.translate(-(layout.rootOriginInRoot ?: Offset.Zero)))
+        },
         clockPaneAlignment = clockPaneAlignment,
         clockPaneWidth = with(frame.density) { frame.geometry.landscapePaneWidthPx.toDp() },
         modifier = Modifier
