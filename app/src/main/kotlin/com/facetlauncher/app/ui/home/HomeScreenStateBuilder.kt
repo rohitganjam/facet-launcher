@@ -11,6 +11,7 @@ import com.facetlauncher.app.domain.ClockAccessoryState
 import com.facetlauncher.app.data.model.ClockStackItemKind
 import com.facetlauncher.app.domain.ResolvedClockItem
 import com.facetlauncher.app.domain.ResolvedFacetStyle
+import com.facetlauncher.app.domain.limitedTo
 import com.facetlauncher.app.domain.WeatherState
 import com.facetlauncher.app.domain.WeatherUnits
 import com.facetlauncher.app.ui.components.AppMenuNotifications
@@ -46,6 +47,8 @@ data class HomeLiveState(
     val positionOwnerFacetName: String? = null,
     /** The clock stack page showing; `null`, or one no longer in the stack, shows the first. */
     val visibleClockItemId: Long? = null,
+    /** Without Pro only the first clock page shows. */
+    val isPro: Boolean = true,
 )
 
 /**
@@ -92,12 +95,14 @@ fun ResolvedFacetStyle.toHomeScreenState(
         adjustMode = live.adjustMode,
         draggingHandle = live.draggingHandle,
     ),
-    widget = visibleClockItem(live.visibleClockItemId)?.toWidgetState(landscape, widgetSizing),
-    clockStack = HomeClockStackState(
-        pageCount = clockStack.size,
-        pageIndex = clockStack.visibleIndex(live.visibleClockItemId),
-        hasClock = clockStack.any { it.kind == ClockStackItemKind.CLOCK },
-    ),
+    widget = shownClockPages(live).let { pages -> pages.getOrNull(pages.visibleIndex(live.visibleClockItemId)) }?.toWidgetState(landscape, widgetSizing),
+    clockStack = shownClockPages(live).let { pages ->
+        HomeClockStackState(
+            pageCount = pages.size,
+            pageIndex = pages.visibleIndex(live.visibleClockItemId),
+            hasClock = pages.any { it.kind == ClockStackItemKind.CLOCK },
+        )
+    },
     calendar = HomeCalendarState(
         events = content.calendarEvents.toImmutableList(),
         colors = settings.calendarColors.toImmutableMap(),
@@ -118,7 +123,8 @@ private fun WeatherState.toHomeWeather(settings: LauncherSettings, iconStyle: We
     iconStyle = iconStyle,
 )
 
-private fun ResolvedFacetStyle.visibleClockItem(itemId: Long?): ResolvedClockItem? = clockStack.getOrNull(clockStack.visibleIndex(itemId))
+/** The clock pages Home shows: all of them with Pro, else the first. */
+private fun ResolvedFacetStyle.shownClockPages(live: HomeLiveState) = clockStack.limitedTo(live.isPro)
 
 /** Where [itemId] sits in the stack, or the first page when it is `null` or gone. */
 internal fun List<ResolvedClockItem>.visibleIndex(itemId: Long?): Int = indexOfFirst { it.id == itemId }.coerceAtLeast(0)

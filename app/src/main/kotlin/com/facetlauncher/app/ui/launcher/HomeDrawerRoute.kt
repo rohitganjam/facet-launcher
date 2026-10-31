@@ -69,6 +69,7 @@ import com.facetlauncher.app.ui.home.rememberHomeLayoutMode
 import com.facetlauncher.app.ui.home.weather.WeatherSheet
 import com.facetlauncher.app.ui.home.weather.WeatherViewModel
 import com.facetlauncher.app.ui.home.widget.ClockWidgetPickerScreen
+import com.facetlauncher.app.ui.home.widget.ClockWidgetPickerTarget
 import com.facetlauncher.app.ui.home.widget.ClockWidgetPickerViewModel
 import com.facetlauncher.app.ui.hub.HubScreen
 import com.facetlauncher.app.ui.hub.HubViewModel
@@ -105,6 +106,7 @@ fun HomeDrawerRoute(
     onNavigateToUsageAccessExplanation: () -> Unit,
     /** Navigates to the clock style gallery, either global (null) or facet-scoped. */
     onNavigateToAppearance: (Long?) -> Unit = { _ -> },
+    onNavigateToClockStack: () -> Unit = {},
     /** Opens the screen that explains and grants notification access, from an app menu's "Enable notifications". */
     onNavigateToNotificationAccessExplanation: () -> Unit = {},
     /** Opens the Units and location settings (where the weather location is chosen), from the weather sheet. */
@@ -332,6 +334,7 @@ fun HomeDrawerRoute(
                     positionOwnerFacetId = homeUiState.clockPositionOwningFacet?.id,
                     positionOwnerFacetName = homeUiState.clockPositionOwningFacet?.name,
                     visibleClockItemId = homeUiState.visibleClockItemId,
+                    isPro = homeUiState.isPro,
                 ),
             ),
             actions = homeScreenActions(
@@ -361,6 +364,7 @@ fun HomeDrawerRoute(
                     toFacetPro = onNavigateToFacetPro,
                     toUsageAccessExplanation = onNavigateToUsageAccessExplanation,
                     toAppearance = onNavigateToAppearance,
+                    toClockStack = onNavigateToClockStack,
                 ),
             ),
             layoutMode = homeLayoutMode,
@@ -457,7 +461,7 @@ fun HomeDrawerRoute(
         }
         HomeClockWidgetPickerOverlay(overlays, onReset = clockWidgetPickerViewModel::reset) { itemId ->
             ClockWidgetPickerScreen(
-                itemId = itemId,
+                target = ClockWidgetPickerTarget.Replace(itemId),
                 onDone = { overlays.showClockWidgetPicker = false },
                 viewModel = clockWidgetPickerViewModel,
             )

@@ -166,6 +166,14 @@ class ResolvedFacetStyleTest {
     }
 
     @Test
+    fun `limitedTo keeps every page with pro and only the first without`() {
+        val pages = resolveFacetStyle(facet { it.copy(clockStack = listOf(clockItem(position = 0), widgetItem(41, position = 1), widgetItem(42, position = 2))) }, settings).clockStack
+
+        assertEquals(3, pages.limitedTo(isPro = true).size)
+        assertEquals(listOf(ClockStackItemKind.CLOCK), pages.limitedTo(isPro = false).map { it.kind })
+    }
+
+    @Test
     fun `the native clock page and the widget page keep the stack's order`() {
         val stacked = facet { it.copy(clockStack = listOf(clockItem(position = 0), widgetItem(41, position = 1))) }
 

@@ -10,6 +10,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.AccessTime
+import androidx.compose.material.icons.outlined.Layers
 import androidx.compose.material.icons.outlined.OpenInFull
 import androidx.compose.material.icons.outlined.Palette
 import androidx.compose.material.icons.outlined.Settings
@@ -65,11 +66,14 @@ fun ClockAdjustSheet(
     onLauncherSettingsClick: () -> Unit,
     onReplaceWithWidgetClick: () -> Unit,
     onReplaceWithClockClick: () -> Unit,
+    onWidgetStackClick: () -> Unit,
+    /** What the Widget stack row says is in the stack: "Clock", "3 pages", "Empty…". */
+    stackSummary: String,
     /** Non-null names the facet whose own clock styles are in effect right now; `null` means the launcher-wide default applies — see [FacetScopeBadge]. */
     overrideFacetName: String?,
     modifier: Modifier = Modifier,
-    /** Whether the page showing is a hosted `AppWidget` (PRD F15) rather than the clock — see this composable's own doc. */
-    hasCustomClockWidget: Boolean = false,
+    /** What the page showing is: the clock, a hosted `AppWidget` (PRD F15), or nothing (an empty stack) — see this composable's own doc. */
+    page: ClockSheetPage = ClockSheetPage.CLOCK,
     /** Whether "Replace with clock" is offered on a widget page: not while the clock is already on another page of the stack. */
     canReplaceWithClock: Boolean = true,
 ) {
@@ -95,8 +99,17 @@ fun ClockAdjustSheet(
                 onReplaceWithWidgetClick = onReplaceWithWidgetClick,
                 onReplaceWithClockClick = onReplaceWithClockClick,
                 overrideFacetName = overrideFacetName,
-                hasCustomClockWidget = hasCustomClockWidget,
+                page = page,
                 canReplaceWithClock = canReplaceWithClock,
+            )
+            CardDivider(startInset = SettingsIconBadgeInset)
+            AdjustRow(
+                icon = Icons.Outlined.Layers,
+                hue = SettingsSectionHue.APPEARANCE,
+                label = stringResource(R.string.clock_adjust_widget_stack),
+                subtitle = stackSummary,
+                onClick = onWidgetStackClick,
+                testTag = "clock_adjust_widget_stack",
             )
         }
         SettingsCard(fullBleedRows = true) {
@@ -132,10 +145,10 @@ private fun ClockPageRows(
     onReplaceWithWidgetClick: () -> Unit,
     onReplaceWithClockClick: () -> Unit,
     overrideFacetName: String?,
-    hasCustomClockWidget: Boolean,
+    page: ClockSheetPage,
     canReplaceWithClock: Boolean,
 ) = Column {
-    if (!hasCustomClockWidget) {
+    if (page == ClockSheetPage.CLOCK) {
         CardDivider(startInset = SettingsIconBadgeInset)
         AdjustRow(
             icon = Icons.Outlined.Palette,
@@ -155,7 +168,7 @@ private fun ClockPageRows(
             onClick = onReplaceWithWidgetClick,
             testTag = "clock_adjust_replace_with_widget",
         )
-    } else {
+    } else if (page == ClockSheetPage.WIDGET) {
         if (canReplaceWithClock) {
             CardDivider(startInset = SettingsIconBadgeInset)
             AdjustRow(
@@ -213,6 +226,8 @@ private fun ClockAdjustSheetPreview() {
             onLauncherSettingsClick = {},
             onReplaceWithWidgetClick = {},
             onReplaceWithClockClick = {},
+            onWidgetStackClick = {},
+            stackSummary = "Clock",
             overrideFacetName = null,
             modifier = Modifier.background(SurfaceContainer),
         )
@@ -230,8 +245,10 @@ private fun ClockAdjustSheetCustomWidgetPreview() {
             onLauncherSettingsClick = {},
             onReplaceWithWidgetClick = {},
             onReplaceWithClockClick = {},
+            onWidgetStackClick = {},
+            stackSummary = "1 widget",
             overrideFacetName = null,
-            hasCustomClockWidget = true,
+            page = ClockSheetPage.WIDGET,
             modifier = Modifier.background(SurfaceContainer),
         )
     }

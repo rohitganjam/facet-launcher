@@ -28,6 +28,7 @@ internal class HomeNavigation(
     /** The clock style gallery, global (`null`) or for one facet. */
     /** Settings > Appearance, global (`null`) or for one facet. */
     val toAppearance: (Long?) -> Unit,
+    val toClockStack: () -> Unit,
 )
 
 /** The route's own state that Home's actions change. */
@@ -93,6 +94,7 @@ private fun homeClockActions(
         onClockSettingsClick = { navigation.toAppearance(state.activeFacet?.id) },
         onNavigateToSettings = navigation.toSettings,
         onNavigateToFacetSettings = { state.activeFacet?.let { navigation.toFacetSettings(it.id) } },
+        onWidgetStackClick = navigation.toClockStack,
         onReplaceWithWidgetClick = { state.visibleClockItem?.let { hooks.openClockWidgetPicker(it.id) } },
         onReplaceWithClockClick = {
             state.visibleClockItem?.let { item ->

@@ -24,10 +24,12 @@ class ClockAdjustSheetTest {
     private fun setContent(
         overrideFacetName: String?,
         onClockSettingsClick: () -> Unit = {},
-        hasCustomClockWidget: Boolean = false,
+        page: ClockSheetPage = ClockSheetPage.CLOCK,
         canReplaceWithClock: Boolean = true,
         onReplaceWithWidgetClick: () -> Unit = {},
         onReplaceWithClockClick: () -> Unit = {},
+        onWidgetStackClick: () -> Unit = {},
+        stackSummary: String = "Clock",
     ) {
         composeRule.setContent {
             FacetLauncherTheme {
@@ -39,7 +41,9 @@ class ClockAdjustSheetTest {
                     onReplaceWithWidgetClick = onReplaceWithWidgetClick,
                     onReplaceWithClockClick = onReplaceWithClockClick,
                     overrideFacetName = overrideFacetName,
-                    hasCustomClockWidget = hasCustomClockWidget,
+                    onWidgetStackClick = onWidgetStackClick,
+                    stackSummary = stackSummary,
+                    page = page,
                     canReplaceWithClock = canReplaceWithClock,
                 )
             }
@@ -91,7 +95,7 @@ class ClockAdjustSheetTest {
     @Test
     fun theClockPageOffersItsSettingsAndReplacingItWithAWidgetOnly() {
         // Given the page showing is the clock
-        setContent(overrideFacetName = null, hasCustomClockWidget = false)
+        setContent(overrideFacetName = null, page = ClockSheetPage.CLOCK)
 
         // Then its settings and "Replace with custom widget" are offered, and nothing that only a widget page has
         composeRule.onNodeWithTag("clock_adjust_clock_settings").assertExists()
@@ -103,7 +107,7 @@ class ClockAdjustSheetTest {
     @Test
     fun aWidgetPageHidesClockSettingsAndOffersBothReplaceRows() {
         // Given the page showing is a hosted widget and the clock is not on another page
-        setContent(overrideFacetName = null, hasCustomClockWidget = true, canReplaceWithClock = true)
+        setContent(overrideFacetName = null, page = ClockSheetPage.WIDGET, canReplaceWithClock = true)
 
         // Then there are no clock settings (nothing to style), and the page can become the clock or another widget
         composeRule.onNodeWithTag("clock_adjust_clock_settings").assertDoesNotExist()
@@ -115,7 +119,7 @@ class ClockAdjustSheetTest {
     @Test
     fun aWidgetPageCannotBeReplacedWithTheClockWhileTheClockIsOnAnotherPage() {
         // Given a widget page in a stack that already has the clock
-        setContent(overrideFacetName = null, hasCustomClockWidget = true, canReplaceWithClock = false)
+        setContent(overrideFacetName = null, page = ClockSheetPage.WIDGET, canReplaceWithClock = false)
 
         // Then only replacing the widget with another widget is offered
         composeRule.onNodeWithTag("clock_adjust_replace_with_clock").assertDoesNotExist()
@@ -135,7 +139,7 @@ class ClockAdjustSheetTest {
     @Test
     fun tappingReplaceCustomWidgetOnAWidgetPageFiresTheSameCallback() {
         var clicked = false
-        setContent(overrideFacetName = null, hasCustomClockWidget = true, onReplaceWithWidgetClick = { clicked = true })
+        setContent(overrideFacetName = null, page = ClockSheetPage.WIDGET, onReplaceWithWidgetClick = { clicked = true })
 
         composeRule.onNodeWithTag("clock_adjust_replace_widget").performClick()
 
@@ -145,7 +149,7 @@ class ClockAdjustSheetTest {
     @Test
     fun tappingReplaceWithClockFiresItsCallback() {
         var clicked = false
-        setContent(overrideFacetName = null, hasCustomClockWidget = true, onReplaceWithClockClick = { clicked = true })
+        setContent(overrideFacetName = null, page = ClockSheetPage.WIDGET, onReplaceWithClockClick = { clicked = true })
 
         composeRule.onNodeWithTag("clock_adjust_replace_with_clock").performClick()
 
@@ -175,6 +179,8 @@ class ClockAdjustSheetTest {
                         onLauncherSettingsClick = { clicked = true },
                         onReplaceWithWidgetClick = {},
                         onReplaceWithClockClick = {},
+                        onWidgetStackClick = {},
+                        stackSummary = "Clock",
                         overrideFacetName = null,
                     )
                 }
@@ -186,5 +192,44 @@ class ClockAdjustSheetTest {
 
         // Then it was reachable and fired
         assert(clicked)
+    }
+
+    private fun assertWidgetStackRowShows(page: ClockSheetPage, summary: String) {
+        setContent(overrideFacetName = null, page = page, stackSummary = summary)
+
+        composeRule.onNode(hasTestTag("clock_adjust_widget_stack") and hasAnyDescendant(hasText(summary)), useUnmergedTree = true).assertExists()
+    }
+
+    @Test
+    fun theWidgetStackRowIsOnTheClockPageAndShowsWhatIsInTheStack() = assertWidgetStackRowShows(ClockSheetPage.CLOCK, "Clock")
+
+    @Test
+    fun theWidgetStackRowIsOnAWidgetPageAndShowsWhatIsInTheStack() = assertWidgetStackRowShows(ClockSheetPage.WIDGET, "3 pages")
+
+    @Test
+    fun theWidgetStackRowIsOnAnEmptyStackAndSaysSo() = assertWidgetStackRowShows(ClockSheetPage.EMPTY, "Empty")
+
+    @Test
+    fun tappingTheWidgetStackRowFiresItsCallback() {
+        var clicked = false
+        setContent(overrideFacetName = null, onWidgetStackClick = { clicked = true })
+
+        composeRule.onNodeWithTag("clock_adjust_widget_stack").performClick()
+
+        assert(clicked)
+    }
+
+    @Test
+    fun anEmptyStackOffersNoReplaceOrClockSettingsRows() {
+        // Given the clock area is empty
+        setContent(overrideFacetName = null, page = ClockSheetPage.EMPTY, stackSummary = "Empty")
+
+        // Then there is no page to replace or style, only the Widget stack row to add one
+        composeRule.onNodeWithTag("clock_adjust_clock_settings").assertDoesNotExist()
+        composeRule.onNodeWithTag("clock_adjust_replace_with_widget").assertDoesNotExist()
+        composeRule.onNodeWithTag("clock_adjust_replace_with_clock").assertDoesNotExist()
+        composeRule.onNodeWithTag("clock_adjust_replace_widget").assertDoesNotExist()
+        composeRule.onNodeWithTag("clock_adjust_widget_stack").assertExists()
+        composeRule.onNodeWithTag("clock_adjust_open").assertExists()
     }
 }

@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.facetlauncher.app.data.DefaultLauncherRepository
 import com.facetlauncher.app.data.NotificationShadeRepository
+import com.facetlauncher.app.data.EntitlementRepository
 import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.MediaSessionRepository
 import com.facetlauncher.app.data.SettingsRepository
@@ -55,6 +56,7 @@ class HomeViewModel @Inject constructor(
     /** PRD F15 — the Composable layer calls straight through these (e.g. `homeViewModel.clockWidgetHost.createHostView(...)`, `homeViewModel.clockWidgetFacet.commitSize(homeUiState.activeFacet, ...)`); see their own docs for why these hooks live outside this class. */
     val clockWidgetHost: ClockWidgetHostController,
     val clockWidgetFacet: ClockWidgetFacetController,
+    entitlementRepository: EntitlementRepository,
 ) : ViewModel() {
 
     private val usageAccessPromptDismissed = MutableStateFlow(false)
@@ -67,7 +69,9 @@ class HomeViewModel @Inject constructor(
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
 
     init {
-        combine(observeHomeScreenState(), usageAccessPromptDismissed, isDefaultLauncher, visibleClockItemByFacet) { screenState, dismissed, isDefault, visibleClockItems ->
+        combine(
+            observeHomeScreenState(), usageAccessPromptDismissed, isDefaultLauncher, visibleClockItemByFacet, entitlementRepository.isPro,
+        ) { screenState, dismissed, isDefault, visibleClockItems, isPro ->
             HomeUiState(
                 settings = screenState.settings,
                 isLoading = false,
@@ -84,6 +88,7 @@ class HomeViewModel @Inject constructor(
                 usageAccessPromptDismissed = dismissed,
                 isDefaultLauncher = isDefault,
                 visibleClockItemId = visibleClockItems[screenState.settings.activeFacetId],
+                isPro = isPro,
             )
         }.onEach { _uiState.value = it }.launchIn(viewModelScope)
 

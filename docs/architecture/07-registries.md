@@ -135,13 +135,15 @@ cycles; `AppRepository` is the single root.
 | `SelectableFacetsUseCase` | the facets the user may switch to: all for Pro, the first 3 in list order for free (`FacetLimits.selectableIds`); `invoke()` ids and `observe()` entities | `FacetRepository`, `EntitlementRepository` | `ActivateFacetByIdUseCase`, `EnsureActiveFacetUseCase`, `RefreshAutomationStateUseCase`, `SyncFacetShortcutsUseCase` |
 | `SortAppsForPickerUseCase` | pure + read (`LAST_USED` only) | `UsageStatsRepository` | `FavoritesPickerViewModel`, `DockAppPickerViewModel`, `FolderAppPickerViewModel` |
 | `SyncFacetShortcutsUseCase` | long-running collector; publishes shortcuts only for selectable facets | `SelectableFacetsUseCase`, `FacetShortcutRepository` | `LauncherViewModel` (see [14](14-flow-deep-links-and-shortcuts.md)) |
+| `AddClockStackItemUseCase` | write: appends the clock or a widget within the plan's limit (1 Free, 5 Pro, one clock); `hasRoom(facetId)` is the Add upsell check; returns `AddClockStackItemResult` | `ClockStackRepository`, `EntitlementRepository` | `ClockStackViewModel`, `ClockWidgetPickerViewModel` |
+| `RemoveClockStackItemUseCase` | write: removes a page and releases the widget id it held | `ClockStackRepository`, `AppWidgetRepository` | `ClockStackViewModel` |
 | `ReplaceClockStackItemUseCase` | write: swaps one page of a facet's clock stack for the native clock (`withClock`, refused while the clock is on another page) or a widget (`withWidget`), in place, and releases the id the old page held | `ClockStackRepository`, `AppWidgetRepository` | `ClockWidgetFacetController`, `ClockWidgetPickerViewModel` |
 
 Non-use-case files in `domain/`: `FlowCombine.kt` (6/7-ary `combine`), `HubGridConstants.kt`
 (`HUB_COLUMNS`, `HUB_MAX_ROWS`, `HUB_MAX_WIDGETS`, `calculateHubCellWidth(context)` — see F4),
 `BackupMapping.kt` (entity ⇄ `Backup*` DTO extension functions).
 
-## 3. ViewModels (37) — `@HiltViewModel`, one per screen
+## 3. ViewModels (38) — `@HiltViewModel`, one per screen
 
 | ViewModel | Screen / surface | Nav arg (`SavedStateHandle`) |
 |---|---|---|
@@ -153,6 +155,7 @@ Non-use-case files in `domain/`: `FlowCombine.kt` (6/7-ary `combine`), `HubGridC
 | `HubWidgetPickerViewModel` | `HubWidgetPickerScreen` | — |
 | `FacetCarouselViewModel` | `FacetCarouselScreen` | — |
 | `ManageFacetsViewModel` | `ManageFacetsScreen` | — |
+| `ClockStackViewModel` | `ClockStackScreen` (the widget stack: reorder, remove, configure, add; the active facet's pages and the plan's limit) | — |
 | `FacetAutomationViewModel` | `FacetAutomationScreen` (rule list, status line) | — |
 | `RuleEditorViewModel` | the rule editor sheet inside `FacetAutomationScreen`: draft rule, permission gate, device pickers | — |
 | `FacetSettingsViewModel` | `FacetSettingsScreen` | `facetId` |

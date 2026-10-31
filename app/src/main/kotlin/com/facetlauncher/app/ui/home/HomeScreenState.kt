@@ -173,6 +173,7 @@ data class HomeClockActions(
     val onNavigateToFacetSettings: () -> Unit = {},
     val onReplaceWithWidgetClick: () -> Unit = {},
     val onReplaceWithClockClick: () -> Unit = {},
+    val onWidgetStackClick: () -> Unit = {},
     val onEventClick: (CalendarEvent) -> Unit = {},
     val onZoneHeightCommit: (Float) -> Unit = {},
     val onScaleCommit: (Float) -> Unit = {},

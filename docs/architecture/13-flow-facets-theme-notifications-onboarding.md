@@ -144,6 +144,7 @@ flowchart TB
   last four hold the launcher's `LauncherSettings` as `settings` instead of a `globalX` field per
   value. `ResolvedFacetStyleTest` covers the override, sentinel, landscape and widget rules, and
   `HomeScreenStateBuilderTest` checks that the state a preview is built from has the same placement as Home resolves for the same facet.
+- **The widget stack screen** (`ClockStackScreen`, route `clockStack`, reached from the Home sheet's Widget stack row) lists the active facet's clock stack with a drag handle, Configure (the clock opens the facet's Appearance screen, a widget its own configure activity) and Remove on each row, an Add row, and the counter against the plan's limit. It hosts the clock widget picker itself for Add. Add opens a chooser (launcher clock or custom widget) while the clock is not in the stack, and goes straight to the picker when it is.
 - **A hosted clock widget shows in previews.** The first page of the stack, when it is a widget, is part of the state (`HomeClockWidgetState`),
   so `HomeScreen` draws it through its normal `ClockWidgetTile`, with `createHostView` pointed at
   `ClockWidgetHostController.createPreviewHostView`: a non-live copy from a second, non-listening

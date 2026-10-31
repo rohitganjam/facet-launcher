@@ -86,6 +86,7 @@ import com.facetlauncher.app.domain.ResolveWidgetDropUseCase
 import com.facetlauncher.app.domain.ResolveWidgetResizeUseCase
 import com.facetlauncher.app.domain.SeedDefaultDockUseCase
 import com.facetlauncher.app.domain.SelectableFacetsUseCase
+import com.facetlauncher.app.domain.AddClockStackItemUseCase
 import com.facetlauncher.app.domain.ReplaceClockStackItemUseCase
 import com.facetlauncher.app.domain.SyncFacetShortcutsUseCase
 import com.facetlauncher.app.ui.drawer.DrawerViewModel
@@ -178,6 +179,7 @@ class KeyboardDismissalTest {
                     MediaSessionRepository(context, notificationBadgeRepository),
                     ClockWidgetHostController(appWidgetRepository),
                     ClockWidgetFacetController(clockStackRepository, ReplaceClockStackItemUseCase(clockStackRepository, appWidgetRepository), EntitlementRepository()),
+                    EntitlementRepository(),
                 )
             }
             launcherViewModel = remember {
@@ -305,7 +307,11 @@ class KeyboardDismissalTest {
                     context.getSystemService(UserManager::class.java),
                     appRepository,
                 )
-                ClockWidgetPickerViewModel(appWidgetRepository, ReplaceClockStackItemUseCase(clockStackRepository, appWidgetRepository))
+                ClockWidgetPickerViewModel(
+                    appWidgetRepository,
+                    ReplaceClockStackItemUseCase(clockStackRepository, appWidgetRepository),
+                    AddClockStackItemUseCase(clockStackRepository, EntitlementRepository()),
+                )
             }
             // A throwaway set of repos, same as this file's other view models — none of this
             // test's cases touch the carousel itself, so correctness here doesn't matter, only

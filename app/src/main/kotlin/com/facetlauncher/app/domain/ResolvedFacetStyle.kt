@@ -15,6 +15,7 @@ import com.facetlauncher.app.data.model.ClockDateStyle
 import com.facetlauncher.app.data.model.ClockFontOption
 import com.facetlauncher.app.data.model.ClockStackItem
 import com.facetlauncher.app.data.model.ClockStackItemKind
+import com.facetlauncher.app.data.model.clockStackLimit
 import com.facetlauncher.app.data.model.ClockTemplateId
 import com.facetlauncher.app.data.model.DockDisplayMode
 import com.facetlauncher.app.data.model.Facet
@@ -191,6 +192,10 @@ private fun resolveListAlignment(facet: Facet?, settings: LauncherSettings): Ori
         ListAlignment(row.landscape, vertical.landscape, column.landscape),
     )
 }
+
+/** Without Pro only the first [FREE_CLOCK_STACK_ITEMS] pages show: the rest stay saved and come back with Pro. */
+fun ImmutableList<ResolvedClockItem>.limitedTo(isPro: Boolean): ImmutableList<ResolvedClockItem> =
+    if (isPro) this else take(clockStackLimit(isPro)).toImmutableList()
 
 /** Landscape's own size and alignment where saved (size per dimension), else the portrait ones. */
 private fun ClockStackItem.resolve(): ResolvedClockItem {

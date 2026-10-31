@@ -1,7 +1,12 @@
 package com.facetlauncher.app.data.model
 
-/** The most items a facet's clock stack can hold: the native clock plus hosted widgets. */
+/** The most items a facet's clock stack can hold with Pro: the native clock plus hosted widgets. */
 const val MAX_CLOCK_STACK_ITEMS = 5
+
+/** Free keeps the one page every facet starts with; more than one page is Pro. */
+const val FREE_CLOCK_STACK_ITEMS = 1
+
+fun clockStackLimit(isPro: Boolean): Int = if (isPro) MAX_CLOCK_STACK_ITEMS else FREE_CLOCK_STACK_ITEMS
 
 enum class ClockStackItemKind { CLOCK, WIDGET }
 

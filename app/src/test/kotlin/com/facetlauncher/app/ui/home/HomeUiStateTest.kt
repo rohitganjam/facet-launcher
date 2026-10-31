@@ -436,6 +436,19 @@ class HomeUiStateTest {
     }
 
     @Test
+    fun `without pro only the first clock page shows and the rest stay saved`() {
+        // Given a stack of a clock and two widgets, the last remembered as visible
+        val facet = Facet(id = 1L, name = "A", position = 0, clockStack = listOf(clockItem(id = 10L, position = 0), widgetItem(41, id = 11L, position = 1), widgetItem(42, id = 12L, position = 2)))
+        val lapsed = HomeUiState(settings = LauncherSettings(activeFacetId = 1L), facets = listOf(facet), visibleClockItemId = 12L, isPro = false)
+
+        // Then only the first page is there, it is the visible one, no widget needs listening, and the facet still holds all three
+        assertEquals(listOf(10L), lapsed.clockStack.map { it.id })
+        assertEquals(10L, lapsed.visibleClockItem?.id)
+        assertEquals(emptyList<Int>(), lapsed.clockStackWidgetIds)
+        assertEquals(3, lapsed.activeFacet?.clockStack?.size)
+    }
+
+    @Test
     fun `an empty stack has no visible page`() {
         val facet = Facet(id = 1L, name = "A", position = 0, clockStack = emptyList())
 

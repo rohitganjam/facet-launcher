@@ -3,6 +3,7 @@ package com.facetlauncher.app.ui.home
 import com.facetlauncher.app.eqOf
 import com.facetlauncher.app.LandscapeTransformCaptor
 import com.facetlauncher.app.data.model.LandscapeOverrides
+import com.facetlauncher.app.data.EntitlementRepository
 import com.facetlauncher.app.data.DefaultLauncherRepository
 import com.facetlauncher.app.data.NotificationShadeRepository
 import com.facetlauncher.app.data.FacetRepository
@@ -102,6 +103,7 @@ class HomeViewModelTest {
             mediaSessionRepository,
             mock(ClockWidgetHostController::class.java),
             clockWidgetFacet,
+            EntitlementRepository(),
         )
     }
 
@@ -186,6 +188,7 @@ class HomeViewModelTest {
             mock(MediaSessionRepository::class.java),
             mock(ClockWidgetHostController::class.java),
             mock(ClockWidgetFacetController::class.java),
+            EntitlementRepository(),
         )
 
         // Then it's still loading well before the timeout

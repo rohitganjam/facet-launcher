@@ -130,6 +130,20 @@ class HomeScreenStateBuilderTest {
     }
 
     @Test
+    fun `without pro the state has only the first clock page`() {
+        // Given a clock and a widget, with the widget page remembered as visible
+        val facet = Facet(id = 1L, name = "A", position = 0, clockStack = listOf(clockItem(id = 10L, position = 0), widgetItem(41, id = 11L, position = 1)))
+        val style = resolveFacetStyle(facet, settings)
+
+        // When building for a user without Pro
+        val state = style.toHomeScreenState(false, settings, content, live = HomeLiveState(visibleClockItemId = 11L, isPro = false))
+
+        // Then there is one page, the clock, and no widget
+        assertEquals(HomeClockStackState(pageCount = 1, pageIndex = 0, hasClock = true), state.clockStack)
+        assertNull(state.widget)
+    }
+
+    @Test
     fun `an empty stack builds a blank clock area`() {
         val facet = Facet(id = 1L, name = "A", position = 0, clockStack = emptyList())
 

@@ -10,6 +10,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import com.facetlauncher.app.R
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.input.pointer.pointerInput
@@ -132,6 +134,16 @@ internal fun Modifier.homeEmptySpaceGestures(mode: ClockAdjustMode, onModeChange
 @Composable
 internal fun ClockMenuSheet(clock: HomeClockState, stack: HomeClockStackState, hasWidget: Boolean, actions: HomeClockActions) {
     val close = { actions.onAdjustModeChange(ClockAdjustMode.NONE) }
+    val page = when {
+        stack.isBlank -> ClockSheetPage.EMPTY
+        hasWidget -> ClockSheetPage.WIDGET
+        else -> ClockSheetPage.CLOCK
+    }
+    val stackSummary = when {
+        stack.isBlank -> stringResource(R.string.clock_adjust_stack_empty)
+        stack.pageCount == 1 -> stringResource(if (stack.hasClock) R.string.clock_adjust_stack_clock else R.string.clock_adjust_stack_one_widget)
+        else -> stringResource(R.string.clock_adjust_stack_pages, stack.pageCount)
+    }
     ThemedModalBottomSheet(
         onDismissRequest = close,
         skipPartiallyExpanded = true,
@@ -159,8 +171,13 @@ internal fun ClockMenuSheet(clock: HomeClockState, stack: HomeClockStackState, h
                 close()
                 actions.onReplaceWithClockClick()
             },
+            onWidgetStackClick = {
+                close()
+                actions.onWidgetStackClick()
+            },
+            stackSummary = stackSummary,
             overrideFacetName = clock.positionOwnerFacetName,
-            hasCustomClockWidget = hasWidget,
+            page = page,
             canReplaceWithClock = !stack.hasClock,
         )
     }

@@ -579,7 +579,7 @@
     <string name="pro_upgrade_facet_limit">Kostenlos sind 3 Facetten enthalten. Mit Pro kannst du bis zu 10 haben.</string>
     <string name="pro_upgrade_facet_locked">Diese Facette ist im kostenlosen Plan pausiert. Lösche eine Facette, um wieder bei 3 zu sein, oder nutze Pro für bis zu 10.</string>
     <string name="facet_locked_content_description">Im kostenlosen Plan deaktiviert</string>
-    <string name="pro_upgrade_custom_widget">Ein eigenes Widget anstelle der Uhr ist eine Pro-Funktion. Der kostenlose Tarif enthält die Uhren des Launchers.</string>
+    <string name="pro_upgrade_widget_stack">Mehr als eine Uhr oder ein Widget auf dem Startbildschirm ist eine Pro-Funktion. Der kostenlose Tarif enthält eines.</string>
     <string name="pro_upgrade_about">Ein Kauf schaltet mehr Facetten und alle Automatisierungs-Auslöser frei. Kein Abo.</string>
     <string name="pro_message_unavailable">Google Play ist gerade nicht verfügbar. Versuche es später erneut.</string>
     <string name="pro_message_no_purchase">Für dieses Google-Konto wurde kein Pro-Kauf gefunden.</string>
@@ -915,6 +915,27 @@
     <string name="clock_adjust_replace_with_clock_subtitle">Die eigene Uhr von Facet auf dieser Seite verwenden</string>
     <string name="clock_adjust_replace_widget">Eigenes Widget ersetzen</string>
     <string name="clock_adjust_replace_widget_subtitle">Ein anderes Widget für diese Seite wählen</string>
+    <string name="clock_adjust_widget_stack">Widget-Stapel</string>
+    <string name="clock_adjust_stack_empty">Leer · Uhr oder Widget hinzufügen</string>
+    <string name="clock_adjust_stack_clock">Uhr</string>
+    <string name="clock_adjust_stack_one_widget">1 Widget</string>
+    <string name="clock_adjust_stack_pages">%1$d Seiten</string>
+    <!-- ClockStackScreen (the widget stack: reorder, remove, configure, add) -->
+    <string name="clock_stack_title">Widget-Stapel</string>
+    <string name="clock_stack_counter">%1$d von %2$d</string>
+    <string name="clock_stack_drag_hint">Zum Umsortieren ziehen. Auf dem Startbildschirm wischst du nach links und rechts durch sie.</string>
+    <string name="clock_stack_full_free_hint">Entferne das aktuelle Widget, um ein anderes hinzuzufügen, oder hol dir Pro für bis zu 5.</string>
+    <string name="clock_stack_empty">Hier ist nichts, daher bleibt der Uhrbereich auf dem Startbildschirm leer, bis du etwas hinzufügst.</string>
+    <string name="clock_stack_add">Widget hinzufügen</string>
+    <string name="clock_stack_row_clock">Uhr des Launchers</string>
+    <string name="clock_stack_row_unavailable">Widget nicht verfügbar</string>
+    <string name="clock_stack_configure">Konfigurieren</string>
+    <string name="clock_stack_remove">%1$s entfernen</string>
+    <string name="clock_stack_chooser_title">Zum Stapel hinzufügen</string>
+    <string name="clock_stack_chooser_clock">Uhr des Launchers</string>
+    <string name="clock_stack_chooser_clock_subtitle">Die eigene Uhr von Facet</string>
+    <string name="clock_stack_chooser_widget">Eigenes Widget</string>
+    <string name="clock_stack_chooser_widget_subtitle">Wähle ein beliebiges Widget auf deinem Handy</string>
     <string name="clock_widget_picker_title">Uhr-Widget auswählen</string>
 
     <!-- Wetter -->

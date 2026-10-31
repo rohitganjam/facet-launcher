@@ -25,6 +25,7 @@ import com.facetlauncher.app.ui.facets.FacetSettingsScreen
 import com.facetlauncher.app.ui.facets.FavoritesPickerScreen
 import com.facetlauncher.app.ui.facets.ManageFacetsScreen
 import com.facetlauncher.app.ui.home.clock.ClockStyleGalleryRoute
+import com.facetlauncher.app.ui.home.stack.ClockStackScreen
 import com.facetlauncher.app.ui.launcher.HomeDrawerRoute
 import com.facetlauncher.app.ui.launcher.LauncherViewModel
 import com.facetlauncher.app.ui.pro.FacetProScreen
@@ -64,6 +65,7 @@ object FacetDestinations {
     const val SETTINGS = "settings"
     const val DOCK_PICKER = "dockPicker?facetId={facetId}"
     const val FACET_MANAGE = "facetManage"
+    const val CLOCK_STACK = "clockStack"
     const val FACET_AUTOMATION = "facetAutomation"
     const val FACET_PRO = "facetPro/{reason}"
     const val FACET_SETTINGS = "facetSettings/{facetId}"
@@ -207,6 +209,7 @@ fun FacetNavHost(
                 onNavigateToPermissions = { navController.navigate(FacetDestinations.PERMISSIONS) },
                 onNavigateToWhatsNew = { navController.navigate(FacetDestinations.WHATS_NEW) },
                 onNavigateToAppearance = { facetId -> navController.navigate(FacetDestinations.appearanceSettings(facetId)) },
+                onNavigateToClockStack = { navController.navigate(FacetDestinations.CLOCK_STACK) },
                 launcherViewModel = launcherViewModel,
             )
         }
@@ -414,6 +417,14 @@ fun FacetNavHost(
                 reason = reason,
                 onBack = { navController.popBackStackSafely() },
                 onAddFacet = { navController.navigate(FacetDestinations.FACET_MANAGE) },
+            )
+        }
+        settingsComposable(FacetDestinations.CLOCK_STACK) {
+            // The widget stack: reorder, configure, remove and add the clock and widgets on Home.
+            ClockStackScreen(
+                onBack = { navController.popBackStackSafely() },
+                onOpenFacetPro = { reason -> navController.navigate(FacetDestinations.facetPro(reason)) },
+                onOpenAppearance = { facetId -> navController.navigate(FacetDestinations.appearanceSettings(facetId)) },
             )
         }
         settingsComposable(FacetDestinations.FACET_MANAGE) {
