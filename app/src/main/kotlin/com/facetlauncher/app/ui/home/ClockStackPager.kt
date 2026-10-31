@@ -39,9 +39,9 @@ private const val PAGE_CHANGE_MAX_WAIT_FRAMES = 30
 private val PAGE_SETTLE_SPEC = tween<Float>(durationMillis = FACET_TRANSITION_DURATION_MS, easing = FacetTransitionEasing)
 
 /**
- * The swipe between the pages of the clock stack. Only one page is drawn at a time: a drag displaces it by
- * [offset] (a fraction of the zone's width, negative towards the next page) and fades it, and a committed swipe slides
- * it out, changes the page, and slides the new one in from the other side. [canMove] tells Home whether a drag
+ * The swipe between the pages of the clock stack, a carousel: a drag displaces the visible page by [offset] (a fraction
+ * of the zone's width, negative towards the next page) while the page that way slides in beside it from the other side.
+ * A committed swipe carries it to the edge, changes the page and resets the offset, so the page that arrived is the visible one. [canMove] tells Home whether a drag
  * belongs to the pager or, at either end of the stack, to Hub and the facet carousel.
  */
 internal class ClockPagerState(
@@ -99,14 +99,14 @@ internal class ClockPagerState(
             offset.animateTo(direction.toFloat(), PAGE_SETTLE_SPEC)
             onPageChange(target)
             awaitPage(target)
-            offset.snapTo(-direction.toFloat())
-            offset.animateTo(0f, PAGE_SETTLE_SPEC)
+            // The page that slid in beside the old one is now the visible one, exactly where the offset puts it.
+            offset.snapTo(0f)
         }
     }
 
     /**
-     * The page change reaches Home through the ViewModel, a few frames later. The old page stays out of sight (offset at the edge,
-     * fully faded) until the new one has replaced it, or it would slide back in from the other side and then swap mid-slide.
+     * The page change reaches Home through the ViewModel, a few frames later. The offset stays at the edge, the new page drawn
+     * where it came to rest, until that page is the visible one: resetting it earlier would show the old page again.
      */
     private suspend fun awaitPage(target: Int) {
         repeat(PAGE_CHANGE_MAX_WAIT_FRAMES) {

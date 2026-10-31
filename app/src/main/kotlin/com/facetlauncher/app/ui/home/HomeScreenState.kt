@@ -83,6 +83,10 @@ data class HomeClockWidgetState(
     val isOrphaned: Boolean = false,
 )
 
+/** A clock stack page next to the visible one: its own widget (`null` for the native clock) and alignment. */
+@Immutable
+data class HomeClockNeighbor(val itemId: Long, val widget: HomeClockWidgetState?, val alignment: ClockAlignment)
+
 /** The clock stack as Home draws it: how many pages, which one shows, and whether there are none (the clock area stays blank). */
 @Immutable
 data class HomeClockStackState(
@@ -90,6 +94,11 @@ data class HomeClockStackState(
     val pageIndex: Int = 0,
     /** Whether the native clock is on some page: there is only one, so a widget page cannot be replaced with it then. */
     val hasClock: Boolean = true,
+    /** The visible page's stack item, which keys its drawing so it keeps its widget view when a swipe makes it the visible one. */
+    val visibleItemId: Long? = null,
+    /** The pages beside the visible one, drawn next to it while a swipe turns the page. */
+    val previous: HomeClockNeighbor? = null,
+    val next: HomeClockNeighbor? = null,
 ) {
     val isBlank: Boolean get() = pageCount == 0
 }

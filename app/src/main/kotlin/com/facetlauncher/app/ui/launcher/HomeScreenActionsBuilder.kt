@@ -8,6 +8,7 @@ import android.provider.CalendarContract
 import androidx.compose.ui.geometry.Rect
 import com.facetlauncher.app.data.model.ProReason
 import com.facetlauncher.app.ui.home.ClockAdjustMode
+import com.facetlauncher.app.ui.home.ClockWidgetHostCache
 import com.facetlauncher.app.ui.home.HomeClockActions
 import com.facetlauncher.app.ui.home.HomeClockWidgetActions
 import com.facetlauncher.app.ui.home.HomeItemActions
@@ -49,6 +50,7 @@ internal class HomeActionsInputs(
     val layoutMode: HomeLayoutMode,
     val context: Context,
     val coroutineScope: CoroutineScope,
+    val widgetHosts: ClockWidgetHostCache,
 )
 
 /** Everything [HomeScreen][com.facetlauncher.app.ui.home.HomeScreen] can do, wired to the view model, the swipes and the route. */
@@ -122,7 +124,7 @@ private fun homeClockWidgetActions(
     hooks: HomeRouteHooks,
 ): HomeClockWidgetActions {
     return HomeClockWidgetActions(
-        createHostView = viewModel.clockWidgetHost::createHostView,
+        createHostView = inputs.widgetHosts::get,
         onSizeChange = viewModel.clockWidgetHost::updateSize,
         onSizeCommit = { widthDp, heightDp ->
             inputs.homeUiState.visibleClockItem?.let { item ->

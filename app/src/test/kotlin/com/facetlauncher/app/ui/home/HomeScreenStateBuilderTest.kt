@@ -160,8 +160,40 @@ class HomeScreenStateBuilderTest {
         // Then the clock page has no widget and the widget page has its own, and both know the stack
         assertNull(onClock.widget)
         assertEquals(41, onWidget.widget?.appWidgetId)
-        assertEquals(HomeClockStackState(pageCount = 2, pageIndex = 0), onClock.clockStack)
-        assertEquals(HomeClockStackState(pageCount = 2, pageIndex = 1), onWidget.clockStack)
+        assertEquals(10L, onClock.clockStack.visibleItemId)
+        assertEquals(11L, onWidget.clockStack.visibleItemId)
+        assertEquals(0, onClock.clockStack.pageIndex)
+        assertEquals(1, onWidget.clockStack.pageIndex)
+        assertEquals(2, onWidget.clockStack.pageCount)
+    }
+
+    @Test
+    fun `the pages beside the visible one are built for the swipe`() {
+        // Given a clock, a widget with its own alignment, and a second widget
+        val facet = Facet(
+            id = 1L, name = "A", position = 0,
+            clockStack = listOf(
+                clockItem(id = 10L, position = 0),
+                widgetItem(41, id = 11L, position = 1, widthDp = 200, heightDp = 100).copy(alignment = ClockAlignment.RIGHT),
+                widgetItem(42, id = 12L, position = 2),
+            ),
+        )
+        val style = resolveFacetStyle(facet, settings)
+
+        // When the middle page is visible
+        val stack = style.toHomeScreenState(false, settings, content, live = HomeLiveState(visibleClockItemId = 11L)).clockStack
+
+        // Then the clock is before it and the other widget after, each with its own widget state
+        assertEquals(10L, stack.previous?.itemId)
+        assertNull(stack.previous?.widget)
+        assertEquals(12L, stack.next?.itemId)
+        assertEquals(42, stack.next?.widget?.appWidgetId)
+
+        // And at the ends there is nothing beyond
+        val first = style.toHomeScreenState(false, settings, content, live = HomeLiveState(visibleClockItemId = 10L)).clockStack
+        assertNull(first.previous)
+        assertEquals(11L, first.next?.itemId)
+        assertEquals(ClockAlignment.RIGHT, first.next?.alignment)
     }
 
     @Test
@@ -184,7 +216,8 @@ class HomeScreenStateBuilderTest {
         val state = style.toHomeScreenState(false, settings, content, live = HomeLiveState(visibleClockItemId = 11L, isPro = false))
 
         // Then there is one page, the clock, and no widget
-        assertEquals(HomeClockStackState(pageCount = 1, pageIndex = 0, hasClock = true), state.clockStack)
+        assertEquals(listOf(1, 0, true), state.clockStack.let { listOf(it.pageCount, it.pageIndex, it.hasClock) })
+        assertNull(state.clockStack.next)
         assertNull(state.widget)
     }
 

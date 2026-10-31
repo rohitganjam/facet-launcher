@@ -37,7 +37,7 @@ flowchart LR
   *Remove* (`DeleteWidgetUseCase`) / *Keep space* (`onKeepOrphanSpace` — no-op, the row stays).
   A hosted widget on Home's clock stack is orphaned the same way (`ClockWidgetHostController.isOrphaned`, re-checked on each
   Home resume); that page draws the same tile with *Remove* only (`ClockWidgetFacetController.remove` →
-  `RemoveClockStackItemUseCase`), at its saved size or a placeholder one.
+  `RemoveClockStackItemUseCase`), at its saved size or a placeholder one. Home keeps one built view per widget page of the stack (`ClockWidgetHostCache`, created in `HomeDrawerRoute`, the other pages built one per frame when the stack changes, dropped with the page or on leaving Home), so a swipe re-attaches a view instead of inflating one. The tile has a surface background at the drawer's default 60% opacity so it reads over a busy wallpaper.
 - Providers are enumerated per profile
   (`userManager.userProfiles.flatMap { getInstalledProvidersForProfile(it) }`), so Work Profile
   widgets appear in the picker tagged with their `AppProfile`; `widget_placements.profile/userId`

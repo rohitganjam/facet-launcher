@@ -133,16 +133,17 @@ internal fun HomeLandscapeContent(frame: HomeFrame) {
     val layout = frame.layout
     val currentOnClockPaneBoundsChange by rememberUpdatedState(frame.actions.onClockPaneBoundsChange)
     DisposableEffect(Unit) { onDispose { currentOnClockPaneBoundsChange(null) } }
+    val clockPaneAlignment = when (frame.state.clock.placement.alignment) {
+        ClockAlignment.LEFT -> Alignment.TopStart
+        ClockAlignment.CENTER -> Alignment.CenterStart
+        ClockAlignment.RIGHT -> Alignment.BottomStart
+    }
     HomeLandscapeLayout(
         hasDock = frame.state.dock.items.isNotEmpty(),
         dockAtBottom = frame.dockAtBottom,
         onDockRowHeightChange = { layout.landscapeDockRowHeightPx = it.toFloat() },
         onClockPaneBoundsChange = { currentOnClockPaneBoundsChange(it.translate(-(layout.rootOriginInRoot ?: Offset.Zero))) },
-        clockPaneAlignment = when (frame.state.clock.placement.alignment) {
-            ClockAlignment.LEFT -> Alignment.TopStart
-            ClockAlignment.CENTER -> Alignment.CenterStart
-            ClockAlignment.RIGHT -> Alignment.BottomStart
-        },
+        clockPaneAlignment = clockPaneAlignment,
         clockPaneWidth = with(frame.density) { frame.geometry.landscapePaneWidthPx.toDp() },
         modifier = Modifier
             .padding(WindowInsets.systemBars.asPaddingValues())
@@ -159,6 +160,7 @@ internal fun HomeLandscapeContent(frame: HomeFrame) {
                 frame.geometry.landscape.originY,
                 Modifier.graphicsLayer { alpha = frame.clockAppearAlpha.value },
                 scaledFootprint = true,
+                anchor = clockPaneAlignment,
             )
         },
         clockPaneOverlay = {

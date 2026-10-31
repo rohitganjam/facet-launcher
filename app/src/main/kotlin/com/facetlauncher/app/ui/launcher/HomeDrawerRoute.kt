@@ -37,6 +37,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.scale
@@ -63,6 +64,7 @@ import com.facetlauncher.app.ui.drawer.PrivateSpaceViewModel
 import com.facetlauncher.app.ui.facets.FacetCarouselScreen
 import com.facetlauncher.app.ui.facets.FacetCarouselViewModel
 import com.facetlauncher.app.ui.home.ClockAdjustMode
+import com.facetlauncher.app.ui.home.ClockWidgetHostCache
 import com.facetlauncher.app.ui.home.HomeItemActions
 import com.facetlauncher.app.ui.home.HomeScreen
 import com.facetlauncher.app.ui.home.HomeViewModel
@@ -192,7 +194,8 @@ fun HomeDrawerRoute(
                 pageCount = { currentHomeUiState.clockStack.size },
                 pageIndex = { currentHomeUiState.clockStack.visibleIndex(currentHomeUiState.visibleClockItemId) },
                 onPageChange = { index -> currentHomeUiState.clockStack.getOrNull(index)?.let { homeViewModel.onClockPageChange(it.id) } },
-                widthPx = { containerWidthPx },
+                // The pane in landscape, where the clock page is the pane's width.
+                widthPx = { clockPaneBoundsInHomeRoot?.width ?: containerWidthPx },
                 coroutineScope = coroutineScope,
             ),
             isInClockZone = { position -> clockZoneBoundsInHomeRoot?.contains(position) == true || clockPaneBoundsInHomeRoot?.contains(position) == true },
@@ -274,6 +277,18 @@ fun HomeDrawerRoute(
     val clockWidgetResizeFloorDp = homeUiState.clockWidgetAppWidgetId?.let { appWidgetId ->
         remember(appWidgetId) { homeViewModel.clockWidgetHost.resizeFloorDp(context, appWidgetId) }
     }
+    // Every widget page stays built, so a swipe re-attaches a view instead of inflating one.
+    val widgetHosts = remember { ClockWidgetHostCache { viewContext, id -> homeViewModel.clockWidgetHost.createHostView(viewContext, id) } }
+    val stackWidgetIds = homeUiState.clockStackWidgetIds
+    LaunchedEffect(stackWidgetIds) {
+        widgetHosts.retainOnly(stackWidgetIds.toSet())
+        // One per frame, so building them never lands inside a swipe.
+        stackWidgetIds.filterNot(widgetHosts::has).forEach {
+            widgetHosts.get(context, it)
+            withFrameNanos { }
+        }
+    }
+    DisposableEffect(widgetHosts) { onDispose { widgetHosts.clear() } }
     val clockWidgetOrphaned = homeUiState.clockWidgetAppWidgetId?.let { appWidgetId ->
         remember(appWidgetId, resumeCount) { homeViewModel.clockWidgetHost.isOrphaned(appWidgetId) }
     } == true
@@ -348,7 +363,7 @@ fun HomeDrawerRoute(
             ),
             actions = homeScreenActions(
                 viewModel = homeViewModel,
-                inputs = HomeActionsInputs(homeUiState, homeLayoutMode, context, coroutineScope),
+                inputs = HomeActionsInputs(homeUiState, homeLayoutMode, context, coroutineScope, widgetHosts),
                 itemActions = itemActions,
                 swipe = swipe,
                 hooks = HomeRouteHooks(

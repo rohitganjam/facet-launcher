@@ -8,6 +8,7 @@ import com.facetlauncher.app.data.model.MediaPlayerState
 import com.facetlauncher.app.data.model.PlacedItem
 import com.facetlauncher.app.data.model.WeatherIconStyle
 import com.facetlauncher.app.domain.ClockAccessoryState
+import com.facetlauncher.app.data.model.ClockAlignment
 import com.facetlauncher.app.data.model.ClockStackItemKind
 import com.facetlauncher.app.domain.ClockPlacement
 import com.facetlauncher.app.domain.ResolvedClockItem
@@ -100,10 +101,15 @@ fun ResolvedFacetStyle.toHomeScreenState(
     ),
     widget = shownClockPages(live).let { pages -> pages.getOrNull(pages.visibleIndex(live.visibleClockItemId)) }?.toWidgetState(landscape, widgetSizing),
     clockStack = shownClockPages(live).let { pages ->
+        val index = pages.visibleIndex(live.visibleClockItemId)
+        val neighbor = { page: ResolvedClockItem? -> page?.toNeighbor(clockPlacement.of(landscape).alignment, landscape, widgetSizing) }
         HomeClockStackState(
             pageCount = pages.size,
-            pageIndex = pages.visibleIndex(live.visibleClockItemId),
+            pageIndex = index,
             hasClock = pages.any { it.kind == ClockStackItemKind.CLOCK },
+            visibleItemId = pages.getOrNull(index)?.id,
+            previous = neighbor(pages.getOrNull(index - 1)),
+            next = neighbor(pages.getOrNull(index + 1)),
         )
     },
     calendar = HomeCalendarState(
@@ -129,6 +135,13 @@ private fun WeatherState.toHomeWeather(settings: LauncherSettings, iconStyle: We
 /** A widget page keeps its own alignment, the clock page the facet's: `null` or an unset alignment leaves [this] as resolved. */
 private fun ClockPlacement.withPageAlignment(page: ResolvedClockItem?, landscape: Boolean): ClockPlacement =
     page?.takeIf { it.kind == ClockStackItemKind.WIDGET }?.alignment?.of(landscape)?.let { copy(alignment = it) } ?: this
+
+/** A page as drawn beside the visible one: a widget page keeps its own alignment, the clock page uses the facet's [clockAlignment]. */
+private fun ResolvedClockItem.toNeighbor(clockAlignment: ClockAlignment, landscape: Boolean, widgetSizing: HomeWidgetSizing) = HomeClockNeighbor(
+    itemId = id,
+    widget = toWidgetState(landscape, widgetSizing),
+    alignment = if (kind == ClockStackItemKind.WIDGET) alignment.of(landscape) ?: clockAlignment else clockAlignment,
+)
 
 /** The clock pages Home shows: all of them with Pro, else the first. */
 private fun ResolvedFacetStyle.shownClockPages(live: HomeLiveState) = clockStack.limitedTo(live.isPro)

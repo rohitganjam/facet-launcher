@@ -10,6 +10,7 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -19,6 +20,7 @@ import androidx.compose.ui.test.longClick
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.width
+import com.facetlauncher.app.data.model.ClockAlignment
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.Folder
 import com.facetlauncher.app.data.model.MediaPlayerState
@@ -27,6 +29,7 @@ import com.facetlauncher.app.data.model.PlacedItem
 import com.facetlauncher.app.domain.QuickAddState
 import com.facetlauncher.app.domain.QuickPlacementAction
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
+import org.junit.Assert.assertTrue
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Rule
@@ -314,6 +317,47 @@ class HomeScreenWiringTest {
 
         // Then the widget is moved, not squeezed into the room that is left
         assertEquals(restingWidth.value, composeRule.onNodeWithTag("clock_widget_host_42").getUnclippedBoundsInRoot().width.value, 0.5f)
+    }
+
+    @Test
+    fun theNextPageSlidesInBesideTheVisibleOneWhileSwiping() {
+        // Given the clock page visible, a widget page after it, and a swipe part-way
+        var offset by mutableStateOf(0f)
+        val state = appState(PlacedItem.SingleApp(mail)).copy(
+            clockStack = HomeClockStackState(
+                pageCount = 2, pageIndex = 0, hasClock = true, visibleItemId = 1L,
+                next = HomeClockNeighbor(
+                    itemId = 2L,
+                    widget = HomeClockWidgetState(itemId = 2L, appWidgetId = 42, widthDp = 200.dp, heightDp = 90.dp, minWidthDp = 64.dp, minHeightDp = 64.dp),
+                    alignment = ClockAlignment.LEFT,
+                ),
+            ),
+        )
+        val actions = HomeScreenActions(
+            item = HomeItemActions(onAppClick = {}),
+            clock = HomeClockActions(pageOffset = { offset }),
+            widget = HomeClockWidgetActions(createHostView = { context, _ -> AppWidgetHostView(context) }),
+        )
+        setHome(state, actions)
+
+        // Then at rest only the clock is drawn
+        composeRule.onNodeWithTag("clock_widget_host_42").assertDoesNotExist()
+
+        // When the clock is dragged towards the next page
+        composeRule.runOnIdle { offset = -0.3f }
+        composeRule.waitForIdle()
+
+        // Then the clock is still there and the widget is coming in beside it, to the right of where it rests
+        composeRule.onNodeWithTag("home_clock_block", useUnmergedTree = true).assertExists()
+        composeRule.onNodeWithTag("clock_widget_host_42").assertExists()
+        val widgetLeft = composeRule.onNodeWithTag("clock_widget_host_42").getUnclippedBoundsInRoot().left
+        val rootWidth = composeRule.onRoot().getUnclippedBoundsInRoot().width
+        assertTrue("widget left $widgetLeft in $rootWidth", widgetLeft > rootWidth * 0.5f)
+
+        // And back at rest it is gone again
+        composeRule.runOnIdle { offset = 0f }
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("clock_widget_host_42").assertDoesNotExist()
     }
 
     @Test
