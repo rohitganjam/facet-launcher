@@ -57,7 +57,7 @@ data class CalendarSettingsUiState(
     val calendarDisplay: CalendarDisplayOptions get() = style.calendarDisplay
     /** The clock-block look the preview strip renders with: the facet's own when it overrides the clock, else launcher-wide. */
     val previewUse24HourTime: Boolean get() = style.clock.use24HourTime
-    val previewClockAlignment: ClockAlignment get() = style.clock.alignment
+    val previewClockAlignment: ClockAlignment get() = style.clockPlacement.portrait.alignment
     val effectiveSelectedCalendarIds: Set<String>? get() = if (isOverriding) facet?.selectedCalendarIds ?: globalSelectedCalendarIds else globalSelectedCalendarIds
     /** The calendar's colour swatch, or `null` when the indicator is off (the picker then drops its colour dots too). */
     fun calendarSwatch(calendarId: String): AccentSwatch? =

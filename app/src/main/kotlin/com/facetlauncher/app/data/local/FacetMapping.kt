@@ -1,8 +1,9 @@
 package com.facetlauncher.app.data.local
 
+import com.facetlauncher.app.data.model.ClockStackItem
 import com.facetlauncher.app.data.model.Facet
 
-internal fun FacetEntity.toFacet(): Facet = Facet(
+internal fun FacetEntity.toFacet(clockStack: List<ClockStackItem> = emptyList()): Facet = Facet(
     id = id,
     name = name,
     position = position,
@@ -18,14 +19,11 @@ internal fun FacetEntity.toFacet(): Facet = Facet(
     clockShowBattery = clockShowBattery,
     clockShowWeather = clockShowWeather,
     clockWeatherIconStyle = clockWeatherIconStyle,
+    clockPlacementOwn = clockPlacementOwn,
     clockAlignment = clockAlignment,
     clockZoneHeightDp = clockZoneHeightDp,
     clockScale = clockScale,
-    clockWidgetAppWidgetId = clockWidgetAppWidgetId,
-    clockWidgetWidthDp = clockWidgetWidthDp,
-    clockWidgetHeightDp = clockWidgetHeightDp,
-    landscapeClockWidgetWidthDp = landscapeClockWidgetWidthDp,
-    landscapeClockWidgetHeightDp = landscapeClockWidgetHeightDp,
+    clockStack = clockStack,
     landscapeClockAlignment = landscapeClockAlignment,
     landscapeClockZoneHeightDp = landscapeClockZoneHeightDp,
     landscapeClockScale = landscapeClockScale,
@@ -68,14 +66,10 @@ internal fun Facet.toEntity(): FacetEntity = FacetEntity(
     clockShowBattery = clockShowBattery,
     clockShowWeather = clockShowWeather,
     clockWeatherIconStyle = clockWeatherIconStyle,
+    clockPlacementOwn = clockPlacementOwn,
     clockAlignment = clockAlignment,
     clockZoneHeightDp = clockZoneHeightDp,
     clockScale = clockScale,
-    clockWidgetAppWidgetId = clockWidgetAppWidgetId,
-    clockWidgetWidthDp = clockWidgetWidthDp,
-    clockWidgetHeightDp = clockWidgetHeightDp,
-    landscapeClockWidgetWidthDp = landscapeClockWidgetWidthDp,
-    landscapeClockWidgetHeightDp = landscapeClockWidgetHeightDp,
     landscapeClockAlignment = landscapeClockAlignment,
     landscapeClockZoneHeightDp = landscapeClockZoneHeightDp,
     landscapeClockScale = landscapeClockScale,

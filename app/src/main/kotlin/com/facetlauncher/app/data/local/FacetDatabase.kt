@@ -9,6 +9,7 @@ import androidx.room.TypeConverters
         FacetEntity::class, AppPlacementEntity::class, WidgetPlacementEntity::class,
         FolderEntity::class, FolderAppEntity::class, FolderPlacementEntity::class,
         AutomationRuleEntity::class, WeatherHourEntity::class, WeatherMetaEntity::class,
+        ClockStackItemEntity::class,
     ],
     version = FacetDatabase.VERSION,
     exportSchema = true,
@@ -24,10 +25,11 @@ abstract class FacetDatabase : RoomDatabase() {
     abstract fun folderPlacementDao(): FolderPlacementDao
     abstract fun automationRuleDao(): AutomationRuleDao
     abstract fun weatherDao(): WeatherDao
+    abstract fun clockStackItemDao(): ClockStackItemDao
 
     companion object {
         // A named constant, not a magic number scattered across DatabaseModule/Migrations/tests —
         // see Migrations.kt for what bumping this requires from here on.
-        const val VERSION = 34
+        const val VERSION = 36
     }
 }

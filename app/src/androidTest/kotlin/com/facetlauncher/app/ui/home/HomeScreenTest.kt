@@ -132,6 +132,21 @@ class HomeScreenTest {
         composeRule.waitForIdle()
     }
 
+    /** Drags the clock's right resize handle by [total], a small first move (which only captures the grab offset) then [steps] equal ones, each on its own frame (see [dragHandleBy]). */
+    private fun dragResizeHandleBy(total: Offset, steps: Int = 6) {
+        val handle = { composeRule.onNodeWithTag("clock_resize_handle_right") }
+        handle().performTouchInput { down(center) }
+        composeRule.waitForIdle()
+        handle().performTouchInput { moveBy(Offset(total.x.coerceIn(-40f, 40f), total.y.coerceIn(-20f, 20f))) }
+        composeRule.waitForIdle()
+        repeat(steps) {
+            handle().performTouchInput { moveBy(Offset(total.x / steps, total.y / steps)) }
+            composeRule.waitForIdle()
+        }
+        handle().performTouchInput { up() }
+        composeRule.waitForIdle()
+    }
+
     @Test
     fun showsFirstFiveAppsAsFavoritesAndDockAppsSeparately() {
         // Given 9 apps, the first 5 as favorites and the rest as the (independently-sourced) dock
@@ -1051,26 +1066,12 @@ class HomeScreenTest {
         // lower — the real cap is whatever still fits the screen). First move captures the grab
         // offset, the rest scale.
         enterAdjustMode()
-        composeRule.onNodeWithTag("clock_resize_handle_right").performTouchInput {
-            down(center)
-            moveBy(Offset(40f, -20f))
-            moveBy(Offset(200f, -150f))
-            moveBy(Offset(3000f, -2000f))
-            up()
-        }
-        composeRule.waitForIdle()
+        dragResizeHandleBy(Offset(3240f, -2170f))
         assertTrue("grew past 1f", committedScale > 1f)
         assertTrue("clamped at or below 2.0", committedScale <= 2.0f + 0.01f)
 
         // When dragging far in (still in adjust mode), it clamps to the hard 0.5 floor.
-        composeRule.onNodeWithTag("clock_resize_handle_right").performTouchInput {
-            down(center)
-            moveBy(Offset(-40f, 20f))
-            moveBy(Offset(-200f, 150f))
-            moveBy(Offset(-3000f, 2000f))
-            up()
-        }
-        composeRule.waitForIdle()
+        dragResizeHandleBy(Offset(-3240f, 2170f))
         assertEquals(0.5f, committedScale, 0.01f)
     }
 

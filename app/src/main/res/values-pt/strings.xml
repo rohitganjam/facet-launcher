@@ -200,6 +200,7 @@
     <string name="inherit_override_inherit_default">Herdar padrão</string>
     <string name="inherit_override_override_for_facet">Substituir para esta faceta</string>
     <string name="inherit_override_changes_dont_affect_others">Mudanças aqui não afetam outras facetas</string>
+    <string name="inherit_override_edit_defaults">Editar predefinições</string>
 
     <!-- GestureHintOverlay -->
     <string name="gesture_hint_switch_facets">Trocar de faceta</string>
@@ -579,7 +580,7 @@
     <string name="pro_upgrade_facet_limit">O plano gratuito inclui 3 facetas. Com o Pro você pode ter até 10.</string>
     <string name="pro_upgrade_facet_locked">Esta faceta está pausada no plano gratuito. Exclua uma faceta para voltar a 3, ou use o Pro para ter até 10.</string>
     <string name="facet_locked_content_description">Desativada no plano gratuito</string>
-    <string name="pro_upgrade_custom_widget">Usar o seu próprio widget no lugar do relógio é um recurso Pro. O plano gratuito inclui os relógios do launcher.</string>
+    <string name="pro_upgrade_widget_stack">Colocar mais do que um relógio ou widget no ecrã inicial é um recurso Pro. O plano gratuito inclui um.</string>
     <string name="pro_upgrade_about">Uma compra desbloqueia mais facetas e todos os gatilhos de automação. Sem assinatura.</string>
     <string name="pro_message_unavailable">O Google Play não está disponível agora. Tente novamente mais tarde.</string>
     <string name="pro_message_no_purchase">Nenhuma compra do Pro encontrada para esta conta do Google.</string>
@@ -812,7 +813,6 @@
     <string name="clock_style_primary_font_color">Cor primária da fonte</string>
     <string name="clock_style_show_meridiem">Exibir AM/PM</string>
     <string name="clock_style_date_style">Estilo de data</string>
-    <string name="clock_style_clock_alignment">Alinhamento do relógio</string>
     <string name="clock_style_position_section">POSIÇÃO</string>
     <string name="clock_style_tap_to_select">ESTILOS DE RELÓGIO — TOQUE PARA SELECIONAR</string>
     <string name="clock_style_long_press_hint">Toque e segure o relógio na tela inicial para ajustar o tamanho e a posição vertical.</string>
@@ -829,8 +829,8 @@
     <string name="clock_adjust_align_top">Alinhar ao topo</string>
     <string name="clock_adjust_align_middle">Alinhar ao meio</string>
     <string name="clock_adjust_align_bottom">Alinhar embaixo</string>
-    <string name="clock_adjust_edit_styles">Editar estilos do relógio</string>
-    <string name="clock_adjust_edit_styles_subtitle">Modelos, fontes, cores e alinhamento</string>
+    <string name="clock_adjust_clock_settings">Definições de relógio e calendário</string>
+    <string name="clock_adjust_clock_settings_subtitle">Modelos, fontes, cores e calendário</string>
     <string name="clock_adjust_facet_settings_subtitle">Lista de apps, dock, relógio e calendário específicos da faceta</string>
 
     <!-- HubWidgetPickerScreen -->
@@ -909,10 +909,33 @@
     <string name="facet_settings_appearance_home_icon_only">Início: apenas ícone</string>
     <string name="facet_settings_appearance_home_icon_and_text">Início: ícone e texto</string>
     <string name="facet_settings_appearance_home_text_only">Início: apenas texto</string>
-    <string name="clock_adjust_use_custom_widget">Usar widget personalizado</string>
-    <string name="clock_adjust_use_custom_widget_subtitle">Substitui o relógio por um widget da sua escolha</string>
-    <string name="clock_adjust_switch_to_launcher_clock">Mudar para o widget de relógio do launcher</string>
-    <string name="clock_adjust_switch_to_launcher_clock_subtitle">Usar o relógio próprio do Facet</string>
+    <string name="clock_adjust_replace_with_widget">Substituir por widget personalizado</string>
+    <string name="clock_adjust_replace_with_widget_subtitle">Substitui o relógio por um widget da sua escolha</string>
+    <string name="clock_adjust_replace_with_clock">Substituir pelo relógio</string>
+    <string name="clock_adjust_replace_with_clock_subtitle">Usar o relógio próprio do Facet nesta página</string>
+    <string name="clock_adjust_replace_widget">Substituir widget personalizado</string>
+    <string name="clock_adjust_replace_widget_subtitle">Escolher outro widget para esta página</string>
+    <string name="clock_adjust_widget_stack">Pilha de widgets</string>
+    <string name="clock_adjust_stack_empty">Vazia · adicione um relógio ou um widget</string>
+    <string name="clock_adjust_stack_clock">Relógio</string>
+    <string name="clock_adjust_stack_one_widget">1 widget</string>
+    <string name="clock_adjust_stack_pages">%1$d páginas</string>
+    <!-- ClockStackScreen (the widget stack: reorder, remove, configure, add) -->
+    <string name="clock_stack_title">Pilha de widgets</string>
+    <string name="clock_stack_counter">%1$d de %2$d</string>
+    <string name="clock_stack_drag_hint">Arraste para reordenar. No ecrã inicial, deslize para a esquerda e para a direita para os percorrer.</string>
+    <string name="clock_stack_full_free_hint">Remova o widget atual para adicionar outro, ou passe a Pro para ter até 5.</string>
+    <string name="clock_stack_empty">Não há nada aqui, por isso a zona do relógio no ecrã inicial fica vazia até adicionar algo.</string>
+    <string name="clock_stack_add">Adicionar widget</string>
+    <string name="clock_stack_row_clock">Relógio do launcher</string>
+    <string name="clock_stack_row_unavailable">Widget indisponível</string>
+    <string name="clock_stack_configure">Configurar</string>
+    <string name="clock_stack_remove">Remover %1$s</string>
+    <string name="clock_stack_chooser_title">Adicionar à pilha</string>
+    <string name="clock_stack_chooser_clock">Relógio do launcher</string>
+    <string name="clock_stack_chooser_clock_subtitle">O relógio próprio do Facet</string>
+    <string name="clock_stack_chooser_widget">Widget personalizado</string>
+    <string name="clock_stack_chooser_widget_subtitle">Escolha qualquer widget do seu telemóvel</string>
     <string name="clock_widget_picker_title">Escolher widget de relógio</string>
 
     <!-- Clima -->

@@ -57,7 +57,7 @@ class ClockAccessorySwitchesTest {
     fun `the switches survive the trip to and from a database row`() {
         val facet = facet(overrideClock = true)
 
-        assertEquals(facet, facet.toEntity().toFacet())
+        assertEquals(facet, facet.toEntity().toFacet(facet.clockStack))
     }
 
     @Test

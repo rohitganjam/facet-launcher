@@ -53,7 +53,6 @@ data class ClockStyleGalleryUiState(
     val showWeather: Boolean get() = clock.showWeather
     val weatherIconStyle: WeatherIconStyle get() = clock.weatherIconStyle
     /** Home clock's horizontal placement, in the same Clock+Calendar design bundle as [templateId]; it also positions the calendar events strip. */
-    val clockAlignment: ClockAlignment get() = clock.alignment
 }
 
 /** Backs the global or facet-scoped clock style gallery. */
@@ -132,14 +131,6 @@ class ClockStyleGalleryViewModel @Inject constructor(
         }
     }
 
-    fun setClockAlignment(alignment: ClockAlignment) {
-        viewModelScope.launch {
-            facetId?.let { pid ->
-                facetRepository.getById(pid)?.let { facetRepository.setClockAlignment(it.id, alignment) }
-            } ?: settingsRepository.setClockAlignment(alignment)
-        }
-    }
-
     /**
      * The Inherit/Override switch for this facet's whole clock design bundle — moved in from
      * `FacetSettingsScreen` so it sits on the same screen as the controls it gates (see chat
@@ -165,10 +156,6 @@ class ClockStyleGalleryViewModel @Inject constructor(
                 colorOption = state.colorOption,
                 use24HourTime = state.use24HourTime,
                 showMeridiem = state.showMeridiem,
-                clockAlignment = state.clockAlignment,
-                landscapeClockAlignment = if (overriding) state.settings.landscape.clockAlignment else facet.landscape.clockAlignment,
-                clockZoneHeightDp = facet.clockZoneHeightDp,
-                clockScale = facet.clockScale,
                 accentColorOption = state.accentColorOption,
                 dateStyle = state.dateStyle,
                 showAlarm = if (overriding) state.settings.showNextAlarm else facet.clockShowAlarm,
@@ -180,22 +167,11 @@ class ClockStyleGalleryViewModel @Inject constructor(
     }
 
     /**
-     * "Reset clock widget position" — restores the whole clock+calendar widget to its original,
-     * untouched layout: the zone height back to `null` (fixed-top, bottom-anchored app list),
-     * alignment back to `LEFT`, and scale back to `0.8f`.
-     * Resets this facet's own values when scoped, the global defaults otherwise — same branching
-     * as every setter above.
+     * "Reset clock position": this facet stops owning its placement and goes back to the launcher's fallback (zone
+     * height unset, alignment left, scale 0.8). Only a facet has a placement to reset, so the launcher-wide scope does nothing.
      */
     fun resetClockPosition() {
-        viewModelScope.launch {
-            facetId?.let { pid ->
-                facetRepository.getById(pid)?.let { facetRepository.resetClockPosition(it.id) }
-            } ?: run {
-                settingsRepository.resetClockZoneHeight()
-                settingsRepository.resetClockScale()
-                settingsRepository.setClockAlignment(ClockAlignment.LEFT)
-                settingsRepository.updateLandscape { it.copy(clockAlignment = null) }
-            }
-        }
+        val pid = facetId ?: return
+        viewModelScope.launch { facetRepository.resetClockPosition(pid) }
     }
 }

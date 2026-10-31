@@ -9,6 +9,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.unit.dp
+import com.facetlauncher.app.ui.home.ClockPagerState
 import com.facetlauncher.app.ui.home.HomeLayoutMode
 import com.facetlauncher.app.ui.home.HomeLiveState
 import com.facetlauncher.app.ui.home.HomeScreenContent
@@ -16,6 +17,7 @@ import com.facetlauncher.app.ui.home.HomeWidgetSizing
 import com.facetlauncher.app.ui.home.WhatsNewPillHost
 import com.facetlauncher.app.ui.home.WhatsNewPillViewModel
 import com.facetlauncher.app.ui.home.toHomeScreenState
+import com.facetlauncher.app.ui.home.visibleIndex
 import android.provider.Settings
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.Animatable
@@ -24,15 +26,18 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.scale
@@ -59,6 +64,7 @@ import com.facetlauncher.app.ui.drawer.PrivateSpaceViewModel
 import com.facetlauncher.app.ui.facets.FacetCarouselScreen
 import com.facetlauncher.app.ui.facets.FacetCarouselViewModel
 import com.facetlauncher.app.ui.home.ClockAdjustMode
+import com.facetlauncher.app.ui.home.ClockWidgetHostCache
 import com.facetlauncher.app.ui.home.HomeItemActions
 import com.facetlauncher.app.ui.home.HomeScreen
 import com.facetlauncher.app.ui.home.HomeViewModel
@@ -67,6 +73,7 @@ import com.facetlauncher.app.ui.home.rememberHomeLayoutMode
 import com.facetlauncher.app.ui.home.weather.WeatherSheet
 import com.facetlauncher.app.ui.home.weather.WeatherViewModel
 import com.facetlauncher.app.ui.home.widget.ClockWidgetPickerScreen
+import com.facetlauncher.app.ui.home.widget.ClockWidgetPickerTarget
 import com.facetlauncher.app.ui.home.widget.ClockWidgetPickerViewModel
 import com.facetlauncher.app.ui.hub.HubScreen
 import com.facetlauncher.app.ui.hub.HubViewModel
@@ -102,7 +109,8 @@ fun HomeDrawerRoute(
     onNavigateToFacetPro: (ProReason) -> Unit,
     onNavigateToUsageAccessExplanation: () -> Unit,
     /** Navigates to the clock style gallery, either global (null) or facet-scoped. */
-    onNavigateToClockStyleGallery: (Long?) -> Unit = { _ -> },
+    onNavigateToAppearance: (Long?) -> Unit = { _ -> },
+    onNavigateToClockStack: () -> Unit = {},
     /** Opens the screen that explains and grants notification access, from an app menu's "Enable notifications". */
     onNavigateToNotificationAccessExplanation: () -> Unit = {},
     /** Opens the Units and location settings (where the weather location is chosen), from the weather sheet. */
@@ -125,7 +133,6 @@ fun HomeDrawerRoute(
     val homeUiState by homeViewModel.uiState.collectAsStateWithLifecycle()
     val weatherUiState by weatherViewModel.uiState.collectAsStateWithLifecycle()
     val whatsNewVersion by whatsNewPillViewModel.version.collectAsStateWithLifecycle()
-    val clockWidgetIsPro by homeViewModel.clockWidgetFacet.isPro.collectAsStateWithLifecycle()
     val launcherUiState by launcherViewModel.uiState.collectAsStateWithLifecycle()
     val folders by drawerViewModel.folders.collectAsStateWithLifecycle()
     val currentOnNavigateToNotificationAccess by rememberUpdatedState(onNavigateToNotificationAccessExplanation)
@@ -149,11 +156,14 @@ fun HomeDrawerRoute(
     // PACKAGE_USAGE_STATS has no grant-change callback — re-check whenever the user returns to
     // Home (e.g. from the usage-access Settings redirect) rather than only on facet changes.
     val lifecycleOwner = LocalLifecycleOwner.current
+    // Counts resumes so the orphaned-widget check re-runs: the app can be uninstalled while Home is away.
+    var resumeCount by remember { mutableIntStateOf(0) }
     val weatherShown by rememberUpdatedState(homeUiState.style.clock.showWeather)
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
                 homeViewModel.refresh()
+                resumeCount++
                 weatherViewModel.onHomeResumed(weatherShown)
             }
         }
@@ -168,6 +178,11 @@ fun HomeDrawerRoute(
 
     val overlays = remember { HomeOverlayState() }
     var clockAdjustMode by remember { mutableStateOf(ClockAdjustMode.NONE) }
+    // Landscape only: the clock pane scrolls its own content, so swiping up to open the drawer works on the apps side only.
+    var clockPaneBoundsInHomeRoot by remember { mutableStateOf<Rect?>(null) }
+    // Portrait only: everything above the divider. A horizontal drag in it or in the landscape clock pane turns the clock stack's pages.
+    var clockZoneBoundsInHomeRoot by remember { mutableStateOf<Rect?>(null) }
+    val currentHomeUiState by rememberUpdatedState(homeUiState)
     val swipe = remember {
         HomeSwipeController(
             containerHeightPx = { containerHeightPx },
@@ -175,6 +190,15 @@ fun HomeDrawerRoute(
             coroutineScope = coroutineScope,
             endClockAdjust = { clockAdjustMode = ClockAdjustMode.NONE },
             expandNotificationShade = homeViewModel::expandNotificationShade,
+            clockPager = ClockPagerState(
+                pageCount = { currentHomeUiState.clockStack.size },
+                pageIndex = { currentHomeUiState.clockStack.visibleIndex(currentHomeUiState.visibleClockItemId) },
+                onPageChange = { index -> currentHomeUiState.clockStack.getOrNull(index)?.let { homeViewModel.onClockPageChange(it.id) } },
+                // The pane in landscape, where the clock page is the pane's width.
+                widthPx = { clockPaneBoundsInHomeRoot?.width ?: containerWidthPx },
+                coroutineScope = coroutineScope,
+            ),
+            isInClockZone = { position -> clockZoneBoundsInHomeRoot?.contains(position) == true || clockPaneBoundsInHomeRoot?.contains(position) == true },
         )
     }
     // What's behind the system bars: wallpaper, except while an opaque picker or the always-dark Private Space covers it.
@@ -205,8 +229,6 @@ fun HomeDrawerRoute(
     // Reported by HomeScreen's own onAppListBoundsChange — same reasoning as
     // clockWidgetBoundsInHomeRoot above, for the favorites/recents/most-used list's own scroll.
     var appListBoundsInHomeRoot by remember { mutableStateOf<Rect?>(null) }
-    // Landscape only: the clock pane scrolls its own content, so swiping up to open the drawer works on the apps side only.
-    var clockPaneBoundsInHomeRoot by remember { mutableStateOf<Rect?>(null) }
     // A long-press sheet (app/folder context menu) is open — Home's swipes must not act on the
     // still-down finger that opened it, or on anything else, until it closes (back still works).
     val homeSwipeBlocked = LocalHomeSwipeGate.current?.isBlocked == true
@@ -217,7 +239,7 @@ fun HomeDrawerRoute(
     val isHubOpen by remember { derivedStateOf { swipe.hub.progress.value > 0f } }
     val isFacetOpen by remember { derivedStateOf { swipe.facet.progress.value > 0f } }
 
-    val clockWidgetNeedsListening = homeUiState.clockWidgetAppWidgetId != null
+    val clockWidgetNeedsListening = homeUiState.clockStackWidgetIds.isNotEmpty()
 
     // Clear focus whenever the drawer, hub, or facet carousel starts moving via a drag.
     LaunchedEffect(swipe.drawer.dragActive, swipe.hub.dragActive, swipe.facet.dragActive) {
@@ -245,16 +267,23 @@ fun HomeDrawerRoute(
         }
     }
 
-    // PRD F15 — the provider's own declared default (getAppWidgetInfo is a real system query, so
-    // resolved once per bound widget id, not every recomposition). The persisted
-    // size (homeUiState.clockWidgetWidthDp/HeightDp) — once the user has actually dragged a resize
-    // handle — takes precedence over this default; see HomeScreen's own effectiveClockWidgetSize.
-    val clockWidgetDefaultSizeDp = homeUiState.clockWidgetAppWidgetId?.let { appWidgetId ->
-        remember(appWidgetId) { homeViewModel.clockWidgetHost.defaultSizeDp(appWidgetId) }
+    // Resolved once per widget id of the stack (getAppWidgetInfo is a real system query), so a neighboring page is sized like the visible one.
+    val stackWidgetIds = homeUiState.clockStackWidgetIds
+    val widgetHost = homeViewModel.clockWidgetHost
+    val widgetDefaultSizesDp = remember(stackWidgetIds) { stackWidgetIds.associateWith { widgetHost.defaultSizeDp(it) } }
+    val widgetResizeFloorsDp = remember(stackWidgetIds) { stackWidgetIds.associateWith { widgetHost.resizeFloorDp(context, it) } }
+    val widgetOrphans = remember(stackWidgetIds, resumeCount) { stackWidgetIds.associateWith { widgetHost.isOrphaned(it) } }
+    // Every widget page stays built, so a swipe re-attaches a view instead of inflating one.
+    val widgetHosts = remember { ClockWidgetHostCache { viewContext, id -> homeViewModel.clockWidgetHost.createHostView(viewContext, id) } }
+    LaunchedEffect(stackWidgetIds) {
+        widgetHosts.retainOnly(stackWidgetIds.toSet())
+        // One per frame, so building them never lands inside a swipe.
+        stackWidgetIds.filterNot(widgetHosts::has).forEach {
+            widgetHosts.get(context, it)
+            withFrameNanos { }
+        }
     }
-    val clockWidgetResizeFloorDp = homeUiState.clockWidgetAppWidgetId?.let { appWidgetId ->
-        remember(appWidgetId) { homeViewModel.clockWidgetHost.resizeFloorDp(context, appWidgetId) }
-    }
+    DisposableEffect(widgetHosts) { onDispose { widgetHosts.clear() } }
     // The persisted size (once the user has actually resized) wins over the provider's own default.
     // The layout mode, and everything that differs between orientations, resolved once: landscape's own
     // values where saved, the portrait ones otherwise.
@@ -311,20 +340,22 @@ fun HomeDrawerRoute(
                     weather = weatherUiState.weather,
                 ),
                 widgetSizing = HomeWidgetSizing(
-                    defaultSizeDp = { clockWidgetDefaultSizeDp },
-                    resizeFloorDp = { clockWidgetResizeFloorDp },
+                    defaultSizeDp = { widgetDefaultSizesDp[it] },
+                    resizeFloorDp = { widgetResizeFloorsDp[it] },
+                    isOrphaned = { widgetOrphans[it] == true },
                 ),
                 live = HomeLiveState(
                     adjustMode = clockAdjustMode,
                     draggingHandle = draggingHandle,
-                    isPro = clockWidgetIsPro,
-                    positionOwnerFacetId = homeUiState.clockPositionOwningFacet?.id,
-                    positionOwnerFacetName = homeUiState.clockPositionOwningFacet?.name,
+                    placementFacetId = homeUiState.activeFacet?.id,
+                    styleOwnerFacetName = homeUiState.clockStyleOwningFacet?.name,
+                    visibleClockItemId = homeUiState.visibleClockItemId,
+                    isPro = homeUiState.isPro,
                 ),
             ),
             actions = homeScreenActions(
                 viewModel = homeViewModel,
-                inputs = HomeActionsInputs(homeUiState, clockWidgetIsPro, homeLayoutMode, context, coroutineScope),
+                inputs = HomeActionsInputs(homeUiState, homeLayoutMode, context, coroutineScope, widgetHosts),
                 itemActions = itemActions,
                 swipe = swipe,
                 hooks = HomeRouteHooks(
@@ -333,8 +364,9 @@ fun HomeDrawerRoute(
                     setClockWidgetBounds = { clockWidgetBoundsInHomeRoot = it },
                     setAppListBounds = { appListBoundsInHomeRoot = it },
                     setClockPaneBounds = { clockPaneBoundsInHomeRoot = it },
-                    openClockWidgetPicker = { facetId ->
-                        overlays.clockWidgetPickerFacetId = facetId
+                    setClockZoneBounds = { clockZoneBoundsInHomeRoot = it },
+                    openClockWidgetPicker = { itemId ->
+                        overlays.clockWidgetPickerItemId = itemId
                         overlays.showClockWidgetPicker = true
                     },
                     openWeather = {
@@ -347,7 +379,8 @@ fun HomeDrawerRoute(
                     toFacetSettings = onNavigateToFacetSettings,
                     toFacetPro = onNavigateToFacetPro,
                     toUsageAccessExplanation = onNavigateToUsageAccessExplanation,
-                    toClockStyleGallery = onNavigateToClockStyleGallery,
+                    toAppearance = onNavigateToAppearance,
+                    toClockStack = onNavigateToClockStack,
                 ),
             ),
             layoutMode = homeLayoutMode,
@@ -368,9 +401,19 @@ fun HomeDrawerRoute(
                 // Receives the app list's own leftover vertical scroll once it bottoms/tops out.
                 .nestedScroll(appListNestedScroll)
                 .pointerInput(draggingHandle, clockAdjustMode, homeSwipeBlocked) {
-                    // Suppress screen-wide gestures if we're in any adjustment mode,
-                    // actively dragging a handle, or a long-press sheet is open.
-                    if (draggingHandle || clockAdjustMode != ClockAdjustMode.NONE || homeSwipeBlocked) return@pointerInput
+                    // Suppress screen-wide gestures while dragging a handle or with a long-press sheet open.
+                    if (draggingHandle || homeSwipeBlocked) return@pointerInput
+                    if (clockAdjustMode == ClockAdjustMode.ADJUST) {
+                        // Only the clock pages turn. This runs after the handles in the pointer chain, so a handle keeps its own drags.
+                        detectHorizontalDragGestures(
+                            onDragStart = swipe::onAdjustDragStart,
+                            onDragEnd = swipe::onAdjustDragEnd,
+                            onDragCancel = swipe::onAdjustDragCancel,
+                            onHorizontalDrag = swipe::onAdjustDrag,
+                        )
+                        return@pointerInput
+                    }
+                    if (clockAdjustMode != ClockAdjustMode.NONE) return@pointerInput
 
                     detectHomeSwipeGestures(
                         shouldClaim = { position ->
@@ -442,9 +485,9 @@ fun HomeDrawerRoute(
                 viewModel = facetViewModel,
             )
         }
-        HomeClockWidgetPickerOverlay(overlays, onReset = clockWidgetPickerViewModel::reset) { facetId ->
+        HomeClockWidgetPickerOverlay(overlays, onReset = clockWidgetPickerViewModel::reset) { itemId ->
             ClockWidgetPickerScreen(
-                facetId = facetId,
+                target = ClockWidgetPickerTarget.Replace(itemId),
                 onDone = { overlays.showClockWidgetPicker = false },
                 viewModel = clockWidgetPickerViewModel,
             )

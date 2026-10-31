@@ -200,6 +200,7 @@
     <string name="inherit_override_inherit_default">Hériter de la valeur par défaut</string>
     <string name="inherit_override_override_for_facet">Remplacer pour cette facette</string>
     <string name="inherit_override_changes_dont_affect_others">Les changements ici n\'affectent pas les autres facettes</string>
+    <string name="inherit_override_edit_defaults">Modifier les valeurs par défaut</string>
 
     <!-- GestureHintOverlay -->
     <string name="gesture_hint_switch_facets">Changer de facette</string>
@@ -579,7 +580,7 @@
     <string name="pro_upgrade_facet_limit">L\'offre gratuite inclut 3 facettes. Pro vous permet d\'en avoir jusqu\'à 10.</string>
     <string name="pro_upgrade_facet_locked">Cette facette est en pause dans l\'offre gratuite. Supprimez une facette pour revenir à 3, ou passez à Pro pour en utiliser jusqu\'à 10.</string>
     <string name="facet_locked_content_description">Désactivée dans l\'offre gratuite</string>
-    <string name="pro_upgrade_custom_widget">Utiliser votre propre widget à la place de l\'horloge est une fonction Pro. L\'offre gratuite inclut les horloges du lanceur.</string>
+    <string name="pro_upgrade_widget_stack">Mettre plusieurs horloges ou widgets sur l\'accueil est une fonction Pro. L\'offre gratuite en inclut un.</string>
     <string name="pro_upgrade_about">Un seul achat débloque plus de facettes et tous les déclencheurs d\'automatisation. Sans abonnement.</string>
     <string name="pro_message_unavailable">Google Play n\'est pas disponible pour le moment. Réessayez plus tard.</string>
     <string name="pro_message_no_purchase">Aucun achat Pro trouvé pour ce compte Google.</string>
@@ -812,7 +813,6 @@
     <string name="clock_style_primary_font_color">Couleur de police principale</string>
     <string name="clock_style_show_meridiem">Afficher le méridien (AM/PM)</string>
     <string name="clock_style_date_style">Style de date</string>
-    <string name="clock_style_clock_alignment">Alignement de l\'horloge</string>
     <string name="clock_style_position_section">POSITION</string>
     <string name="clock_style_tap_to_select">STYLES D\'HORLOGE — APPUYEZ POUR SÉLECTIONNER</string>
     <string name="clock_style_long_press_hint">Appuyez longuement sur l\'horloge de l\'écran d\'accueil pour ajuster la taille et la position verticale.</string>
@@ -829,8 +829,8 @@
     <string name="clock_adjust_align_top">Aligner en haut</string>
     <string name="clock_adjust_align_middle">Aligner au milieu</string>
     <string name="clock_adjust_align_bottom">Aligner en bas</string>
-    <string name="clock_adjust_edit_styles">Modifier les styles d\'horloge</string>
-    <string name="clock_adjust_edit_styles_subtitle">Modèles, polices, couleurs et alignement</string>
+    <string name="clock_adjust_clock_settings">Réglages de l\'horloge et du calendrier</string>
+    <string name="clock_adjust_clock_settings_subtitle">Modèles, polices, couleurs, calendrier</string>
     <string name="clock_adjust_facet_settings_subtitle">Réglages propres à la facette : liste d\'apps, dock, horloge et calendrier</string>
 
     <!-- HubWidgetPickerScreen -->
@@ -909,10 +909,33 @@
     <string name="facet_settings_appearance_home_icon_only">Accueil : icône seule</string>
     <string name="facet_settings_appearance_home_icon_and_text">Accueil : icône et texte</string>
     <string name="facet_settings_appearance_home_text_only">Accueil : texte seul</string>
-    <string name="clock_adjust_use_custom_widget">Utiliser un widget personnalisé</string>
-    <string name="clock_adjust_use_custom_widget_subtitle">Remplace l\'horloge par un widget de votre choix</string>
-    <string name="clock_adjust_switch_to_launcher_clock">Passer au widget d\'horloge du launcher</string>
-    <string name="clock_adjust_switch_to_launcher_clock_subtitle">Utiliser l\'horloge propre à Facet</string>
+    <string name="clock_adjust_replace_with_widget">Remplacer par un widget personnalisé</string>
+    <string name="clock_adjust_replace_with_widget_subtitle">Remplace l\'horloge par un widget de votre choix</string>
+    <string name="clock_adjust_replace_with_clock">Remplacer par l\'horloge</string>
+    <string name="clock_adjust_replace_with_clock_subtitle">Utiliser l\'horloge propre à Facet sur cette page</string>
+    <string name="clock_adjust_replace_widget">Remplacer le widget personnalisé</string>
+    <string name="clock_adjust_replace_widget_subtitle">Choisir un autre widget pour cette page</string>
+    <string name="clock_adjust_widget_stack">Pile de widgets</string>
+    <string name="clock_adjust_stack_empty">Vide · ajoutez une horloge ou un widget</string>
+    <string name="clock_adjust_stack_clock">Horloge</string>
+    <string name="clock_adjust_stack_one_widget">1 widget</string>
+    <string name="clock_adjust_stack_pages">%1$d pages</string>
+    <!-- ClockStackScreen (the widget stack: reorder, remove, configure, add) -->
+    <string name="clock_stack_title">Pile de widgets</string>
+    <string name="clock_stack_counter">%1$d sur %2$d</string>
+    <string name="clock_stack_drag_hint">Faites glisser pour réordonner. Sur l\'accueil, balayez à gauche et à droite pour les parcourir.</string>
+    <string name="clock_stack_full_free_hint">Supprimez le widget actuel pour en ajouter un autre, ou passez à Pro pour en avoir jusqu\'à 5.</string>
+    <string name="clock_stack_empty">Rien ici : la zone de l\'horloge reste vide sur l\'accueil tant que vous n\'ajoutez rien.</string>
+    <string name="clock_stack_add">Ajouter un widget</string>
+    <string name="clock_stack_row_clock">Horloge du launcher</string>
+    <string name="clock_stack_row_unavailable">Widget indisponible</string>
+    <string name="clock_stack_configure">Configurer</string>
+    <string name="clock_stack_remove">Supprimer %1$s</string>
+    <string name="clock_stack_chooser_title">Ajouter à la pile</string>
+    <string name="clock_stack_chooser_clock">Horloge du launcher</string>
+    <string name="clock_stack_chooser_clock_subtitle">L\'horloge propre à Facet</string>
+    <string name="clock_stack_chooser_widget">Widget personnalisé</string>
+    <string name="clock_stack_chooser_widget_subtitle">Choisissez n\'importe quel widget de votre téléphone</string>
     <string name="clock_widget_picker_title">Choisir un widget d\'horloge</string>
 
     <!-- Météo -->

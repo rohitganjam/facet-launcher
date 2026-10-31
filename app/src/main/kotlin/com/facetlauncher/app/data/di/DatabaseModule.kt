@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Room
 import com.facetlauncher.app.data.local.AppPlacementDao
 import com.facetlauncher.app.data.local.AutomationRuleDao
+import com.facetlauncher.app.data.local.ClockStackItemDao
 import com.facetlauncher.app.data.local.FolderPlacementDao
 import com.facetlauncher.app.data.local.FacetDatabase
 import com.facetlauncher.app.data.local.Migrations
@@ -59,4 +60,7 @@ object DatabaseModule {
 
     @Provides
     fun provideWeatherDao(database: FacetDatabase): WeatherDao = database.weatherDao()
+
+    @Provides
+    fun provideClockStackItemDao(database: FacetDatabase): ClockStackItemDao = database.clockStackItemDao()
 }

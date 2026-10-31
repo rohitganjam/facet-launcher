@@ -18,8 +18,8 @@ internal class HomeOverlayState {
     /** The clock widget picker, over Home itself (it opens from the clock adjust sheet, not from the Hub). */
     var showClockWidgetPicker by mutableStateOf(false)
 
-    /** Set when the clock widget flow starts and fixed for its duration, like `ClockWidgetPickerViewModel`'s own pending facet. */
-    var clockWidgetPickerFacetId by mutableStateOf<Long?>(null)
+    /** The stack page being replaced: set when the flow starts and fixed for its duration, like `ClockWidgetPickerViewModel`'s own pending item. */
+    var clockWidgetPickerItemId by mutableStateOf<Long?>(null)
 
     /** The weather sheet, opened from the clock's weather accessory. It is its own bottom sheet window, so it is not part of [anyOpen]. */
     var showWeatherSheet by mutableStateOf(false)

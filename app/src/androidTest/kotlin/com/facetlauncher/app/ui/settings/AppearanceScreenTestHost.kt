@@ -83,12 +83,18 @@ internal class AppearanceScreenTestHost(private val composeRule: ComposeContentT
                     android.app.WallpaperManager.getInstance(context),
                 )
                 val database = Room.inMemoryDatabaseBuilder(context, FacetDatabase::class.java).allowMainThreadQueries().build()
-                val facetRepository = FacetRepository(database.facetDao())
+                val facetRepository = FacetRepository(database.facetDao(), database.clockStackItemDao())
                 val folderRepository = FolderRepository(database.folderDao(), appRepository)
                 val placementRepository = PlacementRepository(database.appPlacementDao(), database.folderPlacementDao())
                 val observePlacedItems = ObservePlacedItemsUseCase(placementRepository, folderRepository, appRepository)
                 if (facetId != null) {
                     runBlocking { database.facetDao().insert(com.facetlauncher.app.data.local.FacetEntity(id = facetId, name = "P", position = 0)) }
+                    // Every real facet starts with the launcher clock as its one page; an empty stack draws no clock.
+                    runBlocking {
+                        database.clockStackItemDao().insert(
+                            com.facetlauncher.app.data.local.ClockStackItemEntity(facetId = facetId, position = 0, kind = com.facetlauncher.app.data.model.ClockStackItemKind.CLOCK),
+                        )
+                    }
                 }
                 runBlocking { seed(facetRepository, facetId) }
                 runBlocking { seedApps(appRepository, placementRepository, facetId) }

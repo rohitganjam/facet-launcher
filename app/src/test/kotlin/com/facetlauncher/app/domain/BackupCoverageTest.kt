@@ -22,9 +22,7 @@ class BackupCoverageTest {
         // Given the fields a facet row holds, minus those a backup cannot or should not carry
         val notBackedUp = setOf(
             "id", // a Room row id is not portable; the backup uses list order
-            "clockWidgetAppWidgetId", // an AppWidgetHost id is not portable, so the widget is re-added by hand
-            "clockWidgetWidthDp", "clockWidgetHeightDp", // sizes only mean something for that bound widget
-            "landscapeClockWidgetWidthDp", "landscapeClockWidgetHeightDp",
+            "clockStack", // its widgets are AppWidgetHost ids, which are not portable, so they are re-added by hand
         )
         val expected = fieldNames(Facet::class.java) - notBackedUp
         val exported = fieldNames(BackupFacet::class.java) - setOf("dockApps", "favorites", "dockFolderPlacements", "favoriteFolderPlacements")

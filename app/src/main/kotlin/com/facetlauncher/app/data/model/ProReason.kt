@@ -14,8 +14,8 @@ enum class ProReason {
     /** The user tapped a facet that is disabled on the free plan. */
     FACET_LOCKED,
 
-    /** The user tried to put a hosted widget in the clock slot on the free plan. */
-    CUSTOM_WIDGET,
+    /** The user tried to add a second page to the clock stack on the free plan. */
+    WIDGET_STACK,
 
     /** The user opened Facet Pro from Settings, not from a limit. */
     ABOUT,

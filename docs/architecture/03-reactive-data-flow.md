@@ -155,7 +155,7 @@ flowchart TB
     MP --> OUT
     S --> OUT
     F --> OUT
-    OUT{{"combine(8 sources) → HomeScreenState"}} --> HVM["HomeViewModel\ncombine(+ usageAccessPromptDismissed, isDefaultLauncher)\n→ HomeUiState"]
+    OUT{{"combine(8 sources) → HomeScreenState"}} --> HVM["HomeViewModel\ncombine(+ usageAccessPromptDismissed, isDefaultLauncher,\nvisibleClockItemByFacet, entitlement isPro)\n→ HomeUiState"]
     HVM --> HS["HomeScreen"]
 ```
 
@@ -167,6 +167,10 @@ Notes:
   (`flow { emit(...) }`), not live streams; `HomeViewModel` re-emits the trigger on resume. It also
   re-evaluates the notification-access grant that gates `mediaPlayer`, re-subscribing to
   `MediaSessionRepository.observe()` once access has been granted in system Settings.
+- The facets in `F` already carry each facet's `clockStack` (hydrated in `FacetRepository` from `clock_stack_items`), so a
+  stack change re-emits the facets and Home with it. `visibleClockItemByFacet` is in-memory only (the page last shown per facet, not
+  saved across a restart) and `isPro` limits the shown pages (`ResolvedFacetStyle.limitedTo`). Whether a widget page is orphaned is not
+  in the flow: Home asks `ClockWidgetHostController.isOrphaned` when it builds its state and again on each resume.
 - `HomeViewModel` seeds `HomeUiState(isLoading = true)` and additionally clears `isLoading`
   after `LOADING_TIMEOUT_MS` so a slow first `LauncherApps` scan can't leave Home blank forever.
 - `HomeUiState`'s resolved "look" properties (`activeAppRowPosition`, `activeAppRowPresentation`,

@@ -1,8 +1,12 @@
 package com.facetlauncher.app.ui.home
 
+import com.facetlauncher.app.data.widgetItem
+import com.facetlauncher.app.domain.ClockPlacement
+import com.facetlauncher.app.PlacementChangeCaptor
 import com.facetlauncher.app.eqOf
 import com.facetlauncher.app.LandscapeTransformCaptor
 import com.facetlauncher.app.data.model.LandscapeOverrides
+import com.facetlauncher.app.data.EntitlementRepository
 import com.facetlauncher.app.data.DefaultLauncherRepository
 import com.facetlauncher.app.data.NotificationShadeRepository
 import com.facetlauncher.app.data.FacetRepository
@@ -102,6 +106,7 @@ class HomeViewModelTest {
             mediaSessionRepository,
             mock(ClockWidgetHostController::class.java),
             clockWidgetFacet,
+            EntitlementRepository(),
         )
     }
 
@@ -139,6 +144,21 @@ class HomeViewModelTest {
     }
 
     @Test
+    fun `the clock page a facet last showed is remembered, apart for each facet`() = runTest {
+        // Given an active facet 1
+        val viewModel = homeViewModel(mock(NotificationShadeRepository::class.java), settings = LauncherSettings(activeFacetId = 1L))
+        testDispatcher.scheduler.advanceUntilIdle()
+        assertEquals(null, viewModel.uiState.value.visibleClockItemId)
+
+        // When it shows its second page
+        viewModel.onClockPageChange(itemId = 42L)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Then the state remembers that page for this facet
+        assertEquals(42L, viewModel.uiState.value.visibleClockItemId)
+    }
+
+    @Test
     fun `is loading until the use case emits, then reflects the real state`() = runTest {
         // Given a HomeViewModel wired to the fake state from homeViewModel(), which emits immediately
         val viewModel = homeViewModel(mock(NotificationShadeRepository::class.java))
@@ -171,6 +191,7 @@ class HomeViewModelTest {
             mock(MediaSessionRepository::class.java),
             mock(ClockWidgetHostController::class.java),
             mock(ClockWidgetFacetController::class.java),
+            EntitlementRepository(),
         )
 
         // Then it's still loading well before the timeout
@@ -184,79 +205,100 @@ class HomeViewModelTest {
         assertFalse(viewModel.uiState.value.isLoading)
     }
 
+    private val shown = ClockPlacement(alignment = ClockAlignment.LEFT, zoneHeightDp = null, scale = 0.8f)
+
+    private fun placementViewModel(
+        facets: List<Facet> = listOf(Facet(id = 1L, name = "Work", position = 0)),
+        controller: ClockWidgetFacetController,
+    ) = homeViewModel(
+        notificationShadeRepository = mock(NotificationShadeRepository::class.java),
+        settings = LauncherSettings(activeFacetId = 1L),
+        facets = facets,
+        clockWidgetFacet = controller,
+    ).also { testDispatcher.scheduler.advanceUntilIdle() }
+
     @Test
-    fun `onClockZoneHeightCommit delegates to the settings repository when no facet is overriding`() = runTest {
-        // Given a HomeViewModel with no active facet overriding the clock bundle
-        val settingsRepository = mock(SettingsRepository::class.java)
-        val viewModel = homeViewModel(mock(NotificationShadeRepository::class.java), settingsRepository)
+    fun `the divider commit goes to the active facet's own placement`() = runTest {
+        // Given a facet that does not override the clock
+        val controller = mock(ClockWidgetFacetController::class.java)
+        val viewModel = placementViewModel(controller = controller)
 
         // When the clock's grab handle commits a new height
         viewModel.onClockZoneHeightCommit(123.4f)
         testDispatcher.scheduler.advanceUntilIdle()
 
-        // Then it delegates to the global settings repository rather than persisting anything itself
-        verify(settingsRepository).setClockZoneHeight(123.4f)
+        // Then it is saved as the facet's own divider, in portrait, and nothing else changes
+        val change = PlacementChangeCaptor()
+        verify(controller).commitPlacement(eqOf(1L), eqOf(HomeLayoutMode.PORTRAIT), change.capture())
+        assertEquals(shown.copy(zoneHeightDp = 123.4f), change.applied(shown))
     }
 
     @Test
-    fun `onClockZoneHeightCommit delegates to the facet repository when the active facet overrides the clock bundle`() = runTest {
-        // Given a HomeViewModel whose active facet has overrideClock = true
-        val settingsRepository = mock(SettingsRepository::class.java)
-        val facetRepository = mock(FacetRepository::class.java)
-        val overridingFacet = Facet(id = 1L, name = "Work", position = 0, overrideClock = true)
-        val viewModel = homeViewModel(
-            notificationShadeRepository = mock(NotificationShadeRepository::class.java),
-            settingsRepository = settingsRepository,
-            facetRepository = facetRepository,
-            settings = LauncherSettings(activeFacetId = 1L),
-            facets = listOf(overridingFacet),
-        )
-        testDispatcher.scheduler.advanceUntilIdle()
+    fun `scale and alignment commits change only their own value`() = runTest {
+        val controller = mock(ClockWidgetFacetController::class.java)
+        val viewModel = placementViewModel(controller = controller)
 
-        // When the clock's grab handle commits a new height
-        viewModel.onClockZoneHeightCommit(123.4f)
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        // Then it writes to this facet's own override instead of the global setting
-        verify(facetRepository).setClockZoneHeight(overridingFacet.id, 123.4f)
-    }
-
-    @Test
-    fun `onClockAlignmentCommit delegates to the settings repository when no facet is overriding`() = runTest {
-        // Given a HomeViewModel with no active facet overriding the clock bundle
-        val settingsRepository = mock(SettingsRepository::class.java)
-        val viewModel = homeViewModel(mock(NotificationShadeRepository::class.java), settingsRepository)
-
-        // When the alignment toolbar picks center
+        viewModel.onClockScaleCommit(1.4f)
         viewModel.onClockAlignmentCommit(ClockAlignment.CENTER)
         testDispatcher.scheduler.advanceUntilIdle()
 
-        // Then it writes the global default
-        verify(settingsRepository).setClockAlignment(ClockAlignment.CENTER)
+        val change = PlacementChangeCaptor()
+        verify(controller, org.mockito.Mockito.times(2)).commitPlacement(eqOf(1L), eqOf(HomeLayoutMode.PORTRAIT), change.capture())
+        assertEquals(listOf(shown.copy(scale = 1.4f), shown.copy(alignment = ClockAlignment.CENTER)), change.appliedEach(shown))
     }
 
     @Test
-    fun `onClockAlignmentCommit delegates to the facet repository when the active facet overrides the clock bundle`() = runTest {
-        // Given a HomeViewModel whose active facet has overrideClock = true
+    fun `the placement commits go to the facet even when it overrides the clock, and never to the launcher settings`() = runTest {
+        // Given an active facet that overrides the clock style
+        val controller = mock(ClockWidgetFacetController::class.java)
         val settingsRepository = mock(SettingsRepository::class.java)
-        val facetRepository = mock(FacetRepository::class.java)
-        val overridingFacet = Facet(id = 1L, name = "Work", position = 0, overrideClock = true)
         val viewModel = homeViewModel(
             notificationShadeRepository = mock(NotificationShadeRepository::class.java),
             settingsRepository = settingsRepository,
-            facetRepository = facetRepository,
             settings = LauncherSettings(activeFacetId = 1L),
-            facets = listOf(overridingFacet),
+            facets = listOf(Facet(id = 1L, name = "Work", position = 0, overrideClock = true)),
+            clockWidgetFacet = controller,
         )
         testDispatcher.scheduler.advanceUntilIdle()
 
-        // When the alignment toolbar picks right
+        // When the alignment is committed
         viewModel.onClockAlignmentCommit(ClockAlignment.RIGHT)
         testDispatcher.scheduler.advanceUntilIdle()
 
-        // Then it writes this facet's own override, same as height and scale
-        verify(facetRepository).setClockAlignment(overridingFacet.id, ClockAlignment.RIGHT)
-        verify(settingsRepository, org.mockito.Mockito.never()).setClockAlignment(ClockAlignment.RIGHT)
+        // Then it goes through the facet's placement path, with no write to the launcher-wide settings
+        verify(controller).commitPlacement(eqOf(1L), eqOf(HomeLayoutMode.PORTRAIT), PlacementChangeCaptor().capture())
+        org.mockito.Mockito.verifyNoInteractions(settingsRepository)
+    }
+
+    @Test
+    fun `landscape commits pass the landscape mode`() = runTest {
+        val controller = mock(ClockWidgetFacetController::class.java)
+        val viewModel = placementViewModel(controller = controller)
+
+        viewModel.onClockZoneHeightCommit(310f, HomeLayoutMode.LANDSCAPE)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val change = PlacementChangeCaptor()
+        verify(controller).commitPlacement(eqOf(1L), eqOf(HomeLayoutMode.LANDSCAPE), change.capture())
+        assertEquals(shown.copy(zoneHeightDp = 310f), change.applied(shown))
+    }
+
+    @Test
+    fun `a widget page keeps its own alignment, saved against the page`() = runTest {
+        // Given the visible clock page is a widget
+        val controller = mock(ClockWidgetFacetController::class.java)
+        val facet = Facet(id = 1L, name = "Work", position = 0, clockStack = listOf(widgetItem(41, id = 7L, facetId = 1L)))
+        val viewModel = placementViewModel(facets = listOf(facet), controller = controller)
+
+        // When the alignment is committed, in portrait and in landscape
+        viewModel.onClockAlignmentCommit(ClockAlignment.CENTER)
+        viewModel.onClockAlignmentCommit(ClockAlignment.RIGHT, HomeLayoutMode.LANDSCAPE)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Then each is saved on the widget page, not on the facet's placement
+        verify(controller).commitPageAlignment(7L, ClockAlignment.CENTER, HomeLayoutMode.PORTRAIT)
+        verify(controller).commitPageAlignment(7L, ClockAlignment.RIGHT, HomeLayoutMode.LANDSCAPE)
+        verify(controller, org.mockito.Mockito.never()).commitPlacement(eqOf(1L), eqOf(HomeLayoutMode.PORTRAIT), PlacementChangeCaptor().capture())
     }
 
     @Test
@@ -314,47 +356,5 @@ class HomeViewModelTest {
         // read, since the answer was already sitting in uiState (see chat history: this used to
         // be a fresh suspend fetch on every open, causing the sheet to visibly reflow).
         assertEquals(QuickPlacementAction.Remove(facetName = null), result.dockAction)
-    }
-
-    private val landscapeCommits = LandscapeOverrides(clockZoneHeightDp = 310f, clockScale = 1.1f, clockAlignment = ClockAlignment.CENTER)
-
-    @Test
-    fun `landscape clock commits write the landscape group of the settings when no facet is overriding`() = runTest {
-        val settingsRepository = mock(SettingsRepository::class.java)
-        val viewModel = homeViewModel(mock(NotificationShadeRepository::class.java), settingsRepository)
-
-        viewModel.onClockZoneHeightCommit(310f, HomeLayoutMode.LANDSCAPE)
-        viewModel.onClockScaleCommit(1.1f, HomeLayoutMode.LANDSCAPE)
-        viewModel.onClockAlignmentCommit(ClockAlignment.CENTER, HomeLayoutMode.LANDSCAPE)
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        val captor = LandscapeTransformCaptor()
-        verify(settingsRepository, org.mockito.Mockito.times(3)).updateLandscape(captor.capture())
-        assertEquals(landscapeCommits, captor.applied())
-        verify(settingsRepository, org.mockito.Mockito.never()).setClockZoneHeight(310f)
-    }
-
-    @Test
-    fun `landscape clock commits write the landscape group of an overriding facet`() = runTest {
-        val facetRepository = mock(FacetRepository::class.java)
-        val overridingFacet = Facet(id = 1L, name = "Work", position = 0, overrideClock = true)
-        val viewModel = homeViewModel(
-            notificationShadeRepository = mock(NotificationShadeRepository::class.java),
-            settingsRepository = mock(SettingsRepository::class.java),
-            facetRepository = facetRepository,
-            settings = LauncherSettings(activeFacetId = 1L),
-            facets = listOf(overridingFacet),
-        )
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        viewModel.onClockZoneHeightCommit(310f, HomeLayoutMode.LANDSCAPE)
-        viewModel.onClockScaleCommit(1.1f, HomeLayoutMode.LANDSCAPE)
-        viewModel.onClockAlignmentCommit(ClockAlignment.CENTER, HomeLayoutMode.LANDSCAPE)
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        val captor = LandscapeTransformCaptor()
-        verify(facetRepository, org.mockito.Mockito.times(3)).updateLandscape(eqOf(overridingFacet.id), captor.capture())
-        assertEquals(landscapeCommits, captor.applied())
-        verify(facetRepository, org.mockito.Mockito.never()).setClockZoneHeight(overridingFacet.id, 310f)
     }
 }

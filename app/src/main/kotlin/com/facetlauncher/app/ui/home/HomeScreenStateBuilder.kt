@@ -8,7 +8,12 @@ import com.facetlauncher.app.data.model.MediaPlayerState
 import com.facetlauncher.app.data.model.PlacedItem
 import com.facetlauncher.app.data.model.WeatherIconStyle
 import com.facetlauncher.app.domain.ClockAccessoryState
+import com.facetlauncher.app.data.model.ClockAlignment
+import com.facetlauncher.app.data.model.ClockStackItemKind
+import com.facetlauncher.app.domain.ClockPlacement
+import com.facetlauncher.app.domain.ResolvedClockItem
 import com.facetlauncher.app.domain.ResolvedFacetStyle
+import com.facetlauncher.app.domain.limitedTo
 import com.facetlauncher.app.domain.WeatherState
 import com.facetlauncher.app.domain.WeatherUnits
 import com.facetlauncher.app.ui.components.AppMenuNotifications
@@ -34,15 +39,20 @@ data class HomeScreenContent(
 data class HomeWidgetSizing(
     val defaultSizeDp: (appWidgetId: Int) -> Pair<Int, Int>? = { null },
     val resizeFloorDp: (appWidgetId: Int) -> Pair<Int, Int>? = { null },
+    /** Whether the widget's provider is gone (its app was uninstalled). */
+    val isOrphaned: (appWidgetId: Int) -> Boolean = { false },
 )
 
 /** The parts of Home's state that only the live screen has: the adjust mode and which facet owns the clock position. */
 data class HomeLiveState(
     val adjustMode: ClockAdjustMode = ClockAdjustMode.NONE,
     val draggingHandle: Boolean = false,
+    val placementFacetId: Long? = null,
+    val styleOwnerFacetName: String? = null,
+    /** The clock stack page showing; `null`, or one no longer in the stack, shows the first. */
+    val visibleClockItemId: Long? = null,
+    /** Without Pro only the first clock page shows. */
     val isPro: Boolean = true,
-    val positionOwnerFacetId: Long? = null,
-    val positionOwnerFacetName: String? = null,
 )
 
 /**
@@ -83,22 +93,23 @@ fun ResolvedFacetStyle.toHomeScreenState(
         showMeridiem = clock.showMeridiem,
         dateStyle = clock.dateStyle,
         launcherFontOption = settings.launcherFontOption,
-        placement = clockPlacement.of(landscape),
-        positionOwnerFacetId = live.positionOwnerFacetId,
-        positionOwnerFacetName = live.positionOwnerFacetName,
+        placement = clockPlacement.of(landscape).withPageAlignment(shownClockPages(live).let { it.getOrNull(it.visibleIndex(live.visibleClockItemId)) }, landscape),
+        placementFacetId = live.placementFacetId,
+        styleOwnerFacetName = live.styleOwnerFacetName,
         adjustMode = live.adjustMode,
         draggingHandle = live.draggingHandle,
-        isPro = live.isPro,
     ),
-    widget = clockWidget?.let { widget ->
-        val size = widget.sizeDp.of(landscape) ?: widgetSizing.defaultSizeDp(widget.appWidgetId)
-        val floor = widgetSizing.resizeFloorDp(widget.appWidgetId)
-        HomeClockWidgetState(
-            appWidgetId = widget.appWidgetId,
-            widthDp = size?.first?.dp,
-            heightDp = size?.second?.dp,
-            minWidthDp = floor?.first?.dp,
-            minHeightDp = floor?.second?.dp,
+    widget = shownClockPages(live).let { pages -> pages.getOrNull(pages.visibleIndex(live.visibleClockItemId)) }?.toWidgetState(landscape, widgetSizing),
+    clockStack = shownClockPages(live).let { pages ->
+        val index = pages.visibleIndex(live.visibleClockItemId)
+        val neighbor = { page: ResolvedClockItem? -> page?.toNeighbor(clockPlacement.of(landscape).alignment, landscape, widgetSizing) }
+        HomeClockStackState(
+            pageCount = pages.size,
+            pageIndex = index,
+            hasClock = pages.any { it.kind == ClockStackItemKind.CLOCK },
+            visibleItemId = pages.getOrNull(index)?.id,
+            previous = neighbor(pages.getOrNull(index - 1)),
+            next = neighbor(pages.getOrNull(index + 1)),
         )
     },
     calendar = HomeCalendarState(
@@ -120,3 +131,40 @@ private fun WeatherState.toHomeWeather(settings: LauncherSettings, iconStyle: We
     temperatureUnit = WeatherUnits.resolve(settings.temperatureUnit, Locale.getDefault()),
     iconStyle = iconStyle,
 )
+
+/** A widget page keeps its own alignment, the clock page the facet's: `null` or an unset alignment leaves [this] as resolved. */
+private fun ClockPlacement.withPageAlignment(page: ResolvedClockItem?, landscape: Boolean): ClockPlacement =
+    page?.takeIf { it.kind == ClockStackItemKind.WIDGET }?.alignment?.of(landscape)?.let { copy(alignment = it) } ?: this
+
+/** A page as drawn beside the visible one: a widget page keeps its own alignment, the clock page uses the facet's [clockAlignment]. */
+private fun ResolvedClockItem.toNeighbor(clockAlignment: ClockAlignment, landscape: Boolean, widgetSizing: HomeWidgetSizing) = HomeClockNeighbor(
+    itemId = id,
+    widget = toWidgetState(landscape, widgetSizing),
+    alignment = if (kind == ClockStackItemKind.WIDGET) alignment.of(landscape) ?: clockAlignment else clockAlignment,
+)
+
+/** The clock pages Home shows: all of them with Pro, else the first. */
+private fun ResolvedFacetStyle.shownClockPages(live: HomeLiveState) = clockStack.limitedTo(live.isPro)
+
+/** Where [itemId] sits in the stack, or the first page when it is `null` or gone. */
+internal fun List<ResolvedClockItem>.visibleIndex(itemId: Long?): Int = indexOfFirst { it.id == itemId }.coerceAtLeast(0)
+
+/** The placeholder's size for an orphaned widget that was never resized, since its provider can no longer say. */
+private val ORPHANED_WIDGET_SIZE_DP = 160 to 110
+
+/** The hosted widget a stack page draws; `null` for the native clock. */
+private fun ResolvedClockItem.toWidgetState(landscape: Boolean, widgetSizing: HomeWidgetSizing): HomeClockWidgetState? {
+    val widgetId = appWidgetId ?: return null
+    val orphaned = widgetSizing.isOrphaned(widgetId)
+    val size = sizeDp.of(landscape) ?: widgetSizing.defaultSizeDp(widgetId) ?: ORPHANED_WIDGET_SIZE_DP.takeIf { orphaned }
+    val floor = widgetSizing.resizeFloorDp(widgetId)
+    return HomeClockWidgetState(
+        itemId = id,
+        appWidgetId = widgetId,
+        isOrphaned = orphaned,
+        widthDp = size?.first?.dp,
+        heightDp = size?.second?.dp,
+        minWidthDp = floor?.first?.dp,
+        minHeightDp = floor?.second?.dp,
+    )
+}

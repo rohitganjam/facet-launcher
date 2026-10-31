@@ -1,5 +1,6 @@
 package com.facetlauncher.app.ui.facets
 
+import com.facetlauncher.app.data.FakeClockStackItemDao
 import androidx.lifecycle.SavedStateHandle
 import com.facetlauncher.app.data.AutomationStateRepository
 import com.facetlauncher.app.data.FacetRepository
@@ -300,7 +301,7 @@ class FacetSettingsViewModelTest {
 
     @Test
     fun `uiState resolves the facet matching facetId out of every observed facet`() = runTest {
-        val facetRepository = FacetRepository(FakeFacetDao())
+        val facetRepository = FacetRepository(FakeFacetDao(), FakeClockStackItemDao())
         facetRepository.addFacet()
         val second = facetRepository.addFacet()
         val viewModel = createViewModel(facetId = second.id, facetRepository = facetRepository)
@@ -312,7 +313,7 @@ class FacetSettingsViewModelTest {
 
     @Test
     fun `applyFacet activates this facet when it isn't already active`() = runTest {
-        val facetRepository = FacetRepository(FakeFacetDao())
+        val facetRepository = FacetRepository(FakeFacetDao(), FakeClockStackItemDao())
         val facet = facetRepository.addFacet()
         val settingsRepository = mock(SettingsRepository::class.java).also {
             `when`(it.settings).thenReturn(MutableStateFlow(LauncherSettings(activeFacetId = 0L)))
@@ -329,7 +330,7 @@ class FacetSettingsViewModelTest {
 
     @Test
     fun `applyFacet records a manual switch in the automation state`() = runTest {
-        val facetRepository = FacetRepository(FakeFacetDao())
+        val facetRepository = FacetRepository(FakeFacetDao(), FakeClockStackItemDao())
         val facet = facetRepository.addFacet()
         val automationState = AutomationStateRepository(
             androidx.datastore.preferences.core.PreferenceDataStoreFactory.create(
@@ -360,7 +361,7 @@ class FacetSettingsViewModelTest {
 
     @Test
     fun `applyFacet is a no-op when this facet is already active`() = runTest {
-        val facetRepository = FacetRepository(FakeFacetDao())
+        val facetRepository = FacetRepository(FakeFacetDao(), FakeClockStackItemDao())
         val facet = facetRepository.addFacet()
         val settingsRepository = mock(SettingsRepository::class.java).also {
             `when`(it.settings).thenReturn(MutableStateFlow(LauncherSettings(activeFacetId = facet.id)))
@@ -377,7 +378,7 @@ class FacetSettingsViewModelTest {
 
     @Test
     fun `renameFacet persists the new name via the repository`() = runTest {
-        val facetRepository = FacetRepository(FakeFacetDao())
+        val facetRepository = FacetRepository(FakeFacetDao(), FakeClockStackItemDao())
         val facet = facetRepository.addFacet()
         val viewModel = createViewModel(facetId = facet.id, facetRepository = facetRepository)
         backgroundScope.launch { viewModel.uiState.collect {} }

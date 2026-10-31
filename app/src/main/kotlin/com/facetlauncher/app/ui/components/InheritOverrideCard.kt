@@ -41,6 +41,8 @@ fun InheritOverrideCard(
     testTagPrefix: String,
     modifier: Modifier = Modifier,
     inheritSubtitle: String = stringResource(R.string.inherit_override_follows_default),
+    /** Opens the launcher-wide version of this screen; shown on the Inherit row while it is selected, so a facet that follows the defaults can change them without backing out. `null` (the launcher-wide screen itself) hides it. */
+    onEditDefaults: (() -> Unit)? = null,
 ) {
     SettingsCard(modifier = modifier, fullBleedRows = true) {
         RadioOptionRow(
@@ -49,6 +51,11 @@ fun InheritOverrideCard(
             selected = !overriding,
             onClick = { onOverridingChange(false) },
             testTag = "${testTagPrefix}_inherit_row",
+            trailing = if (!overriding && onEditDefaults != null) {
+                { EditDefaultsLink(onClick = onEditDefaults, testTag = "${testTagPrefix}_edit_defaults") }
+            } else {
+                null
+            },
         )
         CardDivider()
         RadioOptionRow(
@@ -70,6 +77,7 @@ private fun RadioOptionRow(
     testTag: String,
     modifier: Modifier = Modifier,
     tinted: Boolean = false,
+    trailing: (@Composable () -> Unit)? = null,
 ) {
     Row(
         modifier = modifier
@@ -82,11 +90,23 @@ private fun RadioOptionRow(
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         RadioDot(selected = selected)
-        Column {
+        Column(modifier = Modifier.weight(1f)) {
             Text(text = title, style = MaterialTheme.typography.bodyLarge, color = Ink)
             Text(text = subtitle, style = MaterialTheme.typography.bodyMedium, color = Muted)
         }
+        trailing?.invoke()
     }
+}
+
+/** "Edit defaults ›": a text action on the Inherit row, so tapping it does not also select Inherit (it has its own press target). */
+@Composable
+private fun EditDefaultsLink(onClick: () -> Unit, testTag: String) {
+    TextActionButton(
+        text = stringResource(R.string.inherit_override_edit_defaults),
+        onClick = onClick,
+        modifier = Modifier.testTag(testTag),
+        style = MaterialTheme.typography.bodyMedium,
+    )
 }
 
 @Composable

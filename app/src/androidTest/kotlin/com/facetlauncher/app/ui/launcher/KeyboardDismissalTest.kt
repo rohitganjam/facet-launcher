@@ -36,6 +36,7 @@ import com.facetlauncher.app.data.ContactRepository
 import com.facetlauncher.app.data.DefaultAppRepository
 import com.facetlauncher.app.data.DefaultLauncherRepository
 import com.facetlauncher.app.data.EntitlementRepository
+import com.facetlauncher.app.data.ClockStackRepository
 import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.FacetShortcutRepository
 import com.facetlauncher.app.data.FolderRepository
@@ -85,7 +86,10 @@ import com.facetlauncher.app.domain.ResolveWidgetDropUseCase
 import com.facetlauncher.app.domain.ResolveWidgetResizeUseCase
 import com.facetlauncher.app.domain.SeedDefaultDockUseCase
 import com.facetlauncher.app.domain.SelectableFacetsUseCase
-import com.facetlauncher.app.domain.SwitchFacetToNativeClockUseCase
+import com.facetlauncher.app.domain.AddClockStackItemUseCase
+import com.facetlauncher.app.domain.CommitClockPlacementUseCase
+import com.facetlauncher.app.domain.RemoveClockStackItemUseCase
+import com.facetlauncher.app.domain.ReplaceClockStackItemUseCase
 import com.facetlauncher.app.domain.SyncFacetShortcutsUseCase
 import com.facetlauncher.app.ui.drawer.DrawerViewModel
 import com.facetlauncher.app.ui.drawer.PrivateSpaceViewModel
@@ -139,7 +143,8 @@ class KeyboardDismissalTest {
                 val appRepository = AppRepository(launcherApps, context.getSystemService(UserManager::class.java), context)
                 val placementRepository = PlacementRepository(database.appPlacementDao(), database.folderPlacementDao())
                 val observePlacedItems = ObservePlacedItemsUseCase(placementRepository, FolderRepository(database.folderDao(), appRepository), appRepository)
-                val facetRepository = FacetRepository(database.facetDao())
+                val facetRepository = FacetRepository(database.facetDao(), database.clockStackItemDao())
+                val clockStackRepository = ClockStackRepository(database, database.clockStackItemDao())
                 val usageStatsRepository = UsageStatsRepository(
                     context.getSystemService(UsageStatsManager::class.java),
                     appRepository,
@@ -175,7 +180,14 @@ class KeyboardDismissalTest {
                     ObserveQuickAddStateUseCase(),
                     MediaSessionRepository(context, notificationBadgeRepository),
                     ClockWidgetHostController(appWidgetRepository),
-                    ClockWidgetFacetController(facetRepository, SwitchFacetToNativeClockUseCase(facetRepository, appWidgetRepository), EntitlementRepository()),
+                    ClockWidgetFacetController(
+                        clockStackRepository,
+                        ReplaceClockStackItemUseCase(clockStackRepository, appWidgetRepository),
+                        RemoveClockStackItemUseCase(clockStackRepository, appWidgetRepository),
+                        CommitClockPlacementUseCase(facetRepository, settingsRepository),
+                        EntitlementRepository(),
+                    ),
+                    EntitlementRepository(),
                 )
             }
             launcherViewModel = remember {
@@ -189,7 +201,8 @@ class KeyboardDismissalTest {
                 val appRepository = AppRepository(launcherApps, context.getSystemService(UserManager::class.java), context)
                 val placementRepository = PlacementRepository(database.appPlacementDao(), database.folderPlacementDao())
                 val observePlacedItems = ObservePlacedItemsUseCase(placementRepository, FolderRepository(database.folderDao(), appRepository), appRepository)
-                val facetRepository = FacetRepository(database.facetDao())
+                val facetRepository = FacetRepository(database.facetDao(), database.clockStackItemDao())
+                val clockStackRepository = ClockStackRepository(database, database.clockStackItemDao())
                 LauncherViewModel(
                     GetInstalledAppsUseCase(appRepository),
                     EnsureActiveFacetUseCase(facetRepository, settingsRepository, SelectableFacetsUseCase(facetRepository, EntitlementRepository())),
@@ -219,7 +232,8 @@ class KeyboardDismissalTest {
                 val appRepository = AppRepository(context.getSystemService(LauncherApps::class.java), context.getSystemService(UserManager::class.java), context)
                 val placementRepository = PlacementRepository(database.appPlacementDao(), database.folderPlacementDao())
                 val observePlacedItems = ObservePlacedItemsUseCase(placementRepository, FolderRepository(database.folderDao(), appRepository), appRepository)
-                val facetRepository = FacetRepository(database.facetDao())
+                val facetRepository = FacetRepository(database.facetDao(), database.clockStackItemDao())
+                val clockStackRepository = ClockStackRepository(database, database.clockStackItemDao())
                 val notificationBadgeRepository = NotificationBadgeRepository()
                 val notificationAccessRepository = NotificationAccessRepository(context)
                 DrawerViewModel(
@@ -292,7 +306,8 @@ class KeyboardDismissalTest {
                 val database = Room.inMemoryDatabaseBuilder(context, FacetDatabase::class.java).allowMainThreadQueries().build()
                 val placementRepository = PlacementRepository(database.appPlacementDao(), database.folderPlacementDao())
                 val observePlacedItems = ObservePlacedItemsUseCase(placementRepository, FolderRepository(database.folderDao(), appRepository), appRepository)
-                val facetRepository = FacetRepository(database.facetDao())
+                val facetRepository = FacetRepository(database.facetDao(), database.clockStackItemDao())
+                val clockStackRepository = ClockStackRepository(database, database.clockStackItemDao())
                 val appWidgetRepository = AppWidgetRepository(
                     context,
                     AppWidgetManager.getInstance(context),
@@ -300,7 +315,11 @@ class KeyboardDismissalTest {
                     context.getSystemService(UserManager::class.java),
                     appRepository,
                 )
-                ClockWidgetPickerViewModel(appWidgetRepository, facetRepository)
+                ClockWidgetPickerViewModel(
+                    appWidgetRepository,
+                    ReplaceClockStackItemUseCase(clockStackRepository, appWidgetRepository),
+                    AddClockStackItemUseCase(clockStackRepository, EntitlementRepository()),
+                )
             }
             // A throwaway set of repos, same as this file's other view models — none of this
             // test's cases touch the carousel itself, so correctness here doesn't matter, only
@@ -316,7 +335,8 @@ class KeyboardDismissalTest {
                 val appRepository = AppRepository(launcherApps, context.getSystemService(UserManager::class.java), context)
                 val placementRepository = PlacementRepository(database.appPlacementDao(), database.folderPlacementDao())
                 val observePlacedItems = ObservePlacedItemsUseCase(placementRepository, FolderRepository(database.folderDao(), appRepository), appRepository)
-                val facetRepository = FacetRepository(database.facetDao())
+                val facetRepository = FacetRepository(database.facetDao(), database.clockStackItemDao())
+                val clockStackRepository = ClockStackRepository(database, database.clockStackItemDao())
                 val wallpaperRepository = WallpaperRepository(android.app.WallpaperManager.getInstance(context))
                 FacetCarouselViewModel(
                     facetRepository,

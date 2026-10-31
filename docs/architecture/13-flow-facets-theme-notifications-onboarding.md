@@ -137,14 +137,15 @@ flowchart TB
 - **One resolver for everything a facet overrides:** `domain/ResolvedFacetStyle.kt`'s
   `resolveFacetStyle(facet, settings)` returns the clock block, apps-list look, dock display mode,
   calendar display, the clock and list placement in each orientation (`clockPlacement`, `listAlignment`,
-  with the landscape rules) and the facet's hosted clock widget with its size per orientation. Home
+  with the landscape rules; the clock's is the facet's own once `clockPlacementOwn`, else the launcher's built-in fallback, and never follows `overrideClock`) and the facet's clock stack (`clockStack`: each page's kind, widget id, size and alignment per orientation). Home
   (`HomeUiState`) and every preview read it, so a preview cannot show anything Home would not:
   `FacetCarouselUiState`, `AppearanceUiState`, `CalendarSettingsUiState`, `FacetSettingsUiState`,
   `HomeAppsListUiState`, `DockSettingsUiState` and `ClockStyleGalleryUiState` all delegate to it. The
   last four hold the launcher's `LauncherSettings` as `settings` instead of a `globalX` field per
   value. `ResolvedFacetStyleTest` covers the override, sentinel, landscape and widget rules, and
   `HomeScreenStateBuilderTest` checks that the state a preview is built from has the same placement as Home resolves for the same facet.
-- **A hosted clock widget shows in previews.** The widget is part of the state (`HomeClockWidgetState`),
+- **The widget stack screen** (`ClockStackScreen`, route `clockStack`, reached from the Home sheet's Widget stack row) lists the active facet's clock stack with a drag handle, Configure (the clock opens the facet's Appearance screen, a widget its own configure activity) and Remove on each row, an Add row, and the counter against the plan's limit. It hosts the clock widget picker itself for Add. Add opens a chooser (launcher clock or custom widget) while the clock is not in the stack, and goes straight to the picker when it is.
+- **A hosted clock widget shows in previews.** The first page of the stack, when it is a widget, is part of the state (`HomeClockWidgetState`),
   so `HomeScreen` draws it through its normal `ClockWidgetTile`, with `createHostView` pointed at
   `ClockWidgetHostController.createPreviewHostView`: a non-live copy from a second, non-listening
   `AppWidgetHost` (`AppWidgetRepository.createPreviewHostView`). A host sends later updates to the newest
@@ -190,6 +191,8 @@ Location card, launcher-wide, never per facet (`UnitsAndLocationViewModel`). A f
 clock style, where the Inherit/Override switch lives; turning Override on seeds the three switches and the icon style from the
 defaults (`ClockStyleGalleryViewModel.setOverridingClock`).
 
+Every `InheritOverrideCard` on a facet-scoped screen (clock style, calendar, dock, home apps list) shows an *Edit defaults* link on the selected Inherit row; it opens the launcher-wide version of that screen (`onEditDefaults`, wired in `FacetNavHost`).
+
 `HomeScreenStateBuilder` gates the items: the alarm and battery only when their switch is on, the weather
 (`HomeWeatherState`, from `ObserveWeatherUseCase`) only when its switch is on and the forecast is not outdated.
 `HomeSlots` turns that into a `ClockWeatherAccessory` (`rememberClockWeatherAccessory`: icon, "27°C", and the spoken text
@@ -212,7 +215,7 @@ overrides the clock (Settings → Clock accessories → Icons): monochrome,
 drawn in code in the clock's accessory colour (`WeatherIcon`), or coloured, one bundled PNG per picture
 (`res/drawable-nodpi/weather_color_*`, mapped by `coloredRes()`). The style applies to the accessory row and the sheet;
 `HomeWeatherState.iconStyle` carries it, and `HomeDrawerRoute` hands the active facet's style to the sheet (`WeatherUiState.iconStyle`). The Clock accessories screen opens with
-`ClockAccessoriesPreview`: the clock of that scope (template, font, colour, alignment) with a sample alarm, battery and
+`ClockAccessoriesPreview`: the clock of that scope (template, font, colour) with a sample alarm, battery and
 weather, following the switches and the icon style as they change. The Icons card also carries `WeatherIconsPreviewRow`:
 all nine weather pictures in the selected style. The alarm, battery and weather icons carry the same
 drop shadow as the accessory text (`homeIconShadow`: the glyph redrawn in the shadow tone over a ring of offsets).

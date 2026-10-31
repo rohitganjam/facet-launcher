@@ -241,7 +241,7 @@ private fun ProReason.noteRes(): Int = when (this) {
     ProReason.RULE_LIMIT -> R.string.pro_upgrade_rule_limit
     ProReason.FACET_LIMIT -> R.string.pro_upgrade_facet_limit
     ProReason.FACET_LOCKED -> R.string.pro_upgrade_facet_locked
-    ProReason.CUSTOM_WIDGET -> R.string.pro_upgrade_custom_widget
+    ProReason.WIDGET_STACK -> R.string.pro_upgrade_widget_stack
     ProReason.ABOUT -> R.string.pro_upgrade_about
 }
 

@@ -4,7 +4,7 @@ Complete inventories of the two injectable layers, generated from constructor si
 `@Inject` sites in `app/src/main`. If a class is not in these tables it does not exist; if a
 dependency is not listed the class does not have it.
 
-## 1. Repositories and data singletons (49) — all `@Singleton`, all constructor-injected, and the weather seams (`WeatherApi`, `WeatherStore`, `PlaceGeocoder`) are the only interfaces
+## 1. Repositories and data singletons (50) — all `@Singleton`, all constructor-injected, and the weather seams (`WeatherApi`, `WeatherStore`, `PlaceGeocoder`) are the only interfaces
 
 | Repository | Wraps (source of truth) | Injects | Public API shape | Injected by |
 |---|---|---|---|---|
@@ -27,7 +27,7 @@ dependency is not listed the class does not have it.
 | `PlacementRepository` | Room `app_placements` + `folder_placements` — every Dock and Favorites list, launcher-wide and per facet; a `PlacementTarget(list, facetId)` names one | `AppPlacementDao`, `FolderPlacementDao` | raw reads `observeAppEntities` / `observeFolderPlacements(target)` and their batched `…ForFacets(list, ids)` forms (hydration lives in `ObservePlacedItemsUseCase`), `addApp`, `removeApp`, `placeFolder`, `removeFolderPlacement`, `replaceItems`, `reorderItems`, `deleteAll(target)`, `removeByPackage/UserId` (every list), raw getters, `restoreApp` / `restoreFolderPlacement`, `getOrphanedRows`, `backfillUserId` | 8 use cases, 5 ViewModels |
 | `PlayEntitlementRepository` | Pro from Google Play, cached in the `facet_entitlement` DataStore; only an explicit "owned" or "no purchase" answer changes it (a pending purchase or an unreachable Play keeps the last value) | `BillingRepository`, `@EntitlementDataStore DataStore<Preferences>`, `@ApplicationScope CoroutineScope` | overrides `isPro`, `awaitLoaded()`, `refresh()`; applies an optional debug `EntitlementOverride` on top of Play's answer (the cache keeps Play's answer only) | `EntitlementModule` (bound as `EntitlementRepository`) |
 | `BillingRepository` (`open`) | Google Play Billing client over IPC, the one-time `facet_pro` product; no network permission needed | `Context`, `@ApplicationScope CoroutineScope` | `suspend queryPro(): ProQueryResult`, `suspend priceText()`, `suspend launchPurchase(activity)`, `updates: Flow<ProQueryResult>`; acknowledges purchases | `PlayEntitlementRepository`, `FacetProViewModel` (price, purchase flow, pending updates) |
-| `FacetRepository` | Room `facets` | `FacetDao` | `observeFacets()`, `getById`, `addFacet()`, `renameFacet`, 28 per-column `setX(facet, value)` setters, 4 `updateOverridingX(...)` block setters (trimmed — `updateOverridingApps`/`updateOverridingDock` no longer take the look-field params, moved to `AppearanceSettingsViewModel`'s own per-column setters), `deleteFacet`, `deleteAllFacets`, `restoreFacet`, `reorderFacets` | 11 use cases, 12 ViewModels |
+| `FacetRepository` | Room `facets`, plus each facet's `clock_stack_items` (read only, so a `Facet` comes with its `clockStack`) | `FacetDao`, `ClockStackItemDao` | `observeFacets()` (re-emits when either table changes), `getById`, `addFacet()`, `renameFacet`, 28 per-column `setX(facet, value)` setters, 4 `updateOverridingX(...)` block setters (trimmed — `updateOverridingApps`/`updateOverridingDock` no longer take the look-field params, moved to `AppearanceSettingsViewModel`'s own per-column setters), `deleteFacet`, `deleteAllFacets`, `restoreFacet`, `reorderFacets` | 11 use cases, 12 ViewModels |
 | `FacetShortcutRepository` | `ShortcutManagerCompat` dynamic shortcuts | `Context` | `syncShortcuts(facets)` — full atomic replace, one `ShortcutInfoCompat` per facet | `SyncFacetShortcutsUseCase` |
 | `FolderRepository` | Room `folders` + `folder_apps` | `FolderDao`, `AppRepository` | `observeFolders(): Flow<List<Folder>>` (hydrated), create/rename/delete, add/remove/reorder members, `removeByPackage/UserId`, `getRawFolders`, `restoreFolder`, `deleteAllFolders`, orphan repair | `PlacementRepository`, 5 use cases, 6 ViewModels |
 | `HeadphonesRepository` | `AudioManager` output devices + `AudioDeviceCallback` | `Context` | `observeHeadphonesPluggedIn(): Flow<Boolean>` | `DeviceStateRepository` |
@@ -54,6 +54,8 @@ dependency is not listed the class does not have it.
 | `WallpaperRepository` (`open`) | `WallpaperManager.peekDrawable` / `getWallpaperColors` | `WallpaperManager` | `currentHomeWallpaper(): HomeWallpaper` (`Image` / `Tones` / `Unavailable`, downscaled to 1080px) | `FacetCarouselViewModel`, `AppearanceSettingsViewModel`, `AppDrawerSettingsViewModel`, `DockSettingsViewModel`, `HomeAppsListSettingsViewModel` |
 | `AndroidPlaceGeocoder` (`data/places`, bound as `PlaceGeocoder`) | `android.location.Geocoder` (the listener API from Android 13, the blocking one before); empty answers when it is missing or fails | `Context`, `@IoDispatcher` | `reverse(lat, lon, locale)`, `search(query, locale, max)` | `ResolvePlaceUseCase`, `SearchPlacesUseCase` |
 | `WeatherRepository` (`data/weather`) | The forecast: stored hourly rows and the fetch state, refreshed from MET Norway | `WeatherApi`, `WeatherStore`, `Clock` | `observeHours()`, `observeState()`, `refresh(place): RefreshOutcome` (one refresh at a time, through `WeatherRefreshPolicy`: never before `Expires`, never twice within 10 minutes, nothing while a 429 is being waited out; nothing is retried) | `RefreshWeatherUseCase`, `ObserveWeatherUseCase` |
+| `ClockStackRepository` (`data/`) | A facet's clock stack: the native clock and up to 5 hosted widgets in swipe order; per-item size and alignment, portrait and landscape | `FacetDatabase`, `ClockStackItemDao` | `observe(facetId)`, `getAll`, `addWidget`, `addClock` (once, `false` when full), `replaceWithWidget(itemId, id)` and `replaceWithClock(itemId)` (in place, keep the position and alignment, reset the sizes, return a `ReplacedItem` with the id to release), `remove(itemId)` (returns the widget id to release), `clear(facetId)`, `reorder`, `setSize`, `setLandscapeSize`, `setAlignment`, `setLandscapeAlignment` | `ReplaceClockStackItemUseCase`, `ClockWidgetFacetController` |
+| `StyledIconCache` (`data/icon`) | The glyph-only or outline picture of each app icon, made off the main thread and held weakly per icon bitmap (only the applied picture is kept) | none | `get`/`cached`/`warm`/`clear` | `LauncherActivity` (provided as `LocalStyledIconCache`) |
 | `MetWeatherApi` (`data/weather`, bound as `WeatherApi`) | HTTPS to `api.met.no` Locationforecast 2.0 `compact` | `Clock`, `@IoDispatcher` | `fetch(place, ifModifiedSince): WeatherApiResult` — the only code in the app that opens a connection | `WeatherRepository` |
 | `RoomWeatherStore` (`data/weather`, bound as `WeatherStore`) | Room `weather_hours`, `weather_meta` | `FacetDatabase`, `WeatherDao` | `observeHours()`, `observeState()`, `readHours()`, `readState()`, `replaceHours(list)` (one transaction), `writeState(state)` | `WeatherRepository` |
 | `WidgetPlacementRepository` | Room `widget_placements` | `WidgetPlacementDao` | `observeAll()`, `getById`, `upsert`, `deleteById` (thin pass-through) | `HubViewModel`, `HubWidgetPickerViewModel`, `BackupRestoreViewModel`, `ObserveHubStateUseCase`, `DeleteWidgetUseCase`, `ExportBackupUseCase` |
@@ -80,7 +82,7 @@ flowchart LR
 Every other repository depends only on framework services, DAOs, or `DataStore`. There are no
 cycles; `AppRepository` is the single root.
 
-## 2. Use cases (51) — unscoped, constructor-injected unless noted
+## 2. Use cases (52) — unscoped, constructor-injected unless noted
 
 | Use case | Kind | Injects | Injected by |
 |---|---|---|---|
@@ -92,7 +94,7 @@ cycles; `AppRepository` is the single root.
 | `AssignCalendarColorsUseCase` | pure | — | `CalendarSettingsViewModel` |
 | `CleanUpUninstalledAppsUseCase` | long-running collector | `AppRepository`, `PlacementRepository`, `FolderRepository` | `LauncherViewModel` |
 | `CompactWidgetsUseCase` | pure grid | — | `HubViewModel` |
-| `DeleteFacetUseCase` | write (releases the facet's clock widget id first) | `FacetRepository`, `AppWidgetRepository` | `ManageFacetsViewModel`, `FacetCarouselViewModel` |
+| `DeleteFacetUseCase` | write (releases every widget id in the facet's clock stack first) | `FacetRepository`, `AppWidgetRepository` | `ManageFacetsViewModel`, `FacetCarouselViewModel` |
 | `DeleteWidgetUseCase` | write | `WidgetPlacementRepository`, `AppWidgetRepository` | `HubViewModel` |
 | `EnsureActiveFacetUseCase` | seeds the first facet, and (`keepUsable()`, a collector) keeps the active facet one the user may use: missing or disabled → the first selectable facet | `FacetRepository`, `SettingsRepository`, `SelectableFacetsUseCase` | `LauncherViewModel` |
 | `EvaluateFacetAutomationUseCase` | pure (rules + trigger truth + `AutomationState` → desired facet + new state) | — | `RefreshAutomationStateUseCase` |
@@ -134,13 +136,16 @@ cycles; `AppRepository` is the single root.
 | `SelectableFacetsUseCase` | the facets the user may switch to: all for Pro, the first 3 in list order for free (`FacetLimits.selectableIds`); `invoke()` ids and `observe()` entities | `FacetRepository`, `EntitlementRepository` | `ActivateFacetByIdUseCase`, `EnsureActiveFacetUseCase`, `RefreshAutomationStateUseCase`, `SyncFacetShortcutsUseCase` |
 | `SortAppsForPickerUseCase` | pure + read (`LAST_USED` only) | `UsageStatsRepository` | `FavoritesPickerViewModel`, `DockAppPickerViewModel`, `FolderAppPickerViewModel` |
 | `SyncFacetShortcutsUseCase` | long-running collector; publishes shortcuts only for selectable facets | `SelectableFacetsUseCase`, `FacetShortcutRepository` | `LauncherViewModel` (see [14](14-flow-deep-links-and-shortcuts.md)) |
-| `SwitchFacetToNativeClockUseCase` | write (releases the clock widget id, then clears it) | `FacetRepository`, `AppWidgetRepository` | `ClockWidgetFacetController` |
+| `AddClockStackItemUseCase` | write: appends the clock or a widget within the plan's limit (1 Free, 5 Pro, one clock); `hasRoom(facetId)` is the Add upsell check; returns `AddClockStackItemResult` | `ClockStackRepository`, `EntitlementRepository` | `ClockStackViewModel`, `ClockWidgetPickerViewModel` |
+| `RemoveClockStackItemUseCase` | write: removes a page and releases the widget id it held | `ClockStackRepository`, `AppWidgetRepository` | `ClockStackViewModel` |
+| `CommitClockPlacementUseCase` | write: saves a change to the facet's own clock placement (alignment, scale, divider) for portrait or landscape; the first change copies the launcher-wide placement into the facet and sets `clockPlacementOwn` | `FacetRepository`, `SettingsRepository` | `ClockWidgetFacetController` |
+| `ReplaceClockStackItemUseCase` | write: swaps one page of a facet's clock stack for the native clock (`withClock`, refused while the clock is on another page) or a widget (`withWidget`), in place, and releases the id the old page held | `ClockStackRepository`, `AppWidgetRepository` | `ClockWidgetFacetController`, `ClockWidgetPickerViewModel` |
 
 Non-use-case files in `domain/`: `FlowCombine.kt` (6/7-ary `combine`), `HubGridConstants.kt`
 (`HUB_COLUMNS`, `HUB_MAX_ROWS`, `HUB_MAX_WIDGETS`, `calculateHubCellWidth(context)` — see F4),
 `BackupMapping.kt` (entity ⇄ `Backup*` DTO extension functions).
 
-## 3. ViewModels (37) — `@HiltViewModel`, one per screen
+## 3. ViewModels (38) — `@HiltViewModel`, one per screen
 
 | ViewModel | Screen / surface | Nav arg (`SavedStateHandle`) |
 |---|---|---|
@@ -152,6 +157,7 @@ Non-use-case files in `domain/`: `FlowCombine.kt` (6/7-ary `combine`), `HubGridC
 | `HubWidgetPickerViewModel` | `HubWidgetPickerScreen` | — |
 | `FacetCarouselViewModel` | `FacetCarouselScreen` | — |
 | `ManageFacetsViewModel` | `ManageFacetsScreen` | — |
+| `ClockStackViewModel` | `ClockStackScreen` (the widget stack: reorder, remove, configure, add; the active facet's pages and the plan's limit) | — |
 | `FacetAutomationViewModel` | `FacetAutomationScreen` (rule list, status line) | — |
 | `RuleEditorViewModel` | the rule editor sheet inside `FacetAutomationScreen`: draft rule, permission gate, device pickers | — |
 | `FacetSettingsViewModel` | `FacetSettingsScreen` | `facetId` |

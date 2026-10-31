@@ -20,8 +20,13 @@ class FacetMappingTest {
     @Test
     fun `every FacetEntity column has a Facet field`() {
         // Given the entity's columns and the model's fields
-        val entityColumns = fieldNames(FacetEntity::class.java) - "selectedCalendarIdsCsv"
-        val facetFields = fieldNames(Facet::class.java) - "selectedCalendarIds"
+        // (the five hosted-widget columns are retired: that data lives in clock_stack_items, loaded as Facet.clockStack)
+        val retiredWidgetColumns = setOf(
+            "clockWidgetAppWidgetId", "clockWidgetWidthDp", "clockWidgetHeightDp",
+            "landscapeClockWidgetWidthDp", "landscapeClockWidgetHeightDp",
+        )
+        val entityColumns = fieldNames(FacetEntity::class.java) - "selectedCalendarIdsCsv" - retiredWidgetColumns
+        val facetFields = fieldNames(Facet::class.java) - "selectedCalendarIds" - "clockStack"
 
         // Then they match, so a column added to the entity can't be silently dropped by the mapper
         assertEquals(entityColumns, facetFields)
@@ -39,11 +44,6 @@ class FacetMappingTest {
             clockAlignment = ClockAlignment.RIGHT,
             clockZoneHeightDp = 210f,
             clockScale = 1.1f,
-            clockWidgetAppWidgetId = 41,
-            clockWidgetWidthDp = 180,
-            clockWidgetHeightDp = 90,
-            landscapeClockWidgetWidthDp = 220,
-            landscapeClockWidgetHeightDp = 110,
             landscapeClockAlignment = ClockAlignment.CENTER,
             landscapeClockZoneHeightDp = 300f,
             landscapeClockScale = 0.9f,
@@ -66,7 +66,8 @@ class FacetMappingTest {
         )
 
         // When mapped to the Room row and back
-        val result = facet.toEntity().toFacet()
+        // (the stack lives in its own table, so it is passed back in as FacetRepository does)
+        val result = facet.toEntity().toFacet(facet.clockStack)
 
         // Then nothing is lost
         assertEquals(facet, result)

@@ -10,6 +10,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import com.facetlauncher.app.R
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.input.pointer.pointerInput
@@ -54,7 +56,7 @@ private fun ClockScaleReclampEffect(frame: HomeFrame) {
     val clock = frame.state.clock
     // The effect outlives the composition it launched in, so it reads the latest frame, not the one it captured.
     val latestFrame by rememberUpdatedState(frame)
-    LaunchedEffect(clock.templateId, clock.placement.alignment, clock.dateStyle, clock.placement.zoneHeightDp, clock.positionOwnerFacetId, frame.isLandscape) {
+    LaunchedEffect(clock.templateId, clock.placement.alignment, clock.dateStyle, clock.placement.zoneHeightDp, clock.placementFacetId, frame.isLandscape) {
         // The fit maths is portrait geometry; running it in landscape would save a wrong scale.
         if (frame.isLandscape) return@LaunchedEffect
         // Never settling means no trustworthy measurement, so leave the saved scale alone.
@@ -79,6 +81,14 @@ private fun ClockScaleReclampEffect(frame: HomeFrame) {
 internal fun isClockGeometryMeasured(boxSize: IntSize?, boxOrigin: Offset?, rootSize: IntSize?, handle: HandleBounds): Boolean =
     boxSize != null && boxOrigin != null && rootSize != null && handle.ceilingPx > handle.floorPx
 
+/** Everything above the divider in portrait (the clock block's bottom is just above it); `null` in landscape, where the clock pane's own bounds serve, or before it is measured. */
+private fun clockZoneBounds(layout: HomeScreenLayout, landscape: Boolean): Rect? {
+    val width = layout.rootSize?.width?.toFloat()
+    val bottom = layout.clockBlockBottomInRoot
+    if (landscape || width == null || bottom == null) return null
+    return Rect(0f, 0f, width, bottom - (layout.rootOriginInRoot?.y ?: 0f))
+}
+
 /**
  * Reports the hosted widget's bounds and the app list's viewport to the route, so its swipe-to-open-drawer gesture
  * can leave them alone. The widget's is `null` for the native clock (nothing independently scrollable to protect)
@@ -92,6 +102,7 @@ internal fun HomeBoundsReporting(frame: HomeFrame) {
     SideEffect {
         val box = layout.measureClockBox()
         frame.actions.widget.onBoundsChange(if (hasWidget && box != null) Rect(box.topLeft, box.sizePx) else null)
+        frame.actions.onClockZoneBoundsChange(clockZoneBounds(layout, frame.isLandscape))
     }
     val currentOnAppListBoundsChange by rememberUpdatedState(frame.actions.onAppListBoundsChange)
     LaunchedEffect(Unit) {
@@ -121,8 +132,18 @@ internal fun Modifier.homeEmptySpaceGestures(mode: ClockAdjustMode, onModeChange
 
 /** The clock adjust menu sheet. */
 @Composable
-internal fun ClockMenuSheet(clock: HomeClockState, hasWidget: Boolean, actions: HomeClockActions) {
+internal fun ClockMenuSheet(clock: HomeClockState, stack: HomeClockStackState, hasWidget: Boolean, actions: HomeClockActions) {
     val close = { actions.onAdjustModeChange(ClockAdjustMode.NONE) }
+    val page = when {
+        stack.isBlank -> ClockSheetPage.EMPTY
+        hasWidget -> ClockSheetPage.WIDGET
+        else -> ClockSheetPage.CLOCK
+    }
+    val stackSummary = when {
+        stack.isBlank -> stringResource(R.string.clock_adjust_stack_empty)
+        stack.pageCount == 1 -> stringResource(if (stack.hasClock) R.string.clock_adjust_stack_clock else R.string.clock_adjust_stack_one_widget)
+        else -> stringResource(R.string.clock_adjust_stack_pages, stack.pageCount)
+    }
     ThemedModalBottomSheet(
         onDismissRequest = close,
         skipPartiallyExpanded = true,
@@ -130,7 +151,10 @@ internal fun ClockMenuSheet(clock: HomeClockState, hasWidget: Boolean, actions: 
     ) {
         ClockAdjustSheet(
             onAdjustClick = { actions.onAdjustModeChange(ClockAdjustMode.ADJUST) },
-            onEditStylesClick = actions.onEditClockStyles,
+            onClockSettingsClick = {
+                close()
+                actions.onClockSettingsClick()
+            },
             onFacetSettingsClick = {
                 close()
                 actions.onNavigateToFacetSettings()
@@ -139,17 +163,22 @@ internal fun ClockMenuSheet(clock: HomeClockState, hasWidget: Boolean, actions: 
                 close()
                 actions.onNavigateToSettings()
             },
-            onUseCustomWidgetClick = {
+            onReplaceWithWidgetClick = {
                 close()
-                actions.onUseCustomWidgetClick()
+                actions.onReplaceWithWidgetClick()
             },
-            onSwitchToLauncherClockClick = {
+            onReplaceWithClockClick = {
                 close()
-                actions.onSwitchToLauncherClockClick()
+                actions.onReplaceWithClockClick()
             },
-            overrideFacetName = clock.positionOwnerFacetName,
-            hasCustomClockWidget = hasWidget,
-            isPro = clock.isPro,
+            onWidgetStackClick = {
+                close()
+                actions.onWidgetStackClick()
+            },
+            stackSummary = stackSummary,
+            overrideFacetName = clock.styleOwnerFacetName,
+            page = page,
+            canReplaceWithClock = !stack.hasClock,
         )
     }
 }

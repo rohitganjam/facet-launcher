@@ -2,9 +2,11 @@ package com.facetlauncher.app.ui.home.widget
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.model.WidgetProviderOption
 import com.facetlauncher.app.data.widget.AppWidgetRepository
+import com.facetlauncher.app.domain.AddClockStackItemResult
+import com.facetlauncher.app.domain.AddClockStackItemUseCase
+import com.facetlauncher.app.domain.ReplaceClockStackItemUseCase
 import com.facetlauncher.app.ui.hub.picker.AddFailureReason
 import com.facetlauncher.app.ui.hub.picker.HubAddWidgetEvent
 import com.facetlauncher.app.ui.hub.picker.HubWidgetPickerUiState
@@ -24,19 +26,20 @@ import kotlinx.coroutines.launch
 /**
  * PRD F15's "Use custom widget" flow — allocate -> bind (possibly detouring through the system's
  * own bind-permission dialog) -> configure (possibly detouring through the provider's own
- * configure activity) -> bind as the target facet's clock. Mirrors
+ * configure activity) -> swap in for a stack page, or add to the stack. Mirrors
  * [com.facetlauncher.app.ui.hub.picker.HubWidgetPickerViewModel]'s own orchestration shape
  * (reusing its [HubAddWidgetEvent]/[HubWidgetPickerUiState]/[WidgetProviderGroup] types directly,
  * since the Activity-result-detour shape is identical) but finishes differently: no grid
- * placement — this facet has exactly one clock slot, not up to
- * [com.facetlauncher.app.domain.HUB_MAX_WIDGETS] — so [HubWidgetPickerUiState.remaining] is always
- * `null` here (hides the picker's "N left" counter) and the finish step writes straight to
- * [FacetRepository] instead of [com.facetlauncher.app.data.WidgetPlacementRepository].
+ * placement — it replaces or adds one page of the facet's clock stack, not one of up to
+ * [com.facetlauncher.app.domain.HUB_MAX_WIDGETS] grid widgets — so [HubWidgetPickerUiState.remaining] is always
+ * `null` here (hides the picker's "N left" counter) and the finish step goes through
+ * [ReplaceClockStackItemUseCase] or [AddClockStackItemUseCase] instead of [com.facetlauncher.app.data.WidgetPlacementRepository].
  */
 @HiltViewModel
 class ClockWidgetPickerViewModel @Inject constructor(
     private val appWidgetRepository: AppWidgetRepository,
-    private val facetRepository: FacetRepository,
+    private val replaceClockStackItem: ReplaceClockStackItemUseCase,
+    private val addClockStackItem: AddClockStackItemUseCase,
 ) : ViewModel() {
 
     private val query = MutableStateFlow("")
@@ -47,8 +50,8 @@ class ClockWidgetPickerViewModel @Inject constructor(
     /** The one bind in flight, if any — carried across the bind/configure round trips back from the composable. */
     private var pendingAppWidgetId: Int? = null
 
-    /** Which facet this bind is for — set when the flow starts, since it must not change mid-flow even if the user could otherwise switch facets. */
-    private var pendingFacetId: Long? = null
+    /** What this bind is for: set when the flow starts, since it must not change mid-flow even if the user swipes to another page. */
+    private var pendingTarget: ClockWidgetPickerTarget? = null
 
     val uiState: StateFlow<HubWidgetPickerUiState> = combine(query, allOptions) { currentQuery, options ->
         val currentOptions = options ?: appWidgetRepository.getWidgetProviderOptions().also { allOptions.value = it }
@@ -74,9 +77,9 @@ class ClockWidgetPickerViewModel @Inject constructor(
         allOptions.value = null
     }
 
-    fun onProviderSelect(option: WidgetProviderOption, facetId: Long) {
+    fun onProviderSelect(option: WidgetProviderOption, target: ClockWidgetPickerTarget) {
         viewModelScope.launch {
-            pendingFacetId = facetId
+            pendingTarget = target
             val appWidgetId = appWidgetRepository.allocateAppWidgetId()
             if (!appWidgetRepository.bindAppWidgetIdIfAllowed(appWidgetId, option.provider, option.userHandle)) {
                 pendingAppWidgetId = appWidgetId
@@ -128,16 +131,17 @@ class ClockWidgetPickerViewModel @Inject constructor(
         finishBinding(appWidgetId)
     }
 
-    /** Releases this facet's previously-bound clock widget id (if any) before storing the new one — never leaves the old id leaked. */
+    /** Puts the new widget into the stack as the target says; if that fails (the page is gone, or the stack filled up meanwhile), the new id is released instead. */
     private suspend fun finishBinding(appWidgetId: Int) {
-        val facetId = pendingFacetId
-        val facet = facetId?.let { facetRepository.getById(it) }
-        if (facet == null) {
+        val stored = when (val target = pendingTarget) {
+            is ClockWidgetPickerTarget.Replace -> replaceClockStackItem.withWidget(target.itemId, appWidgetId)
+            is ClockWidgetPickerTarget.Add -> addClockStackItem.addWidget(target.facetId, appWidgetId) == AddClockStackItemResult.ADDED
+            null -> false
+        }
+        if (!stored) {
             failAndRelease(appWidgetId, AddFailureReason.SETUP_CANCELLED)
             return
         }
-        facet.clockWidgetAppWidgetId?.let { appWidgetRepository.deleteAppWidgetId(it) }
-        facetRepository.setClockWidgetAppWidgetId(facet.id, appWidgetId)
         _events.emit(HubAddWidgetEvent.WidgetAdded)
     }
 

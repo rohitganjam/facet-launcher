@@ -1,5 +1,7 @@
 package com.facetlauncher.app.ui.home
 
+import com.facetlauncher.app.data.widgetItem
+import com.facetlauncher.app.data.clockItem
 import androidx.compose.ui.unit.dp
 import com.facetlauncher.app.data.model.AppListVerticalAlignment
 import com.facetlauncher.app.data.model.AppRowPosition
@@ -10,6 +12,7 @@ import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.data.model.MediaPlayerState
 import com.facetlauncher.app.domain.resolveFacetStyle
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Test
 
@@ -71,26 +74,161 @@ class HomeScreenStateBuilderTest {
 
     @Test
     fun `a facet with a hosted widget gets its saved size, then the provider default`() {
-        val saved = Facet(id = 1L, name = "A", position = 0, clockWidgetAppWidgetId = 41, clockWidgetWidthDp = 160, clockWidgetHeightDp = 90)
-        val unsized = Facet(id = 1L, name = "B", position = 0, clockWidgetAppWidgetId = 42)
+        val saved = Facet(id = 1L, name = "A", position = 0, clockStack = listOf(widgetItem(41, id = 1L, widthDp = 160, heightDp = 90)))
+        val unsized = Facet(id = 1L, name = "B", position = 0, clockStack = listOf(widgetItem(42, id = 2L)))
         val sizing = HomeWidgetSizing(defaultSizeDp = { 250 to 110 }, resizeFloorDp = { 60 to 60 })
 
         val savedWidget = build(saved, landscape = false, widgetSizing = sizing).widget
         val unsizedWidget = build(unsized, landscape = false, widgetSizing = sizing).widget
 
-        assertEquals(HomeClockWidgetState(41, 160.dp, 90.dp, 60.dp, 60.dp), savedWidget)
-        assertEquals(HomeClockWidgetState(42, 250.dp, 110.dp, 60.dp, 60.dp), unsizedWidget)
+        assertEquals(HomeClockWidgetState(1L, 41, 160.dp, 90.dp, 60.dp, 60.dp), savedWidget)
+        assertEquals(HomeClockWidgetState(2L, 42, 250.dp, 110.dp, 60.dp, 60.dp), unsizedWidget)
+    }
+
+    @Test
+    fun `an orphaned widget is flagged and keeps a placeholder size when it was never resized`() {
+        // Given a widget whose provider is gone, one with a saved size and one without
+        val sized = Facet(id = 1L, name = "A", position = 0, clockStack = listOf(widgetItem(41, id = 1L, widthDp = 160, heightDp = 90)))
+        val unsized = Facet(id = 1L, name = "B", position = 0, clockStack = listOf(widgetItem(42, id = 2L)))
+        val sizing = HomeWidgetSizing(isOrphaned = { true })
+
+        // When Home's state is built
+        val sizedWidget = build(sized, landscape = false, widgetSizing = sizing).widget
+        val unsizedWidget = build(unsized, landscape = false, widgetSizing = sizing).widget
+
+        // Then both are orphaned, the saved size is kept and the other gets a placeholder size
+        assertEquals(true, sizedWidget?.isOrphaned)
+        assertEquals(160.dp, sizedWidget?.widthDp)
+        assertEquals(true, unsizedWidget?.isOrphaned)
+        assertNotNull(unsizedWidget?.widthDp)
     }
 
     @Test
     fun `a widget size in landscape is its own where saved, else the portrait one`() {
         val facet = Facet(
-            id = 1L, name = "A", position = 0, clockWidgetAppWidgetId = 41,
-            clockWidgetWidthDp = 160, clockWidgetHeightDp = 90, landscapeClockWidgetWidthDp = 400, landscapeClockWidgetHeightDp = 300,
+            id = 1L, name = "A", position = 0,
+            clockStack = listOf(widgetItem(41, widthDp = 160, heightDp = 90, landscapeWidthDp = 400, landscapeHeightDp = 300)),
         )
 
         assertEquals(160.dp, build(facet, landscape = false).widget?.widthDp)
         assertEquals(400.dp, build(facet, landscape = true).widget?.widthDp)
+    }
+
+    @Test
+    fun `a widget page shows its own alignment and the clock page the facet's`() {
+        // Given a facet whose clock page is left-aligned and whose widget page is centred in portrait and right in landscape
+        val widget = widgetItem(41, id = 11L, position = 1).copy(alignment = ClockAlignment.CENTER, landscapeAlignment = ClockAlignment.RIGHT)
+        val facet = Facet(id = 1L, name = "A", position = 0, clockPlacementOwn = true, clockAlignment = ClockAlignment.LEFT, clockStack = listOf(clockItem(id = 10L, position = 0), widget))
+        val style = resolveFacetStyle(facet, settings)
+
+        // When building each page, in each orientation
+        fun alignmentOf(pageId: Long, landscape: Boolean) =
+            style.toHomeScreenState(landscape, settings, content, live = HomeLiveState(visibleClockItemId = pageId)).clock.placement.alignment
+
+        // Then the clock page uses the facet's, and the widget page its own
+        assertEquals(ClockAlignment.LEFT, alignmentOf(10L, landscape = false))
+        assertEquals(ClockAlignment.CENTER, alignmentOf(11L, landscape = false))
+        assertEquals(ClockAlignment.RIGHT, alignmentOf(11L, landscape = true))
+    }
+
+    @Test
+    fun `a widget page with no alignment of its own uses the facet's`() {
+        val facet = Facet(id = 1L, name = "A", position = 0, clockPlacementOwn = true, clockAlignment = ClockAlignment.CENTER, clockStack = listOf(widgetItem(41, id = 11L)))
+
+        val state = resolveFacetStyle(facet, settings).toHomeScreenState(false, settings, content)
+
+        assertEquals(ClockAlignment.CENTER, state.clock.placement.alignment)
+    }
+
+    @Test
+    fun `a stack whose first page is the clock builds the native clock`() {
+        val facet = Facet(id = 1L, name = "A", position = 0, clockStack = listOf(clockItem(position = 0), widgetItem(41, position = 1)))
+
+        assertNull(build(facet, landscape = false).widget)
+    }
+
+    @Test
+    fun `the visible page decides whether the clock or a widget is built`() {
+        // Given a clock page followed by a widget page
+        val facet = Facet(id = 1L, name = "A", position = 0, clockStack = listOf(clockItem(id = 10L, position = 0), widgetItem(41, id = 11L, position = 1)))
+        val style = resolveFacetStyle(facet, settings)
+
+        // When building with each page visible
+        val onClock = style.toHomeScreenState(false, settings, content, live = HomeLiveState(visibleClockItemId = 10L))
+        val onWidget = style.toHomeScreenState(false, settings, content, live = HomeLiveState(visibleClockItemId = 11L))
+
+        // Then the clock page has no widget and the widget page has its own, and both know the stack
+        assertNull(onClock.widget)
+        assertEquals(41, onWidget.widget?.appWidgetId)
+        assertEquals(10L, onClock.clockStack.visibleItemId)
+        assertEquals(11L, onWidget.clockStack.visibleItemId)
+        assertEquals(0, onClock.clockStack.pageIndex)
+        assertEquals(1, onWidget.clockStack.pageIndex)
+        assertEquals(2, onWidget.clockStack.pageCount)
+    }
+
+    @Test
+    fun `the pages beside the visible one are built for the swipe`() {
+        // Given a clock, a widget with its own alignment, and a second widget
+        val facet = Facet(
+            id = 1L, name = "A", position = 0,
+            clockStack = listOf(
+                clockItem(id = 10L, position = 0),
+                widgetItem(41, id = 11L, position = 1, widthDp = 200, heightDp = 100).copy(alignment = ClockAlignment.RIGHT),
+                widgetItem(42, id = 12L, position = 2),
+            ),
+        )
+        val style = resolveFacetStyle(facet, settings)
+
+        // When the middle page is visible
+        val stack = style.toHomeScreenState(false, settings, content, live = HomeLiveState(visibleClockItemId = 11L)).clockStack
+
+        // Then the clock is before it and the other widget after, each with its own widget state
+        assertEquals(10L, stack.previous?.itemId)
+        assertNull(stack.previous?.widget)
+        assertEquals(12L, stack.next?.itemId)
+        assertEquals(42, stack.next?.widget?.appWidgetId)
+
+        // And at the ends there is nothing beyond
+        val first = style.toHomeScreenState(false, settings, content, live = HomeLiveState(visibleClockItemId = 10L)).clockStack
+        assertNull(first.previous)
+        assertEquals(11L, first.next?.itemId)
+        assertEquals(ClockAlignment.RIGHT, first.next?.alignment)
+    }
+
+    @Test
+    fun `a page that is no longer in the stack falls back to the first`() {
+        val facet = Facet(id = 1L, name = "A", position = 0, clockStack = listOf(clockItem(id = 10L, position = 0), widgetItem(41, id = 11L, position = 1)))
+
+        val state = resolveFacetStyle(facet, settings).toHomeScreenState(false, settings, content, live = HomeLiveState(visibleClockItemId = 99L))
+
+        assertEquals(0, state.clockStack.pageIndex)
+        assertNull(state.widget)
+    }
+
+    @Test
+    fun `without pro the state has only the first clock page`() {
+        // Given a clock and a widget, with the widget page remembered as visible
+        val facet = Facet(id = 1L, name = "A", position = 0, clockStack = listOf(clockItem(id = 10L, position = 0), widgetItem(41, id = 11L, position = 1)))
+        val style = resolveFacetStyle(facet, settings)
+
+        // When building for a user without Pro
+        val state = style.toHomeScreenState(false, settings, content, live = HomeLiveState(visibleClockItemId = 11L, isPro = false))
+
+        // Then there is one page, the clock, and no widget
+        assertEquals(listOf(1, 0, true), state.clockStack.let { listOf(it.pageCount, it.pageIndex, it.hasClock) })
+        assertNull(state.clockStack.next)
+        assertNull(state.widget)
+    }
+
+    @Test
+    fun `an empty stack builds a blank clock area`() {
+        val facet = Facet(id = 1L, name = "A", position = 0, clockStack = emptyList())
+
+        val state = build(facet, landscape = false)
+
+        assertEquals(true, state.clockStack.isBlank)
+        assertNull(state.widget)
     }
 
     @Test
@@ -103,7 +241,8 @@ class HomeScreenStateBuilderTest {
         val state = build(null, landscape = false)
 
         assertEquals(ClockAdjustMode.NONE, state.clock.adjustMode)
-        assertNull(state.clock.positionOwnerFacetId)
+        assertNull(state.clock.placementFacetId)
+        assertNull(state.clock.styleOwnerFacetName)
         assertNull(state.media.player)
         assertEquals(false, state.media.showSkipButtons)
     }
@@ -115,5 +254,29 @@ class HomeScreenStateBuilderTest {
         val state = resolveFacetStyle(null, settings).toHomeScreenState(false, settings, content.copy(mediaPlayer = player))
 
         assertEquals(player, state.media.player)
+    }
+
+    @Test
+    fun `each page is sized by its own widget, not the visible one`() {
+        // Given a clock and two widgets whose providers declare different sizes, with the clock visible
+        val facet = Facet(
+            id = 1L, name = "A", position = 0,
+            clockStack = listOf(clockItem(id = 10L, position = 0), widgetItem(41, id = 11L, position = 1), widgetItem(42, id = 12L, position = 2)),
+        )
+        val sizing = HomeWidgetSizing(
+            defaultSizeDp = { mapOf(41 to (250 to 110), 42 to (300 to 200))[it] },
+            resizeFloorDp = { 60 to 60 },
+            isOrphaned = { it == 42 },
+        )
+
+        // When Home's state is built around the middle page
+        val stack = resolveFacetStyle(facet, settings)
+            .toHomeScreenState(false, settings, content, widgetSizing = sizing, live = HomeLiveState(visibleClockItemId = 11L))
+            .clockStack
+
+        // Then the widget after it has its own size and orphan flag, ready before it slides in
+        assertEquals(300.dp, stack.next?.widget?.widthDp)
+        assertEquals(200.dp, stack.next?.widget?.heightDp)
+        assertEquals(true, stack.next?.widget?.isOrphaned)
     }
 }

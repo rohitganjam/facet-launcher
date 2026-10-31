@@ -54,6 +54,9 @@ internal val HOME_LANDSCAPE_CLOCK_PANE_START_PADDING = 24.dp
 internal val HOME_LANDSCAPE_VERTICAL_PADDING_TOP = 8.dp
 internal val HOME_LANDSCAPE_VERTICAL_PADDING_BOTTOM = 16.dp
 
+/** The gap between the page dots and the bottom of the landscape clock pane. */
+internal val HOME_LANDSCAPE_CLOCK_DOTS_BOTTOM = 8.dp
+
 /** Room kept between the clock and the pane's right edge, inside its width. */
 internal val HOME_LANDSCAPE_CLOCK_PANE_END_MARGIN = 16.dp
 
@@ -88,13 +91,15 @@ internal fun HomeLandscapeLayout(
     onDockRowHeightChange: (Int) -> Unit = {},
     /** The whole clock pane's bounds in root coordinates, so the caller can leave its vertical drags to the pane's own scroll. */
     onClockPaneBoundsChange: (Rect) -> Unit = {},
+    /** Drawn over the clock pane without taking layout space. */
+    clockPaneOverlay: @Composable BoxScope.() -> Unit = {},
     dock: @Composable () -> Unit,
 ) {
     // One movable slot for the dock, so it keeps its state whichever branch below places it.
     val currentDock by rememberUpdatedState(dock)
     val dockContent = remember { movableContentOf { currentDock() } }
     val panes: @Composable RowScope.() -> Unit = {
-        ClockPane(clockPaneWidth, clockPaneAlignment, onClockPaneBoundsChange, clock)
+        ClockPane(clockPaneWidth, clockPaneAlignment, onClockPaneBoundsChange, clockPaneOverlay, clock)
         Spacer(modifier = Modifier.width(HOME_LANDSCAPE_PANE_GAP))
         Box(
             modifier = Modifier
@@ -149,7 +154,13 @@ internal fun HomeLandscapeLayout(
  * landscape window can't clip them. Reports its bounds through [onBoundsChange].
  */
 @Composable
-private fun ClockPane(width: Dp, alignment: Alignment, onBoundsChange: (Rect) -> Unit, content: @Composable BoxScope.() -> Unit) {
+private fun ClockPane(
+    width: Dp,
+    alignment: Alignment,
+    onBoundsChange: (Rect) -> Unit,
+    overlay: @Composable BoxScope.() -> Unit,
+    content: @Composable BoxScope.() -> Unit,
+) {
     val scroll = rememberScrollState()
     Box(
         modifier = Modifier
@@ -168,6 +179,7 @@ private fun ClockPane(width: Dp, alignment: Alignment, onBoundsChange: (Rect) ->
                 .verticalScroll(scroll, enabled = scroll.maxValue > 0),
             content = content,
         )
+        overlay()
     }
 }
 

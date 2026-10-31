@@ -77,7 +77,7 @@ class SettingsScreenTest {
                     WorkProfileRepository(context.getSystemService(UserManager::class.java), appRepository, context),
                     AutomationRuleRepository(database.automationRuleDao(), database.facetDao()),
                     entitlement,
-                    FacetRepository(database.facetDao()),
+                    FacetRepository(database.facetDao(), database.clockStackItemDao()),
                 )
             }
             FacetLauncherTheme {

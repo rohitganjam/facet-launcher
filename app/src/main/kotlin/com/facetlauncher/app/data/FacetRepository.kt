@@ -1,6 +1,9 @@
 package com.facetlauncher.app.data
 
+import com.facetlauncher.app.data.local.ClockStackItemDao
+import com.facetlauncher.app.data.local.ClockStackItemEntity
 import com.facetlauncher.app.data.local.FacetDao
+import com.facetlauncher.app.data.local.toModel
 import com.facetlauncher.app.data.local.toEntity
 import com.facetlauncher.app.data.local.toFacet
 import com.facetlauncher.app.data.model.AppListColumnAlignment
@@ -12,10 +15,12 @@ import com.facetlauncher.app.data.model.AppListVerticalAlignment
 import com.facetlauncher.app.data.model.AppRowPosition
 import com.facetlauncher.app.data.model.AppRowPresentation
 import com.facetlauncher.app.data.model.CalendarDisplayOptions
+import com.facetlauncher.app.data.model.DEFAULT_CLOCK_SCALE
 import com.facetlauncher.app.data.model.ClockAlignment
 import com.facetlauncher.app.data.model.ClockColorOption
 import com.facetlauncher.app.data.model.ClockDateStyle
 import com.facetlauncher.app.data.model.ClockFontOption
+import com.facetlauncher.app.data.model.ClockStackItemKind
 import com.facetlauncher.app.data.model.ClockTemplateId
 import com.facetlauncher.app.data.model.DockDisplayMode
 import com.facetlauncher.app.data.model.Facet
@@ -23,10 +28,12 @@ import com.facetlauncher.app.data.model.LandscapeOverrides
 import com.facetlauncher.app.data.model.ListContentMode
 import com.facetlauncher.app.data.model.WeatherIconStyle
 import com.facetlauncher.app.data.model.landscape
+import com.facetlauncher.app.data.model.nativeClockPage
 import com.facetlauncher.app.data.model.withLandscape
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 
@@ -37,16 +44,23 @@ import kotlinx.coroutines.flow.map
  * The last remaining facet can never be deleted ([MIN_FACETS]).
  */
 @Singleton
-class FacetRepository @Inject constructor(private val facetDao: FacetDao) {
+class FacetRepository @Inject constructor(
+    private val facetDao: FacetDao,
+    private val clockStackItemDao: ClockStackItemDao,
+) {
 
     companion object {
         const val MIN_FACETS = 1
         private const val DEFAULT_FACET_NAME_PREFIX = "Facet "
     }
 
-    fun observeFacets(): Flow<List<Facet>> = facetDao.observeAll().map { rows -> rows.map { it.toFacet() } }
+    /** Each facet comes with its clock stack, so a change to either table re-emits. */
+    fun observeFacets(): Flow<List<Facet>> = combine(facetDao.observeAll(), clockStackItemDao.observeAll()) { rows, items ->
+        val stacks = items.groupBy({ it.facetId }, { it.toModel() })
+        rows.map { it.toFacet(stacks[it.id].orEmpty()) }
+    }
 
-    suspend fun getById(id: Long): Facet? = facetDao.getById(id)?.toFacet()
+    suspend fun getById(id: Long): Facet? = facetDao.getById(id)?.toFacet(clockStackItemDao.getAll(id).map { it.toModel() })
 
     /** Reads the facet's current row and writes back [transform] of it, so a write never clobbers a newer change with a stale snapshot. */
     private suspend fun update(facetId: Long, transform: (Facet) -> Facet) {
@@ -63,8 +77,8 @@ class FacetRepository @Inject constructor(private val facetDao: FacetDao) {
         val existing = facetDao.observeAll().first()
         val nextPosition = (existing.maxOfOrNull { it.position } ?: -1) + 1
         val facet = Facet(name = "$DEFAULT_FACET_NAME_PREFIX${existing.size + 1}", position = nextPosition)
-        val id = facetDao.insert(facet.toEntity())
-        return facet.copy(id = id)
+        val id = insertWithNativeClock(facet)
+        return facet.copy(id = id, clockStack = listOf(nativeClockPage(facetId = id)))
     }
 
     suspend fun renameFacet(facetId: Long, newName: String) {
@@ -124,12 +138,21 @@ class FacetRepository @Inject constructor(private val facetDao: FacetDao) {
         update(facetId) { it.copy(clockWeatherIconStyle = style) }
     }
 
-    suspend fun setClockAlignment(facetId: Long, alignment: ClockAlignment) {
-        update(facetId) { it.copy(clockAlignment = alignment) }
-    }
-
-    suspend fun setClockZoneHeight(facetId: Long, heightDp: Float) {
-        update(facetId) { it.copy(clockZoneHeightDp = heightDp) }
+    /**
+     * Makes the clock placement the facet's own ([Facet.clockPlacementOwn]) with these values; [landscape]'s clock fields
+     * are the landscape twins, `null` meaning "same as portrait". Other landscape fields are left alone.
+     */
+    suspend fun setClockPlacement(facetId: Long, alignment: ClockAlignment, zoneHeightDp: Float?, scale: Float, landscape: LandscapeOverrides) {
+        update(facetId) {
+            it.copy(clockPlacementOwn = true, clockAlignment = alignment, clockZoneHeightDp = zoneHeightDp, clockScale = scale)
+                .withLandscape(
+                    it.landscape.copy(
+                        clockAlignment = landscape.clockAlignment,
+                        clockZoneHeightDp = landscape.clockZoneHeightDp,
+                        clockScale = landscape.clockScale,
+                    ),
+                )
+        }
     }
 
     /** Changes this facet's landscape values in one write; a `null` field goes back to "same as portrait". */
@@ -137,63 +160,23 @@ class FacetRepository @Inject constructor(private val facetDao: FacetDao) {
         update(facetId) { it.withLandscape(transform(it.landscape)) }
     }
 
-    /** Restores this facet's clock+calendar block to its natural, undragged position. */
-    suspend fun resetClockZoneHeight(facetId: Long) {
-        update(facetId) { it.copy(clockZoneHeightDp = null).withLandscape(it.landscape.copy(clockZoneHeightDp = null)) }
-    }
-
-    suspend fun setClockScale(facetId: Long, scale: Float) {
-        update(facetId) { it.copy(clockScale = scale) }
-    }
-
     /**
-     * PRD F15 — binds [appWidgetId] as this facet's hosted clock widget, or (`null`) reverts it
-     * to its native clock. The caller owns the real `AppWidgetHost` allocate/bind/configure
-     * round trip (see `ClockWidgetPickerViewModel`) and releasing the old id via
-     * `AppWidgetRepository.deleteAppWidgetId` when switching away from or replacing one — this
-     * just persists which id (if any) is currently bound.
-     */
-    suspend fun setClockWidgetAppWidgetId(facetId: Long, appWidgetId: Int?) {
-        // Also clears the persisted size (real bug, found on-device): a facet's clockWidgetWidthDp/
-        // HeightDp is only ever a valid size for the widget it was resized against. Carrying it
-        // over to a newly-bound widget (a switch, or reverting to null) can force the new widget
-        // outside its own sane bounds and show "Can't show content" indefinitely, regardless of
-        // which provider is picked — matches Facet.clockWidgetWidthDp's own doc ("meaningless
-        // whenever clockWidgetAppWidgetId is null"), extended here to "meaningless for a *different*
-        // non-null id too".
-        update(facetId) {
-            it.copy(clockWidgetAppWidgetId = appWidgetId, clockWidgetWidthDp = null, clockWidgetHeightDp = null)
-                .withLandscape(it.landscape.copy(clockWidgetWidthDp = null, clockWidgetHeightDp = null))
-        }
-    }
-
-    /** PRD F15's interactive resize commit — see [Facet.clockWidgetWidthDp]'s own doc. Landscape's own size goes through [updateLandscape]. */
-    suspend fun setClockWidgetSize(facetId: Long, widthDp: Int, heightDp: Int) {
-        update(facetId) { it.copy(clockWidgetWidthDp = widthDp, clockWidgetHeightDp = heightDp) }
-    }
-
-    /**
-     * "Reset clock widget position" for this facet — the zone height back to `null`, alignment
-     * back to `LEFT`, and scale back to `0.8f`, in one atomic upsert (avoids the clobbering risk
-     * of sequential single-field upserts against the same stale snapshot).
+     * "Reset clock position" for this facet: it stops owning its placement ([Facet.clockPlacementOwn]) and goes back to
+     * the launcher's fallback, with its own values cleared, in one atomic write.
      */
     suspend fun resetClockPosition(facetId: Long) {
         update(facetId) {
-            it.copy(clockZoneHeightDp = null, clockAlignment = ClockAlignment.LEFT, clockScale = 0.8f)
+            it.copy(clockPlacementOwn = false, clockZoneHeightDp = null, clockAlignment = ClockAlignment.LEFT, clockScale = DEFAULT_CLOCK_SCALE)
                 .withLandscape(it.landscape.copy(clockZoneHeightDp = null, clockAlignment = null, clockScale = null))
         }
     }
 
     /**
-     * Seeds the facet's clock *design* settings from effective values and toggles the override
-     * flag. One toggle for the whole Home clock/calendar block — it's a single visual unit, not
-     * independent design decisions — which is why `clockAlignment`/`clockZoneHeightDp` (moved in
-     * from being global-only) are seeded here too, not by [updateOverridingCalendar] (that one is
-     * calendar *selection* only — which calendars, which events — see its own doc comment). The
-     * calendar events strip no longer has its own font/color/weight to seed — it reads Appearance
-     * (global-only) and this block's own `clockAlignment` (see chat history). Atomic upsert to
-     * avoid clobbering. The landscape alignment is seeded the same way, so starting to override doesn't change a
-     * facet's landscape look.
+     * Seeds the facet's clock *style* from the effective values and toggles the override flag. One toggle for the
+     * whole style and accessories block, which is one visual unit, not independent decisions: template, font, colours,
+     * date, time format and the alarm, battery and weather accessories. Placement (alignment, scale, divider) is not
+     * part of it: it is always the facet's own ([Facet.clockPlacementOwn]). The calendar *selection* is separate, see
+     * [updateOverridingCalendar]. One atomic write, to avoid clobbering.
      */
     suspend fun updateOverridingClock(
         facetId: Long,
@@ -203,10 +186,6 @@ class FacetRepository @Inject constructor(private val facetDao: FacetDao) {
         colorOption: ClockColorOption,
         use24HourTime: Boolean,
         showMeridiem: Boolean,
-        clockAlignment: ClockAlignment,
-        landscapeClockAlignment: ClockAlignment?,
-        clockZoneHeightDp: Float?,
-        clockScale: Float,
         accentColorOption: ClockColorOption,
         dateStyle: ClockDateStyle,
         showAlarm: Boolean = true,
@@ -226,12 +205,9 @@ class FacetRepository @Inject constructor(private val facetDao: FacetDao) {
                 clockColorOption = colorOption,
                 use24HourTime = use24HourTime,
                 clockShowMeridiem = showMeridiem,
-                clockAlignment = clockAlignment,
-                clockZoneHeightDp = clockZoneHeightDp,
-                clockScale = clockScale,
                 clockAccentColorOption = accentColorOption,
                 clockDateStyle = dateStyle,
-            ).withLandscape(it.landscape.copy(clockAlignment = landscapeClockAlignment))
+            )
         }
     }
 
@@ -378,7 +354,14 @@ class FacetRepository @Inject constructor(private val facetDao: FacetDao) {
     }
 
     /** F14 Backup & Restore — inserts [facet] as a brand-new row (its own `id` is ignored, a fresh one is autogenerated) and returns that new id. */
-    suspend fun restoreFacet(facet: Facet): Long = facetDao.insert(facet.copy(id = 0).toEntity())
+    suspend fun restoreFacet(facet: Facet): Long = insertWithNativeClock(facet.copy(id = 0))
+
+    /** Every facet starts with its native clock as the stack's one page: an empty stack draws nothing. */
+    private suspend fun insertWithNativeClock(facet: Facet): Long {
+        val id = facetDao.insert(facet.toEntity())
+        clockStackItemDao.insert(ClockStackItemEntity(facetId = id, position = 0, kind = ClockStackItemKind.CLOCK))
+        return id
+    }
 
     /** Positions the facets in [orderedFacetIds] order. */
     suspend fun reorderFacets(orderedFacetIds: List<Long>) {

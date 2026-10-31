@@ -35,6 +35,17 @@ class ClockWidgetHostControllerTest {
     }
 
     @Test
+    fun `isOrphaned is true only when the provider no longer resolves`() {
+        val appWidgetRepository = mock(AppWidgetRepository::class.java)
+        `when`(appWidgetRepository.getAppWidgetInfo(7)).thenReturn(null)
+        `when`(appWidgetRepository.getAppWidgetInfo(8)).thenReturn(AppWidgetProviderInfo())
+        val controller = ClockWidgetHostController(appWidgetRepository)
+
+        assertEquals(true, controller.isOrphaned(7))
+        assertEquals(false, controller.isOrphaned(8))
+    }
+
+    @Test
     fun `createHostView returns the repository's host view for a resolvable provider`() {
         val appWidgetRepository = mock(AppWidgetRepository::class.java)
         val info = AppWidgetProviderInfo()

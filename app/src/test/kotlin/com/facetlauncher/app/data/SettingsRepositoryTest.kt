@@ -243,19 +243,6 @@ class SettingsRepositoryTest {
     }
 
     @Test
-    fun `resetClockScale clears the value back to the default`() = runTest {
-        // Given a repository with a non-default scale
-        val repository = createRepository()
-        repository.setClockScale(1.5f)
-
-        // When resetClockScale is called
-        repository.resetClockScale()
-
-        // Then it returns to the 0.8f default
-        assertEquals(0.8f, repository.settings.first().clockScale, 0.0001f)
-    }
-
-    @Test
     fun `setClockZoneHeight persists and round-trips`() = runTest {
         // Given a repository
         val repository = createRepository()
@@ -572,16 +559,14 @@ class SettingsRepositoryTest {
     }
 
     @Test
-    fun `resetting the clock height and scale clears their landscape values too`() = runTest {
+    fun `resetting the clock height clears its landscape value too`() = runTest {
         val repository = createRepository()
         repository.updateLandscape { it.copy(clockZoneHeightDp = 310f, clockScale = 1.2f, clockAlignment = ClockAlignment.CENTER) }
 
         repository.resetClockZoneHeight()
-        repository.resetClockScale()
 
         val landscape = repository.settings.first().landscape
         assertEquals(null, landscape.clockZoneHeightDp)
-        assertEquals(null, landscape.clockScale)
         assertEquals(ClockAlignment.CENTER, landscape.clockAlignment)
     }
 }

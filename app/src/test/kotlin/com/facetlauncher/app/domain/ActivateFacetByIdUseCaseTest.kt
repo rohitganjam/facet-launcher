@@ -1,5 +1,6 @@
 package com.facetlauncher.app.domain
 
+import com.facetlauncher.app.data.FakeClockStackItemDao
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.Preferences
@@ -86,7 +87,7 @@ class ActivateFacetByIdUseCaseTest {
     @Test
     fun `invoke activates a facet that exists`() = runTest {
         // Given a second facet that isn't currently active
-        val facetRepository = FacetRepository(ActivateFacetByIdFakeFacetDao())
+        val facetRepository = FacetRepository(ActivateFacetByIdFakeFacetDao(), FakeClockStackItemDao())
         val settingsRepository = createSettingsRepository()
         val first = facetRepository.addFacet()
         val second = facetRepository.addFacet()
@@ -102,7 +103,7 @@ class ActivateFacetByIdUseCaseTest {
     @Test
     fun `a free user cannot switch to a facet past the third`() = runTest {
         // Given five facets on the free plan, the fourth disabled
-        val facetRepository = FacetRepository(ActivateFacetByIdFakeFacetDao())
+        val facetRepository = FacetRepository(ActivateFacetByIdFakeFacetDao(), FakeClockStackItemDao())
         val settingsRepository = createSettingsRepository()
         val facets = List(5) { facetRepository.addFacet() }
         settingsRepository.setActiveFacetId(facets[0].id)
@@ -116,7 +117,7 @@ class ActivateFacetByIdUseCaseTest {
 
     @Test
     fun `a free user can still switch to one of the first three`() = runTest {
-        val facetRepository = FacetRepository(ActivateFacetByIdFakeFacetDao())
+        val facetRepository = FacetRepository(ActivateFacetByIdFakeFacetDao(), FakeClockStackItemDao())
         val settingsRepository = createSettingsRepository()
         val facets = List(5) { facetRepository.addFacet() }
         settingsRepository.setActiveFacetId(facets[0].id)
@@ -128,7 +129,7 @@ class ActivateFacetByIdUseCaseTest {
 
     @Test
     fun `a pro user can switch to any of ten facets`() = runTest {
-        val facetRepository = FacetRepository(ActivateFacetByIdFakeFacetDao())
+        val facetRepository = FacetRepository(ActivateFacetByIdFakeFacetDao(), FakeClockStackItemDao())
         val settingsRepository = createSettingsRepository()
         val facets = List(10) { facetRepository.addFacet() }
         settingsRepository.setActiveFacetId(facets[0].id)
@@ -141,7 +142,7 @@ class ActivateFacetByIdUseCaseTest {
     @Test
     fun `a manual switch makes the facet the baseline and suppresses every active rule`() = runTest {
         // Given two rules the evaluator has marked active
-        val facetRepository = FacetRepository(ActivateFacetByIdFakeFacetDao())
+        val facetRepository = FacetRepository(ActivateFacetByIdFakeFacetDao(), FakeClockStackItemDao())
         val automationState = createAutomationStateRepository()
         val first = facetRepository.addFacet()
         val second = facetRepository.addFacet()
@@ -159,7 +160,7 @@ class ActivateFacetByIdUseCaseTest {
     @Test
     fun `a manual switch re-samples the rules before recording itself`() = runTest {
         // Given a facet to switch to
-        val facetRepository = FacetRepository(ActivateFacetByIdFakeFacetDao())
+        val facetRepository = FacetRepository(ActivateFacetByIdFakeFacetDao(), FakeClockStackItemDao())
         val refresh = mock(RefreshAutomationStateUseCase::class.java)
         val facet = facetRepository.addFacet()
 
@@ -172,7 +173,7 @@ class ActivateFacetByIdUseCaseTest {
 
     @Test
     fun `an automation switch does not re-sample the rules`() = runTest {
-        val facetRepository = FacetRepository(ActivateFacetByIdFakeFacetDao())
+        val facetRepository = FacetRepository(ActivateFacetByIdFakeFacetDao(), FakeClockStackItemDao())
         val refresh = mock(RefreshAutomationStateUseCase::class.java)
         val facet = facetRepository.addFacet()
 
@@ -183,7 +184,7 @@ class ActivateFacetByIdUseCaseTest {
 
     @Test
     fun `a switch to a facet that does not exist does not re-sample the rules`() = runTest {
-        val facetRepository = FacetRepository(ActivateFacetByIdFakeFacetDao())
+        val facetRepository = FacetRepository(ActivateFacetByIdFakeFacetDao(), FakeClockStackItemDao())
         val refresh = mock(RefreshAutomationStateUseCase::class.java)
 
         activate(facetRepository, createSettingsRepository(), createAutomationStateRepository(), refresh)(999L)
@@ -194,7 +195,7 @@ class ActivateFacetByIdUseCaseTest {
     @Test
     fun `an automation switch changes the active facet but leaves the automation state alone`() = runTest {
         // Given an active rule and a baseline
-        val facetRepository = FacetRepository(ActivateFacetByIdFakeFacetDao())
+        val facetRepository = FacetRepository(ActivateFacetByIdFakeFacetDao(), FakeClockStackItemDao())
         val settingsRepository = createSettingsRepository()
         val automationState = createAutomationStateRepository()
         val first = facetRepository.addFacet()
@@ -213,7 +214,7 @@ class ActivateFacetByIdUseCaseTest {
     @Test
     fun `an automation switch to a deleted facet is a no-op`() = runTest {
         // Given a facet showing, and a rule that wants a facet which has since been deleted
-        val facetRepository = FacetRepository(ActivateFacetByIdFakeFacetDao())
+        val facetRepository = FacetRepository(ActivateFacetByIdFakeFacetDao(), FakeClockStackItemDao())
         val settingsRepository = createSettingsRepository()
         val automationState = createAutomationStateRepository()
         val facet = facetRepository.addFacet()
@@ -232,7 +233,7 @@ class ActivateFacetByIdUseCaseTest {
     @Test
     fun `invoke is a no-op for an id that doesn't resolve to a real facet`() = runTest {
         // Given a facet that's currently active
-        val facetRepository = FacetRepository(ActivateFacetByIdFakeFacetDao())
+        val facetRepository = FacetRepository(ActivateFacetByIdFakeFacetDao(), FakeClockStackItemDao())
         val settingsRepository = createSettingsRepository()
         val facet = facetRepository.addFacet()
         settingsRepository.setActiveFacetId(facet.id)

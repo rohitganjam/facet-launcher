@@ -53,6 +53,9 @@ class ClockWidgetHostController @Inject constructor(
     fun defaultSizeDp(appWidgetId: Int): Pair<Int, Int>? =
         appWidgetRepository.getAppWidgetInfo(appWidgetId)?.let { it.minWidth to it.minHeight }
 
+    /** Whether [appWidgetId]'s provider is gone, so the widget cannot be drawn. */
+    fun isOrphaned(appWidgetId: Int): Boolean = appWidgetRepository.getAppWidgetInfo(appWidgetId) == null
+
     /** The hosted clock widget's live on-screen size (dp) — see [AppWidgetRepository.updateWidgetSize]. */
     fun updateSize(appWidgetId: Int, widthDp: Int, heightDp: Int) =
         appWidgetRepository.updateWidgetSize(appWidgetId, widthDp, heightDp)

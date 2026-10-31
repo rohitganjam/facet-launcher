@@ -4,12 +4,14 @@ import android.content.Context
 import android.os.Handler
 import android.os.Looper
 import android.view.MotionEvent
+import android.view.VelocityTracker
 import android.view.View
 import android.view.ViewConfiguration
 import android.widget.FrameLayout
 import androidx.core.view.NestedScrollingParent3
 import androidx.core.view.NestedScrollingParentHelper
 import androidx.core.view.ViewCompat
+import kotlin.math.abs
 
 /**
  * Wraps a hosted clock widget's own [android.appwidget.AppWidgetHostView] so a long-press on its
@@ -140,6 +142,12 @@ class ClockWidgetTouchGate(context: Context) : FrameLayout(context), NestedScrol
     private var downY = 0f
     private var intercepting = false
 
+    /** A horizontal drag this view took over to hand to Home's swipes, since the widget itself did not claim it. */
+    private var swiping = false
+    private var lastX = 0f
+    private var lastY = 0f
+    private var velocityTracker: VelocityTracker? = null
+
     private val longPressRunnable = Runnable {
         intercepting = true
         onLongPress?.invoke()
@@ -151,6 +159,7 @@ class ClockWidgetTouchGate(context: Context) : FrameLayout(context), NestedScrol
                 downX = ev.x
                 downY = ev.y
                 intercepting = false
+                swiping = false
                 handler.postDelayed(longPressRunnable, longPressTimeoutMs)
             }
             MotionEvent.ACTION_MOVE -> {
@@ -158,16 +167,80 @@ class ClockWidgetTouchGate(context: Context) : FrameLayout(context), NestedScrol
                 val dy = ev.y - downY
                 if (dx * dx + dy * dy > touchSlopSquared) {
                     handler.removeCallbacks(longPressRunnable)
+                    if (!intercepting && !swiping && abs(dx) > abs(dy)) beginSwipe(ev)
                 }
             }
             MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
                 handler.removeCallbacks(longPressRunnable)
             }
         }
-        return intercepting
+        return intercepting || swiping
+    }
+
+    /**
+     * A horizontal drag no descendant has claimed (a widget that scrolls sideways calls [requestDisallowInterceptTouchEvent]
+     * first, which stops the framework asking) is Home's: it turns the clock stack's pages, or opens the Hub or carousel at the ends.
+     * Widgets that never take part in nested scrolling would otherwise leave it with no way to swipe away.
+     */
+    private fun beginSwipe(ev: MotionEvent) {
+        swiping = true
+        lastX = ev.rawX
+        lastY = ev.rawY
+        velocityTracker = VelocityTracker.obtain().also { it.addScreenMovement(ev) }
+        onNestedScrollStart?.invoke()
+    }
+
+    /** Feeds the tracker the event's screen position, so the velocity is the finger's however the view moves. */
+    private fun VelocityTracker.addScreenMovement(event: MotionEvent) {
+        val screen = MotionEvent.obtain(event)
+        screen.setLocation(event.rawX, event.rawY)
+        addMovement(screen)
+        screen.recycle()
+    }
+
+    private fun handleSwipe(event: MotionEvent) {
+        velocityTracker?.addScreenMovement(event)
+        when (event.actionMasked) {
+            MotionEvent.ACTION_MOVE -> {
+                // Screen coordinates, not this view's: the page moves under the finger as it is swiped, so local ones barely change.
+                // Scroll offsets are the negation of finger movement.
+                onLeftoverScroll?.invoke(lastX - event.rawX, lastY - event.rawY)
+                lastX = event.rawX
+                lastY = event.rawY
+            }
+            MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                val tracker = velocityTracker
+                if (event.actionMasked == MotionEvent.ACTION_UP && tracker != null) {
+                    tracker.computeCurrentVelocity(1000)
+                    onLeftoverFling?.invoke(-tracker.xVelocity, -tracker.yVelocity)
+                }
+                tracker?.recycle()
+                velocityTracker = null
+                swiping = false
+                onNestedScrollStop?.invoke()
+            }
+        }
     }
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
+        // With no child handling the touch (a static widget) the framework skips onInterceptTouchEvent after the DOWN, so the gesture is judged here.
+        if (!intercepting && !swiping) {
+            when (event.actionMasked) {
+                MotionEvent.ACTION_MOVE -> {
+                    val dx = event.x - downX
+                    val dy = event.y - downY
+                    if (dx * dx + dy * dy > touchSlopSquared) {
+                        handler.removeCallbacks(longPressRunnable)
+                        if (abs(dx) > abs(dy)) beginSwipe(event)
+                    }
+                }
+                MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> handler.removeCallbacks(longPressRunnable)
+            }
+        }
+        if (swiping) {
+            handleSwipe(event)
+            return true
+        }
         // Only reached once onInterceptTouchEvent has claimed the gesture — consume the rest of it
         // (the eventual ACTION_UP) so nothing beneath ever sees it as a completed click.
         if (event.actionMasked == MotionEvent.ACTION_UP || event.actionMasked == MotionEvent.ACTION_CANCEL) {

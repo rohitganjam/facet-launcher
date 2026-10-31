@@ -8,6 +8,7 @@ import android.provider.CalendarContract
 import androidx.compose.ui.geometry.Rect
 import com.facetlauncher.app.data.model.ProReason
 import com.facetlauncher.app.ui.home.ClockAdjustMode
+import com.facetlauncher.app.ui.home.ClockWidgetHostCache
 import com.facetlauncher.app.ui.home.HomeClockActions
 import com.facetlauncher.app.ui.home.HomeClockWidgetActions
 import com.facetlauncher.app.ui.home.HomeItemActions
@@ -26,7 +27,9 @@ internal class HomeNavigation(
     val toFacetPro: (ProReason) -> Unit,
     val toUsageAccessExplanation: () -> Unit,
     /** The clock style gallery, global (`null`) or for one facet. */
-    val toClockStyleGallery: (Long?) -> Unit,
+    /** Settings > Appearance, global (`null`) or for one facet. */
+    val toAppearance: (Long?) -> Unit,
+    val toClockStack: () -> Unit,
 )
 
 /** The route's own state that Home's actions change. */
@@ -36,17 +39,18 @@ internal class HomeRouteHooks(
     val setClockWidgetBounds: (Rect?) -> Unit,
     val setAppListBounds: (Rect?) -> Unit,
     val setClockPaneBounds: (Rect?) -> Unit,
-    val openClockWidgetPicker: (facetId: Long) -> Unit,
+    val setClockZoneBounds: (Rect?) -> Unit,
+    val openClockWidgetPicker: (itemId: Long) -> Unit,
     val openWeather: () -> Unit = {},
 )
 
 /** What [homeScreenActions] reads: the values Home's actions act on. */
 internal class HomeActionsInputs(
     val homeUiState: HomeUiState,
-    val clockWidgetIsPro: Boolean,
     val layoutMode: HomeLayoutMode,
     val context: Context,
     val coroutineScope: CoroutineScope,
+    val widgetHosts: ClockWidgetHostCache,
 )
 
 /** Everything [HomeScreen][com.facetlauncher.app.ui.home.HomeScreen] can do, wired to the view model, the swipes and the route. */
@@ -59,7 +63,7 @@ internal fun homeScreenActions(
     navigation: HomeNavigation,
 ): HomeScreenActions = HomeScreenActions(
     item = itemActions,
-    clock = homeClockActions(viewModel, inputs, hooks, navigation),
+    clock = homeClockActions(viewModel, inputs, swipe, hooks, navigation),
     widget = homeClockWidgetActions(viewModel, inputs, swipe, hooks),
     media = HomeMediaActions(
         onPrevious = viewModel::onMediaPrevious,
@@ -73,11 +77,13 @@ internal fun homeScreenActions(
     },
     onAppListBoundsChange = hooks.setAppListBounds,
     onClockPaneBoundsChange = hooks.setClockPaneBounds,
+    onClockZoneBoundsChange = hooks.setClockZoneBounds,
 )
 
 private fun homeClockActions(
     viewModel: HomeViewModel,
     inputs: HomeActionsInputs,
+    swipe: HomeSwipeController,
     hooks: HomeRouteHooks,
     navigation: HomeNavigation,
 ): HomeClockActions {
@@ -87,22 +93,14 @@ private fun homeClockActions(
         onClockClick = { inputs.context.openClockApp() },
         onWeatherClick = hooks.openWeather,
         onBatteryClick = { inputs.context.openBatterySettings() },
-        onEditClockStyles = {
-            hooks.setAdjustMode(ClockAdjustMode.NONE)
-            navigation.toClockStyleGallery(state.clockPositionOwningFacet?.id)
-        },
+        onClockSettingsClick = { navigation.toAppearance(state.activeFacet?.id) },
         onNavigateToSettings = navigation.toSettings,
         onNavigateToFacetSettings = { state.activeFacet?.let { navigation.toFacetSettings(it.id) } },
-        onUseCustomWidgetClick = {
-            if (inputs.clockWidgetIsPro) {
-                state.activeFacet?.let { hooks.openClockWidgetPicker(it.id) }
-            } else {
-                navigation.toFacetPro(ProReason.CUSTOM_WIDGET)
-            }
-        },
-        onSwitchToLauncherClockClick = {
-            state.activeFacet?.let { facet ->
-                inputs.coroutineScope.launch { viewModel.clockWidgetFacet.switchToNativeClock(facet) }
+        onWidgetStackClick = navigation.toClockStack,
+        onReplaceWithWidgetClick = { state.visibleClockItem?.let { hooks.openClockWidgetPicker(it.id) } },
+        onReplaceWithClockClick = {
+            state.visibleClockItem?.let { item ->
+                inputs.coroutineScope.launch { viewModel.clockWidgetFacet.replaceWithClock(item.id) }
             }
         },
         onEventClick = { event ->
@@ -114,6 +112,9 @@ private fun homeClockActions(
         onAlignmentChange = { viewModel.onClockAlignmentCommit(it, mode) },
         onAdjustModeChange = hooks.setAdjustMode,
         onDraggingHandleChange = hooks.setDraggingHandle,
+        pageOffset = { swipe.clockPager.offset.value },
+        pageAnchorIndex = { swipe.clockPager.anchorIndex },
+        pageDragging = { swipe.clockPager.dragActive },
     )
 }
 
@@ -124,11 +125,16 @@ private fun homeClockWidgetActions(
     hooks: HomeRouteHooks,
 ): HomeClockWidgetActions {
     return HomeClockWidgetActions(
-        createHostView = viewModel.clockWidgetHost::createHostView,
+        createHostView = inputs.widgetHosts::get,
         onSizeChange = viewModel.clockWidgetHost::updateSize,
         onSizeCommit = { widthDp, heightDp ->
-            inputs.homeUiState.activeFacet?.let { facet ->
-                inputs.coroutineScope.launch { viewModel.clockWidgetFacet.commitSize(facet, widthDp, heightDp, inputs.layoutMode) }
+            inputs.homeUiState.visibleClockItem?.let { item ->
+                inputs.coroutineScope.launch { viewModel.clockWidgetFacet.commitSize(item.id, widthDp, heightDp, inputs.layoutMode) }
+            }
+        },
+        onRemoveOrphan = {
+            inputs.homeUiState.visibleClockItem?.let { item ->
+                inputs.coroutineScope.launch { viewModel.clockWidgetFacet.remove(item.id) }
             }
         },
         onBoundsChange = hooks.setClockWidgetBounds,

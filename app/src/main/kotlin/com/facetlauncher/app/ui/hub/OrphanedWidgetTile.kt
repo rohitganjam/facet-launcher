@@ -1,6 +1,7 @@
 package com.facetlauncher.app.ui.hub
 
 import android.content.res.Configuration
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -22,17 +23,22 @@ import com.facetlauncher.app.R
 import com.facetlauncher.app.ui.components.dashedBorder
 import com.facetlauncher.app.ui.theme.ErrorColor
 import com.facetlauncher.app.ui.theme.HomeAppTextColor
+import com.facetlauncher.app.ui.theme.Surface
 import com.facetlauncher.app.ui.theme.HomeAppTextColorFaint
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import com.facetlauncher.app.ui.theme.homeAppLabelShadow
 
-/** README `4e` — provider uninstalled. The cell keeps its footprint, dashed border, never a dead frame. */
+private const val ORPHANED_TILE_BACKGROUND_ALPHA = 0.6f
+
+/** README `4e` — provider uninstalled. The cell keeps its footprint, dashed border, never a dead frame. [onKeepSpace] is `null` where there is no cell to keep (Home's clock slot). */
 @Composable
-fun OrphanedWidgetTile(providerLabel: String?, onRemove: () -> Unit, onKeepSpace: () -> Unit, modifier: Modifier = Modifier) {
+fun OrphanedWidgetTile(providerLabel: String?, onRemove: () -> Unit, onKeepSpace: (() -> Unit)?, modifier: Modifier = Modifier) {
     Column(
         modifier = modifier
             .fillMaxSize()
             .testTag("hub_orphaned_widget")
+            // The wallpaper can be busy behind it: a light surface at the drawer's default opacity keeps the text readable.
+            .background(Surface.copy(alpha = ORPHANED_TILE_BACKGROUND_ALPHA), MaterialTheme.shapes.medium)
             .dashedBorder(color = HomeAppTextColorFaint, cornerRadius = 12.dp)
             .padding(10.dp),
         verticalArrangement = Arrangement.SpaceBetween,
@@ -72,12 +78,14 @@ fun OrphanedWidgetTile(providerLabel: String?, onRemove: () -> Unit, onKeepSpace
                 color = ErrorColor,
                 modifier = Modifier.testTag("hub_orphaned_remove").clip(CircleShape).clickable(onClick = onRemove),
             )
-            Text(
-                text = stringResource(R.string.hub_orphaned_keep_space),
-                style = MaterialTheme.typography.labelSmall.copy(shadow = homeAppLabelShadow(HomeAppTextColorFaint)),
-                color = HomeAppTextColorFaint,
-                modifier = Modifier.testTag("hub_orphaned_keep_space").clip(CircleShape).clickable(onClick = onKeepSpace),
-            )
+            if (onKeepSpace != null) {
+                Text(
+                    text = stringResource(R.string.hub_orphaned_keep_space),
+                    style = MaterialTheme.typography.labelSmall.copy(shadow = homeAppLabelShadow(HomeAppTextColorFaint)),
+                    color = HomeAppTextColorFaint,
+                    modifier = Modifier.testTag("hub_orphaned_keep_space").clip(CircleShape).clickable(onClick = onKeepSpace),
+                )
+            }
         }
     }
 }

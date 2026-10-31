@@ -3,8 +3,10 @@ package com.facetlauncher.app.ui.home
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -17,8 +19,20 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.key
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import kotlin.math.roundToInt
+import kotlin.math.sign
+import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.unit.constrainHeight
+import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.layout.Measurable
+import androidx.compose.ui.layout.layoutId
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -52,66 +66,221 @@ import com.facetlauncher.app.ui.theme.Muted
  * so a long-press in the empty space beside it still reaches the facet carousel's own gesture.
  */
 @Composable
-internal fun HomeClockSlot(frame: HomeFrame, alignment: ClockAlignment, scaleOriginY: Float, modifier: Modifier = Modifier, scaledFootprint: Boolean = false) {
+internal fun HomeClockSlot(
+    frame: HomeFrame,
+    alignment: ClockAlignment,
+    scaleOriginY: Float,
+    modifier: Modifier = Modifier,
+    scaledFootprint: Boolean = false,
+    /** Where the page coming in sits against the visible one while a swipe turns it: at the clock's own anchor. */
+    anchor: Alignment = Alignment.BottomStart,
+) {
+    // An empty stack draws nothing, but the slot still takes its place so the divider and list stay put.
+    if (frame.state.clockStack.isBlank) {
+        Spacer(modifier = modifier)
+    } else {
+        ClockSlotBlock(frame, alignment, scaleOriginY, scaledFootprint, anchor, modifier)
+    }
+}
+
+@Composable
+private fun ClockSlotBlock(
+    frame: HomeFrame,
+    alignment: ClockAlignment,
+    scaleOriginY: Float,
+    scaledFootprint: Boolean,
+    anchor: Alignment,
+    modifier: Modifier = Modifier,
+) {
+    val stack = frame.state.clockStack
+    val pageOffset = frame.actions.clock.pageOffset
+    // Only the side is read here, so a swipe recomposes when it changes side, not on every frame.
+    val side by remember(pageOffset) { derivedStateOf { sign(pageOffset()) } }
+    // Once the page has changed under a swipe still at its edge, the old page is gone and nothing is beside the new one.
+    val swiping = frame.actions.clock.pageAnchorIndex().let { it < 0 || it == stack.pageIndex }
+    val incomingId = when {
+        !swiping -> null
+        side < 0f -> stack.next?.itemId
+        side > 0f -> stack.previous?.itemId
+        else -> null
+    }
+    CompositionLocalProvider(LocalBatteryClick provides frame.actions.clock.onBatteryClick) {
+        // The pages either side stay composed (parked out of sight), so a widget is never detached and re-attached as a swipe reaches it.
+        PageStack(anchor = anchor, landscapePaneHeightPx = if (frame.isLandscape) frame.layout.landscapeClockPaneHeightPx.toInt() else 0, modifier = modifier) {
+            val beside = { neighbor: HomeClockNeighbor?, index: Int ->
+                neighbor?.let {
+                    val role = if (it.itemId == incomingId) PageRole.INCOMING else PageRole.PARKED
+                    PageToDraw(it.itemId, role, index, if (frame.isLandscape) ClockAlignment.LEFT else it.alignment, it.widget, it.alignment.verticalOrigin())
+                }
+            }
+            val pages = listOfNotNull(
+                beside(stack.previous, stack.pageIndex - 1),
+                PageToDraw(stack.visibleItemId, PageRole.VISIBLE, stack.pageIndex, alignment, frame.state.widget, frame.geometry.landscape.originY),
+                beside(stack.next, stack.pageIndex + 1),
+            )
+            pages.forEach { page ->
+                key(page.itemId) {
+                    Box(Modifier.layoutId(PageSlot(page.role, page.originY))) {
+                        ClockPage(frame, ClockPageSpec(page.role, page.alignment, page.widget, page.index), scaleOriginY, scaledFootprint)
+                    }
+                }
+            }
+        }
+    }
+}
+
+private class PageToDraw(val itemId: Long?, val role: PageRole, val index: Int, val alignment: ClockAlignment, val widget: HomeClockWidgetState?, val originY: Float)
+
+/** What [PageStack] reads from a page: its role, and in landscape where in the pane its own alignment rests it (0 top, 1 bottom). */
+private data class PageSlot(val role: PageRole, val originY: Float)
+
+private fun ClockAlignment.verticalOrigin() = when (this) {
+    ClockAlignment.LEFT -> 0f
+    ClockAlignment.CENTER -> 0.5f
+    ClockAlignment.RIGHT -> 1f
+}
+
+/**
+ * The visible page, with the page a swipe is bringing in drawn beside it (without adding to its size) while there is one, and the others parked far out of sight.
+ * In landscape ([landscapePaneHeightPx] above 0) the stack fills the pane and each page sits where its own alignment puts it, so one that
+ * is taller or lower than the visible page is not clipped as it slides in.
+ */
+@Composable
+private fun PageStack(anchor: Alignment, landscapePaneHeightPx: Int, modifier: Modifier = Modifier, content: @Composable () -> Unit) {
+    Layout(content = content, modifier = modifier) { measurables, constraints ->
+        val slot = { m: Measurable -> m.layoutId as PageSlot }
+        val visible = measurables.first { slot(it).role == PageRole.VISIBLE }
+        val shown = visible.measure(constraints)
+        val others = measurables.filter { slot(it).role != PageRole.VISIBLE }.map { it to it.measure(Constraints(maxWidth = constraints.maxWidth)) }
+        val fillsPane = landscapePaneHeightPx > 0
+        val height = if (fillsPane) constraints.constrainHeight(maxOf(landscapePaneHeightPx, shown.height)) else shown.height
+        val restingTop = { originY: Float, pageHeight: Int -> (originY * (height - pageHeight)).roundToInt().coerceAtLeast(0) }
+        layout(shown.width, height) {
+            shown.place(0, if (fillsPane) restingTop(slot(visible).originY, shown.height) else 0)
+            others.forEach { (measurable, placeable) ->
+                val at = anchor.align(IntSize(placeable.width, placeable.height), IntSize(shown.width, shown.height), layoutDirection)
+                val y = if (fillsPane) restingTop(slot(measurable).originY, placeable.height) else at.y
+                val x = if (slot(measurable).role == PageRole.INCOMING) at.x else at.x + PARKED_OFFSET_PX
+                placeable.place(x, y)
+            }
+        }
+    }
+}
+
+/** Far enough off to the side that a parked page is never drawn or touched, yet still attached to the window. */
+private const val PARKED_OFFSET_PX = 1 shl 20
+
+/** What a composed page is doing: the visible one, the one a swipe is bringing in beside it, or one waiting out of sight. */
+private enum class PageRole { VISIBLE, INCOMING, PARKED }
+
+/** One drawn page: what it is (the clock when [widget] is `null`), where it sits and which role it plays in the swipe. */
+private class ClockPageSpec(val role: PageRole, val alignment: ClockAlignment, val widget: HomeClockWidgetState?, val index: Int)
+
+@Composable
+private fun ClockPage(frame: HomeFrame, page: ClockPageSpec, scaleOriginY: Float, scaledFootprint: Boolean) {
     val state = frame.state
     val clock = state.clock
-    val widget = state.widget
+    val widget = page.widget
     val actions = frame.actions
     val layout = frame.layout
-    val density = frame.density
-    val widgetSize = frame.geometry.effectiveWidgetSizePx
-    CompositionLocalProvider(LocalBatteryClick provides actions.clock.onBatteryClick) {
-        ClockBlock(
-            modifier = modifier,
-            clockContentModifier = Modifier
-                .pointerInput(Unit) {
-                    detectTapGestures(
-                        onTap = { actions.clock.onClockClick() },
-                        onLongPress = { actions.clock.onAdjustModeChange(ClockAdjustMode.MENU) },
-                    )
-                }
-                .testTag(homeTag("home_clock_block")),
-            clockBoxModifier = Modifier.onGloballyPositioned {
+    val visible = page.role == PageRole.VISIBLE
+    val widgetSize = if (visible) frame.geometry.effectiveWidgetSizePx else widget?.let(frame::neighborWidgetSizePx)
+    val callbacks = widgetPageCallbacks(actions, visible)
+    ClockBlock(
+        modifier = Modifier.pageShift(frame, page.index),
+        clockContentModifier = if (visible) clockTapModifier(actions.clock) else Modifier,
+        clockBoxModifier = if (visible) {
+            Modifier.onGloballyPositioned {
                 layout.clockBoxSize = it.size
-                layout.clockBoxOriginInRoot = it.positionInRoot()
-            },
-            use24HourTime = clock.use24HourTime,
-            templateId = clock.templateId,
-            fontOption = clock.fontOption,
-            colorOption = clock.colorOption,
-            accentColorOption = clock.accentColorOption,
-            showMeridiem = clock.showMeridiem,
-            dateStyle = clock.dateStyle,
-            clockAlignment = alignment,
-            clockScale = frame.geometry.effectiveScale,
-            clockScaleOriginY = scaleOriginY,
-            scaledFootprint = scaledFootprint,
-            events = state.calendar.events,
-            calendarColors = state.calendar.colors,
-            calendarDisplay = state.calendar.display,
-            homeAppsFontWeight = state.list.look.labelFontWeightOption,
-            appLabelColorOption = state.list.look.labelColorOption,
-            onEventClick = actions.clock.onEventClick,
-            launcherFontOption = clock.launcherFontOption,
-            nextAlarmMillis = state.calendar.nextAlarmMillis,
-            batteryPercent = state.calendar.batteryPercent,
-            isCharging = state.calendar.isCharging,
-            weather = rememberClockWeatherAccessory(state.calendar.weather, actions.clock.onWeatherClick),
-            clockWidgetAppWidgetId = widget?.appWidgetId,
-            createClockWidgetHostView = actions.widget.createHostView,
-            clockWidgetWidthDp = widgetSize?.let { with(density) { it.x.toDp() } } ?: widget?.widthDp,
-            clockWidgetHeightDp = widgetSize?.let { with(density) { it.y.toDp() } } ?: widget?.heightDp,
-            // The saved size, not the live drag: it only changes once a commit round-trips through Room, and the real provider push must not track every drag frame.
-            clockWidgetCommittedWidthDp = widget?.widthDp,
-            clockWidgetCommittedHeightDp = widget?.heightDp,
-            onClockWidgetSizeChange = actions.widget.onSizeChange,
-            onClockWidgetLongPress = { actions.clock.onAdjustModeChange(ClockAdjustMode.MENU) },
-            onClockWidgetNestedScrollStart = actions.widget.onNestedScrollStart,
-            onClockWidgetLeftoverScroll = actions.widget.onLeftoverScroll,
-            onClockWidgetNestedScrollStop = actions.widget.onNestedScrollStop,
-            onClockWidgetLeftoverFling = actions.widget.onLeftoverFling,
+                // Without the page swipe's own shift, or the room left of the box would shrink a hosted widget as the page slides.
+                layout.clockBoxOriginInRoot = it.positionInRoot() - Offset(pageShiftPx(frame, page.index), 0f)
+            }
+        } else {
+            Modifier
+        },
+        use24HourTime = clock.use24HourTime,
+        templateId = clock.templateId,
+        fontOption = clock.fontOption,
+        colorOption = clock.colorOption,
+        accentColorOption = clock.accentColorOption,
+        showMeridiem = clock.showMeridiem,
+        dateStyle = clock.dateStyle,
+        clockAlignment = page.alignment,
+        clockScale = frame.geometry.effectiveScale,
+        clockScaleOriginY = scaleOriginY,
+        scaledFootprint = scaledFootprint,
+        events = state.calendar.events,
+        calendarColors = state.calendar.colors,
+        calendarDisplay = state.calendar.display,
+        homeAppsFontWeight = state.list.look.labelFontWeightOption,
+        appLabelColorOption = state.list.look.labelColorOption,
+        onEventClick = actions.clock.onEventClick,
+        launcherFontOption = clock.launcherFontOption,
+        nextAlarmMillis = state.calendar.nextAlarmMillis,
+        batteryPercent = state.calendar.batteryPercent,
+        isCharging = state.calendar.isCharging,
+        weather = rememberClockWeatherAccessory(state.calendar.weather, actions.clock.onWeatherClick),
+        clockWidgetAppWidgetId = widget?.appWidgetId,
+        clockWidgetOrphaned = widget?.isOrphaned == true,
+        onClockWidgetRemove = callbacks.onRemove,
+        createClockWidgetHostView = actions.widget.createHostView,
+        clockWidgetWidthDp = widgetSize?.let { with(frame.density) { it.x.toDp() } } ?: widget?.widthDp,
+        clockWidgetHeightDp = widgetSize?.let { with(frame.density) { it.y.toDp() } } ?: widget?.heightDp,
+        // The saved size, not the live drag: it only changes once a commit round-trips through Room, and the real provider push must not track every drag frame.
+        clockWidgetCommittedWidthDp = widget?.widthDp,
+        clockWidgetCommittedHeightDp = widget?.heightDp,
+        onClockWidgetSizeChange = actions.widget.onSizeChange,
+        onClockWidgetLongPress = callbacks.onLongPress,
+        onClockWidgetNestedScrollStart = callbacks.onNestedScrollStart,
+        onClockWidgetLeftoverScroll = callbacks.onLeftoverScroll,
+        onClockWidgetNestedScrollStop = callbacks.onNestedScrollStop,
+        onClockWidgetLeftoverFling = callbacks.onLeftoverFling,
+    )
+}
+
+/** What a widget page does with touches: only the visible page acts, the incoming one is for looking at. */
+private class WidgetPageCallbacks(
+    val onRemove: () -> Unit,
+    val onLongPress: () -> Unit,
+    val onNestedScrollStart: () -> Unit,
+    val onLeftoverScroll: (Float, Float) -> Unit,
+    val onNestedScrollStop: () -> Unit,
+    val onLeftoverFling: (Float, Float) -> Unit,
+)
+
+private fun widgetPageCallbacks(actions: HomeScreenActions, visible: Boolean) = if (visible) {
+    WidgetPageCallbacks(
+        onRemove = actions.widget.onRemoveOrphan,
+        onLongPress = { actions.clock.onAdjustModeChange(ClockAdjustMode.MENU) },
+        onNestedScrollStart = actions.widget.onNestedScrollStart,
+        onLeftoverScroll = actions.widget.onLeftoverScroll,
+        onNestedScrollStop = actions.widget.onNestedScrollStop,
+        onLeftoverFling = actions.widget.onLeftoverFling,
+    )
+} else {
+    WidgetPageCallbacks({}, {}, {}, { _, _ -> }, {}, { _, _ -> })
+}
+
+/** A tap on the clock opens the clock app, a long press opens its adjust menu. */
+@Composable
+private fun clockTapModifier(clock: HomeClockActions): Modifier = Modifier
+    .pointerInput(Unit) {
+        detectTapGestures(
+            onTap = { clock.onClockClick() },
+            onLongPress = { clock.onAdjustModeChange(ClockAdjustMode.MENU) },
         )
     }
+    .testTag(homeTag("home_clock_block"))
+
+/** Slides the page with the swipe: the one it started from out, the one beside it in from the other side. Read in the draw phase, so a swipe does not recompose Home. */
+private fun Modifier.pageShift(frame: HomeFrame, pageIndex: Int): Modifier = graphicsLayer { translationX = pageShiftPx(frame, pageIndex) }
+
+/** How far page [pageIndex] is displaced right now: one zone per page from the one the swipe started on, plus the swipe's offset (a fraction of the zone's width). */
+private fun pageShiftPx(frame: HomeFrame, pageIndex: Int): Float {
+    val offset = frame.actions.clock.pageOffset()
+    val zone = if (frame.isLandscape) frame.geometry.landscapePaneWidthPx else frame.layout.rootSize?.width?.toFloat() ?: 0f
+    val anchor = frame.actions.clock.pageAnchorIndex().takeIf { it >= 0 } ?: frame.state.clockStack.pageIndex
+    return (pageIndex - anchor + offset) * zone
 }
 
 @Composable

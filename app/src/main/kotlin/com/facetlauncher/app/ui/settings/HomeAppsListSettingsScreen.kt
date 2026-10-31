@@ -84,6 +84,7 @@ fun HomeAppsListSettingsScreen(
     onBack: () -> Unit,
     onEditFavorites: () -> Unit,
     modifier: Modifier = Modifier,
+    onEditDefaults: (() -> Unit)? = null,
     viewModel: HomeAppsListSettingsViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -96,6 +97,7 @@ fun HomeAppsListSettingsScreen(
         onReorderFavorites = viewModel::reorderFavorites,
         onOverridingChange = viewModel::setOverriding,
         modifier = modifier,
+        onEditDefaults = onEditDefaults,
     )
 }
 
@@ -109,6 +111,7 @@ private fun HomeAppsListSettingsContent(
     onReorderFavorites: (List<PlacedItem>) -> Unit,
     onOverridingChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
+    onEditDefaults: (() -> Unit)? = null,
 ) {
     val controlsEnabled = !uiState.isFacetScoped || uiState.isOverriding
 
@@ -125,7 +128,7 @@ private fun HomeAppsListSettingsContent(
                     .padding(horizontal = 24.dp),
                 contentPadding = PaddingValues(top = headerHeight, bottom = 24.dp),
             ) {
-                if (uiState.isFacetScoped) inheritOverrideItems(uiState, onOverridingChange)
+                if (uiState.isFacetScoped) inheritOverrideItems(uiState, onOverridingChange, onEditDefaults)
                 item {
                     HomeSurfacePreview(
                         appList = uiState.previewApps,
@@ -149,12 +152,13 @@ private fun HomeAppsListSettingsContent(
 }
 
 /** A facet's Inherit/Override card, summarising the launcher-wide list it inherits, and the gap under it. */
-private fun LazyListScope.inheritOverrideItems(uiState: HomeAppsListUiState, onOverridingChange: (Boolean) -> Unit) {
+private fun LazyListScope.inheritOverrideItems(uiState: HomeAppsListUiState, onOverridingChange: (Boolean) -> Unit, onEditDefaults: (() -> Unit)?) {
     item {
         InheritOverrideCard(
             overriding = uiState.isOverriding,
             onOverridingChange = onOverridingChange,
             testTagPrefix = "home_apps_list",
+            onEditDefaults = onEditDefaults,
             inheritSubtitle = if (uiState.settings.listContentMode != ListContentMode.FAVORITES) {
                 stringResource(
                     R.string.dot_join_2,

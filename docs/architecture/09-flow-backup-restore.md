@@ -33,7 +33,7 @@ sequenceDiagram
 - **Ids are not exported.** Facets and folders are referenced by their index in the bundle's
   lists; `active_facet_id` becomes `activeFacetIndex`. Room ids are regenerated on import.
 - What is *not* in the file: see [02 §6](02-persistence-room.md) (calendar selection/colors, the hosted
-  clock widget, permission and coach-mark flags, `allow_landscape`). `BackupCoverageTest` enforces the list.
+  clock stack's widget pages (a restored facet starts with just the launcher clock; the facet's `clockPlacementOwn` flag is exported, an old backup reading it as `overrideClock`), permission and coach-mark flags, `allow_landscape`). `BackupCoverageTest` enforces the list.
 
 ## 2. Import
 

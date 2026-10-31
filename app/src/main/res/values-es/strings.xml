@@ -200,6 +200,7 @@
     <string name="inherit_override_inherit_default">Heredar predeterminado</string>
     <string name="inherit_override_override_for_facet">Anular para esta faceta</string>
     <string name="inherit_override_changes_dont_affect_others">Los cambios aquí no afectan a otras facetas</string>
+    <string name="inherit_override_edit_defaults">Editar valores predeterminados</string>
 
     <!-- GestureHintOverlay -->
     <string name="gesture_hint_switch_facets">Cambiar de faceta</string>
@@ -579,7 +580,7 @@
     <string name="pro_upgrade_facet_limit">El plan gratuito incluye 3 facetas. Con Pro puedes tener hasta 10.</string>
     <string name="pro_upgrade_facet_locked">Esta faceta está en pausa en el plan gratuito. Elimina una faceta para volver a 3, o pásate a Pro para usar hasta 10.</string>
     <string name="facet_locked_content_description">Desactivada en el plan gratuito</string>
-    <string name="pro_upgrade_custom_widget">Usar tu propio widget en lugar del reloj es una función Pro. El plan gratuito incluye los relojes del launcher.</string>
+    <string name="pro_upgrade_widget_stack">Poner más de un reloj o widget en Inicio es una función Pro. El plan gratuito incluye uno.</string>
     <string name="pro_upgrade_about">Una compra desbloquea más facetas y todos los disparadores de automatización. Sin suscripción.</string>
     <string name="pro_message_unavailable">Google Play no está disponible ahora. Inténtalo más tarde.</string>
     <string name="pro_message_no_purchase">No se encontró ninguna compra de Pro en esta cuenta de Google.</string>
@@ -812,7 +813,6 @@
     <string name="clock_style_primary_font_color">Color de fuente principal</string>
     <string name="clock_style_show_meridiem">Mostrar meridiano (AM/PM)</string>
     <string name="clock_style_date_style">Estilo de fecha</string>
-    <string name="clock_style_clock_alignment">Alineación del reloj</string>
     <string name="clock_style_position_section">POSICIÓN</string>
     <string name="clock_style_tap_to_select">ESTILOS DE RELOJ — TOCA PARA SELECCIONAR</string>
     <string name="clock_style_long_press_hint">Mantén pulsado el reloj en la pantalla de inicio para ajustar el tamaño y la posición vertical.</string>
@@ -829,8 +829,8 @@
     <string name="clock_adjust_align_top">Alinear arriba</string>
     <string name="clock_adjust_align_middle">Alinear en el centro</string>
     <string name="clock_adjust_align_bottom">Alinear abajo</string>
-    <string name="clock_adjust_edit_styles">Editar estilos de reloj</string>
-    <string name="clock_adjust_edit_styles_subtitle">Plantillas, fuentes, colores y alineación</string>
+    <string name="clock_adjust_clock_settings">Ajustes de reloj y calendario</string>
+    <string name="clock_adjust_clock_settings_subtitle">Plantillas, fuentes, colores y calendario</string>
     <string name="clock_adjust_facet_settings_subtitle">Ajustes específicos de la faceta: lista de apps, dock, reloj y calendario</string>
 
     <!-- HubWidgetPickerScreen -->
@@ -909,10 +909,33 @@
     <string name="facet_settings_appearance_home_icon_only">Inicio: solo icono</string>
     <string name="facet_settings_appearance_home_icon_and_text">Inicio: icono y texto</string>
     <string name="facet_settings_appearance_home_text_only">Inicio: solo texto</string>
-    <string name="clock_adjust_use_custom_widget">Usar widget personalizado</string>
-    <string name="clock_adjust_use_custom_widget_subtitle">Sustituye el reloj por un widget a tu elección</string>
-    <string name="clock_adjust_switch_to_launcher_clock">Cambiar al widget de reloj del launcher</string>
-    <string name="clock_adjust_switch_to_launcher_clock_subtitle">Usar el reloj propio de Facet</string>
+    <string name="clock_adjust_replace_with_widget">Sustituir por widget personalizado</string>
+    <string name="clock_adjust_replace_with_widget_subtitle">Sustituye el reloj por un widget a tu elección</string>
+    <string name="clock_adjust_replace_with_clock">Sustituir por el reloj</string>
+    <string name="clock_adjust_replace_with_clock_subtitle">Usar el reloj propio de Facet en esta página</string>
+    <string name="clock_adjust_replace_widget">Sustituir widget personalizado</string>
+    <string name="clock_adjust_replace_widget_subtitle">Elegir otro widget para esta página</string>
+    <string name="clock_adjust_widget_stack">Pila de widgets</string>
+    <string name="clock_adjust_stack_empty">Vacía · añade un reloj o un widget</string>
+    <string name="clock_adjust_stack_clock">Reloj</string>
+    <string name="clock_adjust_stack_one_widget">1 widget</string>
+    <string name="clock_adjust_stack_pages">%1$d páginas</string>
+    <!-- ClockStackScreen (the widget stack: reorder, remove, configure, add) -->
+    <string name="clock_stack_title">Pila de widgets</string>
+    <string name="clock_stack_counter">%1$d de %2$d</string>
+    <string name="clock_stack_drag_hint">Arrastra para reordenar. En Inicio, desliza a izquierda y derecha para recorrerlos.</string>
+    <string name="clock_stack_full_free_hint">Quita el widget actual para añadir otro, o pásate a Pro para tener hasta 5.</string>
+    <string name="clock_stack_empty">No hay nada aquí, así que la zona del reloj en Inicio queda vacía hasta que añadas algo.</string>
+    <string name="clock_stack_add">Añadir widget</string>
+    <string name="clock_stack_row_clock">Reloj del launcher</string>
+    <string name="clock_stack_row_unavailable">Widget no disponible</string>
+    <string name="clock_stack_configure">Configurar</string>
+    <string name="clock_stack_remove">Quitar %1$s</string>
+    <string name="clock_stack_chooser_title">Añadir a la pila</string>
+    <string name="clock_stack_chooser_clock">Reloj del launcher</string>
+    <string name="clock_stack_chooser_clock_subtitle">El reloj propio de Facet</string>
+    <string name="clock_stack_chooser_widget">Widget personalizado</string>
+    <string name="clock_stack_chooser_widget_subtitle">Elige cualquier widget de tu teléfono</string>
     <string name="clock_widget_picker_title">Elegir widget de reloj</string>
 
     <!-- El tiempo -->

@@ -4,7 +4,7 @@
 
 | Store | Location | What it holds | Written by | Survives |
 |---|---|---|---|---|
-| Room `FacetDatabase` | `facet.db` (schema **v34**, `exportSchema = true` → `app/schemas/…/1.json … 34.json`) | Facets + every *placement*: favorites, dock, folders, folder membership, widget grid positions, plus the facet automation rules (`automation_rules`) and the weather cache (`weather_hours`, `weather_meta`) | 6 repositories (§2): `FacetRepository`, `PlacementRepository`, `FolderRepository`, `WidgetPlacementRepository`, `AutomationRuleRepository`, `WeatherRepository` (through `RoomWeatherStore`) | Reinstall-over-upgrade (migrations); **not** downgrade (dropped) |
+| Room `FacetDatabase` | `facet.db` (schema **v36**, `exportSchema = true` → `app/schemas/…/1.json … 36.json`) | Facets + every *placement*: favorites, dock, folders, folder membership, widget grid positions, plus the facet automation rules (`automation_rules`) the weather cache (`weather_hours`, `weather_meta`) and each facet's clock stack (`clock_stack_items`) | 7 repositories (§2): `FacetRepository`, `PlacementRepository`, `FolderRepository`, `WidgetPlacementRepository`, `AutomationRuleRepository`, `WeatherRepository` (through `RoomWeatherStore`), `ClockStackRepository` | Reinstall-over-upgrade (migrations); **not** downgrade (dropped) |
 | `DataStore<Preferences>` | `facet_settings` (`datastore/facet_settings.preferences_pb`) | **All launcher-wide settings and defaults** — clock/app-list/dock design defaults (the calendar events strip has no design defaults of its own — see below), theme, drawer, search, permission-prompt flags, onboarding/seed/coach-mark flags, active facet id, the clock accessory switches, weather units and location — 79 keys (§5) | `SettingsRepository` only | Any upgrade (missing keys fall back to `LauncherSettings()` defaults) |
 | `DataStore<Preferences>` | `facet_entitlement` (`datastore/facet_entitlement.preferences_pb`) | The cached Pro state (`pro_purchased`; excluded from Android backups and device transfer by `res/xml/data_extraction_rules.xml`), so Pro works offline and at cold start; debug builds also keep `debug_entitlement_mode` here | `PlayEntitlementRepository`, only from an explicit Google Play answer | Same as `facet_settings`; **not** in the backup file, so a restore can never grant Pro |
 | `DataStore<Preferences>` | `facet_automation` (`datastore/facet_automation.preferences_pb`) | Facet-automation bookkeeping: the baseline facet, the ordered active rule ids, the suppressed rule ids (§5.7) | `AutomationStateRepository` (via `ActivateFacetByIdUseCase`) | Same as `facet_settings`; **not** in the backup file |
@@ -38,7 +38,8 @@ erDiagram
         long id PK "autoGenerate"
         string name
         int position
-        boolean overrideClock "gates the whole clock+calendar design block"
+        boolean overrideClock "gates the clock style and accessories, not the placement"
+        boolean clockPlacementOwn "false until first adjusted on Home: then alignment, zone height, scale and their landscape twins are the facet's own"
         string clockTemplateId "enum via Converters"
         string clockFontOption
         string clockColorOption
@@ -50,7 +51,7 @@ erDiagram
         boolean clockShowBattery "default true"
         boolean clockShowWeather "default false"
         string clockWeatherIconStyle "default COLORED; used while overrideClock"
-        string clockAlignment "also positions the calendar events strip"
+        string clockAlignment "own placement, used while clockPlacementOwn"
         float clockZoneHeightDp "nullable"
         float clockScale
         boolean overrideApps
@@ -120,6 +121,21 @@ erDiagram
         string profile
         int userId
         int landscapeOrder "nullable; landscape Hub flow order"
+    }
+
+    facets ||--o{ clock_stack_items : "has (CASCADE)"
+    clock_stack_items {
+        long id PK
+        long facetId FK
+        int position "swipe order"
+        string kind "CLOCK or WIDGET"
+        int appWidgetId "null for CLOCK"
+        int widthDp "nullable until resized"
+        int heightDp
+        string alignment "nullable"
+        int landscapeWidthDp "null falls back to portrait"
+        int landscapeHeightDp
+        string landscapeAlignment
     }
 
     weather_hours {
@@ -193,6 +209,7 @@ flowchart LR
         WPD[WidgetPlacementDao]
         ARD[AutomationRuleDao]
         WTD[WeatherDao]
+        CSD[ClockStackItemDao]
     end
 
     subgraph REPO["data/ repositories"]
@@ -202,6 +219,7 @@ flowchart LR
         WPR[WidgetPlacementRepository]
         ARR["AutomationRuleRepository\n(maps rows to AutomationRule)"]
         WTR["WeatherRepository\n(via RoomWeatherStore, plus the MET API)"]
+        CSR["ClockStackRepository\n(a facet's clock stack)"]
         AR["AppRepository\n(LauncherApps, not Room)"]
     end
 
@@ -212,6 +230,7 @@ flowchart LR
     WPD --> WPR
     ARD --> ARR
     WTD --> WTR
+    CSD --> CSR
     FD -. "facet exists check on save" .-> ARR
 
     AR -. "observeInstalledApps()" .-> FOR
@@ -247,6 +266,7 @@ Every DAO follows the same shape, which is what makes the reactive layer uniform
 | `FolderPlacementDao` | `observe(list, ownerKey)` | `upsert` (REPLACE) | `deleteByFolderId(list, ownerKey, folderId)`, `deleteAllForOwner(list, ownerKey)` | — |
 | `FolderDao` | `observeAllWithApps()` (`@Transaction`, `FolderWithApps`) | `insertFolder(folder): Long`, `renameFolder(id, name)`, `upsertFolderApp(app): Long` | `deleteFolder(id)`, `deleteAllFolders()`, `deleteFolderApp(folderId, pkg, activity, userId)`, `deleteFolderAppsByPackage(pkg, userId)`, `deleteFolderAppsByUserId(userId)` | `getOrphanedFolderApps()` |
 | `AutomationRuleDao` | `observeAll()` (`ORDER BY position ASC, id ASC`) | `insert(rule): Long`, `update(rule)`, `setEnabled(id, enabled)` | `deleteById(id)` | `getById(id)`, `maxPosition()` (`-1` when empty) |
+| `ClockStackItemDao` | `observe(facetId)`, `observeAll()` (`ORDER BY position, id`) | `insert` | `delete(id)`, `deleteAll(facetId)` | `getAll(facetId)`, `getById(id)`; updates `replace` (swaps the kind and widget id, resets the sizes), `setPosition`, `setSize`, `setLandscapeSize`, `setAlignment`, `setLandscapeAlignment`. `ClockStackRepository` wraps add, remove, reorder and clear in `database.withTransaction`, caps a stack at `MAX_CLOCK_STACK_ITEMS` (5) and allows one `CLOCK` item |
 | `WeatherDao` | `observeHours()` (`ORDER BY timeEpochSecond ASC`), `observeMeta()` (the one row, or `null`) | `insertHours(list)` (REPLACE), `upsertMeta(meta)` (REPLACE) | `clearHours()` | `getHours()`, `getMeta()`. `RoomWeatherStore.replaceHours` clears and inserts inside `database.withTransaction`, so a reader never sees half a forecast; `writeState` stores `placeName` and `placeNameSource` with the rest of the fetch state, and `WeatherRepository` drops them when the place changes |
 | `WidgetPlacementDao` | `observeAll()` (no ORDER BY — grid position is `row`/`col`, not `position`) | `upsert(placement)` (REPLACE on `appWidgetId`) | `deleteById(appWidgetId)`, `delete(placement)` | `getById(appWidgetId)` |
 
@@ -337,6 +357,8 @@ Room.databaseBuilder(context, FacetDatabase::class.java, "facet.db")
 | 31→32 | Landscape's own list alignment: `facets.landscapeAppRowPosition`, `landscapeAppListVerticalAlignment`, `landscapeAppListColumnAlignment` (nullable TEXT). `NULL` is "Same as portrait": a facet's landscape value, else its explicit portrait value, else the launcher's landscape value, else its portrait value (`resolveLandscapeSentinel`). Not in `BackupFacet`. `FacetDatabaseMigrationTest.migration31To32…` checks the portrait alignment survives and the new columns are `NULL`. |
 | 32→33 | The clock accessory switches and the weather cache: `facets.clockShowAlarm` and `clockShowBattery` (`INTEGER NOT NULL DEFAULT 1`) and `clockShowWeather` (`DEFAULT 0`), so every facet looks as it did, and the new tables `weather_hours` and `weather_meta` (DDL from the exported `33.json`, empty). The switches follow `overrideClock`; the facet fields are in `BackupFacet`, the cache is not backed up. `FacetDatabaseMigrationTest.migration32To33…` checks the three defaults and that both tables exist and are empty. |
 | 33→34 | `facets.clockWeatherIconStyle` (`TEXT NOT NULL DEFAULT 'COLORED'`): the per-facet weather picture style, used while the facet overrides the clock (`BackupFacet.clockWeatherIconStyle`). `FacetDatabaseMigrationTest.migration33To34…` runs 32→33→34 and checks the default. |
+| 34→35 | New table `clock_stack_items` (DDL from the exported `35.json`, index on `facetId, position`) and every facet gets its first page at position 0: a facet with a hosted clock widget gets that `WIDGET` row (size, alignment and landscape twins carried over), every other facet gets a `CLOCK` row. An empty stack draws nothing, so no facet may be left without a row; `FacetRepository.addFacet` and `restoreFacet` insert the `CLOCK` row too. The `facets.clockWidget*` columns stay (SQLite on minSdk 30 cannot drop a column) but are retired: `FacetMapping` neither reads nor writes them, and `Facet` has no such fields. `FacetDatabaseMigrationTest.migration34To35…` runs 32→33→34→35 and checks the moved widget row, that a clock-only facet gets a `CLOCK` row, and that no facet is left without one. |
+| 35→36 | `facets.clockPlacementOwn` (`INTEGER NOT NULL DEFAULT 0`), then `UPDATE facets SET clockPlacementOwn = overrideClock`: a facet that overrode the clock already owned its placement, the others keep showing the launcher fallback until first adjusted on Home. `BackupFacet.clockPlacementOwn` is nullable: a backup from before it reads as `overrideClock`. `FacetDatabaseMigrationTest.migration35To36…` runs 32→…→36 and checks both facets. |
 
 The landscape twins are handled as one `LandscapeOverrides` group (clock alignment, divider, scale, widget size, row position, vertical and column alignment; every field nullable). Settings hold it as `LauncherSettings.landscape`, read from the six `landscape_*` keys and written only through `updateLandscape`. A facet keeps the flat columns above (so the schema is unchanged) and exposes the group as `FacetEntity.landscape` / `withLandscape(...)`, written through `FacetRepository.updateLandscape`. `resolveLandscape` is the one resolution rule (see [17](17-flow-home-layout.md) §1.0).
 
@@ -573,7 +595,11 @@ DataStore level either.
 The same 67 keys, grouped the way Settings screens present them, with the `LauncherSettings` field
 each maps to. Defaults are `LauncherSettings()`'s constructor defaults.
 
-#### Clock design (global; overridden per facet when `facets.overrideClock`)
+#### Clock design (global; the style and accessories are overridden per facet when `facets.overrideClock`)
+
+The placement keys here (`clock_alignment`, `clock_zone_height_dp`, `clock_scale` and the landscape twins) are no longer
+edited anywhere: they are the launcher's built-in fallback for a facet that has not adjusted its own placement
+(`facets.clockPlacementOwn` false). The first adjustment on Home copies what the facet shows into the facet.
 
 The calendar events strip has no design keys of its own here any more — it reads the global-only
 `home_apps_font_weight`/`app_label_color_option` ("Home app list", below) and `launcher_font_option`
@@ -752,8 +778,8 @@ the ones below, with `activeFacetIndex` instead of `active_facet_id` and the `la
 and `calendar_colors` (keyed by this device's calendar row ids), `allow_landscape` (a per-device choice),
 all four `*_permission_requested` flags and `onboarding_completed`, `defaults_seeded`, `coach_marks_seen`
 (this install's own history). `BackupFacet` carries every `Facet` field except the id and the hosted
-clock widget (`clockWidgetAppWidgetId` and its portrait and landscape sizes): an `AppWidgetHost` id is not
-portable, so that widget is re-added by hand. `BackupCoverageTest` fails when a `Facet` or `LauncherSettings`
+clock stack (`Facet.clockStack`, the rows of `clock_stack_items`): an `AppWidgetHost` id is not
+portable, so the widgets are re-added by hand. `BackupCoverageTest` fails when a `Facet` or `LauncherSettings`
 field is neither exported nor in its list of exclusions, so a new column can't be left out of a backup silently.
 The clock look and placement, the app list's vertical alignment, `recently_installed_position`,
 `search_settings_enabled` and the landscape clock and list values were added later as defaulted fields,

@@ -27,7 +27,7 @@ flowchart TB
     end
 
     subgraph SRC["Sources"]
-        DAO["data/local — Room DAOs\nFacetDatabase v32"]
+        DAO["data/local — Room DAOs\nFacetDatabase v36"]
         DS["DataStore of Preferences\nfacet_settings, facet_automation"]
         FW["Framework services\nLauncherApps, UserManager, AppWidgetManager,\nContentResolver, UsageStatsManager, WallpaperManager ..."]
     end
@@ -105,13 +105,13 @@ flowchart TB
             ENM["EntitlementModule\n@Binds PlayEntitlementRepository\n+ 2 @BindsOptionalOf hooks"]
             WTM["WeatherModule\n@Binds MetWeatherApi to WeatherApi\n@Binds RoomWeatherStore to WeatherStore\n@Binds AndroidPlaceGeocoder to PlaceGeocoder"]
         end
-        REPOS["48 @Singleton data classes (42 repositories)\n@Singleton class X @Inject constructor(...)\n(no module — constructor injection)"]
+        REPOS["50 @Singleton data classes (43 repositories)\n@Singleton class X @Inject constructor(...)\n(no module — constructor injection)"]
         MODS --> REPOS
     end
 
     subgraph VMC["ViewModelComponent — one per ViewModel instance"]
         UCS["Use cases\nclass X @Inject constructor(...)\nunscoped: new instance per injection"]
-        VMS["32 @HiltViewModel ViewModels\nSavedStateHandle for nav args"]
+        VMS["33 @HiltViewModel ViewModels\nSavedStateHandle for nav args"]
         UCS --> VMS
     end
 
@@ -140,9 +140,9 @@ flowchart TB
 | `StyledIconCache` | `@Singleton` | Constructor injection; `LauncherActivity` injects it and provides it as `LocalStyledIconCache` | Makes the glyph-only and outline icon pictures, on demand or ahead of it (`WarmStyledIcons` at the root warms every app's while a glyph or outline style is on, so the drawer finds them ready), and keeps only the applied picture (glyph or outline, not both) for each, held weakly, keyed by the icon bitmap, so a rescan that decodes fresh icons recomputes only what is on screen. A bare instance is the local's default, for previews and tests. |
 | `EntitlementRepository` | `@Singleton` | `EntitlementModule` `@Binds` `PlayEntitlementRepository`; two `@BindsOptionalOf` hooks (`EntitlementOverride`, `DebugSettingsEntry`) | The debug source set (`DebugBindingsModule`) fills the optional hooks; a release build leaves them empty, so the override and its Settings row exist only in debug. The benchmark source set provides an `EntitlementOverride` that always forces Pro (a measurement build, never shipped). |
 | `WeatherApi`, `WeatherStore`, `PlaceGeocoder` | `@Singleton` | `WeatherModule` `@Binds` `MetWeatherApi`, `RoomWeatherStore` and `AndroidPlaceGeocoder` | The seams the weather code is tested through: tests pass a fake API, an in-memory store and a fake geocoder, so no test touches the network. |
-| Repositories (42; with `NotificationOpener`, `NotificationActionController`, `MetWeatherApi`, `RoomWeatherStore` and `AndroidPlaceGeocoder`, 47 `@Singleton` classes in `data/`) | `@Singleton` | Constructor injection, no module | They hold `callbackFlow` registrations and in-memory state (`NotificationBadgeRepository.badgeCounts`); a single instance is required for that state to be shared. |
+| Repositories (43; with `NotificationOpener`, `NotificationActionController`, `MetWeatherApi`, `RoomWeatherStore` and `AndroidPlaceGeocoder`, 48 `@Singleton` classes in `data/`) | `@Singleton` | Constructor injection, no module | They hold `callbackFlow` registrations and in-memory state (`NotificationBadgeRepository.badgeCounts`); a single instance is required for that state to be shared. |
 | Use cases | unscoped | Constructor injection | Stateless by convention; `ObserveHomeScreenStateUseCase` is the one exception (holds a `refreshTrigger` `MutableSharedFlow`) — see F8. |
-| ViewModels (37) | `ViewModelComponent` | `@HiltViewModel`, resolved by `hiltViewModel()` per `NavHost` destination or `by viewModels()` in the Activity | Nav-arg-driven screens (`FacetSettingsViewModel`, `FolderDetailViewModel`, ...) read ids from `SavedStateHandle`. |
+| ViewModels (38) | `ViewModelComponent` | `@HiltViewModel`, resolved by `hiltViewModel()` per `NavHost` destination or `by viewModels()` in the Activity | Nav-arg-driven screens (`FacetSettingsViewModel`, `FolderDetailViewModel`, ...) read ids from `SavedStateHandle`. |
 
 Apart from `EntitlementModule` and `WeatherModule`, there are **no interface-to-implementation `@Binds` modules**: every repository is a concrete
 `@Singleton class`, and tests substitute them with hand-written DAO fakes (`FolderTestFakes.kt`)
@@ -168,6 +168,6 @@ fine) rather than via Hilt test modules — see [06-testing.md](06-testing.md).
 - keeps `SyncFacetShortcutsUseCase` and `RunFacetAutomationUseCase` collecting for the process lifetime (dynamic shortcuts; automation rules);
 - clears `isLoading` after a 3 s timeout so a slow first app scan can't leave the screen blank.
 
-`FacetNavHost` owns 27 string-route destinations (`FacetDestinations`); `Home ⇄ Drawer` is *not* a
+`FacetNavHost` owns 33 string-route destinations (`FacetDestinations`); `Home ⇄ Drawer` is *not* a
 nav transition — `HomeDrawerRoute` handles it as a follow-finger gesture inside the `HOME`
 destination, while `Hub`/`Facets`/settings screens are ordinary destinations.

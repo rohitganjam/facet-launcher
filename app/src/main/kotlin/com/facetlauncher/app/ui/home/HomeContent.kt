@@ -24,6 +24,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.layout.positionInRoot
@@ -83,7 +84,11 @@ private fun BoxScope.PortraitClockZone(frame: HomeFrame) {
     HomeClockSlot(
         frame = frame,
         modifier = Modifier
-            .offset { IntOffset(0, (handlePx - frame.metrics.minGapPx - layout.clockNaturalHeightPx).roundToInt()) }
+            // Placed from the height measured in this very pass, so a page of another height never shows a frame at the old one's place.
+            .layout { measurable, constraints ->
+                val placeable = measurable.measure(constraints)
+                layout(placeable.width, placeable.height) { placeable.place(0, (handlePx - frame.metrics.minGapPx - placeable.height).roundToInt()) }
+            }
             .onGloballyPositioned {
                 layout.clockNaturalHeightPx = it.size.height.toFloat()
                 layout.clockBlockBottomInRoot = it.positionInRoot().y + it.size.height
@@ -105,6 +110,19 @@ private fun BoxScope.PortraitClockZone(frame: HomeFrame) {
                 .graphicsLayer { alpha = media.fraction },
         )
     }
+    // Under the divider, and under the media row when it shows; the list is pushed down to make room.
+    if (frame.state.clockStack.pageCount > 1) {
+        val dotsInsetPx = (with(frame.density) { CLOCK_PAGE_DOTS_ROW_HEIGHT.toPx() } - with(frame.density) { CLOCK_PAGE_DOT_ROW_CONTENT.toPx() }) / 2f
+        ClockPageDots(
+            pageCount = frame.state.clockStack.pageCount,
+            pageIndex = frame.state.clockStack.pageIndex,
+            dragging = frame.actions.clock.pageDragging(),
+            forceShown = frame.state.clock.adjustMode == ClockAdjustMode.ADJUST,
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .offset { IntOffset(0, (media.dotsTopPx + dotsInsetPx).roundToInt()) },
+        )
+    }
     val listModifier = if (frame.state.list.alignment.verticalAlignment == AppListVerticalAlignment.TOP) {
         Modifier.align(Alignment.TopStart).offset { IntOffset(0, media.listTopPx.roundToInt()) }
     } else {
@@ -120,16 +138,20 @@ internal fun HomeLandscapeContent(frame: HomeFrame) {
     val layout = frame.layout
     val currentOnClockPaneBoundsChange by rememberUpdatedState(frame.actions.onClockPaneBoundsChange)
     DisposableEffect(Unit) { onDispose { currentOnClockPaneBoundsChange(null) } }
+    val clockPaneAlignment = when (frame.state.clock.placement.alignment) {
+        ClockAlignment.LEFT -> Alignment.TopStart
+        ClockAlignment.CENTER -> Alignment.CenterStart
+        ClockAlignment.RIGHT -> Alignment.BottomStart
+    }
     HomeLandscapeLayout(
         hasDock = frame.state.dock.items.isNotEmpty(),
         dockAtBottom = frame.dockAtBottom,
         onDockRowHeightChange = { layout.landscapeDockRowHeightPx = it.toFloat() },
-        onClockPaneBoundsChange = { currentOnClockPaneBoundsChange(it.translate(-(layout.rootOriginInRoot ?: Offset.Zero))) },
-        clockPaneAlignment = when (frame.state.clock.placement.alignment) {
-            ClockAlignment.LEFT -> Alignment.TopStart
-            ClockAlignment.CENTER -> Alignment.CenterStart
-            ClockAlignment.RIGHT -> Alignment.BottomStart
+        onClockPaneBoundsChange = {
+            layout.landscapeClockPaneHeightPx = it.height
+            currentOnClockPaneBoundsChange(it.translate(-(layout.rootOriginInRoot ?: Offset.Zero)))
         },
+        clockPaneAlignment = clockPaneAlignment,
         clockPaneWidth = with(frame.density) { frame.geometry.landscapePaneWidthPx.toDp() },
         modifier = Modifier
             .padding(WindowInsets.systemBars.asPaddingValues())
@@ -146,7 +168,20 @@ internal fun HomeLandscapeContent(frame: HomeFrame) {
                 frame.geometry.landscape.originY,
                 Modifier.graphicsLayer { alpha = frame.clockAppearAlpha.value },
                 scaledFootprint = true,
+                anchor = clockPaneAlignment,
             )
+        },
+        clockPaneOverlay = {
+            val stack = frame.state.clockStack
+            if (stack.pageCount > 1) {
+                ClockPageDots(
+                    pageCount = stack.pageCount,
+                    pageIndex = stack.pageIndex,
+                    dragging = frame.actions.clock.pageDragging(),
+                    forceShown = frame.state.clock.adjustMode == ClockAdjustMode.ADJUST,
+                    modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = HOME_LANDSCAPE_CLOCK_DOTS_BOTTOM),
+                )
+            }
         },
         apps = { LandscapeAppsPane(frame) },
         // The side column is icons only; the roomy bottom row follows the user's dock style, as portrait does.

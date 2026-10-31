@@ -84,6 +84,8 @@ internal data class HomeMediaLayout(
     val rowTopPx: Float,
     /** The app list's top now, following the row as it fades in or out. */
     val listTopPx: Float,
+    /** Where the clock stack's page dots sit: under the divider, or under the media row when it shows. Only the portrait layout draws them. */
+    val dotsTopPx: Float,
     /** Where the app list's top settles once the row's fade finishes. */
     val listTopTargetPx: Float,
 )
@@ -101,7 +103,7 @@ internal fun rememberHomeFrame(
     val metrics = clockMetrics(density)
     val widgetMinPx = clockWidgetMinPx(state.widget, landscape, density)
     val geometry = computeClockGeometry(clockGeometryInputs(state, layout, landscape, metrics, widgetMinPx, density))
-    val media = rememberHomeMediaLayout(state.media.player, layout, geometry.handle.handlePx, metrics.minGapPx, landscape, density)
+    val media = rememberHomeMediaLayout(state.media.player, layout, geometry.handle.handlePx, metrics.minGapPx, landscape, state.clockStack.pageCount > 1, density)
     val itemStyle = rememberHomeItemStyle(state.list.look)
     return HomeFrame(
         state = state,
@@ -136,7 +138,7 @@ private fun clockMetrics(density: Density): ClockMetrics {
 }
 
 /** The resize floor is one Hub cell in landscape, where cells are a fixed size; in portrait it is the provider's own minimum. */
-private fun clockWidgetMinPx(widget: HomeClockWidgetState?, landscape: Boolean, density: Density): Offset {
+internal fun clockWidgetMinPx(widget: HomeClockWidgetState?, landscape: Boolean, density: Density): Offset {
     if (landscape) return with(density) { HUB_LANDSCAPE_CELL_SIZE.toPx() }.let { Offset(it, it) }
     return Offset(
         widget?.minWidthDp?.let { with(density) { it.toPx() } } ?: 1f,
@@ -195,6 +197,7 @@ private fun rememberHomeMediaLayout(
     handlePx: Float,
     minGapPx: Float,
     landscape: Boolean,
+    showsPageDots: Boolean,
     density: Density,
 ): HomeMediaLayout {
     LaunchedEffect(player) { if (player != null) layout.lastMediaPlayer = player }
@@ -205,12 +208,16 @@ private fun rememberHomeMediaLayout(
     )
     val rowTopPx = handlePx - minGapPx + with(density) { HOME_MEDIA_ROW_TOP_GAP.toPx() }
     val belowGapPx = with(density) { HOME_MEDIA_ROW_BOTTOM_GAP.toPx() }
-    fun listTopFor(reservePx: Float) = if (reservePx > 0f) maxOf(handlePx, rowTopPx + reservePx + belowGapPx) else handlePx
+    // The dots get their own row under the divider (and under the media row), which pushes the list down while the stack has several pages.
+    val dotsRowPx = if (showsPageDots && !landscape) with(density) { CLOCK_PAGE_DOTS_ROW_HEIGHT.toPx() } else 0f
+    fun belowMediaPx(reservePx: Float) = if (reservePx > 0f) maxOf(handlePx, rowTopPx + reservePx + belowGapPx) else handlePx
+    fun listTopFor(reservePx: Float) = belowMediaPx(reservePx) + dotsRowPx
     return HomeMediaLayout(
         shownPlayer = player ?: layout.lastMediaPlayer,
         fraction = fraction,
         rowTopPx = rowTopPx,
         listTopPx = listTopFor(layout.mediaRowHeightPx * fraction),
+        dotsTopPx = belowMediaPx(layout.mediaRowHeightPx * fraction),
         listTopTargetPx = if (landscape) 0f else listTopFor(if (player != null) layout.mediaRowHeightPx else 0f),
     )
 }
@@ -290,3 +297,17 @@ internal const val GEOMETRY_SETTLE_TIMEOUT_MS = 3_000L
 
 /** M3 emphasized-decelerate easing (`cubic-bezier(.05,.7,.1,1)`) — an element coming to rest as it enters. */
 internal val EmphasizedDecelerateEasing = CubicBezierEasing(0.05f, 0.7f, 0.1f, 1f)
+
+/** A widget page beside the visible one, at the size it will have once shown, so it never resizes as it lands. `null` while its size or Home's room is unknown. */
+internal fun HomeFrame.neighborWidgetSizePx(widget: HomeClockWidgetState): Offset? {
+    val width = widget.widthDp ?: return null
+    val height = widget.heightDp ?: return null
+    val room = geometry.widgetRoomPx ?: return null
+    val min = clockWidgetMinPx(widget, isLandscape, density)
+    val widthPx = with(density) { width.toPx() }
+    val heightPx = with(density) { height.toPx() }
+    return Offset(
+        widthPx.coerceIn(min.x, maxOf(min.x, room.x)),
+        heightPx.coerceIn(min.y, maxOf(min.y, room.y)),
+    )
+}

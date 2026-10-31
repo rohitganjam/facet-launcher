@@ -47,7 +47,7 @@ class CalendarSettingsScreenTest {
                     ),
                 )
                 val database = Room.inMemoryDatabaseBuilder(context, FacetDatabase::class.java).allowMainThreadQueries().build()
-                facetRepository = FacetRepository(database.facetDao())
+                facetRepository = FacetRepository(database.facetDao(), database.clockStackItemDao())
                 if (facetId != null) {
                     runBlocking { facetRepository.addFacet() } // seeds id 1L, matching facetId below
                 }
@@ -184,7 +184,7 @@ class CalendarSettingsScreenGrantedTest {
                 CalendarSettingsViewModel(
                     SavedStateHandle(),
                     settingsRepository,
-                    FacetRepository(database.facetDao()),
+                    FacetRepository(database.facetDao(), database.clockStackItemDao()),
                     FakeCalendarPermissionRepository(context, granted = true),
                     FakeCalendarRepository(context.contentResolver, calendars, todayEvents),
                     WallpaperRepository(WallpaperManager.getInstance(context)),

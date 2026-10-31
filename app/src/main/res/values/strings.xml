@@ -213,6 +213,7 @@
     <string name="inherit_override_inherit_default">Inherit default</string>
     <string name="inherit_override_override_for_facet">Override for this facet</string>
     <string name="inherit_override_changes_dont_affect_others">Changes here don\'t affect other facets</string>
+    <string name="inherit_override_edit_defaults">Edit defaults</string>
 
     <!-- GestureHintOverlay -->
     <string name="gesture_hint_switch_facets">Switch facets</string>
@@ -627,7 +628,7 @@
     <string name="pro_upgrade_facet_limit">The free plan includes 3 facets. Pro lets you have up to 10.</string>
     <string name="pro_upgrade_facet_locked">This facet is paused on the free plan. Delete a facet to get back to 3, or go Pro to use up to 10.</string>
     <string name="facet_locked_content_description">Disabled on the free plan</string>
-    <string name="pro_upgrade_custom_widget">Using your own widget in place of the clock is a Pro feature. The free plan includes the launcher\'s own clocks.</string>
+    <string name="pro_upgrade_widget_stack">Putting more than one clock or widget on Home is a Pro feature. The free plan has one.</string>
     <string name="pro_upgrade_about">One purchase unlocks more facets and every automation trigger. No subscription.</string>
     <string name="pro_message_unavailable">Google Play isn\'t available right now. Try again later.</string>
     <string name="pro_message_no_purchase">No Pro purchase found for this Google account.</string>
@@ -889,7 +890,6 @@
     <string name="clock_style_primary_font_color">Primary font color</string>
     <string name="clock_style_show_meridiem">Show meridiem (AM/PM)</string>
     <string name="clock_style_date_style">Date style</string>
-    <string name="clock_style_clock_alignment">Clock alignment</string>
     <string name="clock_style_position_section">POSITION</string>
     <string name="clock_style_tap_to_select">CLOCK STYLES — TAP TO SELECT</string>
     <string name="clock_style_long_press_hint">Long-press clock on home screen to adjust size and vertical position.</string>
@@ -907,14 +907,37 @@
     <string name="clock_adjust_align_top">Align top</string>
     <string name="clock_adjust_align_middle">Align middle</string>
     <string name="clock_adjust_align_bottom">Align bottom</string>
-    <string name="clock_adjust_edit_styles">Edit clock styles</string>
-    <string name="clock_adjust_edit_styles_subtitle">Templates, fonts, colors, and alignment</string>
+    <string name="clock_adjust_clock_settings">Clock &amp; calendar settings</string>
+    <string name="clock_adjust_clock_settings_subtitle">Templates, fonts, colors, calendar</string>
     <string name="clock_adjust_facet_settings_subtitle">Facet-specific apps list, dock, clock &amp; calendar settings</string>
     <!-- PRD F15 — replaces this facet's native clock with a hosted third-party AppWidget -->
-    <string name="clock_adjust_use_custom_widget">Use custom widget</string>
-    <string name="clock_adjust_use_custom_widget_subtitle">Replace the clock with a widget of your choice</string>
-    <string name="clock_adjust_switch_to_launcher_clock">Switch to launcher clock widget</string>
-    <string name="clock_adjust_switch_to_launcher_clock_subtitle">Use Facet\'s own clock instead</string>
+    <string name="clock_adjust_replace_with_widget">Replace with custom widget</string>
+    <string name="clock_adjust_replace_with_widget_subtitle">Swap the clock for a widget of your choice</string>
+    <string name="clock_adjust_replace_with_clock">Replace with clock</string>
+    <string name="clock_adjust_replace_with_clock_subtitle">Use Facet\'s own clock on this page</string>
+    <string name="clock_adjust_replace_widget">Replace custom widget</string>
+    <string name="clock_adjust_replace_widget_subtitle">Choose a different widget for this page</string>
+    <string name="clock_adjust_widget_stack">Widget stack</string>
+    <string name="clock_adjust_stack_empty">Empty · add a clock or a widget</string>
+    <string name="clock_adjust_stack_clock">Clock</string>
+    <string name="clock_adjust_stack_one_widget">1 widget</string>
+    <string name="clock_adjust_stack_pages">%1$d pages</string>
+    <!-- ClockStackScreen (the widget stack: reorder, remove, configure, add) -->
+    <string name="clock_stack_title">Widget stack</string>
+    <string name="clock_stack_counter">%1$d of %2$d</string>
+    <string name="clock_stack_drag_hint">Drag to reorder. On Home, swipe left and right through them.</string>
+    <string name="clock_stack_full_free_hint">Remove the current widget to add another, or go Pro for up to 5.</string>
+    <string name="clock_stack_empty">Nothing here, so the clock area on Home stays blank until you add something.</string>
+    <string name="clock_stack_add">Add widget</string>
+    <string name="clock_stack_row_clock">Launcher clock</string>
+    <string name="clock_stack_row_unavailable">Widget unavailable</string>
+    <string name="clock_stack_configure">Configure</string>
+    <string name="clock_stack_remove">Remove %1$s</string>
+    <string name="clock_stack_chooser_title">Add to the stack</string>
+    <string name="clock_stack_chooser_clock">Launcher clock</string>
+    <string name="clock_stack_chooser_clock_subtitle">Facet\'s own clock</string>
+    <string name="clock_stack_chooser_widget">Custom widget</string>
+    <string name="clock_stack_chooser_widget_subtitle">Choose any widget on your phone</string>
     <!-- ClockWidgetPickerScreen (reuses hub_widget_picker_search/none_found/setup_cancelled — see HubWidgetPickerScreen) -->
     <string name="clock_widget_picker_title">Choose clock widget</string>
 

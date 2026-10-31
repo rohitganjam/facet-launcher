@@ -81,6 +81,7 @@ import com.facetlauncher.app.ui.theme.resolvedColor
 fun CalendarSettingsScreen(
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
+    onEditDefaults: (() -> Unit)? = null,
     viewModel: CalendarSettingsViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -111,6 +112,7 @@ fun CalendarSettingsScreen(
         onCalendarToggle = viewModel::setCalendarSelected,
         onSelectAllCalendarsChange = viewModel::setAllCalendarsSelected,
         modifier = modifier,
+        onEditDefaults = onEditDefaults,
     )
 }
 
@@ -126,6 +128,7 @@ private fun CalendarSettingsContent(
     onCalendarToggle: (String, Boolean) -> Unit,
     onSelectAllCalendarsChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
+    onEditDefaults: (() -> Unit)? = null,
 ) {
     // Every control below (all-day events, calendar selection) is read-only under Inherit and live under Override.
     val controlsEnabled = !uiState.isFacetScoped || uiState.isOverriding
@@ -154,6 +157,7 @@ private fun CalendarSettingsContent(
                             overriding = uiState.isOverriding,
                             onOverridingChange = onOverridingChange,
                             testTagPrefix = "calendar",
+                            onEditDefaults = onEditDefaults,
                             inheritSubtitle = stringResource(R.string.calendar_settings_follows_launcher_wide),
                         )
                     }

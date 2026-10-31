@@ -55,6 +55,7 @@ import com.facetlauncher.app.data.ContactRepository
 import com.facetlauncher.app.data.DefaultAppRepository
 import com.facetlauncher.app.data.DefaultLauncherRepository
 import com.facetlauncher.app.data.EntitlementRepository
+import com.facetlauncher.app.data.ClockStackRepository
 import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.FacetShortcutRepository
 import com.facetlauncher.app.data.FolderRepository
@@ -110,7 +111,10 @@ import com.facetlauncher.app.domain.ResolveWidgetDropUseCase
 import com.facetlauncher.app.domain.ResolveWidgetResizeUseCase
 import com.facetlauncher.app.domain.SeedDefaultDockUseCase
 import com.facetlauncher.app.domain.SelectableFacetsUseCase
-import com.facetlauncher.app.domain.SwitchFacetToNativeClockUseCase
+import com.facetlauncher.app.domain.AddClockStackItemUseCase
+import com.facetlauncher.app.domain.CommitClockPlacementUseCase
+import com.facetlauncher.app.domain.RemoveClockStackItemUseCase
+import com.facetlauncher.app.domain.ReplaceClockStackItemUseCase
 import com.facetlauncher.app.domain.SyncFacetShortcutsUseCase
 import com.facetlauncher.app.ui.components.HomeSwipeGate
 import com.facetlauncher.app.ui.components.LocalHomeSwipeGate
@@ -131,6 +135,7 @@ import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import java.io.File
 import java.time.Clock
 import kotlinx.collections.immutable.toImmutableList
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.runBlocking
@@ -159,6 +164,9 @@ class HomeDrawerRouteTest {
     val composeRule = createComposeRule()
 
     private lateinit var launcherViewModel: LauncherViewModel
+
+    /** The route's own clock stack and facets, so a test can seed pages for the active facet. */
+    private lateinit var seedClockStack: suspend (appWidgetId: Int) -> Unit
 
     /** One snapshot shared by Home and the Drawer, so a test can seed notifications the long-press sheet then lists. */
     private val notificationBadges = NotificationBadgeRepository()
@@ -205,7 +213,14 @@ class HomeDrawerRouteTest {
                     ),
                 ).also { repo -> if (onboardingCompleted) runBlocking { repo.setOnboardingCompleted(true) } }
             }
-            val facetRepository = remember { FacetRepository(database.facetDao()) }
+            val facetRepository = remember { FacetRepository(database.facetDao(), database.clockStackItemDao()) }
+            val clockStackRepository = remember { ClockStackRepository(database, database.clockStackItemDao()) }
+            seedClockStack = { appWidgetId ->
+                val facetId = facetRepository.observeFacets().first { it.isNotEmpty() }.first().id
+                clockStackRepository.addWidget(facetId, appWidgetId)
+                // A widget with no provider has no default size, and the clock block only draws a widget that has one.
+                clockStackRepository.setSize(clockStackRepository.getAll(facetId).last().id, widthDp = 160, heightDp = 90)
+            }
             // A real AppRepository here would hit the actual on-device LauncherApps service —
             // AppRepositoryTest already covers that integration (mapping/sorting/icon-flatten/
             // live re-emission) against a mocked LauncherApps at the unit level, so there's no
@@ -282,7 +297,14 @@ class HomeDrawerRouteTest {
                     ObserveQuickAddStateUseCase(),
                     MediaSessionRepository(context, notificationBadgeRepository),
                     ClockWidgetHostController(appWidgetRepository),
-                    ClockWidgetFacetController(facetRepository, SwitchFacetToNativeClockUseCase(facetRepository, appWidgetRepository), EntitlementRepository()),
+                    ClockWidgetFacetController(
+                        clockStackRepository,
+                        ReplaceClockStackItemUseCase(clockStackRepository, appWidgetRepository),
+                        RemoveClockStackItemUseCase(clockStackRepository, appWidgetRepository),
+                        CommitClockPlacementUseCase(facetRepository, settingsRepository),
+                        EntitlementRepository(),
+                    ),
+                    EntitlementRepository(),
                 )
             }
             launcherViewModel = remember {
@@ -398,7 +420,11 @@ class HomeDrawerRouteTest {
                     context.getSystemService(UserManager::class.java),
                     appRepository,
                 )
-                ClockWidgetPickerViewModel(appWidgetRepository, facetRepository)
+                ClockWidgetPickerViewModel(
+                    appWidgetRepository,
+                    ReplaceClockStackItemUseCase(clockStackRepository, appWidgetRepository),
+                    AddClockStackItemUseCase(clockStackRepository, EntitlementRepository()),
+                )
             }
             // Shares the same facetRepository/settingsRepository/app-backed repos as
             // homeViewModel/launcherViewModel above — same reasoning as that block's own doc: a
@@ -488,6 +514,123 @@ class HomeDrawerRouteTest {
         composeRule.waitUntil(timeoutMillis = 3_000) {
             composeRule.onAllNodesWithTag("home_app_list_scroll_region").fetchSemanticsNodes().isNotEmpty()
         }
+        // The list region exists before the facet and its rows have loaded from Room and DataStore, so also wait for the
+        // clock (which needs the active facet) and, when favorites were seeded, the first row. A test's first gesture or
+        // lookup then never races the load.
+        composeRule.waitUntil(timeoutMillis = 10_000) {
+            composeRule.onAllNodesWithTag("home_clock_block", useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty() &&
+                (favoriteCount == 0 || composeRule.onAllNodesWithTag("home_app_icon_com.example.A", useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty())
+        }
+    }
+
+    /** Gives the active facet a second clock page (a widget with no provider, drawn as the orphaned placeholder) and waits for the dots that show a stack. */
+    private fun seedSecondClockPage(appWidgetId: Int = 4242) {
+        runBlocking { seedClockStack(appWidgetId) }
+        composeRule.waitUntil(timeoutMillis = 10_000) {
+            composeRule.onAllNodesWithTag("clock_page_dots").fetchSemanticsNodes().isNotEmpty()
+        }
+    }
+
+    @Test
+    fun swipingLeftInTheClockZoneTurnsTheClockStackToItsNextPage() {
+        // Given Home whose clock stack has the clock and then a widget
+        setContent()
+        seedSecondClockPage()
+
+        // When swiping left across the clock zone
+        composeRule.onRoot().performTouchInput {
+            swipeWithVelocity(
+                start = Offset(width * 0.8f, 220f),
+                end = Offset(width * 0.1f, 220f),
+                endVelocity = 200f,
+                durationMillis = 300,
+            )
+        }
+        settleAnimation()
+
+        // Then the widget page shows and the facet carousel did not open
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithTag("hub_orphaned_widget", useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onNodeWithTag("facet_carousel_screen").assertIsNotDisplayed()
+    }
+
+    @Test
+    fun swipingLeftWhileAdjustingTheClockTurnsThePageAndKeepsAdjusting() {
+        // Given a two-page stack and the clock in adjust mode
+        setContent()
+        seedSecondClockPage()
+        composeRule.onNodeWithTag("home_clock_block").performTouchInput { longClick() }
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("clock_adjust_open").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("clock_adjust_toolbar").assertIsDisplayed()
+
+        // When swiping left across the clock zone
+        composeRule.onRoot().performTouchInput {
+            swipeWithVelocity(
+                start = Offset(width * 0.8f, 220f),
+                end = Offset(width * 0.1f, 220f),
+                endVelocity = 200f,
+                durationMillis = 300,
+            )
+        }
+        settleAnimation()
+
+        // Then the widget page shows, still in adjust mode, and the carousel did not open
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithTag("hub_orphaned_widget", useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onNodeWithTag("clock_adjust_toolbar").assertIsDisplayed()
+        composeRule.onNodeWithTag("facet_carousel_screen").assertIsNotDisplayed()
+    }
+
+    @Test
+    fun swipingLeftOnTheLastClockPageOpensTheFacetCarousel() {
+        // Given a two-page stack turned to its last page
+        setContent()
+        seedSecondClockPage()
+        val leftAcrossClockZone: androidx.compose.ui.test.TouchInjectionScope.() -> Unit = {
+            swipeWithVelocity(
+                start = Offset(width * 0.8f, 220f),
+                end = Offset(width * 0.1f, 220f),
+                endVelocity = 200f,
+                durationMillis = 300,
+            )
+        }
+        composeRule.onRoot().performTouchInput(leftAcrossClockZone)
+        settleAnimation()
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithTag("hub_orphaned_widget", useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
+        }
+
+        // When swiping left again, with no page left
+        composeRule.onRoot().performTouchInput(leftAcrossClockZone)
+        settleAnimation()
+
+        // Then the swipe goes on to the facet carousel, as it did before the stack
+        composeRule.onNodeWithTag("facet_carousel_screen").assertIsDisplayed()
+    }
+
+    @Test
+    fun swipingRightOnTheFirstClockPageOpensTheHub() {
+        // Given a two-page stack on its first page
+        setContent()
+        seedSecondClockPage()
+
+        // When swiping right across the clock zone
+        composeRule.onRoot().performTouchInput {
+            swipeWithVelocity(
+                start = Offset(width * 0.1f, 220f),
+                end = Offset(width * 0.8f, 220f),
+                endVelocity = 200f,
+                durationMillis = 300,
+            )
+        }
+        settleAnimation()
+
+        // Then the Hub opened: there was no page to the right
+        composeRule.onNodeWithTag("hub_screen").assertIsDisplayed()
     }
 
     private fun settleAnimation() {

@@ -8,43 +8,44 @@ app/src/main/kotlin/com/facetlauncher/app/
 ├── FacetApplication.kt            @HiltAndroidApp
 ├── LauncherActivity.kt            @AndroidEntryPoint — the only Activity; composition root
 │
-├── data/                          (49)  @Singleton Repositories — the only layer that touches
+├── data/                          (51)  @Singleton Repositories — the only layer that touches
 │   │                                    Room, DataStore, or Android framework services
 │   ├── di/                        (8)   Hilt modules: AppModule, DatabaseModule, DataStoreModule, WidgetModule, EntitlementModule, WeatherModule + the @AutomationDataStore and @EntitlementDataStore qualifiers
 │   ├── icon/                      (4)   The glyph-only and outline icon pictures: IconMasks and IconStyler (pure pixel code), IconLayers (reads an app's themed monochrome layer), StyledIconCache (makes them on demand, off the main thread)
-│   ├── local/                     (18)  Room: FacetDatabase, 9 entities, 7 DAOs, Converters, Migrations
+│   ├── local/                     (21)  Room: FacetDatabase, 8 entities, 8 DAOs, Converters, Migrations
 │   ├── places/                    (4)   Place names and cities: CityRepository over the bundled CityList (assets/cities.tsv), PlaceGeocoder + AndroidPlaceGeocoder (the device Geocoder), GeoDistance
 │   ├── weather/                   (6)   The weather forecast: MetWeatherApi (the only network code), MetForecastParser, WeatherRefreshPolicy (the refresh gate), WeatherRepository, WeatherStore + RoomWeatherStore (see 18)
-│   ├── model/                     (45)  Immutable value types & enums shared by every layer
+│   ├── model/                     (48)  Immutable value types & enums shared by every layer
 │   │                                    (AppInfo, PlacedItem, PlacementList, PlacementTarget, LauncherSettings, AppProfile, Clock*Option,
 │   │                                    FacetDeepLink's build/parse pair, …)
 │   ├── widget/                    (2)   AppWidgetRepository + LauncherAppWidgetHost (AppWidgetHost subclass)
 │   └── FacetNotificationListenerService.kt   @AndroidEntryPoint service feeding NotificationBadgeRepository (its component is also what MediaSessionRepository reads sessions through)
 │
-├── domain/                        (55)  50 *UseCase classes + FlowCombine.kt, HubGridConstants.kt, BackupMapping.kt, WeatherUnits.kt, WeatherDay.kt, RainSummary.kt
+├── domain/                        (62)  52 *UseCase classes + FlowCombine.kt, HubGridConstants.kt, BackupMapping.kt, WeatherUnits.kt, WeatherDay.kt, RainSummary.kt
 │                                        Composes ≥1 repositories, or pure logic (grid placement, ranking, grouping)
 │
 └── ui/
     ├── theme/                     (12)  Color, Type, Theme, SettingsTypography, Motion, ClockFonts/Colors, ClockAlignment, AccentSwatch, ThemeLocals,
     │                                    PrivateSpaceTheme, SystemBars (status/nav icon color) — design tokens; FacetLauncherTheme wrapper
     ├── pro/                       (6)   FacetProScreen (before purchase) / FacetProUnlocked (after) / FacetProViewModel, ProComponents (ink panel, PRO mark, facet fans, trigger pills, gradient button), ProSettingsCard (Settings), previews
-    ├── components/                (44)  Reusable, screen-agnostic composables (AppIcon, ConfirmDialog,
+    ├── components/                (47)  Reusable, screen-agnostic composables (AppIcon, ConfirmDialog,
     │                                    DragReorderState, HomeSurfacePreview, ThemedDropdownMenu, ThemedModalBottomSheet, DismissOnHomePress,
     │                                    AppPickerScreen, FolderContentsSheet, the settings kit — SettingsCard,
     │                                    SettingsSectionHeader, SettingsIconBadge — and the buttons PrimaryButton,
     │                                    TonalButton, SurfaceButton, TextActionButton, …)
-    ├── navigation/                (1)   FacetNavHost + FacetDestinations (29 routes) + popBackStackSafely
+    ├── navigation/                (1)   FacetNavHost + FacetDestinations (33 routes) + popBackStackSafely
     ├── launcher/                  (9)   LauncherViewModel (app-lifetime state), HomeDrawerRoute (wires Home and the panels over it), HomeSwipeController +
     │                                    HomeSwipeGestures (the three swipe axes, settle rules, drag detector), HomeOverlays / HomeAppDrawerOverlay / HomeOverlayState
     │                                    (the Hub, drawer, Private Space, pickers, carousel and one-time prompts), HomeScreenActionsBuilder, LauncherLocals
-    ├── home/                      (38)  HomeScreen (thin dispatcher) / HomeFrame / HomeContent / HomeSlots / HomeScreenEffects / HomeClockGeometry / HomeScreenLayout (measurements) / ClockAdjustControls / ClockResizeOverlays / HomeScreenState (its state and action groups) / HomeViewModel / HomeUiState, ClockBlock, clock handles, ClockAdjustSheet /
-    │                                    ClockAdjustToolbar / `ClockAdjustMode`, hosted-clock-widget controllers/tile, TimeTick, MediaPlayerRow, `ScaledHomeScreen` (the real Home scaled down, for previews), `HomeScreenStateBuilder` and `HomeTags`;
+    ├── home/                      (42)  HomeScreen (thin dispatcher) / HomeFrame / HomeContent / HomeSlots / HomeScreenEffects / HomeClockGeometry / HomeScreenLayout (measurements) / ClockAdjustControls / ClockResizeOverlays / HomeScreenState (its state and action groups) / HomeViewModel / HomeUiState, ClockBlock, clock handles, ClockAdjustSheet /
+    │                                    ClockAdjustToolbar / `ClockAdjustMode`, hosted-clock-widget controllers/tile, `ClockStackPager` (`ClockPagerState` and the page dots), `ClockWidgetHostCache`, `ClockSheetPage`, TimeTick, MediaPlayerRow, `ScaledHomeScreen` (the real Home scaled down, for previews), `HomeScreenStateBuilder` and `HomeTags`;
     │                                    the list and tiles `HomeAppList` (two-column list, column, grid), `AppRow`, `FolderRow`, `DockIcon`, with `HomeItemSpec`
     │                                    (`HomeItemActions` / `HomeItemStyle` / `HomeAppListContent`, the one parameter group they share);
     │                                    landscape: `HomeLandscapeLayout`, `HomeLandscapeGeometry`, `HomeClockHandleGeometry`, `HomeLayoutMode`; `ClockPlacement`/`ListAlignment` (now in `domain/HomePlacement.kt`)
     │   ├── clock/                 (9)   Clock templates, accessory row/icons, ClockWeatherAccessory (the weather item and `LocalClockWeather`), calendar strip, ClockStyleGallery screen+VM
     │   ├── weather/               (10)  The weather sheet over Home: WeatherSheet (+ WeatherSheetParts, RainSummaryText), WeatherViewModel, ClockWeatherAccessoryState, and the formatting and icon helpers (WeatherFormat, WeatherConditionText, WeatherIconKind, WeatherCompass, WindArrow)
-    │   └── widget/                (2)   ClockWidgetPickerScreen / ClockWidgetPickerViewModel (custom clock widget bind flow)
+    │   ├── stack/                 (2)   ClockStackScreen / ClockStackViewModel (the clock stack: reorder, Add, remove, per-page size)
+    │   └── widget/                (3)   ClockWidgetPickerScreen / ClockWidgetPickerViewModel / ClockWidgetPickerTarget (custom clock widget bind flow; Replace a page or Add one)
     ├── drawer/                    (6)   AppDrawerScreen / DrawerViewModel, AlphabetRail, ContactConnectionsSheet,
     │                                    PrivateSpaceScreen / PrivateSpaceViewModel
     ├── hub/                       (13)  HubScreen / HubViewModel / HubUiState, HubGrid, widget tiles, resize/grab gestures
@@ -52,7 +53,7 @@ app/src/main/kotlin/com/facetlauncher/app/
     ├── facets/                    (9)   FacetCarousel, FacetSettings, ManageFacets, FavoritesPicker (screen + VM each)
     ├── dock/                      (2)   DockAppPickerScreen / DockAppPickerViewModel
     ├── onboarding/                (8)   OnboardingScreen / ViewModel / UiState + 3 pages, dots, SetDefaultLauncherSheet
-    └── settings/                  (45)  21 `*Screen.kt` and 16 `*ViewModel.kt` — most settings screens are an `XScreen.kt` + `XViewModel.kt` pair; Appearance is a hub of five screens (`AppearanceSettingsScreen`, `DockAppsAppearanceScreen`, `ThemesAndColorsScreen`, `FontsScreen`, `IconsScreen`) sharing `AppearanceSettingsViewModel` and the `AppearancePreviewCard` wrapper (`AppearancePreview.kt`) over `ui/home/ScaledHomeScreen`
+    └── settings/                  (51)  22 `*Screen.kt` and 17 `*ViewModel.kt` — most settings screens are an `XScreen.kt` + `XViewModel.kt` pair; Appearance is a hub of five screens (`AppearanceSettingsScreen`, `DockAppsAppearanceScreen`, `ThemesAndColorsScreen`, `FontsScreen`, `IconsScreen`) sharing `AppearanceSettingsViewModel` and the `AppearancePreviewCard` wrapper (`AppearancePreview.kt`) over `ui/home/ScaledHomeScreen`
         ├── automation/            (13)  Facet automation: FacetAutomationScreen / ViewModel (rule list), AutomationStrips, RuleEditorSheet / ViewModel / State (draft rule, permission gate), ScheduleFields, TriggerFields, EditorControls, UpgradeSheet, ProPill, PermissionRequest, formatting, previews (`ProPill` lives in `components/`; the Facet Pro screen they open is in `pro/`)
         └── backup/                (3)   BackupRestoreScreen / ViewModel / UiState
 ```

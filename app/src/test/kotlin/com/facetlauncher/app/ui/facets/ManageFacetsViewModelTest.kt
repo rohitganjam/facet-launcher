@@ -1,5 +1,6 @@
 package com.facetlauncher.app.ui.facets
 
+import com.facetlauncher.app.data.FakeClockStackItemDao
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import com.facetlauncher.app.data.AutomationStateRepository
 import com.facetlauncher.app.data.AutomationRuleRepository
@@ -103,7 +104,7 @@ class ManageFacetsViewModelTest {
 
     @Test
     fun `applyFacet activates the facet and records it as a manual switch`() = runTest(dispatcher) {
-        val facetRepository = FacetRepository(FakeFacetDao())
+        val facetRepository = FacetRepository(FakeFacetDao(), FakeClockStackItemDao())
         facetRepository.addFacet()
         val second = facetRepository.addFacet()
         val settings = fakeSettings()
@@ -124,7 +125,7 @@ class ManageFacetsViewModelTest {
 
     @Test
     fun `uiState reflects the observed facets and the add-max rule`() = runTest(dispatcher) {
-        val facetRepository = FacetRepository(FakeFacetDao())
+        val facetRepository = FacetRepository(FakeFacetDao(), FakeClockStackItemDao())
         facetRepository.addFacet()
         facetRepository.addFacet()
         val viewModel = createViewModel(facetRepository)
@@ -139,7 +140,7 @@ class ManageFacetsViewModelTest {
 
     @Test
     fun `reorderFacets persists the new order`() = runTest(dispatcher) {
-        val facetRepository = FacetRepository(FakeFacetDao())
+        val facetRepository = FacetRepository(FakeFacetDao(), FakeClockStackItemDao())
         facetRepository.addFacet()
         facetRepository.addFacet()
         val viewModel = createViewModel(facetRepository)
@@ -155,7 +156,7 @@ class ManageFacetsViewModelTest {
 
     @Test
     fun `addFacet is a no-op once a pro user reaches the maximum`() = runTest(dispatcher) {
-        val facetRepository = FacetRepository(FakeFacetDao())
+        val facetRepository = FacetRepository(FakeFacetDao(), FakeClockStackItemDao())
         repeat(FacetLimits.PRO_MAX_FACETS) { facetRepository.addFacet() }
         val viewModel = createViewModel(facetRepository)
         backgroundScope.launch { viewModel.uiState.collect {} }
@@ -170,7 +171,7 @@ class ManageFacetsViewModelTest {
 
     @Test
     fun `deleting the active facet re-points active to a survivor`() = runTest(dispatcher) {
-        val facetRepository = FacetRepository(FakeFacetDao())
+        val facetRepository = FacetRepository(FakeFacetDao(), FakeClockStackItemDao())
         val first = facetRepository.addFacet()
         val second = facetRepository.addFacet()
         val settings = fakeSettings(activeFacetId = first.id)
@@ -187,7 +188,7 @@ class ManageFacetsViewModelTest {
 
     @Test
     fun `a free user with five facets can use the first three, and the add row shows with the limit reached`() = runTest(dispatcher) {
-        val facetRepository = FacetRepository(FakeFacetDao())
+        val facetRepository = FacetRepository(FakeFacetDao(), FakeClockStackItemDao())
         val facets = List(5) { facetRepository.addFacet() }
         val viewModel = createViewModel(facetRepository, entitlement = FakeEntitlementRepository(initial = false))
         backgroundScope.launch { viewModel.uiState.collect {} }
@@ -201,7 +202,7 @@ class ManageFacetsViewModelTest {
 
     @Test
     fun `a pro user at ten facets sees no add row`() = runTest(dispatcher) {
-        val facetRepository = FacetRepository(FakeFacetDao())
+        val facetRepository = FacetRepository(FakeFacetDao(), FakeClockStackItemDao())
         repeat(FacetLimits.PRO_MAX_FACETS) { facetRepository.addFacet() }
         val viewModel = createViewModel(facetRepository)
         backgroundScope.launch { viewModel.uiState.collect {} }
@@ -213,7 +214,7 @@ class ManageFacetsViewModelTest {
 
     @Test
     fun `a free user at three facets cannot add one`() = runTest(dispatcher) {
-        val facetRepository = FacetRepository(FakeFacetDao())
+        val facetRepository = FacetRepository(FakeFacetDao(), FakeClockStackItemDao())
         repeat(3) { facetRepository.addFacet() }
         val viewModel = createViewModel(facetRepository, entitlement = FakeEntitlementRepository(initial = false))
         backgroundScope.launch { viewModel.uiState.collect {} }
@@ -227,7 +228,7 @@ class ManageFacetsViewModelTest {
 
     @Test
     fun `losing pro disables facets past the third without deleting them, and deleting one brings the next back`() = runTest(dispatcher) {
-        val facetRepository = FacetRepository(FakeFacetDao())
+        val facetRepository = FacetRepository(FakeFacetDao(), FakeClockStackItemDao())
         val facets = List(5) { facetRepository.addFacet() }
         val entitlement = FakeEntitlementRepository(initial = true)
         val viewModel = createViewModel(facetRepository, entitlement = entitlement)
@@ -252,7 +253,7 @@ class ManageFacetsViewModelTest {
 
     @Test
     fun `the automation rule count follows the rules`() = runTest(dispatcher) {
-        val facetRepository = FacetRepository(FakeFacetDao())
+        val facetRepository = FacetRepository(FakeFacetDao(), FakeClockStackItemDao())
         facetRepository.addFacet()
         val viewModel = createViewModel(facetRepository, ruleCount = 3)
         backgroundScope.launch { viewModel.uiState.collect {} }

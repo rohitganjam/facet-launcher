@@ -10,13 +10,17 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.longClick
+import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.width
+import com.facetlauncher.app.data.model.ClockAlignment
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.Folder
 import com.facetlauncher.app.data.model.MediaPlayerState
@@ -25,6 +29,7 @@ import com.facetlauncher.app.data.model.PlacedItem
 import com.facetlauncher.app.domain.QuickAddState
 import com.facetlauncher.app.domain.QuickPlacementAction
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
+import org.junit.Assert.assertTrue
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Rule
@@ -226,9 +231,9 @@ class HomeScreenWiringTest {
         val actions = HomeScreenActions(
             item = HomeItemActions(onAppClick = {}),
             clock = HomeClockActions(
-                onEditClockStyles = { calls += "edit-styles" },
-                onUseCustomWidgetClick = { calls += "use-widget" },
-                onSwitchToLauncherClockClick = { calls += "switch-to-launcher" },
+                onClockSettingsClick = { calls += "clock-settings" },
+                onReplaceWithWidgetClick = { calls += "replace-with-widget" },
+                onReplaceWithClockClick = { calls += "replace-with-clock" },
                 onNavigateToSettings = { calls += "settings" },
                 onNavigateToFacetSettings = { calls += "facet-settings" },
             ),
@@ -237,32 +242,33 @@ class HomeScreenWiringTest {
 
         // When the clock is long-pressed and each row tapped (a tap closes the sheet, so it is reopened each time)
         longPress("home_clock_block")
-        composeRule.onNodeWithTag("clock_adjust_switch_to_launcher_clock").assertDoesNotExist()
-        composeRule.onNodeWithTag("clock_adjust_edit_styles").performClick()
+        composeRule.onNodeWithTag("clock_adjust_replace_with_clock").assertDoesNotExist()
+        composeRule.onNodeWithTag("clock_adjust_clock_settings").performClick()
         longPress("home_clock_block")
-        composeRule.onNodeWithTag("clock_adjust_use_custom_widget").performClick()
+        composeRule.onNodeWithTag("clock_adjust_replace_with_widget").performClick()
         longPress("home_clock_block")
         composeRule.onNodeWithTag("clock_adjust_facet_settings").performClick()
         longPress("home_clock_block")
         composeRule.onNodeWithTag("clock_adjust_launcher_settings").performClick()
 
-        // Then each reached its own callback, and a native clock has no "switch back" row
-        assertEquals(listOf("edit-styles", "use-widget", "facet-settings", "settings"), calls)
+        // Then each reached its own callback, and a native clock page has no "replace with clock" row
+        assertEquals(listOf("clock-settings", "replace-with-widget", "facet-settings", "settings"), calls)
     }
 
     @Test
-    fun aHostedWidgetsMenuOffersSwitchingBackAndTheWidgetIsHosted() {
+    fun aHostedWidgetsMenuOffersReplacingItWithTheClockAndTheWidgetIsHosted() {
         // Given a hosted clock widget
         var switched = 0
         var hostedId: Int? = null
         var listBounds: Rect? = null
         var widgetBounds: Rect? = null
         val state = appState(PlacedItem.SingleApp(mail)).copy(
-            widget = HomeClockWidgetState(appWidgetId = 42, widthDp = 160.dp, heightDp = 90.dp, minWidthDp = 64.dp, minHeightDp = 64.dp),
+            widget = HomeClockWidgetState(itemId = 1L, appWidgetId = 42, widthDp = 160.dp, heightDp = 90.dp, minWidthDp = 64.dp, minHeightDp = 64.dp),
+            clockStack = HomeClockStackState(pageCount = 1, pageIndex = 0, hasClock = false),
         )
         val actions = HomeScreenActions(
             item = HomeItemActions(onAppClick = {}),
-            clock = HomeClockActions(onSwitchToLauncherClockClick = { switched++ }),
+            clock = HomeClockActions(onReplaceWithClockClick = { switched++ }),
             widget = HomeClockWidgetActions(
                 createHostView = { context, id ->
                     hostedId = id
@@ -279,20 +285,170 @@ class HomeScreenWiringTest {
         assertNotNull(widgetBounds)
         assertNotNull(listBounds)
 
-        // When the menu's "switch back" row is tapped
+        // When the menu's "Replace with clock" row is tapped
         // The widget host swallows its own touches, so the menu is opened from empty space as in the landscape tests.
         composeRule.onNodeWithTag("home_screen_root").performTouchInput { longClick(Offset(width * 0.75f, 4f)) }
         composeRule.waitForIdle()
-        composeRule.onNodeWithTag("clock_adjust_switch_to_launcher_clock").performClick()
+        composeRule.onNodeWithTag("clock_adjust_replace_with_clock").performClick()
 
         // Then that action fired
         assertEquals(1, switched)
     }
 
     @Test
-    fun theFacetThatOwnsTheClockPlacementIsNamedOnTheEditStylesRow() {
-        // Given a placement owned by a facet called Work
-        val state = appState(PlacedItem.SingleApp(mail)).copy(clock = HomeClockState(positionOwnerFacetId = 3L, positionOwnerFacetName = "Work"))
+    fun aWidgetKeepsItsWidthWhileThePageIsSwipedAside() {
+        // Given a hosted widget page
+        var offset by mutableStateOf(0f)
+        val state = appState(PlacedItem.SingleApp(mail)).copy(
+            widget = HomeClockWidgetState(itemId = 1L, appWidgetId = 42, widthDp = 300.dp, heightDp = 90.dp, minWidthDp = 64.dp, minHeightDp = 64.dp),
+            clockStack = HomeClockStackState(pageCount = 2, pageIndex = 1, hasClock = true),
+        )
+        val actions = HomeScreenActions(
+            item = HomeItemActions(onAppClick = {}),
+            clock = HomeClockActions(pageOffset = { offset }),
+            widget = HomeClockWidgetActions(createHostView = { context, _ -> AppWidgetHostView(context) }),
+        )
+        setHome(state, actions)
+        val restingWidth = composeRule.onNodeWithTag("clock_widget_host_42").getUnclippedBoundsInRoot().width
+
+        // When the page is dragged part-way aside
+        composeRule.runOnIdle { offset = 0.3f }
+        composeRule.waitForIdle()
+
+        // Then the widget is moved, not squeezed into the room that is left
+        assertEquals(restingWidth.value, composeRule.onNodeWithTag("clock_widget_host_42").getUnclippedBoundsInRoot().width.value, 0.5f)
+    }
+
+    @Test
+    fun theNextPageSlidesInBesideTheVisibleOneWhileSwiping() {
+        // Given the clock page visible, a widget page after it, and a swipe part-way
+        var offset by mutableStateOf(0f)
+        val state = appState(PlacedItem.SingleApp(mail)).copy(
+            clockStack = HomeClockStackState(
+                pageCount = 2, pageIndex = 0, hasClock = true, visibleItemId = 1L,
+                next = HomeClockNeighbor(
+                    itemId = 2L,
+                    widget = HomeClockWidgetState(itemId = 2L, appWidgetId = 42, widthDp = 200.dp, heightDp = 90.dp, minWidthDp = 64.dp, minHeightDp = 64.dp),
+                    alignment = ClockAlignment.LEFT,
+                ),
+            ),
+        )
+        val actions = HomeScreenActions(
+            item = HomeItemActions(onAppClick = {}),
+            clock = HomeClockActions(pageOffset = { offset }),
+            widget = HomeClockWidgetActions(createHostView = { context, _ -> AppWidgetHostView(context) }),
+        )
+        setHome(state, actions)
+
+        // Then at rest the widget page is already built, parked far to the side where it can be neither seen nor touched
+        val rootWidth = composeRule.onRoot().getUnclippedBoundsInRoot().width
+        assertTrue(composeRule.onNodeWithTag("clock_widget_host_42").getUnclippedBoundsInRoot().left > rootWidth * 2)
+
+        // When the clock is dragged towards the next page
+        composeRule.runOnIdle { offset = -0.3f }
+        composeRule.waitForIdle()
+
+        // Then the clock is still there and the widget is coming in beside it, to the right of where it rests
+        composeRule.onNodeWithTag("home_clock_block", useUnmergedTree = true).assertExists()
+        composeRule.onNodeWithTag("clock_widget_host_42").assertExists()
+        val widgetLeft = composeRule.onNodeWithTag("clock_widget_host_42").getUnclippedBoundsInRoot().left
+        assertTrue("widget left $widgetLeft in $rootWidth", widgetLeft > rootWidth * 0.5f && widgetLeft < rootWidth)
+
+        // And back at rest it is parked again, still built
+        composeRule.runOnIdle { offset = 0f }
+        composeRule.waitForIdle()
+        assertTrue(composeRule.onNodeWithTag("clock_widget_host_42").getUnclippedBoundsInRoot().left > rootWidth * 2)
+    }
+
+    @Test
+    fun aWidgetSlidingInHasItsRestingSizeAndKeepsItsViewWhenItLands() {
+        // Given a clock with a widget page after it whose saved width is more than the screen has room for
+        var offset by mutableStateOf(0f)
+        var anchor by mutableStateOf(-1)
+        var landed by mutableStateOf(false)
+        var hostsBuilt = 0
+        val widget = HomeClockWidgetState(itemId = 2L, appWidgetId = 42, widthDp = 2000.dp, heightDp = 90.dp, minWidthDp = 64.dp, minHeightDp = 64.dp)
+        val beside = appState(PlacedItem.SingleApp(mail)).copy(
+            clockStack = HomeClockStackState(
+                pageCount = 2, pageIndex = 0, hasClock = true, visibleItemId = 1L,
+                next = HomeClockNeighbor(itemId = 2L, widget = widget, alignment = ClockAlignment.LEFT),
+            ),
+        )
+        val shown = beside.copy(widget = widget, clockStack = HomeClockStackState(pageCount = 2, pageIndex = 1, hasClock = true, visibleItemId = 2L))
+        composeRule.setContent {
+            FacetLauncherTheme {
+                HomeScreen(
+                    state = if (landed) shown else beside,
+                    actions = HomeScreenActions(
+                        item = HomeItemActions(onAppClick = {}),
+                        clock = HomeClockActions(pageOffset = { offset }, pageAnchorIndex = { anchor }),
+                        widget = HomeClockWidgetActions(createHostView = { context, _ -> hostsBuilt++.let { AppWidgetHostView(context) } }),
+                    ),
+                    layoutMode = HomeLayoutMode.PORTRAIT,
+                )
+            }
+        }
+
+        // When the swipe is part-way
+        composeRule.runOnIdle {
+            anchor = 0
+            offset = -0.3f
+        }
+        composeRule.waitForIdle()
+        val slidingWidth = composeRule.onNodeWithTag("clock_widget_host_42").getUnclippedBoundsInRoot().width
+
+        // Then it is already clamped to the room beside the screen's margins
+        val rootWidth = composeRule.onRoot().getUnclippedBoundsInRoot().width
+        assertTrue("sliding width $slidingWidth in $rootWidth", slidingWidth.value <= rootWidth.value - 48f + 0.5f)
+
+        // When the swipe lands: the page change arrives while the offset is still at the edge, then the offset resets
+        composeRule.runOnIdle { offset = -1f }
+        composeRule.runOnIdle { landed = true }
+        composeRule.waitForIdle()
+        composeRule.runOnIdle {
+            offset = 0f
+            anchor = -1
+        }
+        composeRule.waitForIdle()
+
+        // Then it is the same size, and the view it had while sliding in is still the one on screen
+        assertEquals(slidingWidth.value, composeRule.onNodeWithTag("clock_widget_host_42").getUnclippedBoundsInRoot().width.value, 0.5f)
+        assertEquals(1, hostsBuilt)
+    }
+
+    @Test
+    fun anOrphanedWidgetShowsAPlaceholderWhoseRemoveFires() {
+        // Given a widget page whose app was uninstalled
+        var removed = 0
+        var hosted = false
+        val state = appState(PlacedItem.SingleApp(mail)).copy(
+            widget = HomeClockWidgetState(
+                itemId = 1L, appWidgetId = 42, widthDp = 160.dp, heightDp = 110.dp, minWidthDp = null, minHeightDp = null, isOrphaned = true,
+            ),
+            clockStack = HomeClockStackState(pageCount = 1, pageIndex = 0, hasClock = false),
+        )
+        val actions = HomeScreenActions(
+            item = HomeItemActions(onAppClick = {}),
+            widget = HomeClockWidgetActions(createHostView = { _, _ -> hosted = true; null }, onRemoveOrphan = { removed++ }),
+        )
+        setHome(state, actions)
+
+        // Then a placeholder is drawn in place of the widget, with no Keep space action
+        composeRule.onNodeWithTag("hub_orphaned_widget").assertExists()
+        composeRule.onNodeWithTag("hub_orphaned_keep_space").assertDoesNotExist()
+        assertEquals(false, hosted)
+
+        // When Remove is tapped
+        composeRule.onNodeWithTag("hub_orphaned_remove").performClick()
+
+        // Then the removal fired
+        assertEquals(1, removed)
+    }
+
+    @Test
+    fun theFacetThatOwnsTheClockStyleIsNamedOnTheClockSettingsRow() {
+        // Given a clock style owned by a facet called Work
+        val state = appState(PlacedItem.SingleApp(mail)).copy(clock = HomeClockState(placementFacetId = 3L, styleOwnerFacetName = "Work"))
         setHome(state, HomeScreenActions(item = HomeItemActions(onAppClick = {})))
 
         // When the clock menu opens

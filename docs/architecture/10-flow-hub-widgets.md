@@ -35,6 +35,9 @@ flowchart LR
 - **Orphans**: a placement whose `appWidgetId` no longer has provider info (provider uninstalled,
   Work Profile removed, or bindings lost) is rendered as `OrphanedWidgetTile` with
   *Remove* (`DeleteWidgetUseCase`) / *Keep space* (`onKeepOrphanSpace` — no-op, the row stays).
+  A hosted widget on Home's clock stack is orphaned the same way (`ClockWidgetHostController.isOrphaned`, re-checked on each
+  Home resume); that page draws the same tile with *Remove* only (`ClockWidgetFacetController.remove` →
+  `RemoveClockStackItemUseCase`), at its saved size or a placeholder one. Home keeps one built view per widget page of the stack (`ClockWidgetHostCache`, created in `HomeDrawerRoute`, the other pages built one per frame when the stack changes, dropped with the page or on leaving Home), so a swipe re-attaches a view instead of inflating one. The pages either side of the visible one also stay composed and attached (parked out of sight, see `12`), so a widget is never detached and re-attached as a swipe reaches it. Each page is sized by its own widget (`HomeWidgetSizing` is asked per widget id) and a page not yet shown is clamped to the same room as the visible one (`ClockGeometry.widgetRoomPx`, `HomeFrame.neighborWidgetSizePx`), so it never resizes as it lands. A hosted view is only told its size when that size changes (`ClockWidgetTile`), since every push makes the provider redraw. The tile has a surface background at the drawer's default 60% opacity so it reads over a busy wallpaper.
 - Providers are enumerated per profile
   (`userManager.userProfiles.flatMap { getInstalledProvidersForProfile(it) }`), so Work Profile
   widgets appear in the picker tagged with their `AppProfile`; `widget_placements.profile/userId`
@@ -105,7 +108,11 @@ flowchart TB
 - Every successful mutation ends with `CompactWidgetsUseCase` so the grid never keeps a gap
   above a widget.
 - `updateWidgetSize` tells the provider its real rendered size so responsive widgets
-  (`targetCellWidth` aware) lay out correctly.
+  (`targetCellWidth` aware) lay out correctly. The Home clock-widget tile pushes its committed
+  size through the same call, from the view `update` receives (not a remembered reference).
+- `createHostView`/`createPreviewHostView` set the host view's padding to 4dp
+  (`WIDGET_HOST_PADDING_DP`), replacing the platform's 8dp default for Hub and Home alike. The
+  size pushed to the provider is the outer box, so its content area is 8dp smaller each way.
 
 ## 4. Persistence & recovery matrix
 

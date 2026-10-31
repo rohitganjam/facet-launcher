@@ -25,10 +25,13 @@ import com.facetlauncher.app.data.model.ListContentMode
 import com.facetlauncher.app.data.model.MediaPlayerState
 import com.facetlauncher.app.data.model.PlacedItem
 import com.facetlauncher.app.domain.ClockAccessoryState
+import com.facetlauncher.app.domain.ResolvedClockItem
 import com.facetlauncher.app.domain.ResolvedFacetStyle
+import com.facetlauncher.app.domain.limitedTo
 import com.facetlauncher.app.domain.resolveFacetStyle
 import com.facetlauncher.app.ui.components.HOME_GESTURES_COACH_MARK_ID
 import com.facetlauncher.app.ui.components.HOME_SET_DEFAULT_PROMPT_ID
+import kotlinx.collections.immutable.ImmutableList
 
 data class HomeUiState(
     val settings: LauncherSettings = LauncherSettings(),
@@ -59,19 +62,25 @@ data class HomeUiState(
      * already-default device never flashes the prompt before the answer arrives.
      */
     val isDefaultLauncher: Boolean? = null,
+    /** The clock stack page showing on the active facet, remembered while Home lives; `null` shows the first. */
+    val visibleClockItemId: Long? = null,
+    /** Whether Pro is held: without it only the first clock page shows, and the rest stay saved. */
+    val isPro: Boolean = true,
 ) {
     val activeFacet: Facet?
         get() = facets.find { it.id == settings.activeFacetId }
 
-    /** PRD F15 — facet-scoped only, no global fallback (see F15's Scope: there's no meaningful "global hosted widget" to inherit). `null` means the active facet uses its own native clock. */
-    val clockWidgetAppWidgetId: Int?
-        get() = style.clockWidget?.appWidgetId
+    /** The active facet's clock pages in swipe order (PRD F15; facet-scoped only, there is no global hosted widget to inherit). Empty is the plain native clock. */
+    val clockStack: ImmutableList<ResolvedClockItem> get() = style.clockStack.limitedTo(isPro)
 
-    /** PRD F15's persisted interactive-resize size — `null` until the user drags a resize handle for the first time; see [Facet.clockWidgetWidthDp]'s own doc for what governs the effective size before that. */
-    val clockWidgetWidthDp: Int?
-        get() = activeFacet?.clockWidgetWidthDp
-    val clockWidgetHeightDp: Int?
-        get() = activeFacet?.clockWidgetHeightDp
+    /** The page Home shows: the remembered one, else the first (`null` when the stack is empty). */
+    val visibleClockItem: ResolvedClockItem? get() = clockStack.getOrNull(clockStack.visibleIndex(visibleClockItemId))
+
+    /** The visible page's widget id; `null` when it is the native clock. */
+    val clockWidgetAppWidgetId: Int? get() = visibleClockItem?.appWidgetId
+
+    /** Every widget id in the stack: all of them need the host listening, not only the visible one. */
+    val clockStackWidgetIds: List<Int> get() = clockStack.mapNotNull { it.appWidgetId }
 
     /** The active facet's overrides resolved against [settings]. */
     internal val style: ResolvedFacetStyle by lazy(LazyThreadSafetyMode.NONE) { resolveFacetStyle(activeFacet, settings) }
@@ -91,9 +100,9 @@ data class HomeUiState(
     val showUsageAccessPrompt: Boolean
         get() = activeListContentMode != ListContentMode.FAVORITES && !usageAccessGranted && !usageAccessPromptDismissed
 
-    val clockAlignment: ClockAlignment get() = style.clock.alignment
-    val clockZoneHeightDp: Float? get() = style.clock.zoneHeightDp
-    val clockScale: Float get() = style.clock.scale
+    val clockAlignment: ClockAlignment get() = style.clockPlacement.portrait.alignment
+    val clockZoneHeightDp: Float? get() = style.clockPlacement.portrait.zoneHeightDp
+    val clockScale: Float get() = style.clockPlacement.portrait.scale
 
     /** The clock's alignment, divider position and scale for [mode], resolved by [resolveFacetStyle]. */
     fun clockPlacement(mode: HomeLayoutMode): ClockPlacement = style.clockPlacement.of(mode == HomeLayoutMode.LANDSCAPE)
@@ -101,11 +110,11 @@ data class HomeUiState(
     /** The apps list's row position, vertical anchor and two-column alignment for [mode], resolved by [resolveFacetStyle]. */
     fun listAlignment(mode: HomeLayoutMode): ListAlignment = style.listAlignment.of(mode == HomeLayoutMode.LANDSCAPE)
 
-    /** The hosted clock widget's saved size for [mode]: landscape's own where saved, else the portrait one; `null` before any resize. */
-    fun clockWidgetSizeDp(mode: HomeLayoutMode): Pair<Int, Int>? = style.clockWidget?.sizeDp?.of(mode == HomeLayoutMode.LANDSCAPE)
+    /** The visible page's saved widget size for [mode]: landscape's own where saved, else the portrait one; `null` before any resize. */
+    fun clockWidgetSizeDp(mode: HomeLayoutMode): Pair<Int, Int>? = visibleClockItem?.sizeDp?.of(mode == HomeLayoutMode.LANDSCAPE)
 
-    /** The facet whose `overrideClock` bundle actually governs the clock widget's live position right now, or `null` if the global default applies — see [HomeViewModel.onClockZoneHeightCommit]. */
-    val clockPositionOwningFacet: Facet?
+    /** The facet whose own clock style is in force (it overrides the clock), or `null` while the launcher-wide style applies: the sheet's scope badge. Placement is not part of it. */
+    val clockStyleOwningFacet: Facet?
         get() = activeFacet?.takeIf { it.overrideClock }
 
     /** Names the facet overriding the Dock right now, for [com.facetlauncher.app.ui.components.QuickPlacementBadge] — `null` for the launcher-wide default, mirroring [com.facetlauncher.app.domain.QuickPlacementAction.facetName]'s own convention. */

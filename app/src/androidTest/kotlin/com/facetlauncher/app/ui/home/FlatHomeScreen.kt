@@ -50,6 +50,7 @@ internal fun FlatHomeScreen(
     clockScale: Float = 0.8f,
     clockZoneHeightDp: Float? = null,
     clockAdjustMode: ClockAdjustMode = ClockAdjustMode.NONE,
+    clockPageCount: Int = 1,
     draggingHandle: Boolean = false,
     onClockZoneHeightCommit: (Float) -> Unit = {},
     onClockScaleCommit: (Float) -> Unit = {},
@@ -90,10 +91,11 @@ internal fun FlatHomeScreen(
                 draggingHandle = draggingHandle,
             ),
             widget = clockWidgetAppWidgetId?.let {
-                HomeClockWidgetState(it, clockWidgetWidthDp, clockWidgetHeightDp, clockWidgetMinWidthDp, clockWidgetMinHeightDp)
+                HomeClockWidgetState(1L, it, clockWidgetWidthDp, clockWidgetHeightDp, clockWidgetMinWidthDp, clockWidgetMinHeightDp)
             },
             calendar = HomeCalendarState(events = calendarEvents.toImmutableList()),
             media = HomeMediaState(player = mediaPlayer),
+            clockStack = HomeClockStackState(pageCount = clockPageCount, pageIndex = 0),
         ),
         actions = HomeScreenActions(
             item = HomeItemActions(onAppClick = onAppClick),

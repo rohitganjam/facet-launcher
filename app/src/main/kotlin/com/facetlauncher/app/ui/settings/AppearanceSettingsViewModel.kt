@@ -103,7 +103,7 @@ data class AppearanceSettingsUiState(
     /** `null` (nothing explicitly chosen yet) counts as zero — it isn't "every calendar", it's "none decided". */
     val selectedCalendarCount: Int get() = (if (facet?.overrideCalendar == true) facet.selectedCalendarIds ?: settings.selectedCalendarIds else settings.selectedCalendarIds)?.size ?: 0
 
-    /** [settings] with the clock block resolved for this scope: the facet's own when `overrideClock`, else global. */
+    /** [settings] with the clock style resolved for this scope (the facet's own when `overrideClock`, else global) and the placement the facet shows. */
     val clockSettings: LauncherSettings get() = style.clock.let { clock ->
         settings.copy(
             clockTemplateId = clock.templateId,
@@ -113,9 +113,9 @@ data class AppearanceSettingsUiState(
             use24HourTime = clock.use24HourTime,
             clockShowMeridiem = clock.showMeridiem,
             clockDateStyle = clock.dateStyle,
-            clockAlignment = clock.alignment,
-            clockScale = clock.scale,
-            clockZoneHeightDp = clock.zoneHeightDp,
+            clockAlignment = style.clockPlacement.portrait.alignment,
+            clockScale = style.clockPlacement.portrait.scale,
+            clockZoneHeightDp = style.clockPlacement.portrait.zoneHeightDp,
         )
     }
 }

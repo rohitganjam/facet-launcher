@@ -1,5 +1,7 @@
 package com.facetlauncher.app.ui.home
 
+import com.facetlauncher.app.data.clockItem
+import com.facetlauncher.app.data.widgetItem
 import com.facetlauncher.app.domain.ListAlignment
 import com.facetlauncher.app.domain.ClockPlacement
 import com.facetlauncher.app.data.model.LandscapeOverrides
@@ -45,7 +47,7 @@ class HomeUiStateTest {
     fun `clockWidgetAppWidgetId is null when the active facet uses its native clock`() {
         val state = HomeUiState(
             settings = LauncherSettings(activeFacetId = 1L),
-            facets = listOf(Facet(id = 1L, name = "Facet 1", position = 0, clockWidgetAppWidgetId = null)),
+            facets = listOf(Facet(id = 1L, name = "Facet 1", position = 0)),
         )
 
         assertEquals(null, state.clockWidgetAppWidgetId)
@@ -56,8 +58,8 @@ class HomeUiStateTest {
         val state = HomeUiState(
             settings = LauncherSettings(activeFacetId = 2L),
             facets = listOf(
-                Facet(id = 1L, name = "Facet 1", position = 0, clockWidgetAppWidgetId = 7),
-                Facet(id = 2L, name = "Facet 2", position = 1, clockWidgetAppWidgetId = 42),
+                Facet(id = 1L, name = "Facet 1", position = 0, clockStack = listOf(widgetItem(7, facetId = 1L))),
+                Facet(id = 2L, name = "Facet 2", position = 1, clockStack = listOf(widgetItem(42, facetId = 2L))),
             ),
         )
 
@@ -303,9 +305,9 @@ class HomeUiStateTest {
     }
 
     @Test
-    fun `an overriding facet's landscape clock values win, then its own portrait values, never the launcher's landscape ones`() {
+    fun `a facet that owns its placement uses its landscape values, then its own portrait values, never the launcher's landscape ones`() {
         val facet = Facet(
-            id = 1L, name = "Facet 1", position = 0, overrideClock = true,
+            id = 1L, name = "Facet 1", position = 0, clockPlacementOwn = true,
             clockAlignment = ClockAlignment.RIGHT, clockScale = 1.4f,
             landscapeClockAlignment = ClockAlignment.CENTER,
         )
@@ -321,8 +323,8 @@ class HomeUiStateTest {
     }
 
     @Test
-    fun `an overriding facet that never dragged its divider keeps a natural zone height in landscape`() {
-        val facet = Facet(id = 1L, name = "Facet 1", position = 0, overrideClock = true)
+    fun `a facet that owns its placement but never dragged its divider keeps a natural zone height in landscape`() {
+        val facet = Facet(id = 1L, name = "Facet 1", position = 0, clockPlacementOwn = true)
         val state = HomeUiState(
             settings = LauncherSettings(activeFacetId = 1L, clockZoneHeightDp = 200f, landscape = LandscapeOverrides(clockZoneHeightDp = 300f)),
             facets = listOf(facet),
@@ -332,8 +334,8 @@ class HomeUiStateTest {
     }
 
     @Test
-    fun `a facet that is not overriding the clock uses the launcher's values in both orientations`() {
-        val facet = Facet(id = 1L, name = "Facet 1", position = 0, overrideClock = false, landscapeClockAlignment = ClockAlignment.CENTER)
+    fun `a facet that does not own its placement uses the launcher's values in both orientations`() {
+        val facet = Facet(id = 1L, name = "Facet 1", position = 0, clockPlacementOwn = false, landscapeClockAlignment = ClockAlignment.CENTER)
         val state = HomeUiState(
             settings = LauncherSettings(activeFacetId = 1L, landscape = LandscapeOverrides(clockAlignment = ClockAlignment.RIGHT)),
             facets = listOf(facet),
@@ -402,13 +404,55 @@ class HomeUiStateTest {
 
     @Test
     fun `the hosted widget size in landscape is its own when saved, else the portrait size`() {
-        val portraitOnly = Facet(id = 1L, name = "A", position = 0, clockWidgetAppWidgetId = 7, clockWidgetWidthDp = 160, clockWidgetHeightDp = 90)
-        val both = portraitOnly.copy(landscapeClockWidgetWidthDp = 400, landscapeClockWidgetHeightDp = 300)
+        val portraitOnly = Facet(id = 1L, name = "A", position = 0, clockStack = listOf(widgetItem(7, widthDp = 160, heightDp = 90)))
+        val both = portraitOnly.copy(clockStack = listOf(widgetItem(7, widthDp = 160, heightDp = 90, landscapeWidthDp = 400, landscapeHeightDp = 300)))
         val settings = LauncherSettings(activeFacetId = 1L)
 
         assertEquals(160 to 90, HomeUiState(settings = settings, facets = listOf(portraitOnly)).clockWidgetSizeDp(landscape))
         assertEquals(400 to 300, HomeUiState(settings = settings, facets = listOf(both)).clockWidgetSizeDp(landscape))
         assertEquals(160 to 90, HomeUiState(settings = settings, facets = listOf(both)).clockWidgetSizeDp(portrait))
+    }
+
+    @Test
+    fun `the visible clock page is the remembered one, else the first`() {
+        // Given a stack of a clock and two widgets
+        val facet = Facet(id = 1L, name = "A", position = 0, clockStack = listOf(clockItem(id = 10L, position = 0), widgetItem(41, id = 11L, position = 1), widgetItem(42, id = 12L, position = 2)))
+        val settings = LauncherSettings(activeFacetId = 1L)
+
+        // Then it starts on the first page, resumes on a remembered one, and falls back when that page is gone
+        assertEquals(10L, HomeUiState(settings = settings, facets = listOf(facet)).visibleClockItem?.id)
+        assertEquals(12L, HomeUiState(settings = settings, facets = listOf(facet), visibleClockItemId = 12L).visibleClockItem?.id)
+        assertEquals(10L, HomeUiState(settings = settings, facets = listOf(facet), visibleClockItemId = 99L).visibleClockItem?.id)
+    }
+
+    @Test
+    fun `the widget id is the visible page's, and every widget in the stack needs listening`() {
+        val facet = Facet(id = 1L, name = "A", position = 0, clockStack = listOf(clockItem(id = 10L, position = 0), widgetItem(41, id = 11L, position = 1), widgetItem(42, id = 12L, position = 2)))
+        val settings = LauncherSettings(activeFacetId = 1L)
+
+        assertEquals(null, HomeUiState(settings = settings, facets = listOf(facet)).clockWidgetAppWidgetId)
+        assertEquals(42, HomeUiState(settings = settings, facets = listOf(facet), visibleClockItemId = 12L).clockWidgetAppWidgetId)
+        assertEquals(listOf(41, 42), HomeUiState(settings = settings, facets = listOf(facet)).clockStackWidgetIds)
+    }
+
+    @Test
+    fun `without pro only the first clock page shows and the rest stay saved`() {
+        // Given a stack of a clock and two widgets, the last remembered as visible
+        val facet = Facet(id = 1L, name = "A", position = 0, clockStack = listOf(clockItem(id = 10L, position = 0), widgetItem(41, id = 11L, position = 1), widgetItem(42, id = 12L, position = 2)))
+        val lapsed = HomeUiState(settings = LauncherSettings(activeFacetId = 1L), facets = listOf(facet), visibleClockItemId = 12L, isPro = false)
+
+        // Then only the first page is there, it is the visible one, no widget needs listening, and the facet still holds all three
+        assertEquals(listOf(10L), lapsed.clockStack.map { it.id })
+        assertEquals(10L, lapsed.visibleClockItem?.id)
+        assertEquals(emptyList<Int>(), lapsed.clockStackWidgetIds)
+        assertEquals(3, lapsed.activeFacet?.clockStack?.size)
+    }
+
+    @Test
+    fun `an empty stack has no visible page`() {
+        val facet = Facet(id = 1L, name = "A", position = 0, clockStack = emptyList())
+
+        assertEquals(null, HomeUiState(settings = LauncherSettings(activeFacetId = 1L), facets = listOf(facet)).visibleClockItem)
     }
 
     @Test
