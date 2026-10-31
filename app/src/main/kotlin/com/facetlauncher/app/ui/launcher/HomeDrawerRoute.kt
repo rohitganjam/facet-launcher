@@ -9,6 +9,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.unit.dp
+import com.facetlauncher.app.ui.home.ClockPagerState
 import com.facetlauncher.app.ui.home.HomeLayoutMode
 import com.facetlauncher.app.ui.home.HomeLiveState
 import com.facetlauncher.app.ui.home.HomeScreenContent
@@ -16,6 +17,7 @@ import com.facetlauncher.app.ui.home.HomeWidgetSizing
 import com.facetlauncher.app.ui.home.WhatsNewPillHost
 import com.facetlauncher.app.ui.home.WhatsNewPillViewModel
 import com.facetlauncher.app.ui.home.toHomeScreenState
+import com.facetlauncher.app.ui.home.visibleIndex
 import android.provider.Settings
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.Animatable
@@ -168,6 +170,11 @@ fun HomeDrawerRoute(
 
     val overlays = remember { HomeOverlayState() }
     var clockAdjustMode by remember { mutableStateOf(ClockAdjustMode.NONE) }
+    // Landscape only: the clock pane scrolls its own content, so swiping up to open the drawer works on the apps side only.
+    var clockPaneBoundsInHomeRoot by remember { mutableStateOf<Rect?>(null) }
+    // Portrait only: everything above the divider. A horizontal drag in it or in the landscape clock pane turns the clock stack's pages.
+    var clockZoneBoundsInHomeRoot by remember { mutableStateOf<Rect?>(null) }
+    val currentHomeUiState by rememberUpdatedState(homeUiState)
     val swipe = remember {
         HomeSwipeController(
             containerHeightPx = { containerHeightPx },
@@ -175,6 +182,14 @@ fun HomeDrawerRoute(
             coroutineScope = coroutineScope,
             endClockAdjust = { clockAdjustMode = ClockAdjustMode.NONE },
             expandNotificationShade = homeViewModel::expandNotificationShade,
+            clockPager = ClockPagerState(
+                pageCount = { currentHomeUiState.clockStack.size },
+                pageIndex = { currentHomeUiState.clockStack.visibleIndex(currentHomeUiState.visibleClockItemId) },
+                onPageChange = { index -> currentHomeUiState.clockStack.getOrNull(index)?.let { homeViewModel.onClockPageChange(it.id) } },
+                widthPx = { containerWidthPx },
+                coroutineScope = coroutineScope,
+            ),
+            isInClockZone = { position -> clockZoneBoundsInHomeRoot?.contains(position) == true || clockPaneBoundsInHomeRoot?.contains(position) == true },
         )
     }
     // What's behind the system bars: wallpaper, except while an opaque picker or the always-dark Private Space covers it.
@@ -205,8 +220,6 @@ fun HomeDrawerRoute(
     // Reported by HomeScreen's own onAppListBoundsChange — same reasoning as
     // clockWidgetBoundsInHomeRoot above, for the favorites/recents/most-used list's own scroll.
     var appListBoundsInHomeRoot by remember { mutableStateOf<Rect?>(null) }
-    // Landscape only: the clock pane scrolls its own content, so swiping up to open the drawer works on the apps side only.
-    var clockPaneBoundsInHomeRoot by remember { mutableStateOf<Rect?>(null) }
     // A long-press sheet (app/folder context menu) is open — Home's swipes must not act on the
     // still-down finger that opened it, or on anything else, until it closes (back still works).
     val homeSwipeBlocked = LocalHomeSwipeGate.current?.isBlocked == true
@@ -320,6 +333,7 @@ fun HomeDrawerRoute(
                     isPro = clockWidgetIsPro,
                     positionOwnerFacetId = homeUiState.clockPositionOwningFacet?.id,
                     positionOwnerFacetName = homeUiState.clockPositionOwningFacet?.name,
+                    visibleClockItemId = homeUiState.visibleClockItemId,
                 ),
             ),
             actions = homeScreenActions(
@@ -333,6 +347,7 @@ fun HomeDrawerRoute(
                     setClockWidgetBounds = { clockWidgetBoundsInHomeRoot = it },
                     setAppListBounds = { appListBoundsInHomeRoot = it },
                     setClockPaneBounds = { clockPaneBoundsInHomeRoot = it },
+                    setClockZoneBounds = { clockZoneBoundsInHomeRoot = it },
                     openClockWidgetPicker = { itemId ->
                         overlays.clockWidgetPickerItemId = itemId
                         overlays.showClockWidgetPicker = true

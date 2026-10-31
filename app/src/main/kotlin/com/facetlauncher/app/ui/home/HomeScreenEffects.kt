@@ -79,6 +79,14 @@ private fun ClockScaleReclampEffect(frame: HomeFrame) {
 internal fun isClockGeometryMeasured(boxSize: IntSize?, boxOrigin: Offset?, rootSize: IntSize?, handle: HandleBounds): Boolean =
     boxSize != null && boxOrigin != null && rootSize != null && handle.ceilingPx > handle.floorPx
 
+/** Everything above the divider in portrait (the clock block's bottom is just above it); `null` in landscape, where the clock pane's own bounds serve, or before it is measured. */
+private fun clockZoneBounds(layout: HomeScreenLayout, landscape: Boolean): Rect? {
+    val width = layout.rootSize?.width?.toFloat()
+    val bottom = layout.clockBlockBottomInRoot
+    if (landscape || width == null || bottom == null) return null
+    return Rect(0f, 0f, width, bottom - (layout.rootOriginInRoot?.y ?: 0f))
+}
+
 /**
  * Reports the hosted widget's bounds and the app list's viewport to the route, so its swipe-to-open-drawer gesture
  * can leave them alone. The widget's is `null` for the native clock (nothing independently scrollable to protect)
@@ -92,6 +100,7 @@ internal fun HomeBoundsReporting(frame: HomeFrame) {
     SideEffect {
         val box = layout.measureClockBox()
         frame.actions.widget.onBoundsChange(if (hasWidget && box != null) Rect(box.topLeft, box.sizePx) else null)
+        frame.actions.onClockZoneBoundsChange(clockZoneBounds(layout, frame.isLandscape))
     }
     val currentOnAppListBoundsChange by rememberUpdatedState(frame.actions.onAppListBoundsChange)
     LaunchedEffect(Unit) {

@@ -44,6 +44,8 @@ data class HomeLiveState(
     val isPro: Boolean = true,
     val positionOwnerFacetId: Long? = null,
     val positionOwnerFacetName: String? = null,
+    /** The clock stack page showing; `null`, or one no longer in the stack, shows the first. */
+    val visibleClockItemId: Long? = null,
 )
 
 /**
@@ -91,7 +93,8 @@ fun ResolvedFacetStyle.toHomeScreenState(
         draggingHandle = live.draggingHandle,
         isPro = live.isPro,
     ),
-    widget = clockStack.firstOrNull()?.toWidgetState(landscape, widgetSizing),
+    widget = visibleClockItem(live.visibleClockItemId)?.toWidgetState(landscape, widgetSizing),
+    clockStack = HomeClockStackState(pageCount = clockStack.size, pageIndex = clockStack.visibleIndex(live.visibleClockItemId)),
     calendar = HomeCalendarState(
         events = content.calendarEvents.toImmutableList(),
         colors = settings.calendarColors.toImmutableMap(),
@@ -111,6 +114,11 @@ private fun WeatherState.toHomeWeather(settings: LauncherSettings, iconStyle: We
     temperatureUnit = WeatherUnits.resolve(settings.temperatureUnit, Locale.getDefault()),
     iconStyle = iconStyle,
 )
+
+private fun ResolvedFacetStyle.visibleClockItem(itemId: Long?): ResolvedClockItem? = clockStack.getOrNull(clockStack.visibleIndex(itemId))
+
+/** Where [itemId] sits in the stack, or the first page when it is `null` or gone. */
+internal fun List<ResolvedClockItem>.visibleIndex(itemId: Long?): Int = indexOfFirst { it.id == itemId }.coerceAtLeast(0)
 
 /** The hosted widget a stack page draws; `null` for the native clock. */
 private fun ResolvedClockItem.toWidgetState(landscape: Boolean, widgetSizing: HomeWidgetSizing): HomeClockWidgetState? {

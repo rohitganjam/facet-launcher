@@ -77,6 +77,8 @@ The scale re-clamp (`ClockScaleReclampEffect`, using `ClockFit.maxScale`) is por
 landscape it would persist a wrong `clockScale`, so it is skipped. It also waits until the height handle has room to move (`isClockGeometryMeasured`: ceiling above floor, read from the latest frame): until the content height reaches the geometry the handle sits at its floor and the fit reads as the minimum scale. If the geometry never settles it saves nothing. The compact-spacing check reserves
 nothing above the list in landscape (`HomeMediaLayout.listTopTargetPx` is 0).
 
+With two or more clock pages the portrait list also moves down by `CLOCK_PAGE_DOTS_ROW_HEIGHT` (20dp): the page dots (`ClockPageDots`) take that row under the divider, or under the media row when it shows (`HomeMediaLayout.dotsTopPx`). They fade in during a swipe and for 2.5 s after any page change, and not on first composition. Landscape draws no dots yet. An empty clock stack draws nothing in the clock slot, which keeps its place so the divider and list do not move.
+
 ## 4. Landscape adjust mode
 
 Long-pressing the clock opens the same menu, now with "Adjust clock size & position". The controls:

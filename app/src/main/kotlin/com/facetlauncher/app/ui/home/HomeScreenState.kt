@@ -81,6 +81,12 @@ data class HomeClockWidgetState(
     val minHeightDp: Dp?,
 )
 
+/** The clock stack as Home draws it: how many pages, which one shows, and whether there are none (the clock area stays blank). */
+@Immutable
+data class HomeClockStackState(val pageCount: Int = 1, val pageIndex: Int = 0) {
+    val isBlank: Boolean get() = pageCount == 0
+}
+
 /** What sits with the clock: the calendar strip and the alarm, battery, charging and weather accessories. */
 @Immutable
 data class HomeCalendarState(
@@ -148,6 +154,7 @@ data class HomeScreenState(
     val dock: HomeDockState,
     val clock: HomeClockState = HomeClockState(),
     val widget: HomeClockWidgetState? = null,
+    val clockStack: HomeClockStackState = HomeClockStackState(),
     val calendar: HomeCalendarState = HomeCalendarState(),
     val media: HomeMediaState = HomeMediaState(),
 )
@@ -169,6 +176,10 @@ data class HomeClockActions(
     val onAlignmentChange: (ClockAlignment) -> Unit = {},
     val onAdjustModeChange: (ClockAdjustMode) -> Unit = {},
     val onDraggingHandleChange: (Boolean) -> Unit = {},
+    /** How far a swipe has displaced the visible page, as a fraction of the zone's width; read while drawing so a swipe does not recompose Home. */
+    val pageOffset: () -> Float = { 0f },
+    /** True while a swipe between pages is in progress, so the dots show. */
+    val pageDragging: () -> Boolean = { false },
 )
 
 /** What a hosted clock widget needs: its host view, its size changes, and the nested-scroll handoff to Home's swipes. */
@@ -203,4 +214,6 @@ data class HomeScreenActions(
     val onAppListBoundsChange: (Rect?) -> Unit = {},
     /** Landscape's clock pane, `null` in portrait: its vertical drags scroll the pane instead of opening the drawer. */
     val onClockPaneBoundsChange: (Rect?) -> Unit = {},
+    /** Portrait's clock zone, everything above the divider: horizontal drags there turn the clock stack's pages. */
+    val onClockZoneBoundsChange: (Rect?) -> Unit = {},
 )

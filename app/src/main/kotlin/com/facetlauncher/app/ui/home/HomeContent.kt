@@ -105,6 +105,18 @@ private fun BoxScope.PortraitClockZone(frame: HomeFrame) {
                 .graphicsLayer { alpha = media.fraction },
         )
     }
+    // Under the divider, and under the media row when it shows; the list is pushed down to make room.
+    if (frame.state.clockStack.pageCount > 1) {
+        val dotsInsetPx = (with(frame.density) { CLOCK_PAGE_DOTS_ROW_HEIGHT.toPx() } - with(frame.density) { CLOCK_PAGE_DOT_ROW_CONTENT.toPx() }) / 2f
+        ClockPageDots(
+            pageCount = frame.state.clockStack.pageCount,
+            pageIndex = frame.state.clockStack.pageIndex,
+            dragging = frame.actions.clock.pageDragging(),
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .offset { IntOffset(0, (media.dotsTopPx + dotsInsetPx).roundToInt()) },
+        )
+    }
     val listModifier = if (frame.state.list.alignment.verticalAlignment == AppListVerticalAlignment.TOP) {
         Modifier.align(Alignment.TopStart).offset { IntOffset(0, media.listTopPx.roundToInt()) }
     } else {

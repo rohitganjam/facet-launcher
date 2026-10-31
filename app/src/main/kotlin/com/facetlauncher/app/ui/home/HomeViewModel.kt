@@ -60,11 +60,14 @@ class HomeViewModel @Inject constructor(
     private val usageAccessPromptDismissed = MutableStateFlow(false)
     private val isDefaultLauncher = MutableStateFlow<Boolean?>(null)
 
+    /** The clock stack page each facet last showed (by item id), kept while Home lives so switching facets and back resumes there. */
+    private val visibleClockItemByFacet = MutableStateFlow<Map<Long, Long>>(emptyMap())
+
     private val _uiState = MutableStateFlow(HomeUiState())
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
 
     init {
-        combine(observeHomeScreenState(), usageAccessPromptDismissed, isDefaultLauncher) { screenState, dismissed, isDefault ->
+        combine(observeHomeScreenState(), usageAccessPromptDismissed, isDefaultLauncher, visibleClockItemByFacet) { screenState, dismissed, isDefault, visibleClockItems ->
             HomeUiState(
                 settings = screenState.settings,
                 isLoading = false,
@@ -80,6 +83,7 @@ class HomeViewModel @Inject constructor(
                 mediaPlayer = screenState.mediaPlayer,
                 usageAccessPromptDismissed = dismissed,
                 isDefaultLauncher = isDefault,
+                visibleClockItemId = visibleClockItems[screenState.settings.activeFacetId],
             )
         }.onEach { _uiState.value = it }.launchIn(viewModelScope)
 
@@ -95,6 +99,12 @@ class HomeViewModel @Inject constructor(
             // appear later if the user ever switched to another launcher and opened Facet from its drawer.
             if (isDefault) settingsRepository.markCoachMarkSeen(HOME_SET_DEFAULT_PROMPT_ID)
         }
+    }
+
+    /** The active facet now shows the clock stack page [itemId]; remembered so the facet resumes there. */
+    fun onClockPageChange(itemId: Long) {
+        val facetId = _uiState.value.settings.activeFacetId
+        visibleClockItemByFacet.update { it + (facetId to itemId) }
     }
 
     /** [com.facetlauncher.app.ui.onboarding.SetDefaultLauncherSheet]'s primary action target — see [DefaultLauncherRepository.requestDefaultLauncherIntent]. */

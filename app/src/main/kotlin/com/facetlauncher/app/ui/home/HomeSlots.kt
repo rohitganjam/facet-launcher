@@ -5,6 +5,7 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -44,6 +45,7 @@ import com.facetlauncher.app.ui.home.weather.rememberClockWeatherAccessory
 import com.facetlauncher.app.ui.theme.Accent
 import com.facetlauncher.app.ui.theme.Ink
 import com.facetlauncher.app.ui.theme.Muted
+import kotlin.math.abs
 
 /**
  * The clock, calendar and accessories, or the hosted clock widget. A tap opens the default clock app and a
@@ -53,6 +55,16 @@ import com.facetlauncher.app.ui.theme.Muted
  */
 @Composable
 internal fun HomeClockSlot(frame: HomeFrame, alignment: ClockAlignment, scaleOriginY: Float, modifier: Modifier = Modifier, scaledFootprint: Boolean = false) {
+    // An empty stack draws nothing, but the slot still takes its place so the divider and list stay put.
+    if (frame.state.clockStack.isBlank) {
+        Spacer(modifier = modifier)
+    } else {
+        ClockSlotBlock(frame, alignment, scaleOriginY, scaledFootprint, modifier)
+    }
+}
+
+@Composable
+private fun ClockSlotBlock(frame: HomeFrame, alignment: ClockAlignment, scaleOriginY: Float, scaledFootprint: Boolean, modifier: Modifier = Modifier) {
     val state = frame.state
     val clock = state.clock
     val widget = state.widget
@@ -62,7 +74,7 @@ internal fun HomeClockSlot(frame: HomeFrame, alignment: ClockAlignment, scaleOri
     val widgetSize = frame.geometry.effectiveWidgetSizePx
     CompositionLocalProvider(LocalBatteryClick provides actions.clock.onBatteryClick) {
         ClockBlock(
-            modifier = modifier,
+            modifier = modifier.pageTransition(frame),
             clockContentModifier = Modifier
                 .pointerInput(Unit) {
                     detectTapGestures(
@@ -112,6 +124,14 @@ internal fun HomeClockSlot(frame: HomeFrame, alignment: ClockAlignment, scaleOri
             onClockWidgetLeftoverFling = actions.widget.onLeftoverFling,
         )
     }
+}
+
+/** Displaces and fades the visible page while a swipe turns it; both are read in the draw phase, so a swipe does not recompose Home. */
+private fun Modifier.pageTransition(frame: HomeFrame): Modifier = graphicsLayer {
+    val offset = frame.actions.clock.pageOffset()
+    val zoneWidth = frame.layout.rootSize?.width?.toFloat() ?: size.width
+    translationX = offset * zoneWidth
+    alpha = 1f - abs(offset)
 }
 
 @Composable

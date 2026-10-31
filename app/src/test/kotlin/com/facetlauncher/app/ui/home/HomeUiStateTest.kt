@@ -1,5 +1,6 @@
 package com.facetlauncher.app.ui.home
 
+import com.facetlauncher.app.data.clockItem
 import com.facetlauncher.app.data.widgetItem
 import com.facetlauncher.app.domain.ListAlignment
 import com.facetlauncher.app.domain.ClockPlacement
@@ -410,6 +411,35 @@ class HomeUiStateTest {
         assertEquals(160 to 90, HomeUiState(settings = settings, facets = listOf(portraitOnly)).clockWidgetSizeDp(landscape))
         assertEquals(400 to 300, HomeUiState(settings = settings, facets = listOf(both)).clockWidgetSizeDp(landscape))
         assertEquals(160 to 90, HomeUiState(settings = settings, facets = listOf(both)).clockWidgetSizeDp(portrait))
+    }
+
+    @Test
+    fun `the visible clock page is the remembered one, else the first`() {
+        // Given a stack of a clock and two widgets
+        val facet = Facet(id = 1L, name = "A", position = 0, clockStack = listOf(clockItem(id = 10L, position = 0), widgetItem(41, id = 11L, position = 1), widgetItem(42, id = 12L, position = 2)))
+        val settings = LauncherSettings(activeFacetId = 1L)
+
+        // Then it starts on the first page, resumes on a remembered one, and falls back when that page is gone
+        assertEquals(10L, HomeUiState(settings = settings, facets = listOf(facet)).visibleClockItem?.id)
+        assertEquals(12L, HomeUiState(settings = settings, facets = listOf(facet), visibleClockItemId = 12L).visibleClockItem?.id)
+        assertEquals(10L, HomeUiState(settings = settings, facets = listOf(facet), visibleClockItemId = 99L).visibleClockItem?.id)
+    }
+
+    @Test
+    fun `the widget id is the visible page's, and every widget in the stack needs listening`() {
+        val facet = Facet(id = 1L, name = "A", position = 0, clockStack = listOf(clockItem(id = 10L, position = 0), widgetItem(41, id = 11L, position = 1), widgetItem(42, id = 12L, position = 2)))
+        val settings = LauncherSettings(activeFacetId = 1L)
+
+        assertEquals(null, HomeUiState(settings = settings, facets = listOf(facet)).clockWidgetAppWidgetId)
+        assertEquals(42, HomeUiState(settings = settings, facets = listOf(facet), visibleClockItemId = 12L).clockWidgetAppWidgetId)
+        assertEquals(listOf(41, 42), HomeUiState(settings = settings, facets = listOf(facet)).clockStackWidgetIds)
+    }
+
+    @Test
+    fun `an empty stack has no visible page`() {
+        val facet = Facet(id = 1L, name = "A", position = 0, clockStack = emptyList())
+
+        assertEquals(null, HomeUiState(settings = LauncherSettings(activeFacetId = 1L), facets = listOf(facet)).visibleClockItem)
     }
 
     @Test

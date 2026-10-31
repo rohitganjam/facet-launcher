@@ -37,7 +37,7 @@ app/src/main/kotlin/com/facetlauncher/app/
     ├── launcher/                  (9)   LauncherViewModel (app-lifetime state), HomeDrawerRoute (wires Home and the panels over it), HomeSwipeController +
     │                                    HomeSwipeGestures (the three swipe axes, settle rules, drag detector), HomeOverlays / HomeAppDrawerOverlay / HomeOverlayState
     │                                    (the Hub, drawer, Private Space, pickers, carousel and one-time prompts), HomeScreenActionsBuilder, LauncherLocals
-    ├── home/                      (38)  HomeScreen (thin dispatcher) / HomeFrame / HomeContent / HomeSlots / HomeScreenEffects / HomeClockGeometry / HomeScreenLayout (measurements) / ClockAdjustControls / ClockResizeOverlays / HomeScreenState (its state and action groups) / HomeViewModel / HomeUiState, ClockBlock, clock handles, ClockAdjustSheet /
+    ├── home/                      (39)  HomeScreen (thin dispatcher) / HomeFrame / HomeContent / HomeSlots / HomeScreenEffects / HomeClockGeometry / HomeScreenLayout (measurements) / ClockAdjustControls / ClockResizeOverlays / HomeScreenState (its state and action groups) / HomeViewModel / HomeUiState, ClockBlock, clock handles, ClockAdjustSheet /
     │                                    ClockAdjustToolbar / `ClockAdjustMode`, hosted-clock-widget controllers/tile, TimeTick, MediaPlayerRow, `ScaledHomeScreen` (the real Home scaled down, for previews), `HomeScreenStateBuilder` and `HomeTags`;
     │                                    the list and tiles `HomeAppList` (two-column list, column, grid), `AppRow`, `FolderRow`, `DockIcon`, with `HomeItemSpec`
     │                                    (`HomeItemActions` / `HomeItemStyle` / `HomeAppListContent`, the one parameter group they share);

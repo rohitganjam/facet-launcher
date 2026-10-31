@@ -6,6 +6,7 @@ import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.pointer.PointerInputChange
 import androidx.compose.ui.input.pointer.util.VelocityTracker
 import androidx.compose.ui.unit.Velocity
+import com.facetlauncher.app.ui.home.ClockPagerState
 import kotlin.math.abs
 import kotlinx.coroutines.CoroutineScope
 
@@ -13,6 +14,8 @@ import kotlinx.coroutines.CoroutineScope
  * Turns Home's drags into the Drawer (up), Hub (right) and Switch Facets (left) open/close axes.
  * The first move of a drag picks vertical or horizontal for that whole gesture, and whichever of
  * Hub and carousel a horizontal drag engages first keeps it, so one gesture never drives two panels.
+ * A horizontal drag that starts in the clock zone first belongs to [clockPager], while there is a page in
+ * that direction; at either end of the stack it goes on to Hub or the carousel.
  *
  * Three sources feed the same [start]/[drag]/[settle] so they cannot drift apart: Home's own
  * pointer detector, a hosted clock widget's nested scroll, and the app list's leftover scroll.
@@ -25,6 +28,8 @@ internal class HomeSwipeController(
     coroutineScope: CoroutineScope,
     private val endClockAdjust: () -> Unit,
     private val expandNotificationShade: () -> Unit,
+    val clockPager: ClockPagerState,
+    private val isInClockZone: (Offset) -> Boolean,
 ) {
     val drawer = SwipeAxisState(containerHeightPx, coroutineScope)
     val hub = SwipeAxisState(containerWidthPx, coroutineScope)
@@ -35,6 +40,10 @@ internal class HomeSwipeController(
     private var dragAxis: Axis? = null
     private var dragStartedClosed = false
     private var rawDragDistance = 0f
+    private var dragStartedInClockZone = false
+
+    /** `null` until a horizontal drag has moved, then whether the clock pager (not Hub or the carousel) took it for the whole drag. */
+    private var pagerOwnsDrag: Boolean? = null
 
     private var appListLeftoverDragActive = false
 
@@ -44,11 +53,13 @@ internal class HomeSwipeController(
     /** Whether the drag in progress locked to the horizontal axis. */
     val isHorizontalDrag: Boolean get() = dragAxis == Axis.HORIZONTAL
 
-    fun start() {
+    fun start(inClockZone: Boolean = false) {
         dragAxis = null
         velocityTracker.resetTracking()
         dragStartedClosed = drawer.progress.value == 0f
         rawDragDistance = 0f
+        dragStartedInClockZone = inClockZone
+        pagerOwnsDrag = null
     }
 
     /**
@@ -63,14 +74,21 @@ internal class HomeSwipeController(
                 drawer.dragBy(-dy)
                 rawDragDistance += dy
             }
-            Axis.HORIZONTAL -> when {
-                hub.dragActive || (!facet.dragActive && dx > 0f) -> hub.dragBy(dx)
-                facet.dragActive || (!hub.dragActive && dx < 0f) -> facet.dragBy(-dx)
-            }
+            Axis.HORIZONTAL -> dragHorizontally(dx)
         }
     }
 
-    /** [velocity] only matters for a vertical drag (the shade-expand threshold); a horizontal settle ignores it. */
+    /** The clock pager first, if the drag began in the clock zone and has a page that way; else Hub (right) or the carousel (left), whichever the drag engaged first. */
+    private fun dragHorizontally(dx: Float) {
+        if (pagerOwnsDrag == null && dx != 0f) pagerOwnsDrag = dragStartedInClockZone && clockPager.canMove(dx)
+        when {
+            pagerOwnsDrag == true -> clockPager.dragBy(dx)
+            hub.dragActive || (!facet.dragActive && dx > 0f) -> hub.dragBy(dx)
+            facet.dragActive || (!hub.dragActive && dx < 0f) -> facet.dragBy(-dx)
+        }
+    }
+
+    /** [velocity] is along the drag's own axis: it decides the shade-expand threshold when vertical and the page turn when the pager owns a horizontal drag. */
     fun settle(velocity: Float) {
         when (dragAxis) {
             Axis.VERTICAL -> {
@@ -79,7 +97,7 @@ internal class HomeSwipeController(
                     expandNotificationShade()
                 }
             }
-            Axis.HORIZONTAL -> settleHorizontal()
+            Axis.HORIZONTAL -> if (pagerOwnsDrag == true) clockPager.settle(velocity) else settleHorizontal()
             null -> Unit
         }
     }
@@ -87,7 +105,7 @@ internal class HomeSwipeController(
     fun cancel() {
         when (dragAxis) {
             Axis.VERTICAL -> drawer.settle()
-            Axis.HORIZONTAL -> settleHorizontal()
+            Axis.HORIZONTAL -> if (pagerOwnsDrag == true) clockPager.settle(0f) else settleHorizontal()
             null -> Unit
         }
     }
@@ -98,12 +116,15 @@ internal class HomeSwipeController(
     }
 
     /** The pointer detector's callbacks. */
-    fun onPointerDragStart() {
+    fun onPointerDragStart(down: Offset) {
         widgetScroll.reset()
-        start()
+        start(inClockZone = isInClockZone(down))
     }
 
-    fun onPointerDragEnd() = settle(velocityTracker.calculateVelocity().y)
+    fun onPointerDragEnd() {
+        val velocity = velocityTracker.calculateVelocity()
+        settle(if (isHorizontalDrag) velocity.x else velocity.y)
+    }
 
     fun onPointerDrag(change: PointerInputChange, dragAmount: Offset) {
         drag(dragAmount.x, dragAmount.y)
@@ -148,9 +169,10 @@ internal class WidgetScrollBridge(private val swipe: HomeSwipeController) {
         flingHandledSettle = false
     }
 
+    /** A hosted widget only sits in the clock zone, so a drag it hands over starts there. */
     fun start() {
         reset()
-        swipe.start()
+        swipe.start(inClockZone = true)
     }
 
     fun leftoverScroll(dxPx: Float, dyPx: Float) = swipe.drag(-dxPx, -dyPx)
@@ -161,6 +183,7 @@ internal class WidgetScrollBridge(private val swipe: HomeSwipeController) {
 
     fun leftoverFling(velocityXPx: Float, velocityYPx: Float) {
         flingHandledSettle = true
-        swipe.settle(if (swipe.isHorizontalDrag) velocityXPx else velocityYPx)
+        // A view's fling velocity is in scroll direction, the opposite of the finger's, which the pager settles on.
+        swipe.settle(if (swipe.isHorizontalDrag) -velocityXPx else velocityYPx)
     }
 }

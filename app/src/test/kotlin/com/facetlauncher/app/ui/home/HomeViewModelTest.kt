@@ -139,6 +139,21 @@ class HomeViewModelTest {
     }
 
     @Test
+    fun `the clock page a facet last showed is remembered, apart for each facet`() = runTest {
+        // Given an active facet 1
+        val viewModel = homeViewModel(mock(NotificationShadeRepository::class.java), settings = LauncherSettings(activeFacetId = 1L))
+        testDispatcher.scheduler.advanceUntilIdle()
+        assertEquals(null, viewModel.uiState.value.visibleClockItemId)
+
+        // When it shows its second page
+        viewModel.onClockPageChange(itemId = 42L)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Then the state remembers that page for this facet
+        assertEquals(42L, viewModel.uiState.value.visibleClockItemId)
+    }
+
+    @Test
     fun `is loading until the use case emits, then reflects the real state`() = runTest {
         // Given a HomeViewModel wired to the fake state from homeViewModel(), which emits immediately
         val viewModel = homeViewModel(mock(NotificationShadeRepository::class.java))

@@ -4399,7 +4399,8 @@ Design agreed in chat. The clock slot holds a stack of 0 to 5 items (the native 
 - [x] 1. Data model: `clock_stack_items` table, DAO, migration 34→35, `ClockStackRepository` (cap 5, one clock, reorder, per-item size and alignment). Tests: `ClockStackRepositoryTest`, `FacetDatabaseMigrationTest.migration34To35…`.
 - [x] 2. The stack is the facet's hosted-widget store: `Facet.clockStack` loaded by `FacetRepository`, the five single-widget fields removed, Home, the resize commit, facet deletion and the picker read and write it. Behaviour for users is unchanged.
 - [x] 3. New model: `[Clock]` default rows (migration, new facet, restore, import), empty means blank, per-item `replaceItem` and `ReplaceClockStackItemUseCase` (replacing `ReplaceClockWidgetUseCase` and `SwitchFacetToNativeClockUseCase`), picker target Add or Replace.
-- [ ] 4. Home: pager, swipe routing, page dots, per-item size and alignment, adjust mode across pages.
+- [x] 4a. Home pager: `ClockPagerState` (drag, commit or spring back, in-place slide), swipe routing in `HomeSwipeController` (the pager first in the clock zone, Hub and the carousel at the ends), page dots under the divider and media row, the visible page remembered per facet, an empty stack drawn blank. Tests: `ClockPagerStateTest`, `HomeSwipeControllerTest`, `HomeDrawerRouteTest`.
+- [ ] 4b. Per-page alignment (the adjust handles write the visible page's own), adjust mode across pages, landscape dots.
 - [ ] 5. Sheet (one layout) and the stack screen; Pro limit and lapsed behaviour.
 - [ ] 6. Inherit card "Edit defaults" link.
 - [ ] 7. Tests (unit, Robolectric, instrumented on the emulator), docs, `TEST_REGISTRY.md`.

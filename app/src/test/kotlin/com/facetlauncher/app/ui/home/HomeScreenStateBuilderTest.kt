@@ -103,6 +103,43 @@ class HomeScreenStateBuilderTest {
     }
 
     @Test
+    fun `the visible page decides whether the clock or a widget is built`() {
+        // Given a clock page followed by a widget page
+        val facet = Facet(id = 1L, name = "A", position = 0, clockStack = listOf(clockItem(id = 10L, position = 0), widgetItem(41, id = 11L, position = 1)))
+        val style = resolveFacetStyle(facet, settings)
+
+        // When building with each page visible
+        val onClock = style.toHomeScreenState(false, settings, content, live = HomeLiveState(visibleClockItemId = 10L))
+        val onWidget = style.toHomeScreenState(false, settings, content, live = HomeLiveState(visibleClockItemId = 11L))
+
+        // Then the clock page has no widget and the widget page has its own, and both know the stack
+        assertNull(onClock.widget)
+        assertEquals(41, onWidget.widget?.appWidgetId)
+        assertEquals(HomeClockStackState(pageCount = 2, pageIndex = 0), onClock.clockStack)
+        assertEquals(HomeClockStackState(pageCount = 2, pageIndex = 1), onWidget.clockStack)
+    }
+
+    @Test
+    fun `a page that is no longer in the stack falls back to the first`() {
+        val facet = Facet(id = 1L, name = "A", position = 0, clockStack = listOf(clockItem(id = 10L, position = 0), widgetItem(41, id = 11L, position = 1)))
+
+        val state = resolveFacetStyle(facet, settings).toHomeScreenState(false, settings, content, live = HomeLiveState(visibleClockItemId = 99L))
+
+        assertEquals(0, state.clockStack.pageIndex)
+        assertNull(state.widget)
+    }
+
+    @Test
+    fun `an empty stack builds a blank clock area`() {
+        val facet = Facet(id = 1L, name = "A", position = 0, clockStack = emptyList())
+
+        val state = build(facet, landscape = false)
+
+        assertEquals(true, state.clockStack.isBlank)
+        assertNull(state.widget)
+    }
+
+    @Test
     fun `a facet without a hosted widget builds the native clock`() {
         assertNull(build(Facet(id = 1L, name = "A", position = 0), landscape = false).widget)
     }

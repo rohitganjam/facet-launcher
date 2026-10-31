@@ -251,6 +251,15 @@ vertical drag that starts there is not Home's (swiping up opens the Drawer from 
 horizontal one still opens the Hub or carousel. `HomeDrawerRoute` gets the pane's bounds through
 `HomeScreenActions.onClockPaneBoundsChange`.
 
+**The clock stack's pager comes first for a horizontal drag in the clock zone.** The zone is everything above the
+divider in portrait (`HomeScreenActions.onClockZoneBoundsChange`, from the clock block's bottom) and the clock pane in
+landscape. When such a drag moves, `HomeSwipeController` asks `ClockPagerState.canMove(dx)`: left needs a next page,
+right a previous one. If there is one, the pager owns the whole drag, including a reversal; if not (the first or
+last page, a single page, an empty stack) the drag goes to Hub or the carousel as above. A hosted widget's handed-over
+scroll counts as starting in the zone, and its fling velocity is negated for the pager (a view's is in scroll
+direction). A drag past `PAGE_COMMIT_FRACTION` (20%) or a fling over `PAGE_FLING_VELOCITY_PX` turns the page,
+otherwise it springs back. `ClockPagerStateTest`, `HomeSwipeControllerTest` and three `HomeDrawerRouteTest` cases cover it.
+
 A drag locks to an axis only after 16dp of travel (`HOME_SWIPE_SLOP`), and counts as vertical only
 if its vertical movement exceeds `VERTICAL_DOMINANCE` (1.2x) the horizontal — anything else is
 horizontal. A touch that starts inside the app list's own region is still watched, but only a

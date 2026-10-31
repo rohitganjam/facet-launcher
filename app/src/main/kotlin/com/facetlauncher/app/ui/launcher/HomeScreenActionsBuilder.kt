@@ -36,6 +36,7 @@ internal class HomeRouteHooks(
     val setClockWidgetBounds: (Rect?) -> Unit,
     val setAppListBounds: (Rect?) -> Unit,
     val setClockPaneBounds: (Rect?) -> Unit,
+    val setClockZoneBounds: (Rect?) -> Unit,
     val openClockWidgetPicker: (itemId: Long) -> Unit,
     val openWeather: () -> Unit = {},
 )
@@ -59,7 +60,7 @@ internal fun homeScreenActions(
     navigation: HomeNavigation,
 ): HomeScreenActions = HomeScreenActions(
     item = itemActions,
-    clock = homeClockActions(viewModel, inputs, hooks, navigation),
+    clock = homeClockActions(viewModel, inputs, swipe, hooks, navigation),
     widget = homeClockWidgetActions(viewModel, inputs, swipe, hooks),
     media = HomeMediaActions(
         onPrevious = viewModel::onMediaPrevious,
@@ -73,11 +74,13 @@ internal fun homeScreenActions(
     },
     onAppListBoundsChange = hooks.setAppListBounds,
     onClockPaneBoundsChange = hooks.setClockPaneBounds,
+    onClockZoneBoundsChange = hooks.setClockZoneBounds,
 )
 
 private fun homeClockActions(
     viewModel: HomeViewModel,
     inputs: HomeActionsInputs,
+    swipe: HomeSwipeController,
     hooks: HomeRouteHooks,
     navigation: HomeNavigation,
 ): HomeClockActions {
@@ -114,6 +117,8 @@ private fun homeClockActions(
         onAlignmentChange = { viewModel.onClockAlignmentCommit(it, mode) },
         onAdjustModeChange = hooks.setAdjustMode,
         onDraggingHandleChange = hooks.setDraggingHandle,
+        pageOffset = { swipe.clockPager.offset.value },
+        pageDragging = { swipe.clockPager.dragActive },
     )
 }
 

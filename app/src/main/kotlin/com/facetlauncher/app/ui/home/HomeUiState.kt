@@ -61,6 +61,8 @@ data class HomeUiState(
      * already-default device never flashes the prompt before the answer arrives.
      */
     val isDefaultLauncher: Boolean? = null,
+    /** The clock stack page showing on the active facet, remembered while Home lives; `null` shows the first. */
+    val visibleClockItemId: Long? = null,
 ) {
     val activeFacet: Facet?
         get() = facets.find { it.id == settings.activeFacetId }
@@ -68,8 +70,8 @@ data class HomeUiState(
     /** The active facet's clock pages in swipe order (PRD F15; facet-scoped only, there is no global hosted widget to inherit). Empty is the plain native clock. */
     val clockStack: ImmutableList<ResolvedClockItem> get() = style.clockStack
 
-    /** The page Home shows: the first one, until Home has a pager. */
-    val visibleClockItem: ResolvedClockItem? get() = clockStack.firstOrNull()
+    /** The page Home shows: the remembered one, else the first (`null` when the stack is empty). */
+    val visibleClockItem: ResolvedClockItem? get() = clockStack.getOrNull(clockStack.visibleIndex(visibleClockItemId))
 
     /** The visible page's widget id; `null` when it is the native clock. */
     val clockWidgetAppWidgetId: Int? get() = visibleClockItem?.appWidgetId

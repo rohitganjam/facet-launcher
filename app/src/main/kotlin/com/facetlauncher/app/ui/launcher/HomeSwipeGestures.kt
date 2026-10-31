@@ -131,7 +131,8 @@ internal suspend fun PointerInputScope.detectHomeSwipeGestures(
     shouldClaim: (Offset) -> Boolean = { true },
     /** For a down position [shouldClaim] rejected: still watch it, but claim only a horizontally-dominant drag — a vertical one is left to the descendant's own scroll. */
     claimHorizontalOnly: (Offset) -> Boolean = { false },
-    onDragStart: () -> Unit,
+    /** Called when the drag locks, with where the finger first came down. */
+    onDragStart: (down: Offset) -> Unit,
     onDragEnd: () -> Unit,
     onDragCancel: () -> Unit,
     onDrag: (change: PointerInputChange, dragAmount: Offset) -> Unit,
@@ -164,7 +165,7 @@ internal suspend fun PointerInputScope.detectHomeSwipeGestures(
                         if (!abandoned) {
                             dragging = true
                             change.consume()
-                            onDragStart()
+                            onDragStart(down.position)
                             onDrag(change, accumulated)
                         }
                     }

@@ -84,6 +84,8 @@ internal data class HomeMediaLayout(
     val rowTopPx: Float,
     /** The app list's top now, following the row as it fades in or out. */
     val listTopPx: Float,
+    /** Where the clock stack's page dots sit: under the divider, or under the media row when it shows. Only the portrait layout draws them. */
+    val dotsTopPx: Float,
     /** Where the app list's top settles once the row's fade finishes. */
     val listTopTargetPx: Float,
 )
@@ -101,7 +103,7 @@ internal fun rememberHomeFrame(
     val metrics = clockMetrics(density)
     val widgetMinPx = clockWidgetMinPx(state.widget, landscape, density)
     val geometry = computeClockGeometry(clockGeometryInputs(state, layout, landscape, metrics, widgetMinPx, density))
-    val media = rememberHomeMediaLayout(state.media.player, layout, geometry.handle.handlePx, metrics.minGapPx, landscape, density)
+    val media = rememberHomeMediaLayout(state.media.player, layout, geometry.handle.handlePx, metrics.minGapPx, landscape, state.clockStack.pageCount > 1, density)
     val itemStyle = rememberHomeItemStyle(state.list.look)
     return HomeFrame(
         state = state,
@@ -195,6 +197,7 @@ private fun rememberHomeMediaLayout(
     handlePx: Float,
     minGapPx: Float,
     landscape: Boolean,
+    showsPageDots: Boolean,
     density: Density,
 ): HomeMediaLayout {
     LaunchedEffect(player) { if (player != null) layout.lastMediaPlayer = player }
@@ -205,12 +208,16 @@ private fun rememberHomeMediaLayout(
     )
     val rowTopPx = handlePx - minGapPx + with(density) { HOME_MEDIA_ROW_TOP_GAP.toPx() }
     val belowGapPx = with(density) { HOME_MEDIA_ROW_BOTTOM_GAP.toPx() }
-    fun listTopFor(reservePx: Float) = if (reservePx > 0f) maxOf(handlePx, rowTopPx + reservePx + belowGapPx) else handlePx
+    // The dots get their own row under the divider (and under the media row), which pushes the list down while the stack has several pages.
+    val dotsRowPx = if (showsPageDots && !landscape) with(density) { CLOCK_PAGE_DOTS_ROW_HEIGHT.toPx() } else 0f
+    fun belowMediaPx(reservePx: Float) = if (reservePx > 0f) maxOf(handlePx, rowTopPx + reservePx + belowGapPx) else handlePx
+    fun listTopFor(reservePx: Float) = belowMediaPx(reservePx) + dotsRowPx
     return HomeMediaLayout(
         shownPlayer = player ?: layout.lastMediaPlayer,
         fraction = fraction,
         rowTopPx = rowTopPx,
         listTopPx = listTopFor(layout.mediaRowHeightPx * fraction),
+        dotsTopPx = belowMediaPx(layout.mediaRowHeightPx * fraction),
         listTopTargetPx = if (landscape) 0f else listTopFor(if (player != null) layout.mediaRowHeightPx else 0f),
     )
 }

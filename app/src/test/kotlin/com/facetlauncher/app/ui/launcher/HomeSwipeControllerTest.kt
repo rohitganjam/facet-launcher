@@ -1,6 +1,9 @@
 package com.facetlauncher.app.ui.launcher
 
 import androidx.compose.runtime.MonotonicFrameClock
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
+import com.facetlauncher.app.ui.home.ClockPagerState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import org.junit.Assert.assertEquals
@@ -22,13 +25,28 @@ class HomeSwipeControllerTest {
     private var clockAdjustEnded = 0
     private var shadeExpanded = 0
 
-    private fun controller(width: Float = 1000f, height: Float = 2000f) = HomeSwipeController(
-        containerHeightPx = { height },
-        containerWidthPx = { width },
-        coroutineScope = CoroutineScope(UnconfinedTestDispatcher() + SteppingFrameClock()),
-        endClockAdjust = { clockAdjustEnded++ },
-        expandNotificationShade = { shadeExpanded++ },
-    )
+    private var pageCount = 1
+    private var pageIndex = 0
+    private val clockZone = Rect(0f, 0f, 1000f, 600f)
+
+    private fun controller(width: Float = 1000f, height: Float = 2000f): HomeSwipeController {
+        val scope = CoroutineScope(UnconfinedTestDispatcher() + SteppingFrameClock())
+        return HomeSwipeController(
+            containerHeightPx = { height },
+            containerWidthPx = { width },
+            coroutineScope = scope,
+            endClockAdjust = { clockAdjustEnded++ },
+            expandNotificationShade = { shadeExpanded++ },
+            clockPager = ClockPagerState(
+                pageCount = { pageCount },
+                pageIndex = { pageIndex },
+                onPageChange = { pageIndex = it },
+                widthPx = { width },
+                coroutineScope = scope,
+            ),
+            isInClockZone = { clockZone.contains(it) },
+        )
+    }
 
     @Test
     fun `a mostly vertical drag up pulls the drawer open and leaves the other panels shut`() {
@@ -216,5 +234,140 @@ class HomeSwipeControllerTest {
         swipe.widgetScroll.stop()
 
         assertEquals(1f, swipe.drawer.progress.value, 0f)
+    }
+
+    private fun clockDrag(swipe: HomeSwipeController, dx: Float, down: Offset = Offset(500f, 300f), velocity: Float = 0f) {
+        swipe.onPointerDragStart(down)
+        swipe.drag(dx = dx, dy = 5f)
+        swipe.settle(velocity)
+    }
+
+    @Test
+    fun `a horizontal drag in the clock zone turns the page and leaves Hub and the carousel shut`() {
+        // Given a three-page stack on the middle page
+        pageCount = 3
+        pageIndex = 1
+        val swipe = controller()
+
+        // When dragging left past the commit distance inside the clock zone
+        clockDrag(swipe, dx = -300f)
+
+        // Then the next page shows and neither panel moved
+        assertEquals(2, pageIndex)
+        assertEquals(0f, swipe.facet.progress.value, 0f)
+        assertEquals(0f, swipe.hub.progress.value, 0f)
+    }
+
+    @Test
+    fun `dragging right in the clock zone turns to the previous page`() {
+        pageCount = 3
+        pageIndex = 1
+        val swipe = controller()
+
+        clockDrag(swipe, dx = 300f)
+
+        assertEquals(0, pageIndex)
+        assertEquals(0f, swipe.hub.progress.value, 0f)
+    }
+
+    @Test
+    fun `at the last page a left drag in the clock zone goes to the facet carousel`() {
+        // Given the last page of a stack
+        pageCount = 3
+        pageIndex = 2
+        val swipe = controller()
+
+        // When dragging left in the clock zone
+        swipe.onPointerDragStart(Offset(500f, 300f))
+        swipe.drag(dx = -300f, dy = 5f)
+
+        // Then the carousel follows and the page did not change
+        assertEquals(0.3f, swipe.facet.progress.value, 0.0001f)
+        assertEquals(2, pageIndex)
+    }
+
+    @Test
+    fun `at the first page a right drag in the clock zone goes to the hub`() {
+        pageCount = 3
+        pageIndex = 0
+        val swipe = controller()
+
+        swipe.onPointerDragStart(Offset(500f, 300f))
+        swipe.drag(dx = 300f, dy = 5f)
+
+        assertEquals(0.3f, swipe.hub.progress.value, 0.0001f)
+        assertEquals(0, pageIndex)
+    }
+
+    @Test
+    fun `a drag outside the clock zone ignores the pager`() {
+        // Given a stack with pages both ways, and a finger that starts below the divider
+        pageCount = 3
+        pageIndex = 1
+        val swipe = controller()
+
+        // When dragging left there
+        swipe.onPointerDragStart(Offset(500f, 1200f))
+        swipe.drag(dx = -300f, dy = 5f)
+
+        // Then it is the carousel's drag as before
+        assertEquals(0.3f, swipe.facet.progress.value, 0.0001f)
+        assertEquals(1, pageIndex)
+    }
+
+    @Test
+    fun `a stack of one page never takes a drag`() {
+        pageCount = 1
+        pageIndex = 0
+        val swipe = controller()
+
+        swipe.onPointerDragStart(Offset(500f, 300f))
+        swipe.drag(dx = -300f, dy = 5f)
+
+        assertEquals(0.3f, swipe.facet.progress.value, 0.0001f)
+    }
+
+    @Test
+    fun `a drag the pager took keeps belonging to it when the finger reverses`() {
+        pageCount = 3
+        pageIndex = 1
+        val swipe = controller()
+
+        swipe.onPointerDragStart(Offset(500f, 300f))
+        swipe.drag(dx = -200f, dy = 0f)
+        swipe.drag(dx = 100f, dy = 0f)
+
+        assertEquals(-0.1f, swipe.clockPager.offset.value, 0.0001f)
+        assertEquals(0f, swipe.hub.progress.value, 0f)
+        assertEquals(0f, swipe.facet.progress.value, 0f)
+    }
+
+    @Test
+    fun `a drag handed over by a hosted widget starts in the clock zone`() {
+        // Given a widget's nested scroll handing over a leftover drag at the last page's neighbour
+        pageCount = 3
+        pageIndex = 1
+        val swipe = controller()
+
+        // When it starts and drags left (a scroll offset is the negation of the finger)
+        swipe.widgetScroll.start()
+        swipe.widgetScroll.leftoverScroll(dxPx = 300f, dyPx = 0f)
+        swipe.widgetScroll.stop()
+
+        // Then the page turned
+        assertEquals(2, pageIndex)
+    }
+
+    @Test
+    fun `a fast fling from a widget turns the page even after a short drag`() {
+        pageCount = 3
+        pageIndex = 1
+        val swipe = controller()
+
+        swipe.widgetScroll.start()
+        swipe.widgetScroll.leftoverScroll(dxPx = 100f, dyPx = 0f)
+        swipe.widgetScroll.leftoverFling(velocityXPx = 4000f, velocityYPx = 0f)
+
+        assertEquals(2, pageIndex)
     }
 }
