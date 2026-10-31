@@ -191,6 +191,8 @@ Location card, launcher-wide, never per facet (`UnitsAndLocationViewModel`). A f
 clock style, where the Inherit/Override switch lives; turning Override on seeds the three switches and the icon style from the
 defaults (`ClockStyleGalleryViewModel.setOverridingClock`).
 
+Every `InheritOverrideCard` on a facet-scoped screen (clock style, calendar, dock, home apps list) shows an *Edit defaults* link on the selected Inherit row; it opens the launcher-wide version of that screen (`onEditDefaults`, wired in `FacetNavHost`).
+
 `HomeScreenStateBuilder` gates the items: the alarm and battery only when their switch is on, the weather
 (`HomeWeatherState`, from `ObserveWeatherUseCase`) only when its switch is on and the forecast is not outdated.
 `HomeSlots` turns that into a `ClockWeatherAccessory` (`rememberClockWeatherAccessory`: icon, "27°C", and the spoken text

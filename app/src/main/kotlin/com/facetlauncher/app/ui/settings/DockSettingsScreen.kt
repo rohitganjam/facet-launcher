@@ -78,6 +78,7 @@ fun DockSettingsScreen(
     onBack: () -> Unit,
     onAddDockApp: () -> Unit,
     modifier: Modifier = Modifier,
+    onEditDefaults: (() -> Unit)? = null,
     viewModel: DockSettingsViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -88,6 +89,7 @@ fun DockSettingsScreen(
         onReorderDockItems = viewModel::reorderDockItems,
         onOverridingChange = viewModel::setOverriding,
         modifier = modifier,
+        onEditDefaults = onEditDefaults,
     )
 }
 
@@ -99,6 +101,7 @@ private fun DockSettingsContent(
     onReorderDockItems: (List<PlacedItem>) -> Unit,
     onOverridingChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
+    onEditDefaults: (() -> Unit)? = null,
 ) {
     val controlsEnabled = !uiState.isFacetScoped || uiState.isOverriding
 
@@ -115,7 +118,7 @@ private fun DockSettingsContent(
                     .padding(horizontal = 24.dp),
                 contentPadding = PaddingValues(top = headerHeight, bottom = 24.dp),
             ) {
-                if (uiState.isFacetScoped) inheritOverrideItems(uiState, onOverridingChange)
+                if (uiState.isFacetScoped) inheritOverrideItems(uiState, onOverridingChange, onEditDefaults)
                 item {
                     HomeSurfacePreview(
                         appList = persistentListOf(),
@@ -134,12 +137,13 @@ private fun DockSettingsContent(
 }
 
 /** A facet's Inherit/Override card, summarising the launcher-wide dock it inherits, and the gap under it. */
-private fun LazyListScope.inheritOverrideItems(uiState: DockSettingsUiState, onOverridingChange: (Boolean) -> Unit) {
+private fun LazyListScope.inheritOverrideItems(uiState: DockSettingsUiState, onOverridingChange: (Boolean) -> Unit, onEditDefaults: (() -> Unit)?) {
     item {
         InheritOverrideCard(
             overriding = uiState.isOverriding,
             onOverridingChange = onOverridingChange,
             testTagPrefix = "dock_settings",
+            onEditDefaults = onEditDefaults,
             inheritSubtitle = stringResource(
                 R.string.dot_join_2,
                 stringResource(uiState.settings.dockDisplayMode.displayNameRes),

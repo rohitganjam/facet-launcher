@@ -79,7 +79,12 @@ import java.time.ZoneId
  * [com.facetlauncher.app.ui.home.ClockBlock].
  */
 @Composable
-fun ClockStyleGalleryRoute(onBack: () -> Unit, onOpenClockAccessories: () -> Unit = {}, viewModel: ClockStyleGalleryViewModel = hiltViewModel()) {
+fun ClockStyleGalleryRoute(
+    onBack: () -> Unit,
+    onOpenClockAccessories: () -> Unit = {},
+    onEditDefaults: (() -> Unit)? = null,
+    viewModel: ClockStyleGalleryViewModel = hiltViewModel(),
+) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     ClockStyleGalleryScreen(
         uiState = uiState,
@@ -94,6 +99,7 @@ fun ClockStyleGalleryRoute(onBack: () -> Unit, onOpenClockAccessories: () -> Uni
             onResetClockPosition = viewModel::resetClockPosition,
             onOverridingChange = viewModel::setOverridingClock,
             onOpenClockAccessories = onOpenClockAccessories,
+            onEditDefaults = onEditDefaults,
         ),
         onBack = onBack,
         inheritSubtitle = stringResource(
@@ -116,6 +122,8 @@ internal class ClockStyleGalleryActions(
     val onResetClockPosition: () -> Unit = {},
     val onOverridingChange: (Boolean) -> Unit = {},
     val onOpenClockAccessories: () -> Unit = {},
+    /** Opens the launcher-wide clock style screen; `null` on that screen itself. */
+    val onEditDefaults: (() -> Unit)? = null,
 )
 
 /**
@@ -154,6 +162,7 @@ private fun ClockStyleGalleryScreen(
                             overriding = uiState.isOverriding,
                             onOverridingChange = actions.onOverridingChange,
                             testTagPrefix = "clock_style",
+                            onEditDefaults = actions.onEditDefaults,
                             inheritSubtitle = inheritSubtitle,
                         )
                     }

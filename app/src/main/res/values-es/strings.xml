@@ -200,6 +200,7 @@
     <string name="inherit_override_inherit_default">Heredar predeterminado</string>
     <string name="inherit_override_override_for_facet">Anular para esta faceta</string>
     <string name="inherit_override_changes_dont_affect_others">Los cambios aquí no afectan a otras facetas</string>
+    <string name="inherit_override_edit_defaults">Editar valores predeterminados</string>
 
     <!-- GestureHintOverlay -->
     <string name="gesture_hint_switch_facets">Cambiar de faceta</string>

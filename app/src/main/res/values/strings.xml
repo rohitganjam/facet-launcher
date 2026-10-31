@@ -213,6 +213,7 @@
     <string name="inherit_override_inherit_default">Inherit default</string>
     <string name="inherit_override_override_for_facet">Override for this facet</string>
     <string name="inherit_override_changes_dont_affect_others">Changes here don\'t affect other facets</string>
+    <string name="inherit_override_edit_defaults">Edit defaults</string>
 
     <!-- GestureHintOverlay -->
     <string name="gesture_hint_switch_facets">Switch facets</string>

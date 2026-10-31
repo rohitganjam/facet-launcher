@@ -317,6 +317,7 @@ fun FacetNavHost(
             DockSettingsScreen(
                 onBack = { navController.popBackStackSafely() },
                 onAddDockApp = { navController.navigate(FacetDestinations.dockPicker(facetId)) },
+                onEditDefaults = facetId?.let { { navController.navigate(FacetDestinations.dockSettings()) } },
             )
         }
         settingsComposable(
@@ -327,6 +328,7 @@ fun FacetNavHost(
             HomeAppsListSettingsScreen(
                 onBack = { navController.popBackStackSafely() },
                 onEditFavorites = { navController.navigate(FacetDestinations.favoritesPicker(facetId)) },
+                onEditDefaults = facetId?.let { { navController.navigate(FacetDestinations.homeAppsListSettings()) } },
             )
         }
         settingsComposable(FacetDestinations.APP_DRAWER_SETTINGS) {
@@ -346,6 +348,7 @@ fun FacetNavHost(
             ClockStyleGalleryRoute(
                 onBack = { navController.popBackStackSafely() },
                 onOpenClockAccessories = { navController.navigate(FacetDestinations.clockAccessories(facetId)) },
+                onEditDefaults = { navController.navigate(FacetDestinations.CLOCK_STYLE_GALLERY) },
             )
         }
         settingsComposable(FacetDestinations.PERMISSIONS) {
@@ -463,8 +466,12 @@ fun FacetNavHost(
         settingsComposable(
             FacetDestinations.CALENDAR_SETTINGS,
             arguments = listOf(navArgument("facetId") { type = NavType.LongType; defaultValue = NO_ACTIVE_FACET_ID }),
-        ) {
-            CalendarSettingsScreen(onBack = { navController.popBackStackSafely() })
+        ) { backStackEntry ->
+            val facetId = backStackEntry.arguments?.getLong("facetId")?.takeIf { it != NO_ACTIVE_FACET_ID }
+            CalendarSettingsScreen(
+                onBack = { navController.popBackStackSafely() },
+                onEditDefaults = facetId?.let { { navController.navigate(FacetDestinations.calendarSettings()) } },
+            )
         }
     }
 }

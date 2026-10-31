@@ -200,6 +200,7 @@
     <string name="inherit_override_inherit_default">Hériter de la valeur par défaut</string>
     <string name="inherit_override_override_for_facet">Remplacer pour cette facette</string>
     <string name="inherit_override_changes_dont_affect_others">Les changements ici n\'affectent pas les autres facettes</string>
+    <string name="inherit_override_edit_defaults">Modifier les valeurs par défaut</string>
 
     <!-- GestureHintOverlay -->
     <string name="gesture_hint_switch_facets">Changer de facette</string>
