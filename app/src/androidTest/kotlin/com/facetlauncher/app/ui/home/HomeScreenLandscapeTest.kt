@@ -94,6 +94,7 @@ class HomeScreenLandscapeTest {
         widget: TestClockWidget? = null,
         landscapeSpace: HomeLandscapeSpace? = null,
         allowLandscape: Boolean = true,
+        clockPageCount: Int = 1,
     ) {
         var adjustMode by remember { mutableStateOf(ClockAdjustMode.NONE) }
         var dragging by remember { mutableStateOf(false) }
@@ -123,6 +124,7 @@ class HomeScreenLandscapeTest {
                     mediaPlayer = mediaPlayer,
                     appListVerticalAlignment = appListVerticalAlignment,
                     clockAdjustMode = adjustMode,
+                    clockPageCount = clockPageCount,
                     onAdjustModeChange = { adjustMode = it },
                     draggingHandle = dragging,
                     onDraggingHandleChange = { dragging = it },
@@ -270,6 +272,26 @@ class HomeScreenLandscapeTest {
             assert(kotlin.math.abs(media.top - pane.top) < 2f) { "$each: media $media should sit at the pane's top $pane" }
             assert(firstApp.top >= media.bottom) { "$each: the list ($firstApp) should start below the media row ($media)" }
         }
+    }
+
+    @Test
+    fun pageDotsSitAtTheBottomOfTheClockPaneWhenTheStackHasSeveralPages() {
+        composeRule.setContent { LandscapeHome(clockPageCount = 3) }
+        composeRule.waitForIdle()
+
+        val pane = boundsOf("home_clock_pane")
+        val dots = boundsOf("clock_page_dots")
+
+        assert(dots.bottom <= pane.bottom && dots.top > pane.center.y) { "dots $dots should sit in the lower part of the clock pane $pane" }
+        assert(dots.left >= pane.left && dots.right <= pane.right) { "dots $dots should be inside the clock pane $pane" }
+    }
+
+    @Test
+    fun noPageDotsForASinglePageStack() {
+        composeRule.setContent { LandscapeHome(clockPageCount = 1) }
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithTag("clock_page_dots").assertDoesNotExist()
     }
 
     @Test

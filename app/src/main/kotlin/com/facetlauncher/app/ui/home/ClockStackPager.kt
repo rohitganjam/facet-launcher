@@ -102,10 +102,10 @@ internal class ClockPagerState(
 
 /**
  * One dot per page, the visible page filled. Shown while a swipe is in progress and for [PAGE_DOTS_LINGER_MS]
- * after any page change or swipe, then faded out. Never shown on first composition.
+ * after any page change or swipe, then faded out. Never shown on first composition, unless [forceShown] (clock adjust mode).
  */
 @Composable
-internal fun ClockPageDots(pageCount: Int, pageIndex: Int, dragging: Boolean, modifier: Modifier = Modifier) {
+internal fun ClockPageDots(pageCount: Int, pageIndex: Int, dragging: Boolean, modifier: Modifier = Modifier, forceShown: Boolean = false) {
     var shown by remember { mutableStateOf(false) }
     var seenIndex by remember { mutableIntStateOf(pageIndex) }
     LaunchedEffect(pageIndex, dragging) {
@@ -118,7 +118,7 @@ internal fun ClockPageDots(pageCount: Int, pageIndex: Int, dragging: Boolean, mo
         }
     }
     val fade = remember { Animatable(0f) }
-    LaunchedEffect(shown) { fade.animateTo(if (shown) 1f else 0f, tween(durationMillis = 200)) }
+    LaunchedEffect(shown, forceShown) { fade.animateTo(if (shown || forceShown) 1f else 0f, tween(durationMillis = 200)) }
     Row(
         modifier = modifier.alpha(fade.value).testTag("clock_page_dots"),
         horizontalArrangement = Arrangement.spacedBy(CLOCK_PAGE_DOT_GAP),

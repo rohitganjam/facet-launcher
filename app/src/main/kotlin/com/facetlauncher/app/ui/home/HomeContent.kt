@@ -112,6 +112,7 @@ private fun BoxScope.PortraitClockZone(frame: HomeFrame) {
             pageCount = frame.state.clockStack.pageCount,
             pageIndex = frame.state.clockStack.pageIndex,
             dragging = frame.actions.clock.pageDragging(),
+            forceShown = frame.state.clock.adjustMode == ClockAdjustMode.ADJUST,
             modifier = Modifier
                 .align(Alignment.TopCenter)
                 .offset { IntOffset(0, (media.dotsTopPx + dotsInsetPx).roundToInt()) },
@@ -159,6 +160,18 @@ internal fun HomeLandscapeContent(frame: HomeFrame) {
                 Modifier.graphicsLayer { alpha = frame.clockAppearAlpha.value },
                 scaledFootprint = true,
             )
+        },
+        clockPaneOverlay = {
+            val stack = frame.state.clockStack
+            if (stack.pageCount > 1) {
+                ClockPageDots(
+                    pageCount = stack.pageCount,
+                    pageIndex = stack.pageIndex,
+                    dragging = frame.actions.clock.pageDragging(),
+                    forceShown = frame.state.clock.adjustMode == ClockAdjustMode.ADJUST,
+                    modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = HOME_LANDSCAPE_CLOCK_DOTS_BOTTOM),
+                )
+            }
         },
         apps = { LandscapeAppsPane(frame) },
         // The side column is icons only; the roomy bottom row follows the user's dock style, as portrait does.
