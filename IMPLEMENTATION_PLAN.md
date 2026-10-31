@@ -4374,25 +4374,28 @@ Design agreed in chat (mocks: accessory bar, weather sheet, Clock accessories sc
 
 ## Widget stack on Home (direct request)
 
-Design agreed in chat. The clock slot can hold a stack of up to 5 items (the native clock plus hosted widgets, in any order) that you swipe through. Free: one custom widget replacing the clock, no entitlement. Pro: the stack.
+Design agreed in chat. The clock slot holds a stack of 0 to 5 items (the native clock and hosted widgets, in any order) that you swipe through. Free: 0 or 1 item. Pro: up to 5.
 
 ### Decisions
 
+- **Model:** a stack is a list of items, the clock being one like any other. A new facet starts as `[Clock]`, so every Home looks as before. Empty means nothing is drawn: no default, the clock area stays blank. No "at least one" rule. Migration 34→35 adds a `[Clock]` row for every facet without a widget, besides moving each hosted widget into a row.
+- **Pro:** the only Pro check is the stack's size limit (1 free, 5 Pro). Add is the only action that can hit it (and opens the upsell). Replace and Remove never need Pro. A lapsed facet keeps its stack saved and shows only the first item, with Add and the extra pages locked.
 - **Swipe:** left/right on the clock area moves through the stack until the first or last item, then the swipe falls through to page navigation as today. Up/down is unchanged. A widget that scrolls horizontally keeps the swipe until it is at its own edge (existing nested-scroll gate).
-- **Page dots** sit below the divider, and below the media player when it is visible. Shown during a swipe and for 2–3 s after, then faded; always shown while adjusting size and position.
+- **Page dots** sit below the divider, and below the media player when it is visible. Shown during a swipe and for 2–3 s after, then faded; always shown while adjusting. One item means no pager and no dots.
 - **Per item:** size and alignment (portrait and landscape, landscape falls back to portrait). The divider position (`clockZoneHeightDp`) is shared by the whole stack. The media row is not part of the stack.
-- **Storage:** a new table, one row per item (facet, position, kind clock or widget, widget id, size, alignment, landscape twins). The native clock item reuses the facet's own clock fields (`clockScale`, `clockAlignment`), so nothing is duplicated; a facet with no rows keeps today's clock-only behaviour. Migration turns each existing custom widget into one widget row. Backup keeps the order and the clock item and drops widget items (widgets need re-adding on import, as today).
-- **Pro:** adding a widget to the clock slot is free; the stack is Pro. A lapsed facet keeps its stack saved but shows only the first item, with the stack options locked.
-- **Sheet states:** clock only (Adjust size and position, Clock and calendar settings, Use custom widget, Widget stack), one widget (Adjust, Replace custom widget, Switch to clock widget, Widget stack), stack of 2 or more (Adjust, Manage widget stack). "Edit clock styles" is renamed "Clock and calendar settings".
-- **Stack screen:** reorderable rows (clock and widgets), remove, Add widget (disabled at 5), Remove stack, and a Configure button where there is something to configure: the clock row opens the facet-scoped Appearance screen, a hosted widget launches its own configure activity.
-- **Inherit card:** "Inherit default" gains an "Edit defaults" link to the launcher-wide screen, so a facet that follows the defaults is not a dead end. Applies wherever `InheritOverrideCard` is used.
+- **Storage:** `clock_stack_items`, one row per item. The native clock item reuses the facet's own clock fields (`clockScale`, `clockAlignment`). `Facet.clockStack` is loaded by `FacetRepository`; the five old `facets.clockWidget*` columns are retired (SQLite on minSdk 30 cannot drop a column). Backup keeps no stack (widget ids are not portable); a restored facet starts as `[Clock]`.
+- **Home sheet** (one layout in every state): Adjust size and position (the visible page; the divider when the stack is empty), **Replace clock / Replace widget** (the visible page, swapped in place; hidden when empty), **Widget stack** (subtitle: "Clock", "Gmail", "3 items", "Empty"), Facet settings, Launcher settings. There is no "Use custom widget", "Switch to clock widget" or Pro pill on the sheet.
+- **Replace** swaps the visible page in place: same position, old widget id released, size reset (a size is only valid for the widget it was resized against), alignment kept. Same picker as Add, which lists "Clock" first (hidden when the clock is already in the stack). Cancelling or failing leaves the old page untouched. Replace exists on Home only, not on the stack screen.
+- **Stack screen:** reorder handle, Configure (only where there is something to configure) and Remove per row; Add widget, the "n of limit" counter and, when a free stack is full, "Remove the current widget to add another, or go Pro". Configure on the clock row opens the facet-scoped Appearance screen; on a hosted widget it launches the widget's own configure activity.
+- **Inherit card:** "Inherit default" gains an "Edit defaults" link to the launcher-wide screen, wherever `InheritOverrideCard` is used.
 - Removing a facet or an item releases its widget id through the host.
 
 ### Steps
 
-- [x] 1. Data model: `clock_stack_items` table, DAO, migration 34→35 (moves each hosted widget into a one-item stack), `ClockStackRepository` (cap 5, one clock, reorder, per-item size and alignment). Backup (`09`) and the Facet-side wiring come with step 3. Tests: `ClockStackRepositoryTest`, `FacetDatabaseMigrationTest.migration34To35…`.
-- [ ] 2. Pro gating: custom widget free, stack Pro, lapsed behaviour (`13`).
-- [ ] 3. Home: stack pager, swipe routing, page dots, per-item size and alignment, adjust mode (`12`, `13`).
-- [ ] 4. Sheet states and the stack screen with Configure.
-- [ ] 5. Inherit card "Edit defaults" link.
-- [ ] 6. Tests (unit, Robolectric, instrumented on the emulator), docs, `TEST_REGISTRY.md`.
+- [x] 1. Data model: `clock_stack_items` table, DAO, migration 34→35, `ClockStackRepository` (cap 5, one clock, reorder, per-item size and alignment). Tests: `ClockStackRepositoryTest`, `FacetDatabaseMigrationTest.migration34To35…`.
+- [x] 2. The stack is the facet's hosted-widget store: `Facet.clockStack` loaded by `FacetRepository`, the five single-widget fields removed, Home, the resize commit, facet deletion and the picker read and write it. Behaviour for users is unchanged.
+- [ ] 3. New model: `[Clock]` default rows (migration, new facet, restore, import), empty means blank, per-item `replaceItem` and `ReplaceClockStackItemUseCase` (replacing `ReplaceClockWidgetUseCase` and `SwitchFacetToNativeClockUseCase`), picker target Add or Replace.
+- [ ] 4. Home: pager, swipe routing, page dots, per-item size and alignment, adjust mode across pages.
+- [ ] 5. Sheet (one layout) and the stack screen; Pro limit and lapsed behaviour.
+- [ ] 6. Inherit card "Edit defaults" link.
+- [ ] 7. Tests (unit, Robolectric, instrumented on the emulator), docs, `TEST_REGISTRY.md`.
