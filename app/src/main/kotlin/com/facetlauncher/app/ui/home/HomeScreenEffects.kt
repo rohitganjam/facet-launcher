@@ -56,7 +56,7 @@ private fun ClockScaleReclampEffect(frame: HomeFrame) {
     val clock = frame.state.clock
     // The effect outlives the composition it launched in, so it reads the latest frame, not the one it captured.
     val latestFrame by rememberUpdatedState(frame)
-    LaunchedEffect(clock.templateId, clock.placement.alignment, clock.dateStyle, clock.placement.zoneHeightDp, clock.positionOwnerFacetId, frame.isLandscape) {
+    LaunchedEffect(clock.templateId, clock.placement.alignment, clock.dateStyle, clock.placement.zoneHeightDp, clock.placementFacetId, frame.isLandscape) {
         // The fit maths is portrait geometry; running it in landscape would save a wrong scale.
         if (frame.isLandscape) return@LaunchedEffect
         // Never settling means no trustworthy measurement, so leave the saved scale alone.
@@ -176,7 +176,7 @@ internal fun ClockMenuSheet(clock: HomeClockState, stack: HomeClockStackState, h
                 actions.onWidgetStackClick()
             },
             stackSummary = stackSummary,
-            overrideFacetName = clock.positionOwnerFacetName,
+            overrideFacetName = clock.styleOwnerFacetName,
             page = page,
             canReplaceWithClock = !stack.hasClock,
         )

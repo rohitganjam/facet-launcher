@@ -2,6 +2,9 @@ package com.facetlauncher.app.ui.home
 
 import com.facetlauncher.app.data.ClockStackRepository
 import com.facetlauncher.app.data.EntitlementRepository
+import com.facetlauncher.app.data.model.ClockAlignment
+import com.facetlauncher.app.domain.ClockPlacement
+import com.facetlauncher.app.domain.CommitClockPlacementUseCase
 import com.facetlauncher.app.domain.ReplaceClockStackItemUseCase
 import javax.inject.Inject
 
@@ -15,6 +18,7 @@ import javax.inject.Inject
 class ClockWidgetFacetController @Inject constructor(
     private val clockStackRepository: ClockStackRepository,
     private val replaceClockStackItem: ReplaceClockStackItemUseCase,
+    private val commitClockPlacement: CommitClockPlacementUseCase,
     entitlementRepository: EntitlementRepository,
 ) {
     /** Picking a hosted widget for the clock slot is Pro; a facet that already hosts one keeps it after a lapse. */
@@ -29,5 +33,17 @@ class ClockWidgetFacetController @Inject constructor(
             clockStackRepository.setLandscapeSize(itemId, widthDp, heightDp)
         } else {
             clockStackRepository.setSize(itemId, widthDp, heightDp)
+        }
+
+    /** Saves a change to the facet's own clock placement (alignment, scale or divider) for [mode]; see [CommitClockPlacementUseCase]. */
+    suspend fun commitPlacement(facetId: Long, mode: HomeLayoutMode, change: (ClockPlacement) -> ClockPlacement) =
+        commitClockPlacement(facetId, mode == HomeLayoutMode.LANDSCAPE, change)
+
+    /** Saves the alignment of one widget page, which has its own apart from the clock's. */
+    suspend fun commitPageAlignment(itemId: Long, alignment: ClockAlignment, mode: HomeLayoutMode) =
+        if (mode == HomeLayoutMode.LANDSCAPE) {
+            clockStackRepository.setLandscapeAlignment(itemId, alignment)
+        } else {
+            clockStackRepository.setAlignment(itemId, alignment)
         }
 }

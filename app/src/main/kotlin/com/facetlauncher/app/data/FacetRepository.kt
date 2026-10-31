@@ -15,6 +15,7 @@ import com.facetlauncher.app.data.model.AppListVerticalAlignment
 import com.facetlauncher.app.data.model.AppRowPosition
 import com.facetlauncher.app.data.model.AppRowPresentation
 import com.facetlauncher.app.data.model.CalendarDisplayOptions
+import com.facetlauncher.app.data.model.DEFAULT_CLOCK_SCALE
 import com.facetlauncher.app.data.model.ClockAlignment
 import com.facetlauncher.app.data.model.ClockColorOption
 import com.facetlauncher.app.data.model.ClockDateStyle
@@ -137,12 +138,21 @@ class FacetRepository @Inject constructor(
         update(facetId) { it.copy(clockWeatherIconStyle = style) }
     }
 
-    suspend fun setClockAlignment(facetId: Long, alignment: ClockAlignment) {
-        update(facetId) { it.copy(clockAlignment = alignment) }
-    }
-
-    suspend fun setClockZoneHeight(facetId: Long, heightDp: Float) {
-        update(facetId) { it.copy(clockZoneHeightDp = heightDp) }
+    /**
+     * Makes the clock placement the facet's own ([Facet.clockPlacementOwn]) with these values; [landscape]'s clock fields
+     * are the landscape twins, `null` meaning "same as portrait". Other landscape fields are left alone.
+     */
+    suspend fun setClockPlacement(facetId: Long, alignment: ClockAlignment, zoneHeightDp: Float?, scale: Float, landscape: LandscapeOverrides) {
+        update(facetId) {
+            it.copy(clockPlacementOwn = true, clockAlignment = alignment, clockZoneHeightDp = zoneHeightDp, clockScale = scale)
+                .withLandscape(
+                    it.landscape.copy(
+                        clockAlignment = landscape.clockAlignment,
+                        clockZoneHeightDp = landscape.clockZoneHeightDp,
+                        clockScale = landscape.clockScale,
+                    ),
+                )
+        }
     }
 
     /** Changes this facet's landscape values in one write; a `null` field goes back to "same as portrait". */
@@ -150,37 +160,23 @@ class FacetRepository @Inject constructor(
         update(facetId) { it.withLandscape(transform(it.landscape)) }
     }
 
-    /** Restores this facet's clock+calendar block to its natural, undragged position. */
-    suspend fun resetClockZoneHeight(facetId: Long) {
-        update(facetId) { it.copy(clockZoneHeightDp = null).withLandscape(it.landscape.copy(clockZoneHeightDp = null)) }
-    }
-
-    suspend fun setClockScale(facetId: Long, scale: Float) {
-        update(facetId) { it.copy(clockScale = scale) }
-    }
-
     /**
-     * "Reset clock widget position" for this facet — the zone height back to `null`, alignment
-     * back to `LEFT`, and scale back to `0.8f`, in one atomic upsert (avoids the clobbering risk
-     * of sequential single-field upserts against the same stale snapshot).
+     * "Reset clock position" for this facet: it stops owning its placement ([Facet.clockPlacementOwn]) and goes back to
+     * the launcher's fallback, with its own values cleared, in one atomic write.
      */
     suspend fun resetClockPosition(facetId: Long) {
         update(facetId) {
-            it.copy(clockZoneHeightDp = null, clockAlignment = ClockAlignment.LEFT, clockScale = 0.8f)
+            it.copy(clockPlacementOwn = false, clockZoneHeightDp = null, clockAlignment = ClockAlignment.LEFT, clockScale = DEFAULT_CLOCK_SCALE)
                 .withLandscape(it.landscape.copy(clockZoneHeightDp = null, clockAlignment = null, clockScale = null))
         }
     }
 
     /**
-     * Seeds the facet's clock *design* settings from effective values and toggles the override
-     * flag. One toggle for the whole Home clock/calendar block — it's a single visual unit, not
-     * independent design decisions — which is why `clockAlignment`/`clockZoneHeightDp` (moved in
-     * from being global-only) are seeded here too, not by [updateOverridingCalendar] (that one is
-     * calendar *selection* only — which calendars, which events — see its own doc comment). The
-     * calendar events strip no longer has its own font/color/weight to seed — it reads Appearance
-     * (global-only) and this block's own `clockAlignment` (see chat history). Atomic upsert to
-     * avoid clobbering. The landscape alignment is seeded the same way, so starting to override doesn't change a
-     * facet's landscape look.
+     * Seeds the facet's clock *style* from the effective values and toggles the override flag. One toggle for the
+     * whole style and accessories block, which is one visual unit, not independent decisions: template, font, colours,
+     * date, time format and the alarm, battery and weather accessories. Placement (alignment, scale, divider) is not
+     * part of it: it is always the facet's own ([Facet.clockPlacementOwn]). The calendar *selection* is separate, see
+     * [updateOverridingCalendar]. One atomic write, to avoid clobbering.
      */
     suspend fun updateOverridingClock(
         facetId: Long,
@@ -190,10 +186,6 @@ class FacetRepository @Inject constructor(
         colorOption: ClockColorOption,
         use24HourTime: Boolean,
         showMeridiem: Boolean,
-        clockAlignment: ClockAlignment,
-        landscapeClockAlignment: ClockAlignment?,
-        clockZoneHeightDp: Float?,
-        clockScale: Float,
         accentColorOption: ClockColorOption,
         dateStyle: ClockDateStyle,
         showAlarm: Boolean = true,
@@ -213,12 +205,9 @@ class FacetRepository @Inject constructor(
                 clockColorOption = colorOption,
                 use24HourTime = use24HourTime,
                 clockShowMeridiem = showMeridiem,
-                clockAlignment = clockAlignment,
-                clockZoneHeightDp = clockZoneHeightDp,
-                clockScale = clockScale,
                 clockAccentColorOption = accentColorOption,
                 clockDateStyle = dateStyle,
-            ).withLandscape(it.landscape.copy(clockAlignment = landscapeClockAlignment))
+            )
         }
     }
 

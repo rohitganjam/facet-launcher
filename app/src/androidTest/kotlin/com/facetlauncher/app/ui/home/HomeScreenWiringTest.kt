@@ -291,9 +291,9 @@ class HomeScreenWiringTest {
     }
 
     @Test
-    fun theFacetThatOwnsTheClockPlacementIsNamedOnTheEditStylesRow() {
-        // Given a placement owned by a facet called Work
-        val state = appState(PlacedItem.SingleApp(mail)).copy(clock = HomeClockState(positionOwnerFacetId = 3L, positionOwnerFacetName = "Work"))
+    fun theFacetThatOwnsTheClockStyleIsNamedOnTheClockSettingsRow() {
+        // Given a clock style owned by a facet called Work
+        val state = appState(PlacedItem.SingleApp(mail)).copy(clock = HomeClockState(placementFacetId = 3L, styleOwnerFacetName = "Work"))
         setHome(state, HomeScreenActions(item = HomeItemActions(onAppClick = {})))
 
         // When the clock menu opens

@@ -60,8 +60,10 @@ data class HomeClockState(
     val launcherFontOption: LauncherFontOption = LauncherFontOption.SYSTEM,
     val placement: ClockPlacement = ClockPlacement(ClockAlignment.LEFT, zoneHeightDp = null, scale = 0.8f),
     /** The facet whose clock override governs the placement now (`null`: the launcher-wide default), and its name for the menu badge. */
-    val positionOwnerFacetId: Long? = null,
-    val positionOwnerFacetName: String? = null,
+    /** The facet whose placement Home shows (always the active one), so a change of facet re-fits the clock. */
+    val placementFacetId: Long? = null,
+    /** Names the facet whose own clock style is in force, for the sheet's scope badge; `null` is the launcher-wide style. */
+    val styleOwnerFacetName: String? = null,
     val adjustMode: ClockAdjustMode = ClockAdjustMode.NONE,
     /** True while a handle is being dragged, which suppresses the screen's own gestures. */
     val draggingHandle: Boolean = false,

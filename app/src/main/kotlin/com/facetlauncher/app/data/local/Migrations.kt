@@ -642,6 +642,18 @@ object Migrations {
         }
     }
 
+    /**
+     * Adds `facets.clockPlacementOwn`: whether the facet's clock placement (alignment, scale, divider and their landscape
+     * twins) is its own. A facet that overrides the clock already had its own, so it starts owning it; the others keep
+     * showing the launcher's fallback placement until first adjusted on Home.
+     */
+    val MIGRATION_35_36: Migration = object : Migration(35, 36) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("ALTER TABLE facets ADD COLUMN clockPlacementOwn INTEGER NOT NULL DEFAULT 0")
+            db.execSQL("UPDATE facets SET clockPlacementOwn = overrideClock")
+        }
+    }
+
     val ALL: Array<Migration> = arrayOf(
         MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15, MIGRATION_15_16,
         MIGRATION_16_17, MIGRATION_17_18, MIGRATION_18_19, MIGRATION_19_20, MIGRATION_20_21, MIGRATION_21_22,
@@ -653,5 +665,6 @@ object Migrations {
         MIGRATION_32_33,
         MIGRATION_33_34,
         MIGRATION_34_35,
+        MIGRATION_35_36,
     )
 }

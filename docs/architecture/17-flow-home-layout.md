@@ -122,9 +122,9 @@ A hosted clock widget adjusts too, by real size rather than scale: the corner ha
 for a top-aligned widget, top corners otherwise) resize it between one landscape Hub cell (64dp square, not the portrait cell) and the pane
 (`landscapeMaxWidgetSize`, `landscapeWidgetSizeAtTouch`), and the divider stops at that one-cell
 width, shrinking the widget live and saving that size on release. The rendered size is always clamped to
-the pane without being saved. Landscape saves its own size (`facets.landscapeClockWidgetWidthDp`/`HeightDp`) and
+the pane without being saved. Landscape saves its own size on the widget's stack item (`clock_stack_items.landscapeWidthDp`/`landscapeHeightDp`) and
 uses the portrait one until it has one, so a resize in one orientation never changes the other.
-The route resolves everything that differs between orientations once, from the layout mode: `HomeUiState.clockPlacement(mode)` (alignment, divider position, scale; resolved by `resolveFacetStyle`), `listAlignment(mode)` (row position, vertical anchor, two-column alignment) and `clockWidgetSizeDp(mode)`. Landscape's values are one `LandscapeOverrides` group per scope, the launcher's `landscape_*` keys and a facet's `landscape*` columns (see [02](02-persistence-room.md)), written through `updateLandscape`; a `null` field means "same as portrait". One rule resolves every prop (`resolveLandscape`): the facet's landscape value, else the facet's portrait value if it applies (the clock override is on, or the list field isn't `LAUNCHER_DEFAULT`), else the launcher's landscape value, else the launcher's portrait value. The list alignment is edited under "Landscape alignment" in Dock & Apps appearance (with a "Same as portrait" choice), the clock values by adjust mode in landscape. A facet that starts overriding the clock is seeded with the launcher's landscape alignment, so its landscape look doesn't change. The facet carousel and Appearance previews stay portrait-shaped, and the style gallery edits portrait values only; its reset clears both. Portrait clamps the rendered size in read mode too, so a larger size can't spill out of the screen.
+The route resolves everything that differs between orientations once, from the layout mode: `HomeUiState.clockPlacement(mode)` (alignment, divider position, scale; resolved by `resolveFacetStyle`: the facet's own once `clockPlacementOwn`, else the launcher fallback, with a widget page's own alignment laid over it in the state builder), `listAlignment(mode)` (row position, vertical anchor, two-column alignment) and `clockWidgetSizeDp(mode)`. Landscape's values are one `LandscapeOverrides` group per scope, the launcher's `landscape_*` keys and a facet's `landscape*` columns (see [02](02-persistence-room.md)), written through `updateLandscape`; a `null` field means "same as portrait". One rule resolves every prop (`resolveLandscape`): the facet's landscape value, else the facet's portrait value if it applies (the clock override is on, or the list field isn't `LAUNCHER_DEFAULT`), else the launcher's landscape value, else the launcher's portrait value. The list alignment is edited under "Landscape alignment" in Dock & Apps appearance (with a "Same as portrait" choice), the clock values by adjust mode in landscape. A facet that starts overriding the clock is seeded with the launcher's landscape alignment, so its landscape look doesn't change. The facet carousel and Appearance previews stay portrait-shaped, and the style gallery edits portrait values only; its reset clears both. Portrait clamps the rendered size in read mode too, so a larger size can't spill out of the screen.
 
 The geometry is pure functions: the pane, handle and touch maths in `HomeLandscapeGeometry.kt`, and the per-frame
 resolution (handle bounds, fit limits, effective scale and widget size, pane width) in `HomeClockGeometry.kt`
@@ -134,3 +134,13 @@ resolution (handle bounds, fit limits, effective scale and widget size, pane wid
 
 The landscape widget grid is built (see [10](10-flow-hub-widgets.md) §5). Not built yet: landscape
 facet-preview cards, and gesture thresholds for a short window.
+
+## 5. Who owns the placement
+
+A facet's clock placement (alignment, scale, divider, landscape twins) is always set from this screen, never from
+Settings, and never inherited by choice. `CommitClockPlacementUseCase` saves each adjust-mode commit to the active
+facet: on the first one it copies the placement the facet is showing (the launcher's fallback) into the facet in both
+orientations and sets `facets.clockPlacementOwn`, so changing one value does not move the others. A widget page keeps
+its own alignment on its stack item (`ClockWidgetFacetController.commitPageAlignment`); the clock page uses the
+facet's. "Reset clock position" on the facet's clock style screen clears the flag. `overrideClock` only governs the
+clock's style, calendar and accessories.

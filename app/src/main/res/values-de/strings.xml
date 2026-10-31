@@ -812,7 +812,6 @@
     <string name="clock_style_primary_font_color">Primäre Schriftfarbe</string>
     <string name="clock_style_show_meridiem">Vormittag/Nachmittag anzeigen (AM/PM)</string>
     <string name="clock_style_date_style">Datumsstil</string>
-    <string name="clock_style_clock_alignment">Uhrausrichtung</string>
     <string name="clock_style_position_section">POSITION</string>
     <string name="clock_style_tap_to_select">UHRSTILE — ZUM AUSWÄHLEN TIPPEN</string>
     <string name="clock_style_long_press_hint">Drücke lange auf die Uhr auf dem Startbildschirm, um Größe und vertikale Position anzupassen.</string>

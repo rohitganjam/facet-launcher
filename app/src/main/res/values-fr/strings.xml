@@ -812,7 +812,6 @@
     <string name="clock_style_primary_font_color">Couleur de police principale</string>
     <string name="clock_style_show_meridiem">Afficher le méridien (AM/PM)</string>
     <string name="clock_style_date_style">Style de date</string>
-    <string name="clock_style_clock_alignment">Alignement de l\'horloge</string>
     <string name="clock_style_position_section">POSITION</string>
     <string name="clock_style_tap_to_select">STYLES D\'HORLOGE — APPUYEZ POUR SÉLECTIONNER</string>
     <string name="clock_style_long_press_hint">Appuyez longuement sur l\'horloge de l\'écran d\'accueil pour ajuster la taille et la position verticale.</string>

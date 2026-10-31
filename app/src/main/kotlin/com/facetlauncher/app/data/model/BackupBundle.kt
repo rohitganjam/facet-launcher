@@ -182,6 +182,8 @@ data class BackupFacet(
     val clockShowBattery: Boolean = true,
     val clockShowWeather: Boolean = false,
     val clockWeatherIconStyle: String = WeatherIconStyle.COLORED.name,
+    /** `null` in a backup from before placement was the facet's own: such a facet owned its placement exactly when it overrode the clock. */
+    val clockPlacementOwn: Boolean? = null,
     val clockAlignment: String = ClockAlignment.LEFT.name,
     val clockZoneHeightDp: Float? = null,
     val clockScale: Float = 0.8f,

@@ -112,6 +112,7 @@ import com.facetlauncher.app.domain.ResolveWidgetResizeUseCase
 import com.facetlauncher.app.domain.SeedDefaultDockUseCase
 import com.facetlauncher.app.domain.SelectableFacetsUseCase
 import com.facetlauncher.app.domain.AddClockStackItemUseCase
+import com.facetlauncher.app.domain.CommitClockPlacementUseCase
 import com.facetlauncher.app.domain.ReplaceClockStackItemUseCase
 import com.facetlauncher.app.domain.SyncFacetShortcutsUseCase
 import com.facetlauncher.app.ui.components.HomeSwipeGate
@@ -295,7 +296,12 @@ class HomeDrawerRouteTest {
                     ObserveQuickAddStateUseCase(),
                     MediaSessionRepository(context, notificationBadgeRepository),
                     ClockWidgetHostController(appWidgetRepository),
-                    ClockWidgetFacetController(clockStackRepository, ReplaceClockStackItemUseCase(clockStackRepository, appWidgetRepository), EntitlementRepository()),
+                    ClockWidgetFacetController(
+                        clockStackRepository,
+                        ReplaceClockStackItemUseCase(clockStackRepository, appWidgetRepository),
+                        CommitClockPlacementUseCase(facetRepository, settingsRepository),
+                        EntitlementRepository(),
+                    ),
                     EntitlementRepository(),
                 )
             }
@@ -505,6 +511,13 @@ class HomeDrawerRouteTest {
         // ordinary emission latency, not a real system call — a short timeout is enough.
         composeRule.waitUntil(timeoutMillis = 3_000) {
             composeRule.onAllNodesWithTag("home_app_list_scroll_region").fetchSemanticsNodes().isNotEmpty()
+        }
+        // The list region exists before the facet and its rows have loaded from Room and DataStore, so also wait for the
+        // clock (which needs the active facet) and, when favorites were seeded, the first row. A test's first gesture or
+        // lookup then never races the load.
+        composeRule.waitUntil(timeoutMillis = 10_000) {
+            composeRule.onAllNodesWithTag("home_clock_block", useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty() &&
+                (favoriteCount == 0 || composeRule.onAllNodesWithTag("home_app_icon_com.example.A", useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty())
         }
     }
 
@@ -968,11 +981,8 @@ class HomeDrawerRouteTest {
 
     @Test
     fun draggingLeftAfterALongPressOpensTheContextSheetWithoutOpeningTheCarousel() {
-        // Given Home with a favorite app row (the list fills in asynchronously, so wait for the row before reading it)
+        // Given Home with a favorite app row
         setContent()
-        composeRule.waitUntil(timeoutMillis = 10_000) {
-            composeRule.onAllNodesWithTag("home_app_icon_com.example.A", useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
-        }
         val iconCenter = composeRule.onNodeWithTag("home_app_icon_com.example.A", useUnmergedTree = true)
             .fetchSemanticsNode()
             .boundsInRoot

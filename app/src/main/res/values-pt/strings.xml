@@ -812,7 +812,6 @@
     <string name="clock_style_primary_font_color">Cor primária da fonte</string>
     <string name="clock_style_show_meridiem">Exibir AM/PM</string>
     <string name="clock_style_date_style">Estilo de data</string>
-    <string name="clock_style_clock_alignment">Alinhamento do relógio</string>
     <string name="clock_style_position_section">POSIÇÃO</string>
     <string name="clock_style_tap_to_select">ESTILOS DE RELÓGIO — TOQUE PARA SELECIONAR</string>
     <string name="clock_style_long_press_hint">Toque e segure o relógio na tela inicial para ajustar o tamanho e a posição vertical.</string>

@@ -94,9 +94,8 @@ class ClockStyleGalleryScreenTest {
 
     @Test
     fun tappingATemplateCardPersistsItAsTheChosenTemplate() {
-        // Given the gallery, Light stack applied by default — scrolled into view since the new
-        // Position section (alignment picker + reset row) above it pushes the template list lower
-        // than the initially-composed viewport on some screen sizes.
+        // Given the gallery, Light stack applied by default — scrolled into view since the sections
+        // above it can push the template list lower than the initially-composed viewport on some screen sizes.
         val (settingsRepository, _) = setContent()
         composeRule.onNodeWithTag("clock_style_gallery_list")
             .performScrollToNode(hasTestTag("clock_template_card_${ClockTemplateId.LIGHT_STACK.name}"))
@@ -169,159 +168,68 @@ class ClockStyleGalleryScreenTest {
         composeRule.onNodeWithTag("clock_show_meridiem_toggle").assertIsOn()
     }
 
-    @Test
-    fun globalClockAlignmentSelectionPersistsThroughSettingsRepository() {
-        // Given the global (non-facet-scoped) entry point, Left by default
-        val (settingsRepository, _) = setContent()
-
-        // When picking Center alignment
-        composeRule.onNodeWithTag("clock_style_gallery_list")
-            .performScrollToNode(hasTestTag("clock_alignment_row"))
-        composeRule.onNodeWithTag("clock_alignment_row").performClick()
-        composeRule.waitForIdle()
-        composeRule.onNodeWithTag("clock_alignment_row_option_CENTER").performClick()
-
-        // Then it's persisted to the real repository
-        composeRule.waitUntil(timeoutMillis = 3_000) {
-            runBlocking { settingsRepository.settings.first().clockAlignment == com.facetlauncher.app.data.model.ClockAlignment.CENTER }
-        }
-    }
-
     // calendarPreviewMovesLiveWhenClockAlignmentChanges moved to AppearanceSettingsScreenTest —
     // the calendar preview itself lives there now (see chat history).
 
     @Test
-    fun clockTemplateCardPreviewMovesLiveWhenClockAlignmentChanges() {
-        // Given the gallery, the LIGHT_STACK card's own time text initially left-packed (default).
-        // Every template's root lost its `fillMaxWidth()` as part of the clock hit-box fix (see
-        // HomeScreen.kt's own doc comment), which means ClockStyleGalleryScreen.kt needs its own
-        // explicit `Modifier.align(clockAlignment.resolve())` per card for this to still move —
-        // this test locks that one-line fix in.
-        val (settingsRepository, _) = setContent()
-        composeRule.onNodeWithTag("clock_style_gallery_list")
-            .performScrollToNode(hasTestTag("clock_template_card_LIGHT_STACK"))
-        val lightStackTime = hasText("9:05", substring = true) and hasAnyAncestor(hasTestTag("clock_template_card_LIGHT_STACK"))
-        val leftBefore = composeRule.onNode(lightStackTime, useUnmergedTree = true).fetchSemanticsNode().boundsInRoot.left
+    fun theGalleryHasNoAlignmentRowInEitherScope() {
+        // Given the launcher-wide gallery
+        setContent()
 
-        // When selecting Right clock alignment
-        composeRule.onNodeWithTag("clock_style_gallery_list")
-            .performScrollToNode(hasTestTag("clock_alignment_row"))
-        composeRule.onNodeWithTag("clock_alignment_row").performClick()
-        composeRule.waitForIdle()
-        composeRule.onNodeWithTag("clock_alignment_row_option_RIGHT").performClick()
-        // waitForIdle() alone only settles Compose's own pipeline — it doesn't wait for the
-        // ViewModel's async DataStore write to land and re-emit, which is what actually drives
-        // the recomposition this test is asserting on (see the calendar-alignment test above for
-        // the same pattern, and CLAUDE.md's own guidance on async-on-top-of-recomposition races).
-        composeRule.waitUntil(timeoutMillis = 3_000) {
-            runBlocking { settingsRepository.settings.first().clockAlignment == com.facetlauncher.app.data.model.ClockAlignment.RIGHT }
-        }
-        composeRule.waitForIdle()
-
-        // Then the LIGHT_STACK card's own preview shifts further right — it moves live with the
-        // setting, not just on the real Home screen
-        composeRule.onNodeWithTag("clock_style_gallery_list")
-            .performScrollToNode(hasTestTag("clock_template_card_LIGHT_STACK"))
-        val leftAfter = composeRule.onNode(lightStackTime, useUnmergedTree = true).fetchSemanticsNode().boundsInRoot.left
-        org.junit.Assert.assertTrue(leftAfter > leftBefore)
+        // Then clock alignment is not set here: it is the facet's own and set from Home
+        composeRule.onNodeWithTag("clock_alignment_row").assertDoesNotExist()
     }
 
     @Test
-    fun tappingResetClockWidgetPositionClearsTheZoneHeightAndAlignment() {
-        // Given a previously-dragged clock zone height and non-default alignment, both persisted
-        val (settingsRepository, _) = setContent()
-        runBlocking {
-            settingsRepository.setClockZoneHeight(180f)
-            settingsRepository.setClockAlignment(com.facetlauncher.app.data.model.ClockAlignment.RIGHT)
-        }
-        composeRule.waitUntil(timeoutMillis = 3_000) {
-            runBlocking { settingsRepository.settings.first().clockZoneHeightDp != null }
-        }
-
-        // When "Reset clock widget position" is tapped
-        composeRule.onNodeWithTag("clock_style_gallery_list")
-            .performScrollToNode(hasTestTag("reset_clock_position_row"))
-        composeRule.onNodeWithTag("reset_clock_position_row").performClick()
-        composeRule.waitForIdle()
-
-        // Then the zone height clears AND the alignment returns to Left — the whole widget's
-        // position resets, not just its height. resetClockPosition() issues these as sequential
-        // DataStore writes in one coroutine — waiting on zone height alone could race ahead of the
-        // alignment write, which might still be mid-flight when the assertion below ran. Waiting
-        // on the actual condition being asserted is what makes this reliable.
-        composeRule.waitUntil(timeoutMillis = 3_000) {
-            runBlocking {
-                val settings = settingsRepository.settings.first()
-                settings.clockZoneHeightDp == null &&
-                    settings.clockAlignment == com.facetlauncher.app.data.model.ClockAlignment.LEFT
-            }
-        }
-        val settings = runBlocking { settingsRepository.settings.first() }
-        assertEquals(com.facetlauncher.app.data.model.ClockAlignment.LEFT, settings.clockAlignment)
-    }
-
-    @Test
-    fun facetScopedClockAlignmentPersistsToTheFacetDirectly() {
-        // Given a facet-scoped entry point — alignment is now part of the same Clock+Calendar
-        // design bundle as font/color/template, so it's facet-overridable the same way (see
-        // chat history: this used to be global-only and hidden entirely on this variant).
-        val (settingsRepository, facetRepository) = setContent(facetId = 1L)
-
-        // The alignment control is disabled until Override is picked (same `controlsEnabled`
-        // gating as the rest of this screen's controls — see chat history)
-        composeRule.onNodeWithTag("clock_style_override_row").performClick()
-        composeRule.waitUntil(timeoutMillis = 3_000) {
-            runBlocking { facetRepository.observeFacets().first().any { it.overrideClock } }
-        }
-
-        // When picking Center alignment for the clock
-        composeRule.onNodeWithTag("clock_style_gallery_list")
-            .performScrollToNode(hasTestTag("clock_alignment_row"))
-        composeRule.onNodeWithTag("clock_alignment_row").performClick()
-        composeRule.waitForIdle()
-        composeRule.onNodeWithTag("clock_alignment_row_option_CENTER").performClick()
-
-        // Then it's persisted to this facet's own row, not the launcher-wide global setting
-        composeRule.waitUntil(timeoutMillis = 3_000) {
-            runBlocking {
-                facetRepository.observeFacets().first().single().clockAlignment == com.facetlauncher.app.data.model.ClockAlignment.CENTER
-            }
-        }
-        assertEquals(com.facetlauncher.app.data.model.ClockAlignment.LEFT, runBlocking { settingsRepository.settings.first().clockAlignment })
-    }
-
-    @Test
-    fun facetScopedResetClockWidgetPositionClearsTheFacetsOwnHeightAndAlignment() {
-        // Given a facet-scoped entry point, overriding, with a previously-dragged height and
-        // non-default alignment
+    fun theFacetScopedGalleryHasNoAlignmentRowEvenWhileOverriding() {
+        // Given a facet that overrides the clock style
         val (_, facetRepository) = setContent(facetId = 1L)
         composeRule.onNodeWithTag("clock_style_override_row").performClick()
         composeRule.waitUntil(timeoutMillis = 3_000) {
             runBlocking { facetRepository.observeFacets().first().any { it.overrideClock } }
         }
+
+        // Then there is still no alignment row: the override does not cover placement
+        composeRule.onNodeWithTag("clock_alignment_row").assertDoesNotExist()
+    }
+
+    @Test
+    fun theLauncherWideGalleryHasNoResetPositionRow() {
+        // Given the launcher-wide gallery, which has no placement of its own to reset
+        setContent()
+
+        // Then the Position section with its reset row is not there
+        composeRule.onNodeWithTag("reset_clock_position_row").assertDoesNotExist()
+    }
+
+    @Test
+    fun resetClockPositionGivesAFacetsOwnPlacementBackToTheLauncherFallback() {
+        // Given a facet that owns a dragged placement (it does not need to override the clock style)
+        val (_, facetRepository) = setContent(facetId = 1L)
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            composeRule.onAllNodesWithTag("clock_style_override_row").fetchSemanticsNodes().isNotEmpty()
+        }
         runBlocking {
-            // Each setter re-fetches the current row rather than reusing one stale snapshot —
-            // otherwise the next call's copy() would silently clobber the previous field back to
-            // its original value (see chat history: this exact bug bit this test's first draft).
-            facetRepository.setClockZoneHeight(facetRepository.observeFacets().first().single().id, 180f)
-            facetRepository.setClockAlignment(facetRepository.observeFacets().first().single().id, com.facetlauncher.app.data.model.ClockAlignment.RIGHT)
+            val id = facetRepository.observeFacets().first().single().id
+            facetRepository.setClockPlacement(id, com.facetlauncher.app.data.model.ClockAlignment.RIGHT, 180f, 1.4f, com.facetlauncher.app.data.model.LandscapeOverrides())
         }
         composeRule.waitUntil(timeoutMillis = 3_000) {
-            runBlocking { facetRepository.observeFacets().first().single().clockZoneHeightDp != null }
+            runBlocking { facetRepository.observeFacets().first().single().clockPlacementOwn }
         }
 
-        // When "Reset clock widget position" is tapped
+        // When "Reset clock position" is tapped
         composeRule.onNodeWithTag("clock_style_gallery_list")
             .performScrollToNode(hasTestTag("reset_clock_position_row"))
         composeRule.onNodeWithTag("reset_clock_position_row").performClick()
         composeRule.waitForIdle()
 
-        // Then this facet's own height and alignment reset — the global default is untouched
+        // Then the facet stops owning its placement and its own values are cleared
         composeRule.waitUntil(timeoutMillis = 3_000) {
-            runBlocking { facetRepository.observeFacets().first().single().clockZoneHeightDp == null }
+            runBlocking { !facetRepository.observeFacets().first().single().clockPlacementOwn }
         }
         val facet = runBlocking { facetRepository.observeFacets().first().single() }
         assertEquals(com.facetlauncher.app.data.model.ClockAlignment.LEFT, facet.clockAlignment)
+        assertEquals(null, facet.clockZoneHeightDp)
     }
 
     // The calendar preview (and its divider from the Clock section) moved to
@@ -345,15 +253,15 @@ class ClockStyleGalleryScreenTest {
         composeRule.onNodeWithTag("clock_style_inherit_row").assertExists()
         composeRule.onNodeWithTag("clock_style_override_row").assertExists()
         composeRule.onNodeWithTag("clock_style_gallery_list")
-            .performScrollToNode(hasTestTag("clock_alignment_row"))
-        composeRule.onNodeWithTag("clock_alignment_row").assertIsNotEnabled()
+            .performScrollToNode(hasTestTag("clock_date_style_row"))
+        composeRule.onNodeWithTag("clock_date_style_row").assertIsNotEnabled()
 
         // When switching to Override
         composeRule.onNodeWithTag("clock_style_override_row").performClick()
 
         // Then the controls become live
         composeRule.waitUntil(timeoutMillis = 3_000) {
-            runCatching { composeRule.onNodeWithTag("clock_alignment_row").assertIsEnabled() }.isSuccess
+            runCatching { composeRule.onNodeWithTag("clock_date_style_row").assertIsEnabled() }.isSuccess
         }
     }
 }

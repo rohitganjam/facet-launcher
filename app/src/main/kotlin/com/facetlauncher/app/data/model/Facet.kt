@@ -1,5 +1,8 @@
 package com.facetlauncher.app.data.model
 
+/** The clock scale a facet starts with, and that "Reset clock position" returns to. */
+const val DEFAULT_CLOCK_SCALE = 0.8f
+
 /**
  * One facet as the rest of the app sees it. `FacetRepository` maps it to and from the Room row, so a
  * schema change stops here. Landscape twins are flat `landscape*` fields; read them as a group
@@ -25,10 +28,16 @@ data class Facet(
     val clockShowWeather: Boolean = false,
     /** The weather picture style this facet uses while it overrides the clock block; see `LauncherSettings.weatherIconStyle`. */
     val clockWeatherIconStyle: WeatherIconStyle = WeatherIconStyle.COLORED,
+    /**
+     * Whether the placement fields below ([clockAlignment], [clockZoneHeightDp], [clockScale] and their landscape twins)
+     * are this facet's own. `false` until the user first adjusts it on Home: the facet then shows the launcher's built-in
+     * fallback placement. Placement is never inherited by choice, so the clock override does not touch it.
+     */
+    val clockPlacementOwn: Boolean = false,
     val clockAlignment: ClockAlignment = ClockAlignment.LEFT,
     /** `null` until the facet drags the clock's grab handle for the first time. */
     val clockZoneHeightDp: Float? = null,
-    val clockScale: Float = 0.8f,
+    val clockScale: Float = DEFAULT_CLOCK_SCALE,
     /**
      * What the clock slot shows, in swipe order: the native clock and hosted widgets, each with its own size and
      * alignment. Empty draws nothing there. Held in its own table and loaded by `FacetRepository`; a facet built by

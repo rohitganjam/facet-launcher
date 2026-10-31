@@ -889,7 +889,6 @@
     <string name="clock_style_primary_font_color">Primary font color</string>
     <string name="clock_style_show_meridiem">Show meridiem (AM/PM)</string>
     <string name="clock_style_date_style">Date style</string>
-    <string name="clock_style_clock_alignment">Clock alignment</string>
     <string name="clock_style_position_section">POSITION</string>
     <string name="clock_style_tap_to_select">CLOCK STYLES — TAP TO SELECT</string>
     <string name="clock_style_long_press_hint">Long-press clock on home screen to adjust size and vertical position.</string>

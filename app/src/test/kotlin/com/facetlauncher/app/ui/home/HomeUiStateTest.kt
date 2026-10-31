@@ -305,9 +305,9 @@ class HomeUiStateTest {
     }
 
     @Test
-    fun `an overriding facet's landscape clock values win, then its own portrait values, never the launcher's landscape ones`() {
+    fun `a facet that owns its placement uses its landscape values, then its own portrait values, never the launcher's landscape ones`() {
         val facet = Facet(
-            id = 1L, name = "Facet 1", position = 0, overrideClock = true,
+            id = 1L, name = "Facet 1", position = 0, clockPlacementOwn = true,
             clockAlignment = ClockAlignment.RIGHT, clockScale = 1.4f,
             landscapeClockAlignment = ClockAlignment.CENTER,
         )
@@ -323,8 +323,8 @@ class HomeUiStateTest {
     }
 
     @Test
-    fun `an overriding facet that never dragged its divider keeps a natural zone height in landscape`() {
-        val facet = Facet(id = 1L, name = "Facet 1", position = 0, overrideClock = true)
+    fun `a facet that owns its placement but never dragged its divider keeps a natural zone height in landscape`() {
+        val facet = Facet(id = 1L, name = "Facet 1", position = 0, clockPlacementOwn = true)
         val state = HomeUiState(
             settings = LauncherSettings(activeFacetId = 1L, clockZoneHeightDp = 200f, landscape = LandscapeOverrides(clockZoneHeightDp = 300f)),
             facets = listOf(facet),
@@ -334,8 +334,8 @@ class HomeUiStateTest {
     }
 
     @Test
-    fun `a facet that is not overriding the clock uses the launcher's values in both orientations`() {
-        val facet = Facet(id = 1L, name = "Facet 1", position = 0, overrideClock = false, landscapeClockAlignment = ClockAlignment.CENTER)
+    fun `a facet that does not own its placement uses the launcher's values in both orientations`() {
+        val facet = Facet(id = 1L, name = "Facet 1", position = 0, clockPlacementOwn = false, landscapeClockAlignment = ClockAlignment.CENTER)
         val state = HomeUiState(
             settings = LauncherSettings(activeFacetId = 1L, landscape = LandscapeOverrides(clockAlignment = ClockAlignment.RIGHT)),
             facets = listOf(facet),

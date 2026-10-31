@@ -31,7 +31,7 @@ import com.facetlauncher.app.data.model.resolveSentinel
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
 
-/** The clock block in force: the facet's own while it overrides the clock, the launcher's otherwise. Portrait values. */
+/** The clock's style in force: the facet's own while it overrides the clock, the launcher's otherwise. Placement is separate, see [ResolvedFacetStyle.clockPlacement]. */
 @Immutable
 data class ResolvedClockStyle(
     val templateId: ClockTemplateId,
@@ -45,9 +45,6 @@ data class ResolvedClockStyle(
     val showBattery: Boolean,
     val showWeather: Boolean,
     val weatherIconStyle: WeatherIconStyle,
-    val alignment: ClockAlignment,
-    val zoneHeightDp: Float?,
-    val scale: Float,
 )
 
 /** The apps list in force. The look fields inherit per field via their `LAUNCHER_DEFAULT` sentinel; [contentMode] follows `overrideApps`. */
@@ -123,9 +120,6 @@ private fun resolveClockStyle(facet: Facet?, settings: LauncherSettings) = Resol
     showBattery = facet.resolveOverride({ it.overrideClock }, { it.clockShowBattery }, settings.showBatteryPercentage),
     showWeather = facet.resolveOverride({ it.overrideClock }, { it.clockShowWeather }, settings.showWeather),
     weatherIconStyle = facet.resolveOverride({ it.overrideClock }, { it.clockWeatherIconStyle }, settings.weatherIconStyle),
-    alignment = facet.resolveOverride({ it.overrideClock }, { it.clockAlignment }, settings.clockAlignment),
-    zoneHeightDp = facet.resolveOverride({ it.overrideClock }, { it.clockZoneHeightDp }, settings.clockZoneHeightDp),
-    scale = facet.resolveOverride({ it.overrideClock }, { it.clockScale }, settings.clockScale),
 )
 
 private fun resolveAppListStyle(facet: Facet?, settings: LauncherSettings) = ResolvedAppListStyle(
@@ -147,7 +141,7 @@ private fun resolveAppListStyle(facet: Facet?, settings: LauncherSettings) = Res
 
 /** Portrait follows the facet while it overrides the clock; landscape follows [resolveLandscape] over that. */
 private fun resolveClockPlacement(facet: Facet?, settings: LauncherSettings): Oriented<ClockPlacement> {
-    val owner = facet?.takeIf { it.overrideClock }
+    val owner = facet?.takeIf { it.clockPlacementOwn }
     val global = settings.landscape
     fun <T> prop(portrait: (Facet) -> T, landscape: (LandscapeOverrides) -> T?, globalPortrait: T, globalLandscape: T?): Oriented<T> {
         val own = if (owner != null) portrait(owner) else globalPortrait

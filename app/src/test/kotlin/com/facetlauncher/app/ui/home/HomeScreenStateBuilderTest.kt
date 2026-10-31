@@ -96,6 +96,32 @@ class HomeScreenStateBuilderTest {
     }
 
     @Test
+    fun `a widget page shows its own alignment and the clock page the facet's`() {
+        // Given a facet whose clock page is left-aligned and whose widget page is centred in portrait and right in landscape
+        val widget = widgetItem(41, id = 11L, position = 1).copy(alignment = ClockAlignment.CENTER, landscapeAlignment = ClockAlignment.RIGHT)
+        val facet = Facet(id = 1L, name = "A", position = 0, clockPlacementOwn = true, clockAlignment = ClockAlignment.LEFT, clockStack = listOf(clockItem(id = 10L, position = 0), widget))
+        val style = resolveFacetStyle(facet, settings)
+
+        // When building each page, in each orientation
+        fun alignmentOf(pageId: Long, landscape: Boolean) =
+            style.toHomeScreenState(landscape, settings, content, live = HomeLiveState(visibleClockItemId = pageId)).clock.placement.alignment
+
+        // Then the clock page uses the facet's, and the widget page its own
+        assertEquals(ClockAlignment.LEFT, alignmentOf(10L, landscape = false))
+        assertEquals(ClockAlignment.CENTER, alignmentOf(11L, landscape = false))
+        assertEquals(ClockAlignment.RIGHT, alignmentOf(11L, landscape = true))
+    }
+
+    @Test
+    fun `a widget page with no alignment of its own uses the facet's`() {
+        val facet = Facet(id = 1L, name = "A", position = 0, clockPlacementOwn = true, clockAlignment = ClockAlignment.CENTER, clockStack = listOf(widgetItem(41, id = 11L)))
+
+        val state = resolveFacetStyle(facet, settings).toHomeScreenState(false, settings, content)
+
+        assertEquals(ClockAlignment.CENTER, state.clock.placement.alignment)
+    }
+
+    @Test
     fun `a stack whose first page is the clock builds the native clock`() {
         val facet = Facet(id = 1L, name = "A", position = 0, clockStack = listOf(clockItem(position = 0), widgetItem(41, position = 1)))
 
@@ -163,7 +189,8 @@ class HomeScreenStateBuilderTest {
         val state = build(null, landscape = false)
 
         assertEquals(ClockAdjustMode.NONE, state.clock.adjustMode)
-        assertNull(state.clock.positionOwnerFacetId)
+        assertNull(state.clock.placementFacetId)
+        assertNull(state.clock.styleOwnerFacetName)
         assertNull(state.media.player)
         assertEquals(false, state.media.showSkipButtons)
     }

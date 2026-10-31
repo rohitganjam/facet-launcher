@@ -100,9 +100,9 @@ data class HomeUiState(
     val showUsageAccessPrompt: Boolean
         get() = activeListContentMode != ListContentMode.FAVORITES && !usageAccessGranted && !usageAccessPromptDismissed
 
-    val clockAlignment: ClockAlignment get() = style.clock.alignment
-    val clockZoneHeightDp: Float? get() = style.clock.zoneHeightDp
-    val clockScale: Float get() = style.clock.scale
+    val clockAlignment: ClockAlignment get() = style.clockPlacement.portrait.alignment
+    val clockZoneHeightDp: Float? get() = style.clockPlacement.portrait.zoneHeightDp
+    val clockScale: Float get() = style.clockPlacement.portrait.scale
 
     /** The clock's alignment, divider position and scale for [mode], resolved by [resolveFacetStyle]. */
     fun clockPlacement(mode: HomeLayoutMode): ClockPlacement = style.clockPlacement.of(mode == HomeLayoutMode.LANDSCAPE)
@@ -113,8 +113,8 @@ data class HomeUiState(
     /** The visible page's saved widget size for [mode]: landscape's own where saved, else the portrait one; `null` before any resize. */
     fun clockWidgetSizeDp(mode: HomeLayoutMode): Pair<Int, Int>? = visibleClockItem?.sizeDp?.of(mode == HomeLayoutMode.LANDSCAPE)
 
-    /** The facet whose `overrideClock` bundle actually governs the clock widget's live position right now, or `null` if the global default applies — see [HomeViewModel.onClockZoneHeightCommit]. */
-    val clockPositionOwningFacet: Facet?
+    /** The facet whose own clock style is in force (it overrides the clock), or `null` while the launcher-wide style applies: the sheet's scope badge. Placement is not part of it. */
+    val clockStyleOwningFacet: Facet?
         get() = activeFacet?.takeIf { it.overrideClock }
 
     /** Names the facet overriding the Dock right now, for [com.facetlauncher.app.ui.components.QuickPlacementBadge] — `null` for the launcher-wide default, mirroring [com.facetlauncher.app.domain.QuickPlacementAction.facetName]'s own convention. */

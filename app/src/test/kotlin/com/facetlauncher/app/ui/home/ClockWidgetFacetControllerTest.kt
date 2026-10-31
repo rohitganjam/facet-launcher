@@ -3,6 +3,9 @@ package com.facetlauncher.app.ui.home
 import com.facetlauncher.app.data.ClockStackRepository
 import com.facetlauncher.app.data.EntitlementRepository
 import com.facetlauncher.app.data.FakeEntitlementRepository
+import com.facetlauncher.app.data.model.ClockAlignment
+import com.facetlauncher.app.domain.ClockPlacement
+import com.facetlauncher.app.domain.CommitClockPlacementUseCase
 import com.facetlauncher.app.domain.ReplaceClockStackItemUseCase
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertFalse
@@ -16,9 +19,10 @@ class ClockWidgetFacetControllerTest {
 
     private val clockStackRepository = mock(ClockStackRepository::class.java)
     private val replaceClockStackItem = mock(ReplaceClockStackItemUseCase::class.java)
+    private val commitClockPlacement = mock(CommitClockPlacementUseCase::class.java)
 
     private fun controller(entitlement: EntitlementRepository = EntitlementRepository()) =
-        ClockWidgetFacetController(clockStackRepository, replaceClockStackItem, entitlement)
+        ClockWidgetFacetController(clockStackRepository, replaceClockStackItem, commitClockPlacement, entitlement)
 
     @Test
     fun `replaceWithClock delegates to the use case with the page id`() = runTest {
@@ -57,5 +61,26 @@ class ClockWidgetFacetControllerTest {
         assertFalse(controller.isPro.value)
         entitlement.proFlow.value = true
         assertTrue(controller.isPro.value)
+    }
+
+    @Test
+    fun `commitPlacement hands the change to the use case with the orientation`() = runTest {
+        val change: (ClockPlacement) -> ClockPlacement = { it.copy(scale = 1.4f) }
+
+        controller().commitPlacement(facetId = 3L, mode = HomeLayoutMode.LANDSCAPE, change = change)
+
+        verify(commitClockPlacement).invoke(3L, true, change)
+        controller().commitPlacement(facetId = 3L, mode = HomeLayoutMode.PORTRAIT, change = change)
+        verify(commitClockPlacement).invoke(3L, false, change)
+    }
+
+    @Test
+    fun `commitPageAlignment saves a portrait alignment on the page, and a landscape one on its landscape twin`() = runTest {
+        controller().commitPageAlignment(itemId = 5L, alignment = ClockAlignment.CENTER, mode = HomeLayoutMode.PORTRAIT)
+        controller().commitPageAlignment(itemId = 5L, alignment = ClockAlignment.RIGHT, mode = HomeLayoutMode.LANDSCAPE)
+
+        verify(clockStackRepository).setAlignment(5L, ClockAlignment.CENTER)
+        verify(clockStackRepository).setLandscapeAlignment(5L, ClockAlignment.RIGHT)
+        verify(clockStackRepository, never()).setLandscapeAlignment(5L, ClockAlignment.CENTER)
     }
 }

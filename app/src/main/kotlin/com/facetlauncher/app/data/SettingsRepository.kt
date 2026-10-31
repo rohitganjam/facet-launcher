@@ -584,13 +584,6 @@ class SettingsRepository @Inject constructor(
         dataStore.edit { it.writeLandscape(transform(it.toLandscapeOverrides())) }
     }
 
-    suspend fun resetClockScale() {
-        dataStore.edit {
-            it.remove(Keys.CLOCK_SCALE)
-            it.remove(Keys.LANDSCAPE_CLOCK_SCALE)
-        }
-    }
-
     /** The default every facet inherits unless it sets its own override — see [LauncherSettings.appListVerticalAlignment]. */
     suspend fun setAppListVerticalAlignment(alignment: AppListVerticalAlignment) {
         dataStore.edit { it[Keys.APP_LIST_VERTICAL_ALIGNMENT] = alignment.name }

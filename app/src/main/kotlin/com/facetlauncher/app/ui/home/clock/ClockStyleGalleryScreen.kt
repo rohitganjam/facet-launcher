@@ -91,7 +91,6 @@ fun ClockStyleGalleryRoute(onBack: () -> Unit, onOpenClockAccessories: () -> Uni
             onUse24HourTimeChange = viewModel::setUse24HourTime,
             onShowMeridiemChange = viewModel::setClockShowMeridiem,
             onDateStyleChange = viewModel::setClockDateStyle,
-            onClockAlignmentChange = viewModel::setClockAlignment,
             onResetClockPosition = viewModel::resetClockPosition,
             onOverridingChange = viewModel::setOverridingClock,
             onOpenClockAccessories = onOpenClockAccessories,
@@ -114,7 +113,6 @@ internal class ClockStyleGalleryActions(
     val onUse24HourTimeChange: (Boolean) -> Unit = {},
     val onShowMeridiemChange: (Boolean) -> Unit = {},
     val onDateStyleChange: (ClockDateStyle) -> Unit = {},
-    val onClockAlignmentChange: (ClockAlignment) -> Unit = {},
     val onResetClockPosition: () -> Unit = {},
     val onOverridingChange: (Boolean) -> Unit = {},
     val onOpenClockAccessories: () -> Unit = {},
@@ -163,10 +161,12 @@ private fun ClockStyleGalleryScreen(
                 item { SectionLabel(R.string.clock_style_clock_section) }
                 item { ClockStyleCard(uiState, controlsEnabled, actions) }
                 item { ClockAccessoriesLinkCard(actions.onOpenClockAccessories) }
-                item { SectionLabel(R.string.clock_style_position_section) }
-                item {
-                    SettingsCard(fullBleedRows = true) {
-                        ClockPositionResetRow(onClick = actions.onResetClockPosition, enabled = controlsEnabled)
+                if (uiState.isFacetScoped) {
+                    item { SectionLabel(R.string.clock_style_position_section) }
+                    item {
+                        SettingsCard(fullBleedRows = true) {
+                            ClockPositionResetRow(onClick = actions.onResetClockPosition)
+                        }
                     }
                 }
                 item { TemplateHints() }
@@ -251,16 +251,6 @@ private fun ClockStyleCard(uiState: ClockStyleGalleryUiState, controlsEnabled: B
             onSelect = actions.onDateStyleChange,
             enabled = controlsEnabled,
             testTag = "clock_date_style_row",
-        )
-        CardDivider()
-        LabeledDropdownRow(
-            title = stringResource(R.string.clock_style_clock_alignment),
-            options = ClockAlignment.entries,
-            selected = uiState.clockAlignment,
-            label = { stringResource(it.displayNameRes) },
-            onSelect = actions.onClockAlignmentChange,
-            enabled = controlsEnabled,
-            testTag = "clock_alignment_row",
         )
     }
 }
@@ -366,9 +356,9 @@ private fun ClockTemplateCard(
             // Every template's own root lost its `fillMaxWidth()` (see HomeScreen.kt's own doc on the clock hit-box fix),
             // so this Column's shared `horizontalAlignment` no longer moves each card's preview — an explicit per-child
             // align is needed here, same as ClockBlock's own real Home usage.
-            modifier = Modifier.align(uiState.clockAlignment.resolve()),
+            modifier = Modifier.align(ClockAlignment.LEFT.resolve()),
             launcherFontOption = uiState.launcherFontOption,
-            clockAlignment = uiState.clockAlignment,
+            clockAlignment = ClockAlignment.LEFT,
             nextAlarmMillis = sample.nextAlarmMillis,
             batteryPercent = SAMPLE_BATTERY_PERCENT,
             isCharging = false,
@@ -378,19 +368,18 @@ private fun ClockTemplateCard(
 }
 
 /**
- * Direct one-tap action, no confirmation — restores the whole clock+calendar widget's position:
- * `clockZoneHeightDp` back to `null` (the grab handle) AND `clockAlignment` back to `LEFT`, not
- * just the height alone. Consistent with this screen's other immediate-effect controls.
+ * Direct one-tap action, no confirmation: the facet stops owning its clock placement and returns to the launcher's
+ * fallback (a facet's placement is set on Home, never inherited by choice). Consistent with this screen's other
+ * immediate-effect controls.
  */
 @Composable
-private fun ClockPositionResetRow(onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true) {
+private fun ClockPositionResetRow(onClick: () -> Unit, modifier: Modifier = Modifier) {
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .clickable(enabled = enabled, onClick = onClick)
+            .clickable(onClick = onClick)
             .testTag("reset_clock_position_row")
-            .padding(horizontal = LocalSettingsRowInset.current, vertical = 13.dp)
-            .alpha(if (enabled) 1f else 0.4f),
+            .padding(horizontal = LocalSettingsRowInset.current, vertical = 13.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {

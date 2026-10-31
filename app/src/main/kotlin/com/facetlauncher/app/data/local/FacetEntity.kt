@@ -49,6 +49,7 @@ data class FacetEntity(
     /** The weather picture style this facet uses while it overrides the clock block; see `LauncherSettings.weatherIconStyle`. */
     val clockWeatherIconStyle: WeatherIconStyle = WeatherIconStyle.COLORED,
     /** The clock widget's own horizontal placement — also governs the calendar events strip, which shares it rather than having its own (see chat history: the strip's font/color/weight/alignment were consolidated into Appearance's/clock's shared settings). See [com.facetlauncher.app.data.model.LauncherSettings.clockAlignment]. */
+    val clockPlacementOwn: Boolean = false,
     val clockAlignment: ClockAlignment = ClockAlignment.LEFT,
     /** `null` until this facet drags the clock's grab handle for the first time — see [com.facetlauncher.app.data.model.LauncherSettings.clockZoneHeightDp]. */
     val clockZoneHeightDp: Float? = null,

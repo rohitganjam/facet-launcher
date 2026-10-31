@@ -1,5 +1,6 @@
 package com.facetlauncher.app
 
+import com.facetlauncher.app.domain.ClockPlacement
 import com.facetlauncher.app.data.model.LandscapeOverrides
 import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers
@@ -30,4 +31,22 @@ class LandscapeTransformCaptor {
 fun <T> eqOf(value: T): T {
     ArgumentMatchers.eq(value)
     return value
+}
+
+/** The same stand-in for a clock placement change: register it in `verify(...)`, then apply what was captured. */
+class PlacementChangeCaptor {
+    @Suppress("UNCHECKED_CAST")
+    private val captor = ArgumentCaptor.forClass(Function1::class.java) as ArgumentCaptor<(ClockPlacement) -> ClockPlacement>
+
+    /** Use inside `verify(...)`, in place of the change argument. */
+    fun capture(): (ClockPlacement) -> ClockPlacement {
+        captor.capture()
+        return { it }
+    }
+
+    /** The single captured change, applied to [start]. */
+    fun applied(start: ClockPlacement): ClockPlacement = captor.value(start)
+
+    /** Every captured change, each applied to [start], in call order. */
+    fun appliedEach(start: ClockPlacement): List<ClockPlacement> = captor.allValues.map { it(start) }
 }

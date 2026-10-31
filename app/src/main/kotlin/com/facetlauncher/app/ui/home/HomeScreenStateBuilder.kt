@@ -9,6 +9,7 @@ import com.facetlauncher.app.data.model.PlacedItem
 import com.facetlauncher.app.data.model.WeatherIconStyle
 import com.facetlauncher.app.domain.ClockAccessoryState
 import com.facetlauncher.app.data.model.ClockStackItemKind
+import com.facetlauncher.app.domain.ClockPlacement
 import com.facetlauncher.app.domain.ResolvedClockItem
 import com.facetlauncher.app.domain.ResolvedFacetStyle
 import com.facetlauncher.app.domain.limitedTo
@@ -43,8 +44,8 @@ data class HomeWidgetSizing(
 data class HomeLiveState(
     val adjustMode: ClockAdjustMode = ClockAdjustMode.NONE,
     val draggingHandle: Boolean = false,
-    val positionOwnerFacetId: Long? = null,
-    val positionOwnerFacetName: String? = null,
+    val placementFacetId: Long? = null,
+    val styleOwnerFacetName: String? = null,
     /** The clock stack page showing; `null`, or one no longer in the stack, shows the first. */
     val visibleClockItemId: Long? = null,
     /** Without Pro only the first clock page shows. */
@@ -89,9 +90,9 @@ fun ResolvedFacetStyle.toHomeScreenState(
         showMeridiem = clock.showMeridiem,
         dateStyle = clock.dateStyle,
         launcherFontOption = settings.launcherFontOption,
-        placement = clockPlacement.of(landscape),
-        positionOwnerFacetId = live.positionOwnerFacetId,
-        positionOwnerFacetName = live.positionOwnerFacetName,
+        placement = clockPlacement.of(landscape).withPageAlignment(shownClockPages(live).let { it.getOrNull(it.visibleIndex(live.visibleClockItemId)) }, landscape),
+        placementFacetId = live.placementFacetId,
+        styleOwnerFacetName = live.styleOwnerFacetName,
         adjustMode = live.adjustMode,
         draggingHandle = live.draggingHandle,
     ),
@@ -122,6 +123,10 @@ private fun WeatherState.toHomeWeather(settings: LauncherSettings, iconStyle: We
     temperatureUnit = WeatherUnits.resolve(settings.temperatureUnit, Locale.getDefault()),
     iconStyle = iconStyle,
 )
+
+/** A widget page keeps its own alignment, the clock page the facet's: `null` or an unset alignment leaves [this] as resolved. */
+private fun ClockPlacement.withPageAlignment(page: ResolvedClockItem?, landscape: Boolean): ClockPlacement =
+    page?.takeIf { it.kind == ClockStackItemKind.WIDGET }?.alignment?.of(landscape)?.let { copy(alignment = it) } ?: this
 
 /** The clock pages Home shows: all of them with Pro, else the first. */
 private fun ResolvedFacetStyle.shownClockPages(live: HomeLiveState) = clockStack.limitedTo(live.isPro)

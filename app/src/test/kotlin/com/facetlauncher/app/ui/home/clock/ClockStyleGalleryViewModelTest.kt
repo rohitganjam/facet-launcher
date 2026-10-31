@@ -130,46 +130,19 @@ class ClockStyleGalleryViewModelTest {
     }
 
     @Test
-    fun `changing clock alignment calls the global repository setter when not facet-scoped`() = runTest {
-        val settingsRepository = mock(SettingsRepository::class.java)
-        val viewModel = createViewModel(settingsRepository = settingsRepository)
-
-        viewModel.setClockAlignment(ClockAlignment.CENTER)
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        verify(settingsRepository).setClockAlignment(ClockAlignment.CENTER)
-    }
-
-    @Test
-    fun `changing clock alignment writes the facet's own override when facet-scoped`() = runTest {
-        // Now part of the same Clock+Calendar design bundle as font/color/template — facet-
-        // overridable like those, unlike its earlier global-only design (see chat history).
-        val facet = Facet(id = 5L, name = "Work", position = 0, overrideClock = true)
-        val facetRepository = mock(FacetRepository::class.java)
-        `when`(facetRepository.observeFacets()).thenReturn(flowOf(listOf(facet)))
-        `when`(facetRepository.getById(5L)).thenReturn(facet)
-        val viewModel = createViewModel(facetRepository = facetRepository, facetId = 5L)
-
-        viewModel.setClockAlignment(ClockAlignment.CENTER)
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        verify(facetRepository).setClockAlignment(facet.id, ClockAlignment.CENTER)
-    }
-
-    @Test
-    fun `resetClockPosition resets the global height and alignment when not facet-scoped`() = runTest {
+    fun `resetClockPosition does nothing in the launcher-wide scope, which has no placement to reset`() = runTest {
         val settingsRepository = mock(SettingsRepository::class.java)
         val viewModel = createViewModel(settingsRepository = settingsRepository)
 
         viewModel.resetClockPosition()
         testDispatcher.scheduler.advanceUntilIdle()
 
-        verify(settingsRepository).resetClockZoneHeight()
-        verify(settingsRepository).setClockAlignment(ClockAlignment.LEFT)
+        verify(settingsRepository, org.mockito.Mockito.never()).resetClockZoneHeight()
+        verify(settingsRepository, org.mockito.Mockito.never()).setClockAlignment(ClockAlignment.LEFT)
     }
 
     @Test
-    fun `resetClockPosition resets the facet's own height and both alignments when facet-scoped`() = runTest {
+    fun `resetClockPosition gives a facet's placement back to the launcher fallback`() = runTest {
         val facet = Facet(id = 5L, name = "Work", position = 0, overrideClock = true, clockZoneHeightDp = 200f)
         val facetRepository = mock(FacetRepository::class.java)
         `when`(facetRepository.observeFacets()).thenReturn(flowOf(listOf(facet)))
@@ -180,27 +153,6 @@ class ClockStyleGalleryViewModelTest {
         testDispatcher.scheduler.advanceUntilIdle()
 
         verify(facetRepository).resetClockPosition(facet.id)
-    }
-
-    @Test
-    fun `uiState resolves clock alignment from the facet when scoped`() = runTest {
-        val facet = Facet(
-            id = 5L,
-            name = "Work",
-            position = 0,
-            overrideClock = true,
-            clockAlignment = ClockAlignment.CENTER,
-        )
-        val settingsRepository = mock(SettingsRepository::class.java)
-        `when`(settingsRepository.settings).thenReturn(flowOf(LauncherSettings()))
-        val facetRepository = mock(FacetRepository::class.java)
-        `when`(facetRepository.observeFacets()).thenReturn(flowOf(listOf(facet)))
-        val savedStateHandle = SavedStateHandle(mapOf("facetId" to 5L))
-        val viewModel = ClockStyleGalleryViewModel(savedStateHandle, settingsRepository, facetRepository)
-        backgroundScope.launch { viewModel.uiState.collect {} }
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        assertEquals(ClockAlignment.CENTER, viewModel.uiState.value.clockAlignment)
     }
 
     @Test

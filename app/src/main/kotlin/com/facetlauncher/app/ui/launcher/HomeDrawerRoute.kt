@@ -331,8 +331,8 @@ fun HomeDrawerRoute(
                 live = HomeLiveState(
                     adjustMode = clockAdjustMode,
                     draggingHandle = draggingHandle,
-                    positionOwnerFacetId = homeUiState.clockPositionOwningFacet?.id,
-                    positionOwnerFacetName = homeUiState.clockPositionOwningFacet?.name,
+                    placementFacetId = homeUiState.activeFacet?.id,
+                    styleOwnerFacetName = homeUiState.clockStyleOwningFacet?.name,
                     visibleClockItemId = homeUiState.visibleClockItemId,
                     isPro = homeUiState.isPro,
                 ),

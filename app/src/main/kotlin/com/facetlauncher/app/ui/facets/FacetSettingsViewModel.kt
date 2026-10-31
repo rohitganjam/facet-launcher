@@ -62,8 +62,8 @@ data class FacetSettingsUiState(
     val effectiveUse24HourTime: Boolean get() = style.clock.use24HourTime
     val clockShowMeridiem: Boolean get() = style.clock.showMeridiem
     val clockDateStyle: ClockDateStyle get() = style.clock.dateStyle
-    val clockAlignment: ClockAlignment get() = style.clock.alignment
-    val clockZoneHeightDp: Float? get() = style.clock.zoneHeightDp
+    val clockAlignment: ClockAlignment get() = style.clockPlacement.portrait.alignment
+    val clockZoneHeightDp: Float? get() = style.clockPlacement.portrait.zoneHeightDp
 
     /** The Apps card's single inherit/override switch — governs list content mode, apps-to-show, and favorites together now (position/presentation moved to Settings → Appearance — see chat history). */
     val isOverridingApps: Boolean get() = facet?.overrideApps ?: false

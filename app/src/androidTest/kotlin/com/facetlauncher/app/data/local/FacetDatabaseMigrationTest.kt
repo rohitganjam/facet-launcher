@@ -852,6 +852,30 @@ class FacetDatabaseMigrationTest {
         total.close()
     }
 
+    @Test
+    fun migration35To36LetsAFacetThatOverrodeTheClockKeepOwningItsPlacement() {
+        // Given a v32 database with a facet that overrides the clock and one that does not
+        val dbV32 = helper.createDatabase(TEST_DB, 32)
+        insertFacetV27(dbV32, id = 1, name = "Work")
+        insertFacetV27(dbV32, id = 2, name = "Home")
+        dbV32.execSQL("UPDATE facets SET overrideClock = 1 WHERE id = 1")
+        dbV32.close()
+
+        // When migrating through to v36 (Room also validates the result against the exported v36 schema)
+        val dbV36 = helper.runMigrationsAndValidate(
+            TEST_DB, 36, true,
+            Migrations.MIGRATION_32_33, Migrations.MIGRATION_33_34, Migrations.MIGRATION_34_35, Migrations.MIGRATION_35_36,
+        )
+
+        // Then the overriding facet owns its placement, and the other keeps showing the launcher's fallback
+        val owns = dbV36.query("SELECT id, clockPlacementOwn FROM facets ORDER BY id")
+        owns.moveToFirst()
+        assertEquals(1, owns.getInt(1))
+        owns.moveToNext()
+        assertEquals(0, owns.getInt(1))
+        owns.close()
+    }
+
     /** A v27 facet row — the v25 shape plus the two calendar-display columns, which a freshly created database has no defaults for. */
     private fun insertFacetV27(db: androidx.sqlite.db.SupportSQLiteDatabase, id: Long, name: String) {
         insertFacetV25Columns(db, id, name, extraColumns = ", showCalendarIndicator, calendarItemsToShow", extraValues = ", 1, 3")

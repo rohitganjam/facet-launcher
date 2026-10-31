@@ -1,5 +1,7 @@
 package com.facetlauncher.app.ui.settings
 
+import com.facetlauncher.app.data.model.ClockAlignment
+import androidx.compose.ui.Alignment
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Column
@@ -59,7 +61,7 @@ internal fun ClockAccessoriesPreview(uiState: ClockAccessoriesUiState, modifier:
             .border(1.dp, Hairline, shape)
             .testTag("clock_accessories_preview")
             .padding(16.dp),
-        horizontalAlignment = clock.alignment.resolve(),
+        horizontalAlignment = Alignment.Start,
     ) {
         ClockDisplay(
             templateId = clock.templateId,
@@ -75,7 +77,7 @@ internal fun ClockAccessoriesPreview(uiState: ClockAccessoriesUiState, modifier:
             weather = weather,
             dateStyle = clock.dateStyle,
             launcherFontOption = settings.launcherFontOption,
-            clockAlignment = clock.alignment,
+            clockAlignment = ClockAlignment.LEFT,
         )
     }
 }

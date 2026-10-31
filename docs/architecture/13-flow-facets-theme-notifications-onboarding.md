@@ -137,7 +137,7 @@ flowchart TB
 - **One resolver for everything a facet overrides:** `domain/ResolvedFacetStyle.kt`'s
   `resolveFacetStyle(facet, settings)` returns the clock block, apps-list look, dock display mode,
   calendar display, the clock and list placement in each orientation (`clockPlacement`, `listAlignment`,
-  with the landscape rules) and the facet's clock stack (`clockStack`: each page's kind, widget id, size and alignment per orientation). Home
+  with the landscape rules; the clock's is the facet's own once `clockPlacementOwn`, else the launcher's built-in fallback, and never follows `overrideClock`) and the facet's clock stack (`clockStack`: each page's kind, widget id, size and alignment per orientation). Home
   (`HomeUiState`) and every preview read it, so a preview cannot show anything Home would not:
   `FacetCarouselUiState`, `AppearanceUiState`, `CalendarSettingsUiState`, `FacetSettingsUiState`,
   `HomeAppsListUiState`, `DockSettingsUiState` and `ClockStyleGalleryUiState` all delegate to it. The
@@ -213,7 +213,7 @@ overrides the clock (Settings → Clock accessories → Icons): monochrome,
 drawn in code in the clock's accessory colour (`WeatherIcon`), or coloured, one bundled PNG per picture
 (`res/drawable-nodpi/weather_color_*`, mapped by `coloredRes()`). The style applies to the accessory row and the sheet;
 `HomeWeatherState.iconStyle` carries it, and `HomeDrawerRoute` hands the active facet's style to the sheet (`WeatherUiState.iconStyle`). The Clock accessories screen opens with
-`ClockAccessoriesPreview`: the clock of that scope (template, font, colour, alignment) with a sample alarm, battery and
+`ClockAccessoriesPreview`: the clock of that scope (template, font, colour) with a sample alarm, battery and
 weather, following the switches and the icon style as they change. The Icons card also carries `WeatherIconsPreviewRow`:
 all nine weather pictures in the selected style. The alarm, battery and weather icons carry the same
 drop shadow as the accessory text (`homeIconShadow`: the glyph redrawn in the shadow tone over a ring of offsets).
