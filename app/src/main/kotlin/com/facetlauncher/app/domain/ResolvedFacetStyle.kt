@@ -16,6 +16,7 @@ import com.facetlauncher.app.data.model.ClockFontOption
 import com.facetlauncher.app.data.model.ClockStackItem
 import com.facetlauncher.app.data.model.ClockStackItemKind
 import com.facetlauncher.app.data.model.clockStackLimit
+import com.facetlauncher.app.data.model.nativeClockPage
 import com.facetlauncher.app.data.model.ClockTemplateId
 import com.facetlauncher.app.data.model.DockDisplayMode
 import com.facetlauncher.app.data.model.Facet
@@ -105,7 +106,8 @@ fun resolveFacetStyle(facet: Facet?, settings: LauncherSettings): ResolvedFacetS
     calendarDisplay = facet.effectiveCalendarDisplay(settings),
     clockPlacement = resolveClockPlacement(facet, settings),
     listAlignment = resolveListAlignment(facet, settings),
-    clockStack = facet?.clockStack.orEmpty().map { it.resolve() }.toImmutableList(),
+    // No facet (a launcher-wide preview) draws the launcher clock alone.
+    clockStack = (facet?.clockStack ?: listOf(nativeClockPage())).map { it.resolve() }.toImmutableList(),
 )
 
 private fun resolveClockStyle(facet: Facet?, settings: LauncherSettings) = ResolvedClockStyle(

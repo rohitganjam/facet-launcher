@@ -4443,8 +4443,8 @@ Recorded so the doc matches what was built, and why each differs from the first 
   - [x] 9c. Decided: "Reset clock position" clears only the clock's placement (no change to widget pages). `FacetRepository.resetClockPosition` already does exactly that; `FacetRepositoryTest` covers it.
   - [x] 9d. Decided: the remembered page is not saved across a restart; it stays in memory.
   - [ ] 9e. Visual check on the emulator with two real widgets: the pager, the dots, the stack screen and the sheet.
-  - [ ] 9f. One full instrumented run on the emulator.
+  - [x] 9f. One full instrumented run on the emulator: 949 tests, 9 failed. Eight were previews with no clock (`resolveFacetStyle(null)` gave an empty stack; fixed, with a unit test) and one fixture missing its clock page; one `ClockStyleGalleryScreenTest` failure did not repeat. The four failing classes were re-run clean.
   - [x] 9g. Decided: no phone install for now (neither uninstalling nor a release-signed build). Revisit only if asked.
-  - [ ] 9h. Docs re-check: `09` (backup), `03` (Home state), `12` (sheet and gestures); regenerate `TEST_REGISTRY.md`.
+  - [x] 9h. Docs re-check: `09` (backup), `03` (Home state), `12` (sheet and gestures); regenerate `TEST_REGISTRY.md`.
   - [ ] 9i. Native review of the fr, de, es and pt strings written for this feature.
   - [ ] 9j. In-app "What's new" via `scripts/release.sh --notes-only` and the release, only if this ships. Waiting on you to say whether and when.

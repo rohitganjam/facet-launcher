@@ -238,4 +238,13 @@ class ResolvedFacetStyleTest {
         assertEquals(CalendarDisplayOptions(showIndicator = false, itemsToShow = 2), style.calendarDisplay)
         assertEquals(CalendarDisplayOptions(settings.showCalendarIndicator, settings.calendarItemsToShow), inherited.calendarDisplay)
     }
+
+    @Test
+    fun `no facet resolves to a stack of just the launcher clock`() {
+        // When the style is resolved for the launcher-wide view
+        val style = resolveFacetStyle(null, settings)
+
+        // Then there is one clock page, so a preview draws a clock
+        assertEquals(listOf(ClockStackItemKind.CLOCK), style.clockStack.map { it.kind })
+    }
 }
