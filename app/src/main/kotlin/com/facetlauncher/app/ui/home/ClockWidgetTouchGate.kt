@@ -184,20 +184,29 @@ class ClockWidgetTouchGate(context: Context) : FrameLayout(context), NestedScrol
      */
     private fun beginSwipe(ev: MotionEvent) {
         swiping = true
-        lastX = ev.x
-        lastY = ev.y
-        velocityTracker = VelocityTracker.obtain().also { it.addMovement(ev) }
+        lastX = ev.rawX
+        lastY = ev.rawY
+        velocityTracker = VelocityTracker.obtain().also { it.addScreenMovement(ev) }
         onNestedScrollStart?.invoke()
     }
 
+    /** Feeds the tracker the event's screen position, so the velocity is the finger's however the view moves. */
+    private fun VelocityTracker.addScreenMovement(event: MotionEvent) {
+        val screen = MotionEvent.obtain(event)
+        screen.setLocation(event.rawX, event.rawY)
+        addMovement(screen)
+        screen.recycle()
+    }
+
     private fun handleSwipe(event: MotionEvent) {
-        velocityTracker?.addMovement(event)
+        velocityTracker?.addScreenMovement(event)
         when (event.actionMasked) {
             MotionEvent.ACTION_MOVE -> {
+                // Screen coordinates, not this view's: the page moves under the finger as it is swiped, so local ones barely change.
                 // Scroll offsets are the negation of finger movement.
-                onLeftoverScroll?.invoke(lastX - event.x, lastY - event.y)
-                lastX = event.x
-                lastY = event.y
+                onLeftoverScroll?.invoke(lastX - event.rawX, lastY - event.rawY)
+                lastX = event.rawX
+                lastY = event.rawY
             }
             MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
                 val tracker = velocityTracker

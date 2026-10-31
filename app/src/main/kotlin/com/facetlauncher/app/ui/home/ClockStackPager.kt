@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -31,6 +32,9 @@ internal const val PAGE_FLING_VELOCITY_PX = 1500f
 
 /** How long the page dots stay after a swipe ends. */
 internal const val PAGE_DOTS_LINGER_MS = 2_500L
+
+/** How long to wait for a page change to show before sliding in anyway, so a change that never lands cannot leave the clock out of sight. */
+private const val PAGE_CHANGE_MAX_WAIT_FRAMES = 30
 
 private val PAGE_SETTLE_SPEC = tween<Float>(durationMillis = FACET_TRANSITION_DURATION_MS, easing = FacetTransitionEasing)
 
@@ -94,8 +98,23 @@ internal class ClockPagerState(
             }
             offset.animateTo(direction.toFloat(), PAGE_SETTLE_SPEC)
             onPageChange(target)
+            awaitPage(target)
             offset.snapTo(-direction.toFloat())
             offset.animateTo(0f, PAGE_SETTLE_SPEC)
+        }
+    }
+
+    /**
+     * The page change reaches Home through the ViewModel, a few frames later. The old page stays out of sight (offset at the edge,
+     * fully faded) until the new one has replaced it, or it would slide back in from the other side and then swap mid-slide.
+     */
+    private suspend fun awaitPage(target: Int) {
+        repeat(PAGE_CHANGE_MAX_WAIT_FRAMES) {
+            if (pageIndex() == target) {
+                withFrameNanos { }
+                return
+            }
+            withFrameNanos { }
         }
     }
 }

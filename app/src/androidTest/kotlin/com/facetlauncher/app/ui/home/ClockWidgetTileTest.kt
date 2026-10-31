@@ -1,6 +1,13 @@
 package com.facetlauncher.app.ui.home
 
 import android.appwidget.AppWidgetHostView
+import androidx.compose.foundation.layout.Box
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.test.down
+import androidx.compose.ui.test.moveBy
+import androidx.compose.ui.test.up
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -121,5 +128,40 @@ class ClockWidgetTileTest {
         composeRule.waitForIdle()
 
         assertEquals(emptyList<String>(), calls)
+    }
+
+    @Test
+    fun aSwipeThatMovesTheWidgetItselfStillFollowsTheFinger() {
+        // Given a widget that is shifted by the very scroll it hands to Home, as a swiped clock page is
+        var shift by mutableStateOf(0f)
+        composeRule.setContent {
+            Box(modifier = Modifier.graphicsLayer { translationX = shift }) {
+                ClockWidgetTile(
+                    appWidgetId = 7,
+                    committedWidthDp = 300.dp,
+                    committedHeightDp = 200.dp,
+                    createHostView = { context, _ -> AppWidgetHostView(context) },
+                    onSizeChange = { _, _, _ -> },
+                    onLongPress = {},
+                    onLeftoverScroll = { dx, _ -> shift -= dx },
+                )
+            }
+        }
+        composeRule.waitForIdle()
+
+        // When the finger drags right by 400px in steps
+        var travelled = 0f
+        // A frame is drawn between the moves, so the view has shifted under the finger by the time the next one arrives.
+        composeRule.onNodeWithTag("clock_widget_host_7").performTouchInput { down(center) }
+        repeat(10) {
+            composeRule.onNodeWithTag("clock_widget_host_7").performTouchInput { moveBy(Offset(40f, 0f)) }
+            travelled += 40f
+            composeRule.waitForIdle()
+        }
+        composeRule.onNodeWithTag("clock_widget_host_7").performTouchInput { up() }
+        composeRule.waitForIdle()
+
+        // Then the shift is the finger's travel (less the touch slop), not the shrinking amount the view's own movement would leave
+        assertTrue("shift $shift of $travelled", shift > travelled * 0.8f)
     }
 }

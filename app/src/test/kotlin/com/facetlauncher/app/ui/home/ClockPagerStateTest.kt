@@ -167,4 +167,36 @@ class ClockPagerStateTest {
         assertTrue(changes.isEmpty())
         assertEquals(0f, pager.offset.value, 0f)
     }
+
+    @Test
+    fun `the old page stays out until the new one has replaced it`() {
+        // Given a page change that only lands on the fifth look at the index, as the ViewModel's round trip does
+        var reads = 0
+        var landed = 1
+        var requested = 1
+        lateinit var pager: ClockPagerState
+        var offsetWhenLanded = Float.NaN
+        pager = ClockPagerState(
+            pageCount = { 3 },
+            pageIndex = {
+                if (++reads > 5 && landed != requested) {
+                    landed = requested
+                    offsetWhenLanded = pager.offset.value
+                }
+                landed
+            },
+            onPageChange = { requested = it },
+            widthPx = { 1000f },
+            coroutineScope = CoroutineScope(UnconfinedTestDispatcher() + SteppingFrameClock()),
+        )
+
+        // When a drag past the commit fraction to the left is released
+        pager.dragBy(-400f)
+        pager.settle(0f)
+
+        // Then the page was still fully out (offset at the edge) when the new one landed, and it then slid in to rest
+        assertEquals(-1f, offsetWhenLanded, 0f)
+        assertEquals(2, landed)
+        assertEquals(0f, pager.offset.value, 0f)
+    }
 }
