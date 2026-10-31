@@ -81,9 +81,9 @@ def build_notes(since: str, to: str, version: str) -> str:
         capture_output=True, text=True, timeout=180,
     )
     if result.returncode != 0 or not result.stdout.strip():
-        raise RuntimeError(
-            f"claude -p failed (exit {result.returncode}): {result.stderr.strip() or '(no stderr)'}",
-        )
+        # The CLI reports some failures (an expired login, say) on stdout, so show whichever has the reason.
+        reason = result.stderr.strip() or result.stdout.strip() or "(no output)"
+        raise RuntimeError(f"claude -p failed (exit {result.returncode}): {reason}")
     return result.stdout.strip() + "\n"
 
 
