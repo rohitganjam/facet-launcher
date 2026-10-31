@@ -4,7 +4,7 @@ Complete inventories of the two injectable layers, generated from constructor si
 `@Inject` sites in `app/src/main`. If a class is not in these tables it does not exist; if a
 dependency is not listed the class does not have it.
 
-## 1. Repositories and data singletons (49) — all `@Singleton`, all constructor-injected, and the weather seams (`WeatherApi`, `WeatherStore`, `PlaceGeocoder`) are the only interfaces
+## 1. Repositories and data singletons (50) — all `@Singleton`, all constructor-injected, and the weather seams (`WeatherApi`, `WeatherStore`, `PlaceGeocoder`) are the only interfaces
 
 | Repository | Wraps (source of truth) | Injects | Public API shape | Injected by |
 |---|---|---|---|---|
@@ -55,6 +55,7 @@ dependency is not listed the class does not have it.
 | `AndroidPlaceGeocoder` (`data/places`, bound as `PlaceGeocoder`) | `android.location.Geocoder` (the listener API from Android 13, the blocking one before); empty answers when it is missing or fails | `Context`, `@IoDispatcher` | `reverse(lat, lon, locale)`, `search(query, locale, max)` | `ResolvePlaceUseCase`, `SearchPlacesUseCase` |
 | `WeatherRepository` (`data/weather`) | The forecast: stored hourly rows and the fetch state, refreshed from MET Norway | `WeatherApi`, `WeatherStore`, `Clock` | `observeHours()`, `observeState()`, `refresh(place): RefreshOutcome` (one refresh at a time, through `WeatherRefreshPolicy`: never before `Expires`, never twice within 10 minutes, nothing while a 429 is being waited out; nothing is retried) | `RefreshWeatherUseCase`, `ObserveWeatherUseCase` |
 | `ClockStackRepository` (`data/`) | A facet's clock stack: the native clock and up to 5 hosted widgets in swipe order; per-item size and alignment, portrait and landscape | `FacetDatabase`, `ClockStackItemDao` | `observe(facetId)`, `getAll`, `addWidget`, `addClock` (once, `false` when full), `replaceWithWidget(itemId, id)` and `replaceWithClock(itemId)` (in place, keep the position and alignment, reset the sizes, return a `ReplacedItem` with the id to release), `remove(itemId)` (returns the widget id to release), `clear(facetId)`, `reorder`, `setSize`, `setLandscapeSize`, `setAlignment`, `setLandscapeAlignment` | `ReplaceClockStackItemUseCase`, `ClockWidgetFacetController` |
+| `StyledIconCache` (`data/icon`) | The glyph-only or outline picture of each app icon, made off the main thread and held weakly per icon bitmap (only the applied picture is kept) | none | `get`/`cached`/`warm`/`clear` | `LauncherActivity` (provided as `LocalStyledIconCache`) |
 | `MetWeatherApi` (`data/weather`, bound as `WeatherApi`) | HTTPS to `api.met.no` Locationforecast 2.0 `compact` | `Clock`, `@IoDispatcher` | `fetch(place, ifModifiedSince): WeatherApiResult` — the only code in the app that opens a connection | `WeatherRepository` |
 | `RoomWeatherStore` (`data/weather`, bound as `WeatherStore`) | Room `weather_hours`, `weather_meta` | `FacetDatabase`, `WeatherDao` | `observeHours()`, `observeState()`, `readHours()`, `readState()`, `replaceHours(list)` (one transaction), `writeState(state)` | `WeatherRepository` |
 | `WidgetPlacementRepository` | Room `widget_placements` | `WidgetPlacementDao` | `observeAll()`, `getById`, `upsert`, `deleteById` (thin pass-through) | `HubViewModel`, `HubWidgetPickerViewModel`, `BackupRestoreViewModel`, `ObserveHubStateUseCase`, `DeleteWidgetUseCase`, `ExportBackupUseCase` |
@@ -81,7 +82,7 @@ flowchart LR
 Every other repository depends only on framework services, DAOs, or `DataStore`. There are no
 cycles; `AppRepository` is the single root.
 
-## 2. Use cases (51) — unscoped, constructor-injected unless noted
+## 2. Use cases (52) — unscoped, constructor-injected unless noted
 
 | Use case | Kind | Injects | Injected by |
 |---|---|---|---|
@@ -137,6 +138,7 @@ cycles; `AppRepository` is the single root.
 | `SyncFacetShortcutsUseCase` | long-running collector; publishes shortcuts only for selectable facets | `SelectableFacetsUseCase`, `FacetShortcutRepository` | `LauncherViewModel` (see [14](14-flow-deep-links-and-shortcuts.md)) |
 | `AddClockStackItemUseCase` | write: appends the clock or a widget within the plan's limit (1 Free, 5 Pro, one clock); `hasRoom(facetId)` is the Add upsell check; returns `AddClockStackItemResult` | `ClockStackRepository`, `EntitlementRepository` | `ClockStackViewModel`, `ClockWidgetPickerViewModel` |
 | `RemoveClockStackItemUseCase` | write: removes a page and releases the widget id it held | `ClockStackRepository`, `AppWidgetRepository` | `ClockStackViewModel` |
+| `CommitClockPlacementUseCase` | write: saves a change to the facet's own clock placement (alignment, scale, divider) for portrait or landscape; the first change copies the launcher-wide placement into the facet and sets `clockPlacementOwn` | `FacetRepository`, `SettingsRepository` | `ClockWidgetFacetController` |
 | `ReplaceClockStackItemUseCase` | write: swaps one page of a facet's clock stack for the native clock (`withClock`, refused while the clock is on another page) or a widget (`withWidget`), in place, and releases the id the old page held | `ClockStackRepository`, `AppWidgetRepository` | `ClockWidgetFacetController`, `ClockWidgetPickerViewModel` |
 
 Non-use-case files in `domain/`: `FlowCombine.kt` (6/7-ary `combine`), `HubGridConstants.kt`
