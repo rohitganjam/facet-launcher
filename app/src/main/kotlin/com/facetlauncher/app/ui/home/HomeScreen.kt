@@ -77,7 +77,7 @@ fun HomeScreen(
         ClockAdjustOverlays(adjustEnv, landscape = frame.isLandscape)
         ClockAdjustPills(adjustEnv, adjusting = clock.adjustMode == ClockAdjustMode.ADJUST, landscape = frame.isLandscape)
         HomeBoundsReporting(frame)
-        if (clock.adjustMode == ClockAdjustMode.MENU) ClockMenuSheet(clock, state.widget != null, actions.clock)
+        if (clock.adjustMode == ClockAdjustMode.MENU) ClockMenuSheet(clock, state.clockStack, state.widget != null, actions.clock)
     }
 }
 

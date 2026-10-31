@@ -206,10 +206,7 @@ fun FacetNavHost(
                 onNavigateToUnitsAndLocation = { navController.navigate(FacetDestinations.UNITS_AND_LOCATION) },
                 onNavigateToPermissions = { navController.navigate(FacetDestinations.PERMISSIONS) },
                 onNavigateToWhatsNew = { navController.navigate(FacetDestinations.WHATS_NEW) },
-                onNavigateToClockStyleGallery = { facetId ->
-                    val dest = if (facetId != null) FacetDestinations.facetClockStyleGallery(facetId) else FacetDestinations.CLOCK_STYLE_GALLERY
-                    navController.navigate(dest)
-                },
+                onNavigateToAppearance = { facetId -> navController.navigate(FacetDestinations.appearanceSettings(facetId)) },
                 launcherViewModel = launcherViewModel,
             )
         }

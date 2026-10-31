@@ -907,14 +907,16 @@
     <string name="clock_adjust_align_top">Align top</string>
     <string name="clock_adjust_align_middle">Align middle</string>
     <string name="clock_adjust_align_bottom">Align bottom</string>
-    <string name="clock_adjust_edit_styles">Edit clock styles</string>
-    <string name="clock_adjust_edit_styles_subtitle">Templates, fonts, colors, and alignment</string>
+    <string name="clock_adjust_clock_settings">Clock &amp; calendar settings</string>
+    <string name="clock_adjust_clock_settings_subtitle">Templates, fonts, colors, calendar</string>
     <string name="clock_adjust_facet_settings_subtitle">Facet-specific apps list, dock, clock &amp; calendar settings</string>
     <!-- PRD F15 — replaces this facet's native clock with a hosted third-party AppWidget -->
-    <string name="clock_adjust_use_custom_widget">Use custom widget</string>
-    <string name="clock_adjust_use_custom_widget_subtitle">Replace the clock with a widget of your choice</string>
-    <string name="clock_adjust_switch_to_launcher_clock">Switch to launcher clock widget</string>
-    <string name="clock_adjust_switch_to_launcher_clock_subtitle">Use Facet\'s own clock instead</string>
+    <string name="clock_adjust_replace_with_widget">Replace with custom widget</string>
+    <string name="clock_adjust_replace_with_widget_subtitle">Swap the clock for a widget of your choice</string>
+    <string name="clock_adjust_replace_with_clock">Replace with clock</string>
+    <string name="clock_adjust_replace_with_clock_subtitle">Use Facet\'s own clock on this page</string>
+    <string name="clock_adjust_replace_widget">Replace custom widget</string>
+    <string name="clock_adjust_replace_widget_subtitle">Choose a different widget for this page</string>
     <!-- ClockWidgetPickerScreen (reuses hub_widget_picker_search/none_found/setup_cancelled — see HubWidgetPickerScreen) -->
     <string name="clock_widget_picker_title">Choose clock widget</string>
 

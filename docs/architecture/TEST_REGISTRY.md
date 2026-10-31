@@ -3493,17 +3493,17 @@ How to read: one section per tier, one table per package (mirrors `app/src/main`
 
 <details><summary><code>ClockAdjustSheetTest</code> — 11 cases</summary>
 
-- editStylesRowShowsTheGlobalBadgeWhenNoFacetOverridesItsOwn
-- editStylesRowShowsTheFacetNameBadgeWhenTheActiveFacetOverridesItsOwn
-- tappingEditStylesRowFiresOnEditStylesClick
-- nativeClockShowsUseCustomWidgetRowButNotSwitchBackRow
-- customWidgetActiveHidesEditStylesAndShowsSwitchBackRow
-- tappingUseCustomWidgetRowFiresOnUseCustomWidgetClick
-- useCustomWidgetRowShowsAProPillOnlyOnTheFreePlan
-- useCustomWidgetRowHasNoProPillForAProUser
-- aFreeUserCanStillSwitchBackToTheLauncherClock
+- clockSettingsRowShowsTheGlobalBadgeWhenNoFacetOverridesItsOwn
+- clockSettingsRowShowsTheFacetNameBadgeWhenTheActiveFacetOverridesItsOwn
+- tappingClockSettingsRowFiresOnClockSettingsClick
+- theClockPageOffersItsSettingsAndReplacingItWithAWidgetOnly
+- aWidgetPageHidesClockSettingsAndOffersBothReplaceRows
+- aWidgetPageCannotBeReplacedWithTheClockWhileTheClockIsOnAnotherPage
+- tappingReplaceWithCustomWidgetFiresItsCallback
+- tappingReplaceCustomWidgetOnAWidgetPageFiresTheSameCallback
+- tappingReplaceWithClockFiresItsCallback
+- noRowIsMarkedPro
 - theLastRowIsReachableInAWindowShorterThanTheSheet
-- tappingSwitchToLauncherClockRowFiresOnSwitchToLauncherClockClick
 
 </details>
 
@@ -3695,7 +3695,7 @@ How to read: one section per tier, one table per package (mirrors `app/src/main`
 - theMediaButtonsReachTheirOwnCallbacks
 - hidingTheSkipButtonsRemovesPreviousAndNext
 - theClockMenuRowsReachTheClockActions
-- aHostedWidgetsMenuOffersSwitchingBackAndTheWidgetIsHosted
+- aHostedWidgetsMenuOffersReplacingItWithTheClockAndTheWidgetIsHosted
 - theFacetThatOwnsTheClockPlacementIsNamedOnTheEditStylesRow
 - theBatteryReadingReachesTheClockAccessories
 

@@ -130,7 +130,7 @@ internal fun Modifier.homeEmptySpaceGestures(mode: ClockAdjustMode, onModeChange
 
 /** The clock adjust menu sheet. */
 @Composable
-internal fun ClockMenuSheet(clock: HomeClockState, hasWidget: Boolean, actions: HomeClockActions) {
+internal fun ClockMenuSheet(clock: HomeClockState, stack: HomeClockStackState, hasWidget: Boolean, actions: HomeClockActions) {
     val close = { actions.onAdjustModeChange(ClockAdjustMode.NONE) }
     ThemedModalBottomSheet(
         onDismissRequest = close,
@@ -139,7 +139,10 @@ internal fun ClockMenuSheet(clock: HomeClockState, hasWidget: Boolean, actions: 
     ) {
         ClockAdjustSheet(
             onAdjustClick = { actions.onAdjustModeChange(ClockAdjustMode.ADJUST) },
-            onEditStylesClick = actions.onEditClockStyles,
+            onClockSettingsClick = {
+                close()
+                actions.onClockSettingsClick()
+            },
             onFacetSettingsClick = {
                 close()
                 actions.onNavigateToFacetSettings()
@@ -148,17 +151,17 @@ internal fun ClockMenuSheet(clock: HomeClockState, hasWidget: Boolean, actions: 
                 close()
                 actions.onNavigateToSettings()
             },
-            onUseCustomWidgetClick = {
+            onReplaceWithWidgetClick = {
                 close()
-                actions.onUseCustomWidgetClick()
+                actions.onReplaceWithWidgetClick()
             },
-            onSwitchToLauncherClockClick = {
+            onReplaceWithClockClick = {
                 close()
-                actions.onSwitchToLauncherClockClick()
+                actions.onReplaceWithClockClick()
             },
             overrideFacetName = clock.positionOwnerFacetName,
             hasCustomClockWidget = hasWidget,
-            isPro = clock.isPro,
+            canReplaceWithClock = !stack.hasClock,
         )
     }
 }

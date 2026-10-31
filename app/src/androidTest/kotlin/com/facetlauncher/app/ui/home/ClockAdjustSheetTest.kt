@@ -3,7 +3,6 @@ package com.facetlauncher.app.ui.home
 import androidx.compose.foundation.layout.height
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.hasAnyDescendant
 import androidx.compose.ui.test.hasTestTag
@@ -24,127 +23,142 @@ class ClockAdjustSheetTest {
 
     private fun setContent(
         overrideFacetName: String?,
-        onEditStylesClick: () -> Unit = {},
+        onClockSettingsClick: () -> Unit = {},
         hasCustomClockWidget: Boolean = false,
-        onUseCustomWidgetClick: () -> Unit = {},
-        onSwitchToLauncherClockClick: () -> Unit = {},
-        isPro: Boolean = true,
+        canReplaceWithClock: Boolean = true,
+        onReplaceWithWidgetClick: () -> Unit = {},
+        onReplaceWithClockClick: () -> Unit = {},
     ) {
         composeRule.setContent {
             FacetLauncherTheme {
                 ClockAdjustSheet(
                     onAdjustClick = {},
-                    onEditStylesClick = onEditStylesClick,
+                    onClockSettingsClick = onClockSettingsClick,
                     onFacetSettingsClick = {},
                     onLauncherSettingsClick = {},
-                    onUseCustomWidgetClick = onUseCustomWidgetClick,
-                    onSwitchToLauncherClockClick = onSwitchToLauncherClockClick,
+                    onReplaceWithWidgetClick = onReplaceWithWidgetClick,
+                    onReplaceWithClockClick = onReplaceWithClockClick,
                     overrideFacetName = overrideFacetName,
                     hasCustomClockWidget = hasCustomClockWidget,
-                    isPro = isPro,
+                    canReplaceWithClock = canReplaceWithClock,
                 )
             }
         }
     }
 
     @Test
-    fun editStylesRowShowsTheGlobalBadgeWhenNoFacetOverridesItsOwn() {
+    fun clockSettingsRowShowsTheGlobalBadgeWhenNoFacetOverridesItsOwn() {
         // Given no facet owns the clock's own style right now
         setContent(overrideFacetName = null)
 
         // Then the row's label stays generic and its badge reads "Global"
         composeRule.onNode(
-            hasTestTag("clock_adjust_edit_styles") and hasAnyDescendant(hasText("Edit clock styles")),
+            hasTestTag("clock_adjust_clock_settings") and hasAnyDescendant(hasText("Clock & calendar settings")),
             useUnmergedTree = true,
         ).assertExists()
         composeRule.onNode(
-            hasTestTag("clock_adjust_edit_styles") and hasAnyDescendant(hasText("Global")),
+            hasTestTag("clock_adjust_clock_settings") and hasAnyDescendant(hasText("Global")),
             useUnmergedTree = true,
         ).assertExists()
     }
 
     @Test
-    fun editStylesRowShowsTheFacetNameBadgeWhenTheActiveFacetOverridesItsOwn() {
+    fun clockSettingsRowShowsTheFacetNameBadgeWhenTheActiveFacetOverridesItsOwn() {
         // Given the "Work" facet owns the clock's own style right now
         setContent(overrideFacetName = "Work")
 
         // Then the row's label is unchanged, and its badge names that facet instead of "Global"
         composeRule.onNode(
-            hasTestTag("clock_adjust_edit_styles") and hasAnyDescendant(hasText("Edit clock styles")),
+            hasTestTag("clock_adjust_clock_settings") and hasAnyDescendant(hasText("Clock & calendar settings")),
             useUnmergedTree = true,
         ).assertExists()
         composeRule.onNode(
-            hasTestTag("clock_adjust_edit_styles") and hasAnyDescendant(hasText("Work")),
+            hasTestTag("clock_adjust_clock_settings") and hasAnyDescendant(hasText("Work")),
             useUnmergedTree = true,
         ).assertExists()
     }
 
     @Test
-    fun tappingEditStylesRowFiresOnEditStylesClick() {
+    fun tappingClockSettingsRowFiresOnClockSettingsClick() {
         var clicked = false
-        setContent(overrideFacetName = null, onEditStylesClick = { clicked = true })
+        setContent(overrideFacetName = null, onClockSettingsClick = { clicked = true })
 
-        composeRule.onNodeWithTag("clock_adjust_edit_styles").performClick()
+        composeRule.onNodeWithTag("clock_adjust_clock_settings").performClick()
 
         assert(clicked)
     }
 
     @Test
-    fun nativeClockShowsUseCustomWidgetRowButNotSwitchBackRow() {
-        // Given the active facet has no hosted clock widget
+    fun theClockPageOffersItsSettingsAndReplacingItWithAWidgetOnly() {
+        // Given the page showing is the clock
         setContent(overrideFacetName = null, hasCustomClockWidget = false)
 
-        // Then "Use custom widget" is offered, "Switch to launcher clock widget" is not, and styles stay editable
-        composeRule.onNodeWithTag("clock_adjust_use_custom_widget").assertExists()
-        composeRule.onNodeWithTag("clock_adjust_switch_to_launcher_clock").assertDoesNotExist()
-        composeRule.onNodeWithTag("clock_adjust_edit_styles").assertExists()
+        // Then its settings and "Replace with custom widget" are offered, and nothing that only a widget page has
+        composeRule.onNodeWithTag("clock_adjust_clock_settings").assertExists()
+        composeRule.onNodeWithTag("clock_adjust_replace_with_widget").assertExists()
+        composeRule.onNodeWithTag("clock_adjust_replace_with_clock").assertDoesNotExist()
+        composeRule.onNodeWithTag("clock_adjust_replace_widget").assertDoesNotExist()
     }
 
     @Test
-    fun customWidgetActiveHidesEditStylesAndShowsSwitchBackRow() {
-        // Given the active facet already has a hosted clock widget
-        setContent(overrideFacetName = null, hasCustomClockWidget = true)
+    fun aWidgetPageHidesClockSettingsAndOffersBothReplaceRows() {
+        // Given the page showing is a hosted widget and the clock is not on another page
+        setContent(overrideFacetName = null, hasCustomClockWidget = true, canReplaceWithClock = true)
 
-        // Then "Edit ... styles" is hidden (nothing to style), and both widget-choice rows are offered
-        composeRule.onNodeWithTag("clock_adjust_edit_styles").assertDoesNotExist()
-        composeRule.onNodeWithTag("clock_adjust_use_custom_widget").assertExists()
-        composeRule.onNodeWithTag("clock_adjust_switch_to_launcher_clock").assertExists()
+        // Then there are no clock settings (nothing to style), and the page can become the clock or another widget
+        composeRule.onNodeWithTag("clock_adjust_clock_settings").assertDoesNotExist()
+        composeRule.onNodeWithTag("clock_adjust_replace_with_clock").assertExists()
+        composeRule.onNodeWithTag("clock_adjust_replace_widget").assertExists()
+        composeRule.onNodeWithTag("clock_adjust_replace_with_widget").assertDoesNotExist()
     }
 
     @Test
-    fun tappingUseCustomWidgetRowFiresOnUseCustomWidgetClick() {
+    fun aWidgetPageCannotBeReplacedWithTheClockWhileTheClockIsOnAnotherPage() {
+        // Given a widget page in a stack that already has the clock
+        setContent(overrideFacetName = null, hasCustomClockWidget = true, canReplaceWithClock = false)
+
+        // Then only replacing the widget with another widget is offered
+        composeRule.onNodeWithTag("clock_adjust_replace_with_clock").assertDoesNotExist()
+        composeRule.onNodeWithTag("clock_adjust_replace_widget").assertExists()
+    }
+
+    @Test
+    fun tappingReplaceWithCustomWidgetFiresItsCallback() {
         var clicked = false
-        setContent(overrideFacetName = null, onUseCustomWidgetClick = { clicked = true })
+        setContent(overrideFacetName = null, onReplaceWithWidgetClick = { clicked = true })
 
-        composeRule.onNodeWithTag("clock_adjust_use_custom_widget").performClick()
+        composeRule.onNodeWithTag("clock_adjust_replace_with_widget").performClick()
 
         assert(clicked)
     }
 
     @Test
-    fun useCustomWidgetRowShowsAProPillOnlyOnTheFreePlan() {
-        // Given a free user
-        setContent(overrideFacetName = null, isPro = false)
+    fun tappingReplaceCustomWidgetOnAWidgetPageFiresTheSameCallback() {
+        var clicked = false
+        setContent(overrideFacetName = null, hasCustomClockWidget = true, onReplaceWithWidgetClick = { clicked = true })
 
-        // Then the row is marked Pro, and still reports its click so the caller can open Facet Pro
-        composeRule.onNodeWithTag("clock_adjust_use_custom_widget").assertTextContains("Pro")
+        composeRule.onNodeWithTag("clock_adjust_replace_widget").performClick()
+
+        assert(clicked)
     }
 
     @Test
-    fun useCustomWidgetRowHasNoProPillForAProUser() {
-        setContent(overrideFacetName = null, isPro = true)
+    fun tappingReplaceWithClockFiresItsCallback() {
+        var clicked = false
+        setContent(overrideFacetName = null, hasCustomClockWidget = true, onReplaceWithClockClick = { clicked = true })
 
+        composeRule.onNodeWithTag("clock_adjust_replace_with_clock").performClick()
+
+        assert(clicked)
+    }
+
+    @Test
+    fun noRowIsMarkedPro() {
+        // Given the sheet on either kind of page
+        setContent(overrideFacetName = null)
+
+        // Then replacing is free: no row carries a Pro pill
         composeRule.onAllNodesWithText("Pro").assertCountEquals(0)
-    }
-
-    @Test
-    fun aFreeUserCanStillSwitchBackToTheLauncherClock() {
-        var clicked = false
-        setContent(overrideFacetName = null, hasCustomClockWidget = true, isPro = false, onSwitchToLauncherClockClick = { clicked = true })
-
-        composeRule.onNodeWithTag("clock_adjust_switch_to_launcher_clock").performClick()
-
-        assert(clicked)
     }
 
     @Test
@@ -156,11 +170,11 @@ class ClockAdjustSheetTest {
                 androidx.compose.foundation.layout.Box(androidx.compose.ui.Modifier.height(220.dp)) {
                     ClockAdjustSheet(
                         onAdjustClick = {},
-                        onEditStylesClick = {},
+                        onClockSettingsClick = {},
                         onFacetSettingsClick = {},
                         onLauncherSettingsClick = { clicked = true },
-                        onUseCustomWidgetClick = {},
-                        onSwitchToLauncherClockClick = {},
+                        onReplaceWithWidgetClick = {},
+                        onReplaceWithClockClick = {},
                         overrideFacetName = null,
                     )
                 }
@@ -171,16 +185,6 @@ class ClockAdjustSheetTest {
         composeRule.onNodeWithTag("clock_adjust_launcher_settings").performScrollTo().assertIsDisplayed().performClick()
 
         // Then it was reachable and fired
-        assert(clicked)
-    }
-
-    @Test
-    fun tappingSwitchToLauncherClockRowFiresOnSwitchToLauncherClockClick() {
-        var clicked = false
-        setContent(overrideFacetName = null, hasCustomClockWidget = true, onSwitchToLauncherClockClick = { clicked = true })
-
-        composeRule.onNodeWithTag("clock_adjust_switch_to_launcher_clock").performClick()
-
         assert(clicked)
     }
 }

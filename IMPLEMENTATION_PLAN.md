@@ -4401,6 +4401,8 @@ Design agreed in chat. The clock slot holds a stack of 0 to 5 items (the native 
 - [x] 3. New model: `[Clock]` default rows (migration, new facet, restore, import), empty means blank, per-item `replaceItem` and `ReplaceClockStackItemUseCase` (replacing `ReplaceClockWidgetUseCase` and `SwitchFacetToNativeClockUseCase`), picker target Add or Replace.
 - [x] 4a. Home pager: `ClockPagerState` (drag, commit or spring back, in-place slide), swipe routing in `HomeSwipeController` (the pager first in the clock zone, Hub and the carousel at the ends), page dots under the divider and media row, the visible page remembered per facet, an empty stack drawn blank. Tests: `ClockPagerStateTest`, `HomeSwipeControllerTest`, `HomeDrawerRouteTest`.
 - [ ] 4b. Per-page alignment (the adjust handles write the visible page's own), adjust mode across pages, landscape dots.
-- [ ] 5. Sheet (one layout) and the stack screen; Pro limit and lapsed behaviour.
+- [x] 5a. Sheet rows follow the visible page: the clock page has Clock and calendar settings (facet-scoped Appearance) and Replace with custom widget, a widget page has Replace with clock (hidden while the clock is on another page) and Replace custom widget. Replace is free; the Pro pill and check are gone. New strings in all five locales. Tests: `ClockAdjustSheetTest`, `HomeScreenWiringTest`.
+- [ ] 5b. Widget stack row, Add widget and the empty-state sheet; the Add flow (chooser, picker target Add), the Pro size limit and the lapsed first-page-only rule.
+- [ ] 5c. The stack screen: reorder, Configure, Remove, counter and hint.
 - [ ] 6. Inherit card "Edit defaults" link.
 - [ ] 7. Tests (unit, Robolectric, instrumented on the emulator), docs, `TEST_REGISTRY.md`.

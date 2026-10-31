@@ -226,9 +226,9 @@ class HomeScreenWiringTest {
         val actions = HomeScreenActions(
             item = HomeItemActions(onAppClick = {}),
             clock = HomeClockActions(
-                onEditClockStyles = { calls += "edit-styles" },
-                onUseCustomWidgetClick = { calls += "use-widget" },
-                onSwitchToLauncherClockClick = { calls += "switch-to-launcher" },
+                onClockSettingsClick = { calls += "clock-settings" },
+                onReplaceWithWidgetClick = { calls += "replace-with-widget" },
+                onReplaceWithClockClick = { calls += "replace-with-clock" },
                 onNavigateToSettings = { calls += "settings" },
                 onNavigateToFacetSettings = { calls += "facet-settings" },
             ),
@@ -237,21 +237,21 @@ class HomeScreenWiringTest {
 
         // When the clock is long-pressed and each row tapped (a tap closes the sheet, so it is reopened each time)
         longPress("home_clock_block")
-        composeRule.onNodeWithTag("clock_adjust_switch_to_launcher_clock").assertDoesNotExist()
-        composeRule.onNodeWithTag("clock_adjust_edit_styles").performClick()
+        composeRule.onNodeWithTag("clock_adjust_replace_with_clock").assertDoesNotExist()
+        composeRule.onNodeWithTag("clock_adjust_clock_settings").performClick()
         longPress("home_clock_block")
-        composeRule.onNodeWithTag("clock_adjust_use_custom_widget").performClick()
+        composeRule.onNodeWithTag("clock_adjust_replace_with_widget").performClick()
         longPress("home_clock_block")
         composeRule.onNodeWithTag("clock_adjust_facet_settings").performClick()
         longPress("home_clock_block")
         composeRule.onNodeWithTag("clock_adjust_launcher_settings").performClick()
 
-        // Then each reached its own callback, and a native clock has no "switch back" row
-        assertEquals(listOf("edit-styles", "use-widget", "facet-settings", "settings"), calls)
+        // Then each reached its own callback, and a native clock page has no "replace with clock" row
+        assertEquals(listOf("clock-settings", "replace-with-widget", "facet-settings", "settings"), calls)
     }
 
     @Test
-    fun aHostedWidgetsMenuOffersSwitchingBackAndTheWidgetIsHosted() {
+    fun aHostedWidgetsMenuOffersReplacingItWithTheClockAndTheWidgetIsHosted() {
         // Given a hosted clock widget
         var switched = 0
         var hostedId: Int? = null
@@ -259,10 +259,11 @@ class HomeScreenWiringTest {
         var widgetBounds: Rect? = null
         val state = appState(PlacedItem.SingleApp(mail)).copy(
             widget = HomeClockWidgetState(itemId = 1L, appWidgetId = 42, widthDp = 160.dp, heightDp = 90.dp, minWidthDp = 64.dp, minHeightDp = 64.dp),
+            clockStack = HomeClockStackState(pageCount = 1, pageIndex = 0, hasClock = false),
         )
         val actions = HomeScreenActions(
             item = HomeItemActions(onAppClick = {}),
-            clock = HomeClockActions(onSwitchToLauncherClockClick = { switched++ }),
+            clock = HomeClockActions(onReplaceWithClockClick = { switched++ }),
             widget = HomeClockWidgetActions(
                 createHostView = { context, id ->
                     hostedId = id
@@ -279,11 +280,11 @@ class HomeScreenWiringTest {
         assertNotNull(widgetBounds)
         assertNotNull(listBounds)
 
-        // When the menu's "switch back" row is tapped
+        // When the menu's "Replace with clock" row is tapped
         // The widget host swallows its own touches, so the menu is opened from empty space as in the landscape tests.
         composeRule.onNodeWithTag("home_screen_root").performTouchInput { longClick(Offset(width * 0.75f, 4f)) }
         composeRule.waitForIdle()
-        composeRule.onNodeWithTag("clock_adjust_switch_to_launcher_clock").performClick()
+        composeRule.onNodeWithTag("clock_adjust_replace_with_clock").performClick()
 
         // Then that action fired
         assertEquals(1, switched)

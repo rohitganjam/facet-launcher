@@ -829,8 +829,8 @@
     <string name="clock_adjust_align_top">Oben ausrichten</string>
     <string name="clock_adjust_align_middle">Mittig ausrichten</string>
     <string name="clock_adjust_align_bottom">Unten ausrichten</string>
-    <string name="clock_adjust_edit_styles">Uhrstile bearbeiten</string>
-    <string name="clock_adjust_edit_styles_subtitle">Vorlagen, Schriftarten, Farben und Ausrichtung</string>
+    <string name="clock_adjust_clock_settings">Uhr- und Kalendereinstellungen</string>
+    <string name="clock_adjust_clock_settings_subtitle">Vorlagen, Schriftarten, Farben, Kalender</string>
     <string name="clock_adjust_facet_settings_subtitle">Facettenspezifische App-Liste, Dock-, Uhr- &amp; Kalendereinstellungen</string>
 
     <!-- HubWidgetPickerScreen -->
@@ -909,10 +909,12 @@
     <string name="facet_settings_appearance_home_icon_only">Start: nur Symbol</string>
     <string name="facet_settings_appearance_home_icon_and_text">Start: Symbol &amp; Text</string>
     <string name="facet_settings_appearance_home_text_only">Start: nur Text</string>
-    <string name="clock_adjust_use_custom_widget">Eigenes Widget verwenden</string>
-    <string name="clock_adjust_use_custom_widget_subtitle">Ersetzt die Uhr durch ein Widget deiner Wahl</string>
-    <string name="clock_adjust_switch_to_launcher_clock">Zum Uhr-Widget des Launchers wechseln</string>
-    <string name="clock_adjust_switch_to_launcher_clock_subtitle">Die eigene Uhr von Facet verwenden</string>
+    <string name="clock_adjust_replace_with_widget">Durch eigenes Widget ersetzen</string>
+    <string name="clock_adjust_replace_with_widget_subtitle">Ersetzt die Uhr durch ein Widget deiner Wahl</string>
+    <string name="clock_adjust_replace_with_clock">Durch Uhr ersetzen</string>
+    <string name="clock_adjust_replace_with_clock_subtitle">Die eigene Uhr von Facet auf dieser Seite verwenden</string>
+    <string name="clock_adjust_replace_widget">Eigenes Widget ersetzen</string>
+    <string name="clock_adjust_replace_widget_subtitle">Ein anderes Widget für diese Seite wählen</string>
     <string name="clock_widget_picker_title">Uhr-Widget auswählen</string>
 
     <!-- Wetter -->

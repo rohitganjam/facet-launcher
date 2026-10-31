@@ -104,7 +104,7 @@ fun HomeDrawerRoute(
     onNavigateToFacetPro: (ProReason) -> Unit,
     onNavigateToUsageAccessExplanation: () -> Unit,
     /** Navigates to the clock style gallery, either global (null) or facet-scoped. */
-    onNavigateToClockStyleGallery: (Long?) -> Unit = { _ -> },
+    onNavigateToAppearance: (Long?) -> Unit = { _ -> },
     /** Opens the screen that explains and grants notification access, from an app menu's "Enable notifications". */
     onNavigateToNotificationAccessExplanation: () -> Unit = {},
     /** Opens the Units and location settings (where the weather location is chosen), from the weather sheet. */
@@ -127,7 +127,6 @@ fun HomeDrawerRoute(
     val homeUiState by homeViewModel.uiState.collectAsStateWithLifecycle()
     val weatherUiState by weatherViewModel.uiState.collectAsStateWithLifecycle()
     val whatsNewVersion by whatsNewPillViewModel.version.collectAsStateWithLifecycle()
-    val clockWidgetIsPro by homeViewModel.clockWidgetFacet.isPro.collectAsStateWithLifecycle()
     val launcherUiState by launcherViewModel.uiState.collectAsStateWithLifecycle()
     val folders by drawerViewModel.folders.collectAsStateWithLifecycle()
     val currentOnNavigateToNotificationAccess by rememberUpdatedState(onNavigateToNotificationAccessExplanation)
@@ -330,7 +329,6 @@ fun HomeDrawerRoute(
                 live = HomeLiveState(
                     adjustMode = clockAdjustMode,
                     draggingHandle = draggingHandle,
-                    isPro = clockWidgetIsPro,
                     positionOwnerFacetId = homeUiState.clockPositionOwningFacet?.id,
                     positionOwnerFacetName = homeUiState.clockPositionOwningFacet?.name,
                     visibleClockItemId = homeUiState.visibleClockItemId,
@@ -338,7 +336,7 @@ fun HomeDrawerRoute(
             ),
             actions = homeScreenActions(
                 viewModel = homeViewModel,
-                inputs = HomeActionsInputs(homeUiState, clockWidgetIsPro, homeLayoutMode, context, coroutineScope),
+                inputs = HomeActionsInputs(homeUiState, homeLayoutMode, context, coroutineScope),
                 itemActions = itemActions,
                 swipe = swipe,
                 hooks = HomeRouteHooks(
@@ -362,7 +360,7 @@ fun HomeDrawerRoute(
                     toFacetSettings = onNavigateToFacetSettings,
                     toFacetPro = onNavigateToFacetPro,
                     toUsageAccessExplanation = onNavigateToUsageAccessExplanation,
-                    toClockStyleGallery = onNavigateToClockStyleGallery,
+                    toAppearance = onNavigateToAppearance,
                 ),
             ),
             layoutMode = homeLayoutMode,

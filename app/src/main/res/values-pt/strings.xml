@@ -829,8 +829,8 @@
     <string name="clock_adjust_align_top">Alinhar ao topo</string>
     <string name="clock_adjust_align_middle">Alinhar ao meio</string>
     <string name="clock_adjust_align_bottom">Alinhar embaixo</string>
-    <string name="clock_adjust_edit_styles">Editar estilos do relógio</string>
-    <string name="clock_adjust_edit_styles_subtitle">Modelos, fontes, cores e alinhamento</string>
+    <string name="clock_adjust_clock_settings">Definições de relógio e calendário</string>
+    <string name="clock_adjust_clock_settings_subtitle">Modelos, fontes, cores e calendário</string>
     <string name="clock_adjust_facet_settings_subtitle">Lista de apps, dock, relógio e calendário específicos da faceta</string>
 
     <!-- HubWidgetPickerScreen -->
@@ -909,10 +909,12 @@
     <string name="facet_settings_appearance_home_icon_only">Início: apenas ícone</string>
     <string name="facet_settings_appearance_home_icon_and_text">Início: ícone e texto</string>
     <string name="facet_settings_appearance_home_text_only">Início: apenas texto</string>
-    <string name="clock_adjust_use_custom_widget">Usar widget personalizado</string>
-    <string name="clock_adjust_use_custom_widget_subtitle">Substitui o relógio por um widget da sua escolha</string>
-    <string name="clock_adjust_switch_to_launcher_clock">Mudar para o widget de relógio do launcher</string>
-    <string name="clock_adjust_switch_to_launcher_clock_subtitle">Usar o relógio próprio do Facet</string>
+    <string name="clock_adjust_replace_with_widget">Substituir por widget personalizado</string>
+    <string name="clock_adjust_replace_with_widget_subtitle">Substitui o relógio por um widget da sua escolha</string>
+    <string name="clock_adjust_replace_with_clock">Substituir pelo relógio</string>
+    <string name="clock_adjust_replace_with_clock_subtitle">Usar o relógio próprio do Facet nesta página</string>
+    <string name="clock_adjust_replace_widget">Substituir widget personalizado</string>
+    <string name="clock_adjust_replace_widget_subtitle">Escolher outro widget para esta página</string>
     <string name="clock_widget_picker_title">Escolher widget de relógio</string>
 
     <!-- Clima -->

@@ -26,7 +26,8 @@ internal class HomeNavigation(
     val toFacetPro: (ProReason) -> Unit,
     val toUsageAccessExplanation: () -> Unit,
     /** The clock style gallery, global (`null`) or for one facet. */
-    val toClockStyleGallery: (Long?) -> Unit,
+    /** Settings > Appearance, global (`null`) or for one facet. */
+    val toAppearance: (Long?) -> Unit,
 )
 
 /** The route's own state that Home's actions change. */
@@ -44,7 +45,6 @@ internal class HomeRouteHooks(
 /** What [homeScreenActions] reads: the values Home's actions act on. */
 internal class HomeActionsInputs(
     val homeUiState: HomeUiState,
-    val clockWidgetIsPro: Boolean,
     val layoutMode: HomeLayoutMode,
     val context: Context,
     val coroutineScope: CoroutineScope,
@@ -90,20 +90,11 @@ private fun homeClockActions(
         onClockClick = { inputs.context.openClockApp() },
         onWeatherClick = hooks.openWeather,
         onBatteryClick = { inputs.context.openBatterySettings() },
-        onEditClockStyles = {
-            hooks.setAdjustMode(ClockAdjustMode.NONE)
-            navigation.toClockStyleGallery(state.clockPositionOwningFacet?.id)
-        },
+        onClockSettingsClick = { navigation.toAppearance(state.activeFacet?.id) },
         onNavigateToSettings = navigation.toSettings,
         onNavigateToFacetSettings = { state.activeFacet?.let { navigation.toFacetSettings(it.id) } },
-        onUseCustomWidgetClick = {
-            if (inputs.clockWidgetIsPro) {
-                state.visibleClockItem?.let { hooks.openClockWidgetPicker(it.id) }
-            } else {
-                navigation.toFacetPro(ProReason.CUSTOM_WIDGET)
-            }
-        },
-        onSwitchToLauncherClockClick = {
+        onReplaceWithWidgetClick = { state.visibleClockItem?.let { hooks.openClockWidgetPicker(it.id) } },
+        onReplaceWithClockClick = {
             state.visibleClockItem?.let { item ->
                 inputs.coroutineScope.launch { viewModel.clockWidgetFacet.replaceWithClock(item.id) }
             }

@@ -8,6 +8,7 @@ import com.facetlauncher.app.data.model.MediaPlayerState
 import com.facetlauncher.app.data.model.PlacedItem
 import com.facetlauncher.app.data.model.WeatherIconStyle
 import com.facetlauncher.app.domain.ClockAccessoryState
+import com.facetlauncher.app.data.model.ClockStackItemKind
 import com.facetlauncher.app.domain.ResolvedClockItem
 import com.facetlauncher.app.domain.ResolvedFacetStyle
 import com.facetlauncher.app.domain.WeatherState
@@ -41,7 +42,6 @@ data class HomeWidgetSizing(
 data class HomeLiveState(
     val adjustMode: ClockAdjustMode = ClockAdjustMode.NONE,
     val draggingHandle: Boolean = false,
-    val isPro: Boolean = true,
     val positionOwnerFacetId: Long? = null,
     val positionOwnerFacetName: String? = null,
     /** The clock stack page showing; `null`, or one no longer in the stack, shows the first. */
@@ -91,10 +91,13 @@ fun ResolvedFacetStyle.toHomeScreenState(
         positionOwnerFacetName = live.positionOwnerFacetName,
         adjustMode = live.adjustMode,
         draggingHandle = live.draggingHandle,
-        isPro = live.isPro,
     ),
     widget = visibleClockItem(live.visibleClockItemId)?.toWidgetState(landscape, widgetSizing),
-    clockStack = HomeClockStackState(pageCount = clockStack.size, pageIndex = clockStack.visibleIndex(live.visibleClockItemId)),
+    clockStack = HomeClockStackState(
+        pageCount = clockStack.size,
+        pageIndex = clockStack.visibleIndex(live.visibleClockItemId),
+        hasClock = clockStack.any { it.kind == ClockStackItemKind.CLOCK },
+    ),
     calendar = HomeCalendarState(
         events = content.calendarEvents.toImmutableList(),
         colors = settings.calendarColors.toImmutableMap(),

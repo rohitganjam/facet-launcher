@@ -65,8 +65,6 @@ data class HomeClockState(
     val adjustMode: ClockAdjustMode = ClockAdjustMode.NONE,
     /** True while a handle is being dragged, which suppresses the screen's own gestures. */
     val draggingHandle: Boolean = false,
-    /** Whether "Use custom widget" is a Pro feature the user has. */
-    val isPro: Boolean = true,
 )
 
 /** A hosted clock widget in place of the native clock. Absent when the facet uses the native clock. */
@@ -83,7 +81,12 @@ data class HomeClockWidgetState(
 
 /** The clock stack as Home draws it: how many pages, which one shows, and whether there are none (the clock area stays blank). */
 @Immutable
-data class HomeClockStackState(val pageCount: Int = 1, val pageIndex: Int = 0) {
+data class HomeClockStackState(
+    val pageCount: Int = 1,
+    val pageIndex: Int = 0,
+    /** Whether the native clock is on some page: there is only one, so a widget page cannot be replaced with it then. */
+    val hasClock: Boolean = true,
+) {
     val isBlank: Boolean get() = pageCount == 0
 }
 
@@ -165,11 +168,11 @@ data class HomeClockActions(
     val onClockClick: () -> Unit = {},
     val onWeatherClick: () -> Unit = {},
     val onBatteryClick: () -> Unit = {},
-    val onEditClockStyles: () -> Unit = {},
+    val onClockSettingsClick: () -> Unit = {},
     val onNavigateToSettings: () -> Unit = {},
     val onNavigateToFacetSettings: () -> Unit = {},
-    val onUseCustomWidgetClick: () -> Unit = {},
-    val onSwitchToLauncherClockClick: () -> Unit = {},
+    val onReplaceWithWidgetClick: () -> Unit = {},
+    val onReplaceWithClockClick: () -> Unit = {},
     val onEventClick: (CalendarEvent) -> Unit = {},
     val onZoneHeightCommit: (Float) -> Unit = {},
     val onScaleCommit: (Float) -> Unit = {},
