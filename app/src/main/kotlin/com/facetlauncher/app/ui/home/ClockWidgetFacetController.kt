@@ -5,6 +5,7 @@ import com.facetlauncher.app.data.EntitlementRepository
 import com.facetlauncher.app.data.model.ClockAlignment
 import com.facetlauncher.app.domain.ClockPlacement
 import com.facetlauncher.app.domain.CommitClockPlacementUseCase
+import com.facetlauncher.app.domain.RemoveClockStackItemUseCase
 import com.facetlauncher.app.domain.ReplaceClockStackItemUseCase
 import javax.inject.Inject
 
@@ -18,6 +19,7 @@ import javax.inject.Inject
 class ClockWidgetFacetController @Inject constructor(
     private val clockStackRepository: ClockStackRepository,
     private val replaceClockStackItem: ReplaceClockStackItemUseCase,
+    private val removeClockStackItem: RemoveClockStackItemUseCase,
     private val commitClockPlacement: CommitClockPlacementUseCase,
     entitlementRepository: EntitlementRepository,
 ) {
@@ -26,6 +28,9 @@ class ClockWidgetFacetController @Inject constructor(
 
     /** PRD F15's "Switch to launcher clock widget" row: the page [itemId] becomes the native clock again, releasing its widget. */
     suspend fun replaceWithClock(itemId: Long) = replaceClockStackItem.withClock(itemId)
+
+    /** Drops the page [itemId], releasing its widget; used for a widget whose app was uninstalled. */
+    suspend fun remove(itemId: Long) = removeClockStackItem(itemId)
 
     /** PRD F15's interactive resize commit, fired once on release by the clock's resize handles; saved against the stack item [itemId]. */
     suspend fun commitSize(itemId: Long, widthDp: Int, heightDp: Int, mode: HomeLayoutMode = HomeLayoutMode.PORTRAIT) =

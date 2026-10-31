@@ -31,6 +31,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -152,11 +153,14 @@ fun HomeDrawerRoute(
     // PACKAGE_USAGE_STATS has no grant-change callback — re-check whenever the user returns to
     // Home (e.g. from the usage-access Settings redirect) rather than only on facet changes.
     val lifecycleOwner = LocalLifecycleOwner.current
+    // Counts resumes so the orphaned-widget check re-runs: the app can be uninstalled while Home is away.
+    var resumeCount by remember { mutableIntStateOf(0) }
     val weatherShown by rememberUpdatedState(homeUiState.style.clock.showWeather)
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
                 homeViewModel.refresh()
+                resumeCount++
                 weatherViewModel.onHomeResumed(weatherShown)
             }
         }
@@ -269,6 +273,9 @@ fun HomeDrawerRoute(
     val clockWidgetResizeFloorDp = homeUiState.clockWidgetAppWidgetId?.let { appWidgetId ->
         remember(appWidgetId) { homeViewModel.clockWidgetHost.resizeFloorDp(context, appWidgetId) }
     }
+    val clockWidgetOrphaned = homeUiState.clockWidgetAppWidgetId?.let { appWidgetId ->
+        remember(appWidgetId, resumeCount) { homeViewModel.clockWidgetHost.isOrphaned(appWidgetId) }
+    } == true
     // The persisted size (once the user has actually resized) wins over the provider's own default.
     // The layout mode, and everything that differs between orientations, resolved once: landscape's own
     // values where saved, the portrait ones otherwise.
@@ -327,6 +334,7 @@ fun HomeDrawerRoute(
                 widgetSizing = HomeWidgetSizing(
                     defaultSizeDp = { clockWidgetDefaultSizeDp },
                     resizeFloorDp = { clockWidgetResizeFloorDp },
+                    isOrphaned = { clockWidgetOrphaned },
                 ),
                 live = HomeLiveState(
                     adjustMode = clockAdjustMode,

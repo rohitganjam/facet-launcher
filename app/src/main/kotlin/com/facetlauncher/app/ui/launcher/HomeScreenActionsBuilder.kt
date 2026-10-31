@@ -129,6 +129,11 @@ private fun homeClockWidgetActions(
                 inputs.coroutineScope.launch { viewModel.clockWidgetFacet.commitSize(item.id, widthDp, heightDp, inputs.layoutMode) }
             }
         },
+        onRemoveOrphan = {
+            inputs.homeUiState.visibleClockItem?.let { item ->
+                inputs.coroutineScope.launch { viewModel.clockWidgetFacet.remove(item.id) }
+            }
+        },
         onBoundsChange = hooks.setClockWidgetBounds,
         onNestedScrollStart = swipe.widgetScroll::start,
         onLeftoverScroll = swipe.widgetScroll::leftoverScroll,

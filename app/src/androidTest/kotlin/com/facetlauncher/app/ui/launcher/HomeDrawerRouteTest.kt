@@ -113,6 +113,7 @@ import com.facetlauncher.app.domain.SeedDefaultDockUseCase
 import com.facetlauncher.app.domain.SelectableFacetsUseCase
 import com.facetlauncher.app.domain.AddClockStackItemUseCase
 import com.facetlauncher.app.domain.CommitClockPlacementUseCase
+import com.facetlauncher.app.domain.RemoveClockStackItemUseCase
 import com.facetlauncher.app.domain.ReplaceClockStackItemUseCase
 import com.facetlauncher.app.domain.SyncFacetShortcutsUseCase
 import com.facetlauncher.app.ui.components.HomeSwipeGate
@@ -299,6 +300,7 @@ class HomeDrawerRouteTest {
                     ClockWidgetFacetController(
                         clockStackRepository,
                         ReplaceClockStackItemUseCase(clockStackRepository, appWidgetRepository),
+                        RemoveClockStackItemUseCase(clockStackRepository, appWidgetRepository),
                         CommitClockPlacementUseCase(facetRepository, settingsRepository),
                         EntitlementRepository(),
                     ),

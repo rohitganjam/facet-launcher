@@ -6,6 +6,7 @@ import com.facetlauncher.app.data.FakeEntitlementRepository
 import com.facetlauncher.app.data.model.ClockAlignment
 import com.facetlauncher.app.domain.ClockPlacement
 import com.facetlauncher.app.domain.CommitClockPlacementUseCase
+import com.facetlauncher.app.domain.RemoveClockStackItemUseCase
 import com.facetlauncher.app.domain.ReplaceClockStackItemUseCase
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertFalse
@@ -19,10 +20,11 @@ class ClockWidgetFacetControllerTest {
 
     private val clockStackRepository = mock(ClockStackRepository::class.java)
     private val replaceClockStackItem = mock(ReplaceClockStackItemUseCase::class.java)
+    private val removeClockStackItem = mock(RemoveClockStackItemUseCase::class.java)
     private val commitClockPlacement = mock(CommitClockPlacementUseCase::class.java)
 
     private fun controller(entitlement: EntitlementRepository = EntitlementRepository()) =
-        ClockWidgetFacetController(clockStackRepository, replaceClockStackItem, commitClockPlacement, entitlement)
+        ClockWidgetFacetController(clockStackRepository, replaceClockStackItem, removeClockStackItem, commitClockPlacement, entitlement)
 
     @Test
     fun `replaceWithClock delegates to the use case with the page id`() = runTest {
@@ -31,6 +33,15 @@ class ClockWidgetFacetControllerTest {
 
         // Then the use case does it
         verify(replaceClockStackItem).withClock(5L)
+    }
+
+    @Test
+    fun `remove delegates to the use case with the page id`() = runTest {
+        // When an orphaned page is removed
+        controller().remove(itemId = 7L)
+
+        // Then the use case drops it
+        verify(removeClockStackItem).invoke(7L)
     }
 
     @Test

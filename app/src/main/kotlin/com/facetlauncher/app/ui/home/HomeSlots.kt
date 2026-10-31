@@ -75,14 +75,7 @@ private fun ClockSlotBlock(frame: HomeFrame, alignment: ClockAlignment, scaleOri
     CompositionLocalProvider(LocalBatteryClick provides actions.clock.onBatteryClick) {
         ClockBlock(
             modifier = modifier.pageTransition(frame),
-            clockContentModifier = Modifier
-                .pointerInput(Unit) {
-                    detectTapGestures(
-                        onTap = { actions.clock.onClockClick() },
-                        onLongPress = { actions.clock.onAdjustModeChange(ClockAdjustMode.MENU) },
-                    )
-                }
-                .testTag(homeTag("home_clock_block")),
+            clockContentModifier = clockTapModifier(actions.clock),
             clockBoxModifier = Modifier.onGloballyPositioned {
                 layout.clockBoxSize = it.size
                 layout.clockBoxOriginInRoot = it.positionInRoot()
@@ -110,6 +103,8 @@ private fun ClockSlotBlock(frame: HomeFrame, alignment: ClockAlignment, scaleOri
             isCharging = state.calendar.isCharging,
             weather = rememberClockWeatherAccessory(state.calendar.weather, actions.clock.onWeatherClick),
             clockWidgetAppWidgetId = widget?.appWidgetId,
+            clockWidgetOrphaned = widget?.isOrphaned == true,
+            onClockWidgetRemove = actions.widget.onRemoveOrphan,
             createClockWidgetHostView = actions.widget.createHostView,
             clockWidgetWidthDp = widgetSize?.let { with(density) { it.x.toDp() } } ?: widget?.widthDp,
             clockWidgetHeightDp = widgetSize?.let { with(density) { it.y.toDp() } } ?: widget?.heightDp,
@@ -125,6 +120,17 @@ private fun ClockSlotBlock(frame: HomeFrame, alignment: ClockAlignment, scaleOri
         )
     }
 }
+
+/** A tap on the clock opens the clock app, a long press opens its adjust menu. */
+@Composable
+private fun clockTapModifier(clock: HomeClockActions): Modifier = Modifier
+    .pointerInput(Unit) {
+        detectTapGestures(
+            onTap = { clock.onClockClick() },
+            onLongPress = { clock.onAdjustModeChange(ClockAdjustMode.MENU) },
+        )
+    }
+    .testTag(homeTag("home_clock_block"))
 
 /** Displaces and fades the visible page while a swipe turns it; both are read in the draw phase, so a swipe does not recompose Home. */
 private fun Modifier.pageTransition(frame: HomeFrame): Modifier = graphicsLayer {

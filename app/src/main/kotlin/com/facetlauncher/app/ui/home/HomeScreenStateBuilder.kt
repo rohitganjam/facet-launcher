@@ -38,6 +38,8 @@ data class HomeScreenContent(
 data class HomeWidgetSizing(
     val defaultSizeDp: (appWidgetId: Int) -> Pair<Int, Int>? = { null },
     val resizeFloorDp: (appWidgetId: Int) -> Pair<Int, Int>? = { null },
+    /** Whether the widget's provider is gone (its app was uninstalled). */
+    val isOrphaned: (appWidgetId: Int) -> Boolean = { false },
 )
 
 /** The parts of Home's state that only the live screen has: the adjust mode and which facet owns the clock position. */
@@ -134,14 +136,19 @@ private fun ResolvedFacetStyle.shownClockPages(live: HomeLiveState) = clockStack
 /** Where [itemId] sits in the stack, or the first page when it is `null` or gone. */
 internal fun List<ResolvedClockItem>.visibleIndex(itemId: Long?): Int = indexOfFirst { it.id == itemId }.coerceAtLeast(0)
 
+/** The placeholder's size for an orphaned widget that was never resized, since its provider can no longer say. */
+private val ORPHANED_WIDGET_SIZE_DP = 160 to 110
+
 /** The hosted widget a stack page draws; `null` for the native clock. */
 private fun ResolvedClockItem.toWidgetState(landscape: Boolean, widgetSizing: HomeWidgetSizing): HomeClockWidgetState? {
     val widgetId = appWidgetId ?: return null
-    val size = sizeDp.of(landscape) ?: widgetSizing.defaultSizeDp(widgetId)
+    val orphaned = widgetSizing.isOrphaned(widgetId)
+    val size = sizeDp.of(landscape) ?: widgetSizing.defaultSizeDp(widgetId) ?: ORPHANED_WIDGET_SIZE_DP.takeIf { orphaned }
     val floor = widgetSizing.resizeFloorDp(widgetId)
     return HomeClockWidgetState(
         itemId = id,
         appWidgetId = widgetId,
+        isOrphaned = orphaned,
         widthDp = size?.first?.dp,
         heightDp = size?.second?.dp,
         minWidthDp = floor?.first?.dp,

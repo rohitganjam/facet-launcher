@@ -291,6 +291,35 @@ class HomeScreenWiringTest {
     }
 
     @Test
+    fun anOrphanedWidgetShowsAPlaceholderWhoseRemoveFires() {
+        // Given a widget page whose app was uninstalled
+        var removed = 0
+        var hosted = false
+        val state = appState(PlacedItem.SingleApp(mail)).copy(
+            widget = HomeClockWidgetState(
+                itemId = 1L, appWidgetId = 42, widthDp = 160.dp, heightDp = 110.dp, minWidthDp = null, minHeightDp = null, isOrphaned = true,
+            ),
+            clockStack = HomeClockStackState(pageCount = 1, pageIndex = 0, hasClock = false),
+        )
+        val actions = HomeScreenActions(
+            item = HomeItemActions(onAppClick = {}),
+            widget = HomeClockWidgetActions(createHostView = { _, _ -> hosted = true; null }, onRemoveOrphan = { removed++ }),
+        )
+        setHome(state, actions)
+
+        // Then a placeholder is drawn in place of the widget, with no Keep space action
+        composeRule.onNodeWithTag("hub_orphaned_widget").assertExists()
+        composeRule.onNodeWithTag("hub_orphaned_keep_space").assertDoesNotExist()
+        assertEquals(false, hosted)
+
+        // When Remove is tapped
+        composeRule.onNodeWithTag("hub_orphaned_remove").performClick()
+
+        // Then the removal fired
+        assertEquals(1, removed)
+    }
+
+    @Test
     fun theFacetThatOwnsTheClockStyleIsNamedOnTheClockSettingsRow() {
         // Given a clock style owned by a facet called Work
         val state = appState(PlacedItem.SingleApp(mail)).copy(clock = HomeClockState(placementFacetId = 3L, styleOwnerFacetName = "Work"))

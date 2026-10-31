@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
+import com.facetlauncher.app.ui.hub.OrphanedWidgetTile
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -111,6 +112,9 @@ fun ClockBlock(
      * [clockWidgetHeightDp] are only read when this is non-null.
      */
     clockWidgetAppWidgetId: Int? = null,
+    /** The widget's app was uninstalled: a placeholder with a Remove action is drawn instead of the host. */
+    clockWidgetOrphaned: Boolean = false,
+    onClockWidgetRemove: () -> Unit = {},
     /** `null` when [clockWidgetAppWidgetId] has no resolvable provider (orphaned) — see [com.facetlauncher.app.ui.home.HomeViewModel.createClockWidgetHostView]. */
     createClockWidgetHostView: (Context, Int) -> AppWidgetHostView? = { _, _ -> null },
     /**
@@ -164,6 +168,8 @@ fun ClockBlock(
                 isCharging = isCharging,
                 weather = weather,
                 clockWidgetAppWidgetId = clockWidgetAppWidgetId,
+                clockWidgetOrphaned = clockWidgetOrphaned,
+                onClockWidgetRemove = onClockWidgetRemove,
                 createClockWidgetHostView = createClockWidgetHostView,
                 clockWidgetWidthDp = clockWidgetWidthDp,
                 clockWidgetHeightDp = clockWidgetHeightDp,
@@ -219,6 +225,8 @@ private fun ClockOrWidgetContent(
     isCharging: Boolean,
     weather: ClockWeatherAccessory?,
     clockWidgetAppWidgetId: Int?,
+    clockWidgetOrphaned: Boolean,
+    onClockWidgetRemove: () -> Unit,
     createClockWidgetHostView: (Context, Int) -> AppWidgetHostView?,
     clockWidgetWidthDp: Dp?,
     clockWidgetHeightDp: Dp?,
@@ -235,6 +243,8 @@ private fun ClockOrWidgetContent(
     if (clockWidgetAppWidgetId != null && clockWidgetWidthDp != null && clockWidgetHeightDp != null) {
         ClockWidgetContent(
             appWidgetId = clockWidgetAppWidgetId,
+            orphaned = clockWidgetOrphaned,
+            onRemove = onClockWidgetRemove,
             widthDp = clockWidgetWidthDp,
             heightDp = clockWidgetHeightDp,
             committedWidthDp = clockWidgetCommittedWidthDp ?: clockWidgetWidthDp,
@@ -278,6 +288,8 @@ private fun ClockOrWidgetContent(
 @Composable
 private fun ClockWidgetContent(
     appWidgetId: Int,
+    orphaned: Boolean,
+    onRemove: () -> Unit,
     widthDp: Dp,
     heightDp: Dp,
     committedWidthDp: Dp,
@@ -290,6 +302,12 @@ private fun ClockWidgetContent(
     onNestedScrollStop: () -> Unit,
     onLeftoverFling: (velocityXPx: Float, velocityYPx: Float) -> Unit,
 ) {
+    if (orphaned) {
+        Box(modifier = Modifier.size(widthDp, heightDp)) {
+            OrphanedWidgetTile(providerLabel = null, onRemove = onRemove, onKeepSpace = null)
+        }
+        return
+    }
     ClockWidgetTile(
         appWidgetId = appWidgetId,
         committedWidthDp = committedWidthDp,

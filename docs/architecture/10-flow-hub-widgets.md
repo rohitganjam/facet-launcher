@@ -35,6 +35,9 @@ flowchart LR
 - **Orphans**: a placement whose `appWidgetId` no longer has provider info (provider uninstalled,
   Work Profile removed, or bindings lost) is rendered as `OrphanedWidgetTile` with
   *Remove* (`DeleteWidgetUseCase`) / *Keep space* (`onKeepOrphanSpace` — no-op, the row stays).
+  A hosted widget on Home's clock stack is orphaned the same way (`ClockWidgetHostController.isOrphaned`, re-checked on each
+  Home resume); that page draws the same tile with *Remove* only (`ClockWidgetFacetController.remove` →
+  `RemoveClockStackItemUseCase`), at its saved size or a placeholder one.
 - Providers are enumerated per profile
   (`userManager.userProfiles.flatMap { getInstalledProvidersForProfile(it) }`), so Work Profile
   widgets appear in the picker tagged with their `AppProfile`; `widget_placements.profile/userId`

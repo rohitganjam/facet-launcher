@@ -79,6 +79,8 @@ data class HomeClockWidgetState(
     val heightDp: Dp?,
     val minWidthDp: Dp?,
     val minHeightDp: Dp?,
+    /** The provider's app was uninstalled: Home draws a placeholder with a Remove action instead of the widget. */
+    val isOrphaned: Boolean = false,
 )
 
 /** The clock stack as Home draws it: how many pages, which one shows, and whether there are none (the clock area stays blank). */
@@ -194,6 +196,8 @@ data class HomeClockWidgetActions(
     val createHostView: (Context, Int) -> AppWidgetHostView? = { _, _ -> null },
     val onSizeChange: (appWidgetId: Int, widthDp: Int, heightDp: Int) -> Unit = { _, _, _ -> },
     val onSizeCommit: (widthDp: Int, heightDp: Int) -> Unit = { _, _ -> },
+    /** Removes the visible orphaned widget page from the stack. */
+    val onRemoveOrphan: () -> Unit = {},
     val onBoundsChange: (Rect?) -> Unit = {},
     val onNestedScrollStart: () -> Unit = {},
     val onLeftoverScroll: (dxPx: Float, dyPx: Float) -> Unit = { _, _ -> },

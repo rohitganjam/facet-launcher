@@ -26,9 +26,9 @@ import com.facetlauncher.app.ui.theme.HomeAppTextColorFaint
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import com.facetlauncher.app.ui.theme.homeAppLabelShadow
 
-/** README `4e` — provider uninstalled. The cell keeps its footprint, dashed border, never a dead frame. */
+/** README `4e` — provider uninstalled. The cell keeps its footprint, dashed border, never a dead frame. [onKeepSpace] is `null` where there is no cell to keep (Home's clock slot). */
 @Composable
-fun OrphanedWidgetTile(providerLabel: String?, onRemove: () -> Unit, onKeepSpace: () -> Unit, modifier: Modifier = Modifier) {
+fun OrphanedWidgetTile(providerLabel: String?, onRemove: () -> Unit, onKeepSpace: (() -> Unit)?, modifier: Modifier = Modifier) {
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -72,12 +72,14 @@ fun OrphanedWidgetTile(providerLabel: String?, onRemove: () -> Unit, onKeepSpace
                 color = ErrorColor,
                 modifier = Modifier.testTag("hub_orphaned_remove").clip(CircleShape).clickable(onClick = onRemove),
             )
-            Text(
-                text = stringResource(R.string.hub_orphaned_keep_space),
-                style = MaterialTheme.typography.labelSmall.copy(shadow = homeAppLabelShadow(HomeAppTextColorFaint)),
-                color = HomeAppTextColorFaint,
-                modifier = Modifier.testTag("hub_orphaned_keep_space").clip(CircleShape).clickable(onClick = onKeepSpace),
-            )
+            if (onKeepSpace != null) {
+                Text(
+                    text = stringResource(R.string.hub_orphaned_keep_space),
+                    style = MaterialTheme.typography.labelSmall.copy(shadow = homeAppLabelShadow(HomeAppTextColorFaint)),
+                    color = HomeAppTextColorFaint,
+                    modifier = Modifier.testTag("hub_orphaned_keep_space").clip(CircleShape).clickable(onClick = onKeepSpace),
+                )
+            }
         }
     }
 }

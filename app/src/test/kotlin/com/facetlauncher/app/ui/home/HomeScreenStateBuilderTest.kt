@@ -12,6 +12,7 @@ import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.data.model.MediaPlayerState
 import com.facetlauncher.app.domain.resolveFacetStyle
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Test
 
@@ -82,6 +83,24 @@ class HomeScreenStateBuilderTest {
 
         assertEquals(HomeClockWidgetState(1L, 41, 160.dp, 90.dp, 60.dp, 60.dp), savedWidget)
         assertEquals(HomeClockWidgetState(2L, 42, 250.dp, 110.dp, 60.dp, 60.dp), unsizedWidget)
+    }
+
+    @Test
+    fun `an orphaned widget is flagged and keeps a placeholder size when it was never resized`() {
+        // Given a widget whose provider is gone, one with a saved size and one without
+        val sized = Facet(id = 1L, name = "A", position = 0, clockStack = listOf(widgetItem(41, id = 1L, widthDp = 160, heightDp = 90)))
+        val unsized = Facet(id = 1L, name = "B", position = 0, clockStack = listOf(widgetItem(42, id = 2L)))
+        val sizing = HomeWidgetSizing(isOrphaned = { true })
+
+        // When Home's state is built
+        val sizedWidget = build(sized, landscape = false, widgetSizing = sizing).widget
+        val unsizedWidget = build(unsized, landscape = false, widgetSizing = sizing).widget
+
+        // Then both are orphaned, the saved size is kept and the other gets a placeholder size
+        assertEquals(true, sizedWidget?.isOrphaned)
+        assertEquals(160.dp, sizedWidget?.widthDp)
+        assertEquals(true, unsizedWidget?.isOrphaned)
+        assertNotNull(unsizedWidget?.widthDp)
     }
 
     @Test
