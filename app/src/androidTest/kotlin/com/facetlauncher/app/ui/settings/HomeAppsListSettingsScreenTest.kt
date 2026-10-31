@@ -68,7 +68,7 @@ class HomeAppsListSettingsScreenTest {
                 )
                 val database = Room.inMemoryDatabaseBuilder(context, FacetDatabase::class.java).allowMainThreadQueries().build()
                 val appRepository = AppRepository(context.getSystemService(LauncherApps::class.java), context.getSystemService(UserManager::class.java), context)
-                val facetRepository = FacetRepository(database.facetDao())
+                val facetRepository = FacetRepository(database.facetDao(), database.clockStackItemDao())
                 val facetId = if (facetScoped) runBlocking { facetRepository.addFacet().id } else null
                 onFacetRepo(facetRepository, facetId)
                 val folderRepository = FolderRepository(database.folderDao(), appRepository)

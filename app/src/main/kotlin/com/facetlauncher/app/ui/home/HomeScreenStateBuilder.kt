@@ -8,6 +8,7 @@ import com.facetlauncher.app.data.model.MediaPlayerState
 import com.facetlauncher.app.data.model.PlacedItem
 import com.facetlauncher.app.data.model.WeatherIconStyle
 import com.facetlauncher.app.domain.ClockAccessoryState
+import com.facetlauncher.app.domain.ResolvedClockItem
 import com.facetlauncher.app.domain.ResolvedFacetStyle
 import com.facetlauncher.app.domain.WeatherState
 import com.facetlauncher.app.domain.WeatherUnits
@@ -90,17 +91,7 @@ fun ResolvedFacetStyle.toHomeScreenState(
         draggingHandle = live.draggingHandle,
         isPro = live.isPro,
     ),
-    widget = clockWidget?.let { widget ->
-        val size = widget.sizeDp.of(landscape) ?: widgetSizing.defaultSizeDp(widget.appWidgetId)
-        val floor = widgetSizing.resizeFloorDp(widget.appWidgetId)
-        HomeClockWidgetState(
-            appWidgetId = widget.appWidgetId,
-            widthDp = size?.first?.dp,
-            heightDp = size?.second?.dp,
-            minWidthDp = floor?.first?.dp,
-            minHeightDp = floor?.second?.dp,
-        )
-    },
+    widget = clockStack.firstOrNull()?.toWidgetState(landscape, widgetSizing),
     calendar = HomeCalendarState(
         events = content.calendarEvents.toImmutableList(),
         colors = settings.calendarColors.toImmutableMap(),
@@ -120,3 +111,18 @@ private fun WeatherState.toHomeWeather(settings: LauncherSettings, iconStyle: We
     temperatureUnit = WeatherUnits.resolve(settings.temperatureUnit, Locale.getDefault()),
     iconStyle = iconStyle,
 )
+
+/** The hosted widget a stack page draws; `null` for the native clock. */
+private fun ResolvedClockItem.toWidgetState(landscape: Boolean, widgetSizing: HomeWidgetSizing): HomeClockWidgetState? {
+    val widgetId = appWidgetId ?: return null
+    val size = sizeDp.of(landscape) ?: widgetSizing.defaultSizeDp(widgetId)
+    val floor = widgetSizing.resizeFloorDp(widgetId)
+    return HomeClockWidgetState(
+        itemId = id,
+        appWidgetId = widgetId,
+        widthDp = size?.first?.dp,
+        heightDp = size?.second?.dp,
+        minWidthDp = floor?.first?.dp,
+        minHeightDp = floor?.second?.dp,
+    )
+}

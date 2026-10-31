@@ -59,7 +59,7 @@ class ApplyFacetAutomationUseCaseTest {
         val database: FacetDatabase = Room.inMemoryDatabaseBuilder(ApplicationProvider.getApplicationContext(), FacetDatabase::class.java)
             .allowMainThreadQueries()
             .build()
-        val facets = FacetRepository(database.facetDao())
+        val facets = FacetRepository(database.facetDao(), database.clockStackItemDao())
         val rules = AutomationRuleRepository(database.automationRuleDao(), database.facetDao())
         val settings = SettingsRepository(
             PreferenceDataStoreFactory.create(produceFile = { tempFolder.newFile("settings-${System.nanoTime()}.preferences_pb") }),

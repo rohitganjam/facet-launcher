@@ -137,14 +137,14 @@ flowchart TB
 - **One resolver for everything a facet overrides:** `domain/ResolvedFacetStyle.kt`'s
   `resolveFacetStyle(facet, settings)` returns the clock block, apps-list look, dock display mode,
   calendar display, the clock and list placement in each orientation (`clockPlacement`, `listAlignment`,
-  with the landscape rules) and the facet's hosted clock widget with its size per orientation. Home
+  with the landscape rules) and the facet's clock stack (`clockStack`: each page's kind, widget id, size and alignment per orientation). Home
   (`HomeUiState`) and every preview read it, so a preview cannot show anything Home would not:
   `FacetCarouselUiState`, `AppearanceUiState`, `CalendarSettingsUiState`, `FacetSettingsUiState`,
   `HomeAppsListUiState`, `DockSettingsUiState` and `ClockStyleGalleryUiState` all delegate to it. The
   last four hold the launcher's `LauncherSettings` as `settings` instead of a `globalX` field per
   value. `ResolvedFacetStyleTest` covers the override, sentinel, landscape and widget rules, and
   `HomeScreenStateBuilderTest` checks that the state a preview is built from has the same placement as Home resolves for the same facet.
-- **A hosted clock widget shows in previews.** The widget is part of the state (`HomeClockWidgetState`),
+- **A hosted clock widget shows in previews.** The first page of the stack, when it is a widget, is part of the state (`HomeClockWidgetState`),
   so `HomeScreen` draws it through its normal `ClockWidgetTile`, with `createHostView` pointed at
   `ClockWidgetHostController.createPreviewHostView`: a non-live copy from a second, non-listening
   `AppWidgetHost` (`AppWidgetRepository.createPreviewHostView`). A host sends later updates to the newest

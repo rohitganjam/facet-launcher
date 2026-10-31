@@ -29,14 +29,12 @@ data class Facet(
     /** `null` until the facet drags the clock's grab handle for the first time. */
     val clockZoneHeightDp: Float? = null,
     val clockScale: Float = 0.8f,
-    /** The facet's own hosted clock widget id; `null` means the native clock. Never shared with another facet. */
-    val clockWidgetAppWidgetId: Int? = null,
-    /** The hosted widget's persisted size in dp; `null` until the first resize, meaningless while [clockWidgetAppWidgetId] is `null`. */
-    val clockWidgetWidthDp: Int? = null,
-    val clockWidgetHeightDp: Int? = null,
-    /** Landscape's own hosted-widget size; `null` falls back to the portrait size. */
-    val landscapeClockWidgetWidthDp: Int? = null,
-    val landscapeClockWidgetHeightDp: Int? = null,
+    /**
+     * What the clock slot shows, in swipe order: the native clock and hosted widgets, each with its own size and
+     * alignment. Empty means the plain native clock. Held in its own table and loaded by `FacetRepository`, so a
+     * facet built by hand (a preview, a test) carries whatever stack it is given.
+     */
+    val clockStack: List<ClockStackItem> = emptyList(),
     /** Landscape's own clock alignment, zone height and scale; `null` uses the portrait value. */
     val landscapeClockAlignment: ClockAlignment? = null,
     val landscapeClockZoneHeightDp: Float? = null,
@@ -110,8 +108,6 @@ val Facet.landscape: LandscapeOverrides
         clockAlignment = landscapeClockAlignment,
         clockZoneHeightDp = landscapeClockZoneHeightDp,
         clockScale = landscapeClockScale,
-        clockWidgetWidthDp = landscapeClockWidgetWidthDp,
-        clockWidgetHeightDp = landscapeClockWidgetHeightDp,
         appRowPosition = landscapeAppRowPosition,
         appListVerticalAlignment = landscapeAppListVerticalAlignment,
         appListColumnAlignment = landscapeAppListColumnAlignment,
@@ -122,8 +118,6 @@ fun Facet.withLandscape(overrides: LandscapeOverrides): Facet = copy(
     landscapeClockAlignment = overrides.clockAlignment,
     landscapeClockZoneHeightDp = overrides.clockZoneHeightDp,
     landscapeClockScale = overrides.clockScale,
-    landscapeClockWidgetWidthDp = overrides.clockWidgetWidthDp,
-    landscapeClockWidgetHeightDp = overrides.clockWidgetHeightDp,
     landscapeAppRowPosition = overrides.appRowPosition,
     landscapeAppListVerticalAlignment = overrides.appListVerticalAlignment,
     landscapeAppListColumnAlignment = overrides.appListColumnAlignment,

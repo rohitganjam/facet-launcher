@@ -90,7 +90,7 @@ internal fun FlatHomeScreen(
                 draggingHandle = draggingHandle,
             ),
             widget = clockWidgetAppWidgetId?.let {
-                HomeClockWidgetState(it, clockWidgetWidthDp, clockWidgetHeightDp, clockWidgetMinWidthDp, clockWidgetMinHeightDp)
+                HomeClockWidgetState(1L, it, clockWidgetWidthDp, clockWidgetHeightDp, clockWidgetMinWidthDp, clockWidgetMinHeightDp)
             },
             calendar = HomeCalendarState(events = calendarEvents.toImmutableList()),
             media = HomeMediaState(player = mediaPlayer),

@@ -1,5 +1,8 @@
 package com.facetlauncher.app.domain
 
+import com.facetlauncher.app.data.model.ClockStackItemKind
+import com.facetlauncher.app.data.widgetItem
+import com.facetlauncher.app.data.clockItem
 import com.facetlauncher.app.data.model.Facet
 import com.facetlauncher.app.data.model.AppListLayout
 import com.facetlauncher.app.data.model.AppRowPosition
@@ -139,27 +142,45 @@ class ResolvedFacetStyleTest {
 
     @Test
     fun `the hosted clock widget is the facet's own and is not gated by the clock override`() {
-        val withWidget = facet { it.copy(overrideClock = false, clockWidgetAppWidgetId = 41, clockWidgetWidthDp = 160, clockWidgetHeightDp = 90) }
+        val withWidget = facet { it.copy(overrideClock = false, clockStack = listOf(widgetItem(41, widthDp = 160, heightDp = 90))) }
 
         val style = resolveFacetStyle(withWidget, settings)
 
-        assertEquals(41, style.clockWidget?.appWidgetId)
-        assertEquals(160 to 90, style.clockWidget?.sizeDp?.portrait)
+        assertEquals(41, style.clockStack.single().appWidgetId)
+        assertEquals(160 to 90, style.clockStack.single().sizeDp.portrait)
     }
 
     @Test
     fun `the hosted widget size in landscape is its own per dimension, else the portrait one`() {
-        val widget = facet { it.copy(clockWidgetAppWidgetId = 41, clockWidgetWidthDp = 160, clockWidgetHeightDp = 90) }
-        val landscapeWidthOnly = widget.copy(landscapeClockWidgetWidthDp = 400)
+        val widget = facet { it.copy(clockStack = listOf(widgetItem(41, widthDp = 160, heightDp = 90))) }
+        val landscapeWidthOnly = facet { it.copy(clockStack = listOf(widgetItem(41, widthDp = 160, heightDp = 90, landscapeWidthDp = 400))) }
 
-        assertEquals(160 to 90, resolveFacetStyle(widget, settings).clockWidget?.sizeDp?.landscape)
-        assertEquals(400 to 90, resolveFacetStyle(landscapeWidthOnly, settings).clockWidget?.sizeDp?.landscape)
+        assertEquals(160 to 90, resolveFacetStyle(widget, settings).clockStack.single().sizeDp.landscape)
+        assertEquals(400 to 90, resolveFacetStyle(landscapeWidthOnly, settings).clockStack.single().sizeDp.landscape)
     }
 
     @Test
-    fun `there is no hosted widget without a bound id or before a resize`() {
-        assertEquals(null, resolveFacetStyle(facet(), settings).clockWidget)
-        assertEquals(null, resolveFacetStyle(facet { it.copy(clockWidgetAppWidgetId = 41) }, settings).clockWidget?.sizeDp?.portrait)
+    fun `there is no stack page without items, and no size before a resize`() {
+        assertEquals(emptyList<ResolvedClockItem>(), resolveFacetStyle(facet(), settings).clockStack)
+        assertEquals(null, resolveFacetStyle(facet { it.copy(clockStack = listOf(widgetItem(41))) }, settings).clockStack.single().sizeDp.portrait)
+    }
+
+    @Test
+    fun `the native clock page and the widget page keep the stack's order`() {
+        val stacked = facet { it.copy(clockStack = listOf(clockItem(position = 0), widgetItem(41, position = 1))) }
+
+        val kinds = resolveFacetStyle(stacked, settings).clockStack.map { it.kind to it.appWidgetId }
+
+        assertEquals(listOf(ClockStackItemKind.CLOCK to null, ClockStackItemKind.WIDGET to 41), kinds)
+    }
+
+    @Test
+    fun `a page's landscape alignment is its own, else the portrait one`() {
+        val item = widgetItem(41).copy(alignment = ClockAlignment.CENTER)
+        val own = item.copy(landscapeAlignment = ClockAlignment.RIGHT)
+
+        assertEquals(ClockAlignment.CENTER, resolveFacetStyle(facet { it.copy(clockStack = listOf(item)) }, settings).clockStack.single().alignment.landscape)
+        assertEquals(ClockAlignment.RIGHT, resolveFacetStyle(facet { it.copy(clockStack = listOf(own)) }, settings).clockStack.single().alignment.landscape)
     }
 
     @Test

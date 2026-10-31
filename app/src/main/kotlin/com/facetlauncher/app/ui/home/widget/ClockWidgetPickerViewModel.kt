@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.model.WidgetProviderOption
 import com.facetlauncher.app.data.widget.AppWidgetRepository
+import com.facetlauncher.app.domain.ReplaceClockWidgetUseCase
 import com.facetlauncher.app.ui.hub.picker.AddFailureReason
 import com.facetlauncher.app.ui.hub.picker.HubAddWidgetEvent
 import com.facetlauncher.app.ui.hub.picker.HubWidgetPickerUiState
@@ -37,6 +38,7 @@ import kotlinx.coroutines.launch
 class ClockWidgetPickerViewModel @Inject constructor(
     private val appWidgetRepository: AppWidgetRepository,
     private val facetRepository: FacetRepository,
+    private val replaceClockWidget: ReplaceClockWidgetUseCase,
 ) : ViewModel() {
 
     private val query = MutableStateFlow("")
@@ -128,7 +130,7 @@ class ClockWidgetPickerViewModel @Inject constructor(
         finishBinding(appWidgetId)
     }
 
-    /** Releases this facet's previously-bound clock widget id (if any) before storing the new one — never leaves the old id leaked. */
+    /** Stores the new widget as the facet's clock; [ReplaceClockWidgetUseCase] releases whatever it held before. */
     private suspend fun finishBinding(appWidgetId: Int) {
         val facetId = pendingFacetId
         val facet = facetId?.let { facetRepository.getById(it) }
@@ -136,8 +138,7 @@ class ClockWidgetPickerViewModel @Inject constructor(
             failAndRelease(appWidgetId, AddFailureReason.SETUP_CANCELLED)
             return
         }
-        facet.clockWidgetAppWidgetId?.let { appWidgetRepository.deleteAppWidgetId(it) }
-        facetRepository.setClockWidgetAppWidgetId(facet.id, appWidgetId)
+        replaceClockWidget(facet.id, appWidgetId)
         _events.emit(HubAddWidgetEvent.WidgetAdded)
     }
 

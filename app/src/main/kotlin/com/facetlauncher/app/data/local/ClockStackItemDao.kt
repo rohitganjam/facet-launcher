@@ -11,6 +11,9 @@ interface ClockStackItemDao {
     @Query("SELECT * FROM clock_stack_items WHERE facetId = :facetId ORDER BY position ASC, id ASC")
     fun observe(facetId: Long): Flow<List<ClockStackItemEntity>>
 
+    @Query("SELECT * FROM clock_stack_items ORDER BY facetId ASC, position ASC, id ASC")
+    fun observeAll(): Flow<List<ClockStackItemEntity>>
+
     @Query("SELECT * FROM clock_stack_items WHERE facetId = :facetId ORDER BY position ASC, id ASC")
     suspend fun getAll(facetId: Long): List<ClockStackItemEntity>
 

@@ -1,5 +1,7 @@
 package com.facetlauncher.app.ui.home
 
+import com.facetlauncher.app.data.widgetItem
+import com.facetlauncher.app.data.clockItem
 import androidx.compose.ui.unit.dp
 import com.facetlauncher.app.data.model.AppListVerticalAlignment
 import com.facetlauncher.app.data.model.AppRowPosition
@@ -71,26 +73,33 @@ class HomeScreenStateBuilderTest {
 
     @Test
     fun `a facet with a hosted widget gets its saved size, then the provider default`() {
-        val saved = Facet(id = 1L, name = "A", position = 0, clockWidgetAppWidgetId = 41, clockWidgetWidthDp = 160, clockWidgetHeightDp = 90)
-        val unsized = Facet(id = 1L, name = "B", position = 0, clockWidgetAppWidgetId = 42)
+        val saved = Facet(id = 1L, name = "A", position = 0, clockStack = listOf(widgetItem(41, id = 1L, widthDp = 160, heightDp = 90)))
+        val unsized = Facet(id = 1L, name = "B", position = 0, clockStack = listOf(widgetItem(42, id = 2L)))
         val sizing = HomeWidgetSizing(defaultSizeDp = { 250 to 110 }, resizeFloorDp = { 60 to 60 })
 
         val savedWidget = build(saved, landscape = false, widgetSizing = sizing).widget
         val unsizedWidget = build(unsized, landscape = false, widgetSizing = sizing).widget
 
-        assertEquals(HomeClockWidgetState(41, 160.dp, 90.dp, 60.dp, 60.dp), savedWidget)
-        assertEquals(HomeClockWidgetState(42, 250.dp, 110.dp, 60.dp, 60.dp), unsizedWidget)
+        assertEquals(HomeClockWidgetState(1L, 41, 160.dp, 90.dp, 60.dp, 60.dp), savedWidget)
+        assertEquals(HomeClockWidgetState(2L, 42, 250.dp, 110.dp, 60.dp, 60.dp), unsizedWidget)
     }
 
     @Test
     fun `a widget size in landscape is its own where saved, else the portrait one`() {
         val facet = Facet(
-            id = 1L, name = "A", position = 0, clockWidgetAppWidgetId = 41,
-            clockWidgetWidthDp = 160, clockWidgetHeightDp = 90, landscapeClockWidgetWidthDp = 400, landscapeClockWidgetHeightDp = 300,
+            id = 1L, name = "A", position = 0,
+            clockStack = listOf(widgetItem(41, widthDp = 160, heightDp = 90, landscapeWidthDp = 400, landscapeHeightDp = 300)),
         )
 
         assertEquals(160.dp, build(facet, landscape = false).widget?.widthDp)
         assertEquals(400.dp, build(facet, landscape = true).widget?.widthDp)
+    }
+
+    @Test
+    fun `a stack whose first page is the clock builds the native clock`() {
+        val facet = Facet(id = 1L, name = "A", position = 0, clockStack = listOf(clockItem(position = 0), widgetItem(41, position = 1)))
+
+        assertNull(build(facet, landscape = false).widget)
     }
 
     @Test

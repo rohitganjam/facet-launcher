@@ -109,8 +109,6 @@ class FacetTest {
             clockAlignment = ClockAlignment.CENTER,
             clockZoneHeightDp = 310f,
             clockScale = 1.1f,
-            clockWidgetWidthDp = 400,
-            clockWidgetHeightDp = 300,
             appRowPosition = AppRowPosition.CENTER,
             appListVerticalAlignment = AppListVerticalAlignment.TOP,
             appListColumnAlignment = AppListColumnAlignment.MIRRORED,

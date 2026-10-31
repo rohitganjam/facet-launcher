@@ -112,6 +112,36 @@ class ClockStackRepositoryTest {
     }
 
     @Test
+    fun `replaceWithWidget leaves just that widget, unsized, and returns every earlier id`() = runTest {
+        // Given a stack with a clock and two widgets, the first of them resized
+        repository.addClock(facetId)
+        repository.addWidget(facetId, 10)
+        repository.addWidget(facetId, 11)
+        repository.setSize(repository.getAll(facetId)[1].id, 400, 300)
+
+        // When one widget replaces the stack
+        val released = repository.replaceWithWidget(facetId, 99)
+
+        // Then the earlier widget ids come back, and only the new widget remains with no inherited size
+        assertEquals(listOf(10, 11), released)
+        val only = repository.getAll(facetId).single()
+        assertEquals(99, only.appWidgetId)
+        assertEquals(0, only.position)
+        assertNull(only.widthDp)
+        assertNull(only.heightDp)
+    }
+
+    @Test
+    fun `replaceWithWidget on a facet with no stack adds the widget and releases nothing`() = runTest {
+        // When a widget replaces an empty stack
+        val released = repository.replaceWithWidget(facetId, 5)
+
+        // Then nothing is released and the widget is the whole stack
+        assertTrue(released.isEmpty())
+        assertEquals(listOf(5), widgetIds())
+    }
+
+    @Test
     fun `reorder applies the given order`() = runTest {
         // Given widgets 10, 11, 12
         listOf(10, 11, 12).forEach { repository.addWidget(facetId, it) }

@@ -1,5 +1,6 @@
 package com.facetlauncher.app.domain
 
+import com.facetlauncher.app.data.FakeClockStackItemDao
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.Preferences
@@ -62,7 +63,7 @@ class EnsureActiveFacetUseCaseTest {
     @Test
     fun `seeds a default facet and sets it active when the database is empty`() = runTest {
         // Given no facets and no active facet id
-        val facetRepository = FacetRepository(FakeFacetDao())
+        val facetRepository = FacetRepository(FakeFacetDao(), FakeClockStackItemDao())
         val settingsRepository = createSettingsRepository()
 
         // When ensuring an active facet
@@ -77,7 +78,7 @@ class EnsureActiveFacetUseCaseTest {
     @Test
     fun `leaves an already-valid active facet id untouched`() = runTest {
         // Given a facet that's already set active
-        val facetRepository = FacetRepository(FakeFacetDao())
+        val facetRepository = FacetRepository(FakeFacetDao(), FakeClockStackItemDao())
         val settingsRepository = createSettingsRepository()
         val facet = facetRepository.addFacet()
         settingsRepository.setActiveFacetId(facet.id)
@@ -93,7 +94,7 @@ class EnsureActiveFacetUseCaseTest {
     @Test
     fun `falls back to an existing facet when the active id no longer resolves`() = runTest {
         // Given a stored facet but an active id pointing at a facet that no longer exists
-        val facetRepository = FacetRepository(FakeFacetDao())
+        val facetRepository = FacetRepository(FakeFacetDao(), FakeClockStackItemDao())
         val settingsRepository = createSettingsRepository()
         val facet = facetRepository.addFacet()
         settingsRepository.setActiveFacetId(facet.id + 999)
@@ -109,7 +110,7 @@ class EnsureActiveFacetUseCaseTest {
     @Test
     fun `a free user whose active facet is past the third gets the first usable facet`() = runTest {
         // Given five facets on the free plan, with the fifth active (Pro was refunded)
-        val facetRepository = FacetRepository(FakeFacetDao())
+        val facetRepository = FacetRepository(FakeFacetDao(), FakeClockStackItemDao())
         val settingsRepository = createSettingsRepository()
         val facets = List(5) { facetRepository.addFacet() }
         settingsRepository.setActiveFacetId(facets[4].id)
@@ -125,7 +126,7 @@ class EnsureActiveFacetUseCaseTest {
     @Test
     fun `keepUsable moves the active facet when pro is lost and again leaves it alone when pro returns`() = runTest {
         // Given a pro user with five facets, the fifth active
-        val facetRepository = FacetRepository(FakeFacetDao())
+        val facetRepository = FacetRepository(FakeFacetDao(), FakeClockStackItemDao())
         val settingsRepository = createSettingsRepository()
         val facets = List(5) { facetRepository.addFacet() }
         settingsRepository.setActiveFacetId(facets[4].id)

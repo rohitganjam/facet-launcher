@@ -72,6 +72,8 @@ data class HomeClockState(
 /** A hosted clock widget in place of the native clock. Absent when the facet uses the native clock. */
 @Immutable
 data class HomeClockWidgetState(
+    /** The stack item this widget is, so a resize is saved against it. */
+    val itemId: Long,
     val appWidgetId: Int,
     val widthDp: Dp?,
     val heightDp: Dp?,

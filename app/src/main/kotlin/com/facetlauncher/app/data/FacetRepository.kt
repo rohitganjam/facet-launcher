@@ -1,6 +1,8 @@
 package com.facetlauncher.app.data
 
+import com.facetlauncher.app.data.local.ClockStackItemDao
 import com.facetlauncher.app.data.local.FacetDao
+import com.facetlauncher.app.data.local.toModel
 import com.facetlauncher.app.data.local.toEntity
 import com.facetlauncher.app.data.local.toFacet
 import com.facetlauncher.app.data.model.AppListColumnAlignment
@@ -27,6 +29,7 @@ import com.facetlauncher.app.data.model.withLandscape
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 
@@ -37,16 +40,23 @@ import kotlinx.coroutines.flow.map
  * The last remaining facet can never be deleted ([MIN_FACETS]).
  */
 @Singleton
-class FacetRepository @Inject constructor(private val facetDao: FacetDao) {
+class FacetRepository @Inject constructor(
+    private val facetDao: FacetDao,
+    private val clockStackItemDao: ClockStackItemDao,
+) {
 
     companion object {
         const val MIN_FACETS = 1
         private const val DEFAULT_FACET_NAME_PREFIX = "Facet "
     }
 
-    fun observeFacets(): Flow<List<Facet>> = facetDao.observeAll().map { rows -> rows.map { it.toFacet() } }
+    /** Each facet comes with its clock stack, so a change to either table re-emits. */
+    fun observeFacets(): Flow<List<Facet>> = combine(facetDao.observeAll(), clockStackItemDao.observeAll()) { rows, items ->
+        val stacks = items.groupBy({ it.facetId }, { it.toModel() })
+        rows.map { it.toFacet(stacks[it.id].orEmpty()) }
+    }
 
-    suspend fun getById(id: Long): Facet? = facetDao.getById(id)?.toFacet()
+    suspend fun getById(id: Long): Facet? = facetDao.getById(id)?.toFacet(clockStackItemDao.getAll(id).map { it.toModel() })
 
     /** Reads the facet's current row and writes back [transform] of it, so a write never clobbers a newer change with a stale snapshot. */
     private suspend fun update(facetId: Long, transform: (Facet) -> Facet) {
@@ -144,32 +154,6 @@ class FacetRepository @Inject constructor(private val facetDao: FacetDao) {
 
     suspend fun setClockScale(facetId: Long, scale: Float) {
         update(facetId) { it.copy(clockScale = scale) }
-    }
-
-    /**
-     * PRD F15 — binds [appWidgetId] as this facet's hosted clock widget, or (`null`) reverts it
-     * to its native clock. The caller owns the real `AppWidgetHost` allocate/bind/configure
-     * round trip (see `ClockWidgetPickerViewModel`) and releasing the old id via
-     * `AppWidgetRepository.deleteAppWidgetId` when switching away from or replacing one — this
-     * just persists which id (if any) is currently bound.
-     */
-    suspend fun setClockWidgetAppWidgetId(facetId: Long, appWidgetId: Int?) {
-        // Also clears the persisted size (real bug, found on-device): a facet's clockWidgetWidthDp/
-        // HeightDp is only ever a valid size for the widget it was resized against. Carrying it
-        // over to a newly-bound widget (a switch, or reverting to null) can force the new widget
-        // outside its own sane bounds and show "Can't show content" indefinitely, regardless of
-        // which provider is picked — matches Facet.clockWidgetWidthDp's own doc ("meaningless
-        // whenever clockWidgetAppWidgetId is null"), extended here to "meaningless for a *different*
-        // non-null id too".
-        update(facetId) {
-            it.copy(clockWidgetAppWidgetId = appWidgetId, clockWidgetWidthDp = null, clockWidgetHeightDp = null)
-                .withLandscape(it.landscape.copy(clockWidgetWidthDp = null, clockWidgetHeightDp = null))
-        }
-    }
-
-    /** PRD F15's interactive resize commit — see [Facet.clockWidgetWidthDp]'s own doc. Landscape's own size goes through [updateLandscape]. */
-    suspend fun setClockWidgetSize(facetId: Long, widthDp: Int, heightDp: Int) {
-        update(facetId) { it.copy(clockWidgetWidthDp = widthDp, clockWidgetHeightDp = heightDp) }
     }
 
     /**

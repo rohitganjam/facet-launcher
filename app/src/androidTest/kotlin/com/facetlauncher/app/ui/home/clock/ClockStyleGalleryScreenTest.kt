@@ -46,7 +46,7 @@ class ClockStyleGalleryScreenTest {
             val context = LocalContext.current
             val viewModel = remember {
                 val database = Room.inMemoryDatabaseBuilder(context, FacetDatabase::class.java).allowMainThreadQueries().build()
-                facetRepository = FacetRepository(database.facetDao())
+                facetRepository = FacetRepository(database.facetDao(), database.clockStackItemDao())
                 settingsRepository = SettingsRepository(
                     PreferenceDataStoreFactory.create(
                         produceFile = { File(context.cacheDir, "clock-style-gallery-test-${System.nanoTime()}.preferences_pb") },

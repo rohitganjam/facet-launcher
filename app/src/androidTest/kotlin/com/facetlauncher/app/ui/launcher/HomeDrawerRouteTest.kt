@@ -55,6 +55,7 @@ import com.facetlauncher.app.data.ContactRepository
 import com.facetlauncher.app.data.DefaultAppRepository
 import com.facetlauncher.app.data.DefaultLauncherRepository
 import com.facetlauncher.app.data.EntitlementRepository
+import com.facetlauncher.app.data.ClockStackRepository
 import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.FacetShortcutRepository
 import com.facetlauncher.app.data.FolderRepository
@@ -110,6 +111,7 @@ import com.facetlauncher.app.domain.ResolveWidgetDropUseCase
 import com.facetlauncher.app.domain.ResolveWidgetResizeUseCase
 import com.facetlauncher.app.domain.SeedDefaultDockUseCase
 import com.facetlauncher.app.domain.SelectableFacetsUseCase
+import com.facetlauncher.app.domain.ReplaceClockWidgetUseCase
 import com.facetlauncher.app.domain.SwitchFacetToNativeClockUseCase
 import com.facetlauncher.app.domain.SyncFacetShortcutsUseCase
 import com.facetlauncher.app.ui.components.HomeSwipeGate
@@ -205,7 +207,8 @@ class HomeDrawerRouteTest {
                     ),
                 ).also { repo -> if (onboardingCompleted) runBlocking { repo.setOnboardingCompleted(true) } }
             }
-            val facetRepository = remember { FacetRepository(database.facetDao()) }
+            val facetRepository = remember { FacetRepository(database.facetDao(), database.clockStackItemDao()) }
+            val clockStackRepository = remember { ClockStackRepository(database, database.clockStackItemDao()) }
             // A real AppRepository here would hit the actual on-device LauncherApps service —
             // AppRepositoryTest already covers that integration (mapping/sorting/icon-flatten/
             // live re-emission) against a mocked LauncherApps at the unit level, so there's no
@@ -282,7 +285,7 @@ class HomeDrawerRouteTest {
                     ObserveQuickAddStateUseCase(),
                     MediaSessionRepository(context, notificationBadgeRepository),
                     ClockWidgetHostController(appWidgetRepository),
-                    ClockWidgetFacetController(facetRepository, SwitchFacetToNativeClockUseCase(facetRepository, appWidgetRepository), EntitlementRepository()),
+                    ClockWidgetFacetController(clockStackRepository, SwitchFacetToNativeClockUseCase(clockStackRepository, appWidgetRepository), EntitlementRepository()),
                 )
             }
             launcherViewModel = remember {
@@ -398,7 +401,7 @@ class HomeDrawerRouteTest {
                     context.getSystemService(UserManager::class.java),
                     appRepository,
                 )
-                ClockWidgetPickerViewModel(appWidgetRepository, facetRepository)
+                ClockWidgetPickerViewModel(appWidgetRepository, facetRepository, ReplaceClockWidgetUseCase(clockStackRepository, appWidgetRepository))
             }
             // Shares the same facetRepository/settingsRepository/app-backed repos as
             // homeViewModel/launcherViewModel above — same reasoning as that block's own doc: a

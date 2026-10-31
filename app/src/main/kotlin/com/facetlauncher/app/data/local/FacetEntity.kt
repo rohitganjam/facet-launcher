@@ -55,27 +55,13 @@ data class FacetEntity(
     /** Home clock's scale factor — see [com.facetlauncher.app.data.model.LauncherSettings.clockScale]. */
     val clockScale: Float = 0.8f,
     /**
-     * PRD F15 — a hosted third-party `AppWidget` bound as this facet's clock, replacing the
-     * native [clockTemplateId] rendering. Facet-scoped only (no global equivalent — see F15's
-     * Scope) — `null` (the default) means this facet uses its own native clock; non-null is this
-     * facet's own [android.appwidget.AppWidgetHost] id, unique to it, never shared with another
-     * facet or the Hub's own widget ids. Deleting a facet with a non-null id here must release it
-     * via `AppWidgetHost.deleteAppWidgetId` first (see `CleanUpUninstalledAppsUseCase`-style
-     * cleanup principle) — never just drop the row.
+     * Retired: a facet's hosted clock widget now lives in `clock_stack_items` (see `ClockStackItemEntity`), which
+     * migration 34→35 filled from these columns. They are no longer read or written, and stay because SQLite on
+     * minSdk 30 cannot drop a column.
      */
     val clockWidgetAppWidgetId: Int? = null,
-    /**
-     * PRD F15 — this facet's hosted clock widget's own persisted on-screen size, real dp (not a
-     * scale factor — see `ClockBlock`'s own doc for why a hosted widget needs its actual box size,
-     * not [clockScale]'s continuous transform). `null` until the user drags a resize handle for
-     * the first time, mirroring [clockZoneHeightDp]'s own null-until-touched convention — the
-     * effective size before that first drag is the provider's own declared minimum (see
-     * `ClockWidgetHostController.defaultSizeDp`). Meaningless (and unset) whenever
-     * [clockWidgetAppWidgetId] is null.
-     */
     val clockWidgetWidthDp: Int? = null,
     val clockWidgetHeightDp: Int? = null,
-    /** Landscape's own size for the hosted clock widget; `null` falls back to the portrait size above (clamped to the pane on screen). */
     val landscapeClockWidgetWidthDp: Int? = null,
     val landscapeClockWidgetHeightDp: Int? = null,
     /** Landscape's own clock alignment (top, middle or bottom there), zone height (its divider position) and scale; `null` uses the portrait value above. */

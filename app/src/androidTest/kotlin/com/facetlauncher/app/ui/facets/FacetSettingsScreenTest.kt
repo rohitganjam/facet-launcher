@@ -64,7 +64,7 @@ class FacetSettingsScreenTest {
             val viewModel = remember {
                 val database = Room.inMemoryDatabaseBuilder(context, FacetDatabase::class.java).allowMainThreadQueries().build()
                 val launcherApps = context.getSystemService(LauncherApps::class.java)
-                facetRepository = FacetRepository(database.facetDao())
+                facetRepository = FacetRepository(database.facetDao(), database.clockStackItemDao())
                 val appRepository = AppRepository(launcherApps, context.getSystemService(UserManager::class.java), context)
                 settingsRepository = SettingsRepository(
                     PreferenceDataStoreFactory.create(

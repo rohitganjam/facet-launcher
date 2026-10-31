@@ -39,6 +39,14 @@ class ClockStackRepository @Inject constructor(
         append(facetId) { ClockStackItemEntity(facetId = facetId, position = it, kind = ClockStackItemKind.CLOCK) }
     }
 
+    /** Replaces the whole stack with one widget, as the free single custom widget does; returns the previous widget ids for the caller to release. */
+    suspend fun replaceWithWidget(facetId: Long, appWidgetId: Int): List<Int> = database.withTransaction {
+        val released = dao.getAll(facetId).mapNotNull { it.appWidgetId }
+        dao.deleteAll(facetId)
+        dao.insert(ClockStackItemEntity(facetId = facetId, position = 0, kind = ClockStackItemKind.WIDGET, appWidgetId = appWidgetId))
+        released
+    }
+
     /** Removes the item and closes the gap; returns its widget id for the caller to release, or `null` for the clock or an unknown id. */
     suspend fun remove(itemId: Long): Int? = database.withTransaction {
         val item = dao.getById(itemId) ?: return@withTransaction null

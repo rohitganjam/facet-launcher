@@ -217,7 +217,7 @@ fun HomeDrawerRoute(
     val isHubOpen by remember { derivedStateOf { swipe.hub.progress.value > 0f } }
     val isFacetOpen by remember { derivedStateOf { swipe.facet.progress.value > 0f } }
 
-    val clockWidgetNeedsListening = homeUiState.clockWidgetAppWidgetId != null
+    val clockWidgetNeedsListening = homeUiState.clockStackWidgetIds.isNotEmpty()
 
     // Clear focus whenever the drawer, hub, or facet carousel starts moving via a drag.
     LaunchedEffect(swipe.drawer.dragActive, swipe.hub.dragActive, swipe.facet.dragActive) {

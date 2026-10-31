@@ -86,7 +86,7 @@ class FacetCarouselScreenTest {
             val context = LocalContext.current
             val viewModel = remember {
                 val database = Room.inMemoryDatabaseBuilder(context, FacetDatabase::class.java).allowMainThreadQueries().build()
-                val facetRepository = FacetRepository(database.facetDao())
+                val facetRepository = FacetRepository(database.facetDao(), database.clockStackItemDao())
                 val settingsRepository = SettingsRepository(
                     PreferenceDataStoreFactory.create(
                         produceFile = { File(context.cacheDir, "facet-carousel-test-${System.nanoTime()}.preferences_pb") },

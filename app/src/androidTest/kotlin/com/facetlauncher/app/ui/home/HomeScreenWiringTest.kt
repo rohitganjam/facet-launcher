@@ -258,7 +258,7 @@ class HomeScreenWiringTest {
         var listBounds: Rect? = null
         var widgetBounds: Rect? = null
         val state = appState(PlacedItem.SingleApp(mail)).copy(
-            widget = HomeClockWidgetState(appWidgetId = 42, widthDp = 160.dp, heightDp = 90.dp, minWidthDp = 64.dp, minHeightDp = 64.dp),
+            widget = HomeClockWidgetState(itemId = 1L, appWidgetId = 42, widthDp = 160.dp, heightDp = 90.dp, minWidthDp = 64.dp, minHeightDp = 64.dp),
         )
         val actions = HomeScreenActions(
             item = HomeItemActions(onAppClick = {}),

@@ -1,7 +1,7 @@
 package com.facetlauncher.app.ui.home
 
 import com.facetlauncher.app.data.EntitlementRepository
-import com.facetlauncher.app.data.FacetRepository
+import com.facetlauncher.app.data.ClockStackRepository
 import com.facetlauncher.app.data.model.Facet
 import com.facetlauncher.app.domain.SwitchFacetToNativeClockUseCase
 import javax.inject.Inject
@@ -16,7 +16,7 @@ import javax.inject.Inject
  * [com.facetlauncher.app.ui.launcher.HomeDrawerRoute]) and passes it straight through.
  */
 class ClockWidgetFacetController @Inject constructor(
-    private val facetRepository: FacetRepository,
+    private val clockStackRepository: ClockStackRepository,
     private val switchFacetToNativeClock: SwitchFacetToNativeClockUseCase,
     entitlementRepository: EntitlementRepository,
 ) {
@@ -26,11 +26,11 @@ class ClockWidgetFacetController @Inject constructor(
     /** PRD F15's "Switch to launcher clock widget" row — see [SwitchFacetToNativeClockUseCase]'s own doc. */
     suspend fun switchToNativeClock(facet: Facet) = switchFacetToNativeClock(facet)
 
-    /** PRD F15's interactive resize commit, fired once on release by the clock's resize handles — see [Facet.clockWidgetWidthDp]'s own doc. */
-    suspend fun commitSize(facet: Facet, widthDp: Int, heightDp: Int, mode: HomeLayoutMode = HomeLayoutMode.PORTRAIT) =
+    /** PRD F15's interactive resize commit, fired once on release by the clock's resize handles; saved against the stack item [itemId]. */
+    suspend fun commitSize(itemId: Long, widthDp: Int, heightDp: Int, mode: HomeLayoutMode = HomeLayoutMode.PORTRAIT) =
         if (mode == HomeLayoutMode.LANDSCAPE) {
-            facetRepository.updateLandscape(facet.id) { it.copy(clockWidgetWidthDp = widthDp, clockWidgetHeightDp = heightDp) }
+            clockStackRepository.setLandscapeSize(itemId, widthDp, heightDp)
         } else {
-            facetRepository.setClockWidgetSize(facet.id, widthDp, heightDp)
+            clockStackRepository.setSize(itemId, widthDp, heightDp)
         }
 }

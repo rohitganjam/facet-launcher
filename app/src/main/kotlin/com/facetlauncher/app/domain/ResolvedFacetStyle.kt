@@ -13,6 +13,8 @@ import com.facetlauncher.app.data.model.ClockAlignment
 import com.facetlauncher.app.data.model.ClockColorOption
 import com.facetlauncher.app.data.model.ClockDateStyle
 import com.facetlauncher.app.data.model.ClockFontOption
+import com.facetlauncher.app.data.model.ClockStackItem
+import com.facetlauncher.app.data.model.ClockStackItemKind
 import com.facetlauncher.app.data.model.ClockTemplateId
 import com.facetlauncher.app.data.model.DockDisplayMode
 import com.facetlauncher.app.data.model.Facet
@@ -25,6 +27,8 @@ import com.facetlauncher.app.data.model.resolveLandscape
 import com.facetlauncher.app.data.model.WeatherIconStyle
 import com.facetlauncher.app.data.model.resolveOverride
 import com.facetlauncher.app.data.model.resolveSentinel
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.toImmutableList
 
 /** The clock block in force: the facet's own while it overrides the clock, the launcher's otherwise. Portrait values. */
 @Immutable
@@ -64,9 +68,18 @@ data class Oriented<T>(val portrait: T, val landscape: T) {
     fun of(landscape: Boolean): T = if (landscape) this.landscape else portrait
 }
 
-/** The facet's hosted third-party clock widget. Facet-scoped only, so it is not gated by `overrideClock`. A `null` size means "not resized yet". */
+/**
+ * One page of the facet's clock stack. Facet-scoped only, so it is not gated by `overrideClock`. A `null` size means
+ * "not resized yet" and a `null` alignment "use the facet's own clock alignment". The native clock has neither.
+ */
 @Immutable
-data class ResolvedClockWidget(val appWidgetId: Int, val sizeDp: Oriented<Pair<Int, Int>?>)
+data class ResolvedClockItem(
+    val id: Long,
+    val kind: ClockStackItemKind,
+    val appWidgetId: Int?,
+    val sizeDp: Oriented<Pair<Int, Int>?>,
+    val alignment: Oriented<ClockAlignment?>,
+)
 
 /**
  * Everything a facet can override, resolved against the launcher-wide settings: the one place Home,
@@ -82,7 +95,8 @@ data class ResolvedFacetStyle(
     val clockPlacement: Oriented<ClockPlacement>,
     /** The apps list's row position, vertical anchor and two-column alignment in each orientation. */
     val listAlignment: Oriented<ListAlignment>,
-    val clockWidget: ResolvedClockWidget?,
+    /** The clock slot's pages in swipe order; empty is the plain native clock. */
+    val clockStack: ImmutableList<ResolvedClockItem>,
 )
 
 /** [facet] is `null` when there is none, which yields the launcher-wide values. */
@@ -93,7 +107,7 @@ fun resolveFacetStyle(facet: Facet?, settings: LauncherSettings): ResolvedFacetS
     calendarDisplay = facet.effectiveCalendarDisplay(settings),
     clockPlacement = resolveClockPlacement(facet, settings),
     listAlignment = resolveListAlignment(facet, settings),
-    clockWidget = facet?.clockWidgetAppWidgetId?.let { ResolvedClockWidget(it, resolveClockWidgetSize(facet)) },
+    clockStack = facet?.clockStack.orEmpty().map { it.resolve() }.toImmutableList(),
 )
 
 private fun resolveClockStyle(facet: Facet?, settings: LauncherSettings) = ResolvedClockStyle(
@@ -178,12 +192,17 @@ private fun resolveListAlignment(facet: Facet?, settings: LauncherSettings): Ori
     )
 }
 
-/** Landscape's own size where saved (per dimension), else the portrait one; `null` before any resize. */
-private fun resolveClockWidgetSize(facet: Facet): Oriented<Pair<Int, Int>?> {
+/** Landscape's own size and alignment where saved (size per dimension), else the portrait ones. */
+private fun ClockStackItem.resolve(): ResolvedClockItem {
     fun size(width: Int?, height: Int?) = if (width != null && height != null) width to height else null
-    val landscape = facet.landscape
-    return Oriented(
-        portrait = size(facet.clockWidgetWidthDp, facet.clockWidgetHeightDp),
-        landscape = size(landscape.clockWidgetWidthDp ?: facet.clockWidgetWidthDp, landscape.clockWidgetHeightDp ?: facet.clockWidgetHeightDp),
+    return ResolvedClockItem(
+        id = id,
+        kind = kind,
+        appWidgetId = appWidgetId,
+        sizeDp = Oriented(
+            portrait = size(widthDp, heightDp),
+            landscape = size(landscapeWidthDp ?: widthDp, landscapeHeightDp ?: heightDp),
+        ),
+        alignment = Oriented(portrait = alignment, landscape = landscapeAlignment ?: alignment),
     )
 }

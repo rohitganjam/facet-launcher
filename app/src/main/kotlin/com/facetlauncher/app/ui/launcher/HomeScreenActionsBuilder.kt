@@ -127,8 +127,8 @@ private fun homeClockWidgetActions(
         createHostView = viewModel.clockWidgetHost::createHostView,
         onSizeChange = viewModel.clockWidgetHost::updateSize,
         onSizeCommit = { widthDp, heightDp ->
-            inputs.homeUiState.activeFacet?.let { facet ->
-                inputs.coroutineScope.launch { viewModel.clockWidgetFacet.commitSize(facet, widthDp, heightDp, inputs.layoutMode) }
+            inputs.homeUiState.visibleClockItem?.let { item ->
+                inputs.coroutineScope.launch { viewModel.clockWidgetFacet.commitSize(item.id, widthDp, heightDp, inputs.layoutMode) }
             }
         },
         onBoundsChange = hooks.setClockWidgetBounds,

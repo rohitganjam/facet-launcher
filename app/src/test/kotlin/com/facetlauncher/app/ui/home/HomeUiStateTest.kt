@@ -1,5 +1,6 @@
 package com.facetlauncher.app.ui.home
 
+import com.facetlauncher.app.data.widgetItem
 import com.facetlauncher.app.domain.ListAlignment
 import com.facetlauncher.app.domain.ClockPlacement
 import com.facetlauncher.app.data.model.LandscapeOverrides
@@ -45,7 +46,7 @@ class HomeUiStateTest {
     fun `clockWidgetAppWidgetId is null when the active facet uses its native clock`() {
         val state = HomeUiState(
             settings = LauncherSettings(activeFacetId = 1L),
-            facets = listOf(Facet(id = 1L, name = "Facet 1", position = 0, clockWidgetAppWidgetId = null)),
+            facets = listOf(Facet(id = 1L, name = "Facet 1", position = 0)),
         )
 
         assertEquals(null, state.clockWidgetAppWidgetId)
@@ -56,8 +57,8 @@ class HomeUiStateTest {
         val state = HomeUiState(
             settings = LauncherSettings(activeFacetId = 2L),
             facets = listOf(
-                Facet(id = 1L, name = "Facet 1", position = 0, clockWidgetAppWidgetId = 7),
-                Facet(id = 2L, name = "Facet 2", position = 1, clockWidgetAppWidgetId = 42),
+                Facet(id = 1L, name = "Facet 1", position = 0, clockStack = listOf(widgetItem(7, facetId = 1L))),
+                Facet(id = 2L, name = "Facet 2", position = 1, clockStack = listOf(widgetItem(42, facetId = 2L))),
             ),
         )
 
@@ -402,8 +403,8 @@ class HomeUiStateTest {
 
     @Test
     fun `the hosted widget size in landscape is its own when saved, else the portrait size`() {
-        val portraitOnly = Facet(id = 1L, name = "A", position = 0, clockWidgetAppWidgetId = 7, clockWidgetWidthDp = 160, clockWidgetHeightDp = 90)
-        val both = portraitOnly.copy(landscapeClockWidgetWidthDp = 400, landscapeClockWidgetHeightDp = 300)
+        val portraitOnly = Facet(id = 1L, name = "A", position = 0, clockStack = listOf(widgetItem(7, widthDp = 160, heightDp = 90)))
+        val both = portraitOnly.copy(clockStack = listOf(widgetItem(7, widthDp = 160, heightDp = 90, landscapeWidthDp = 400, landscapeHeightDp = 300)))
         val settings = LauncherSettings(activeFacetId = 1L)
 
         assertEquals(160 to 90, HomeUiState(settings = settings, facets = listOf(portraitOnly)).clockWidgetSizeDp(landscape))
