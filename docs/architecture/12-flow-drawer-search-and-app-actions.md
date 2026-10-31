@@ -275,7 +275,7 @@ A downward drag from a closed drawer expands the notification shade on the same 
 
 Every Home action menu — `AppContextMenu`, `FolderTileContextMenu`, the clock adjust menu and the one-time
 "make Facet your home screen" prompt (`SetDefaultLauncherSheet`) — is a `ThemedModalBottomSheet` (`components/`): one themed M3 `ModalBottomSheet`, so the surface runs behind the
-system bars and swipe-down and Back dismiss it the same way everywhere. The surface is `Surface` unless the caller passes `containerColor`: the clock adjust menu passes the dimmer `SurfaceContainer` because its content (`ClockAdjustSheet`) is two tonal `SettingsCard`s of icon-badge rows — Adjust clock size & position, Edit clock styles (with the Global / facet-name badge), Use custom widget or Switch to launcher clock; then Facet settings and Launcher settings. While one is showing, Home's swipes
+system bars and swipe-down and Back dismiss it the same way everywhere. The surface is `Surface` unless the caller passes `containerColor`: the clock adjust menu passes the dimmer `SurfaceContainer` because its content (`ClockAdjustSheet`) is two tonal `SettingsCard`s of icon-badge rows — Adjust clock size & position, Clock & calendar settings (with the Global / facet-name badge) and, by the visible page, Replace with custom widget (clock page) or Replace custom widget and Replace with clock (widget page; the latter hidden while the clock is on another page); then the Widget stack row, Facet settings and Launcher settings. While one is showing, Home's swipes
 are off — otherwise the still-down finger that opened the sheet could go on to open the carousel or Hub
 behind it. The wrapper calls `BlockHomeSwipesWhileShown()` (`HomeSwipeGate`, provided by
 `LauncherActivity` via `LocalHomeSwipeGate`); `HomeDrawerRoute` skips its swipe detector and the app
@@ -288,9 +288,7 @@ gets corner resize handles, a full-width height handle (`ClockZoneHandle`, 48dp 
 `ClockAdjustToolbar` — an "Alignment" pill with left / center / right. The toolbar sits *below* the height
 handle (strip + `CLOCK_ADJUST_TOOLBAR_GAP`), not under the clock: the clock block is pinned only 24dp
 (`HOME_CLOCK_MIN_GAP`) above the handle, too little room for it. It writes through
-`HomeViewModel.onClockAlignmentCommit`, with the same facet-or-global ownership as height and scale
-(`clockPositionOwningFacet`; all three sit behind `overrideClock`) — the Clock Style screen writes the same
-value. Changing alignment re-clamps an oversized clock through the existing `clockAlignment`-keyed effect. The
+`HomeViewModel.onClockAlignmentCommit` to the facet: the clock page's alignment, scale and divider height are the facet's own (`CommitClockPlacementUseCase`, copy-on-first-adjust, see [17](17-flow-home-layout.md)), and a widget page saves its own alignment against its stack item. The Clock Style screen has no alignment row any more. Changing alignment re-clamps an oversized clock through the existing `clockAlignment`-keyed effect. The
 toolbar dims to 25% and its options are disabled while any handle or resize drag is active, and becomes usable again
 ~200ms after release, so a thumb coming off the handle can't tap it (it stays composed, so it doesn't pop in and out).
 It swallows taps on its own surface even when disabled, because Home's root exits adjust mode on any tap that reaches
