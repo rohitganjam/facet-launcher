@@ -4371,3 +4371,28 @@ Design agreed in chat (mocks: accessory bar, weather sheet, Clock accessories sc
 - [x] Only the applied picture is kept: `StyledPicture` (glyph or outline) is passed to `StyledIconCache`/`IconStyler.style(only = ...)`, which build and hold just that one (plus the fallback if it is missing); switching between glyph and outline replaces the held picture and `WarmStyledIcons` rebuilds for the new one, and a style that draws neither (default, monochrome) empties the cache. Roughly halves the cache and skips the unused picture's work. Tests: `StyledIconCacheTest`, `IconStylerTest`.
 - [x] The app's own icon gained a monochrome layer (`ic_launcher_monochrome`), so it takes the themed path here and Android's themed icons.
 - Tests: `IconMasksTest`, `IconStylerTest`, `StyledIconCacheTest`, `AppRepositoryTest` (themed layer kept or absent).
+
+## Widget stack on Home (direct request)
+
+Design agreed in chat. The clock slot can hold a stack of up to 5 items (the native clock plus hosted widgets, in any order) that you swipe through. Free: one custom widget replacing the clock, no entitlement. Pro: the stack.
+
+### Decisions
+
+- **Swipe:** left/right on the clock area moves through the stack until the first or last item, then the swipe falls through to page navigation as today. Up/down is unchanged. A widget that scrolls horizontally keeps the swipe until it is at its own edge (existing nested-scroll gate).
+- **Page dots** sit below the divider, and below the media player when it is visible. Shown during a swipe and for 2–3 s after, then faded; always shown while adjusting size and position.
+- **Per item:** size and alignment (portrait and landscape, landscape falls back to portrait). The divider position (`clockZoneHeightDp`) is shared by the whole stack. The media row is not part of the stack.
+- **Storage:** a new table, one row per item (facet, position, kind clock or widget, widget id, size, alignment, landscape twins). The native clock item reuses the facet's own clock fields (`clockScale`, `clockAlignment`), so nothing is duplicated; a facet with no rows keeps today's clock-only behaviour. Migration turns each existing custom widget into one widget row. Backup keeps the order and the clock item and drops widget items (widgets need re-adding on import, as today).
+- **Pro:** adding a widget to the clock slot is free; the stack is Pro. A lapsed facet keeps its stack saved but shows only the first item, with the stack options locked.
+- **Sheet states:** clock only (Adjust size and position, Clock and calendar settings, Use custom widget, Widget stack), one widget (Adjust, Replace custom widget, Switch to clock widget, Widget stack), stack of 2 or more (Adjust, Manage widget stack). "Edit clock styles" is renamed "Clock and calendar settings".
+- **Stack screen:** reorderable rows (clock and widgets), remove, Add widget (disabled at 5), Remove stack, and a Configure button where there is something to configure: the clock row opens the facet-scoped Appearance screen, a hosted widget launches its own configure activity.
+- **Inherit card:** "Inherit default" gains an "Edit defaults" link to the launcher-wide screen, so a facet that follows the defaults is not a dead end. Applies wherever `InheritOverrideCard` is used.
+- Removing a facet or an item releases its widget id through the host.
+
+### Steps
+
+- [ ] 1. Data model: table, DAO, migration, `FacetRepository` methods, backup (`02`, `09`).
+- [ ] 2. Pro gating: custom widget free, stack Pro, lapsed behaviour (`13`).
+- [ ] 3. Home: stack pager, swipe routing, page dots, per-item size and alignment, adjust mode (`12`, `13`).
+- [ ] 4. Sheet states and the stack screen with Configure.
+- [ ] 5. Inherit card "Edit defaults" link.
+- [ ] 6. Tests (unit, Robolectric, instrumented on the emulator), docs, `TEST_REGISTRY.md`.
