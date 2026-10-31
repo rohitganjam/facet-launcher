@@ -256,7 +256,7 @@ divider in portrait (`HomeScreenActions.onClockZoneBoundsChange`, from the clock
 landscape. When such a drag moves, `HomeSwipeController` asks `ClockPagerState.canMove(dx)`: left needs a next page,
 right a previous one. If there is one, the pager owns the whole drag, including a reversal; if not (the first or
 last page, a single page, an empty stack) the drag goes to Hub or the carousel as above. A hosted widget's handed-over
-scroll counts as starting in the zone, and its fling velocity is negated for the pager (a view's is in scroll
+scroll (from its own nested scrolling, or taken by `ClockWidgetTouchGate` itself for a horizontal-dominant drag the widget did not claim, so static widgets can be swiped away) counts as starting in the zone, and its fling velocity is negated for the pager (a view's is in scroll
 direction). A drag past `PAGE_COMMIT_FRACTION` (20%) or a fling over `PAGE_FLING_VELOCITY_PX` turns the page,
 otherwise it springs back. `ClockPagerStateTest`, `HomeSwipeControllerTest` and four `HomeDrawerRouteTest` cases cover it.
 
