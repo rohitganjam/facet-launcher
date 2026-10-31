@@ -105,7 +105,11 @@ flowchart TB
 - Every successful mutation ends with `CompactWidgetsUseCase` so the grid never keeps a gap
   above a widget.
 - `updateWidgetSize` tells the provider its real rendered size so responsive widgets
-  (`targetCellWidth` aware) lay out correctly.
+  (`targetCellWidth` aware) lay out correctly. The Home clock-widget tile pushes its committed
+  size through the same call, from the view `update` receives (not a remembered reference).
+- `createHostView`/`createPreviewHostView` set the host view's padding to 4dp
+  (`WIDGET_HOST_PADDING_DP`), replacing the platform's 8dp default for Hub and Home alike. The
+  size pushed to the provider is the outer box, so its content area is 8dp smaller each way.
 
 ## 4. Persistence & recovery matrix
 

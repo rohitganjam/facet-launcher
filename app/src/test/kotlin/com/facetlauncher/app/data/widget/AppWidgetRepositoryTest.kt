@@ -243,6 +243,36 @@ class AppWidgetRepositoryTest {
     }
 
     @Test
+    fun `createHostView replaces the platform inset with 4dp padding on every side`() {
+        // Given a host whose view carries the platform's default 8dp inset
+        val host = mock(LauncherAppWidgetHost::class.java)
+        val view = android.appwidget.AppWidgetHostView(context).apply { setPadding(8, 8, 8, 8) }
+        `when`(host.createView(eq(context), eq(7), org.mockito.ArgumentMatchers.any())).thenReturn(view)
+        val repository = AppWidgetRepository(context, mock(AppWidgetManager::class.java), host, personalOnlyUserManager(), fakeAppRepository())
+
+        // When the repository hands the view out
+        val created = repository.createHostView(context, 7, AppWidgetProviderInfo())
+
+        // Then the content is inset by 4dp, not 8dp, on all four sides
+        val expectedPx = (4 * context.resources.displayMetrics.density).toInt()
+        assertEquals(listOf(expectedPx, expectedPx, expectedPx, expectedPx), listOf(created.paddingLeft, created.paddingTop, created.paddingRight, created.paddingBottom))
+    }
+
+    @Test
+    fun `createPreviewHostView uses the same 4dp padding as the live view`() {
+        // Given a repository whose preview host is the real one
+        val repository = AppWidgetRepository(context, mock(AppWidgetManager::class.java), mock(LauncherAppWidgetHost::class.java), personalOnlyUserManager(), fakeAppRepository())
+
+        // When a preview view is created
+        val created = repository.createPreviewHostView(context, 7, AppWidgetProviderInfo())
+
+        // Then it is inset like the live one, so a preview matches what Home draws
+        val expectedPx = (4 * context.resources.displayMetrics.density).toInt()
+        assertEquals(expectedPx, created.paddingLeft)
+        assertEquals(expectedPx, created.paddingBottom)
+    }
+
+    @Test
     fun `deleteAppWidgetId releases the id through the host`() {
         // Given a host
         val host = mock(LauncherAppWidgetHost::class.java)

@@ -25,6 +25,7 @@ import com.facetlauncher.app.domain.calculateHubCellWidth
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.math.roundToInt
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -33,6 +34,9 @@ import kotlinx.coroutines.flow.Flow
  * is expected to "add back" to find the target cell count.
  */
 private const val WIDGET_CELL_PADDING_DP = 30
+
+/** Replaces the platform's default 8dp inset around a hosted widget's content. */
+private const val WIDGET_HOST_PADDING_DP = 4
 
 /**
  * Every `AppWidgetManager`/`AppWidgetHost` call for the Hub (F5) lives here — nothing else in
@@ -200,7 +204,7 @@ class AppWidgetRepository @Inject constructor(
     }
 
     fun createHostView(context: Context, appWidgetId: Int, info: AppWidgetProviderInfo): AppWidgetHostView =
-        host.createView(context, appWidgetId, info)
+        host.createView(context, appWidgetId, info).withHostPadding()
 
     /**
      * A snapshot view of a bound widget for previews. It comes from a second [AppWidgetHost] with
@@ -208,7 +212,12 @@ class AppWidgetRepository @Inject constructor(
      * updates to the newest, so a view from [host] would take them away from the live one on Home.
      */
     fun createPreviewHostView(context: Context, appWidgetId: Int, info: AppWidgetProviderInfo): AppWidgetHostView =
-        previewHost.createView(context, appWidgetId, info)
+        previewHost.createView(context, appWidgetId, info).withHostPadding()
+
+    private fun AppWidgetHostView.withHostPadding() = apply {
+        val padding = (WIDGET_HOST_PADDING_DP * resources.displayMetrics.density).roundToInt()
+        setPadding(padding, padding, padding, padding)
+    }
 
     private val previewHost: AppWidgetHost by lazy { AppWidgetHost(this.context, HUB_APP_WIDGET_HOST_ID) }
 

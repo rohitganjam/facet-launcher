@@ -7,7 +7,6 @@ import android.widget.FrameLayout
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.key
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
@@ -65,7 +64,6 @@ fun ClockWidgetTile(
     onNestedScrollStop: () -> Unit = {},
     onLeftoverFling: (velocityXPx: Float, velocityYPx: Float) -> Unit = { _, _ -> },
 ) = key(appWidgetId) {
-    var hostView: AppWidgetHostView? = remember { null }
     val currentOnLongPress = rememberUpdatedState(onLongPress)
     val currentOnNestedScrollStart = rememberUpdatedState(onNestedScrollStart)
     val currentOnLeftoverScroll = rememberUpdatedState(onLeftoverScroll)
@@ -89,13 +87,12 @@ fun ClockWidgetTile(
             val gate = ClockWidgetTouchGate(context)
             gate.bindCallbacks()
             val view = createHostView(context, appWidgetId) ?: View(context)
-            if (view is AppWidgetHostView) hostView = view
             gate.addView(view, FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT))
             gate
         },
         update = { gate ->
             gate.bindCallbacks()
-            val view = hostView ?: return@AndroidView
+            val view = gate.getChildAt(0) as? AppWidgetHostView ?: return@AndroidView
             val widthDp = committedWidthDp.value.toInt()
             val heightDp = committedHeightDp.value.toInt()
             if (widthDp > 0 && heightDp > 0) {
