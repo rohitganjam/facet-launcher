@@ -36,7 +36,7 @@ internal class HomeRouteHooks(
     val setClockWidgetBounds: (Rect?) -> Unit,
     val setAppListBounds: (Rect?) -> Unit,
     val setClockPaneBounds: (Rect?) -> Unit,
-    val openClockWidgetPicker: (facetId: Long) -> Unit,
+    val openClockWidgetPicker: (itemId: Long) -> Unit,
     val openWeather: () -> Unit = {},
 )
 
@@ -95,14 +95,14 @@ private fun homeClockActions(
         onNavigateToFacetSettings = { state.activeFacet?.let { navigation.toFacetSettings(it.id) } },
         onUseCustomWidgetClick = {
             if (inputs.clockWidgetIsPro) {
-                state.activeFacet?.let { hooks.openClockWidgetPicker(it.id) }
+                state.visibleClockItem?.let { hooks.openClockWidgetPicker(it.id) }
             } else {
                 navigation.toFacetPro(ProReason.CUSTOM_WIDGET)
             }
         },
         onSwitchToLauncherClockClick = {
-            state.activeFacet?.let { facet ->
-                inputs.coroutineScope.launch { viewModel.clockWidgetFacet.switchToNativeClock(facet) }
+            state.visibleClockItem?.let { item ->
+                inputs.coroutineScope.launch { viewModel.clockWidgetFacet.replaceWithClock(item.id) }
             }
         },
         onEventClick = { event ->

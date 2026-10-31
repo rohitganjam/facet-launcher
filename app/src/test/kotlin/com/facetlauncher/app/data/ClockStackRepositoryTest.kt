@@ -112,33 +112,90 @@ class ClockStackRepositoryTest {
     }
 
     @Test
-    fun `replaceWithWidget leaves just that widget, unsized, and returns every earlier id`() = runTest {
-        // Given a stack with a clock and two widgets, the first of them resized
+    fun `replaceWithWidget swaps the item in place, resets its size, keeps its place and alignment, and returns the old id`() = runTest {
+        // Given a clock and two widgets, the second resized and centred
         repository.addClock(facetId)
         repository.addWidget(facetId, 10)
         repository.addWidget(facetId, 11)
-        repository.setSize(repository.getAll(facetId)[1].id, 400, 300)
+        val second = repository.getAll(facetId)[2]
+        repository.setSize(second.id, 400, 300)
+        repository.setLandscapeSize(second.id, 500, 200)
+        repository.setAlignment(second.id, ClockAlignment.CENTER)
 
-        // When one widget replaces the stack
-        val released = repository.replaceWithWidget(facetId, 99)
+        // When widget 99 replaces it
+        val replaced = repository.replaceWithWidget(second.id, 99)
 
-        // Then the earlier widget ids come back, and only the new widget remains with no inherited size
-        assertEquals(listOf(10, 11), released)
-        val only = repository.getAll(facetId).single()
-        assertEquals(99, only.appWidgetId)
-        assertEquals(0, only.position)
-        assertNull(only.widthDp)
-        assertNull(only.heightDp)
+        // Then the old id comes back, and the page keeps its position and alignment but starts unsized
+        assertEquals(11, replaced?.releasedAppWidgetId)
+        val rows = repository.getAll(facetId)
+        assertEquals(listOf(null, 10, 99), rows.map { it.appWidgetId })
+        assertEquals(2, rows[2].position)
+        assertEquals(ClockAlignment.CENTER, rows[2].alignment)
+        assertNull(rows[2].widthDp)
+        assertNull(rows[2].landscapeHeightDp)
     }
 
     @Test
-    fun `replaceWithWidget on a facet with no stack adds the widget and releases nothing`() = runTest {
-        // When a widget replaces an empty stack
-        val released = repository.replaceWithWidget(facetId, 5)
+    fun `replaceWithWidget turns the clock into a widget and releases nothing`() = runTest {
+        // Given a stack that is just the clock
+        repository.addClock(facetId)
+        val clock = repository.getAll(facetId).single()
 
-        // Then nothing is released and the widget is the whole stack
-        assertTrue(released.isEmpty())
-        assertEquals(listOf(5), widgetIds())
+        // When a widget replaces it
+        val replaced = repository.replaceWithWidget(clock.id, 5)
+
+        // Then it is a widget row, and there was nothing to release
+        assertNull(replaced?.releasedAppWidgetId)
+        assertEquals(listOf(ClockStackItemKind.WIDGET to 5), repository.getAll(facetId).map { it.kind to it.appWidgetId })
+    }
+
+    @Test
+    fun `replaceWithClock turns a widget into the clock and returns its id`() = runTest {
+        // Given a stack that is just a widget
+        repository.addWidget(facetId, 10)
+        val widget = repository.getAll(facetId).single()
+
+        // When the clock replaces it
+        val replaced = repository.replaceWithClock(widget.id)
+
+        // Then the page is the clock and the widget id is handed back to release
+        assertEquals(10, replaced?.releasedAppWidgetId)
+        assertEquals(listOf(ClockStackItemKind.CLOCK to null), repository.getAll(facetId).map { it.kind to it.appWidgetId })
+    }
+
+    @Test
+    fun `replaceWithClock is refused while the clock is on another page`() = runTest {
+        // Given a clock and a widget
+        repository.addClock(facetId)
+        repository.addWidget(facetId, 10)
+        val widget = repository.getAll(facetId)[1]
+
+        // When the clock would replace the widget too
+        val replaced = repository.replaceWithClock(widget.id)
+
+        // Then nothing changes
+        assertNull(replaced)
+        assertEquals(listOf(null, 10), widgetIds())
+    }
+
+    @Test
+    fun `replaceWithClock on the clock itself changes nothing and releases nothing`() = runTest {
+        // Given a stack that is just the clock
+        repository.addClock(facetId)
+        val clock = repository.getAll(facetId).single()
+
+        // When the clock replaces itself
+        val replaced = repository.replaceWithClock(clock.id)
+
+        // Then it is still the clock and nothing is released
+        assertNull(replaced?.releasedAppWidgetId)
+        assertEquals(ClockStackItemKind.CLOCK, repository.getAll(facetId).single().kind)
+    }
+
+    @Test
+    fun `replacing an unknown item changes nothing`() = runTest {
+        assertNull(repository.replaceWithWidget(9999, 1))
+        assertNull(repository.replaceWithClock(9999))
     }
 
     @Test

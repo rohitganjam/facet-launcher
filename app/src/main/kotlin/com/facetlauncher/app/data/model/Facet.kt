@@ -31,10 +31,10 @@ data class Facet(
     val clockScale: Float = 0.8f,
     /**
      * What the clock slot shows, in swipe order: the native clock and hosted widgets, each with its own size and
-     * alignment. Empty means the plain native clock. Held in its own table and loaded by `FacetRepository`, so a
-     * facet built by hand (a preview, a test) carries whatever stack it is given.
+     * alignment. Empty draws nothing there. Held in its own table and loaded by `FacetRepository`; a facet built by
+     * hand (a preview, a test) starts with the native clock, as a new facet does.
      */
-    val clockStack: List<ClockStackItem> = emptyList(),
+    val clockStack: List<ClockStackItem> = listOf(nativeClockPage()),
     /** Landscape's own clock alignment, zone height and scale; `null` uses the portrait value. */
     val landscapeClockAlignment: ClockAlignment? = null,
     val landscapeClockZoneHeightDp: Float? = null,

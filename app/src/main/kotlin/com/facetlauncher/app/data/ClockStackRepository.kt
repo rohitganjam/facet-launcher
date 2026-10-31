@@ -14,6 +14,9 @@ import javax.inject.Singleton
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
+/** What a replace freed: the widget id the old item held, if any, for the caller to release. */
+data class ReplacedItem(val releasedAppWidgetId: Int?)
+
 /**
  * A facet's clock stack: the native clock and hosted widgets, in swipe order. Rows only: the caller
  * owns the `AppWidgetHost` allocate/bind/configure round trip and releases the ids that [remove] and
@@ -39,12 +42,19 @@ class ClockStackRepository @Inject constructor(
         append(facetId) { ClockStackItemEntity(facetId = facetId, position = it, kind = ClockStackItemKind.CLOCK) }
     }
 
-    /** Replaces the whole stack with one widget, as the free single custom widget does; returns the previous widget ids for the caller to release. */
-    suspend fun replaceWithWidget(facetId: Long, appWidgetId: Int): List<Int> = database.withTransaction {
-        val released = dao.getAll(facetId).mapNotNull { it.appWidgetId }
-        dao.deleteAll(facetId)
-        dao.insert(ClockStackItemEntity(facetId = facetId, position = 0, kind = ClockStackItemKind.WIDGET, appWidgetId = appWidgetId))
-        released
+    /** Swaps the item for a hosted widget in place. `null` when the item does not exist, else what to release. */
+    suspend fun replaceWithWidget(itemId: Long, appWidgetId: Int): ReplacedItem? = database.withTransaction {
+        val item = dao.getById(itemId) ?: return@withTransaction null
+        dao.replace(itemId, ClockStackItemKind.WIDGET, appWidgetId)
+        ReplacedItem(releasedAppWidgetId = item.appWidgetId)
+    }
+
+    /** Swaps the item for the native clock in place. `null` when the item does not exist or the clock is already on another page. */
+    suspend fun replaceWithClock(itemId: Long): ReplacedItem? = database.withTransaction {
+        val item = dao.getById(itemId) ?: return@withTransaction null
+        if (dao.getAll(item.facetId).any { it.kind == ClockStackItemKind.CLOCK && it.id != itemId }) return@withTransaction null
+        dao.replace(itemId, ClockStackItemKind.CLOCK, null)
+        ReplacedItem(releasedAppWidgetId = item.appWidgetId)
     }
 
     /** Removes the item and closes the gap; returns its widget id for the caller to release, or `null` for the clock or an unknown id. */

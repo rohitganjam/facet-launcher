@@ -66,7 +66,8 @@ class FacetMappingTest {
         )
 
         // When mapped to the Room row and back
-        val result = facet.toEntity().toFacet()
+        // (the stack lives in its own table, so it is passed back in as FacetRepository does)
+        val result = facet.toEntity().toFacet(facet.clockStack)
 
         // Then nothing is lost
         assertEquals(facet, result)

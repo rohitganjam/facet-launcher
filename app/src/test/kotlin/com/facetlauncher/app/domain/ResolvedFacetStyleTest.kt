@@ -161,7 +161,7 @@ class ResolvedFacetStyleTest {
 
     @Test
     fun `there is no stack page without items, and no size before a resize`() {
-        assertEquals(emptyList<ResolvedClockItem>(), resolveFacetStyle(facet(), settings).clockStack)
+        assertEquals(emptyList<ResolvedClockItem>(), resolveFacetStyle(facet { it.copy(clockStack = emptyList()) }, settings).clockStack)
         assertEquals(null, resolveFacetStyle(facet { it.copy(clockStack = listOf(widgetItem(41))) }, settings).clockStack.single().sizeDp.portrait)
     }
 

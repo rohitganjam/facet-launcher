@@ -800,7 +800,7 @@ class FacetDatabaseMigrationTest {
     }
 
     @Test
-    fun migration34To35MovesEachHostedClockWidgetIntoAOneItemStackAndLeavesClockOnlyFacetsEmpty() {
+    fun migration34To35MovesEachHostedClockWidgetIntoAOneItemStackAndGivesOtherFacetsTheNativeClock() {
         // Given a v32 database with one facet that hosts a clock widget (sized, with landscape values) and one on the native clock
         val dbV32 = helper.createDatabase(TEST_DB, 32)
         insertFacetV27(dbV32, id = 1, name = "Work")
@@ -820,7 +820,7 @@ class FacetDatabaseMigrationTest {
         // Then the widget facet has one WIDGET item at position 0 carrying its size and alignment
         val items = dbV35.query(
             "SELECT facetId, position, kind, appWidgetId, widthDp, heightDp, alignment, landscapeWidthDp, landscapeHeightDp, landscapeAlignment " +
-                "FROM clock_stack_items",
+                "FROM clock_stack_items WHERE facetId = 1",
         )
         assertEquals(1, items.count)
         items.moveToFirst()
@@ -836,11 +836,20 @@ class FacetDatabaseMigrationTest {
         assertEquals("RIGHT", items.getString(9))
         items.close()
 
-        // And the native-clock facet has no items, so it stays the plain clock
-        val clockOnly = dbV35.query("SELECT COUNT(*) FROM clock_stack_items WHERE facetId = 2")
+        // And the facet that was on its native clock gets one CLOCK page at position 0, so it keeps its look
+        val clockOnly = dbV35.query("SELECT position, kind, appWidgetId FROM clock_stack_items WHERE facetId = 2")
+        assertEquals(1, clockOnly.count)
         clockOnly.moveToFirst()
         assertEquals(0, clockOnly.getInt(0))
+        assertEquals("CLOCK", clockOnly.getString(1))
+        assertEquals(true, clockOnly.isNull(2))
         clockOnly.close()
+
+        // And no facet is left without a page
+        val total = dbV35.query("SELECT COUNT(*) FROM clock_stack_items")
+        total.moveToFirst()
+        assertEquals(2, total.getInt(0))
+        total.close()
     }
 
     /** A v27 facet row — the v25 shape plus the two calendar-display columns, which a freshly created database has no defaults for. */

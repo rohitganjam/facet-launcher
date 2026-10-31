@@ -617,9 +617,10 @@ object Migrations {
     }
 
     /**
-     * Adds `clock_stack_items` and moves each facet's existing hosted clock widget into it as one WIDGET row at
-     * position 0 (its size and alignment carried over), so a facet with a custom widget becomes a one-item stack.
-     * The old `facets.clockWidget*` columns stay in place, unused from here on.
+     * Adds `clock_stack_items` and gives every facet its first page at position 0: a facet with a hosted clock
+     * widget gets that widget (its size and alignment carried over), every other facet gets the native clock. An
+     * empty stack draws nothing, so no facet may be left without a row. The old `facets.clockWidget*` columns stay in
+     * place, retired.
      */
     val MIGRATION_34_35: Migration = object : Migration(34, 35) {
         override fun migrate(db: SupportSQLiteDatabase) {
@@ -637,6 +638,7 @@ object Migrations {
                     "landscapeClockWidgetWidthDp, landscapeClockWidgetHeightDp, landscapeClockAlignment " +
                     "FROM facets WHERE clockWidgetAppWidgetId IS NOT NULL",
             )
+            db.execSQL("INSERT INTO clock_stack_items (facetId, position, kind) SELECT id, 0, 'CLOCK' FROM facets WHERE clockWidgetAppWidgetId IS NULL")
         }
     }
 

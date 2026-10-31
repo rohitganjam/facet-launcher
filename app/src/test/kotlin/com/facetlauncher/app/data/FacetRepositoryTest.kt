@@ -388,29 +388,56 @@ class FacetRepositoryTest {
         val dao = FakeFacetDao()
         val stackDao = FakeClockStackItemDao()
         val repository = FacetRepository(dao, stackDao)
-        val first = repository.addFacet()
-        val second = repository.addFacet()
-        stackDao.insert(ClockStackItemEntity(facetId = first.id, position = 1, kind = ClockStackItemKind.WIDGET, appWidgetId = 11))
-        stackDao.insert(ClockStackItemEntity(facetId = first.id, position = 0, kind = ClockStackItemKind.CLOCK))
-        stackDao.insert(ClockStackItemEntity(facetId = second.id, position = 0, kind = ClockStackItemKind.WIDGET, appWidgetId = 22))
+        val first = dao.insert(FacetEntity(name = "A", position = 0))
+        val second = dao.insert(FacetEntity(name = "B", position = 1))
+        stackDao.insert(ClockStackItemEntity(facetId = first, position = 1, kind = ClockStackItemKind.WIDGET, appWidgetId = 11))
+        stackDao.insert(ClockStackItemEntity(facetId = first, position = 0, kind = ClockStackItemKind.CLOCK))
+        stackDao.insert(ClockStackItemEntity(facetId = second, position = 0, kind = ClockStackItemKind.WIDGET, appWidgetId = 22))
 
         // When the facets are observed
         val facets = repository.observeFacets().first()
 
         // Then each carries only its own items, in position order, and getById matches
-        assertEquals(listOf(null, 11), facets.first { it.id == first.id }.clockStack.map { it.appWidgetId })
-        assertEquals(listOf(22), facets.first { it.id == second.id }.clockStack.map { it.appWidgetId })
-        assertEquals(listOf(null, 11), repository.getById(first.id)!!.clockStack.map { it.appWidgetId })
+        assertEquals(listOf(null, 11), facets.first { it.id == first }.clockStack.map { it.appWidgetId })
+        assertEquals(listOf(22), facets.first { it.id == second }.clockStack.map { it.appWidgetId })
+        assertEquals(listOf(null, 11), repository.getById(first)!!.clockStack.map { it.appWidgetId })
     }
 
     @Test
     fun `a facet with no stack rows has an empty clock stack`() = runTest {
-        // Given a facet that never had a widget
-        val repository = FacetRepository(FakeFacetDao(), FakeClockStackItemDao())
-        repository.addFacet()
+        // Given a facet row with no stack rows (an empty stack draws nothing)
+        val dao = FakeFacetDao()
+        val repository = FacetRepository(dao, FakeClockStackItemDao())
+        dao.insert(FacetEntity(name = "A", position = 0))
 
-        // Then it is the plain native clock
+        // Then its clock stack is empty, not a default clock
         assertEquals(emptyList<Any>(), repository.observeFacets().first().single().clockStack)
+    }
+
+    @Test
+    fun `a new facet starts with the native clock as its one page`() = runTest {
+        // Given a repository
+        val repository = FacetRepository(FakeFacetDao(), FakeClockStackItemDao())
+
+        // When a facet is added
+        val added = repository.addFacet()
+
+        // Then its stack is the native clock, both on the returned facet and as stored
+        assertEquals(listOf(ClockStackItemKind.CLOCK), added.clockStack.map { it.kind })
+        assertEquals(listOf(ClockStackItemKind.CLOCK), repository.getById(added.id)!!.clockStack.map { it.kind })
+        assertEquals(added.id, repository.getById(added.id)!!.clockStack.single().facetId)
+    }
+
+    @Test
+    fun `a restored facet starts with the native clock too`() = runTest {
+        // Given a repository
+        val repository = FacetRepository(FakeFacetDao(), FakeClockStackItemDao())
+
+        // When a facet is restored from a backup (which carries no stack)
+        val id = repository.restoreFacet(Facet(name = "Restored", position = 0))
+
+        // Then it has the native clock as its one page
+        assertEquals(listOf(ClockStackItemKind.CLOCK), repository.getById(id)!!.clockStack.map { it.kind })
     }
 
     @Test

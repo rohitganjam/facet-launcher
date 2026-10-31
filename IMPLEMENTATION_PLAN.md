@@ -4398,7 +4398,7 @@ Design agreed in chat. The clock slot holds a stack of 0 to 5 items (the native 
 
 - [x] 1. Data model: `clock_stack_items` table, DAO, migration 34→35, `ClockStackRepository` (cap 5, one clock, reorder, per-item size and alignment). Tests: `ClockStackRepositoryTest`, `FacetDatabaseMigrationTest.migration34To35…`.
 - [x] 2. The stack is the facet's hosted-widget store: `Facet.clockStack` loaded by `FacetRepository`, the five single-widget fields removed, Home, the resize commit, facet deletion and the picker read and write it. Behaviour for users is unchanged.
-- [ ] 3. New model: `[Clock]` default rows (migration, new facet, restore, import), empty means blank, per-item `replaceItem` and `ReplaceClockStackItemUseCase` (replacing `ReplaceClockWidgetUseCase` and `SwitchFacetToNativeClockUseCase`), picker target Add or Replace.
+- [x] 3. New model: `[Clock]` default rows (migration, new facet, restore, import), empty means blank, per-item `replaceItem` and `ReplaceClockStackItemUseCase` (replacing `ReplaceClockWidgetUseCase` and `SwitchFacetToNativeClockUseCase`), picker target Add or Replace.
 - [ ] 4. Home: pager, swipe routing, page dots, per-item size and alignment, adjust mode across pages.
 - [ ] 5. Sheet (one layout) and the stack screen; Pro limit and lapsed behaviour.
 - [ ] 6. Inherit card "Edit defaults" link.

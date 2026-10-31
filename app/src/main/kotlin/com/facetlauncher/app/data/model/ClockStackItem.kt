@@ -24,3 +24,6 @@ data class ClockStackItem(
     val landscapeHeightDp: Int? = null,
     val landscapeAlignment: ClockAlignment? = null,
 )
+
+/** The page every facet starts with: its native clock. A real row gets its ids when stored. */
+fun nativeClockPage(facetId: Long = 0L, id: Long = 0L) = ClockStackItem(id = id, facetId = facetId, position = 0, kind = ClockStackItemKind.CLOCK)

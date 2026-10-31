@@ -3,8 +3,7 @@ package com.facetlauncher.app.ui.home
 import com.facetlauncher.app.data.ClockStackRepository
 import com.facetlauncher.app.data.EntitlementRepository
 import com.facetlauncher.app.data.FakeEntitlementRepository
-import com.facetlauncher.app.data.model.Facet
-import com.facetlauncher.app.domain.SwitchFacetToNativeClockUseCase
+import com.facetlauncher.app.domain.ReplaceClockStackItemUseCase
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -16,21 +15,18 @@ import org.mockito.Mockito.verify
 class ClockWidgetFacetControllerTest {
 
     private val clockStackRepository = mock(ClockStackRepository::class.java)
-    private val switchFacetToNativeClock = mock(SwitchFacetToNativeClockUseCase::class.java)
+    private val replaceClockStackItem = mock(ReplaceClockStackItemUseCase::class.java)
 
     private fun controller(entitlement: EntitlementRepository = EntitlementRepository()) =
-        ClockWidgetFacetController(clockStackRepository, switchFacetToNativeClock, entitlement)
+        ClockWidgetFacetController(clockStackRepository, replaceClockStackItem, entitlement)
 
     @Test
-    fun `switchToNativeClock delegates to the use case with the given facet`() = runTest {
-        // Given a facet
-        val facet = Facet(id = 1L, name = "Work", position = 0)
-
-        // When switching it to the native clock
-        controller().switchToNativeClock(facet)
+    fun `replaceWithClock delegates to the use case with the page id`() = runTest {
+        // When the visible page is switched to the clock
+        controller().replaceWithClock(itemId = 5L)
 
         // Then the use case does it
-        verify(switchFacetToNativeClock).invoke(facet)
+        verify(replaceClockStackItem).withClock(5L)
     }
 
     @Test

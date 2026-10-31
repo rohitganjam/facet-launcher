@@ -111,8 +111,7 @@ import com.facetlauncher.app.domain.ResolveWidgetDropUseCase
 import com.facetlauncher.app.domain.ResolveWidgetResizeUseCase
 import com.facetlauncher.app.domain.SeedDefaultDockUseCase
 import com.facetlauncher.app.domain.SelectableFacetsUseCase
-import com.facetlauncher.app.domain.ReplaceClockWidgetUseCase
-import com.facetlauncher.app.domain.SwitchFacetToNativeClockUseCase
+import com.facetlauncher.app.domain.ReplaceClockStackItemUseCase
 import com.facetlauncher.app.domain.SyncFacetShortcutsUseCase
 import com.facetlauncher.app.ui.components.HomeSwipeGate
 import com.facetlauncher.app.ui.components.LocalHomeSwipeGate
@@ -285,7 +284,7 @@ class HomeDrawerRouteTest {
                     ObserveQuickAddStateUseCase(),
                     MediaSessionRepository(context, notificationBadgeRepository),
                     ClockWidgetHostController(appWidgetRepository),
-                    ClockWidgetFacetController(clockStackRepository, SwitchFacetToNativeClockUseCase(clockStackRepository, appWidgetRepository), EntitlementRepository()),
+                    ClockWidgetFacetController(clockStackRepository, ReplaceClockStackItemUseCase(clockStackRepository, appWidgetRepository), EntitlementRepository()),
                 )
             }
             launcherViewModel = remember {
@@ -401,7 +400,7 @@ class HomeDrawerRouteTest {
                     context.getSystemService(UserManager::class.java),
                     appRepository,
                 )
-                ClockWidgetPickerViewModel(appWidgetRepository, facetRepository, ReplaceClockWidgetUseCase(clockStackRepository, appWidgetRepository))
+                ClockWidgetPickerViewModel(appWidgetRepository, ReplaceClockStackItemUseCase(clockStackRepository, appWidgetRepository))
             }
             // Shares the same facetRepository/settingsRepository/app-backed repos as
             // homeViewModel/launcherViewModel above — same reasoning as that block's own doc: a

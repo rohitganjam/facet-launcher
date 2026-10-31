@@ -125,23 +125,23 @@ internal fun HomeFacetCarouselOverlay(facet: SwipeAxisState, containerWidthPx: F
 
 /** The clock widget picker, over everything else: reached from the clock adjust sheet on Home, not from the Hub. */
 @Composable
-internal fun HomeClockWidgetPickerOverlay(overlays: HomeOverlayState, onReset: () -> Unit, content: @Composable (facetId: Long) -> Unit) {
+internal fun HomeClockWidgetPickerOverlay(overlays: HomeOverlayState, onReset: () -> Unit, content: @Composable (itemId: Long) -> Unit) {
     val currentOnReset by rememberUpdatedState(onReset)
-    // Clear its search and target facet whenever its panel closes.
+    // Clear its search and target page whenever its panel closes.
     LaunchedEffect(overlays.showClockWidgetPicker) {
         if (!overlays.showClockWidgetPicker) {
             currentOnReset()
-            overlays.clockWidgetPickerFacetId = null
+            overlays.clockWidgetPickerItemId = null
         }
     }
-    overlays.clockWidgetPickerFacetId?.let { facetId ->
+    overlays.clockWidgetPickerItemId?.let { itemId ->
         AnimatedVisibility(
             visible = overlays.showClockWidgetPicker,
             enter = slideInHorizontally(initialOffsetX = { it }, animationSpec = tween(FACET_TRANSITION_DURATION_MS, easing = FacetTransitionEasing)),
             exit = slideOutHorizontally(targetOffsetX = { it }, animationSpec = tween(FACET_TRANSITION_DURATION_MS, easing = FacetTransitionEasing)),
             modifier = Modifier.testTag("clock_widget_picker_overlay"),
         ) {
-            content(facetId)
+            content(itemId)
         }
     }
 }

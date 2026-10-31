@@ -3,6 +3,7 @@ package com.facetlauncher.app.data
 import com.facetlauncher.app.data.local.ClockStackItemDao
 import com.facetlauncher.app.data.local.ClockStackItemEntity
 import com.facetlauncher.app.data.model.ClockAlignment
+import com.facetlauncher.app.data.model.ClockStackItemKind
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
@@ -42,6 +43,10 @@ class FakeClockStackItemDao(initial: List<ClockStackItemEntity> = emptyList()) :
     }
 
     override suspend fun setPosition(id: Long, position: Int) = change(id) { it.copy(position = position) }
+
+    override suspend fun replace(id: Long, kind: ClockStackItemKind, appWidgetId: Int?) = change(id) {
+        it.copy(kind = kind, appWidgetId = appWidgetId, widthDp = null, heightDp = null, landscapeWidthDp = null, landscapeHeightDp = null)
+    }
 
     override suspend fun setSize(id: Long, widthDp: Int, heightDp: Int) = change(id) { it.copy(widthDp = widthDp, heightDp = heightDp) }
 

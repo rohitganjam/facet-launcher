@@ -21,14 +21,14 @@ import kotlinx.coroutines.delay
 
 /**
  * PRD F15's "Use custom widget" picker — same add-widget grid the Hub uses
- * ([HubWidgetPickerContent], reused directly rather than duplicated), scoped to [facetId]'s clock
- * slot instead of the Hub grid. Event-collection/Activity-result-launcher wiring mirrors
+ * ([HubWidgetPickerContent], reused directly rather than duplicated), scoped to replacing the stack
+ * page [itemId] instead of placing on the Hub grid. Event-collection/Activity-result-launcher wiring mirrors
  * [com.facetlauncher.app.ui.hub.picker.HubWidgetPickerScreen] exactly — see its own doc for why
  * this is event-driven rather than a direct `onClick` launch.
  */
 @Composable
 fun ClockWidgetPickerScreen(
-    facetId: Long,
+    itemId: Long,
     onDone: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: ClockWidgetPickerViewModel = hiltViewModel(),
@@ -71,7 +71,7 @@ fun ClockWidgetPickerScreen(
         uiState = uiState,
         failureMessage = failureMessage,
         onQueryChange = viewModel::onQueryChange,
-        onProviderSelect = { option -> viewModel.onProviderSelect(option, facetId) },
+        onProviderSelect = { option -> viewModel.onProviderSelect(option, itemId) },
         onBack = onDone,
         title = stringResource(R.string.clock_widget_picker_title),
         modifier = modifier,

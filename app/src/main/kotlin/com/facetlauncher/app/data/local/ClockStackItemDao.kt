@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
 import com.facetlauncher.app.data.model.ClockAlignment
+import com.facetlauncher.app.data.model.ClockStackItemKind
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -31,6 +32,13 @@ interface ClockStackItemDao {
 
     @Query("UPDATE clock_stack_items SET position = :position WHERE id = :id")
     suspend fun setPosition(id: Long, position: Int)
+
+    /** Swaps what the item is, keeping its place and alignment; the sizes only fit the item they were set for, so they reset. */
+    @Query(
+        "UPDATE clock_stack_items SET kind = :kind, appWidgetId = :appWidgetId, widthDp = NULL, heightDp = NULL, " +
+            "landscapeWidthDp = NULL, landscapeHeightDp = NULL WHERE id = :id",
+    )
+    suspend fun replace(id: Long, kind: ClockStackItemKind, appWidgetId: Int?)
 
     @Query("UPDATE clock_stack_items SET widthDp = :widthDp, heightDp = :heightDp WHERE id = :id")
     suspend fun setSize(id: Long, widthDp: Int, heightDp: Int)

@@ -333,8 +333,8 @@ fun HomeDrawerRoute(
                     setClockWidgetBounds = { clockWidgetBoundsInHomeRoot = it },
                     setAppListBounds = { appListBoundsInHomeRoot = it },
                     setClockPaneBounds = { clockPaneBoundsInHomeRoot = it },
-                    openClockWidgetPicker = { facetId ->
-                        overlays.clockWidgetPickerFacetId = facetId
+                    openClockWidgetPicker = { itemId ->
+                        overlays.clockWidgetPickerItemId = itemId
                         overlays.showClockWidgetPicker = true
                     },
                     openWeather = {
@@ -442,9 +442,9 @@ fun HomeDrawerRoute(
                 viewModel = facetViewModel,
             )
         }
-        HomeClockWidgetPickerOverlay(overlays, onReset = clockWidgetPickerViewModel::reset) { facetId ->
+        HomeClockWidgetPickerOverlay(overlays, onReset = clockWidgetPickerViewModel::reset) { itemId ->
             ClockWidgetPickerScreen(
-                facetId = facetId,
+                itemId = itemId,
                 onDone = { overlays.showClockWidgetPicker = false },
                 viewModel = clockWidgetPickerViewModel,
             )
