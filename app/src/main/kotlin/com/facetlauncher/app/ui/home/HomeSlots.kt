@@ -20,6 +20,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -78,7 +79,8 @@ private fun ClockSlotBlock(frame: HomeFrame, alignment: ClockAlignment, scaleOri
             clockContentModifier = clockTapModifier(actions.clock),
             clockBoxModifier = Modifier.onGloballyPositioned {
                 layout.clockBoxSize = it.size
-                layout.clockBoxOriginInRoot = it.positionInRoot()
+                // Without the page swipe's own shift, or the room left of the box would shrink a hosted widget as the page slides.
+                layout.clockBoxOriginInRoot = it.positionInRoot() - Offset(pageTranslationPx(frame), 0f)
             },
             use24HourTime = clock.use24HourTime,
             templateId = clock.templateId,
@@ -134,10 +136,14 @@ private fun clockTapModifier(clock: HomeClockActions): Modifier = Modifier
 
 /** Displaces and fades the visible page while a swipe turns it; both are read in the draw phase, so a swipe does not recompose Home. */
 private fun Modifier.pageTransition(frame: HomeFrame): Modifier = graphicsLayer {
-    val offset = frame.actions.clock.pageOffset()
-    val zoneWidth = frame.layout.rootSize?.width?.toFloat() ?: size.width
-    translationX = offset * zoneWidth
-    alpha = 1f - abs(offset)
+    translationX = pageTranslationPx(frame, fallbackWidth = size.width)
+    alpha = 1f - abs(frame.actions.clock.pageOffset())
+}
+
+/** How far the visible page is displaced right now: the swipe's offset as a fraction of the clock zone's width. */
+private fun pageTranslationPx(frame: HomeFrame, fallbackWidth: Float = 0f): Float {
+    val zoneWidth = frame.layout.rootSize?.width?.toFloat() ?: fallbackWidth
+    return frame.actions.clock.pageOffset() * zoneWidth
 }
 
 @Composable

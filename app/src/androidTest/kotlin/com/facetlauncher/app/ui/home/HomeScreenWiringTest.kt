@@ -16,7 +16,9 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.longClick
+import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.width
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.Folder
 import com.facetlauncher.app.data.model.MediaPlayerState
@@ -288,6 +290,30 @@ class HomeScreenWiringTest {
 
         // Then that action fired
         assertEquals(1, switched)
+    }
+
+    @Test
+    fun aWidgetKeepsItsWidthWhileThePageIsSwipedAside() {
+        // Given a hosted widget page
+        var offset by mutableStateOf(0f)
+        val state = appState(PlacedItem.SingleApp(mail)).copy(
+            widget = HomeClockWidgetState(itemId = 1L, appWidgetId = 42, widthDp = 300.dp, heightDp = 90.dp, minWidthDp = 64.dp, minHeightDp = 64.dp),
+            clockStack = HomeClockStackState(pageCount = 2, pageIndex = 1, hasClock = true),
+        )
+        val actions = HomeScreenActions(
+            item = HomeItemActions(onAppClick = {}),
+            clock = HomeClockActions(pageOffset = { offset }),
+            widget = HomeClockWidgetActions(createHostView = { context, _ -> AppWidgetHostView(context) }),
+        )
+        setHome(state, actions)
+        val restingWidth = composeRule.onNodeWithTag("clock_widget_host_42").getUnclippedBoundsInRoot().width
+
+        // When the page is dragged part-way aside
+        composeRule.runOnIdle { offset = 0.3f }
+        composeRule.waitForIdle()
+
+        // Then the widget is moved, not squeezed into the room that is left
+        assertEquals(restingWidth.value, composeRule.onNodeWithTag("clock_widget_host_42").getUnclippedBoundsInRoot().width.value, 0.5f)
     }
 
     @Test
