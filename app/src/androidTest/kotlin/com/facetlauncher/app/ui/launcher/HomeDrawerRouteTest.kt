@@ -523,7 +523,7 @@ class HomeDrawerRouteTest {
         }
     }
 
-    /** Gives the active facet a second clock page (a widget with no provider, drawn as an empty host) and waits for the dots that show a stack. */
+    /** Gives the active facet a second clock page (a widget with no provider, drawn as the orphaned placeholder) and waits for the dots that show a stack. */
     private fun seedSecondClockPage(appWidgetId: Int = 4242) {
         runBlocking { seedClockStack(appWidgetId) }
         composeRule.waitUntil(timeoutMillis = 10_000) {
@@ -550,8 +550,38 @@ class HomeDrawerRouteTest {
 
         // Then the widget page shows and the facet carousel did not open
         composeRule.waitUntil(timeoutMillis = 5_000) {
-            composeRule.onAllNodesWithTag("clock_widget_host_4242", useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
+            composeRule.onAllNodesWithTag("hub_orphaned_widget", useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
         }
+        composeRule.onNodeWithTag("facet_carousel_screen").assertIsNotDisplayed()
+    }
+
+    @Test
+    fun swipingLeftWhileAdjustingTheClockTurnsThePageAndKeepsAdjusting() {
+        // Given a two-page stack and the clock in adjust mode
+        setContent()
+        seedSecondClockPage()
+        composeRule.onNodeWithTag("home_clock_block").performTouchInput { longClick() }
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("clock_adjust_open").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("clock_adjust_toolbar").assertIsDisplayed()
+
+        // When swiping left across the clock zone
+        composeRule.onRoot().performTouchInput {
+            swipeWithVelocity(
+                start = Offset(width * 0.8f, 220f),
+                end = Offset(width * 0.1f, 220f),
+                endVelocity = 200f,
+                durationMillis = 300,
+            )
+        }
+        settleAnimation()
+
+        // Then the widget page shows, still in adjust mode, and the carousel did not open
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithTag("hub_orphaned_widget", useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onNodeWithTag("clock_adjust_toolbar").assertIsDisplayed()
         composeRule.onNodeWithTag("facet_carousel_screen").assertIsNotDisplayed()
     }
 
@@ -571,7 +601,7 @@ class HomeDrawerRouteTest {
         composeRule.onRoot().performTouchInput(leftAcrossClockZone)
         settleAnimation()
         composeRule.waitUntil(timeoutMillis = 5_000) {
-            composeRule.onAllNodesWithTag("clock_widget_host_4242", useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
+            composeRule.onAllNodesWithTag("hub_orphaned_widget", useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
         }
 
         // When swiping left again, with no page left

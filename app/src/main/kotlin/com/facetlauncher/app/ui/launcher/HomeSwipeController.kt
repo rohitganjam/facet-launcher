@@ -47,6 +47,10 @@ internal class HomeSwipeController(
 
     private var appListLeftoverDragActive = false
 
+    /** While adjusting the clock: whether the horizontal drag in progress turns the clock pager (`null` until it has moved). */
+    private var adjustPagerOwnsDrag: Boolean? = null
+    private var adjustDragInClockZone = false
+
     /** A hosted clock widget's nested scroll, feeding this controller. */
     val widgetScroll = WidgetScrollBridge(this)
 
@@ -124,6 +128,32 @@ internal class HomeSwipeController(
     fun onPointerDragEnd() {
         val velocity = velocityTracker.calculateVelocity()
         settle(if (isHorizontalDrag) velocity.x else velocity.y)
+    }
+
+    /**
+     * Clock adjust mode takes no Hub, carousel or drawer swipes and must not end the adjust, but a horizontal
+     * drag in the clock zone still turns the clock stack's pages, so each page can be adjusted in turn.
+     */
+    fun onAdjustDragStart(position: Offset) {
+        velocityTracker.resetTracking()
+        adjustPagerOwnsDrag = null
+        adjustDragInClockZone = isInClockZone(position)
+    }
+
+    fun onAdjustDrag(change: PointerInputChange, dx: Float) {
+        if (adjustPagerOwnsDrag == null && dx != 0f) adjustPagerOwnsDrag = adjustDragInClockZone && clockPager.canMove(dx)
+        if (adjustPagerOwnsDrag == true) clockPager.dragBy(dx)
+        velocityTracker.addPosition(change.uptimeMillis, change.position)
+    }
+
+    fun onAdjustDragEnd() {
+        if (adjustPagerOwnsDrag == true) clockPager.settle(velocityTracker.calculateVelocity().x)
+        adjustPagerOwnsDrag = null
+    }
+
+    fun onAdjustDragCancel() {
+        if (adjustPagerOwnsDrag == true) clockPager.settle(0f)
+        adjustPagerOwnsDrag = null
     }
 
     fun onPointerDrag(change: PointerInputChange, dragAmount: Offset) {

@@ -258,7 +258,9 @@ right a previous one. If there is one, the pager owns the whole drag, including 
 last page, a single page, an empty stack) the drag goes to Hub or the carousel as above. A hosted widget's handed-over
 scroll counts as starting in the zone, and its fling velocity is negated for the pager (a view's is in scroll
 direction). A drag past `PAGE_COMMIT_FRACTION` (20%) or a fling over `PAGE_FLING_VELOCITY_PX` turns the page,
-otherwise it springs back. `ClockPagerStateTest`, `HomeSwipeControllerTest` and three `HomeDrawerRouteTest` cases cover it.
+otherwise it springs back. `ClockPagerStateTest`, `HomeSwipeControllerTest` and four `HomeDrawerRouteTest` cases cover it.
+
+In clock adjust mode (`ClockAdjustMode.ADJUST`) the screen-wide detector is replaced by a horizontal-only one (`onAdjustDrag*` on the controller): a drag in the clock zone turns the pages and nothing else (no Hub, carousel or drawer, no hand-off at the ends, adjust mode kept), so each page can be sized and placed in turn. It sits after the handles in the pointer chain, so a handle keeps its own drags; the dots are held visible.
 
 A drag locks to an axis only after 16dp of travel (`HOME_SWIPE_SLOP`), and counts as vertical only
 if its vertical movement exceeds `VERTICAL_DOMINANCE` (1.2x) the horizontal — anything else is

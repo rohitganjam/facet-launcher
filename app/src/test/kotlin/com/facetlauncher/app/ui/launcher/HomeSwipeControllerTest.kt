@@ -3,6 +3,9 @@ package com.facetlauncher.app.ui.launcher
 import androidx.compose.runtime.MonotonicFrameClock
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.input.pointer.PointerId
+import androidx.compose.ui.input.pointer.PointerInputChange
+import androidx.compose.ui.input.pointer.PointerType
 import com.facetlauncher.app.ui.home.ClockPagerState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -369,5 +372,52 @@ class HomeSwipeControllerTest {
         swipe.widgetScroll.leftoverFling(velocityXPx = 4000f, velocityYPx = 0f)
 
         assertEquals(2, pageIndex)
+    }
+
+    private fun change(x: Float, timeMs: Long) = PointerInputChange(
+        id = PointerId(0), uptimeMillis = timeMs, position = Offset(x, 100f), pressed = true,
+        previousUptimeMillis = timeMs - 16, previousPosition = Offset(x, 100f), previousPressed = true,
+        isInitiallyConsumed = false, type = PointerType.Touch,
+    )
+
+    @Test
+    fun `while adjusting a drag in the clock zone turns the page and never ends the adjust or opens a panel`() {
+        pageCount = 3
+        val swipe = controller()
+
+        swipe.onAdjustDragStart(Offset(500f, 100f))
+        swipe.onAdjustDrag(change(500f, 16), dx = -600f)
+        swipe.onAdjustDragEnd()
+
+        assertEquals(1, pageIndex)
+        assertEquals(0, clockAdjustEnded)
+        assertEquals(0f, swipe.facet.progress.value, 0f)
+        assertEquals(0f, swipe.hub.progress.value, 0f)
+    }
+
+    @Test
+    fun `while adjusting a drag past the last page goes nowhere`() {
+        pageCount = 2
+        pageIndex = 1
+        val swipe = controller()
+
+        swipe.onAdjustDragStart(Offset(500f, 100f))
+        swipe.onAdjustDrag(change(500f, 16), dx = -600f)
+        swipe.onAdjustDragEnd()
+
+        assertEquals(1, pageIndex)
+        assertEquals(0f, swipe.facet.progress.value, 0f)
+    }
+
+    @Test
+    fun `while adjusting a drag outside the clock zone is ignored`() {
+        pageCount = 3
+        val swipe = controller()
+
+        swipe.onAdjustDragStart(Offset(500f, 1500f))
+        swipe.onAdjustDrag(change(500f, 16), dx = -600f)
+        swipe.onAdjustDragEnd()
+
+        assertEquals(0, pageIndex)
     }
 }

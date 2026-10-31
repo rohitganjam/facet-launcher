@@ -26,6 +26,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -393,9 +394,19 @@ fun HomeDrawerRoute(
                 // Receives the app list's own leftover vertical scroll once it bottoms/tops out.
                 .nestedScroll(appListNestedScroll)
                 .pointerInput(draggingHandle, clockAdjustMode, homeSwipeBlocked) {
-                    // Suppress screen-wide gestures if we're in any adjustment mode,
-                    // actively dragging a handle, or a long-press sheet is open.
-                    if (draggingHandle || clockAdjustMode != ClockAdjustMode.NONE || homeSwipeBlocked) return@pointerInput
+                    // Suppress screen-wide gestures while dragging a handle or with a long-press sheet open.
+                    if (draggingHandle || homeSwipeBlocked) return@pointerInput
+                    if (clockAdjustMode == ClockAdjustMode.ADJUST) {
+                        // Only the clock pages turn. This runs after the handles in the pointer chain, so a handle keeps its own drags.
+                        detectHorizontalDragGestures(
+                            onDragStart = swipe::onAdjustDragStart,
+                            onDragEnd = swipe::onAdjustDragEnd,
+                            onDragCancel = swipe::onAdjustDragCancel,
+                            onHorizontalDrag = swipe::onAdjustDrag,
+                        )
+                        return@pointerInput
+                    }
+                    if (clockAdjustMode != ClockAdjustMode.NONE) return@pointerInput
 
                     detectHomeSwipeGestures(
                         shouldClaim = { position ->
