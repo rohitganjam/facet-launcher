@@ -184,19 +184,18 @@ fun ClockBlock(
                 clockContentModifier = clockContentModifier,
             )
         }
-        CalendarEventsBlock(
-            events = events,
-            clock = clock,
-            locale = locale,
-            use24HourTime = use24HourTime,
-            calendarColors = calendarColors,
-            fontFamily = launcherFontOption.fontFamily,
-            textColor = appLabelColorOption.resolve(),
-            fontWeight = homeAppsFontWeight.resolve(),
-            alignment = clockAlignment,
-            display = calendarDisplay,
-            onEventClick = onEventClick,
-        )
+        if (clockWidgetAppWidgetId == null) { // only the built-in clock carries the events list
+            CalendarEventsBlock(
+                events = events, clock = clock, locale = locale,
+                use24HourTime = use24HourTime, calendarColors = calendarColors,
+                fontFamily = launcherFontOption.fontFamily,
+                textColor = appLabelColorOption.resolve(),
+                fontWeight = homeAppsFontWeight.resolve(),
+                alignment = clockAlignment,
+                display = calendarDisplay,
+                onEventClick = onEventClick,
+            )
+        }
     }
 }
 

@@ -1,6 +1,9 @@
 package com.facetlauncher.app.ui.home
 
 import android.appwidget.AppWidgetHostView
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.center
@@ -25,6 +28,7 @@ import java.time.Clock
 import java.time.Instant
 import java.time.ZoneOffset
 import java.util.Locale
+import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -97,6 +101,41 @@ class ClockBlockTest {
         // Then the hosted widget's host view renders in place of the native clock
         composeRule.onNodeWithTag("clock_widget_host_42").assertExists()
         composeRule.onNodeWithText("9:05").assertDoesNotExist()
+    }
+
+    @Test
+    fun calendarEventsAreDrawnUnderTheClockButNotUnderAHostedWidget() {
+        // Given an upcoming event
+        val fixedClock = Clock.fixed(Instant.parse("2026-08-27T09:05:00Z"), ZoneOffset.UTC)
+        val event = CalendarEvent(
+            id = 1, calendarId = "1", title = "Team standup",
+            startTimeMillis = fixedClock.millis() + 3_600_000, endTimeMillis = fixedClock.millis() + 5_400_000, isAllDay = false,
+        )
+        var widgetId by mutableStateOf<Int?>(null)
+
+        // When the block shows the built-in clock
+        composeRule.setContent {
+            FacetLauncherTheme {
+                ClockBlock(
+                    clock = fixedClock,
+                    locale = Locale.US,
+                    events = persistentListOf(event),
+                    clockWidgetAppWidgetId = widgetId,
+                    clockWidgetWidthDp = 180.dp,
+                    clockWidgetHeightDp = 90.dp,
+                )
+            }
+        }
+
+        // Then the event is listed under it
+        composeRule.onNodeWithText("Team standup", substring = true).assertExists()
+
+        // When the same block hosts a widget instead
+        widgetId = 42
+        composeRule.waitForIdle()
+
+        // Then the event list is gone
+        composeRule.onNodeWithText("Team standup", substring = true).assertDoesNotExist()
     }
 
     @Test
