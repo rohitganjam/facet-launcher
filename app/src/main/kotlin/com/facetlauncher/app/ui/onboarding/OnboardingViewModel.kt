@@ -18,6 +18,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import com.facetlauncher.app.data.PlacementRepository
 import com.facetlauncher.app.data.model.PlacementTarget
+import com.facetlauncher.app.data.model.SearchBarPosition
 
 /**
  * Backs the whole onboarding flow (`ui/onboarding/OnboardingScreen.kt`) — one instance shared
@@ -48,6 +49,9 @@ class OnboardingViewModel @Inject constructor(
             listContentMode = settings.listContentMode,
             appsToShowCount = settings.appsToShowCount,
             drawerPresentation = settings.drawerPresentation,
+            searchBarPosition = settings.searchBarPosition,
+            searchContactsEnabled = settings.searchContactsEnabled,
+            searchSettingsEnabled = settings.searchSettingsEnabled,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), OnboardingUiState())
 
@@ -61,6 +65,18 @@ class OnboardingViewModel @Inject constructor(
 
     fun setDrawerPresentation(presentation: DrawerPresentation) {
         viewModelScope.launch { settingsRepository.setDrawerPresentation(presentation) }
+    }
+
+    fun setSearchBarPosition(position: SearchBarPosition) {
+        viewModelScope.launch { settingsRepository.setSearchBarPosition(position) }
+    }
+
+    fun setSearchContactsEnabled(enabled: Boolean) {
+        viewModelScope.launch { settingsRepository.setSearchContactsEnabled(enabled) }
+    }
+
+    fun setSearchSettingsEnabled(enabled: Boolean) {
+        viewModelScope.launch { settingsRepository.setSearchSettingsEnabled(enabled) }
     }
 
     fun reorderDockApps(orderedApps: List<AppInfo>) {

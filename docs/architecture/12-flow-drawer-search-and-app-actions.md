@@ -312,6 +312,7 @@ overlay that composes its own state subscribes with `DismissOnHomePress` — `Th
 for every action menu and for the facet automation rule editor (a settings sheet, so a Home press while it is
 open closes it and drops the draft), and `FolderContentsSheet` and the contact connections sheet call it
 directly; a new one must do the same.
+A Home press while the launcher is already in front and bare (Drawer, Hub, carousel, clock adjust, pickers, Private Space and sheets all closed) instead opens the Drawer and focuses its search field. `LauncherActivity.onNewIntent` passes `whileResumed` to `LauncherViewModel.onHomePressed`, which `HomeDrawerRoute`'s collector reads as `homePressedWhileResumed` before it closes anything, then bumps `DrawerSearchBarConfig.focusRequest`. A press from another app, or with anything open, only returns to bare Home (`HomeDrawerRouteTest`).
 Samsung's swipe-up gesture injects `KEYCODE_HOME` itself, so it reaches this path exactly like the button.
 
 Because the transition tracks the finger, none

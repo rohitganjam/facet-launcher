@@ -13,6 +13,7 @@ import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeLeft
@@ -343,6 +344,30 @@ class OnboardingScreenTest {
             composeRule.onAllNodesWithTag("onboarding_favorite_reorder_row_${seededApp?.packageName}").fetchSemanticsNodes().isEmpty()
         }
         composeRule.onNodeWithTag("onboarding_clear_favorites").assertDoesNotExist()
+    }
+
+    @Test
+    fun `home setup offers the search bar position and both search toggles`() {
+        setContent()
+        composeRule.onNodeWithTag("onboarding_next").performClick()
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithTag("onboarding_search_bar_position_row").performScrollTo().assertExists()
+        composeRule.onNodeWithTag("onboarding_search_contacts_toggle").performScrollTo().assertIsOff()
+        composeRule.onNodeWithTag("onboarding_search_settings_toggle").performScrollTo().assertIsOff()
+    }
+
+    @Test
+    fun `turning on Search settings in home setup switches it on`() {
+        setContent()
+        composeRule.onNodeWithTag("onboarding_next").performClick()
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithTag("onboarding_search_settings_toggle").performScrollTo().performClick()
+
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            runCatching { composeRule.onNodeWithTag("onboarding_search_settings_toggle").assertIsOn() }.isSuccess
+        }
     }
 
     @Test

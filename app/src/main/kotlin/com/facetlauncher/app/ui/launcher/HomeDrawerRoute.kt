@@ -209,8 +209,14 @@ fun HomeDrawerRoute(
             else -> SystemBarsBackdrop.WALLPAPER
         },
     )
+    var searchFocusRequest by remember { mutableIntStateOf(0) }
+    val homeSwipeGate = LocalHomeSwipeGate.current
     LaunchedEffect(launcherViewModel) {
         launcherViewModel.homePressedEvent.collect {
+            val onBareHome = launcherViewModel.homePressedWhileResumed && homeSwipeGate?.isBlocked != true &&
+                swipe.drawer.progress.value == 0f && swipe.hub.progress.value == 0f && swipe.facet.progress.value == 0f &&
+                clockAdjustMode == ClockAdjustMode.NONE && !overlays.showWidgetPicker &&
+                !overlays.showClockWidgetPicker && !overlays.showPrivateSpace
             focusManager.clearFocus()
             clockAdjustMode = ClockAdjustMode.NONE
             overlays.showClockWidgetPicker = false
@@ -220,6 +226,10 @@ fun HomeDrawerRoute(
             coroutineScope.launch { swipe.drawer.close() }
             coroutineScope.launch { swipe.hub.close() }
             coroutineScope.launch { swipe.facet.close() }
+            if (onBareHome) {
+                searchFocusRequest++
+                coroutineScope.launch { swipe.drawer.open() }
+            }
         }
     }
     var draggingHandle by remember { mutableStateOf(false) }
@@ -458,6 +468,7 @@ fun HomeDrawerRoute(
             isDrawerOpen = isDrawerOpen,
             overlays = overlays,
             onNavigateToSettings = onNavigateToSettings,
+            searchFocusRequest = searchFocusRequest,
         )
         HomePrivateSpaceOverlay(
             overlays = overlays,

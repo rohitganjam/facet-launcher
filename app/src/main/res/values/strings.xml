@@ -454,7 +454,7 @@
     <string name="app_drawer_show_labels_title">Show labels</string>
     <string name="app_drawer_show_labels_subtitle">Shows application name below the icon</string>
     <string name="app_drawer_search_contacts_title">Search contacts</string>
-    <string name="app_drawer_search_contacts_subtitle">Call, message, WhatsApp from results</string>
+    <string name="app_drawer_search_contacts_subtitle">Show contacts in search results</string>
     <string name="app_drawer_search_settings_title">Search settings</string>
     <string name="app_drawer_search_settings_subtitle">Jump to system settings like Wi-Fi or Bluetooth</string>
     <string name="app_drawer_search_bar_position">Search bar position</string>

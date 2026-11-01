@@ -92,6 +92,8 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
@@ -559,6 +561,10 @@ private fun DrawerSearchBar(
     modifier: Modifier = Modifier,
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
+    val focusRequester = remember { FocusRequester() }
+    LaunchedEffect(config.focusRequest) {
+        if (config.focusRequest > 0) focusRequester.requestFocus()
+    }
 
     Row(
         modifier = modifier
@@ -588,7 +594,7 @@ private fun DrawerSearchBar(
                 unfocusedIndicatorColor = Accent.copy(alpha = 0f),
                 focusedIndicatorColor = Accent.copy(alpha = 0f),
             ),
-            modifier = Modifier.weight(1f).testTag("drawer_search_field"),
+            modifier = Modifier.weight(1f).focusRequester(focusRequester).testTag("drawer_search_field"),
         )
         Box {
             IconButton(onClick = { menuExpanded = true }, modifier = Modifier.testTag("drawer_search_overflow")) {

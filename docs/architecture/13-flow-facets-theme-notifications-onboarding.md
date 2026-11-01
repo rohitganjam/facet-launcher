@@ -430,7 +430,7 @@ sequenceDiagram
 ```mermaid
 flowchart LR
     START["LauncherActivity\nonboarding_completed == false"] --> INTRO["OnboardingIntroPage"]
-    INTRO --> SETUP["OnboardingHomeSetupPage\n(OnboardingViewModel: list mode, apps-to-show,\ndrawer presentation, reorder/clear dock & favorites)"]
+    INTRO --> SETUP["OnboardingHomeSetupPage\n(OnboardingViewModel: list mode, apps-to-show,\ndrawer presentation, search bar position, contacts/settings search,\nreorder/clear dock & favorites)"]
     SETUP --> FACETS["OnboardingFacetsPage\n(explains facets)"]
     FACETS -- "Next / Skip / swipe" --> FIN["LauncherViewModel.completeOnboarding()\n→ setOnboardingCompleted(true)"]
     FIN --> HOME["FacetNavHost (HOME)"]
@@ -441,6 +441,8 @@ flowchart LR
 
 - The gate is `LauncherUiState.onboardingCompleted: Boolean?`, fed by its own settings collector (not the apps/work-profile
   `combine`): `null` shows the blank frame, only `false` shows onboarding, and the 3s loading timeout resolves `null` to `true`.
+- The setup page's App drawer card mirrors the top of `AppDrawerSettingsScreen`. Turning on "Search contacts" launches
+  the `READ_CONTACTS` request from `OnboardingScreen` and persists only on grant, so onboarding asks for nothing unless that switch is flipped.
 - Onboarding is outside the nav graph (a top-level `when` branch in `LauncherActivity`), so Back
   can never pop into it and it never appears on the back stack.
 - The dock the user sees on the setup page is already seeded — `SeedDefaultDockUseCase` runs at

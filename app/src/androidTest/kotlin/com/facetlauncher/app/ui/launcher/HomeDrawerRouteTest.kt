@@ -18,6 +18,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.center
@@ -663,6 +664,52 @@ class HomeDrawerRouteTest {
         settleAnimation()
 
         // Then the drawer closes — the interrupted close didn't end Home-press handling
+        composeRule.onNodeWithTag("alphabet_rail").assertIsNotDisplayed()
+    }
+
+    @Test
+    fun homePressOnBareHomeOpensTheDrawerAndFocusesSearch() {
+        // Given the launcher is on bare Home and in front
+        setContent()
+        composeRule.onNodeWithTag("home_app_list_scroll_region").assertExists()
+
+        // When Home is pressed again
+        composeRule.runOnUiThread { launcherViewModel.onHomePressed(whileResumed = true) }
+        settleAnimation()
+
+        // Then the drawer opens with the search field focused
+        composeRule.onNodeWithTag("alphabet_rail").assertIsDisplayed()
+        composeRule.onNodeWithTag("drawer_search_field").assertIsFocused()
+    }
+
+    @Test
+    fun homePressFromAnotherAppStaysOnHome() {
+        // Given the launcher is on bare Home
+        setContent()
+        composeRule.onNodeWithTag("home_app_list_scroll_region").assertExists()
+
+        // When Home is pressed from another app (the launcher was not in front)
+        composeRule.runOnUiThread { launcherViewModel.onHomePressed(whileResumed = false) }
+        settleAnimation()
+
+        // Then the drawer stays closed
+        composeRule.onNodeWithTag("alphabet_rail").assertIsNotDisplayed()
+    }
+
+    @Test
+    fun homePressWithTheDrawerOpenOnlyReturnsToHome() {
+        // Given the drawer is open
+        setContent()
+        composeRule.onNodeWithTag("home_app_list_scroll_region").assertExists()
+        composeRule.onRoot().performTouchInput { swipeUp() }
+        settleAnimation()
+        composeRule.onNodeWithTag("alphabet_rail").assertIsDisplayed()
+
+        // When Home is pressed while the launcher is in front
+        composeRule.runOnUiThread { launcherViewModel.onHomePressed(whileResumed = true) }
+        settleAnimation()
+
+        // Then the drawer closes rather than reopening
         composeRule.onNodeWithTag("alphabet_rail").assertIsNotDisplayed()
     }
 

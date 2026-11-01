@@ -106,7 +106,12 @@ class LauncherViewModel @Inject constructor(
     private val _homePressedEvent = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
     val homePressedEvent: SharedFlow<Unit> = _homePressedEvent.asSharedFlow()
 
-    fun onHomePressed() {
+    /** True when the latest Home press arrived while the launcher was already in front (not from another app). */
+    var homePressedWhileResumed = false
+        private set
+
+    fun onHomePressed(whileResumed: Boolean = false) {
+        homePressedWhileResumed = whileResumed
         _homePressedEvent.tryEmit(Unit)
     }
 

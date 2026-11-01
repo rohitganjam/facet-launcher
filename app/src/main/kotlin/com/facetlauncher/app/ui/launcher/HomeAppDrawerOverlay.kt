@@ -132,6 +132,7 @@ internal fun HomeAppDrawerOverlay(
     isDrawerOpen: Boolean,
     overlays: HomeOverlayState,
     onNavigateToSettings: () -> Unit,
+    searchFocusRequest: Int = 0,
 ) {
     val listState = rememberLazyListState()
     val gridState = rememberLazyGridState()
@@ -172,6 +173,7 @@ internal fun HomeAppDrawerOverlay(
         onOpenPrivateSpace = { overlays.showPrivateSpace = true },
         onNavigateToSettings = onNavigateToSettings,
         isDrawerOpen = isDrawerOpen,
+        searchFocusRequest = searchFocusRequest,
         modifier = Modifier
             .fillMaxSize()
             .offset { IntOffset(0, ((1f - drawer.progress.value) * containerHeightPx).toInt()) }
@@ -205,6 +207,7 @@ private fun HomeDrawerScreen(
     onOpenPrivateSpace: () -> Unit,
     onNavigateToSettings: () -> Unit,
     isDrawerOpen: Boolean,
+    searchFocusRequest: Int,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
@@ -226,6 +229,7 @@ private fun HomeDrawerScreen(
             onOpenSecureFolder = { intent -> runCatching { context.startActivity(intent) } },
             showPrivateSpaceRow = state.privateSpaceState !is PrivateSpaceState.NotConfigured,
             onPrivateSpaceRowClick = { state.privateSpaceState.onRowClick(onOpenPrivateSpace, actions.onRequestUnlockPrivateSpace) },
+            focusRequest = searchFocusRequest,
         ),
         searchSources = DrawerSearchSources(
             contacts = state.contacts,

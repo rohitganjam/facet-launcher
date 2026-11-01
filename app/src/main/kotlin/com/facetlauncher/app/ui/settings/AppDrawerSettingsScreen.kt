@@ -207,6 +207,15 @@ private fun ColumnScope.DrawerSearchAndOrderRows(
     onDrawerOpacityChange: (Float) -> Unit,
 ) {
     CardDivider()
+    LabeledDropdownRow(
+        title = stringResource(R.string.app_drawer_search_bar_position),
+        options = SearchBarPosition.entries,
+        selected = settings.searchBarPosition,
+        label = { stringResource(it.displayNameRes) },
+        onSelect = onSearchBarPositionChange,
+        testTag = "search_bar_position_row",
+    )
+    CardDivider()
     SettingsToggleRow(
         title = stringResource(R.string.app_drawer_search_contacts_title),
         subtitle = stringResource(R.string.app_drawer_search_contacts_subtitle),
@@ -221,15 +230,6 @@ private fun ColumnScope.DrawerSearchAndOrderRows(
         checked = settings.searchSettingsEnabled,
         onCheckedChange = onSearchSettingsToggle,
         testTag = "search_settings_toggle",
-    )
-    CardDivider()
-    LabeledDropdownRow(
-        title = stringResource(R.string.app_drawer_search_bar_position),
-        options = SearchBarPosition.entries,
-        selected = settings.searchBarPosition,
-        label = { stringResource(it.displayNameRes) },
-        onSelect = onSearchBarPositionChange,
-        testTag = "search_bar_position_row",
     )
     CardDivider()
     LabeledDropdownRow(

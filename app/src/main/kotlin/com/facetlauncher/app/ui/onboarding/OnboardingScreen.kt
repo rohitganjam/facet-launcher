@@ -1,11 +1,14 @@
 package com.facetlauncher.app.ui.onboarding
 
+import android.Manifest
 import android.app.Activity
 import android.content.Intent
 import android.os.Build
 import android.provider.Settings
 import android.view.WindowManager
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -132,6 +135,9 @@ fun OnboardingScreen(
     val density = LocalDensity.current
     val swipeCommitPx = with(density) { SWIPE_COMMIT_DISTANCE.toPx() }
     val context = LocalContext.current
+    val requestContactsPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        viewModel.setSearchContactsEnabled(granted)
+    }
     // Onboarding has no navigation stack of its own to reach the real UsageAccessExplanationScreen
     // from — this jumps straight to the system Settings redirect it would otherwise lead to.
     val onNavigateToUsageAccessExplanation: () -> Unit = {
@@ -209,6 +215,11 @@ fun OnboardingScreen(
                     onAppsToShowCountChange = viewModel::setAppsToShowCount,
                     drawerPresentation = uiState.drawerPresentation,
                     onDrawerPresentationChange = viewModel::setDrawerPresentation,
+                    onSearchBarPositionChange = viewModel::setSearchBarPosition,
+                    onSearchContactsToggle = { enabled ->
+                        if (enabled) requestContactsPermission.launch(Manifest.permission.READ_CONTACTS) else viewModel.setSearchContactsEnabled(false)
+                    },
+                    onSearchSettingsToggle = viewModel::setSearchSettingsEnabled,
                     onOpenFavoritesPicker = { subScreen = OnboardingSubScreen.FAVORITES_PICKER },
                     onReorderFavorites = viewModel::reorderFavorites,
                     onClearFavorites = viewModel::clearFavorites,
