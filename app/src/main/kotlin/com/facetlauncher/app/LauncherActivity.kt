@@ -136,7 +136,7 @@ class LauncherActivity : ComponentActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         if (intent.action == Intent.ACTION_MAIN && intent.hasCategory(Intent.CATEGORY_HOME)) {
-            viewModel.onHomePressed(whileResumed = lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED))
+            viewModel.onHomePressed(whileResumed = lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED))
         }
         handleFacetDeepLink(intent)
     }
