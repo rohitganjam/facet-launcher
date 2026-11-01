@@ -11,12 +11,12 @@ import javax.inject.Inject
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.mapLatest
+import kotlinx.coroutines.flow.transformLatest
 
-/** One installed pack as the Icons screen shows it. [samples] carry the pack's icons; empty when it covers none of the candidates. */
-data class IconPackOption(val pack: IconPackInfo, val samples: List<AppInfo>, val coveredApps: Int)
+/** One installed pack as the Icons screen shows it. [coveredApps] is known only for the applied pack, once it has loaded. */
+data class IconPackOption(val pack: IconPackInfo, val coveredApps: Int? = null, val isLoading: Boolean = false)
 
-/** What the Icons screen's style and pack cards preview. [builtInSamples] always carry the apps' own icons, even while a pack is applied. */
+/** What the Icons screen's style and pack cards show. [builtInSamples] always carry the apps' own icons, even while a pack is applied. */
 data class IconPickerState(
     val builtInSamples: List<AppInfo> = emptyList(),
     val packs: List<IconPackOption> = emptyList(),
@@ -24,7 +24,10 @@ data class IconPickerState(
     val isLoading: Boolean = true,
 )
 
-/** The Icons screen's card previews: the built-in styles' samples and every installed pack with its own. */
+/**
+ * The Icons screen's cards: the built-in styles' samples and every installed pack, by its own app icon. No pack is
+ * read here except the applied one, for its coverage, so opening the screen costs only a package query.
+ */
 class ObserveIconPickerUseCase @Inject constructor(
     private val observePlacedItems: ObservePlacedItemsUseCase,
     private val getInstalledApps: GetInstalledAppsUseCase,
@@ -38,22 +41,20 @@ class ObserveIconPickerUseCase @Inject constructor(
         observePlacedItems.items(PlacementTarget.GlobalFavorites),
         observePlacedItems.items(PlacementTarget.GlobalDock),
         getInstalledApps.observe(),
-    ) { favorites, dock, installed -> (favorites + dock).singleApps() to installed }
-        .mapLatest { (homeApps, installed) ->
-            val defaults = defaultAppRepository.getDefaultAppPackages()
-            val builtIn = selectIconSamples(homeApps, installed, defaults).map { appRepository.withOwnIcon(it) }
-            val installedPackages = installed.mapTo(HashSet()) { it.packageName }
-            val packs = iconPackRepository.getInstalledPacks().map { info ->
-                val icons = iconPackRepository.load(info.packageName, installedPackages)
-                if (icons == null) {
-                    IconPackOption(info, samples = emptyList(), coveredApps = 0)
-                } else {
-                    val covered = { app: AppInfo -> icons.covers(app.packageName, app.activityName) }
-                    val samples = selectIconSamples(homeApps, installed, defaults, accept = covered).mapNotNull(icons::applyTo)
-                    IconPackOption(info, samples, coveredApps = installed.distinctBy { it.packageName }.count(covered))
-                }
+        iconPackRepository.selection,
+    ) { favorites, dock, installed, selection -> Triple((favorites + dock).singleApps(), installed, selection?.packageName) }
+        .transformLatest { (homeApps, installed, applied) ->
+            val builtIn = selectIconSamples(homeApps, installed, defaultAppRepository.getDefaultAppPackages()).map { appRepository.withOwnIcon(it) }
+            val packs = iconPackRepository.getInstalledPacks()
+            val totalApps = installed.distinctBy { it.packageName }.size
+            fun state(coverage: (IconPackInfo) -> IconPackOption) = IconPickerState(builtIn, packs.map(coverage), totalApps, isLoading = false)
+            // The cards first, the applied pack loading, then its coverage once it has been read.
+            emit(state { IconPackOption(it, isLoading = it.packageName == applied) })
+            if (applied != null && packs.any { it.packageName == applied }) {
+                val icons = iconPackRepository.load(applied, installed.mapTo(HashSet()) { it.packageName })
+                val covered = icons?.let { pack -> installed.distinctBy { it.packageName }.count { pack.covers(it.packageName, it.activityName) } }
+                emit(state { IconPackOption(it, coveredApps = covered.takeIf { _ -> it.packageName == applied }) })
             }
-            IconPickerState(builtInSamples = builtIn, packs = packs, totalApps = installed.distinctBy { it.packageName }.size, isLoading = false)
         }
 
     private fun List<PlacedItem>.singleApps(): List<AppInfo> = filterIsInstance<PlacedItem.SingleApp>().map { it.app }

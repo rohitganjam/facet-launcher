@@ -29,6 +29,7 @@ import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.clickable
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -371,9 +372,15 @@ private fun PackCards(packs: ImmutableList<IconPackOption>, appliedPack: String?
                 onClick = { onSelectPack(option.pack.packageName) },
                 modifier = Modifier.width(optionWidth).testTag("icons_pack_${option.pack.packageName}"),
             ) {
-                // A pack draws its icons as they are, whatever built-in style is stored.
-                CompositionLocalProvider(LocalIconRenderMode provides IconRenderMode.SYSTEM_DEFAULT) {
-                    if (option.samples.isNotEmpty()) SampleGrid(option.samples.toImmutableList()) else PackOwnIcon(option.pack)
+                // Only the pack's own app icon: a pack is read when it's applied, and the Home preview above shows it.
+                PackOwnIcon(option.pack)
+                if (option.isLoading) {
+                    CircularProgressIndicator(
+                        color = Accent,
+                        trackColor = Color.Transparent,
+                        strokeWidth = 2.dp,
+                        modifier = Modifier.size(SAMPLE_ICON_SIZE * 2 + 8.dp).testTag("icons_pack_loading"),
+                    )
                 }
             }
         }
@@ -530,7 +537,7 @@ private fun IconsScreenPreview() {
 @Preview(name = "Pack applied, dark", showBackground = true, widthDp = 390, heightDp = 1000, uiMode = Configuration.UI_MODE_NIGHT_YES)
 @Composable
 private fun IconsScreenPackPreview() {
-    val packs = listOf("Arcticons", "Lawnicons", "Delta").map { IconPackOption(IconPackInfo("pack.$it", it, icon = null), samples = emptyList(), coveredApps = 142) }
+    val packs = listOf("Arcticons", "Lawnicons", "Delta").map { IconPackOption(IconPackInfo("pack.$it", it, icon = null), coveredApps = 142.takeIf { _ -> it == "Arcticons" }) }
     FacetLauncherTheme {
         IconsContent(
             settings = LauncherSettings(iconPackPackage = "pack.Arcticons"),

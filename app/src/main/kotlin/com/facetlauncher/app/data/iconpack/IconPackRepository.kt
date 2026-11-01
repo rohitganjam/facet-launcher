@@ -85,7 +85,8 @@ open class IconPackRepository @Inject constructor(
         val updated = runCatching { packageManager.getPackageInfo(packageName, 0).lastUpdateTime }.getOrNull()
             ?: return@withContext null
         loadMutex.withLock {
-            loaded[packageName]?.takeIf { it.packUpdated == updated && it.forPackages == installedPackages }?.let { return@withLock it.icons }
+            // A pack read for more apps than asked for (Home's scan also counts this launcher and Private Space) still answers.
+            loaded[packageName]?.takeIf { it.packUpdated == updated && it.forPackages.containsAll(installedPackages) }?.let { return@withLock it.icons }
             val icons = runCatching { read(packageName, installedPackages) }.getOrNull()
             loaded[packageName] = LoadedPack(updated, installedPackages, icons)
             icons

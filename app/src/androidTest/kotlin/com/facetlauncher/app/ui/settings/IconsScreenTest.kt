@@ -101,8 +101,8 @@ class IconsScreenTest {
 
     private val twoPacks = IconPickerState(
         packs = listOf(
-            IconPackOption(IconPackInfo("pack.alpha", "Alpha", icon = null), samples = emptyList(), coveredApps = 3),
-            IconPackOption(IconPackInfo("pack.beta", "Beta", icon = null), samples = emptyList(), coveredApps = 7),
+            IconPackOption(IconPackInfo("pack.alpha", "Alpha", icon = null), coveredApps = 3),
+            IconPackOption(IconPackInfo("pack.beta", "Beta", icon = null)),
         ),
         totalApps = 10,
         isLoading = false,
@@ -165,6 +165,17 @@ class IconsScreenTest {
 
         // Then Beta is asked for
         assertEquals("pack.beta", picked)
+    }
+
+    @Test
+    fun aPackBeingAppliedShowsItIsLoading() {
+        // Given Beta just picked and still being read
+        val loading = twoPacks.copy(packs = twoPacks.packs.map { if (it.pack.packageName == "pack.beta") it.copy(isLoading = true) else it.copy(coveredApps = null) })
+        setPackContent(LauncherSettings(iconPackPackage = "pack.beta"), loading)
+
+        // Then its card shows a spinner, and no coverage is claimed yet
+        composeRule.onNodeWithTag("icons_pack_loading", useUnmergedTree = true).assertExists()
+        assertEquals(0, composeRule.onAllNodesWithText("Covers", substring = true).fetchSemanticsNodes().size)
     }
 
     @Test

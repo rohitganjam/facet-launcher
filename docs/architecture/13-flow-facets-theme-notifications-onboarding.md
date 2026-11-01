@@ -252,9 +252,10 @@ flowchart LR
   is `SYSTEM_DEFAULT`, so `LocalIconRenderMode` draws icons as they are; the stored `icon_render_mode` is untouched and
   comes back when the pack is cleared. The pack's icons come in through `AppInfo.icon` (`03 §1`), and `AppIcon` draws one
   with `iconFromPack` unclipped, ignoring `LocalIconShape`. Settings → Appearance → Icons lists the built-in styles and
-  the installed packs side by side (`IconsViewModel` over `ObserveIconPickerUseCase`): each card previews four apps
-  (`SelectIconSamplesUseCase`: Home, then the device's default apps, then the drawer; a pack card only shows apps it
-  covers). Picking a built-in style clears the pack; with a pack applied the Colour and Background rows give way to
+  the installed packs side by side (`IconsViewModel` over `ObserveIconPickerUseCase`): a built-in card previews four apps
+  (`SelectIconSamplesUseCase`: Home, then the device's default apps, then the drawer), a pack card shows only the pack's
+  own app icon, so opening the screen reads no pack; tapping one applies it (a spinner while it's read) and the Home
+  preview above shows it. Picking a built-in style clears the pack; with a pack applied the Colour and Background rows give way to
   the pack's coverage and "Apps the pack misses" (`icon_pack_fallback`), and Icon Shape is greyed out under `MATCH_PACK`.
   "Get more" and "Find icon packs" open the Play Store's icon pack search (the web search where there is no Play Store).
 - `LocalDynamicColorRefreshSignal` is bumped when the wallpaper changes so Material You colours
