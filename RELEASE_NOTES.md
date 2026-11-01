@@ -1,29 +1,41 @@
-# Facet Launcher 0.1.32
+# Facet Launcher 0.1.34
 
 ## New Features
-- After an update, a small "What's new" pill appears once at the top of the Home screen to point you to the release notes. It shows only if you haven't read that version's notes yet, and it doesn't appear on a fresh install.
+- Clock stack: each facet's clock area can now hold several pages, such as the clock and widgets. Swipe sideways to move between them. Page dots appear during and just after a swipe, including in landscape and while adjusting.
+- A new Widget stack screen lists the facet's pages. You can reorder, configure, remove and add pages there. Free users get one page and Pro users get up to five.
+- Each facet remembers the page it last showed.
+- A page whose app was uninstalled now shows a placeholder with a Remove button.
 
 ## Fixes
-- In landscape, the facet settings and delete buttons were cut off. The "Add facet" card was also squeezed down to a thin strip. Both now display properly.
-- In the contact connections sheet, dragging back up now scrolls the list instead of closing the app drawer.
-- In landscape, the clock menu and the set-default sheets no longer cut off their last row. They now scroll.
-- In landscape, the large gap between the clock and the calendar on Home is gone. Rows are no longer cut off in short windows.
+- Responsive widgets on Home now get their real size, so they no longer stay stuck on their smallest layout.
+- Swiping between clock pages no longer flickers, resizes, jitters or re-loads a widget as the next page arrives.
+- Horizontal drags on a widget that doesn't scroll now pass through to Home, so you can still swipe to other screens.
+- A neighboring widget page no longer briefly shows a clock while you swipe to it.
+- In landscape, taller or differently aligned pages are no longer clipped or shifted when they land.
+- A swiped widget page now slides instead of squeezing.
 
 ## Improvements
-- On short screens, such as landscape, facet settings and delete facet are now in a three-dot menu next to the facet name. The "Add facet" card switches to a compact layout when space is tight. Portrait is unchanged.
-- On the landscape Home screen, the clock side now scrolls when its content doesn't fit. Swiping up from the apps side still opens the app drawer.
+- The clock's alignment, size and divider are now saved separately for each facet. They no longer change when you edit the clock override or launcher-wide settings. A facet you haven't adjusted shows the default layout, and your first adjustment saves it to that facet.
+- "Reset clock position" now clears only the clock's placement.
+- The Alignment row is removed from the Clock style gallery.
+- The clock menu now shows options that match the visible page. These include clock and calendar settings, "Replace with custom widget" and "Replace with clock".
+- Replacing a page no longer requires Pro.
+- Hosted widgets now use tighter padding.
+- "Edit defaults" on the inherit card now links to the launcher-wide screen.
+- New and restored facets start with the native clock as their first page.
+- New strings are translated into all five languages.
 
 ## Internal
-- Debug settings: add a row to show the What's new pill again.
-- HomeDrawerRouteTest: supply WeatherViewModel and the What's new pill ViewModel so the test runs again.
-- KeyboardDismissalTest: supply the weather and What's new pill view models.
-- AppContextMenu: split state, pages, overlays and transition into helpers; clears LongMethod and LambdaParameterInRestartableEffect (baseline 61 → 59).
-- Detekt baseline regenerated over the combined fixes (77 → 61).
-- Detekt: clear ComplexCondition, LoopWithTooManyJumpStatements and two CyclomaticComplexMethod entries (PlaceWidgetUseCase.isFree, HubViewModel.hasSameFrame, cursor loop cleanup, placementActionsFor, queryCustomDataRows/connectionFor); baseline 83 → 77.
-- Split flat-list settings screens, the clock style gallery and the home setup page into private composables; suppress LongMethod on Migrations.migrate and FacetNavHost.
-- AppDrawerScreen takes parameter groups (item actions, appearance, search bar, search sources): about 65 parameters down to 17; baseline 85 → 83.
-- AppDrawerScreen: move list derivations, rail jump math and tab helpers into DrawerBrowseModel, DrawerRailTarget and DrawerTab, with unit tests; baseline 88 → 85.
-- Composables take ImmutableList/ImmutableMap/ImmutableSet; UnstableCollections baseline 37 → 2.
-- Drop the Compose stability config; List parameters are compared by instance again.
-- Detekt: configure rules to fit the codebase, keep UnstableCollections on; baseline 160 → 128.
-- Regenerate graphify-out.
+- Added the `clock_stack_items` table and `ClockStackRepository`. Migration 34→35 creates a first page for every facet by moving existing hosted widgets into a one-item stack.
+- `Facet` now carries `clockStack`. The five single-widget fields are removed from `Facet` and the landscape group, and the columns are retired. Home, the resize commit, facet deletion and the widget picker read and write the stack and release every widget id involved.
+- Added `ReplaceClockStackItemUseCase`, which swaps a page in place and releases the old widget id. The picker now takes an Add or Replace target. The Pro upsell reason is now `WIDGET_STACK`.
+- Migration 35→36 adds the placement-ownership flag, derived from `overrideClock`.
+- Pager rework: neighbouring pages stay composed and parked. `HomeWidgetSizing` is answered per widget id. Page room comes from `ClockGeometry.widgetRoomPx`. Pages shift relative to `ClockPagerState.anchorIndex`. A hosted view is only told its size when it changes, and the clock slot is placed from the height measured in the same pass.
+- `ClockWidgetTile` now reads the host view from the tile instead of a local that was null after the first recomposition.
+- Tests added for the pager anchor, per-widget neighbour sizing, widget room, Home wiring, `ClockWidgetPickerViewModel` add and replace flows, and the stack screen Add flow.
+- Fixed the `clockScaleIsClampedToItsBounds` test to drag one move per frame.
+- Fixed a preview fixture, and no facet now resolves to the launcher clock.
+- Docs: refreshed docs 10 and 12, the test registry, counts and registries, Home state inputs, adjust sheet rows and placement ownership. Added plan docs for the widget stack.
+- Regenerated graphify-out.
+- Release notes scripts now show why `claude -p` failed, using stdout when stderr is empty.
+- Release 0.1.33: version bump, What's new, build commit recorded.
