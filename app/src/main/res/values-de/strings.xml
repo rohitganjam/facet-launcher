@@ -890,7 +890,7 @@
     <string name="icon_shape_square">Quadrat</string>
     <string name="icons_screen_icon_pack">Icon-Paket</string>
     <string name="icons_screen_built_in">Integriert</string>
-    <string name="icons_screen_installed">Installiert</string>
+    <string name="icons_screen_external">Extern</string>
     <plurals name="icons_screen_pack_count">
         <item quantity="one">%d Paket</item>
         <item quantity="other">%d Pakete</item>

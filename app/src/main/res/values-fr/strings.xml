@@ -890,7 +890,7 @@
     <string name="icon_shape_square">Carré</string>
     <string name="icons_screen_icon_pack">Pack d\'icônes</string>
     <string name="icons_screen_built_in">Intégrés</string>
-    <string name="icons_screen_installed">Installés</string>
+    <string name="icons_screen_external">Externes</string>
     <plurals name="icons_screen_pack_count">
         <item quantity="one">%d pack</item>
         <item quantity="other">%d packs</item>

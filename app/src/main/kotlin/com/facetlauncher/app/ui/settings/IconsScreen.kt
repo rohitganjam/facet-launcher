@@ -272,7 +272,7 @@ private fun IconOptions(
             )
             CardDivider()
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Bottom) {
-                OptionGroupLabel(stringResource(R.string.icons_screen_installed))
+                OptionGroupLabel(stringResource(R.string.icons_screen_external))
                 if (packs.isNotEmpty()) {
                     Text(
                         text = pluralStringResource(R.plurals.icons_screen_pack_count, packs.size, packs.size),

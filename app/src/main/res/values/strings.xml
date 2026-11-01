@@ -94,7 +94,7 @@
     <string name="icon_shape_square">Square</string>
     <string name="icons_screen_icon_pack">Icon pack</string>
     <string name="icons_screen_built_in">Built-in</string>
-    <string name="icons_screen_installed">Installed</string>
+    <string name="icons_screen_external">External</string>
     <plurals name="icons_screen_pack_count">
         <item quantity="one">%d pack</item>
         <item quantity="other">%d packs</item>
