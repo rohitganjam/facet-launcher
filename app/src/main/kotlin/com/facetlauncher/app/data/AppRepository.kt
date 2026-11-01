@@ -24,6 +24,7 @@ import androidx.core.graphics.drawable.toBitmap
 import com.facetlauncher.app.data.di.ApplicationScope
 import com.facetlauncher.app.data.di.DefaultDispatcher
 import com.facetlauncher.app.data.icon.monochromeCoverage
+import com.facetlauncher.app.data.iconpack.IconPackIcons
 import com.facetlauncher.app.data.iconpack.IconPackRepository
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.AppProfile
@@ -31,6 +32,9 @@ import com.facetlauncher.app.data.model.IconPackFallback
 import com.facetlauncher.app.data.model.IconPackSelection
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.text.Collator
+import java.time.Clock
+import java.time.LocalDate
+import java.time.ZoneId
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.CoroutineDispatcher
@@ -42,15 +46,19 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.shareIn
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 /**
@@ -114,6 +122,13 @@ private val PROFILE_CHANGE_ACTIONS = IntentFilter().apply {
     addAction(Intent.ACTION_PROFILE_UNAVAILABLE)
 }
 
+/** What can move the day of the month under an icon pack's calendar icon while the launcher runs. */
+private val DATE_CHANGE_ACTIONS = IntentFilter().apply {
+    addAction(Intent.ACTION_DATE_CHANGED)
+    addAction(Intent.ACTION_TIME_CHANGED)
+    addAction(Intent.ACTION_TIMEZONE_CHANGED)
+}
+
 /** Wraps [LauncherApps] to expose the launchable apps visible to this launcher, across every profile (personal + a Work Profile, if one exists). */
 @Singleton
 class AppRepository @Inject constructor(
@@ -128,6 +143,8 @@ class AppRepository @Inject constructor(
     @DefaultDispatcher private val defaultDispatcher: CoroutineDispatcher = Dispatchers.Default,
     // Defaulted like the two above; null draws every app's own icon.
     private val iconPackRepository: IconPackRepository? = null,
+    /** Dates an icon pack's calendar icons. */
+    private val clock: Clock = Clock.systemDefaultZone(),
 ) {
 
     /**
@@ -215,7 +232,13 @@ class AppRepository @Inject constructor(
     }
 
     /** [getInstalledApps] with [selection]'s pack icons in place of the apps' own, where it has them. */
-    private suspend fun scanInstalledApps(selection: IconPackSelection?): List<AppInfo> = withContext(defaultDispatcher) {
+    private suspend fun scanInstalledApps(selection: IconPackSelection?): List<AppInfo> = scan(selection).apps
+
+    /** One scan's apps, with the pack and day they were drawn for, so a date change can redraw just the dated ones. */
+    private class Scan(val apps: List<AppInfo>, val pack: IconPackIcons?, val dayOfMonth: Int)
+
+    private suspend fun scan(selection: IconPackSelection?): Scan = withContext(defaultDispatcher) {
+        val day = dayOfMonth()
         val collator = Collator.getInstance()
         val activities = userManager.userProfiles
             // A device-specific LauncherApps quirk for one odd profile (e.g. an OEM clone profile
@@ -224,7 +247,7 @@ class AppRepository @Inject constructor(
             .flatMap { handle -> runCatching { launcherApps.getActivityList(null, handle) }.getOrDefault(emptyList()).map { it to handle } }
         val pack = selection?.let { iconPackRepository?.loadApplied(it, activities.installedPackages()) }
         val themeUncovered = selection?.fallback == IconPackFallback.MATCH_PACK
-        activities
+        val apps = activities
             .map { (info, handle) ->
                 async {
                     // getActivityList() succeeding doesn't guarantee every entry it returns is
@@ -237,7 +260,7 @@ class AppRepository @Inject constructor(
                     runCatching {
                         val packageName = info.applicationInfo.packageName
                         val className = info.componentName.className
-                        val packIcon = pack?.let { runCatching { it.iconFor(packageName, className) }.getOrNull() }
+                        val packIcon = pack?.let { runCatching { it.iconFor(packageName, className, day) }.getOrNull() }
                         val drawable = if (packIcon == null) runCatching { info.getIcon(0) }.getOrNull() else null
                         val ownIcon = drawable?.let { runCatching { flattenIcon(it) }.getOrNull() }
                         val themedIcon = if (themeUncovered && ownIcon != null) pack?.let { runCatching { it.themed(ownIcon, packageName) }.getOrNull() } else null
@@ -265,6 +288,53 @@ class AppRepository @Inject constructor(
             .awaitAll()
             .filterNotNull()
             .sortedWith(Comparator { a, b -> collator.compare(a.label, b.label) })
+        Scan(apps, pack, day)
+    }
+
+    /** Today's day of the month in the device's current time zone, which [clock] may have been made before a zone change. */
+    private fun dayOfMonth(): Int = LocalDate.now(clock.withZone(ZoneId.systemDefault())).dayOfMonth
+
+    /** [scan]'s apps, with a pack's calendar icons redrawn whenever the day changes; just those apps, not a rescan. */
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private fun withCurrentDate(scan: Scan): Flow<List<AppInfo>> {
+        val pack = scan.pack
+        if (pack == null || scan.apps.none { pack.isDated(it.packageName, it.activityName) }) return flowOf(scan.apps)
+        return observeDayOfMonth().mapLatest { day ->
+            if (day == scan.dayOfMonth) {
+                scan.apps
+            } else {
+                withContext(defaultDispatcher) {
+                    scan.apps.map { app ->
+                        if (!pack.isDated(app.packageName, app.activityName)) return@map app
+                        val icon = runCatching { pack.iconFor(app.packageName, app.activityName, day) }.getOrNull() ?: return@map app
+                        app.copy(icon = icon.asImageBitmap(), monochromeIcon = null, iconFromPack = true)
+                    }
+                }
+            }
+        }
+    }
+
+    /** The day of the month, now and again on a date, time or zone change while running, and on [recheckDate]. */
+    private fun observeDayOfMonth(): Flow<Int> = callbackFlow {
+        val receiver = object : BroadcastReceiver() {
+            override fun onReceive(context: Context?, intent: Intent?) {
+                trySend(dayOfMonth())
+            }
+        }
+        ContextCompat.registerReceiver(context, receiver, DATE_CHANGE_ACTIONS, ContextCompat.RECEIVER_NOT_EXPORTED)
+        val rechecks = launch { dateRechecks.collect { trySend(dayOfMonth()) } }
+        trySend(dayOfMonth())
+        awaitClose {
+            rechecks.cancel()
+            context.unregisterReceiver(receiver)
+        }
+    }.distinctUntilChanged()
+
+    private val dateRechecks = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+
+    /** Re-reads the date, for Home coming back after a sleep a date-change broadcast may not have reached. */
+    fun recheckDate() {
+        dateRechecks.tryEmit(Unit)
     }
 
     /**
@@ -299,7 +369,8 @@ class AppRepository @Inject constructor(
     @OptIn(ExperimentalCoroutinesApi::class)
     private fun observeInstalledAppsUncached(): Flow<List<AppInfo>> =
         combine(observePackageChanges(), iconPackRepository?.selection ?: flowOf(null)) { _, selection -> selection }
-            .mapLatest(::scanInstalledApps)
+            .mapLatest(::scan)
+            .flatMapLatest(::withCurrentDate)
 
     private fun observePackageChanges(): Flow<Unit> = callbackFlow {
         val refresh: () -> Unit = { trySend(Unit) }

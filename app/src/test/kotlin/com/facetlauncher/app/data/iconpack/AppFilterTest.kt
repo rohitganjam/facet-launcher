@@ -39,6 +39,30 @@ class AppFilterTest {
     }
 
     @Test
+    fun `calendar entries give a day-of-month prefix by activity, then by package`() {
+        // Given a pack dating one calendar app, alongside its plain icon, and one uninstalled one
+        val filter = parse(
+            """
+            <resources>
+                <item component="ComponentInfo{com.cal/com.cal.Main}" drawable="cal" />
+                <calendar component="ComponentInfo{com.cal/.Main}" prefix="cal_day_" />
+                <calendar component="ComponentInfo{com.gone/com.gone.Main}" prefix="gone_" />
+                <calendar component="ComponentInfo{{com.typo/com.typo.Main}" prefix="typo_" />
+                <calendar component="ComponentInfo{com.broken/com.broken.Main}" prefix="" />
+            </resources>
+            """,
+            keepPackage = { it != "com.gone" },
+        )
+
+        // Then the calendar app has its prefix by activity and by package, its plain icon stays, and the rest are dropped
+        assertEquals("cal_day_", filter.calendarPrefixFor("com.cal", "com.cal.Main"))
+        assertEquals("cal_day_", filter.calendarPrefixFor("com.cal", "com.cal.Other"))
+        assertEquals("cal", filter.drawableFor("com.cal", "com.cal.Main"))
+        assertEquals(mapOf("com.cal/com.cal.Main" to "cal_day_", "com.typo/com.typo.Main" to "typo_"), filter.calendars)
+        assertNull(filter.calendarPrefixFor("com.other", "com.other.Main"))
+    }
+
+    @Test
     fun `only the packages asked for are kept`() {
         // Given a pack listing an installed and an uninstalled app
         val filter = parse(

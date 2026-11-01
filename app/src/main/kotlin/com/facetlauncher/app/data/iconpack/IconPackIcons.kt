@@ -8,11 +8,9 @@ import android.graphics.PorterDuff
 import android.graphics.PorterDuffXfermode
 import android.graphics.Rect
 import android.graphics.drawable.Drawable
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.core.content.res.ResourcesCompat
 import androidx.core.graphics.createBitmap
 import androidx.core.graphics.drawable.toBitmap
-import com.facetlauncher.app.data.model.AppInfo
 
 /** Pack icons are drawn at most this many pixels square: sharp at every icon size the app uses, without holding full-size pack art for every app. */
 const val PACK_ICON_SIZE = 192
@@ -22,15 +20,14 @@ interface IconPackIcons {
     /** Whether the pack has its own icon for this activity (or its package). */
     fun covers(packageName: String, className: String): Boolean
 
-    /** The pack's own icon for this activity, or null when it has none. */
-    fun iconFor(packageName: String, className: String): Bitmap?
+    /** Whether the pack draws this activity's icon for the day of the month (a calendar app). */
+    fun isDated(packageName: String, className: String): Boolean
+
+    /** The pack's own icon for this activity on [dayOfMonth] (only a dated app's icon depends on it), or null when it has none. */
+    fun iconFor(packageName: String, className: String, dayOfMonth: Int): Bitmap?
 
     /** [icon] themed with the pack's backing tile, mask and overlay, or null when the pack ships none of them. */
     fun themed(icon: Bitmap, packageName: String): Bitmap?
-
-    /** [app] wearing the pack's icon, or null when the pack has none for it. */
-    fun applyTo(app: AppInfo): AppInfo? =
-        iconFor(app.packageName, app.activityName)?.let { app.copy(icon = it.asImageBitmap(), monochromeIcon = null, iconFromPack = true) }
 }
 
 /** [IconPackIcons] read from an installed pack's own resources. */
@@ -40,10 +37,16 @@ internal class ResourceIconPack(
     private val filter: AppFilter,
 ) : IconPackIcons {
 
-    override fun covers(packageName: String, className: String): Boolean = filter.drawableFor(packageName, className) != null
+    override fun covers(packageName: String, className: String): Boolean =
+        filter.drawableFor(packageName, className) != null || isDated(packageName, className)
 
-    override fun iconFor(packageName: String, className: String): Bitmap? =
-        filter.drawableFor(packageName, className)?.let(::drawable)?.let(::render)
+    override fun isDated(packageName: String, className: String): Boolean = filter.calendarPrefixFor(packageName, className) != null
+
+    /** A dated app's drawable for the day first; a pack missing that day falls back to the app's plain entry. */
+    override fun iconFor(packageName: String, className: String, dayOfMonth: Int): Bitmap? {
+        val dated = filter.calendarPrefixFor(packageName, className)?.let { drawable("$it$dayOfMonth") }
+        return (dated ?: filter.drawableFor(packageName, className)?.let(::drawable))?.let(::render)
+    }
 
     override fun themed(icon: Bitmap, packageName: String): Bitmap? {
         if (!filter.hasFallbackArt) return null

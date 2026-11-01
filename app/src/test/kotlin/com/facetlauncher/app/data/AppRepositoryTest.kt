@@ -24,6 +24,10 @@ import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.AppProfile
 import com.facetlauncher.app.data.model.IconPackFallback
 import java.io.File
+import java.time.Clock
+import java.time.Instant
+import java.time.ZoneId
+import java.time.ZoneOffset
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -587,10 +591,56 @@ class AppRepositoryTest {
 
     /** A pack covering only `com.example.covered`: its icon is all red, and it themes other apps all blue. */
     private class FakePackIcons : IconPackIcons {
-        override fun covers(packageName: String, className: String) = packageName == "com.example.covered"
-        override fun iconFor(packageName: String, className: String): Bitmap? = if (covers(packageName, className)) solid(Color.RED) else null
+        override fun covers(packageName: String, className: String) = packageName == "com.example.covered" || isDated(packageName, className)
+        override fun isDated(packageName: String, className: String) = packageName == "com.example.calendar"
+        override fun iconFor(packageName: String, className: String, dayOfMonth: Int): Bitmap? = when {
+            isDated(packageName, className) -> solid(colorForDay(dayOfMonth))
+            covers(packageName, className) -> solid(Color.RED)
+            else -> null
+        }
         override fun themed(icon: Bitmap, packageName: String): Bitmap = solid(Color.BLUE)
         private fun solid(color: Int) = Bitmap.createBitmap(PACK_ICON_SIZE, PACK_ICON_SIZE, Bitmap.Config.ARGB_8888).apply { eraseColor(color) }
+
+        companion object {
+            /** A distinct colour per day, so a test can tell which day's icon is drawn. */
+            fun colorForDay(day: Int) = Color.rgb(day * 8, 0, 255 - day * 8)
+        }
+    }
+
+    /** A clock a test can move to another day. */
+    private class MovableClock(var instant: Instant) : Clock() {
+        override fun getZone(): ZoneId = ZoneOffset.UTC
+        override fun withZone(zone: ZoneId?): Clock = this
+        override fun instant(): Instant = instant
+    }
+
+    @Test
+    fun `a pack's calendar icon follows the date, redrawing only the calendar app`() = runTest {
+        // Given a pack that dates the calendar app, on the 14th
+        val clock = MovableClock(Instant.parse("2026-11-14T12:00:00Z"))
+        val settings = settingsRepository().apply { setIconPack("com.example.pack") }
+        val launcherApps = mock(LauncherApps::class.java)
+        val activities = listOf(fakeActivity("com.example.calendar", ".Main", "Calendar"), fakeActivity("com.example.covered", ".Main", "Covered"))
+        `when`(launcherApps.getActivityList(eq(null), any())).thenReturn(activities)
+        val repository = AppRepository(
+            launcherApps, personalOnlyUserManager(), context, backgroundScope,
+            iconPackRepository = FakeIconPackRepository(context, settings, FakePackIcons()), clock = clock,
+        )
+        val emissions = Channel<List<AppInfo>>(Channel.UNLIMITED)
+        val collectJob = launch { repository.observeInstalledApps().collect { emissions.send(it) } }
+        val first = emissions.receive().associateBy { it.packageName }
+        assertEquals(FakePackIcons.colorForDay(14), first.getValue("com.example.calendar").centerColor())
+
+        // When midnight passes while Home is away and it comes back
+        clock.instant = Instant.parse("2026-11-15T00:01:00Z")
+        repository.recheckDate()
+
+        // Then the calendar app shows the 15th and the other app's icon is the very same bitmap, not redrawn
+        val next = emissions.receive().associateBy { it.packageName }
+        assertEquals(FakePackIcons.colorForDay(15), next.getValue("com.example.calendar").centerColor())
+        assertTrue(next.getValue("com.example.covered").icon === first.getValue("com.example.covered").icon)
+        verify(launcherApps).getActivityList(eq(null), any())
+        collectJob.cancel()
     }
 
     /** Stands in for another app's resources; [icons] null means the pack isn't installed. */

@@ -129,6 +129,7 @@ class LauncherActivity : ComponentActivity() {
         super.onResume()
         // A refund, a purchase on another device or a redeemed code shows up here without a restart.
         lifecycleScope.launch { entitlementRepository.refresh() }
+        viewModel.onResumed()
     }
 
     override fun onNewIntent(intent: Intent) {

@@ -21,7 +21,9 @@ package, and sets `AppInfo.iconFromPack` so `AppIcon` draws it unclipped. An app
 icon on the pack's `iconback`/`iconmask`/`iconupon` art under `MATCH_PACK` (also `iconFromPack`), or keeps its
 own icon under `KEEP_DEFAULT` or when the pack ships no such art. Pack icons carry no `monochromeIcon`. The
 pack is parsed once per pack version and installed-app set (`IconPackRepository.load`, only installed apps'
-appfilter entries are kept), and a pack that is no longer installed is unapplied there.
+appfilter entries are kept), and a pack that is no longer installed is unapplied there. A pack's `<calendar>`
+entries date an app's icon: the drawable is the entry's prefix plus today's day of the month (falling back to the
+app's plain `<item>`, then its own icon), and a new day redraws only those apps (see §5, "Calendar icons").
 
 ```mermaid
 sequenceDiagram
@@ -238,6 +240,7 @@ sequenceDiagram
 | Pro entitlement | `EntitlementRepository.isPro` — a `StateFlow<Boolean>` fed by `PlayEntitlementRepository` (the cached value first, then `BillingRepository.queryPro()` at startup and every resume, with a debug-only `EntitlementOverride` applied on top, plus the `BillingRepository.updates` flow for purchases that finish while running). Everything else gets "everyone is Pro" from the base class (tests, previews) | `RunFacetAutomationUseCase` (a pass on change), `ObserveFacetAutomationUseCase`, `RuleEditorViewModel`; `RefreshAutomationStateUseCase` reads `.value` |
 | Wake events | `WakeEventsRepository.observeWakeEvents()` — `callbackFlow` over `ACTION_SCREEN_ON`, `ACTION_USER_PRESENT`, `ACTION_TIME_CHANGED`, `ACTION_TIMEZONE_CHANGED` | `RunFacetAutomationUseCase` (see [15](15-flow-facet-automation.md)) |
 | Next alarm | `callbackFlow` over `ACTION_NEXT_ALARM_CLOCK_CHANGED` + injected `Clock` | `ObserveClockAccessoriesUseCase` |
+| Calendar icons (icon packs) | `AppRepository.observeDayOfMonth()` — `callbackFlow` over `ACTION_DATE_CHANGED`, `ACTION_TIME_CHANGED`, `ACTION_TIMEZONE_CHANGED`, plus `recheckDate()` (`LauncherActivity.onResume` → `LauncherViewModel.onResumed`, for a midnight passed asleep), read through the injected `Clock` in the current zone; subscribed only while the applied pack dates an installed app (`flatMapLatest` after each scan). A new day redraws just the dated apps' icons from the last scan, no re-list | `installedApps` (`03 §1`) |
 | Widget host | `LauncherAppWidgetHost.providerChanges: SharedFlow<Int>` merged with a `refreshTrigger` in `ObserveHubStateUseCase` | `HubViewModel` |
 | Work Profile state | `WorkProfileRepository.observeWorkProfiles()` — `callbackFlow` over profile broadcasts mapped through `UserManager.isQuietModeEnabled` | `LauncherViewModel`, `SettingsViewModel` |
 | Private Space | `PrivateSpaceRepository.observePrivateSpaceState()` (sealed `PrivateSpaceState`) + `observePrivateSpaceApps()` (= `observeAppsForProfile(PRIVATE)`) | `PrivateSpaceViewModel`, `DrawerViewModel` |

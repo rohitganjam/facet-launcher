@@ -88,7 +88,7 @@ data class LauncherUiState(
 
 @HiltViewModel
 class LauncherViewModel @Inject constructor(
-    getInstalledApps: GetInstalledAppsUseCase,
+    private val getInstalledApps: GetInstalledAppsUseCase,
     private val ensureActiveFacet: EnsureActiveFacetUseCase,
     private val cleanUpUninstalledApps: CleanUpUninstalledAppsUseCase,
     private val repairOrphanedProfileRows: RepairOrphanedProfileRowsUseCase,
@@ -120,6 +120,11 @@ class LauncherViewModel @Inject constructor(
     fun activateFacetFromDeepLink(uri: Uri) {
         val facetId = parseFacetIdFromDeepLink(uri) ?: return
         viewModelScope.launch { activateFacetById(facetId) }
+    }
+
+    /** The launcher came back to the front: midnight may have passed while the screen was off. */
+    fun onResumed() {
+        getInstalledApps.recheckDate()
     }
 
     /** Called once, from the final onboarding step ("Set as default" or "Later") — see [com.facetlauncher.app.LauncherActivity]. */

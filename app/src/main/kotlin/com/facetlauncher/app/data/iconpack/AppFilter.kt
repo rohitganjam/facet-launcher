@@ -13,11 +13,13 @@ data class AppFilter(
     val iconMask: String? = null,
     val iconUpon: String? = null,
     val scale: Float = 1f,
+    /** `<calendar>` entries: the drawable prefix by `"package/activityClass"`, completed with the day of the month (`calendar_` + `14`). */
+    val calendars: Map<String, String> = emptyMap(),
 ) {
     /** The first drawable listed for each package — the stand-in when an app's exact activity isn't listed. */
-    val packages: Map<String, String> = buildMap {
-        components.forEach { (key, drawable) -> putIfAbsent(key.substringBefore('/'), drawable) }
-    }
+    val packages: Map<String, String> = components.byPackage()
+
+    private val calendarPackages: Map<String, String> = calendars.byPackage()
 
     val hasFallbackArt: Boolean get() = iconBacks.isNotEmpty() || iconMask != null || iconUpon != null
 
@@ -25,9 +27,18 @@ data class AppFilter(
     fun drawableFor(packageName: String, className: String): String? =
         components["$packageName/$className"] ?: packages[packageName]
 
+    /** The day-of-month drawable prefix for this activity (else its package), null for an app the pack doesn't date. */
+    fun calendarPrefixFor(packageName: String, className: String): String? =
+        calendars["$packageName/$className"] ?: calendarPackages[packageName]
+
+    private fun Map<String, String>.byPackage(): Map<String, String> = buildMap {
+        this@byPackage.forEach { (key, value) -> putIfAbsent(key.substringBefore('/'), value) }
+    }
+
     /** Collects tags from either reader; malformed entries are skipped rather than failing the whole pack. */
     private class Builder(private val keepPackage: (String) -> Boolean) {
         private val components = LinkedHashMap<String, String>()
+        private val calendars = LinkedHashMap<String, String>()
         private val iconBacks = mutableListOf<String>()
         private var iconMask: String? = null
         private var iconUpon: String? = null
@@ -41,6 +52,11 @@ data class AppFilter(
                     val drawable = attribute("drawable")?.takeIf { it.isNotBlank() } ?: return
                     components.putIfAbsent(key, drawable)
                 }
+                "calendar" -> {
+                    val key = componentKey(attribute("component"))?.takeIf { keepPackage(it.substringBefore('/')) } ?: return
+                    val prefix = attribute("prefix")?.takeIf { it.isNotBlank() } ?: return
+                    calendars.putIfAbsent(key, prefix)
+                }
                 "iconback" -> iconBacks += images()
                 "iconmask" -> iconMask = images().firstOrNull() ?: iconMask
                 "iconupon" -> iconUpon = images().firstOrNull() ?: iconUpon
@@ -48,12 +64,12 @@ data class AppFilter(
             }
         }
 
-        fun build() = AppFilter(components, iconBacks, iconMask, iconUpon, scale)
+        fun build() = AppFilter(components, iconBacks, iconMask, iconUpon, scale, calendars)
     }
 
     companion object {
         /** Tags whose attributes are read; every other tag is passed over. */
-        private val READ_TAGS = setOf("item", "iconback", "iconmask", "iconupon", "scale")
+        private val READ_TAGS = setOf("item", "calendar", "iconback", "iconmask", "iconupon", "scale")
 
         /**
          * Reads a compiled `appfilter.xml` resource. Only items whose package passes [keepPackage] are held: a big pack
@@ -127,9 +143,9 @@ data class AppFilter(
         private fun decodeEntities(value: String): String =
             if ('&' !in value) value else value.replace("&lt;", "<").replace("&gt;", ">").replace("&quot;", "\"").replace("&apos;", "'").replace("&amp;", "&")
 
-        /** `ComponentInfo{com.app/com.app.Main}` (or `.Main`, relative to the package) → `com.app/com.app.Main`. */
+        /** `ComponentInfo{com.app/com.app.Main}` (or `.Main`, relative to the package; stray doubled braces happen in real packs) → `com.app/com.app.Main`. */
         internal fun componentKey(raw: String?): String? {
-            val inner = raw?.trim()?.removePrefix("ComponentInfo{")?.removeSuffix("}") ?: return null
+            val inner = raw?.trim()?.removePrefix("ComponentInfo")?.trim('{', '}') ?: return null
             val packageName = inner.substringBefore('/', "").trim()
             val className = inner.substringAfter('/', "").trim()
             if (packageName.isEmpty() || className.isEmpty()) return null

@@ -25,6 +25,9 @@ class GetInstalledAppsUseCase @Inject constructor(private val appRepository: App
      * deliberately left untouched — Favorites/Dock pickers use it, and a user pinning their own
      * launcher there is a harmless, if unusual, choice to leave available.
      */
+    /** Redraws an icon pack's calendar icons if the day changed while Home was away. */
+    fun recheckDate() = appRepository.recheckDate()
+
     fun observe(): Flow<List<AppInfo>> = appRepository.observeInstalledApps().map { apps ->
         apps.filterNot { it.packageName == FACET_LAUNCHER_PACKAGE_NAME || it.profile == AppProfile.PRIVATE }
     }
