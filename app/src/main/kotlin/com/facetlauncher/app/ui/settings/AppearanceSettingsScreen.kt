@@ -310,7 +310,7 @@ private fun LazyListScope.generalSection(
             CardDivider()
             ClickableRow(
                 title = stringResource(R.string.appearance_section_icons),
-                subtitle = stringResource(settings.iconRenderMode.style.displayNameRes),
+                subtitle = stringResource(if (settings.iconPackPackage != null) R.string.icons_screen_icon_pack else settings.iconRenderMode.style.displayNameRes),
                 onClick = onNavigateToIcons,
                 testTag = "general_icons_row",
                 leadingIcon = iconBadge(Icons.Outlined.Category, SettingsSectionHue.APPEARANCE),

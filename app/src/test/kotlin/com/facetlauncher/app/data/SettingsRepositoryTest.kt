@@ -25,6 +25,7 @@ import com.facetlauncher.app.data.model.DrawerGridDensity
 import com.facetlauncher.app.data.model.DrawerListItemSize
 import com.facetlauncher.app.data.model.DrawerPresentation
 import com.facetlauncher.app.data.model.FontWeightOption
+import com.facetlauncher.app.data.model.IconPackFallback
 import com.facetlauncher.app.data.model.IconRenderMode
 import com.facetlauncher.app.data.model.IconShape
 import com.facetlauncher.app.data.model.LauncherFontOption
@@ -41,6 +42,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -423,6 +425,31 @@ class SettingsRepositoryTest {
         assertEquals(true, settings.accentFromSystem)
         assertEquals(null, settings.customAccentSwatch)
         assertEquals(WallpaperAccentRole.PRIMARY, settings.wallpaperAccentRole)
+    }
+
+    @Test
+    fun `an icon pack is applied, its fallback kept, and cleared back to the built-in style`() = runTest {
+        // Given a repository on a built-in glyph style
+        val repository = createRepository()
+        repository.setIconRenderMode(IconRenderMode.GLYPH_ACCENT)
+        assertNull(repository.settings.first().iconPackPackage)
+        assertEquals(IconPackFallback.MATCH_PACK, repository.settings.first().iconPackFallback)
+
+        // When applying a pack that keeps missed apps' own icons
+        repository.setIconPack("com.example.pack")
+        repository.setIconPackFallback(IconPackFallback.KEEP_DEFAULT)
+
+        // Then both are stored, and icons draw as the pack has them
+        val applied = repository.settings.first()
+        assertEquals("com.example.pack", applied.iconPackPackage)
+        assertEquals(IconPackFallback.KEEP_DEFAULT, applied.iconPackFallback)
+        assertEquals(IconRenderMode.SYSTEM_DEFAULT, applied.effectiveIconRenderMode)
+
+        // And clearing the pack brings the stored glyph style back
+        repository.setIconPack(null)
+        val cleared = repository.settings.first()
+        assertNull(cleared.iconPackPackage)
+        assertEquals(IconRenderMode.GLYPH_ACCENT, cleared.effectiveIconRenderMode)
     }
 
     @Test

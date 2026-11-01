@@ -140,7 +140,7 @@ class LauncherViewModel @Inject constructor(
                 accentFromSystem = settings.accentFromSystem,
                 customAccentSwatch = settings.customAccentSwatch,
                 wallpaperAccentRole = settings.wallpaperAccentRole,
-                iconRenderMode = settings.iconRenderMode,
+                iconRenderMode = settings.effectiveIconRenderMode,
                 iconShape = settings.iconShape,
                 launcherFontOption = settings.launcherFontOption,
                 homeAppsFontWeight = settings.homeAppsFontWeight,

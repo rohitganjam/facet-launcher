@@ -6,6 +6,7 @@ import android.content.pm.ApplicationInfo
 import android.content.pm.LauncherActivityInfo
 import android.content.pm.LauncherApps
 import android.content.pm.LauncherUserInfo
+import android.graphics.Bitmap
 import android.graphics.Color
 import android.graphics.drawable.AdaptiveIconDrawable
 import android.graphics.drawable.ColorDrawable
@@ -13,17 +14,26 @@ import android.os.Process
 import android.os.UserHandle
 import android.os.UserManager
 import androidx.compose.ui.graphics.asAndroidBitmap
+import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.test.core.app.ApplicationProvider
 import com.facetlauncher.app.data.icon.STORED_ICON_SIZE
+import com.facetlauncher.app.data.iconpack.IconPackIcons
+import com.facetlauncher.app.data.iconpack.IconPackRepository
+import com.facetlauncher.app.data.iconpack.PACK_ICON_SIZE
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.AppProfile
+import com.facetlauncher.app.data.model.IconPackFallback
+import java.io.File
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertTrue
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertNotEquals
 import org.junit.Test
@@ -573,6 +583,119 @@ class AppRepositoryTest {
 
         // 4. handlesFor(OTHER) finds exactly the clone handle — not WORK or PRIVATE
         assertEquals(listOf(cloneHandle), repository.handlesFor(AppProfile.OTHER))
+    }
+
+    /** A pack covering only `com.example.covered`: its icon is all red, and it themes other apps all blue. */
+    private class FakePackIcons : IconPackIcons {
+        override fun covers(packageName: String, className: String) = packageName == "com.example.covered"
+        override fun iconFor(packageName: String, className: String): Bitmap? = if (covers(packageName, className)) solid(Color.RED) else null
+        override fun themed(icon: Bitmap, packageName: String): Bitmap = solid(Color.BLUE)
+        private fun solid(color: Int) = Bitmap.createBitmap(PACK_ICON_SIZE, PACK_ICON_SIZE, Bitmap.Config.ARGB_8888).apply { eraseColor(color) }
+    }
+
+    /** Stands in for another app's resources; [icons] null means the pack isn't installed. */
+    private class FakeIconPackRepository(context: Context, settings: SettingsRepository, private val icons: IconPackIcons?) : IconPackRepository(context, settings) {
+        override suspend fun isInstalled(packageName: String) = icons != null
+        override suspend fun load(packageName: String, installedPackages: Set<String>) = icons
+    }
+
+    private fun settingsRepository() = SettingsRepository(
+        PreferenceDataStoreFactory.create(produceFile = { File(context.cacheDir, "icon-pack-${System.nanoTime()}.preferences_pb") }),
+    )
+
+    /** A covered and an uncovered app, each with an all-green icon of its own. */
+    private fun launcherAppsWithTwoApps(): LauncherApps {
+        val launcherApps = mock(LauncherApps::class.java)
+        val activities = listOf(fakeActivity("com.example.covered", ".Main", "Covered"), fakeActivity("com.example.missed", ".Main", "Missed"))
+        activities.forEach { `when`(it.getIcon(0)).thenReturn(AdaptiveIconDrawable(ColorDrawable(Color.GREEN), ColorDrawable(Color.GREEN))) }
+        `when`(launcherApps.getActivityList(eq(null), any())).thenReturn(activities)
+        return launcherApps
+    }
+
+    private fun AppInfo.centerColor() = icon!!.asAndroidBitmap().let { it.getPixel(it.width / 2, it.height / 2) }
+
+    @Test
+    fun `an applied pack draws its icons and themes the apps it misses`() = runTest {
+        // Given a pack applied with the default Match pack fallback
+        val settings = settingsRepository().apply { setIconPack("com.example.pack") }
+        val repository = AppRepository(launcherAppsWithTwoApps(), personalOnlyUserManager(), context, iconPackRepository = FakeIconPackRepository(context, settings, FakePackIcons()))
+
+        // When fetching installed apps
+        val apps = repository.getInstalledApps().associateBy { it.packageName }
+
+        // Then the covered app wears the pack's icon and the other the pack's theming, both drawn unclipped
+        assertEquals(Color.RED, apps.getValue("com.example.covered").centerColor())
+        assertEquals(Color.BLUE, apps.getValue("com.example.missed").centerColor())
+        assertTrue(apps.values.all { it.iconFromPack })
+        assertTrue(apps.values.all { it.monochromeIcon == null })
+    }
+
+    @Test
+    fun `keep default leaves the apps a pack misses with their own icon`() = runTest {
+        // Given a pack applied with the Keep default fallback
+        val settings = settingsRepository().apply {
+            setIconPack("com.example.pack")
+            setIconPackFallback(IconPackFallback.KEEP_DEFAULT)
+        }
+        val repository = AppRepository(launcherAppsWithTwoApps(), personalOnlyUserManager(), context, iconPackRepository = FakeIconPackRepository(context, settings, FakePackIcons()))
+
+        // When fetching installed apps
+        val missed = repository.getInstalledApps().first { it.packageName == "com.example.missed" }
+
+        // Then the missed app keeps its own icon, clipped like any other
+        assertEquals(Color.GREEN, missed.centerColor())
+        assertFalse(missed.iconFromPack)
+    }
+
+    @Test
+    fun `a pack that is no longer installed is unapplied`() = runTest {
+        // Given a stored pack that isn't on the device, as after restoring a backup
+        val settings = settingsRepository().apply { setIconPack("com.example.gone") }
+        val repository = AppRepository(launcherAppsWithTwoApps(), personalOnlyUserManager(), context, iconPackRepository = FakeIconPackRepository(context, settings, icons = null))
+
+        // When fetching installed apps
+        val apps = repository.getInstalledApps()
+
+        // Then every app keeps its own icon and the setting is cleared
+        assertTrue(apps.none { it.iconFromPack })
+        assertNull(settings.settings.first().iconPackPackage)
+    }
+
+    @Test
+    fun `observeInstalledApps re-emits with pack icons when a pack is applied`() = runTest {
+        // Given the live list with no pack applied
+        val settings = settingsRepository()
+        val repository = AppRepository(
+            launcherAppsWithTwoApps(), personalOnlyUserManager(), context, backgroundScope,
+            iconPackRepository = FakeIconPackRepository(context, settings, FakePackIcons()),
+        )
+        val emissions = Channel<List<AppInfo>>(Channel.UNLIMITED)
+        val collectJob = launch { repository.observeInstalledApps().collect { emissions.send(it) } }
+        assertTrue(emissions.receive().none { it.iconFromPack })
+
+        // When a pack is applied
+        settings.setIconPack("com.example.pack")
+
+        // Then the list is rescanned with the pack's icons
+        assertTrue(emissions.receive().all { it.iconFromPack })
+        collectJob.cancel()
+    }
+
+    @Test
+    fun `withOwnIcon brings back an app's own icon in place of a pack's`() = runTest {
+        // Given an app wearing a pack icon, and LauncherApps resolving its own green icon
+        val launcherApps = mock(LauncherApps::class.java)
+        val own = fakeActivity("com.example.covered", ".Main", "Covered")
+        `when`(own.getIcon(0)).thenReturn(AdaptiveIconDrawable(ColorDrawable(Color.GREEN), ColorDrawable(Color.GREEN)))
+        `when`(launcherApps.resolveActivity(any(), any())).thenReturn(own)
+        val packApp = AppInfo("com.example.covered", ".Main", "Covered", icon = null, iconFromPack = true)
+
+        // When asking for its own icon
+        val result = AppRepository(launcherApps, personalOnlyUserManager(), context).withOwnIcon(packApp)
+
+        // Then it's the app's own, no longer marked as the pack's
+        assertEquals(Color.GREEN, result.centerColor())
+        assertFalse(result.iconFromPack)
     }
 }
 

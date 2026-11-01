@@ -1343,6 +1343,7 @@ private fun DrawerAppRow(
                 AppIcon(
                     icon = app.icon,
                     monochromeIcon = app.monochromeIcon,
+                    fromIconPack = app.iconFromPack,
                     size = itemSize.iconSizeDp.dp,
                     contentDescription = null,
                     isWorkApp = app.profile == AppProfile.WORK,
@@ -1492,6 +1493,7 @@ private fun DrawerGridTile(
         AppIcon(
             icon = app.icon,
             monochromeIcon = app.monochromeIcon,
+            fromIconPack = app.iconFromPack,
             size = AppIconSize.TILE,
             contentDescription = null,
             notificationCount = badgeCount,

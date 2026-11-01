@@ -5,6 +5,7 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.content.pm.LauncherActivityInfo
 import android.content.pm.LauncherApps
 import android.graphics.Bitmap
 import android.graphics.Canvas
@@ -23,8 +24,11 @@ import androidx.core.graphics.drawable.toBitmap
 import com.facetlauncher.app.data.di.ApplicationScope
 import com.facetlauncher.app.data.di.DefaultDispatcher
 import com.facetlauncher.app.data.icon.monochromeCoverage
+import com.facetlauncher.app.data.iconpack.IconPackRepository
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.AppProfile
+import com.facetlauncher.app.data.model.IconPackFallback
+import com.facetlauncher.app.data.model.IconPackSelection
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.text.Collator
 import javax.inject.Inject
@@ -32,6 +36,7 @@ import javax.inject.Singleton
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -40,9 +45,12 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.shareIn
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 /**
@@ -118,6 +126,8 @@ class AppRepository @Inject constructor(
     // this default, since Dagger-generated code passes every constructor parameter explicitly.
     @ApplicationScope private val applicationScope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default),
     @DefaultDispatcher private val defaultDispatcher: CoroutineDispatcher = Dispatchers.Default,
+    // Defaulted like the two above; null draws every app's own icon.
+    private val iconPackRepository: IconPackRepository? = null,
 ) {
 
     /**
@@ -185,13 +195,36 @@ class AppRepository @Inject constructor(
      * sum of all of them (see chat history: this was invisible before Home started gating its own
      * first paint on this list, since default content rendered over it in the meantime).
      */
-    suspend fun getInstalledApps(): List<AppInfo> = withContext(defaultDispatcher) {
+    suspend fun getInstalledApps(): List<AppInfo> = scanInstalledApps(iconPackRepository?.selection?.first())
+
+    private fun List<Pair<LauncherActivityInfo, UserHandle>>.installedPackages(): Set<String> =
+        mapNotNullTo(HashSet()) { (info, _) -> runCatching { info.applicationInfo.packageName }.getOrNull() }
+
+    /** [app] with its own icon back in place of an icon pack's, for previewing the built-in styles while a pack is applied. */
+    suspend fun withOwnIcon(app: AppInfo): AppInfo {
+        if (!app.iconFromPack) return app
+        return withContext(defaultDispatcher) {
+            val intent = Intent(Intent.ACTION_MAIN).setComponent(ComponentName(app.packageName, app.activityName))
+            val drawable = runCatching { launcherApps.resolveActivity(intent, app.userHandle)?.getIcon(0) }.getOrNull() ?: return@withContext app
+            app.copy(
+                icon = runCatching { flattenIcon(drawable).asImageBitmap() }.getOrNull(),
+                monochromeIcon = runCatching { monochromeCoverage(drawable)?.asImageBitmap() }.getOrNull(),
+                iconFromPack = false,
+            )
+        }
+    }
+
+    /** [getInstalledApps] with [selection]'s pack icons in place of the apps' own, where it has them. */
+    private suspend fun scanInstalledApps(selection: IconPackSelection?): List<AppInfo> = withContext(defaultDispatcher) {
         val collator = Collator.getInstance()
-        userManager.userProfiles
+        val activities = userManager.userProfiles
             // A device-specific LauncherApps quirk for one odd profile (e.g. an OEM clone profile
             // that doesn't fully honor the LauncherApps contract) shouldn't take down the whole
             // app list — skip that handle's apps rather than crashing the entire fetch.
             .flatMap { handle -> runCatching { launcherApps.getActivityList(null, handle) }.getOrDefault(emptyList()).map { it to handle } }
+        val pack = selection?.let { iconPackRepository?.loadApplied(it, activities.installedPackages()) }
+        val themeUncovered = selection?.fallback == IconPackFallback.MATCH_PACK
+        activities
             .map { (info, handle) ->
                 async {
                     // getActivityList() succeeding doesn't guarantee every entry it returns is
@@ -202,13 +235,19 @@ class AppRepository @Inject constructor(
                     // cleanly in this process — confirmed via a real Techno Spark 20 Pro crash.
                     // One bad entry should drop just itself, not the whole list.
                     runCatching {
-                        val drawable = runCatching { info.getIcon(0) }.getOrNull()
+                        val packageName = info.applicationInfo.packageName
+                        val className = info.componentName.className
+                        val packIcon = pack?.let { runCatching { it.iconFor(packageName, className) }.getOrNull() }
+                        val drawable = if (packIcon == null) runCatching { info.getIcon(0) }.getOrNull() else null
+                        val ownIcon = drawable?.let { runCatching { flattenIcon(it) }.getOrNull() }
+                        val themedIcon = if (themeUncovered && ownIcon != null) pack?.let { runCatching { it.themed(ownIcon, packageName) }.getOrNull() } else null
+                        val fromPack = packIcon != null || themedIcon != null
                         AppInfo(
-                            packageName = info.applicationInfo.packageName,
-                            activityName = info.componentName.className,
+                            packageName = packageName,
+                            activityName = className,
                             label = info.label.toString(),
-                            icon = drawable?.let { runCatching { flattenIcon(it).asImageBitmap() }.getOrNull() },
-                            monochromeIcon = drawable?.let { runCatching { monochromeCoverage(it)?.asImageBitmap() }.getOrNull() },
+                            icon = (packIcon ?: themedIcon ?: ownIcon)?.asImageBitmap(),
+                            monochromeIcon = if (fromPack) null else drawable?.let { runCatching { monochromeCoverage(it)?.asImageBitmap() }.getOrNull() },
                             profile = profileFor(handle),
                             userHandle = handle,
                             firstInstallTime = info.firstInstallTime,
@@ -218,6 +257,7 @@ class AppRepository @Inject constructor(
                             lastUpdateTime = runCatching {
                                 context.packageManager.getPackageInfo(info.applicationInfo.packageName, 0).lastUpdateTime
                             }.getOrDefault(info.firstInstallTime),
+                            iconFromPack = fromPack,
                         )
                     }.getOrNull()
                 }
@@ -255,8 +295,14 @@ class AppRepository @Inject constructor(
     private val installedApps: SharedFlow<List<AppInfo>> = observeInstalledAppsUncached()
         .shareIn(applicationScope, SharingStarted.WhileSubscribed(stopTimeoutMillis = SHARE_STOP_TIMEOUT_MILLIS), replay = 1)
 
-    private fun observeInstalledAppsUncached(): Flow<List<AppInfo>> = callbackFlow {
-        val refresh: () -> Unit = { launch { trySend(getInstalledApps()) } }
+    /** A rescan per package or profile change and per icon pack change; a newer one cancels a scan still running, so a stale pack never lands last. */
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private fun observeInstalledAppsUncached(): Flow<List<AppInfo>> =
+        combine(observePackageChanges(), iconPackRepository?.selection ?: flowOf(null)) { _, selection -> selection }
+            .mapLatest(::scanInstalledApps)
+
+    private fun observePackageChanges(): Flow<Unit> = callbackFlow {
+        val refresh: () -> Unit = { trySend(Unit) }
 
         val callback = object : LauncherApps.Callback() {
             override fun onPackageAdded(packageName: String?, user: UserHandle?) = refresh()

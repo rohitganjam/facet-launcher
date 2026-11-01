@@ -54,6 +54,11 @@ internal class AppearanceScreenTestHost(private val composeRule: ComposeContentT
      */
     lateinit var screenViewModel: AppearanceSettingsViewModel
 
+    /** The repositories behind [screenViewModel], for a screen that also needs a view model of its own (Icons). */
+    lateinit var appRepository: AppRepository
+    lateinit var observePlacedItems: ObservePlacedItemsUseCase
+    lateinit var settingsRepository: SettingsRepository
+
     /** The `facets` flow is a real Room query, so a facet-scoped screen first renders unscoped until it emits. */
     fun awaitFacetScoped() {
         composeRule.waitUntil(timeoutMillis = 5_000) { screenViewModel.uiState.value.isFacetScoped }
@@ -87,6 +92,9 @@ internal class AppearanceScreenTestHost(private val composeRule: ComposeContentT
                 val folderRepository = FolderRepository(database.folderDao(), appRepository)
                 val placementRepository = PlacementRepository(database.appPlacementDao(), database.folderPlacementDao())
                 val observePlacedItems = ObservePlacedItemsUseCase(placementRepository, folderRepository, appRepository)
+                this@AppearanceScreenTestHost.appRepository = appRepository
+                this@AppearanceScreenTestHost.observePlacedItems = observePlacedItems
+                this@AppearanceScreenTestHost.settingsRepository = settingsRepository
                 if (facetId != null) {
                     runBlocking { database.facetDao().insert(com.facetlauncher.app.data.local.FacetEntity(id = facetId, name = "P", position = 0)) }
                     // Every real facet starts with the launcher clock as its one page; an empty stack draws no clock.

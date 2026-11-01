@@ -115,7 +115,7 @@ internal fun FolderTileGlyph(folder: Folder, modifier: Modifier = Modifier) {
 @Composable
 private fun FolderTileGlyphSlot(app: AppInfo?) {
     if (app != null) {
-        AppIcon(icon = app.icon, monochromeIcon = app.monochromeIcon, size = AppIconSize.SHORTCUT, contentDescription = null)
+        AppIcon(icon = app.icon, monochromeIcon = app.monochromeIcon, fromIconPack = app.iconFromPack, size = AppIconSize.SHORTCUT, contentDescription = null)
     } else {
         Box(modifier = Modifier.size(AppIconSize.SHORTCUT))
     }

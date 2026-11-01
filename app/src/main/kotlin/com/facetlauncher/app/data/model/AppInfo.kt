@@ -26,6 +26,8 @@ data class AppInfo(
     val userHandle: UserHandle = Process.myUserHandle(),
     val firstInstallTime: Long = 0L,
     val lastUpdateTime: Long = 0L,
+    /** [icon] came from the applied icon pack, which gives it its own shape, so it is drawn unclipped. */
+    val iconFromPack: Boolean = false,
 ) {
     /** Unique per installed activity per user — a stable list/reorder key. The same app in a Work Profile shares its package and activity, so those two alone collide. */
     val listKey: String get() = "$packageName/$activityName/${userHandle.hashCode()}"

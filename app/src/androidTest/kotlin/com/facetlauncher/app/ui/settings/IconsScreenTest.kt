@@ -1,18 +1,40 @@
 package com.facetlauncher.app.ui.settings
 
+import android.content.Context
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.graphics.toPixelMap
+import androidx.compose.ui.test.assertIsEnabled
+import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.assertIsNotSelected
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToNode
+import com.facetlauncher.app.data.DefaultAppRepository
 import com.facetlauncher.app.data.SettingsRepository
+import com.facetlauncher.app.data.iconpack.IconPackRepository
+import com.facetlauncher.app.data.model.HomeWallpaper
+import com.facetlauncher.app.data.model.IconPackFallback
+import com.facetlauncher.app.data.model.IconPackInfo
 import com.facetlauncher.app.data.model.IconRenderMode
 import com.facetlauncher.app.data.model.IconShape
+import com.facetlauncher.app.data.model.LauncherSettings
+import com.facetlauncher.app.domain.GetInstalledAppsUseCase
+import com.facetlauncher.app.domain.IconPackOption
+import com.facetlauncher.app.domain.IconPickerState
+import com.facetlauncher.app.domain.ObserveIconPickerUseCase
+import com.facetlauncher.app.domain.SelectIconSamplesUseCase
+import com.facetlauncher.app.domain.SelectPreviewAppsUseCase
+import com.facetlauncher.app.ui.home.LocalAllowLandscape
+import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
@@ -28,8 +50,144 @@ class IconsScreenTest {
 
     private fun setContent(): SettingsRepository =
         host.setContent(null, false, true, emptyList(), { _, _ -> }, { _, _, _ -> }) { viewModel ->
-            IconsScreen(onBack = {}, viewModel = viewModel)
+            val context = LocalContext.current
+            val iconsViewModel = remember { iconsViewModel(context) }
+            IconsScreen(onBack = {}, viewModel = viewModel, iconsViewModel = iconsViewModel)
         }
+
+    /** The real picker over the host's repositories; the emulator has no icon packs installed. */
+    private fun iconsViewModel(context: Context): IconsViewModel {
+        val iconPacks = IconPackRepository(context, host.settingsRepository)
+        val observeIconPicker = ObserveIconPickerUseCase(
+            host.observePlacedItems,
+            GetInstalledAppsUseCase(host.appRepository),
+            host.appRepository,
+            iconPacks,
+            DefaultAppRepository(context),
+            SelectIconSamplesUseCase(SelectPreviewAppsUseCase()),
+        )
+        return IconsViewModel(observeIconPicker, host.settingsRepository, iconPacks)
+    }
+
+    /** The screen's content alone, over [picker] — packs can't be installed on the emulator, so their cards are tested this way. */
+    private fun setPackContent(settings: LauncherSettings, picker: IconPickerState, onSelectPack: (String) -> Unit = {}) {
+        composeRule.setContent {
+            CompositionLocalProvider(LocalAllowLandscape provides false) {
+                FacetLauncherTheme {
+                    IconsContent(
+                        settings = settings,
+                        uiState = AppearanceSettingsUiState(settings = settings),
+                        picker = picker,
+                        homeWallpaper = HomeWallpaper.Unavailable,
+                        onBack = {},
+                        onSelectBuiltIn = {},
+                        onIconRenderModeChange = {},
+                        onSelectPack = onSelectPack,
+                        onPackFallbackChange = {},
+                        onOpenPack = {},
+                        onFindPacks = {},
+                        onIconShapeChange = {},
+                    )
+                }
+            }
+        }
+    }
+
+    /** The colour and background rows sit below the pack row, off a phone's first screen. */
+    private fun openDropdown(tag: String) {
+        composeRule.onNodeWithTag("icons_screen").performScrollToNode(hasTestTag(tag))
+        composeRule.onNodeWithTag(tag).performClick()
+    }
+
+    private val twoPacks = IconPickerState(
+        packs = listOf(
+            IconPackOption(IconPackInfo("pack.alpha", "Alpha", icon = null), samples = emptyList(), coveredApps = 3),
+            IconPackOption(IconPackInfo("pack.beta", "Beta", icon = null), samples = emptyList(), coveredApps = 7),
+        ),
+        totalApps = 10,
+        isLoading = false,
+    )
+
+    @Test
+    fun withNoPacksInstalledTheScreenOffersToFindSome() {
+        // Given no icon packs on the device
+        var searched = false
+        composeRule.setContent {
+            CompositionLocalProvider(LocalAllowLandscape provides false) {
+                FacetLauncherTheme {
+                    IconsContent(
+                        settings = LauncherSettings(), uiState = AppearanceSettingsUiState(), picker = IconPickerState(isLoading = false),
+                        homeWallpaper = HomeWallpaper.Unavailable, onBack = {}, onSelectBuiltIn = {}, onIconRenderModeChange = {}, onSelectPack = {},
+                        onPackFallbackChange = {}, onOpenPack = {}, onFindPacks = { searched = true }, onIconShapeChange = {},
+                    )
+                }
+            }
+        }
+
+        // When tapping the offer to find some
+        composeRule.onNodeWithTag("icons_screen").performScrollToNode(hasTestTag("icons_find_packs"))
+        composeRule.onNodeWithTag("icons_no_packs").assertIsDisplayed()
+        composeRule.onNodeWithTag("icons_find_packs").performClick()
+
+        // Then the pack search opens
+        assertEquals(true, searched)
+    }
+
+    @Test
+    fun pickingABuiltInStyleUnappliesAnIconPack() {
+        // Given an icon pack applied
+        val settingsRepository = setContent()
+        runBlocking { settingsRepository.setIconPack("com.example.pack") }
+        composeRule.waitUntil(timeoutMillis = 3_000) { composeRule.onAllNodes(hasTestTag("icons_applied_pack")).fetchSemanticsNodes().isNotEmpty() }
+
+        // When picking the glyph style
+        composeRule.onNodeWithTag("icons_style_GLYPH").performClick()
+
+        // Then the pack is cleared and the style stored
+        settingsRepository.awaitMode(IconRenderMode.GLYPH_ACCENT)
+        composeRule.waitUntil(timeoutMillis = 3_000) { runBlocking { settingsRepository.settings.first().iconPackPackage == null } }
+    }
+
+    @Test
+    fun packCardsShowTheAppliedPackAndPickAnother() {
+        // Given two packs, Alpha applied
+        var picked: String? = null
+        setPackContent(LauncherSettings(iconPackPackage = "pack.alpha"), twoPacks, onSelectPack = { picked = it })
+
+        // Then Alpha is selected, no built-in style is, and Alpha's coverage and fallback rows show
+        composeRule.onNodeWithTag("icons_pack_pack.alpha").assertIsSelected()
+        composeRule.onNodeWithTag("icons_style_DEFAULT").assertIsNotSelected()
+        composeRule.onNodeWithText("Covers 3 of 10 apps").assertExists()
+        composeRule.onNodeWithTag("icons_pack_misses_row").assertExists()
+
+        // When picking Beta
+        composeRule.onNodeWithTag("icons_pack_pack.beta").performClick()
+
+        // Then Beta is asked for
+        assertEquals("pack.beta", picked)
+    }
+
+    @Test
+    fun aPackThatThemesEveryAppTakesOverTheIconShape() {
+        // Given a pack applied with the Match pack fallback
+        setPackContent(LauncherSettings(iconPackPackage = "pack.alpha", iconPackFallback = IconPackFallback.MATCH_PACK), twoPacks)
+        composeRule.onNodeWithTag("icons_screen").performScrollToNode(hasTestTag("appearance_icon_shape_row"))
+
+        // Then the shapes can't be picked, and the colour row is gone
+        composeRule.onNodeWithTag("icon_shape_CIRCLE").assertIsNotEnabled()
+        composeRule.onNodeWithText("Set by Alpha for the icons it draws").assertExists()
+        assertEquals(0, composeRule.onAllNodesWithText("Colour").fetchSemanticsNodes().size)
+    }
+
+    @Test
+    fun keepingDefaultIconsLeavesTheShapePickable() {
+        // Given a pack applied that leaves missed apps their own icons
+        setPackContent(LauncherSettings(iconPackPackage = "pack.alpha", iconPackFallback = IconPackFallback.KEEP_DEFAULT), twoPacks)
+        composeRule.onNodeWithTag("icons_screen").performScrollToNode(hasTestTag("appearance_icon_shape_row"))
+
+        // Then the shape still applies to them
+        composeRule.onNodeWithTag("icon_shape_CIRCLE").assertIsEnabled()
+    }
 
     private fun SettingsRepository.awaitMode(mode: IconRenderMode) =
         composeRule.waitUntil(timeoutMillis = 3_000) { runBlocking { settings.first().iconRenderMode == mode } }
@@ -58,7 +216,7 @@ class IconsScreenTest {
         settingsRepository.awaitMode(IconRenderMode.GLYPH_ACCENT)
 
         // When choosing Theme inverted
-        composeRule.onNodeWithTag("icons_colour_row").performClick()
+        openDropdown("icons_colour_row")
         composeRule.waitForIdle()
         composeRule.onNodeWithTag("icons_colour_row_option_THEME_INVERTED").performClick()
 
@@ -74,7 +232,7 @@ class IconsScreenTest {
         settingsRepository.awaitMode(IconRenderMode.OUTLINE_ACCENT)
 
         // When choosing the tile background
-        composeRule.onNodeWithTag("icons_background_row").performClick()
+        openDropdown("icons_background_row")
         composeRule.waitForIdle()
         composeRule.onNodeWithTag("icons_background_row_option_TILE").performClick()
 
@@ -88,7 +246,7 @@ class IconsScreenTest {
         val settingsRepository = setContent()
         composeRule.onNodeWithTag("icons_style_GLYPH").performClick()
         settingsRepository.awaitMode(IconRenderMode.GLYPH_ACCENT)
-        composeRule.onNodeWithTag("icons_colour_row").performClick()
+        openDropdown("icons_colour_row")
         composeRule.waitForIdle()
         composeRule.onNodeWithTag("icons_colour_row_option_THEME").performClick()
         settingsRepository.awaitMode(IconRenderMode.GLYPH_INK)
@@ -96,7 +254,7 @@ class IconsScreenTest {
         val themed = backdropOf()
 
         // When switching to theme inverted
-        composeRule.onNodeWithTag("icons_colour_row").performClick()
+        openDropdown("icons_colour_row")
         composeRule.waitForIdle()
         composeRule.onNodeWithTag("icons_colour_row_option_THEME_INVERTED").performClick()
         settingsRepository.awaitMode(IconRenderMode.GLYPH_INVERTED)

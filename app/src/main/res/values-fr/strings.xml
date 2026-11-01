@@ -888,6 +888,22 @@
     <string name="icon_shape_rounded">Arrondi</string>
     <string name="icon_shape_circle">Cercle</string>
     <string name="icon_shape_square">Carré</string>
+    <string name="icons_screen_icon_pack">Pack d\'icônes</string>
+    <string name="icons_screen_built_in">Intégrés</string>
+    <string name="icons_screen_installed">Installés</string>
+    <plurals name="icons_screen_pack_count">
+        <item quantity="one">%d pack</item>
+        <item quantity="other">%d packs</item>
+    </plurals>
+    <string name="icons_screen_get_more">En obtenir</string>
+    <string name="icons_screen_no_packs">Aucun pack d\'icônes installé. Les packs conçus pour Nova, Lawnchair, ADW ou Apex fonctionnent aussi ici.</string>
+    <string name="icons_screen_find_packs">Trouver des packs d\'icônes</string>
+    <string name="icons_screen_pack_coverage">Couvre %1$d apps sur %2$d</string>
+    <string name="icons_screen_open_pack">Ouvrir le pack</string>
+    <string name="icons_screen_pack_misses">Apps absentes du pack</string>
+    <string name="icons_screen_shape_set_by_pack">Définie par %1$s pour ses icônes</string>
+    <string name="icon_pack_fallback_match_pack">Assortir au pack</string>
+    <string name="icon_pack_fallback_keep_default">Garder l\'original</string>
     <string name="app_row_position_launcher_default">Position par défaut du launcher</string>
     <string name="app_row_presentation_launcher_default">Style par défaut du launcher</string>
     <string name="app_list_vertical_alignment_launcher_default">Position par défaut du launcher</string>

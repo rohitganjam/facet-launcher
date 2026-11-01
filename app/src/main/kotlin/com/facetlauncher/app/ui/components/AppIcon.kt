@@ -93,6 +93,7 @@ fun AppIcon(
     AppIcon(
         icon = app.icon,
         monochromeIcon = app.monochromeIcon,
+        fromIconPack = app.iconFromPack,
         size = size,
         contentDescription = contentDescription,
         modifier = modifier,
@@ -125,6 +126,8 @@ fun AppIcon(
     modifier: Modifier = Modifier,
     /** The app's themed-icon layer, for the glyph and outline icon styles; see [AppInfo.monochromeIcon]. */
     monochromeIcon: ImageBitmap? = null,
+    /** [icon] is an icon pack's, which carries its own shape: drawn unclipped, ignoring the Icon Shape setting. */
+    fromIconPack: Boolean = false,
     notificationCount: Int? = null,
     badgeStyle: NotificationBadgeStyle = NotificationBadgeStyle.DOT,
     isWorkApp: Boolean = false,
@@ -137,10 +140,10 @@ fun AppIcon(
     Box(modifier = modifier) {
         if (notificationCount != null && notificationCount > 0) {
             BadgedBox(badge = { NotificationBadge(count = notificationCount, style = badgeStyle) }) {
-                AppIconGlyph(icon = icon, monochromeIcon = monochromeIcon, size = size, contentDescription = contentDescription)
+                AppIconGlyph(icon = icon, monochromeIcon = monochromeIcon, fromIconPack = fromIconPack, size = size, contentDescription = contentDescription)
             }
         } else {
-            AppIconGlyph(icon = icon, monochromeIcon = monochromeIcon, size = size, contentDescription = contentDescription)
+            AppIconGlyph(icon = icon, monochromeIcon = monochromeIcon, fromIconPack = fromIconPack, size = size, contentDescription = contentDescription)
         }
         // Bottom-start, not stacked with the notification dot above (top-end, via BadgedBox) —
         // matches every other Android launcher's own convention for where a Work Profile badge
@@ -195,7 +198,7 @@ private fun OtherProfileBadge(modifier: Modifier = Modifier) {
  * fallback where it has no glyph or outline); while it is being made nothing is drawn.
  */
 @Composable
-private fun AppIconGlyph(icon: ImageBitmap?, monochromeIcon: ImageBitmap?, size: Dp, contentDescription: String?, modifier: Modifier = Modifier) {
+private fun AppIconGlyph(icon: ImageBitmap?, monochromeIcon: ImageBitmap?, fromIconPack: Boolean, size: Dp, contentDescription: String?, modifier: Modifier = Modifier) {
     val renderMode = LocalIconRenderMode.current
     val shapeSetting = LocalIconShape.current
     val iconShape = remember(shapeSetting) { shapeSetting.toComposeShape() }
@@ -218,7 +221,7 @@ private fun AppIconGlyph(icon: ImageBitmap?, monochromeIcon: ImageBitmap?, size:
                 else -> tintColor.asColorTint()
             },
             alpha = if (pending) 0f else 1f,
-            modifier = modifier.size(size).iconClip(iconShape, paint.tile.takeUnless { pending }, unclipped = styledPicture != null),
+            modifier = modifier.size(size).iconClip(iconShape, paint.tile.takeUnless { pending }, unclipped = styledPicture != null || fromIconPack),
         )
     } else {
         Box(

@@ -103,6 +103,9 @@ data class BackupSettings(
     val iconRenderMode: String,
     /** Purely additive and defaulted, so no version bump. */
     val iconShape: String = IconShape.SQUIRCLE.name,
+    /** Purely additive and defaulted, so no version bump. Restored as is: a pack not installed on the new device is unapplied the first time icons load. */
+    val iconPackPackage: String? = null,
+    val iconPackFallback: String = IconPackFallback.MATCH_PACK.name,
     val launcherFontOption: String,
     /** Defaulted — tolerant-reader discipline, see this file's own doc comment. */
     val fontScaleOption: String = FontScaleOption.DEFAULT.name,

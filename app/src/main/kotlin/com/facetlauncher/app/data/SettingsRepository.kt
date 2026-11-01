@@ -33,6 +33,7 @@ import com.facetlauncher.app.data.model.DrawerListItemSize
 import com.facetlauncher.app.data.model.DrawerPresentation
 import com.facetlauncher.app.data.model.FontScaleOption
 import com.facetlauncher.app.data.model.FontWeightOption
+import com.facetlauncher.app.data.model.IconPackFallback
 import com.facetlauncher.app.data.model.IconRenderMode
 import com.facetlauncher.app.data.model.IconShape
 import com.facetlauncher.app.data.model.LandscapeOverrides
@@ -93,6 +94,8 @@ private object Keys {
     val WALLPAPER_ACCENT_ROLE = stringPreferencesKey("wallpaper_accent_role")
     val ICON_RENDER_MODE = stringPreferencesKey("icon_render_mode")
     val ICON_SHAPE = stringPreferencesKey("icon_shape")
+    val ICON_PACK_PACKAGE = stringPreferencesKey("icon_pack_package")
+    val ICON_PACK_FALLBACK = stringPreferencesKey("icon_pack_fallback")
     val LAUNCHER_FONT_OPTION = stringPreferencesKey("launcher_font_option")
     val FONT_SCALE_OPTION = stringPreferencesKey("font_scale_option")
     val APP_LABEL_COLOR_OPTION = stringPreferencesKey("app_label_color_option")
@@ -203,6 +206,9 @@ class SettingsRepository @Inject constructor(
                 ?: defaults.iconRenderMode,
             iconShape = preferences[Keys.ICON_SHAPE]?.let { runCatching { IconShape.valueOf(it) }.getOrNull() }
                 ?: defaults.iconShape,
+            iconPackPackage = preferences[Keys.ICON_PACK_PACKAGE],
+            iconPackFallback = preferences[Keys.ICON_PACK_FALLBACK]?.let { runCatching { IconPackFallback.valueOf(it) }.getOrNull() }
+                ?: defaults.iconPackFallback,
             launcherFontOption = preferences[Keys.LAUNCHER_FONT_OPTION]?.let { runCatching { LauncherFontOption.valueOf(it) }.getOrNull() }
                 ?: defaults.launcherFontOption,
             fontScaleOption = preferences[Keys.FONT_SCALE_OPTION]?.let { runCatching { FontScaleOption.valueOf(it) }.getOrNull() }
@@ -392,6 +398,15 @@ class SettingsRepository @Inject constructor(
 
     suspend fun setIconShape(shape: IconShape) {
         dataStore.edit { it[Keys.ICON_SHAPE] = shape.name }
+    }
+
+    /** Applies an installed icon pack launcher-wide; null goes back to the built-in [IconRenderMode]. */
+    suspend fun setIconPack(packageName: String?) {
+        dataStore.edit { if (packageName == null) it.remove(Keys.ICON_PACK_PACKAGE) else it[Keys.ICON_PACK_PACKAGE] = packageName }
+    }
+
+    suspend fun setIconPackFallback(fallback: IconPackFallback) {
+        dataStore.edit { it[Keys.ICON_PACK_FALLBACK] = fallback.name }
     }
 
     suspend fun setLauncherFontOption(option: LauncherFontOption) {

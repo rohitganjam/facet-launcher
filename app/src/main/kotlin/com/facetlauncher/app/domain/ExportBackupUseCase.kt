@@ -98,6 +98,7 @@ private fun LauncherSettings.toBackupSettings(activeFacetIndex: Int?): BackupSet
     wallpaperAccentRole = wallpaperAccentRole.name,
     iconRenderMode = iconRenderMode.name,
     iconShape = iconShape.name,
+    iconPackPackage = iconPackPackage, iconPackFallback = iconPackFallback.name,
     launcherFontOption = launcherFontOption.name,
     fontScaleOption = fontScaleOption.name,
     appLabelColorOption = appLabelColorOption.name,

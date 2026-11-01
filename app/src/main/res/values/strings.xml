@@ -92,6 +92,22 @@
     <string name="icon_shape_rounded">Rounded</string>
     <string name="icon_shape_circle">Circle</string>
     <string name="icon_shape_square">Square</string>
+    <string name="icons_screen_icon_pack">Icon pack</string>
+    <string name="icons_screen_built_in">Built-in</string>
+    <string name="icons_screen_installed">Installed</string>
+    <plurals name="icons_screen_pack_count">
+        <item quantity="one">%d pack</item>
+        <item quantity="other">%d packs</item>
+    </plurals>
+    <string name="icons_screen_get_more">Get more</string>
+    <string name="icons_screen_no_packs">No icon packs installed. Packs made for Nova, Lawnchair, ADW or Apex work here too.</string>
+    <string name="icons_screen_find_packs">Find icon packs</string>
+    <string name="icons_screen_pack_coverage">Covers %1$d of %2$d apps</string>
+    <string name="icons_screen_open_pack">Open pack</string>
+    <string name="icons_screen_pack_misses">Apps the pack misses</string>
+    <string name="icons_screen_shape_set_by_pack">Set by %1$s for the icons it draws</string>
+    <string name="icon_pack_fallback_match_pack">Match pack</string>
+    <string name="icon_pack_fallback_keep_default">Keep default</string>
 
     <!-- ClockTemplateId -->
     <string name="clock_template_light_stack">Light stack</string>

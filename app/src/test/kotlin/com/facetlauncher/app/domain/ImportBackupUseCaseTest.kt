@@ -274,6 +274,25 @@ class ImportBackupUseCaseTest {
     }
 
     @Test
+    fun `restores the icon pack and its fallback, and an older backup without them clears the pack`() = runTest {
+        val withPack = mock(Uri::class.java)
+        val older = mock(Uri::class.java)
+        fun bundle(settings: com.facetlauncher.app.data.model.BackupSettings) = BackupBundle(
+            exportedAtEpochMillis = 0L, settings = settings,
+            facets = emptyList(), dockApps = emptyList(), defaultFavoriteApps = emptyList(), widgetPlacements = emptyList(),
+        )
+        `when`(backupRepository.readBackup(withPack)).thenReturn(bundle(minimalSettings().copy(iconPackPackage = "com.example.pack", iconPackFallback = "KEEP_DEFAULT")))
+        `when`(backupRepository.readBackup(older)).thenReturn(bundle(minimalSettings()))
+
+        useCase(withPack)
+        useCase(older)
+
+        verify(settingsRepository).setIconPack("com.example.pack")
+        verify(settingsRepository).setIconPackFallback(com.facetlauncher.app.data.model.IconPackFallback.KEEP_DEFAULT)
+        verify(settingsRepository).setIconPack(null)
+    }
+
+    @Test
     fun `a backup whose clock divider was never dragged clears the current one`() = runTest {
         val uri = mock(Uri::class.java)
         `when`(backupRepository.readBackup(uri)).thenReturn(

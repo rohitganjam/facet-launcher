@@ -227,7 +227,7 @@ facet's three switches.
 
 ```mermaid
 flowchart LR
-    DS["DataStore: theme_mode, accent_from_system,\ncustom_accent_swatch, wallpaper_accent_role,\nicon_render_mode, icon_shape, launcher_font_option,\nhome_apps_font_weight, font_scale_option"] --> LVM["LauncherViewModel → LauncherUiState"]
+    DS["DataStore: theme_mode, accent_from_system,\ncustom_accent_swatch, wallpaper_accent_role,\nicon_render_mode, icon_pack_package, icon_shape, launcher_font_option,\nhome_apps_font_weight, font_scale_option"] --> LVM["LauncherViewModel → LauncherUiState\n(iconRenderMode = effectiveIconRenderMode)"]
     LVM --> ACT["LauncherActivity.setContent"]
     ACT --> T["FacetLauncherTheme(themeMode, accentFromSystem, customAccentSwatch,\nwallpaperAccentRole, iconRenderMode, iconShape, launcherFontOption,\nhomeAppsFontWeight, fontScaleOption)"]
     T --> DARK{"themeMode"}
@@ -248,6 +248,15 @@ flowchart LR
 
 - The Activity renders an empty `Box` until `LauncherUiState.isLoading` clears, precisely so the
   first frame is never painted with default theme values that then flip.
+- **Icon packs replace the icon style.** While `icon_pack_package` is set, `LauncherSettings.effectiveIconRenderMode`
+  is `SYSTEM_DEFAULT`, so `LocalIconRenderMode` draws icons as they are; the stored `icon_render_mode` is untouched and
+  comes back when the pack is cleared. The pack's icons come in through `AppInfo.icon` (`03 §1`), and `AppIcon` draws one
+  with `iconFromPack` unclipped, ignoring `LocalIconShape`. Settings → Appearance → Icons lists the built-in styles and
+  the installed packs side by side (`IconsViewModel` over `ObserveIconPickerUseCase`): each card previews four apps
+  (`SelectIconSamplesUseCase`: Home, then the device's default apps, then the drawer; a pack card only shows apps it
+  covers). Picking a built-in style clears the pack; with a pack applied the Colour and Background rows give way to
+  the pack's coverage and "Apps the pack misses" (`icon_pack_fallback`), and Icon Shape is greyed out under `MATCH_PACK`.
+  "Get more" and "Find icon packs" open the Play Store's icon pack search (the web search where there is no Play Store).
 - `LocalDynamicColorRefreshSignal` is bumped when the wallpaper changes so Material You colours
   re-resolve without a restart.
 - Android 11 (`minSdk 30`) has no Material You: `dynamicColorSupported` is false, `accentTonalExtremes()` uses the

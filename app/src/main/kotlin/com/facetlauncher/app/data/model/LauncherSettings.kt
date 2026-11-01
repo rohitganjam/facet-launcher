@@ -295,6 +295,10 @@ data class LauncherSettings(
     val iconRenderMode: IconRenderMode = IconRenderMode.SYSTEM_DEFAULT,
     /** Settings → Appearance → "Icon shape" — see [IconShape]. Global, not facet-overridable. */
     val iconShape: IconShape = IconShape.SQUIRCLE,
+    /** Settings → Appearance → Icons — the installed icon pack applied launcher-wide, null for the built-in styles. Replaces [iconRenderMode] while set. */
+    val iconPackPackage: String? = null,
+    /** How apps [iconPackPackage] has no icon for are drawn. */
+    val iconPackFallback: IconPackFallback = IconPackFallback.MATCH_PACK,
     /**
      * Settings → Appearance → "Font" — the base font for every text role app-wide except the
      * clock/calendar, which pick their own font independently (see [ClockFontOption]'s
@@ -426,4 +430,9 @@ data class LauncherSettings(
     val defaultsSeeded: Boolean = false,
     /** Ids of dismissed post-onboarding coach marks (e.g. `"HOME_GESTURES"`) — additive, never cleared. Install-local — excluded from the backup bundle. */
     val coachMarksSeen: Set<String> = emptySet(),
-)
+) {
+    val iconPackSelection: IconPackSelection? get() = iconPackPackage?.let { IconPackSelection(it, iconPackFallback) }
+
+    /** The style icons are drawn in: an icon pack draws its icons as they are, so it stands in for the default style. */
+    val effectiveIconRenderMode: IconRenderMode get() = if (iconPackPackage != null) IconRenderMode.SYSTEM_DEFAULT else iconRenderMode
+}
