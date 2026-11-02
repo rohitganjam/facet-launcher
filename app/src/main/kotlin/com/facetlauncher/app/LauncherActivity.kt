@@ -15,7 +15,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import com.facetlauncher.app.data.EntitlementRepository
@@ -127,8 +126,18 @@ class LauncherActivity : ComponentActivity() {
         }
     }
 
+    // A Home press on bare Home only pauses the activity before onNewIntent, same as returning from an app, so the
+    // lifecycle state can't tell them apart; only coming back from another app stops it first.
+    private var stoppedSinceResume = false
+
+    override fun onStop() {
+        stoppedSinceResume = true
+        super.onStop()
+    }
+
     override fun onResume() {
         super.onResume()
+        stoppedSinceResume = false
         // A refund, a purchase on another device or a redeemed code shows up here without a restart.
         lifecycleScope.launch { entitlementRepository.refresh() }
         viewModel.onResumed()
@@ -137,7 +146,7 @@ class LauncherActivity : ComponentActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         if (intent.action == Intent.ACTION_MAIN && intent.hasCategory(Intent.CATEGORY_HOME)) {
-            viewModel.onHomePressed(whileResumed = lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED))
+            viewModel.onHomePressed(whileResumed = !stoppedSinceResume)
         }
         handleFacetDeepLink(intent)
     }
