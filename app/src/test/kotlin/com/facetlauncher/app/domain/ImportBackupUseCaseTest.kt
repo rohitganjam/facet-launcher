@@ -274,6 +274,45 @@ class ImportBackupUseCaseTest {
     }
 
     @Test
+    fun `restores the icon pack and its fallback, and an older backup without them clears the pack`() = runTest {
+        val withPack = mock(Uri::class.java)
+        val older = mock(Uri::class.java)
+        fun bundle(settings: com.facetlauncher.app.data.model.BackupSettings) = BackupBundle(
+            exportedAtEpochMillis = 0L, settings = settings,
+            facets = emptyList(), dockApps = emptyList(), defaultFavoriteApps = emptyList(), widgetPlacements = emptyList(),
+        )
+        `when`(backupRepository.readBackup(withPack)).thenReturn(bundle(minimalSettings().copy(iconPackPackage = "com.example.pack", iconPackFallback = "KEEP_DEFAULT")))
+        `when`(backupRepository.readBackup(older)).thenReturn(bundle(minimalSettings()))
+
+        useCase(withPack)
+        useCase(older)
+
+        verify(settingsRepository).setIconPack("com.example.pack")
+        verify(settingsRepository).setIconPackFallback(com.facetlauncher.app.data.model.IconPackFallback.KEEP_DEFAULT)
+        verify(settingsRepository).setIconPack(null)
+    }
+
+    @Test
+    fun `restores icon size and shrink list to fit, an older backup getting their defaults`() = runTest {
+        val newer = mock(Uri::class.java)
+        val older = mock(Uri::class.java)
+        fun bundle(settings: com.facetlauncher.app.data.model.BackupSettings) = BackupBundle(
+            exportedAtEpochMillis = 0L, settings = settings,
+            facets = emptyList(), dockApps = emptyList(), defaultFavoriteApps = emptyList(), widgetPlacements = emptyList(),
+        )
+        `when`(backupRepository.readBackup(newer)).thenReturn(bundle(minimalSettings().copy(iconScalePercent = 115, appListShrinkToFit = "ON")))
+        `when`(backupRepository.readBackup(older)).thenReturn(bundle(minimalSettings()))
+
+        useCase(newer)
+        useCase(older)
+
+        verify(settingsRepository).setIconScalePercent(115)
+        verify(settingsRepository).setAppListShrinkToFit(com.facetlauncher.app.data.model.AppListShrinkToFit.ON)
+        verify(settingsRepository).setIconScalePercent(100)
+        verify(settingsRepository).setAppListShrinkToFit(com.facetlauncher.app.data.model.AppListShrinkToFit.OFF)
+    }
+
+    @Test
     fun `a backup whose clock divider was never dragged clears the current one`() = runTest {
         val uri = mock(Uri::class.java)
         `when`(backupRepository.readBackup(uri)).thenReturn(

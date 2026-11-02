@@ -15,6 +15,7 @@ import com.facetlauncher.app.BuildConfig
 import com.facetlauncher.app.data.model.AppListColumnAlignment
 import com.facetlauncher.app.data.model.AppListGridColumns
 import com.facetlauncher.app.data.model.AppListGridDisplayMode
+import com.facetlauncher.app.data.model.AppListShrinkToFit
 import com.facetlauncher.app.data.model.AppListLayout
 import com.facetlauncher.app.data.model.AppListLimits
 import com.facetlauncher.app.data.model.AppListVerticalAlignment
@@ -33,7 +34,9 @@ import com.facetlauncher.app.data.model.DrawerListItemSize
 import com.facetlauncher.app.data.model.DrawerPresentation
 import com.facetlauncher.app.data.model.FontScaleOption
 import com.facetlauncher.app.data.model.FontWeightOption
+import com.facetlauncher.app.data.model.IconPackFallback
 import com.facetlauncher.app.data.model.IconRenderMode
+import com.facetlauncher.app.data.model.IconScale
 import com.facetlauncher.app.data.model.IconShape
 import com.facetlauncher.app.data.model.LandscapeOverrides
 import com.facetlauncher.app.data.model.LauncherFontOption
@@ -93,6 +96,9 @@ private object Keys {
     val WALLPAPER_ACCENT_ROLE = stringPreferencesKey("wallpaper_accent_role")
     val ICON_RENDER_MODE = stringPreferencesKey("icon_render_mode")
     val ICON_SHAPE = stringPreferencesKey("icon_shape")
+    val ICON_SCALE_PERCENT = intPreferencesKey("icon_scale_percent")
+    val ICON_PACK_PACKAGE = stringPreferencesKey("icon_pack_package")
+    val ICON_PACK_FALLBACK = stringPreferencesKey("icon_pack_fallback")
     val LAUNCHER_FONT_OPTION = stringPreferencesKey("launcher_font_option")
     val FONT_SCALE_OPTION = stringPreferencesKey("font_scale_option")
     val APP_LABEL_COLOR_OPTION = stringPreferencesKey("app_label_color_option")
@@ -142,6 +148,7 @@ private object Keys {
     val LANDSCAPE_APP_LIST_COLUMN_ALIGNMENT = stringPreferencesKey("landscape_app_list_column_alignment")
     val APP_LIST_GRID_COLUMNS = stringPreferencesKey("app_list_grid_columns")
     val APP_LIST_GRID_DISPLAY_MODE = stringPreferencesKey("app_list_grid_display_mode")
+    val APP_LIST_SHRINK_TO_FIT = stringPreferencesKey("app_list_shrink_to_fit")
     val ONBOARDING_COMPLETED = booleanPreferencesKey("onboarding_completed")
     val DEFAULTS_SEEDED = booleanPreferencesKey("defaults_seeded")
     val COACH_MARKS_SEEN = stringSetPreferencesKey("coach_marks_seen")
@@ -203,6 +210,10 @@ class SettingsRepository @Inject constructor(
                 ?: defaults.iconRenderMode,
             iconShape = preferences[Keys.ICON_SHAPE]?.let { runCatching { IconShape.valueOf(it) }.getOrNull() }
                 ?: defaults.iconShape,
+            iconScalePercent = (preferences[Keys.ICON_SCALE_PERCENT] ?: defaults.iconScalePercent).coerceIn(IconScale.MIN_PERCENT, IconScale.MAX_PERCENT),
+            iconPackPackage = preferences[Keys.ICON_PACK_PACKAGE],
+            iconPackFallback = preferences[Keys.ICON_PACK_FALLBACK]?.let { runCatching { IconPackFallback.valueOf(it) }.getOrNull() }
+                ?: defaults.iconPackFallback,
             launcherFontOption = preferences[Keys.LAUNCHER_FONT_OPTION]?.let { runCatching { LauncherFontOption.valueOf(it) }.getOrNull() }
                 ?: defaults.launcherFontOption,
             fontScaleOption = preferences[Keys.FONT_SCALE_OPTION]?.let { runCatching { FontScaleOption.valueOf(it) }.getOrNull() }
@@ -270,6 +281,8 @@ class SettingsRepository @Inject constructor(
                 ?: defaults.appListGridColumns,
             appListGridDisplayMode = preferences[Keys.APP_LIST_GRID_DISPLAY_MODE]?.let { runCatching { AppListGridDisplayMode.valueOf(it) }.getOrNull() }
                 ?: defaults.appListGridDisplayMode,
+            appListShrinkToFit = preferences[Keys.APP_LIST_SHRINK_TO_FIT]?.let { runCatching { AppListShrinkToFit.valueOf(it) }.getOrNull() }
+                ?.takeIf { it != AppListShrinkToFit.LAUNCHER_DEFAULT } ?: defaults.appListShrinkToFit,
             onboardingCompleted = preferences[Keys.ONBOARDING_COMPLETED] ?: defaults.onboardingCompleted,
             defaultsSeeded = preferences[Keys.DEFAULTS_SEEDED] ?: defaults.defaultsSeeded,
             coachMarksSeen = preferences[Keys.COACH_MARKS_SEEN] ?: defaults.coachMarksSeen,
@@ -392,6 +405,19 @@ class SettingsRepository @Inject constructor(
 
     suspend fun setIconShape(shape: IconShape) {
         dataStore.edit { it[Keys.ICON_SHAPE] = shape.name }
+    }
+
+    suspend fun setIconScalePercent(percent: Int) {
+        dataStore.edit { it[Keys.ICON_SCALE_PERCENT] = percent.coerceIn(IconScale.MIN_PERCENT, IconScale.MAX_PERCENT) }
+    }
+
+    /** Applies an installed icon pack launcher-wide; null goes back to the built-in [IconRenderMode]. */
+    suspend fun setIconPack(packageName: String?) {
+        dataStore.edit { if (packageName == null) it.remove(Keys.ICON_PACK_PACKAGE) else it[Keys.ICON_PACK_PACKAGE] = packageName }
+    }
+
+    suspend fun setIconPackFallback(fallback: IconPackFallback) {
+        dataStore.edit { it[Keys.ICON_PACK_FALLBACK] = fallback.name }
     }
 
     suspend fun setLauncherFontOption(option: LauncherFontOption) {
@@ -607,6 +633,11 @@ class SettingsRepository @Inject constructor(
     /** The default every facet inherits unless it sets its own override — see [LauncherSettings.appListGridDisplayMode]. */
     suspend fun setAppListGridDisplayMode(mode: AppListGridDisplayMode) {
         dataStore.edit { it[Keys.APP_LIST_GRID_DISPLAY_MODE] = mode.name }
+    }
+
+    /** The default every facet inherits unless it sets its own — see [LauncherSettings.appListShrinkToFit]. */
+    suspend fun setAppListShrinkToFit(shrinkToFit: AppListShrinkToFit) {
+        dataStore.edit { it[Keys.APP_LIST_SHRINK_TO_FIT] = shrinkToFit.name }
     }
 
     /** Completing onboarding on a build also marks that version's What's new as seen: a fresh install has nothing new to announce. */

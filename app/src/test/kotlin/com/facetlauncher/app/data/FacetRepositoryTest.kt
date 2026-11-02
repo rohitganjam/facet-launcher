@@ -319,6 +319,22 @@ class FacetRepositoryTest {
     }
 
     @Test
+    fun `setAppListShrinkToFit stores the facet's own value and can go back to the launcher's`() = runTest {
+        // Given a new facet, inheriting
+        val repository = FacetRepository(FakeFacetDao(), FakeClockStackItemDao())
+        val facet = repository.addFacet()
+        assertEquals(com.facetlauncher.app.data.model.AppListShrinkToFit.LAUNCHER_DEFAULT, facet.appListShrinkToFit)
+
+        // When it turns shrinking on, then back to the launcher's
+        repository.setAppListShrinkToFit(facet.id, com.facetlauncher.app.data.model.AppListShrinkToFit.ON)
+        assertEquals(com.facetlauncher.app.data.model.AppListShrinkToFit.ON, repository.observeFacets().first().single().appListShrinkToFit)
+        repository.setAppListShrinkToFit(facet.id, com.facetlauncher.app.data.model.AppListShrinkToFit.LAUNCHER_DEFAULT)
+
+        // Then it inherits again
+        assertEquals(com.facetlauncher.app.data.model.AppListShrinkToFit.LAUNCHER_DEFAULT, repository.observeFacets().first().single().appListShrinkToFit)
+    }
+
+    @Test
     fun `setAppsToShowCount coerces into the 3 to 12 range`() = runTest {
         val dao = FakeFacetDao()
         val repository = FacetRepository(dao, FakeClockStackItemDao())

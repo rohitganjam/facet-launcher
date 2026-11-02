@@ -20,6 +20,42 @@ class IconMasksTest {
     private fun AlphaMask.at(x: Int, y: Int) = alpha[y * width + x]
 
     @Test
+    fun `normalizePeak scales a dull outline so its strongest lines are full and ratios hold`() {
+        // Given an outline peaking at 100 with a line at half that
+        val alpha = IntArray(200) { 0 }.also { for (i in 0 until 150) it[i] = 100; for (i in 150 until 200) it[i] = 50 }
+
+        // When normalised
+        val out = IconMasks.normalizePeak(AlphaMask(20, 10, alpha))
+
+        // Then the peak is full and the weaker lines keep the same ratio, with empty pixels untouched
+        assertEquals(255, out.alpha.max())
+        assertEquals(127, out.alpha[199])
+        assertEquals(0, IconMasks.normalizePeak(AlphaMask(2, 1, intArrayOf(0, 90))).alpha[0])
+    }
+
+    @Test
+    fun `normalizePeak ignores a lone stray pixel when setting the peak`() {
+        // Given a dull outline with one stray bright pixel in 200
+        val alpha = IntArray(400) { if (it < 200) 80 else 0 }.also { it[0] = 255 }
+
+        // When normalised
+        val out = IconMasks.normalizePeak(AlphaMask(40, 10, alpha))
+
+        // Then the body of the outline is full, not left dull by the stray
+        assertEquals(255, out.alpha[100])
+    }
+
+    @Test
+    fun `normalizePeak leaves an empty outline empty`() {
+        // Given no drawn pixels
+        // When normalised
+        val out = IconMasks.normalizePeak(AlphaMask(2, 2, IntArray(4)))
+
+        // Then it stays empty
+        assertEquals(0, out.alpha.max())
+    }
+
+    @Test
     fun `fromAlpha reads the alpha channel`() {
         // Given pixels with different alpha
         val pixels = intArrayOf(0x00FFFFFF, 0x80000000.toInt(), 0xFF123456.toInt(), 0x40FF0000)

@@ -9,6 +9,7 @@ import com.facetlauncher.app.data.local.toFacet
 import com.facetlauncher.app.data.model.AppListColumnAlignment
 import com.facetlauncher.app.data.model.AppListGridColumns
 import com.facetlauncher.app.data.model.AppListGridDisplayMode
+import com.facetlauncher.app.data.model.AppListShrinkToFit
 import com.facetlauncher.app.data.model.AppListLayout
 import com.facetlauncher.app.data.model.AppListLimits
 import com.facetlauncher.app.data.model.AppListVerticalAlignment
@@ -251,6 +252,10 @@ class FacetRepository @Inject constructor(
 
     suspend fun setAppListGridDisplayMode(facetId: Long, mode: AppListGridDisplayMode) {
         update(facetId) { it.copy(appListGridDisplayMode = mode) }
+    }
+
+    suspend fun setAppListShrinkToFit(facetId: Long, shrinkToFit: AppListShrinkToFit) {
+        update(facetId) { it.copy(appListShrinkToFit = shrinkToFit) }
     }
 
     suspend fun setOverridingFavorites(facetId: Long, overriding: Boolean) {

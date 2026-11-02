@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
@@ -27,6 +28,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.facetlauncher.app.R
 import com.facetlauncher.app.data.model.AppListColumnAlignment
@@ -287,15 +289,28 @@ private fun HomeSurfacePreviewGrid(
                         fontWeight = labelFontWeight,
                     )
                 } else {
-                    when (item) {
-                        is PlacedItem.SingleApp -> AppIcon(
-                            app = item.app,
-                            size = AppIconSize.TILE,
-                            contentDescription = label,
-                            notificationCount = badgeCountFor(item.app.packageName),
-                            badgeStyle = badgeStyle,
-                        )
-                        is PlacedItem.FolderItem -> FolderTileGlyph(folder = item.folder)
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        when (item) {
+                            is PlacedItem.SingleApp -> AppIcon(
+                                app = item.app,
+                                size = AppIconSize.scaled(),
+                                contentDescription = label,
+                                notificationCount = badgeCountFor(item.app.packageName),
+                                badgeStyle = badgeStyle,
+                            )
+                            is PlacedItem.FolderItem -> FolderTileGlyph(folder = item.folder, size = AppIconSize.scaled())
+                        }
+                        if (displayMode == AppListGridDisplayMode.ICONS_AND_TEXT) {
+                            Text(
+                                text = label,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = labelColor,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                fontWeight = labelFontWeight,
+                                modifier = Modifier.padding(top = 4.dp).widthIn(max = AppIconSize.scaled(AppIconSize.GRID_LABEL_WIDTH)),
+                            )
+                        }
                     }
                 }
             }

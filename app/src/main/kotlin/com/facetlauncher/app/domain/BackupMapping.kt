@@ -9,6 +9,7 @@ import com.facetlauncher.app.data.local.WidgetPlacementEntity
 import com.facetlauncher.app.data.model.AppListColumnAlignment
 import com.facetlauncher.app.data.model.AppListGridColumns
 import com.facetlauncher.app.data.model.AppListGridDisplayMode
+import com.facetlauncher.app.data.model.AppListShrinkToFit
 import com.facetlauncher.app.data.model.AppListLayout
 import com.facetlauncher.app.data.model.AppListLimits
 import com.facetlauncher.app.data.model.AppProfile
@@ -88,6 +89,7 @@ fun Facet.toBackupFacet(
     landscapeAppListColumnAlignment = landscapeAppListColumnAlignment?.name,
     appListGridColumns = appListGridColumns.name,
     appListGridDisplayMode = appListGridDisplayMode.name,
+    appListShrinkToFit = appListShrinkToFit.name,
     listContentMode = listContentMode.name,
     appsToShowCount = appsToShowCount,
     overridingFavorites = overridingFavorites,
@@ -142,6 +144,7 @@ fun BackupFacet.toFacet(): Facet = Facet(
     landscapeAppListColumnAlignment = landscapeAppListColumnAlignment?.toEnumOrNull(),
     appListGridColumns = appListGridColumns.toEnumOrDefault(AppListGridColumns.LAUNCHER_DEFAULT),
     appListGridDisplayMode = appListGridDisplayMode.toEnumOrDefault(AppListGridDisplayMode.LAUNCHER_DEFAULT),
+    appListShrinkToFit = appListShrinkToFit.toEnumOrDefault(AppListShrinkToFit.LAUNCHER_DEFAULT),
     listContentMode = listContentMode.toEnumOrDefault(ListContentMode.FAVORITES),
     appsToShowCount = appsToShowCount.coerceIn(AppListLimits.MIN_APPS_TO_SHOW, AppListLimits.MAX_APPS_TO_SHOW),
     overridingFavorites = overridingFavorites,

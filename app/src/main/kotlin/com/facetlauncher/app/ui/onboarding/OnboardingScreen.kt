@@ -1,11 +1,14 @@
 package com.facetlauncher.app.ui.onboarding
 
+import android.Manifest
 import android.app.Activity
 import android.content.Intent
 import android.os.Build
 import android.provider.Settings
 import android.view.WindowManager
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -53,15 +56,15 @@ import com.facetlauncher.app.ui.theme.Wallpaper
 
 /**
  * The three onboarding steps, in order — see `ONBOARDING_FLOW.md` §3. Reaching the end of
- * [FACETS] (via "Next" or "Skip") completes onboarding directly ([OnboardingScreen]'s [onFinish])
+ * [HOME_SETUP] (via "Next" or "Skip") completes onboarding directly ([OnboardingScreen]'s [onFinish])
  * rather than advancing to a further step — the "make Facet your home screen" prompt lives on the
  * real Home screen instead, shown once there right after onboarding completes (see
  * [SetDefaultLauncherSheet]'s own doc for why).
  */
 enum class OnboardingStep {
     INTRO,
-    HOME_SETUP,
     FACETS,
+    HOME_SETUP,
 }
 
 /** Steps shown in each page's [OnboardingDots]. */
@@ -73,23 +76,23 @@ private enum class OnboardingSubScreen {
     FAVORITES_PICKER,
 }
 
-/** The step a right swipe (or the on-screen "Back" on [OnboardingStep.HOME_SETUP]/[OnboardingStep.FACETS]) lands on — every step but [OnboardingStep.INTRO] can go back this way. */
+/** The step a right swipe (or the on-screen "Back" on [OnboardingStep.FACETS]/[OnboardingStep.HOME_SETUP]) lands on — every step but [OnboardingStep.INTRO] can go back this way. */
 private fun previousStep(step: OnboardingStep): OnboardingStep = when (step) {
     OnboardingStep.INTRO -> OnboardingStep.INTRO
-    OnboardingStep.HOME_SETUP -> OnboardingStep.INTRO
-    OnboardingStep.FACETS -> OnboardingStep.HOME_SETUP
+    OnboardingStep.FACETS -> OnboardingStep.INTRO
+    OnboardingStep.HOME_SETUP -> OnboardingStep.FACETS
 }
 
 /**
- * The step a "Next" action (on-screen or a left swipe) lands on. [OnboardingStep.FACETS] maps to
+ * The step a "Next" action (on-screen or a left swipe) lands on. [OnboardingStep.HOME_SETUP] maps to
  * itself — [OnboardingScreen] special-cases moving past it to call [OnboardingScreen]'s own
  * `onFinish` instead of changing `step`, the same way the old `SET_DEFAULT` step used to be the
  * fixed point every "next" resolved to.
  */
 private fun nextStep(step: OnboardingStep): OnboardingStep = when (step) {
-    OnboardingStep.INTRO -> OnboardingStep.HOME_SETUP
-    OnboardingStep.HOME_SETUP -> OnboardingStep.FACETS
-    OnboardingStep.FACETS -> OnboardingStep.FACETS
+    OnboardingStep.INTRO -> OnboardingStep.FACETS
+    OnboardingStep.FACETS -> OnboardingStep.HOME_SETUP
+    OnboardingStep.HOME_SETUP -> OnboardingStep.HOME_SETUP
 }
 
 /** A swipe shorter than this is treated as a scroll/drag within the step's own content, not a page change. */
@@ -132,6 +135,9 @@ fun OnboardingScreen(
     val density = LocalDensity.current
     val swipeCommitPx = with(density) { SWIPE_COMMIT_DISTANCE.toPx() }
     val context = LocalContext.current
+    val requestContactsPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        viewModel.setSearchContactsEnabled(granted)
+    }
     // Onboarding has no navigation stack of its own to reach the real UsageAccessExplanationScreen
     // from — this jumps straight to the system Settings redirect it would otherwise lead to.
     val onNavigateToUsageAccessExplanation: () -> Unit = {
@@ -171,7 +177,7 @@ fun OnboardingScreen(
                             },
                             onDragEnd = {
                                 when {
-                                    totalDrag <= -swipeCommitPx -> if (step == OnboardingStep.FACETS) onFinish() else step = nextStep(step)
+                                    totalDrag <= -swipeCommitPx -> if (step == OnboardingStep.HOME_SETUP) onFinish() else step = nextStep(step)
                                     totalDrag >= swipeCommitPx -> step = previousStep(step)
                                 }
                             },
@@ -209,17 +215,22 @@ fun OnboardingScreen(
                     onAppsToShowCountChange = viewModel::setAppsToShowCount,
                     drawerPresentation = uiState.drawerPresentation,
                     onDrawerPresentationChange = viewModel::setDrawerPresentation,
+                    onSearchBarPositionChange = viewModel::setSearchBarPosition,
+                    onSearchContactsToggle = { enabled ->
+                        if (enabled) requestContactsPermission.launch(Manifest.permission.READ_CONTACTS) else viewModel.setSearchContactsEnabled(false)
+                    },
+                    onSearchSettingsToggle = viewModel::setSearchSettingsEnabled,
                     onOpenFavoritesPicker = { subScreen = OnboardingSubScreen.FAVORITES_PICKER },
                     onReorderFavorites = viewModel::reorderFavorites,
                     onClearFavorites = viewModel::clearFavorites,
                     onClearDockApps = viewModel::clearDockApps,
                     onBack = { step = previousStep(step) },
-                    onNext = { step = nextStep(step) },
+                    onNext = onFinish,
                 )
                 OnboardingStep.FACETS -> OnboardingFacetsPage(
                     uiState = uiState,
                     onBack = { step = previousStep(step) },
-                    onNext = onFinish,
+                    onNext = { step = nextStep(step) },
                 )
             }
         }

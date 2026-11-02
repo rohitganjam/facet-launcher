@@ -18,6 +18,9 @@ enum class DockDisplayMode(@param:StringRes val displayNameRes: Int) {
     LAUNCHER_DEFAULT(R.string.dock_display_mode_launcher_default),
     ICONS(R.string.dock_display_mode_icons),
     TEXT(R.string.dock_display_mode_text),
+
+    /** The icon with its name under it, one line, as the drawer grid draws it. */
+    ICONS_AND_TEXT(R.string.dock_display_mode_icons_and_text),
 }
 
 enum class DrawerPresentation(@param:StringRes val displayNameRes: Int) {
@@ -47,18 +50,22 @@ enum class DrawerGridDensity(@param:StringRes val displayNameRes: Int) {
 }
 
 /**
- * List presentation only. [extraRowPaddingDp] adds on top of [DrawerAppRow][com.facetlauncher.app.ui.drawer.DrawerAppRow]'s
- * own 8dp base vertical padding (originally the design spec's `6px 0` for App Drawer's list rows —
- * see `design_handoff_minimal_launcher/README.md`'s `1h` — rounded up to 8dp per direct request so
- * every tier's total sits on a clean 4dp-grid value: `COMPACT` 8dp, `REGULAR` 16dp, `SPACIOUS`
- * 24dp; see chat history). [iconSizeDp] grows the row's [AppIcon][com.facetlauncher.app.ui.components.AppIcon]
- * alongside it for `REGULAR`/`SPACIOUS` (also per direct request) — `COMPACT` keeps the row's
- * existing 32dp icon unchanged, so this option's own default look doesn't shift.
+ * A list row's size: its icon ([iconSizeDp], before the Icon size scale) and the padding above and below it
+ * ([verticalPaddingDp]), so a row is the icon plus twice the padding. The drawer list offers all three; Home's
+ * list is [REGULAR], dropping to [COMPACT] only when "Shrink list to fit" is on and the list doesn't fit; a folder
+ * sheet's list is always [REGULAR].
  */
-enum class DrawerListItemSize(val extraRowPaddingDp: Int, val iconSizeDp: Int, @param:StringRes val displayNameRes: Int) {
-    COMPACT(0, 32, R.string.drawer_list_item_size_compact),
-    REGULAR(8, 36, R.string.drawer_list_item_size_regular),
-    SPACIOUS(16, 40, R.string.drawer_list_item_size_spacious),
+enum class DrawerListItemSize(val iconSizeDp: Int, val verticalPaddingDp: Int, @param:StringRes val displayNameRes: Int) {
+    COMPACT(36, 4, R.string.drawer_list_item_size_compact),
+    REGULAR(44, 12, R.string.drawer_list_item_size_regular),
+    SPACIOUS(44, 16, R.string.drawer_list_item_size_spacious),
+}
+
+/** Settings → Appearance → Icons → Icon size, in percent of [DrawerListItemSize]'s icon sizes. */
+object IconScale {
+    const val MIN_PERCENT = 80
+    const val MAX_PERCENT = 120
+    const val DEFAULT_PERCENT = 100
 }
 
 enum class SearchBarPosition(@param:StringRes val displayNameRes: Int) {
@@ -212,16 +219,27 @@ enum class AppListGridColumns(val columns: Int, @param:StringRes val displayName
 }
 
 /**
- * Only meaningful when [AppListLayout.GRID] is active — what a grid tile renders. Deliberately
- * shaped like [DockDisplayMode] (icons-only or text-only, no combined option) rather than
- * [AppRowPresentation]'s three-way shape, and a separate setting from the Dock's own —
- * Home's grid tiles are visually distinct from the Dock. [LAUNCHER_DEFAULT] is facet-only — see
+ * Only meaningful when [AppListLayout.GRID] is active — what a grid tile renders. Shaped like
+ * [DockDisplayMode] and a separate setting from the Dock's own. [LAUNCHER_DEFAULT] is facet-only — see
  * [DockDisplayMode]'s own doc for the sentinel's exact shape.
  */
 enum class AppListGridDisplayMode(@param:StringRes val displayNameRes: Int) {
     LAUNCHER_DEFAULT(R.string.app_list_grid_display_mode_launcher_default),
     ICONS(R.string.app_list_grid_display_mode_icons),
     TEXT(R.string.app_list_grid_display_mode_text),
+
+    /** The icon with its name under it, one line, as the drawer grid draws it. */
+    ICONS_AND_TEXT(R.string.app_list_grid_display_mode_icons_and_text),
+}
+
+/**
+ * Whether Home's list (not the grid) drops to Compact rows when Regular rows wouldn't fit; [OFF] keeps Regular rows
+ * and the list scrolls. [LAUNCHER_DEFAULT] is facet-only — see [DockDisplayMode]'s own doc for the sentinel's shape.
+ */
+enum class AppListShrinkToFit(@param:StringRes val displayNameRes: Int) {
+    LAUNCHER_DEFAULT(R.string.app_list_shrink_to_fit_launcher_default),
+    OFF(R.string.app_list_shrink_to_fit_off),
+    ON(R.string.app_list_shrink_to_fit_on),
 }
 
 /**
@@ -295,6 +313,12 @@ data class LauncherSettings(
     val iconRenderMode: IconRenderMode = IconRenderMode.SYSTEM_DEFAULT,
     /** Settings → Appearance → "Icon shape" — see [IconShape]. Global, not facet-overridable. */
     val iconShape: IconShape = IconShape.SQUIRCLE,
+    /** Settings → Appearance → Icons → Icon size, [IconScale.MIN_PERCENT]..[IconScale.MAX_PERCENT]. Global, not facet-overridable. */
+    val iconScalePercent: Int = IconScale.DEFAULT_PERCENT,
+    /** Settings → Appearance → Icons — the installed icon pack applied launcher-wide, null for the built-in styles. Replaces [iconRenderMode] while set. */
+    val iconPackPackage: String? = null,
+    /** How apps [iconPackPackage] has no icon for are drawn. */
+    val iconPackFallback: IconPackFallback = IconPackFallback.MATCH_PACK,
     /**
      * Settings → Appearance → "Font" — the base font for every text role app-wide except the
      * clock/calendar, which pick their own font independently (see [ClockFontOption]'s
@@ -408,6 +432,8 @@ data class LauncherSettings(
     val appListGridColumns: AppListGridColumns = AppListGridColumns.FOUR,
     /** Only meaningful while [appListLayout] is [AppListLayout.GRID] — see [AppListGridDisplayMode]'s own doc. */
     val appListGridDisplayMode: AppListGridDisplayMode = AppListGridDisplayMode.ICONS,
+    /** Only meaningful in the list layouts — see [AppListShrinkToFit]. */
+    val appListShrinkToFit: AppListShrinkToFit = AppListShrinkToFit.OFF,
     /**
      * Home clock's scale factor — the default every facet inherits.
      * Uniform scaling ensures proportions are preserved.
@@ -426,4 +452,9 @@ data class LauncherSettings(
     val defaultsSeeded: Boolean = false,
     /** Ids of dismissed post-onboarding coach marks (e.g. `"HOME_GESTURES"`) — additive, never cleared. Install-local — excluded from the backup bundle. */
     val coachMarksSeen: Set<String> = emptySet(),
-)
+) {
+    val iconPackSelection: IconPackSelection? get() = iconPackPackage?.let { IconPackSelection(it, iconPackFallback) }
+
+    /** The style icons are drawn in: an icon pack draws its icons as they are, so it stands in for the default style. */
+    val effectiveIconRenderMode: IconRenderMode get() = if (iconPackPackage != null) IconRenderMode.SYSTEM_DEFAULT else iconRenderMode
+}

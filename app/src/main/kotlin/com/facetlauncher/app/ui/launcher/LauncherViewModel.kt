@@ -66,6 +66,8 @@ data class LauncherUiState(
     val wallpaperAccentRole: WallpaperAccentRole = WallpaperAccentRole.PRIMARY,
     val iconRenderMode: IconRenderMode = IconRenderMode.SYSTEM_DEFAULT,
     val iconShape: IconShape = IconShape.SQUIRCLE,
+    /** `LauncherSettings.iconScalePercent` as a factor. */
+    val iconScale: Float = 1f,
     val launcherFontOption: LauncherFontOption = LauncherFontOption.SYSTEM,
     val homeAppsFontWeight: FontWeightOption = FontWeightOption.REGULAR,
     val fontScaleOption: FontScaleOption = FontScaleOption.DEFAULT,
@@ -88,7 +90,7 @@ data class LauncherUiState(
 
 @HiltViewModel
 class LauncherViewModel @Inject constructor(
-    getInstalledApps: GetInstalledAppsUseCase,
+    private val getInstalledApps: GetInstalledAppsUseCase,
     private val ensureActiveFacet: EnsureActiveFacetUseCase,
     private val cleanUpUninstalledApps: CleanUpUninstalledAppsUseCase,
     private val repairOrphanedProfileRows: RepairOrphanedProfileRowsUseCase,
@@ -106,7 +108,12 @@ class LauncherViewModel @Inject constructor(
     private val _homePressedEvent = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
     val homePressedEvent: SharedFlow<Unit> = _homePressedEvent.asSharedFlow()
 
-    fun onHomePressed() {
+    /** True when the latest Home press arrived while the launcher was already in front (not from another app). */
+    var homePressedWhileResumed = false
+        private set
+
+    fun onHomePressed(whileResumed: Boolean = false) {
+        homePressedWhileResumed = whileResumed
         _homePressedEvent.tryEmit(Unit)
     }
 
@@ -120,6 +127,11 @@ class LauncherViewModel @Inject constructor(
     fun activateFacetFromDeepLink(uri: Uri) {
         val facetId = parseFacetIdFromDeepLink(uri) ?: return
         viewModelScope.launch { activateFacetById(facetId) }
+    }
+
+    /** The launcher came back to the front: midnight may have passed while the screen was off. */
+    fun onResumed() {
+        getInstalledApps.recheckDate()
     }
 
     /** Called once, from the final onboarding step ("Set as default" or "Later") — see [com.facetlauncher.app.LauncherActivity]. */
@@ -140,8 +152,9 @@ class LauncherViewModel @Inject constructor(
                 accentFromSystem = settings.accentFromSystem,
                 customAccentSwatch = settings.customAccentSwatch,
                 wallpaperAccentRole = settings.wallpaperAccentRole,
-                iconRenderMode = settings.iconRenderMode,
+                iconRenderMode = settings.effectiveIconRenderMode,
                 iconShape = settings.iconShape,
+                iconScale = settings.iconScalePercent / 100f,
                 launcherFontOption = settings.launcherFontOption,
                 homeAppsFontWeight = settings.homeAppsFontWeight,
                 fontScaleOption = settings.fontScaleOption,

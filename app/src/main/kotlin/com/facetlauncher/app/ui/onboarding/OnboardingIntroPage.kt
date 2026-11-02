@@ -49,7 +49,7 @@ import kotlinx.coroutines.launch
 
 /**
  * Onboarding step 1 (`4f`) — one-breath framing, no interaction beyond Next. Names the three parts
- * of Home (clock / app list / dock) so "dock" isn't a surprise in step 2, and previews the three
+ * of Home (clock / app list / dock) so "dock" isn't a surprise in the home-setup step, and previews the three
  * gestures that will actually be available afterward — kept in sync with the real gesture map
  * (`PRD.md` §5): swipe up → App Drawer, swipe right → Hub, swipe left → Switch Facets.
  */

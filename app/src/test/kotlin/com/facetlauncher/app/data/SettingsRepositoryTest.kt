@@ -25,6 +25,8 @@ import com.facetlauncher.app.data.model.DrawerGridDensity
 import com.facetlauncher.app.data.model.DrawerListItemSize
 import com.facetlauncher.app.data.model.DrawerPresentation
 import com.facetlauncher.app.data.model.FontWeightOption
+import com.facetlauncher.app.data.model.AppListShrinkToFit
+import com.facetlauncher.app.data.model.IconPackFallback
 import com.facetlauncher.app.data.model.IconRenderMode
 import com.facetlauncher.app.data.model.IconShape
 import com.facetlauncher.app.data.model.LauncherFontOption
@@ -41,6 +43,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -423,6 +426,61 @@ class SettingsRepositoryTest {
         assertEquals(true, settings.accentFromSystem)
         assertEquals(null, settings.customAccentSwatch)
         assertEquals(WallpaperAccentRole.PRIMARY, settings.wallpaperAccentRole)
+    }
+
+    @Test
+    fun `an icon pack is applied, its fallback kept, and cleared back to the built-in style`() = runTest {
+        // Given a repository on a built-in glyph style
+        val repository = createRepository()
+        repository.setIconRenderMode(IconRenderMode.GLYPH_ACCENT)
+        assertNull(repository.settings.first().iconPackPackage)
+        assertEquals(IconPackFallback.MATCH_PACK, repository.settings.first().iconPackFallback)
+
+        // When applying a pack that keeps missed apps' own icons
+        repository.setIconPack("com.example.pack")
+        repository.setIconPackFallback(IconPackFallback.KEEP_DEFAULT)
+
+        // Then both are stored, and icons draw as the pack has them
+        val applied = repository.settings.first()
+        assertEquals("com.example.pack", applied.iconPackPackage)
+        assertEquals(IconPackFallback.KEEP_DEFAULT, applied.iconPackFallback)
+        assertEquals(IconRenderMode.SYSTEM_DEFAULT, applied.effectiveIconRenderMode)
+
+        // And clearing the pack brings the stored glyph style back
+        repository.setIconPack(null)
+        val cleared = repository.settings.first()
+        assertNull(cleared.iconPackPackage)
+        assertEquals(IconRenderMode.GLYPH_ACCENT, cleared.effectiveIconRenderMode)
+    }
+
+    @Test
+    fun `icon size defaults to 100 percent, round-trips and stays within 80 to 120`() = runTest {
+        // Given a fresh repository
+        val repository = createRepository()
+        assertEquals(100, repository.settings.first().iconScalePercent)
+
+        // When set inside, below and above the range
+        repository.setIconScalePercent(113)
+        assertEquals(113, repository.settings.first().iconScalePercent)
+        repository.setIconScalePercent(50)
+        assertEquals(80, repository.settings.first().iconScalePercent)
+        repository.setIconScalePercent(200)
+
+        // Then it is clamped to the ends
+        assertEquals(120, repository.settings.first().iconScalePercent)
+    }
+
+    @Test
+    fun `shrink list to fit defaults to off and round-trips`() = runTest {
+        // Given a fresh repository, where long lists scroll
+        val repository = createRepository()
+        assertEquals(AppListShrinkToFit.OFF, repository.settings.first().appListShrinkToFit)
+
+        // When turned on
+        repository.setAppListShrinkToFit(AppListShrinkToFit.ON)
+
+        // Then it is stored
+        assertEquals(AppListShrinkToFit.ON, repository.settings.first().appListShrinkToFit)
     }
 
     @Test

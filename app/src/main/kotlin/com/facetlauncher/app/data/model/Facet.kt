@@ -65,6 +65,7 @@ data class Facet(
     val appListColumnAlignment: AppListColumnAlignment = AppListColumnAlignment.LAUNCHER_DEFAULT,
     val appListGridColumns: AppListGridColumns = AppListGridColumns.LAUNCHER_DEFAULT,
     val appListGridDisplayMode: AppListGridDisplayMode = AppListGridDisplayMode.LAUNCHER_DEFAULT,
+    val appListShrinkToFit: AppListShrinkToFit = AppListShrinkToFit.LAUNCHER_DEFAULT,
     /** `true`: the facet has its own Favorites list; `false`: it uses the launcher-wide one. */
     val overridingFavorites: Boolean = false,
 

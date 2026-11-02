@@ -126,6 +126,21 @@ class ResolvedFacetStyleTest {
     }
 
     @Test
+    fun `shrink list to fit is the facet's own when set, else the launcher's`() {
+        // Given the launcher shrinking its list
+        val shrinking = settings.copy(appListShrinkToFit = com.facetlauncher.app.data.model.AppListShrinkToFit.ON)
+
+        // When a facet inherits it, and another turns it off
+        val inherits = resolveFacetStyle(facet(), shrinking)
+        val own = resolveFacetStyle(facet { it.copy(appListShrinkToFit = com.facetlauncher.app.data.model.AppListShrinkToFit.OFF) }, shrinking)
+
+        // Then each resolves to the right value, and no facet resolves to the launcher's
+        assertEquals(com.facetlauncher.app.data.model.AppListShrinkToFit.ON, inherits.appList.shrinkToFit)
+        assertEquals(com.facetlauncher.app.data.model.AppListShrinkToFit.OFF, own.appList.shrinkToFit)
+        assertEquals(com.facetlauncher.app.data.model.AppListShrinkToFit.ON, resolveFacetStyle(null, shrinking).appList.shrinkToFit)
+    }
+
+    @Test
     fun `list alignment resolves each field through its sentinel, then landscape over it`() {
         val withLandscape = settings.copy(landscape = LandscapeOverrides(appRowPosition = AppRowPosition.RIGHT))
         val inherits = resolveFacetStyle(facet { it.copy(appRowPosition = AppRowPosition.LAUNCHER_DEFAULT) }, withLandscape)

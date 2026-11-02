@@ -15,6 +15,16 @@ event, no matter how many repositories are hydrating against it at once (previou
 was showing; this was finding F1, now fixed — see the `git blame` on `AppRepository.kt` for the
 change). Each scan also reads an adaptive icon's themed monochrome layer into `AppInfo.monochromeIcon`, a small alpha-only bitmap (API 33+, null when the app ships none); the glyph and outline pictures built from it are not made here but by `StyledIconCache`, on demand and warmed in the background for all apps (see 13).
 
+With an icon pack applied (`IconPackRepository.selection`, from `icon_pack_package`), the scan swaps in the
+pack's icon (capped at `PACK_ICON_SIZE` = 192px) for every app the pack covers, by exact activity then by
+package, and sets `AppInfo.iconFromPack` so `AppIcon` draws it unclipped. An app the pack misses gets its own
+icon on the pack's `iconback`/`iconmask`/`iconupon` art under `MATCH_PACK` (also `iconFromPack`), or keeps its
+own icon under `KEEP_DEFAULT` or when the pack ships no such art. Pack icons carry no `monochromeIcon`. The
+pack is parsed once per pack version and installed-app set (`IconPackRepository.load`, only installed apps'
+appfilter entries are kept), and a pack that is no longer installed is unapplied there. A pack's `<calendar>`
+entries date an app's icon: the drawable is the entry's prefix plus today's day of the month (falling back to the
+app's plain `<item>`, then its own icon), and a new day redraws only those apps (see §5, "Calendar icons").
+
 ```mermaid
 sequenceDiagram
     autonumber
@@ -24,6 +34,7 @@ sequenceDiagram
     participant AR as AppRepository (@Singleton)
     participant SH as installedApps (SharedFlow, shareIn on @ApplicationScope)
     participant LA as LauncherApps + UserManager
+    participant IP as IconPackRepository
     participant OS as Android (package & profile broadcasts)
 
     UI->>VM: collectAsStateWithLifecycle()
@@ -34,12 +45,14 @@ sequenceDiagram
     activate SH
     SH->>LA: registerCallback(LauncherApps.Callback)
     SH->>OS: registerReceiver(MANAGED_PROFILE_ADDED/REMOVED/AVAILABLE/UNAVAILABLE + PROFILE_ADDED/REMOVED/AVAILABLE/UNAVAILABLE)
-    SH->>SH: refresh()  →  launch { trySend(getInstalledApps()) }
+    SH->>IP: collect selection (combined with the package events)
+    SH->>SH: refresh() → mapLatest { scanInstalledApps(selection) } (a newer event cancels a running scan)
     SH->>LA: userManager.userProfiles
     loop each UserHandle
         SH->>LA: getActivityList(null, handle)   (runCatching — a broken profile is skipped)
     end
-    SH->>SH: async per app on Dispatchers.Default: label + flattenIcon() + profileFor(handle)
+    SH->>IP: loadApplied(selection, installed packages)   (only when a pack is applied)
+    SH->>SH: async per app on Dispatchers.Default: label + pack icon or flattenIcon() + profileFor(handle)
     SH->>SH: awaitAll() → sort with locale Collator
     SH-->>UC: emit + replay(1) List<AppInfo>
     UC-->>VM: map { filter out PRIVATE profile / own package }
@@ -65,7 +78,7 @@ Key properties of this flow:
 | Property | Value | Consequence |
 |---|---|---|
 | Source of truth | `LauncherApps.getActivityList()` per `UserManager.userProfiles` handle | Work Profile / Private Space / OEM clone apps arrive in the same list, tagged by `AppInfo.profile` + `userHandle`. Each `AppInfo` also carries `firstInstallTime` (`LauncherActivityInfo.getFirstInstallTime()`, cross-profile safe) and a best-effort `lastUpdateTime` (`PackageManager.getPackageInfo(...).lastUpdateTime`, which only resolves the calling user's own packages — falls back to `firstInstallTime` for a Work Profile app) — feeds the app picker screens' "Installed Date"/"Last updated" sorts (see `SortAppsForPickerUseCase`). |
-| Trigger | `LauncherApps.Callback` (5 package events) + 4 `ACTION_MANAGED_PROFILE_*` broadcasts + 4 generic `ACTION_PROFILE_*` broadcasts (the actions Android 15+ Private Space uses, added/removed/available/unavailable) + one initial `refresh()` | Installs, uninstalls, updates and any profile appearing/disappearing/pausing/resuming (Work Profile or Private Space) all propagate without a restart. |
+| Trigger | `LauncherApps.Callback` (5 package events) + 4 `ACTION_MANAGED_PROFILE_*` broadcasts + 4 generic `ACTION_PROFILE_*` broadcasts (the actions Android 15+ Private Space uses, added/removed/available/unavailable) + one initial `refresh()`, combined with `IconPackRepository.selection` | Installs, uninstalls, updates and any profile appearing/disappearing/pausing/resuming (Work Profile or Private Space) all propagate without a restart, and so does applying, clearing or changing an icon pack. Scans run through `mapLatest`, so a newer trigger cancels a scan still running. |
 | Work per emission | One full re-list + parallel icon decode of every app, **shared** across every collector | O(apps) per event, but exactly once app-wide, not once per collector. |
 | Sharing | `shareIn(@ApplicationScope, SharingStarted.WhileSubscribed(stopTimeoutMillis = 5_000), replay = 1)` | One `LauncherApps` registration for the whole app; survives brief gaps (a Home↔Drawer transition) without re-registering; torn down 5s after the last collector goes away. `replay = 1` gives every new collector (a freshly opened screen) the current list immediately. |
 | Profile classification | `profileFor(handle)` via `getLauncherUserInfo().userType` (API 35+), `OTHER` below | Single source of truth reused by `WorkProfileRepository`, `PrivateSpaceRepository`, `AppWidgetRepository`. |
@@ -227,6 +240,7 @@ sequenceDiagram
 | Pro entitlement | `EntitlementRepository.isPro` — a `StateFlow<Boolean>` fed by `PlayEntitlementRepository` (the cached value first, then `BillingRepository.queryPro()` at startup and every resume, with a debug-only `EntitlementOverride` applied on top, plus the `BillingRepository.updates` flow for purchases that finish while running). Everything else gets "everyone is Pro" from the base class (tests, previews) | `RunFacetAutomationUseCase` (a pass on change), `ObserveFacetAutomationUseCase`, `RuleEditorViewModel`; `RefreshAutomationStateUseCase` reads `.value` |
 | Wake events | `WakeEventsRepository.observeWakeEvents()` — `callbackFlow` over `ACTION_SCREEN_ON`, `ACTION_USER_PRESENT`, `ACTION_TIME_CHANGED`, `ACTION_TIMEZONE_CHANGED` | `RunFacetAutomationUseCase` (see [15](15-flow-facet-automation.md)) |
 | Next alarm | `callbackFlow` over `ACTION_NEXT_ALARM_CLOCK_CHANGED` + injected `Clock` | `ObserveClockAccessoriesUseCase` |
+| Calendar icons (icon packs) | `AppRepository.observeDayOfMonth()` — `callbackFlow` over `ACTION_DATE_CHANGED`, `ACTION_TIME_CHANGED`, `ACTION_TIMEZONE_CHANGED`, plus `recheckDate()` (`LauncherActivity.onResume` → `LauncherViewModel.onResumed`, for a midnight passed asleep), read through the injected `Clock` in the current zone; subscribed only while the applied pack dates an installed app (`flatMapLatest` after each scan). A new day redraws just the dated apps' icons from the last scan, no re-list | `installedApps` (`03 §1`) |
 | Widget host | `LauncherAppWidgetHost.providerChanges: SharedFlow<Int>` merged with a `refreshTrigger` in `ObserveHubStateUseCase` | `HubViewModel` |
 | Work Profile state | `WorkProfileRepository.observeWorkProfiles()` — `callbackFlow` over profile broadcasts mapped through `UserManager.isQuietModeEnabled` | `LauncherViewModel`, `SettingsViewModel` |
 | Private Space | `PrivateSpaceRepository.observePrivateSpaceState()` (sealed `PrivateSpaceState`) + `observePrivateSpaceApps()` (= `observeAppsForProfile(PRIVATE)`) | `PrivateSpaceViewModel`, `DrawerViewModel` |

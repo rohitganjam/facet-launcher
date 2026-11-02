@@ -48,5 +48,8 @@ val LocalIconRenderMode = staticCompositionLocalOf { IconRenderMode.SYSTEM_DEFAU
 /** Global app-icon outline, provided alongside [LocalIconRenderMode] for the same reason. */
 val LocalIconShape = staticCompositionLocalOf { IconShape.SQUIRCLE }
 
+/** Settings → Appearance → Icons → Icon size, as a factor (1 = 100%); see `AppIconSize.scaled`. */
+val LocalIconScale = staticCompositionLocalOf { 1f }
+
 /** Makes the glyph and outline icon pictures; the root provides the app-wide one, a bare one serves previews and tests. */
 val LocalStyledIconCache = staticCompositionLocalOf { StyledIconCache() }

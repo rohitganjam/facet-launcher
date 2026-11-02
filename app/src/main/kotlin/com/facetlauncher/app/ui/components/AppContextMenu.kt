@@ -454,7 +454,8 @@ private fun AppMenuHeader(app: AppInfo, onOpenApp: () -> Unit, onAppInfo: () -> 
             AppIcon(
                 icon = app.icon,
                 monochromeIcon = app.monochromeIcon,
-                size = AppIconSize.ROW_SPACIOUS,
+                fromIconPack = app.iconFromPack,
+                size = AppIconSize.COMPACT,
                 contentDescription = null,
                 isWorkApp = app.profile == AppProfile.WORK,
                 isOtherProfileApp = app.profile == AppProfile.OTHER,

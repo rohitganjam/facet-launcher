@@ -124,7 +124,18 @@ setting fits a phone, a foldable and a tablet (a typical phone gets 5/4/4 column
 rows; search results use the same column count, laid out as equal-weight cells so tiles sit on the
 same grid. The setting persists under the old `drawer_grid_size` key; the retired `FIVE_BY_SIX`-style
 names still load (`DrawerGridDensity.fromStored`) and map to the nearest density. Home's own grid
-(`AppListGridColumns`) is a separate setting and still fixed-column.
+(`AppListGridColumns`) is a separate setting and still fixed-column. Density changes the cells, never the icon: grid
+icons are always `AppIconSize.ICON` × the Icon size setting, with a one-line label (`showDrawerLabels`) at most
+`GRID_LABEL_WIDTH` × that scale.
+
+### 1e. List item size and folder sheets
+
+List presentation only. `DrawerListItemSize` is a row's icon and the padding above and below it: Compact 36dp + 4,
+Regular 44dp + 12, Spacious 44dp + 16 (icons × the Icon size setting, see [17 §2b](17-flow-home-layout.md)). Contact and
+Settings search rows and Private Space's rows use the same sizes. A folder opened from the drawer follows the drawer:
+from the grid, `FolderContentsSheet` is a grid with the drawer grid's column count (`DrawerFolderTile.gridColumns`)
+and its labels on or off; from the list (or "Recently installed", or Private Space), a list of Regular rows whatever
+the List item size.
 
 ### 1d. Preview on the App drawer settings screen
 
@@ -312,6 +323,7 @@ overlay that composes its own state subscribes with `DismissOnHomePress` — `Th
 for every action menu and for the facet automation rule editor (a settings sheet, so a Home press while it is
 open closes it and drops the draft), and `FolderContentsSheet` and the contact connections sheet call it
 directly; a new one must do the same.
+A Home press while the launcher is already in front and bare (Drawer, Hub, carousel, clock adjust, pickers, Private Space and sheets all closed) instead opens the Drawer and focuses its search field. `LauncherActivity.onNewIntent` passes `whileResumed` (lifecycle at least STARTED: onNewIntent runs after a pause) to `LauncherViewModel.onHomePressed`, which `HomeDrawerRoute`'s collector reads as `homePressedWhileResumed` before it closes anything, then bumps `DrawerSearchBarConfig.focusRequest`. A press from another app, or with anything open, only returns to bare Home (`HomeDrawerRouteTest`).
 Samsung's swipe-up gesture injects `KEYCODE_HOME` itself, so it reaches this path exactly like the button.
 
 Because the transition tracks the finger, none

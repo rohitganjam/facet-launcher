@@ -69,6 +69,8 @@ import com.facetlauncher.app.ui.theme.LocalLightStatusBarIcons
 import com.facetlauncher.app.ui.theme.UnscaledTypography
 import com.facetlauncher.app.R
 import com.facetlauncher.app.data.model.AppInfo
+import com.facetlauncher.app.data.model.AppListGridDisplayMode
+import com.facetlauncher.app.data.model.DrawerListItemSize
 import com.facetlauncher.app.data.model.DrawerPresentation
 import com.facetlauncher.app.data.model.Folder
 import com.facetlauncher.app.ui.theme.Accent
@@ -101,9 +103,9 @@ sealed interface FolderSheetHeaderAction {
  * threading extra state through a large prop surface — [ContactConnectionsSheet] hoists the
  * equivalent state to its host screen's own top level instead, but the visual result is the same.
  *
- * Content follows the App Drawer's own [presentation] (List/Grid) exactly, and shows an explicit
- * empty-state message for a 0-app folder rather than a bare blank sheet — a folder is never
- * auto-deleted for being empty, so this is a real, reachable state.
+ * Content follows where the folder was opened: [DrawerPresentation.GRID] with that grid's [gridColumns] and
+ * [gridDisplayMode] when opened from the drawer's grid or from Home's grid layout, else a list of Regular rows.
+ * A 0-app folder shows an explicit empty-state message — a folder is never auto-deleted for being empty.
  *
  * [headerAction] governs the trailing header action, both rendered as the same `Accent` text-button
  * treatment: [FolderSheetHeaderAction.Rename] ("Rename", the normal case) or
@@ -123,6 +125,8 @@ fun FolderContentsSheet(
     modifier: Modifier = Modifier,
     headerAction: FolderSheetHeaderAction = FolderSheetHeaderAction.Rename(onRename = { _, _ -> }),
     gridColumns: Int = 5,
+    /** In [DrawerPresentation.GRID]: what each tile shows, matching the grid the folder was opened from. */
+    gridDisplayMode: AppListGridDisplayMode = AppListGridDisplayMode.ICONS_AND_TEXT,
     appMenuNotifications: AppMenuNotifications = AppMenuNotifications.None,
     onAppInfo: (AppInfo) -> Unit = {},
     /** True for the "Recently installed" virtual folder (List-only) — each contained app's icon gets a small recency badge, since these apps aren't grouped by any visual similarity the way a real folder's contents are. */
@@ -225,6 +229,7 @@ fun FolderContentsSheet(
                             FolderContentsGrid(
                                 folder = folder,
                                 columns = gridColumns,
+                                displayMode = gridDisplayMode,
                                 onAppClick = { app -> onDismissRequest(); onAppClick(app) },
                                 appMenuNotifications = appMenuNotifications,
                                 onAppInfo = onAppInfo,
@@ -367,12 +372,13 @@ private fun FolderContentsAppRow(
                 .fillMaxWidth()
                 .testTag("folder_contents_app_${app.packageName}")
                 .longPressReleaseClickable(onClick = onClick, onLongPress = { menuExpanded = true })
-                .padding(horizontal = 24.dp, vertical = 13.dp),
+                // A folder's list is always Regular rows, whatever the drawer's List item size.
+                .padding(horizontal = 24.dp, vertical = DrawerListItemSize.REGULAR.verticalPaddingDp.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             Box {
-                AppIcon(app = app, size = AppIconSize.ROW_REGULAR, contentDescription = null)
+                AppIcon(app = app, size = AppIconSize.forRow(DrawerListItemSize.REGULAR), contentDescription = null)
                 if (showRecencyBadge) {
                     RecencyBadge(modifier = Modifier.align(Alignment.BottomEnd).testTag("recency_badge_${app.packageName}"))
                 }
@@ -427,20 +433,25 @@ private fun RecencyBadge(modifier: Modifier = Modifier) {
     }
 }
 
-/** A small, non-lazy grid (folder membership is always small) replicating the App Drawer's own [com.facetlauncher.app.ui.drawer.AppDrawerScreen] grid-tile visual spec, since its own tile composable is private and too Drawer-specific to import directly. */
+/**
+ * A small, non-lazy grid (folder membership is always small) in the grid the folder was opened from: its [columns],
+ * and its [displayMode] (icons, names, or both). Each row has [columns] equal cells, so the grid lines up.
+ */
 @Composable
 private fun FolderContentsGrid(
     folder: Folder,
     columns: Int,
+    displayMode: AppListGridDisplayMode,
     onAppClick: (AppInfo) -> Unit,
     appMenuNotifications: AppMenuNotifications,
     onAppInfo: (AppInfo) -> Unit = {},
     onRemoveFromFolder: (AppInfo) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val perRow = columns.coerceAtLeast(1)
     Column(modifier = modifier.verticalScroll(rememberScrollState()).padding(horizontal = 20.dp, vertical = 12.dp)) {
-        folder.apps.chunked(columns.coerceAtLeast(1)).forEach { rowApps ->
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(bottom = 16.dp)) {
+        folder.apps.chunked(perRow).forEach { rowApps ->
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)) {
                 rowApps.forEach { app ->
                     FolderContentsGridTile(
                         app = app,
@@ -448,8 +459,11 @@ private fun FolderContentsGrid(
                         appMenuNotifications = appMenuNotifications,
                         onAppInfo = onAppInfo,
                         onRemoveFromFolder = { onRemoveFromFolder(app) },
+                        displayMode = displayMode,
+                        modifier = Modifier.weight(1f),
                     )
                 }
+                repeat(perRow - rowApps.size) { Spacer(modifier = Modifier.weight(1f)) }
             }
         }
     }
@@ -463,26 +477,32 @@ private fun FolderContentsGridTile(
     appMenuNotifications: AppMenuNotifications,
     onAppInfo: (AppInfo) -> Unit = {},
     onRemoveFromFolder: () -> Unit,
+    displayMode: AppListGridDisplayMode,
     modifier: Modifier = Modifier,
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
     Box(modifier = modifier) {
         Column(
             modifier = Modifier
+                .fillMaxWidth()
                 .longPressReleaseClickable(onClick = onClick, onLongPress = { menuExpanded = true })
                 .testTag("folder_contents_grid_tile_${app.packageName}"),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            AppIcon(app = app, size = AppIconSize.TILE, contentDescription = null)
-            Text(
-                text = app.label,
-                style = MaterialTheme.typography.labelSmall,
-                color = Ink,
-                textAlign = TextAlign.Center,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.padding(top = 7.dp).widthIn(max = 56.dp),
-            )
+            if (displayMode != AppListGridDisplayMode.TEXT) AppIcon(app = app, size = AppIconSize.scaled(), contentDescription = null)
+            if (displayMode != AppListGridDisplayMode.ICONS) {
+                Text(
+                    text = app.label,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Ink,
+                    textAlign = TextAlign.Center,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier
+                        .padding(top = if (displayMode == AppListGridDisplayMode.TEXT) 0.dp else 7.dp)
+                        .widthIn(max = AppIconSize.scaled(AppIconSize.GRID_LABEL_WIDTH)),
+                )
+            }
         }
         AppContextMenu(
             app = app,

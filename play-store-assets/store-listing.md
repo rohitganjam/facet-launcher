@@ -11,7 +11,7 @@ Launcher, Lawnchair, Niagara, etc. are all listed).
 
 (72 chars)
 
-## Full description (max 4000 characters — this draft is 3,972)
+## Full description (max 4000 characters — this draft is 3,899)
 
 ```
 Your phone isn't used the same way all day, so why should your home screen be?
@@ -22,58 +22,55 @@ FACETS: YOUR PHONE, ON SWITCH
 Create up to ten independent facets, like Work, Personal and Focus. Swipe left on the home screen to preview every facet live, then tap to switch instantly.
 - Give each facet its own favorite apps, dock, clock style, calendar and app list layout, or put a widget where the clock goes
 - New facets inherit your shared defaults, so you only change what's different
-- Reorder, rename or remove facets whenever you like
 - Every facet is also an app shortcut ("Switch to Work"), so automation apps can switch it too
 
 FACET AUTOMATION: IT SWITCHES FOR YOU
 Walk into the office and your Work facet is waiting. Plug in headphones and Focus kicks in. Each rule picks a facet and one trigger:
-- A schedule, by day and time window
-- A Wi-Fi network (any, or a named one), a Bluetooth device, headphones, or the battery level
+- A schedule, a Wi-Fi network, a Bluetooth device, headphones or the battery level
 - Choose what happens when the rule ends: go back, switch to another facet, or stay
 Pick a facet yourself and your choice always wins.
 
 A HOME SCREEN THAT GETS OUT OF THE WAY
 - Just a clock, the date and the apps you actually use
-- Swap the clock for any widget you like, facet by facet
-- Show Favorites, Recents or Most Used apps
-- Lay your list out as a single column, two columns or a grid, aligned left or right, with icons, text or both, at the top or bottom
+- Show Favorites, Recents or Most Used apps, as a single column, two columns or a grid, with icons, text or both
 - A dock of up to five apps, shared or set per facet
 - Group apps into folders on the dock and in your favorites
 - Notification badges as a dot or a count
-- An optional media player row with album art, song details, playback controls and a progress bar, right on your home screen
+- An optional media player row with album art, playback controls and a progress bar
+- Built for landscape, foldables and tablets, with the clock, apps and dock side by side
 
 CLOCKS WITH CHARACTER
-- More than 30 clock styles, from clean typography to bold shapes
-- Set the font, weight, color, alignment and date format for each style
-- Drag to move your clock and resize it right on the home screen
-- See what's next: upcoming calendar events sit under the clock, from now until noon tomorrow. Show one to three, with an optional color bar for each calendar
+- More than 30 clock styles, from clean typography to bold shapes, each with its own font, color and date format
+- Drag to move and resize your clock right on the home screen
+- Weather beside your alarm and battery, with a 24-hour forecast and the days ahead one tap away. Use your location or search a city, and save up to ten
+- Upcoming calendar events sit under the clock, with an optional color bar for each calendar
+- Widget stacks: swipe between the clock and your widgets in the same spot
 
 AN APP DRAWER THAT KEEPS UP
 - A letter-indexed list, or a grid in several sizes
-- Fast search across your apps, and optionally your contacts and system settings
-- Call, message or email a contact straight from the results
+- Fast search across your apps, and optionally your contacts and system settings, with call, message or email straight from the results
 - Separate tabs for your Work Profile and Private Space apps
-- Long-press any app for app info, uninstall and its own shortcuts
-- Adjust the drawer's opacity and where the search bar sits
+- Long-press any app for app info, uninstall, shortcuts and its ongoing notifications
 
 WIDGET HUB
 Give your widgets a home of their own, one swipe from your home screen, so they never crowd your apps. Add up to 20, drag them into place and resize them freely.
 
 MAKE IT YOURS
-- Light, dark or system theme
-- An accent color pulled from your wallpaper, or one you choose
+- Light, dark or system theme, with an accent color from your wallpaper or one you choose
 - Your pick of launcher font and weight
-- Icons as squircles, rounded squares, circles or squares, or a monochrome look
-- Your wallpaper shows through everywhere
+- Icon shapes (squircle, rounded square, circle, square) and styles: full color or a monochrome look tinted to your accent
 
 BACKUP AND RESTORE
 Export your facets and settings to a file and restore them on any device.
 
+FACET PRO
+Facet Launcher is free. An optional Pro upgrade adds more automation rules, Wi-Fi, Bluetooth, headphone and battery triggers, and widget stacks of up to five pages.
+
 PRIVATE BY DESIGN
-Facet Launcher uses the internet only for the optional weather feature, which is off until you turn it on and then asks for an approximate location. No accounts, no analytics, no ads: everything else stays on your device. Optional features ask for permission only when you turn them on: Calendar for events on your home screen, Contacts for contact search, Usage access for Recents and Most Used, Notification access for badges and the media player, Bluetooth for Bluetooth rules, and Location for the weather at your position and so Android lets the app read a Wi-Fi network name for named-network rules. Say no to any of them and the rest of the launcher works normally.
+Facet Launcher uses the internet only for the optional weather feature, which is off until you turn it on. No accounts, no analytics, no ads: everything else stays on your device. Optional features ask for permission only when you turn them on, and the rest of the launcher works normally if you say no.
 
 REQUIREMENTS
-Android 11 or later. Set Facet Launcher as your default home app in Settings to get the full experience.
+Android 11 or later. Available in English, German, Spanish, French and Portuguese. Set Facet Launcher as your default home app in Settings to get the full experience.
 
 Questions or feedback: <support email or site — fill in before publishing>
 ```

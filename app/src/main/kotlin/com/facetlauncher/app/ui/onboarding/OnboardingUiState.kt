@@ -4,6 +4,7 @@ import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.AppListLimits
 import com.facetlauncher.app.data.model.DrawerPresentation
 import com.facetlauncher.app.data.model.ListContentMode
+import com.facetlauncher.app.data.model.SearchBarPosition
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 
@@ -26,4 +27,7 @@ data class OnboardingUiState(
     val appsToShowCount: Int = AppListLimits.DEFAULT_APPS_TO_SHOW,
     /** List vs Grid — see `AppDrawerSettingsScreen`'s own identical "Show apps as" row. */
     val drawerPresentation: DrawerPresentation = DrawerPresentation.LIST,
+    val searchBarPosition: SearchBarPosition = SearchBarPosition.TOP,
+    val searchContactsEnabled: Boolean = false,
+    val searchSettingsEnabled: Boolean = false,
 )

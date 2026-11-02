@@ -37,6 +37,7 @@ import androidx.compose.ui.unit.dp
 import com.facetlauncher.app.R
 import com.facetlauncher.app.data.PrivateSpaceState
 import com.facetlauncher.app.data.model.AppInfo
+import com.facetlauncher.app.data.model.DrawerListItemSize
 import com.facetlauncher.app.data.model.DrawerPresentation
 import com.facetlauncher.app.data.model.Folder
 import com.facetlauncher.app.data.model.RecentlyInstalledPosition
@@ -67,6 +68,8 @@ fun PrivateSpaceScreen(
     /** Its own copy of the main Drawer's "Recently installed" category — same global setting, computed independently over Private Space's own [apps] (see [PrivateSpaceViewModel.recentlyInstalledApps]'s own doc). Already empty while [query] is non-blank. */
     recentlyInstalledApps: ImmutableList<AppInfo> = persistentListOf(),
     recentlyInstalledPosition: RecentlyInstalledPosition = RecentlyInstalledPosition.SHOW_FIRST,
+    /** The main drawer's List item size, so Private Space's rows match it. */
+    listItemSize: DrawerListItemSize = DrawerListItemSize.REGULAR,
 ) {
     PrivateSpaceTheme {
         Column(
@@ -98,7 +101,7 @@ fun PrivateSpaceScreen(
                         }
                     }
                     items(apps, key = { it.listKey }) { app ->
-                        PrivateSpaceAppRow(app = app, onClick = { onAppClick(app) })
+                        PrivateSpaceAppRow(app = app, itemSize = listItemSize, onClick = { onAppClick(app) })
                     }
                     if (recentlyInstalledApps.isNotEmpty() && recentlyInstalledPosition == RecentlyInstalledPosition.SHOW_LAST) {
                         item(key = "header_recently_installed") { PrivateSpaceRecentlyInstalledHeader() }
@@ -143,18 +146,18 @@ private fun PrivateSpaceSearchBar(query: String, onQueryChange: (String) -> Unit
 }
 
 @Composable
-private fun PrivateSpaceAppRow(app: AppInfo, onClick: () -> Unit, modifier: Modifier = Modifier) {
+private fun PrivateSpaceAppRow(app: AppInfo, itemSize: DrawerListItemSize, onClick: () -> Unit, modifier: Modifier = Modifier) {
     Row(
         modifier = modifier
             .fillMaxWidth()
             .clip(MaterialTheme.shapes.large)
             .clickable(onClick = onClick)
             .testTag("private_space_app_row_${app.packageName}")
-            .padding(horizontal = 24.dp, vertical = 10.dp),
+            .padding(horizontal = 24.dp, vertical = itemSize.verticalPaddingDp.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        AppIcon(icon = app.icon, monochromeIcon = app.monochromeIcon, size = AppIconSize.ROW_REGULAR, contentDescription = null)
+        AppIcon(icon = app.icon, monochromeIcon = app.monochromeIcon, fromIconPack = app.iconFromPack, size = AppIconSize.forRow(itemSize), contentDescription = null)
         Text(text = app.label, color = MaterialTheme.colorScheme.onSurface)
     }
 }

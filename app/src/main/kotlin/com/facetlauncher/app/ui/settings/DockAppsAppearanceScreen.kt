@@ -24,6 +24,7 @@ import com.facetlauncher.app.R
 import com.facetlauncher.app.data.model.AppListColumnAlignment
 import com.facetlauncher.app.data.model.AppListGridColumns
 import com.facetlauncher.app.data.model.AppListGridDisplayMode
+import com.facetlauncher.app.data.model.AppListShrinkToFit
 import com.facetlauncher.app.data.model.AppListLayout
 import com.facetlauncher.app.data.model.AppListVerticalAlignment
 import com.facetlauncher.app.data.model.AppRowPosition
@@ -70,6 +71,7 @@ fun DockAppsAppearanceScreen(
         onAppListColumnAlignmentChange = viewModel::setAppListColumnAlignment,
         onAppListGridColumnsChange = viewModel::setAppListGridColumns,
         onAppListGridDisplayModeChange = viewModel::setAppListGridDisplayMode,
+        onAppListShrinkToFitChange = viewModel::setAppListShrinkToFit,
         modifier = modifier,
     )
 }
@@ -92,6 +94,7 @@ private fun DockAppsAppearanceContent(
     onAppListGridColumnsChange: (AppListGridColumns) -> Unit,
     onAppListGridDisplayModeChange: (AppListGridDisplayMode) -> Unit,
     modifier: Modifier = Modifier,
+    onAppListShrinkToFitChange: (AppListShrinkToFit) -> Unit = {},
 ) {
     StickyHeaderLayout(
         modifier = modifier,
@@ -125,6 +128,7 @@ private fun DockAppsAppearanceContent(
                         onAppRowPresentationChange = onAppRowPresentationChange,
                         onAppListGridColumnsChange = onAppListGridColumnsChange,
                         onAppListGridDisplayModeChange = onAppListGridDisplayModeChange,
+                        onAppListShrinkToFitChange = onAppListShrinkToFitChange,
                     )
                 }
                 item { SettingsSectionHeader(stringResource(R.string.appearance_alignment_portrait_title)) }
@@ -191,6 +195,7 @@ private fun SharedLookCard(
     onAppRowPresentationChange: (AppRowPresentation) -> Unit,
     onAppListGridColumnsChange: (AppListGridColumns) -> Unit,
     onAppListGridDisplayModeChange: (AppListGridDisplayMode) -> Unit,
+    onAppListShrinkToFitChange: (AppListShrinkToFit) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     // LAUNCHER_DEFAULT only makes sense where there's a global value above to inherit from; offering it
@@ -244,8 +249,23 @@ private fun SharedLookCard(
                 onSelect = onAppRowPresentationChange,
                 testTag = "appearance_app_row_presentation_row",
             )
+            CardDivider()
+            ShrinkToFitRow(uiState, onAppListShrinkToFitChange)
         }
     }
+}
+
+/** "Shrink list to fit", for the list layouts: Compact rows when Regular ones wouldn't fit, else the list scrolls. */
+@Composable
+private fun ShrinkToFitRow(uiState: AppearanceSettingsUiState, onChange: (AppListShrinkToFit) -> Unit) {
+    LabeledDropdownRow(
+        title = stringResource(R.string.home_apps_list_shrink_to_fit),
+        options = if (uiState.isFacetScoped) AppListShrinkToFit.entries else AppListShrinkToFit.entries - AppListShrinkToFit.LAUNCHER_DEFAULT,
+        selected = uiState.appListShrinkToFit,
+        label = { stringResource(it.displayNameRes) },
+        onSelect = onChange,
+        testTag = "appearance_app_list_shrink_to_fit_row",
+    )
 }
 
 /**

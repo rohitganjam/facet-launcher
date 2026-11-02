@@ -17,6 +17,7 @@ import com.facetlauncher.app.domain.resolveFacetStyle
 import com.facetlauncher.app.data.model.AppListColumnAlignment
 import com.facetlauncher.app.data.model.AppListGridColumns
 import com.facetlauncher.app.data.model.AppListGridDisplayMode
+import com.facetlauncher.app.data.model.AppListShrinkToFit
 import com.facetlauncher.app.data.model.AppListLayout
 import com.facetlauncher.app.data.model.AppListVerticalAlignment
 import com.facetlauncher.app.data.model.AppRowPosition
@@ -92,6 +93,7 @@ data class AppearanceSettingsUiState(
     val landscape: LandscapeOverrides get() = facet?.landscape ?: settings.landscape
     val appListGridColumns: AppListGridColumns get() = style.appList.gridColumns
     val appListGridDisplayMode: AppListGridDisplayMode get() = style.appList.gridDisplayMode
+    val appListShrinkToFit: AppListShrinkToFit get() = style.appList.shrinkToFit
     /** Mirrors `HomeAppsListSettingsViewModel.HomeAppsListUiState.favorites`'s own resolution exactly — same `overrideApps` flag. */
     val effectiveFavorites: List<PlacedItem> get() = if (facet?.overrideApps == true) facetFavorites else globalFavorites
     /** Mirrors `DockSettingsViewModel.DockSettingsUiState.dockItems`'s own resolution — same `overrideDock` flag. */
@@ -243,6 +245,10 @@ class AppearanceSettingsViewModel @Inject constructor(
         viewModelScope.launch { settingsRepository.setIconShape(shape) }
     }
 
+    fun setIconScalePercent(percent: Int) {
+        viewModelScope.launch { settingsRepository.setIconScalePercent(percent) }
+    }
+
     fun setLauncherFontOption(option: LauncherFontOption) {
         viewModelScope.launch { settingsRepository.setLauncherFontOption(option) }
     }
@@ -330,6 +336,13 @@ class AppearanceSettingsViewModel @Inject constructor(
         viewModelScope.launch {
             facetId?.let { pid -> facetRepository.getById(pid)?.let { facetRepository.setAppListGridColumns(it.id, columns) } }
                 ?: settingsRepository.setAppListGridColumns(columns)
+        }
+    }
+
+    fun setAppListShrinkToFit(shrinkToFit: AppListShrinkToFit) {
+        viewModelScope.launch {
+            facetId?.let { pid -> facetRepository.getById(pid)?.let { facetRepository.setAppListShrinkToFit(it.id, shrinkToFit) } }
+                ?: settingsRepository.setAppListShrinkToFit(shrinkToFit)
         }
     }
 

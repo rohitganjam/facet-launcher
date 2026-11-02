@@ -81,6 +81,11 @@ internal class SwipeAxisState(private val containerSizePx: () -> Float, private 
         coroutineScope.launch { progress.animateTo(target, DRAWER_SETTLE_SPEC) }
     }
 
+    suspend fun open() {
+        dragActive = false
+        progress.animateTo(1f, DRAWER_SETTLE_SPEC)
+    }
+
     suspend fun close() {
         // Already closed and idle: skip the no-op tween, which would still tick the frame clock for its full duration.
         if (progress.value == 0f && !progress.isRunning && !dragActive) return

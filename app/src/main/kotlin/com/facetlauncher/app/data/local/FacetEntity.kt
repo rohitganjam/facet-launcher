@@ -5,6 +5,7 @@ import androidx.room.PrimaryKey
 import com.facetlauncher.app.data.model.AppListColumnAlignment
 import com.facetlauncher.app.data.model.AppListGridColumns
 import com.facetlauncher.app.data.model.AppListGridDisplayMode
+import com.facetlauncher.app.data.model.AppListShrinkToFit
 import com.facetlauncher.app.data.model.AppListLayout
 import com.facetlauncher.app.data.model.AppListLimits
 import com.facetlauncher.app.data.model.AppListVerticalAlignment
@@ -91,6 +92,8 @@ data class FacetEntity(
     val appListGridColumns: AppListGridColumns = AppListGridColumns.LAUNCHER_DEFAULT,
     /** Look, not content — see [appRowPosition]'s own doc for the sentinel model. */
     val appListGridDisplayMode: AppListGridDisplayMode = AppListGridDisplayMode.LAUNCHER_DEFAULT,
+    /** Look, not content — see [appRowPosition]'s own doc for the sentinel model. */
+    val appListShrinkToFit: AppListShrinkToFit = AppListShrinkToFit.LAUNCHER_DEFAULT,
     /**
      * Independent of [overrideApps] flag for the mode/count, but typically switched 
      * together in the UI (see [com.facetlauncher.app.ui.facets.FacetSettingsViewModel.setOverridingApps]).

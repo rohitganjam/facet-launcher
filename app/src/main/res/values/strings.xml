@@ -92,6 +92,23 @@
     <string name="icon_shape_rounded">Rounded</string>
     <string name="icon_shape_circle">Circle</string>
     <string name="icon_shape_square">Square</string>
+    <string name="icons_screen_icon_pack">Icon pack</string>
+    <string name="icons_screen_built_in">Built-in</string>
+    <string name="icons_screen_external">External</string>
+    <string name="icons_screen_icon_size">Icon size</string>
+    <plurals name="icons_screen_pack_count">
+        <item quantity="one">%d pack</item>
+        <item quantity="other">%d packs</item>
+    </plurals>
+    <string name="icons_screen_get_more">Get more</string>
+    <string name="icons_screen_no_packs">No icon packs installed. Packs made for Nova, Lawnchair, ADW or Apex work here too.</string>
+    <string name="icons_screen_find_packs">Find icon packs</string>
+    <string name="icons_screen_pack_coverage">Covers %1$d of %2$d apps</string>
+    <string name="icons_screen_open_pack">Open pack</string>
+    <string name="icons_screen_pack_misses">Apps the pack misses</string>
+    <string name="icons_screen_shape_set_by_pack">Set by %1$s for the icons it draws</string>
+    <string name="icon_pack_fallback_match_pack">Match pack</string>
+    <string name="icon_pack_fallback_keep_default">Keep default</string>
 
     <!-- ClockTemplateId -->
     <string name="clock_template_light_stack">Light stack</string>
@@ -421,6 +438,12 @@
     <string name="home_apps_list_column_alignment">Column alignment</string>
     <string name="home_apps_list_grid_columns">Grid columns</string>
     <string name="home_apps_list_grid_display">Grid display</string>
+    <string name="home_apps_list_shrink_to_fit">Shrink list to fit</string>
+    <string name="app_list_shrink_to_fit_launcher_default">Default launcher style</string>
+    <string name="app_list_shrink_to_fit_off">Off</string>
+    <string name="app_list_shrink_to_fit_on">On</string>
+    <string name="app_list_grid_display_mode_icons_and_text">Icons and text</string>
+    <string name="dock_display_mode_icons_and_text">Icons and text</string>
     <string name="home_apps_list_content_facet">App list content</string>
     <string name="home_apps_list_content_default">Default App list content</string>
     <string name="home_apps_list_apps_to_show">Apps to show</string>
@@ -438,7 +461,7 @@
     <string name="app_drawer_show_labels_title">Show labels</string>
     <string name="app_drawer_show_labels_subtitle">Shows application name below the icon</string>
     <string name="app_drawer_search_contacts_title">Search contacts</string>
-    <string name="app_drawer_search_contacts_subtitle">Call, message, WhatsApp from results</string>
+    <string name="app_drawer_search_contacts_subtitle">Show contacts in search results</string>
     <string name="app_drawer_search_settings_title">Search settings</string>
     <string name="app_drawer_search_settings_subtitle">Jump to system settings like Wi-Fi or Bluetooth</string>
     <string name="app_drawer_search_bar_position">Search bar position</string>
@@ -875,6 +898,7 @@
     <string name="facet_settings_appearance_clock_label">%1$s clock</string>
     <string name="facet_settings_appearance_dock_icons">Dock icons</string>
     <string name="facet_settings_appearance_dock_text">Dock text</string>
+    <string name="facet_settings_appearance_dock_icons_and_text">Dock icons and text</string>
     <string name="facet_settings_appearance_home_icon_only">Home icon only</string>
     <string name="facet_settings_appearance_home_icon_and_text">Home icon &amp; text</string>
     <string name="facet_settings_appearance_home_text_only">Home text only</string>

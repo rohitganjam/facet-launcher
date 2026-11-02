@@ -383,6 +383,12 @@
     <string name="home_apps_list_column_alignment">Spaltenausrichtung</string>
     <string name="home_apps_list_grid_columns">Rasterspalten</string>
     <string name="home_apps_list_grid_display">Rasteranzeige</string>
+    <string name="home_apps_list_shrink_to_fit">Liste an Bildschirm anpassen</string>
+    <string name="app_list_shrink_to_fit_launcher_default">Standardstil des Launchers</string>
+    <string name="app_list_shrink_to_fit_off">Aus</string>
+    <string name="app_list_shrink_to_fit_on">An</string>
+    <string name="app_list_grid_display_mode_icons_and_text">Symbole und Text</string>
+    <string name="dock_display_mode_icons_and_text">Symbole und Text</string>
     <string name="home_apps_list_content_facet">App-Listeninhalt</string>
     <string name="home_apps_list_content_default">Standard-App-Listeninhalt</string>
     <string name="home_apps_list_apps_to_show">Anzuzeigende Apps</string>
@@ -888,6 +894,23 @@
     <string name="icon_shape_rounded">Abgerundet</string>
     <string name="icon_shape_circle">Kreis</string>
     <string name="icon_shape_square">Quadrat</string>
+    <string name="icons_screen_icon_pack">Icon-Paket</string>
+    <string name="icons_screen_built_in">Integriert</string>
+    <string name="icons_screen_external">Extern</string>
+    <string name="icons_screen_icon_size">Symbolgröße</string>
+    <plurals name="icons_screen_pack_count">
+        <item quantity="one">%d Paket</item>
+        <item quantity="other">%d Pakete</item>
+    </plurals>
+    <string name="icons_screen_get_more">Mehr holen</string>
+    <string name="icons_screen_no_packs">Keine Icon-Pakete installiert. Pakete für Nova, Lawnchair, ADW oder Apex funktionieren auch hier.</string>
+    <string name="icons_screen_find_packs">Icon-Pakete finden</string>
+    <string name="icons_screen_pack_coverage">Deckt %1$d von %2$d Apps ab</string>
+    <string name="icons_screen_open_pack">Paket öffnen</string>
+    <string name="icons_screen_pack_misses">Apps ohne Paket-Icon</string>
+    <string name="icons_screen_shape_set_by_pack">Von %1$s für seine Icons festgelegt</string>
+    <string name="icon_pack_fallback_match_pack">An Paket anpassen</string>
+    <string name="icon_pack_fallback_keep_default">Standard behalten</string>
     <string name="app_row_position_launcher_default">Standardposition des Launchers</string>
     <string name="app_row_presentation_launcher_default">Standardstil des Launchers</string>
     <string name="app_list_vertical_alignment_launcher_default">Standardposition des Launchers</string>
@@ -906,6 +929,7 @@
     <string name="facet_settings_appearance_clock_label">Uhr: %1$s</string>
     <string name="facet_settings_appearance_dock_icons">Dock-Symbole</string>
     <string name="facet_settings_appearance_dock_text">Dock-Text</string>
+    <string name="facet_settings_appearance_dock_icons_and_text">Dock-Symbole und -Text</string>
     <string name="facet_settings_appearance_home_icon_only">Start: nur Symbol</string>
     <string name="facet_settings_appearance_home_icon_and_text">Start: Symbol &amp; Text</string>
     <string name="facet_settings_appearance_home_text_only">Start: nur Text</string>

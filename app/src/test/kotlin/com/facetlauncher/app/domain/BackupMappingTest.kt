@@ -58,6 +58,7 @@ class BackupMappingTest {
             appListVerticalAlignment = AppListVerticalAlignment.TOP,
             landscapeClockAlignment = ClockAlignment.CENTER, landscapeClockZoneHeightDp = 300f, landscapeClockScale = 0.9f,
             landscapeAppListVerticalAlignment = AppListVerticalAlignment.BOTTOM,
+            appListShrinkToFit = com.facetlauncher.app.data.model.AppListShrinkToFit.ON,
         )
 
         // When it goes out and comes back

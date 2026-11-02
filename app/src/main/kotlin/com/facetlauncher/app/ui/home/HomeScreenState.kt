@@ -132,7 +132,10 @@ data class HomeItemLook(
     val badgeStyle: NotificationBadgeStyle = NotificationBadgeStyle.DOT,
     val appMenuNotifications: AppMenuNotifications = AppMenuNotifications.None,
     val folderCandidates: ImmutableList<Folder>? = null,
+    /** How Home's folder sheets lay out: a grid like Home's own when Home uses the grid layout, else a list. */
     val drawerPresentation: DrawerPresentation = DrawerPresentation.LIST,
+    val folderGridColumns: Int = AppListGridColumns.FOUR.columns,
+    val folderGridDisplayMode: AppListGridDisplayMode = AppListGridDisplayMode.ICONS,
     val labelColorOption: ClockColorOption = ClockColorOption.THEME,
     val labelFontWeightOption: FontWeightOption = FontWeightOption.REGULAR,
 )
@@ -148,6 +151,8 @@ data class HomeListState(
     val gridColumns: AppListGridColumns = AppListGridColumns.FOUR,
     val gridDisplayMode: AppListGridDisplayMode = AppListGridDisplayMode.ICONS,
     val showUsageAccessPrompt: Boolean = false,
+    /** "Shrink list to fit": drop to Compact rows when Regular ones wouldn't fit; off, the list scrolls instead. */
+    val shrinkToFit: Boolean = false,
 )
 
 @Immutable

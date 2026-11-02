@@ -15,6 +15,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import com.facetlauncher.app.data.EntitlementRepository
@@ -91,6 +92,7 @@ class LauncherActivity : ComponentActivity() {
                     wallpaperAccentRole = uiState.wallpaperAccentRole,
                     iconRenderMode = uiState.iconRenderMode,
                     iconShape = uiState.iconShape,
+                    iconScale = uiState.iconScale,
                     launcherFontOption = uiState.launcherFontOption,
                     homeAppsFontWeight = uiState.homeAppsFontWeight,
                     fontScaleOption = uiState.fontScaleOption,
@@ -129,12 +131,13 @@ class LauncherActivity : ComponentActivity() {
         super.onResume()
         // A refund, a purchase on another device or a redeemed code shows up here without a restart.
         lifecycleScope.launch { entitlementRepository.refresh() }
+        viewModel.onResumed()
     }
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         if (intent.action == Intent.ACTION_MAIN && intent.hasCategory(Intent.CATEGORY_HOME)) {
-            viewModel.onHomePressed()
+            viewModel.onHomePressed(whileResumed = lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED))
         }
         handleFacetDeepLink(intent)
     }

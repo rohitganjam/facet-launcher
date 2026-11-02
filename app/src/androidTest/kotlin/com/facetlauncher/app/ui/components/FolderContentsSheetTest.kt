@@ -11,6 +11,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.up
 import com.facetlauncher.app.data.model.AppInfo
+import com.facetlauncher.app.data.model.AppListGridDisplayMode
 import com.facetlauncher.app.data.model.DrawerPresentation
 import com.facetlauncher.app.data.model.Folder
 import com.facetlauncher.app.ui.launcher.LocalHomePressedEvent
@@ -32,6 +33,7 @@ class FolderContentsSheetTest {
         presentation: DrawerPresentation,
         onDismissRequest: () -> Unit = {},
         homePressedEvent: SharedFlow<Unit>? = null,
+        gridDisplayMode: AppListGridDisplayMode = AppListGridDisplayMode.ICONS_AND_TEXT,
     ) {
         composeRule.setContent {
             FacetLauncherTheme {
@@ -42,6 +44,7 @@ class FolderContentsSheetTest {
                         onAppClick = {},
                         presentation = presentation,
                         onRemoveFromFolder = { _, _ -> },
+                        gridDisplayMode = gridDisplayMode,
                     )
                 }
             }
@@ -116,5 +119,24 @@ class FolderContentsSheetTest {
 
         // Then the context menu opens
         composeRule.onNodeWithTag("app_context_menu").assertExists()
+    }
+
+    @Test
+    fun aGridOfIconsOnlyLeavesTheNamesOut() {
+        // Given a folder opened from a grid that shows icons only
+        setContent(DrawerPresentation.GRID, gridDisplayMode = AppListGridDisplayMode.ICONS)
+
+        // Then the tile is there without its name
+        composeRule.onNodeWithTag("folder_contents_grid_tile_${app.packageName}", useUnmergedTree = true).assertExists()
+        composeRule.onNodeWithText(app.label).assertDoesNotExist()
+    }
+
+    @Test
+    fun aGridOfIconsAndTextShowsEachName() {
+        // Given a folder opened from a grid that shows icons and names
+        setContent(DrawerPresentation.GRID, gridDisplayMode = AppListGridDisplayMode.ICONS_AND_TEXT)
+
+        // Then the app's name is shown under its icon
+        composeRule.onNodeWithText(app.label).assertExists()
     }
 }

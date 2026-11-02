@@ -17,8 +17,10 @@ kept for history with their resolutions noted, not because they're still open.
 1. **Four screens, but only one asks for input.** Intro → home setup → profiles → set-as-default.
    Screens 1 and 3 are read-only ("Next" only); screen 2 is skippable; screen 4 is the action.
    Feels like "two teaching screens + one setup screen + one action sheet."
-2. **Zero runtime permissions.** Onboarding requests *nothing* — not calendar, contacts, usage, or
-   notification access. Those stay just-in-time (PRD §7). Explicit test assertion.
+2. **No permission prompts unless the user turns on a feature that needs one.** Onboarding never
+   asks on its own — not calendar, contacts, usage, or notification access. The one exception is
+   the home-setup "Search contacts" switch, which asks for `READ_CONTACTS` only when flipped on
+   (just-in-time, PRD §7) and stays off if denied. Explicit test assertion for the no-touch path.
 3. **The one thing that matters is set-as-default.** A launcher the user hasn't set as default is
    inert. That screen is last and gets the most care.
 4. **Profiles and the dock are represented, not buried.** Profiles is the launcher's single most

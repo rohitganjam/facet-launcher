@@ -408,7 +408,7 @@ private fun AppPickerRow(app: AppInfo, checked: Boolean, enabled: Boolean, tagPr
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(14.dp),
     ) {
-        AppIcon(app = app, size = AppIconSize.ROW_COMPACT, contentDescription = null)
+        AppIcon(app = app, size = AppIconSize.COMPACT, contentDescription = null)
         Text(text = app.label, style = MaterialTheme.typography.bodyLarge, color = Ink, modifier = Modifier.weight(1f))
         Checkbox(
             checked = checked,

@@ -339,7 +339,7 @@ private fun HomeAppListBody(frame: HomeFrame) {
     val list = frame.state.list
     val compact = frame.layout.useCompactAppSpacing
     val rowPadding = if (compact) HOME_APP_ROW_COMPACT_VERTICAL_PADDING else HOME_APP_ROW_REGULAR_VERTICAL_PADDING
-    val rowIconSize = if (compact) AppIconSize.ROW_COMPACT else AppIconSize.ROW_REGULAR
+    val rowIconSize = AppIconSize.scaled(if (compact) AppIconSize.COMPACT else AppIconSize.ICON)
     val position = list.alignment.rowPosition
     when (list.layout) {
         AppListLayout.TWO_COLUMN -> HomeAppTwoColumnList(

@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -54,7 +55,7 @@ internal fun AppRow(
     position: AppRowPosition = AppRowPosition.LEFT,
     presentation: AppRowPresentation = AppRowPresentation.ICON_AND_TEXT,
     verticalPadding: Dp = HOME_APP_ROW_REGULAR_VERTICAL_PADDING,
-    iconSize: Dp = AppIconSize.ROW_REGULAR,
+    iconSize: Dp = AppIconSize.scaled(),
     enableLongPressMenu: Boolean = true,
     testTagPrefix: String = "home_",
     onClick: () -> Unit = { actions.onAppClick(app) },
@@ -98,7 +99,8 @@ private fun AppRowContent(
     val showIcon = presentation != AppRowPresentation.TEXT_ONLY
     val showLabel = presentation != AppRowPresentation.ICON_ONLY
     val badgeCount = style.badgeCounts[app.packageName]
-    Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = appRowArrangement(position)) {
+    // A text-only row keeps the icon's height, so switching row style doesn't move the list.
+    Row(modifier = modifier.heightIn(min = iconSize), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = appRowArrangement(position)) {
         val icon: @Composable () -> Unit = {
             if (showIcon) AppRowIcon(app, iconSize, badgeCount.takeUnless { showLabel }, showLabel, style, testTagPrefix)
         }

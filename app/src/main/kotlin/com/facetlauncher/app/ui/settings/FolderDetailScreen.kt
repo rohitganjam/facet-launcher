@@ -274,7 +274,7 @@ private fun FolderAppsReorderList(
                         .testTag("folder_detail_reorder_handle_${app.packageName}")
                         .then(reorderState.dragModifier(app)),
                 )
-                AppIcon(app = app, size = AppIconSize.ROW_COMPACT, contentDescription = null)
+                AppIcon(app = app, size = AppIconSize.COMPACT, contentDescription = null)
                 Text(text = app.label, style = MaterialTheme.typography.bodyLarge, color = Ink, modifier = Modifier.weight(1f))
                 IconButton(
                     onClick = { onRemoveApp(app) },

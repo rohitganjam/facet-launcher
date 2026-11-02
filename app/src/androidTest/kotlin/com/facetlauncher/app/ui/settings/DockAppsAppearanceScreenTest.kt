@@ -287,6 +287,55 @@ class DockAppsAppearanceScreenTest {
     }
 
     @Test
+    fun shrinkListToFitIsOfferedForAListAndStoredWhenTurnedOn() {
+        // Given the default list layout, where long lists scroll
+        val settingsRepository = setContent()
+        composeRule.onNodeWithTag("dock_apps_appearance_screen").performScrollToNode(hasTestTag("appearance_app_list_shrink_to_fit_row"))
+        composeRule.onNodeWithTag("appearance_app_list_shrink_to_fit_row").assertTextContains("Off")
+
+        // When turning it on
+        composeRule.onNodeWithTag("appearance_app_list_shrink_to_fit_row").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("appearance_app_list_shrink_to_fit_row_option_ON").performClick()
+
+        // Then it's stored launcher-wide
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            runBlocking { settingsRepository.settings.first().appListShrinkToFit == com.facetlauncher.app.data.model.AppListShrinkToFit.ON }
+        }
+    }
+
+    @Test
+    fun shrinkListToFitIsNotOfferedForTheGrid() {
+        // Given the grid layout
+        setContent()
+        composeRule.onNodeWithTag("dock_apps_appearance_screen").performScrollToNode(hasTestTag("appearance_app_list_layout_row"))
+        composeRule.onNodeWithTag("appearance_app_list_layout_row").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("appearance_app_list_layout_row_option_GRID").performClick()
+
+        // Then there is no row to shrink a list that isn't one
+        composeRule.waitUntil(timeoutMillis = 3_000) { composeRule.onAllNodesWithTag("appearance_app_list_grid_display_mode_row").fetchSemanticsNodes().isNotEmpty() }
+        composeRule.onNodeWithTag("appearance_app_list_shrink_to_fit_row").assertDoesNotExist()
+    }
+
+    @Test
+    fun dockOffersIconsAndText() {
+        // Given the screen
+        val settingsRepository = setContent()
+        composeRule.onNodeWithTag("dock_apps_appearance_screen").performScrollToNode(hasTestTag("appearance_dock_display_style_row"))
+
+        // When picking "Icons and text"
+        composeRule.onNodeWithTag("appearance_dock_display_style_row").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("appearance_dock_display_style_row_option_ICONS_AND_TEXT").performClick()
+
+        // Then it's stored
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            runBlocking { settingsRepository.settings.first().dockDisplayMode == com.facetlauncher.app.data.model.DockDisplayMode.ICONS_AND_TEXT }
+        }
+    }
+
+    @Test
     fun facetScopedDockDisplayStyleRowOffersLauncherDefaultAndWritesToThatFacet() {
         // Given a facet-scoped entry point, Icons inherited by default — waited for facet-scoped
         // settle first (see facetScopedModeKeepsClockRowAndPreviewButHidesEveryGlobalOnlyField's own comment)

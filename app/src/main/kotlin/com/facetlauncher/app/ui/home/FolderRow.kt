@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -51,12 +52,18 @@ import com.facetlauncher.app.ui.theme.Muted
 import com.facetlauncher.app.ui.theme.homeAppLabelShadow
 import kotlinx.coroutines.flow.map
 
-/** A [AppIconSize.TILE]-sized, `medium`/12dp-shaped tile showing up to 4 of the folder's app icons — a 1x2 row for 1-2 apps, a 2x2 grid for 3-4 — CLAUDE.md's M3 shape table, tile scale. No inner padding: icons run to the tile's own edge so the outer rounded-corner clip crops their corners slightly, the same way a real folder preview reads as "full" rather than an icon floating in a frame. A 0-app folder (valid, persistent — never auto-deleted) renders a single centered muted folder glyph instead. */
+/**
+ * A [size]d, `medium`/12dp-shaped tile showing up to 4 of the folder's app icons — a 1x2 row for 1-2 apps, a 2x2 grid for 3-4.
+ * No inner padding: icons run to the tile's own edge so the outer rounded-corner clip crops their corners slightly. A 0-app
+ * folder (valid, persistent — never auto-deleted) renders a single centered muted folder glyph instead. The mini icons keep
+ * [AppIconSize.FOLDER_MINI]'s proportion to an [AppIconSize.ICON] tile, so a scaled tile stays in proportion.
+ */
 @Composable
-internal fun FolderTileGlyph(folder: Folder, modifier: Modifier = Modifier) {
+internal fun FolderTileGlyph(folder: Folder, modifier: Modifier = Modifier, size: Dp = AppIconSize.ICON) {
+    val mini = size * (AppIconSize.FOLDER_MINI / AppIconSize.ICON)
     Box(
         modifier = modifier
-            .size(AppIconSize.TILE)
+            .size(size)
             .clip(RoundedCornerShape(12.dp))
             .background(FolderGlyphBackground)
             .drawWithContent {
@@ -66,7 +73,7 @@ internal fun FolderTileGlyph(folder: Folder, modifier: Modifier = Modifier) {
                     brush = Brush.radialGradient(
                         colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.18f)),
                         center = center,
-                        radius = size.maxDimension * 0.75f,
+                        radius = this.size.maxDimension * 0.75f,
                     ),
                 )
             },
@@ -77,7 +84,7 @@ internal fun FolderTileGlyph(folder: Folder, modifier: Modifier = Modifier) {
                     imageVector = Icons.Outlined.FolderIcon,
                     contentDescription = null,
                     tint = Muted,
-                    modifier = Modifier.size(AppIconSize.SHORTCUT),
+                    modifier = Modifier.size(mini),
                 )
             }
         } else {
@@ -89,7 +96,7 @@ internal fun FolderTileGlyph(folder: Folder, modifier: Modifier = Modifier) {
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     for (colIndex in 0..1) {
-                        FolderTileGlyphSlot(app = previewApps.getOrNull(colIndex))
+                        FolderTileGlyphSlot(app = previewApps.getOrNull(colIndex), size = mini)
                     }
                 }
             } else {
@@ -101,7 +108,7 @@ internal fun FolderTileGlyph(folder: Folder, modifier: Modifier = Modifier) {
                     for (rowIndex in 0..1) {
                         Row(horizontalArrangement = Arrangement.spacedBy(2.dp, Alignment.CenterHorizontally)) {
                             for (colIndex in 0..1) {
-                                FolderTileGlyphSlot(app = previewApps.getOrNull(rowIndex * 2 + colIndex))
+                                FolderTileGlyphSlot(app = previewApps.getOrNull(rowIndex * 2 + colIndex), size = mini)
                             }
                         }
                     }
@@ -113,11 +120,11 @@ internal fun FolderTileGlyph(folder: Folder, modifier: Modifier = Modifier) {
 
 /** One cell of [FolderTileGlyph]'s grid/row — an app icon, or a blank spacer when the folder has fewer apps than slots. */
 @Composable
-private fun FolderTileGlyphSlot(app: AppInfo?) {
+private fun FolderTileGlyphSlot(app: AppInfo?, size: Dp) {
     if (app != null) {
-        AppIcon(icon = app.icon, monochromeIcon = app.monochromeIcon, size = AppIconSize.SHORTCUT, contentDescription = null)
+        AppIcon(icon = app.icon, monochromeIcon = app.monochromeIcon, fromIconPack = app.iconFromPack, size = size, contentDescription = null)
     } else {
-        Box(modifier = Modifier.size(AppIconSize.SHORTCUT))
+        Box(modifier = Modifier.size(size))
     }
 }
 
@@ -134,7 +141,7 @@ internal fun FolderRow(
     position: AppRowPosition = AppRowPosition.LEFT,
     presentation: AppRowPresentation = AppRowPresentation.ICON_AND_TEXT,
     verticalPadding: Dp = HOME_APP_ROW_REGULAR_VERTICAL_PADDING,
-    iconSize: Dp = AppIconSize.ROW_REGULAR,
+    iconSize: Dp = AppIconSize.scaled(),
     testTagPrefix: String = "home_",
     enableLongPressMenu: Boolean = true,
     onClick: () -> Unit = {},
@@ -175,9 +182,10 @@ private fun FolderRowContent(
 ) {
     val showIcon = presentation != AppRowPresentation.TEXT_ONLY
     val showLabel = presentation != AppRowPresentation.ICON_ONLY
-    Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = appRowArrangement(position)) {
+    // A text-only row keeps the icon's height, so switching row style doesn't move the list.
+    Row(modifier = modifier.heightIn(min = iconSize), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = appRowArrangement(position)) {
         val icon: @Composable () -> Unit = {
-            if (showIcon) FolderTileGlyph(folder = folder, modifier = Modifier.size(iconSize))
+            if (showIcon) FolderTileGlyph(folder = folder, size = iconSize)
         }
         val label: @Composable () -> Unit = {
             if (showLabel) {

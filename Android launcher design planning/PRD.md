@@ -23,7 +23,7 @@ A minimal, fast, list-first Android home screen launcher. Prioritizes speed and 
 - No cloud sync / backup of launcher config across devices (local only for v1).
 - No tablet/foldable-specific layouts.
 - No custom lock screen or notification shade replacement.
-- No third-party icon pack support (F11) — parked as a separate future requirement; v1 ships system-default icons + monochrome overlay only.
+- ~~No third-party icon pack support (F11)~~ — **built (F11 v2):** installed packs apply launcher-wide from Settings → Appearance → Icons (see F11 below).
 - No OEM-level system theming support (e.g. Samsung Theme Park / Galaxy Store icon packs) — these apply icons before any third-party launcher can render them; undetectable by design.
 - No web search fallback in the app drawer search — search (now in scope per F6) covers apps and contacts only.
 
@@ -33,7 +33,7 @@ A minimal, fast, list-first Android home screen launcher. Prioritizes speed and 
 
 Not in scope for this version, but researched and worth preserving rather than losing:
 
-- **Third-party icon pack support (F11 v2 candidate):** a two-layer model — (1) generic detection of installed icon-pack apps via their declared intent action, then parsing their `appfilter.xml` for a component-name → icon mapping; (2) optionally, a direct-apply intent contract of our own (mirroring Niagara's `bitpit.launcher.APPLY_ICONS` pattern) that pack developers could adopt for a one-tap "apply" flow, though that only pays off with ecosystem adoption (e.g. getting added to the "Blueprint" icon-pack dashboard template's supported-launcher list). Fallback-for-uncovered-apps model: pack's own generic styling → system default → user manual override, remembered per-pack.
+- **Third-party icon pack support (F11 v2) — built, moved out of parking (see F11).** The original research, kept for reference: a two-layer model — (1) generic detection of installed icon-pack apps via their declared intent action, then parsing their `appfilter.xml` for a component-name → icon mapping; (2) optionally, a direct-apply intent contract of our own (mirroring Niagara's `bitpit.launcher.APPLY_ICONS` pattern) that pack developers could adopt for a one-tap "apply" flow, though that only pays off with ecosystem adoption (e.g. getting added to the "Blueprint" icon-pack dashboard template's supported-launcher list). Fallback-for-uncovered-apps model: pack's own generic styling → system default → user manual override, remembered per-pack.
 
 ---
 
@@ -124,12 +124,13 @@ Not in scope for this version, but researched and worth preserving rather than l
 ### F10. App Drawer Overlay
 - App drawer is presented as a configurable-opacity overlay on top of the home background (not a separate flat background) — reinforces "minimal" visual identity, avoids maintaining a second background asset.
 
-### F11. Label Customization (icon customization parked)
+### F11. Label and Icon Customization
 - **Icon sources [decided, scope reduced]:** two rendering modes for v1, applied globally (not per-app):
   1. System-default icons, as provided by each app.
   2. Monochrome overlay mode: user picks a single accent color, applied as a themed overlay across all icons.
-- **Third-party icon pack support is parked, out of scope for this version.** The two-layer detection/parsing/direct-apply model researched for this doc (generic `appfilter.xml` parsing + a Niagara-style direct-apply intent contract) is real and workable, but is being tracked as a **separate future requirement** rather than built now. Revisit F11 v2 for that scope if/when prioritized.
-- **No per-app icon override in this version [decided]:** since icon packs aren't supported, there's no per-app icon replacement or per-app overlay toggle — the monochrome mode, if enabled, applies uniformly across all icons. Per-app customization is limited to label editing only.
+- **Third-party icon packs [built, F11 v2, free]:** installed packs (found by the Nova/ADW/Apex/GO theme intents; `appfilter.xml` parsed, calendar packs dated by day) are listed under Settings → Appearance → Icons as "External", next to the "Built-in" styles; one pack applies launcher-wide and replaces the built-in style while applied. Apps a pack misses use the pack's back/mask art ("Match pack") or their own icon ("Keep default"). The pack's shape wins over Icon shape. No direct-apply intent contract (Niagara-style) was built.
+- **Icon size [built]:** one icon size everywhere the user's apps appear (44dp at 100%), scaled 80–120% in 1% steps from the Icons screen.
+- **No per-app icon override in this version [decided]:** there's no per-app icon replacement or per-app overlay toggle — the icon style or pack applies uniformly across all icons. Per-app customization is limited to label editing only.
 - **Per-app label editing [decided, in scope]:** user can rename an app's displayed label without affecting the actual app name. This is the only per-app customization in this version.
 - **Min SDK simplification:** with min SDK set to Android 13 (API 33), there's no need to support pre-13 OS-version fallbacks. The custom monochrome-overlay engine is still needed for any app whose own icon asset doesn't include a monochrome variant (`Icon.getMonochrome()` returns null) — that's a per-app packaging choice, not an OS capability gap.
 

@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
@@ -195,17 +196,36 @@ internal fun HomeAppGridTile(
                 modifier = Modifier.testTag(homeTag("home_app_label_${app.packageName}")),
             )
         } else {
-            AppIcon(
-                app = app,
-                size = AppIconSize.TILE,
-                contentDescription = app.label,
-                notificationCount = style.badgeCounts[app.packageName],
-                badgeStyle = style.badgeStyle,
-                modifier = Modifier.testTag(homeTag("home_app_icon_${app.packageName}")),
-            )
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                AppIcon(
+                    app = app,
+                    size = AppIconSize.scaled(),
+                    contentDescription = app.label,
+                    notificationCount = style.badgeCounts[app.packageName],
+                    badgeStyle = style.badgeStyle,
+                    modifier = Modifier.testTag(homeTag("home_app_icon_${app.packageName}")),
+                )
+                if (displayMode == AppListGridDisplayMode.ICONS_AND_TEXT) {
+                    HomeTileLabel(app.label, style, Modifier.testTag(homeTag("home_app_label_${app.packageName}")))
+                }
+            }
         }
         AppItemMenu(app, menuExpanded, { menuExpanded = false }, actions, style)
     }
+}
+
+/** An icon tile's name under it ("Icons and text" on Home's grid and the dock): one line, in Home's label style. */
+@Composable
+internal fun HomeTileLabel(text: String, style: HomeItemStyle, modifier: Modifier = Modifier) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.labelSmall.copy(shadow = homeAppLabelShadow(style.labelColor), fontWeight = style.labelFontWeight),
+        color = style.labelColor,
+        textAlign = TextAlign.Center,
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis,
+        modifier = modifier.padding(top = 7.dp).widthIn(max = AppIconSize.scaled(AppIconSize.GRID_LABEL_WIDTH)),
+    )
 }
 
 /** [HomeAppGridTile]'s folder counterpart: the contents sheet on tap, the folder menu on long-press. */
@@ -237,7 +257,10 @@ internal fun HomeFolderGridTile(
                 overflow = TextOverflow.Ellipsis,
             )
         } else {
-            FolderTileGlyph(folder = folder)
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                FolderTileGlyph(folder = folder, size = AppIconSize.scaled())
+                if (displayMode == AppListGridDisplayMode.ICONS_AND_TEXT) HomeTileLabel(folder.name, style)
+            }
         }
         if (sheetOpen) FolderItemSheet(folder, { sheetOpen = false }, actions, style)
         FolderItemMenu(folder, menuExpanded, { menuExpanded = false }, actions)

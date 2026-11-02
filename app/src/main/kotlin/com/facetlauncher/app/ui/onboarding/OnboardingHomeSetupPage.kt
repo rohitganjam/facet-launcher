@@ -41,6 +41,7 @@ import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.AppListLimits
 import com.facetlauncher.app.data.model.DrawerPresentation
 import com.facetlauncher.app.data.model.ListContentMode
+import com.facetlauncher.app.data.model.SearchBarPosition
 import com.facetlauncher.app.ui.components.AppIcon
 import com.facetlauncher.app.ui.components.AppIconSize
 import com.facetlauncher.app.ui.components.CardDivider
@@ -49,6 +50,7 @@ import com.facetlauncher.app.ui.components.LabeledDropdownRow
 import com.facetlauncher.app.ui.components.LocalSettingsRowInset
 import com.facetlauncher.app.ui.components.ReorderRowDefaults
 import com.facetlauncher.app.ui.components.SettingsCard
+import com.facetlauncher.app.ui.components.SettingsToggleRow
 import com.facetlauncher.app.ui.components.TextActionButton
 import com.facetlauncher.app.ui.components.rememberDragReorderState
 import com.facetlauncher.app.ui.theme.Faint
@@ -60,7 +62,7 @@ import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
 
 /**
- * Onboarding step 2 (`4g`, extended) — the launcher-wide default HOME APPS content mode and DOCK.
+ * Onboarding step 3 (`4g`, extended) — the launcher-wide default HOME APPS content mode and DOCK.
  * Both sections mirror their Settings counterparts (`DockSettingsScreen`, `HomeAppsListSettingsScreen`):
  * a live row that supports drag-to-reorder in place, plus a clickable row that opens the same
  * full-screen picker Settings uses ([com.facetlauncher.app.ui.dock.DockAppPickerScreen],
@@ -76,6 +78,9 @@ fun OnboardingHomeSetupPage(
     onAppsToShowCountChange: (Int) -> Unit,
     drawerPresentation: DrawerPresentation,
     onDrawerPresentationChange: (DrawerPresentation) -> Unit,
+    onSearchBarPositionChange: (SearchBarPosition) -> Unit,
+    onSearchContactsToggle: (Boolean) -> Unit,
+    onSearchSettingsToggle: (Boolean) -> Unit,
     onOpenFavoritesPicker: () -> Unit,
     onReorderFavorites: (List<AppInfo>) -> Unit,
     onClearFavorites: () -> Unit,
@@ -111,8 +116,12 @@ fun OnboardingHomeSetupPage(
                 )
                 Spacer(modifier = Modifier.height(40.dp))
                 AppDrawerSection(
+                    uiState = uiState,
                     presentation = drawerPresentation,
                     onPresentationChange = onDrawerPresentationChange,
+                    onSearchBarPositionChange = onSearchBarPositionChange,
+                    onSearchContactsToggle = onSearchContactsToggle,
+                    onSearchSettingsToggle = onSearchSettingsToggle,
                 )
             }
             item { Spacer(modifier = Modifier.height(96.dp)) }
@@ -123,7 +132,7 @@ fun OnboardingHomeSetupPage(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            OnboardingDots(step = 1, totalSteps = ONBOARDING_STEP_COUNT)
+            OnboardingDots(step = 2, totalSteps = ONBOARDING_STEP_COUNT)
             Row(horizontalArrangement = Arrangement.spacedBy(20.dp)) {
                 TextActionButton(
                     text = stringResource(R.string.action_back),
@@ -132,7 +141,8 @@ fun OnboardingHomeSetupPage(
                     modifier = Modifier.testTag("onboarding_back"),
                 )
                 TextActionButton(
-                    text = stringResource(R.string.action_next),
+                    // The last step: it leads into the set-default sheet on Home, so "Continue", not "Next".
+                    text = stringResource(R.string.action_continue),
                     onClick = onNext,
                     modifier = Modifier.testTag("onboarding_next"),
                 )
@@ -223,9 +233,17 @@ private fun DockClickableRow(countLabel: String, onClick: () -> Unit, modifier: 
     }
 }
 
-/** Mirrors `AppDrawerSettingsScreen`'s own "Show apps as" row — List vs Grid, default List. */
+/** Mirrors the top of `AppDrawerSettingsScreen`: "Show apps as" plus the search bar position and search toggles. */
 @Composable
-private fun AppDrawerSection(presentation: DrawerPresentation, onPresentationChange: (DrawerPresentation) -> Unit, modifier: Modifier = Modifier) {
+private fun AppDrawerSection(
+    uiState: OnboardingUiState,
+    presentation: DrawerPresentation,
+    onPresentationChange: (DrawerPresentation) -> Unit,
+    onSearchBarPositionChange: (SearchBarPosition) -> Unit,
+    onSearchContactsToggle: (Boolean) -> Unit,
+    onSearchSettingsToggle: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
+) {
     Column(modifier = modifier.fillMaxWidth()) {
         Text(text = stringResource(R.string.onboarding_app_drawer_section_header), style = MaterialTheme.typography.labelSmall, color = Muted)
         Spacer(modifier = Modifier.height(8.dp))
@@ -237,6 +255,31 @@ private fun AppDrawerSection(presentation: DrawerPresentation, onPresentationCha
                 label = { stringResource(it.displayNameRes) },
                 onSelect = onPresentationChange,
                 testTag = "onboarding_drawer_presentation_row",
+            )
+            CardDivider()
+            LabeledDropdownRow(
+                title = stringResource(R.string.app_drawer_search_bar_position),
+                options = SearchBarPosition.entries,
+                selected = uiState.searchBarPosition,
+                label = { stringResource(it.displayNameRes) },
+                onSelect = onSearchBarPositionChange,
+                testTag = "onboarding_search_bar_position_row",
+            )
+            CardDivider()
+            SettingsToggleRow(
+                title = stringResource(R.string.app_drawer_search_contacts_title),
+                subtitle = stringResource(R.string.app_drawer_search_contacts_subtitle),
+                checked = uiState.searchContactsEnabled,
+                onCheckedChange = onSearchContactsToggle,
+                testTag = "onboarding_search_contacts_toggle",
+            )
+            CardDivider()
+            SettingsToggleRow(
+                title = stringResource(R.string.app_drawer_search_settings_title),
+                subtitle = stringResource(R.string.app_drawer_search_settings_subtitle),
+                checked = uiState.searchSettingsEnabled,
+                onCheckedChange = onSearchSettingsToggle,
+                testTag = "onboarding_search_settings_toggle",
             )
         }
     }
@@ -256,7 +299,7 @@ private val FAVORITE_ROW_SHAPE = RoundedCornerShape(12.dp)
 private fun DockAppsReorderRow(dockApps: ImmutableList<AppInfo>, onReorder: (List<AppInfo>) -> Unit, modifier: Modifier = Modifier) {
     val componentsKey = dockApps.map { it.listKey }
     var order by remember(componentsKey) { mutableStateOf<List<AppInfo>>(dockApps) }
-    val slotWidthPx = with(LocalDensity.current) { (AppIconSize.TILE + ReorderRowDefaults.DOCK_TILE_SPACING).toPx() }
+    val slotWidthPx = with(LocalDensity.current) { (AppIconSize.ICON + ReorderRowDefaults.DOCK_TILE_SPACING).toPx() }
     val reorderState = rememberDragReorderState(
         items = order,
         key = { it.listKey },
@@ -267,7 +310,7 @@ private fun DockAppsReorderRow(dockApps: ImmutableList<AppInfo>, onReorder: (Lis
     )
 
     LazyRow(
-        modifier = modifier.height(AppIconSize.TILE),
+        modifier = modifier.height(AppIconSize.ICON),
         horizontalArrangement = Arrangement.spacedBy(ReorderRowDefaults.DOCK_TILE_SPACING),
         userScrollEnabled = false,
     ) {
@@ -275,7 +318,7 @@ private fun DockAppsReorderRow(dockApps: ImmutableList<AppInfo>, onReorder: (Lis
             val isDragging = reorderState.isDragging(app)
             AppIcon(
                 app = app,
-                size = AppIconSize.TILE,
+                size = AppIconSize.ICON,
                 contentDescription = app.label,
                 modifier = Modifier
                     .testTag("onboarding_dock_tile_${app.packageName}")
@@ -463,6 +506,9 @@ private fun OnboardingHomeSetupPagePreview() {
             onAppsToShowCountChange = {},
             drawerPresentation = DrawerPresentation.LIST,
             onDrawerPresentationChange = {},
+            onSearchBarPositionChange = {},
+            onSearchContactsToggle = {},
+            onSearchSettingsToggle = {},
             onOpenFavoritesPicker = {},
             onReorderFavorites = {},
             onClearFavorites = {},

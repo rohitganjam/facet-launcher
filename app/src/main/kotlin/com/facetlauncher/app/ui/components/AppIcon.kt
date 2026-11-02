@@ -44,6 +44,7 @@ import com.facetlauncher.app.ui.theme.IconTile
 import com.facetlauncher.app.ui.theme.Ink
 import com.facetlauncher.app.ui.theme.InkInverted
 import com.facetlauncher.app.ui.theme.LocalIconRenderMode
+import com.facetlauncher.app.ui.theme.LocalIconScale
 import com.facetlauncher.app.ui.theme.LocalIconShape
 import com.facetlauncher.app.ui.theme.LocalStyledIconCache
 import com.facetlauncher.app.ui.theme.Muted
@@ -54,30 +55,30 @@ import kotlin.math.abs
 private fun badgeLabel(count: Int): String = if (count > 9) "9+" else count.toString()
 
 /**
- * The app's full set of standard [AppIcon] sizes — every icon tile in the app should be one of
- * these rather than a bespoke `Dp` picked by eye (see chat history: this replaced ~9 slightly
- * different hand-picked radii/sizes across the app with 5 named sizes).
- * [ROW_COMPACT]/[ROW_REGULAR]/[ROW_SPACIOUS] deliberately equal [DrawerListItemSize]'s own
- * `iconSizeDp` tiers (that enum is the one place a user actually chooses an icon size) rather than
- * repeating those numbers here.
+ * The app's three [AppIcon] sizes. [ICON] and [COMPACT] are drawn at [scaled] wherever the icon is the user's own
+ * (Home, dock, drawer, folder sheets, Private Space); settings screens, pickers and the long-press menu use them
+ * unscaled so their layouts never shift.
  */
 object AppIconSize {
-    /** The smallest icon in the app — a shortcut's leading icon inside [AppContextMenu]'s menu row. */
-    val SHORTCUT = 20.dp
+    /** Every app icon: list rows, grid tiles, the dock and folder tiles. */
+    val ICON = DrawerListItemSize.REGULAR.iconSizeDp.dp
 
-    /** One icon in a list row — App Drawer's own Compact tier, Home's app list when it needs to
-     *  compact (see `HomeScreen.kt`'s own compact-spacing check), and every reorder/picker row
-     *  (Settings' Default Favorites, the Favorites/Dock pickers). */
-    val ROW_COMPACT = DrawerListItemSize.COMPACT.iconSizeDp.dp
+    /** A Compact list row's icon (the drawer's Compact size, Home's list once it shrinks to fit), and every settings picker row. */
+    val COMPACT = DrawerListItemSize.COMPACT.iconSizeDp.dp
 
-    /** App Drawer's own Regular tier; Home's app list in its normal (non-compacted) state. */
-    val ROW_REGULAR = DrawerListItemSize.REGULAR.iconSizeDp.dp
+    /** The mini icons inside a folder tile, and other glyphs that small; scaled with their tile. */
+    val FOLDER_MINI = 20.dp
 
-    /** App Drawer's own Spacious tier; also [AppContextMenu]'s header icon, which already happened to match. */
-    val ROW_SPACIOUS = DrawerListItemSize.SPACIOUS.iconSizeDp.dp
+    /** The widest a grid tile's one-line label runs, under an [ICON]; scaled with it. */
+    val GRID_LABEL_WIDTH = 56.dp
 
-    /** Grid-tile-scale UI: App Drawer's Grid layout, the real Home Dock, and its Settings/onboarding management tiles. */
-    val TILE = 44.dp
+    /** [base] at the user's Icon size setting. */
+    @Composable
+    fun scaled(base: Dp = ICON): Dp = base * LocalIconScale.current
+
+    /** The icon of a list row of [size], at the user's Icon size setting. */
+    @Composable
+    fun forRow(size: DrawerListItemSize): Dp = scaled(size.iconSizeDp.dp)
 }
 
 /** [AppIcon] for an [AppInfo]: also draws the Work / other-profile badge, so two copies of one app (personal and Work) can be told apart. */
@@ -93,6 +94,7 @@ fun AppIcon(
     AppIcon(
         icon = app.icon,
         monochromeIcon = app.monochromeIcon,
+        fromIconPack = app.iconFromPack,
         size = size,
         contentDescription = contentDescription,
         modifier = modifier,
@@ -125,6 +127,8 @@ fun AppIcon(
     modifier: Modifier = Modifier,
     /** The app's themed-icon layer, for the glyph and outline icon styles; see [AppInfo.monochromeIcon]. */
     monochromeIcon: ImageBitmap? = null,
+    /** [icon] is an icon pack's, which carries its own shape: drawn unclipped, ignoring the Icon Shape setting. */
+    fromIconPack: Boolean = false,
     notificationCount: Int? = null,
     badgeStyle: NotificationBadgeStyle = NotificationBadgeStyle.DOT,
     isWorkApp: Boolean = false,
@@ -137,10 +141,10 @@ fun AppIcon(
     Box(modifier = modifier) {
         if (notificationCount != null && notificationCount > 0) {
             BadgedBox(badge = { NotificationBadge(count = notificationCount, style = badgeStyle) }) {
-                AppIconGlyph(icon = icon, monochromeIcon = monochromeIcon, size = size, contentDescription = contentDescription)
+                AppIconGlyph(icon = icon, monochromeIcon = monochromeIcon, fromIconPack = fromIconPack, size = size, contentDescription = contentDescription)
             }
         } else {
-            AppIconGlyph(icon = icon, monochromeIcon = monochromeIcon, size = size, contentDescription = contentDescription)
+            AppIconGlyph(icon = icon, monochromeIcon = monochromeIcon, fromIconPack = fromIconPack, size = size, contentDescription = contentDescription)
         }
         // Bottom-start, not stacked with the notification dot above (top-end, via BadgedBox) —
         // matches every other Android launcher's own convention for where a Work Profile badge
@@ -195,7 +199,7 @@ private fun OtherProfileBadge(modifier: Modifier = Modifier) {
  * fallback where it has no glyph or outline); while it is being made nothing is drawn.
  */
 @Composable
-private fun AppIconGlyph(icon: ImageBitmap?, monochromeIcon: ImageBitmap?, size: Dp, contentDescription: String?, modifier: Modifier = Modifier) {
+private fun AppIconGlyph(icon: ImageBitmap?, monochromeIcon: ImageBitmap?, fromIconPack: Boolean, size: Dp, contentDescription: String?, modifier: Modifier = Modifier) {
     val renderMode = LocalIconRenderMode.current
     val shapeSetting = LocalIconShape.current
     val iconShape = remember(shapeSetting) { shapeSetting.toComposeShape() }
@@ -218,7 +222,7 @@ private fun AppIconGlyph(icon: ImageBitmap?, monochromeIcon: ImageBitmap?, size:
                 else -> tintColor.asColorTint()
             },
             alpha = if (pending) 0f else 1f,
-            modifier = modifier.size(size).iconClip(iconShape, paint.tile.takeUnless { pending }, unclipped = styledPicture != null),
+            modifier = modifier.size(size).iconClip(iconShape, paint.tile.takeUnless { pending }, unclipped = styledPicture != null || fromIconPack),
         )
     } else {
         Box(

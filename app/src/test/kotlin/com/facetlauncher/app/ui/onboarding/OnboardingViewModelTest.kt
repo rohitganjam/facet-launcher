@@ -6,6 +6,7 @@ import com.facetlauncher.app.data.model.DrawerPresentation
 import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.data.model.ListContentMode
 import com.facetlauncher.app.data.model.PlacedItem
+import com.facetlauncher.app.data.model.SearchBarPosition
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -155,6 +156,42 @@ class OnboardingViewModelTest {
         testDispatcher.scheduler.advanceUntilIdle()
 
         verify(f.settingsRepository).setDrawerPresentation(DrawerPresentation.GRID)
+    }
+
+    @Test
+    fun `uiState reflects the current search settings`() = runTest {
+        // Given search bar at the bottom with both search toggles already on (defaults: top, off, off)
+        val f = fixture(
+            settings = LauncherSettings(
+                searchBarPosition = SearchBarPosition.BOTTOM,
+                searchContactsEnabled = true,
+                searchSettingsEnabled = true,
+            ),
+        )
+        backgroundScope.launch { f.viewModel.uiState.collect {} }
+        runCurrent()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val state = f.viewModel.uiState.value
+        assertEquals(SearchBarPosition.BOTTOM, state.searchBarPosition)
+        assertEquals(true, state.searchContactsEnabled)
+        assertEquals(true, state.searchSettingsEnabled)
+    }
+
+    @Test
+    fun `search setters delegate to the settings repository`() = runTest {
+        val f = fixture()
+        backgroundScope.launch { f.viewModel.uiState.collect {} }
+        runCurrent()
+
+        f.viewModel.setSearchBarPosition(SearchBarPosition.BOTTOM)
+        f.viewModel.setSearchContactsEnabled(true)
+        f.viewModel.setSearchSettingsEnabled(true)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        verify(f.settingsRepository).setSearchBarPosition(SearchBarPosition.BOTTOM)
+        verify(f.settingsRepository).setSearchContactsEnabled(true)
+        verify(f.settingsRepository).setSearchSettingsEnabled(true)
     }
 
     @Test
