@@ -11,7 +11,7 @@ Launcher, Lawnchair, Niagara, etc. are all listed).
 
 (72 chars)
 
-## Full description (max 4000 characters — this draft is 3,899)
+## Full description (max 4000 characters — this draft is 3,984)
 
 ```
 Your phone isn't used the same way all day, so why should your home screen be?
@@ -59,6 +59,7 @@ MAKE IT YOURS
 - Light, dark or system theme, with an accent color from your wallpaper or one you choose
 - Your pick of launcher font and weight
 - Icon shapes (squircle, rounded square, circle, square) and styles: full color or a monochrome look tinted to your accent
+- Icon packs: apply any pack you've installed (Nova, ADW, Apex and more) to every app
 
 BACKUP AND RESTORE
 Export your facets and settings to a file and restore them on any device.
