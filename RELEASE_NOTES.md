@@ -1,41 +1,41 @@
-# Facet Launcher 0.1.34
+# Facet Launcher 0.1.35
 
 ## New Features
-- Clock stack: each facet's clock area can now hold several pages, such as the clock and widgets. Swipe sideways to move between them. Page dots appear during and just after a swipe, including in landscape and while adjusting.
-- A new Widget stack screen lists the facet's pages. You can reorder, configure, remove and add pages there. Free users get one page and Pro users get up to five.
-- Each facet remembers the page it last showed.
-- A page whose app was uninstalled now shows a placeholder with a Remove button.
+- Icon pack support: apply icon packs you've installed (the kind made for Nova, ADW, Apex and similar launchers) to every app from Settings → Appearance → Icons, alongside the built-in styles. Apps the pack doesn't cover can be styled to match the pack or keep their own icon. The screen also shows how many of your apps the pack covers, lists the ones it misses, and links to where you can find more packs.
+- Calendar icons from icon packs now show today's date and update by themselves when the day, time or time zone changes.
+- New Icon size slider on the Icons screen (80–120%) that resizes app icons everywhere: Home, the dock, the app drawer, folders and Private Space.
+- New "Shrink list to fit" option for each facet (off by default): if Home's list doesn't fit on screen, it switches to compact rows instead of scrolling.
+- New "Icons and text" style for the dock and Home's grid, which shows the app name under each icon.
+- Pressing the Home button while you're already on Home now opens the app drawer with search ready to type.
+- Onboarding's home setup page now lets you choose where the search bar goes and turn contacts and settings search on or off.
 
 ## Fixes
-- Responsive widgets on Home now get their real size, so they no longer stay stuck on their smallest layout.
-- Swiping between clock pages no longer flickers, resizes, jitters or re-loads a widget as the next page arrives.
-- Horizontal drags on a widget that doesn't scroll now pass through to Home, so you can still swipe to other screens.
-- A neighboring widget page no longer briefly shows a clock while you swipe to it.
-- In landscape, taller or differently aligned pages are no longer clipped or shifted when they land.
-- A swiped widget page now slides instead of squeezing.
+- On a clock stack, calendar events now show only on the built-in clock page, not on pages that hold a widget.
 
 ## Improvements
-- The clock's alignment, size and divider are now saved separately for each facet. They no longer change when you edit the clock override or launcher-wide settings. A facet you haven't adjusted shows the default layout, and your first adjustment saves it to that facet.
-- "Reset clock position" now clears only the clock's placement.
-- The Alignment row is removed from the Clock style gallery.
-- The clock menu now shows options that match the visible page. These include clock and calendar settings, "Replace with custom widget" and "Replace with clock".
-- Replacing a page no longer requires Pro.
-- Hosted widgets now use tighter padding.
-- "Edit defaults" on the inherit card now links to the launcher-wide screen.
-- New and restored facets start with the native clock as their first page.
-- New strings are translated into all five languages.
+- App icons are now the same size on Home, the dock, the drawer, folders and Private Space.
+- Icon pack icons are sharper.
+- Folders now match the layout of the place you opened them from (Home's grid or the drawer's grid, with the same columns and labels), or use standard list rows otherwise.
+- The Icons screen opens faster: each pack shows its own app icon, and a pack is only loaded when you tap it to apply it.
+- Installed icon packs are now labeled "External", next to "Built-in".
+- List rows have more room in the Regular and Spacious sizes.
+- Onboarding now asks you to pick facets before home setup, and home setup is the last step.
+- The launcher only asks for contacts permission when you turn on contacts search.
+- In Settings, the search bar position option now sits above the search toggles, and the contacts search description reads "Show contacts in search results".
+- Icon outlines are more consistent: all of them reach the same brightness, and plain icons now have the same rim thickness as themed ones.
 
 ## Internal
-- Added the `clock_stack_items` table and `ClockStackRepository`. Migration 34→35 creates a first page for every facet by moving existing hosted widgets into a one-item stack.
-- `Facet` now carries `clockStack`. The five single-widget fields are removed from `Facet` and the landscape group, and the columns are retired. Home, the resize commit, facet deletion and the widget picker read and write the stack and release every widget id involved.
-- Added `ReplaceClockStackItemUseCase`, which swaps a page in place and releases the old widget id. The picker now takes an Add or Replace target. The Pro upsell reason is now `WIDGET_STACK`.
-- Migration 35→36 adds the placement-ownership flag, derived from `overrideClock`.
-- Pager rework: neighbouring pages stay composed and parked. `HomeWidgetSizing` is answered per widget id. Page room comes from `ClockGeometry.widgetRoomPx`. Pages shift relative to `ClockPagerState.anchorIndex`. A hosted view is only told its size when it changes, and the clock slot is placed from the height measured in the same pass.
-- `ClockWidgetTile` now reads the host view from the tile instead of a local that was null after the first recomposition.
-- Tests added for the pager anchor, per-widget neighbour sizing, widget room, Home wiring, `ClockWidgetPickerViewModel` add and replace flows, and the stack screen Add flow.
-- Fixed the `clockScaleIsClampedToItsBounds` test to drag one move per frame.
-- Fixed a preview fixture, and no facet now resolves to the launcher clock.
-- Docs: refreshed docs 10 and 12, the test registry, counts and registries, Home state inputs, adjust sheet rows and placement ownership. Added plan docs for the widget stack.
-- Regenerated graphify-out.
-- Release notes scripts now show why `claude -p` failed, using stdout when stderr is empty.
-- Release 0.1.33: version bump, What's new, build commit recorded.
+- IconPackRepository: finds packs by launcher-theme intents, parses appfilter.xml (asset text scan, then XML resource fallback) and caches parsed packs. AppRepository swaps in pack icons and rescans when the pack changes. New `icon_pack_package` / `icon_pack_fallback` settings, included in backups. A pack that is no longer installed gets unapplied on the next scan.
+- Icon pack `<calendar>` parsing tolerates the doubled brace that some real packs have in a component. Dated apps redraw on date/time/zone broadcasts and when Home resumes, without a full re-list.
+- Applied pack coverage now reuses Home's parse instead of parsing every installed pack.
+- Pack icon cap raised from 192px to 256px.
+- Settings migration 36→37 for "Shrink list to fit".
+- `DrawerListItemSize` padding: Regular 4→12dp, Spacious 8→16dp (rows 68/76dp).
+- Home press reselect: treat STARTED as already in front (onNewIntent runs after onPause, so RESUMED never matched).
+- ClockBlock skips CalendarEventsBlock when a widget id is set.
+- Onboarding search options landed inside commits 5ba8534 and a944203 (swept up from the shared index). d1abf00 is an empty commit that records this.
+- Tests, translations, living docs, CAPABILITIES, PRD copies, IMPLEMENTATION_PLAN, TEST_REGISTRY and ONBOARDING_FLOW.md updated.
+- Regenerated graphify-out (×2).
+- Added combined 0.1.27–0.1.34 release notes and a giveaway-pick script.
+- Refreshed Play Store screenshots. Updated the Play Store listing and capabilities for weather, landscape, widget stacks and Pro.
+- Release 0.1.34: version bump, What's new, release notes.
