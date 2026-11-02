@@ -2448,9 +2448,9 @@
     "semantic_hash": ""
   },
   "scripts/last-release.json": {
-    "mtime": 1793592858.0027783,
-    "seen": 1793593247.861217,
-    "ast_hash": "ce4528dea6053ff48707fed22b18fd24",
+    "mtime": 1793639399.577125,
+    "seen": 1793639448.888253,
+    "ast_hash": "1788f49f7ab344971238cdc1dd469e10",
     "semantic_hash": ""
   },
   "scripts/gen-release-notes.py": {
@@ -2460,9 +2460,9 @@
     "semantic_hash": ""
   },
   "RELEASE_NOTES.md": {
-    "mtime": 1793592857.9817386,
-    "seen": 1793593247.8612301,
-    "ast_hash": "3ea823c1fd49e8a525c12c436ac5f2d7",
+    "mtime": 1793639399.5537255,
+    "seen": 1793639448.888267,
+    "ast_hash": "9413690f96a49918987c7a89c29b4092",
     "semantic_hash": ""
   },
   "app/src/androidTest/kotlin/com/facetlauncher/app/ui/settings/AboutScreenTest.kt": {
@@ -6000,9 +6000,15 @@
     "semantic_hash": ""
   },
   "app/src/main/assets/whats_new/0.1.36.md": {
-    "mtime": 1793637119.3959033,
-    "seen": 1793639191.0380611,
-    "ast_hash": "08719b95ce18d75c81a50a85575b0da1",
+    "mtime": 1793639261.1783378,
+    "seen": 1793639448.8882859,
+    "ast_hash": "d00e5ac85a032ae77300a84a40953b1c",
+    "semantic_hash": ""
+  },
+  "release_notes/0.1.36.md": {
+    "mtime": 1793639399.5543032,
+    "seen": 1793639448.888316,
+    "ast_hash": "9413690f96a49918987c7a89c29b4092",
     "semantic_hash": ""
   }
 }
