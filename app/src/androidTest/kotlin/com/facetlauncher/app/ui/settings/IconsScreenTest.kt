@@ -7,7 +7,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.graphics.toPixelMap
 import androidx.compose.ui.test.assertIsEnabled
-import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsNotSelected
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.semantics.ProgressBarRangeInfo
@@ -74,7 +73,7 @@ class IconsScreenTest {
     }
 
     /** The screen's content alone, over [picker] — packs can't be installed on the emulator, so their cards are tested this way. */
-    private fun setPackContent(settings: LauncherSettings, picker: IconPickerState, onSelectPack: (String) -> Unit = {}) {
+    private fun setPackContent(settings: LauncherSettings, picker: IconPickerState, onSelectPack: (String) -> Unit = {}, onForceIconShapeChange: (Boolean) -> Unit = {}) {
         composeRule.setContent {
             CompositionLocalProvider(LocalAllowLandscape provides false) {
                 FacetLauncherTheme {
@@ -91,10 +90,16 @@ class IconsScreenTest {
                         onOpenPack = {},
                         onFindPacks = {},
                         onIconShapeChange = {},
+                        onForceIconShapeChange = onForceIconShapeChange,
                     )
                 }
             }
         }
+    }
+
+    /** The shape and size card sits above the pack card, so the style and pack cards start below the first screen. */
+    private fun showPackCards() {
+        composeRule.onNodeWithTag("icons_screen").performScrollToNode(hasTestTag("icons_style_DEFAULT"))
     }
 
     /** The colour and background rows sit below the pack row, off a phone's first screen. */
@@ -122,7 +127,7 @@ class IconsScreenTest {
                     IconsContent(
                         settings = LauncherSettings(), uiState = AppearanceSettingsUiState(), picker = IconPickerState(isLoading = false),
                         homeWallpaper = HomeWallpaper.Unavailable, onBack = {}, onSelectBuiltIn = {}, onIconRenderModeChange = {}, onSelectPack = {},
-                        onPackFallbackChange = {}, onOpenPack = {}, onFindPacks = { searched = true }, onIconShapeChange = {},
+                        onPackFallbackChange = {}, onOpenPack = {}, onFindPacks = { searched = true }, onIconShapeChange = {}, onForceIconShapeChange = {},
                     )
                 }
             }
@@ -142,6 +147,7 @@ class IconsScreenTest {
         // Given an icon pack applied
         val settingsRepository = setContent()
         runBlocking { settingsRepository.setIconPack("com.example.pack") }
+        showPackCards()
         composeRule.waitUntil(timeoutMillis = 3_000) { composeRule.onAllNodes(hasTestTag("icons_applied_pack")).fetchSemanticsNodes().isNotEmpty() }
 
         // When picking the glyph style
@@ -159,6 +165,7 @@ class IconsScreenTest {
         setPackContent(LauncherSettings(iconPackPackage = "pack.alpha"), twoPacks, onSelectPack = { picked = it })
 
         // Then Alpha is selected, no built-in style is, and Alpha's coverage and fallback rows show
+        showPackCards()
         composeRule.onNodeWithTag("icons_pack_pack.alpha").assertIsSelected()
         composeRule.onNodeWithTag("icons_style_DEFAULT").assertIsNotSelected()
         composeRule.onNodeWithText("Covers 3 of 10 apps").assertExists()
@@ -178,30 +185,54 @@ class IconsScreenTest {
         setPackContent(LauncherSettings(iconPackPackage = "pack.beta"), loading)
 
         // Then its card shows a spinner, and no coverage is claimed yet
+        showPackCards()
         composeRule.onNodeWithTag("icons_pack_loading", useUnmergedTree = true).assertExists()
         assertEquals(0, composeRule.onAllNodesWithText("Covers", substring = true).fetchSemanticsNodes().size)
     }
 
     @Test
-    fun aPackThatThemesEveryAppTakesOverTheIconShape() {
+    fun theShapePickerStaysEnabledWhateverThePackDoes() {
         // Given a pack applied with the Match pack fallback
         setPackContent(LauncherSettings(iconPackPackage = "pack.alpha", iconPackFallback = IconPackFallback.MATCH_PACK), twoPacks)
         composeRule.onNodeWithTag("icons_screen").performScrollToNode(hasTestTag("appearance_icon_shape_row"))
 
-        // Then the shapes can't be picked, and the colour row is gone
-        composeRule.onNodeWithTag("icon_shape_CIRCLE").assertIsNotEnabled()
-        composeRule.onNodeWithText("Set by Alpha for the icons it draws").assertExists()
+        // Then the shape can still be picked, and the colour row is gone
+        composeRule.onNodeWithTag("icon_shape_CIRCLE").assertIsEnabled()
         assertEquals(0, composeRule.onAllNodesWithText("Colour").fetchSemanticsNodes().size)
     }
 
     @Test
-    fun keepingDefaultIconsLeavesTheShapePickable() {
+    fun theMissedAppsRowDescribesTheSelectedFallback() {
         // Given a pack applied that leaves missed apps their own icons
         setPackContent(LauncherSettings(iconPackPackage = "pack.alpha", iconPackFallback = IconPackFallback.KEEP_DEFAULT), twoPacks)
-        composeRule.onNodeWithTag("icons_screen").performScrollToNode(hasTestTag("appearance_icon_shape_row"))
+        composeRule.onNodeWithTag("icons_screen").performScrollToNode(hasTestTag("icons_pack_misses_row"))
 
-        // Then the shape still applies to them
-        composeRule.onNodeWithTag("icon_shape_CIRCLE").assertIsEnabled()
+        // Then the row says so
+        composeRule.onNodeWithText("Use default icons").assertExists()
+        composeRule.onNodeWithText("Left as the app's own icon").assertExists()
+    }
+
+    @Test
+    fun forceIconShapeSwitchReportsTheChange() {
+        // Given a pack applied
+        var forced: Boolean? = null
+        setPackContent(LauncherSettings(iconPackPackage = "pack.alpha"), twoPacks, onForceIconShapeChange = { forced = it })
+        composeRule.onNodeWithTag("icons_screen").performScrollToNode(hasTestTag("icons_force_shape_switch"))
+
+        // When switching it on
+        composeRule.onNodeWithTag("icons_force_shape_switch").performClick()
+
+        // Then the change is reported
+        assertEquals(true, forced)
+    }
+
+    @Test
+    fun forceIconShapeSwitchIsOnlyOfferedWithAPack() {
+        // Given no pack applied
+        setPackContent(LauncherSettings(), twoPacks)
+
+        // Then there is no switch
+        composeRule.onNodeWithTag("icons_force_shape_switch").assertDoesNotExist()
     }
 
     private fun SettingsRepository.awaitMode(mode: IconRenderMode) =
@@ -227,6 +258,7 @@ class IconsScreenTest {
     fun styleCardsSetTheStyleAndKeepTheColour() {
         // Given the screen on the default style
         val settingsRepository = setContent()
+        showPackCards()
         composeRule.onNodeWithTag("icons_style_DEFAULT").assertIsSelected()
 
         // When picking Glyph and then Outline
@@ -243,6 +275,7 @@ class IconsScreenTest {
     fun colourDropdownOffersThemeInvertedForGlyphAndPersistsIt() {
         // Given the glyph style selected
         val settingsRepository = setContent()
+        showPackCards()
         composeRule.onNodeWithTag("icons_style_GLYPH").performClick()
         settingsRepository.awaitMode(IconRenderMode.GLYPH_ACCENT)
 
@@ -259,6 +292,7 @@ class IconsScreenTest {
     fun backgroundDropdownPutsGlyphAndOutlineOnATile() {
         // Given the outline style
         val settingsRepository = setContent()
+        showPackCards()
         composeRule.onNodeWithTag("icons_style_OUTLINE").performClick()
         settingsRepository.awaitMode(IconRenderMode.OUTLINE_ACCENT)
 
@@ -275,6 +309,7 @@ class IconsScreenTest {
     fun themeInvertedSamplesGetADifferentBackdrop() {
         // Given the glyph style in the theme colour
         val settingsRepository = setContent()
+        showPackCards()
         composeRule.onNodeWithTag("icons_style_GLYPH").performClick()
         settingsRepository.awaitMode(IconRenderMode.GLYPH_ACCENT)
         openDropdown("icons_colour_row")
@@ -324,6 +359,7 @@ class IconsScreenTest {
 
         // Then the Home preview and all four style cards are there
         composeRule.onNodeWithTag("appearance_preview_card").assertIsDisplayed()
+        showPackCards()
         listOf("DEFAULT", "MONOCHROME", "GLYPH", "OUTLINE").forEach { composeRule.onNodeWithTag("icons_style_$it").assertIsDisplayed() }
     }
 }

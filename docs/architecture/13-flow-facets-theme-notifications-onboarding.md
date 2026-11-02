@@ -256,7 +256,7 @@ flowchart LR
   (`SelectIconSamplesUseCase`: Home, then the device's default apps, then the drawer), a pack card shows only the pack's
   own app icon, so opening the screen reads no pack; tapping one applies it (a spinner while it's read) and the Home
   preview above shows it. Picking a built-in style clears the pack; with a pack applied the Colour and Background rows give way to
-  the pack's coverage and "Apps the pack misses" (`icon_pack_fallback`), and Icon Shape is greyed out under `MATCH_PACK`.
+  the pack's coverage and "Apps the pack misses" (`icon_pack_fallback`), and a "Force icon shape" switch; Icon Shape and Icon size sit together in their own card above and always apply.
   "Get more" and "Find icon packs" open the Play Store's icon pack search (the web search where there is no Play Store).
 - `LocalDynamicColorRefreshSignal` is bumped when the wallpaper changes so Material You colours
   re-resolve without a restart.

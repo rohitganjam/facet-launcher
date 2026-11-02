@@ -127,7 +127,7 @@ fun AppIcon(
     modifier: Modifier = Modifier,
     /** The app's themed-icon layer, for the glyph and outline icon styles; see [AppInfo.monochromeIcon]. */
     monochromeIcon: ImageBitmap? = null,
-    /** [icon] is an icon pack's, which carries its own shape: drawn unclipped, ignoring the Icon Shape setting. */
+    /** [icon] is an icon pack's, which carries its own shape: drawn unclipped unless [IconOutline.clipsPackIcons]. */
     fromIconPack: Boolean = false,
     notificationCount: Int? = null,
     badgeStyle: NotificationBadgeStyle = NotificationBadgeStyle.DOT,
@@ -201,8 +201,8 @@ private fun OtherProfileBadge(modifier: Modifier = Modifier) {
 @Composable
 private fun AppIconGlyph(icon: ImageBitmap?, monochromeIcon: ImageBitmap?, fromIconPack: Boolean, size: Dp, contentDescription: String?, modifier: Modifier = Modifier) {
     val renderMode = LocalIconRenderMode.current
-    val shapeSetting = LocalIconShape.current
-    val iconShape = remember(shapeSetting) { shapeSetting.toComposeShape() }
+    val outline = LocalIconShape.current
+    val iconShape = remember(outline.shape) { outline.shape.toComposeShape() }
     if (icon != null) {
         val styled = rememberStyledIcon(renderMode, icon, monochromeIcon)
         val styledPicture = renderMode.pictureOf(styled)
@@ -222,7 +222,7 @@ private fun AppIconGlyph(icon: ImageBitmap?, monochromeIcon: ImageBitmap?, fromI
                 else -> tintColor.asColorTint()
             },
             alpha = if (pending) 0f else 1f,
-            modifier = modifier.size(size).iconClip(iconShape, paint.tile.takeUnless { pending }, unclipped = styledPicture != null || fromIconPack),
+            modifier = modifier.size(size).iconClip(iconShape, paint.tile.takeUnless { pending }, unclipped = styledPicture != null || (fromIconPack && !outline.clipsPackIcons)),
         )
     } else {
         Box(

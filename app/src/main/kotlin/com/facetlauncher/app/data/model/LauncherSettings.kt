@@ -319,6 +319,8 @@ data class LauncherSettings(
     val iconPackPackage: String? = null,
     /** How apps [iconPackPackage] has no icon for are drawn. */
     val iconPackFallback: IconPackFallback = IconPackFallback.MATCH_PACK,
+    /** Clips the icon pack's own icons to [iconShape] too, instead of leaving them in the pack's shape. */
+    val forceIconShape: Boolean = false,
     /**
      * Settings → Appearance → "Font" — the base font for every text role app-wide except the
      * clock/calendar, which pick their own font independently (see [ClockFontOption]'s

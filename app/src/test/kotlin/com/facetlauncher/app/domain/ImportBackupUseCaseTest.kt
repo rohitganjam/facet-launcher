@@ -281,7 +281,7 @@ class ImportBackupUseCaseTest {
             exportedAtEpochMillis = 0L, settings = settings,
             facets = emptyList(), dockApps = emptyList(), defaultFavoriteApps = emptyList(), widgetPlacements = emptyList(),
         )
-        `when`(backupRepository.readBackup(withPack)).thenReturn(bundle(minimalSettings().copy(iconPackPackage = "com.example.pack", iconPackFallback = "KEEP_DEFAULT")))
+        `when`(backupRepository.readBackup(withPack)).thenReturn(bundle(minimalSettings().copy(iconPackPackage = "com.example.pack", iconPackFallback = "KEEP_DEFAULT", forceIconShape = true)))
         `when`(backupRepository.readBackup(older)).thenReturn(bundle(minimalSettings()))
 
         useCase(withPack)
@@ -289,6 +289,7 @@ class ImportBackupUseCaseTest {
 
         verify(settingsRepository).setIconPack("com.example.pack")
         verify(settingsRepository).setIconPackFallback(com.facetlauncher.app.data.model.IconPackFallback.KEEP_DEFAULT)
+        verify(settingsRepository).setForceIconShape(true)
         verify(settingsRepository).setIconPack(null)
     }
 

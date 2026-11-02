@@ -910,9 +910,13 @@
     <string name="icons_screen_pack_coverage">Couvre %1$d apps sur %2$d</string>
     <string name="icons_screen_open_pack">Ouvrir le pack</string>
     <string name="icons_screen_pack_misses">Apps absentes du pack</string>
-    <string name="icons_screen_shape_set_by_pack">Définie par %1$s pour ses icônes</string>
     <string name="icon_pack_fallback_match_pack">Assortir au pack</string>
-    <string name="icon_pack_fallback_keep_default">Garder l\'original</string>
+    <string name="icon_pack_fallback_keep_default">Icônes par défaut</string>
+    <string name="icon_pack_fallback_match_pack_description">Adaptée au fond et à la forme du pack</string>
+    <string name="icon_pack_fallback_keep_default_description">Laissée telle que l\'icône de l\'appli</string>
+    <string name="icons_screen_shape_and_size">Forme et taille</string>
+    <string name="icons_screen_force_shape">Forcer la forme des icônes</string>
+    <string name="icons_screen_force_shape_description">Découpe aussi les icônes du pack selon la forme ci-dessus</string>
     <string name="app_row_position_launcher_default">Position par défaut du launcher</string>
     <string name="app_row_presentation_launcher_default">Style par défaut du launcher</string>
     <string name="app_list_vertical_alignment_launcher_default">Position par défaut du launcher</string>

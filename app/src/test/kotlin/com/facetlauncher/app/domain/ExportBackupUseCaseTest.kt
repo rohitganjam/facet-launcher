@@ -197,7 +197,7 @@ class ExportBackupUseCaseTest {
                     clockAlignment = ClockAlignment.RIGHT, clockZoneHeightDp = 240f, clockScale = 1.3f,
                     appListVerticalAlignment = AppListVerticalAlignment.TOP, recentlyInstalledPosition = RecentlyInstalledPosition.SHOW_LAST,
                     searchSettingsEnabled = true,
-                    iconPackPackage = "com.example.pack", iconPackFallback = com.facetlauncher.app.data.model.IconPackFallback.KEEP_DEFAULT,
+                    iconPackPackage = "com.example.pack", iconPackFallback = com.facetlauncher.app.data.model.IconPackFallback.KEEP_DEFAULT, forceIconShape = true,
                     landscape = LandscapeOverrides(clockAlignment = ClockAlignment.LEFT, clockZoneHeightDp = 280f, clockScale = 1.0f, appListVerticalAlignment = AppListVerticalAlignment.TOP),
                 ),
             ),
@@ -222,6 +222,7 @@ class ExportBackupUseCaseTest {
         assertEquals(true, settings.searchSettingsEnabled)
         assertEquals("com.example.pack", settings.iconPackPackage)
         assertEquals("KEEP_DEFAULT", settings.iconPackFallback)
+        assertEquals(true, settings.forceIconShape)
         assertEquals("LEFT", settings.landscapeClockAlignment)
         assertEquals(280f, settings.landscapeClockZoneHeightDp)
         assertEquals(1.0f, settings.landscapeClockScale)

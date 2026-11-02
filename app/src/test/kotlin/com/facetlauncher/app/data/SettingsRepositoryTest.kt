@@ -429,6 +429,19 @@ class SettingsRepositoryTest {
     }
 
     @Test
+    fun `forcing the icon shape is stored and defaults off`() = runTest {
+        // Given a fresh repository
+        val repository = createRepository()
+        assertEquals(false, repository.settings.first().forceIconShape)
+
+        // When forcing the shape
+        repository.setForceIconShape(true)
+
+        // Then it is stored
+        assertEquals(true, repository.settings.first().forceIconShape)
+    }
+
+    @Test
     fun `an icon pack is applied, its fallback kept, and cleared back to the built-in style`() = runTest {
         // Given a repository on a built-in glyph style
         val repository = createRepository()

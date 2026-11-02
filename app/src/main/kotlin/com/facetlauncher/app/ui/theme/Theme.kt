@@ -89,6 +89,7 @@ fun FacetLauncherTheme(
     wallpaperAccentRole: WallpaperAccentRole = WallpaperAccentRole.PRIMARY,
     iconRenderMode: IconRenderMode = IconRenderMode.SYSTEM_DEFAULT,
     iconShape: IconShape = IconShape.SQUIRCLE,
+    forceIconShape: Boolean = false,
     iconScale: Float = 1f,
     launcherFontOption: LauncherFontOption = LauncherFontOption.SYSTEM,
     homeAppsFontWeight: FontWeightOption = FontWeightOption.REGULAR,
@@ -121,7 +122,7 @@ fun FacetLauncherTheme(
         LocalWallpaperAccentRole provides wallpaperAccentRole,
         LocalDynamicColorRefreshSignal provides dynamicColorRefreshSignal,
         LocalIconRenderMode provides iconRenderMode,
-        LocalIconShape provides iconShape,
+        LocalIconShape provides remember(iconShape, forceIconShape) { IconOutline(iconShape, forceIconShape) },
         LocalIconScale provides iconScale,
     ) {
         MaterialTheme(

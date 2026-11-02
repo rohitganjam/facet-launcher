@@ -99,6 +99,7 @@ private object Keys {
     val ICON_SCALE_PERCENT = intPreferencesKey("icon_scale_percent")
     val ICON_PACK_PACKAGE = stringPreferencesKey("icon_pack_package")
     val ICON_PACK_FALLBACK = stringPreferencesKey("icon_pack_fallback")
+    val FORCE_ICON_SHAPE = booleanPreferencesKey("force_icon_shape")
     val LAUNCHER_FONT_OPTION = stringPreferencesKey("launcher_font_option")
     val FONT_SCALE_OPTION = stringPreferencesKey("font_scale_option")
     val APP_LABEL_COLOR_OPTION = stringPreferencesKey("app_label_color_option")
@@ -215,6 +216,7 @@ class SettingsRepository @Inject constructor(
             iconPackPackage = preferences[Keys.ICON_PACK_PACKAGE],
             iconPackFallback = preferences[Keys.ICON_PACK_FALLBACK]?.let { runCatching { IconPackFallback.valueOf(it) }.getOrNull() }
                 ?: defaults.iconPackFallback,
+            forceIconShape = preferences[Keys.FORCE_ICON_SHAPE] ?: defaults.forceIconShape,
             launcherFontOption = preferences[Keys.LAUNCHER_FONT_OPTION]?.let { runCatching { LauncherFontOption.valueOf(it) }.getOrNull() }
                 ?: defaults.launcherFontOption,
             fontScaleOption = preferences[Keys.FONT_SCALE_OPTION]?.let { runCatching { FontScaleOption.valueOf(it) }.getOrNull() }
@@ -420,6 +422,10 @@ class SettingsRepository @Inject constructor(
 
     suspend fun setIconPackFallback(fallback: IconPackFallback) {
         dataStore.edit { it[Keys.ICON_PACK_FALLBACK] = fallback.name }
+    }
+
+    suspend fun setForceIconShape(force: Boolean) {
+        dataStore.edit { it[Keys.FORCE_ICON_SHAPE] = force }
     }
 
     suspend fun setLauncherFontOption(option: LauncherFontOption) {

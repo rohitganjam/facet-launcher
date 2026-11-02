@@ -42,5 +42,9 @@ class IconsViewModel @Inject constructor(
         viewModelScope.launch { settingsRepository.setIconPackFallback(fallback) }
     }
 
+    fun setForceIconShape(force: Boolean) {
+        viewModelScope.launch { settingsRepository.setForceIconShape(force) }
+    }
+
     fun openPack(packageName: String) = iconPackRepository.open(packageName)
 }

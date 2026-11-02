@@ -187,6 +187,7 @@ class ImportBackupUseCase @Inject constructor(
             setIconPack(settings.iconPackPackage)
             setIconScalePercent(settings.iconScalePercent)
             setIconPackFallback(settings.iconPackFallback.toEnumOrDefault(IconPackFallback.MATCH_PACK))
+            setForceIconShape(settings.forceIconShape)
             setLauncherFontOption(settings.launcherFontOption.toEnumOrDefault(LauncherFontOption.SYSTEM))
             setFontScaleOption(settings.fontScaleOption.toEnumOrDefault(FontScaleOption.DEFAULT))
             setAppLabelColorOption(settings.appLabelColorOption.toEnumOrDefault(ClockColorOption.THEME))

@@ -42,7 +42,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.CornerRadius
@@ -80,6 +79,7 @@ import com.facetlauncher.app.ui.components.CardDivider
 import com.facetlauncher.app.ui.components.LabeledDropdownRow
 import com.facetlauncher.app.ui.components.SettingsCard
 import com.facetlauncher.app.ui.components.SettingsSectionHeader
+import com.facetlauncher.app.ui.components.SettingsToggleRow
 import com.facetlauncher.app.ui.components.StickyHeaderLayout
 import com.facetlauncher.app.ui.components.TextActionButton
 import com.facetlauncher.app.ui.components.toComposeShape
@@ -137,6 +137,7 @@ fun IconsScreen(
         onOpenPack = iconsViewModel::openPack,
         onFindPacks = { openIconPackSearch(context) },
         onIconShapeChange = viewModel::setIconShape,
+        onForceIconShapeChange = iconsViewModel::setForceIconShape,
         onIconScaleChange = viewModel::setIconScalePercent,
         modifier = modifier,
     )
@@ -162,6 +163,7 @@ internal fun IconsContent(
     onOpenPack: (String) -> Unit,
     onFindPacks: () -> Unit,
     onIconShapeChange: (IconShape) -> Unit,
+    onForceIconShapeChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
     onIconScaleChange: (Int) -> Unit = {},
 ) {
@@ -189,6 +191,14 @@ internal fun IconsContent(
                         modifier = Modifier.padding(bottom = 20.dp).testTag("appearance_preview_card"),
                     )
                 }
+                item { SettingsSectionHeader(stringResource(R.string.icons_screen_shape_and_size)) }
+                item {
+                    SettingsCard {
+                        IconShapePicker(selected = settings.iconShape, onSelect = onIconShapeChange)
+                        CardDivider()
+                        IconSizeSlider(percent = settings.iconScalePercent, onChange = onIconScaleChange)
+                    }
+                }
                 item { SettingsSectionHeader(stringResource(R.string.icons_screen_icon_pack)) }
                 item {
                     IconPackCard(
@@ -201,11 +211,9 @@ internal fun IconsContent(
                         onPackFallbackChange = onPackFallbackChange,
                         onOpenPack = onOpenPack,
                         onFindPacks = onFindPacks,
-                        onIconShapeChange = onIconShapeChange,
+                        onForceIconShapeChange = onForceIconShapeChange,
                     )
                 }
-                item { SettingsSectionHeader(stringResource(R.string.icons_screen_icon_size)) }
-                item { SettingsCard { IconSizeSlider(percent = settings.iconScalePercent, onChange = onIconScaleChange) } }
             }
         },
     )
@@ -247,7 +255,7 @@ private fun IconPackCard(
     onPackFallbackChange: (IconPackFallback) -> Unit,
     onOpenPack: (String) -> Unit,
     onFindPacks: () -> Unit,
-    onIconShapeChange: (IconShape) -> Unit,
+    onForceIconShapeChange: (Boolean) -> Unit,
 ) {
     val appliedPack = settings.iconPackPackage
     val appliedOption = picker.packs.firstOrNull { it.pack.packageName == appliedPack }
@@ -265,19 +273,19 @@ private fun IconPackCard(
                 label = { stringResource(it.displayNameRes) },
                 onSelect = onPackFallbackChange,
                 testTag = "icons_pack_misses_row",
+                subtitle = stringResource(settings.iconPackFallback.descriptionRes),
+            )
+            CardDivider()
+            SettingsToggleRow(
+                title = stringResource(R.string.icons_screen_force_shape),
+                subtitle = stringResource(R.string.icons_screen_force_shape_description),
+                checked = settings.forceIconShape,
+                onCheckedChange = onForceIconShapeChange,
+                testTag = "icons_force_shape_switch",
             )
         } else {
             StyleColourRows(settings.iconRenderMode, onIconRenderModeChange)
         }
-        CardDivider()
-        // The pack draws its own shape for the icons it covers, and themes the rest unless they keep their default.
-        val packShapesEverything = appliedPack != null && settings.iconPackFallback == IconPackFallback.MATCH_PACK
-        IconShapePicker(
-            selected = settings.iconShape,
-            onSelect = onIconShapeChange,
-            enabled = !packShapesEverything,
-            caption = if (packShapesEverything) stringResource(R.string.icons_screen_shape_set_by_pack, appliedLabel) else null,
-        )
     }
 }
 
@@ -562,6 +570,7 @@ private fun IconsScreenPreview() {
             onOpenPack = {},
             onFindPacks = {},
             onIconShapeChange = {},
+            onForceIconShapeChange = {},
         )
     }
 }
@@ -585,6 +594,7 @@ private fun IconsScreenPackPreview() {
             onOpenPack = {},
             onFindPacks = {},
             onIconShapeChange = {},
+            onForceIconShapeChange = {},
         )
     }
 }
@@ -592,31 +602,30 @@ private fun IconsScreenPackPreview() {
 private val ICON_SHAPE_RING_WIDTH = 2.dp
 private val ICON_SHAPE_RING_GAP = 2.dp
 
-/** Icon outline picker — each option drawn in its own shape so Squircle vs Rounded square is visible, not just named. Greyed out with [caption] when an icon pack decides the shape. */
+/** Icon outline picker — each option drawn in its own shape so Squircle vs Rounded square is visible, not just named. */
 @Composable
-internal fun IconShapePicker(selected: IconShape, onSelect: (IconShape) -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true, caption: String? = null) {
+internal fun IconShapePicker(selected: IconShape, onSelect: (IconShape) -> Unit, modifier: Modifier = Modifier) {
     Column(modifier = modifier.padding(vertical = 8.dp).testTag("appearance_icon_shape_row")) {
         Text(
             text = stringResource(R.string.appearance_icon_shape),
             style = MaterialTheme.typography.bodyLarge,
-            color = if (enabled) Ink else Muted,
+            color = Ink,
         )
-        if (caption != null) Text(text = caption, style = MaterialTheme.typography.bodySmall, color = Muted)
-        Row(modifier = Modifier.fillMaxWidth().padding(top = 10.dp).alpha(if (enabled) 1f else 0.45f), horizontalArrangement = Arrangement.SpaceBetween) {
+        Row(modifier = Modifier.fillMaxWidth().padding(top = 10.dp), horizontalArrangement = Arrangement.SpaceBetween) {
             IconShape.entries.forEach { shape ->
-                IconShapeOption(shape = shape, isSelected = shape == selected, enabled = enabled, onSelect = { onSelect(shape) })
+                IconShapeOption(shape = shape, isSelected = shape == selected, onSelect = { onSelect(shape) })
             }
         }
     }
 }
 
 @Composable
-private fun IconShapeOption(shape: IconShape, isSelected: Boolean, enabled: Boolean, onSelect: () -> Unit, modifier: Modifier = Modifier) {
+private fun IconShapeOption(shape: IconShape, isSelected: Boolean, onSelect: () -> Unit, modifier: Modifier = Modifier) {
     Column(
         modifier = modifier
             .testTag("icon_shape_${shape.name}")
             .clip(MaterialTheme.shapes.small)
-            .selectable(selected = isSelected, enabled = enabled, role = Role.RadioButton, onClick = onSelect)
+            .selectable(selected = isSelected, role = Role.RadioButton, onClick = onSelect)
             .padding(horizontal = 6.dp, vertical = 4.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {

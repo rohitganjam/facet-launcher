@@ -46,7 +46,10 @@ val LocalDynamicColorRefreshSignal = staticCompositionLocalOf { 0 }
 val LocalIconRenderMode = staticCompositionLocalOf { IconRenderMode.SYSTEM_DEFAULT }
 
 /** Global app-icon outline, provided alongside [LocalIconRenderMode] for the same reason. */
-val LocalIconShape = staticCompositionLocalOf { IconShape.SQUIRCLE }
+val LocalIconShape = staticCompositionLocalOf { IconOutline(IconShape.SQUIRCLE) }
+
+/** The icon outline, and whether it also clips an icon pack's own icons, which otherwise keep the pack's shape. */
+data class IconOutline(val shape: IconShape, val clipsPackIcons: Boolean = false)
 
 /** Settings → Appearance → Icons → Icon size, as a factor (1 = 100%); see `AppIconSize.scaled`. */
 val LocalIconScale = staticCompositionLocalOf { 1f }

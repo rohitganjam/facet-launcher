@@ -108,6 +108,8 @@ data class BackupSettings(
     /** Purely additive and defaulted, so no version bump. */
     val iconScalePercent: Int = IconScale.DEFAULT_PERCENT,
     val iconPackFallback: String = IconPackFallback.MATCH_PACK.name,
+    /** Purely additive and defaulted, so no version bump. */
+    val forceIconShape: Boolean = false,
     val launcherFontOption: String,
     /** Defaulted — tolerant-reader discipline, see this file's own doc comment. */
     val fontScaleOption: String = FontScaleOption.DEFAULT.name,

@@ -3,6 +3,7 @@ package com.facetlauncher.app.ui.components
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -53,6 +54,8 @@ fun <T> LabeledDropdownRow(
     onSelect: (T) -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
+    /** A line under the title, such as what the selected option does. */
+    subtitle: String? = null,
     optionEnabled: (T) -> Boolean = { true },
     /** Optional content after an option's label in the menu, such as a Pro pill. */
     optionTrailing: (@Composable (T) -> Unit)? = null,
@@ -61,54 +64,71 @@ fun <T> LabeledDropdownRow(
     leading: (@Composable () -> Unit)? = null,
     titleModifier: Modifier = Modifier,
 ) {
+    Column(modifier = modifier.fillMaxWidth().padding(horizontal = LocalSettingsRowInset.current, vertical = 13.dp).alpha(if (enabled) 1f else 0.4f)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Row(
+                modifier = titleModifier,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                leading?.invoke()
+                Text(text = title, style = MaterialTheme.typography.bodyLarge, color = Ink)
+            }
+            DropdownValue(options, selected, label, onSelect, enabled, optionEnabled, optionTrailing, testTag)
+        }
+        if (subtitle != null) Text(text = subtitle, style = MaterialTheme.typography.bodyMedium, color = Muted)
+    }
+}
+
+/** The row's value with its chevron, and the themed menu anchored to it. */
+@Composable
+private fun <T> DropdownValue(
+    options: List<T>,
+    selected: T,
+    label: @Composable (T) -> String,
+    onSelect: (T) -> Unit,
+    enabled: Boolean,
+    optionEnabled: (T) -> Boolean,
+    optionTrailing: (@Composable (T) -> Unit)?,
+    testTag: String?,
+) {
     var expanded by remember { mutableStateOf(false) }
     var anchorWidthPx by remember { mutableIntStateOf(0) }
     var menuWidthPx by remember { mutableIntStateOf(0) }
     val density = LocalDensity.current
-
-    Row(
-        modifier = modifier.fillMaxWidth().padding(horizontal = LocalSettingsRowInset.current, vertical = 13.dp).alpha(if (enabled) 1f else 0.4f),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
+    Box(modifier = Modifier.onGloballyPositioned { anchorWidthPx = it.size.width }) {
         Row(
-            modifier = titleModifier,
+            modifier = Modifier
+                .then(if (testTag != null) Modifier.testTag(testTag) else Modifier)
+                .clickable(enabled = enabled) { expanded = true },
             verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(2.dp),
         ) {
-            leading?.invoke()
-            Text(text = title, style = MaterialTheme.typography.bodyLarge, color = Ink)
+            // Ink (primary text), not Muted — this is the row's own answer, not a
+            // de-emphasized label; at Muted's alpha it read as disabled (see chat history).
+            Text(text = label(selected), style = MaterialTheme.typography.bodyMedium, color = Ink)
+            Icon(Icons.Default.KeyboardArrowDown, contentDescription = null, tint = Muted)
         }
-        Box(modifier = Modifier.onGloballyPositioned { anchorWidthPx = it.size.width }) {
-            Row(
-                modifier = Modifier
-                    .then(if (testTag != null) Modifier.testTag(testTag) else Modifier)
-                    .clickable(enabled = enabled) { expanded = true },
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(2.dp),
-            ) {
-                // Ink (primary text), not Muted — this is the row's own answer, not a
-                // de-emphasized label; at Muted's alpha it read as disabled (see chat history).
-                Text(text = label(selected), style = MaterialTheme.typography.bodyMedium, color = Ink)
-                Icon(Icons.Default.KeyboardArrowDown, contentDescription = null, tint = Muted)
-            }
-            ThemedDropdownMenu(
-                expanded = expanded,
-                onDismissRequest = { expanded = false },
-                offset = with(density) { DpOffset(x = (anchorWidthPx - menuWidthPx).toDp(), y = 0.dp) },
-                modifier = Modifier.onSizeChanged { menuWidthPx = it.width },
-            ) {
-                options.forEach { option ->
-                    ThemedDropdownMenuItem(
-                        label = label(option),
-                        enabled = optionEnabled(option),
-                        trailingIcon = optionTrailing?.let { trailing -> { trailing(option) } },
-                        onClick = {
-                            expanded = false
-                            onSelect(option)
-                        },
-                        modifier = if (testTag != null) Modifier.testTag("${testTag}_option_$option") else Modifier,
-                    )
-                }
+        ThemedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+            offset = with(density) { DpOffset(x = (anchorWidthPx - menuWidthPx).toDp(), y = 0.dp) },
+            modifier = Modifier.onSizeChanged { menuWidthPx = it.width },
+        ) {
+            options.forEach { option ->
+                ThemedDropdownMenuItem(
+                    label = label(option),
+                    enabled = optionEnabled(option),
+                    trailingIcon = optionTrailing?.let { trailing -> { trailing(option) } },
+                    onClick = {
+                        expanded = false
+                        onSelect(option)
+                    },
+                    modifier = if (testTag != null) Modifier.testTag("${testTag}_option_$option") else Modifier,
+                )
             }
         }
     }

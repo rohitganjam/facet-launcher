@@ -15,12 +15,12 @@ data class IconPackInfo(
 )
 
 /** What an app the active icon pack has no icon for looks like. */
-enum class IconPackFallback(@param:StringRes val displayNameRes: Int) {
+enum class IconPackFallback(@param:StringRes val displayNameRes: Int, @param:StringRes val descriptionRes: Int) {
     /** The app's own icon on the pack's backing tile and mask, where the pack ships them. */
-    MATCH_PACK(R.string.icon_pack_fallback_match_pack),
+    MATCH_PACK(R.string.icon_pack_fallback_match_pack, R.string.icon_pack_fallback_match_pack_description),
 
     /** The app's own icon, in the Icon Shape setting. */
-    KEEP_DEFAULT(R.string.icon_pack_fallback_keep_default),
+    KEEP_DEFAULT(R.string.icon_pack_fallback_keep_default, R.string.icon_pack_fallback_keep_default_description),
 }
 
 /** The icon pack applied launcher-wide, as stored in settings. */

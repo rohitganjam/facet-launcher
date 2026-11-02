@@ -66,6 +66,7 @@ data class LauncherUiState(
     val wallpaperAccentRole: WallpaperAccentRole = WallpaperAccentRole.PRIMARY,
     val iconRenderMode: IconRenderMode = IconRenderMode.SYSTEM_DEFAULT,
     val iconShape: IconShape = IconShape.SQUIRCLE,
+    val forceIconShape: Boolean = false,
     /** `LauncherSettings.iconScalePercent` as a factor. */
     val iconScale: Float = 1f,
     val launcherFontOption: LauncherFontOption = LauncherFontOption.SYSTEM,
@@ -156,6 +157,7 @@ class LauncherViewModel @Inject constructor(
                 wallpaperAccentRole = settings.wallpaperAccentRole,
                 iconRenderMode = settings.effectiveIconRenderMode,
                 iconShape = settings.iconShape,
+                forceIconShape = settings.forceIconShape && settings.iconPackPackage != null,
                 iconScale = settings.iconScalePercent / 100f,
                 launcherFontOption = settings.launcherFontOption,
                 homeAppsFontWeight = settings.homeAppsFontWeight,

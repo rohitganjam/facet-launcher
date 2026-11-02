@@ -5,7 +5,7 @@
 | Store | Location | What it holds | Written by | Survives |
 |---|---|---|---|---|
 | Room `FacetDatabase` | `facet.db` (schema **v37**, `exportSchema = true` → `app/schemas/…/1.json … 37.json`) | Facets + every *placement*: favorites, dock, folders, folder membership, widget grid positions, plus the facet automation rules (`automation_rules`) the weather cache (`weather_hours`, `weather_meta`) and each facet's clock stack (`clock_stack_items`) | 7 repositories (§2): `FacetRepository`, `PlacementRepository`, `FolderRepository`, `WidgetPlacementRepository`, `AutomationRuleRepository`, `WeatherRepository` (through `RoomWeatherStore`), `ClockStackRepository` | Reinstall-over-upgrade (migrations); **not** downgrade (dropped) |
-| `DataStore<Preferences>` | `facet_settings` (`datastore/facet_settings.preferences_pb`) | **All launcher-wide settings and defaults** — clock/app-list/dock design defaults (the calendar events strip has no design defaults of its own — see below), theme, drawer, search, permission-prompt flags, onboarding/seed/coach-mark flags, active facet id, the clock accessory switches, weather units and location, the icon pack and size — 83 keys (§5) | `SettingsRepository` only | Any upgrade (missing keys fall back to `LauncherSettings()` defaults) |
+| `DataStore<Preferences>` | `facet_settings` (`datastore/facet_settings.preferences_pb`) | **All launcher-wide settings and defaults** — clock/app-list/dock design defaults (the calendar events strip has no design defaults of its own — see below), theme, drawer, search, permission-prompt flags, onboarding/seed/coach-mark flags, active facet id, the clock accessory switches, weather units and location, the icon pack and size — 84 keys (§5) | `SettingsRepository` only | Any upgrade (missing keys fall back to `LauncherSettings()` defaults) |
 | `DataStore<Preferences>` | `facet_entitlement` (`datastore/facet_entitlement.preferences_pb`) | The cached Pro state (`pro_purchased`; excluded from Android backups and device transfer by `res/xml/data_extraction_rules.xml`), so Pro works offline and at cold start; debug builds also keep `debug_entitlement_mode` here | `PlayEntitlementRepository`, only from an explicit Google Play answer | Same as `facet_settings`; **not** in the backup file, so a restore can never grant Pro |
 | `DataStore<Preferences>` | `facet_automation` (`datastore/facet_automation.preferences_pb`) | Facet-automation bookkeeping: the baseline facet, the ordered active rule ids, the suppressed rule ids (§5.7) | `AutomationStateRepository` (via `ActivateFacetByIdUseCase`) | Same as `facet_settings`; **not** in the backup file |
 | System `AppWidgetService` | Android framework, keyed by `HUB_APP_WIDGET_HOST_ID = 1024` | Which `appWidgetId`s are bound to which providers for this host | `LauncherAppWidgetHost` via `AppWidgetRepository` (allocate/bind/delete) | App data clear **does not** clear it → orphan detection in `ObserveHubStateUseCase` |
@@ -423,6 +423,7 @@ erDiagram
         int icon_scale_percent "Icon size, 80..120, default 100"
         string icon_pack_package "installed icon pack, absent = built-in styles"
         string icon_pack_fallback "IconPackFallback, default MATCH_PACK"
+        bool force_icon_shape "clip the pack's icons to icon_shape, default false"
         string launcher_font_option "LauncherFontOption, default SYSTEM"
         string font_scale_option "FontScaleOption, default DEFAULT"
         string drawer_presentation "DrawerPresentation, default LIST"
@@ -571,6 +572,7 @@ DataStore serialises writes and is main-safe; callers `viewModelScope.launch { }
 | `setIconScalePercent(Int)` | `icon_scale_percent` | set (clamped 80..120) | `AppearanceSettingsViewModel`, `ImportBackupUseCase` |
 | `setIconPack(String?)` | `icon_pack_package` | set / remove (null) | `IconsViewModel`, `IconPackRepository` (clears an uninstalled pack), `ImportBackupUseCase` |
 | `setIconPackFallback(IconPackFallback)` | `icon_pack_fallback` | set | `IconsViewModel`, `ImportBackupUseCase` |
+| `setForceIconShape(Boolean)` | `force_icon_shape` | set | `IconsViewModel`, `ImportBackupUseCase` |
 | `setLauncherFontOption(LauncherFontOption)` | `launcher_font_option` | set | `AppearanceSettingsViewModel` |
 | `setFontScaleOption(FontScaleOption)` | `font_scale_option` | set | `AppearanceSettingsViewModel` |
 | `setDrawerPresentation(DrawerPresentation)` | `drawer_presentation` | set | `AppDrawerSettingsViewModel`, `OnboardingViewModel` |
@@ -702,6 +704,7 @@ its position (see chat history: calendar/appearance styling consolidation).
 | `icon_scale_percent` | Int | `iconScalePercent` | `100` | Icon size, 80..120 (clamped on read and write); scales every app icon outside settings (`LocalIconScale`); global; backed up |
 | `icon_pack_package` | String | `iconPackPackage` | `null` (absent) | installed icon pack applied launcher-wide; while set, `effectiveIconRenderMode` is `SYSTEM_DEFAULT` and `icon_render_mode` is kept for when it's cleared; cleared by `IconPackRepository.loadApplied` when the pack isn't installed; backed up |
 | `icon_pack_fallback` | String (`IconPackFallback`) | `iconPackFallback` | `MATCH_PACK` | apps the pack has no icon for: the pack's back/mask/upon art, or their own icon; backed up |
+| `force_icon_shape` | Boolean | `forceIconShape` | `false` | clips the pack's own icons to `icon_shape` as well (`IconOutline.clipsPackIcons`, carried by `LocalIconShape`); only applies while a pack is set; backed up |
 | `launcher_font_option` | String (`LauncherFontOption`) | `launcherFontOption` | `SYSTEM` | also styles the calendar events strip |
 | `font_scale_option` | String (`FontScaleOption`) | `fontScaleOption` | `DEFAULT` | multiplies every `MaterialTheme.typography` role's `fontSize`/`lineHeight` app-wide except the clock |
 

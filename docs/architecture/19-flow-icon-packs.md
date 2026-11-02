@@ -41,7 +41,9 @@ flowchart TB
 ## 3. Drawing
 
 `AppRepository` puts the pack icon in `AppInfo.icon` and sets `AppInfo.iconFromPack`, which `AppIcon` draws unclipped
-(the pack's shape wins over Icon shape). While a pack is applied `LauncherSettings.effectiveIconRenderMode` is
+(the pack's shape wins over Icon shape) unless `force_icon_shape` is on (`IconOutline.clipsPackIcons`, carried by `LocalIconShape`, only while a pack is
+applied), which clips it to Icon shape like any other icon. A clip only cuts: a round pack icon stays round under a
+squircle. While a pack is applied `LauncherSettings.effectiveIconRenderMode` is
 `SYSTEM_DEFAULT`, so no built-in style tints the pack's icons; `icon_render_mode` is kept and comes back when the pack is
 cleared. Pack icons carry no `monochromeIcon`. See [03 §1](03-reactive-data-flow.md) for the scan.
 
@@ -54,8 +56,9 @@ dates an installed app, and a new day redraws just those apps from the last scan
 `IconsViewModel` over `ObserveIconPickerUseCase`: Built-in cards preview four apps (`SelectIconSamplesUseCase`: Home's
 apps, then the device's default apps, then the drawer) with their own icons (`AppRepository.withOwnIcon`); External
 cards show each pack's app icon. Tapping a pack applies it; its card shows a spinner until the applied pack is read for
-its coverage ("Covers N of M apps"). With a pack applied: Open pack, "Apps the pack misses" (Match pack / Keep default),
-the Colour and Background rows hidden, Icon shape greyed out under Match pack. Picking a built-in card clears the pack.
+its coverage ("Covers N of M apps"). With a pack applied: Open pack, "Apps the pack misses" (Match pack / Use default icons, with a one-line description of the selected one),
+"Force icon shape", and the Colour and Background rows hidden. Icon shape and Icon size share a card above the pack card
+and stay available whatever the pack does. Picking a built-in card clears the pack.
 "Get more" and "Find icon packs" open the Play Store's icon pack search, or the web search without the Play Store.
 
 ## 5. Persistence and backup

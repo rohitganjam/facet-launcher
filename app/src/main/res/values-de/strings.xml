@@ -910,9 +910,13 @@
     <string name="icons_screen_pack_coverage">Deckt %1$d von %2$d Apps ab</string>
     <string name="icons_screen_open_pack">Paket öffnen</string>
     <string name="icons_screen_pack_misses">Apps ohne Paket-Icon</string>
-    <string name="icons_screen_shape_set_by_pack">Von %1$s für seine Icons festgelegt</string>
     <string name="icon_pack_fallback_match_pack">An Paket anpassen</string>
-    <string name="icon_pack_fallback_keep_default">Standard behalten</string>
+    <string name="icon_pack_fallback_keep_default">Standardsymbole</string>
+    <string name="icon_pack_fallback_match_pack_description">Passend zu Kachel und Form des Packs gestaltet</string>
+    <string name="icon_pack_fallback_keep_default_description">Bleiben das eigene Symbol der App</string>
+    <string name="icons_screen_shape_and_size">Form und Größe</string>
+    <string name="icons_screen_force_shape">Icon-Form erzwingen</string>
+    <string name="icons_screen_force_shape_description">Schneidet auch die Icons des Packs in die obige Form</string>
     <string name="app_row_position_launcher_default">Standardposition des Launchers</string>
     <string name="app_row_presentation_launcher_default">Standardstil des Launchers</string>
     <string name="app_list_vertical_alignment_launcher_default">Standardposition des Launchers</string>

@@ -106,9 +106,13 @@
     <string name="icons_screen_pack_coverage">Covers %1$d of %2$d apps</string>
     <string name="icons_screen_open_pack">Open pack</string>
     <string name="icons_screen_pack_misses">Apps the pack misses</string>
-    <string name="icons_screen_shape_set_by_pack">Set by %1$s for the icons it draws</string>
     <string name="icon_pack_fallback_match_pack">Match pack</string>
-    <string name="icon_pack_fallback_keep_default">Keep default</string>
+    <string name="icon_pack_fallback_keep_default">Use default icons</string>
+    <string name="icon_pack_fallback_match_pack_description">Restyled to match the pack\'s tile and shape</string>
+    <string name="icon_pack_fallback_keep_default_description">Left as the app\'s own icon</string>
+    <string name="icons_screen_shape_and_size">Shape and size</string>
+    <string name="icons_screen_force_shape">Force icon shape</string>
+    <string name="icons_screen_force_shape_description">Also clip the pack\'s icons to the shape above</string>
 
     <!-- ClockTemplateId -->
     <string name="clock_template_light_stack">Light stack</string>
