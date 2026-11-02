@@ -383,6 +383,12 @@
     <string name="home_apps_list_column_alignment">Spaltenausrichtung</string>
     <string name="home_apps_list_grid_columns">Rasterspalten</string>
     <string name="home_apps_list_grid_display">Rasteranzeige</string>
+    <string name="home_apps_list_shrink_to_fit">Liste an Bildschirm anpassen</string>
+    <string name="app_list_shrink_to_fit_launcher_default">Standardstil des Launchers</string>
+    <string name="app_list_shrink_to_fit_off">Aus</string>
+    <string name="app_list_shrink_to_fit_on">An</string>
+    <string name="app_list_grid_display_mode_icons_and_text">Symbole und Text</string>
+    <string name="dock_display_mode_icons_and_text">Symbole und Text</string>
     <string name="home_apps_list_content_facet">App-Listeninhalt</string>
     <string name="home_apps_list_content_default">Standard-App-Listeninhalt</string>
     <string name="home_apps_list_apps_to_show">Anzuzeigende Apps</string>
@@ -891,6 +897,7 @@
     <string name="icons_screen_icon_pack">Icon-Paket</string>
     <string name="icons_screen_built_in">Integriert</string>
     <string name="icons_screen_external">Extern</string>
+    <string name="icons_screen_icon_size">Symbolgröße</string>
     <plurals name="icons_screen_pack_count">
         <item quantity="one">%d Paket</item>
         <item quantity="other">%d Pakete</item>
@@ -922,6 +929,7 @@
     <string name="facet_settings_appearance_clock_label">Uhr: %1$s</string>
     <string name="facet_settings_appearance_dock_icons">Dock-Symbole</string>
     <string name="facet_settings_appearance_dock_text">Dock-Text</string>
+    <string name="facet_settings_appearance_dock_icons_and_text">Dock-Symbole und -Text</string>
     <string name="facet_settings_appearance_home_icon_only">Start: nur Symbol</string>
     <string name="facet_settings_appearance_home_icon_and_text">Start: Symbol &amp; Text</string>
     <string name="facet_settings_appearance_home_text_only">Start: nur Text</string>

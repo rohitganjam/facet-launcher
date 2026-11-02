@@ -3,17 +3,24 @@ package com.facetlauncher.app.ui.home
 import com.facetlauncher.app.data.widgetItem
 import com.facetlauncher.app.data.clockItem
 import androidx.compose.ui.unit.dp
+import com.facetlauncher.app.data.model.AppListGridColumns
+import com.facetlauncher.app.data.model.AppListGridDisplayMode
+import com.facetlauncher.app.data.model.AppListLayout
+import com.facetlauncher.app.data.model.AppListShrinkToFit
 import com.facetlauncher.app.data.model.AppListVerticalAlignment
 import com.facetlauncher.app.data.model.AppRowPosition
 import com.facetlauncher.app.data.model.ClockAlignment
+import com.facetlauncher.app.data.model.DrawerPresentation
 import com.facetlauncher.app.data.model.Facet
 import com.facetlauncher.app.data.model.LandscapeOverrides
 import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.data.model.MediaPlayerState
 import com.facetlauncher.app.domain.resolveFacetStyle
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class HomeScreenStateBuilderTest {
@@ -56,6 +63,38 @@ class HomeScreenStateBuilderTest {
                 assertEquals(home.listAlignment(mode), state.list.alignment)
             }
         }
+    }
+
+    @Test
+    fun `shrink list to fit reaches the list only when it is on`() {
+        // Given a facet that shrinks its list and one that doesn't
+        val shrinks = Facet(id = 1L, name = "Shrinks", position = 0, appListShrinkToFit = AppListShrinkToFit.ON)
+        val scrolls = Facet(id = 1L, name = "Scrolls", position = 0, appListShrinkToFit = AppListShrinkToFit.OFF)
+
+        // Then only the first asks Home to compact
+        assertTrue(build(shrinks, landscape = false).list.shrinkToFit)
+        assertFalse(build(scrolls, landscape = false).list.shrinkToFit)
+        assertFalse(build(null, landscape = false).list.shrinkToFit)
+    }
+
+    @Test
+    fun `folder sheets follow Home's layout, a grid with Home's columns and display only when Home is a grid`() {
+        // Given a facet with a five-column grid showing icons and text, and one with a list
+        val grid = Facet(
+            id = 1L, name = "Grid", position = 0, appListLayout = AppListLayout.GRID,
+            appListGridColumns = AppListGridColumns.FIVE, appListGridDisplayMode = AppListGridDisplayMode.ICONS_AND_TEXT,
+        )
+        val list = Facet(id = 1L, name = "List", position = 0, appListLayout = AppListLayout.SINGLE_COLUMN)
+
+        // When Home's state is built for each
+        val gridLook = build(grid, landscape = false).list.look
+        val listLook = build(list, landscape = false).list.look
+
+        // Then the grid's folders open as that grid, and the list's as a list
+        assertEquals(DrawerPresentation.GRID, gridLook.drawerPresentation)
+        assertEquals(5, gridLook.folderGridColumns)
+        assertEquals(AppListGridDisplayMode.ICONS_AND_TEXT, gridLook.folderGridDisplayMode)
+        assertEquals(DrawerPresentation.LIST, listLook.drawerPresentation)
     }
 
     @Test

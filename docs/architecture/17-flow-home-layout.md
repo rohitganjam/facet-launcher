@@ -58,10 +58,29 @@ slots.
 |---|---|---|
 | Clock | Positioned by absolute offset from the zone handle; `clockAlignment` is left, centre or right | Always left-aligned with a 24dp margin. `clockAlignment` maps LEFT → top, CENTER → middle, RIGHT → bottom of the clock pane |
 | Media row | Under the clock, pushes the list down | Pinned to the top of the apps pane, above the list, whatever the list's Top or Bottom anchor; the list gets the height the row leaves |
-| App list | Below the clock; Top or Bottom anchor; single column, two columns or grid | In the apps pane; same Top or Bottom anchor; single column, two columns or grid as chosen; a grid's column count follows the compact or roomy rule above (`landscapeGridColumns`); scrolls when taller than the pane |
-| Dock | A row along the bottom, honouring the dock display mode | A column at the right edge, icons only, vertically centred, scrolls on overflow, inset from the edge and excluded from the system back gesture |
+| App list | Below the clock; Top or Bottom anchor; single column, two columns or grid; a long list scrolls, or drops to Compact rows when "Shrink list to fit" is on (see 2b) | In the apps pane; same Top or Bottom anchor; single column, two columns or grid as chosen; a grid's column count follows the compact or roomy rule above (`landscapeGridColumns`); scrolls when taller than the pane |
+| Dock | A row along the bottom, honouring the dock display mode (Icons, Text, or Icons and text); never shrinks with the list | A column at the right edge, icons only, vertically centred, scrolls on overflow, inset from the edge and excluded from the system back gesture |
 | Panes | n/a | Clock pane (40% of the window until a width is saved), a 24dp gap holding the divider handle, apps pane the rest |
 | Clock adjust mode | A horizontal height handle, an alignment pill (left / center / right) and top corner scale handles | A vertical divider handle, an alignment pill (top / middle / bottom) and scale handles; see section 4 |
+
+## 2b. Icon sizes, rows and "Shrink list to fit"
+
+Every app icon the user sees (Home's list, grid and dock, folder tiles, the drawer, folder sheets, Private Space) is
+`AppIconSize.ICON` (44dp) times the Icon size setting (`icon_scale_percent`, 80–120%, provided as `LocalIconScale` by
+`FacetLauncherTheme`; `AppIconSize.scaled`/`forRow`). The only other size is a Compact row's 36dp icon, also scaled; a
+folder tile's mini icons keep `FOLDER_MINI`'s 20/44 proportion. Settings screens, pickers and the long-press menu header
+use the unscaled sizes so they never shift.
+
+A list row is its icon plus `DrawerListItemSize.verticalPaddingDp` above and below: Compact 36 + 4, Regular 44 + 4,
+Spacious 44 + 8. A text-only Home row keeps the icon's height. Home's list uses Regular; with
+`appListShrinkToFit` on (`AppListShrinkToFit`, facet-overridable, off by default) `HomeFrame`'s one-shot fit check drops it
+to Compact when the Regular list wouldn't fit, otherwise the list keeps Regular rows and scrolls. The dock is not part
+of the check. "Icons and text" (`DockDisplayMode.ICONS_AND_TEXT`, `AppListGridDisplayMode.ICONS_AND_TEXT`) puts a
+one-line name under each dock or grid icon (`HomeTileLabel`, Home's label style, max width `GRID_LABEL_WIDTH` × scale).
+
+A folder sheet follows where it was opened: from Home's grid layout it is a grid with Home's grid columns and display
+(`HomeItemLook.drawerPresentation`/`folderGridColumns`/`folderGridDisplayMode`, set by `toHomeScreenState`), from the
+drawer's grid a grid with the drawer's column count and labels, anywhere else a list of Regular rows.
 
 ## 2a. Portrait's height handle limit
 

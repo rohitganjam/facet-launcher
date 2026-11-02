@@ -4,6 +4,7 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -91,8 +92,9 @@ private fun SingleAppDockIcon(
                 if (badgeCount != null && badgeCount > 0) NotificationBadge(count = badgeCount, style = style.badgeStyle)
             }
         } else {
-            Box(modifier = clickModifier) {
-                AppIcon(app = app, size = AppIconSize.TILE, contentDescription = app.label, notificationCount = badgeCount, badgeStyle = style.badgeStyle)
+            Column(modifier = clickModifier, horizontalAlignment = Alignment.CenterHorizontally) {
+                AppIcon(app = app, size = AppIconSize.scaled(), contentDescription = app.label, notificationCount = badgeCount, badgeStyle = style.badgeStyle)
+                if (displayMode == DockDisplayMode.ICONS_AND_TEXT) HomeTileLabel(app.label, style, Modifier.testTag(homeTag("dock_label_${app.packageName}")))
             }
         }
         if (enableLongPressMenu) AppItemMenu(app, menuExpanded, { menuExpanded = false }, actions, style)
@@ -130,8 +132,9 @@ private fun FolderDockIcon(
                 )
             }
         } else {
-            Box(modifier = clickModifier.testTag(homeTag("dock_folder_tile_${folder.id}"))) {
-                FolderTileGlyph(folder = folder)
+            Column(modifier = clickModifier.testTag(homeTag("dock_folder_tile_${folder.id}")), horizontalAlignment = Alignment.CenterHorizontally) {
+                FolderTileGlyph(folder = folder, size = AppIconSize.scaled())
+                if (displayMode == DockDisplayMode.ICONS_AND_TEXT) HomeTileLabel(folder.name, style)
             }
         }
         if (enableLongPressMenu && sheetOpen) FolderItemSheet(folder, { sheetOpen = false }, actions, style)

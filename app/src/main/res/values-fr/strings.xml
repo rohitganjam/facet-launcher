@@ -383,6 +383,12 @@
     <string name="home_apps_list_column_alignment">Alignement des colonnes</string>
     <string name="home_apps_list_grid_columns">Colonnes de la grille</string>
     <string name="home_apps_list_grid_display">Affichage de la grille</string>
+    <string name="home_apps_list_shrink_to_fit">Réduire la liste pour tenir</string>
+    <string name="app_list_shrink_to_fit_launcher_default">Style par défaut du launcher</string>
+    <string name="app_list_shrink_to_fit_off">Désactivé</string>
+    <string name="app_list_shrink_to_fit_on">Activé</string>
+    <string name="app_list_grid_display_mode_icons_and_text">Icônes et texte</string>
+    <string name="dock_display_mode_icons_and_text">Icônes et texte</string>
     <string name="home_apps_list_content_facet">Contenu de la liste d\'apps</string>
     <string name="home_apps_list_content_default">Contenu par défaut de la liste d\'apps</string>
     <string name="home_apps_list_apps_to_show">Apps à afficher</string>
@@ -891,6 +897,7 @@
     <string name="icons_screen_icon_pack">Pack d\'icônes</string>
     <string name="icons_screen_built_in">Intégrés</string>
     <string name="icons_screen_external">Externes</string>
+    <string name="icons_screen_icon_size">Taille des icônes</string>
     <plurals name="icons_screen_pack_count">
         <item quantity="one">%d pack</item>
         <item quantity="other">%d packs</item>
@@ -922,6 +929,7 @@
     <string name="facet_settings_appearance_clock_label">Horloge : %1$s</string>
     <string name="facet_settings_appearance_dock_icons">Icônes du dock</string>
     <string name="facet_settings_appearance_dock_text">Texte du dock</string>
+    <string name="facet_settings_appearance_dock_icons_and_text">Icônes et texte du dock</string>
     <string name="facet_settings_appearance_home_icon_only">Accueil : icône seule</string>
     <string name="facet_settings_appearance_home_icon_and_text">Accueil : icône et texte</string>
     <string name="facet_settings_appearance_home_text_only">Accueil : texte seul</string>

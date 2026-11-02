@@ -25,6 +25,7 @@ import com.facetlauncher.app.data.model.DrawerGridDensity
 import com.facetlauncher.app.data.model.DrawerListItemSize
 import com.facetlauncher.app.data.model.DrawerPresentation
 import com.facetlauncher.app.data.model.FontWeightOption
+import com.facetlauncher.app.data.model.AppListShrinkToFit
 import com.facetlauncher.app.data.model.IconPackFallback
 import com.facetlauncher.app.data.model.IconRenderMode
 import com.facetlauncher.app.data.model.IconShape
@@ -450,6 +451,36 @@ class SettingsRepositoryTest {
         val cleared = repository.settings.first()
         assertNull(cleared.iconPackPackage)
         assertEquals(IconRenderMode.GLYPH_ACCENT, cleared.effectiveIconRenderMode)
+    }
+
+    @Test
+    fun `icon size defaults to 100 percent, round-trips and stays within 80 to 120`() = runTest {
+        // Given a fresh repository
+        val repository = createRepository()
+        assertEquals(100, repository.settings.first().iconScalePercent)
+
+        // When set inside, below and above the range
+        repository.setIconScalePercent(113)
+        assertEquals(113, repository.settings.first().iconScalePercent)
+        repository.setIconScalePercent(50)
+        assertEquals(80, repository.settings.first().iconScalePercent)
+        repository.setIconScalePercent(200)
+
+        // Then it is clamped to the ends
+        assertEquals(120, repository.settings.first().iconScalePercent)
+    }
+
+    @Test
+    fun `shrink list to fit defaults to off and round-trips`() = runTest {
+        // Given a fresh repository, where long lists scroll
+        val repository = createRepository()
+        assertEquals(AppListShrinkToFit.OFF, repository.settings.first().appListShrinkToFit)
+
+        // When turned on
+        repository.setAppListShrinkToFit(AppListShrinkToFit.ON)
+
+        // Then it is stored
+        assertEquals(AppListShrinkToFit.ON, repository.settings.first().appListShrinkToFit)
     }
 
     @Test

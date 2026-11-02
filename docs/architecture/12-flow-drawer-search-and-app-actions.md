@@ -124,7 +124,18 @@ setting fits a phone, a foldable and a tablet (a typical phone gets 5/4/4 column
 rows; search results use the same column count, laid out as equal-weight cells so tiles sit on the
 same grid. The setting persists under the old `drawer_grid_size` key; the retired `FIVE_BY_SIX`-style
 names still load (`DrawerGridDensity.fromStored`) and map to the nearest density. Home's own grid
-(`AppListGridColumns`) is a separate setting and still fixed-column.
+(`AppListGridColumns`) is a separate setting and still fixed-column. Density changes the cells, never the icon: grid
+icons are always `AppIconSize.ICON` × the Icon size setting, with a one-line label (`showDrawerLabels`) at most
+`GRID_LABEL_WIDTH` × that scale.
+
+### 1e. List item size and folder sheets
+
+List presentation only. `DrawerListItemSize` is a row's icon and the padding above and below it: Compact 36dp + 4,
+Regular 44dp + 4, Spacious 44dp + 8 (icons × the Icon size setting, see [17 §2b](17-flow-home-layout.md)). Contact and
+Settings search rows and Private Space's rows use the same sizes. A folder opened from the drawer follows the drawer:
+from the grid, `FolderContentsSheet` is a grid with the drawer grid's column count (`DrawerFolderTile.gridColumns`)
+and its labels on or off; from the list (or "Recently installed", or Private Space), a list of Regular rows whatever
+the List item size.
 
 ### 1d. Preview on the App drawer settings screen
 

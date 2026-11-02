@@ -12,8 +12,8 @@ import androidx.core.content.res.ResourcesCompat
 import androidx.core.graphics.createBitmap
 import androidx.core.graphics.drawable.toBitmap
 
-/** Pack icons are drawn at most this many pixels square: sharp at every icon size the app uses, without holding full-size pack art for every app. */
-const val PACK_ICON_SIZE = 192
+/** Pack icons are drawn at most this many pixels square: sharp at the largest icon (44dp at 120%, on a 4x screen), without holding full-size pack art for every app. */
+const val PACK_ICON_SIZE = 256
 
 /** One loaded icon pack's icons. */
 interface IconPackIcons {

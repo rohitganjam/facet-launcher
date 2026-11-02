@@ -10,7 +10,11 @@ import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsNotSelected
 import androidx.compose.ui.test.assertIsSelected
+import androidx.compose.ui.semantics.ProgressBarRangeInfo
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.captureToImage
+import androidx.compose.ui.test.hasProgressBarRangeInfo
+import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
@@ -202,6 +206,22 @@ class IconsScreenTest {
 
     private fun SettingsRepository.awaitMode(mode: IconRenderMode) =
         composeRule.waitUntil(timeoutMillis = 3_000) { runBlocking { settings.first().iconRenderMode == mode } }
+
+    @Test
+    fun iconSizeSliderStoresTheChosenPercent() {
+        // Given the screen at the default 100%
+        val settingsRepository = setContent()
+        composeRule.onNodeWithTag("icons_screen").performScrollToNode(hasTestTag("icons_size_slider"))
+        composeRule.onNodeWithText("100%").assertExists()
+
+        // When the slider is moved to 112%
+        composeRule.onNode(hasProgressBarRangeInfo(ProgressBarRangeInfo(100f, 80f..120f, steps = 39)))
+            .performSemanticsAction(SemanticsActions.SetProgress) { it(112f) }
+
+        // Then 112% is stored and shown
+        composeRule.waitUntil(timeoutMillis = 3_000) { runBlocking { settingsRepository.settings.first().iconScalePercent == 112 } }
+        composeRule.onNodeWithText("112%").assertExists()
+    }
 
     @Test
     fun styleCardsSetTheStyleAndKeepTheColour() {

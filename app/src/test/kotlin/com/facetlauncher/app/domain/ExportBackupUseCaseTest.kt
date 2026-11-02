@@ -67,6 +67,7 @@ class ExportBackupUseCaseTest {
             appListColumnAlignment = AppListColumnAlignment.MIRRORED,
             appListGridColumns = AppListGridColumns.SIX,
             appListGridDisplayMode = AppListGridDisplayMode.TEXT,
+            appListShrinkToFit = com.facetlauncher.app.data.model.AppListShrinkToFit.ON,
         )
         `when`(settingsRepository.settings).thenReturn(
             flowOf(
@@ -76,6 +77,8 @@ class ExportBackupUseCaseTest {
                     appListColumnAlignment = AppListColumnAlignment.BOTH_RIGHT,
                     appListGridColumns = AppListGridColumns.FIVE,
                     appListGridDisplayMode = AppListGridDisplayMode.TEXT,
+                    appListShrinkToFit = com.facetlauncher.app.data.model.AppListShrinkToFit.ON,
+                    iconScalePercent = 112,
                     showNotificationsInAppMenu = false,
                 ),
             ),
@@ -117,6 +120,9 @@ class ExportBackupUseCaseTest {
         assertEquals("MIRRORED", bundle.facets[0].appListColumnAlignment)
         assertEquals("SIX", bundle.facets[0].appListGridColumns)
         assertEquals("TEXT", bundle.facets[0].appListGridDisplayMode)
+        assertEquals("ON", bundle.facets[0].appListShrinkToFit)
+        assertEquals("ON", bundle.settings.appListShrinkToFit)
+        assertEquals(112, bundle.settings.iconScalePercent)
         assertEquals("GRID", bundle.settings.appListLayout)
         assertEquals("BOTH_RIGHT", bundle.settings.appListColumnAlignment)
         assertEquals("FIVE", bundle.settings.appListGridColumns)

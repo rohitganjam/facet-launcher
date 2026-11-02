@@ -39,6 +39,7 @@ import com.facetlauncher.app.data.WorkProfileInfo
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.ContactConnection
 import com.facetlauncher.app.data.model.ContactInfo
+import com.facetlauncher.app.data.model.DrawerListItemSize
 import com.facetlauncher.app.data.model.DrawerPresentation
 import com.facetlauncher.app.data.model.Folder
 import com.facetlauncher.app.data.model.LauncherSettings
@@ -289,15 +290,23 @@ internal data class HomePrivateSpaceState(
     val apps: ImmutableList<AppInfo>,
     val recentlyInstalledApps: ImmutableList<AppInfo>,
     val recentlyInstalledPosition: RecentlyInstalledPosition,
+    /** The main drawer's List item size, which Private Space's rows follow. */
+    val listItemSize: DrawerListItemSize = DrawerListItemSize.REGULAR,
 )
 
 @Composable
-internal fun rememberHomePrivateSpaceState(viewModel: PrivateSpaceViewModel, state: PrivateSpaceState, position: RecentlyInstalledPosition) =
+internal fun rememberHomePrivateSpaceState(
+    viewModel: PrivateSpaceViewModel,
+    state: PrivateSpaceState,
+    position: RecentlyInstalledPosition,
+    listItemSize: DrawerListItemSize,
+) =
     HomePrivateSpaceState(
         state = state,
         apps = viewModel.filteredApps.collectAsStateWithLifecycle().value,
         recentlyInstalledApps = viewModel.recentlyInstalledApps.collectAsStateWithLifecycle().value,
         recentlyInstalledPosition = position,
+        listItemSize = listItemSize,
     )
 
 /** Private Space, an in-place overlay over the app drawer: one back press returns to the drawer, a second closes it. */
@@ -328,6 +337,7 @@ internal fun HomePrivateSpaceOverlay(
             apps = state.apps,
             recentlyInstalledApps = state.recentlyInstalledApps,
             recentlyInstalledPosition = state.recentlyInstalledPosition,
+            listItemSize = state.listItemSize,
             query = query,
             onQueryChange = { query = it; onQueryChange(it) },
             onAppClick = onAppClick,

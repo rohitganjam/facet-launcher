@@ -120,7 +120,8 @@ file whose `backupVersion` is *greater* than the current constant is refused wit
 `UnsupportedVersion`; the constant only bumps for a non-additive/breaking change — a purely
 additive, defaulted, tolerant-reader field does **not** require a bump (established by
 `fontScaleOption`, reused for `appListLayout`/`appListColumnAlignment`/`appListGridColumns`/
-`appListGridDisplayMode`, `systemBarIconStyle`, `iconShape`, and `iconPackPackage`/`iconPackFallback` — see `BackupBundle.kt`'s own doc comment). `ExportBackupUseCaseTest` /
+`appListGridDisplayMode`, `systemBarIconStyle`, `iconShape`, `iconPackPackage`/`iconPackFallback`, `iconScalePercent`, and
+`appListShrinkToFit` (settings and each facet) — see `BackupBundle.kt`'s own doc comment). `ExportBackupUseCaseTest` /
 `ImportBackupUseCaseTest` round-trip the bundle and must be extended for every new field;
 `BackupCoverageTest` fails until a new `Facet` or `LauncherSettings` field is exported or listed as left out.
 Import replaces the landscape group and the clock divider height outright, so a restore clears values

@@ -105,6 +105,8 @@ data class BackupSettings(
     val iconShape: String = IconShape.SQUIRCLE.name,
     /** Purely additive and defaulted, so no version bump. Restored as is: a pack not installed on the new device is unapplied the first time icons load. */
     val iconPackPackage: String? = null,
+    /** Purely additive and defaulted, so no version bump. */
+    val iconScalePercent: Int = IconScale.DEFAULT_PERCENT,
     val iconPackFallback: String = IconPackFallback.MATCH_PACK.name,
     val launcherFontOption: String,
     /** Defaulted — tolerant-reader discipline, see this file's own doc comment. */
@@ -120,6 +122,8 @@ data class BackupSettings(
     val landscapeAppListColumnAlignment: String? = null,
     val appListGridColumns: String = AppListGridColumns.FOUR.name,
     val appListGridDisplayMode: String = AppListGridDisplayMode.ICONS.name,
+    /** Purely additive and defaulted, so no version bump. */
+    val appListShrinkToFit: String = AppListShrinkToFit.OFF.name,
     val listContentMode: String,
     val appsToShowCount: Int,
     val clockTemplateId: String,
@@ -206,6 +210,7 @@ data class BackupFacet(
     val landscapeAppListColumnAlignment: String? = null,
     val appListGridColumns: String = AppListGridColumns.LAUNCHER_DEFAULT.name,
     val appListGridDisplayMode: String = AppListGridDisplayMode.LAUNCHER_DEFAULT.name,
+    val appListShrinkToFit: String = AppListShrinkToFit.LAUNCHER_DEFAULT.name,
     val listContentMode: String,
     val appsToShowCount: Int,
     val overridingFavorites: Boolean,

@@ -233,6 +233,8 @@ private fun rememberHomeItemStyle(look: HomeItemLook): HomeItemStyle {
             appMenuNotifications = look.appMenuNotifications,
             folderCandidates = look.folderCandidates,
             drawerPresentation = look.drawerPresentation,
+            folderGridColumns = look.folderGridColumns,
+            folderGridDisplayMode = look.folderGridDisplayMode,
             labelColor = labelColor,
             labelFontWeight = labelFontWeight,
         )
@@ -265,7 +267,8 @@ private fun rememberClockAppearAlpha(layout: HomeScreenLayout): State<Float> {
  * fades in once, so it never renders at regular spacing and snaps to compact. The list is first measured at
  * regular density off-screen. Once that settles, it switches to the tighter density if it would otherwise need
  * to scroll. Evaluated once per key change, not continuously: flipping to compact shrinks the content and
- * re-triggers the measurement, but the effect has finished by then and doesn't see its own result.
+ * re-triggers the measurement, but the effect has finished by then and doesn't see its own result. With
+ * "Shrink list to fit" off there is nothing to decide: Regular rows, and the list scrolls when it's long.
  */
 @Composable
 private fun rememberListAppearAlpha(state: HomeScreenState, layout: HomeScreenLayout, media: HomeMediaLayout): State<Float> {
@@ -273,10 +276,15 @@ private fun rememberListAppearAlpha(state: HomeScreenState, layout: HomeScreenLa
     val listKey = state.list.items.map { it.stableKey() }
     val presentation = state.list.rowPresentation
     val usagePrompt = state.list.showUsageAccessPrompt
-    var revealed by remember(listKey, presentation, usagePrompt) { mutableStateOf(false) }
+    val shrinkToFit = state.list.shrinkToFit
+    var revealed by remember(listKey, presentation, usagePrompt, shrinkToFit) { mutableStateOf(false) }
     val hasMedia = state.media.player != null
-    LaunchedEffect(listKey, presentation, usagePrompt, state.clock.placement.zoneHeightDp, hasMedia, layout.mediaRowHeightPx) {
+    LaunchedEffect(listKey, presentation, usagePrompt, shrinkToFit, state.clock.placement.zoneHeightDp, hasMedia, layout.mediaRowHeightPx) {
         layout.useCompactAppSpacing = false
+        if (!shrinkToFit) {
+            revealed = true
+            return@LaunchedEffect
+        }
         withTimeoutOrNull(GEOMETRY_SETTLE_TIMEOUT_MS) {
             snapshotFlow { layout.appListNaturalHeightPx to (layout.contentHeightPx - media.listTopTargetPx) }
                 .first { (natural, available) -> natural > 0f && available > 0f }

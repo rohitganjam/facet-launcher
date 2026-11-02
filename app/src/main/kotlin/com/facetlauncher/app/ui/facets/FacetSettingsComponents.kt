@@ -51,6 +51,7 @@ internal fun AppRowPresentation.displayLabel(): String = stringResource(displayN
 internal fun DockDisplayMode.appearanceSummaryLabel(): String = when (this) {
     DockDisplayMode.ICONS -> stringResource(R.string.facet_settings_appearance_dock_icons)
     DockDisplayMode.TEXT -> stringResource(R.string.facet_settings_appearance_dock_text)
+    DockDisplayMode.ICONS_AND_TEXT -> stringResource(R.string.facet_settings_appearance_dock_icons_and_text)
     DockDisplayMode.LAUNCHER_DEFAULT -> displayLabel()
 }
 

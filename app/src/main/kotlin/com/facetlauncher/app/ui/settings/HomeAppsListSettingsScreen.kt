@@ -339,7 +339,7 @@ private fun LazyItemScope.FavoriteReorderRow(item: PlacedItem, reorderState: Dra
         )
         when (item) {
             is PlacedItem.SingleApp -> {
-                AppIcon(app = item.app, size = AppIconSize.ROW_COMPACT, contentDescription = null)
+                AppIcon(app = item.app, size = AppIconSize.COMPACT, contentDescription = null)
                 Text(text = item.app.label, style = MaterialTheme.typography.bodyLarge, color = Ink, modifier = Modifier.weight(1f))
             }
             is PlacedItem.FolderItem -> {

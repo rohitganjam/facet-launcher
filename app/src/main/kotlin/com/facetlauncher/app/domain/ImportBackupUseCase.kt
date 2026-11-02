@@ -9,6 +9,7 @@ import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.model.AppListColumnAlignment
 import com.facetlauncher.app.data.model.AppListGridColumns
 import com.facetlauncher.app.data.model.AppListGridDisplayMode
+import com.facetlauncher.app.data.model.AppListShrinkToFit
 import com.facetlauncher.app.data.model.AppListLayout
 import com.facetlauncher.app.data.model.AppRowPosition
 import com.facetlauncher.app.data.model.AppRowPresentation
@@ -184,6 +185,7 @@ class ImportBackupUseCase @Inject constructor(
             setIconRenderMode(settings.iconRenderMode.toEnumOrDefault(IconRenderMode.SYSTEM_DEFAULT))
             setIconShape(settings.iconShape.toEnumOrDefault(IconShape.SQUIRCLE))
             setIconPack(settings.iconPackPackage)
+            setIconScalePercent(settings.iconScalePercent)
             setIconPackFallback(settings.iconPackFallback.toEnumOrDefault(IconPackFallback.MATCH_PACK))
             setLauncherFontOption(settings.launcherFontOption.toEnumOrDefault(LauncherFontOption.SYSTEM))
             setFontScaleOption(settings.fontScaleOption.toEnumOrDefault(FontScaleOption.DEFAULT))
@@ -198,6 +200,7 @@ class ImportBackupUseCase @Inject constructor(
             applyClockPlacement(settings)
             setAppListGridColumns(settings.appListGridColumns.toEnumOrDefault(AppListGridColumns.FOUR))
             setAppListGridDisplayMode(settings.appListGridDisplayMode.toEnumOrDefault(AppListGridDisplayMode.ICONS))
+            setAppListShrinkToFit(settings.appListShrinkToFit.toEnumOrDefault(AppListShrinkToFit.OFF))
             setListContentMode(settings.listContentMode.toEnumOrDefault(ListContentMode.FAVORITES))
             setAppsToShowCount(settings.appsToShowCount)
             setClockTemplateId(settings.clockTemplateId.toEnumOrDefault(ClockTemplateId.LIGHT_STACK))

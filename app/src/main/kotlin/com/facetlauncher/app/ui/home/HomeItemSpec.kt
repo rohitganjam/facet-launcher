@@ -8,6 +8,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.facetlauncher.app.data.model.AppInfo
+import com.facetlauncher.app.data.model.AppListGridColumns
+import com.facetlauncher.app.data.model.AppListGridDisplayMode
 import com.facetlauncher.app.data.model.AppRowPosition
 import com.facetlauncher.app.data.model.DrawerPresentation
 import com.facetlauncher.app.data.model.Folder
@@ -56,6 +58,8 @@ data class HomeItemStyle(
     /** The full folder library: see [AppContextMenu]'s own doc for what non-null means. */
     val folderCandidates: ImmutableList<Folder>? = null,
     val drawerPresentation: DrawerPresentation = DrawerPresentation.LIST,
+    val folderGridColumns: Int = AppListGridColumns.FOUR.columns,
+    val folderGridDisplayMode: AppListGridDisplayMode = AppListGridDisplayMode.ICONS,
     val labelFontWeight: FontWeight = FontWeight.Normal,
 )
 
@@ -91,6 +95,8 @@ internal fun FolderItemSheet(folder: Folder, onDismiss: () -> Unit, actions: Hom
         onDismissRequest = onDismiss,
         onAppClick = actions.onAppClick,
         presentation = style.drawerPresentation,
+        gridColumns = style.folderGridColumns,
+        gridDisplayMode = style.folderGridDisplayMode,
         onRemoveFromFolder = actions.onRemoveFromFolder,
         headerAction = FolderSheetHeaderAction.Rename(onRename = actions.onRenameFolder),
         appMenuNotifications = style.appMenuNotifications,

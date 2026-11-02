@@ -239,7 +239,7 @@ private fun DockAppsRow(
         // the raw list would reset drag state mid-drag on re-emissions unrelated to the dock.
         val componentsKey = dockItems.map { it.reorderKey() }
         var order by remember(componentsKey) { mutableStateOf<List<PlacedItem>>(dockItems) }
-        val slotWidthPx = with(LocalDensity.current) { (AppIconSize.TILE + ReorderRowDefaults.DOCK_TILE_SPACING).toPx() }
+        val slotWidthPx = with(LocalDensity.current) { (AppIconSize.ICON + ReorderRowDefaults.DOCK_TILE_SPACING).toPx() }
         val reorderState = rememberDragReorderState(
             items = order,
             key = { it.reorderKey() },
@@ -250,7 +250,7 @@ private fun DockAppsRow(
         )
 
         LazyRow(
-            modifier = Modifier.height(AppIconSize.TILE),
+            modifier = Modifier.height(AppIconSize.ICON),
             horizontalArrangement = Arrangement.spacedBy(ReorderRowDefaults.DOCK_TILE_SPACING),
             verticalAlignment = Alignment.CenterVertically,
             userScrollEnabled = false,
@@ -278,7 +278,7 @@ private fun DockAppsRow(
                         .then(reorderState.dragModifier(item)),
                 ) {
                     when (item) {
-                        is PlacedItem.SingleApp -> AppIcon(app = item.app, size = AppIconSize.TILE, contentDescription = item.app.label)
+                        is PlacedItem.SingleApp -> AppIcon(app = item.app, size = AppIconSize.ICON, contentDescription = item.app.label)
                         is PlacedItem.FolderItem -> FolderTileGlyph(folder = item.folder)
                     }
                 }

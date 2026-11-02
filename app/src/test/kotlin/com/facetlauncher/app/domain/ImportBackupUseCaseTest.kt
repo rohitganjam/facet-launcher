@@ -293,6 +293,26 @@ class ImportBackupUseCaseTest {
     }
 
     @Test
+    fun `restores icon size and shrink list to fit, an older backup getting their defaults`() = runTest {
+        val newer = mock(Uri::class.java)
+        val older = mock(Uri::class.java)
+        fun bundle(settings: com.facetlauncher.app.data.model.BackupSettings) = BackupBundle(
+            exportedAtEpochMillis = 0L, settings = settings,
+            facets = emptyList(), dockApps = emptyList(), defaultFavoriteApps = emptyList(), widgetPlacements = emptyList(),
+        )
+        `when`(backupRepository.readBackup(newer)).thenReturn(bundle(minimalSettings().copy(iconScalePercent = 115, appListShrinkToFit = "ON")))
+        `when`(backupRepository.readBackup(older)).thenReturn(bundle(minimalSettings()))
+
+        useCase(newer)
+        useCase(older)
+
+        verify(settingsRepository).setIconScalePercent(115)
+        verify(settingsRepository).setAppListShrinkToFit(com.facetlauncher.app.data.model.AppListShrinkToFit.ON)
+        verify(settingsRepository).setIconScalePercent(100)
+        verify(settingsRepository).setAppListShrinkToFit(com.facetlauncher.app.data.model.AppListShrinkToFit.OFF)
+    }
+
+    @Test
     fun `a backup whose clock divider was never dragged clears the current one`() = runTest {
         val uri = mock(Uri::class.java)
         `when`(backupRepository.readBackup(uri)).thenReturn(

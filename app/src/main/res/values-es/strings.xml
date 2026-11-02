@@ -383,6 +383,12 @@
     <string name="home_apps_list_column_alignment">Alineación de columnas</string>
     <string name="home_apps_list_grid_columns">Columnas de la cuadrícula</string>
     <string name="home_apps_list_grid_display">Visualización de la cuadrícula</string>
+    <string name="home_apps_list_shrink_to_fit">Ajustar lista a la pantalla</string>
+    <string name="app_list_shrink_to_fit_launcher_default">Estilo predeterminado del launcher</string>
+    <string name="app_list_shrink_to_fit_off">Desactivado</string>
+    <string name="app_list_shrink_to_fit_on">Activado</string>
+    <string name="app_list_grid_display_mode_icons_and_text">Iconos y texto</string>
+    <string name="dock_display_mode_icons_and_text">Iconos y texto</string>
     <string name="home_apps_list_content_facet">Contenido de la lista de apps</string>
     <string name="home_apps_list_content_default">Contenido predeterminado de la lista de apps</string>
     <string name="home_apps_list_apps_to_show">Apps a mostrar</string>
@@ -891,6 +897,7 @@
     <string name="icons_screen_icon_pack">Paquete de iconos</string>
     <string name="icons_screen_built_in">Integrados</string>
     <string name="icons_screen_external">Externos</string>
+    <string name="icons_screen_icon_size">Tamaño de iconos</string>
     <plurals name="icons_screen_pack_count">
         <item quantity="one">%d paquete</item>
         <item quantity="other">%d paquetes</item>
@@ -922,6 +929,7 @@
     <string name="facet_settings_appearance_clock_label">Reloj: %1$s</string>
     <string name="facet_settings_appearance_dock_icons">Iconos del dock</string>
     <string name="facet_settings_appearance_dock_text">Texto del dock</string>
+    <string name="facet_settings_appearance_dock_icons_and_text">Iconos y texto del dock</string>
     <string name="facet_settings_appearance_home_icon_only">Inicio: solo icono</string>
     <string name="facet_settings_appearance_home_icon_and_text">Inicio: icono y texto</string>
     <string name="facet_settings_appearance_home_text_only">Inicio: solo texto</string>

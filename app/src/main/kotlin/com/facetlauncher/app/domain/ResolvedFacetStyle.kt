@@ -4,6 +4,7 @@ import androidx.compose.runtime.Immutable
 import com.facetlauncher.app.data.model.AppListColumnAlignment
 import com.facetlauncher.app.data.model.AppListGridColumns
 import com.facetlauncher.app.data.model.AppListGridDisplayMode
+import com.facetlauncher.app.data.model.AppListShrinkToFit
 import com.facetlauncher.app.data.model.AppListLayout
 import com.facetlauncher.app.data.model.AppListVerticalAlignment
 import com.facetlauncher.app.data.model.AppRowPosition
@@ -59,6 +60,7 @@ data class ResolvedAppListStyle(
     val columnAlignment: AppListColumnAlignment,
     val gridColumns: AppListGridColumns,
     val gridDisplayMode: AppListGridDisplayMode,
+    val shrinkToFit: AppListShrinkToFit = AppListShrinkToFit.OFF,
 )
 
 /** A value for each orientation; [of] picks one. */
@@ -139,6 +141,7 @@ private fun resolveAppListStyle(facet: Facet?, settings: LauncherSettings) = Res
     gridDisplayMode = facet.resolveSentinel(
         { it.appListGridDisplayMode }, AppListGridDisplayMode.LAUNCHER_DEFAULT, settings.appListGridDisplayMode,
     ),
+    shrinkToFit = facet.resolveSentinel({ it.appListShrinkToFit }, AppListShrinkToFit.LAUNCHER_DEFAULT, settings.appListShrinkToFit),
 )
 
 /** Portrait follows the facet while it overrides the clock; landscape follows [resolveLandscape] over that. */

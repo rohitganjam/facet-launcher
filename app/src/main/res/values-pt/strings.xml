@@ -383,6 +383,12 @@
     <string name="home_apps_list_column_alignment">Alinhamento das colunas</string>
     <string name="home_apps_list_grid_columns">Colunas da grade</string>
     <string name="home_apps_list_grid_display">Exibição da grade</string>
+    <string name="home_apps_list_shrink_to_fit">Ajustar lista à tela</string>
+    <string name="app_list_shrink_to_fit_launcher_default">Estilo padrão do launcher</string>
+    <string name="app_list_shrink_to_fit_off">Desativado</string>
+    <string name="app_list_shrink_to_fit_on">Ativado</string>
+    <string name="app_list_grid_display_mode_icons_and_text">Ícones e texto</string>
+    <string name="dock_display_mode_icons_and_text">Ícones e texto</string>
     <string name="home_apps_list_content_facet">Conteúdo da lista de apps</string>
     <string name="home_apps_list_content_default">Conteúdo padrão da lista de apps</string>
     <string name="home_apps_list_apps_to_show">Apps a exibir</string>
@@ -891,6 +897,7 @@
     <string name="icons_screen_icon_pack">Pacote de ícones</string>
     <string name="icons_screen_built_in">Integrados</string>
     <string name="icons_screen_external">Externos</string>
+    <string name="icons_screen_icon_size">Tamanho dos ícones</string>
     <plurals name="icons_screen_pack_count">
         <item quantity="one">%d pacote</item>
         <item quantity="other">%d pacotes</item>
@@ -922,6 +929,7 @@
     <string name="facet_settings_appearance_clock_label">Relógio: %1$s</string>
     <string name="facet_settings_appearance_dock_icons">Ícones do dock</string>
     <string name="facet_settings_appearance_dock_text">Texto do dock</string>
+    <string name="facet_settings_appearance_dock_icons_and_text">Ícones e texto do dock</string>
     <string name="facet_settings_appearance_home_icon_only">Início: apenas ícone</string>
     <string name="facet_settings_appearance_home_icon_and_text">Início: ícone e texto</string>
     <string name="facet_settings_appearance_home_text_only">Início: apenas texto</string>

@@ -298,7 +298,7 @@ private val FAVORITE_ROW_SHAPE = RoundedCornerShape(12.dp)
 private fun DockAppsReorderRow(dockApps: ImmutableList<AppInfo>, onReorder: (List<AppInfo>) -> Unit, modifier: Modifier = Modifier) {
     val componentsKey = dockApps.map { it.listKey }
     var order by remember(componentsKey) { mutableStateOf<List<AppInfo>>(dockApps) }
-    val slotWidthPx = with(LocalDensity.current) { (AppIconSize.TILE + ReorderRowDefaults.DOCK_TILE_SPACING).toPx() }
+    val slotWidthPx = with(LocalDensity.current) { (AppIconSize.ICON + ReorderRowDefaults.DOCK_TILE_SPACING).toPx() }
     val reorderState = rememberDragReorderState(
         items = order,
         key = { it.listKey },
@@ -309,7 +309,7 @@ private fun DockAppsReorderRow(dockApps: ImmutableList<AppInfo>, onReorder: (Lis
     )
 
     LazyRow(
-        modifier = modifier.height(AppIconSize.TILE),
+        modifier = modifier.height(AppIconSize.ICON),
         horizontalArrangement = Arrangement.spacedBy(ReorderRowDefaults.DOCK_TILE_SPACING),
         userScrollEnabled = false,
     ) {
@@ -317,7 +317,7 @@ private fun DockAppsReorderRow(dockApps: ImmutableList<AppInfo>, onReorder: (Lis
             val isDragging = reorderState.isDragging(app)
             AppIcon(
                 app = app,
-                size = AppIconSize.TILE,
+                size = AppIconSize.ICON,
                 contentDescription = app.label,
                 modifier = Modifier
                     .testTag("onboarding_dock_tile_${app.packageName}")

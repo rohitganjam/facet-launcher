@@ -330,6 +330,28 @@ class HomeScreenTest {
     }
 
     @Test
+    fun dockIconsAndTextModeShowsEachIconWithItsName() {
+        // Given a dock in Icons and text mode
+        val dockApps = apps(4)
+        composeRule.setContent {
+            FacetLauncherTheme {
+                FlatHomeScreen(
+                    appListItems = emptyList(),
+                    dockApps = dockApps.map { PlacedItem.SingleApp(it) },
+                    dockDisplayMode = DockDisplayMode.ICONS_AND_TEXT,
+                    onAppClick = {},
+                )
+            }
+        }
+
+        // Then every dock app shows its icon and its name under it
+        dockApps.forEach { app ->
+            composeRule.onNodeWithContentDescription(app.label).assertExists()
+            composeRule.onNodeWithTag("dock_label_${app.packageName}", useUnmergedTree = true).assertExists()
+        }
+    }
+
+    @Test
     fun dockTextModeRendersLabelsInsteadOfIcons() {
         // Given a dock in Text display mode
         val dockApps = apps(4)

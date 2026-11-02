@@ -52,7 +52,7 @@ internal fun AppMenuFolderPage(
                     .padding(8.dp),
             )
             // The same folder icon and + badge as the sheet's "Add to folder" tile.
-            Box(modifier = Modifier.size(AppIconSize.ROW_SPACIOUS), contentAlignment = Alignment.Center) {
+            Box(modifier = Modifier.size(AppIconSize.COMPACT), contentAlignment = Alignment.Center) {
                 Icon(imageVector = Icons.Outlined.Folder, contentDescription = null, tint = Muted, modifier = Modifier.size(32.dp))
                 PlacementBadge(isRemove = false, modifier = Modifier.align(Alignment.TopEnd).offset(x = 4.dp, y = (-2).dp))
             }

@@ -876,6 +876,27 @@ class FacetDatabaseMigrationTest {
         owns.close()
     }
 
+    @Test
+    fun migration36To37GivesExistingFacetsTheLauncherShrinkToFit() {
+        // Given a v32 database with a facet
+        val dbV32 = helper.createDatabase(TEST_DB, 32)
+        insertFacetV27(dbV32, id = 1, name = "Work")
+        dbV32.close()
+
+        // When migrating through to v37 (Room also validates the result against the exported v37 schema)
+        val dbV37 = helper.runMigrationsAndValidate(
+            TEST_DB, 37, true,
+            Migrations.MIGRATION_32_33, Migrations.MIGRATION_33_34, Migrations.MIGRATION_34_35, Migrations.MIGRATION_35_36,
+            Migrations.MIGRATION_36_37,
+        )
+
+        // Then the facet follows the launcher-wide Shrink list to fit
+        val shrink = dbV37.query("SELECT appListShrinkToFit FROM facets")
+        shrink.moveToFirst()
+        assertEquals("LAUNCHER_DEFAULT", shrink.getString(0))
+        shrink.close()
+    }
+
     /** A v27 facet row — the v25 shape plus the two calendar-display columns, which a freshly created database has no defaults for. */
     private fun insertFacetV27(db: androidx.sqlite.db.SupportSQLiteDatabase, id: Long, name: String) {
         insertFacetV25Columns(db, id, name, extraColumns = ", showCalendarIndicator, calendarItemsToShow", extraValues = ", 1, 3")

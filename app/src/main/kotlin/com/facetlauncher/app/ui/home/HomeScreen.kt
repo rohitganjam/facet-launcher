@@ -18,6 +18,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.facetlauncher.app.data.model.landscape
 import com.facetlauncher.app.data.model.AppInfo
+import com.facetlauncher.app.data.model.DrawerListItemSize
 import com.facetlauncher.app.data.model.AppListColumnAlignment
 import com.facetlauncher.app.data.model.AppListVerticalAlignment
 import com.facetlauncher.app.data.model.AppRowPosition
@@ -102,15 +103,10 @@ internal const val CLOCK_ADJUST_TOOLBAR_DIMMED_ALPHA = 0.25f
 /** Half the resize handle's hit box — the amount it extends past the clock corner it sits on. */
 internal val HOME_CLOCK_RESIZE_HANDLE_INSET = 20.dp
 
-internal val HOME_APP_ROW_REGULAR_VERTICAL_PADDING = 16.dp
+/** Home's list rows are the drawer's Regular rows, and its Compact rows once "Shrink list to fit" shrinks them. */
+internal val HOME_APP_ROW_REGULAR_VERTICAL_PADDING = DrawerListItemSize.REGULAR.verticalPaddingDp.dp
 
-/**
- * [AppRow]'s tighter per-row vertical padding, switched to automatically (see this file's
- * one-shot compact-spacing check) when the regular density would make the app list need to
- * scroll. Matches App Drawer's own `DrawerListItemSize.COMPACT` total row padding (base 8dp +
- * 0 extra), so Home's compact density reads the same as Drawer's.
- */
-internal val HOME_APP_ROW_COMPACT_VERTICAL_PADDING = 8.dp
+internal val HOME_APP_ROW_COMPACT_VERTICAL_PADDING = DrawerListItemSize.COMPACT.verticalPaddingDp.dp
 
 @Preview(showBackground = true, widthDp = 390, heightDp = 844)
 @Preview(name = "Dark", showBackground = true, widthDp = 390, heightDp = 844, uiMode = Configuration.UI_MODE_NIGHT_YES)

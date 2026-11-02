@@ -92,6 +92,7 @@ class LauncherActivity : ComponentActivity() {
                     wallpaperAccentRole = uiState.wallpaperAccentRole,
                     iconRenderMode = uiState.iconRenderMode,
                     iconShape = uiState.iconShape,
+                    iconScale = uiState.iconScale,
                     launcherFontOption = uiState.launcherFontOption,
                     homeAppsFontWeight = uiState.homeAppsFontWeight,
                     fontScaleOption = uiState.fontScaleOption,

@@ -4,8 +4,8 @@
 
 | Store | Location | What it holds | Written by | Survives |
 |---|---|---|---|---|
-| Room `FacetDatabase` | `facet.db` (schema **v36**, `exportSchema = true` → `app/schemas/…/1.json … 36.json`) | Facets + every *placement*: favorites, dock, folders, folder membership, widget grid positions, plus the facet automation rules (`automation_rules`) the weather cache (`weather_hours`, `weather_meta`) and each facet's clock stack (`clock_stack_items`) | 7 repositories (§2): `FacetRepository`, `PlacementRepository`, `FolderRepository`, `WidgetPlacementRepository`, `AutomationRuleRepository`, `WeatherRepository` (through `RoomWeatherStore`), `ClockStackRepository` | Reinstall-over-upgrade (migrations); **not** downgrade (dropped) |
-| `DataStore<Preferences>` | `facet_settings` (`datastore/facet_settings.preferences_pb`) | **All launcher-wide settings and defaults** — clock/app-list/dock design defaults (the calendar events strip has no design defaults of its own — see below), theme, drawer, search, permission-prompt flags, onboarding/seed/coach-mark flags, active facet id, the clock accessory switches, weather units and location, the icon pack — 81 keys (§5) | `SettingsRepository` only | Any upgrade (missing keys fall back to `LauncherSettings()` defaults) |
+| Room `FacetDatabase` | `facet.db` (schema **v37**, `exportSchema = true` → `app/schemas/…/1.json … 37.json`) | Facets + every *placement*: favorites, dock, folders, folder membership, widget grid positions, plus the facet automation rules (`automation_rules`) the weather cache (`weather_hours`, `weather_meta`) and each facet's clock stack (`clock_stack_items`) | 7 repositories (§2): `FacetRepository`, `PlacementRepository`, `FolderRepository`, `WidgetPlacementRepository`, `AutomationRuleRepository`, `WeatherRepository` (through `RoomWeatherStore`), `ClockStackRepository` | Reinstall-over-upgrade (migrations); **not** downgrade (dropped) |
+| `DataStore<Preferences>` | `facet_settings` (`datastore/facet_settings.preferences_pb`) | **All launcher-wide settings and defaults** — clock/app-list/dock design defaults (the calendar events strip has no design defaults of its own — see below), theme, drawer, search, permission-prompt flags, onboarding/seed/coach-mark flags, active facet id, the clock accessory switches, weather units and location, the icon pack and size — 83 keys (§5) | `SettingsRepository` only | Any upgrade (missing keys fall back to `LauncherSettings()` defaults) |
 | `DataStore<Preferences>` | `facet_entitlement` (`datastore/facet_entitlement.preferences_pb`) | The cached Pro state (`pro_purchased`; excluded from Android backups and device transfer by `res/xml/data_extraction_rules.xml`), so Pro works offline and at cold start; debug builds also keep `debug_entitlement_mode` here | `PlayEntitlementRepository`, only from an explicit Google Play answer | Same as `facet_settings`; **not** in the backup file, so a restore can never grant Pro |
 | `DataStore<Preferences>` | `facet_automation` (`datastore/facet_automation.preferences_pb`) | Facet-automation bookkeeping: the baseline facet, the ordered active rule ids, the suppressed rule ids (§5.7) | `AutomationStateRepository` (via `ActivateFacetByIdUseCase`) | Same as `facet_settings`; **not** in the backup file |
 | System `AppWidgetService` | Android framework, keyed by `HUB_APP_WIDGET_HOST_ID = 1024` | Which `appWidgetId`s are bound to which providers for this host | `LauncherAppWidgetHost` via `AppWidgetRepository` (allocate/bind/delete) | App data clear **does not** clear it → orphan detection in `ObserveHubStateUseCase` |
@@ -64,6 +64,7 @@ erDiagram
         string appListColumnAlignment "two-column only"
         string appListGridColumns "grid only"
         string appListGridDisplayMode "grid only"
+        string appListShrinkToFit "list only"
         boolean overridingFavorites
         boolean overrideDock
         string dockDisplayMode
@@ -359,6 +360,7 @@ Room.databaseBuilder(context, FacetDatabase::class.java, "facet.db")
 | 33→34 | `facets.clockWeatherIconStyle` (`TEXT NOT NULL DEFAULT 'COLORED'`): the per-facet weather picture style, used while the facet overrides the clock (`BackupFacet.clockWeatherIconStyle`). `FacetDatabaseMigrationTest.migration33To34…` runs 32→33→34 and checks the default. |
 | 34→35 | New table `clock_stack_items` (DDL from the exported `35.json`, index on `facetId, position`) and every facet gets its first page at position 0: a facet with a hosted clock widget gets that `WIDGET` row (size, alignment and landscape twins carried over), every other facet gets a `CLOCK` row. An empty stack draws nothing, so no facet may be left without a row; `FacetRepository.addFacet` and `restoreFacet` insert the `CLOCK` row too. The `facets.clockWidget*` columns stay (SQLite on minSdk 30 cannot drop a column) but are retired: `FacetMapping` neither reads nor writes them, and `Facet` has no such fields. `FacetDatabaseMigrationTest.migration34To35…` runs 32→33→34→35 and checks the moved widget row, that a clock-only facet gets a `CLOCK` row, and that no facet is left without one. |
 | 35→36 | `facets.clockPlacementOwn` (`INTEGER NOT NULL DEFAULT 0`), then `UPDATE facets SET clockPlacementOwn = overrideClock`: a facet that overrode the clock already owned its placement, the others keep showing the launcher fallback until first adjusted on Home. `BackupFacet.clockPlacementOwn` is nullable: a backup from before it reads as `overrideClock`. `FacetDatabaseMigrationTest.migration35To36…` runs 32→…→36 and checks both facets. |
+| 36→37 | `facets.appListShrinkToFit` (`TEXT NOT NULL DEFAULT 'LAUNCHER_DEFAULT'`): Home's "Shrink list to fit", per facet; every existing facet follows the launcher-wide value (`app_list_shrink_to_fit`, off by default). `FacetDatabaseMigrationTest.migration36To37…` runs 32→…→37 and checks the default. |
 
 The landscape twins are handled as one `LandscapeOverrides` group (clock alignment, divider, scale, widget size, row position, vertical and column alignment; every field nullable). Settings hold it as `LauncherSettings.landscape`, read from the six `landscape_*` keys and written only through `updateLandscape`. A facet keeps the flat columns above (so the schema is unchanged) and exposes the group as `FacetEntity.landscape` / `withLandscape(...)`, written through `FacetRepository.updateLandscape`. `resolveLandscape` is the one resolution rule (see [17](17-flow-home-layout.md) §1.0).
 
@@ -417,6 +419,7 @@ erDiagram
         string wallpaper_accent_role "WallpaperAccentRole, default PRIMARY"
         string icon_render_mode "IconRenderMode, default SYSTEM_DEFAULT"
         string icon_shape "IconShape, default SQUIRCLE"
+        int icon_scale_percent "Icon size, 80..120, default 100"
         string icon_pack_package "installed icon pack, absent = built-in styles"
         string icon_pack_fallback "IconPackFallback, default MATCH_PACK"
         string launcher_font_option "LauncherFontOption, default SYSTEM"
@@ -467,7 +470,7 @@ reads directly — see §0), `calendar_colors`, everything under Theme, Drawer, 
 Notifications, Permission bookkeeping, and First-run.
 
 **`appRowPosition`/`appRowPresentation`/`appListVerticalAlignment`/`dockDisplayMode`/`appListLayout`/
-`appListColumnAlignment`/`appListGridColumns`/`appListGridDisplayMode` are a third
+`appListColumnAlignment`/`appListGridColumns`/`appListGridDisplayMode`/`appListShrinkToFit` are a third
 resolution shape**, distinct from both the boolean-gated fields above and the always-global list —
 edited from Settings → Appearance now (moved out of Dock's/Home Apps List's own screens, see chat
 history), each resolved via its own `LAUNCHER_DEFAULT` sentinel value (mirroring
@@ -551,6 +554,7 @@ DataStore serialises writes and is main-safe; callers `viewModelScope.launch { }
 | `setAppListColumnAlignment(AppListColumnAlignment)` | `app_list_column_alignment` | set | `AppearanceSettingsViewModel`, `ImportBackupUseCase` |
 | `setAppListGridColumns(AppListGridColumns)` | `app_list_grid_columns` | set | `AppearanceSettingsViewModel`, `ImportBackupUseCase` |
 | `setAppListGridDisplayMode(AppListGridDisplayMode)` | `app_list_grid_display_mode` | set | `AppearanceSettingsViewModel`, `ImportBackupUseCase` |
+| `setAppListShrinkToFit(AppListShrinkToFit)` | `app_list_shrink_to_fit` | set | `AppearanceSettingsViewModel`, `ImportBackupUseCase` |
 | `setHomeAppsFontWeight(FontWeightOption)` | `home_apps_font_weight` | set | `AppearanceSettingsViewModel` |
 | `setAppLabelColorOption(ClockColorOption)` | `app_label_color_option` | set | `AppearanceSettingsViewModel` |
 | `setDockDisplayMode(DockDisplayMode)` | `dock_display_mode` | set | `AppearanceSettingsViewModel` |
@@ -562,6 +566,7 @@ DataStore serialises writes and is main-safe; callers `viewModelScope.launch { }
 | `setWallpaperAccentRole(WallpaperAccentRole)` | `wallpaper_accent_role` | set | `AppearanceSettingsViewModel` |
 | `setIconRenderMode(IconRenderMode)` | `icon_render_mode` | set | `AppearanceSettingsViewModel`, `IconsViewModel` |
 | `setIconShape(IconShape)` | `icon_shape` | set | `AppearanceSettingsViewModel`, `ImportBackupUseCase` |
+| `setIconScalePercent(Int)` | `icon_scale_percent` | set (clamped 80..120) | `AppearanceSettingsViewModel`, `ImportBackupUseCase` |
 | `setIconPack(String?)` | `icon_pack_package` | set / remove (null) | `IconsViewModel`, `IconPackRepository` (clears an uninstalled pack), `ImportBackupUseCase` |
 | `setIconPackFallback(IconPackFallback)` | `icon_pack_fallback` | set | `IconsViewModel`, `ImportBackupUseCase` |
 | `setLauncherFontOption(LauncherFontOption)` | `launcher_font_option` | set | `AppearanceSettingsViewModel` |
@@ -596,7 +601,7 @@ DataStore level either.
 
 ### 5.4 Key registry by section
 
-The same 69 keys, grouped the way Settings screens present them, with the `LauncherSettings` field
+The same 71 keys, grouped the way Settings screens present them, with the `LauncherSettings` field
 each maps to. Defaults are `LauncherSettings()`'s constructor defaults.
 
 #### Clock design (global; the style and accessories are overridden per facet when `facets.overrideClock`)
@@ -663,7 +668,8 @@ its position (see chat history: calendar/appearance styling consolidation).
 | `app_list_layout` | String (`AppListLayout`) | `appListLayout` | `SINGLE_COLUMN` | single column / two column / grid |
 | `app_list_column_alignment` | String (`AppListColumnAlignment`) | `appListColumnAlignment` | `BOTH_LEFT` | two-column only |
 | `app_list_grid_columns` | String (`AppListGridColumns`) | `appListGridColumns` | `FOUR` | grid only — 3/4/5/6 |
-| `app_list_grid_display_mode` | String (`AppListGridDisplayMode`) | `appListGridDisplayMode` | `ICONS` | grid only — icons or text, never both |
+| `app_list_grid_display_mode` | String (`AppListGridDisplayMode`) | `appListGridDisplayMode` | `ICONS` | grid only — icons, text, or icons and text |
+| `app_list_shrink_to_fit` | String (`AppListShrinkToFit`) | `appListShrinkToFit` | `OFF` | list layouts only — Compact rows when Regular ones wouldn't fit; off, the list scrolls; facet-overridable (`facets.appListShrinkToFit`) |
 | `home_apps_font_weight` | String (`FontWeightOption`) | `homeAppsFontWeight` | `REGULAR` | not facet-overridable; also styles the calendar events strip |
 | `app_label_color_option` | String (`ClockColorOption`) | `appLabelColorOption` | `THEME` | not facet-overridable; also styles the calendar events strip |
 
@@ -690,6 +696,7 @@ its position (see chat history: calendar/appearance styling consolidation).
 | `wallpaper_accent_role` | String (`WallpaperAccentRole`) | `wallpaperAccentRole` | `PRIMARY` | only meaningful when `accent_from_system` |
 | `icon_render_mode` | String (`IconRenderMode`) | `iconRenderMode` | `SYSTEM_DEFAULT` | |
 | `icon_shape` | String (`IconShape`) | `iconShape` | `SQUIRCLE` | icon outline (Squircle n=4 / Rounded n=2.6 / Circle / Square); global, not facet-overridable; backed up |
+| `icon_scale_percent` | Int | `iconScalePercent` | `100` | Icon size, 80..120 (clamped on read and write); scales every app icon outside settings (`LocalIconScale`); global; backed up |
 | `icon_pack_package` | String | `iconPackPackage` | `null` (absent) | installed icon pack applied launcher-wide; while set, `effectiveIconRenderMode` is `SYSTEM_DEFAULT` and `icon_render_mode` is kept for when it's cleared; cleared by `IconPackRepository.loadApplied` when the pack isn't installed; backed up |
 | `icon_pack_fallback` | String (`IconPackFallback`) | `iconPackFallback` | `MATCH_PACK` | apps the pack has no icon for: the pack's back/mask/upon art, or their own icon; backed up |
 | `launcher_font_option` | String (`LauncherFontOption`) | `launcherFontOption` | `SYSTEM` | also styles the calendar events strip |
@@ -701,7 +708,7 @@ its position (see chat history: calendar/appearance styling consolidation).
 |---|---|---|---|
 | `drawer_presentation` | String (`DrawerPresentation`) | `drawerPresentation` | `LIST` |
 | `drawer_grid_size` | String (`DrawerGridDensity`) | `drawerGridDensity` | `COMPACT` |
-| `drawer_list_item_size` | String (`DrawerListItemSize`) | `drawerListItemSize` | `REGULAR` |
+| `drawer_list_item_size` | String (`DrawerListItemSize`) | `drawerListItemSize` | `REGULAR` | a row is icon + padding each side: Compact 36 + 4, Regular 44 + 4, Spacious 44 + 8 (icons × Icon size); also sizes Private Space's rows |
 | `drawer_opacity` | Float | `drawerOpacity` | `0.6` |
 | `show_drawer_icons` | Boolean | `showDrawerIcons` | `true` |
 | `show_drawer_labels` | Boolean | `showDrawerLabels` | `true` |

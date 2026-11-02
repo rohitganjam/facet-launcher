@@ -32,6 +32,8 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -65,6 +67,7 @@ import com.facetlauncher.app.data.model.IconColour
 import com.facetlauncher.app.data.model.IconPackFallback
 import com.facetlauncher.app.data.model.IconPackInfo
 import com.facetlauncher.app.data.model.IconRenderMode
+import com.facetlauncher.app.data.model.IconScale
 import com.facetlauncher.app.data.model.IconShape
 import com.facetlauncher.app.data.model.IconStyle
 import com.facetlauncher.app.data.model.LauncherSettings
@@ -88,6 +91,7 @@ import com.facetlauncher.app.ui.theme.Ink
 import com.facetlauncher.app.ui.theme.LocalIconRenderMode
 import com.facetlauncher.app.ui.theme.Muted
 import com.facetlauncher.app.ui.theme.SurfaceContainer
+import kotlin.math.roundToInt
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
 
@@ -133,6 +137,7 @@ fun IconsScreen(
         onOpenPack = iconsViewModel::openPack,
         onFindPacks = { openIconPackSearch(context) },
         onIconShapeChange = viewModel::setIconShape,
+        onIconScaleChange = viewModel::setIconScalePercent,
         modifier = modifier,
     )
 }
@@ -158,6 +163,7 @@ internal fun IconsContent(
     onFindPacks: () -> Unit,
     onIconShapeChange: (IconShape) -> Unit,
     modifier: Modifier = Modifier,
+    onIconScaleChange: (Int) -> Unit = {},
 ) {
     val homeSamples = remember(uiState.effectiveFavorites, uiState.effectiveDockItems) {
         (uiState.effectiveFavorites + uiState.effectiveDockItems).sampleApps()
@@ -198,9 +204,36 @@ internal fun IconsContent(
                         onIconShapeChange = onIconShapeChange,
                     )
                 }
+                item { SettingsSectionHeader(stringResource(R.string.icons_screen_icon_size)) }
+                item { SettingsCard { IconSizeSlider(percent = settings.iconScalePercent, onChange = onIconScaleChange) } }
             }
         },
     )
+}
+
+/** Settings → Icons → Icon size: every app icon on Home, the dock, the drawer and folders, 80–120% in 1% steps. */
+@Composable
+private fun IconSizeSlider(percent: Int, onChange: (Int) -> Unit, modifier: Modifier = Modifier) {
+    Column(modifier = modifier.testTag("icons_size_slider").padding(vertical = 8.dp)) {
+        Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
+            Text(text = stringResource(R.string.icons_screen_icon_size), style = MaterialTheme.typography.bodyLarge, color = Ink)
+            Text(text = stringResource(R.string.percent_format, percent), style = MaterialTheme.typography.bodyMedium, color = Muted)
+        }
+        Slider(
+            value = percent.toFloat(),
+            onValueChange = { onChange(it.roundToInt()) },
+            valueRange = IconScale.MIN_PERCENT.toFloat()..IconScale.MAX_PERCENT.toFloat(),
+            // One stop per percent between the ends.
+            steps = IconScale.MAX_PERCENT - IconScale.MIN_PERCENT - 1,
+            colors = SliderDefaults.colors(
+                thumbColor = Accent,
+                activeTrackColor = Accent,
+                inactiveTrackColor = Hairline,
+                activeTickColor = Color.Transparent,
+                inactiveTickColor = Color.Transparent,
+            ),
+        )
+    }
 }
 
 @Composable
@@ -591,13 +624,13 @@ private fun IconShapeOption(shape: IconShape, isSelected: Boolean, enabled: Bool
         // reserved on every option so selecting one doesn't shift the row.
         Box(
             modifier = Modifier
-                .size(AppIconSize.TILE + (ICON_SHAPE_RING_WIDTH + ICON_SHAPE_RING_GAP) * 2)
+                .size(AppIconSize.ICON + (ICON_SHAPE_RING_WIDTH + ICON_SHAPE_RING_GAP) * 2)
                 .then(if (isSelected) Modifier.border(ICON_SHAPE_RING_WIDTH, Accent, shape.toComposeShape()) else Modifier),
             contentAlignment = Alignment.Center,
         ) {
             Box(
                 modifier = Modifier
-                    .size(AppIconSize.TILE)
+                    .size(AppIconSize.ICON)
                     .background(IconTile, shape.toComposeShape())
                     .then(if (isSelected) Modifier else Modifier.border(1.dp, Hairline, shape.toComposeShape())),
             )

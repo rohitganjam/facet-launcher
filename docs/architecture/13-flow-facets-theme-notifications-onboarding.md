@@ -227,9 +227,9 @@ facet's three switches.
 
 ```mermaid
 flowchart LR
-    DS["DataStore: theme_mode, accent_from_system,\ncustom_accent_swatch, wallpaper_accent_role,\nicon_render_mode, icon_pack_package, icon_shape, launcher_font_option,\nhome_apps_font_weight, font_scale_option"] --> LVM["LauncherViewModel → LauncherUiState\n(iconRenderMode = effectiveIconRenderMode)"]
+    DS["DataStore: theme_mode, accent_from_system,\ncustom_accent_swatch, wallpaper_accent_role,\nicon_render_mode, icon_pack_package, icon_shape, icon_scale_percent,\nlauncher_font_option, home_apps_font_weight, font_scale_option"] --> LVM["LauncherViewModel → LauncherUiState\n(iconRenderMode = effectiveIconRenderMode)"]
     LVM --> ACT["LauncherActivity.setContent"]
-    ACT --> T["FacetLauncherTheme(themeMode, accentFromSystem, customAccentSwatch,\nwallpaperAccentRole, iconRenderMode, iconShape, launcherFontOption,\nhomeAppsFontWeight, fontScaleOption)"]
+    ACT --> T["FacetLauncherTheme(themeMode, accentFromSystem, customAccentSwatch,\nwallpaperAccentRole, iconRenderMode, iconShape, iconScale, launcherFontOption,\nhomeAppsFontWeight, fontScaleOption)"]
     T --> DARK{"themeMode"}
     DARK -- LIGHT --> L[light]
     DARK -- DARK --> D[dark]
@@ -241,7 +241,7 @@ flowchart LR
     SW --> CS
     T --> TYPO["facetTypography(launcherFontOption.fontFamily,\nhomeAppsFontWeight.resolve(), fontScaleOption.scale)"]
     CS --> MT["MaterialTheme(colorScheme, typography, shapes = M3 defaults)"]
-    T --> LOCALS["CompositionLocals: LocalAccentFromSystem, LocalCustomAccentSwatch,\nLocalWallpaperAccentRole, LocalDynamicColorRefreshSignal, LocalIconRenderMode, LocalIconShape\n(LocalStyledIconCache is provided by LauncherActivity)"]
+    T --> LOCALS["CompositionLocals: LocalAccentFromSystem, LocalCustomAccentSwatch,\nLocalWallpaperAccentRole, LocalDynamicColorRefreshSignal, LocalIconRenderMode, LocalIconShape,\nLocalIconScale (LocalStyledIconCache is provided by LauncherActivity)"]
     MT --> APP[every screen]
     LOCALS --> APP
 ```

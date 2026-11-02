@@ -55,8 +55,9 @@ starting at `HOME`.
 | App list (Favorites / Recents / Most Used) | `ui/home/HomeSlots.kt`, `HomeAppList.kt`, `domain/ObserveHomeScreenStateUseCase.kt` | Per-facet `ListContentMode`. Section heading is dynamic (FAVORITES/RECENTS/MOST USED). |
 | — Favorites | `data/FavoriteAppRepository.kt`, `DefaultFavoriteAppRepository.kt` | Up to 8. Global **Default favorites** list + per-facet override (`overridingFavorites`). Uninstall-collapse + hard delete. Reorder in Settings, not the picker. |
 | — Recents / Most Used | `data/UsageStatsRepository.kt` | `UsageStatsManager`, 30-day window. **Gated on `PACKAGE_USAGE_STATS`** (special access). Shows a dashed strip + "Open settings" when ungranted; strip dismisses on tap. |
-| App list layout | `AppRowPosition` (LEFT/RIGHT), `AppRowPresentation` (ICON_ONLY / ICON_AND_TEXT / TEXT_ONLY), `AppListVerticalAlignment` (TOP/BOTTOM) | Per-facet overridable. |
-| Dock | `data/DockAppRepository.kt`, `ui/home/DockIcon.kt`, `HomeContent.kt` | 0–5 apps, **shared by default, with a per-facet override** (`overrideDock`) — a facet inherits the launcher-wide dock until it opts to set its own. Icons or Text display mode. Omitted entirely when empty. Reorder in Settings. |
+| App list layout | `AppRowPosition` (LEFT/RIGHT), `AppRowPresentation` (ICON_ONLY / ICON_AND_TEXT / TEXT_ONLY), `AppListVerticalAlignment` (TOP/BOTTOM), grid display (Icons / Text / Icons and text) | Per-facet overridable. |
+| Shrink list to fit | `AppListShrinkToFit` (`ui/settings/DockAppsAppearanceScreen.kt`, `ui/home/HomeFrame.kt`) | List layouts only, off by default: a long Home list scrolls; on, it drops to Compact rows when Regular ones wouldn't fit. Per-facet overridable. |
+| Dock | `data/DockAppRepository.kt`, `ui/home/DockIcon.kt`, `HomeContent.kt` | 0–5 apps, **shared by default, with a per-facet override** (`overrideDock`) — a facet inherits the launcher-wide dock until it opts to set its own. Icons, Text, or Icons and text display mode; never shrinks with the app list. Omitted entirely when empty. Reorder in Settings. |
 | Notification badges | `data/FacetNotificationListenerService.kt`, `NotificationBadgeRepository.kt` | Dot or Count (capped `9+`) on favorites list, dock, and drawer. Respects system silent-channel suppression, filters group summaries. **Gated on notification listener access** (special access). |
 | App launch | `LauncherActivity.launchApp` | `ACTION_MAIN`/`CATEGORY_LAUNCHER` component intent. |
 | App long-press context menu | `ui/components/AppContextMenu.kt`, `data/AppShortcutRepository.kt` | App info, Uninstall (`REQUEST_DELETE_PACKAGES`), and the app's own published shortcuts (App Shortcuts API — requires Facet to be default launcher; silently omitted otherwise). Rename is **not** built (deferred to icon-pack work). |
@@ -178,15 +179,16 @@ from the `release_notes/` change log. English only. Backfilled from 0.1.10.
 | Light + dark scheme | `ui/theme/Theme.kt` | `ThemeMode` LIGHT / DARK / SYSTEM (default). |
 | Status bar icons | `SystemBarIconStyle`, `ui/theme/SystemBars.kt` | Default (matches the theme) / Light / Dark for status + 3-button nav icon color over the wallpaper (Home, Hub, carousel, Drawer). Opaque screens always follow the theme; Private Space is always light. Global; in backups. The gesture pill adapts by itself. |
 | Accent color | `accentFromSystem` (default true) | Material You from wallpaper (`WallpaperAccentRole` primary/secondary/tertiary) OR a fixed `AccentSwatch` picker. |
-| Icon render mode | `IconRenderMode` | System default OR monochrome overlay (tints via `Icon.getMonochrome()` or a bitmap transform with the accent). Global, not per-app. |
+| Icon render mode | `IconRenderMode` | System default OR monochrome overlay (tints via `Icon.getMonochrome()` or a bitmap transform with the accent). Global, not per-app. An applied icon pack stands in for it. |
 | Launcher font | `LauncherFontOption` | Base font for all text roles except clock/calendar (which have their own picker + a "Default launcher font" option). |
 | Font weight | `homeAppsFontWeight`, `calendarFontWeight` | `FontWeightOption` (6 stops). Home-apps weight scopes to app list + dock + drawer labels. Calendar weight is facet-overridable. |
 | App label color | `appLabelColorOption` (`ClockColorOption`) | THEME / THEME_INVERTED / ACCENT_PRIMARY / ACCENT_SECONDARY. |
-| Icon shape | `IconShape` (SQUIRCLE default, ROUNDED, CIRCLE, SQUARE) | Global outline for app icons, picked in Appearance with each option drawn in its own shape; the selected one gets an accent ring with a gap. |
+| Icon shape | `IconShape` (SQUIRCLE default, ROUNDED, CIRCLE, SQUARE) | Global outline for app icons, picked in Appearance with each option drawn in its own shape; the selected one gets an accent ring with a gap. An applied icon pack's shape wins for the icons it draws. |
+| Icon size | `iconScalePercent`, `AppIconSize` + `LocalIconScale` (`ui/components/AppIcon.kt`) | One size for every app icon on Home, the dock, the drawer, folders and Private Space (44dp at 100%; Compact rows 36dp), scaled 80–120% in 1% steps from the Icons screen. Settings screens and pickers stay fixed. Global. |
 | Live preview card | `AppearanceSettingsScreen.kt` | Wallpaper-backed sample of app rows + dock icon. |
 | Appearance screen order | `AppearanceSettingsScreen.kt` | Preview, then a Clock & calendar card (the Clock Style and Calendars to display rows), Dock & home (one "Dock & Apps appearance" row), and — global only — Notifications (a "Notifications and media" row) and General (one "Fonts, themes and icons" row). The same screen serves a facet, which has only the first two. |
-| Per-app label rename | **Not built.** | Deferred to icon-pack work (F11 v2, parked). |
-| Third-party icon packs | **Not built / parked** (PRD §3a). | |
+| Per-app label rename | **Not built.** | |
+| Third-party icon packs | `data/iconpack/`, `ui/settings/IconsScreen.kt` (see [19](docs/architecture/19-flow-icon-packs.md)) | Free. Installed packs (Nova/ADW/Apex/GO theme intents) shown by their own app icon under "External"; one applies launcher-wide in place of the built-in style. Exact activity then package lookup, `iconback`/`iconmask`/`iconupon` theming for missed apps ("Match pack") or their own icon ("Keep default"), calendar packs dated by day, Open pack, Get more / Find icon packs (Play Store search). Unapplied if the pack is uninstalled or missing after a restore. Backed up. |
 
 ---
 

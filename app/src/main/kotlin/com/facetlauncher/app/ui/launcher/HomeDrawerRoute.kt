@@ -323,6 +323,7 @@ fun HomeDrawerRoute(
         privateSpaceViewModel,
         drawerState.privateSpaceState,
         drawerState.settings.recentlyInstalledPosition,
+        drawerState.settings.drawerListItemSize,
     )
 
     Box(

@@ -108,6 +108,7 @@ import androidx.compose.ui.unit.sp
 import com.facetlauncher.app.R
 import com.facetlauncher.app.data.WorkProfileInfo
 import com.facetlauncher.app.data.model.AppInfo
+import com.facetlauncher.app.data.model.AppListGridDisplayMode
 import com.facetlauncher.app.data.model.AppProfile
 import com.facetlauncher.app.data.model.ContactConnection
 import com.facetlauncher.app.data.model.ContactInfo
@@ -872,14 +873,14 @@ private fun Modifier.drawerDashedBorder(color: Color, cornerRadius: androidx.com
  */
 @Composable
 private fun ContactRow(contact: ContactInfo, onClick: () -> Unit, modifier: Modifier = Modifier, itemSize: DrawerListItemSize = DrawerListItemSize.COMPACT) {
-    val avatarSize = itemSize.iconSizeDp.dp
+    val avatarSize = AppIconSize.forRow(itemSize)
 
     Row(
         modifier = modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
             .testTag("contact_row_${contact.id}")
-            .padding(vertical = 8.dp + itemSize.extraRowPaddingDp.dp),
+            .padding(vertical = itemSize.verticalPaddingDp.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(14.dp),
     ) {
@@ -910,7 +911,7 @@ private fun SettingsResultRow(entry: SettingsSearchEntry, onClick: () -> Unit, m
             .fillMaxWidth()
             .clickable(onClick = onClick)
             .testTag("settings_result_row_${entry.id}")
-            .padding(vertical = 8.dp + itemSize.extraRowPaddingDp.dp),
+            .padding(vertical = itemSize.verticalPaddingDp.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(14.dp),
     ) {
@@ -918,7 +919,7 @@ private fun SettingsResultRow(entry: SettingsSearchEntry, onClick: () -> Unit, m
             imageVector = Icons.Default.Settings,
             contentDescription = null,
             tint = Muted,
-            modifier = Modifier.size(itemSize.iconSizeDp.dp),
+            modifier = Modifier.size(AppIconSize.forRow(itemSize)),
         )
         Text(text = entry.label, style = MaterialTheme.typography.bodyLarge, color = DrawerAppTextColor)
     }
@@ -1201,11 +1202,11 @@ private fun DrawerRecentlyInstalledRow(
                 .clip(MaterialTheme.shapes.large)
                 .clickable(onClick = { sheetOpen = true })
                 .testTag("drawer_recently_installed_row")
-                .padding(horizontal = 8.dp, vertical = 8.dp + itemSize.extraRowPaddingDp.dp),
+                .padding(horizontal = 8.dp, vertical = itemSize.verticalPaddingDp.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(14.dp),
         ) {
-            RecentlyInstalledGlyph(modifier = Modifier.size(itemSize.iconSizeDp.dp))
+            RecentlyInstalledGlyph(modifier = Modifier.size(AppIconSize.forRow(itemSize)))
             Text(
                 text = stringResource(R.string.drawer_recently_installed_label),
                 style = MaterialTheme.typography.bodyLarge.copy(fontWeight = appearance.labelFontWeight),
@@ -1254,7 +1255,8 @@ private fun RecentlyInstalledGlyph(modifier: Modifier = Modifier) {
             imageVector = RecencyIcon,
             contentDescription = null,
             tint = InkInverted,
-            modifier = Modifier.size(AppIconSize.SHORTCUT),
+            // A folder tile's mini-icon proportion, so the glyph scales with the row.
+            modifier = Modifier.fillMaxSize(AppIconSize.FOLDER_MINI / AppIconSize.ICON),
         )
     }
 }
@@ -1280,11 +1282,11 @@ private fun DrawerFolderRow(
                 .clip(MaterialTheme.shapes.large)
                 .longPressReleaseClickable(onClick = { sheetOpen = true }, onLongPress = { menuExpanded = true })
                 .testTag("drawer_folder_row_${folder.id}")
-                .padding(horizontal = 8.dp, vertical = 8.dp + itemSize.extraRowPaddingDp.dp),
+                .padding(horizontal = 8.dp, vertical = itemSize.verticalPaddingDp.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(14.dp),
         ) {
-            FolderTileGlyph(folder = folder, modifier = Modifier.size(itemSize.iconSizeDp.dp))
+            FolderTileGlyph(folder = folder, size = AppIconSize.forRow(itemSize))
             Text(text = folder.name, style = MaterialTheme.typography.bodyLarge.copy(fontWeight = labelFontWeight), color = DrawerAppTextColor)
         }
         if (sheetOpen) {
@@ -1338,7 +1340,7 @@ private fun DrawerAppRow(
                 .testTag("drawer_app_row_${app.packageName}")
                 // Base 6dp vertical padding plus the selected size tier's extra (0/8/16dp) — see
                 // DrawerListItemSize's own doc (see chat history).
-                .padding(horizontal = 8.dp, vertical = 8.dp + itemSize.extraRowPaddingDp.dp),
+                .padding(horizontal = 8.dp, vertical = itemSize.verticalPaddingDp.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(14.dp),
         ) {
@@ -1350,7 +1352,7 @@ private fun DrawerAppRow(
                     icon = app.icon,
                     monochromeIcon = app.monochromeIcon,
                     fromIconPack = app.iconFromPack,
-                    size = itemSize.iconSizeDp.dp,
+                    size = AppIconSize.forRow(itemSize),
                     contentDescription = null,
                     isWorkApp = app.profile == AppProfile.WORK,
                     isOtherProfileApp = app.profile == AppProfile.OTHER,
@@ -1428,7 +1430,7 @@ private fun DrawerGridContent(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             if (folderDisplayMode == DrawerFolderDisplayMode.SHOW_FIRST) {
-                drawerFolderTiles(pinnedFolders, rowHeight, appearance, actions, appMenuNotifications)
+                drawerFolderTiles(pinnedFolders, columns, rowHeight, appearance, actions, appMenuNotifications)
             }
             items(items, key = { it.itemKey() }) { item ->
                 when (item) {
@@ -1447,12 +1449,13 @@ private fun DrawerGridContent(
                         appearance = appearance,
                         actions = actions,
                         appMenuNotifications = appMenuNotifications,
+                        gridColumns = columns,
                         modifier = Modifier.height(rowHeight),
                     )
                 }
             }
             if (folderDisplayMode == DrawerFolderDisplayMode.SHOW_LAST) {
-                drawerFolderTiles(pinnedFolders, rowHeight, appearance, actions, appMenuNotifications)
+                drawerFolderTiles(pinnedFolders, columns, rowHeight, appearance, actions, appMenuNotifications)
             }
         }
     }
@@ -1461,13 +1464,14 @@ private fun DrawerGridContent(
 /** [DrawerGridContent]'s pinned-folder tiles — no header (see [DrawerGridContent]'s own doc), just the tiles themselves at [rowHeight]. */
 private fun LazyGridScope.drawerFolderTiles(
     folders: List<Folder>,
+    gridColumns: Int,
     rowHeight: Dp,
     appearance: DrawerAppearance,
     actions: DrawerItemActions,
     appMenuNotifications: AppMenuNotifications,
 ) {
     items(folders, key = { "folder_${it.id}" }) { folder ->
-        DrawerFolderTile(folder, appearance, actions, appMenuNotifications, Modifier.height(rowHeight))
+        DrawerFolderTile(folder, appearance, actions, appMenuNotifications, gridColumns, Modifier.height(rowHeight))
     }
 }
 
@@ -1500,7 +1504,7 @@ private fun DrawerGridTile(
             icon = app.icon,
             monochromeIcon = app.monochromeIcon,
             fromIconPack = app.iconFromPack,
-            size = AppIconSize.TILE,
+            size = AppIconSize.scaled(),
             contentDescription = null,
             notificationCount = badgeCount,
             badgeStyle = appearance.notificationBadgeStyle,
@@ -1516,7 +1520,7 @@ private fun DrawerGridTile(
                 textAlign = TextAlign.Center,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.widthIn(max = 56.dp),
+                modifier = Modifier.widthIn(max = AppIconSize.scaled(AppIconSize.GRID_LABEL_WIDTH)),
             )
         }
         AppContextMenu(
@@ -1545,6 +1549,8 @@ private fun DrawerFolderTile(
     appearance: DrawerAppearance,
     actions: DrawerItemActions,
     appMenuNotifications: AppMenuNotifications,
+    /** The drawer grid's column count, which the folder's own grid matches. */
+    gridColumns: Int,
     modifier: Modifier = Modifier,
 ) {
     val labelFontWeight = appearance.labelFontWeight
@@ -1559,7 +1565,7 @@ private fun DrawerFolderTile(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
-        FolderTileGlyph(folder = folder, modifier = Modifier.size(AppIconSize.TILE))
+        FolderTileGlyph(folder = folder, size = AppIconSize.scaled())
         if (appearance.showLabels) {
             Spacer(modifier = Modifier.height(7.dp))
             Text(
@@ -1569,7 +1575,7 @@ private fun DrawerFolderTile(
                 textAlign = TextAlign.Center,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.widthIn(max = 56.dp),
+                modifier = Modifier.widthIn(max = AppIconSize.scaled(AppIconSize.GRID_LABEL_WIDTH)),
             )
         }
         if (sheetOpen) {
@@ -1578,6 +1584,8 @@ private fun DrawerFolderTile(
                 onDismissRequest = { sheetOpen = false },
                 onAppClick = actions.onAppClick,
                 presentation = DrawerPresentation.GRID,
+                gridColumns = gridColumns,
+                gridDisplayMode = if (appearance.showLabels) AppListGridDisplayMode.ICONS_AND_TEXT else AppListGridDisplayMode.ICONS,
                 onRemoveFromFolder = actions.onRemoveFromFolder,
                 headerAction = FolderSheetHeaderAction.Rename(onRename = actions.onRenameFolder),
                 appMenuNotifications = appMenuNotifications,

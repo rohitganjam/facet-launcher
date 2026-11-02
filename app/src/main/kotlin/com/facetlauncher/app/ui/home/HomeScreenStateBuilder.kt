@@ -1,6 +1,9 @@
 package com.facetlauncher.app.ui.home
 
 import androidx.compose.ui.unit.dp
+import com.facetlauncher.app.data.model.AppListLayout
+import com.facetlauncher.app.data.model.AppListShrinkToFit
+import com.facetlauncher.app.data.model.DrawerPresentation
 import com.facetlauncher.app.data.model.CalendarEvent
 import com.facetlauncher.app.data.model.Folder
 import com.facetlauncher.app.data.model.LauncherSettings
@@ -55,6 +58,19 @@ data class HomeLiveState(
     val isPro: Boolean = true,
 )
 
+/** How Home's tiles look; its folders open the way Home's list is laid out, a grid only when Home's is. */
+private fun ResolvedFacetStyle.itemLook(settings: LauncherSettings, content: HomeScreenContent) = HomeItemLook(
+    badgeCounts = content.badgeCounts,
+    badgeStyle = settings.notificationBadgeStyle,
+    appMenuNotifications = content.appMenuNotifications,
+    folderCandidates = content.folderCandidates?.toImmutableList(),
+    drawerPresentation = if (appList.layout == AppListLayout.GRID) DrawerPresentation.GRID else DrawerPresentation.LIST,
+    folderGridColumns = appList.gridColumns.columns,
+    folderGridDisplayMode = appList.gridDisplayMode,
+    labelColorOption = settings.appLabelColorOption,
+    labelFontWeightOption = settings.homeAppsFontWeight,
+)
+
 /**
  * The state [HomeScreen] draws, built from the resolved style for the given orientation. Home and the
  * facet previews both build theirs here, so a preview shows exactly the placement Home would.
@@ -68,20 +84,14 @@ fun ResolvedFacetStyle.toHomeScreenState(
 ): HomeScreenState = HomeScreenState(
     list = HomeListState(
         items = content.listItems,
-        look = HomeItemLook(
-            badgeCounts = content.badgeCounts,
-            badgeStyle = settings.notificationBadgeStyle,
-            appMenuNotifications = content.appMenuNotifications,
-            folderCandidates = content.folderCandidates?.toImmutableList(),
-            labelColorOption = settings.appLabelColorOption,
-            labelFontWeightOption = settings.homeAppsFontWeight,
-        ),
+        look = itemLook(settings, content),
         layout = appList.layout,
         alignment = listAlignment.of(landscape),
         rowPresentation = appList.rowPresentation,
         gridColumns = appList.gridColumns,
         gridDisplayMode = appList.gridDisplayMode,
         showUsageAccessPrompt = content.showUsageAccessPrompt,
+        shrinkToFit = appList.shrinkToFit == AppListShrinkToFit.ON,
     ),
     dock = HomeDockState(items = content.dockItems, displayMode = dockDisplayMode),
     clock = HomeClockState(
