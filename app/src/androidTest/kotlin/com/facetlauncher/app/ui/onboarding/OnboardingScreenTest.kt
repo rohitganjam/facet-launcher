@@ -113,6 +113,14 @@ class OnboardingScreenTest {
         composeRule.waitForIdle()
     }
 
+    private fun goToHomeSetup() {
+        repeat(2) {
+            composeRule.onNodeWithTag("onboarding_next").performClick()
+            composeRule.waitForIdle()
+        }
+        composeRule.onNodeWithTag("onboarding_home_setup_page").assertExists()
+    }
+
     @Test
     fun `first run shows the intro step`() {
         setContent()
@@ -121,19 +129,19 @@ class OnboardingScreenTest {
     }
 
     @Test
-    fun `Next advances intro through home setup to facets then finishes onboarding`() {
+    fun `Next advances intro through facets to home setup then finishes onboarding`() {
         var finished = false
         setContent(onFinish = { finished = true })
 
         composeRule.onNodeWithTag("onboarding_next").performClick()
         composeRule.waitForIdle()
-        composeRule.onNodeWithTag("onboarding_home_setup_page").assertExists()
+        composeRule.onNodeWithTag("onboarding_facets_page").assertExists()
 
         composeRule.onNodeWithTag("onboarding_next").performClick()
         composeRule.waitForIdle()
-        composeRule.onNodeWithTag("onboarding_facets_page").assertExists()
+        composeRule.onNodeWithTag("onboarding_home_setup_page").assertExists()
 
-        // Facets' "Next" is the flow's last, real action — the "make Facet your home screen"
+        // Home setup's "Continue" is the flow's last, real action — the "make Facet your home screen"
         // prompt itself now lives on the real Home screen instead of a further step here (see
         // SetDefaultLauncherSheet's own doc), so reaching it just finishes onboarding directly.
         composeRule.onNodeWithTag("onboarding_next").performClick()
@@ -148,8 +156,7 @@ class OnboardingScreenTest {
         // Drawer/Search's own "Add to folder" long-press flow, unreachable from onboarding), so
         // both pickers should go straight to the apps list rather than offering a dead-end tab.
         setContent()
-        composeRule.onNodeWithTag("onboarding_next").performClick()
-        composeRule.waitForIdle()
+        goToHomeSetup()
 
         composeRule.onNodeWithTag("onboarding_manage_dock").performClick()
         composeRule.waitForIdle()
@@ -165,7 +172,18 @@ class OnboardingScreenTest {
     }
 
     @Test
-    fun `Back on the home-setup step returns to intro`() {
+    fun `Back on the home-setup step returns to facets`() {
+        setContent()
+        goToHomeSetup()
+
+        composeRule.onNodeWithTag("onboarding_back").performClick()
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithTag("onboarding_facets_page").assertExists()
+    }
+
+    @Test
+    fun `Back on the facets step returns to intro`() {
         setContent()
         composeRule.onNodeWithTag("onboarding_next").performClick()
         composeRule.waitForIdle()
@@ -174,20 +192,6 @@ class OnboardingScreenTest {
         composeRule.waitForIdle()
 
         composeRule.onNodeWithTag("onboarding_intro_page").assertExists()
-    }
-
-    @Test
-    fun `Back on the facets step returns to home setup`() {
-        setContent()
-        composeRule.onNodeWithTag("onboarding_next").performClick()
-        composeRule.waitForIdle()
-        composeRule.onNodeWithTag("onboarding_next").performClick()
-        composeRule.waitForIdle()
-
-        composeRule.onNodeWithTag("onboarding_back").performClick()
-        composeRule.waitForIdle()
-
-        composeRule.onNodeWithTag("onboarding_home_setup_page").assertExists()
     }
 
     @Test
@@ -197,20 +201,19 @@ class OnboardingScreenTest {
         composeRule.onNodeWithTag("onboarding_screen").performTouchInput { swipeLeft() }
         composeRule.waitForIdle()
 
-        composeRule.onNodeWithTag("onboarding_home_setup_page").assertExists()
+        composeRule.onNodeWithTag("onboarding_facets_page").assertExists()
     }
 
     @Test
     fun `swiping right returns to the previous step`() {
         setContent()
-        composeRule.onNodeWithTag("onboarding_next").performClick()
-        composeRule.waitForIdle()
+        goToHomeSetup()
         composeRule.onNodeWithTag("onboarding_home_setup_page").assertExists()
 
         composeRule.onNodeWithTag("onboarding_screen").performTouchInput { swipeRight() }
         composeRule.waitForIdle()
 
-        composeRule.onNodeWithTag("onboarding_intro_page").assertExists()
+        composeRule.onNodeWithTag("onboarding_facets_page").assertExists()
     }
 
     @Test
@@ -231,7 +234,7 @@ class OnboardingScreenTest {
         composeRule.waitForIdle()
         composeRule.onNodeWithTag("onboarding_next").performClick()
         composeRule.waitForIdle()
-        composeRule.onNodeWithTag("onboarding_facets_page").assertExists()
+        composeRule.onNodeWithTag("onboarding_home_setup_page").assertExists()
 
         composeRule.onNodeWithTag("onboarding_screen").performTouchInput { swipeLeft() }
         composeRule.waitForIdle()
@@ -243,8 +246,7 @@ class OnboardingScreenTest {
     fun `tapping Favorites opens the full-screen favorites picker`() {
         setContent()
 
-        composeRule.onNodeWithTag("onboarding_next").performClick()
-        composeRule.waitForIdle()
+        goToHomeSetup()
 
         composeRule.onNodeWithTag("onboarding_edit_favorites").performClick()
         composeRule.waitForIdle()
@@ -255,8 +257,7 @@ class OnboardingScreenTest {
     @Test
     fun `Done on the favorites picker returns to home setup`() {
         setContent()
-        composeRule.onNodeWithTag("onboarding_next").performClick()
-        composeRule.waitForIdle()
+        goToHomeSetup()
         composeRule.onNodeWithTag("onboarding_edit_favorites").performClick()
         composeRule.waitForIdle()
 
@@ -276,8 +277,7 @@ class OnboardingScreenTest {
         }
         requireNotNull(seededApp)
 
-        composeRule.onNodeWithTag("onboarding_next").performClick()
-        composeRule.waitForIdle()
+        goToHomeSetup()
         composeRule.waitUntil(timeoutMillis = 3_000) {
             composeRule.onNodeWithText("1 of ${AppListLimits.MAX_DOCK_APPS}").let { runCatching { it.assertExists() }.isSuccess }
         }
@@ -298,8 +298,7 @@ class OnboardingScreenTest {
         }
         requireNotNull(seededApp)
 
-        composeRule.onNodeWithTag("onboarding_next").performClick()
-        composeRule.waitForIdle()
+        goToHomeSetup()
         composeRule.waitUntil(timeoutMillis = 3_000) {
             composeRule.onNodeWithTag("onboarding_clear_dock").let { runCatching { it.assertExists() }.isSuccess }
         }
@@ -327,8 +326,7 @@ class OnboardingScreenTest {
         }
         requireNotNull(seededApp)
 
-        composeRule.onNodeWithTag("onboarding_next").performClick()
-        composeRule.waitForIdle()
+        goToHomeSetup()
         composeRule.waitUntil(timeoutMillis = 3_000) {
             composeRule.onNodeWithTag("onboarding_clear_favorites").let { runCatching { it.assertExists() }.isSuccess }
         }
@@ -349,8 +347,7 @@ class OnboardingScreenTest {
     @Test
     fun `home setup offers the search bar position and both search toggles`() {
         setContent()
-        composeRule.onNodeWithTag("onboarding_next").performClick()
-        composeRule.waitForIdle()
+        goToHomeSetup()
 
         composeRule.onNodeWithTag("onboarding_search_bar_position_row").performScrollTo().assertExists()
         composeRule.onNodeWithTag("onboarding_search_contacts_toggle").performScrollTo().assertIsOff()
@@ -360,8 +357,7 @@ class OnboardingScreenTest {
     @Test
     fun `turning on Search settings in home setup switches it on`() {
         setContent()
-        composeRule.onNodeWithTag("onboarding_next").performClick()
-        composeRule.waitForIdle()
+        goToHomeSetup()
 
         composeRule.onNodeWithTag("onboarding_search_settings_toggle").performScrollTo().performClick()
 
@@ -390,16 +386,15 @@ class OnboardingScreenTest {
     }
 
     @Test
-    fun `system back from home setup returns to the intro step`() {
+    fun `system back from home setup returns to the facets step`() {
         setContent()
-        composeRule.onNodeWithTag("onboarding_next").performClick()
-        composeRule.waitForIdle()
+        goToHomeSetup()
         composeRule.onNodeWithTag("onboarding_home_setup_page").assertExists()
 
         pressBack()
         composeRule.waitForIdle()
 
-        composeRule.onNodeWithTag("onboarding_intro_page").assertExists()
+        composeRule.onNodeWithTag("onboarding_facets_page").assertExists()
     }
 
     @Test
@@ -417,8 +412,7 @@ class OnboardingScreenTest {
     fun `Skip on the home-setup step finishes onboarding`() {
         var finished = false
         setContent(onFinish = { finished = true })
-        composeRule.onNodeWithTag("onboarding_next").performClick()
-        composeRule.waitForIdle()
+        goToHomeSetup()
         composeRule.onNodeWithTag("onboarding_home_setup_page").assertExists()
 
         composeRule.onNodeWithTag("onboarding_skip").performClick()
@@ -431,8 +425,6 @@ class OnboardingScreenTest {
     fun `Skip on the facets step finishes onboarding`() {
         var finished = false
         setContent(onFinish = { finished = true })
-        composeRule.onNodeWithTag("onboarding_next").performClick()
-        composeRule.waitForIdle()
         composeRule.onNodeWithTag("onboarding_next").performClick()
         composeRule.waitForIdle()
         composeRule.onNodeWithTag("onboarding_facets_page").assertExists()

@@ -57,8 +57,8 @@ enum class DrawerGridDensity(@param:StringRes val displayNameRes: Int) {
  */
 enum class DrawerListItemSize(val iconSizeDp: Int, val verticalPaddingDp: Int, @param:StringRes val displayNameRes: Int) {
     COMPACT(36, 4, R.string.drawer_list_item_size_compact),
-    REGULAR(44, 4, R.string.drawer_list_item_size_regular),
-    SPACIOUS(44, 8, R.string.drawer_list_item_size_spacious),
+    REGULAR(44, 12, R.string.drawer_list_item_size_regular),
+    SPACIOUS(44, 16, R.string.drawer_list_item_size_spacious),
 }
 
 /** Settings → Appearance → Icons → Icon size, in percent of [DrawerListItemSize]'s icon sizes. */

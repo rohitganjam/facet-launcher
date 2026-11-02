@@ -131,7 +131,7 @@ icons are always `AppIconSize.ICON` × the Icon size setting, with a one-line la
 ### 1e. List item size and folder sheets
 
 List presentation only. `DrawerListItemSize` is a row's icon and the padding above and below it: Compact 36dp + 4,
-Regular 44dp + 4, Spacious 44dp + 8 (icons × the Icon size setting, see [17 §2b](17-flow-home-layout.md)). Contact and
+Regular 44dp + 12, Spacious 44dp + 16 (icons × the Icon size setting, see [17 §2b](17-flow-home-layout.md)). Contact and
 Settings search rows and Private Space's rows use the same sizes. A folder opened from the drawer follows the drawer:
 from the grid, `FolderContentsSheet` is a grid with the drawer grid's column count (`DrawerFolderTile.gridColumns`)
 and its labels on or off; from the list (or "Recently installed", or Private Space), a list of Regular rows whatever

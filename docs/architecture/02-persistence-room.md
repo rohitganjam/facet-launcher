@@ -708,7 +708,7 @@ its position (see chat history: calendar/appearance styling consolidation).
 |---|---|---|---|
 | `drawer_presentation` | String (`DrawerPresentation`) | `drawerPresentation` | `LIST` |
 | `drawer_grid_size` | String (`DrawerGridDensity`) | `drawerGridDensity` | `COMPACT` |
-| `drawer_list_item_size` | String (`DrawerListItemSize`) | `drawerListItemSize` | `REGULAR` | a row is icon + padding each side: Compact 36 + 4, Regular 44 + 4, Spacious 44 + 8 (icons × Icon size); also sizes Private Space's rows |
+| `drawer_list_item_size` | String (`DrawerListItemSize`) | `drawerListItemSize` | `REGULAR` | a row is icon + padding each side: Compact 36 + 4, Regular 44 + 12, Spacious 44 + 16 (icons × Icon size); also sizes Private Space's rows |
 | `drawer_opacity` | Float | `drawerOpacity` | `0.6` |
 | `show_drawer_icons` | Boolean | `showDrawerIcons` | `true` |
 | `show_drawer_labels` | Boolean | `showDrawerLabels` | `true` |

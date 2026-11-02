@@ -4210,10 +4210,10 @@ How to read: one section per tier, one table per package (mirrors `app/src/main`
 <details><summary><code>OnboardingScreenTest</code> — 21 cases</summary>
 
 - first run shows the intro step
-- Next advances intro through home setup to facets then finishes onboarding
+- Next advances intro through facets to home setup then finishes onboarding
 - dock and favorites pickers reached from onboarding skip the Folders tab
-- Back on the home-setup step returns to intro
-- Back on the facets step returns to home setup
+- Back on the home-setup step returns to facets
+- Back on the facets step returns to intro
 - swiping left advances to the next step
 - swiping right returns to the previous step
 - swiping right on the first step does nothing
@@ -4226,7 +4226,7 @@ How to read: one section per tier, one table per package (mirrors `app/src/main`
 - home setup offers the search bar position and both search toggles
 - turning on Search settings in home setup switches it on
 - completing onboarding requests no runtime permission
-- system back from home setup returns to the intro step
+- system back from home setup returns to the facets step
 - Skip on the intro step finishes onboarding
 - Skip on the home-setup step finishes onboarding
 - Skip on the facets step finishes onboarding

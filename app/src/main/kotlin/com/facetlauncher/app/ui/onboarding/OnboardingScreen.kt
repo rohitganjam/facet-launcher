@@ -56,15 +56,15 @@ import com.facetlauncher.app.ui.theme.Wallpaper
 
 /**
  * The three onboarding steps, in order — see `ONBOARDING_FLOW.md` §3. Reaching the end of
- * [FACETS] (via "Next" or "Skip") completes onboarding directly ([OnboardingScreen]'s [onFinish])
+ * [HOME_SETUP] (via "Next" or "Skip") completes onboarding directly ([OnboardingScreen]'s [onFinish])
  * rather than advancing to a further step — the "make Facet your home screen" prompt lives on the
  * real Home screen instead, shown once there right after onboarding completes (see
  * [SetDefaultLauncherSheet]'s own doc for why).
  */
 enum class OnboardingStep {
     INTRO,
-    HOME_SETUP,
     FACETS,
+    HOME_SETUP,
 }
 
 /** Steps shown in each page's [OnboardingDots]. */
@@ -76,23 +76,23 @@ private enum class OnboardingSubScreen {
     FAVORITES_PICKER,
 }
 
-/** The step a right swipe (or the on-screen "Back" on [OnboardingStep.HOME_SETUP]/[OnboardingStep.FACETS]) lands on — every step but [OnboardingStep.INTRO] can go back this way. */
+/** The step a right swipe (or the on-screen "Back" on [OnboardingStep.FACETS]/[OnboardingStep.HOME_SETUP]) lands on — every step but [OnboardingStep.INTRO] can go back this way. */
 private fun previousStep(step: OnboardingStep): OnboardingStep = when (step) {
     OnboardingStep.INTRO -> OnboardingStep.INTRO
-    OnboardingStep.HOME_SETUP -> OnboardingStep.INTRO
-    OnboardingStep.FACETS -> OnboardingStep.HOME_SETUP
+    OnboardingStep.FACETS -> OnboardingStep.INTRO
+    OnboardingStep.HOME_SETUP -> OnboardingStep.FACETS
 }
 
 /**
- * The step a "Next" action (on-screen or a left swipe) lands on. [OnboardingStep.FACETS] maps to
+ * The step a "Next" action (on-screen or a left swipe) lands on. [OnboardingStep.HOME_SETUP] maps to
  * itself — [OnboardingScreen] special-cases moving past it to call [OnboardingScreen]'s own
  * `onFinish` instead of changing `step`, the same way the old `SET_DEFAULT` step used to be the
  * fixed point every "next" resolved to.
  */
 private fun nextStep(step: OnboardingStep): OnboardingStep = when (step) {
-    OnboardingStep.INTRO -> OnboardingStep.HOME_SETUP
-    OnboardingStep.HOME_SETUP -> OnboardingStep.FACETS
-    OnboardingStep.FACETS -> OnboardingStep.FACETS
+    OnboardingStep.INTRO -> OnboardingStep.FACETS
+    OnboardingStep.FACETS -> OnboardingStep.HOME_SETUP
+    OnboardingStep.HOME_SETUP -> OnboardingStep.HOME_SETUP
 }
 
 /** A swipe shorter than this is treated as a scroll/drag within the step's own content, not a page change. */
@@ -177,7 +177,7 @@ fun OnboardingScreen(
                             },
                             onDragEnd = {
                                 when {
-                                    totalDrag <= -swipeCommitPx -> if (step == OnboardingStep.FACETS) onFinish() else step = nextStep(step)
+                                    totalDrag <= -swipeCommitPx -> if (step == OnboardingStep.HOME_SETUP) onFinish() else step = nextStep(step)
                                     totalDrag >= swipeCommitPx -> step = previousStep(step)
                                 }
                             },
@@ -225,12 +225,12 @@ fun OnboardingScreen(
                     onClearFavorites = viewModel::clearFavorites,
                     onClearDockApps = viewModel::clearDockApps,
                     onBack = { step = previousStep(step) },
-                    onNext = { step = nextStep(step) },
+                    onNext = onFinish,
                 )
                 OnboardingStep.FACETS -> OnboardingFacetsPage(
                     uiState = uiState,
                     onBack = { step = previousStep(step) },
-                    onNext = onFinish,
+                    onNext = { step = nextStep(step) },
                 )
             }
         }

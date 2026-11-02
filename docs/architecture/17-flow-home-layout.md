@@ -71,8 +71,8 @@ Every app icon the user sees (Home's list, grid and dock, folder tiles, the draw
 folder tile's mini icons keep `FOLDER_MINI`'s 20/44 proportion. Settings screens, pickers and the long-press menu header
 use the unscaled sizes so they never shift.
 
-A list row is its icon plus `DrawerListItemSize.verticalPaddingDp` above and below: Compact 36 + 4, Regular 44 + 4,
-Spacious 44 + 8. A text-only Home row keeps the icon's height. Home's list uses Regular; with
+A list row is its icon plus `DrawerListItemSize.verticalPaddingDp` above and below: Compact 36 + 4, Regular 44 + 12,
+Spacious 44 + 16. A text-only Home row keeps the icon's height. Home's list uses Regular; with
 `appListShrinkToFit` on (`AppListShrinkToFit`, facet-overridable, off by default) `HomeFrame`'s one-shot fit check drops it
 to Compact when the Regular list wouldn't fit, otherwise the list keeps Regular rows and scrolls. The dock is not part
 of the check. "Icons and text" (`DockDisplayMode.ICONS_AND_TEXT`, `AppListGridDisplayMode.ICONS_AND_TEXT`) puts a

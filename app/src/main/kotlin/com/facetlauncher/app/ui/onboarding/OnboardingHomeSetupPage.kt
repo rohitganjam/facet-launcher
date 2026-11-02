@@ -62,7 +62,7 @@ import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
 
 /**
- * Onboarding step 2 (`4g`, extended) — the launcher-wide default HOME APPS content mode and DOCK.
+ * Onboarding step 3 (`4g`, extended) — the launcher-wide default HOME APPS content mode and DOCK.
  * Both sections mirror their Settings counterparts (`DockSettingsScreen`, `HomeAppsListSettingsScreen`):
  * a live row that supports drag-to-reorder in place, plus a clickable row that opens the same
  * full-screen picker Settings uses ([com.facetlauncher.app.ui.dock.DockAppPickerScreen],
@@ -132,7 +132,7 @@ fun OnboardingHomeSetupPage(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            OnboardingDots(step = 1, totalSteps = ONBOARDING_STEP_COUNT)
+            OnboardingDots(step = 2, totalSteps = ONBOARDING_STEP_COUNT)
             Row(horizontalArrangement = Arrangement.spacedBy(20.dp)) {
                 TextActionButton(
                     text = stringResource(R.string.action_back),
@@ -141,7 +141,8 @@ fun OnboardingHomeSetupPage(
                     modifier = Modifier.testTag("onboarding_back"),
                 )
                 TextActionButton(
-                    text = stringResource(R.string.action_next),
+                    // The last step: it leads into the set-default sheet on Home, so "Continue", not "Next".
+                    text = stringResource(R.string.action_continue),
                     onClick = onNext,
                     modifier = Modifier.testTag("onboarding_next"),
                 )

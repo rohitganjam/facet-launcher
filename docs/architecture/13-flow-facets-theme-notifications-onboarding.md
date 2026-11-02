@@ -430,9 +430,9 @@ sequenceDiagram
 ```mermaid
 flowchart LR
     START["LauncherActivity\nonboarding_completed == false"] --> INTRO["OnboardingIntroPage"]
-    INTRO --> SETUP["OnboardingHomeSetupPage\n(OnboardingViewModel: list mode, apps-to-show,\ndrawer presentation, search bar position, contacts/settings search,\nreorder/clear dock & favorites)"]
-    SETUP --> FACETS["OnboardingFacetsPage\n(explains facets)"]
-    FACETS -- "Next / Skip / swipe" --> FIN["LauncherViewModel.completeOnboarding()\n→ setOnboardingCompleted(true)"]
+    INTRO --> FACETS["OnboardingFacetsPage\n(explains facets)"]
+    FACETS --> SETUP["OnboardingHomeSetupPage\n(OnboardingViewModel: list mode, apps-to-show,\ndrawer presentation, search bar position, contacts/settings search,\nreorder/clear dock & favorites)"]
+    SETUP -- "Continue / Skip / swipe" --> FIN["LauncherViewModel.completeOnboarding()\n→ setOnboardingCompleted(true)"]
     FIN --> HOME["FacetNavHost (HOME)"]
     HOME --> PROMPT["HomeScreen: 'Set as default' prompt\n(coach mark HOME_SET_DEFAULT_PROMPT, until dismissed\nor DefaultLauncherRepository.isDefaultLauncher())"]
     HOME --> GEST["Gesture hint overlay\n(coach mark HOME_GESTURES)"]

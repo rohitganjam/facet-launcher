@@ -57,7 +57,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 
 /**
- * Onboarding step 3 — teaches the *concept* of facets with an illustrative mockup, not the
+ * Onboarding step 2 — teaches the *concept* of facets with an illustrative mockup, not the
  * user's own real picks (a fresh install only ever has one real facet at this point, so showing
  * three genuinely different-looking "layouts" needs invented content — same call the original
  * design brief made: invented app names, monogram-tile icons, no real products). A small looping
@@ -87,7 +87,7 @@ fun OnboardingFacetsPage(uiState: OnboardingUiState, onBack: () -> Unit, onNext:
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            OnboardingDots(step = 2, totalSteps = ONBOARDING_STEP_COUNT)
+            OnboardingDots(step = 1, totalSteps = ONBOARDING_STEP_COUNT)
             Row(horizontalArrangement = Arrangement.spacedBy(20.dp)) {
                 TextActionButton(
                     text = stringResource(R.string.action_back),
@@ -96,10 +96,7 @@ fun OnboardingFacetsPage(uiState: OnboardingUiState, onBack: () -> Unit, onNext:
                     modifier = Modifier.testTag("onboarding_back"),
                 )
                 TextActionButton(
-                    // Not "Next" (this is the last swipeable step) or "Finish" (it doesn't finish
-                    // onboarding by itself — it leads into the set-default sheet, the real final
-                    // action) — "Continue" describes moving on into that sheet without overclaiming.
-                    text = stringResource(R.string.action_continue),
+                    text = stringResource(R.string.action_next),
                     onClick = onNext,
                     modifier = Modifier.testTag("onboarding_next"),
                 )
