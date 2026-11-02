@@ -392,6 +392,7 @@ erDiagram
         float clock_zone_height_dp "nullable, absent = template height"
         float clock_scale "default 0.8"
         boolean allow_landscape "default true; off = portrait only"
+        boolean hide_status_bar "default false; hides the status bar over Home, Hub and Drawer"
         string landscape_clock_alignment "nullable, absent = use clock_alignment"
         float landscape_clock_zone_height_dp "nullable, absent = use clock_zone_height_dp"
         float landscape_clock_scale "nullable, absent = use clock_scale"
@@ -534,6 +535,7 @@ DataStore serialises writes and is main-safe; callers `viewModelScope.launch { }
 | `removeWeatherCity(WeatherCity)` | `weather_saved_cities`, the four city keys | drop it from the list; clear the four keys when it was the chosen one | `WeatherLocationViewModel` |
 | `setSavedWeatherCities(List<WeatherCity>)` | `weather_saved_cities` | replace the list (restore), at most 10 | `ImportBackupUseCase` |
 | `setAllowLandscape(Boolean)` | `allow_landscape` | set | `AppearanceSettingsViewModel` |
+| `setHideStatusBar(Boolean)` | `hide_status_bar` | set | `AppearanceSettingsViewModel` |
 | `setClockAlignment(ClockAlignment)` | `clock_alignment` | set | `ClockStyleGalleryViewModel`, `HomeViewModel` (clock adjust toolbar) |
 | `setClockZoneHeight(Float)` | `clock_zone_height_dp` | set | `HomeViewModel` (zone drag handle) |
 | `resetClockZoneHeight()` | `clock_zone_height_dp` and `landscape_clock_zone_height_dp` | **remove** | `ClockStyleGalleryViewModel` |
@@ -639,6 +641,7 @@ its position (see chat history: calendar/appearance styling consolidation).
 | `clock_zone_height_dp` | Float | `clockZoneHeightDp` | `null` (= template's natural height) | nullable — `resetClockZoneHeight()` removes the key |
 | `clock_scale` | Float | `clockScale` | `0.8` | `resetClockScale()` removes the key |
 | `allow_landscape` | Boolean | `allowLandscape` | `true` | launcher-wide: off keeps Home in portrait, locks the screen to portrait and hides the landscape settings |
+| `hide_status_bar` | Boolean | `hideStatusBar` | `false` | launcher-wide: hides the status bar over Home, Hub and Drawer; a swipe-down shows it for 3 s ([13](13-flow-facets-theme-notifications-onboarding.md) §2a) |
 | `landscape_clock_alignment` | String (`ClockAlignment`) | `landscapeClockAlignment` | `null` (= `clock_alignment`) | landscape's own placement, written from Home's adjust mode in landscape |
 | `landscape_clock_zone_height_dp` | Float | `landscapeClockZoneHeightDp` | `null` (= `clock_zone_height_dp`) | landscape's divider position (the clock pane width) |
 | `landscape_clock_scale` | Float | `landscapeClockScale` | `null` (= `clock_scale`) | removed by `resetClockScale()` too |
@@ -788,7 +791,7 @@ through a user-chosen SAF `Uri`. Import refuses `backupVersion > CURRENT_BACKUP_
 older (fields added since carry defaults). Contents: `settings: BackupSettings` — every DataStore key except
 the ones below, with `activeFacetIndex` instead of `active_facet_id` and the `landscape_*` keys as flat
 `landscape*` fields. **Not backed up** (all deliberate): `active_facet_id` (a row id), `selected_calendar_ids`
-and `calendar_colors` (keyed by this device's calendar row ids), `allow_landscape` (a per-device choice),
+and `calendar_colors` (keyed by this device's calendar row ids), `allow_landscape` and `hide_status_bar` (per-device choices),
 all four `*_permission_requested` flags and `onboarding_completed`, `defaults_seeded`, `coach_marks_seen`
 (this install's own history). `BackupFacet` carries every `Facet` field except the id and the hosted
 clock stack (`Facet.clockStack`, the rows of `clock_stack_items`): an `AppWidgetHost` id is not

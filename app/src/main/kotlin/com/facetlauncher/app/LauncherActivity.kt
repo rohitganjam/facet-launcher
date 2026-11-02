@@ -15,6 +15,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.core.view.WindowCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import com.facetlauncher.app.data.EntitlementRepository
@@ -61,6 +62,8 @@ class LauncherActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // Android 15+ enforces edge-to-edge; below that the window would resize when the status bar hides or shows.
+        WindowCompat.setDecorFitsSystemWindows(window, false)
 
         handleFacetDeepLink(intent)
 
@@ -97,7 +100,7 @@ class LauncherActivity : ComponentActivity() {
                     fontScaleOption = uiState.fontScaleOption,
                 ) {
                     WarmStyledIcons(uiState.apps, uiState.iconRenderMode)
-                    ProvideSystemBars(uiState.systemBarIconStyle, systemBarsState) {
+                    ProvideSystemBars(uiState.systemBarIconStyle, systemBarsState, uiState.hideStatusBar) {
                         when {
                             uiState.isLoading || uiState.onboardingCompleted == null -> {
                                 // Real settings/apps haven't loaded yet — render nothing rather than a

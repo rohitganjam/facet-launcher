@@ -7,6 +7,51 @@ import org.junit.Test
 class SystemBarsTest {
 
     @Test
+    fun `the status bar is hidden only over the wallpaper with the setting on and no reveal`() {
+        for (backdrop in SystemBarsBackdrop.entries) {
+            val overWallpaper = backdrop == SystemBarsBackdrop.WALLPAPER
+            assertEquals(overWallpaper, isStatusBarHidden(hideSetting = true, backdrop = backdrop, revealed = false))
+            assertEquals(false, isStatusBarHidden(hideSetting = false, backdrop = backdrop, revealed = false))
+            assertEquals(false, isStatusBarHidden(hideSetting = true, backdrop = backdrop, revealed = true))
+        }
+    }
+
+    @Test
+    fun `a swipe reveals a hidden status bar once and then leaves the next swipe for the shade`() {
+        // Given the setting on over the wallpaper, with the system not showing the bar
+        val state = SystemBarsState().apply {
+            backdrop = SystemBarsBackdrop.WALLPAPER
+            hideStatusBar = true
+        }
+
+        // When swiping down, then swiping again while it shows
+        val first = state.revealStatusBar()
+        val second = state.revealStatusBar()
+
+        // Then the first reveals it and the second is not consumed
+        assertEquals(true, first)
+        assertEquals(true, state.statusBarRevealed)
+        assertEquals(false, second)
+    }
+
+    @Test
+    fun `a swipe does not reveal when the system already shows the bar or the setting is off`() {
+        // Given the system showing the bar after an edge swipe
+        val shown = SystemBarsState().apply {
+            backdrop = SystemBarsBackdrop.WALLPAPER
+            hideStatusBar = true
+            systemStatusBarVisible = { true }
+        }
+        // And the setting off
+        val off = SystemBarsState().apply { backdrop = SystemBarsBackdrop.WALLPAPER }
+
+        // Then neither consumes the swipe
+        assertEquals(false, shown.revealStatusBar())
+        assertEquals(false, off.revealStatusBar())
+        assertEquals(false, shown.statusBarRevealed)
+    }
+
+    @Test
     fun `over the wallpaper, match theme follows the theme`() {
         assertEquals(true, useLightSystemBarIcons(SystemBarIconStyle.MATCH_THEME, SystemBarsBackdrop.WALLPAPER, isDarkTheme = true))
         assertEquals(false, useLightSystemBarIcons(SystemBarIconStyle.MATCH_THEME, SystemBarsBackdrop.WALLPAPER, isDarkTheme = false))

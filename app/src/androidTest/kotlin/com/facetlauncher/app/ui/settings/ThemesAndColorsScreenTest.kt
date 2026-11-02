@@ -94,6 +94,21 @@ class ThemesAndColorsScreenTest {
     }
 
     @Test
+    fun hideStatusBarRowDefaultsToOffAndPersistsWhenTurnedOn() {
+        // Given the screen, with the status bar shown by default
+        val settingsRepository = setContent()
+        composeRule.onNodeWithTag("themes_colors_screen").performScrollToNode(hasTestTag("appearance_hide_status_bar_row"))
+        composeRule.onNodeWithText("Hide status bar").assertIsDisplayed()
+        assertEquals(false, runBlocking { settingsRepository.settings.first().hideStatusBar })
+
+        // When tapping the row
+        composeRule.onNodeWithTag("appearance_hide_status_bar_row").performClick()
+
+        // Then the setting is saved
+        composeRule.waitUntil(timeoutMillis = 3_000) { runBlocking { settingsRepository.settings.first().hideStatusBar } }
+    }
+
+    @Test
     // Wallpaper colours (and so the source tabs) exist from Android 12; older devices skip these rather than run them
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
     fun accentSwatchGridOnlyAppearsWhenBasicColorsIsSelectedAndPickingOneShowsItChecked() {
@@ -238,7 +253,7 @@ class ThemesAndColorsScreenTest {
         setContent(onBack = { backPressed = true })
 
         // Then its own title shows, with the live preview card above the controls
-        composeRule.onNodeWithText("Themes and colors").assertIsDisplayed()
+        composeRule.onNodeWithText("General settings").assertIsDisplayed()
         composeRule.onNodeWithTag("appearance_preview_card").assertExists()
 
         // When tapping back

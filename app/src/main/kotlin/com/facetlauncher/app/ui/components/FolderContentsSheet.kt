@@ -62,10 +62,12 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.window.DialogWindowProvider
 import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
 import com.facetlauncher.app.ui.theme.FACET_TRANSITION_DURATION_MS
 import com.facetlauncher.app.ui.theme.FacetTransitionEasing
 import com.facetlauncher.app.ui.theme.LocalIsDarkTheme
 import com.facetlauncher.app.ui.theme.LocalLightStatusBarIcons
+import com.facetlauncher.app.ui.theme.LocalStatusBarHidden
 import com.facetlauncher.app.ui.theme.UnscaledTypography
 import com.facetlauncher.app.R
 import com.facetlauncher.app.data.model.AppInfo
@@ -294,6 +296,7 @@ private fun rememberSheetSlideState(onDismiss: () -> Unit): SheetSlideState {
 private fun SheetDialogWindow() {
     val view = LocalView.current
     val statusIconsLight = LocalLightStatusBarIcons.current
+    val statusBarHidden = LocalStatusBarHidden.current
     val isDarkTheme = LocalIsDarkTheme.current
     SideEffect {
         val window = (view.parent as? DialogWindowProvider)?.window ?: return@SideEffect
@@ -301,6 +304,7 @@ private fun SheetDialogWindow() {
         window.setDimAmount(0f)
         window.isNavigationBarContrastEnforced = false
         val controller = WindowCompat.getInsetsController(window, view)
+        if (statusBarHidden) controller.hide(WindowInsetsCompat.Type.statusBars()) else controller.show(WindowInsetsCompat.Type.statusBars())
         if (statusIconsLight != null) {
             controller.isAppearanceLightStatusBars = !statusIconsLight
             controller.isAppearanceLightNavigationBars = !isDarkTheme

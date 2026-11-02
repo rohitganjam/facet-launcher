@@ -439,6 +439,8 @@
     <string name="appearance_header_title">Aparência</string>
     <string name="appearance_launcher_theme">Tema do launcher</string>
     <string name="appearance_system_bar_icons">Ícones da barra de status</string>
+    <string name="appearance_hide_status_bar_title">Ocultar a barra de estado</string>
+    <string name="appearance_hide_status_bar_subtitle">Oculta no início, no Hub e no menu de apps. Deslize para baixo para a mostrar durante alguns segundos.</string>
     <string name="appearance_launcher_font">Estilo da fonte do launcher</string>
     <string name="appearance_section_icons">Ícones</string>
     <string name="appearance_section_fonts">Fontes</string>
@@ -922,8 +924,9 @@
     <string name="appearance_section_dock_home">Dock e início</string>
     <string name="appearance_section_clock">Relógio e calendário</string>
     <string name="appearance_dock_apps_title">Aparência do dock e dos apps</string>
-    <string name="appearance_themes_colors_title">Temas e cores</string>
-    <string name="appearance_section_general">Geral</string>
+    <string name="appearance_general_title">Definições gerais</string>
+    <string name="appearance_general_subtitle">Temas, destaque, barra de estado</string>
+    <string name="appearance_section_look_feel">Aspeto e comportamento</string>
     <string name="appearance_icon_shape">Formato dos ícones</string>
     <string name="facet_settings_appearance_title">Aparência</string>
     <string name="facet_settings_appearance_clock_label">Relógio: %1$s</string>

@@ -225,6 +225,10 @@ class AppearanceSettingsViewModel @Inject constructor(
         viewModelScope.launch { settingsRepository.setSystemBarIconStyle(style) }
     }
 
+    fun setHideStatusBar(hide: Boolean) {
+        viewModelScope.launch { settingsRepository.setHideStatusBar(hide) }
+    }
+
     fun setAccentFromSystem(enabled: Boolean) {
         viewModelScope.launch { settingsRepository.setAccentFromSystem(enabled) }
     }

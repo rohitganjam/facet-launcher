@@ -491,6 +491,17 @@ class AppearanceSettingsViewModelTest {
     }
 
     @Test
+    fun `setHideStatusBar writes to SettingsRepository`() = runTest {
+        val settingsRepository = mock(SettingsRepository::class.java)
+        val viewModel = createViewModel(settingsRepository = settingsRepository)
+
+        viewModel.setHideStatusBar(true)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        verify(settingsRepository).setHideStatusBar(true)
+    }
+
+    @Test
     fun `setAllowLandscape writes to SettingsRepository and the state reflects the setting`() = runTest {
         val settingsRepository = mock(SettingsRepository::class.java)
         val viewModel = createViewModel(settingsRepository = settingsRepository, settings = LauncherSettings(allowLandscape = false))

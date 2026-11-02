@@ -68,7 +68,7 @@ flowchart TB
   selection summary, or "Needs calendar access" while `READ_CALENDAR` isn't granted, like the Notifications row below;
   `AppearanceSettingsViewModel` re-reads both grants on resume), "Dock & home" (one
   "Dock & Apps appearance" row → `DockAppsAppearanceScreen`, both scopes, route `dockAppsAppearance?facetId=`), and, global
-  only, "Notifications" and "General" (three rows: "Themes and colors" → `ThemesAndColorsScreen`, "Fonts" → `FontsScreen`, "Icons" → `IconsScreen`, each showing its current value).
+  only, "Notifications" and "Look & Feel" (three rows: "General settings" → `ThemesAndColorsScreen` with a static "Themes, accent, status bar" subtitle, "Fonts" → `FontsScreen`, "Icons" → `IconsScreen`, the last two showing their current value).
   The two moved-out screens each show the same live `AppearancePreviewCard` above their controls and share
   `AppearanceSettingsViewModel` (a separate instance per back-stack entry). `DockAppsAppearanceScreen` holds the `LOOK`
   fields above, always shown, in four cards on the global screen (three on a facet's): an "Allow landscape mode" switch (global only, `SettingsToggleRow`; off hides the Landscape alignment card), the shared look (dock style, list layout, presentation or grid rows), then "Portrait alignment" and "Landscape alignment" under `SettingsSectionHeader`s. Each alignment card has the layout's horizontal row (row position, or column alignment for two columns, none for a grid) and the list position. Landscape's rows add a "Same as portrait" choice, stored as `null`; the preview card stays portrait-shaped; three pages, each a Home preview plus only its own card(s), reached from the "General" rows: `ThemesAndColorsScreen` (route `themesAndColors`: launcher theme, status bar icons, accent), `FontsScreen` (route `fonts`: launcher font style, font color, size, weight, then a `FontPreviewRow` of sample text in
@@ -322,7 +322,20 @@ A screen only declares its backdrop (`SystemBarsBackdropEffect`); leaving compos
 `THEME_SURFACE`, so Settings and onboarding need no code. Bottom sheets are separate windows with
 their own bar appearance: `ThemedModalBottomSheet` sets nav icons from the theme (the sheet surface
 runs behind the nav bar) and keeps the status bar as Home has it (`LocalLightStatusBarIcons`).
-The setting is global, in Appearance → General, and is in `BackupSettings` (defaulted).
+The setting is global, in Appearance → Look & Feel → General settings, and is in `BackupSettings` (defaulted).
+
+**Hide status bar** (`hide_status_bar`, same screen, device-local and not backed up): `ProvideSystemBars` hides
+`statusBars()` on the activity window with `BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE` while the backdrop is `WALLPAPER`
+(Home, Hub, Drawer) and shows it on every other backdrop; `isStatusBarHidden` is the pure rule. It re-applies on
+resume and window focus, and sheet/dialog windows follow `LocalStatusBarHidden` (`MatchStatusBarVisibility`,
+`SheetDialogWindow`), since a separate window would otherwise bring the bar back. Home, Hub and Drawer pad with
+`launcherSystemBarInsets()`, which with the setting on drops the status bar from the top inset and keeps only the display
+cutout, so the bar overlays the content and nothing moves when it shows. Edge-to-edge is only enforced from Android 15, so `LauncherActivity` calls `setDecorFitsSystemWindows(false)` and the
+v29 theme sets `windowLayoutInDisplayCutoutMode=shortEdges`; without them API 30–34 resizes the window, or on a phone
+with a cutout pushes it below the cutout, whenever the bar hides or shows. An edge swipe gets the system's own transient
+bar. A Home swipe-down that clears the shade threshold calls `SystemBarsState.revealStatusBar()` first: with the bar
+hidden (and the system not already showing it) it shows the bar for `STATUS_BAR_REVEAL_MILLIS` (3 s, then hides again)
+and consumes the swipe; with the bar showing it expands the notification shade as before.
 `SystemBarsTest` covers the rule; `SystemBarsAppearanceTest` reads the real window flags.
 
 ## 3. Notification badges

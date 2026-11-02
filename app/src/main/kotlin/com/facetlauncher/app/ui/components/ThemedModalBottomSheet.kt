@@ -11,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import com.facetlauncher.app.ui.theme.LocalIsDarkTheme
 import com.facetlauncher.app.ui.theme.LocalLightStatusBarIcons
+import com.facetlauncher.app.ui.theme.MatchStatusBarVisibility
 import com.facetlauncher.app.ui.theme.Scrim
 import com.facetlauncher.app.ui.theme.Surface
 import com.facetlauncher.app.ui.theme.UnscaledTypography
@@ -59,6 +60,7 @@ fun ThemedModalBottomSheet(
         dragHandle = { AppContextMenuDragHandle() },
         content = {
             val columnScope = this
+            MatchStatusBarVisibility()
             UnscaledTypography { columnScope.content() }
         },
     )

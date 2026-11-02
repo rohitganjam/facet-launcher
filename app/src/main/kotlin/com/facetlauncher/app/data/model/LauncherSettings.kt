@@ -444,6 +444,8 @@ data class LauncherSettings(
      * the landscape settings. Launcher-wide and device-local (not facet-overridable, not backed up).
      */
     val allowLandscape: Boolean = true,
+    /** Hides the status bar over Home, Hub and Drawer; a swipe down reveals it for a few seconds. Launcher-wide and device-local (not backed up). */
+    val hideStatusBar: Boolean = false,
     /** Landscape's own values for the props that differ between orientations; `null` fields use the portrait value. */
     val landscape: LandscapeOverrides = LandscapeOverrides(),
     /** Whether the first-run onboarding flow has been completed (or skipped past its final step). Gates [LauncherActivity][com.facetlauncher.app.LauncherActivity]'s onboarding branch. Install-local — excluded from the backup bundle. */

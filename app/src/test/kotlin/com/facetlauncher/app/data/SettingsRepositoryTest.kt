@@ -570,6 +570,16 @@ class SettingsRepositoryTest {
     }
 
     @Test
+    fun `hide status bar defaults to off and persists when turned on`() = runTest {
+        val repository = createRepository()
+        assertEquals(false, repository.settings.first().hideStatusBar)
+
+        repository.setHideStatusBar(true)
+
+        assertEquals(true, repository.settings.first().hideStatusBar)
+    }
+
+    @Test
     fun `allow landscape defaults to on and persists when turned off`() = runTest {
         val repository = createRepository()
         assertEquals(true, repository.settings.first().allowLandscape)

@@ -138,6 +138,7 @@ private object Keys {
     val CLOCK_ZONE_HEIGHT_DP = floatPreferencesKey("clock_zone_height_dp")
     val CLOCK_SCALE = floatPreferencesKey("clock_scale")
     val ALLOW_LANDSCAPE = booleanPreferencesKey("allow_landscape")
+    val HIDE_STATUS_BAR = booleanPreferencesKey("hide_status_bar")
     val LANDSCAPE_CLOCK_ALIGNMENT = stringPreferencesKey("landscape_clock_alignment")
     val LANDSCAPE_CLOCK_ZONE_HEIGHT_DP = floatPreferencesKey("landscape_clock_zone_height_dp")
     val LANDSCAPE_CLOCK_SCALE = floatPreferencesKey("landscape_clock_scale")
@@ -270,6 +271,7 @@ class SettingsRepository @Inject constructor(
             clockZoneHeightDp = preferences[Keys.CLOCK_ZONE_HEIGHT_DP],
             clockScale = preferences[Keys.CLOCK_SCALE] ?: defaults.clockScale,
             allowLandscape = preferences[Keys.ALLOW_LANDSCAPE] ?: defaults.allowLandscape,
+            hideStatusBar = preferences[Keys.HIDE_STATUS_BAR] ?: defaults.hideStatusBar,
             landscape = preferences.toLandscapeOverrides(),
             appListVerticalAlignment = preferences[Keys.APP_LIST_VERTICAL_ALIGNMENT]?.let { runCatching { AppListVerticalAlignment.valueOf(it) }.getOrNull() }
                 ?: defaults.appListVerticalAlignment,
@@ -438,6 +440,10 @@ class SettingsRepository @Inject constructor(
 
     suspend fun setSystemBarIconStyle(style: SystemBarIconStyle) {
         dataStore.edit { it[Keys.SYSTEM_BAR_ICON_STYLE] = style.name }
+    }
+
+    suspend fun setHideStatusBar(hide: Boolean) {
+        dataStore.edit { it[Keys.HIDE_STATUS_BAR] = hide }
     }
 
     suspend fun setCalendarPermissionRequested(requested: Boolean) {

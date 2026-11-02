@@ -397,4 +397,27 @@ class LauncherViewModelTest {
 
         assertEquals(false, viewModel.uiState.value.allowLandscape)
     }
+
+    @Test
+    fun `reflects hideStatusBar from settings`() = runTest {
+        val repository = mock(AppRepository::class.java)
+        `when`(repository.observeInstalledApps()).thenReturn(flowOf(emptyList()))
+        val settingsRepository = mock(SettingsRepository::class.java)
+        `when`(settingsRepository.settings).thenReturn(flowOf(LauncherSettings(hideStatusBar = true, onboardingCompleted = true)))
+        val viewModel = LauncherViewModel(
+            GetInstalledAppsUseCase(repository),
+            mock(EnsureActiveFacetUseCase::class.java),
+            mock(CleanUpUninstalledAppsUseCase::class.java),
+            mock(RepairOrphanedProfileRowsUseCase::class.java),
+            mock(SeedDefaultDockUseCase::class.java),
+            mock(SyncFacetShortcutsUseCase::class.java),
+            mock(ActivateFacetByIdUseCase::class.java),
+            mock(RunFacetAutomationUseCase::class.java),
+            settingsRepository,
+            fakeWorkProfileRepository(),
+        )
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(true, viewModel.uiState.value.hideStatusBar)
+    }
 }

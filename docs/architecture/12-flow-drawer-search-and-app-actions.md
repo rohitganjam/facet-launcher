@@ -283,7 +283,8 @@ list's own scroll, which hands leftover drag back via `appListNestedScrollConnec
 Commit happens when the drag has travelled `COMMIT_TRAVEL_FRACTION` (20%) of the container *from where
 that drag started*, or released above `VELOCITY_THRESHOLD_PX` (1500 px/s); anything short springs back.
 A downward drag from a closed drawer expands the notification shade on the same terms
-(`SWIPE_DOWN_SHADE_FRACTION`, 20% of the height).
+(`SWIPE_DOWN_SHADE_FRACTION`, 20% of the height). With "Hide status bar" on and the bar hidden, that swipe reveals
+the bar instead (`SystemBarsState.revealStatusBar`) and the next one opens the shade; see [13](13-flow-facets-theme-notifications-onboarding.md) §2a.
 
 Every Home action menu — `AppContextMenu`, `FolderTileContextMenu`, the clock adjust menu and the one-time
 "make Facet your home screen" prompt (`SetDefaultLauncherSheet`) — is a `ThemedModalBottomSheet` (`components/`): one themed M3 `ModalBottomSheet`, so the surface runs behind the

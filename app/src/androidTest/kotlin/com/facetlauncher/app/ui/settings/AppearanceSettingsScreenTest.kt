@@ -226,7 +226,7 @@ class AppearanceSettingsScreenTest {
         composeRule.onNodeWithTag("appearance_settings_screen").performScrollToNode(hasTestTag("notification_settings_row"))
         composeRule.onNodeWithTag("notification_settings_row").assertIsDisplayed()
         composeRule.onNodeWithTag("appearance_settings_screen").performScrollToNode(hasTestTag("general_icons_row"))
-        composeRule.onNodeWithText("General").assertIsDisplayed()
+        composeRule.onNodeWithText("Look & Feel").assertIsDisplayed()
     }
 
     @Test
@@ -401,7 +401,7 @@ class AppearanceSettingsScreenTest {
         composeRule.onNodeWithText("Clock & calendar").assertIsDisplayed()
         composeRule.onNodeWithTag("appearance_settings_screen").performScrollToNode(hasTestTag("appearance_dock_apps_row"))
         composeRule.onNodeWithText("Dock & home").assertIsDisplayed()
-        composeRule.onNodeWithText("General").assertDoesNotExist()
+        composeRule.onNodeWithText("Look & Feel").assertDoesNotExist()
     }
 
     @Test
@@ -553,8 +553,9 @@ class AppearanceSettingsScreenTest {
         )
         composeRule.onNodeWithTag("appearance_settings_screen").performScrollToNode(hasTestTag("general_icons_row"))
 
-        // Then each row names its page and its current value
-        composeRule.onNodeWithTag("general_themes_colors_row").assertTextContains("Themes and colors", substring = true)
+        // Then General reads its static subtitle and the others name their page and current value
+        composeRule.onNodeWithTag("general_themes_colors_row").assertTextContains("General settings", substring = true)
+        composeRule.onNodeWithTag("general_themes_colors_row").assertTextContains("Themes, accent, status bar", substring = true)
         composeRule.onNodeWithTag("general_fonts_row").assertTextContains("Fonts", substring = true)
         composeRule.onNodeWithTag("general_icons_row").assertTextContains("Default", substring = true)
 

@@ -5,10 +5,8 @@ import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -21,6 +19,7 @@ import com.facetlauncher.app.ui.components.StickyHeaderLayout
 import com.facetlauncher.app.ui.home.HomeLayoutMode
 import com.facetlauncher.app.ui.home.rememberHomeLayoutMode
 import com.facetlauncher.app.ui.theme.SurfaceContainer
+import com.facetlauncher.app.ui.theme.launcherSystemBarInsets
 
 /**
  * The Launcher Hub (F5) — reached by swiping right from Home. A translucent overlay on Home:
@@ -79,7 +78,7 @@ private fun HubContent(
         // Edge-to-edge is enforced unconditionally at this app's targetSdk (36) — without this,
         // the header draws under the status bar and the grid's bottom row under the gesture/nav
         // bar, matching HomeScreen's/AppDrawerScreen's own systemBars inset handling.
-        modifier = modifier.background(SurfaceContainer.copy(alpha = opacity)).windowInsetsPadding(WindowInsets.systemBars),
+        modifier = modifier.background(SurfaceContainer.copy(alpha = opacity)).windowInsetsPadding(launcherSystemBarInsets()),
         header = {
             HubHeader(
                 widgetCount = uiState.widgetCount,

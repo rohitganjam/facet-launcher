@@ -73,6 +73,8 @@ data class LauncherUiState(
     val fontScaleOption: FontScaleOption = FontScaleOption.DEFAULT,
     /** `LauncherSettings.allowLandscape`: off keeps Home in portrait and locks the screen's orientation. */
     val allowLandscape: Boolean = true,
+    /** `LauncherSettings.hideStatusBar`: hides the status bar over Home, Hub and Drawer. */
+    val hideStatusBar: Boolean = false,
     /**
      * Gates [com.facetlauncher.app.LauncherActivity]'s onboarding branch — see [LauncherSettings.onboardingCompleted][com.facetlauncher.app.data.model.LauncherSettings.onboardingCompleted].
      * `null` until DataStore has answered, so onboarding never shows on a default.
@@ -159,6 +161,7 @@ class LauncherViewModel @Inject constructor(
                 homeAppsFontWeight = settings.homeAppsFontWeight,
                 fontScaleOption = settings.fontScaleOption,
                 allowLandscape = settings.allowLandscape,
+                hideStatusBar = settings.hideStatusBar,
                 workProfiles = workProfiles.toImmutableList(),
             )
         }.onEach { combined -> _uiState.update { combined.copy(onboardingCompleted = it.onboardingCompleted) } }.launchIn(viewModelScope)

@@ -61,7 +61,7 @@ import com.facetlauncher.app.ui.theme.SurfaceContainer
 /**
  * Settings → Appearance (`3c`) — a live preview of Home, then a section per area, each a short list of rows that open their own screen:
  * Clock & calendar (clock style, calendars to display), Dock & home ("Dock & Apps appearance" → [DockAppsAppearanceScreen]),
- * Notifications (global only → the Notifications page) and General (global only: "Themes and colors" → [ThemesAndColorsScreen], "Fonts" → [FontsScreen], "Icons" → [IconsScreen]).
+ * Notifications (global only → the Notifications page) and Look & Feel (global only: "General settings" → [ThemesAndColorsScreen], "Fonts" → [FontsScreen], "Icons" → [IconsScreen]).
  * With a `facetId` it is a facet's own Appearance screen: the same layout minus the global-only sections.
  */
 @Composable
@@ -282,19 +282,19 @@ private fun appDrawerSummary(presentation: DrawerPresentation, searchContactsEna
     )
 }
 
-/** Global only — a row each into [ThemesAndColorsScreen], [FontsScreen] and [IconsScreen], each naming its current value. */
+/** Global only — a row each into [ThemesAndColorsScreen] (static subtitle), [FontsScreen] and [IconsScreen] (each naming its current value). */
 private fun LazyListScope.generalSection(
     settings: LauncherSettings,
     onNavigateToThemesAndColors: () -> Unit,
     onNavigateToFonts: () -> Unit,
     onNavigateToIcons: () -> Unit,
 ) {
-    item { SettingsSectionHeader(stringResource(R.string.appearance_section_general)) }
+    item { SettingsSectionHeader(stringResource(R.string.appearance_section_look_feel)) }
     item {
         SettingsCard(fullBleedRows = true) {
             ClickableRow(
-                title = stringResource(R.string.appearance_themes_colors_title),
-                subtitle = stringResource(settings.themeMode.displayNameRes),
+                title = stringResource(R.string.appearance_general_title),
+                subtitle = stringResource(R.string.appearance_general_subtitle),
                 onClick = onNavigateToThemesAndColors,
                 testTag = "general_themes_colors_row",
                 leadingIcon = iconBadge(Icons.Outlined.Palette, SettingsSectionHue.APPEARANCE),

@@ -1,9 +1,9 @@
 package com.facetlauncher.app.ui.launcher
 
 import androidx.activity.compose.LocalActivity
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
@@ -82,7 +82,9 @@ import com.facetlauncher.app.ui.hub.picker.HubWidgetPickerViewModel
 import com.facetlauncher.app.ui.launcher.HomeDrawerRoute
 import com.facetlauncher.app.ui.launcher.LauncherViewModel
 import com.facetlauncher.app.ui.theme.SystemBarsBackdrop
+import com.facetlauncher.app.ui.theme.LocalSystemBarsState
 import com.facetlauncher.app.ui.theme.SystemBarsBackdropEffect
+import com.facetlauncher.app.ui.theme.launcherSystemBarInsets
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -183,13 +185,17 @@ fun HomeDrawerRoute(
     // Portrait only: everything above the divider. A horizontal drag in it or in the landscape clock pane turns the clock stack's pages.
     var clockZoneBoundsInHomeRoot by remember { mutableStateOf<Rect?>(null) }
     val currentHomeUiState by rememberUpdatedState(homeUiState)
+    val systemBarsState = LocalSystemBarsState.current
     val swipe = remember {
         HomeSwipeController(
             containerHeightPx = { containerHeightPx },
             containerWidthPx = { containerWidthPx },
             coroutineScope = coroutineScope,
             endClockAdjust = { clockAdjustMode = ClockAdjustMode.NONE },
-            expandNotificationShade = homeViewModel::expandNotificationShade,
+            // A hidden status bar comes back first; the next swipe-down (bar showing) opens the shade.
+            expandNotificationShade = {
+                if (systemBarsState?.revealStatusBar() != true) homeViewModel.expandNotificationShade()
+            },
             clockPager = ClockPagerState(
                 pageCount = { currentHomeUiState.clockStack.size },
                 pageIndex = { currentHomeUiState.clockStack.visibleIndex(currentHomeUiState.visibleClockItemId) },
@@ -533,7 +539,9 @@ fun HomeDrawerRoute(
             ready = homeUiState.firstRunPromptsDone && !isDrawerOpen && !isHubOpen && !isFacetOpen,
             onShow = whatsNewPillViewModel::onShown,
             onOpen = onNavigateToWhatsNew,
-            modifier = Modifier.align(Alignment.TopCenter).windowInsetsPadding(WindowInsets.statusBars).padding(top = 12.dp),
+            modifier = Modifier.align(Alignment.TopCenter)
+                .windowInsetsPadding(launcherSystemBarInsets().only(WindowInsetsSides.Top))
+                .padding(top = 12.dp),
         )
     }
 }

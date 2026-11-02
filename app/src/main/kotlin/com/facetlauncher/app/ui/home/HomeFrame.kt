@@ -3,9 +3,7 @@ package com.facetlauncher.app.ui.home
 import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
@@ -33,6 +31,7 @@ import com.facetlauncher.app.ui.home.HomeScreenActions
 import com.facetlauncher.app.ui.home.HomeScreenState
 import com.facetlauncher.app.ui.home.stableKey
 import com.facetlauncher.app.ui.hub.HUB_LANDSCAPE_CELL_SIZE
+import com.facetlauncher.app.ui.theme.launcherSystemBarInsets
 import com.facetlauncher.app.ui.theme.resolve
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
@@ -125,7 +124,7 @@ internal fun rememberHomeFrame(
 
 @Composable
 private fun clockMetrics(density: Density): ClockMetrics {
-    val topInsetPx = WindowInsets.systemBars.getTop(density)
+    val topInsetPx = launcherSystemBarInsets().getTop(density)
     val headroomPx = with(density) { (HOME_CLOCK_RESIZE_HANDLE_INSET + 12.dp).toPx() }
     return ClockMetrics(
         topInsetPx = topInsetPx.toFloat(),

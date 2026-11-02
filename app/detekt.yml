@@ -27,6 +27,8 @@ Compose:
       - LocalHomeSwipeGate
       - LocalSystemBarsState
       - LocalLightStatusBarIcons
+      - LocalHideStatusBar
+      - LocalStatusBarHidden
       - LocalDynamicColorRefreshSignal
       - LocalAccentFromSystem
       - LocalIconRenderMode

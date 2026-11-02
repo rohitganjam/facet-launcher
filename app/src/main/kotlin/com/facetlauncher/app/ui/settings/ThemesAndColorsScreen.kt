@@ -52,6 +52,7 @@ import com.facetlauncher.app.data.model.WallpaperAccentRole
 import com.facetlauncher.app.ui.components.CardDivider
 import com.facetlauncher.app.ui.components.LabeledDropdownRow
 import com.facetlauncher.app.ui.components.SettingsCard
+import com.facetlauncher.app.ui.components.SettingsToggleRow
 import com.facetlauncher.app.ui.components.StickyHeaderLayout
 import com.facetlauncher.app.ui.theme.Accent
 import com.facetlauncher.app.ui.theme.AccentSwatch
@@ -64,7 +65,7 @@ import com.facetlauncher.app.ui.theme.dynamicColorSupported
 import com.facetlauncher.app.ui.theme.toneOf
 
 /**
- * Settings → Appearance → Themes and colors — theme, status bar icons and accent color. Global only: a facet has no override
+ * Settings → Appearance → Look & Feel → General settings — theme, status bar icons and accent color. Global only: a facet has no override
  * for any of these, so a facet's Appearance screen has no link here. Shares [AppearanceSettingsViewModel] with [AppearanceSettingsScreen].
  */
 @Composable
@@ -83,6 +84,7 @@ fun ThemesAndColorsScreen(
         onBack = onBack,
         onThemeModeChange = viewModel::setThemeMode,
         onSystemBarIconStyleChange = viewModel::setSystemBarIconStyle,
+        onHideStatusBarChange = viewModel::setHideStatusBar,
         onAccentFromSystemChange = viewModel::setAccentFromSystem,
         onCustomAccentSwatchChange = viewModel::setCustomAccentSwatch,
         onWallpaperAccentRoleChange = viewModel::setWallpaperAccentRole,
@@ -98,6 +100,7 @@ private fun ThemesAndColorsContent(
     onBack: () -> Unit,
     onThemeModeChange: (ThemeMode) -> Unit,
     onSystemBarIconStyleChange: (SystemBarIconStyle) -> Unit,
+    onHideStatusBarChange: (Boolean) -> Unit,
     onAccentFromSystemChange: (Boolean) -> Unit,
     onCustomAccentSwatchChange: (AccentSwatch) -> Unit,
     onWallpaperAccentRoleChange: (WallpaperAccentRole) -> Unit,
@@ -105,7 +108,7 @@ private fun ThemesAndColorsContent(
 ) {
     StickyHeaderLayout(
         modifier = modifier,
-        header = { AppearanceSettingsHeader(title = stringResource(R.string.appearance_themes_colors_title), onBack = onBack) },
+        header = { AppearanceSettingsHeader(title = stringResource(R.string.appearance_general_title), onBack = onBack) },
         content = { headerHeight ->
             LazyColumn(
                 modifier = Modifier
@@ -128,6 +131,7 @@ private fun ThemesAndColorsContent(
                         settings = settings,
                         onThemeModeChange = onThemeModeChange,
                         onSystemBarIconStyleChange = onSystemBarIconStyleChange,
+                        onHideStatusBarChange = onHideStatusBarChange,
                         onAccentFromSystemChange = onAccentFromSystemChange,
                         onCustomAccentSwatchChange = onCustomAccentSwatchChange,
                         onWallpaperAccentRoleChange = onWallpaperAccentRoleChange,
@@ -143,6 +147,7 @@ private fun ThemeCard(
     settings: LauncherSettings,
     onThemeModeChange: (ThemeMode) -> Unit,
     onSystemBarIconStyleChange: (SystemBarIconStyle) -> Unit,
+    onHideStatusBarChange: (Boolean) -> Unit,
     onAccentFromSystemChange: (Boolean) -> Unit,
     onCustomAccentSwatchChange: (AccentSwatch) -> Unit,
     onWallpaperAccentRoleChange: (WallpaperAccentRole) -> Unit,
@@ -164,6 +169,14 @@ private fun ThemeCard(
             label = { stringResource(it.displayNameRes) },
             onSelect = onSystemBarIconStyleChange,
             testTag = "appearance_system_bar_icons_row",
+        )
+        CardDivider()
+        SettingsToggleRow(
+            title = stringResource(R.string.appearance_hide_status_bar_title),
+            subtitle = stringResource(R.string.appearance_hide_status_bar_subtitle),
+            checked = settings.hideStatusBar,
+            onCheckedChange = onHideStatusBarChange,
+            testTag = "appearance_hide_status_bar_row",
         )
         CardDivider()
         AccentColorSection(
@@ -190,6 +203,7 @@ private fun ThemesAndColorsScreenPreview() {
             onBack = {},
             onThemeModeChange = {},
             onSystemBarIconStyleChange = {},
+            onHideStatusBarChange = {},
             onAccentFromSystemChange = {},
             onCustomAccentSwatchChange = {},
             onWallpaperAccentRoleChange = {},
