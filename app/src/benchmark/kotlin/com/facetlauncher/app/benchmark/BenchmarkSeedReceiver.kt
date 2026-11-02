@@ -71,7 +71,7 @@ class BenchmarkSeedReceiver : BroadcastReceiver() {
         settingsRepository.setActiveFacetId(facets.first().id)
         facets.forEachIndexed { index, facet ->
             val target = PlacementTarget(PlacementList.FAVORITES, facet.id)
-            if (placementRepository.observeItems(target).first().isEmpty()) {
+            if (placementRepository.getRawApps(target).isEmpty()) {
                 apps.rotated(index * FAVORITES_PER_FACET).take(FAVORITES_PER_FACET).forEachIndexed { position, app ->
                     placementRepository.addApp(target, app, position)
                 }
@@ -81,10 +81,10 @@ class BenchmarkSeedReceiver : BroadcastReceiver() {
     }
 
     private suspend fun seedGlobalLists(placementRepository: PlacementRepository, apps: List<AppInfo>) {
-        if (placementRepository.observeItems(PlacementTarget.GlobalFavorites).first().isEmpty()) {
+        if (placementRepository.getRawApps(PlacementTarget.GlobalFavorites).isEmpty()) {
             apps.take(FAVORITES_PER_FACET).forEachIndexed { position, app -> placementRepository.addApp(PlacementTarget.GlobalFavorites, app, position) }
         }
-        if (placementRepository.observeItems(PlacementTarget.GlobalDock).first().isEmpty()) {
+        if (placementRepository.getRawApps(PlacementTarget.GlobalDock).isEmpty()) {
             apps.take(DOCK_APPS).forEachIndexed { position, app -> placementRepository.addApp(PlacementTarget.GlobalDock, app, position) }
         }
     }

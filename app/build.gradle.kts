@@ -68,6 +68,14 @@ android {
             matchingFallbacks += listOf("release")
             isDebuggable = false
         }
+        // Release without R8: the baseline profile has to be recorded against the original class and method names.
+        create("profile") {
+            initWith(buildTypes.getByName("release"))
+            isMinifyEnabled = false
+            signingConfig = signingConfigs.getByName("debug")
+            matchingFallbacks += listOf("release")
+            isDebuggable = false
+        }
     }
 
     compileOptions {
@@ -98,6 +106,10 @@ android {
         }
         getByName("test") {
             java.srcDirs("src/test/kotlin")
+        }
+        getByName("profile") {
+            kotlin.directories.add("src/benchmark/kotlin")
+            manifest.srcFile("src/benchmark/AndroidManifest.xml")
         }
         getByName("androidTest") {
             java.srcDirs("src/androidTest/kotlin")
@@ -167,6 +179,9 @@ dependencies {
 
     // Stable collection types for composable parameters (ImmutableList, ImmutableMap, ImmutableSet), so detekt's UnstableCollections rule stays quiet.
     implementation("org.jetbrains.kotlinx:kotlinx-collections-immutable:0.5.2")
+
+    // Installs src/main/baseline-prof.txt on devices that don't get it from Play (sideloaded APKs, first launch after an update).
+    implementation("androidx.profileinstaller:profileinstaller:1.4.1")
 
     // Google Play Billing for the one-time Facet Pro purchase (docs/architecture/16-flow-billing.md)
     implementation("com.android.billingclient:billing-ktx:9.1.0")

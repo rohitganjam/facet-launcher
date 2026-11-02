@@ -13,5 +13,16 @@ object BenchmarkSeed {
         Thread.sleep(SEED_SETTLE_MS)
     }
 
+    /** pressHome() goes to the Home role holder, so make it this app, not the device's own launcher. */
+    fun makeDefaultHome(packageName: String = "com.facetlauncher.app") {
+        UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
+            .executeShellCommand("cmd role add-role-holder --user 0 android.app.role.HOME $packageName")
+    }
+
+    /** The seed broadcast leaves the app's process running, and a cold start needs it stopped (its data stays). */
+    fun stopApp() {
+        UiDevice.getInstance(InstrumentationRegistry.getInstrumentation()).executeShellCommand("am force-stop com.facetlauncher.app")
+    }
+
     private const val SEED_SETTLE_MS = 3_000L
 }

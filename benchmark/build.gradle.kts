@@ -21,6 +21,12 @@ android {
             signingConfig = getByName("debug").signingConfig
             matchingFallbacks += listOf("release")
         }
+        // Targets :app's unminified `profile` build, which the baseline profile is recorded against.
+        create("profile") {
+            isDebuggable = true
+            signingConfig = getByName("debug").signingConfig
+            matchingFallbacks += listOf("release")
+        }
     }
 
     targetProjectPath = ":app"
@@ -36,6 +42,6 @@ dependencies {
 
 androidComponents {
     beforeVariants(selector().all()) {
-        it.enable = it.buildType == "benchmark"
+        it.enable = it.buildType == "benchmark" || it.buildType == "profile"
     }
 }
