@@ -24,14 +24,19 @@ import urllib.request
 
 REDEEM_URL = "https://play.google.com/redeem?code="
 USER_AGENT = "script:facet-giveaway-pick:1.0"
+SUBJECT = "Your Facet Launcher Pro code"
 DM = """Hi u/{user}, you won a Facet Launcher Pro code. Thanks for entering!
 
-Code: {code}
+The code is yours either way, nothing is required. If you're interested, two things would help me:
+1. Join the community for updates and feature discussions: https://discord.gg/E45Hmfd5k
+2. If you end up liking the app, an honest review on the Play Store.
+
+Your code: {code}
 Redeem: {url}{code}
 
 Open the link on the phone signed in to the Google account you want Pro on, or use Play Store > profile > Payments & subscriptions > Redeem code. Then open the launcher and Pro unlocks. Expires {expiry}.
 
-Any feedback is welcome but never required. Enjoy!"""
+Enjoy!"""
 
 
 def clean(name):
@@ -140,6 +145,7 @@ def main():
     src.add_argument("--commenters", help="file with one username per line")
     p.add_argument("--top-level-only", action="store_true", help="with --post-url, count only replies to the post itself")
     p.add_argument("--save-commenters", metavar="FILE", help="with --post-url, also write the fetched list here for audit")
+    p.add_argument("--in-order", action="store_true", help="give codes in list order instead of drawing at random")
     p.add_argument("-o", "--out", default="winners.md")
     p.add_argument("--exclude", default="AutoModerator", help="comma-separated usernames to skip (add your own)")
     p.add_argument("--expiry", default="[date]", help="code expiry to print in the DM")
@@ -160,11 +166,13 @@ def main():
     if n < len(codes):
         print(f"only {len(users)} eligible entrants for {len(codes)} codes; {len(codes) - n} codes left unused", file=sys.stderr)
 
-    winners = secrets.SystemRandom().sample(users, n)
+    winners = users[:n] if a.in_order else secrets.SystemRandom().sample(users, n)
     with open(a.out, "w", encoding="utf-8") as f:
         f.write(f"# {n} winners of {len(users)} entrants\n\n")
         for user, code in zip(winners, codes):
-            f.write(f"## u/{user}\n\n```\n{DM.format(user=user, code=code, url=REDEEM_URL, expiry=a.expiry)}\n```\n\n")
+            dm = DM.format(user=user, code=code, url=REDEEM_URL, expiry=a.expiry)
+            q = urllib.parse.urlencode({"to": user, "subject": SUBJECT, "message": dm}, quote_via=urllib.parse.quote)
+            f.write(f"## u/{user}\n\n[Open pre-filled DM](https://www.reddit.com/message/compose/?{q})\n\n```\n{dm}\n```\n\n")
     print(f"{n} winners of {len(users)} entrants -> {a.out}")
     print("Winners:", ", ".join(f"u/{u}" for u in winners))
 
