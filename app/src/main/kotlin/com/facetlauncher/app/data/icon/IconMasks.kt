@@ -30,6 +30,7 @@ object IconMasks {
     private const val MAX_REMOVED = 0.95f
     private const val EDGE_FLOOR = 0.15f
     private const val EDGE_FULL = 0.5f
+    private const val PEAK_PERCENTILE = 0.95f
 
     /** The icon's own alpha, e.g. a themed monochrome layer. */
     fun fromAlpha(argb: IntArray, width: Int, height: Int) =
@@ -342,6 +343,18 @@ object IconMasks {
         val scale = mag.sortedArray()[(mag.size * 0.98f).toInt().coerceAtMost(mag.size - 1)].coerceAtLeast(1f)
         val raw = IntArray(argb.size) { (((mag[it] / scale - EDGE_FLOOR) / (EDGE_FULL - EDGE_FLOOR)).coerceIn(0f, 1f) * 255).toInt() }
         return AlphaMask(width, height, rank(raw, width, height, thickness, max = true))
+    }
+
+    /** [mask] kept only where [shape] covers, in proportion to its coverage. */
+    fun clipTo(mask: AlphaMask, shape: AlphaMask) =
+        AlphaMask(mask.width, mask.height, IntArray(mask.alpha.size) { mask.alpha[it] * shape.alpha[it] / 255 })
+
+    /** Scales every opacity by one factor so the 95th percentile of the drawn pixels reaches full, keeping the gradient's shape. */
+    fun normalizePeak(mask: AlphaMask): AlphaMask {
+        val drawn = mask.alpha.filter { it > 0 }.sorted()
+        if (drawn.isEmpty()) return mask
+        val peak = drawn[((drawn.size - 1) * PEAK_PERCENTILE).toInt()]
+        return AlphaMask(mask.width, mask.height, IntArray(mask.alpha.size) { (mask.alpha[it] * 255f / peak).toInt().coerceAtMost(255) })
     }
 
     private fun borderIndices(width: Int, height: Int): IntArray {

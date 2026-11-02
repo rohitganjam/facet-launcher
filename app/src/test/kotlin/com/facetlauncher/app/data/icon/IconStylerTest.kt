@@ -44,6 +44,18 @@ class IconStylerTest {
     }
 
     @Test
+    fun `a faint themed layer still gets an outline that peaks at full opacity`() {
+        // Given a themed layer drawn at about a third opacity
+        val faint = themedBlock(14, 34).map { if (it != 0) 0x55000000 else 0 }.toIntArray()
+
+        // When styling
+        val outline = IconStyler.style(logo(), faint, side, StyledPicture.OUTLINE).outline!!
+
+        // Then its rim is brought up to full opacity
+        assertEquals(255, outline.maxOf { it ushr 24 })
+    }
+
+    @Test
     fun `a themed layer that fills the icon is ignored`() {
         // Given a themed layer that is one solid block over the whole icon
         val themed = themedBlock(0, side)
@@ -99,6 +111,21 @@ class IconStylerTest {
         // Then the outline is drawn along the glyph's boundary
         assertNotNull(masks.outline)
         assertTrue(masks.outline!!.at(16, 24) ushr 24 > 200)
+    }
+
+    @Test
+    fun `a plain logo's outline is as wide as a themed rim and stays inside the glyph`() {
+        // Given a 192px logo and a themed layer of the same square
+        val big = 192
+        fun square(argb: Int, background: Int) = IntArray(big * big) { if (it % big in 64 until 128 && it / big in 64 until 128) argb else background }
+        fun IntArray.runAcross() = (0 until big).filter { this[96 * big + it] ushr 24 >= 128 }
+        val plain = IconStyler.style(square(white, plate), null, big, StyledPicture.OUTLINE).outline!!.runAcross()
+        val themed = IconStyler.style(square(white, plate), square(0xFF000000.toInt(), 0), big, StyledPicture.OUTLINE).outline!!.runAcross()
+
+        // Then the plain rim is about as wide as the themed one on the left edge, with nothing outside the glyph
+        val plainLeft = plain.filter { it < 96 }
+        assertTrue(plainLeft.min() >= 64)
+        assertTrue(abs(plainLeft.size - themed.count { it < 96 }) <= 1)
     }
 
     @Test

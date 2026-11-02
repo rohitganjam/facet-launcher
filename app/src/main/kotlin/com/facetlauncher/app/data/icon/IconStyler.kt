@@ -39,7 +39,7 @@ object IconStyler {
     fun style(icon: IntArray, themed: IntArray?, size: Int, only: StyledPicture? = null): StyledMasks {
         val layer = themed?.let { IconMasks.fromAlpha(it, size, size) }?.takeIf { coverage(it) in MIN_THEMED_COVERAGE..MAX_THEMED_COVERAGE }
         if (layer != null) {
-            val outline = if (only != StyledPicture.GLYPH) flat(IconMasks.contour(layer, size / OUTLINE_DIVISOR)) else null
+            val outline = if (only != StyledPicture.GLYPH) flat(IconMasks.normalizePeak(IconMasks.contour(layer, size / OUTLINE_DIVISOR))) else null
             return StyledMasks(if (only != StyledPicture.OUTLINE) flat(layer) else null, outline, fallback = null, fallbackTones = null)
         }
         val plateless = IconMasks.removePlate(icon, size, size) ?: IconMasks.removePlateByEdges(icon, size, size)
@@ -52,9 +52,13 @@ object IconStyler {
     /** The outline of a plain icon: the edges of its glyph alone where it has one, else the whole icon's edges unless they are art. */
     private fun plainOutline(icon: IntArray, plateless: AlphaMask?, size: Int): IntArray? =
         if (plateless != null) {
-            flat(IconMasks.edges(onGrey(icon, plateless), size, size, thickness = 0))
+            val onGrey = onGrey(icon, plateless)
+            val width = size / OUTLINE_DIVISOR
+            val detail = IconMasks.clipTo(IconMasks.edges(onGrey, size, size, thickness = 1), plateless)
+            val rim = IconMasks.clipTo(IconMasks.edges(onGrey, size, size, thickness = width - 1), plateless).let { IconMasks.clipTo(it, IconMasks.contour(plateless, width)) }
+            flat(IconMasks.normalizePeak(AlphaMask(size, size, IntArray(icon.size) { maxOf(detail.alpha[it], rim.alpha[it]) })))
         } else {
-            IconMasks.edges(icon, size, size, thickness = 1).takeIf { coverage(it, threshold = ART_EDGE_OPACITY) <= ART_EDGE_COVERAGE }?.let { flat(it) }
+            IconMasks.edges(icon, size, size, thickness = 1).takeIf { coverage(it, threshold = ART_EDGE_OPACITY) <= ART_EDGE_COVERAGE }?.let { flat(IconMasks.normalizePeak(it)) }
         }
 
     /**
