@@ -45,7 +45,7 @@ import com.facetlauncher.app.ui.theme.Ink
 import com.facetlauncher.app.ui.theme.Muted
 import com.facetlauncher.app.ui.theme.SurfaceContainer
 
-/** Settings → About → What's new — one card per release, newest first, with the installed version marked. */
+/** Settings → About card → What's new — one card per release, newest first, with the installed version marked. */
 @Composable
 fun WhatsNewScreen(
     onBack: () -> Unit,

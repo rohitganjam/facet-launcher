@@ -8,7 +8,7 @@ app/src/main/kotlin/com/facetlauncher/app/
 ├── FacetApplication.kt            @HiltAndroidApp
 ├── LauncherActivity.kt            @AndroidEntryPoint — the only Activity; composition root
 │
-├── data/                          (51)  @Singleton Repositories — the only layer that touches
+├── data/                          (52)  @Singleton Repositories — the only layer that touches
 │   │                                    Room, DataStore, or Android framework services
 │   ├── di/                        (8)   Hilt modules: AppModule, DatabaseModule, DataStoreModule, WidgetModule, EntitlementModule, WeatherModule + the @AutomationDataStore and @EntitlementDataStore qualifiers
 │   ├── icon/                      (4)   The glyph-only and outline icon pictures: IconMasks and IconStyler (pure pixel code), IconLayers (reads an app's themed monochrome layer), StyledIconCache (makes them on demand, off the main thread)
@@ -54,7 +54,7 @@ app/src/main/kotlin/com/facetlauncher/app/
     ├── facets/                    (9)   FacetCarousel, FacetSettings, ManageFacets, FavoritesPicker (screen + VM each)
     ├── dock/                      (2)   DockAppPickerScreen / DockAppPickerViewModel
     ├── onboarding/                (8)   OnboardingScreen / ViewModel / UiState + 3 pages, dots, SetDefaultLauncherSheet
-    └── settings/                  (52)  22 `*Screen.kt` and 18 `*ViewModel.kt` — most settings screens are an `XScreen.kt` + `XViewModel.kt` pair; Appearance is a hub of five screens (`AppearanceSettingsScreen`, `DockAppsAppearanceScreen`, `ThemesAndColorsScreen`, `FontsScreen`, `IconsScreen`) sharing `AppearanceSettingsViewModel` (`IconsScreen` adds `IconsViewModel` for its style and icon pack cards) and the `AppearancePreviewCard` wrapper (`AppearancePreview.kt`) over `ui/home/ScaledHomeScreen`
+    └── settings/                  (57)  24 `*Screen.kt` and 20 `*ViewModel.kt` — most settings screens are an `XScreen.kt` + `XViewModel.kt` pair; Appearance is a hub of five screens (`AppearanceSettingsScreen`, `DockAppsAppearanceScreen`, `ThemesAndColorsScreen`, `FontsScreen`, `IconsScreen`) sharing `AppearanceSettingsViewModel` (`IconsScreen` adds `IconsViewModel` for its style and icon pack cards) and the `AppearancePreviewCard` wrapper (`AppearancePreview.kt`) over `ui/home/ScaledHomeScreen`
         ├── automation/            (13)  Facet automation: FacetAutomationScreen / ViewModel (rule list), AutomationStrips, RuleEditorSheet / ViewModel / State (draft rule, permission gate), ScheduleFields, TriggerFields, EditorControls, UpgradeSheet, ProPill, PermissionRequest, formatting, previews (`ProPill` lives in `components/`; the Facet Pro screen they open is in `pro/`)
         └── backup/                (3)   BackupRestoreScreen / ViewModel / UiState
 ```

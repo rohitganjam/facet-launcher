@@ -266,6 +266,10 @@ data class LauncherSettings(
     val drawerListItemSize: DrawerListItemSize = DrawerListItemSize.REGULAR,
     val drawerOpacity: Float = 0.6f,
     val notificationDotsEnabled: Boolean = true,
+    /** Opt-in: pressing Home while already on bare Home opens the Drawer with search focused. */
+    val homeOpensSearch: Boolean = false,
+    /** Opt-in: a double-tap on empty Home locks the screen. Also needs the accessibility service. */
+    val doubleTapToLock: Boolean = false,
     /** F13 — Dot (README's spec default) vs a capped numeric count, chosen from the dedicated Notification settings screen. */
     val notificationBadgeStyle: NotificationBadgeStyle = NotificationBadgeStyle.DOT,
     /** Opt-in: the media player row under Home's clock. Also needs notification access (a media session is read through the listener grant). */

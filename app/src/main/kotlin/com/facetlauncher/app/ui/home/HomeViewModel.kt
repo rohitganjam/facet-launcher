@@ -7,6 +7,7 @@ import com.facetlauncher.app.data.DefaultLauncherRepository
 import com.facetlauncher.app.data.NotificationShadeRepository
 import com.facetlauncher.app.data.EntitlementRepository
 import com.facetlauncher.app.data.FacetRepository
+import com.facetlauncher.app.data.LockScreenController
 import com.facetlauncher.app.data.MediaSessionRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.model.ClockStackItemKind
@@ -28,6 +29,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
@@ -59,6 +61,7 @@ class HomeViewModel @Inject constructor(
     val clockWidgetHost: ClockWidgetHostController,
     val clockWidgetFacet: ClockWidgetFacetController,
     entitlementRepository: EntitlementRepository,
+    private val lockScreenController: LockScreenController,
 ) : ViewModel() {
 
     private val usageAccessPromptDismissed = MutableStateFlow(false)
@@ -144,6 +147,13 @@ class HomeViewModel @Inject constructor(
     fun onMediaNext() = mediaSessionRepository.skipToNext()
 
     fun onMediaOpen() = mediaSessionRepository.openPlayer()
+
+    /** Double-tap on empty Home: locks the screen if "Double-tap to lock" is on and its accessibility service is running. */
+    fun onEmptySpaceDoubleTap() {
+        viewModelScope.launch {
+            if (settingsRepository.settings.first().doubleTapToLock) lockScreenController.lock()
+        }
+    }
 
     /** Swipe-down-to-open-shade gesture, from [com.facetlauncher.app.ui.launcher.HomeDrawerRoute]. */
     fun expandNotificationShade() {

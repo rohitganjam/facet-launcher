@@ -36,6 +36,7 @@ import com.facetlauncher.app.data.ContactRepository
 import com.facetlauncher.app.data.DefaultAppRepository
 import com.facetlauncher.app.data.DefaultLauncherRepository
 import com.facetlauncher.app.data.EntitlementRepository
+import com.facetlauncher.app.data.LockScreenController
 import com.facetlauncher.app.data.ClockStackRepository
 import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.FacetShortcutRepository
@@ -188,6 +189,7 @@ class KeyboardDismissalTest {
                         EntitlementRepository(),
                     ),
                     EntitlementRepository(),
+                    LockScreenController(),
                 )
             }
             launcherViewModel = remember {

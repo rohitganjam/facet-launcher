@@ -10,6 +10,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
+import com.facetlauncher.app.data.AccessibilityAccessRepository
 import com.facetlauncher.app.data.CalendarPermissionRepository
 import com.facetlauncher.app.data.ContactPermissionRepository
 import com.facetlauncher.app.data.NotificationAccessRepository
@@ -30,6 +31,7 @@ class PermissionsScreenTest {
     private fun setContent(
         onNavigateToUsageAccessExplanation: () -> Unit = {},
         onNavigateToNotificationAccessExplanation: () -> Unit = {},
+        onNavigateToAccessibilityAccessExplanation: () -> Unit = {},
     ) {
         composeRule.setContent {
             val context = LocalContext.current
@@ -46,6 +48,7 @@ class PermissionsScreenTest {
                     ContactPermissionRepository(context),
                     UsageAccessRepository(context.getSystemService(AppOpsManager::class.java), context),
                     NotificationAccessRepository(context),
+                    AccessibilityAccessRepository(context),
                     FakeAutomationPermissionRepository(context, granted = false),
                     testDeviceStateRepository(context),
                 )
@@ -55,6 +58,7 @@ class PermissionsScreenTest {
                     onBack = {},
                     onNavigateToUsageAccessExplanation = onNavigateToUsageAccessExplanation,
                     onNavigateToNotificationAccessExplanation = onNavigateToNotificationAccessExplanation,
+                    onNavigateToAccessibilityAccessExplanation = onNavigateToAccessibilityAccessExplanation,
                     viewModel = viewModel,
                 )
             }
@@ -147,6 +151,19 @@ class PermissionsScreenTest {
         // Then it navigates there
         assertEquals(true, navigated)
     }
+
+    @Test
+    fun tappingTurnOnForAccessibilityAccessNavigatesToItsExplanationScreen() {
+        // Given the permissions screen with accessibility access not enabled
+        var navigated = false
+        setContent(onNavigateToAccessibilityAccessExplanation = { navigated = true })
+
+        // When tapping the Accessibility access row
+        composeRule.onNodeWithTag("permission_row_ACCESSIBILITY_ACCESS").performClick()
+
+        // Then it navigates to the explanation screen
+        assertEquals(true, navigated)
+    }
 }
 
 class PermissionsScreenGrantedTest {
@@ -172,6 +189,7 @@ class PermissionsScreenGrantedTest {
                     ContactPermissionRepository(context),
                     UsageAccessRepository(context.getSystemService(AppOpsManager::class.java), context),
                     NotificationAccessRepository(context),
+                    AccessibilityAccessRepository(context),
                     FakeAutomationPermissionRepository(context, granted = true),
                     testDeviceStateRepository(context),
                 )
@@ -181,6 +199,7 @@ class PermissionsScreenGrantedTest {
                     onBack = {},
                     onNavigateToUsageAccessExplanation = {},
                     onNavigateToNotificationAccessExplanation = {},
+                    onNavigateToAccessibilityAccessExplanation = {},
                     viewModel = viewModel,
                 )
             }

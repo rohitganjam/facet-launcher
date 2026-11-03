@@ -30,10 +30,10 @@ import androidx.compose.material.icons.outlined.Dock
 import androidx.compose.material.icons.outlined.Folder
 import androidx.compose.material.icons.outlined.FormatListBulleted
 import androidx.compose.material.icons.outlined.Home
-import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Palette
 import androidx.compose.material.icons.outlined.SettingsBackupRestore
 import androidx.compose.material.icons.outlined.Shield
+import androidx.compose.material.icons.outlined.TouchApp
 import androidx.compose.material.icons.outlined.Wallpaper
 import androidx.compose.material.icons.outlined.Work
 import androidx.compose.material3.Icon
@@ -82,8 +82,8 @@ import kotlinx.collections.immutable.toImmutableList
  * now lives, as a row inside it — see chat history: calendar/appearance styling consolidation),
  * HOME & APPS (Calendars / Dock / Home Apps List / App Drawer / Notifications — grouped by "what
  * shows on an app icon, on Home, or in the drawer", not by how narrowly each one's own settings
- * happen to be scoped), and SYSTEM (Permissions / Backup & restore / Set as default launcher /
- * About — device-level, not a launcher preference).
+ * happen to be scoped), SYSTEM (Permissions / Backup & restore / Set as default launcher —
+ * device-level, not a launcher preference), and ABOUT (version / What's new / updates / Discord).
  */
 @Composable
 fun SettingsScreen(
@@ -95,9 +95,11 @@ fun SettingsScreen(
     onNavigateToDockSettings: () -> Unit,
     onNavigateToHomeAppsListSettings: () -> Unit,
     onNavigateToFolders: () -> Unit,
+    onNavigateToGestures: () -> Unit,
     onNavigateToPermissions: () -> Unit,
     onNavigateToBackupRestore: () -> Unit,
-    onNavigateToAbout: () -> Unit,
+    onNavigateToWhatsNew: () -> Unit,
+    onNavigateToLicenses: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: SettingsViewModel = hiltViewModel(),
 ) {
@@ -113,9 +115,11 @@ fun SettingsScreen(
         onNavigateToDockSettings = onNavigateToDockSettings,
         onNavigateToHomeAppsListSettings = onNavigateToHomeAppsListSettings,
         onNavigateToFolders = onNavigateToFolders,
+        onNavigateToGestures = onNavigateToGestures,
         onNavigateToPermissions = onNavigateToPermissions,
         onNavigateToBackupRestore = onNavigateToBackupRestore,
-        onNavigateToAbout = onNavigateToAbout,
+        onNavigateToWhatsNew = onNavigateToWhatsNew,
+        onNavigateToLicenses = onNavigateToLicenses,
         onRequestDefaultLauncherIntent = viewModel::requestDefaultLauncherIntent,
         onRequestWorkProfileSettingsIntent = viewModel::workProfileSettingsIntent,
         modifier = modifier,
@@ -133,9 +137,11 @@ private fun SettingsContent(
     onNavigateToDockSettings: () -> Unit,
     onNavigateToHomeAppsListSettings: () -> Unit,
     onNavigateToFolders: () -> Unit,
+    onNavigateToGestures: () -> Unit,
     onNavigateToPermissions: () -> Unit,
     onNavigateToBackupRestore: () -> Unit,
-    onNavigateToAbout: () -> Unit,
+    onNavigateToWhatsNew: () -> Unit,
+    onNavigateToLicenses: () -> Unit,
     onRequestDefaultLauncherIntent: () -> Intent,
     onRequestWorkProfileSettingsIntent: () -> Intent,
     modifier: Modifier = Modifier,
@@ -177,13 +183,17 @@ private fun SettingsContent(
                 item {
                     SystemCard(
                         uiState = uiState,
+                        onNavigateToGestures = onNavigateToGestures,
                         onNavigateToPermissions = onNavigateToPermissions,
                         onNavigateToBackupRestore = onNavigateToBackupRestore,
-                        onNavigateToAbout = onNavigateToAbout,
                         onSetDefaultLauncher = { defaultLauncherLauncher.launch(onRequestDefaultLauncherIntent()) },
                         onRequestWorkProfileSettingsIntent = onRequestWorkProfileSettingsIntent,
                     )
                 }
+
+                item { SettingsSectionHeader(stringResource(R.string.settings_section_about)) }
+                item { AboutCard(onNavigateToWhatsNew, onNavigateToLicenses) }
+                item { AboutCredit() }
 
                 debugEntry?.let { entry -> item { entry.Content() } }
 
@@ -277,14 +287,22 @@ private fun HomeAppsCard(
 @Composable
 private fun SystemCard(
     uiState: SettingsUiState,
+    onNavigateToGestures: () -> Unit,
     onNavigateToPermissions: () -> Unit,
     onNavigateToBackupRestore: () -> Unit,
-    onNavigateToAbout: () -> Unit,
     onSetDefaultLauncher: () -> Unit,
     onRequestWorkProfileSettingsIntent: () -> Intent,
 ) {
     val context = LocalContext.current
     SettingsCard(fullBleedRows = true) {
+        ClickableRow(
+            title = stringResource(R.string.settings_gestures_title),
+            subtitle = stringResource(R.string.settings_gestures_subtitle),
+            onClick = onNavigateToGestures,
+            testTag = "gestures_row",
+            leadingIcon = iconBadge(Icons.Outlined.TouchApp, SettingsSectionHue.SYSTEM),
+        )
+        CardDivider(startInset = SettingsIconBadgeInset)
         ClickableRow(
             title = stringResource(R.string.settings_permissions_title),
             subtitle = stringResource(R.string.settings_permissions_subtitle),
@@ -325,14 +343,6 @@ private fun SystemCard(
                 leadingIcon = iconBadge(Icons.Outlined.Work, SettingsSectionHue.SYSTEM),
             )
         }
-        CardDivider(startInset = SettingsIconBadgeInset)
-        ClickableRow(
-            title = stringResource(R.string.settings_about_title),
-            subtitle = stringResource(R.string.settings_about_subtitle),
-            onClick = onNavigateToAbout,
-            testTag = "about_row",
-            leadingIcon = iconBadge(Icons.Outlined.Info, SettingsSectionHue.SYSTEM),
-        )
     }
 }
 
@@ -446,9 +456,11 @@ private fun SettingsScreenPreview() {
             onNavigateToDockSettings = {},
             onNavigateToHomeAppsListSettings = {},
             onNavigateToFolders = {},
+            onNavigateToGestures = {},
             onNavigateToPermissions = {},
             onNavigateToBackupRestore = {},
-            onNavigateToAbout = {},
+            onNavigateToWhatsNew = {},
+            onNavigateToLicenses = {},
             onViewFacetPro = {},
             onRequestDefaultLauncherIntent = { Intent(Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS) },
             onRequestWorkProfileSettingsIntent = { Intent(Settings.ACTION_SETTINGS) },

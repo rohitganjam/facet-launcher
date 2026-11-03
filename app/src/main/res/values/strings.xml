@@ -279,11 +279,12 @@
     <string name="settings_section_appearance">Appearance</string>
     <string name="settings_section_home_apps">Apps and folders</string>
     <string name="settings_section_system">System</string>
+    <string name="settings_section_about">About</string>
     <string name="settings_facets_title">Facets</string>
     <string name="settings_facets_subtitle">Create and manage facet-specific settings</string>
     <string name="settings_change_wallpaper_title">Change wallpaper</string>
     <string name="settings_change_wallpaper_subtitle">Change your system wallpaper</string>
-    <string name="settings_appearance_title">Appearance</string>
+    <string name="settings_appearance_title">Customization</string>
     <string name="settings_appearance_subtitle">Customize clock, calendar, home, notifications, themes</string>
     <string name="settings_clock_calendar_title">Clock Style</string>
     <string name="settings_time_format_24h">24-hour time</string>
@@ -343,8 +344,6 @@
     <string name="settings_status_active">Active</string>
     <string name="settings_status_not_set">Not set</string>
     <string name="settings_status_paused">Paused</string>
-    <string name="settings_about_title">About Facet Launcher</string>
-    <string name="settings_about_subtitle">Version, updates, and community</string>
 
     <!-- NotificationSettingsScreen -->
     <string name="notification_badges_row_title">Notification badges</string>
@@ -495,7 +494,7 @@
     <string name="system_bar_icons_dark">Dark</string>
 
     <!-- AppearanceSettingsScreen -->
-    <string name="appearance_header_title">Appearance</string>
+    <string name="appearance_header_title">Customization</string>
     <string name="appearance_section_dock_home">Dock &amp; home</string>
     <string name="appearance_section_clock">Clock &amp; calendar</string>
     <string name="appearance_dock_apps_title">Dock &amp; Apps appearance</string>
@@ -734,8 +733,7 @@
          drag_to_reorder_content_description, folder_remove_from_folder) -->
     <string name="folder_detail_no_apps_yet">No apps in this folder yet. Tap \"Add to folder\" to add some.</string>
 
-    <!-- AboutScreen -->
-    <string name="about_header_title">About</string>
+    <!-- AboutCard -->
     <string name="about_version">Version</string>
     <string name="about_check_for_updates">Check for updates</string>
     <string name="about_check_for_updates_subtitle">Open Facet Launcher on Google Play</string>
@@ -746,6 +744,11 @@
     <string name="whats_new_pill_description">Updated to %1$s. Opens what\'s new</string>
     <string name="about_whats_new">What\'s new</string>
     <string name="about_whats_new_subtitle">Features and improvements in each release</string>
+    <string name="about_licenses">Open source licenses</string>
+    <string name="about_licenses_subtitle">Libraries, fonts and data Facet uses</string>
+    <string name="licenses_section_libraries">Libraries and fonts</string>
+    <string name="licenses_section_fonts">Fonts</string>
+    <string name="licenses_section_data">Data</string>
     <string name="whats_new_header_title">What\'s new</string>
     <string name="whats_new_version">Version %1$s</string>
     <string name="whats_new_installed">Installed</string>
@@ -861,7 +864,7 @@
 
     <!-- FacetCarouselScreen ("Delete" reuses action_delete) -->
     <string name="facet_carousel_delete_title">Delete %1$s?</string>
-    <string name="facet_carousel_delete_message">This can\'t be undone. Its favorites also be removed.</string>
+    <string name="facet_carousel_delete_message">This can\'t be undone. Its favorites will also be removed.</string>
     <string name="facet_carousel_header_title">Switch Facets</string>
     <plurals name="facet_carousel_count">
         <item quantity="one">%d facet available</item>
@@ -1158,6 +1161,35 @@
     <string name="clock_accessories_inheriting">This facet uses the launcher\'s clock settings. Turn on Override in Clock style to change these.</string>
     <string name="clock_accessories_open_clock_style">Clock style</string>
     <string name="weather_location_current_short">Current location</string>
+
+    <!-- Gestures -->
+    <string name="settings_gestures_title">Gestures</string>
+    <string name="settings_gestures_subtitle">Swipes, taps and the Home button</string>
+    <string name="gestures_section_built_in">Built in</string>
+    <string name="gestures_section_optional">Optional</string>
+    <string name="gesture_swipe_up_title">Swipe up</string>
+    <string name="gesture_swipe_up_subtitle">Open the app drawer</string>
+    <string name="gesture_swipe_right_title">Swipe right</string>
+    <string name="gesture_swipe_right_subtitle">Open the Hub</string>
+    <string name="gesture_swipe_left_title">Swipe left</string>
+    <string name="gesture_swipe_left_subtitle">Switch facets</string>
+    <string name="gesture_swipe_down_title">Swipe down</string>
+    <string name="gesture_swipe_down_subtitle">Open the notification shade</string>
+    <string name="gesture_long_press_title">Long-press empty space</string>
+    <string name="gesture_long_press_subtitle">Open the clock and layout menu</string>
+    <string name="gesture_home_opens_search_title">Home button opens search</string>
+    <string name="gesture_home_opens_search_subtitle">Press Home while already on Home to open the drawer with search ready.</string>
+    <string name="gesture_double_tap_lock_title">Double-tap to lock</string>
+    <string name="gesture_double_tap_lock_subtitle">Double-tap empty space on Home to lock the screen.</string>
+    <string name="gesture_double_tap_lock_needs_access">Double-tap empty space on Home to lock the screen. Needs accessibility access, which you\'ll be asked to turn on.</string>
+
+    <!-- Accessibility access (double-tap to lock) -->
+    <string name="permission_accessibility_title">Accessibility access</string>
+    <string name="permission_accessibility_subtitle">Lets a double-tap on Home lock the screen.</string>
+    <string name="accessibility_access_explanation_headline">Double-tap to lock locks your screen when you double-tap empty space on Home.</string>
+    <string name="accessibility_access_explanation_body">This needs the Facet accessibility service, turned on from system Settings — Facet can\'t enable it directly. It is used only to lock the screen: it doesn\'t read what\'s on screen, watch what you type, or send anything off your device. Fingerprint and face unlock keep working.</string>
+    <string name="accessibility_service_label">Facet double-tap to lock</string>
+    <string name="accessibility_service_description">Locks the screen when you double-tap empty space on Home. Doesn\'t read screen content.</string>
 
     <!-- About: credits -->
     <string name="about_weather_credit">Weather data from MET Norway (CC BY 4.0). City names from GeoNames (CC BY 4.0).</string>

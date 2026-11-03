@@ -20,7 +20,7 @@ data class WhatsNewUiState(
     val isLoading: Boolean = true,
 )
 
-/** Settings → About → What's new: every release's bundled notes, newest first. */
+/** Settings → About card → What's new: every release's bundled notes, newest first. */
 @HiltViewModel
 class WhatsNewViewModel @Inject constructor(
     private val releaseNotesRepository: ReleaseNotesRepository,

@@ -1,6 +1,7 @@
 package com.facetlauncher.app.ui.settings
 
 import android.content.Context
+import com.facetlauncher.app.data.AccessibilityAccessRepository
 import com.facetlauncher.app.data.AutomationPermissionRepository
 import com.facetlauncher.app.data.CalendarPermissionRepository
 import com.facetlauncher.app.data.ContactPermissionRepository
@@ -54,6 +55,7 @@ class PermissionsViewModelTest {
         contactPermissionRepository: ContactPermissionRepository = mock(ContactPermissionRepository::class.java),
         usageAccessRepository: UsageAccessRepository = mock(UsageAccessRepository::class.java),
         notificationAccessRepository: NotificationAccessRepository = mock(NotificationAccessRepository::class.java),
+        accessibilityAccessRepository: AccessibilityAccessRepository = mock(AccessibilityAccessRepository::class.java),
         automationPermissionRepository: AutomationPermissionRepository = mock(AutomationPermissionRepository::class.java),
         deviceStateRepository: DeviceStateRepository = mock(DeviceStateRepository::class.java),
     ): PermissionsViewModel {
@@ -70,6 +72,7 @@ class PermissionsViewModelTest {
             contactPermissionRepository,
             usageAccessRepository,
             notificationAccessRepository,
+            accessibilityAccessRepository,
             automationPermissionRepository,
             deviceStateRepository,
         )
@@ -85,6 +88,8 @@ class PermissionsViewModelTest {
         `when`(usageAccessRepository.isGranted()).thenReturn(false)
         val notificationAccessRepository = mock(NotificationAccessRepository::class.java)
         `when`(notificationAccessRepository.isGranted()).thenReturn(true)
+        val accessibilityAccessRepository = mock(AccessibilityAccessRepository::class.java)
+        `when`(accessibilityAccessRepository.isGranted()).thenReturn(true)
         val automationPermissionRepository = mock(AutomationPermissionRepository::class.java)
         `when`(automationPermissionRepository.isGranted(AutomationPermission.BLUETOOTH_CONNECT)).thenReturn(true)
         `when`(automationPermissionRepository.isGranted(AutomationPermission.LOCATION)).thenReturn(false)
@@ -99,13 +104,14 @@ class PermissionsViewModelTest {
             contactPermissionRepository = contactPermissionRepository,
             usageAccessRepository = usageAccessRepository,
             notificationAccessRepository = notificationAccessRepository,
+            accessibilityAccessRepository = accessibilityAccessRepository,
             automationPermissionRepository = automationPermissionRepository,
         )
         backgroundScope.launch { viewModel.uiState.collect {} }
         testDispatcher.scheduler.advanceUntilIdle()
 
         val permissions = viewModel.uiState.value.permissions
-        assertEquals(6, permissions.size)
+        assertEquals(7, permissions.size)
 
         val calendar = permissions.single { it.kind == PermissionKind.CALENDAR }
         assertTrue(calendar.isGranted)
@@ -121,6 +127,9 @@ class PermissionsViewModelTest {
         val notificationAccess = permissions.single { it.kind == PermissionKind.NOTIFICATION_ACCESS }
         assertTrue(notificationAccess.isGranted)
 
+        val accessibilityAccess = permissions.single { it.kind == PermissionKind.ACCESSIBILITY_ACCESS }
+        assertTrue(accessibilityAccess.isGranted)
+
         val bluetooth = permissions.single { it.kind == PermissionKind.BLUETOOTH }
         assertTrue(bluetooth.isGranted)
         assertTrue(bluetooth.hasRequestedBefore)
@@ -131,7 +140,7 @@ class PermissionsViewModelTest {
     }
 
     @Test
-    fun `the bluetooth and location rows come after the existing four`() = runTest {
+    fun `the accessibility, bluetooth and location rows come after the existing four`() = runTest {
         val viewModel = createViewModel()
         backgroundScope.launch { viewModel.uiState.collect {} }
         testDispatcher.scheduler.advanceUntilIdle()
@@ -142,6 +151,7 @@ class PermissionsViewModelTest {
                 PermissionKind.CONTACTS,
                 PermissionKind.USAGE_ACCESS,
                 PermissionKind.NOTIFICATION_ACCESS,
+                PermissionKind.ACCESSIBILITY_ACCESS,
                 PermissionKind.BLUETOOTH,
                 PermissionKind.LOCATION,
             ),

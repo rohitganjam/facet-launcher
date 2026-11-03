@@ -4,7 +4,7 @@ Complete inventories of the two injectable layers, generated from constructor si
 `@Inject` sites in `app/src/main`. If a class is not in these tables it does not exist; if a
 dependency is not listed the class does not have it.
 
-## 1. Repositories and data singletons (51) — all `@Singleton`, all constructor-injected, and the weather seams (`WeatherApi`, `WeatherStore`, `PlaceGeocoder`) are the only interfaces
+## 1. Repositories and data singletons (52) — all `@Singleton`, all constructor-injected, and the weather seams (`WeatherApi`, `WeatherStore`, `PlaceGeocoder`) are the only interfaces
 
 | Repository | Wraps (source of truth) | Injects | Public API shape | Injected by |
 |---|---|---|---|---|
@@ -35,18 +35,21 @@ dependency is not listed the class does not have it.
 | `LocationRepository` | `LocationManager`: one approximate fix (network provider's current location, else the last known), `ACCESS_COARSE_LOCATION` or fine | `Context`, `@IoDispatcher` | `isPermissionGranted()`, `currentLocation(): DeviceLocation?` (10-second timeout; an altitude of exactly 0 counts as unknown). Never continuous and never in the background | `RefreshWeatherUseCase` |
 | `MediaSessionRepository` (`open`) | `MediaSessionManager.getActiveSessions` via the notification-listener grant, `MediaController` callbacks and transport controls; sessions only count while `NotificationBadgeRepository.mediaNotificationPackages` has their package; art falls back to a `content:`/`file:` art URI decoded off the main thread | `Context`, `NotificationBadgeRepository` | `observe(): Flow<MediaPlayerState?>` (cold), `skipToPrevious()`, `togglePlayPause()`, `skipToNext()`, `openPlayer()` | `ObserveHomeScreenStateUseCase`, `HomeViewModel` |
 | `ReleaseNotesRepository` (`open`) | bundled `assets/whats_new/<version>.md` (user-facing New/Improved bullets per release, drafted and signed off by `scripts/release.sh` before the build); `ReleaseNotesParser` parses each file | `Context` | `releases(): List<ReleaseNotes>` (IO, one-shot, newest first) | `WhatsNewPillViewModel` | the What's new pill over Home (`WhatsNewPillHost`): the version to announce, and `onShown` | — |
+| `LicenseRepository` (`open`) | bundled `assets/licenses/*.txt` (Apache 2.0, CC BY 4.0 and each font's own OFL file, as published); `LicenseCatalog` (`data/model`) lists the entries and their files | `Context` | `sections(info): List<LicenseSection>` (IO, one-shot, in file order) | `LicenseTextViewModel` |
 | `AppVersion` (`open`) | `BuildConfig.VERSION_NAME`, behind a class so tests can supply their own | — | `name` | `WhatsNewPillViewModel`, `WhatsNewViewModel` |
 | `WhatsNewViewModel`, `WhatsNewPillViewModel` |
 | `NextAlarmRepository` | `AlarmManager.nextAlarmClock` + `ACTION_NEXT_ALARM_CLOCK_CHANGED` | `Context`, `Clock` | `observeNextAlarmMillis(): Flow<Long?>` | `ObserveClockAccessoriesUseCase` |
 | `NotificationActionController` | the connected `FacetNotificationListenerService`, which attaches a `cancelNotifications` lambda while bound | — | `attach(canceller)`, `detach()`, `dismiss(keys): Boolean` | `DrawerViewModel` (callers); `FacetNotificationListenerService` (attach/detach) |
 | `NotificationAccessRepository` (`open`) | `NotificationManagerCompat.getEnabledListenerPackages` | `Context` | `isGranted()` | `ObserveHomeScreenStateUseCase`, `DrawerViewModel`, 3 settings ViewModels |
+| `LockScreenController` | the connected `FacetAccessibilityService`, which attaches a `performGlobalAction(GLOBAL_ACTION_LOCK_SCREEN)` lambda while bound | — | `attach(locker)`, `detach()`, `lock(): Boolean` | `HomeViewModel.onEmptySpaceDoubleTap` (caller); `FacetAccessibilityService` (attach/detach) |
+| `AccessibilityAccessRepository` (`open`) | whether `FacetAccessibilityService` is in `Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES` | `Context` | `isGranted()` | `GesturesViewModel`, `AccessibilityAccessExplanationViewModel`, `PermissionsViewModel` |
 | `NotificationBadgeRepository` | in-memory `MutableStateFlow`s: counts by package, media packages, and the listable notifications | — | `badgeCounts: StateFlow`, `mediaNotificationPackages`, `notificationsFor(pkg, handle): Flow<List<NotificationInfo>>`, `setActiveNotifications(list)` | `FacetNotificationListenerService` (writer), `ObserveHomeScreenStateUseCase`, `DrawerViewModel` |
 | `NotificationOpener` | `PendingIntent.send` of another app's notification content intent (with the background-start opt-in on API 34+) | `Context` | `open(contentIntent): Boolean` | `DrawerViewModel` |
 | `CityRepository` (`data/places`) | `assets/cities.tsv` read once into a `CityList` (empty when the asset is missing) | `Context`, `@IoDispatcher` | `search(query, limit)`, `nearest(lat, lon, countryCode?, maxKm?)` | `ResolvePlaceUseCase`, `SearchPlacesUseCase` |
 | `NotificationShadeRepository` | `StatusBarManager.expandNotificationsPanel` (reflection, `EXPAND_STATUS_BAR`) | `Context` | `expand()` | `HomeViewModel` |
 | `PrivateSpaceRepository` | `UserManager` quiet-mode + `ACTION_PROFILE_*` broadcasts | `UserManager`, `AppRepository`, `Context` | `observePrivateSpaceState(): Flow<PrivateSpaceState>`, `observePrivateSpaceApps()`, `requestUnlock()` | `DrawerViewModel`, `PrivateSpaceViewModel` |
 | `SecureFolderRepository` | `PackageManager.getLaunchIntentForPackage(Samsung Secure Folder)` | `Context` | `launchIntent(): Intent?` | `DrawerViewModel` |
-| `SettingsRepository` | `DataStore<Preferences>` `facet_settings` | `DataStore<Preferences>` | `settings: Flow<LauncherSettings>`, 80 `suspend fun set*/reset*/mark*/update*/choose*/remove*` writers | 14 use cases, 19 ViewModels, `IconPackRepository` |
+| `SettingsRepository` | `DataStore<Preferences>` `facet_settings` | `DataStore<Preferences>` | `settings: Flow<LauncherSettings>`, 82 `suspend fun set*/reset*/mark*/update*/choose*/remove*` writers | 14 use cases, 20 ViewModels, `IconPackRepository` |
 | `SystemSettingsRepository` | Static catalogue of `Settings.ACTION_*` intents + keyword aliases | `Context` | `search(query)` (IO) | `DrawerViewModel` |
 | `UsageAccessRepository` | `AppOpsManager.unsafeCheckOpNoThrow(GET_USAGE_STATS)` | `AppOpsManager`, `Context` | `isGranted()` | `ObserveHomeScreenStateUseCase`, `ObserveFacetPreviewsUseCase`, `PermissionsViewModel`, `UsageAccessExplanationViewModel` |
 | `UsageStatsRepository` | `UsageStatsManager.queryUsageStats` | `UsageStatsManager`, `AppRepository` | `getRecentApps(limit)`, `getMostUsedApps(limit)` | `ObserveHomeScreenStateUseCase`, `ObserveFacetPreviewsUseCase` |
@@ -62,8 +65,8 @@ dependency is not listed the class does not have it.
 | `WidgetPlacementRepository` | Room `widget_placements` | `WidgetPlacementDao` | `observeAll()`, `getById`, `upsert`, `deleteById` (thin pass-through) | `HubViewModel`, `HubWidgetPickerViewModel`, `BackupRestoreViewModel`, `ObserveHubStateUseCase`, `DeleteWidgetUseCase`, `ExportBackupUseCase` |
 | `WorkProfileRepository` | `UserManager.userProfiles` + `isQuietModeEnabled` + `ACTION_MANAGED_PROFILE_*` | `UserManager`, `AppRepository`, `Context` | `observeWorkProfiles(): Flow<List<WorkProfileInfo>>` | `LauncherViewModel`, `SettingsViewModel` |
 
-Three repositories are `open class` with `open fun` (`CalendarPermissionRepository`,
-`NotificationAccessRepository`, `WallpaperRepository`) so instrumented tests can subclass them
+Four repositories are `open class` with `open fun` (`CalendarPermissionRepository`,
+`NotificationAccessRepository`, `AccessibilityAccessRepository`, `WallpaperRepository`) so instrumented tests can subclass them
 (`androidTest/.../settings/FakeNotificationAccessRepository.kt`, `FakeCalendarPermissionRepository.kt`)
 where `mockito-android` can't intercept a `final` class; every other repository is either
 constructed over a hand-written DAO fake or mocked with Mockito 5 on the JVM.
@@ -151,7 +154,7 @@ Non-use-case files in `domain/`: `FlowCombine.kt` (6/7-ary `combine`), `HubGridC
 (`HUB_COLUMNS`, `HUB_MAX_ROWS`, `HUB_MAX_WIDGETS`, `calculateHubCellWidth(context)` — see F4),
 `BackupMapping.kt` (entity ⇄ `Backup*` DTO extension functions).
 
-## 3. ViewModels (39) — `@HiltViewModel`, one per screen
+## 3. ViewModels (42) — `@HiltViewModel`, one per screen
 
 | ViewModel | Screen / surface | Nav arg (`SavedStateHandle`) |
 |---|---|---|
@@ -186,6 +189,8 @@ Non-use-case files in `domain/`: `FlowCombine.kt` (6/7-ary `combine`), `HubGridC
 | `CalendarSettingsViewModel` | `CalendarSettingsScreen` | `facetId?` |
 | `NotificationSettingsViewModel` | `NotificationSettingsScreen` | — |
 | `NotificationAccessExplanationViewModel` | `NotificationAccessExplanationScreen` | — |
+| `GesturesViewModel` | `GesturesScreen` (Settings → Gestures: the built-in gestures and the two opt-in switches) | — |
+| `AccessibilityAccessExplanationViewModel` | `AccessibilityAccessExplanationScreen` | — |
 | `UsageAccessExplanationViewModel` | `UsageAccessExplanationScreen` | — |
 | `PermissionsViewModel` | `PermissionsScreen` | — |
 | `FoldersSettingsViewModel` | `FoldersSettingsScreen` | — |
@@ -193,3 +198,4 @@ Non-use-case files in `domain/`: `FlowCombine.kt` (6/7-ary `combine`), `HubGridC
 | `FolderAppPickerViewModel` | `FolderAppPickerScreen` | `folderId` |
 | `BackupRestoreViewModel` | `BackupRestoreScreen` | — |
 | `WhatsNewViewModel` | `WhatsNewScreen` (opening it marks the running version's notes seen) | — |
+| `LicenseTextViewModel` | `LicenseTextScreen` (one licence entry, by `licenseId`) | `licenseId` |

@@ -77,6 +77,26 @@ class SettingsRepositoryTest {
     }
 
     @Test
+    fun `the gesture switches persist independently`() = runTest {
+        // Given a fresh repository
+        val repository = createRepository()
+
+        // When only Home-opens-search is turned on
+        repository.setHomeOpensSearch(true)
+
+        // Then double-tap to lock stays off
+        val first = repository.settings.first()
+        assertTrue(first.homeOpensSearch)
+        assertFalse(first.doubleTapToLock)
+
+        // And turning on double-tap to lock leaves the other switch alone
+        repository.setDoubleTapToLock(true)
+        val second = repository.settings.first()
+        assertTrue(second.homeOpensSearch)
+        assertTrue(second.doubleTapToLock)
+    }
+
+    @Test
     fun `defaults match the design spec before anything is written`() = runTest {
         // Given a fresh repository with nothing written yet
         val repository = createRepository()
@@ -92,6 +112,8 @@ class SettingsRepositoryTest {
         assertEquals(IconShape.SQUIRCLE, settings.iconShape)
         assertEquals(0.6f, settings.drawerOpacity, 0.0001f)
         assertEquals(true, settings.notificationDotsEnabled)
+        assertEquals(false, settings.homeOpensSearch)
+        assertEquals(false, settings.doubleTapToLock)
         assertEquals(NotificationBadgeStyle.DOT, settings.notificationBadgeStyle)
         assertEquals(false, settings.showMediaPlayerOnHome)
         assertEquals(true, settings.showMediaSkipButtons)

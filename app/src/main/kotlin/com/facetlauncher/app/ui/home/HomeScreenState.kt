@@ -237,6 +237,8 @@ data class HomeScreenActions(
     val widget: HomeClockWidgetActions = HomeClockWidgetActions(),
     val media: HomeMediaActions = HomeMediaActions(),
     val onUsageAccessPromptClick: () -> Unit = {},
+    /** A double-tap on empty space; the view model decides whether it locks the screen. */
+    val onEmptySpaceDoubleTap: () -> Unit = {},
     val onAppListBoundsChange: (Rect?) -> Unit = {},
     /** Landscape's clock pane, `null` in portrait: its vertical drags scroll the pane instead of opening the drawer. */
     val onClockPaneBoundsChange: (Rect?) -> Unit = {},

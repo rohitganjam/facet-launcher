@@ -200,7 +200,7 @@
     <string name="inherit_override_inherit_default">Herdar padrão</string>
     <string name="inherit_override_override_for_facet">Substituir para esta faceta</string>
     <string name="inherit_override_changes_dont_affect_others">Mudanças aqui não afetam outras facetas</string>
-    <string name="inherit_override_edit_defaults">Editar predefinições</string>
+    <string name="inherit_override_edit_defaults">Editar padrões</string>
 
     <!-- GestureHintOverlay -->
     <string name="gesture_hint_switch_facets">Trocar de faceta</string>
@@ -239,11 +239,12 @@
     <string name="settings_section_appearance">Aparência</string>
     <string name="settings_section_home_apps">Apps e pastas</string>
     <string name="settings_section_system">Sistema</string>
+    <string name="settings_section_about">Sobre</string>
     <string name="settings_facets_title">Facetas</string>
     <string name="settings_facets_subtitle">Crie e gerencie configurações específicas de cada faceta</string>
     <string name="settings_change_wallpaper_title">Mudar papel de parede</string>
     <string name="settings_change_wallpaper_subtitle">Altere o papel de parede do sistema</string>
-    <string name="settings_appearance_title">Aparência</string>
+    <string name="settings_appearance_title">Personalização</string>
     <string name="settings_appearance_subtitle">Personalize relógio, calendário, início, notificações, temas</string>
     <string name="settings_clock_calendar_title">Estilo do relógio</string>
     <string name="settings_time_format_24h">Formato de 24 horas</string>
@@ -303,8 +304,6 @@
     <string name="settings_status_active">Ativo</string>
     <string name="settings_status_not_set">Não definido</string>
     <string name="settings_status_paused">Pausado</string>
-    <string name="settings_about_title">Sobre o Facet Launcher</string>
-    <string name="settings_about_subtitle">Versão, atualizações e comunidade</string>
 
     <!-- NotificationSettingsScreen -->
     <string name="notification_badges_row_title">Selos de notificação</string>
@@ -335,7 +334,7 @@
     <string name="search_bar_position_top">Superior</string>
     <string name="search_bar_position_bottom">Inferior</string>
     <string name="drawer_folder_display_mode_do_not_show">Não exibir</string>
-    <string name="drawer_folder_display_mode_inline">Exibir pastas embutidas</string>
+    <string name="drawer_folder_display_mode_inline">Exibir pastas na lista</string>
     <string name="drawer_folder_display_mode_show_first">Exibir pastas primeiro</string>
     <string name="drawer_folder_display_mode_show_last">Exibir pastas por último</string>
     <string name="recently_installed_position_show_first">Exibir recentes primeiro</string>
@@ -374,7 +373,7 @@
     <string name="home_apps_list_position">Posição</string>
     <string name="home_apps_list_list_position">Posição da lista</string>
     <string name="appearance_allow_landscape_title">Permitir modo paisagem</string>
-    <string name="appearance_allow_landscape_subtitle">Usa um layout em paisagem quando o ecrã é largo o suficiente. Desligado mantém o início em retrato.</string>
+    <string name="appearance_allow_landscape_subtitle">Usa um layout em paisagem quando a tela é larga o suficiente. Desativado mantém o início em retrato.</string>
     <string name="appearance_alignment_portrait_title">Alinhamento em retrato</string>
     <string name="appearance_alignment_landscape_title">Alinhamento em paisagem</string>
     <string name="home_apps_list_same_as_portrait">Igual ao retrato</string>
@@ -436,11 +435,11 @@
     <string name="system_bar_icons_dark">Escuro</string>
 
     <!-- AppearanceSettingsScreen -->
-    <string name="appearance_header_title">Aparência</string>
+    <string name="appearance_header_title">Personalização</string>
     <string name="appearance_launcher_theme">Tema do launcher</string>
     <string name="appearance_system_bar_icons">Ícones da barra de status</string>
-    <string name="appearance_hide_status_bar_title">Ocultar a barra de estado</string>
-    <string name="appearance_hide_status_bar_subtitle">Oculta no início, no Hub e no menu de apps. Deslize para baixo para a mostrar durante alguns segundos.</string>
+    <string name="appearance_hide_status_bar_title">Ocultar a barra de status</string>
+    <string name="appearance_hide_status_bar_subtitle">Oculta no início, no Hub e no menu de apps. Deslize para baixo para mostrá-la por alguns segundos.</string>
     <string name="appearance_launcher_font">Estilo da fonte do launcher</string>
     <string name="appearance_section_icons">Ícones</string>
     <string name="appearance_section_fonts">Fontes</string>
@@ -588,7 +587,7 @@
     <string name="pro_upgrade_facet_limit">O plano gratuito inclui 3 facetas. Com o Pro você pode ter até 10.</string>
     <string name="pro_upgrade_facet_locked">Esta faceta está pausada no plano gratuito. Exclua uma faceta para voltar a 3, ou use o Pro para ter até 10.</string>
     <string name="facet_locked_content_description">Desativada no plano gratuito</string>
-    <string name="pro_upgrade_widget_stack">Colocar mais do que um relógio ou widget no ecrã inicial é um recurso Pro. O plano gratuito inclui um.</string>
+    <string name="pro_upgrade_widget_stack">Colocar mais de um relógio ou widget na tela inicial é um recurso Pro. O plano gratuito inclui um.</string>
     <string name="pro_upgrade_about">Uma compra desbloqueia mais facetas e todos os gatilhos de automação. Sem assinatura.</string>
     <string name="pro_message_unavailable">O Google Play não está disponível agora. Tente novamente mais tarde.</string>
     <string name="pro_message_no_purchase">Nenhuma compra do Pro encontrada para esta conta do Google.</string>
@@ -602,7 +601,7 @@
     <string name="automation_end_switch_to">Mudar para</string>
     <string name="automation_end_stay">Ficar em %1$s</string>
     <string name="automation_error_no_days">Escolha pelo menos um dia</string>
-    <string name="automation_error_facet_missing">Essa faceta já não existe. Escolha outra.</string>
+    <string name="automation_error_facet_missing">Essa faceta não existe mais. Escolha outra.</string>
     <string name="automation_delete_title">Excluir esta regra?</string>
     <string name="automation_delete_message">A regra deixará de mudar de faceta. Não é possível desfazer.</string>
     <string name="automation_section_rules">Regras</string>
@@ -659,8 +658,7 @@
     <!-- FolderDetailScreen -->
     <string name="folder_detail_no_apps_yet">Ainda não há apps nesta pasta. Toque em \"Adicionar à pasta\" para adicionar alguns.</string>
 
-    <!-- AboutScreen -->
-    <string name="about_header_title">Sobre</string>
+    <!-- AboutCard -->
     <string name="about_version">Versão</string>
     <string name="about_check_for_updates">Verificar atualizações</string>
     <string name="about_check_for_updates_subtitle">Abrir o Facet Launcher no Google Play</string>
@@ -671,6 +669,11 @@
     <string name="whats_new_pill_description">Atualizado para %1$s. Abre as novidades</string>
     <string name="about_whats_new">Novidades</string>
     <string name="about_whats_new_subtitle">Novos recursos e melhorias em cada versão</string>
+    <string name="about_licenses">Licenças de código aberto</string>
+    <string name="about_licenses_subtitle">Bibliotecas, fontes e dados usados pelo Facet</string>
+    <string name="licenses_section_libraries">Bibliotecas e fontes</string>
+    <string name="licenses_section_fonts">Fontes</string>
+    <string name="licenses_section_data">Dados</string>
     <string name="whats_new_header_title">Novidades</string>
     <string name="whats_new_version">Versão %1$s</string>
     <string name="whats_new_installed">Instalada</string>
@@ -837,7 +840,7 @@
     <string name="clock_adjust_align_top">Alinhar ao topo</string>
     <string name="clock_adjust_align_middle">Alinhar ao meio</string>
     <string name="clock_adjust_align_bottom">Alinhar embaixo</string>
-    <string name="clock_adjust_clock_settings">Definições de relógio e calendário</string>
+    <string name="clock_adjust_clock_settings">Configurações de relógio e calendário</string>
     <string name="clock_adjust_clock_settings_subtitle">Modelos, fontes, cores e calendário</string>
     <string name="clock_adjust_facet_settings_subtitle">Lista de apps, dock, relógio e calendário específicos da faceta</string>
 
@@ -928,9 +931,9 @@
     <string name="appearance_section_dock_home">Dock e início</string>
     <string name="appearance_section_clock">Relógio e calendário</string>
     <string name="appearance_dock_apps_title">Aparência do dock e dos apps</string>
-    <string name="appearance_general_title">Definições gerais</string>
-    <string name="appearance_general_subtitle">Temas, destaque, barra de estado</string>
-    <string name="appearance_section_look_feel">Aspeto e comportamento</string>
+    <string name="appearance_general_title">Configurações gerais</string>
+    <string name="appearance_general_subtitle">Temas, destaque, barra de status</string>
+    <string name="appearance_section_look_feel">Aparência e comportamento</string>
     <string name="appearance_icon_shape">Formato dos ícones</string>
     <string name="facet_settings_appearance_title">Aparência</string>
     <string name="facet_settings_appearance_clock_label">Relógio: %1$s</string>
@@ -954,9 +957,9 @@
     <!-- ClockStackScreen (the widget stack: reorder, remove, configure, add) -->
     <string name="clock_stack_title">Pilha de widgets</string>
     <string name="clock_stack_counter">%1$d de %2$d</string>
-    <string name="clock_stack_drag_hint">Arraste para reordenar. No ecrã inicial, deslize para a esquerda e para a direita para os percorrer.</string>
-    <string name="clock_stack_full_free_hint">Remova o widget atual para adicionar outro, ou passe a Pro para ter até 5.</string>
-    <string name="clock_stack_empty">Não há nada aqui, por isso a zona do relógio no ecrã inicial fica vazia até adicionar algo.</string>
+    <string name="clock_stack_drag_hint">Arraste para reordenar. Na tela inicial, deslize para a esquerda e para a direita para percorrê-los.</string>
+    <string name="clock_stack_full_free_hint">Remova o widget atual para adicionar outro, ou faça upgrade para o Pro e tenha até 5.</string>
+    <string name="clock_stack_empty">Não há nada aqui, então a área do relógio na tela inicial fica vazia até você adicionar algo.</string>
     <string name="clock_stack_add">Adicionar widget</string>
     <string name="clock_stack_row_clock">Relógio do launcher</string>
     <string name="clock_stack_row_unavailable">Widget indisponível</string>
@@ -966,7 +969,7 @@
     <string name="clock_stack_chooser_clock">Relógio do launcher</string>
     <string name="clock_stack_chooser_clock_subtitle">O relógio próprio do Facet</string>
     <string name="clock_stack_chooser_widget">Widget personalizado</string>
-    <string name="clock_stack_chooser_widget_subtitle">Escolha qualquer widget do seu telemóvel</string>
+    <string name="clock_stack_chooser_widget_subtitle">Escolha qualquer widget do seu celular</string>
     <string name="clock_widget_picker_title">Escolher widget de relógio</string>
 
     <!-- Clima -->
@@ -1076,5 +1079,30 @@
     <string name="clock_accessories_inheriting">Esta faceta usa as configurações de relógio do launcher. Ative «Personalizar» em Estilo do relógio para alterá-las.</string>
     <string name="clock_accessories_open_clock_style">Estilo do relógio</string>
     <string name="weather_location_current_short">Localização atual</string>
+    <string name="settings_gestures_title">Gestos</string>
+    <string name="settings_gestures_subtitle">Deslizes, toques e o botão Início</string>
+    <string name="gestures_section_built_in">Integrados</string>
+    <string name="gestures_section_optional">Opcionais</string>
+    <string name="gesture_swipe_up_title">Deslizar para cima</string>
+    <string name="gesture_swipe_up_subtitle">Abrir a gaveta de apps</string>
+    <string name="gesture_swipe_right_title">Deslizar para a direita</string>
+    <string name="gesture_swipe_right_subtitle">Abrir o Hub</string>
+    <string name="gesture_swipe_left_title">Deslizar para a esquerda</string>
+    <string name="gesture_swipe_left_subtitle">Trocar de faceta</string>
+    <string name="gesture_swipe_down_title">Deslizar para baixo</string>
+    <string name="gesture_swipe_down_subtitle">Abrir a central de notificações</string>
+    <string name="gesture_long_press_title">Manter pressionado um espaço vazio</string>
+    <string name="gesture_long_press_subtitle">Abrir o menu do relógio e do layout</string>
+    <string name="gesture_home_opens_search_title">O botão Início abre a busca</string>
+    <string name="gesture_home_opens_search_subtitle">Toque em Início quando já estiver na tela inicial para abrir a gaveta com a busca pronta.</string>
+    <string name="gesture_double_tap_lock_title">Toque duplo para bloquear</string>
+    <string name="gesture_double_tap_lock_subtitle">Toque duas vezes em um espaço vazio da tela inicial para bloquear a tela.</string>
+    <string name="gesture_double_tap_lock_needs_access">Toque duas vezes em um espaço vazio da tela inicial para bloquear a tela. Requer acesso de acessibilidade, que será pedido para você ativar.</string>
+    <string name="permission_accessibility_title">Acesso de acessibilidade</string>
+    <string name="permission_accessibility_subtitle">Permite que um toque duplo na tela inicial bloqueie a tela.</string>
+    <string name="accessibility_access_explanation_headline">Toque duplo para bloquear bloqueia a tela quando você toca duas vezes em um espaço vazio da tela inicial.</string>
+    <string name="accessibility_access_explanation_body">Isso requer o serviço de acessibilidade do Facet, ativado nas configurações do sistema — o Facet não pode ativá-lo diretamente. Ele serve apenas para bloquear a tela: não lê o que há na tela, não observa o que você digita e não envia nada para fora do seu dispositivo. O desbloqueio por digital ou rosto continua funcionando.</string>
+    <string name="accessibility_service_label">Facet toque duplo para bloquear</string>
+    <string name="accessibility_service_description">Bloqueia a tela quando você toca duas vezes em um espaço vazio da tela inicial. Não lê o conteúdo da tela.</string>
     <string name="about_weather_credit">Dados do clima da MET Norway (CC BY 4.0). Nomes de cidades do GeoNames (CC BY 4.0).</string>
 </resources>

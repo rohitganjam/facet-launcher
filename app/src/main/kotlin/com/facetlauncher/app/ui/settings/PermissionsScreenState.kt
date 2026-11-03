@@ -9,6 +9,7 @@ enum class PermissionKind {
     CONTACTS,
     USAGE_ACCESS,
     NOTIFICATION_ACCESS,
+    ACCESSIBILITY_ACCESS,
     BLUETOOTH,
     LOCATION,
 }

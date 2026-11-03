@@ -8,6 +8,7 @@ import com.facetlauncher.app.data.AutomationPermissionRepository
 import com.facetlauncher.app.data.CalendarPermissionRepository
 import com.facetlauncher.app.data.ContactPermissionRepository
 import com.facetlauncher.app.data.DeviceStateRepository
+import com.facetlauncher.app.data.AccessibilityAccessRepository
 import com.facetlauncher.app.data.NotificationAccessRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.UsageAccessRepository
@@ -38,6 +39,7 @@ class PermissionsViewModel @Inject constructor(
     private val contactPermissionRepository: ContactPermissionRepository,
     private val usageAccessRepository: UsageAccessRepository,
     private val notificationAccessRepository: NotificationAccessRepository,
+    private val accessibilityAccessRepository: AccessibilityAccessRepository,
     private val automationPermissionRepository: AutomationPermissionRepository,
     private val deviceStateRepository: DeviceStateRepository,
 ) : ViewModel() {
@@ -75,6 +77,12 @@ class PermissionsViewModel @Inject constructor(
                     title = context.getString(R.string.permission_notification_access_title),
                     subtitle = context.getString(R.string.permission_notification_access_subtitle),
                     isGranted = notificationAccessRepository.isGranted(),
+                ),
+                PermissionRowState(
+                    kind = PermissionKind.ACCESSIBILITY_ACCESS,
+                    title = context.getString(R.string.permission_accessibility_title),
+                    subtitle = context.getString(R.string.permission_accessibility_subtitle),
+                    isGranted = accessibilityAccessRepository.isGranted(),
                 ),
                 PermissionRowState(
                     kind = PermissionKind.BLUETOOTH,

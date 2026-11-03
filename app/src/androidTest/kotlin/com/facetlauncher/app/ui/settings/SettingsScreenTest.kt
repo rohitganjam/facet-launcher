@@ -18,6 +18,7 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToNode
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.room.Room
+import com.facetlauncher.app.BuildConfig
 import com.facetlauncher.app.data.AppRepository
 import com.facetlauncher.app.data.AutomationRuleRepository
 import com.facetlauncher.app.data.DefaultLauncherRepository
@@ -53,9 +54,11 @@ class SettingsScreenTest {
         onNavigateToDockSettings: () -> Unit = {},
         onNavigateToHomeAppsListSettings: () -> Unit = {},
         onNavigateToFolders: () -> Unit = {},
+        onNavigateToGestures: () -> Unit = {},
         onNavigateToPermissions: () -> Unit = {},
         onNavigateToBackupRestore: () -> Unit = {},
-        onNavigateToAbout: () -> Unit = {},
+        onNavigateToWhatsNew: () -> Unit = {},
+        onNavigateToLicenses: () -> Unit = {},
     ): SettingsRepository {
         lateinit var settingsRepository: SettingsRepository
         composeRule.setContent {
@@ -90,9 +93,11 @@ class SettingsScreenTest {
                     onNavigateToDockSettings = onNavigateToDockSettings,
                     onNavigateToHomeAppsListSettings = onNavigateToHomeAppsListSettings,
                     onNavigateToFolders = onNavigateToFolders,
+                    onNavigateToGestures = onNavigateToGestures,
                     onNavigateToPermissions = onNavigateToPermissions,
                     onNavigateToBackupRestore = onNavigateToBackupRestore,
-                    onNavigateToAbout = onNavigateToAbout,
+                    onNavigateToWhatsNew = onNavigateToWhatsNew,
+                    onNavigateToLicenses = onNavigateToLicenses,
                     viewModel = viewModel,
                 )
             }
@@ -142,7 +147,7 @@ class SettingsScreenTest {
 
     @Test
     fun appearanceRowIsClickableAndShowsAGenericSubtitle() {
-        // Given the settings screen, scrolled to the "Appearance" row — the theme/accent/
+        // Given the settings screen, scrolled to the "Customization" row — the theme/accent/
         // icons/font block lives on its own screen, reached through this single summary row
         // instead of inline controls. The subtitle is a static, generic description rather than
         // the live theme/font values (see chat history — the dynamic subtitle wasn't wanted here).
@@ -246,6 +251,20 @@ class SettingsScreenTest {
     }
 
     @Test
+    fun gesturesRowIsClickable() {
+        // Given the settings screen, scrolled to the Gestures row (under SYSTEM)
+        var navigated = false
+        setContent(onNavigateToGestures = { navigated = true })
+        composeRule.onNodeWithTag("settings_screen").performScrollToNode(hasTestTag("gestures_row"))
+
+        // When tapping "Gestures"
+        composeRule.onNodeWithTag("gestures_row").performClick()
+
+        // Then its callback fires
+        assertEquals(true, navigated)
+    }
+
+    @Test
     fun permissionsRowIsClickable() {
         // Given the settings screen, scrolled to the Permissions row (now under SYSTEM)
         var navigated = false
@@ -270,17 +289,54 @@ class SettingsScreenTest {
     }
 
     @Test
-    fun aboutRowIsClickable() {
-        // Given the settings screen, scrolled to the "About Facet Launcher" row under SYSTEM
-        var navigated = false
-        setContent(onNavigateToAbout = { navigated = true })
-        composeRule.onNodeWithTag("settings_screen").performScrollToNode(hasTestTag("about_row"))
+    fun aboutCardVersionRowShowsTheAppsActualVersionName() {
+        // Given the settings screen, scrolled to the About card — the version comes from
+        // BuildConfig, never hardcoded, so it can't drift from what scripts/release.sh bumps
+        setContent()
+        composeRule.onNodeWithTag("settings_screen").performScrollToNode(hasTestTag("about_version_row"))
+
+        // Then it shows the real BuildConfig.VERSION_NAME
+        composeRule.onNodeWithTag("about_version_row").assertTextContains(BuildConfig.VERSION_NAME, substring = true)
+    }
+
+    @Test
+    fun aboutCardWhatsNewRowOpensTheReleaseNotes() {
+        // Given the settings screen, scrolled to the About card's What's new row
+        var opened = false
+        setContent(onNavigateToWhatsNew = { opened = true })
+        composeRule.onNodeWithTag("settings_screen").performScrollToNode(hasTestTag("about_whats_new_row"))
 
         // When tapping it
-        composeRule.onNodeWithTag("about_row").performClick()
+        composeRule.onNodeWithTag("about_whats_new_row").performClick()
 
         // Then its callback fires
-        assertEquals(true, navigated)
+        assertEquals(true, opened)
+    }
+
+    @Test
+    fun aboutCardLicensesRowOpensTheLicensesScreen() {
+        // Given the settings screen, scrolled to the About card's licences row
+        var opened = false
+        setContent(onNavigateToLicenses = { opened = true })
+        composeRule.onNodeWithTag("settings_screen").performScrollToNode(hasTestTag("about_licenses_row"))
+
+        // When tapping it
+        composeRule.onNodeWithTag("about_licenses_row").performClick()
+
+        // Then its callback fires
+        assertEquals(true, opened)
+    }
+
+    @Test
+    fun aboutCardLinkRowsAreInteractive() {
+        // Given the settings screen, scrolled to the About card — launching Play Store / Discord
+        // isn't verifiable from a Compose test (same category as changeWallpaperRowIsInteractive)
+        setContent()
+        composeRule.onNodeWithTag("settings_screen").performScrollToNode(hasTestTag("about_discord_row"))
+
+        // Then both link rows are genuinely interactive
+        composeRule.onNodeWithTag("about_check_updates_row").assertHasClickAction()
+        composeRule.onNodeWithTag("about_discord_row").assertHasClickAction()
     }
 
     @Test
@@ -310,10 +366,10 @@ class SettingsScreenTest {
     fun topLevelNavRowsShowALeadingIconBadge() {
         setContent()
 
-        composeRule.onNodeWithTag("settings_screen").performScrollToNode(hasTestTag("about_row"))
+        composeRule.onNodeWithTag("settings_screen").performScrollToNode(hasTestTag("about_whats_new_row"))
 
         // Unmerged: the row merges its children into one node, hiding the badge from the merged tree.
-        composeRule.onNodeWithTag("about_row", useUnmergedTree = true).assert(hasAnyDescendant(hasTestTag("settings_icon_badge")))
+        composeRule.onNodeWithTag("about_whats_new_row", useUnmergedTree = true).assert(hasAnyDescendant(hasTestTag("settings_icon_badge")))
         composeRule.onNodeWithTag("view_permissions_row", useUnmergedTree = true).assert(hasAnyDescendant(hasTestTag("settings_icon_badge")))
     }
 
