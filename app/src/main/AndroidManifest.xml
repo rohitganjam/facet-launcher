@@ -144,8 +144,10 @@
             </intent-filter>
         </service>
 
-        <!-- Home's double-tap to lock — only performs GLOBAL_ACTION_LOCK_SCREEN, requests no events and reads no
-             screen content. Enabled by the user from system Accessibility settings. -->
+        <!-- Disabled until the Play Console AccessibilityService declaration is approved; re-enable with the
+             double-tap to lock UI (Gestures row, Permissions row, HomeViewModel.onEmptySpaceDoubleTap).
+             Home's double-tap to lock only performs GLOBAL_ACTION_LOCK_SCREEN, requests no events and reads no
+             screen content.
         <service
             android:name=".data.FacetAccessibilityService"
             android:exported="true"
@@ -158,6 +160,8 @@
                 android:name="android.accessibilityservice"
                 android:resource="@xml/accessibility_service_config" />
         </service>
+        -->
+
     </application>
 
 </manifest>

@@ -150,9 +150,10 @@ class HomeViewModel @Inject constructor(
 
     /** Double-tap on empty Home: locks the screen if "Double-tap to lock" is on and its accessibility service is running. */
     fun onEmptySpaceDoubleTap() {
-        viewModelScope.launch {
-            if (settingsRepository.settings.first().doubleTapToLock) lockScreenController.lock()
-        }
+        // Disabled until the Play AccessibilityService declaration is approved.
+        // viewModelScope.launch {
+        //     if (settingsRepository.settings.first().doubleTapToLock) lockScreenController.lock()
+        // }
     }
 
     /** Swipe-down-to-open-shade gesture, from [com.facetlauncher.app.ui.launcher.HomeDrawerRoute]. */

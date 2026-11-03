@@ -72,6 +72,8 @@ fun GesturesScreen(
     )
 }
 
+// onDoubleTapToLockChange is unused while the double-tap to lock switch is commented out.
+@Suppress("UnusedParameter")
 @Composable
 private fun GesturesContent(
     uiState: GesturesUiState,
@@ -108,16 +110,17 @@ private fun GesturesContent(
                 onCheckedChange = onHomeOpensSearchChange,
                 testTag = "gesture_home_opens_search_toggle",
             )
-            CardDivider()
-            SettingsToggleRow(
-                title = stringResource(R.string.gesture_double_tap_lock_title),
-                subtitle = stringResource(
-                    if (uiState.isAccessibilityGranted) R.string.gesture_double_tap_lock_subtitle else R.string.gesture_double_tap_lock_needs_access,
-                ),
-                checked = uiState.doubleTapToLock,
-                onCheckedChange = onDoubleTapToLockChange,
-                testTag = "gesture_double_tap_lock_toggle",
-            )
+            // Double-tap to lock is disabled until the Play AccessibilityService declaration is approved.
+            // CardDivider()
+            // SettingsToggleRow(
+            //     title = stringResource(R.string.gesture_double_tap_lock_title),
+            //     subtitle = stringResource(
+            //         if (uiState.isAccessibilityGranted) R.string.gesture_double_tap_lock_subtitle else R.string.gesture_double_tap_lock_needs_access,
+            //     ),
+            //     checked = uiState.doubleTapToLock,
+            //     onCheckedChange = onDoubleTapToLockChange,
+            //     testTag = "gesture_double_tap_lock_toggle",
+            // )
         }
     }
 }

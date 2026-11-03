@@ -3046,7 +3046,7 @@ How to read: one section per tier, one table per package (mirrors `app/src/main`
 <details><summary><code>PermissionsViewModelTest</code> — 6 cases</summary>
 
 - uiState reflects each repository's granted status and the persisted requested-before flags
-- the accessibility, bluetooth and location rows come after the existing four
+- the bluetooth and location rows come after the existing four
 - markCalendarPermissionRequested and markContactsPermissionRequested write SettingsRepository directly
 - answering the bluetooth or location request records it and wakes the automation sources
 - a grant changed outside the app wakes the automation sources on the next refresh

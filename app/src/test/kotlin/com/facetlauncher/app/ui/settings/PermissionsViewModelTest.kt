@@ -111,7 +111,7 @@ class PermissionsViewModelTest {
         testDispatcher.scheduler.advanceUntilIdle()
 
         val permissions = viewModel.uiState.value.permissions
-        assertEquals(7, permissions.size)
+        assertEquals(6, permissions.size)
 
         val calendar = permissions.single { it.kind == PermissionKind.CALENDAR }
         assertTrue(calendar.isGranted)
@@ -127,8 +127,7 @@ class PermissionsViewModelTest {
         val notificationAccess = permissions.single { it.kind == PermissionKind.NOTIFICATION_ACCESS }
         assertTrue(notificationAccess.isGranted)
 
-        val accessibilityAccess = permissions.single { it.kind == PermissionKind.ACCESSIBILITY_ACCESS }
-        assertTrue(accessibilityAccess.isGranted)
+        // The Accessibility row is disabled until the Play AccessibilityService declaration is approved.
 
         val bluetooth = permissions.single { it.kind == PermissionKind.BLUETOOTH }
         assertTrue(bluetooth.isGranted)
@@ -140,7 +139,7 @@ class PermissionsViewModelTest {
     }
 
     @Test
-    fun `the accessibility, bluetooth and location rows come after the existing four`() = runTest {
+    fun `the bluetooth and location rows come after the existing four`() = runTest {
         val viewModel = createViewModel()
         backgroundScope.launch { viewModel.uiState.collect {} }
         testDispatcher.scheduler.advanceUntilIdle()
@@ -151,7 +150,6 @@ class PermissionsViewModelTest {
                 PermissionKind.CONTACTS,
                 PermissionKind.USAGE_ACCESS,
                 PermissionKind.NOTIFICATION_ACCESS,
-                PermissionKind.ACCESSIBILITY_ACCESS,
                 PermissionKind.BLUETOOTH,
                 PermissionKind.LOCATION,
             ),
