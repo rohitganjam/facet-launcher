@@ -141,8 +141,7 @@ fun OnboardingHomeSetupPage(
                     modifier = Modifier.testTag("onboarding_back"),
                 )
                 TextActionButton(
-                    // The last step: it leads into the set-default sheet on Home, so "Continue", not "Next".
-                    text = stringResource(R.string.action_continue),
+                    text = stringResource(R.string.action_next),
                     onClick = onNext,
                     modifier = Modifier.testTag("onboarding_next"),
                 )

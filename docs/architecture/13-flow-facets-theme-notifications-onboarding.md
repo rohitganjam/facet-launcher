@@ -445,7 +445,8 @@ flowchart LR
     START["LauncherActivity\nonboarding_completed == false"] --> INTRO["OnboardingIntroPage"]
     INTRO --> FACETS["OnboardingFacetsPage\n(explains facets)"]
     FACETS --> SETUP["OnboardingHomeSetupPage\n(OnboardingViewModel: list mode, apps-to-show,\ndrawer presentation, search bar position, contacts/settings search,\nreorder/clear dock & favorites)"]
-    SETUP -- "Continue / Skip / swipe" --> FIN["LauncherViewModel.completeOnboarding()\n→ setOnboardingCompleted(true)"]
+    SETUP --> NOTIF["OnboardingNotificationsPage\n(NotificationSettingsViewModel: badges on/off, badge style,\nHome media player; access note)"]
+    NOTIF -- "Continue / Skip / swipe" --> FIN["LauncherViewModel.completeOnboarding()\n→ setOnboardingCompleted(true)"]
     FIN --> HOME["FacetNavHost (HOME)"]
     HOME --> PROMPT["HomeScreen: 'Set as default' prompt\n(coach mark HOME_SET_DEFAULT_PROMPT, until dismissed\nor DefaultLauncherRepository.isDefaultLauncher())"]
     HOME --> GEST["Gesture hint overlay\n(coach mark HOME_GESTURES)"]
@@ -456,6 +457,11 @@ flowchart LR
   `combine`): `null` shows the blank frame, only `false` shows onboarding, and the 3s loading timeout resolves `null` to `true`.
 - The setup page's App drawer card mirrors the top of `AppDrawerSettingsScreen`. Turning on "Search contacts" launches
   the `READ_CONTACTS` request from `OnboardingScreen` and persists only on grant, so onboarding asks for nothing unless that switch is flipped.
+- The last step, `OnboardingNotificationsPage`, reuses Settings' `NotificationSettingsViewModel`, `NotificationPreview` and the
+  `BadgeSettingsCard`/`MediaPlayerSettingsCard` (their in-app-menu and skip-buttons rows are omitted by passing a null callback). Its
+  body text is the disclosure for notification listener access. Turning badges or the media player on without access persists the
+  setting and opens `ACTION_NOTIFICATION_LISTENER_SETTINGS` directly (no `NotificationAccessExplanationScreen` — there is no nav
+  stack here); the VM re-checks the grant on resume, and the switches show on only while access is held. Skipping asks for nothing.
 - Onboarding is outside the nav graph (a top-level `when` branch in `LauncherActivity`), so Back
   can never pop into it and it never appears on the back stack.
 - The dock the user sees on the setup page is already seeded — `SeedDefaultDockUseCase` runs at

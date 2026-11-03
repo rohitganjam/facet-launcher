@@ -49,14 +49,15 @@ import com.facetlauncher.app.ui.dock.DockAppPickerScreen
 import com.facetlauncher.app.ui.dock.DockAppPickerViewModel
 import com.facetlauncher.app.ui.facets.FavoritesPickerScreen
 import com.facetlauncher.app.ui.facets.FavoritesPickerViewModel
+import com.facetlauncher.app.ui.settings.NotificationSettingsViewModel
 import com.facetlauncher.app.ui.theme.FACET_TRANSITION_DURATION_MS
 import com.facetlauncher.app.ui.theme.FacetTransitionEasing
 import com.facetlauncher.app.ui.theme.Muted
 import com.facetlauncher.app.ui.theme.Wallpaper
 
 /**
- * The three onboarding steps, in order — see `ONBOARDING_FLOW.md` §3. Reaching the end of
- * [HOME_SETUP] (via "Next" or "Skip") completes onboarding directly ([OnboardingScreen]'s [onFinish])
+ * The four onboarding steps, in order — see `ONBOARDING_FLOW.md` §3. Reaching the end of
+ * [NOTIFICATIONS] (via "Next" or "Skip") completes onboarding directly ([OnboardingScreen]'s [onFinish])
  * rather than advancing to a further step — the "make Facet your home screen" prompt lives on the
  * real Home screen instead, shown once there right after onboarding completes (see
  * [SetDefaultLauncherSheet]'s own doc for why).
@@ -65,10 +66,11 @@ enum class OnboardingStep {
     INTRO,
     FACETS,
     HOME_SETUP,
+    NOTIFICATIONS,
 }
 
 /** Steps shown in each page's [OnboardingDots]. */
-internal const val ONBOARDING_STEP_COUNT = 3
+internal const val ONBOARDING_STEP_COUNT = 4
 
 /** Full-screen pickers opened from the home-setup step — reused as-is from Settings/Facets, not part of [OnboardingStep]'s own linear flow. */
 private enum class OnboardingSubScreen {
@@ -76,15 +78,16 @@ private enum class OnboardingSubScreen {
     FAVORITES_PICKER,
 }
 
-/** The step a right swipe (or the on-screen "Back" on [OnboardingStep.FACETS]/[OnboardingStep.HOME_SETUP]) lands on — every step but [OnboardingStep.INTRO] can go back this way. */
+/** The step a right swipe (or the on-screen "Back" on every later step) lands on — every step but [OnboardingStep.INTRO] can go back this way. */
 private fun previousStep(step: OnboardingStep): OnboardingStep = when (step) {
     OnboardingStep.INTRO -> OnboardingStep.INTRO
     OnboardingStep.FACETS -> OnboardingStep.INTRO
     OnboardingStep.HOME_SETUP -> OnboardingStep.FACETS
+    OnboardingStep.NOTIFICATIONS -> OnboardingStep.HOME_SETUP
 }
 
 /**
- * The step a "Next" action (on-screen or a left swipe) lands on. [OnboardingStep.HOME_SETUP] maps to
+ * The step a "Next" action (on-screen or a left swipe) lands on. [OnboardingStep.NOTIFICATIONS] maps to
  * itself — [OnboardingScreen] special-cases moving past it to call [OnboardingScreen]'s own
  * `onFinish` instead of changing `step`, the same way the old `SET_DEFAULT` step used to be the
  * fixed point every "next" resolved to.
@@ -92,7 +95,8 @@ private fun previousStep(step: OnboardingStep): OnboardingStep = when (step) {
 private fun nextStep(step: OnboardingStep): OnboardingStep = when (step) {
     OnboardingStep.INTRO -> OnboardingStep.FACETS
     OnboardingStep.FACETS -> OnboardingStep.HOME_SETUP
-    OnboardingStep.HOME_SETUP -> OnboardingStep.HOME_SETUP
+    OnboardingStep.HOME_SETUP -> OnboardingStep.NOTIFICATIONS
+    OnboardingStep.NOTIFICATIONS -> OnboardingStep.NOTIFICATIONS
 }
 
 /** A swipe shorter than this is treated as a scroll/drag within the step's own content, not a page change. */
@@ -110,7 +114,7 @@ private const val ONBOARDING_BACKDROP_SCRIM_ALPHA = 0.7f
  * [com.facetlauncher.app.ui.launcher.HomeDrawerRoute] gets), so it never lands on the back stack.
  * Owns only step navigation; all data lives in the shared [OnboardingViewModel], obtained once
  * here and passed down as stateless parameters to each step. [dockPickerViewModel]/
- * [favoritesPickerViewModel] are a testing seam only — production always leaves them `null`, which
+ * [favoritesPickerViewModel]/[notificationSettingsViewModel] are a testing seam only — production always leaves them `null`, which
  * lets [com.facetlauncher.app.ui.dock.DockAppPickerScreen]/[com.facetlauncher.app.ui.facets.FavoritesPickerScreen]
  * fall back to their own `hiltViewModel()`; a non-Hilt test host (like `OnboardingScreenTest`, which
  * already builds [OnboardingViewModel] by hand) supplies its own instance instead.
@@ -122,6 +126,7 @@ fun OnboardingScreen(
     viewModel: OnboardingViewModel = hiltViewModel(),
     dockPickerViewModel: DockAppPickerViewModel? = null,
     favoritesPickerViewModel: FavoritesPickerViewModel? = null,
+    notificationSettingsViewModel: NotificationSettingsViewModel? = null,
 ) {
     var step by rememberSaveable { mutableStateOf(OnboardingStep.INTRO) }
     var subScreen by rememberSaveable { mutableStateOf<OnboardingSubScreen?>(null) }
@@ -177,7 +182,7 @@ fun OnboardingScreen(
                             },
                             onDragEnd = {
                                 when {
-                                    totalDrag <= -swipeCommitPx -> if (step == OnboardingStep.HOME_SETUP) onFinish() else step = nextStep(step)
+                                    totalDrag <= -swipeCommitPx -> if (step == OnboardingStep.NOTIFICATIONS) onFinish() else step = nextStep(step)
                                     totalDrag >= swipeCommitPx -> step = previousStep(step)
                                 }
                             },
@@ -225,8 +230,20 @@ fun OnboardingScreen(
                     onClearFavorites = viewModel::clearFavorites,
                     onClearDockApps = viewModel::clearDockApps,
                     onBack = { step = previousStep(step) },
-                    onNext = onFinish,
+                    onNext = { step = nextStep(step) },
                 )
+                OnboardingStep.NOTIFICATIONS -> if (notificationSettingsViewModel != null) {
+                    OnboardingNotificationsPage(
+                        onBack = { step = previousStep(step) },
+                        onNext = onFinish,
+                        viewModel = notificationSettingsViewModel,
+                    )
+                } else {
+                    OnboardingNotificationsPage(
+                        onBack = { step = previousStep(step) },
+                        onNext = onFinish,
+                    )
+                }
                 OnboardingStep.FACETS -> OnboardingFacetsPage(
                     uiState = uiState,
                     onBack = { step = previousStep(step) },

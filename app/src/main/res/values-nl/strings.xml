@@ -713,6 +713,9 @@
 
     <string name="onboarding_home_setup_headline">Stel je startscherm in</string>
     <string name="onboarding_home_setup_subhead">Kies de apps die je op Home wilt. Je kunt dit later allemaal wijzigen.</string>
+    <string name="onboarding_notifications_headline">Badges en nu afspelen</string>
+    <string name="onboarding_notifications_subhead">Stippen op apps waar iets op je wacht, en wat er nu speelt op je startscherm. Je kunt dit later wijzigen.</string>
+    <string name="onboarding_notifications_access_note">Beide hebben toegang tot meldingen nodig, een speciale toestemming die je inschakelt in de systeeminstellingen. Facet leest alleen welke apps actieve meldingen hebben en de titel, artiest en hoes van wat er speelt. De tekst van meldingen wordt nooit gelezen en er verlaat niets je apparaat.</string>
     <string name="onboarding_dock_section_header">DOCK</string>
     <string name="action_clear_all">Alles wissen</string>
     <string name="onboarding_dock_section_subhead">De standaarddock — elk facet kan later zijn eigen dock aanpassen. Sleep om de volgorde te wijzigen.</string>
