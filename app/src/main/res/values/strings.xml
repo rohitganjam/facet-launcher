@@ -798,6 +798,10 @@
          onboarding_list_content_favorites below — same word) -->
     <string name="onboarding_home_setup_headline">Set up your home screen</string>
     <string name="onboarding_home_setup_subhead">Pick the apps you want on Home. You can change all of this later.</string>
+    <!-- OnboardingNotificationsPage (the controls reuse the Notifications settings rows) -->
+    <string name="onboarding_notifications_headline">Badges and now playing</string>
+    <string name="onboarding_notifications_subhead">Dots on apps with something waiting, and what\'s playing on Home. You can change this later.</string>
+    <string name="onboarding_notifications_access_note">Both need notification access, a special permission you turn on in system Settings. Facet only reads which apps have active notifications and the title, artist, and artwork of what\'s playing. It never reads notification text, and nothing leaves your device.</string>
     <string name="onboarding_dock_section_header">DOCK</string>
     <string name="action_clear_all">Clear all</string>
     <string name="onboarding_dock_section_subhead">The default dock — each facet can customize its own later. Drag to reorder.</string>

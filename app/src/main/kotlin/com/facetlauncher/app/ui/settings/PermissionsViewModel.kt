@@ -78,12 +78,13 @@ class PermissionsViewModel @Inject constructor(
                     subtitle = context.getString(R.string.permission_notification_access_subtitle),
                     isGranted = notificationAccessRepository.isGranted(),
                 ),
-                PermissionRowState(
-                    kind = PermissionKind.ACCESSIBILITY_ACCESS,
-                    title = context.getString(R.string.permission_accessibility_title),
-                    subtitle = context.getString(R.string.permission_accessibility_subtitle),
-                    isGranted = accessibilityAccessRepository.isGranted(),
-                ),
+                // Disabled until the Play AccessibilityService declaration is approved.
+                // PermissionRowState(
+                //     kind = PermissionKind.ACCESSIBILITY_ACCESS,
+                //     title = context.getString(R.string.permission_accessibility_title),
+                //     subtitle = context.getString(R.string.permission_accessibility_subtitle),
+                //     isGranted = accessibilityAccessRepository.isGranted(),
+                // ),
                 PermissionRowState(
                     kind = PermissionKind.BLUETOOTH,
                     title = context.getString(R.string.permission_bluetooth_title),

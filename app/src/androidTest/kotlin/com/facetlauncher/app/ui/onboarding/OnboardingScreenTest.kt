@@ -1,6 +1,7 @@
 package com.facetlauncher.app.ui.onboarding
 
 import android.app.AppOpsManager
+import android.app.WallpaperManager
 import android.app.usage.UsageStatsManager
 import android.content.pm.LauncherApps
 import android.os.UserManager
@@ -26,16 +27,21 @@ import androidx.test.espresso.intent.Intents
 import androidx.test.espresso.intent.VerificationModes
 import androidx.test.espresso.intent.matcher.IntentMatchers.hasAction
 import com.facetlauncher.app.data.AppRepository
+import com.facetlauncher.app.data.DefaultAppRepository
 import com.facetlauncher.app.data.FolderRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.UsageAccessRepository
 import com.facetlauncher.app.data.UsageStatsRepository
+import com.facetlauncher.app.data.WallpaperRepository
 import com.facetlauncher.app.data.local.FacetDatabase
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.domain.GetInstalledAppsUseCase
+import com.facetlauncher.app.domain.SelectPreviewAppsUseCase
 import com.facetlauncher.app.domain.SortAppsForPickerUseCase
 import com.facetlauncher.app.ui.dock.DockAppPickerViewModel
 import com.facetlauncher.app.ui.facets.FavoritesPickerViewModel
+import com.facetlauncher.app.ui.settings.FakeNotificationAccessRepository
+import com.facetlauncher.app.ui.settings.NotificationSettingsViewModel
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import java.io.File
 import kotlinx.coroutines.runBlocking
@@ -49,6 +55,13 @@ import com.facetlauncher.app.data.model.AppListLimits
 import com.facetlauncher.app.data.PlacementRepository
 import com.facetlauncher.app.domain.ObservePlacedItemsUseCase
 import com.facetlauncher.app.data.model.PlacementTarget
+
+private class OnboardingViewModels(
+    val onboarding: OnboardingViewModel,
+    val dockPicker: DockAppPickerViewModel,
+    val favoritesPicker: FavoritesPickerViewModel,
+    val notificationSettings: NotificationSettingsViewModel,
+)
 
 class OnboardingScreenTest {
 
@@ -87,7 +100,7 @@ class OnboardingScreenTest {
                 val getInstalledApps = GetInstalledAppsUseCase(appRepository)
                 val sortAppsForPicker = SortAppsForPickerUseCase(UsageStatsRepository(context.getSystemService(UsageStatsManager::class.java), appRepository))
                 val usageAccessRepository = UsageAccessRepository(context.getSystemService(AppOpsManager::class.java), context)
-                Triple(
+                OnboardingViewModels(
                     OnboardingViewModel(
                         placementRepository,
                         observePlacedItems,
@@ -99,14 +112,24 @@ class OnboardingScreenTest {
                     // default dock/favorites, matching onboarding's own scope.
                     DockAppPickerViewModel(SavedStateHandle(), getInstalledApps, placementRepository, observePlacedItems, folderRepository, sortAppsForPicker, usageAccessRepository),
                     FavoritesPickerViewModel(SavedStateHandle(), getInstalledApps, placementRepository, observePlacedItems, folderRepository, sortAppsForPicker, usageAccessRepository),
+                    NotificationSettingsViewModel(
+                        settingsRepository,
+                        FakeNotificationAccessRepository(context, granted = false),
+                        observePlacedItems,
+                        WallpaperRepository(WallpaperManager.getInstance(context)),
+                        DefaultAppRepository(context),
+                        getInstalledApps,
+                        SelectPreviewAppsUseCase(),
+                    ),
                 )
             }
             FacetLauncherTheme {
                 OnboardingScreen(
                     onFinish = onFinish,
-                    viewModel = viewModels.first,
-                    dockPickerViewModel = viewModels.second,
-                    favoritesPickerViewModel = viewModels.third,
+                    viewModel = viewModels.onboarding,
+                    dockPickerViewModel = viewModels.dockPicker,
+                    favoritesPickerViewModel = viewModels.favoritesPicker,
+                    notificationSettingsViewModel = viewModels.notificationSettings,
                 )
             }
         }
@@ -121,6 +144,13 @@ class OnboardingScreenTest {
         composeRule.onNodeWithTag("onboarding_home_setup_page").assertExists()
     }
 
+    private fun goToNotifications() {
+        goToHomeSetup()
+        composeRule.onNodeWithTag("onboarding_next").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("onboarding_notifications_page").assertExists()
+    }
+
     @Test
     fun `first run shows the intro step`() {
         setContent()
@@ -129,7 +159,7 @@ class OnboardingScreenTest {
     }
 
     @Test
-    fun `Next advances intro through facets to home setup then finishes onboarding`() {
+    fun `Next advances intro through facets and home setup to notifications then finishes onboarding`() {
         var finished = false
         setContent(onFinish = { finished = true })
 
@@ -141,9 +171,13 @@ class OnboardingScreenTest {
         composeRule.waitForIdle()
         composeRule.onNodeWithTag("onboarding_home_setup_page").assertExists()
 
-        // Home setup's "Continue" is the flow's last, real action — the "make Facet your home screen"
-        // prompt itself now lives on the real Home screen instead of a further step here (see
-        // SetDefaultLauncherSheet's own doc), so reaching it just finishes onboarding directly.
+        composeRule.onNodeWithTag("onboarding_next").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("onboarding_notifications_page").assertExists()
+
+        // The notifications step's "Continue" is the flow's last, real action — the "make Facet your
+        // home screen" prompt itself now lives on the real Home screen instead of a further step here
+        // (see SetDefaultLauncherSheet's own doc), so reaching it just finishes onboarding directly.
         composeRule.onNodeWithTag("onboarding_next").performClick()
         composeRule.waitForIdle()
 
@@ -180,6 +214,17 @@ class OnboardingScreenTest {
         composeRule.waitForIdle()
 
         composeRule.onNodeWithTag("onboarding_facets_page").assertExists()
+    }
+
+    @Test
+    fun `Back on the notifications step returns to home setup`() {
+        setContent()
+        goToNotifications()
+
+        composeRule.onNodeWithTag("onboarding_back").performClick()
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithTag("onboarding_home_setup_page").assertExists()
     }
 
     @Test
@@ -230,11 +275,7 @@ class OnboardingScreenTest {
     fun `swiping left on the last step finishes onboarding`() {
         var finished = false
         setContent(onFinish = { finished = true })
-        composeRule.onNodeWithTag("onboarding_next").performClick()
-        composeRule.waitForIdle()
-        composeRule.onNodeWithTag("onboarding_next").performClick()
-        composeRule.waitForIdle()
-        composeRule.onNodeWithTag("onboarding_home_setup_page").assertExists()
+        goToNotifications()
 
         composeRule.onNodeWithTag("onboarding_screen").performTouchInput { swipeLeft() }
         composeRule.waitForIdle()
@@ -369,10 +410,7 @@ class OnboardingScreenTest {
     @Test
     fun `completing onboarding requests no runtime permission`() {
         setContent()
-        composeRule.onNodeWithTag("onboarding_next").performClick()
-        composeRule.waitForIdle()
-        composeRule.onNodeWithTag("onboarding_next").performClick()
-        composeRule.waitForIdle()
+        goToNotifications()
         composeRule.onNodeWithTag("onboarding_next").performClick()
         composeRule.waitForIdle()
 

@@ -20,6 +20,7 @@ import com.facetlauncher.app.ui.testDeviceStateRepository
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import java.io.File
 import org.junit.Assert.assertEquals
+import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 
@@ -152,6 +153,8 @@ class PermissionsScreenTest {
         assertEquals(true, navigated)
     }
 
+    // Disabled with the double-tap to lock UI until the Play AccessibilityService declaration is approved.
+    @Ignore("double-tap to lock disabled")
     @Test
     fun tappingTurnOnForAccessibilityAccessNavigatesToItsExplanationScreen() {
         // Given the permissions screen with accessibility access not enabled

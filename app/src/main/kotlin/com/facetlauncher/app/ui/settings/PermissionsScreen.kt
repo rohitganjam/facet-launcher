@@ -265,12 +265,12 @@ private fun PermissionsScreenPreview() {
                     subtitle = stringResource(R.string.permission_notification_access_subtitle),
                     isGranted = false,
                 ),
-                PermissionRowState(
-                    kind = PermissionKind.ACCESSIBILITY_ACCESS,
-                    title = stringResource(R.string.permission_accessibility_title),
-                    subtitle = stringResource(R.string.permission_accessibility_subtitle),
-                    isGranted = false,
-                ),
+                // PermissionRowState(
+                //     kind = PermissionKind.ACCESSIBILITY_ACCESS,
+                //     title = stringResource(R.string.permission_accessibility_title),
+                //     subtitle = stringResource(R.string.permission_accessibility_subtitle),
+                //     isGranted = false,
+                // ),
                 PermissionRowState(
                     kind = PermissionKind.BLUETOOTH,
                     title = stringResource(R.string.permission_bluetooth_title),

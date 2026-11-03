@@ -17,6 +17,7 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
+import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 
@@ -73,9 +74,8 @@ class GesturesScreenTest {
         composeRule.onNodeWithText("Open the notification shade").assertExists()
         composeRule.onNodeWithText("Long-press empty space").assertExists()
 
-        // And both optional gestures have a switch, off by default
+        // And the optional gesture has a switch, off by default (double-tap to lock is disabled for now)
         composeRule.onNodeWithTag("gesture_home_opens_search_toggle").assertIsOff()
-        composeRule.onNodeWithTag("gesture_double_tap_lock_toggle").assertIsOff()
     }
 
     @Test
@@ -92,6 +92,8 @@ class GesturesScreenTest {
         assertTrue(runBlocking { settingsRepository.settings.first().homeOpensSearch })
     }
 
+    // Disabled with the double-tap to lock UI until the Play AccessibilityService declaration is approved.
+    @Ignore("double-tap to lock disabled")
     @Test
     fun turningOnDoubleTapToLockWithAccessibilityEnabledStaysOnWithoutOpeningTheExplanation() {
         // Given accessibility access is already enabled
@@ -108,6 +110,8 @@ class GesturesScreenTest {
         assertFalse(explanationOpened)
     }
 
+    // Disabled with the double-tap to lock UI until the Play AccessibilityService declaration is approved.
+    @Ignore("double-tap to lock disabled")
     @Test
     fun turningOnDoubleTapToLockWithoutAccessibilityOpensTheExplanationAndStaysOff() {
         // Given accessibility access has not been enabled

@@ -718,6 +718,9 @@
     <!-- OnboardingHomeSetupPage -->
     <string name="onboarding_home_setup_headline">Configure sua tela inicial</string>
     <string name="onboarding_home_setup_subhead">Escolha os apps que você quer na tela inicial. Você pode mudar tudo isso depois.</string>
+    <string name="onboarding_notifications_headline">Indicadores e reprodução atual</string>
+    <string name="onboarding_notifications_subhead">Pontos nos apps com algo pendente e o que está tocando na tela inicial. Você pode mudar isso depois.</string>
+    <string name="onboarding_notifications_access_note">Os dois recursos precisam de acesso às notificações, uma permissão especial que você ativa nas configurações do sistema. O Facet lê apenas quais apps têm notificações ativas e o título, o artista e a capa do que está tocando. Ele nunca lê o texto das notificações, e nada sai do seu dispositivo.</string>
     <string name="onboarding_dock_section_header">DOCK</string>
     <string name="action_clear_all">Limpar tudo</string>
     <string name="onboarding_dock_section_subhead">O dock padrão — cada faceta pode personalizar o seu depois. Arraste para reordenar.</string>

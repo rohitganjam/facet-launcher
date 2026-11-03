@@ -228,6 +228,9 @@
     <string name="onboarding_intro_gesture_widgets">Deslize para a direita para ver os seus widgets.</string>
     <string name="onboarding_home_setup_headline">Configure o seu ecrã inicial</string>
     <string name="onboarding_home_setup_subhead">Escolha as apps que quer no ecrã inicial. Pode alterar tudo isto mais tarde.</string>
+    <string name="onboarding_notifications_headline">Indicadores e reprodução atual</string>
+    <string name="onboarding_notifications_subhead">Pontos nas apps com algo pendente e o que está a tocar no ecrã principal. Pode alterar isto mais tarde.</string>
+    <string name="onboarding_notifications_access_note">Ambas as funcionalidades precisam de acesso às notificações, uma autorização especial que ativa nas definições do sistema. O Facet lê apenas que apps têm notificações ativas e o título, o artista e a capa do que está a tocar. Nunca lê o texto das notificações e nada sai do seu dispositivo.</string>
     <string name="onboarding_dock_section_subhead">O dock predefinido — cada faceta pode personalizar o seu mais tarde. Arraste para reordenar.</string>
     <string name="onboarding_clear_dock_message">Remove todas as apps do dock predefinido. Pode voltar a adicionar apps quando quiser.</string>
     <string name="onboarding_manage_dock_apps">Gerir apps do dock</string>

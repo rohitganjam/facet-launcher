@@ -144,14 +144,15 @@ private fun NotificationSettingsContent(
     }
 }
 
+/** Also used by onboarding, which passes a null [onInAppMenuChange] to leave the in-app menu row out. */
 @Composable
-private fun BadgeSettingsCard(
+internal fun BadgeSettingsCard(
     badgesEnabled: Boolean,
     badgeStyle: NotificationBadgeStyle,
     inAppMenuEnabled: Boolean,
     onBadgesEnabledChange: (Boolean) -> Unit,
     onBadgeStyleChange: (NotificationBadgeStyle) -> Unit,
-    onInAppMenuChange: (Boolean) -> Unit,
+    onInAppMenuChange: ((Boolean) -> Unit)?,
     modifier: Modifier = Modifier,
 ) {
     SettingsCard(modifier = modifier) {
@@ -178,33 +179,36 @@ private fun BadgeSettingsCard(
             testTag = "badge_style_row",
             modifier = Modifier.alpha(if (badgesEnabled) 1f else 0.4f),
         )
-        CardDivider()
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(vertical = 13.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                text = stringResource(R.string.notification_app_menu_row_title),
-                style = MaterialTheme.typography.bodyLarge,
-                color = Ink,
-                modifier = Modifier.weight(1f).padding(end = 12.dp),
-            )
-            Switch(
-                checked = inAppMenuEnabled,
-                onCheckedChange = onInAppMenuChange,
-                modifier = Modifier.testTag("notification_app_menu_toggle"),
-            )
+        if (onInAppMenuChange != null) {
+            CardDivider()
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(vertical = 13.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = stringResource(R.string.notification_app_menu_row_title),
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = Ink,
+                    modifier = Modifier.weight(1f).padding(end = 12.dp),
+                )
+                Switch(
+                    checked = inAppMenuEnabled,
+                    onCheckedChange = onInAppMenuChange,
+                    modifier = Modifier.testTag("notification_app_menu_toggle"),
+                )
+            }
         }
     }
 }
 
+/** Also used by onboarding, which passes a null [onShowSkipButtonsChange] to leave the skip-buttons row out. */
 @Composable
-private fun MediaPlayerSettingsCard(
+internal fun MediaPlayerSettingsCard(
     enabled: Boolean,
     showSkipButtons: Boolean,
     onEnabledChange: (Boolean) -> Unit,
-    onShowSkipButtonsChange: (Boolean) -> Unit,
+    onShowSkipButtonsChange: ((Boolean) -> Unit)?,
     modifier: Modifier = Modifier,
 ) {
     SettingsCard(modifier = modifier) {
@@ -225,19 +229,21 @@ private fun MediaPlayerSettingsCard(
                 modifier = Modifier.testTag("media_player_toggle"),
             )
         }
-        CardDivider()
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(vertical = 13.dp).alpha(if (enabled) 1f else 0.4f),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(text = stringResource(R.string.media_skip_buttons_row_title), style = MaterialTheme.typography.bodyLarge, color = Ink)
-            Switch(
-                checked = showSkipButtons,
-                onCheckedChange = onShowSkipButtonsChange,
-                enabled = enabled,
-                modifier = Modifier.testTag("media_skip_buttons_toggle"),
-            )
+        if (onShowSkipButtonsChange != null) {
+            CardDivider()
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(vertical = 13.dp).alpha(if (enabled) 1f else 0.4f),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(text = stringResource(R.string.media_skip_buttons_row_title), style = MaterialTheme.typography.bodyLarge, color = Ink)
+                Switch(
+                    checked = showSkipButtons,
+                    onCheckedChange = onShowSkipButtonsChange,
+                    enabled = enabled,
+                    modifier = Modifier.testTag("media_skip_buttons_toggle"),
+                )
+            }
         }
     }
 }

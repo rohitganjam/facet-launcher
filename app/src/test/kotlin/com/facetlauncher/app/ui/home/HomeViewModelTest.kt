@@ -38,6 +38,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
+import org.junit.Ignore
 import org.junit.Test
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.verify
@@ -125,6 +126,8 @@ class HomeViewModelTest {
         )
     }
 
+    // Disabled with the double-tap to lock UI until the Play AccessibilityService declaration is approved.
+    @Ignore("double-tap to lock disabled")
     @Test
     fun `a double-tap on empty Home locks the screen when double-tap to lock is on`() = runTest {
         // Given double-tap to lock is on and the accessibility service is attached
