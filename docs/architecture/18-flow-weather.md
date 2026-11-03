@@ -145,7 +145,7 @@ header, when sent, sets the earliest next attempt.
   (`WeatherLocationViewModel`) through `SearchPlacesUseCase`.
 - **Icons.** `weatherIconStyle` (coloured by default, monochrome optional) is a launcher default that a facet overrides with the clock
   (`clockWeatherIconStyle`); the coloured set is nine PNGs (192 px), original artwork inspired by Google's Weather Icons v4.
-- **Credits:** About lists MET Norway and GeoNames.
+- **Credits:** the About section of Settings lists MET Norway and GeoNames.
 
 Tests: `WeatherConditionTest`, `WeatherViewModelTest` (JVM); `ClockAccessoriesScreenTest`, `WeatherLocationScreenTest` and
 `ClockWeatherAccessoryTest` (instrumented). Not testable on an emulator: a real location fix, a real `Geocoder` backend

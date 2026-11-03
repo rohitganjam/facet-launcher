@@ -1,0 +1,1049 @@
+<resources>
+    <string name="app_name">Facet Launcher</string>
+
+    <string name="font_name_system">Systeem</string>
+    <string name="font_name_roboto_flex">Roboto Flex</string>
+    <string name="font_name_noto_sans">Noto Sans</string>
+    <string name="font_name_manrope">Manrope</string>
+    <string name="font_name_poppins">Poppins</string>
+    <string name="font_name_inter">Inter</string>
+    <string name="font_name_montserrat">Montserrat</string>
+    <string name="font_name_lato">Lato</string>
+
+    <string name="app_sort_alphabetical">Alfabetisch</string>
+    <string name="app_sort_last_used">Laatst gebruikt</string>
+    <string name="app_sort_installed_date">Installatiedatum</string>
+    <string name="app_sort_last_updated">Laatst bijgewerkt</string>
+
+    <string name="clock_date_style_full">Volledig</string>
+    <string name="clock_date_style_condensed">Compact</string>
+
+    <string name="clock_font_launcher_default">Standaardlettertype van de launcher</string>
+
+    <string name="clock_color_theme">Thema</string>
+    <string name="clock_color_theme_inverted">Thema omgekeerd</string>
+    <string name="clock_color_accent_primary">Primaire accentkleur</string>
+    <string name="clock_color_accent_secondary">Secundaire accentkleur</string>
+
+    <string name="font_weight_thin">Dun</string>
+    <string name="font_weight_extra_light">Extra licht</string>
+    <string name="font_weight_light">Licht</string>
+    <string name="font_weight_regular">Normaal</string>
+    <string name="font_weight_medium">Gemiddeld</string>
+    <string name="font_weight_semi_bold">Halfvet</string>
+
+    <string name="font_scale_small">Klein</string>
+    <string name="font_scale_default">Standaard</string>
+    <string name="font_scale_large">Groot</string>
+    <string name="font_scale_extra_large">Extra groot</string>
+    <string name="font_scale_huge">Enorm</string>
+
+    <string name="icon_render_system_default">Systeemstandaard</string>
+    <string name="icon_render_monochrome_black_white">Monochroom (zwart-wit)</string>
+    <string name="icon_render_monochrome_accent">Monochroom (accent)</string>
+    <string name="icon_render_glyph_accent">Symbool (accent)</string>
+    <string name="icon_render_outline_accent">Omtrek (accent)</string>
+    <string name="icon_render_glyph_ink">Symbool (thema)</string>
+    <string name="icon_render_outline_ink">Omtrek (thema)</string>
+    <string name="icon_render_glyph_inverted">Symbool (thema omgekeerd)</string>
+    <string name="icon_render_outline_inverted">Omtrek (thema omgekeerd)</string>
+    <string name="icon_style_default">Standaard</string>
+    <string name="icon_style_monochrome">Monochroom</string>
+    <string name="icon_style_glyph">Symbool</string>
+    <string name="icon_style_outline">Omtrek</string>
+    <string name="icon_colour_accent">Accent</string>
+    <string name="icon_colour_theme">Thema</string>
+    <string name="icon_colour_theme_inverted">Thema omgekeerd</string>
+    <string name="icons_screen_title">Pictogrammen</string>
+    <string name="icons_screen_subtitle">Stijl, kleur en vorm</string>
+    <string name="icons_screen_style">Stijl</string>
+    <string name="icons_screen_colour">Kleur</string>
+    <string name="icon_render_glyph_tile_accent">Symbool op tegel (accent)</string>
+    <string name="icon_render_glyph_tile_ink">Symbool op tegel (thema)</string>
+    <string name="icon_render_glyph_tile_inverted">Symbool op tegel (thema omgekeerd)</string>
+    <string name="icon_render_outline_tile_accent">Omtrek op tegel (accent)</string>
+    <string name="icon_render_outline_tile_ink">Omtrek op tegel (thema)</string>
+    <string name="icon_render_outline_tile_inverted">Omtrek op tegel (thema omgekeerd)</string>
+    <string name="icon_background_none">Geen</string>
+    <string name="icon_background_tile">Tegel</string>
+    <string name="icon_render_glyph_reversed_accent">Symbool op omgekeerde tegel (accent)</string>
+    <string name="icon_render_glyph_reversed_ink">Symbool op omgekeerde tegel (thema)</string>
+    <string name="icon_render_glyph_reversed_inverted">Symbool op omgekeerde tegel (thema omgekeerd)</string>
+    <string name="icon_render_outline_reversed_accent">Omtrek op omgekeerde tegel (accent)</string>
+    <string name="icon_render_outline_reversed_ink">Omtrek op omgekeerde tegel (thema)</string>
+    <string name="icon_render_outline_reversed_inverted">Omtrek op omgekeerde tegel (thema omgekeerd)</string>
+    <string name="icon_background_reversed_tile">Omgekeerde tegel</string>
+    <string name="icons_screen_background">Achtergrond</string>
+    <string name="icon_shape_squircle">Squircle</string>
+    <string name="icon_shape_rounded">Afgerond</string>
+    <string name="icon_shape_circle">Cirkel</string>
+    <string name="icon_shape_square">Vierkant</string>
+    <string name="icons_screen_icon_pack">Pictogrampakket</string>
+    <string name="icons_screen_built_in">Ingebouwd</string>
+    <string name="icons_screen_external">Extern</string>
+    <string name="icons_screen_icon_size">Pictogramgrootte</string>
+    <plurals name="icons_screen_pack_count">
+        <item quantity="one">%d pakket</item>
+        <item quantity="other">%d pakketten</item>
+    </plurals>
+    <string name="icons_screen_get_more">Meer ophalen</string>
+    <string name="icons_screen_no_packs">Geen pictogrampakketten geïnstalleerd. Pakketten voor Nova, Lawnchair, ADW of Apex werken hier ook.</string>
+    <string name="icons_screen_find_packs">Pictogrampakketten zoeken</string>
+    <string name="icons_screen_pack_coverage">Dekt %1$d van %2$d apps</string>
+    <string name="icons_screen_open_pack">Pakket openen</string>
+    <string name="icons_screen_pack_misses">Apps die het pakket mist</string>
+    <string name="icon_pack_fallback_match_pack">Aan pakket aanpassen</string>
+    <string name="icon_pack_fallback_keep_default">Standaardpictogrammen gebruiken</string>
+    <string name="icon_pack_fallback_match_pack_description">Aangepast aan de tegel en vorm van het pakket</string>
+    <string name="icon_pack_fallback_keep_default_description">Blijft het eigen pictogram van de app</string>
+    <string name="icons_screen_shape_and_size">Vorm en grootte</string>
+    <string name="icons_screen_force_shape">Pictogramvorm afdwingen</string>
+    <string name="icons_screen_force_shape_description">Knip ook de pictogrammen van het pakket bij op de vorm hierboven</string>
+
+    <string name="clock_template_light_stack">Lichte stapel</string>
+    <string name="clock_template_rule_meridiem">Liniaal</string>
+    <string name="clock_template_date_forward">Datum voorop</string>
+    <string name="clock_template_weight_contrast">Gewichtscontrast</string>
+    <string name="clock_template_italic_accent">Cursief</string>
+    <string name="clock_template_spelled_out">Uitgeschreven</string>
+    <string name="clock_template_vertical_stack">Verticale stapel</string>
+    <string name="clock_template_vertical_stack_bold_hour">Verticale stapel (vet uur)</string>
+    <string name="clock_template_roboto_flex_wide">Flex breed</string>
+    <string name="clock_template_roboto_flex_narrow">Flex smal</string>
+    <string name="clock_template_tech_distorted">Tech vervormd</string>
+    <string name="clock_template_variable_divider">Variabele scheiding</string>
+    <string name="clock_template_fluid_stack">Vloeiende stapel</string>
+    <string name="clock_template_fluid_stack_inverted">Vloeiende stapel omgekeerd</string>
+    <string name="clock_template_bracket_minimal">Minimale haken</string>
+    <string name="clock_template_two_line_divider">Tweeregelige scheiding</string>
+    <string name="clock_template_bold_colon">Vette dubbele punt</string>
+    <string name="clock_template_accented_fluid_stack">Vloeiende stapel met accent</string>
+    <string name="clock_template_accented_fluid_stack_inverted">Vloeiende stapel met accent omgekeerd</string>
+    <string name="clock_template_accent_contrast">Accentcontrast</string>
+    <string name="clock_template_accent_field">Accentvlak</string>
+    <string name="clock_template_hour_tile">Uurtegel</string>
+    <string name="clock_template_chip">Chip</string>
+    <string name="clock_template_duotone_overlap">Duotone-overlap</string>
+    <string name="clock_template_corner_frame">Hoekkader</string>
+    <string name="clock_template_stub">Stompje</string>
+    <string name="clock_template_halo">Halo</string>
+    <string name="clock_template_digit_cells">Cijfercellen</string>
+    <string name="clock_template_negative_panel">Negatief paneel</string>
+    <string name="clock_template_hollow_hour">Hol uur</string>
+    <string name="clock_template_highlighter">Markeerstift</string>
+    <string name="clock_template_column_rule">Kolomlijn</string>
+    <string name="clock_template_colon_mark">Dubbele punt</string>
+    <string name="clock_template_pill_pair">Pillenpaar</string>
+    <string name="clock_template_shelf">Plank</string>
+    <string name="clock_template_half_immersed">Half ondergedompeld</string>
+
+    <string name="accent_swatch_blue">Blauw</string>
+    <string name="accent_swatch_indigo">Indigo</string>
+    <string name="accent_swatch_purple">Paars</string>
+    <string name="accent_swatch_pink">Roze</string>
+    <string name="accent_swatch_red">Rood</string>
+    <string name="accent_swatch_orange">Oranje</string>
+    <string name="accent_swatch_amber">Amber</string>
+    <string name="accent_swatch_green">Groen</string>
+    <string name="accent_swatch_teal">Blauwgroen</string>
+    <string name="accent_swatch_cyan">Cyaan</string>
+
+    <string name="settings_catalog_wifi">Wifi</string>
+    <string name="settings_catalog_bluetooth">Bluetooth</string>
+    <string name="settings_catalog_airplane_mode">Vliegtuigmodus</string>
+    <string name="settings_catalog_display">Scherm</string>
+    <string name="settings_catalog_sound">Geluid en trillen</string>
+    <string name="settings_catalog_battery_saver">Batterijbesparing</string>
+    <string name="settings_catalog_storage">Opslag</string>
+    <string name="settings_catalog_apps">Apps</string>
+    <string name="settings_catalog_location">Locatie</string>
+    <string name="settings_catalog_security">Beveiliging</string>
+    <string name="settings_catalog_accessibility">Toegankelijkheid</string>
+    <string name="settings_catalog_date_time">Datum en tijd</string>
+    <string name="settings_catalog_language">Talen en invoer</string>
+    <string name="settings_catalog_accounts">Accounts</string>
+    <string name="settings_catalog_nfc">NFC</string>
+
+    <string name="content_description_back">Terug</string>
+    <string name="action_cancel">Annuleren</string>
+    <string name="action_save">Opslaan</string>
+    <string name="action_reset">Resetten</string>
+    <string name="action_rename">Hernoemen</string>
+    <string name="action_done">Klaar</string>
+    <string name="folder_add_to_folder">Aan map toevoegen</string>
+    <string name="folder_remove_from_folder">Uit map verwijderen</string>
+    <string name="folder_create_new_folder">Nieuwe map maken</string>
+    <string name="folder_new_folder_title">Nieuwe map</string>
+    <string name="folder_name_this_folder">Geef deze map een naam.</string>
+    <string name="folder_rename_title">Map hernoemen</string>
+    <string name="folder_rename_explanation">Kies een nieuwe naam voor deze map.</string>
+    <string name="folder_no_apps_yet">Nog geen apps in deze map</string>
+    <string name="quick_placement_add_to">Toevoegen aan %1$s</string>
+    <string name="quick_placement_remove_from">Verwijderen uit %1$s</string>
+    <string name="quick_placement_favorites">Favorieten</string>
+    <string name="quick_placement_dock">Dock</string>
+    <plurals name="folder_app_count">
+        <item quantity="one">%d app</item>
+        <item quantity="other">%d apps</item>
+    </plurals>
+
+    <string name="app_context_menu_app_info">App-info</string>
+    <string name="app_context_menu_uninstall">Verwijderen</string>
+    <string name="app_menu_notifications_header">Meldingen · %1$d</string>
+    <string name="app_menu_notifications_clear_all">Alles wissen</string>
+    <string name="app_menu_notifications_title">Meldingen</string>
+    <string name="app_menu_notifications_empty">Geen meldingen</string>
+    <string name="app_menu_notifications_access_needed">Voor meldingen is toegang nodig via de systeeminstellingen.</string>
+    <string name="relative_age_seconds">%1$ds</string>
+    <string name="relative_age_minutes">%1$dm</string>
+    <string name="relative_age_hours">%1$du</string>
+    <string name="relative_age_days">%1$dd</string>
+    <string name="placement_action_description">%1$s, %2$s</string>
+
+    <string name="app_picker_search_apps">Apps zoeken</string>
+    <string name="app_picker_all_apps">ALLE APPS</string>
+    <string name="app_picker_no_folders_yet">Nog geen mappen. Houd een app lang ingedrukt en kies “Aan map toevoegen” om er een te maken.</string>
+    <string name="app_picker_tab_apps">Apps</string>
+    <string name="app_picker_tab_folders">Mappen</string>
+
+    <string name="inherit_override_follows_default">Volgt de standaard van de hele launcher</string>
+    <string name="inherit_override_inherit_default">Standaard overnemen</string>
+    <string name="inherit_override_override_for_facet">Overschrijven voor deze facet</string>
+    <string name="inherit_override_changes_dont_affect_others">Wijzigingen hier hebben geen invloed op andere facets</string>
+    <string name="inherit_override_edit_defaults">Standaarden bewerken</string>
+
+    <string name="gesture_hint_switch_facets">Van facet wisselen</string>
+    <string name="gesture_hint_arrow_left">←</string>
+    <string name="gesture_hint_arrow_right">→</string>
+    <string name="gesture_hint_widgets">Widgets</string>
+    <string name="gesture_hint_all_your_apps">Al je apps</string>
+    <string name="gesture_hint_arrow_up">↑</string>
+    <string name="gesture_hint_clock_hold">Houd de klok ingedrukt om hem te vergroten of te verplaatsen</string>
+    <string name="gesture_hint_got_it">Begrepen</string>
+
+    <string name="facet_scope_global">Algemeen</string>
+    <string name="facet_scope_work">Werk</string>
+    <string name="facet_scope_other_profile">Ander profiel</string>
+
+    <string name="home_surface_preview_nothing_yet">Nog niets om te bekijken</string>
+
+    <string name="app_sort_ascending">Oplopend sorteren</string>
+    <string name="app_sort_descending">Aflopend sorteren</string>
+
+    <string name="notification_badge_style_dot">Stip</string>
+    <string name="notification_badge_style_count">Aantal</string>
+
+    <string name="dot_join_2">%1$s · %2$s</string>
+    <string name="dot_join_3">%1$s · %2$s · %3$s</string>
+    <string name="comma_join_2">%1$s, %2$s</string>
+
+    <string name="settings_header_title">Instellingen</string>
+    <string name="settings_section_facets">Facets</string>
+    <string name="settings_section_appearance">Uiterlijk</string>
+    <string name="settings_section_home_apps">Apps en mappen</string>
+    <string name="settings_section_system">Systeem</string>
+    <string name="settings_section_about">Over</string>
+    <string name="settings_facets_title">Facets</string>
+    <string name="settings_facets_subtitle">Facetspecifieke instellingen maken en beheren</string>
+    <string name="settings_change_wallpaper_title">Achtergrond wijzigen</string>
+    <string name="settings_change_wallpaper_subtitle">Wijzig je systeemachtergrond</string>
+    <string name="settings_appearance_title">Aanpassing</string>
+    <string name="settings_appearance_subtitle">Klok, agenda, startscherm, meldingen en thema\'s aanpassen</string>
+    <string name="settings_clock_calendar_title">Klokstijl</string>
+    <string name="settings_time_format_24h">24-uurs tijd</string>
+    <string name="settings_time_format_12h">12-uurs tijd</string>
+    <string name="settings_calendars_title">Weer te geven agenda\'s</string>
+    <plurals name="settings_calendars_selected">
+        <item quantity="one">%1$d agenda geselecteerd</item>
+        <item quantity="other">%1$d agenda\'s geselecteerd</item>
+    </plurals>
+    <string name="settings_all_day_events_visible">Evenementen van een hele dag zichtbaar</string>
+    <string name="settings_all_day_events_hidden">Evenementen van een hele dag verborgen</string>
+    <string name="settings_dock_title">Dock</string>
+    <plurals name="settings_dock_apps_count">
+        <item quantity="one">%d dock-app</item>
+        <item quantity="other">%d dock-apps</item>
+    </plurals>
+    <plurals name="settings_dock_folders_count">
+        <item quantity="one">%d map</item>
+        <item quantity="other">%d mappen</item>
+    </plurals>
+    <string name="settings_home_apps_list_title">Appslijst op startscherm</string>
+    <plurals name="settings_favorites_count">
+        <item quantity="one">%1$d favoriet</item>
+        <item quantity="other">%1$d favorieten</item>
+    </plurals>
+    <plurals name="settings_recents_count">
+        <item quantity="one">%1$d recente</item>
+        <item quantity="other">%1$d recente</item>
+    </plurals>
+    <string name="settings_most_used_count">%1$d meest gebruikt</string>
+    <string name="settings_app_drawer_title">App-lade</string>
+    <string name="settings_show_as">Weergeven als %1$s</string>
+    <string name="settings_search_on">Aan</string>
+    <string name="settings_search_off">Uit</string>
+    <string name="settings_contact_search">Contacten zoeken: %1$s</string>
+    <string name="settings_settings_search">Instellingen zoeken: %1$s</string>
+    <string name="settings_notifications_title">Meldingen</string>
+    <string name="settings_notifications_media_row_title">Meldingen en media</string>
+    <string name="settings_notifications_summary_badges_dot">Stipbadges</string>
+    <string name="settings_notifications_summary_badges_count">Aantalbadges</string>
+    <string name="settings_notifications_summary_badges_off">Badges uit</string>
+    <string name="settings_notifications_summary_media_on">Mediaspeler aan</string>
+    <string name="settings_notifications_summary_media_off">Mediaspeler uit</string>
+    <string name="settings_notifications_needs_access">Toegang tot meldingen nodig</string>
+    <string name="settings_calendars_needs_access">Toegang tot agenda nodig</string>
+    <string name="settings_folders_title">Mappen</string>
+    <string name="settings_folders_none">Nog geen mappen</string>
+    <plurals name="settings_folders_count">
+        <item quantity="one">%d map</item>
+        <item quantity="other">%d mappen</item>
+    </plurals>
+    <string name="settings_permissions_title">Machtigingen</string>
+    <string name="settings_permissions_subtitle">Bekijk waartoe Facet Launcher toegang heeft en waarom</string>
+    <string name="settings_backup_restore_title">Back-up en herstel</string>
+    <string name="settings_backup_restore_subtitle">Instellingen als bestand exporteren · widgets moeten na importeren opnieuw worden toegevoegd</string>
+    <string name="settings_set_default_launcher_title">Instellen als standaardlauncher</string>
+    <string name="settings_status_active">Actief</string>
+    <string name="settings_status_not_set">Niet ingesteld</string>
+    <string name="settings_status_paused">Gepauzeerd</string>
+
+    <string name="notification_badges_row_title">Meldingsbadges</string>
+    <string name="notification_badge_style_row_title">Badgestijl</string>
+    <string name="notification_app_menu_row_title">Meldingen tonen in het appmenu</string>
+    <string name="media_player_row_title">Mediaspeler tonen op het startscherm</string>
+    <string name="media_skip_buttons_row_title">Overslaan-knoppen tonen</string>
+    <string name="notification_preview_title">Voorbeeld</string>
+    <string name="notification_preview_app">Berichten</string>
+    <string name="notification_preview_no_access">Toegang tot meldingen is nodig om badges en de mediaspeler te bekijken.</string>
+    <string name="notification_preview_allow_access">Toegang toestaan</string>
+    <string name="notification_preview_disabled">Badges en de mediaspeler zijn uit, dus Home toont geen meldingen.</string>
+
+    <string name="media_player_open_cd">Speler openen</string>
+    <string name="media_player_previous_cd">Vorig nummer</string>
+    <string name="media_player_next_cd">Volgend nummer</string>
+    <string name="media_player_play_cd">Afspelen</string>
+    <string name="media_player_pause_cd">Pauzeren</string>
+
+    <string name="drawer_presentation_list">Lijst</string>
+    <string name="drawer_presentation_grid">Raster</string>
+    <string name="drawer_grid_density_compact">Compact</string>
+    <string name="drawer_grid_density_regular">Normaal</string>
+    <string name="drawer_grid_density_spacious">Ruim</string>
+    <string name="drawer_list_item_size_compact">Compact</string>
+    <string name="drawer_list_item_size_regular">Normaal</string>
+    <string name="drawer_list_item_size_spacious">Ruim</string>
+    <string name="search_bar_position_top">Boven</string>
+    <string name="search_bar_position_bottom">Onder</string>
+    <string name="drawer_folder_display_mode_do_not_show">Niet tonen</string>
+    <string name="drawer_folder_display_mode_inline">Mappen tussen de apps tonen</string>
+    <string name="drawer_folder_display_mode_show_first">Mappen eerst tonen</string>
+    <string name="drawer_folder_display_mode_show_last">Mappen laatst tonen</string>
+    <string name="recently_installed_position_show_first">Recente eerst tonen</string>
+    <string name="recently_installed_position_show_last">Recente laatst tonen</string>
+    <string name="recently_installed_position_do_not_show">Niet tonen</string>
+
+    <string name="app_row_position_left">Links</string>
+    <string name="app_row_position_center">Midden</string>
+    <string name="app_row_position_right">Rechts</string>
+    <string name="app_row_position_launcher_default">Standaardpositie van de launcher</string>
+    <string name="app_row_presentation_icon_only">Alleen pictogram</string>
+    <string name="app_row_presentation_icon_and_text">Pictogram en tekst</string>
+    <string name="app_row_presentation_text_only">Alleen tekst</string>
+    <string name="app_row_presentation_launcher_default">Standaardstijl van de launcher</string>
+    <string name="app_list_vertical_alignment_top">Boven</string>
+    <string name="app_list_vertical_alignment_bottom">Onder</string>
+    <string name="app_list_vertical_alignment_launcher_default">Standaardpositie van de launcher</string>
+    <string name="list_content_mode_favorites">Favorieten</string>
+    <string name="list_content_mode_recents">Recent</string>
+    <string name="list_content_mode_most_used">Meest gebruikt</string>
+    <string name="dock_display_mode_icons">Pictogrammen</string>
+    <string name="dock_display_mode_text">Tekst</string>
+    <string name="dock_display_mode_launcher_default">Standaardstijl van de launcher</string>
+    <string name="app_list_layout_single_column">Eén kolom</string>
+    <string name="app_list_layout_two_column">Twee kolommen</string>
+    <string name="app_list_layout_grid">Raster</string>
+    <string name="app_list_layout_launcher_default">Standaardindeling van de launcher</string>
+    <string name="app_list_column_alignment_both_left">Beide links</string>
+    <string name="app_list_column_alignment_both_right">Beide rechts</string>
+    <string name="app_list_column_alignment_mirrored">Links en rechts</string>
+    <string name="app_list_column_alignment_launcher_default">Standaarduitlijning van de launcher</string>
+    <string name="app_list_grid_columns_three">3 kolommen</string>
+    <string name="app_list_grid_columns_four">4 kolommen</string>
+    <string name="app_list_grid_columns_five">5 kolommen</string>
+    <string name="app_list_grid_columns_six">6 kolommen</string>
+    <string name="app_list_grid_columns_launcher_default">Standaardkolommen van de launcher</string>
+    <string name="app_list_grid_display_mode_icons">Pictogrammen</string>
+    <string name="app_list_grid_display_mode_text">Tekst</string>
+    <string name="app_list_grid_display_mode_launcher_default">Standaardstijl van de launcher</string>
+
+    <string name="home_apps_list_header_title">Appslijst op startscherm</string>
+    <string name="home_apps_list_position">Uitlijning van startschermapps</string>
+    <string name="home_apps_list_list_position">Positie van de appslijst</string>
+    <string name="appearance_allow_landscape_title">Liggende modus toestaan</string>
+    <string name="appearance_allow_landscape_subtitle">Gebruik een liggende indeling als het scherm breed genoeg is. Uit houdt Home staand.</string>
+    <string name="appearance_alignment_portrait_title">Uitlijning staand</string>
+    <string name="appearance_alignment_landscape_title">Uitlijning liggend</string>
+    <string name="home_apps_list_same_as_portrait">Hetzelfde als staand</string>
+    <string name="home_apps_list_presentation">Startschermapps tonen als</string>
+    <string name="home_apps_list_layout">Indeling van de appslijst</string>
+    <string name="home_apps_list_column_alignment">Kolomuitlijning</string>
+    <string name="home_apps_list_grid_columns">Rasterkolommen</string>
+    <string name="home_apps_list_grid_display">Rasterweergave</string>
+    <string name="home_apps_list_shrink_to_fit">Lijst laten krimpen tot passend</string>
+    <string name="app_list_shrink_to_fit_launcher_default">Standaardstijl van de launcher</string>
+    <string name="app_list_shrink_to_fit_off">Uit</string>
+    <string name="app_list_shrink_to_fit_on">Aan</string>
+    <string name="app_list_grid_display_mode_icons_and_text">Pictogrammen en tekst</string>
+    <string name="dock_display_mode_icons_and_text">Pictogrammen en tekst</string>
+    <string name="home_apps_list_content_facet">Inhoud van de appslijst</string>
+    <string name="home_apps_list_content_default">Standaardinhoud van de appslijst</string>
+    <string name="home_apps_list_apps_to_show">Te tonen apps</string>
+    <string name="home_apps_list_favorites_facet">Favorieten</string>
+    <string name="home_apps_list_favorites_default">Standaardfavorieten</string>
+    <string name="drag_to_reorder_content_description">Sleep om de volgorde te wijzigen</string>
+
+    <string name="app_drawer_settings_header_title">App-lade</string>
+    <string name="app_drawer_show_apps_as">Apps tonen als</string>
+    <string name="app_drawer_grid_density">Rasterdichtheid</string>
+    <string name="app_drawer_list_item_size">Grootte van lijstitems</string>
+    <string name="app_drawer_show_icons_title">Pictogrammen tonen</string>
+    <string name="app_drawer_show_icons_subtitle">Toont pictogrammen bij de appnaam</string>
+    <string name="app_drawer_show_labels_title">Labels tonen</string>
+    <string name="app_drawer_show_labels_subtitle">Toont de appnaam onder het pictogram</string>
+    <string name="app_drawer_search_contacts_title">Contacten zoeken</string>
+    <string name="app_drawer_search_contacts_subtitle">Contacten tonen in zoekresultaten</string>
+    <string name="app_drawer_search_settings_title">Instellingen zoeken</string>
+    <string name="app_drawer_search_settings_subtitle">Spring naar systeeminstellingen zoals wifi of Bluetooth</string>
+    <string name="app_drawer_search_bar_position">Positie van de zoekbalk</string>
+    <string name="app_drawer_folders_in_drawer">Mappen in de lade</string>
+    <string name="app_drawer_recently_installed_position">Recent geïnstalleerd</string>
+    <string name="app_drawer_opacity_label">Dekking van de lade</string>
+    <string name="app_drawer_preview_description">Voorbeeld van de app-lade</string>
+    <string name="drawer_preview_folder_name">Werk</string>
+    <string-array name="drawer_preview_app_labels">
+        <item>Agenda</item>
+        <item>Camera</item>
+        <item>Klok</item>
+        <item>Kaarten</item>
+        <item>Muziek</item>
+        <item>Notities</item>
+        <item>Foto\'s</item>
+        <item>Weer</item>
+    </string-array>
+    <string name="drawer_recently_installed_label">Recent geïnstalleerd</string>
+
+    <string name="theme_mode_light">Licht</string>
+    <string name="theme_mode_dark">Donker</string>
+    <string name="theme_mode_system">Systeem</string>
+    <string name="system_bar_icons_match_theme">Standaard</string>
+    <string name="system_bar_icons_light">Licht</string>
+    <string name="system_bar_icons_dark">Donker</string>
+
+    <string name="appearance_header_title">Aanpassing</string>
+    <string name="appearance_section_dock_home">Dock en startscherm</string>
+    <string name="appearance_section_clock">Klok en agenda</string>
+    <string name="appearance_dock_apps_title">Uiterlijk van dock en apps</string>
+    <string name="appearance_general_title">Algemene instellingen</string>
+    <string name="appearance_general_subtitle">Thema\'s, accent, statusbalk</string>
+    <string name="appearance_section_look_feel">Uiterlijk en gevoel</string>
+    <string name="appearance_launcher_theme">Launcherthema</string>
+    <string name="appearance_system_bar_icons">Pictogrammen in de statusbalk</string>
+    <string name="appearance_hide_status_bar_title">Statusbalk verbergen</string>
+    <string name="appearance_hide_status_bar_subtitle">Verborgen op Home, Hub en het appmenu. Veeg omlaag om hem enkele seconden te tonen.</string>
+    <string name="appearance_icon_shape">Pictogramvorm</string>
+    <string name="appearance_launcher_font">Lettertype van de launcher</string>
+    <string name="appearance_section_icons">Pictogrammen</string>
+    <string name="appearance_section_fonts">Lettertypen</string>
+    <string name="font_preview_row">Appslijst op startscherm</string>
+    <string name="font_preview_body">Docktekst</string>
+    <string name="font_preview_label">Rastertekst</string>
+    <string name="appearance_font_color">Letterkleur</string>
+    <string name="appearance_font_size">Lettergrootte</string>
+    <string name="appearance_font_weight">Letterdikte</string>
+    <string name="appearance_accent_color">Accentkleur</string>
+    <string name="appearance_wallpaper_colors">Achtergrondkleuren</string>
+    <string name="appearance_basic_colors">Basiskleuren</string>
+
+    <string name="backup_restore_confirm_title">Alles op dit apparaat vervangen?</string>
+    <string name="backup_restore_confirm_message">Importeren vervangt alle facets, de dock en de standaardfavorieten door de inhoud van het back-upbestand. Dit kan niet ongedaan worden gemaakt.</string>
+    <string name="backup_restore_confirm_replace">Vervangen</string>
+    <string name="backup_restore_export_title">Back-up exporteren</string>
+    <string name="backup_restore_export_subtitle">Sla alle facets, de dock, favorieten en instellingen op als bestand</string>
+    <string name="backup_restore_import_title">Back-up importeren</string>
+    <string name="backup_restore_import_subtitle">Vervang alles op dit apparaat vanuit een back-upbestand</string>
+    <string name="backup_restore_widgets_to_readd_header">OPNIEUW TOE TE VOEGEN WIDGETS</string>
+    <string name="backup_restore_widgets_to_readd_explanation">Deze widgets konden niet automatisch worden hersteld — tik op elk om hem terug te zetten waar hij stond.</string>
+    <string name="backup_restore_export_succeeded">Back-up opgeslagen</string>
+    <string name="backup_restore_export_failed">Kon de back-up niet opslaan</string>
+    <plurals name="backup_restored_facets_count">
+        <item quantity="one">%d facet hersteld</item>
+        <item quantity="other">%d facets hersteld</item>
+    </plurals>
+    <plurals name="backup_widgets_need_readding_count">
+        <item quantity="one">%d widget moet hieronder opnieuw worden toegevoegd</item>
+        <item quantity="other">%d widgets moeten hieronder opnieuw worden toegevoegd</item>
+    </plurals>
+    <string name="backup_restore_import_failed_invalid_file">Dat bestand is geen geldige Facet-back-up</string>
+    <string name="backup_restore_import_failed_unsupported_version">Die back-up is gemaakt met een nieuwere versie van Facet</string>
+    <string name="backup_restore_app_not_installed">App niet geïnstalleerd</string>
+    <string name="backup_restore_readd">Opnieuw toevoegen</string>
+    <string name="backup_restore_skip">Overslaan</string>
+
+    <string name="permissions_header_title">Machtigingen</string>
+    <string name="permission_status_on">Aan</string>
+    <string name="permission_turn_on">Inschakelen</string>
+
+    <string name="permission_calendar_title">Agenda</string>
+    <string name="permission_calendar_subtitle">Toont de evenementen van vandaag op de klok.</string>
+    <string name="permission_contacts_title">Contacten</string>
+    <string name="permission_contacts_subtitle">Laat het zoeken in de lade passende contacten tonen met snelle bel-, bericht- en WhatsApp-acties.</string>
+    <string name="permission_usage_access_title">Gebruikstoegang</string>
+    <string name="permission_usage_access_subtitle">Voedt de lijsten Recent en Meest gebruikt.</string>
+    <string name="permission_notification_access_title">Toegang tot meldingen</string>
+    <string name="permission_notification_access_subtitle">Toont een stip of aantalbadge op apps met actieve meldingen.</string>
+    <string name="permission_bluetooth_title">Bluetooth</string>
+    <string name="permission_bluetooth_subtitle">Laat facetautomatiseringsregels reageren op een gekoppeld Bluetooth-apparaat, zoals je auto, en toont gekoppelde apparaten wanneer je er een instelt.</string>
+    <string name="permission_location_title">Locatie</string>
+    <string name="permission_location_subtitle">Android vereist dit om de naam van het wifinetwerk te lezen voor regels over een bepaald netwerk, en om het weer te vinden waar je bent als je Huidige locatie gebruiken kiest. Facet gebruikt het nergens anders voor.</string>
+
+    <string name="settings_facet_automation_title">Facetautomatisering</string>
+    <string name="settings_facet_automation_none">Geen regels</string>
+    <plurals name="settings_facet_automation_rules">
+        <item quantity="one">%d regel</item>
+        <item quantity="other">%d regels</item>
+    </plurals>
+    <string name="automation_header_title">Facetautomatisering</string>
+    <string name="automation_editor_new">Nieuwe regel</string>
+    <string name="automation_editor_edit">Regel bewerken</string>
+    <string name="automation_editor_switch_to">Wisselen naar</string>
+    <string name="automation_editor_when">Wanneer</string>
+    <string name="automation_trigger_schedule">Schema</string>
+    <string name="automation_trigger_bluetooth">Bluetooth-apparaat</string>
+    <string name="automation_trigger_wifi">Wifi</string>
+    <string name="automation_trigger_headphones">Koptelefoon</string>
+    <string name="automation_trigger_battery">Batterij</string>
+    <string name="automation_while_connected">Zolang verbonden</string>
+    <string name="automation_while_not_connected">Zolang niet verbonden</string>
+    <string name="automation_while_plugged_in">Zolang aangesloten</string>
+    <string name="automation_while_not_plugged_in">Zolang niet aangesloten</string>
+    <string name="automation_editor_device">Apparaat</string>
+    <string name="automation_choose_device">Kies een apparaat</string>
+    <string name="automation_no_paired_devices">Geen gekoppelde apparaten. Koppel er eerst een in de Bluetooth-instellingen van je telefoon.</string>
+    <string name="automation_wifi_scope_any">Elk netwerk</string>
+    <string name="automation_wifi_scope_named">Bepaald netwerk</string>
+    <string name="automation_editor_network">Netwerk</string>
+    <string name="automation_choose_network">Kies een netwerk</string>
+    <string name="automation_battery_option_below">Onder</string>
+    <string name="automation_battery_option_above">Boven</string>
+    <string name="automation_battery_percent">%1$d%%</string>
+    <string name="automation_error_no_device">Kies een apparaat om deze regel op te slaan</string>
+    <string name="automation_error_no_network">Kies een netwerk om deze regel op te slaan</string>
+    <string name="automation_permission_bluetooth_off">Bluetooth-toegang is uit, dus deze trigger kan niet worden gebruikt. Sta het toe in Instellingen.</string>
+    <string name="automation_permission_location_off">Locatietoegang is uit. Android heeft die nodig om wifinetwerknamen te lezen. Sta het toe in Instellingen.</string>
+    <string name="automation_open_settings">Instellingen openen</string>
+    <string name="pro_pill">Pro</string>
+    <string name="automation_paused_needs_pro">Gepauzeerd. Pro vereist</string>
+    <string name="automation_free_strip">Gratis bevat 2 schemaregels. Pro voegt meer regels toe en triggers voor Bluetooth, wifi, opladen, koptelefoon en batterij.</string>
+    <string name="automation_see_pro">Upgraden naar Pro</string>
+    <string name="pro_hero_title">Meer facets, meer automatisering, meer aanpassing</string>
+    <string name="pro_hero_trigger_office">Kantoor</string>
+    <string name="pro_hero_trigger_work">Werk</string>
+    <string name="pro_hero_trigger_car">Auto</string>
+    <string name="pro_hero_trigger_drive">Rijden</string>
+    <string name="pro_add_facet">Een facet toevoegen</string>
+    <string name="pro_restore">Aankopen herstellen</string>
+    <string name="pro_feature_facets_title">Meer facets</string>
+    <string name="pro_feature_facets_body">Gratis bevat er 3. Pro gaat tot 10. Elk krijgt eigen startschermapps en een eigen klok.</string>
+    <string name="pro_feature_triggers_title">Triggers voor wifi, Bluetooth, koptelefoon en batterij</string>
+    <string name="pro_feature_triggers_body">Maak verbinding met het kantoornetwerk of de auto, en het facet wisselt.</string>
+    <string name="pro_feature_widgets_title">Eigen widgets op het startscherm</string>
+    <string name="pro_feature_widgets_body">Vervang de klok door een willekeurige widget op je telefoon. Gratis bevat de eigen klokken van de launcher.</string>
+    <string name="pro_feature_future_title">Toekomstige Pro-functies inbegrepen</string>
+    <string name="pro_feature_future_body">Alles wat later aan Pro wordt toegevoegd, is van jou.</string>
+    <string name="pro_unlock">Levenslang Pro ontgrendelen</string>
+    <string name="pro_unlock_price">Levenslang Pro ontgrendelen · %1$s</string>
+    <string name="pro_on_pro_title">Je hebt Pro</string>
+    <string name="pro_on_pro_body">Ontgrendeld op elke telefoon die is aangemeld bij dit Google-account.</string>
+    <string name="pro_unlocked">ONTGRENDELD</string>
+    <string name="pro_owned_facets_title">Meer facets</string>
+    <string name="pro_owned_facets_body">Tot 10 facets</string>
+    <string name="pro_owned_wifi_title">Wifitriggers</string>
+    <string name="pro_owned_wifi_body">Wisselen op een netwerk</string>
+    <string name="pro_owned_bluetooth_title">Bluetooth-triggers</string>
+    <string name="pro_owned_bluetooth_body">Wisselen op een apparaat</string>
+    <string name="pro_owned_more_title">Triggers voor koptelefoon en batterij</string>
+    <string name="pro_owned_more_body">Wisselen bij aansluiten of opladen</string>
+    <string name="pro_card_headline">De complete Facet-ervaring, volledig ontgrendeld.</string>
+    <string name="settings_pro_free_plan">Je hebt het gratis abonnement</string>
+    <string name="pro_upgrade_to_pro">Upgraden naar Pro</string>
+    <string name="pro_active_title">Pro is actief</string>
+    <string name="pro_hero_label_weekend">WEEKEND</string>
+    <string name="pro_hero_label_drive">RIJDEN</string>
+    <string name="pro_hero_label_work">WERK</string>
+    <plurals name="settings_pro_facet_count">
+        <item quantity="one">%d facet</item>
+        <item quantity="other">%d facets</item>
+    </plurals>
+    <plurals name="settings_pro_triggers_running">
+        <item quantity="one">%d trigger actief</item>
+        <item quantity="other">%d triggers actief</item>
+    </plurals>
+    <string name="pro_done">Klaar</string>
+    <string name="pro_upgrade_trigger">Regels die reageren op Bluetooth, wifi, een koptelefoon of de batterij horen bij Pro.</string>
+    <string name="pro_upgrade_rule_limit">Het gratis abonnement bevat 2 regels. Met Pro kun je er meer toevoegen.</string>
+    <string name="pro_upgrade_facet_limit">Het gratis abonnement bevat 3 facets. Met Pro kun je er tot 10 hebben.</string>
+    <string name="pro_upgrade_facet_locked">Dit facet is gepauzeerd in het gratis abonnement. Verwijder een facet om terug te gaan naar 3, of ga Pro om er tot 10 te gebruiken.</string>
+    <string name="facet_locked_content_description">Uitgeschakeld in het gratis abonnement</string>
+    <string name="pro_upgrade_widget_stack">Meer dan één klok of widget op Home is een Pro-functie. Het gratis abonnement heeft er één.</string>
+    <string name="pro_upgrade_about">Eén aankoop ontgrendelt meer facets en elke automatiseringstrigger. Geen abonnement.</string>
+    <string name="pro_message_unavailable">Google Play is nu niet beschikbaar. Probeer het later opnieuw.</string>
+    <string name="pro_message_no_purchase">Geen Pro-aankoop gevonden voor dit Google-account.</string>
+    <string name="pro_message_pending">Je aankoop is in behandeling. Pro gaat aan zodra die is voltooid.</string>
+    <string name="pro_message_restored">Pro hersteld. Bedankt.</string>
+    <string name="automation_editor_from">Van</string>
+    <string name="automation_editor_until">Tot</string>
+    <string name="automation_ends_next_day">Eindigt de volgende dag</string>
+    <string name="automation_editor_when_it_ends">Wanneer het eindigt</string>
+    <string name="automation_end_return">Terug naar het vorige facet</string>
+    <string name="automation_end_switch_to">Wisselen naar</string>
+    <string name="automation_end_stay">Blijven op %1$s</string>
+    <string name="automation_error_no_days">Kies minstens één dag</string>
+    <string name="automation_error_facet_missing">Dat facet bestaat niet meer. Kies een ander.</string>
+    <string name="automation_delete_title">Deze regel verwijderen?</string>
+    <string name="automation_delete_message">De regel wisselt niet langer van facet. Dit kan niet ongedaan worden gemaakt.</string>
+    <string name="automation_section_rules">Regels</string>
+    <string name="automation_add_rule">Regel toevoegen</string>
+    <string name="automation_section_other_apps">Andere apps gebruiken</string>
+    <string name="automation_other_apps_note">Elk facet heeft een snelkoppeling “Wisselen naar” voor automatiseringsapps zoals Samsung Modi en routines, Tasker, MacroDroid en meer.\n\nAls je zelf een facet kiest, of een app het voor je wisselt, overschrijft die keuze welke van je automatiseringsregels hierboven actief is. Je regels nemen het weer over zodra die regel eindigt.</string>
+    <string name="automation_empty">Voeg een regel toe om automatisch van facet te wisselen.</string>
+    <string name="automation_status_driving">%1$s wordt getoond vanwege de regel %2$s</string>
+    <string name="automation_status_override">%1$s wordt getoond, het facet dat je koos. %2$s is gepauzeerd tot het eindigt.</string>
+    <string name="automation_days_weekdays">Werkdagen</string>
+    <string name="automation_days_weekends">Weekenden</string>
+    <string name="automation_days_every_day">Elke dag</string>
+    <string name="automation_schedule_title">%1$s · %2$s–%3$s</string>
+    <string name="automation_bluetooth_connected">%1$s · verbonden</string>
+    <string name="automation_bluetooth_not_connected">%1$s · niet verbonden</string>
+    <string name="automation_wifi_any">Elk wifinetwerk</string>
+    <string name="automation_headphones_in">Koptelefoon · aangesloten</string>
+    <string name="automation_headphones_out">Koptelefoon · niet aangesloten</string>
+    <string name="automation_battery_charging">Opladen</string>
+    <string name="automation_battery_not_charging">Niet opladen</string>
+    <string name="automation_level_below">onder</string>
+    <string name="automation_level_above">boven</string>
+    <string name="automation_battery_title">%1$s · %2$s %3$d%%</string>
+    <string name="automation_subtitle_return">%1$s, dan het vorige facet</string>
+    <string name="automation_subtitle_switch_to">%1$s, dan %2$s</string>
+    <string name="automation_subtitle_stay">%1$s, dan blijven</string>
+    <string name="automation_needs_bluetooth">Bluetooth-toegang nodig</string>
+    <string name="automation_needs_location">Locatietoegang nodig</string>
+
+    <string name="dock_display_style">Dock-apps tonen als</string>
+    <string name="dock_select_apps">Dock-apps selecteren</string>
+    <string name="format_count_of_max">%1$d van %2$d</string>
+
+    <string name="folders_settings_create_folder">Map</string>
+    <string name="folders_settings_delete_folder">Map verwijderen</string>
+    <string name="folders_settings_delete_message">Dit verwijdert “%1$s” definitief en haalt de map uit elke dock- en favorietenlijst waarin hij staat.</string>
+    <string name="action_delete">Verwijderen</string>
+
+    <string name="calendar_settings_header_title">Agenda-instellingen</string>
+    <string name="calendar_settings_follows_launcher_wide">Volgt de agenda-instelling van de hele launcher</string>
+    <string name="calendar_settings_show_all_day_events">Evenementen van een hele dag tonen</string>
+    <string name="calendar_settings_show_indicator">Agenda-indicator tonen</string>
+    <string name="calendar_settings_items_to_display">Weer te geven items</string>
+    <string name="calendar_settings_preview_event_1">Teamoverleg</string>
+    <string name="calendar_settings_preview_event_2">Designreview</string>
+    <string name="calendar_settings_preview_event_3">Lunch met Sam</string>
+    <string name="calendar_settings_preview_sample_note">Voorbeeldevenementen</string>
+    <string name="calendar_settings_no_calendars_found">Geen agenda\'s gevonden op dit apparaat.</string>
+    <string name="calendar_settings_access_off">Agendatoegang uit — evenementen verborgen.</string>
+
+    <string name="folder_detail_no_apps_yet">Nog geen apps in deze map. Tik op “Aan map toevoegen” om er toe te voegen.</string>
+
+    <string name="about_version">Versie</string>
+    <string name="about_check_for_updates">Controleren op updates</string>
+    <string name="about_check_for_updates_subtitle">Facet Launcher openen in Google Play</string>
+    <string name="about_join_discord">Word lid van de Discord</string>
+    <string name="about_join_discord_subtitle">Chat met de community, deel feedback en volg mee</string>
+    <string name="whats_new_pill_title">Bijgewerkt naar %1$s</string>
+    <string name="whats_new_pill_action">Bekijk wat er nieuw is</string>
+    <string name="whats_new_pill_description">Bijgewerkt naar %1$s. Opent wat er nieuw is</string>
+    <string name="about_whats_new">Wat is er nieuw</string>
+    <string name="about_whats_new_subtitle">Functies en verbeteringen in elke release</string>
+    <string name="about_licenses">Open-sourcelicenties</string>
+    <string name="about_licenses_subtitle">Bibliotheken, lettertypen en gegevens die Facet gebruikt</string>
+    <string name="licenses_section_libraries">Bibliotheken en lettertypen</string>
+    <string name="licenses_section_fonts">Lettertypen</string>
+    <string name="licenses_section_data">Gegevens</string>
+    <string name="whats_new_header_title">Wat is er nieuw</string>
+    <string name="whats_new_version">Versie %1$s</string>
+    <string name="whats_new_installed">Geïnstalleerd</string>
+    <string name="whats_new_section_new">Nieuw</string>
+    <string name="whats_new_section_improved">Verbeterd</string>
+    <string name="whats_new_empty">Er zijn nog geen releaseopmerkingen.</string>
+
+    <string name="open_settings">Instellingen openen</string>
+
+    <string name="usage_access_explanation_headline">Recent en Meest gebruikt tonen apps op basis van hoe je je telefoon echt gebruikt.</string>
+    <string name="usage_access_explanation_body">Hiervoor is gebruikstoegang nodig, een speciale machtiging die je via de systeeminstellingen geeft — Facet kan die niet zelf aanvragen. Het leest alleen welke apps je opent en hoe lang; er verlaat niets je apparaat.</string>
+
+    <string name="notification_access_explanation_headline">Meldingsbadges tonen een stip of aantal op apps waar iets op je wacht, en de mediaspeler toont wat er wordt afgespeeld.</string>
+    <string name="notification_access_explanation_body">Hiervoor is toegang tot meldingen nodig, een speciale machtiging die je via de systeeminstellingen geeft — Facet kan die niet zelf aanvragen. Het leest alleen welke apps actieve meldingen hebben en of die stil zijn, plus de titel, artiest en hoes van de media die wordt afgespeeld; er verlaat niets je apparaat.</string>
+
+    <string name="folder_app_picker_in_folder">IN MAP</string>
+
+    <string name="percent_format">%1$d%%</string>
+
+    <string name="action_next">Volgende</string>
+    <string name="action_back">Terug</string>
+    <string name="action_continue">Doorgaan</string>
+
+    <string name="onboarding_skip">Overslaan</string>
+
+    <string name="onboarding_intro_headline">Een startscherm dat om jou draait.</string>
+    <string name="onboarding_intro_subhead">Geen pictogramraster. Alleen je klok, wat er komt en een paar apps die je echt opent.</string>
+    <string name="onboarding_intro_diagram_clock_time">9:41</string>
+    <string name="onboarding_intro_diagram_clock_label">Klok</string>
+    <string name="onboarding_intro_diagram_apps_label">Je apps</string>
+    <string name="onboarding_intro_gesture_drawer">Veeg altijd omhoog voor al je apps.</string>
+    <string name="onboarding_intro_gesture_widgets">Veeg naar rechts voor je widgets.</string>
+    <string name="onboarding_intro_gesture_facets">Veeg naar links om van facet te wisselen.</string>
+
+    <string name="onboarding_home_setup_headline">Stel je startscherm in</string>
+    <string name="onboarding_home_setup_subhead">Kies de apps die je op Home wilt. Je kunt dit later allemaal wijzigen.</string>
+    <string name="onboarding_dock_section_header">DOCK</string>
+    <string name="action_clear_all">Alles wissen</string>
+    <string name="onboarding_dock_section_subhead">De standaarddock — elk facet kan later zijn eigen dock aanpassen. Sleep om de volgorde te wijzigen.</string>
+    <string name="onboarding_clear_dock_title">De dock leegmaken?</string>
+    <string name="onboarding_clear_dock_message">Verwijdert elke app uit de standaarddock. Je kunt apps altijd weer toevoegen.</string>
+    <string name="onboarding_manage_dock_apps">Dock-apps beheren</string>
+    <string name="onboarding_app_drawer_section_header">APP-LADE</string>
+    <string name="onboarding_home_apps_section_header">STARTSCHERMAPPS</string>
+    <string name="onboarding_show_label">Tonen</string>
+    <string name="onboarding_list_content_favorites">Favorieten</string>
+    <string name="onboarding_list_content_recently_used">Recent gebruikt</string>
+    <string name="onboarding_list_content_most_used">Meest gebruikt</string>
+    <string name="onboarding_clear_favorites_title">Favorieten wissen?</string>
+    <string name="onboarding_clear_favorites_message">Verwijdert elke app uit je standaardfavorieten. Je kunt apps altijd weer toevoegen.</string>
+
+    <string name="onboarding_facets_headline">Meer dan één startscherm</string>
+    <string name="onboarding_facets_body">\nFacets zijn aparte startschermindelingen, elk met eigen klokstijl, agenda\'s, appslijst, favorieten en zo nodig dock. \n\nVeeg op Home naar links om van facet te wisselen.\n\nMaak meerdere facets voor verschillende momenten, zoals werk, focus, privé enzovoort.</string>
+    <string name="onboarding_facets_mock_favorites_label">FAVORIETEN</string>
+
+    <string name="onboarding_later">Later</string>
+    <string name="set_default_launcher_headline">Maak Facet je startscherm</string>
+    <string name="set_default_launcher_body">Android vraagt om bevestiging. Je kunt altijd via Instellingen terugschakelen naar je oude launcher.</string>
+    <string name="set_default_launcher_home_app_badge">Startapp</string>
+    <string name="set_default_launcher_cta">Als standaard instellen</string>
+    <string name="set_default_launcher_permissions_note">Machtigingen komen later, één voor één, alleen als een functie ze nodig heeft.</string>
+
+    <string name="onboarding_dots_step_content_description">Stap %1$d van %2$d</string>
+
+    <string name="drawer_tab_personal">Persoonlijk</string>
+    <string name="drawer_search_more_options">Meer opties</string>
+    <string name="drawer_search_launcher_settings">Launcher-instellingen</string>
+    <string name="drawer_search_open_secure_folder">Beveiligde map openen</string>
+    <string name="drawer_search_system_settings">Systeeminstellingen</string>
+    <string name="drawer_search_private_space">Privéruimte</string>
+    <string name="drawer_search_section_apps">APPS</string>
+    <string name="drawer_search_section_contacts">CONTACTEN</string>
+    <string name="drawer_search_section_settings">INSTELLINGEN</string>
+    <string name="drawer_contacts_access_needed">Voor het zoeken naar contacten is toegang nodig via de systeeminstellingen.</string>
+    <string name="drawer_contacts_search_off">Zoeken naar contacten staat uit in de instellingen van de app-lade.</string>
+    <string name="drawer_search_no_matches">Geen resultaten voor “%1$s”</string>
+    <string name="drawer_search_clear">Zoekopdracht wissen</string>
+
+    <string name="contact_connections_view_contact">Contact bekijken</string>
+    <string name="contact_connections_multiple_options">Meerdere opties beschikbaar</string>
+    <string name="contact_connections_other">Overig</string>
+
+    <string name="private_space_locked">Privéruimte is vergrendeld</string>
+    <string name="private_space_no_apps">Geen apps in Privéruimte</string>
+    <string name="private_space_no_matches">Geen resultaten</string>
+    <string name="private_space_search">Privéruimte doorzoeken</string>
+
+    <string name="facet_carousel_delete_title">%1$s verwijderen?</string>
+    <string name="facet_carousel_delete_message">Dit kan niet ongedaan worden gemaakt. De favorieten worden ook verwijderd.</string>
+    <string name="facet_carousel_header_title">Van facet wisselen</string>
+    <plurals name="facet_carousel_count">
+        <item quantity="one">%d facet beschikbaar</item>
+        <item quantity="other">%d facets beschikbaar</item>
+    </plurals>
+    <string name="facet_carousel_reorder">Volgorde wijzigen</string>
+    <string name="facet_carousel_launcher_settings">Launcher-instellingen</string>
+    <string name="facet_carousel_launcher_settings_subtitle">Uiterlijk, standaardklok, favorieten, lade en meer</string>
+    <string name="facet_carousel_active">Actief</string>
+    <string name="facet_carousel_no_favorites">Nog geen favorieten</string>
+    <string name="preview_media_title">Nu aan het afspelen</string>
+    <string name="preview_media_artist">Artiest</string>
+    <string name="facet_carousel_facet_settings">Facetinstellingen</string>
+    <string name="facet_carousel_delete_facet">Facet verwijderen</string>
+    <string name="facet_carousel_add_facet">Facet toevoegen</string>
+    <string name="facet_carousel_add_facet_subtitle">Begint met de standaardklok, agenda, favoriete apps en instellingen van je launcher. Pas ze per facet aan.</string>
+    <string name="facet_carousel_add_glyph">+</string>
+
+    <string name="manage_facets_delete_message">Dit kan niet ongedaan worden gemaakt. De favorieten worden ook verwijderd.</string>
+    <string name="manage_facets_header_title">Facets beheren</string>
+    <string name="manage_facets_drag_hint">Sleep om de volgorde van facets te wijzigen</string>
+    <string name="manage_facets_options">Facetopties</string>
+    <string name="manage_facets_apply_facet">Facet toepassen</string>
+
+    <string name="facet_settings_default_name">Facet</string>
+    <string name="facet_settings_active">Actief</string>
+    <string name="facet_settings_activate_facet">Activeren</string>
+    <string name="facet_settings_rename_facet">Facet hernoemen</string>
+    <plurals name="format_count_apps">
+        <item quantity="one">%1$d app</item>
+        <item quantity="other">%1$d apps</item>
+    </plurals>
+    <string name="facet_settings_dock_settings_title">Dock-instellingen</string>
+    <string name="facet_settings_appearance_title">Uiterlijk</string>
+    <string name="facet_settings_appearance_clock_label">Klok: %1$s</string>
+    <string name="facet_settings_appearance_dock_icons">Dock-pictogrammen</string>
+    <string name="facet_settings_appearance_dock_text">Docktekst</string>
+    <string name="facet_settings_appearance_dock_icons_and_text">Dock-pictogrammen en tekst</string>
+    <string name="facet_settings_appearance_home_icon_only">Home alleen pictogram</string>
+    <string name="facet_settings_appearance_home_icon_and_text">Home pictogram en tekst</string>
+    <string name="facet_settings_appearance_home_text_only">Home alleen tekst</string>
+    <string name="facet_settings_rename_explanation">Geef dit facet een nieuwe naam.</string>
+
+    <string name="home_usage_access_needed">Voor Meest gebruikt is gebruikstoegang nodig via de systeeminstellingen.</string>
+
+    <string name="clock_style_font_label">Lettertype</string>
+    <string name="clock_style_clock_section">KLOK</string>
+    <string name="clock_style_primary_font_color">Primaire letterkleur</string>
+    <string name="clock_style_show_meridiem">Voor-/namiddag tonen (AM/PM)</string>
+    <string name="clock_style_date_style">Datumstijl</string>
+    <string name="clock_style_position_section">POSITIE</string>
+    <string name="clock_style_tap_to_select">KLOKSTIJLEN — TIK OM TE KIEZEN</string>
+    <string name="clock_style_long_press_hint">Houd de klok op het startscherm ingedrukt om grootte en verticale positie aan te passen.</string>
+    <string name="clock_style_applied">Toegepast</string>
+    <string name="clock_style_reset_position">Positie van klokwidget resetten</string>
+
+    <string name="clock_adjust_adjust_size_position">Grootte en positie van de klok aanpassen</string>
+    <string name="clock_adjust_size_position_subtitle">De klok vergroten of verplaatsen</string>
+    <string name="clock_adjust_alignment_heading">Uitlijning</string>
+    <string name="clock_adjust_align_left">Links uitlijnen</string>
+    <string name="clock_adjust_align_center">Centreren</string>
+    <string name="clock_adjust_align_right">Rechts uitlijnen</string>
+    <string name="clock_adjust_align_top">Boven uitlijnen</string>
+    <string name="clock_adjust_align_middle">Midden uitlijnen</string>
+    <string name="clock_adjust_align_bottom">Onder uitlijnen</string>
+    <string name="clock_adjust_clock_settings">Klok- en agenda-instellingen</string>
+    <string name="clock_adjust_clock_settings_subtitle">Sjablonen, lettertypen, kleuren, agenda</string>
+    <string name="clock_adjust_facet_settings_subtitle">Facetspecifieke appslijst, dock, klok- en agenda-instellingen</string>
+    <string name="clock_adjust_replace_with_widget">Vervangen door eigen widget</string>
+    <string name="clock_adjust_replace_with_widget_subtitle">Vervang de klok door een widget naar keuze</string>
+    <string name="clock_adjust_replace_with_clock">Vervangen door klok</string>
+    <string name="clock_adjust_replace_with_clock_subtitle">Gebruik de eigen klok van Facet op deze pagina</string>
+    <string name="clock_adjust_replace_widget">Eigen widget vervangen</string>
+    <string name="clock_adjust_replace_widget_subtitle">Kies een andere widget voor deze pagina</string>
+    <string name="clock_adjust_widget_stack">Widgetstapel</string>
+    <string name="clock_adjust_stack_empty">Leeg · voeg een klok of widget toe</string>
+    <string name="clock_adjust_stack_clock">Klok</string>
+    <string name="clock_adjust_stack_one_widget">1 widget</string>
+    <string name="clock_adjust_stack_pages">%1$d pagina\'s</string>
+    <string name="clock_stack_title">Widgetstapel</string>
+    <string name="clock_stack_counter">%1$d van %2$d</string>
+    <string name="clock_stack_drag_hint">Sleep om de volgorde te wijzigen. Veeg op Home naar links en rechts door de stapel.</string>
+    <string name="clock_stack_full_free_hint">Verwijder de huidige widget om een andere toe te voegen, of ga Pro voor tot 5.</string>
+    <string name="clock_stack_empty">Hier staat niets, dus het klokgebied op Home blijft leeg tot je iets toevoegt.</string>
+    <string name="clock_stack_add">Widget toevoegen</string>
+    <string name="clock_stack_row_clock">Launcherklok</string>
+    <string name="clock_stack_row_unavailable">Widget niet beschikbaar</string>
+    <string name="clock_stack_configure">Configureren</string>
+    <string name="clock_stack_remove">%1$s verwijderen</string>
+    <string name="clock_stack_chooser_title">Aan de stapel toevoegen</string>
+    <string name="clock_stack_chooser_clock">Launcherklok</string>
+    <string name="clock_stack_chooser_clock_subtitle">De eigen klok van Facet</string>
+    <string name="clock_stack_chooser_widget">Eigen widget</string>
+    <string name="clock_stack_chooser_widget_subtitle">Kies een willekeurige widget op je telefoon</string>
+    <string name="clock_widget_picker_title">Klokwidget kiezen</string>
+
+    <string name="hub_widget_picker_full">Vol — verwijder eerst een widget</string>
+    <string name="hub_widget_picker_setup_cancelled">De installatie is niet voltooid, dus die widget is niet toegevoegd</string>
+    <string name="hub_widget_picker_search">Widgets zoeken</string>
+    <string name="hub_widget_picker_none_found">Geen widgets gevonden</string>
+    <string name="hub_widget_picker_title">Widget toevoegen</string>
+    <string name="hub_widget_picker_remaining">%d over</string>
+    <plurals name="hub_widget_picker_option_count">
+        <item quantity="one">%d widget</item>
+        <item quantity="other">%d widgets</item>
+    </plurals>
+    <string name="hub_widget_dimensions">%1$d×%2$d</string>
+    <string name="hub_widget_label_with_dimensions">%1$s %2$d×%3$d</string>
+
+    <string name="hub_orphaned_fallback_label">Deze</string>
+    <string name="hub_orphaned_widget_unavailable">Widget van %1$s niet beschikbaar</string>
+    <string name="hub_orphaned_app_uninstalled">De app is verwijderd</string>
+    <string name="hub_orphaned_remove">Verwijderen</string>
+    <string name="hub_orphaned_keep_space">Ruimte behouden</string>
+
+    <string name="hub_header_title">Widgets</string>
+    <string name="hub_header_subtitle">%1$d van %2$d widgets</string>
+    <string name="hub_header_add">Toevoegen</string>
+
+    <string name="hub_grid_resize_widget">Widget vergroten of verkleinen</string>
+    <string name="hub_grid_remove_widget">Widget verwijderen</string>
+
+    <string name="hub_empty_state_title">Nog geen widgets</string>
+    <string name="hub_empty_state_subtitle">Voeg een widget toe om te beginnen.</string>
+
+    <string name="hub_at_capacity_message">Vol bij 20 widgets — verwijder er een om een andere toe te voegen.</string>
+    <string name="hub_at_capacity_manage">Beheren</string>
+
+    <string name="facet_settings_apps_list_settings_title">Instellingen voor appslijst</string>
+
+    <string name="clock_accessory_separator_dot">·</string>
+
+    <string name="clock_template_bracket_open">"[ "</string>
+    <string name="clock_template_bracket_close">" ]"</string>
+    <string name="clock_template_colon">:</string>
+
+    <string name="clock_zone_handle_drag_to_resize">Sleep om het formaat te wijzigen</string>
+
+    <string name="weather_condition_clear">Helder</string>
+    <string name="weather_condition_mostly_clear">Overwegend helder</string>
+    <string name="weather_condition_partly_cloudy">Half bewolkt</string>
+    <string name="weather_condition_cloudy">Bewolkt</string>
+    <string name="weather_condition_fog">Mist</string>
+    <string name="weather_condition_light_rain">Lichte regen</string>
+    <string name="weather_condition_rain">Regen</string>
+    <string name="weather_condition_heavy_rain">Zware regen</string>
+    <string name="weather_condition_sleet">Ijzel</string>
+    <string name="weather_condition_snow">Sneeuw</string>
+    <string name="weather_condition_thunderstorm">Onweer</string>
+
+    <string name="weather_temperature_format">%1$d°%2$s</string>
+    <string name="weather_accessory_description">%1$s, %2$s. Opent de weergegevens</string>
+    <string name="weather_accessory_description_no_condition">%1$s. Opent de weergegevens</string>
+
+    <string name="weather_sheet_now">Nu</string>
+    <string name="weather_sheet_today">Vandaag</string>
+    <string name="weather_sheet_high_low">H %1$s · L %2$s</string>
+    <string name="weather_place_near">In de buurt van %1$s</string>
+    <string name="weather_next_24_hours">Komende 24 uur</string>
+    <string name="weather_legend_rain">Regen, %1$s</string>
+    <string name="weather_legend_wind">Wind, %1$s</string>
+    <string name="weather_detail_humidity">Luchtvochtigheid</string>
+    <string name="weather_detail_pressure">Luchtdruk</string>
+    <string name="weather_detail_cloud_cover">Bewolking</string>
+    <string name="weather_detail_wind">Wind</string>
+    <string name="weather_updated">Bijgewerkt %1$s</string>
+    <string name="weather_updated_outdated">Bijgewerkt %1$s, verouderd</string>
+    <string name="weather_credit">Weergegevens van MET Norway</string>
+    <string name="weather_refresh">Vernieuwen</string>
+    <string name="weather_refresh_updated">Weer bijgewerkt</string>
+    <string name="weather_refresh_up_to_date">Al up-to-date</string>
+    <string name="weather_refresh_too_soon">Net bijgewerkt. Probeer het over een paar minuten opnieuw.</string>
+    <string name="weather_refresh_busy">De weerdienst is druk. Probeer het later opnieuw.</string>
+    <string name="weather_refresh_offline">Je bent offline. Probeer het later opnieuw.</string>
+    <string name="weather_refresh_failed">Kon het weer niet bijwerken. Probeer het later opnieuw.</string>
+    <string name="weather_needs_location">Sta locatie toe om het weer te zien waar je bent.</string>
+    <string name="weather_allow_location">Locatie toestaan</string>
+    <string name="weather_no_location">Zet locatie aan om het weer hier te zien.</string>
+    <string name="weather_no_city">Kies een stad om het weer ervan te zien.</string>
+    <string name="weather_choose_city">Kies een stad</string>
+    <string name="weather_empty">Nog geen weer</string>
+    <string name="weather_empty_hint">Het verschijnt na de eerste update.</string>
+
+    <string name="weather_summary_dry">Geen regen verwacht in de komende 24 uur.</string>
+    <string name="weather_summary_now_until">%1$s tot %2$s, ongeveer %3$s.</string>
+    <string name="weather_summary_now_continues">%1$s gedurende de komende 24 uur, ongeveer %2$s.</string>
+    <string name="weather_summary_later">%1$s van %2$s tot %3$s, ongeveer %4$s.</string>
+    <string name="weather_summary_later_open">%1$s vanaf %2$s, ongeveer %3$s.</string>
+
+    <string name="weather_direction_n">N</string>
+    <string name="weather_direction_ne">NO</string>
+    <string name="weather_direction_e">O</string>
+    <string name="weather_direction_se">ZO</string>
+    <string name="weather_direction_s">Z</string>
+    <string name="weather_direction_sw">ZW</string>
+    <string name="weather_direction_w">W</string>
+    <string name="weather_direction_nw">NW</string>
+
+    <string name="clock_accessories_title">Klokaccessoires</string>
+    <string name="clock_accessories_summary">Wekker, batterij en weer</string>
+    <string name="clock_accessories_show_alarm">Volgende wekker tonen</string>
+    <string name="clock_accessories_show_battery">Batterijpercentage tonen</string>
+    <string name="clock_accessories_show_weather">Weer tonen</string>
+    <string name="clock_accessories_units">Eenheden</string>
+    <string name="clock_accessories_unit_temperature">Temperatuur</string>
+    <string name="clock_accessories_unit_wind">Windsnelheid</string>
+    <string name="clock_accessories_unit_rain">Regen</string>
+    <string name="clock_accessories_unit_pressure">Luchtdruk</string>
+    <string name="clock_accessories_location">Locatie</string>
+    <string name="units_and_location_note">Eenheden en locatie gelden voor elk facet.</string>
+    <string name="weather_unit_auto">Automatisch</string>
+    <string name="weather_unit_option_kmh">Kilometer per uur (km/h)</string>
+    <string name="weather_unit_option_mph">Mijl per uur (mph)</string>
+    <string name="weather_unit_option_ms">Meter per seconde (m/s)</string>
+    <string name="weather_unit_option_mm">Millimeter (mm)</string>
+    <string name="weather_unit_option_inch">Inch (in)</string>
+    <string name="weather_unit_option_hpa">Hectopascal (hPa)</string>
+    <string name="weather_unit_option_inhg">Inch kwik (inHg)</string>
+    <string name="weather_unit_option_mmhg">Millimeter kwik (mmHg)</string>
+
+    <string name="weather_location_title">Locatie</string>
+    <string name="weather_location_current">Huidige locatie gebruiken</string>
+    <string name="weather_location_current_hint">Bij benadering, gelezen wanneer je Home opent</string>
+    <string name="weather_location_city">Kies een stad</string>
+    <string name="weather_location_city_hint">Geen locatiemachtiging nodig</string>
+    <string name="weather_location_showing_for">Weer wordt getoond voor</string>
+    <string name="weather_location_search">Steden zoeken</string>
+    <string name="weather_location_search_hint">Typ een plaatsnaam</string>
+    <string name="weather_location_no_results">Geen steden gevonden</string>
+    <string name="weather_location_none">Nog geen</string>
+    <string name="weather_permission_location_subtitle">Nodig om het weer te tonen waar je bent. Facet leest alleen een geschatte positie, en alleen terwijl Home open is.</string>
+    <string name="clock_accessories_icons">Pictogrammen</string>
+    <string name="units_and_location_title">Eenheden en locatie</string>
+    <string name="units_and_location_subtitle">Geldt voor elk facet</string>
+    <string name="weather_icon_style">Weerpictogrammen</string>
+    <string name="weather_icon_style_monochrome">Monochroom</string>
+    <string name="weather_icon_style_colored">Gekleurd</string>
+    <string name="weather_location_saved_title">Je steden</string>
+    <string name="weather_location_pick_prompt">Zoek hieronder een stad en tik erop om hem hier toe te voegen.</string>
+    <string name="weather_location_tick_prompt">Selecteer een stad om het weer ervan te tonen.</string>
+    <string name="weather_location_remove">%1$s verwijderen</string>
+    <string name="weather_location_limit">Je kunt tot %1$d steden bewaren. Verwijder er een om een andere toe te voegen.</string>
+    <string name="weather_leave_title">Geen stad geselecteerd</string>
+    <string name="weather_leave_message">Het weer heeft een stad nodig om te tonen. Wat wil je doen?</string>
+    <string name="weather_leave_turn_off">Weer uitzetten</string>
+    <string name="weather_leave_use_current">Huidige locatie gebruiken</string>
+    <string name="weather_leave_choose_city">Kies een stad</string>
+
+    <string name="clock_accessories_inheriting">Dit facet gebruikt de klokinstellingen van de launcher. Zet Overschrijven aan in Klokstijl om deze te wijzigen.</string>
+    <string name="clock_accessories_open_clock_style">Klokstijl</string>
+    <string name="weather_location_current_short">Huidige locatie</string>
+
+    <string name="settings_gestures_title">Gebaren</string>
+    <string name="settings_gestures_subtitle">Veegbewegingen, tikken en de Home-knop</string>
+    <string name="gestures_section_built_in">Ingebouwd</string>
+    <string name="gestures_section_optional">Optioneel</string>
+    <string name="gesture_swipe_up_title">Omhoog vegen</string>
+    <string name="gesture_swipe_up_subtitle">De app-lade openen</string>
+    <string name="gesture_swipe_right_title">Naar rechts vegen</string>
+    <string name="gesture_swipe_right_subtitle">De Hub openen</string>
+    <string name="gesture_swipe_left_title">Naar links vegen</string>
+    <string name="gesture_swipe_left_subtitle">Van facet wisselen</string>
+    <string name="gesture_swipe_down_title">Omlaag vegen</string>
+    <string name="gesture_swipe_down_subtitle">Het meldingenpaneel openen</string>
+    <string name="gesture_long_press_title">Lang drukken op lege ruimte</string>
+    <string name="gesture_long_press_subtitle">Het klok- en indelingsmenu openen</string>
+    <string name="gesture_home_opens_search_title">Home-knop opent zoeken</string>
+    <string name="gesture_home_opens_search_subtitle">Druk op Home terwijl je al op Home bent om de lade te openen met zoeken klaar.</string>
+    <string name="gesture_double_tap_lock_title">Dubbeltik om te vergrendelen</string>
+    <string name="gesture_double_tap_lock_subtitle">Dubbeltik op lege ruimte op Home om het scherm te vergrendelen.</string>
+    <string name="gesture_double_tap_lock_needs_access">Dubbeltik op lege ruimte op Home om het scherm te vergrendelen. Hiervoor is toegankelijkheidstoegang nodig, die je wordt gevraagd in te schakelen.</string>
+
+    <string name="permission_accessibility_title">Toegankelijkheidstoegang</string>
+    <string name="permission_accessibility_subtitle">Laat een dubbeltik op Home het scherm vergrendelen.</string>
+    <string name="accessibility_access_explanation_headline">Dubbeltik om te vergrendelen vergrendelt je scherm wanneer je dubbeltikt op lege ruimte op Home.</string>
+    <string name="accessibility_access_explanation_body">Hiervoor is de toegankelijkheidsservice van Facet nodig, die je via de systeeminstellingen inschakelt — Facet kan die niet zelf aanzetten. Hij wordt alleen gebruikt om het scherm te vergrendelen: hij leest niet wat er op het scherm staat, ziet niet wat je typt en stuurt niets van je apparaat weg. Ontgrendelen met vingerafdruk of gezicht blijft werken.</string>
+    <string name="accessibility_service_label">Facet dubbeltik om te vergrendelen</string>
+    <string name="accessibility_service_description">Vergrendelt het scherm wanneer je dubbeltikt op lege ruimte op Home. Leest geen schermcontent.</string>
+
+    <string name="about_weather_credit">Weergegevens van MET Norway (CC BY 4.0). Plaatsnamen van GeoNames (CC BY 4.0).</string>
+</resources>

@@ -116,16 +116,23 @@ internal fun HomeBoundsReporting(frame: HomeFrame) {
 }
 
 /**
- * Taps on empty space leave adjust mode, or (when nothing is active) a long-press opens the clock adjust menu.
+ * Taps on empty space leave adjust mode, or (when nothing is active) a long-press opens the clock adjust menu and a
+ * double-tap calls [onDoubleTap].
  * Attached to the root Box, an ancestor of every child, so a descendant's own gesture (an app icon, the dock, the
  * clock's detector) claims a touch first and only an unconsumed one counts as empty space. Keyed on the mode:
  * ADJUST and NONE install a pointerInput in the same slot, and sharing a key would reuse the old detector's
  * coroutine across the switch, leaving a stale handler running.
  */
-internal fun Modifier.homeEmptySpaceGestures(mode: ClockAdjustMode, onModeChange: (ClockAdjustMode) -> Unit): Modifier = this.then(
+internal fun Modifier.homeEmptySpaceGestures(
+    mode: ClockAdjustMode,
+    onModeChange: (ClockAdjustMode) -> Unit,
+    onDoubleTap: () -> Unit = {},
+): Modifier = this.then(
     when (mode) {
         ClockAdjustMode.ADJUST -> Modifier.pointerInput(mode) { detectTapGestures(onTap = { onModeChange(ClockAdjustMode.NONE) }) }
-        ClockAdjustMode.NONE -> Modifier.pointerInput(mode) { detectTapGestures(onLongPress = { onModeChange(ClockAdjustMode.MENU) }) }
+        ClockAdjustMode.NONE -> Modifier.pointerInput(mode) {
+            detectTapGestures(onDoubleTap = { onDoubleTap() }, onLongPress = { onModeChange(ClockAdjustMode.MENU) })
+        }
         ClockAdjustMode.MENU -> Modifier
     },
 )

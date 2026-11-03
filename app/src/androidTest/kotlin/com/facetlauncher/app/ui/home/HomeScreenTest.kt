@@ -16,6 +16,7 @@ import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.center
 import androidx.compose.ui.test.click
+import androidx.compose.ui.test.doubleClick
 import androidx.compose.ui.test.down
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.hasText
@@ -280,6 +281,55 @@ class HomeScreenTest {
 
         // Then drag mode never activates — the touch fell outside the clock's own hit box
         composeRule.onNodeWithTag("home_clock_zone_handle").assertDoesNotExist()
+    }
+
+    @Test
+    fun doubleTappingEmptySpaceReportsAnEmptySpaceDoubleTap() {
+        // Given Home with empty space to the right of its left-aligned clock
+        var doubleTaps = 0
+        composeRule.setContent {
+            FacetLauncherTheme {
+                FlatHomeScreen(
+                    appListItems = apps(1).map { PlacedItem.SingleApp(it) },
+                    dockApps = emptyList(),
+                    onAppClick = {},
+                    onEmptySpaceDoubleTap = { doubleTaps++ },
+                )
+            }
+        }
+        val rootWidth = composeRule.onRoot().fetchSemanticsNode().boundsInRoot.right
+        val clockBounds = composeRule.onNodeWithTag("home_clock_block").fetchSemanticsNode().boundsInRoot
+        val besideClock = Offset((clockBounds.right + rootWidth) / 2f, clockBounds.center.y)
+
+        // When that empty space is double-tapped
+        composeRule.onRoot().performTouchInput { doubleClick(besideClock) }
+        composeRule.waitForIdle()
+
+        // Then one double-tap is reported
+        assertEquals(1, doubleTaps)
+    }
+
+    @Test
+    fun doubleTappingAnAppRowDoesNotReportAnEmptySpaceDoubleTap() {
+        // Given Home with one app row
+        var doubleTaps = 0
+        composeRule.setContent {
+            FacetLauncherTheme {
+                FlatHomeScreen(
+                    appListItems = apps(1).map { PlacedItem.SingleApp(it) },
+                    dockApps = emptyList(),
+                    onAppClick = {},
+                    onEmptySpaceDoubleTap = { doubleTaps++ },
+                )
+            }
+        }
+
+        // When the app row itself is double-tapped
+        composeRule.onNodeWithText("App 1").performTouchInput { doubleClick() }
+        composeRule.waitForIdle()
+
+        // Then it is the row's gesture, not an empty-space double-tap
+        assertEquals(0, doubleTaps)
     }
 
     @Test

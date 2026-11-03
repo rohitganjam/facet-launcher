@@ -1,0 +1,317 @@
+<resources>
+    <!-- European Portuguese: only what differs from values-pt (Brazilian); everything else falls back to it. -->
+    <string name="clock_font_launcher_default">Tipo de letra predefinido do launcher</string>
+    <string name="font_weight_semi_bold">Seminegrito</string>
+    <string name="font_scale_default">Predefinido</string>
+    <string name="icon_render_system_default">Predefinição do sistema</string>
+    <string name="icon_style_default">Predefinido</string>
+    <string name="system_bar_icons_match_theme">Predefinido</string>
+
+    <string name="settings_catalog_display">Ecrã</string>
+    <string name="settings_catalog_apps">Aplicações</string>
+
+    <string name="action_save">Guardar</string>
+    <string name="action_reset">Repor</string>
+    <string name="action_delete">Eliminar</string>
+    <string name="app_context_menu_app_info">Informações da app</string>
+    <string name="app_picker_all_apps">TODAS AS APPS</string>
+    <string name="app_menu_notifications_access_needed">As notificações precisam de acesso através das definições do sistema.</string>
+    <string name="app_picker_no_folders_yet">Ainda não há pastas. Mantenha premida uma app e escolha \"Adicionar à pasta\" para criar uma.</string>
+    <string name="inherit_override_inherit_default">Herdar predefinição</string>
+    <string name="inherit_override_edit_defaults">Editar predefinições</string>
+    <string name="gesture_hint_all_your_apps">Todas as suas apps</string>
+    <string name="gesture_hint_clock_hold">Mantenha o relógio premido para redimensionar ou mover</string>
+    <string name="gesture_hint_got_it">Percebi</string>
+    <string name="home_surface_preview_nothing_yet">Ainda não há nada para mostrar</string>
+
+    <string name="settings_header_title">Definições</string>
+    <string name="settings_facets_subtitle">Crie e gira definições específicas de cada faceta</string>
+    <string name="settings_change_wallpaper_title">Alterar imagem de fundo</string>
+    <string name="settings_change_wallpaper_subtitle">Altere a imagem de fundo do sistema</string>
+    <string name="settings_calendars_title">Calendários a mostrar</string>
+    <string name="settings_home_apps_list_title">Lista de apps do ecrã inicial</string>
+    <string name="settings_show_as">Mostrar como %1$s</string>
+    <string name="settings_contact_search">Pesquisa de contactos %1$s</string>
+    <string name="settings_settings_search">Pesquisa de definições %1$s</string>
+    <string name="settings_notifications_summary_badges_dot">Emblemas de ponto</string>
+    <string name="settings_notifications_summary_badges_count">Emblemas numéricos</string>
+    <string name="settings_notifications_summary_badges_off">Emblemas desativados</string>
+    <string name="settings_permissions_subtitle">Veja a que o Facet Launcher pode aceder e porquê</string>
+    <string name="settings_backup_restore_title">Cópia de segurança e restauro</string>
+    <string name="settings_backup_restore_subtitle">Exporte as definições como ficheiro · os widgets têm de ser adicionados novamente ao importar</string>
+    <string name="settings_set_default_launcher_title">Definir como launcher predefinido</string>
+
+    <string name="notification_badges_row_title">Emblemas de notificação</string>
+    <string name="notification_badge_style_row_title">Estilo do emblema</string>
+    <string name="notification_app_menu_row_title">Mostrar notificações no menu da app</string>
+    <string name="media_player_row_title">Mostrar o reprodutor multimédia no ecrã inicial</string>
+    <string name="media_skip_buttons_row_title">Mostrar botões de saltar</string>
+    <string name="notification_preview_no_access">O acesso às notificações é necessário para pré-visualizar os emblemas e o reprodutor.</string>
+    <string name="notification_preview_disabled">Os emblemas e o reprodutor estão desativados, por isso o Início não mostrará notificações.</string>
+
+    <string name="drawer_presentation_grid">Grelha</string>
+    <string name="drawer_folder_display_mode_do_not_show">Não mostrar</string>
+    <string name="drawer_folder_display_mode_inline">Mostrar pastas na lista</string>
+    <string name="drawer_folder_display_mode_show_first">Mostrar pastas primeiro</string>
+    <string name="drawer_folder_display_mode_show_last">Mostrar pastas no fim</string>
+    <string name="recently_installed_position_show_first">Mostrar recentes primeiro</string>
+    <string name="recently_installed_position_show_last">Mostrar recentes no fim</string>
+    <string name="recently_installed_position_do_not_show">Não mostrar</string>
+    <string name="app_list_layout_grid">Grelha</string>
+    <string name="app_row_position_launcher_default">Posição predefinida do launcher</string>
+    <string name="app_row_presentation_launcher_default">Estilo predefinido do launcher</string>
+    <string name="app_list_vertical_alignment_launcher_default">Posição predefinida do launcher</string>
+    <string name="dock_display_mode_launcher_default">Estilo predefinido do launcher</string>
+    <string name="app_list_layout_launcher_default">Esquema predefinido do launcher</string>
+    <string name="app_list_column_alignment_launcher_default">Alinhamento predefinido do launcher</string>
+    <string name="app_list_grid_columns_launcher_default">Colunas predefinidas do launcher</string>
+    <string name="app_list_grid_display_mode_launcher_default">Estilo predefinido do launcher</string>
+    <string name="app_list_shrink_to_fit_launcher_default">Estilo predefinido do launcher</string>
+
+    <string name="home_apps_list_header_title">Lista de apps do ecrã inicial</string>
+    <string name="appearance_allow_landscape_subtitle">Usa um esquema em paisagem quando o ecrã é suficientemente largo. Desativado mantém o início em retrato.</string>
+    <string name="home_apps_list_grid_columns">Colunas da grelha</string>
+    <string name="home_apps_list_grid_display">Apresentação da grelha</string>
+    <string name="home_apps_list_shrink_to_fit">Ajustar lista ao ecrã</string>
+    <string name="home_apps_list_layout">Esquema da lista de apps</string>
+    <string name="home_apps_list_content_default">Conteúdo predefinido da lista de apps</string>
+    <string name="home_apps_list_apps_to_show">Apps a mostrar</string>
+    <string name="home_apps_list_favorites_default">Favoritos predefinidos</string>
+
+    <string name="app_drawer_show_apps_as">Mostrar apps como</string>
+    <string name="app_drawer_grid_density">Densidade da grelha</string>
+    <string name="app_drawer_show_icons_title">Mostrar ícones</string>
+    <string name="app_drawer_show_icons_subtitle">Mostra ícones com o nome da app</string>
+    <string name="app_drawer_show_labels_title">Mostrar etiquetas</string>
+    <string name="app_drawer_show_labels_subtitle">Mostra o nome da app por baixo do ícone</string>
+    <string name="app_drawer_search_contacts_title">Pesquisar contactos</string>
+    <string name="app_drawer_search_contacts_subtitle">Ligue, envie mensagem ou WhatsApp diretamente dos resultados</string>
+    <string name="app_drawer_search_settings_title">Pesquisar definições</string>
+    <string name="app_drawer_search_settings_subtitle">Vá diretamente às definições do sistema, como Wi-Fi ou Bluetooth</string>
+    <string name="app_drawer_search_bar_position">Posição da barra de pesquisa</string>
+    <string-array name="drawer_preview_app_labels">
+        <item>Agenda</item>
+        <item>Câmara</item>
+        <item>Fotos</item>
+        <item>Mapas</item>
+        <item>Música</item>
+        <item>Notas</item>
+        <item>Relógio</item>
+        <item>Tempo</item>
+    </string-array>
+
+    <string name="appearance_system_bar_icons">Ícones da barra de estado</string>
+    <string name="appearance_hide_status_bar_title">Ocultar a barra de estado</string>
+    <string name="appearance_hide_status_bar_subtitle">Oculta no início, no Hub e no menu de apps. Deslize para baixo para a mostrar durante alguns segundos.</string>
+    <string name="appearance_launcher_font">Estilo do tipo de letra do launcher</string>
+    <string name="appearance_section_fonts">Tipos de letra</string>
+    <string name="font_preview_row">Lista de apps do ecrã inicial</string>
+    <string name="appearance_font_color">Cor do tipo de letra</string>
+    <string name="appearance_font_size">Tamanho do tipo de letra</string>
+    <string name="appearance_font_weight">Espessura do tipo de letra</string>
+    <string name="appearance_wallpaper_colors">Cores da imagem de fundo</string>
+    <string name="appearance_section_look_feel">Aspeto e comportamento</string>
+    <string name="appearance_general_title">Definições gerais</string>
+    <string name="appearance_general_subtitle">Temas, destaque, barra de estado</string>
+    <string name="clock_style_font_label">Tipo de letra</string>
+    <string name="clock_style_primary_font_color">Cor primária do tipo de letra</string>
+    <string name="clock_style_show_meridiem">Mostrar AM/PM</string>
+    <string name="clock_style_long_press_hint">Mantenha premido o relógio no ecrã inicial para ajustar o tamanho e a posição vertical.</string>
+    <string name="clock_style_reset_position">Repor posição do widget do relógio</string>
+
+    <string name="backup_restore_confirm_message">Importar substitui cada faceta, o dock e os favoritos predefinidos pelo conteúdo do ficheiro da cópia de segurança. Esta ação não pode ser anulada.</string>
+    <string name="backup_restore_export_title">Exportar cópia de segurança</string>
+    <string name="backup_restore_export_subtitle">Guarde cada faceta, o dock, favoritos e definições como ficheiro</string>
+    <string name="backup_restore_import_title">Importar cópia de segurança</string>
+    <string name="backup_restore_import_subtitle">Substitua tudo neste dispositivo a partir de um ficheiro de cópia de segurança</string>
+    <string name="backup_restore_widgets_to_readd_explanation">Estes widgets não puderam ser restaurados automaticamente — toque em cada um para o adicionar de volta onde estava.</string>
+    <string name="backup_restore_export_succeeded">Cópia de segurança guardada</string>
+    <string name="backup_restore_export_failed">Não foi possível guardar a cópia de segurança</string>
+    <plurals name="backup_widgets_need_readding_count">
+        <item quantity="one">%d widget tem de ser adicionado novamente abaixo</item>
+        <item quantity="other">%d widgets têm de ser adicionados novamente abaixo</item>
+    </plurals>
+    <string name="backup_restore_import_failed_invalid_file">Esse ficheiro não é uma cópia de segurança válida do Facet</string>
+    <string name="backup_restore_import_failed_unsupported_version">Essa cópia de segurança foi feita por uma versão mais recente do Facet</string>
+    <string name="backup_restore_skip">Saltar</string>
+
+    <string name="permission_calendar_subtitle">Mostra os eventos de hoje no relógio.</string>
+    <string name="permission_contacts_title">Contactos</string>
+    <string name="permission_contacts_subtitle">Permite que a pesquisa da gaveta mostre contactos correspondentes com ações rápidas de chamada/mensagem/WhatsApp.</string>
+    <string name="permission_usage_access_title">Acesso à utilização</string>
+    <string name="permission_notification_access_subtitle">Mostra um emblema de ponto ou número em apps com notificações ativas.</string>
+    <string name="permission_bluetooth_subtitle">Permite que as regras de automatização de facetas reajam a um dispositivo Bluetooth emparelhado, como o carro, e lista os dispositivos emparelhados ao configurar uma regra.</string>
+    <string name="permission_location_subtitle">O Android exige esta permissão para ler o nome da rede Wi-Fi em regras de uma rede específica e para obter o tempo onde está quando escolhe Usar a localização atual. O Facet não a usa para mais nada.</string>
+
+    <string name="settings_facet_automation_title">Automatização de facetas</string>
+    <string name="automation_header_title">Automatização de facetas</string>
+    <string name="automation_trigger_headphones">Auriculares</string>
+    <string name="automation_while_connected">Enquanto ligado</string>
+    <string name="automation_while_not_connected">Enquanto não ligado</string>
+    <string name="automation_while_plugged_in">Enquanto ligados</string>
+    <string name="automation_while_not_plugged_in">Enquanto não ligados</string>
+    <string name="automation_no_paired_devices">Nenhum dispositivo emparelhado. Emparelhe um primeiro nas definições de Bluetooth.</string>
+    <string name="automation_error_no_device">Escolha um dispositivo para guardar a regra</string>
+    <string name="automation_error_no_network">Escolha uma rede para guardar a regra</string>
+    <string name="automation_permission_bluetooth_off">O acesso ao Bluetooth está desativado, por isso este acionador não pode ser usado. Permita nas Definições.</string>
+    <string name="automation_permission_location_off">O acesso à localização está desativado. O Android precisa dele para ler os nomes das redes Wi-Fi. Permita nas Definições.</string>
+    <string name="automation_open_settings">Abrir definições</string>
+    <string name="automation_paused_needs_pro">Em pausa. Requer Pro</string>
+    <string name="automation_free_strip">O plano gratuito inclui 2 regras de horário. O Pro adiciona mais regras e acionadores para Bluetooth, Wi-Fi, carregamento, auriculares e bateria.</string>
+    <string name="automation_see_pro">Mudar para o Pro</string>
+    <string name="pro_hero_title">Mais facetas, mais automatização, mais personalização</string>
+    <string name="pro_hero_trigger_drive">Conduzir</string>
+    <string name="pro_hero_label_drive">CONDUZIR</string>
+    <string name="pro_feature_facets_body">O plano gratuito inclui 3. O Pro vai até 10. Cada uma tem as suas próprias apps no ecrã inicial e o seu relógio.</string>
+    <string name="pro_feature_triggers_title">Acionadores de Wi-Fi, Bluetooth, auriculares e bateria</string>
+    <string name="pro_feature_triggers_body">Ligue-se à rede do escritório ou ao carro, e a faceta muda.</string>
+    <string name="pro_feature_widgets_title">Widgets personalizados no ecrã inicial</string>
+    <string name="pro_feature_widgets_body">Substitua o relógio por qualquer widget do seu telemóvel. O plano gratuito inclui os relógios do launcher.</string>
+    <string name="pro_feature_future_title">Funcionalidades Pro futuras incluídas</string>
+    <string name="pro_on_pro_title">Tem o Pro</string>
+    <string name="pro_on_pro_body">Desbloqueado em todos os telemóveis com esta conta Google.</string>
+    <string name="pro_owned_wifi_title">Acionadores de Wi-Fi</string>
+    <string name="pro_owned_wifi_body">Muda ao ligar a uma rede</string>
+    <string name="pro_owned_bluetooth_title">Acionadores de Bluetooth</string>
+    <string name="pro_owned_bluetooth_body">Muda ao ligar um dispositivo</string>
+    <string name="pro_owned_more_title">Acionadores de auriculares e bateria</string>
+    <string name="pro_owned_more_body">Muda ao ligar os auriculares ou ao carregar</string>
+    <string name="settings_pro_free_plan">Está no plano gratuito</string>
+    <string name="pro_upgrade_to_pro">Mudar para o Pro</string>
+    <plurals name="settings_pro_triggers_running">
+        <item quantity="one">%d acionador ativo</item>
+        <item quantity="other">%d acionadores ativos</item>
+    </plurals>
+    <string name="pro_upgrade_trigger">Regras que reagem a Bluetooth, Wi-Fi, auriculares ou à bateria fazem parte do Pro.</string>
+    <string name="pro_upgrade_rule_limit">O plano gratuito inclui 2 regras. Com o Pro pode adicionar mais.</string>
+    <string name="pro_upgrade_facet_limit">O plano gratuito inclui 3 facetas. Com o Pro pode ter até 10.</string>
+    <string name="pro_upgrade_facet_locked">Esta faceta está em pausa no plano gratuito. Elimine uma faceta para voltar a 3, ou passe ao Pro para ter até 10.</string>
+    <string name="pro_upgrade_widget_stack">Colocar mais do que um relógio ou widget no ecrã inicial é uma funcionalidade Pro. O plano gratuito inclui um.</string>
+    <string name="pro_upgrade_about">Uma compra desbloqueia mais facetas e todos os acionadores de automatização. Sem subscrição.</string>
+    <string name="pro_message_unavailable">O Google Play não está disponível neste momento. Tente novamente mais tarde.</string>
+    <string name="pro_message_pending">A sua compra está pendente. O Pro será ativado quando estiver concluída.</string>
+    <string name="automation_error_facet_missing">Essa faceta já não existe. Escolha outra.</string>
+    <string name="automation_delete_title">Eliminar esta regra?</string>
+    <string name="automation_delete_message">A regra deixará de mudar de faceta. Não é possível anular.</string>
+    <string name="automation_section_other_apps">Usar outras apps</string>
+    <string name="automation_other_apps_note">Cada faceta tem um atalho «Mudar para» para apps de automatização como Modos e rotinas da Samsung, Tasker, MacroDroid e mais.\n\nSe escolher uma faceta ou uma app a mudar por si, essa escolha sobrepõe-se à que estiver ativa entre as suas regras de automatização acima. As suas regras voltam a valer quando essa regra terminar.</string>
+    <string name="automation_empty">Adicione uma regra para mudar de faceta automaticamente.</string>
+    <string name="automation_status_driving">A mostrar %1$s por causa da regra %2$s</string>
+    <string name="automation_status_override">A mostrar %1$s, a faceta escolhida. %2$s está em pausa até terminar.</string>
+    <string name="automation_bluetooth_connected">%1$s · ligado</string>
+    <string name="automation_bluetooth_not_connected">%1$s · desligado</string>
+    <string name="automation_headphones_in">Auriculares · ligados</string>
+    <string name="automation_headphones_out">Auriculares · desligados</string>
+    <string name="automation_battery_charging">A carregar</string>
+    <string name="dock_display_style">Estilo de apresentação</string>
+
+    <string name="folders_settings_delete_folder">Eliminar pasta</string>
+    <string name="folders_settings_delete_message">Isto elimina permanentemente \"%1$s\" e remove-a de todas as listas do Dock e de Favoritos em que estiver.</string>
+    <string name="calendar_settings_header_title">Definições do calendário</string>
+    <string name="calendar_settings_follows_launcher_wide">Segue a definição de calendário do launcher</string>
+    <string name="calendar_settings_show_all_day_events">Mostrar eventos de dia inteiro</string>
+    <string name="calendar_settings_items_to_display">Itens a mostrar</string>
+    <string name="calendar_settings_preview_event_1">Reunião de equipa</string>
+
+    <string name="open_settings">Abrir definições</string>
+    <string name="usage_access_explanation_headline">Recentes e Mais usados mostram apps com base na forma como realmente usa o seu telemóvel.</string>
+    <string name="usage_access_explanation_body">Isto requer acesso à utilização, uma permissão especial concedida nas definições do sistema — o Facet não a pode solicitar diretamente. Apenas lê que apps abre e durante quanto tempo; nada sai do seu dispositivo.</string>
+    <string name="notification_access_explanation_headline">Os emblemas de notificação mostram um ponto ou número nas apps com algo à sua espera, e o reprodutor multimédia mostra o que está a tocar.</string>
+    <string name="notification_access_explanation_body">Isto requer acesso às notificações, uma permissão especial concedida nas definições do sistema — o Facet não a pode solicitar diretamente. Apenas lê que apps têm notificações ativas e se estão silenciosas, além do título, do artista e da capa dos conteúdos multimédia em reprodução; nada sai do seu dispositivo.</string>
+
+    <string name="action_next">Seguinte</string>
+    <string name="onboarding_skip">Saltar</string>
+    <string name="onboarding_intro_headline">Um ecrã inicial focado em si.</string>
+    <string name="onboarding_intro_subhead">Sem grelha de ícones. Apenas o seu relógio, o que se segue e algumas apps que realmente usa.</string>
+    <string name="onboarding_intro_diagram_apps_label">As suas apps</string>
+    <string name="onboarding_intro_gesture_drawer">Deslize para cima a qualquer momento para ver todas as suas apps.</string>
+    <string name="onboarding_intro_gesture_widgets">Deslize para a direita para ver os seus widgets.</string>
+    <string name="onboarding_home_setup_headline">Configure o seu ecrã inicial</string>
+    <string name="onboarding_home_setup_subhead">Escolha as apps que quer no ecrã inicial. Pode alterar tudo isto mais tarde.</string>
+    <string name="onboarding_dock_section_subhead">O dock predefinido — cada faceta pode personalizar o seu mais tarde. Arraste para reordenar.</string>
+    <string name="onboarding_clear_dock_message">Remove todas as apps do dock predefinido. Pode voltar a adicionar apps quando quiser.</string>
+    <string name="onboarding_manage_dock_apps">Gerir apps do dock</string>
+    <string name="onboarding_home_apps_section_header">APPS DO ECRÃ INICIAL</string>
+    <string name="onboarding_show_label">Mostrar</string>
+    <string name="onboarding_clear_favorites_message">Remove todas as apps dos seus favoritos predefinidos. Pode voltar a adicionar apps quando quiser.</string>
+    <string name="onboarding_facets_headline">Mais do que um ecrã inicial</string>
+    <string name="onboarding_facets_body">\nAs facetas são esquemas de ecrã inicial separados, cada um com o seu próprio estilo de relógio, calendários, lista de apps, favoritos e dock, se necessário. \n\nDeslize para a esquerda no ecrã inicial para mudar de faceta.\n\nCrie várias facetas para ocasiões diferentes, como trabalho, concentração, pessoal, etc.</string>
+    <string name="set_default_launcher_headline">Faça do Facet o seu ecrã inicial</string>
+    <string name="set_default_launcher_body">O Android vai pedir a sua confirmação. Pode voltar ao seu launcher antigo em qualquer altura nas definições.</string>
+    <string name="set_default_launcher_home_app_badge">App de início</string>
+    <string name="set_default_launcher_cta">Definir como predefinido</string>
+    <string name="set_default_launcher_permissions_note">As permissões vêm depois, uma de cada vez, apenas quando uma funcionalidade precisar delas.</string>
+
+    <string name="drawer_search_launcher_settings">Definições do launcher</string>
+    <string name="drawer_search_system_settings">Definições do sistema</string>
+    <string name="drawer_search_section_contacts">CONTACTOS</string>
+    <string name="drawer_search_section_settings">DEFINIÇÕES</string>
+    <string name="drawer_contacts_access_needed">A pesquisa de contactos precisa de acesso através das definições do sistema.</string>
+    <string name="drawer_contacts_search_off">A pesquisa de contactos está desativada nas definições da Gaveta de apps.</string>
+    <string name="drawer_search_clear">Limpar pesquisa</string>
+    <string name="contact_connections_view_contact">Ver contacto</string>
+    <string name="private_space_search">Pesquisar no Espaço Privado</string>
+
+    <string name="facet_carousel_delete_title">Eliminar %1$s?</string>
+    <string name="facet_carousel_delete_message">Esta ação não pode ser anulada. Os favoritos dela também serão removidos.</string>
+    <string name="facet_carousel_launcher_settings">Definições do launcher</string>
+    <string name="facet_carousel_launcher_settings_subtitle">Aparência, relógio predefinido, favoritos, gaveta e mais</string>
+    <string name="facet_carousel_facet_settings">Definições da faceta</string>
+    <string name="facet_carousel_delete_facet">Eliminar faceta</string>
+    <string name="facet_carousel_add_facet_subtitle">Começa com o relógio predefinido, o calendário, as apps favoritas e as definições do seu launcher. Personalize cada faceta.</string>
+    <string name="preview_media_title">A reproduzir</string>
+    <string name="manage_facets_delete_message">Esta ação não pode ser anulada. Os favoritos dela também serão removidos.</string>
+    <string name="manage_facets_header_title">Gerir facetas</string>
+    <string name="facet_settings_dock_settings_title">Definições do dock</string>
+    <string name="home_usage_access_needed">\"Mais usados\" precisa de acesso à utilização através das definições do sistema.</string>
+
+    <string name="clock_adjust_clock_settings">Definições de relógio e calendário</string>
+    <string name="clock_adjust_align_bottom">Alinhar em baixo</string>
+    <string name="hub_widget_picker_search">Pesquisar widgets</string>
+    <string name="hub_orphaned_app_uninstalled">A app foi desinstalada</string>
+    <string name="hub_at_capacity_manage">Gerir</string>
+    <string name="facet_settings_apps_list_settings_title">Definições da lista de apps</string>
+    <string name="icon_pack_fallback_keep_default">Ícones predefinidos</string>
+
+    <string name="weather_accessory_description">%1$s, %2$s. Abre os detalhes do tempo</string>
+    <string name="weather_accessory_description_no_condition">%1$s. Abre os detalhes do tempo</string>
+    <string name="weather_detail_humidity">Humidade</string>
+    <string name="weather_credit">Dados meteorológicos da MET Norway</string>
+    <string name="weather_refresh_updated">Tempo atualizado</string>
+    <string name="weather_refresh_too_soon">Atualizado há instantes. Tente novamente dentro de alguns minutos.</string>
+    <string name="weather_refresh_busy">O serviço meteorológico está sobrecarregado. Tente mais tarde.</string>
+    <string name="weather_refresh_offline">Está offline. Tente mais tarde.</string>
+    <string name="weather_refresh_failed">Não foi possível atualizar o tempo. Tente mais tarde.</string>
+    <string name="weather_needs_location">Permita a localização para ver o tempo onde está.</string>
+    <string name="weather_no_location">Ative a localização para ver o tempo aqui.</string>
+    <string name="weather_no_city">Escolha uma cidade para ver o tempo.</string>
+    <string name="weather_empty">Ainda sem dados meteorológicos</string>
+    <string name="weather_direction_e">E</string>
+    <string name="clock_accessories_summary">Alarme, bateria e tempo</string>
+    <string name="clock_accessories_show_battery">Mostrar a percentagem da bateria</string>
+    <string name="clock_accessories_show_weather">Mostrar o tempo</string>
+    <string name="weather_unit_option_kmh">Quilómetros por hora (km/h)</string>
+    <string name="weather_location_current_hint">Aproximada, lida ao abrir o Início</string>
+    <string name="weather_location_showing_for">A mostrar o tempo de</string>
+    <string name="weather_location_search">Pesquisar cidades</string>
+    <string name="weather_location_search_hint">Escreva o nome de uma cidade</string>
+    <string name="weather_permission_location_subtitle">Necessário para mostrar o tempo onde está. O Facet lê apenas uma posição aproximada, e só enquanto o Início está aberto.</string>
+    <string name="weather_location_saved_title">As suas cidades</string>
+    <string name="weather_location_pick_prompt">Pesquise uma cidade abaixo e toque nela para a adicionar aqui.</string>
+    <string name="weather_location_limit">Pode manter até %1$d cidades. Remova uma para adicionar outra.</string>
+    <string name="weather_leave_message">O tempo precisa de uma cidade. O que quer fazer?</string>
+    <string name="clock_accessories_inheriting">Esta faceta usa as definições de relógio do launcher. Ative «Personalizar» em Estilo do relógio para as alterar.</string>
+
+    <string name="gesture_swipe_down_subtitle">Abrir o painel de notificações</string>
+    <string name="gesture_long_press_title">Manter premido um espaço vazio</string>
+    <string name="gesture_long_press_subtitle">Abrir o menu do relógio e do esquema</string>
+    <string name="gesture_home_opens_search_title">O botão Início abre a pesquisa</string>
+    <string name="gesture_home_opens_search_subtitle">Toque em Início quando já estiver no ecrã inicial para abrir a gaveta com a pesquisa pronta.</string>
+    <string name="gesture_double_tap_lock_subtitle">Toque duas vezes num espaço vazio do ecrã inicial para bloquear o ecrã.</string>
+    <string name="gesture_double_tap_lock_needs_access">Toque duas vezes num espaço vazio do ecrã inicial para bloquear o ecrã. Requer acesso de acessibilidade, que lhe será pedido para ativar.</string>
+    <string name="permission_accessibility_subtitle">Permite que um toque duplo no ecrã inicial bloqueie o ecrã.</string>
+    <string name="accessibility_access_explanation_headline">Toque duplo para bloquear bloqueia o ecrã quando toca duas vezes num espaço vazio do ecrã inicial.</string>
+    <string name="accessibility_access_explanation_body">Isto requer o serviço de acessibilidade do Facet, ativado nas definições do sistema — o Facet não o pode ativar diretamente. Serve apenas para bloquear o ecrã: não lê o que está no ecrã, não observa o que escreve e não envia nada para fora do seu dispositivo. O desbloqueio por impressão digital ou rosto continua a funcionar.</string>
+    <string name="accessibility_service_description">Bloqueia o ecrã quando toca duas vezes num espaço vazio do ecrã inicial. Não lê o conteúdo do ecrã.</string>
+    <string name="about_weather_credit">Dados meteorológicos da MET Norway (CC BY 4.0). Nomes de cidades do GeoNames (CC BY 4.0).</string>
+</resources>

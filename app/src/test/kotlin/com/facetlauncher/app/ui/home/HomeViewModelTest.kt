@@ -7,6 +7,7 @@ import com.facetlauncher.app.eqOf
 import com.facetlauncher.app.LandscapeTransformCaptor
 import com.facetlauncher.app.data.model.LandscapeOverrides
 import com.facetlauncher.app.data.EntitlementRepository
+import com.facetlauncher.app.data.LockScreenController
 import com.facetlauncher.app.data.DefaultLauncherRepository
 import com.facetlauncher.app.data.NotificationShadeRepository
 import com.facetlauncher.app.data.FacetRepository
@@ -25,6 +26,7 @@ import com.facetlauncher.app.domain.QuickPlacementAction
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
+import java.util.concurrent.atomic.AtomicInteger
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -78,6 +80,7 @@ class HomeViewModelTest {
         favoriteItems: List<PlacedItem> = emptyList(),
         clockWidgetFacet: ClockWidgetFacetController = mock(ClockWidgetFacetController::class.java),
         mediaSessionRepository: MediaSessionRepository = mock(MediaSessionRepository::class.java),
+        lockScreenController: LockScreenController = LockScreenController(),
     ): HomeViewModel {
         val observeHomeScreenState = mock(ObserveHomeScreenStateUseCase::class.java)
         `when`(observeHomeScreenState.invoke()).thenReturn(
@@ -107,7 +110,47 @@ class HomeViewModelTest {
             mock(ClockWidgetHostController::class.java),
             clockWidgetFacet,
             EntitlementRepository(),
+            lockScreenController,
         )
+    }
+
+    private fun lockingViewModel(doubleTapToLock: Boolean, locked: AtomicInteger): HomeViewModel {
+        val settingsRepository = mock(SettingsRepository::class.java)
+        `when`(settingsRepository.settings).thenReturn(flowOf(LauncherSettings(doubleTapToLock = doubleTapToLock)))
+        val controller = LockScreenController().apply { attach { locked.incrementAndGet() > 0 } }
+        return homeViewModel(
+            mock(NotificationShadeRepository::class.java),
+            settingsRepository = settingsRepository,
+            lockScreenController = controller,
+        )
+    }
+
+    @Test
+    fun `a double-tap on empty Home locks the screen when double-tap to lock is on`() = runTest {
+        // Given double-tap to lock is on and the accessibility service is attached
+        val locked = AtomicInteger()
+        val viewModel = lockingViewModel(doubleTapToLock = true, locked = locked)
+
+        // When Home reports a double-tap
+        viewModel.onEmptySpaceDoubleTap()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Then the screen is locked once
+        assertEquals(1, locked.get())
+    }
+
+    @Test
+    fun `a double-tap on empty Home does nothing when double-tap to lock is off`() = runTest {
+        // Given double-tap to lock is off (the default)
+        val locked = AtomicInteger()
+        val viewModel = lockingViewModel(doubleTapToLock = false, locked = locked)
+
+        // When Home reports a double-tap
+        viewModel.onEmptySpaceDoubleTap()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Then nothing is locked
+        assertEquals(0, locked.get())
     }
 
     @Test
@@ -192,6 +235,7 @@ class HomeViewModelTest {
             mock(ClockWidgetHostController::class.java),
             mock(ClockWidgetFacetController::class.java),
             EntitlementRepository(),
+            LockScreenController(),
         )
 
         // Then it's still loading well before the timeout

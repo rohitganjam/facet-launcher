@@ -56,6 +56,7 @@ import com.facetlauncher.app.data.ContactRepository
 import com.facetlauncher.app.data.DefaultAppRepository
 import com.facetlauncher.app.data.DefaultLauncherRepository
 import com.facetlauncher.app.data.EntitlementRepository
+import com.facetlauncher.app.data.LockScreenController
 import com.facetlauncher.app.data.ClockStackRepository
 import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.FacetShortcutRepository
@@ -193,6 +194,8 @@ class HomeDrawerRouteTest {
         favoriteCount: Int = 1,
         /** What the (mocked) home-role check reports — the prompt only shows when `false`; `true` skips straight to the hints. */
         isDefaultLauncher: Boolean = false,
+        /** The "Home button opens search" setting (off by default, as in the app). */
+        homeOpensSearch: Boolean = false,
     ) {
         composeRule.setContent {
             val context = LocalContext.current
@@ -212,7 +215,10 @@ class HomeDrawerRouteTest {
                     PreferenceDataStoreFactory.create(
                         produceFile = { File(context.cacheDir, "test-settings-${System.nanoTime()}.preferences_pb") },
                     ),
-                ).also { repo -> if (onboardingCompleted) runBlocking { repo.setOnboardingCompleted(true) } }
+                ).also { repo ->
+                    if (onboardingCompleted) runBlocking { repo.setOnboardingCompleted(true) }
+                    if (homeOpensSearch) runBlocking { repo.setHomeOpensSearch(true) }
+                }
             }
             val facetRepository = remember { FacetRepository(database.facetDao(), database.clockStackItemDao()) }
             val clockStackRepository = remember { ClockStackRepository(database, database.clockStackItemDao()) }
@@ -306,6 +312,7 @@ class HomeDrawerRouteTest {
                         EntitlementRepository(),
                     ),
                     EntitlementRepository(),
+                    LockScreenController(),
                 )
             }
             launcherViewModel = remember {
@@ -669,8 +676,8 @@ class HomeDrawerRouteTest {
 
     @Test
     fun homePressOnBareHomeOpensTheDrawerAndFocusesSearch() {
-        // Given the launcher is on bare Home and in front
-        setContent()
+        // Given the launcher is on bare Home and in front, with "Home button opens search" on
+        setContent(homeOpensSearch = true)
         composeRule.onNodeWithTag("home_app_list_scroll_region").assertExists()
 
         // When Home is pressed again
@@ -680,6 +687,20 @@ class HomeDrawerRouteTest {
         // Then the drawer opens with the search field focused
         composeRule.onNodeWithTag("alphabet_rail").assertIsDisplayed()
         composeRule.onNodeWithTag("drawer_search_field").assertIsFocused()
+    }
+
+    @Test
+    fun homePressOnBareHomeStaysOnHomeWhenHomeOpensSearchIsOff() {
+        // Given the launcher is on bare Home and in front, with "Home button opens search" off (the default)
+        setContent()
+        composeRule.onNodeWithTag("home_app_list_scroll_region").assertExists()
+
+        // When Home is pressed again
+        composeRule.runOnUiThread { launcherViewModel.onHomePressed(whileResumed = true) }
+        settleAnimation()
+
+        // Then the drawer stays closed
+        composeRule.onNodeWithTag("alphabet_rail").assertIsNotDisplayed()
     }
 
     @Test

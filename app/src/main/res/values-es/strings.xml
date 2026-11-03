@@ -239,11 +239,12 @@
     <string name="settings_section_appearance">Apariencia</string>
     <string name="settings_section_home_apps">Apps y carpetas</string>
     <string name="settings_section_system">Sistema</string>
+    <string name="settings_section_about">Acerca de</string>
     <string name="settings_facets_title">Facetas</string>
     <string name="settings_facets_subtitle">Crea y gestiona ajustes específicos de cada faceta</string>
     <string name="settings_change_wallpaper_title">Cambiar fondo de pantalla</string>
     <string name="settings_change_wallpaper_subtitle">Cambia el fondo de pantalla del sistema</string>
-    <string name="settings_appearance_title">Apariencia</string>
+    <string name="settings_appearance_title">Personalización</string>
     <string name="settings_appearance_subtitle">Personaliza reloj, calendario, inicio, notificaciones, temas</string>
     <string name="settings_clock_calendar_title">Estilo de reloj</string>
     <string name="settings_time_format_24h">Formato de 24 horas</string>
@@ -303,8 +304,6 @@
     <string name="settings_status_active">Activo</string>
     <string name="settings_status_not_set">No establecido</string>
     <string name="settings_status_paused">Pausado</string>
-    <string name="settings_about_title">Acerca de Facet Launcher</string>
-    <string name="settings_about_subtitle">Versión, actualizaciones y comunidad</string>
 
     <!-- NotificationSettingsScreen -->
     <string name="notification_badges_row_title">Insignias de notificación</string>
@@ -436,7 +435,7 @@
     <string name="system_bar_icons_dark">Oscuro</string>
 
     <!-- AppearanceSettingsScreen -->
-    <string name="appearance_header_title">Apariencia</string>
+    <string name="appearance_header_title">Personalización</string>
     <string name="appearance_launcher_theme">Tema del launcher</string>
     <string name="appearance_system_bar_icons">Iconos de la barra de estado</string>
     <string name="appearance_hide_status_bar_title">Ocultar la barra de estado</string>
@@ -659,8 +658,7 @@
     <!-- FolderDetailScreen -->
     <string name="folder_detail_no_apps_yet">Aún no hay apps en esta carpeta. Toca \"Añadir a carpeta\" para añadir algunas.</string>
 
-    <!-- AboutScreen -->
-    <string name="about_header_title">Acerca de</string>
+    <!-- AboutCard -->
     <string name="about_version">Versión</string>
     <string name="about_check_for_updates">Buscar actualizaciones</string>
     <string name="about_check_for_updates_subtitle">Abrir Facet Launcher en Google Play</string>
@@ -671,6 +669,11 @@
     <string name="whats_new_pill_description">Actualizado a %1$s. Abre las novedades</string>
     <string name="about_whats_new">Novedades</string>
     <string name="about_whats_new_subtitle">Nuevas funciones y mejoras en cada versión</string>
+    <string name="about_licenses">Licencias de código abierto</string>
+    <string name="about_licenses_subtitle">Bibliotecas, fuentes y datos que usa Facet</string>
+    <string name="licenses_section_libraries">Bibliotecas y fuentes</string>
+    <string name="licenses_section_fonts">Fuentes</string>
+    <string name="licenses_section_data">Datos</string>
     <string name="whats_new_header_title">Novedades</string>
     <string name="whats_new_version">Versión %1$s</string>
     <string name="whats_new_installed">Instalada</string>
@@ -1076,5 +1079,30 @@
     <string name="clock_accessories_inheriting">Esta faceta usa los ajustes de reloj del launcher. Activa «Personalizar» en Estilo del reloj para cambiarlos.</string>
     <string name="clock_accessories_open_clock_style">Estilo del reloj</string>
     <string name="weather_location_current_short">Ubicación actual</string>
+    <string name="settings_gestures_title">Gestos</string>
+    <string name="settings_gestures_subtitle">Deslizamientos, toques y el botón de inicio</string>
+    <string name="gestures_section_built_in">Integrados</string>
+    <string name="gestures_section_optional">Opcionales</string>
+    <string name="gesture_swipe_up_title">Deslizar hacia arriba</string>
+    <string name="gesture_swipe_up_subtitle">Abrir el cajón de apps</string>
+    <string name="gesture_swipe_right_title">Deslizar a la derecha</string>
+    <string name="gesture_swipe_right_subtitle">Abrir el Hub</string>
+    <string name="gesture_swipe_left_title">Deslizar a la izquierda</string>
+    <string name="gesture_swipe_left_subtitle">Cambiar de faceta</string>
+    <string name="gesture_swipe_down_title">Deslizar hacia abajo</string>
+    <string name="gesture_swipe_down_subtitle">Abrir el panel de notificaciones</string>
+    <string name="gesture_long_press_title">Mantener pulsado un espacio vacío</string>
+    <string name="gesture_long_press_subtitle">Abrir el menú del reloj y la disposición</string>
+    <string name="gesture_home_opens_search_title">El botón de inicio abre la búsqueda</string>
+    <string name="gesture_home_opens_search_subtitle">Pulsa Inicio cuando ya estés en la pantalla de inicio para abrir el cajón con la búsqueda lista.</string>
+    <string name="gesture_double_tap_lock_title">Doble toque para bloquear</string>
+    <string name="gesture_double_tap_lock_subtitle">Toca dos veces un espacio vacío de la pantalla de inicio para bloquear la pantalla.</string>
+    <string name="gesture_double_tap_lock_needs_access">Toca dos veces un espacio vacío de la pantalla de inicio para bloquear la pantalla. Necesita acceso de accesibilidad, que se te pedirá activar.</string>
+    <string name="permission_accessibility_title">Acceso de accesibilidad</string>
+    <string name="permission_accessibility_subtitle">Permite que un doble toque en la pantalla de inicio bloquee la pantalla.</string>
+    <string name="accessibility_access_explanation_headline">Doble toque para bloquear bloquea la pantalla cuando tocas dos veces un espacio vacío de la pantalla de inicio.</string>
+    <string name="accessibility_access_explanation_body">Esto necesita el servicio de accesibilidad de Facet, que se activa desde los Ajustes del sistema; Facet no puede activarlo directamente. Solo se usa para bloquear la pantalla: no lee lo que hay en ella, no observa lo que escribes y no envía nada fuera de tu dispositivo. El desbloqueo con huella o con el rostro sigue funcionando.</string>
+    <string name="accessibility_service_label">Facet doble toque para bloquear</string>
+    <string name="accessibility_service_description">Bloquea la pantalla cuando tocas dos veces un espacio vacío de la pantalla de inicio. No lee el contenido de la pantalla.</string>
     <string name="about_weather_credit">Datos del tiempo de MET Norway (CC BY 4.0). Nombres de ciudades de GeoNames (CC BY 4.0).</string>
 </resources>

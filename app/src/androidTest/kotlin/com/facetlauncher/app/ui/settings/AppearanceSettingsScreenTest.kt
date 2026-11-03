@@ -73,7 +73,7 @@ class AppearanceSettingsScreenTest {
         composeRule.onNodeWithTag("appearance_settings_screen").performScrollToNode(hasTestTag("general_icons_row"))
 
         // Then the pinned header (title + back button) is still on screen, not scrolled away
-        composeRule.onNodeWithText("Appearance").assertIsDisplayed()
+        composeRule.onNodeWithText("Customization").assertIsDisplayed()
         composeRule.onNodeWithTag("back_button").assertIsDisplayed()
     }
 
@@ -318,7 +318,8 @@ class AppearanceSettingsScreenTest {
         setContent(onNavigateToNotificationSettings = { navigated = true })
         composeRule.onNodeWithTag("appearance_settings_screen").performScrollToNode(hasTestTag("notification_settings_row"))
         composeRule.onNodeWithTag("notification_settings_row").assertTextContains("Notifications and media", substring = true)
-        composeRule.onNodeWithTag("notification_settings_row").assertTextContains("Dot badges · Media player off", substring = true)
+        // The access state arrives a frame after the first composition, so wait for the subtext like the other tests here
+        awaitNotificationSubtext("Dot badges · Media player off")
 
         // When tapping it
         composeRule.onNodeWithTag("notification_settings_row").performClick()

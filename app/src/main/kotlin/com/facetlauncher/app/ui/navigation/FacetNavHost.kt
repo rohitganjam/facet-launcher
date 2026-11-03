@@ -29,7 +29,10 @@ import com.facetlauncher.app.ui.home.stack.ClockStackScreen
 import com.facetlauncher.app.ui.launcher.HomeDrawerRoute
 import com.facetlauncher.app.ui.launcher.LauncherViewModel
 import com.facetlauncher.app.ui.pro.FacetProScreen
-import com.facetlauncher.app.ui.settings.AboutScreen
+import com.facetlauncher.app.ui.settings.AccessibilityAccessExplanationScreen
+import com.facetlauncher.app.ui.settings.GesturesScreen
+import com.facetlauncher.app.ui.settings.LicenseTextScreen
+import com.facetlauncher.app.ui.settings.LicensesScreen
 import com.facetlauncher.app.ui.settings.AppDrawerSettingsScreen
 import com.facetlauncher.app.ui.settings.AppearanceSettingsScreen
 import com.facetlauncher.app.ui.settings.CalendarSettingsScreen
@@ -73,6 +76,8 @@ object FacetDestinations {
     const val CALENDAR_SETTINGS = "calendarSettings?facetId={facetId}"
     const val USAGE_ACCESS_EXPLANATION = "usageAccessExplanation"
     const val PERMISSIONS = "permissions"
+    const val GESTURES = "gestures"
+    const val ACCESSIBILITY_ACCESS_EXPLANATION = "accessibilityAccessExplanation"
     const val NOTIFICATION_SETTINGS = "notificationSettings"
     const val FOLDERS_SETTINGS = "foldersSettings"
     const val FOLDER_DETAIL = "folderDetail/{folderId}"
@@ -92,8 +97,9 @@ object FacetDestinations {
     const val DOCK_SETTINGS = "dockSettings?facetId={facetId}"
     const val HOME_APPS_LIST_SETTINGS = "homeAppsListSettings?facetId={facetId}"
     const val APP_DRAWER_SETTINGS = "appDrawerSettings"
-    const val ABOUT = "about"
     const val WHATS_NEW = "whats_new"
+    const val LICENSES = "licenses"
+    const val LICENSE_TEXT = "licenseText/{licenseId}"
 
     fun facetClockStyleGallery(facetId: Long) = "facetClockStyleGallery/$facetId"
 
@@ -102,6 +108,7 @@ object FacetDestinations {
     fun facetPro(reason: ProReason) = "facetPro/${reason.name}"
 
     fun folderDetail(folderId: Long) = "folderDetail/$folderId"
+    fun licenseText(licenseId: String) = "licenseText/$licenseId"
 
     fun folderAppPicker(folderId: Long) = "folderAppPicker/$folderId"
 
@@ -226,19 +233,27 @@ fun FacetNavHost(
                 onNavigateToDockSettings = { navController.navigate(FacetDestinations.dockSettings()) },
                 onNavigateToHomeAppsListSettings = { navController.navigate(FacetDestinations.homeAppsListSettings()) },
                 onNavigateToFolders = { navController.navigate(FacetDestinations.FOLDERS_SETTINGS) },
+                onNavigateToGestures = { navController.navigate(FacetDestinations.GESTURES) },
                 onNavigateToPermissions = { navController.navigate(FacetDestinations.PERMISSIONS) },
                 onNavigateToBackupRestore = { navController.navigate(FacetDestinations.BACKUP_RESTORE) },
-                onNavigateToAbout = { navController.navigate(FacetDestinations.ABOUT) },
+                onNavigateToWhatsNew = { navController.navigate(FacetDestinations.WHATS_NEW) },
+                onNavigateToLicenses = { navController.navigate(FacetDestinations.LICENSES) },
             )
+        }
+        settingsComposable(FacetDestinations.LICENSES) {
+            LicensesScreen(
+                onBack = { navController.popBackStackSafely() },
+                onOpenLicense = { id -> navController.navigate(FacetDestinations.licenseText(id)) },
+            )
+        }
+        settingsComposable(
+            FacetDestinations.LICENSE_TEXT,
+            arguments = listOf(navArgument("licenseId") { type = NavType.StringType }),
+        ) {
+            LicenseTextScreen(onBack = { navController.popBackStackSafely() })
         }
         settingsComposable(FacetDestinations.BACKUP_RESTORE) {
             BackupRestoreScreen(onBack = { navController.popBackStackSafely() })
-        }
-        settingsComposable(FacetDestinations.ABOUT) {
-            AboutScreen(
-                onBack = { navController.popBackStackSafely() },
-                onNavigateToWhatsNew = { navController.navigate(FacetDestinations.WHATS_NEW) },
-            )
         }
         settingsComposable(FacetDestinations.WHATS_NEW) {
             WhatsNewScreen(onBack = { navController.popBackStackSafely() })
@@ -358,7 +373,21 @@ fun FacetNavHost(
                 onNavigateToNotificationAccessExplanation = {
                     navController.navigate(FacetDestinations.NOTIFICATION_ACCESS_EXPLANATION)
                 },
+                onNavigateToAccessibilityAccessExplanation = {
+                    navController.navigate(FacetDestinations.ACCESSIBILITY_ACCESS_EXPLANATION)
+                },
             )
+        }
+        settingsComposable(FacetDestinations.GESTURES) {
+            GesturesScreen(
+                onBack = { navController.popBackStackSafely() },
+                onNavigateToAccessibilityAccessExplanation = {
+                    navController.navigate(FacetDestinations.ACCESSIBILITY_ACCESS_EXPLANATION)
+                },
+            )
+        }
+        settingsComposable(FacetDestinations.ACCESSIBILITY_ACCESS_EXPLANATION) {
+            AccessibilityAccessExplanationScreen(onBack = { navController.popBackStackSafely() })
         }
         settingsComposable(FacetDestinations.NOTIFICATION_SETTINGS) {
             NotificationSettingsScreen(

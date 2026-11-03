@@ -239,11 +239,12 @@
     <string name="settings_section_appearance">Design</string>
     <string name="settings_section_home_apps">Apps und Ordner</string>
     <string name="settings_section_system">System</string>
+    <string name="settings_section_about">Über</string>
     <string name="settings_facets_title">Facetten</string>
     <string name="settings_facets_subtitle">Facettenspezifische Einstellungen erstellen und verwalten</string>
     <string name="settings_change_wallpaper_title">Hintergrundbild ändern</string>
     <string name="settings_change_wallpaper_subtitle">Ändere das Hintergrundbild deines Systems</string>
-    <string name="settings_appearance_title">Design</string>
+    <string name="settings_appearance_title">Anpassung</string>
     <string name="settings_appearance_subtitle">Uhr, Kalender, Startbildschirm, Benachrichtigungen, Designs anpassen</string>
     <string name="settings_clock_calendar_title">Uhrstil</string>
     <string name="settings_time_format_24h">24-Stunden-Format</string>
@@ -303,8 +304,6 @@
     <string name="settings_status_active">Aktiv</string>
     <string name="settings_status_not_set">Nicht festgelegt</string>
     <string name="settings_status_paused">Pausiert</string>
-    <string name="settings_about_title">Über Facet Launcher</string>
-    <string name="settings_about_subtitle">Version, Updates und Community</string>
 
     <!-- NotificationSettingsScreen -->
     <string name="notification_badges_row_title">Benachrichtigungsabzeichen</string>
@@ -436,7 +435,7 @@
     <string name="system_bar_icons_dark">Dunkel</string>
 
     <!-- AppearanceSettingsScreen -->
-    <string name="appearance_header_title">Design</string>
+    <string name="appearance_header_title">Anpassung</string>
     <string name="appearance_launcher_theme">Launcher-Design</string>
     <string name="appearance_system_bar_icons">Symbole der Statusleiste</string>
     <string name="appearance_hide_status_bar_title">Statusleiste ausblenden</string>
@@ -659,8 +658,7 @@
     <!-- FolderDetailScreen -->
     <string name="folder_detail_no_apps_yet">Noch keine Apps in diesem Ordner. Tippe auf „Zu Ordner hinzufügen“, um welche hinzuzufügen.</string>
 
-    <!-- AboutScreen -->
-    <string name="about_header_title">Über</string>
+    <!-- AboutCard -->
     <string name="about_version">Version</string>
     <string name="about_check_for_updates">Nach Updates suchen</string>
     <string name="about_check_for_updates_subtitle">Facet Launcher im Google Play Store öffnen</string>
@@ -671,6 +669,11 @@
     <string name="whats_new_pill_description">Aktualisiert auf %1$s. Öffnet die Neuigkeiten</string>
     <string name="about_whats_new">Neuigkeiten</string>
     <string name="about_whats_new_subtitle">Neue Funktionen und Verbesserungen in jeder Version</string>
+    <string name="about_licenses">Open-Source-Lizenzen</string>
+    <string name="about_licenses_subtitle">Bibliotheken, Schriften und Daten, die Facet nutzt</string>
+    <string name="licenses_section_libraries">Bibliotheken und Schriften</string>
+    <string name="licenses_section_fonts">Schriften</string>
+    <string name="licenses_section_data">Daten</string>
     <string name="whats_new_header_title">Neuigkeiten</string>
     <string name="whats_new_version">Version %1$s</string>
     <string name="whats_new_installed">Installiert</string>
@@ -1076,5 +1079,30 @@
     <string name="clock_accessories_inheriting">Diese Facette nutzt die Uhr-Einstellungen des Launchers. Aktiviere „Überschreiben“ unter Uhrstil, um sie zu ändern.</string>
     <string name="clock_accessories_open_clock_style">Uhrstil</string>
     <string name="weather_location_current_short">Aktueller Standort</string>
+    <string name="settings_gestures_title">Gesten</string>
+    <string name="settings_gestures_subtitle">Wischen, Tippen und die Home-Taste</string>
+    <string name="gestures_section_built_in">Integriert</string>
+    <string name="gestures_section_optional">Optional</string>
+    <string name="gesture_swipe_up_title">Nach oben wischen</string>
+    <string name="gesture_swipe_up_subtitle">App-Übersicht öffnen</string>
+    <string name="gesture_swipe_right_title">Nach rechts wischen</string>
+    <string name="gesture_swipe_right_subtitle">Hub öffnen</string>
+    <string name="gesture_swipe_left_title">Nach links wischen</string>
+    <string name="gesture_swipe_left_subtitle">Facetten wechseln</string>
+    <string name="gesture_swipe_down_title">Nach unten wischen</string>
+    <string name="gesture_swipe_down_subtitle">Benachrichtigungsleiste öffnen</string>
+    <string name="gesture_long_press_title">Leere Fläche lange drücken</string>
+    <string name="gesture_long_press_subtitle">Uhr- und Layout-Menü öffnen</string>
+    <string name="gesture_home_opens_search_title">Home-Taste öffnet die Suche</string>
+    <string name="gesture_home_opens_search_subtitle">Drücke Home, während du schon auf dem Startbildschirm bist, um die App-Übersicht mit bereiter Suche zu öffnen.</string>
+    <string name="gesture_double_tap_lock_title">Doppeltippen zum Sperren</string>
+    <string name="gesture_double_tap_lock_subtitle">Tippe doppelt auf eine leere Fläche des Startbildschirms, um das Display zu sperren.</string>
+    <string name="gesture_double_tap_lock_needs_access">Tippe doppelt auf eine leere Fläche des Startbildschirms, um das Display zu sperren. Dafür ist Bedienungshilfen-Zugriff nötig, den du aktivieren sollst.</string>
+    <string name="permission_accessibility_title">Bedienungshilfen-Zugriff</string>
+    <string name="permission_accessibility_subtitle">Lässt ein Doppeltippen auf dem Startbildschirm das Display sperren.</string>
+    <string name="accessibility_access_explanation_headline">Doppeltippen zum Sperren sperrt dein Display, wenn du auf dem Startbildschirm doppelt auf eine leere Fläche tippst.</string>
+    <string name="accessibility_access_explanation_body">Dafür ist der Facet-Bedienungshilfendienst nötig, den du in den Systemeinstellungen aktivierst — Facet kann ihn nicht selbst einschalten. Er wird nur zum Sperren des Displays verwendet: Er liest nicht, was auf dem Bildschirm steht, beobachtet keine Eingaben und sendet nichts von deinem Gerät. Entsperren per Fingerabdruck oder Gesicht funktioniert weiterhin.</string>
+    <string name="accessibility_service_label">Facet Doppeltippen zum Sperren</string>
+    <string name="accessibility_service_description">Sperrt das Display, wenn du auf dem Startbildschirm doppelt auf eine leere Fläche tippst. Liest keine Bildschirminhalte.</string>
     <string name="about_weather_credit">Wetterdaten von MET Norway (CC BY 4.0). Städtenamen von GeoNames (CC BY 4.0).</string>
 </resources>

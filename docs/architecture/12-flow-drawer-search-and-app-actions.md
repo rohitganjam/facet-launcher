@@ -324,8 +324,20 @@ overlay that composes its own state subscribes with `DismissOnHomePress` — `Th
 for every action menu and for the facet automation rule editor (a settings sheet, so a Home press while it is
 open closes it and drops the draft), and `FolderContentsSheet` and the contact connections sheet call it
 directly; a new one must do the same.
-A Home press while the launcher is already in front and bare (Drawer, Hub, carousel, clock adjust, pickers, Private Space and sheets all closed) instead opens the Drawer and focuses its search field. `LauncherActivity.onNewIntent` passes `whileResumed` (true unless the activity was stopped since it last resumed: a Home press on bare Home only pauses it, but returning from another app stops it first; `lifecycle.currentState` can't tell them apart, as both reach `onNewIntent` in STARTED) to `LauncherViewModel.onHomePressed`, which `HomeDrawerRoute`'s collector reads as `homePressedWhileResumed` before it closes anything, then bumps `DrawerSearchBarConfig.focusRequest`. A press from another app, or with anything open, only returns to bare Home (`HomeDrawerRouteTest`).
+A Home press while the launcher is already in front and bare (Drawer, Hub, carousel, clock adjust, pickers, Private Space and sheets all closed) instead opens the Drawer and focuses its search field, but only when the opt-in "Home button opens search" setting (`homeOpensSearch`, off by default, Settings → Gestures) is on; `HomeDrawerRoute` reads it from `LauncherUiState.homeOpensSearch` before closing anything. `LauncherActivity.onNewIntent` passes `whileResumed` (true unless the activity was stopped since it last resumed: a Home press on bare Home only pauses it, but returning from another app stops it first; `lifecycle.currentState` can't tell them apart, as both reach `onNewIntent` in STARTED) to `LauncherViewModel.onHomePressed`, which `HomeDrawerRoute`'s collector reads as `homePressedWhileResumed` before it closes anything, then bumps `DrawerSearchBarConfig.focusRequest`. A press from another app, or with anything open, only returns to bare Home (`HomeDrawerRouteTest`).
 Samsung's swipe-up gesture injects `KEYCODE_HOME` itself, so it reaches this path exactly like the button.
+
+**Double-tap to lock.** `homeEmptySpaceGestures` also reports a double-tap on empty Home (idle clock-adjust mode only; the
+detector has no `onTap`, so nothing is delayed) as `HomeScreenActions.onEmptySpaceDoubleTap` → `HomeViewModel.onEmptySpaceDoubleTap()`.
+That reads `doubleTapToLock` (opt-in, off by default) and, when on, calls `LockScreenController.lock()`. The controller holds the
+lock lambda that the connected `FacetAccessibilityService` attaches (`performGlobalAction(GLOBAL_ACTION_LOCK_SCREEN)`, which keeps
+biometric unlock working); with no service connected it is a no-op. The service requests no events and reads no screen content, and
+is enabled from system Accessibility settings after `AccessibilityAccessExplanationScreen`, checked by
+`AccessibilityAccessRepository.isGranted()`. Settings → Gestures (`GesturesScreen` / `GesturesViewModel`) lists every Home gesture
+(the four swipes and the empty-space long-press as read-only rows) with switches for the two opt-in ones; the lock switch reads
+on only while the service is enabled, and turning it on without access routes through the explanation screen. The Permissions
+screen has a matching Accessibility access row. `HomeViewModelTest`, `LockScreenControllerTest`, `GesturesViewModelTest`,
+`GesturesScreenTest`, `HomeScreenTest` and `HomeDrawerRouteTest` cover it.
 
 Because the transition tracks the finger, none
 of these can be `NavHost` transitions — Home, Drawer, Hub and Carousel are composed together

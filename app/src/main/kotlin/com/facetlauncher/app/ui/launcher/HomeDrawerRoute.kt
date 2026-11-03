@@ -219,7 +219,8 @@ fun HomeDrawerRoute(
     val homeSwipeGate = LocalHomeSwipeGate.current
     LaunchedEffect(launcherViewModel) {
         launcherViewModel.homePressedEvent.collect {
-            val onBareHome = launcherViewModel.homePressedWhileResumed && homeSwipeGate?.isBlocked != true &&
+            val onBareHome = launcherViewModel.homePressedWhileResumed && launcherViewModel.uiState.value.homeOpensSearch &&
+                homeSwipeGate?.isBlocked != true &&
                 swipe.drawer.progress.value == 0f && swipe.hub.progress.value == 0f && swipe.facet.progress.value == 0f &&
                 clockAdjustMode == ClockAdjustMode.NONE && !overlays.showWidgetPicker &&
                 !overlays.showClockWidgetPicker && !overlays.showPrivateSpace

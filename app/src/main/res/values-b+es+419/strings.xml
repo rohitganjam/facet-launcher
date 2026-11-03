@@ -1,0 +1,121 @@
+<resources>
+    <!-- Latin American Spanish: only what differs from values-es; everything else falls back to it. -->
+    <string name="folder_add_to_folder">Agregar a carpeta</string>
+    <string name="quick_placement_add_to">Agregar a %1$s</string>
+    <string name="app_menu_notifications_access_needed">Las notificaciones necesitan acceso desde la configuración del sistema.</string>
+    <string name="app_picker_no_folders_yet">Aún no hay carpetas. Mantén presionada una app y elige \"Agregar a carpeta\" para crear una.</string>
+    <string name="gesture_hint_clock_hold">Mantén presionado el reloj para cambiar su tamaño y posición</string>
+
+    <string name="settings_header_title">Configuración</string>
+    <string name="settings_facets_subtitle">Crea y administra la configuración específica de cada faceta</string>
+    <string name="settings_settings_search">Búsqueda de configuración %1$s</string>
+    <string name="settings_backup_restore_subtitle">Exporta la configuración como archivo · los widgets deben agregarse de nuevo al importar</string>
+    <string name="app_drawer_search_settings_title">Buscar en configuración</string>
+    <string name="app_drawer_search_settings_subtitle">Accede a la configuración del sistema como Wi-Fi o Bluetooth</string>
+    <string-array name="drawer_preview_app_labels">
+        <item>Calendario</item>
+        <item>Cámara</item>
+        <item>Fotos</item>
+        <item>Mapas</item>
+        <item>Música</item>
+        <item>Notas</item>
+        <item>Reloj</item>
+        <item>Clima</item>
+    </string-array>
+
+    <string name="backup_restore_widgets_to_readd_header">WIDGETS PARA VOLVER A AGREGAR</string>
+    <string name="backup_restore_widgets_to_readd_explanation">Estos widgets no se pudieron restaurar automáticamente. Toca cada uno para agregarlo de nuevo donde estaba.</string>
+    <plurals name="backup_widgets_need_readding_count">
+        <item quantity="one">%d widget debe agregarse de nuevo abajo</item>
+        <item quantity="other">%d widgets deben agregarse de nuevo abajo</item>
+    </plurals>
+    <string name="backup_restore_readd">Agregar de nuevo</string>
+
+    <string name="permission_location_subtitle">Android lo exige para leer el nombre de la red Wi-Fi en las reglas de una red concreta y para buscar el clima de donde estás cuando eliges Usar la ubicación actual. Facet no lo usa para nada más.</string>
+
+    <string name="automation_trigger_headphones">Audífonos</string>
+    <string name="automation_while_plugged_in">Mientras estén conectados</string>
+    <string name="automation_while_not_plugged_in">Mientras no estén conectados</string>
+    <string name="automation_permission_bluetooth_off">El acceso a Bluetooth está desactivado, así que este disparador no se puede usar. Permítelo en Configuración.</string>
+    <string name="automation_permission_location_off">El acceso a la ubicación está desactivado. Android lo necesita para leer los nombres de las redes Wi-Fi. Permítelo en Configuración.</string>
+    <string name="automation_open_settings">Abrir configuración</string>
+    <string name="automation_free_strip">El plan gratuito incluye 2 reglas de horario. Pro agrega más reglas y disparadores para Bluetooth, Wi-Fi, carga, audífonos y batería.</string>
+    <string name="automation_no_paired_devices">No hay dispositivos vinculados. Vincula uno primero en la configuración de Bluetooth.</string>
+    <string name="pro_hero_trigger_car">Auto</string>
+    <string name="pro_add_facet">Agregar una faceta</string>
+    <string name="pro_feature_triggers_title">Disparadores de Wi-Fi, Bluetooth, audífonos y batería</string>
+    <string name="pro_feature_triggers_body">Conéctate a la red de la oficina o al auto y la faceta cambia.</string>
+    <string name="pro_feature_future_body">Todo lo que se agregue a Pro más adelante es tuyo.</string>
+    <string name="pro_owned_more_title">Disparadores de audífonos y batería</string>
+    <string name="pro_owned_more_body">Cambia al conectar o cargar</string>
+    <string name="pro_upgrade_trigger">Las reglas que reaccionan al Bluetooth, al Wi-Fi, a los audífonos o a la batería forman parte de Pro.</string>
+    <string name="pro_upgrade_rule_limit">El plan gratuito incluye 2 reglas. Con Pro puedes agregar más.</string>
+    <string name="pro_upgrade_facet_locked">Esta faceta está en pausa en el plan gratuito. Elimina una faceta para volver a 3, o actualiza a Pro para usar hasta 10.</string>
+    <string name="automation_add_rule">Agregar regla</string>
+    <string name="automation_empty">Agrega una regla para cambiar de faceta automáticamente.</string>
+    <string name="automation_headphones_in">Audífonos · conectados</string>
+    <string name="automation_headphones_out">Audífonos · desconectados</string>
+
+    <string name="calendar_settings_header_title">Configuración del calendario</string>
+    <string name="calendar_settings_follows_launcher_wide">Sigue la configuración de calendario general del launcher</string>
+    <string name="folder_detail_no_apps_yet">Aún no hay apps en esta carpeta. Toca \"Agregar a carpeta\" para agregar algunas.</string>
+    <string name="open_settings">Abrir configuración</string>
+    <string name="usage_access_explanation_body">Esto necesita acceso de uso, un permiso especial que se concede desde la configuración del sistema; Facet no puede solicitarlo directamente. Solo lee qué apps abres y por cuánto tiempo; nada sale de tu dispositivo.</string>
+    <string name="notification_access_explanation_body">Esto necesita acceso a notificaciones, un permiso especial que se concede desde la configuración del sistema; Facet no puede solicitarlo directamente. Solo lee qué apps tienen notificaciones activas y si son silenciosas, además del título, el artista y la carátula de lo que suena; nada sale de tu dispositivo.</string>
+    <string name="onboarding_clear_dock_message">Quita todas las apps del dock predeterminado. Puedes volver a agregarlas en cualquier momento.</string>
+    <string name="onboarding_clear_favorites_message">Quita todas las apps de tus favoritos predeterminados. Puedes volver a agregarlas en cualquier momento.</string>
+    <string name="set_default_launcher_body">Android te pedirá que confirmes. Puedes volver a tu launcher anterior en cualquier momento desde Configuración.</string>
+
+    <string name="drawer_search_launcher_settings">Configuración del launcher</string>
+    <string name="drawer_search_system_settings">Configuración del sistema</string>
+    <string name="drawer_search_section_settings">CONFIGURACIÓN</string>
+    <string name="drawer_contacts_access_needed">La búsqueda de contactos necesita acceso desde la configuración del sistema.</string>
+    <string name="drawer_contacts_search_off">La búsqueda de contactos está desactivada en la configuración del cajón de apps.</string>
+    <string name="facet_carousel_launcher_settings">Configuración del launcher</string>
+    <string name="facet_carousel_facet_settings">Configuración de faceta</string>
+    <string name="facet_carousel_add_facet">Agregar faceta</string>
+    <string name="facet_settings_dock_settings_title">Configuración del Dock</string>
+    <string name="home_usage_access_needed">Más usadas necesita acceso de uso desde la configuración del sistema.</string>
+
+    <string name="clock_style_long_press_hint">Mantén presionado el reloj en la pantalla de inicio para ajustar el tamaño y la posición vertical.</string>
+    <string name="clock_adjust_clock_settings">Configuración de reloj y calendario</string>
+    <string name="clock_adjust_facet_settings_subtitle">Configuración específica de la faceta: lista de apps, dock, reloj y calendario</string>
+    <string name="hub_widget_picker_setup_cancelled">La configuración no terminó, así que ese widget no se agregó</string>
+    <string name="hub_widget_picker_title">Agregar widget</string>
+    <string name="hub_header_add">Agregar</string>
+    <string name="hub_empty_state_subtitle">Agrega un widget para empezar.</string>
+    <string name="hub_at_capacity_message">Lleno con 20 widgets — quita uno para agregar otro.</string>
+    <string name="facet_settings_apps_list_settings_title">Configuración de la lista de apps</string>
+    <string name="appearance_general_title">Configuración general</string>
+    <string name="clock_adjust_stack_empty">Vacía · agrega un reloj o un widget</string>
+    <string name="clock_stack_full_free_hint">Quita el widget actual para agregar otro, o actualiza a Pro para tener hasta 5.</string>
+    <string name="clock_stack_empty">No hay nada aquí, así que la zona del reloj en Inicio queda vacía hasta que agregues algo.</string>
+    <string name="clock_stack_add">Agregar widget</string>
+    <string name="clock_stack_chooser_title">Agregar a la pila</string>
+
+    <string name="weather_accessory_description">%1$s, %2$s. Abre los detalles del clima</string>
+    <string name="weather_accessory_description_no_condition">%1$s. Abre los detalles del clima</string>
+    <string name="weather_credit">Datos del clima de MET Norway</string>
+    <string name="weather_refresh_updated">Clima actualizado</string>
+    <string name="weather_refresh_busy">El servicio del clima está saturado. Inténtalo más tarde.</string>
+    <string name="weather_refresh_failed">No se pudo actualizar el clima. Inténtalo más tarde.</string>
+    <string name="weather_needs_location">Permite la ubicación para ver el clima donde estás.</string>
+    <string name="weather_no_location">Activa la ubicación para ver el clima aquí.</string>
+    <string name="weather_no_city">Elige una ciudad para ver su clima.</string>
+    <string name="weather_empty">Aún no hay datos del clima</string>
+    <string name="clock_accessories_summary">Alarma, batería y clima</string>
+    <string name="clock_accessories_show_weather">Mostrar el clima</string>
+    <string name="weather_location_showing_for">Mostrando el clima de</string>
+    <string name="weather_permission_location_subtitle">Necesario para mostrar el clima de donde estás. Facet solo lee una posición aproximada, y solo mientras Home está abierto.</string>
+    <string name="weather_icon_style">Iconos del clima</string>
+    <string name="weather_location_pick_prompt">Busca una ciudad abajo y tócala para agregarla aquí.</string>
+    <string name="weather_location_tick_prompt">Selecciona una ciudad para ver su clima.</string>
+    <string name="weather_location_limit">Puedes guardar hasta %1$d ciudades. Quita una para agregar otra.</string>
+    <string name="weather_leave_message">El clima necesita una ciudad. ¿Qué quieres hacer?</string>
+    <string name="weather_leave_turn_off">Desactivar el clima</string>
+    <string name="clock_accessories_inheriting">Esta faceta usa la configuración de reloj del launcher. Activa «Personalizar» en Estilo del reloj para cambiarla.</string>
+
+    <string name="gesture_long_press_title">Mantener presionado un espacio vacío</string>
+    <string name="gesture_home_opens_search_subtitle">Presiona Inicio cuando ya estés en la pantalla de inicio para abrir el cajón con la búsqueda lista.</string>
+    <string name="about_weather_credit">Datos del clima de MET Norway (CC BY 4.0). Nombres de ciudades de GeoNames (CC BY 4.0).</string>
+</resources>

@@ -70,7 +70,7 @@ fun HomeScreen(
                 layout.rootSize = it.size
                 layout.rootOriginInRoot = it.positionInRoot()
             }
-            .homeEmptySpaceGestures(clock.adjustMode, actions.clock.onAdjustModeChange)
+            .homeEmptySpaceGestures(clock.adjustMode, actions.clock.onAdjustModeChange, actions.onEmptySpaceDoubleTap)
             .testTag(homeTag("home_screen_root")),
     ) {
         if (frame.isLandscape) HomeLandscapeContent(frame) else HomePortraitContent(frame)

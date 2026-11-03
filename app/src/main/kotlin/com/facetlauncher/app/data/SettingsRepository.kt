@@ -74,6 +74,8 @@ private object Keys {
     val DRAWER_LIST_ITEM_SIZE = stringPreferencesKey("drawer_list_item_size")
     val DRAWER_OPACITY = floatPreferencesKey("drawer_opacity")
     val NOTIFICATION_DOTS_ENABLED = booleanPreferencesKey("notification_dots_enabled")
+    val HOME_OPENS_SEARCH = booleanPreferencesKey("home_opens_search")
+    val DOUBLE_TAP_TO_LOCK = booleanPreferencesKey("double_tap_to_lock")
     val NOTIFICATION_BADGE_STYLE = stringPreferencesKey("notification_badge_style")
     val SHOW_MEDIA_PLAYER_ON_HOME = booleanPreferencesKey("show_media_player_on_home")
     val SHOW_MEDIA_SKIP_BUTTONS = booleanPreferencesKey("show_media_skip_buttons")
@@ -175,6 +177,8 @@ class SettingsRepository @Inject constructor(
                 ?: defaults.drawerListItemSize,
             drawerOpacity = preferences[Keys.DRAWER_OPACITY] ?: defaults.drawerOpacity,
             notificationDotsEnabled = preferences[Keys.NOTIFICATION_DOTS_ENABLED] ?: defaults.notificationDotsEnabled,
+            homeOpensSearch = preferences[Keys.HOME_OPENS_SEARCH] ?: defaults.homeOpensSearch,
+            doubleTapToLock = preferences[Keys.DOUBLE_TAP_TO_LOCK] ?: defaults.doubleTapToLock,
             notificationBadgeStyle = preferences[Keys.NOTIFICATION_BADGE_STYLE]?.let {
                 runCatching { NotificationBadgeStyle.valueOf(it) }.getOrNull()
             } ?: defaults.notificationBadgeStyle,
@@ -327,6 +331,14 @@ class SettingsRepository @Inject constructor(
 
     suspend fun setNotificationDotsEnabled(enabled: Boolean) {
         dataStore.edit { it[Keys.NOTIFICATION_DOTS_ENABLED] = enabled }
+    }
+
+    suspend fun setHomeOpensSearch(enabled: Boolean) {
+        dataStore.edit { it[Keys.HOME_OPENS_SEARCH] = enabled }
+    }
+
+    suspend fun setDoubleTapToLock(enabled: Boolean) {
+        dataStore.edit { it[Keys.DOUBLE_TAP_TO_LOCK] = enabled }
     }
 
     suspend fun setNotificationBadgeStyle(style: NotificationBadgeStyle) {

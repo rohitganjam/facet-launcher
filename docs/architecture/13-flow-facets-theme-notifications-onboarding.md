@@ -208,7 +208,7 @@ refresh; `HomeDrawerRoute` also calls `WeatherViewModel.onHomeResumed(weatherSho
 and low, the next-24-hours strip (condition, temperature, rain, wind), humidity, pressure and the other details, the days
 ahead, and an "Updated" footer with the MET Norway credit and a refresh button. Its states (`WeatherNotice`) are
 busy-try-later, offline, location permission needed, no city, and already up to date. Its place line opens Clock
-accessories to choose another place. The About screen carries the MET and GeoNames credit too.
+accessories to choose another place. The About section of Settings carries the MET and GeoNames credit too.
 
 Weather pictures come in two styles, the launcher default `weatherIconStyle` (coloured unless changed) or a facet's own while it
 overrides the clock (Settings → Clock accessories → Icons): monochrome,
@@ -474,7 +474,7 @@ flowchart LR
   `WhatsNewPillViewModel.version` is the running version when onboarding is done, `assets/whats_new/<version>.md` exists and
   the coach-mark id `WHATS_NEW_<version>` is not in `coachMarksSeen` (`whatsNewSeenId`). A fresh install never qualifies:
   `SettingsRepository.setOnboardingCompleted(true)` adds the running version's id, and opening What's new
-  (`WhatsNewViewModel`, from About or from the pill) adds it too. The pill waits for `HomeUiState.firstRunPromptsDone`
+  (`WhatsNewViewModel`, from the About card in Settings or from the pill) adds it too. The pill waits for `HomeUiState.firstRunPromptsDone`
   (set-default step and gesture hint behind the user) and a Home at rest, marks the version seen as it appears, and
   leaves after 8 seconds, when swiped up, or when tapped (which opens What's new). A debug build's Settings (bottom, under
   the Pro switch) has a *What's new pill* row that clears the running version's seen mark, to see the pill again without an update

@@ -70,6 +70,7 @@ fun PermissionsScreen(
     onBack: () -> Unit,
     onNavigateToUsageAccessExplanation: () -> Unit,
     onNavigateToNotificationAccessExplanation: () -> Unit,
+    onNavigateToAccessibilityAccessExplanation: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: PermissionsViewModel = hiltViewModel(),
 ) {
@@ -125,6 +126,7 @@ fun PermissionsScreen(
         when (permission.kind) {
             PermissionKind.USAGE_ACCESS -> onNavigateToUsageAccessExplanation()
             PermissionKind.NOTIFICATION_ACCESS -> onNavigateToNotificationAccessExplanation()
+            PermissionKind.ACCESSIBILITY_ACCESS -> onNavigateToAccessibilityAccessExplanation()
             else -> runtimePermissions[permission.kind]?.let { request ->
                 val canAskAgain = !permission.hasRequestedBefore ||
                     activity == null ||
@@ -261,6 +263,12 @@ private fun PermissionsScreenPreview() {
                     kind = PermissionKind.NOTIFICATION_ACCESS,
                     title = stringResource(R.string.permission_notification_access_title),
                     subtitle = stringResource(R.string.permission_notification_access_subtitle),
+                    isGranted = false,
+                ),
+                PermissionRowState(
+                    kind = PermissionKind.ACCESSIBILITY_ACCESS,
+                    title = stringResource(R.string.permission_accessibility_title),
+                    subtitle = stringResource(R.string.permission_accessibility_subtitle),
                     isGranted = false,
                 ),
                 PermissionRowState(

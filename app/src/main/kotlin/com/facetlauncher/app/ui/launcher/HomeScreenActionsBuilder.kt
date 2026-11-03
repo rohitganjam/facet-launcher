@@ -75,6 +75,7 @@ internal fun homeScreenActions(
         viewModel.dismissUsageAccessPrompt()
         navigation.toUsageAccessExplanation()
     },
+    onEmptySpaceDoubleTap = viewModel::onEmptySpaceDoubleTap,
     onAppListBoundsChange = hooks.setAppListBounds,
     onClockPaneBoundsChange = hooks.setClockPaneBounds,
     onClockZoneBoundsChange = hooks.setClockZoneBounds,
