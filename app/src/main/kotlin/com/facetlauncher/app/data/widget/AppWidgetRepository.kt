@@ -103,9 +103,7 @@ class AppWidgetRepository @Inject constructor(
     fun getWidgetProviderOptions(): List<WidgetProviderOption> {
         val packageManager = context.packageManager
         return installedProvidersWithProfile().mapNotNull { (info, profile, handle) ->
-            val appLabel = runCatching {
-                packageManager.getApplicationLabel(packageManager.getApplicationInfo(info.provider.packageName, 0)).toString()
-            }.getOrNull() ?: return@mapNotNull null
+            val appLabel = appRepository.appLabelFor(info.provider.packageName, handle) ?: return@mapNotNull null
 
             val (columns, rows) = defaultSpanFor(info)
 

@@ -4492,3 +4492,8 @@ Decided with you: one icon size across Home, the dock, the drawer and folders (4
 - [x] `OnboardingNotificationsPageTest` (5), `OnboardingScreenTest` (22) and `NotificationSettingsScreenTest` (shared cards) pass on the `Medium_Phone_API_36.1` emulator.
 - [ ] Native review of the new fr, de, es, pt, pt-rPT and nl strings (`onboarding_notifications_*`, machine-translated).
 - [ ] Check on a device: switch on from onboarding, grant in system Settings, return and see the switch on and the preview fill in.
+
+## Widget picker: Work Profile-only apps
+- [x] Fixed: widgets from apps installed only in the Work Profile never showed in the picker. `getWidgetProviderOptions` looked the owning app's label up with the personal `PackageManager`, which threw for a work-only package and silently dropped the option. It now asks `AppRepository.appLabelFor(packageName, handle)` (`LauncherApps.getApplicationInfo` for the provider's own profile handle); a provider no profile can resolve is still skipped. The rest of the picker path (Hub and clock picker ViewModels, screen) only consumes `appLabel`; there are no other `getApplicationInfo`/icon lookups on it.
+- [x] Tests: `AppWidgetRepositoryTest` (work-only provider listed with its label and tagged WORK; unresolvable provider skipped). JVM only.
+- [ ] Check on a device with a real Work Profile that a work-only app's widgets appear in the Hub picker.

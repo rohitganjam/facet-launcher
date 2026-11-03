@@ -54,8 +54,19 @@ class AppWidgetRepositoryTest {
      * 35+ check `AppRepository.profileFor` now does, so these tests aren't silently dependent on
      * Robolectric's default simulated SDK level being above or below 35.
      */
-    private fun fakeAppRepository(userManager: UserManager, workHandle: UserHandle? = null, privateHandle: UserHandle? = null): AppRepository {
+    private fun fakeAppRepository(
+        userManager: UserManager,
+        workHandle: UserHandle? = null,
+        privateHandle: UserHandle? = null,
+        installedPackages: Map<UserHandle, Set<String>> = emptyMap(),
+    ): AppRepository {
         val launcherApps = mock(LauncherApps::class.java)
+        installedPackages.forEach { (handle, packages) ->
+            packages.forEach { packageName ->
+                val appInfo = ApplicationInfo().apply { this.packageName = packageName; nonLocalizedLabel = "App $packageName" }
+                `when`(launcherApps.getApplicationInfo(packageName, 0, handle)).thenReturn(appInfo)
+            }
+        }
         if (workHandle != null) {
             val info = mock(LauncherUserInfo::class.java)
             `when`(info.userType).thenReturn(UserManager.USER_TYPE_PROFILE_MANAGED)
@@ -303,7 +314,7 @@ class AppWidgetRepositoryTest {
         val workProvider = AppWidgetProviderInfo().apply { provider = ComponentName("com.example.widgets", ".Clock") }.withResolvableLabel(appInfo)
         `when`(appWidgetManager.getInstalledProvidersForProfile(personalHandle)).thenReturn(listOf(personalProvider))
         `when`(appWidgetManager.getInstalledProvidersForProfile(workHandle)).thenReturn(listOf(workProvider))
-        val repository = AppWidgetRepository(context, appWidgetManager, mock(LauncherAppWidgetHost::class.java), userManager, fakeAppRepository(userManager, workHandle))
+        val repository = AppWidgetRepository(context, appWidgetManager, mock(LauncherAppWidgetHost::class.java), userManager, fakeAppRepository(userManager, workHandle, installedPackages = mapOf(personalHandle to setOf("com.example.widgets"), workHandle to setOf("com.example.widgets"))))
 
         // When fetching provider options across every profile
         val options = repository.getWidgetProviderOptions()
@@ -311,6 +322,48 @@ class AppWidgetRepositoryTest {
         // Then the same provider appears twice, tagged by the profile it came from
         assertEquals(2, options.size)
         assertEquals(setOf(AppProfile.PERSONAL, AppProfile.WORK), options.map { it.profile }.toSet())
+    }
+
+    @Test
+    @Config(sdk = [35])
+    fun `getWidgetProviderOptions lists a provider whose app exists only in the Work Profile`() {
+        // Given a package installed for the work handle only, so PackageManager (personal) can't see it
+        val workPackage = "com.example.workonly"
+        val appInfo = ApplicationInfo().apply { packageName = workPackage }
+        val personalHandle = Process.myUserHandle()
+        val workHandle = mock(UserHandle::class.java)
+        val userManager = mock(UserManager::class.java)
+        `when`(userManager.userProfiles).thenReturn(listOf(personalHandle, workHandle))
+        val appWidgetManager = mock(AppWidgetManager::class.java)
+        val workProvider = AppWidgetProviderInfo().apply { provider = ComponentName(workPackage, ".Cal") }.withResolvableLabel(appInfo)
+        `when`(appWidgetManager.getInstalledProvidersForProfile(personalHandle)).thenReturn(emptyList())
+        `when`(appWidgetManager.getInstalledProvidersForProfile(workHandle)).thenReturn(listOf(workProvider))
+        val appRepository = fakeAppRepository(userManager, workHandle, installedPackages = mapOf(workHandle to setOf(workPackage)))
+        val repository = AppWidgetRepository(context, appWidgetManager, mock(LauncherAppWidgetHost::class.java), userManager, appRepository)
+
+        // When fetching provider options
+        val options = repository.getWidgetProviderOptions()
+
+        // Then it is kept, labelled from the work profile, and tagged WORK
+        assertEquals(1, options.size)
+        assertEquals("App $workPackage", options.single().appLabel)
+        assertEquals(AppProfile.WORK, options.single().profile)
+    }
+
+    @Test
+    @Config(sdk = [35])
+    fun `getWidgetProviderOptions skips a provider whose app resolves in no profile`() {
+        // Given a provider whose package no profile can resolve
+        val appInfo = ApplicationInfo().apply { packageName = "com.example.ghost" }
+        val personalHandle = Process.myUserHandle()
+        val userManager = personalOnlyUserManager()
+        val appWidgetManager = mock(AppWidgetManager::class.java)
+        val provider = AppWidgetProviderInfo().apply { provider = ComponentName("com.example.ghost", ".W") }.withResolvableLabel(appInfo)
+        `when`(appWidgetManager.getInstalledProvidersForProfile(personalHandle)).thenReturn(listOf(provider))
+        val repository = AppWidgetRepository(context, appWidgetManager, mock(LauncherAppWidgetHost::class.java), userManager, fakeAppRepository(userManager))
+
+        // Then it is dropped
+        assertTrue(repository.getWidgetProviderOptions().isEmpty())
     }
 
     @Test
@@ -331,7 +384,7 @@ class AppWidgetRepositoryTest {
         val privateProvider = AppWidgetProviderInfo().apply { provider = ComponentName("com.example.widgets", ".Clock") }.withResolvableLabel(appInfo)
         `when`(appWidgetManager.getInstalledProvidersForProfile(personalHandle)).thenReturn(listOf(personalProvider))
         `when`(appWidgetManager.getInstalledProvidersForProfile(privateHandle)).thenReturn(listOf(privateProvider))
-        val repository = AppWidgetRepository(context, appWidgetManager, mock(LauncherAppWidgetHost::class.java), userManager, fakeAppRepository(userManager, privateHandle = privateHandle))
+        val repository = AppWidgetRepository(context, appWidgetManager, mock(LauncherAppWidgetHost::class.java), userManager, fakeAppRepository(userManager, privateHandle = privateHandle, installedPackages = mapOf(personalHandle to setOf("com.example.widgets"))))
 
         // Then only the personal profile's provider survives, in both entry points
         assertEquals(listOf(AppProfile.PERSONAL), repository.getWidgetProviderOptions().map { it.profile })

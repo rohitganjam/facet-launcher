@@ -179,6 +179,10 @@ class AppRepository @Inject constructor(
         }
     }
 
+    /** [packageName]'s app label as installed for [handle] — `null` if that profile doesn't have it. Unlike `PackageManager`, this reaches work-only packages. */
+    fun appLabelFor(packageName: String, handle: UserHandle): String? =
+        runCatching { launcherApps.getApplicationInfo(packageName, 0, handle)?.loadLabel(context.packageManager)?.toString() }.getOrNull()
+
     /**
      * Resolves [profile] to *a* live handle classified as that category — `null` if none exists
      * (e.g. a race with unenrollment). Only for callers that need "the" Work Profile/Private Space
