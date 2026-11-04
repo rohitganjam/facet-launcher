@@ -3,7 +3,10 @@ package com.facetlauncher.app.ui.home.widget
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.facetlauncher.app.data.model.WidgetProviderOption
+import com.facetlauncher.app.data.model.NativeWidgetRef
 import com.facetlauncher.app.data.model.NativeWidgetType
+import com.facetlauncher.app.domain.defaultSizeDp
+import com.facetlauncher.app.domain.isConfigurable
 import com.facetlauncher.app.data.widget.AppWidgetRepository
 import com.facetlauncher.app.domain.AddClockStackItemResult
 import com.facetlauncher.app.domain.AddClockStackItemUseCase
@@ -94,11 +97,19 @@ class ClockWidgetPickerViewModel @Inject constructor(
     /** A widget Facet draws itself: nothing to bind or configure, so it goes straight into the stack as [target] says. */
     fun onNativeWidgetSelect(type: NativeWidgetType, target: ClockWidgetPickerTarget) {
         viewModelScope.launch {
-            val stored = when (target) {
-                is ClockWidgetPickerTarget.Replace -> replaceClockStackItem.withNativeWidget(target.itemId, type)
-                is ClockWidgetPickerTarget.Add -> addClockStackItem.addNativeWidget(target.facetId, type) == AddClockStackItemResult.ADDED
+            val itemId = when (target) {
+                is ClockWidgetPickerTarget.Replace -> target.itemId.takeIf { replaceClockStackItem.withNativeWidget(it, type) }
+                is ClockWidgetPickerTarget.Add -> addClockStackItem.addNativeWidget(target.facetId, type).itemId
             }
-            _events.emit(if (stored) HubAddWidgetEvent.WidgetAdded else HubAddWidgetEvent.AddFailed(AddFailureReason.SETUP_CANCELLED))
+            val (widthDp, heightDp) = type.defaultSizeDp()
+            _events.emit(
+                when {
+                    itemId == null -> HubAddWidgetEvent.AddFailed(AddFailureReason.SETUP_CANCELLED)
+                    // A widget with settings at its default size opens them first.
+                    type.isConfigurable(widthDp, heightDp) -> HubAddWidgetEvent.NativeWidgetAdded(NativeWidgetRef.Home(itemId))
+                    else -> HubAddWidgetEvent.WidgetAdded
+                },
+            )
         }
     }
 

@@ -55,6 +55,7 @@ import androidx.compose.ui.zIndex
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.facetlauncher.app.R
+import com.facetlauncher.app.data.model.NativeWidgetRef
 import com.facetlauncher.app.ui.nativewidget.labelRes
 import com.facetlauncher.app.data.model.ClockStackItemKind
 import com.facetlauncher.app.data.model.ProReason
@@ -69,6 +70,7 @@ import com.facetlauncher.app.ui.components.SettingsIconBadgeInset
 import com.facetlauncher.app.ui.components.StickyHeaderLayout
 import com.facetlauncher.app.ui.components.TextActionButton
 import com.facetlauncher.app.ui.components.ThemedModalBottomSheet
+import com.facetlauncher.app.ui.nativewidget.config.NativeWidgetConfigSheet
 import com.facetlauncher.app.ui.components.rememberDragReorderState
 import com.facetlauncher.app.ui.home.widget.ClockWidgetPickerScreen
 import com.facetlauncher.app.ui.home.widget.ClockWidgetPickerTarget
@@ -104,6 +106,8 @@ fun ClockStackScreen(
     val scope = rememberCoroutineScope()
     var showPicker by remember { mutableStateOf(false) }
     var showChooser by remember { mutableStateOf(false) }
+    // The settings of a widget just added, opened over this screen.
+    var configureRef by remember { mutableStateOf<NativeWidgetRef?>(null) }
     // A widget's own configure screen: nothing to read back, the host view redraws itself.
     val configureLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) {}
 
@@ -136,9 +140,12 @@ fun ClockStackScreen(
                 target = ClockWidgetPickerTarget.Add(uiState.facetId),
                 onDone = { showPicker = false },
                 modifier = Modifier.fillMaxSize().background(SurfaceContainer),
+                onConfigureNewWidget = { configureRef = it },
             )
         }
     }
+
+    configureRef?.let { ref -> NativeWidgetConfigSheet(ref = ref, onDismiss = { configureRef = null }) }
 
     if (showChooser) {
         AddChooserSheet(

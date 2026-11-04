@@ -15,6 +15,7 @@ import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -42,6 +43,16 @@ class ClockStackRepositoryTest {
     fun tearDown() = database.close()
 
     private suspend fun widgetIds() = repository.getAll(facetId).map { it.appWidgetId }
+
+    @Test
+    fun `adding a native page returns the id of the new page`() = runTest {
+        // When two native pages are added
+        val first = repository.addNativeWidget(facetId, NativeWidgetType.WEATHER)
+        val second = repository.addNativeWidget(facetId, NativeWidgetType.AGENDA)
+
+        // Then each id is the stored page's own
+        assertEquals(listOf(first, second), repository.getAll(facetId).map { it.id })
+    }
 
     @Test
     fun `a native page keeps its own setting until it is replaced`() = runTest {
@@ -297,7 +308,7 @@ class ClockStackRepositoryTest {
     @Test
     fun `a native widget is added with its type and no widget id`() = runTest {
         // Given a native widget added to the stack
-        assertTrue(repository.addNativeWidget(facetId, NativeWidgetType.WEATHER))
+        assertNotNull(repository.addNativeWidget(facetId, NativeWidgetType.WEATHER))
 
         // Then it is stored as a native page carrying only its type
         val item = repository.getAll(facetId).single()
@@ -309,10 +320,10 @@ class ClockStackRepositoryTest {
     @Test
     fun `native widgets count against the stack limit`() = runTest {
         // Given a full stack
-        repeat(MAX_CLOCK_STACK_ITEMS) { assertTrue(repository.addNativeWidget(facetId, NativeWidgetType.AGENDA)) }
+        repeat(MAX_CLOCK_STACK_ITEMS) { assertNotNull(repository.addNativeWidget(facetId, NativeWidgetType.AGENDA)) }
 
         // Then a sixth is refused
-        assertFalse(repository.addNativeWidget(facetId, NativeWidgetType.AGENDA))
+        assertNull(repository.addNativeWidget(facetId, NativeWidgetType.AGENDA))
     }
 
     @Test

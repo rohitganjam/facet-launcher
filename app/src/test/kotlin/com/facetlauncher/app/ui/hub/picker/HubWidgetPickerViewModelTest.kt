@@ -1,5 +1,6 @@
 package com.facetlauncher.app.ui.hub.picker
 
+import com.facetlauncher.app.data.model.NativeWidgetRef
 import com.facetlauncher.app.data.model.NativeWidgetType
 import com.facetlauncher.app.domain.defaultSpan
 import android.appwidget.AppWidgetProviderInfo
@@ -381,7 +382,7 @@ class HubWidgetPickerViewModelTest {
         testDispatcher.scheduler.advanceUntilIdle()
 
         // A medium Agenda has calendars to choose, so the Hub is told to open them for the new widget
-        assertEquals(listOf(HubAddWidgetEvent.NativeWidgetAdded(-1)), events)
+        assertEquals(listOf(HubAddWidgetEvent.NativeWidgetAdded(NativeWidgetRef.Hub(-1))), events)
         verify(widgetPlacementRepository).upsert(
             WidgetPlacementEntity(appWidgetId = -1, providerPackageName = "", providerClassName = "", row = 1, col = 0, colSpan = 3, rowSpan = 2, nativeWidgetType = NativeWidgetType.AGENDA),
         )

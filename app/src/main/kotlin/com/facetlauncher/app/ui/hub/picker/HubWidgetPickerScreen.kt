@@ -59,6 +59,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.facetlauncher.app.R
+import com.facetlauncher.app.data.model.NativeWidgetRef
 import com.facetlauncher.app.data.model.AppProfile
 import com.facetlauncher.app.data.model.WidgetProviderOption
 import com.facetlauncher.app.ui.components.BackButton
@@ -86,7 +87,7 @@ fun HubWidgetPickerScreen(
     modifier: Modifier = Modifier,
     viewModel: HubWidgetPickerViewModel = hiltViewModel(),
     /** Called, before [onDone], with a placed widget that has settings to choose first. */
-    onConfigureNewWidget: (Int) -> Unit = {},
+    onConfigureNewWidget: (NativeWidgetRef) -> Unit = {},
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val configureNewWidget by rememberUpdatedState(onConfigureNewWidget)
@@ -108,7 +109,7 @@ fun HubWidgetPickerScreen(
                 is HubAddWidgetEvent.LaunchConfigure -> configureLauncher.launch(IntentSenderRequest.Builder(event.intentSender).build())
                 HubAddWidgetEvent.WidgetAdded -> onDone()
                 is HubAddWidgetEvent.NativeWidgetAdded -> {
-                    configureNewWidget(event.appWidgetId)
+                    configureNewWidget(event.ref)
                     onDone()
                 }
                 is HubAddWidgetEvent.AddFailed -> {

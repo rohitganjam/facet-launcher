@@ -1,6 +1,8 @@
 package com.facetlauncher.app.ui.home.widget
 
+import com.facetlauncher.app.data.model.NativeWidgetRef
 import com.facetlauncher.app.data.model.NativeWidgetType
+import com.facetlauncher.app.domain.AddedPage
 import android.appwidget.AppWidgetProviderInfo
 import android.content.ComponentName
 import android.content.Intent
@@ -233,13 +235,44 @@ class ClockWidgetPickerViewModelTest {
         viewModel.onNativeWidgetSelect(NativeWidgetType.WEATHER, ClockWidgetPickerTarget.Replace(5L))
         testDispatcher.scheduler.advanceUntilIdle()
 
-        assertEquals(listOf(HubAddWidgetEvent.WidgetAdded), events)
+        // A weather page has settings, so the sheet for the replaced page opens
+        assertEquals(listOf(HubAddWidgetEvent.NativeWidgetAdded(NativeWidgetRef.Home(5L))), events)
         verify(appWidgetRepository, never()).allocateAppWidgetId()
     }
 
     @Test
+    fun `a Facet widget added to the stack opens the settings of the new page`() = runTest {
+        // Given room in the stack, where the new agenda page gets id 12
+        `when`(addClockStackItem.addNativeWidget(9L, NativeWidgetType.AGENDA)).thenReturn(AddedPage(AddClockStackItemResult.ADDED, 12L))
+        val viewModel = viewModel()
+        val events = collect(viewModel)
+
+        // When the agenda is added
+        viewModel.onNativeWidgetSelect(NativeWidgetType.AGENDA, ClockWidgetPickerTarget.Add(9L))
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Then the settings open for that page
+        assertEquals(listOf(HubAddWidgetEvent.NativeWidgetAdded(NativeWidgetRef.Home(12L))), events)
+    }
+
+    @Test
+    fun `Now Playing added to the stack just closes the picker`() = runTest {
+        // Given room in the stack
+        `when`(addClockStackItem.addNativeWidget(9L, NativeWidgetType.NOW_PLAYING)).thenReturn(AddedPage(AddClockStackItemResult.ADDED, 13L))
+        val viewModel = viewModel()
+        val events = collect(viewModel)
+
+        // When Now Playing is added, which has no settings
+        viewModel.onNativeWidgetSelect(NativeWidgetType.NOW_PLAYING, ClockWidgetPickerTarget.Add(9L))
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Then there is nothing to open
+        assertEquals(listOf(HubAddWidgetEvent.WidgetAdded), events)
+    }
+
+    @Test
     fun `a Facet widget add that finds the stack full emits AddFailed`() = runTest {
-        `when`(addClockStackItem.addNativeWidget(9L, NativeWidgetType.AGENDA)).thenReturn(AddClockStackItemResult.LIMIT_REACHED)
+        `when`(addClockStackItem.addNativeWidget(9L, NativeWidgetType.AGENDA)).thenReturn(AddedPage(AddClockStackItemResult.LIMIT_REACHED))
         val viewModel = viewModel()
         val events = collect(viewModel)
 

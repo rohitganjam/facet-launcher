@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.facetlauncher.app.data.WidgetPlacementRepository
 import com.facetlauncher.app.data.local.WidgetPlacementEntity
+import com.facetlauncher.app.data.model.NativeWidgetRef
 import com.facetlauncher.app.data.model.NativeWidgetType
 import com.facetlauncher.app.data.model.WidgetProviderOption
 import com.facetlauncher.app.data.widget.AppWidgetRepository
@@ -121,7 +122,7 @@ class HubWidgetPickerViewModel @Inject constructor(
                         ),
                     )
                     val (widthDp, heightDp) = type.defaultSizeDp()
-                    _events.emit(if (type.isConfigurable(widthDp, heightDp)) HubAddWidgetEvent.NativeWidgetAdded(appWidgetId) else HubAddWidgetEvent.WidgetAdded)
+                    _events.emit(if (type.isConfigurable(widthDp, heightDp)) HubAddWidgetEvent.NativeWidgetAdded(NativeWidgetRef.Hub(appWidgetId)) else HubAddWidgetEvent.WidgetAdded)
                 }
                 PlaceWidgetResult.HubFull -> _events.emit(HubAddWidgetEvent.AddFailed(AddFailureReason.HUB_FULL))
             }

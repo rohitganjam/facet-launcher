@@ -1,6 +1,7 @@
 package com.facetlauncher.app.ui.hub.picker
 
 import android.content.Intent
+import com.facetlauncher.app.data.model.NativeWidgetRef
 import android.content.IntentSender
 import com.facetlauncher.app.data.model.WidgetProviderOption
 
@@ -30,7 +31,7 @@ sealed interface HubAddWidgetEvent {
     data class LaunchConfigure(val intentSender: IntentSender) : HubAddWidgetEvent
     data object WidgetAdded : HubAddWidgetEvent
 
-    /** A widget Facet draws itself was placed and has settings to choose first: the Hub opens them for [appWidgetId]. */
-    data class NativeWidgetAdded(val appWidgetId: Int) : HubAddWidgetEvent
+    /** A widget Facet draws itself was placed and has settings to choose first: they open for [ref]. */
+    data class NativeWidgetAdded(val ref: NativeWidgetRef) : HubAddWidgetEvent
     data class AddFailed(val reason: AddFailureReason) : HubAddWidgetEvent
 }

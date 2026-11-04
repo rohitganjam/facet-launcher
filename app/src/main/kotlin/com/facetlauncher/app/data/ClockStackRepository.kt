@@ -37,16 +37,16 @@ class ClockStackRepository @Inject constructor(
     /** Appends a widget at the end. `false`, and nothing written, when the stack is full. */
     suspend fun addWidget(facetId: Long, appWidgetId: Int): Boolean = append(facetId) {
         ClockStackItemEntity(facetId = facetId, position = it, kind = ClockStackItemKind.WIDGET, appWidgetId = appWidgetId)
-    }
+    } != null
 
     /** Appends the native clock. `false`, and nothing written, when the stack is full or already has the clock. */
     suspend fun addClock(facetId: Long): Boolean = database.withTransaction {
         if (dao.getAll(facetId).any { it.kind == ClockStackItemKind.CLOCK }) return@withTransaction false
-        append(facetId) { ClockStackItemEntity(facetId = facetId, position = it, kind = ClockStackItemKind.CLOCK) }
+        append(facetId) { ClockStackItemEntity(facetId = facetId, position = it, kind = ClockStackItemKind.CLOCK) } != null
     }
 
-    /** Appends a widget Facet draws itself. `false`, and nothing written, when the stack is full. */
-    suspend fun addNativeWidget(facetId: Long, type: NativeWidgetType): Boolean = append(facetId) {
+    /** Appends a widget Facet draws itself and returns its item id; `null`, and nothing written, when the stack is full. */
+    suspend fun addNativeWidget(facetId: Long, type: NativeWidgetType): Long? = append(facetId) {
         ClockStackItemEntity(facetId = facetId, position = it, kind = ClockStackItemKind.NATIVE_WIDGET, nativeWidgetType = type)
     }
 
@@ -121,11 +121,10 @@ class ClockStackRepository @Inject constructor(
 
     suspend fun setLandscapeAlignment(itemId: Long, alignment: ClockAlignment?) = dao.setLandscapeAlignment(itemId, alignment)
 
-    private suspend fun append(facetId: Long, row: (position: Int) -> ClockStackItemEntity): Boolean = database.withTransaction {
+    /** Inserts the row at the end and returns its id; `null` when the stack is full. */
+    private suspend fun append(facetId: Long, row: (position: Int) -> ClockStackItemEntity): Long? = database.withTransaction {
         val count = dao.getAll(facetId).size
-        if (count >= MAX_CLOCK_STACK_ITEMS) return@withTransaction false
-        dao.insert(row(count))
-        true
+        if (count >= MAX_CLOCK_STACK_ITEMS) null else dao.insert(row(count))
     }
 
     private suspend fun renumber(facetId: Long) {

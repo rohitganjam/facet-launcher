@@ -524,7 +524,7 @@ fun HomeDrawerRoute(
             },
         )
         HomeWidgetPickerOverlay(overlays, onReset = widgetPickerViewModel::reset) {
-            HubWidgetPickerScreen(onDone = { overlays.showWidgetPicker = false }, viewModel = widgetPickerViewModel, onConfigureNewWidget = { id -> overlays.configureRef = NativeWidgetRef.Hub(id) })
+            HubWidgetPickerScreen(onDone = { overlays.showWidgetPicker = false }, viewModel = widgetPickerViewModel, onConfigureNewWidget = { overlays.configureRef = it })
         }
         HomeFacetCarouselOverlay(swipe.facet, containerWidthPx, isOpen = isFacetOpen) {
             FacetCarouselScreen(
@@ -544,6 +544,7 @@ fun HomeDrawerRoute(
                 target = ClockWidgetPickerTarget.Replace(itemId),
                 onDone = { overlays.showClockWidgetPicker = false },
                 viewModel = clockWidgetPickerViewModel,
+                onConfigureNewWidget = { overlays.configureRef = it },
             )
         }
         if (overlays.showWeatherSheet) {

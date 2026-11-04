@@ -9,12 +9,14 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.facetlauncher.app.R
+import com.facetlauncher.app.data.model.NativeWidgetRef
 import com.facetlauncher.app.data.model.NativeWidgetType
 import com.facetlauncher.app.ui.hub.picker.AddFailureReason
 import com.facetlauncher.app.ui.hub.picker.HubAddWidgetEvent
@@ -34,8 +36,11 @@ fun ClockWidgetPickerScreen(
     onDone: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: ClockWidgetPickerViewModel = hiltViewModel(),
+    /** Called, before [onDone], with a placed widget that has settings to choose first. */
+    onConfigureNewWidget: (NativeWidgetRef) -> Unit = {},
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val configureNewWidget by rememberUpdatedState(onConfigureNewWidget)
     var failureMessage by remember { mutableStateOf<String?>(null) }
 
     val configureLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
@@ -51,7 +56,11 @@ fun ClockWidgetPickerScreen(
             when (event) {
                 is HubAddWidgetEvent.LaunchBindPermission -> bindPermissionLauncher.launch(event.intent)
                 is HubAddWidgetEvent.LaunchConfigure -> configureLauncher.launch(IntentSenderRequest.Builder(event.intentSender).build())
-                HubAddWidgetEvent.WidgetAdded, is HubAddWidgetEvent.NativeWidgetAdded -> onDone()
+                HubAddWidgetEvent.WidgetAdded -> onDone()
+                is HubAddWidgetEvent.NativeWidgetAdded -> {
+                    configureNewWidget(event.ref)
+                    onDone()
+                }
                 is HubAddWidgetEvent.AddFailed -> {
                     failureMessage = when (event.reason) {
                         // HUB_FULL never fires here — this picker's uiState.remaining is always null (no capacity check).

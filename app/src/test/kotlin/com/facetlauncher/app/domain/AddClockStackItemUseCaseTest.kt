@@ -113,8 +113,8 @@ class AddClockStackItemUseCaseTest {
 
     @Test
     fun `a free facet with an empty stack can add one Facet widget and then no more`() = runTest {
-        assertEquals(AddClockStackItemResult.ADDED, useCase().addNativeWidget(facetId, NativeWidgetType.WEATHER))
-        assertEquals(AddClockStackItemResult.LIMIT_REACHED, useCase().addNativeWidget(facetId, NativeWidgetType.AGENDA))
+        assertEquals(AddClockStackItemResult.ADDED, useCase().addNativeWidget(facetId, NativeWidgetType.WEATHER).result)
+        assertEquals(AddClockStackItemResult.LIMIT_REACHED, useCase().addNativeWidget(facetId, NativeWidgetType.AGENDA).result)
         assertEquals(listOf(ClockStackItemKind.NATIVE_WIDGET), kinds())
     }
 }

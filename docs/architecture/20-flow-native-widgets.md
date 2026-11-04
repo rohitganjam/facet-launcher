@@ -78,8 +78,9 @@ path, keyed by `NativeWidgetRef` (`Hub(appWidgetId)` or `Home(itemId)`):
 - A **medium or large Agenda** (`isConfigurable`) has a 3-dot button at its top right; a **Weather** widget opens its own weather sheet when
   tapped (`NativeWidgetActions.onOpenWeather(ref)`, which shows that widget's forecast), with a 3-dot button to the right of the rain
   summary. Both call `onConfigure(ref)`, and `HomeDrawerRoute` opens `NativeWidgetConfigSheet(ref)` (`HomeOverlayState.configureRef`).
-- On adding a Weather or Agenda widget from the Hub picker (one that has settings at its default size) the picker emits
-  `HubAddWidgetEvent.NativeWidgetAdded(id)` and the route opens the sheet for `Hub(id)`. Adding to a Home page does not open it.
+- On adding a Weather or Agenda widget (one that has settings at its default size), from the Hub picker or to a Home page, the picker emits
+  `HubAddWidgetEvent.NativeWidgetAdded(ref)` (`Hub(id)` or `Home(itemId)`, the latter from `AddClockStackItemUseCase`'s `AddedPage`) and the
+  route, or the widget stack screen when the add started there, opens the sheet for it.
 - Backup: a Weather widget's own location travels (`BackupWidgetPlacement.nativeWidgetConfig`, `BackupNativeStackPage.nativeWidgetConfig`);
   an Agenda widget's calendar ids are left out, since they belong to the device (its all-day choice travels). Replacing a Home page resets its setting.
 
