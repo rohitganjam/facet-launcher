@@ -846,8 +846,6 @@
     <string name="clock_adjust_align_top">Oben ausrichten</string>
     <string name="clock_adjust_align_middle">Mittig ausrichten</string>
     <string name="clock_adjust_align_bottom">Unten ausrichten</string>
-    <string name="clock_adjust_clock_settings">Uhr- und Kalendereinstellungen</string>
-    <string name="clock_adjust_clock_settings_subtitle">Vorlagen, Schriftarten, Farben, Kalender</string>
     <string name="clock_adjust_facet_settings_subtitle">Facettenspezifische App-Liste, Dock-, Uhr- &amp; Kalendereinstellungen</string>
 
     <!-- HubWidgetPickerScreen -->
@@ -941,6 +939,9 @@
     <string name="appearance_general_subtitle">Designs, Akzent, Statusleiste</string>
     <string name="appearance_section_look_feel">Optik und Bedienung</string>
     <string name="appearance_icon_shape">Symbolform</string>
+    <string name="facet_settings_section_home">Startseite</string>
+    <string name="facet_settings_widgets_title">Widgets</string>
+    <string name="facet_settings_widgets_subtitle">Was oben auf der Startseite dieser Facette steht</string>
     <string name="facet_settings_appearance_title">Darstellung</string>
     <string name="facet_settings_appearance_clock_label">Uhr: %1$s</string>
     <string name="facet_settings_appearance_dock_icons">Dock-Symbole</string>
@@ -949,12 +950,16 @@
     <string name="facet_settings_appearance_home_icon_only">Start: nur Symbol</string>
     <string name="facet_settings_appearance_home_icon_and_text">Start: Symbol &amp; Text</string>
     <string name="facet_settings_appearance_home_text_only">Start: nur Text</string>
-    <string name="clock_adjust_replace_with_widget">Durch eigenes Widget ersetzen</string>
-    <string name="clock_adjust_replace_with_widget_subtitle">Ersetzt die Uhr durch ein Widget deiner Wahl</string>
-    <string name="clock_adjust_replace_with_clock">Durch Uhr ersetzen</string>
-    <string name="clock_adjust_replace_with_clock_subtitle">Die eigene Uhr von Facet auf dieser Seite verwenden</string>
     <string name="clock_adjust_replace_widget">Eigenes Widget ersetzen</string>
     <string name="clock_adjust_replace_widget_subtitle">Ein anderes Widget für diese Seite wählen</string>
+    <string name="clock_adjust_remove_widget">Widget entfernen</string>
+    <string name="clock_adjust_remove_widget_subtitle">Diese Seite aus dem Stapel nehmen</string>
+    <string name="clock_adjust_add_widget">Widget hinzufügen</string>
+    <string name="clock_adjust_add_widget_subtitle">Ein Widget für den oberen Bereich wählen</string>
+    <string name="clock_style_sheet_styles">Uhrstile</string>
+    <string name="clock_style_sheet_styles_subtitle">Vorlage, Schrift, Farben, Zeit und Datum</string>
+    <string name="clock_style_sheet_calendar">Kalendereinstellungen</string>
+    <string name="clock_style_sheet_calendar_subtitle">Welche Kalender unter der Uhr erscheinen</string>
     <string name="clock_adjust_widget_stack">Widget-Stapel</string>
     <string name="clock_adjust_stack_empty">Leer · Uhr oder Widget hinzufügen</string>
     <string name="clock_adjust_stack_clock">Uhr</string>

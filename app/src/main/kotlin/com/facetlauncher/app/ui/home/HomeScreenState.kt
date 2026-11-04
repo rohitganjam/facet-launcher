@@ -195,11 +195,15 @@ data class HomeClockActions(
     val onRequestCalendarAccess: () -> Unit = {},
     val onRequestLocationAccess: () -> Unit = {},
     val onBatteryClick: () -> Unit = {},
-    val onClockSettingsClick: () -> Unit = {},
+    /** The clock's own sheet: the full-screen clock style options, and the calendar settings. */
+    val onClockStylesClick: () -> Unit = {},
+    val onCalendarSettingsClick: () -> Unit = {},
     val onNavigateToSettings: () -> Unit = {},
     val onNavigateToFacetSettings: () -> Unit = {},
-    val onReplaceWithWidgetClick: () -> Unit = {},
-    val onReplaceWithClockClick: () -> Unit = {},
+    /** The Home sheet's rows for the page showing: swap it through the widget picker, take it off the stack, or add the first one. */
+    val onReplaceWidgetClick: () -> Unit = {},
+    val onRemoveWidgetClick: () -> Unit = {},
+    val onAddWidgetClick: () -> Unit = {},
     val onWidgetStackClick: () -> Unit = {},
     val onEventClick: (CalendarEvent) -> Unit = {},
     val onZoneHeightCommit: (Float) -> Unit = {},

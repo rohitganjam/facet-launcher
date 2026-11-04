@@ -55,7 +55,8 @@ class FacetSettingsScreenTest {
     private fun setContent(
         onNavigateToAppsList: (Long) -> Unit = {},
         onNavigateToDockSettings: (Long) -> Unit = {},
-        onNavigateToAppearance: (Long) -> Unit = {},
+        onNavigateToDockAppsAppearance: (Long) -> Unit = {},
+        onNavigateToWidgets: (Long) -> Unit = {},
         onFacetApply: () -> Unit = {},
     ): FacetRepository {
         lateinit var facetRepository: FacetRepository
@@ -85,7 +86,8 @@ class FacetSettingsScreenTest {
                     onBack = {},
                     onNavigateToAppsList = onNavigateToAppsList,
                     onNavigateToDockSettings = onNavigateToDockSettings,
-                    onNavigateToAppearance = onNavigateToAppearance,
+                    onNavigateToDockAppsAppearance = onNavigateToDockAppsAppearance,
+                    onNavigateToWidgets = onNavigateToWidgets,
                     onFacetApply = onFacetApply,
                     viewModel = viewModel,
                 )
@@ -181,18 +183,41 @@ class FacetSettingsScreenTest {
     }
 
     @Test
-    fun appearanceRowNavigatesWithTheFacetsIdAndReflectsTheEffectiveLookFields() {
-        var navigatedFromAppearance: Long? = null
-        setContent(onNavigateToAppearance = { navigatedFromAppearance = it })
+    fun theDockAndAppsAppearanceRowOpensItDirectlyAndSummarisesTheEffectiveLook() {
+        var navigated: Long? = null
+        setContent(onNavigateToDockAppsAppearance = { navigated = it })
         awaitFacetLoaded()
 
-        // This row previews the facet's clock style, then the dock display style and app row
-        // presentation — inheriting the global defaults (Icons, Icon & Text) since this facet
-        // overrides none of them — each named for its surface: "<template> clock · Dock icons · Home icon & text".
+        // This row opens the dock and apps look straight away (no Appearance hub in between), and previews the dock display style
+        // and the app row presentation, inheriting the global defaults here: "Dock icons · Home icon & text".
         scrollToRow("facet_appearance_row")
-        composeRule.onNodeWithTag("facet_appearance_row").assertTextContains(" clock · Dock icons · Home icon & text", substring = true)
+        composeRule.onNodeWithTag("facet_appearance_row").assertTextContains("Dock icons · Home icon & text", substring = true)
         composeRule.onNodeWithTag("facet_appearance_row").performClick()
-        assertEquals(true, navigatedFromAppearance != null)
+        assertEquals(true, navigated != null)
+    }
+
+    @Test
+    fun theWidgetsRowOpensThisFacetsWidgetStack() {
+        var navigated: Long? = null
+        setContent(onNavigateToWidgets = { navigated = it })
+        awaitFacetLoaded()
+
+        scrollToRow("facet_widgets_row")
+        composeRule.onNodeWithTag("facet_widgets_row").performClick()
+
+        assertEquals(true, navigated != null)
+    }
+
+    @Test
+    fun theHomeSectionHoldsWidgetsAndTheDockAndAppsLookAndThereIsNoAppearanceHub() {
+        setContent()
+        awaitFacetLoaded()
+
+        scrollToRow("facet_widgets_row")
+        composeRule.onNodeWithText("Home").assertExists()
+        composeRule.onNodeWithTag("facet_widgets_row").assertExists()
+        composeRule.onNodeWithTag("facet_appearance_row").assertExists()
+        composeRule.onNodeWithText("Appearance").assertDoesNotExist()
     }
 
     @Test

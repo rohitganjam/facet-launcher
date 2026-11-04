@@ -24,9 +24,9 @@ internal class HomeNavigation(
     val toFacetSettings: (facetId: Long) -> Unit,
     val toFacetPro: (ProReason) -> Unit,
     val toUsageAccessExplanation: () -> Unit,
-    /** The clock style gallery, global (`null`) or for one facet. */
-    /** Settings > Appearance, global (`null`) or for one facet. */
-    val toAppearance: (Long?) -> Unit,
+    /** One facet's clock style options, and the calendar settings of its clock. */
+    val toClockStyle: (facetId: Long) -> Unit,
+    val toCalendarSettings: (facetId: Long) -> Unit,
     val toClockStack: () -> Unit,
 )
 
@@ -39,6 +39,8 @@ internal class HomeRouteHooks(
     val setClockPaneBounds: (Rect?) -> Unit,
     val setClockZoneBounds: (Rect?) -> Unit,
     val openClockWidgetPicker: (itemId: Long) -> Unit,
+    /** Opens the picker to add a page to the facet's stack. */
+    val openAddClockWidgetPicker: (facetId: Long) -> Unit,
     val openWeather: () -> Unit = {},
 )
 
@@ -92,16 +94,18 @@ private fun homeClockActions(
         onClockClick = { inputs.context.openClockApp() },
         onWeatherClick = hooks.openWeather,
         onBatteryClick = { inputs.context.openBatterySettings() },
-        onClockSettingsClick = { navigation.toAppearance(state.activeFacet?.id) },
+        onClockStylesClick = { state.activeFacet?.let { navigation.toClockStyle(it.id) } },
+        onCalendarSettingsClick = { state.activeFacet?.let { navigation.toCalendarSettings(it.id) } },
         onNavigateToSettings = navigation.toSettings,
         onNavigateToFacetSettings = { state.activeFacet?.let { navigation.toFacetSettings(it.id) } },
         onWidgetStackClick = navigation.toClockStack,
-        onReplaceWithWidgetClick = { state.visibleClockItem?.let { hooks.openClockWidgetPicker(it.id) } },
-        onReplaceWithClockClick = {
+        onReplaceWidgetClick = { state.visibleClockItem?.let { hooks.openClockWidgetPicker(it.id) } },
+        onRemoveWidgetClick = {
             state.visibleClockItem?.let { item ->
-                inputs.coroutineScope.launch { viewModel.clockWidgetFacet.replaceWithClock(item.id) }
+                inputs.coroutineScope.launch { viewModel.clockWidgetFacet.remove(item.id) }
             }
         },
+        onAddWidgetClick = { state.activeFacet?.let { hooks.openAddClockWidgetPicker(it.id) } },
         onEventClick = { event -> openCalendarEvent(inputs.context, event) },
         onZoneHeightCommit = { viewModel.onClockZoneHeightCommit(it, mode) },
         onScaleCommit = { viewModel.onClockScaleCommit(it, mode) },

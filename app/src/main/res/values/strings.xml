@@ -911,6 +911,9 @@
         <item quantity="other">%1$d apps</item>
     </plurals>
     <string name="facet_settings_dock_settings_title">Dock settings</string>
+    <string name="facet_settings_section_home">Home</string>
+    <string name="facet_settings_widgets_title">Widgets</string>
+    <string name="facet_settings_widgets_subtitle">What sits at the top of this facet\'s Home</string>
     <string name="facet_settings_appearance_title">Appearance</string>
     <string name="facet_settings_appearance_clock_label">%1$s clock</string>
     <string name="facet_settings_appearance_dock_icons">Dock icons</string>
@@ -948,16 +951,18 @@
     <string name="clock_adjust_align_top">Align top</string>
     <string name="clock_adjust_align_middle">Align middle</string>
     <string name="clock_adjust_align_bottom">Align bottom</string>
-    <string name="clock_adjust_clock_settings">Clock &amp; calendar settings</string>
-    <string name="clock_adjust_clock_settings_subtitle">Templates, fonts, colors, calendar</string>
     <string name="clock_adjust_facet_settings_subtitle">Facet-specific apps list, dock, clock &amp; calendar settings</string>
     <!-- PRD F15 — replaces this facet's native clock with a hosted third-party AppWidget -->
-    <string name="clock_adjust_replace_with_widget">Replace with custom widget</string>
-    <string name="clock_adjust_replace_with_widget_subtitle">Swap the clock for a widget of your choice</string>
-    <string name="clock_adjust_replace_with_clock">Replace with clock</string>
-    <string name="clock_adjust_replace_with_clock_subtitle">Use Facet\'s own clock on this page</string>
-    <string name="clock_adjust_replace_widget">Replace custom widget</string>
+    <string name="clock_adjust_replace_widget">Replace widget</string>
     <string name="clock_adjust_replace_widget_subtitle">Choose a different widget for this page</string>
+    <string name="clock_adjust_remove_widget">Remove widget</string>
+    <string name="clock_adjust_remove_widget_subtitle">Take this page off the stack</string>
+    <string name="clock_adjust_add_widget">Add widget</string>
+    <string name="clock_adjust_add_widget_subtitle">Choose a widget for the top of Home</string>
+    <string name="clock_style_sheet_styles">Clock styles</string>
+    <string name="clock_style_sheet_styles_subtitle">Template, font, colors, time and date</string>
+    <string name="clock_style_sheet_calendar">Calendar settings</string>
+    <string name="clock_style_sheet_calendar_subtitle">Which calendars show under the clock</string>
     <string name="clock_adjust_widget_stack">Widget stack</string>
     <string name="clock_adjust_stack_empty">Empty · add a clock or a widget</string>
     <string name="clock_adjust_stack_clock">Clock</string>

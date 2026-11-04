@@ -133,19 +133,14 @@ internal fun Modifier.homeEmptySpaceGestures(
         ClockAdjustMode.NONE -> Modifier.pointerInput(mode) {
             detectTapGestures(onDoubleTap = { onDoubleTap() }, onLongPress = { onModeChange(ClockAdjustMode.MENU) })
         }
-        ClockAdjustMode.MENU -> Modifier
+        ClockAdjustMode.MENU, ClockAdjustMode.STYLE_MENU -> Modifier
     },
 )
 
-/** The clock adjust menu sheet. */
+/** The Home sheet: adjust, replace/remove/add the widget showing, the widget stack, and the facet and launcher settings. */
 @Composable
-internal fun ClockMenuSheet(stack: HomeClockStackState, hasWidget: Boolean, actions: HomeClockActions) {
+internal fun ClockMenuSheet(stack: HomeClockStackState, actions: HomeClockActions) {
     val close = { actions.onAdjustModeChange(ClockAdjustMode.NONE) }
-    val page = when {
-        stack.isBlank -> ClockSheetPage.EMPTY
-        hasWidget -> ClockSheetPage.WIDGET
-        else -> ClockSheetPage.CLOCK
-    }
     val stackSummary = when {
         stack.isBlank -> stringResource(R.string.clock_adjust_stack_empty)
         stack.pageCount == 1 -> stringResource(if (stack.hasClock) R.string.clock_adjust_stack_clock else R.string.clock_adjust_stack_one_widget)
@@ -158,10 +153,6 @@ internal fun ClockMenuSheet(stack: HomeClockStackState, hasWidget: Boolean, acti
     ) {
         ClockAdjustSheet(
             onAdjustClick = { actions.onAdjustModeChange(ClockAdjustMode.ADJUST) },
-            onClockSettingsClick = {
-                close()
-                actions.onClockSettingsClick()
-            },
             onFacetSettingsClick = {
                 close()
                 actions.onNavigateToFacetSettings()
@@ -170,21 +161,46 @@ internal fun ClockMenuSheet(stack: HomeClockStackState, hasWidget: Boolean, acti
                 close()
                 actions.onNavigateToSettings()
             },
-            onReplaceWithWidgetClick = {
+            onReplaceWidgetClick = {
                 close()
-                actions.onReplaceWithWidgetClick()
+                actions.onReplaceWidgetClick()
             },
-            onReplaceWithClockClick = {
+            onRemoveWidgetClick = {
                 close()
-                actions.onReplaceWithClockClick()
+                actions.onRemoveWidgetClick()
+            },
+            onAddWidgetClick = {
+                close()
+                actions.onAddWidgetClick()
             },
             onWidgetStackClick = {
                 close()
                 actions.onWidgetStackClick()
             },
             stackSummary = stackSummary,
-            page = page,
-            canReplaceWithClock = !stack.hasClock,
+            hasPage = !stack.isBlank,
+        )
+    }
+}
+
+/** The clock's own sheet, opened by a long-press on the clock or its calendar: its styles (full screen) and its calendar settings. */
+@Composable
+internal fun ClockStyleSheet(actions: HomeClockActions) {
+    val close = { actions.onAdjustModeChange(ClockAdjustMode.NONE) }
+    ThemedModalBottomSheet(
+        onDismissRequest = close,
+        skipPartiallyExpanded = true,
+        containerColor = SurfaceContainer,
+    ) {
+        ClockStyleSheetContent(
+            onClockStylesClick = {
+                close()
+                actions.onClockStylesClick()
+            },
+            onCalendarSettingsClick = {
+                close()
+                actions.onCalendarSettingsClick()
+            },
         )
     }
 }

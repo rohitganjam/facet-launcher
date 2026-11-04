@@ -1,5 +1,6 @@
 package com.facetlauncher.app.ui.home.stack
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
@@ -58,11 +59,11 @@ class ClockStackScreenAddFlowTest {
         }
         val appWidgets = mock(AppWidgetRepository::class.java)
         val viewModel = ClockStackViewModel(
-            settings, stack, appWidgets, RemoveClockStackItemUseCase(stack, appWidgets), AddClockStackItemUseCase(stack, entitlement), entitlement, Dispatchers.IO,
+            SavedStateHandle(), settings, stack, appWidgets, RemoveClockStackItemUseCase(stack, appWidgets), AddClockStackItemUseCase(stack, entitlement), entitlement, Dispatchers.IO,
         )
         composeRule.setContent {
             FacetLauncherTheme {
-                ClockStackScreen(onBack = {}, onOpenFacetPro = { opened += it }, onOpenAppearance = {}, viewModel = viewModel)
+                ClockStackScreen(onBack = {}, onOpenFacetPro = { opened += it }, onOpenClockStyle = {}, viewModel = viewModel)
             }
         }
         composeRule.waitUntil(timeoutMillis = 5_000) {

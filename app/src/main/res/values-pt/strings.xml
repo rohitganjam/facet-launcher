@@ -846,8 +846,6 @@
     <string name="clock_adjust_align_top">Alinhar ao topo</string>
     <string name="clock_adjust_align_middle">Alinhar ao meio</string>
     <string name="clock_adjust_align_bottom">Alinhar embaixo</string>
-    <string name="clock_adjust_clock_settings">Configurações de relógio e calendário</string>
-    <string name="clock_adjust_clock_settings_subtitle">Modelos, fontes, cores e calendário</string>
     <string name="clock_adjust_facet_settings_subtitle">Lista de apps, dock, relógio e calendário específicos da faceta</string>
 
     <!-- HubWidgetPickerScreen -->
@@ -941,6 +939,9 @@
     <string name="appearance_general_subtitle">Temas, destaque, barra de status</string>
     <string name="appearance_section_look_feel">Aparência e comportamento</string>
     <string name="appearance_icon_shape">Formato dos ícones</string>
+    <string name="facet_settings_section_home">Início</string>
+    <string name="facet_settings_widgets_title">Widgets</string>
+    <string name="facet_settings_widgets_subtitle">O que fica no topo do início desta faceta</string>
     <string name="facet_settings_appearance_title">Aparência</string>
     <string name="facet_settings_appearance_clock_label">Relógio: %1$s</string>
     <string name="facet_settings_appearance_dock_icons">Ícones do dock</string>
@@ -949,12 +950,16 @@
     <string name="facet_settings_appearance_home_icon_only">Início: apenas ícone</string>
     <string name="facet_settings_appearance_home_icon_and_text">Início: ícone e texto</string>
     <string name="facet_settings_appearance_home_text_only">Início: apenas texto</string>
-    <string name="clock_adjust_replace_with_widget">Substituir por widget personalizado</string>
-    <string name="clock_adjust_replace_with_widget_subtitle">Substitui o relógio por um widget da sua escolha</string>
-    <string name="clock_adjust_replace_with_clock">Substituir pelo relógio</string>
-    <string name="clock_adjust_replace_with_clock_subtitle">Usar o relógio próprio do Facet nesta página</string>
     <string name="clock_adjust_replace_widget">Substituir widget personalizado</string>
     <string name="clock_adjust_replace_widget_subtitle">Escolher outro widget para esta página</string>
+    <string name="clock_adjust_remove_widget">Remover widget</string>
+    <string name="clock_adjust_remove_widget_subtitle">Tirar esta página da pilha</string>
+    <string name="clock_adjust_add_widget">Adicionar widget</string>
+    <string name="clock_adjust_add_widget_subtitle">Escolha um widget para o topo do início</string>
+    <string name="clock_style_sheet_styles">Estilos do relógio</string>
+    <string name="clock_style_sheet_styles_subtitle">Modelo, fonte, cores, hora e data</string>
+    <string name="clock_style_sheet_calendar">Definições do calendário</string>
+    <string name="clock_style_sheet_calendar_subtitle">Que calendários aparecem sob o relógio</string>
     <string name="clock_adjust_widget_stack">Pilha de widgets</string>
     <string name="clock_adjust_stack_empty">Vazia · adicione um relógio ou um widget</string>
     <string name="clock_adjust_stack_clock">Relógio</string>

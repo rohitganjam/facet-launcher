@@ -805,6 +805,9 @@
         <item quantity="other">%1$d apps</item>
     </plurals>
     <string name="facet_settings_dock_settings_title">Dock-instellingen</string>
+    <string name="facet_settings_section_home">Home</string>
+    <string name="facet_settings_widgets_title">Widgets</string>
+    <string name="facet_settings_widgets_subtitle">Wat bovenaan de Home van deze facet staat</string>
     <string name="facet_settings_appearance_title">Uiterlijk</string>
     <string name="facet_settings_appearance_clock_label">Klok: %1$s</string>
     <string name="facet_settings_appearance_dock_icons">Dock-pictogrammen</string>
@@ -837,15 +840,17 @@
     <string name="clock_adjust_align_top">Boven uitlijnen</string>
     <string name="clock_adjust_align_middle">Midden uitlijnen</string>
     <string name="clock_adjust_align_bottom">Onder uitlijnen</string>
-    <string name="clock_adjust_clock_settings">Klok- en agenda-instellingen</string>
-    <string name="clock_adjust_clock_settings_subtitle">Sjablonen, lettertypen, kleuren, agenda</string>
     <string name="clock_adjust_facet_settings_subtitle">Facetspecifieke appslijst, dock, klok- en agenda-instellingen</string>
-    <string name="clock_adjust_replace_with_widget">Vervangen door eigen widget</string>
-    <string name="clock_adjust_replace_with_widget_subtitle">Vervang de klok door een widget naar keuze</string>
-    <string name="clock_adjust_replace_with_clock">Vervangen door klok</string>
-    <string name="clock_adjust_replace_with_clock_subtitle">Gebruik de eigen klok van Facet op deze pagina</string>
     <string name="clock_adjust_replace_widget">Eigen widget vervangen</string>
     <string name="clock_adjust_replace_widget_subtitle">Kies een andere widget voor deze pagina</string>
+    <string name="clock_adjust_remove_widget">Widget verwijderen</string>
+    <string name="clock_adjust_remove_widget_subtitle">Deze pagina uit de stapel halen</string>
+    <string name="clock_adjust_add_widget">Widget toevoegen</string>
+    <string name="clock_adjust_add_widget_subtitle">Kies een widget voor de bovenkant van Home</string>
+    <string name="clock_style_sheet_styles">Klokstijlen</string>
+    <string name="clock_style_sheet_styles_subtitle">Sjabloon, lettertype, kleuren, tijd en datum</string>
+    <string name="clock_style_sheet_calendar">Agenda-instellingen</string>
+    <string name="clock_style_sheet_calendar_subtitle">Welke agenda\'s onder de klok staan</string>
     <string name="clock_adjust_widget_stack">Widgetstapel</string>
     <string name="clock_adjust_stack_empty">Leeg · voeg een klok of widget toe</string>
     <string name="clock_adjust_stack_clock">Klok</string>

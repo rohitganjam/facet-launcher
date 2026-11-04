@@ -102,7 +102,9 @@ internal fun rememberHomeFrame(
     val metrics = clockMetrics(density)
     val widgetMinPx = clockWidgetMinPx(state.widget, landscape, density)
     val geometry = computeClockGeometry(clockGeometryInputs(state, layout, landscape, metrics, widgetMinPx, density))
-    val media = rememberHomeMediaLayout(state.media.player, layout, geometry.handle.handlePx, metrics.minGapPx, landscape, state.clockStack.pageCount > 1, density)
+    // With nothing at the top the media row starts there, after its own gap; otherwise it sits just above the divider, under the clock.
+    val mediaRowAnchorPx = if (state.clockStack.isBlank) 0f else geometry.handle.handlePx - metrics.minGapPx
+    val media = rememberHomeMediaLayout(state.media.player, layout, geometry.handle.handlePx, mediaRowAnchorPx, landscape, state.clockStack.pageCount > 1, density)
     val itemStyle = rememberHomeItemStyle(state.list.look)
     return HomeFrame(
         state = state,
@@ -188,13 +190,13 @@ private fun clockWidgetMeasure(widget: HomeClockWidgetState, layout: HomeScreenL
     )
 }
 
-/** The media row's fade, and the list tops that follow it. Landscape's list fills its own pane from the top, so nothing is reserved above it there. */
+/** The media row's fade (its top is [rowAnchorPx] plus a gap), and the list tops that follow it. Landscape's list fills its own pane from the top, so nothing is reserved above it there. */
 @Composable
 private fun rememberHomeMediaLayout(
     player: MediaPlayerState?,
     layout: HomeScreenLayout,
     handlePx: Float,
-    minGapPx: Float,
+    rowAnchorPx: Float,
     landscape: Boolean,
     showsPageDots: Boolean,
     density: Density,
@@ -205,7 +207,7 @@ private fun rememberHomeMediaLayout(
         animationSpec = tween(durationMillis = 200, easing = EmphasizedDecelerateEasing),
         label = "mediaPlayerAppearance",
     )
-    val rowTopPx = handlePx - minGapPx + with(density) { HOME_MEDIA_ROW_TOP_GAP.toPx() }
+    val rowTopPx = rowAnchorPx + with(density) { HOME_MEDIA_ROW_TOP_GAP.toPx() }
     val belowGapPx = with(density) { HOME_MEDIA_ROW_BOTTOM_GAP.toPx() }
     // The dots get their own row under the divider (and under the media row), which pushes the list down while the stack has several pages.
     val dotsRowPx = if (showsPageDots && !landscape) with(density) { CLOCK_PAGE_DOTS_ROW_HEIGHT.toPx() } else 0f

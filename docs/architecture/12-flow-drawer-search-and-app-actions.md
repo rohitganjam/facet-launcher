@@ -286,9 +286,9 @@ A downward drag from a closed drawer expands the notification shade on the same 
 (`SWIPE_DOWN_SHADE_FRACTION`, 20% of the height). With "Hide status bar" on and the bar hidden, that swipe reveals
 the bar instead (`SystemBarsState.revealStatusBar`) and the next one opens the shade; see [13](13-flow-facets-theme-notifications-onboarding.md) §2a.
 
-Every Home action menu — `AppContextMenu`, `FolderTileContextMenu`, the clock adjust menu and the one-time
+Every Home action menu — `AppContextMenu`, `FolderTileContextMenu`, the Home sheet, the clock's sheet and the one-time
 "make Facet your home screen" prompt (`SetDefaultLauncherSheet`) — is a `ThemedModalBottomSheet` (`components/`): one themed M3 `ModalBottomSheet`, so the surface runs behind the
-system bars and swipe-down and Back dismiss it the same way everywhere. The surface is `Surface` unless the caller passes `containerColor`: the clock adjust menu passes the dimmer `SurfaceContainer` because its content (`ClockAdjustSheet`) is two tonal `SettingsCard`s of icon-badge rows — Adjust clock size & position, Clock & calendar settings (with the Global / facet-name badge) and, by the visible page, Replace with custom widget (clock page) or Replace custom widget and Replace with clock (widget page; the latter hidden while the clock is on another page); then the Widget stack row, Facet settings and Launcher settings. While one is showing, Home's swipes
+system bars and swipe-down and Back dismiss it the same way everywhere. The surface is `Surface` unless the caller passes `containerColor`: the clock's sheets pass the dimmer `SurfaceContainer` because their content is tonal `SettingsCard`s of icon-badge rows. Two sheets, by what is pressed: a long-press on **free space or on a widget page** opens the Home sheet (`ClockAdjustMode.MENU`, `ClockAdjustSheet`: Adjust size & position, then Replace widget and Remove widget while a page shows or Add widget when the stack is empty, then Widget stack, Facet settings and Launcher settings; the rows do not depend on what the page is), and a long-press on **the clock or the events under it** opens the clock's own sheet (`ClockAdjustMode.STYLE_MENU`, `ClockStyleSheetContent`: Clock styles, which opens the full-screen options, and Calendar settings, `calendarSettings?facetId=`). A tap on an event still opens the event; the long-press on the events block is `longPressFallback`. Add widget opens the clock widget picker with `ClockWidgetPickerTarget.Add`, Replace with `Replace` (`HomeOverlayState.clockWidgetPickerTarget`); Remove goes through `ClockWidgetFacetController.remove`. While one is showing, Home's swipes
 are off — otherwise the still-down finger that opened the sheet could go on to open the carousel or Hub
 behind it. The wrapper calls `BlockHomeSwipesWhileShown()` (`HomeSwipeGate`, provided by
 `LauncherActivity` via `LocalHomeSwipeGate`); `HomeDrawerRoute` skips its swipe detector and the app
@@ -296,7 +296,7 @@ list's scroll handoff while the gate is non-zero (clock *adjust mode*, with its 
 is gated separately on `clockAdjustMode`).
 System back is unaffected.
 
-**Adjust mode** (`ClockAdjustMode.ADJUST`, entered from the clock menu) has no sheet: the clock or hosted widget
+**Adjust mode** (`ClockAdjustMode.ADJUST`, entered from the Home sheet) has no sheet: the clock or hosted widget
 gets corner resize handles, a full-width height handle (`ClockZoneHandle`, 48dp touch strip), and the
 `ClockAdjustToolbar` — an "Alignment" pill with left / center / right. The toolbar sits *below* the height
 handle (strip + `CLOCK_ADJUST_TOOLBAR_GAP`), not under the clock: the clock block is pinned only 24dp

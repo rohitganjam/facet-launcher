@@ -218,6 +218,7 @@ private fun ClockPage(frame: HomeFrame, page: ClockPageSpec, scaleOriginY: Float
         homeAppsFontWeight = state.list.look.labelFontWeightOption,
         appLabelColorOption = state.list.look.labelColorOption,
         onEventClick = actions.clock.onEventClick,
+        onCalendarLongPress = { actions.clock.onAdjustModeChange(ClockAdjustMode.STYLE_MENU) },
         launcherFontOption = clock.launcherFontOption,
         nextAlarmMillis = state.calendar.nextAlarmMillis,
         batteryPercent = state.calendar.batteryPercent,
@@ -265,13 +266,13 @@ private fun widgetPageCallbacks(actions: HomeScreenActions, visible: Boolean) = 
     WidgetPageCallbacks({}, {}, {}, { _, _ -> }, {}, { _, _ -> })
 }
 
-/** A tap on the clock opens the clock app, a long press opens its adjust menu. */
+/** A tap on the clock opens the clock app, a long press opens the clock's own sheet (styles and calendar). */
 @Composable
 private fun clockTapModifier(clock: HomeClockActions): Modifier = Modifier
     .pointerInput(Unit) {
         detectTapGestures(
             onTap = { clock.onClockClick() },
-            onLongPress = { clock.onAdjustModeChange(ClockAdjustMode.MENU) },
+            onLongPress = { clock.onAdjustModeChange(ClockAdjustMode.STYLE_MENU) },
         )
     }
     .testTag(homeTag("home_clock_block"))

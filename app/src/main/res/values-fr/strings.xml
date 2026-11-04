@@ -846,8 +846,6 @@
     <string name="clock_adjust_align_top">Aligner en haut</string>
     <string name="clock_adjust_align_middle">Aligner au milieu</string>
     <string name="clock_adjust_align_bottom">Aligner en bas</string>
-    <string name="clock_adjust_clock_settings">Réglages de l\'horloge et du calendrier</string>
-    <string name="clock_adjust_clock_settings_subtitle">Modèles, polices, couleurs, calendrier</string>
     <string name="clock_adjust_facet_settings_subtitle">Réglages propres à la facette : liste d\'apps, dock, horloge et calendrier</string>
 
     <!-- HubWidgetPickerScreen -->
@@ -941,6 +939,9 @@
     <string name="appearance_general_subtitle">Thèmes, accent, barre d’état</string>
     <string name="appearance_section_look_feel">Aspect et ergonomie</string>
     <string name="appearance_icon_shape">Forme des icônes</string>
+    <string name="facet_settings_section_home">Accueil</string>
+    <string name="facet_settings_widgets_title">Widgets</string>
+    <string name="facet_settings_widgets_subtitle">Ce qui se trouve en haut de l\'accueil de cette facette</string>
     <string name="facet_settings_appearance_title">Apparence</string>
     <string name="facet_settings_appearance_clock_label">Horloge : %1$s</string>
     <string name="facet_settings_appearance_dock_icons">Icônes du dock</string>
@@ -949,12 +950,16 @@
     <string name="facet_settings_appearance_home_icon_only">Accueil : icône seule</string>
     <string name="facet_settings_appearance_home_icon_and_text">Accueil : icône et texte</string>
     <string name="facet_settings_appearance_home_text_only">Accueil : texte seul</string>
-    <string name="clock_adjust_replace_with_widget">Remplacer par un widget personnalisé</string>
-    <string name="clock_adjust_replace_with_widget_subtitle">Remplace l\'horloge par un widget de votre choix</string>
-    <string name="clock_adjust_replace_with_clock">Remplacer par l\'horloge</string>
-    <string name="clock_adjust_replace_with_clock_subtitle">Utiliser l\'horloge propre à Facet sur cette page</string>
     <string name="clock_adjust_replace_widget">Remplacer le widget personnalisé</string>
     <string name="clock_adjust_replace_widget_subtitle">Choisir un autre widget pour cette page</string>
+    <string name="clock_adjust_remove_widget">Retirer le widget</string>
+    <string name="clock_adjust_remove_widget_subtitle">Retirer cette page de la pile</string>
+    <string name="clock_adjust_add_widget">Ajouter un widget</string>
+    <string name="clock_adjust_add_widget_subtitle">Choisir un widget pour le haut de l\'accueil</string>
+    <string name="clock_style_sheet_styles">Styles d\'horloge</string>
+    <string name="clock_style_sheet_styles_subtitle">Modèle, police, couleurs, heure et date</string>
+    <string name="clock_style_sheet_calendar">Réglages de l\'agenda</string>
+    <string name="clock_style_sheet_calendar_subtitle">Quels agendas apparaissent sous l\'horloge</string>
     <string name="clock_adjust_widget_stack">Pile de widgets</string>
     <string name="clock_adjust_stack_empty">Vide · ajoutez une horloge ou un widget</string>
     <string name="clock_adjust_stack_clock">Horloge</string>

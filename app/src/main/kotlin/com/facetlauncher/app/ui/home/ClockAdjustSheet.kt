@@ -9,7 +9,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.AccessTime
+import androidx.compose.material.icons.outlined.AddCircleOutline
+import androidx.compose.material.icons.outlined.CalendarMonth
+import androidx.compose.material.icons.outlined.DeleteOutline
 import androidx.compose.material.icons.outlined.Layers
 import androidx.compose.material.icons.outlined.OpenInFull
 import androidx.compose.material.icons.outlined.Palette
@@ -34,39 +36,25 @@ import com.facetlauncher.app.ui.theme.SettingsSectionHue
 import com.facetlauncher.app.ui.theme.SurfaceContainer
 
 /**
- * Long-press bottom sheet — opened both by long-pressing the clock and by long-pressing any other
- * empty space on Home (see [com.facetlauncher.app.ui.home.HomeScreen]'s own root long-press
- * detector). Lets the user enter the combined clock adjust mode (move handle + resize handles
- * together), jump to the clock style gallery, or jump to the active facet's own settings
- * or launcher-wide settings — each row carries a subheading, same pattern as
- * [com.facetlauncher.app.ui.facets.FacetCarouselScreen]'s own "Launcher settings" row and its
- * per-card "Facet settings" gear.
- *
- * Laid out like the Settings screens: two tonal [SettingsCard]s (the clock rows, then the two
- * settings destinations) of icon-badge rows on the dimmer sheet tone ([SurfaceContainer], set by
- * the host), with full-width press highlights.
- *
- * The widget rows follow the page showing (PRD F15's clock stack). On the clock page: its settings and "Replace
- * with custom widget". On a widget page: "Replace with clock" (hidden while [canReplaceWithClock] is false, as the
- * clock is already on another page) and "Replace custom widget". Replacing swaps the visible page in place and is
- * never a Pro action; "Adjust size & position" is there either way.
+ * The Home sheet, opened by a long-press on free space on Home or on a widget page (the clock and its calendar have their own,
+ * [ClockStyleSheetContent]). Its rows do not depend on what the page is: adjust size and position (the only way into resize
+ * mode), replace or remove the widget showing (or add one when there is none), the widget stack, then the facet's and the
+ * launcher's settings. Replacing swaps the visible page in place and is never a Pro action.
  */
 @Composable
 fun ClockAdjustSheet(
     onAdjustClick: () -> Unit,
-    onClockSettingsClick: () -> Unit,
     onFacetSettingsClick: () -> Unit,
     onLauncherSettingsClick: () -> Unit,
-    onReplaceWithWidgetClick: () -> Unit,
-    onReplaceWithClockClick: () -> Unit,
+    onReplaceWidgetClick: () -> Unit,
+    onRemoveWidgetClick: () -> Unit,
+    onAddWidgetClick: () -> Unit,
     onWidgetStackClick: () -> Unit,
     /** What the Widget stack row says is in the stack: "Clock", "3 pages", "Empty…". */
     stackSummary: String,
     modifier: Modifier = Modifier,
-    /** What the page showing is: the clock, a hosted `AppWidget` (PRD F15), or nothing (an empty stack) — see this composable's own doc. */
-    page: ClockSheetPage = ClockSheetPage.CLOCK,
-    /** Whether "Replace with clock" is offered on a widget page: not while the clock is already on another page of the stack. */
-    canReplaceWithClock: Boolean = true,
+    /** Whether the stack has a page showing: replace and remove need one, and add is for when there is none. */
+    hasPage: Boolean = true,
 ) {
     Column(
         modifier = modifier
@@ -85,13 +73,7 @@ fun ClockAdjustSheet(
                 onClick = onAdjustClick,
                 testTag = "clock_adjust_open",
             )
-            ClockPageRows(
-                onClockSettingsClick = onClockSettingsClick,
-                onReplaceWithWidgetClick = onReplaceWithWidgetClick,
-                onReplaceWithClockClick = onReplaceWithClockClick,
-                page = page,
-                canReplaceWithClock = canReplaceWithClock,
-            )
+            PageRows(hasPage, onReplaceWidgetClick, onRemoveWidgetClick, onAddWidgetClick)
             CardDivider(startInset = SettingsIconBadgeInset)
             AdjustRow(
                 icon = Icons.Outlined.Layers,
@@ -102,81 +84,45 @@ fun ClockAdjustSheet(
                 testTag = "clock_adjust_widget_stack",
             )
         }
-        SettingsCard(fullBleedRows = true) {
-            AdjustRow(
-                icon = Icons.Outlined.Settings,
-                hue = SettingsSectionHue.FACETS,
-                label = stringResource(R.string.facet_carousel_facet_settings),
-                subtitle = stringResource(R.string.clock_adjust_facet_settings_subtitle),
-                onClick = onFacetSettingsClick,
-                testTag = "clock_adjust_facet_settings",
-            )
-            CardDivider(startInset = SettingsIconBadgeInset)
-            AdjustRow(
-                icon = Icons.Outlined.Tune,
-                hue = SettingsSectionHue.SYSTEM,
-                label = stringResource(R.string.facet_carousel_launcher_settings),
-                subtitle = stringResource(R.string.facet_carousel_launcher_settings_subtitle),
-                onClick = onLauncherSettingsClick,
-                testTag = "clock_adjust_launcher_settings",
-            )
-        }
+        SettingsRows(onFacetSettingsClick, onLauncherSettingsClick)
     }
 }
 
 /**
- * The rows that depend on the page showing, factored out of [ClockAdjustSheet] itself purely to stay under this
- * codebase's max-composable-length lint rule. Each row is preceded by its divider, so the first card's last row has
- * none after it.
+ * The clock's own sheet, opened by a long-press on the clock or on the events under it: its styles, which open full screen,
+ * and its calendar settings.
  */
 @Composable
-private fun ClockPageRows(
-    onClockSettingsClick: () -> Unit,
-    onReplaceWithWidgetClick: () -> Unit,
-    onReplaceWithClockClick: () -> Unit,
-    page: ClockSheetPage,
-    canReplaceWithClock: Boolean,
-) = Column {
-    if (page == ClockSheetPage.CLOCK) {
-        CardDivider(startInset = SettingsIconBadgeInset)
-        AdjustRow(
-            icon = Icons.Outlined.Palette,
-            hue = SettingsSectionHue.APPEARANCE,
-            label = stringResource(R.string.clock_adjust_clock_settings),
-            subtitle = stringResource(R.string.clock_adjust_clock_settings_subtitle),
-            onClick = onClockSettingsClick,
-            testTag = "clock_adjust_clock_settings",
-        )
-        CardDivider(startInset = SettingsIconBadgeInset)
-        AdjustRow(
-            icon = Icons.Outlined.Widgets,
-            hue = SettingsSectionHue.APPEARANCE,
-            label = stringResource(R.string.clock_adjust_replace_with_widget),
-            subtitle = stringResource(R.string.clock_adjust_replace_with_widget_subtitle),
-            onClick = onReplaceWithWidgetClick,
-            testTag = "clock_adjust_replace_with_widget",
-        )
-    } else if (page == ClockSheetPage.WIDGET) {
-        if (canReplaceWithClock) {
+fun ClockStyleSheetContent(
+    onClockStylesClick: () -> Unit,
+    onCalendarSettingsClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(start = 24.dp, end = 24.dp, top = 4.dp, bottom = 16.dp)
+            .testTag("clock_style_sheet"),
+    ) {
+        SettingsCard(fullBleedRows = true) {
+            AdjustRow(
+                icon = Icons.Outlined.Palette,
+                hue = SettingsSectionHue.APPEARANCE,
+                label = stringResource(R.string.clock_style_sheet_styles),
+                subtitle = stringResource(R.string.clock_style_sheet_styles_subtitle),
+                onClick = onClockStylesClick,
+                testTag = "clock_style_sheet_styles",
+            )
             CardDivider(startInset = SettingsIconBadgeInset)
             AdjustRow(
-                icon = Icons.Outlined.AccessTime,
+                icon = Icons.Outlined.CalendarMonth,
                 hue = SettingsSectionHue.APPEARANCE,
-                label = stringResource(R.string.clock_adjust_replace_with_clock),
-                subtitle = stringResource(R.string.clock_adjust_replace_with_clock_subtitle),
-                onClick = onReplaceWithClockClick,
-                testTag = "clock_adjust_replace_with_clock",
+                label = stringResource(R.string.clock_style_sheet_calendar),
+                subtitle = stringResource(R.string.clock_style_sheet_calendar_subtitle),
+                onClick = onCalendarSettingsClick,
+                testTag = "clock_style_sheet_calendar",
             )
         }
-        CardDivider(startInset = SettingsIconBadgeInset)
-        AdjustRow(
-            icon = Icons.Outlined.Widgets,
-            hue = SettingsSectionHue.APPEARANCE,
-            label = stringResource(R.string.clock_adjust_replace_widget),
-            subtitle = stringResource(R.string.clock_adjust_replace_widget_subtitle),
-            onClick = onReplaceWithWidgetClick,
-            testTag = "clock_adjust_replace_widget",
-        )
     }
 }
 
@@ -189,7 +135,6 @@ private fun AdjustRow(
     onClick: () -> Unit,
     testTag: String,
     modifier: Modifier = Modifier,
-    trailingContent: (@Composable () -> Unit)? = null,
 ) {
     ClickableRow(
         title = label,
@@ -198,7 +143,6 @@ private fun AdjustRow(
         testTag = testTag,
         modifier = modifier,
         leadingIcon = { SettingsIconBadge(icon, hue) },
-        trailing = trailingContent,
     )
 }
 
@@ -209,11 +153,11 @@ private fun ClockAdjustSheetPreview() {
     FacetLauncherTheme {
         ClockAdjustSheet(
             onAdjustClick = {},
-            onClockSettingsClick = {},
             onFacetSettingsClick = {},
             onLauncherSettingsClick = {},
-            onReplaceWithWidgetClick = {},
-            onReplaceWithClockClick = {},
+            onReplaceWidgetClick = {},
+            onRemoveWidgetClick = {},
+            onAddWidgetClick = {},
             onWidgetStackClick = {},
             stackSummary = "Clock",
             modifier = Modifier.background(SurfaceContainer),
@@ -221,21 +165,90 @@ private fun ClockAdjustSheetPreview() {
     }
 }
 
-@Preview(name = "Custom widget active", showBackground = true)
+@Preview(name = "Empty stack", showBackground = true)
 @Composable
-private fun ClockAdjustSheetCustomWidgetPreview() {
+private fun ClockAdjustSheetEmptyPreview() {
     FacetLauncherTheme {
         ClockAdjustSheet(
             onAdjustClick = {},
-            onClockSettingsClick = {},
             onFacetSettingsClick = {},
             onLauncherSettingsClick = {},
-            onReplaceWithWidgetClick = {},
-            onReplaceWithClockClick = {},
+            onReplaceWidgetClick = {},
+            onRemoveWidgetClick = {},
+            onAddWidgetClick = {},
             onWidgetStackClick = {},
-            stackSummary = "1 widget",
-            page = ClockSheetPage.WIDGET,
+            stackSummary = "Empty",
+            hasPage = false,
             modifier = Modifier.background(SurfaceContainer),
+        )
+    }
+}
+
+@Preview(name = "Clock sheet", showBackground = true)
+@Composable
+private fun ClockStyleSheetPreview() {
+    FacetLauncherTheme { ClockStyleSheetContent(onClockStylesClick = {}, onCalendarSettingsClick = {}, modifier = Modifier.background(SurfaceContainer)) }
+}
+
+@Composable
+private fun SettingsRows(onFacetSettingsClick: () -> Unit, onLauncherSettingsClick: () -> Unit) {
+    SettingsCard(fullBleedRows = true) {
+        AdjustRow(
+            icon = Icons.Outlined.Settings,
+            hue = SettingsSectionHue.FACETS,
+            label = stringResource(R.string.facet_carousel_facet_settings),
+            subtitle = stringResource(R.string.clock_adjust_facet_settings_subtitle),
+            onClick = onFacetSettingsClick,
+            testTag = "clock_adjust_facet_settings",
+        )
+        CardDivider(startInset = SettingsIconBadgeInset)
+        AdjustRow(
+            icon = Icons.Outlined.Tune,
+            hue = SettingsSectionHue.SYSTEM,
+            label = stringResource(R.string.facet_carousel_launcher_settings),
+            subtitle = stringResource(R.string.facet_carousel_launcher_settings_subtitle),
+            onClick = onLauncherSettingsClick,
+            testTag = "clock_adjust_launcher_settings",
+        )
+    }
+}
+
+/** Rows that act on the page showing, or add one when there is none. Called inside the first card. */
+@Composable
+private fun PageRows(
+    hasPage: Boolean,
+    onReplaceWidgetClick: () -> Unit,
+    onRemoveWidgetClick: () -> Unit,
+    onAddWidgetClick: () -> Unit,
+) {
+    if (hasPage) {
+        CardDivider(startInset = SettingsIconBadgeInset)
+        AdjustRow(
+            icon = Icons.Outlined.Widgets,
+            hue = SettingsSectionHue.APPEARANCE,
+            label = stringResource(R.string.clock_adjust_replace_widget),
+            subtitle = stringResource(R.string.clock_adjust_replace_widget_subtitle),
+            onClick = onReplaceWidgetClick,
+            testTag = "clock_adjust_replace_widget",
+        )
+        CardDivider(startInset = SettingsIconBadgeInset)
+        AdjustRow(
+            icon = Icons.Outlined.DeleteOutline,
+            hue = SettingsSectionHue.APPEARANCE,
+            label = stringResource(R.string.clock_adjust_remove_widget),
+            subtitle = stringResource(R.string.clock_adjust_remove_widget_subtitle),
+            onClick = onRemoveWidgetClick,
+            testTag = "clock_adjust_remove_widget",
+        )
+    } else {
+        CardDivider(startInset = SettingsIconBadgeInset)
+        AdjustRow(
+            icon = Icons.Outlined.AddCircleOutline,
+            hue = SettingsSectionHue.APPEARANCE,
+            label = stringResource(R.string.clock_adjust_add_widget),
+            subtitle = stringResource(R.string.clock_adjust_add_widget_subtitle),
+            onClick = onAddWidgetClick,
+            testTag = "clock_adjust_add_widget",
         )
     }
 }

@@ -98,7 +98,7 @@ private val STACK_ROW_SPACING = 10.dp
 fun ClockStackScreen(
     onBack: () -> Unit,
     onOpenFacetPro: (ProReason) -> Unit,
-    onOpenAppearance: (facetId: Long) -> Unit,
+    onOpenClockStyle: (facetId: Long) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: ClockStackViewModel = hiltViewModel(),
 ) {
@@ -120,7 +120,7 @@ fun ClockStackScreen(
             onConfigure = { row ->
                 val sender = row.appWidgetId?.let { viewModel.configureSender(it) }
                 when {
-                    row.kind == ClockStackItemKind.CLOCK -> onOpenAppearance(uiState.facetId)
+                    row.kind == ClockStackItemKind.CLOCK -> onOpenClockStyle(uiState.facetId)
                     sender != null -> configureLauncher.launch(IntentSenderRequest.Builder(sender).build())
                 }
             },

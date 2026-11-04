@@ -68,7 +68,7 @@ object FacetDestinations {
     const val SETTINGS = "settings"
     const val DOCK_PICKER = "dockPicker?facetId={facetId}"
     const val FACET_MANAGE = "facetManage"
-    const val CLOCK_STACK = "clockStack"
+    const val CLOCK_STACK = "clockStack?facetId={facetId}"
     const val FACET_AUTOMATION = "facetAutomation"
     const val FACET_PRO = "facetPro/{reason}"
     const val FACET_SETTINGS = "facetSettings/{facetId}"
@@ -140,6 +140,10 @@ object FacetDestinations {
         if (facetId != null && facetId != NO_ACTIVE_FACET_ID) "calendarSettings?facetId=$facetId" else "calendarSettings"
 
     /** Omitting [facetId] (or passing [NO_ACTIVE_FACET_ID]) opens the launcher-wide Clock accessories. */
+    /** The widget stack of [facetId]; omitting it (or passing [NO_ACTIVE_FACET_ID]) opens the active facet's. */
+    fun clockStack(facetId: Long? = null) =
+        if (facetId != null && facetId != NO_ACTIVE_FACET_ID) "clockStack?facetId=$facetId" else "clockStack"
+
     fun clockAccessories(facetId: Long? = null) =
         if (facetId != null && facetId != NO_ACTIVE_FACET_ID) "clockAccessories?facetId=$facetId" else "clockAccessories"
 }
@@ -215,8 +219,9 @@ fun FacetNavHost(
                 onNavigateToClockAccessories = { facetId -> navController.navigate(FacetDestinations.clockAccessories(facetId)) },
                 onNavigateToPermissions = { navController.navigate(FacetDestinations.PERMISSIONS) },
                 onNavigateToWhatsNew = { navController.navigate(FacetDestinations.WHATS_NEW) },
-                onNavigateToAppearance = { facetId -> navController.navigate(FacetDestinations.appearanceSettings(facetId)) },
-                onNavigateToClockStack = { navController.navigate(FacetDestinations.CLOCK_STACK) },
+                onNavigateToClockStyle = { facetId -> navController.navigate(FacetDestinations.facetClockStyleGallery(facetId)) },
+                onNavigateToCalendarSettings = { facetId -> navController.navigate(FacetDestinations.calendarSettings(facetId)) },
+                onNavigateToClockStack = { navController.navigate(FacetDestinations.clockStack()) },
                 launcherViewModel = launcherViewModel,
             )
         }
@@ -438,12 +443,15 @@ fun FacetNavHost(
                 onAddFacet = { navController.navigate(FacetDestinations.FACET_MANAGE) },
             )
         }
-        settingsComposable(FacetDestinations.CLOCK_STACK) {
+        settingsComposable(
+            FacetDestinations.CLOCK_STACK,
+            arguments = listOf(navArgument("facetId") { type = NavType.LongType; defaultValue = NO_ACTIVE_FACET_ID }),
+        ) {
             // The widget stack: reorder, configure, remove and add the clock and widgets on Home.
             ClockStackScreen(
                 onBack = { navController.popBackStackSafely() },
                 onOpenFacetPro = { reason -> navController.navigate(FacetDestinations.facetPro(reason)) },
-                onOpenAppearance = { facetId -> navController.navigate(FacetDestinations.appearanceSettings(facetId)) },
+                onOpenClockStyle = { facetId -> navController.navigate(FacetDestinations.facetClockStyleGallery(facetId)) },
             )
         }
         settingsComposable(FacetDestinations.FACET_MANAGE) {
@@ -464,9 +472,8 @@ fun FacetNavHost(
                 onBack = { navController.popBackStackSafely() },
                 onNavigateToAppsList = { facetId -> navController.navigate(FacetDestinations.homeAppsListSettings(facetId)) },
                 onNavigateToDockSettings = { facetId -> navController.navigate(FacetDestinations.dockSettings(facetId)) },
-                onNavigateToAppearance = { facetId ->
-                    navController.navigate(FacetDestinations.appearanceSettings(facetId))
-                },
+                onNavigateToDockAppsAppearance = { facetId -> navController.navigate(FacetDestinations.dockAppsAppearance(facetId)) },
+                onNavigateToWidgets = { facetId -> navController.navigate(FacetDestinations.clockStack(facetId)) },
                 onFacetApply = { navController.popBackStack(FacetDestinations.HOME, inclusive = false) },
             )
         }

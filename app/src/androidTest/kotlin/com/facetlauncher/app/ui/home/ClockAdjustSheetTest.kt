@@ -1,9 +1,6 @@
 package com.facetlauncher.app.ui.home
 
-import androidx.compose.foundation.layout.height
-import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.hasAnyDescendant
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
@@ -11,8 +8,8 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
-import androidx.compose.ui.unit.dp
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
+import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 
@@ -21,182 +18,111 @@ class ClockAdjustSheetTest {
     @get:Rule
     val composeRule = createComposeRule()
 
-    private fun setContent(
-        onClockSettingsClick: () -> Unit = {},
-        page: ClockSheetPage = ClockSheetPage.CLOCK,
-        canReplaceWithClock: Boolean = true,
-        onReplaceWithWidgetClick: () -> Unit = {},
-        onReplaceWithClockClick: () -> Unit = {},
-        onWidgetStackClick: () -> Unit = {},
+    private fun setSheet(
+        hasPage: Boolean = true,
+        calls: MutableList<String> = mutableListOf(),
         stackSummary: String = "Clock",
     ) {
         composeRule.setContent {
             FacetLauncherTheme {
                 ClockAdjustSheet(
-                    onAdjustClick = {},
-                    onClockSettingsClick = onClockSettingsClick,
-                    onFacetSettingsClick = {},
-                    onLauncherSettingsClick = {},
-                    onReplaceWithWidgetClick = onReplaceWithWidgetClick,
-                    onReplaceWithClockClick = onReplaceWithClockClick,
-                    onWidgetStackClick = onWidgetStackClick,
+                    onAdjustClick = { calls += "adjust" },
+                    onFacetSettingsClick = { calls += "facet-settings" },
+                    onLauncherSettingsClick = { calls += "launcher-settings" },
+                    onReplaceWidgetClick = { calls += "replace" },
+                    onRemoveWidgetClick = { calls += "remove" },
+                    onAddWidgetClick = { calls += "add" },
+                    onWidgetStackClick = { calls += "stack" },
                     stackSummary = stackSummary,
-                    page = page,
-                    canReplaceWithClock = canReplaceWithClock,
+                    hasPage = hasPage,
                 )
             }
         }
     }
 
-
-
     @Test
-    fun tappingClockSettingsRowFiresOnClockSettingsClick() {
-        var clicked = false
-        setContent(onClockSettingsClick = { clicked = true })
+    fun withAPageTheSheetOffersAdjustReplaceRemoveAndTheStack() {
+        // Given a stack with a page showing
+        setSheet(hasPage = true)
 
-        composeRule.onNodeWithTag("clock_adjust_clock_settings").performClick()
-
-        assert(clicked)
+        // Then the same rows are there whatever the page is, and nothing to add
+        composeRule.onNodeWithTag("clock_adjust_open").assertIsDisplayed()
+        composeRule.onNodeWithTag("clock_adjust_replace_widget").assertIsDisplayed()
+        composeRule.onNodeWithTag("clock_adjust_remove_widget").assertIsDisplayed()
+        composeRule.onNodeWithTag("clock_adjust_widget_stack").assertIsDisplayed()
+        composeRule.onNodeWithTag("clock_adjust_add_widget").assertDoesNotExist()
     }
 
     @Test
-    fun theClockPageOffersItsSettingsAndReplacingItWithAWidgetOnly() {
-        // Given the page showing is the clock
-        setContent(page = ClockSheetPage.CLOCK)
+    fun withNoPageTheSheetOffersAddInsteadOfReplaceAndRemove() {
+        // Given an empty stack
+        setSheet(hasPage = false, stackSummary = "Empty")
 
-        // Then its settings and "Replace with custom widget" are offered, and nothing that only a widget page has
-        composeRule.onNodeWithTag("clock_adjust_clock_settings").assertExists()
-        composeRule.onNodeWithTag("clock_adjust_replace_with_widget").assertExists()
-        composeRule.onNodeWithTag("clock_adjust_replace_with_clock").assertDoesNotExist()
+        // Then adding is offered, and there is nothing to replace or remove
+        composeRule.onNodeWithTag("clock_adjust_add_widget").assertIsDisplayed()
         composeRule.onNodeWithTag("clock_adjust_replace_widget").assertDoesNotExist()
+        composeRule.onNodeWithTag("clock_adjust_remove_widget").assertDoesNotExist()
+        composeRule.onNodeWithTag("clock_adjust_open").assertIsDisplayed()
     }
 
     @Test
-    fun aWidgetPageHidesClockSettingsAndOffersBothReplaceRows() {
-        // Given the page showing is a hosted widget and the clock is not on another page
-        setContent(page = ClockSheetPage.WIDGET, canReplaceWithClock = true)
+    fun thereIsNoClockSettingsOrReplaceWithClockRowAnyMore() {
+        // Given the sheet over a page
+        setSheet()
 
-        // Then there are no clock settings (nothing to style), and the page can become the clock or another widget
+        // Then the clock's own rows live on the clock's sheet, not here
         composeRule.onNodeWithTag("clock_adjust_clock_settings").assertDoesNotExist()
-        composeRule.onNodeWithTag("clock_adjust_replace_with_clock").assertExists()
-        composeRule.onNodeWithTag("clock_adjust_replace_widget").assertExists()
+        composeRule.onNodeWithTag("clock_adjust_replace_with_clock").assertDoesNotExist()
         composeRule.onNodeWithTag("clock_adjust_replace_with_widget").assertDoesNotExist()
     }
 
     @Test
-    fun aWidgetPageCannotBeReplacedWithTheClockWhileTheClockIsOnAnotherPage() {
-        // Given a widget page in a stack that already has the clock
-        setContent(page = ClockSheetPage.WIDGET, canReplaceWithClock = false)
+    fun everyRowFiresItsOwnAction() {
+        // Given a sheet over a page, with a log of calls
+        val calls = mutableListOf<String>()
+        setSheet(calls = calls)
 
-        // Then only replacing the widget with another widget is offered
-        composeRule.onNodeWithTag("clock_adjust_replace_with_clock").assertDoesNotExist()
-        composeRule.onNodeWithTag("clock_adjust_replace_widget").assertExists()
-    }
-
-    @Test
-    fun tappingReplaceWithCustomWidgetFiresItsCallback() {
-        var clicked = false
-        setContent(onReplaceWithWidgetClick = { clicked = true })
-
-        composeRule.onNodeWithTag("clock_adjust_replace_with_widget").performClick()
-
-        assert(clicked)
-    }
-
-    @Test
-    fun tappingReplaceCustomWidgetOnAWidgetPageFiresTheSameCallback() {
-        var clicked = false
-        setContent(page = ClockSheetPage.WIDGET, onReplaceWithWidgetClick = { clicked = true })
-
-        composeRule.onNodeWithTag("clock_adjust_replace_widget").performClick()
-
-        assert(clicked)
-    }
-
-    @Test
-    fun tappingReplaceWithClockFiresItsCallback() {
-        var clicked = false
-        setContent(page = ClockSheetPage.WIDGET, onReplaceWithClockClick = { clicked = true })
-
-        composeRule.onNodeWithTag("clock_adjust_replace_with_clock").performClick()
-
-        assert(clicked)
-    }
-
-    @Test
-    fun noRowIsMarkedPro() {
-        // Given the sheet on either kind of page
-        setContent()
-
-        // Then replacing is free: no row carries a Pro pill
-        composeRule.onAllNodesWithText("Pro").assertCountEquals(0)
-    }
-
-    @Test
-    fun theLastRowIsReachableInAWindowShorterThanTheSheet() {
-        // Given the sheet in a window far shorter than its content, as a landscape phone gives it
-        var clicked = false
-        composeRule.setContent {
-            FacetLauncherTheme {
-                androidx.compose.foundation.layout.Box(androidx.compose.ui.Modifier.height(220.dp)) {
-                    ClockAdjustSheet(
-                        onAdjustClick = {},
-                        onClockSettingsClick = {},
-                        onFacetSettingsClick = {},
-                        onLauncherSettingsClick = { clicked = true },
-                        onReplaceWithWidgetClick = {},
-                        onReplaceWithClockClick = {},
-                        onWidgetStackClick = {},
-                        stackSummary = "Clock",
-                    )
-                }
-            }
+        // When each row is tapped
+        listOf("open", "replace_widget", "remove_widget", "widget_stack", "facet_settings", "launcher_settings").forEach { name ->
+            composeRule.onNodeWithTag("clock_adjust_$name").performScrollTo().performClick()
         }
 
-        // When scrolling to the last row and tapping it
-        composeRule.onNodeWithTag("clock_adjust_launcher_settings").performScrollTo().assertIsDisplayed().performClick()
-
-        // Then it was reachable and fired
-        assert(clicked)
-    }
-
-    private fun assertWidgetStackRowShows(page: ClockSheetPage, summary: String) {
-        setContent(page = page, stackSummary = summary)
-
-        composeRule.onNode(hasTestTag("clock_adjust_widget_stack") and hasAnyDescendant(hasText(summary)), useUnmergedTree = true).assertExists()
+        // Then each reached its own callback
+        assertEquals(listOf("adjust", "replace", "remove", "stack", "facet-settings", "launcher-settings"), calls)
     }
 
     @Test
-    fun theWidgetStackRowIsOnTheClockPageAndShowsWhatIsInTheStack() = assertWidgetStackRowShows(ClockSheetPage.CLOCK, "Clock")
+    fun theAddRowFiresAddWhenTheStackIsEmpty() {
+        val calls = mutableListOf<String>()
+        setSheet(hasPage = false, calls = calls)
 
-    @Test
-    fun theWidgetStackRowIsOnAWidgetPageAndShowsWhatIsInTheStack() = assertWidgetStackRowShows(ClockSheetPage.WIDGET, "3 pages")
+        composeRule.onNodeWithTag("clock_adjust_add_widget").performClick()
 
-    @Test
-    fun theWidgetStackRowIsOnAnEmptyStackAndSaysSo() = assertWidgetStackRowShows(ClockSheetPage.EMPTY, "Empty")
-
-    @Test
-    fun tappingTheWidgetStackRowFiresItsCallback() {
-        var clicked = false
-        setContent(onWidgetStackClick = { clicked = true })
-
-        composeRule.onNodeWithTag("clock_adjust_widget_stack").performClick()
-
-        assert(clicked)
+        assertEquals(listOf("add"), calls)
     }
 
     @Test
-    fun anEmptyStackOffersNoReplaceOrClockSettingsRows() {
-        // Given the clock area is empty
-        setContent(page = ClockSheetPage.EMPTY, stackSummary = "Empty")
+    fun theWidgetStackRowShowsWhatIsInTheStack() {
+        setSheet(stackSummary = "3 pages")
 
-        // Then there is no page to replace or style, only the Widget stack row to add one
-        composeRule.onNodeWithTag("clock_adjust_clock_settings").assertDoesNotExist()
-        composeRule.onNodeWithTag("clock_adjust_replace_with_widget").assertDoesNotExist()
-        composeRule.onNodeWithTag("clock_adjust_replace_with_clock").assertDoesNotExist()
-        composeRule.onNodeWithTag("clock_adjust_replace_widget").assertDoesNotExist()
-        composeRule.onNodeWithTag("clock_adjust_widget_stack").assertExists()
-        composeRule.onNodeWithTag("clock_adjust_open").assertExists()
+        composeRule.onNodeWithTag("clock_adjust_widget_stack").assertIsDisplayed()
+        composeRule.onNode(hasTestTag("clock_adjust_widget_stack") and hasAnyDescendant(hasText("3 pages")), useUnmergedTree = true).assertExists()
+    }
+
+    @Test
+    fun theClockSheetOffersStylesAndCalendarSettings() {
+        // Given the clock's own sheet
+        val calls = mutableListOf<String>()
+        composeRule.setContent {
+            FacetLauncherTheme { ClockStyleSheetContent(onClockStylesClick = { calls += "styles" }, onCalendarSettingsClick = { calls += "calendar" }) }
+        }
+
+        // When both rows are tapped
+        composeRule.onNodeWithTag("clock_style_sheet_styles").performClick()
+        composeRule.onNodeWithTag("clock_style_sheet_calendar").performClick()
+
+        // Then each fires its own action, and that is all the sheet holds
+        assertEquals(listOf("styles", "calendar"), calls)
+        composeRule.onNodeWithTag("clock_adjust_open").assertDoesNotExist()
     }
 }

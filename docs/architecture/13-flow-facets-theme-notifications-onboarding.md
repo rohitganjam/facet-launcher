@@ -191,7 +191,7 @@ card 3 Icons (while weather is on), then, while weather is on, a *Location* card
 (`UnitsAndLocationScreen`, route `unitsAndLocation`): the four units and the Location card, launcher-wide (`UnitsAndLocationViewModel`), so a
 Weather widget can reach them whether or not the clock shows weather.
 
-The Home sheet no longer names a facet on its *Clock & calendar settings* row (the old scope badge): a clock's settings are always its own. Dock and Home apps list screens still carry an `InheritOverrideCard` with an *Edit defaults* link (`onEditDefaults`, wired in `FacetNavHost`).
+The Home sheet no longer has a *Clock & calendar settings* row or its facet scope badge: a clock's settings are always its own, reached from the clock's own sheet (a long-press on the clock or its calendar, [12](12-flow-drawer-search-and-app-actions.md) §4). A facet's settings screen has a *Home* section with *Widgets* (that facet's widget stack, `clockStack?facetId=`) and *Dock & apps appearance* (`DockAppsAppearanceScreen` directly, with no Appearance hub in between), above the existing *Apps and folders* section. Dock and Home apps list screens still carry an `InheritOverrideCard` with an *Edit defaults* link (`onEditDefaults`, wired in `FacetNavHost`).
 
 `HomeScreenStateBuilder` gates the items: the alarm and battery only when their switch is on, the weather
 (`HomeWeatherState`, from `ObserveWeatherUseCase`) only when its switch is on and the forecast is not outdated.

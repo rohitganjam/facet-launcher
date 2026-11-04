@@ -100,7 +100,7 @@ With two or more clock pages the portrait list also moves down by `CLOCK_PAGE_DO
 
 ## 4. Landscape adjust mode
 
-Long-pressing the clock opens the same menu, now with "Adjust clock size & position". The controls:
+Long-pressing free space opens the Home sheet, whose first row is "Adjust clock size & position" ([12](12-flow-drawer-search-and-app-actions.md) §4; a long-press on the clock itself opens the clock's own two-row sheet instead). The controls:
 
 - **Divider handle.** `ClockZoneHandle(dragOrientation = Horizontal)`: a full-height rail in the gap
   between the panes, dragged left and right. The pane width is saved in landscape's own

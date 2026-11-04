@@ -118,8 +118,9 @@ fun HomeDrawerRoute(
     onNavigateToManageFacets: () -> Unit,
     onNavigateToFacetPro: (ProReason) -> Unit,
     onNavigateToUsageAccessExplanation: () -> Unit,
-    /** Navigates to the clock style gallery, either global (null) or facet-scoped. */
-    onNavigateToAppearance: (Long?) -> Unit = { _ -> },
+    /** Opens one facet's clock style options, and the calendar settings of its clock. */
+    onNavigateToClockStyle: (facetId: Long) -> Unit = { _ -> },
+    onNavigateToCalendarSettings: (facetId: Long) -> Unit = { _ -> },
     onNavigateToClockStack: () -> Unit = {},
     /** Opens the screen that explains and grants notification access, from an app menu's "Enable notifications". */
     onNavigateToNotificationAccessExplanation: () -> Unit = {},
@@ -391,7 +392,11 @@ fun HomeDrawerRoute(
             setClockPaneBounds = { clockPaneBoundsInHomeRoot = it },
             setClockZoneBounds = { clockZoneBoundsInHomeRoot = it },
             openClockWidgetPicker = { itemId ->
-                overlays.clockWidgetPickerItemId = itemId
+                overlays.clockWidgetPickerTarget = ClockWidgetPickerTarget.Replace(itemId)
+                overlays.showClockWidgetPicker = true
+            },
+            openAddClockWidgetPicker = { facetId ->
+                overlays.clockWidgetPickerTarget = ClockWidgetPickerTarget.Add(facetId)
                 overlays.showClockWidgetPicker = true
             },
             openWeather = { openWeatherSheet(null) },
@@ -401,7 +406,8 @@ fun HomeDrawerRoute(
             toFacetSettings = onNavigateToFacetSettings,
             toFacetPro = onNavigateToFacetPro,
             toUsageAccessExplanation = onNavigateToUsageAccessExplanation,
-            toAppearance = onNavigateToAppearance,
+            toClockStyle = onNavigateToClockStyle,
+            toCalendarSettings = onNavigateToCalendarSettings,
             toClockStack = onNavigateToClockStack,
         ),
     )
@@ -539,9 +545,9 @@ fun HomeDrawerRoute(
                 viewModel = facetViewModel,
             )
         }
-        HomeClockWidgetPickerOverlay(overlays, onReset = clockWidgetPickerViewModel::reset) { itemId ->
+        HomeClockWidgetPickerOverlay(overlays, onReset = clockWidgetPickerViewModel::reset) { target ->
             ClockWidgetPickerScreen(
-                target = ClockWidgetPickerTarget.Replace(itemId),
+                target = target,
                 onDone = { overlays.showClockWidgetPicker = false },
                 viewModel = clockWidgetPickerViewModel,
                 onConfigureNewWidget = { overlays.configureRef = it },
