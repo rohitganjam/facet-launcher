@@ -57,8 +57,8 @@ class HubWidgetPickerTabsTest {
         // Given the Work tab of a picker with both
         show(pickerState(options, "", WidgetPickerTab.WORK, 3))
 
-        // Then the work Calendar lists and the personal Clock does not
-        composeRule.onNodeWithTag("hub_widget_option_work_badge", useUnmergedTree = true).assertExists()
+        // Then the work Calendar lists, with no Work chip since the tab says it, and the personal Clock does not
+        composeRule.onNodeWithTag("hub_widget_option_work_badge", useUnmergedTree = true).assertDoesNotExist()
         composeRule.onNodeWithText("Calendar").assertExists()
         composeRule.onNodeWithText("Clock").assertDoesNotExist()
     }

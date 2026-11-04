@@ -166,7 +166,8 @@ private fun List<CalendarEvent>.toLines(zone: ZoneId, showHeadings: Boolean, lim
 }
 
 internal fun previewCalendarState(): HomeCalendarState {
-    val base = 4_000_000_000_000L // far ahead, so the sample events never count as ended
+    // 09:00 tomorrow: always ahead of the ticking clock, so the sample events never count as ended, and reads as a real date.
+    val base = LocalDate.now().plusDays(1).atTime(9, 0).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
     fun event(id: Long, title: String, offsetMin: Long, location: String = "") =
         CalendarEvent(id, "1", title, base + offsetMin * 60_000, base + (offsetMin + 45) * 60_000, isAllDay = false, location = location)
     return HomeCalendarState(

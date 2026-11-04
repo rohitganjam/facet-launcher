@@ -68,7 +68,6 @@ import com.facetlauncher.app.ui.components.StickyHeaderLayout
 import com.facetlauncher.app.ui.components.OtherScopeBadge
 import com.facetlauncher.app.ui.components.ProfileTab
 import com.facetlauncher.app.ui.components.ProfileTabRow
-import com.facetlauncher.app.ui.components.WorkScopeBadge
 import com.facetlauncher.app.data.model.NativeWidgetType
 import com.facetlauncher.app.ui.nativewidget.NativeWidgetPickerSection
 import com.facetlauncher.app.ui.theme.ErrorColor
@@ -354,10 +353,8 @@ private fun WidgetProviderOptionTile(option: WidgetProviderOption, tileWidth: Dp
                     )
                 }
             }
-            // Bottom-start, matching AppIcon's own Work Profile badge placement convention.
-            if (option.profile == AppProfile.WORK) {
-                WorkScopeBadge(modifier = Modifier.align(Alignment.BottomStart).padding(4.dp).testTag("hub_widget_option_work_badge"))
-            } else if (option.profile == AppProfile.OTHER) {
+            // Work widgets have their own tab, so only another profile's get a badge.
+            if (option.profile == AppProfile.OTHER) {
                 OtherScopeBadge(modifier = Modifier.align(Alignment.BottomStart).padding(4.dp).testTag("hub_widget_option_other_badge"))
             }
         }

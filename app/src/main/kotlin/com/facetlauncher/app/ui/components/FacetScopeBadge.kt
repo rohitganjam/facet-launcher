@@ -18,7 +18,7 @@ import com.facetlauncher.app.ui.theme.Muted
 /**
  * A small tonal pill naming a scope/tag a row applies to — `small`/8dp (CLAUDE.md's M3 shape
  * table — chips' own token) rather than a fully-rounded pill. [FacetScopeBadge] and
- * [WorkScopeBadge] both build on this exact construction rather than each rolling their own, so
+ * [OtherScopeBadge] both build on this exact construction rather than each rolling their own, so
  * every such pill in the app reads as one visual family.
  */
 @Composable
@@ -50,17 +50,11 @@ fun FacetScopeBadge(facetName: String?, modifier: Modifier = Modifier, textScale
     ScopeBadge(label = facetName ?: stringResource(R.string.facet_scope_global), color = color, modifier = modifier, textScaleRatio = textScaleRatio)
 }
 
-/** Marks a row as belonging to a Work Profile app. */
-@Composable
-fun WorkScopeBadge(modifier: Modifier = Modifier) {
-    ScopeBadge(label = stringResource(R.string.facet_scope_work), color = Accent, modifier = modifier)
-}
-
 /**
  * Marks a row as belonging to an [AppProfile.OTHER][com.facetlauncher.app.data.model.AppProfile]
  * app — a profile that exists but can't be positively identified as a Work Profile or Private
  * Space (an OEM dual-app/clone profile, most commonly, or any non-primary profile at all below
- * API 35). Sibling to [WorkScopeBadge] — same shape, [Muted] tone since it's informational
+ * API 35). Sibling to [FacetScopeBadge] — same shape, [Muted] tone since it's informational
  * ("there's a second copy of this") rather than a specific category name the way "Work" is.
  */
 @Composable
