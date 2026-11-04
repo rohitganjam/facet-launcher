@@ -89,21 +89,6 @@ class NativeWidgetStateTest {
     }
 
     @Test
-    fun `a tap on a Hub weather widget opens that widget's own sheet`() {
-        // Given actions that report the Hub widget a weather tap came from
-        var opened: Int? = null
-        var launcherOpens = 0
-        val actions = NativeWidgetActions(onOpenWeather = { launcherOpens++ }, onOpenHubWeather = { opened = it })
-
-        // When the widget with id -4 is tapped
-        actions.forHubWidget(-4).onOpenWeather()
-
-        // Then its id is reported, and the launcher-wide weather sheet is not what opens
-        assertEquals(-4, opened)
-        assertEquals(0, launcherOpens)
-    }
-
-    @Test
     fun `the weather sheet of a widget with its own location shows that forecast`() {
         // Given the launcher's weather state
         val launcher = com.facetlauncher.app.ui.home.weather.WeatherUiState(weather = com.facetlauncher.app.ui.home.previewWeather())

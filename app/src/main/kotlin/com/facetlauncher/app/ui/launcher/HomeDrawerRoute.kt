@@ -14,10 +14,12 @@ import com.facetlauncher.app.ui.home.HomeLayoutMode
 import com.facetlauncher.app.ui.home.HomeLiveState
 import com.facetlauncher.app.ui.home.HomeScreenContent
 import com.facetlauncher.app.ui.home.HomeWidgetSizing
+import com.facetlauncher.app.data.model.NativeWidgetRef
 import com.facetlauncher.app.ui.nativewidget.NativeWidgetAccess
 import com.facetlauncher.app.ui.nativewidget.NativeWidgetAccessControls
 import com.facetlauncher.app.ui.nativewidget.NativeWidgetActions
 import com.facetlauncher.app.ui.nativewidget.NativeWidgetEnvironment
+import com.facetlauncher.app.ui.nativewidget.config.NativeWidgetConfigSheet
 import com.facetlauncher.app.ui.nativewidget.rememberNativeWidgetAccess
 import com.facetlauncher.app.ui.nativewidget.withWeatherOverride
 import com.facetlauncher.app.ui.home.WhatsNewPillHost
@@ -141,7 +143,6 @@ fun HomeDrawerRoute(
 ) {
     val homeUiState by homeViewModel.uiState.collectAsStateWithLifecycle()
     val weatherUiState by weatherViewModel.uiState.collectAsStateWithLifecycle()
-    val hubUiState by hubViewModel.uiState.collectAsStateWithLifecycle()
     val whatsNewVersion by whatsNewPillViewModel.version.collectAsStateWithLifecycle()
     val launcherUiState by launcherViewModel.uiState.collectAsStateWithLifecycle()
     val folders by drawerViewModel.folders.collectAsStateWithLifecycle()
@@ -371,7 +372,12 @@ fun HomeDrawerRoute(
             isPro = homeUiState.isPro,
         ),
     )
-    val homeScreenState = styledHomeScreenState.copy(nativeWidgets = styledHomeScreenState.nativeWidgets.copy(access = widgetAccess.access))
+    val homeScreenState = styledHomeScreenState.copy(nativeWidgets = styledHomeScreenState.nativeWidgets.copy(access = widgetAccess.access, overrides = widgetAccess.overrides))
+    val openWeatherSheet: (NativeWidgetRef?) -> Unit = { ref ->
+        overlays.weatherSheetRef = ref
+        overlays.showWeatherSheet = true
+        weatherViewModel.refresh(userInitiated = false)
+    }
     val builtScreenActions = homeScreenActions(
         viewModel = homeViewModel,
         inputs = HomeActionsInputs(homeUiState, homeLayoutMode, context, coroutineScope, widgetHosts),
@@ -388,11 +394,7 @@ fun HomeDrawerRoute(
                 overlays.clockWidgetPickerItemId = itemId
                 overlays.showClockWidgetPicker = true
             },
-            openWeather = {
-                overlays.weatherSheetWidgetId = null
-                overlays.showWeatherSheet = true
-                weatherViewModel.refresh(userInitiated = false)
-            },
+            openWeather = { openWeatherSheet(null) },
         ),
         navigation = HomeNavigation(
             toSettings = onNavigateToSettings,
@@ -404,7 +406,12 @@ fun HomeDrawerRoute(
         ),
     )
     val screenActions = builtScreenActions.copy(
-        clock = builtScreenActions.clock.copy(onRequestCalendarAccess = widgetAccess.requestCalendar, onRequestLocationAccess = widgetAccess.requestLocation),
+        clock = builtScreenActions.clock.copy(
+            onOpenNativeWeather = openWeatherSheet,
+            onConfigureNativeWidget = { overlays.configureRef = it },
+            onRequestCalendarAccess = widgetAccess.requestCalendar,
+            onRequestLocationAccess = widgetAccess.requestLocation,
+        ),
     )
 
     Box(
@@ -485,16 +492,12 @@ fun HomeDrawerRoute(
                 nativeWidgets = NativeWidgetEnvironment(
                     state = homeScreenState.nativeWidgets,
                     actions = NativeWidgetActions(
-                        onOpenWeather = screenActions.clock.onWeatherClick,
+                        onOpenWeather = screenActions.clock.onOpenNativeWeather,
+                        onConfigure = screenActions.clock.onConfigureNativeWidget,
                         onOpenEvent = screenActions.clock.onEventClick,
                         media = screenActions.media,
                         onRequestCalendarAccess = widgetAccess.requestCalendar,
                         onRequestLocationAccess = widgetAccess.requestLocation,
-                        onOpenHubWeather = { id ->
-                            overlays.weatherSheetWidgetId = id
-                            overlays.showWeatherSheet = true
-                            weatherViewModel.refresh(userInitiated = false)
-                        },
                     ),
                 ),
             )
@@ -521,7 +524,7 @@ fun HomeDrawerRoute(
             },
         )
         HomeWidgetPickerOverlay(overlays, onReset = widgetPickerViewModel::reset) {
-            HubWidgetPickerScreen(onDone = { overlays.showWidgetPicker = false }, viewModel = widgetPickerViewModel, onConfigureNewWidget = hubViewModel::requestConfigure)
+            HubWidgetPickerScreen(onDone = { overlays.showWidgetPicker = false }, viewModel = widgetPickerViewModel, onConfigureNewWidget = { id -> overlays.configureRef = NativeWidgetRef.Hub(id) })
         }
         HomeFacetCarouselOverlay(swipe.facet, containerWidthPx, isOpen = isFacetOpen) {
             FacetCarouselScreen(
@@ -544,14 +547,13 @@ fun HomeDrawerRoute(
             )
         }
         if (overlays.showWeatherSheet) {
-            val hubWidgetId = overlays.weatherSheetWidgetId
-            val hubWidget = hubWidgetId?.let { id -> hubUiState.widgets.firstOrNull { it.appWidgetId == id } }
+            val sheetRef = overlays.weatherSheetRef
             WeatherSheet(
-                uiState = weatherUiState.copy(iconStyle = homeUiState.style.clock.weatherIconStyle).withWeatherOverride(hubWidget?.nativeOverride),
-                onConfigure = hubWidgetId?.let { id ->
+                uiState = weatherUiState.copy(iconStyle = homeUiState.style.clock.weatherIconStyle).withWeatherOverride(sheetRef?.let { widgetAccess.overrides[it] }),
+                onConfigure = sheetRef?.let { ref ->
                     {
                         overlays.showWeatherSheet = false
-                        hubViewModel.requestConfigure(id)
+                        overlays.configureRef = ref
                     }
                 },
                 onRefresh = { weatherViewModel.refresh() },
@@ -566,6 +568,7 @@ fun HomeDrawerRoute(
                 },
             )
         }
+        overlays.configureRef?.let { ref -> NativeWidgetConfigSheet(ref = ref, onDismiss = { overlays.configureRef = null }) }
         HomeOneTimePrompts(
             showSetDefaultPrompt = homeUiState.showSetDefaultPrompt,
             showGestureHint = homeUiState.showGestureHint,

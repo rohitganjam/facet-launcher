@@ -36,10 +36,13 @@ interface ClockStackItemDao {
 
     /** Swaps what the item is, keeping its place and alignment; the sizes only fit the item they were set for, so they reset. */
     @Query(
-        "UPDATE clock_stack_items SET kind = :kind, appWidgetId = :appWidgetId, nativeWidgetType = :nativeWidgetType, widthDp = NULL, heightDp = NULL, " +
+        "UPDATE clock_stack_items SET kind = :kind, appWidgetId = :appWidgetId, nativeWidgetType = :nativeWidgetType, nativeWidgetConfig = NULL, widthDp = NULL, heightDp = NULL, " +
             "landscapeWidthDp = NULL, landscapeHeightDp = NULL WHERE id = :id",
     )
     suspend fun replace(id: Long, kind: ClockStackItemKind, appWidgetId: Int?, nativeWidgetType: NativeWidgetType?)
+
+    @Query("UPDATE clock_stack_items SET nativeWidgetConfig = :config WHERE id = :id")
+    suspend fun updateConfig(id: Long, config: String?)
 
     @Query("UPDATE clock_stack_items SET widthDp = :widthDp, heightDp = :heightDp WHERE id = :id")
     suspend fun setSize(id: Long, widthDp: Int, heightDp: Int)

@@ -1,4 +1,4 @@
-package com.facetlauncher.app.ui.hub.config
+package com.facetlauncher.app.ui.nativewidget.config
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -18,6 +18,7 @@ import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
@@ -26,8 +27,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.facetlauncher.app.R
-import com.facetlauncher.app.data.model.CalendarInfo
 import com.facetlauncher.app.data.model.NativeWidgetConfig
+import com.facetlauncher.app.data.model.NativeWidgetRef
 import com.facetlauncher.app.data.model.NativeWidgetType
 import com.facetlauncher.app.data.model.WeatherCity
 import com.facetlauncher.app.data.model.WidgetWeatherLocation
@@ -41,30 +42,31 @@ import com.facetlauncher.app.ui.theme.Surface
 import com.facetlauncher.app.ui.theme.SurfaceContainer
 import kotlinx.collections.immutable.ImmutableList
 
-/** The settings of one Weather or Agenda widget on the Hub: its own calendars or location, or the launcher's. */
+/** The settings of one Weather or Agenda widget, on the Hub or on Home: its own calendars or location, or the launcher's. */
 @Composable
-fun HubWidgetConfigSheet(
-    appWidgetId: Int,
-    type: NativeWidgetType,
-    config: NativeWidgetConfig,
+fun NativeWidgetConfigSheet(
+    ref: NativeWidgetRef,
     onDismiss: () -> Unit,
-    viewModel: HubWidgetConfigViewModel = hiltViewModel(),
+    viewModel: NativeWidgetConfigViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    HubWidgetConfigContent(
-        type = type,
-        config = config,
-        state = state,
-        onDismiss = onDismiss,
-        onConfigChange = { viewModel.save(appWidgetId, it) },
-    )
+    val settings by remember(ref) { viewModel.settings(ref) }.collectAsStateWithLifecycle(initialValue = null)
+    settings?.let {
+        NativeWidgetConfigContent(
+            type = it.type,
+            config = it.config,
+            state = state,
+            onDismiss = onDismiss,
+            onConfigChange = { config -> viewModel.save(ref, config) },
+        )
+    }
 }
 
 @Composable
-internal fun HubWidgetConfigContent(
+internal fun NativeWidgetConfigContent(
     type: NativeWidgetType,
     config: NativeWidgetConfig,
-    state: HubWidgetConfigUiState,
+    state: NativeWidgetConfigUiState,
     onDismiss: () -> Unit,
     onConfigChange: (NativeWidgetConfig) -> Unit,
 ) {
@@ -79,7 +81,7 @@ internal fun HubWidgetConfigContent(
         ) {
             Text(text = stringResource(type.labelRes()), style = MaterialTheme.typography.titleMedium, color = Ink)
             when (type) {
-                NativeWidgetType.AGENDA -> AgendaConfig(config, state.calendars, onConfigChange)
+                NativeWidgetType.AGENDA -> AgendaConfig(config, state, onConfigChange)
                 NativeWidgetType.WEATHER -> WeatherConfig(config, state.savedCities, onConfigChange)
                 NativeWidgetType.NOW_PLAYING -> Unit
             }
@@ -87,41 +89,42 @@ internal fun HubWidgetConfigContent(
     }
 }
 
+/** The launcher's Calendar settings, per widget: all-day events on or off, and which calendars. Each starts from the launcher's current value. */
 @Composable
-private fun AgendaConfig(config: NativeWidgetConfig, calendars: ImmutableList<CalendarInfo>, onConfigChange: (NativeWidgetConfig) -> Unit) {
-    val chosen = config.calendarIds
+private fun AgendaConfig(config: NativeWidgetConfig, state: NativeWidgetConfigUiState, onConfigChange: (NativeWidgetConfig) -> Unit) {
+    val showAllDay = config.showAllDayEvents ?: state.launcherShowAllDay
+    val chosen = config.calendarIds ?: state.launcherCalendarIds ?: state.calendars.map { it.id }.toSet()
+    fun change(allDay: Boolean = showAllDay, ids: Set<String> = chosen) = onConfigChange(config.copy(showAllDayEvents = allDay, calendarIds = ids))
     Column {
         Row(
             modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
-            Text(text = stringResource(R.string.hub_widget_config_use_launcher), style = MaterialTheme.typography.bodyLarge, color = Ink, modifier = Modifier.weight(1f))
+            Text(text = stringResource(R.string.calendar_settings_show_all_day_events), style = MaterialTheme.typography.bodyLarge, color = Ink, modifier = Modifier.weight(1f))
             Switch(
-                checked = chosen == null,
-                onCheckedChange = { follow -> onConfigChange(config.copy(calendarIds = if (follow) null else calendars.map { it.id }.toSet())) },
+                checked = showAllDay,
+                onCheckedChange = { change(allDay = it) },
                 colors = SwitchDefaults.colors(checkedTrackColor = Accent, checkedThumbColor = Surface),
-                modifier = Modifier.testTag("hub_widget_config_follow"),
+                modifier = Modifier.testTag("hub_widget_config_all_day"),
             )
         }
-        if (chosen != null) {
-            SectionLabel(stringResource(R.string.hub_widget_config_calendars))
-            if (calendars.isEmpty()) Text(text = stringResource(R.string.hub_widget_config_no_calendars), style = MaterialTheme.typography.bodyMedium, color = Muted)
-            calendars.forEach { calendar ->
-                val selected = calendar.id in chosen
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { onConfigChange(config.copy(calendarIds = if (selected) chosen - calendar.id else chosen + calendar.id)) }
-                        .padding(vertical = 4.dp)
-                        .testTag("hub_widget_config_calendar_${calendar.id}"),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Checkbox(checked = selected, onCheckedChange = null, colors = CheckboxDefaults.colors(checkedColor = Accent))
-                    Column(modifier = Modifier.padding(start = 12.dp)) {
-                        Text(text = calendar.displayName, style = MaterialTheme.typography.bodyLarge, color = Ink)
-                        Text(text = calendar.accountName, style = MaterialTheme.typography.bodySmall, color = Muted)
-                    }
+        SectionLabel(stringResource(R.string.hub_widget_config_calendars))
+        if (state.calendars.isEmpty()) Text(text = stringResource(R.string.hub_widget_config_no_calendars), style = MaterialTheme.typography.bodyMedium, color = Muted)
+        state.calendars.forEach { calendar ->
+            val selected = calendar.id in chosen
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { change(ids = if (selected) chosen - calendar.id else chosen + calendar.id) }
+                    .padding(vertical = 4.dp)
+                    .testTag("hub_widget_config_calendar_${calendar.id}"),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Checkbox(checked = selected, onCheckedChange = null, colors = CheckboxDefaults.colors(checkedColor = Accent))
+                Column(modifier = Modifier.padding(start = 12.dp)) {
+                    Text(text = calendar.displayName, style = MaterialTheme.typography.bodyLarge, color = Ink)
+                    Text(text = calendar.accountName, style = MaterialTheme.typography.bodySmall, color = Muted)
                 }
             }
         }

@@ -253,6 +253,7 @@ private fun ClockOrWidgetContent(
             size = DpSize(clockWidgetWidthDp, clockWidgetHeightDp),
             state = nativeWidget.state,
             actions = nativeWidget.actions,
+            ref = nativeWidget.ref,
             modifier = Modifier.longPressFallback(onClockWidgetLongPress),
         )
     } else if (clockWidgetAppWidgetId != null && clockWidgetWidthDp != null && clockWidgetHeightDp != null) {

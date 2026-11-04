@@ -5,6 +5,7 @@ import com.facetlauncher.app.data.LocationRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.data.model.WeatherLocationMode
+import com.facetlauncher.app.domain.NativeWidgetOverrides
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
@@ -35,7 +36,7 @@ class NativeWidgetAccessViewModelTest {
     private fun viewModel(mode: WeatherLocationMode): NativeWidgetAccessViewModel {
         val settings = mock(SettingsRepository::class.java)
         `when`(settings.settings).thenReturn(flowOf(LauncherSettings(weatherLocationMode = mode)))
-        return NativeWidgetAccessViewModel(settings, calendar, location)
+        return NativeWidgetAccessViewModel(settings, calendar, location, NativeWidgetOverrides { flowOf(emptyMap()) })
     }
 
     @Test

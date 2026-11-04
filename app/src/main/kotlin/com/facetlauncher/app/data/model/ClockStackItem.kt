@@ -33,6 +33,8 @@ data class ClockStackItem(
     val landscapeWidthDp: Int? = null,
     val landscapeHeightDp: Int? = null,
     val landscapeAlignment: ClockAlignment? = null,
+    /** What a native widget page is set to instead of the launcher-wide setting; see [NativeWidgetConfig]. `null` follows the launcher. */
+    val nativeWidgetConfig: String? = null,
 )
 
 /** The page every facet starts with: its native clock. A real row gets its ids when stored. */

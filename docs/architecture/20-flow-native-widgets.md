@@ -58,20 +58,30 @@ Weather: `HomeDrawerRoute` keeps the forecast fresh while the clock's weather ac
 Home page (`HomeUiState.showsNativeWeather`) **or** on the Hub (`HubViewModel.hasNativeWeather`). It goes through the same
 refresh gate and location rules as the accessory ([18](18-flow-weather.md)); nothing is requested while none of the three is on.
 
-### 3a. Per-widget settings (Hub)
+### 3a. Per-widget settings (Hub and Home)
 
-A Hub Agenda at Medium or Large (`isConfigurable`) has a 3-dot button at its top right, and a Hub Weather widget opens its own weather sheet when tapped (`NativeWidgetActions.onOpenHubWeather`, which shows that widget's forecast), with a 3-dot button to the right of the rain summary. Either opens `HubWidgetConfigSheet`, which edits `widget_placements.nativeWidgetConfig` (`NativeWidgetConfig`, one tab-separated
-line per field): Agenda picks its own calendars, Weather picks the current location or one of the cities saved in the weather
-settings. A `null` field follows the launcher-wide setting; Now Playing and Home stack pages have none.
+A Weather or Agenda widget can be set to its own calendars or location instead of the launcher-wide setting, wherever it is placed: on
+the Hub (`widget_placements.nativeWidgetConfig`) or as a Home clock page (`clock_stack_items.nativeWidgetConfig`). Both go through one
+path, keyed by `NativeWidgetRef` (`Hub(appWidgetId)` or `Home(itemId)`):
 
-`ObserveNativeWidgetOverridesUseCase` (behind the `NativeWidgetOverrides` interface `HubViewModel` reads) turns each widget with a
-setting into a `NativeWidgetOverride` (its events, or its `WeatherState`), re-derived every five minutes; `NativeWidgetState.withOverride`
-applies it on the tile. Forecasts are shared by place: `WidgetWeatherRepository` holds one in-memory forecast per place behind the
-same `WeatherRefreshPolicy` gate, so widgets on one city make one request, and a place equal to the launcher-wide one reads the
-launcher's own stored forecast and makes none. "Current location" while the launcher already follows the position is the launcher's
-forecast too.
-
-On adding a Weather or Agenda widget from the Hub picker (one that has settings at its default size), the picker emits `HubAddWidgetEvent.NativeWidgetAdded(id)`; `HomeDrawerRoute` passes it to `HubViewModel.requestConfigure`, and `HubScreen` opens the config sheet for it, so the widget's calendars or location are chosen right after placing it. Now Playing just closes the picker.
+- `NativeWidgetConfig` (one tab-separated line per field) stores it: Agenda's chosen calendar ids and all-day choice (the sheet shows the
+  launcher's Calendar options, starting from the launcher's current values, with no follow switch), Weather's current location or a saved
+  city. A `null` field follows the launcher; Now Playing has none. `SetNativeWidgetConfigUseCase` writes either store and
+  `ObserveNativeWidgetSettingsUseCase` reads it back.
+- `ObserveNativeWidgetOverridesUseCase` turns every widget with a setting (Hub placements and the active facet's Home pages) into a
+  `NativeWidgetOverride` (its events, or its `WeatherState`) through `NativeWidgetOverrideResolver`, re-derived every five minutes.
+  `NativeWidgetAccessViewModel` exposes the map; `HomeDrawerRoute` puts it in `NativeWidgetState.overrides`, and `NativeWidget` reads
+  its own entry by its `ref`.
+- Forecasts are shared by place: `WidgetWeatherRepository` holds one in-memory forecast per place behind the same `WeatherRefreshPolicy`
+  gate, so widgets on one city make one request, and a place equal to the launcher-wide one reads the launcher's own stored forecast and
+  makes none. "Current location" while the launcher already follows the position is the launcher's forecast too.
+- A **medium or large Agenda** (`isConfigurable`) has a 3-dot button at its top right; a **Weather** widget opens its own weather sheet when
+  tapped (`NativeWidgetActions.onOpenWeather(ref)`, which shows that widget's forecast), with a 3-dot button to the right of the rain
+  summary. Both call `onConfigure(ref)`, and `HomeDrawerRoute` opens `NativeWidgetConfigSheet(ref)` (`HomeOverlayState.configureRef`).
+- On adding a Weather or Agenda widget from the Hub picker (one that has settings at its default size) the picker emits
+  `HubAddWidgetEvent.NativeWidgetAdded(id)` and the route opens the sheet for `Hub(id)`. Adding to a Home page does not open it.
+- Backup: a Weather widget's own location travels (`BackupWidgetPlacement.nativeWidgetConfig`, `BackupNativeStackPage.nativeWidgetConfig`);
+  an Agenda widget's calendar ids are left out, since they belong to the device (its all-day choice travels). Replacing a Home page resets its setting.
 
 ### 3b. Missing permissions
 
@@ -103,7 +113,7 @@ Additive, no `CURRENT_BACKUP_VERSION` bump. `BackupWidgetPlacement.nativeWidgetT
 carry the types with their sizes and alignments. Import writes the native Hub placements straight back
 (`deleteAllNative()` first, then new negative ids) instead of putting them in the re-add queue, and appends the native
 pages after a restored facet's launcher clock (`ClockStackRepository.restoreNativeWidgets`, up to the stack limit).
-A Weather widget's own location (`BackupWidgetPlacement.nativeWidgetConfig`) travels too; an Agenda widget's calendar ids are left out, since they belong to the device. An unknown type from a newer backup is skipped. Hosted widgets are unchanged.
+A Weather widget's own location (`BackupWidgetPlacement.nativeWidgetConfig`) travels too; an Agenda widget's calendar ids are left out, since they belong to the device (its all-day choice travels). An unknown type from a newer backup is skipped. Hosted widgets are unchanged.
 
 ## 6. Tests
 

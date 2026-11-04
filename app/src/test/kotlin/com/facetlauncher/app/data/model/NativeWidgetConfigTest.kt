@@ -65,4 +65,18 @@ class NativeWidgetConfigTest {
         // Then no location is read
         assertNull(decoded.weatherLocation)
     }
+
+    @Test
+    fun `the all-day choice round trips and is kept apart from following the launcher`() {
+        // Given a widget set to hide all-day events and nothing else
+        val config = NativeWidgetConfig(showAllDayEvents = false)
+
+        // When encoded and decoded
+        val decoded = decodeNativeWidgetConfig(config.encode())
+
+        // Then the choice is kept, with no calendars of its own, and the widget is no longer following the launcher
+        assertEquals(false, decoded.showAllDayEvents)
+        assertNull(decoded.calendarIds)
+        assertTrue(!decoded.followsLauncher)
+    }
 }

@@ -1,8 +1,6 @@
 package com.facetlauncher.app.ui.hub
 
-import com.facetlauncher.app.data.model.NativeWidgetConfig
 import com.facetlauncher.app.data.model.NativeWidgetType
-import com.facetlauncher.app.domain.NativeWidgetOverride
 import com.facetlauncher.app.domain.HUB_COLUMNS
 import com.facetlauncher.app.domain.HUB_MAX_WIDGETS
 import kotlinx.collections.immutable.ImmutableList
@@ -23,9 +21,6 @@ data class HubWidgetUi(
     val isOrphaned: Boolean,
     val landscapeOrder: Int? = null,
     val nativeWidgetType: NativeWidgetType? = null,
-    val nativeWidgetConfig: NativeWidgetConfig = NativeWidgetConfig(),
-    /** What the widget shows instead of the launcher-wide data, when it is set to its own calendars or location. */
-    val nativeOverride: NativeWidgetOverride? = null,
 )
 
 /** A widget placed in the landscape grid: [row]/[col] are landscape's own, packed from the saved order (see [com.facetlauncher.app.domain.LandscapeHubUseCase]), and [rowSpan] is clamped to the rows shown. */
@@ -38,9 +33,6 @@ data class HubLandscapeWidgetUi(
     val providerLabel: String?,
     val isOrphaned: Boolean,
     val nativeWidgetType: NativeWidgetType? = null,
-    val nativeWidgetConfig: NativeWidgetConfig = NativeWidgetConfig(),
-    /** What the widget shows instead of the launcher-wide data, when it is set to its own calendars or location. */
-    val nativeOverride: NativeWidgetOverride? = null,
 )
 
 data class HubUiState(

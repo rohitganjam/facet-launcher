@@ -1,5 +1,13 @@
 package com.facetlauncher.app.domain
 
+import com.facetlauncher.app.data.local.WidgetPlacementEntity
+import com.facetlauncher.app.data.model.BackupNativeStackPage
+import com.facetlauncher.app.data.model.NativeWidgetConfig
+import com.facetlauncher.app.data.model.NativeWidgetType
+import com.facetlauncher.app.data.model.WeatherCity
+import com.facetlauncher.app.data.model.WidgetWeatherLocation
+import com.facetlauncher.app.data.model.decodeNativeWidgetConfig
+import com.facetlauncher.app.data.model.encode
 import com.facetlauncher.app.data.model.Facet
 import com.facetlauncher.app.data.model.AppListColumnAlignment
 import com.facetlauncher.app.data.model.AppListVerticalAlignment
@@ -104,5 +112,33 @@ class BackupMappingTest {
         assertNull(restored.clockZoneHeightDp)
         assertEquals(AppListVerticalAlignment.LAUNCHER_DEFAULT, restored.appListVerticalAlignment)
         assertNull(restored.landscapeClockAlignment)
+    }
+
+    @Test
+    fun `a native widget's own location is backed up and its calendar ids are not`() {
+        // Given a Hub Agenda set to calendar ids of this device and a Weather widget set to a city
+        val oslo = WeatherCity("Oslo", 59.91, 10.75, "Europe/Oslo")
+        val agenda = WidgetPlacementEntity(-1, "", "", 0, 0, 4, 2, nativeWidgetType = NativeWidgetType.AGENDA, nativeWidgetConfig = NativeWidgetConfig(calendarIds = setOf("5")).encode())
+        val weather = WidgetPlacementEntity(-2, "", "", 2, 0, 4, 2, nativeWidgetType = NativeWidgetType.WEATHER, nativeWidgetConfig = NativeWidgetConfig(weatherLocation = WidgetWeatherLocation.City(oslo)).encode())
+
+        // When mapped to the backup
+        val backedAgenda = agenda.toBackupPlacement()
+        val backedWeather = weather.toBackupPlacement()
+
+        // Then the calendar ids are dropped and the city is kept
+        assertNull(backedAgenda.nativeWidgetConfig)
+        assertEquals(WidgetWeatherLocation.City(oslo), decodeNativeWidgetConfig(backedWeather.nativeWidgetConfig).weatherLocation)
+    }
+
+    @Test
+    fun `a restored Home page keeps the location it was backed up with`() {
+        // Given a backed-up Weather page set to current location
+        val page = BackupNativeStackPage(type = "WEATHER", nativeWidgetConfig = NativeWidgetConfig(weatherLocation = WidgetWeatherLocation.Current).encode())
+
+        // When restored as a stack item
+        val item = page.toStackItem()
+
+        // Then the item follows the same setting
+        assertEquals(WidgetWeatherLocation.Current, decodeNativeWidgetConfig(item?.nativeWidgetConfig).weatherLocation)
     }
 }

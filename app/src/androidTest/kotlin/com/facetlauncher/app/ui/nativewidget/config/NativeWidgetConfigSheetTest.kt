@@ -1,4 +1,4 @@
-package com.facetlauncher.app.ui.hub.config
+package com.facetlauncher.app.ui.nativewidget.config
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -20,14 +20,15 @@ import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 
-class HubWidgetConfigSheetTest {
+class NativeWidgetConfigSheetTest {
 
     @get:Rule
     val composeRule = createComposeRule()
 
     private val oslo = WeatherCity("Oslo", 59.91, 10.75, "Europe/Oslo")
-    private val state = HubWidgetConfigUiState(
+    private val state = NativeWidgetConfigUiState(
         calendars = persistentListOf(CalendarInfo("1", "Personal", "me@example.com"), CalendarInfo("2", "Work", "me@work.com")),
+        launcherShowAllDay = true,
         savedCities = persistentListOf(oslo),
     )
 
@@ -35,22 +36,23 @@ class HubWidgetConfigSheetTest {
         composeRule.setContent {
             FacetLauncherTheme {
                 var config by mutableStateOf(initial)
-                HubWidgetConfigContent(type = type, config = config, state = state, onDismiss = {}, onConfigChange = { config = it; onChange(it) })
+                NativeWidgetConfigContent(type = type, config = config, state = state, onDismiss = {}, onConfigChange = { config = it; onChange(it) })
             }
         }
     }
 
     @Test
-    fun agendaFollowsTheLauncherUntilTheSwitchIsTurnedOff() {
-        // Given an agenda widget that follows the launcher
+    fun agendaStartsFromTheLaunchersCalendarSettingsAndAllDayCanBeTurnedOff() {
+        // Given an agenda that follows the launcher, which shows all-day events
         var saved: NativeWidgetConfig? = null
         show(NativeWidgetType.AGENDA, NativeWidgetConfig(), onChange = { saved = it })
 
-        // When turning the follow switch off
-        composeRule.onNodeWithTag("hub_widget_config_follow").performClick()
+        // When turning all-day events off
+        composeRule.onNodeWithTag("hub_widget_config_all_day").performClick()
 
-        // Then it is set to its own calendars, starting with all of them
+        // Then the widget has its own all-day choice, and the calendars it was already showing
         composeRule.waitForIdle()
+        assertEquals(false, saved?.showAllDayEvents)
         assertEquals(setOf("1", "2"), saved?.calendarIds)
     }
 

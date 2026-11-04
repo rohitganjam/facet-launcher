@@ -4,6 +4,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.mutableStateOf
+import com.facetlauncher.app.data.model.NativeWidgetRef
 
 /**
  * Which in-place sub-screens are open over Home. They are overlays inside [HomeDrawerRoute], not
@@ -24,8 +25,11 @@ internal class HomeOverlayState {
     /** The weather sheet, opened from the clock's weather accessory. It is its own bottom sheet window, so it is not part of [anyOpen]. */
     var showWeatherSheet by mutableStateOf(false)
 
-    /** The Hub Weather widget the sheet was opened from, `null` when it came from the clock's accessory. */
-    var weatherSheetWidgetId by mutableStateOf<Int?>(null)
+    /** The Weather widget the sheet was opened from, Hub or Home; `null` when it came from the clock's accessory. */
+    var weatherSheetRef by mutableStateOf<NativeWidgetRef?>(null)
+
+    /** The widget whose settings sheet is open. It is its own bottom sheet window, so it is not part of [anyOpen]. */
+    var configureRef by mutableStateOf<NativeWidgetRef?>(null)
 
     /** Private Space, over the app drawer. */
     var showPrivateSpace by mutableStateOf(false)

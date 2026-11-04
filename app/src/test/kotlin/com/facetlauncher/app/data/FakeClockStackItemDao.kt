@@ -35,6 +35,10 @@ class FakeClockStackItemDao(initial: List<ClockStackItemEntity> = emptyList()) :
         return stored.id
     }
 
+    override suspend fun updateConfig(id: Long, config: String?) {
+        rows.value = rows.value.map { if (it.id == id) it.copy(nativeWidgetConfig = config) else it }
+    }
+
     override suspend fun delete(id: Long) {
         rows.value = rows.value.filterNot { it.id == id }
     }

@@ -121,7 +121,10 @@ fun Facet.toBackupFacet(
 )
 
 private fun ClockStackItem.toBackupNativePage() = nativeWidgetType?.let {
-    BackupNativeStackPage(it.name, widthDp, heightDp, alignment?.name, landscapeWidthDp, landscapeHeightDp, landscapeAlignment?.name)
+    BackupNativeStackPage(
+        it.name, widthDp, heightDp, alignment?.name, landscapeWidthDp, landscapeHeightDp, landscapeAlignment?.name,
+        decodeNativeWidgetConfig(nativeWidgetConfig).copy(calendarIds = null).encode(),
+    )
 }
 
 /** The page as a stack item for the facet; `null` for a type this version does not know, so a newer backup still restores. */
@@ -129,7 +132,7 @@ fun BackupNativeStackPage.toStackItem(): ClockStackItem? = type.toEnumOrNull<Nat
     ClockStackItem(
         id = 0L, facetId = 0L, position = 0, kind = ClockStackItemKind.NATIVE_WIDGET, nativeWidgetType = it,
         widthDp = widthDp, heightDp = heightDp, alignment = alignment?.toEnumOrNull(),
-        landscapeWidthDp = landscapeWidthDp, landscapeHeightDp = landscapeHeightDp, landscapeAlignment = landscapeAlignment?.toEnumOrNull(),
+        landscapeWidthDp = landscapeWidthDp, landscapeHeightDp = landscapeHeightDp, landscapeAlignment = landscapeAlignment?.toEnumOrNull(), nativeWidgetConfig = nativeWidgetConfig,
     )
 }
 

@@ -8,6 +8,8 @@ import com.facetlauncher.app.data.model.ClockAlignment
 import com.facetlauncher.app.data.model.ClockStackItemKind
 import com.facetlauncher.app.data.model.MAX_CLOCK_STACK_ITEMS
 import com.facetlauncher.app.data.model.NativeWidgetType
+import com.facetlauncher.app.data.model.decodeNativeWidgetConfig
+import com.facetlauncher.app.data.model.NativeWidgetConfig
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.After
@@ -40,6 +42,21 @@ class ClockStackRepositoryTest {
     fun tearDown() = database.close()
 
     private suspend fun widgetIds() = repository.getAll(facetId).map { it.appWidgetId }
+
+    @Test
+    fun `a native page keeps its own setting until it is replaced`() = runTest {
+        // Given a native Agenda page set to its own calendars
+        repository.addNativeWidget(facetId, NativeWidgetType.AGENDA)
+        val id = repository.getAll(facetId).single().id
+        repository.setConfig(id, NativeWidgetConfig(calendarIds = setOf("4")))
+        assertEquals(setOf("4"), decodeNativeWidgetConfig(repository.getAll(facetId).single().nativeWidgetConfig).calendarIds)
+
+        // When the page is swapped for another widget
+        repository.replaceWithNativeWidget(id, NativeWidgetType.WEATHER)
+
+        // Then the old setting is gone and it follows the launcher
+        assertNull(repository.getAll(facetId).single().nativeWidgetConfig)
+    }
 
     @Test
     fun `items come back in the order they were added`() = runTest {

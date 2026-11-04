@@ -1,6 +1,7 @@
 package com.facetlauncher.app.domain
 
 import com.facetlauncher.app.data.CalendarPermissionRepository
+import com.facetlauncher.app.data.ClockStackRepository
 import com.facetlauncher.app.data.CalendarRepository
 import com.facetlauncher.app.data.LocationRepository
 import com.facetlauncher.app.data.SettingsRepository
@@ -8,7 +9,10 @@ import com.facetlauncher.app.data.WidgetPlacementRepository
 import com.facetlauncher.app.data.local.WidgetPlacementEntity
 import com.facetlauncher.app.data.model.CalendarEvent
 import com.facetlauncher.app.data.model.LauncherSettings
+import com.facetlauncher.app.data.model.ClockStackItem
+import com.facetlauncher.app.data.model.ClockStackItemKind
 import com.facetlauncher.app.data.model.NativeWidgetConfig
+import com.facetlauncher.app.data.model.NativeWidgetRef
 import com.facetlauncher.app.data.model.NativeWidgetType
 import com.facetlauncher.app.data.model.WeatherCity
 import com.facetlauncher.app.data.model.WeatherHour
@@ -44,6 +48,7 @@ class ObserveNativeWidgetOverridesUseCaseTest {
 
     private val placements = mock(WidgetPlacementRepository::class.java)
     private val settings = mock(SettingsRepository::class.java)
+    private val clockStack = mock(ClockStackRepository::class.java)
     private val calendars = mock(CalendarRepository::class.java)
     private val calendarPermission = mock(CalendarPermissionRepository::class.java)
     private val widgetWeather = mock(WidgetWeatherRepository::class.java)
@@ -52,12 +57,15 @@ class ObserveNativeWidgetOverridesUseCaseTest {
     private val resolvePlace = mock(ResolvePlaceUseCase::class.java)
 
     private fun useCase() = ObserveNativeWidgetOverridesUseCase(
-        placements, settings, calendars, calendarPermission, widgetWeather, launcherWeather, location, resolvePlace,
-        object : Clock() {
-            override fun instant(): Instant = now
-            override fun getZone() = ZoneOffset.UTC
-            override fun withZone(zone: java.time.ZoneId?): Clock = this
-        },
+        placements, clockStack, settings,
+        NativeWidgetOverrideResolver(
+            calendars, calendarPermission, widgetWeather, launcherWeather, location, resolvePlace,
+            object : Clock() {
+                override fun instant(): Instant = now
+                override fun getZone() = ZoneOffset.UTC
+                override fun withZone(zone: java.time.ZoneId?): Clock = this
+            },
+        ),
     )
 
     private fun native(id: Int, type: NativeWidgetType, config: NativeWidgetConfig) = WidgetPlacementEntity(
@@ -68,6 +76,7 @@ class ObserveNativeWidgetOverridesUseCaseTest {
     private fun given(vararg widgets: WidgetPlacementEntity, launcher: LauncherSettings = LauncherSettings()) {
         `when`(placements.observeAll()).thenReturn(flowOf(widgets.toList()))
         `when`(settings.settings).thenReturn(flowOf(launcher))
+        `when`(clockStack.observe(launcher.activeFacetId)).thenReturn(flowOf(emptyList()))
         `when`(launcherWeather.observeState()).thenReturn(flowOf(WeatherFetchState()))
         `when`(launcherWeather.observeHours()).thenReturn(flowOf(emptyList()))
     }
@@ -84,8 +93,40 @@ class ObserveNativeWidgetOverridesUseCaseTest {
         val overrides = useCase()().first()
 
         // Then only the first has an override, with its own events
-        assertEquals(listOf(event), overrides[-1]?.events)
-        assertNull(overrides[-2])
+        assertEquals(listOf(event), overrides[NativeWidgetRef.Hub(-1)]?.events)
+        assertNull(overrides[NativeWidgetRef.Hub(-2)])
+    }
+
+    @Test
+    fun `an agenda with only its own all-day choice keeps the launcher's calendars`() = runTest {
+        // Given the launcher shows calendar 2 with all-day events, and an agenda that hides all-day events
+        val event = CalendarEvent(1, "2", "Standup", 0, 1, false)
+        given(native(-1, NativeWidgetType.AGENDA, NativeWidgetConfig(showAllDayEvents = false)), launcher = LauncherSettings(selectedCalendarIds = setOf("2"), showAllDayEvents = true))
+        `when`(calendarPermission.isGranted()).thenReturn(true)
+        `when`(calendars.getUpcomingEvents(setOf("2"), false)).thenReturn(listOf(event))
+
+        // Then it reads the launcher's calendars with its own all-day choice
+        assertEquals(listOf(event), useCase()().first()[NativeWidgetRef.Hub(-1)]?.events)
+    }
+
+    @Test
+    fun `a Home page with its own calendars is resolved like a Hub widget`() = runTest {
+        // Given an agenda page on the active facet's clock stack set to calendar 5
+        val event = CalendarEvent(1, "5", "Standup", 0, 1, false)
+        given()
+        val page = ClockStackItem(
+            id = 7, facetId = LauncherSettings().activeFacetId, position = 0, kind = ClockStackItemKind.NATIVE_WIDGET,
+            nativeWidgetType = NativeWidgetType.AGENDA, nativeWidgetConfig = NativeWidgetConfig(calendarIds = setOf("5")).encode(),
+        )
+        `when`(clockStack.observe(LauncherSettings().activeFacetId)).thenReturn(flowOf(listOf(page)))
+        `when`(calendarPermission.isGranted()).thenReturn(true)
+        `when`(calendars.getUpcomingEvents(setOf("5"), true)).thenReturn(listOf(event))
+
+        // When observing
+        val overrides = useCase()().first()
+
+        // Then the page gets its own events, keyed as a Home widget
+        assertEquals(listOf(event), overrides[NativeWidgetRef.Home(7)]?.events)
     }
 
     @Test
@@ -95,7 +136,7 @@ class ObserveNativeWidgetOverridesUseCaseTest {
         `when`(calendarPermission.isGranted()).thenReturn(false)
 
         // Then it shows an empty list rather than the launcher's
-        assertEquals(emptyList<CalendarEvent>(), useCase()().first()[-1]?.events)
+        assertEquals(emptyList<CalendarEvent>(), useCase()().first()[NativeWidgetRef.Hub(-1)]?.events)
     }
 
     @Test
@@ -106,7 +147,7 @@ class ObserveNativeWidgetOverridesUseCaseTest {
         `when`(launcherWeather.observeHours()).thenReturn(flowOf(hours))
 
         // When observing
-        val override = useCase()().first()[-1]
+        val override = useCase()().first()[NativeWidgetRef.Hub(-1)]
 
         // Then the widget gets Oslo's weather without a request of its own
         assertEquals("Oslo", override?.weather?.placeName)
@@ -124,8 +165,8 @@ class ObserveNativeWidgetOverridesUseCaseTest {
         val overrides = useCase()().first()
 
         // Then both show Oslo, asking the one shared holder for the same place
-        assertEquals("Oslo", overrides[-1]?.weather?.placeName)
-        assertEquals("Oslo", overrides[-2]?.weather?.placeName)
+        assertEquals("Oslo", overrides[NativeWidgetRef.Hub(-1)]?.weather?.placeName)
+        assertEquals("Oslo", overrides[NativeWidgetRef.Hub(-2)]?.weather?.placeName)
         verify(widgetWeather, times(2)).refresh(osloPlace)
     }
 
@@ -138,7 +179,7 @@ class ObserveNativeWidgetOverridesUseCaseTest {
         )
 
         // Then it has no override of its own
-        assertNull(useCase()().first()[-1])
+        assertNull(useCase()().first()[NativeWidgetRef.Hub(-1)])
     }
 
     @Test
@@ -151,7 +192,7 @@ class ObserveNativeWidgetOverridesUseCaseTest {
         `when`(location.isPermissionGranted()).thenReturn(false)
 
         // Then it shows no forecast instead of the launcher's city
-        val override = useCase()().first()[-1]
+        val override = useCase()().first()[NativeWidgetRef.Hub(-1)]
         assertEquals(true, override?.weatherUnavailable)
         assertEquals(true, override?.locationMissing)
         assertNull(override?.weather)

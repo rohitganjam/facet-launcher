@@ -304,6 +304,8 @@ data class BackupNativeStackPage(
     val landscapeWidthDp: Int? = null,
     val landscapeHeightDp: Int? = null,
     val landscapeAlignment: String? = null,
+    /** A Weather page's own location, as `NativeWidgetConfig` encodes it; an Agenda page's calendar ids are left out, since they belong to this device. */
+    val nativeWidgetConfig: String? = null,
 )
 
 /** A saved weather city in a backup file. */

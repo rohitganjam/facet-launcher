@@ -8,6 +8,7 @@
     <ID>ComposableNestingDepth:FolderContentsSheet.kt:@Composable fun FolderContentsSheet</ID>
     <ID>ComposableNestingDepth:HubGrid.kt:@Composable fun HubGrid</ID>
     <ID>ComposableNestingDepth:HubWidgetPickerScreen.kt:@Composable internal fun HubWidgetPickerContent</ID>
+    <ID>LongMethod:FacetCarouselScreen.kt:@Composable private fun FacetPreviewPage</ID>
     <ID>ComposableParamOrder:ClockAccessoryIcons.kt:@Composable fun BatteryIcon</ID>
     <ID>ComposableParamOrder:ClockTemplates.kt:@Composable fun ClockDisplay</ID>
     <ID>ComposableParamOrder:ClockTemplates.kt:@Composable private fun ClockGlyphText</ID>
@@ -31,7 +32,6 @@
     <ID>LongMethod:AppSortControl.kt:@Composable fun AppSortControl</ID>
     <ID>LongMethod:ContactConnectionsSheet.kt:@Composable fun ContactConnectionsSheet</ID>
     <ID>LongMethod:FacetCarouselScreen.kt:@Composable private fun FacetCarouselContent</ID>
-    <ID>LongMethod:FacetCarouselScreen.kt:@Composable private fun FacetPreviewPage</ID>
     <ID>LongMethod:FolderContentsSheet.kt:@Composable fun FolderContentsSheet</ID>
     <ID>LongMethod:FolderTileContextMenu.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun FolderTileContextMenu</ID>
     <ID>LongMethod:HomeDrawerRoute.kt:@Composable fun HomeDrawerRoute</ID>
@@ -59,7 +59,7 @@
     <ID>ViewModelForwarding:FacetNavHost.kt:HomeDrawerRoute( apps = apps, onAppClick = onAppClick, onNavigateToSettings = { navController.navigate(FacetDestinations.SETTINGS) }, onNavigateToFacetSettings = { facetId -&gt; navController.navigate(FacetDestinations.facetSettings(facetId)) }, onNavigateToManageFacets = { navController.navigate(FacetDestinations.FACET_MANAGE) }, onNavigateToFacetPro = { reason -&gt; navController.navigate(FacetDestinations.facetPro(reason)) }, onNavigateToUsageAccessExplanation = { navController.navigate(FacetDestinations.USAGE_ACCESS_EXPLANATION) }, onNavigateToNotificationAccessExplanation = { navController.navigate(FacetDestinations.NOTIFICATION_ACCESS_EXPLANATION) }, onNavigateToUnitsAndLocation = { navController.navigate(FacetDestinations.UNITS_AND_LOCATION) }, onNavigateToPermissions = { navController.navigate(FacetDestinations.PERMISSIONS) }, onNavigateToWhatsNew = { navController.navigate(FacetDestinations.WHATS_NEW) }, onNavigateToAppearance = { facetId -&gt; navController.navigate(FacetDestinations.appearanceSettings(facetId)) }, onNavigateToClockStack = { navController.navigate(FacetDestinations.CLOCK_STACK) }, launcherViewModel = launcherViewModel, )</ID>
     <ID>ViewModelForwarding:HomeDrawerRoute.kt:ClockWidgetPickerScreen( target = ClockWidgetPickerTarget.Replace(itemId), onDone = { overlays.showClockWidgetPicker = false }, viewModel = clockWidgetPickerViewModel, )</ID>
     <ID>ViewModelForwarding:HomeDrawerRoute.kt:FacetCarouselScreen( onFacetApply = { coroutineScope.launch { swipe.facet.close() } }, onEditFacet = onNavigateToFacetSettings, onReorderFacets = onNavigateToManageFacets, onNavigateToSettings = onNavigateToSettings, onOpenFacetPro = onNavigateToFacetPro, onDismissDrag = { deltaPx -&gt; swipe.facet.dragBy(-deltaPx) }, onDismissDragEnd = { swipe.facet.settle() }, modifier = Modifier.fillMaxSize(), viewModel = facetViewModel, )</ID>
-    <ID>ViewModelForwarding:HomeDrawerRoute.kt:HubScreen( onAddClick = { overlays.showWidgetPicker = true }, onManageClick = {}, // wired once there's a dedicated manage flow modifier = Modifier.fillMaxSize().testTag("hub_screen"), viewModel = hubViewModel, nativeWidgets = NativeWidgetEnvironment( state = homeScreenState.nativeWidgets, actions = NativeWidgetActions( onOpenWeather = screenActions.clock.onWeatherClick, onOpenEvent = screenActions.clock.onEventClick, media = screenActions.media, onRequestCalendarAccess = widgetAccess.requestCalendar, onRequestLocationAccess = widgetAccess.requestLocation, onOpenHubWeather = { id -&gt; overlays.weatherSheetWidgetId = id overlays.showWeatherSheet = true weatherViewModel.refresh(userInitiated = false) }, ), ), )</ID>
-    <ID>ViewModelForwarding:HomeDrawerRoute.kt:HubWidgetPickerScreen(onDone = { overlays.showWidgetPicker = false }, viewModel = widgetPickerViewModel, onConfigureNewWidget = hubViewModel::requestConfigure)</ID>
+    <ID>ViewModelForwarding:HomeDrawerRoute.kt:HubScreen( onAddClick = { overlays.showWidgetPicker = true }, onManageClick = {}, // wired once there's a dedicated manage flow modifier = Modifier.fillMaxSize().testTag("hub_screen"), viewModel = hubViewModel, nativeWidgets = NativeWidgetEnvironment( state = homeScreenState.nativeWidgets, actions = NativeWidgetActions( onOpenWeather = screenActions.clock.onOpenNativeWeather, onConfigure = screenActions.clock.onConfigureNativeWidget, onOpenEvent = screenActions.clock.onEventClick, media = screenActions.media, onRequestCalendarAccess = widgetAccess.requestCalendar, onRequestLocationAccess = widgetAccess.requestLocation, ), ), )</ID>
+    <ID>ViewModelForwarding:HomeDrawerRoute.kt:HubWidgetPickerScreen(onDone = { overlays.showWidgetPicker = false }, viewModel = widgetPickerViewModel, onConfigureNewWidget = { id -&gt; overlays.configureRef = NativeWidgetRef.Hub(id) })</ID>
   </CurrentIssues>
 </SmellBaseline>

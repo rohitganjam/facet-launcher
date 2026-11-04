@@ -942,6 +942,25 @@ class FacetDatabaseMigrationTest {
         cursor.close()
     }
 
+    @Test
+    fun migration39To40KeepsStackItemsAndLeavesTheWidgetConfigEmpty() {
+        // Given a v39 database with a native stack page
+        val dbV39 = helper.createDatabase(TEST_DB, 39)
+        dbV39.execSQL("INSERT INTO clock_stack_items (id, facetId, position, kind, nativeWidgetType) VALUES (3, 1, 0, 'NATIVE_WIDGET', 'WEATHER')")
+        dbV39.close()
+
+        // When migrating to v40 (Room also validates the result against the exported v40 schema)
+        val dbV40 = helper.runMigrationsAndValidate(TEST_DB, 40, true, Migrations.MIGRATION_39_40)
+
+        // Then the page is intact and follows the launcher-wide settings
+        val cursor = dbV40.query("SELECT id, nativeWidgetType, nativeWidgetConfig FROM clock_stack_items")
+        cursor.moveToFirst()
+        assertEquals(3, cursor.getInt(0))
+        assertEquals("WEATHER", cursor.getString(1))
+        assertTrue(cursor.isNull(2))
+        cursor.close()
+    }
+
     /** A v27 facet row — the v25 shape plus the two calendar-display columns, which a freshly created database has no defaults for. */
     private fun insertFacetV27(db: androidx.sqlite.db.SupportSQLiteDatabase, id: Long, name: String) {
         insertFacetV25Columns(db, id, name, extraColumns = ", showCalendarIndicator, calendarItemsToShow", extraValues = ", 1, 3")

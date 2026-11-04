@@ -2,9 +2,8 @@ package com.facetlauncher.app.ui.hub
 
 import androidx.compose.ui.unit.DpSize
 import com.facetlauncher.app.ui.nativewidget.NativeWidgetEnvironment
+import com.facetlauncher.app.data.model.NativeWidgetRef
 import com.facetlauncher.app.ui.nativewidget.NativeWidget
-import com.facetlauncher.app.ui.nativewidget.forHubWidget
-import com.facetlauncher.app.ui.nativewidget.withOverride
 import com.facetlauncher.app.domain.minSpan
 import android.appwidget.AppWidgetHostView
 import android.content.Context
@@ -445,9 +444,9 @@ fun HubGrid(
                                 NativeWidget(
                                     type = widget.nativeWidgetType,
                                     size = DpSize(tileWidth, tileHeight),
-                                    state = nativeWidgets.state.withOverride(widget.nativeOverride),
-                                    actions = nativeWidgets.actions.forHubWidget(widget.appWidgetId),
-                                    onConfigure = { nativeWidgets.actions.onConfigure(widget.appWidgetId) },
+                                    state = nativeWidgets.state,
+                                    actions = nativeWidgets.actions,
+                                    ref = NativeWidgetRef.Hub(widget.appWidgetId),
                                 )
                             } else if (widget.isOrphaned) {
                                 OrphanedWidgetTile(

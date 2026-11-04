@@ -31,12 +31,19 @@ import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.model.WeatherLocationMode
 import com.facetlauncher.app.ui.components.TextActionButton
 import com.facetlauncher.app.ui.theme.Muted
+import com.facetlauncher.app.data.model.NativeWidgetRef
+import com.facetlauncher.app.domain.NativeWidgetOverride
+import com.facetlauncher.app.domain.NativeWidgetOverrides
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
+import kotlinx.collections.immutable.ImmutableMap
+import kotlinx.collections.immutable.persistentMapOf
+import kotlinx.collections.immutable.toImmutableMap
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 
 /** What the widgets Facet draws itself are missing to show anything: the permission they read, when they need it. */
@@ -53,6 +60,7 @@ class NativeWidgetAccessViewModel @Inject constructor(
     settingsRepository: SettingsRepository,
     private val calendarPermissionRepository: CalendarPermissionRepository,
     private val locationRepository: LocationRepository,
+    observeOverrides: NativeWidgetOverrides,
 ) : ViewModel() {
 
     private val recheck = MutableStateFlow(0)
@@ -64,6 +72,11 @@ class NativeWidgetAccessViewModel @Inject constructor(
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), NativeWidgetAccess())
 
+    /** What each widget set to its own calendars or location shows, for Hub tiles and Home pages alike. */
+    val overrides: StateFlow<ImmutableMap<NativeWidgetRef, NativeWidgetOverride>> = observeOverrides()
+        .map { it.toImmutableMap() }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), persistentMapOf())
+
     fun refresh() {
         recheck.value += 1
     }
@@ -71,11 +84,17 @@ class NativeWidgetAccessViewModel @Inject constructor(
 
 /** The permission state and the two runtime requests a widget's "Allow" button runs. */
 @Immutable
-data class NativeWidgetAccessControls(val access: NativeWidgetAccess, val requestCalendar: () -> Unit, val requestLocation: () -> Unit)
+data class NativeWidgetAccessControls(
+    val access: NativeWidgetAccess,
+    val requestCalendar: () -> Unit,
+    val requestLocation: () -> Unit,
+    val overrides: ImmutableMap<NativeWidgetRef, NativeWidgetOverride> = persistentMapOf(),
+)
 
 @Composable
 fun rememberNativeWidgetAccess(viewModel: NativeWidgetAccessViewModel = hiltViewModel()): NativeWidgetAccessControls {
     val access by viewModel.access.collectAsStateWithLifecycle()
+    val overrides by viewModel.overrides.collectAsStateWithLifecycle()
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event -> if (event == Lifecycle.Event.ON_RESUME) viewModel.refresh() }
@@ -88,6 +107,7 @@ fun rememberNativeWidgetAccess(viewModel: NativeWidgetAccessViewModel = hiltView
         access = access,
         requestCalendar = { calendar.launch(Manifest.permission.READ_CALENDAR) },
         requestLocation = { location.launch(Manifest.permission.ACCESS_COARSE_LOCATION) },
+        overrides = overrides,
     )
 }
 

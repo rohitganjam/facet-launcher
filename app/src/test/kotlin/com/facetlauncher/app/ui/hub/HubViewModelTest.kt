@@ -194,21 +194,6 @@ class HubViewModelTest {
         HubWidgetState(id, row = row, col = 0, colSpan = 1, rowSpan = 1, providerLabel = "W$id", isOrphaned = false, landscapeOrder = landscapeOrder)
 
     @Test
-    fun `a configure request is held until the Hub has handled it`() = runTest {
-        // Given a Hub with no pending request
-        val viewModel = landscapeViewModel(InMemoryWidgetPlacementDao(emptyList()), emptyList())
-        assertEquals(null, viewModel.configureRequest.value)
-
-        // When the picker asks for a just-placed widget's settings
-        viewModel.requestConfigure(-3)
-
-        // Then the request is kept for the Hub, and cleared once it has opened them
-        assertEquals(-3, viewModel.configureRequest.value)
-        viewModel.onConfigureRequestHandled()
-        assertEquals(null, viewModel.configureRequest.value)
-    }
-
-    @Test
     fun `landscape widgets stay empty until the screen reports its rows`() = runTest {
         val viewModel = landscapeViewModel(InMemoryWidgetPlacementDao(emptyList()), listOf(placed(1, row = 0)))
         backgroundScope.launch { viewModel.uiState.collect {} }

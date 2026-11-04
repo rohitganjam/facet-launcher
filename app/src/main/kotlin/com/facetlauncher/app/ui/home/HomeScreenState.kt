@@ -20,6 +20,7 @@ import com.facetlauncher.app.data.model.AppRowPresentation
 import com.facetlauncher.app.data.model.CalendarDisplayOptions
 import com.facetlauncher.app.data.model.CalendarEvent
 import com.facetlauncher.app.data.model.ClockAlignment
+import com.facetlauncher.app.data.model.NativeWidgetRef
 import com.facetlauncher.app.data.model.NativeWidgetType
 import com.facetlauncher.app.ui.nativewidget.NativeWidgetState
 import com.facetlauncher.app.data.model.ClockColorOption
@@ -190,6 +191,9 @@ data class HomeScreenState(
 data class HomeClockActions(
     val onClockClick: () -> Unit = {},
     val onWeatherClick: () -> Unit = {},
+    /** A tap on a Weather widget page, and the request to open a widget's settings; both say which widget. */
+    val onOpenNativeWeather: (NativeWidgetRef?) -> Unit = {},
+    val onConfigureNativeWidget: (NativeWidgetRef) -> Unit = {},
     val onRequestCalendarAccess: () -> Unit = {},
     val onRequestLocationAccess: () -> Unit = {},
     val onBatteryClick: () -> Unit = {},

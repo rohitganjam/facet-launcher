@@ -9,7 +9,9 @@ import com.facetlauncher.app.data.model.ClockAlignment
 import com.facetlauncher.app.data.model.ClockStackItem
 import com.facetlauncher.app.data.model.ClockStackItemKind
 import com.facetlauncher.app.data.model.MAX_CLOCK_STACK_ITEMS
+import com.facetlauncher.app.data.model.NativeWidgetConfig
 import com.facetlauncher.app.data.model.NativeWidgetType
+import com.facetlauncher.app.data.model.encode
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.flow.Flow
@@ -58,10 +60,13 @@ class ClockStackRepository @Inject constructor(
                     facetId = facetId, position = count, kind = ClockStackItemKind.NATIVE_WIDGET, nativeWidgetType = page.nativeWidgetType,
                     widthDp = page.widthDp, heightDp = page.heightDp, alignment = page.alignment,
                     landscapeWidthDp = page.landscapeWidthDp, landscapeHeightDp = page.landscapeHeightDp, landscapeAlignment = page.landscapeAlignment,
+                    nativeWidgetConfig = page.nativeWidgetConfig,
                 ),
             )
         }
     }
+
+    suspend fun setConfig(itemId: Long, config: NativeWidgetConfig) = dao.updateConfig(itemId, config.encode())
 
     /** Swaps the item for a widget Facet draws itself in place. `null` when the item does not exist, else what to release. */
     suspend fun replaceWithNativeWidget(itemId: Long, type: NativeWidgetType): ReplacedItem? = database.withTransaction {

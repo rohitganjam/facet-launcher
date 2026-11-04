@@ -28,10 +28,13 @@ data class ClockStackItemEntity(
     val landscapeWidthDp: Int? = null,
     val landscapeHeightDp: Int? = null,
     val landscapeAlignment: ClockAlignment? = null,
+    /** What this native widget page is set to instead of the launcher-wide setting, as `NativeWidgetConfig` encodes it; `null` follows the launcher. */
+    val nativeWidgetConfig: String? = null,
 )
 
 fun ClockStackItemEntity.toModel() = ClockStackItem(
     id = id, facetId = facetId, position = position, kind = kind, appWidgetId = appWidgetId, nativeWidgetType = nativeWidgetType,
     widthDp = widthDp, heightDp = heightDp, alignment = alignment,
     landscapeWidthDp = landscapeWidthDp, landscapeHeightDp = landscapeHeightDp, landscapeAlignment = landscapeAlignment,
+    nativeWidgetConfig = nativeWidgetConfig,
 )

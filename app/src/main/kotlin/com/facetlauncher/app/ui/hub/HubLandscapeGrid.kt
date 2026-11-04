@@ -2,9 +2,8 @@ package com.facetlauncher.app.ui.hub
 
 import androidx.compose.ui.unit.DpSize
 import com.facetlauncher.app.ui.nativewidget.NativeWidgetEnvironment
+import com.facetlauncher.app.data.model.NativeWidgetRef
 import com.facetlauncher.app.ui.nativewidget.NativeWidget
-import com.facetlauncher.app.ui.nativewidget.forHubWidget
-import com.facetlauncher.app.ui.nativewidget.withOverride
 import com.facetlauncher.app.domain.minSpan
 import android.appwidget.AppWidgetHostView
 import android.content.Context
@@ -399,9 +398,9 @@ private fun LandscapeTileContent(
         NativeWidget(
             type = widget.nativeWidgetType,
             size = DpSize(tileWidth, tileHeight),
-            state = callbacks.nativeWidgets.state.withOverride(widget.nativeOverride),
-            actions = callbacks.nativeWidgets.actions.forHubWidget(widget.appWidgetId),
-            onConfigure = { callbacks.nativeWidgets.actions.onConfigure(widget.appWidgetId) },
+            state = callbacks.nativeWidgets.state,
+            actions = callbacks.nativeWidgets.actions,
+            ref = NativeWidgetRef.Hub(widget.appWidgetId),
         )
     } else if (widget.isOrphaned) {
         OrphanedWidgetTile(

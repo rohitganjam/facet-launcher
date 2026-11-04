@@ -8,16 +8,19 @@ sealed interface WidgetWeatherLocation {
 
 /**
  * What one widget Facet draws itself is set to, overriding the launcher-wide setting. A `null` field follows the
- * launcher: [calendarIds] for Agenda (an empty set is "no calendars", not "follow"), [weatherLocation] for Weather.
+ * launcher: [calendarIds] and [showAllDayEvents] for Agenda (an empty set is "no calendars", not "follow"), [weatherLocation] for Weather.
  */
 data class NativeWidgetConfig(
     val calendarIds: Set<String>? = null,
+    /** Agenda: whether all-day events show; `null` follows the launcher. */
+    val showAllDayEvents: Boolean? = null,
     val weatherLocation: WidgetWeatherLocation? = null,
 ) {
-    val followsLauncher: Boolean get() = calendarIds == null && weatherLocation == null
+    val followsLauncher: Boolean get() = calendarIds == null && showAllDayEvents == null && weatherLocation == null
 }
 
 private const val CALENDAR_KEY = "cal"
+private const val ALL_DAY_KEY = "allday"
 private const val WEATHER_KEY = "wx"
 private const val WEATHER_CURRENT = "current"
 private const val WEATHER_CITY = "city"
@@ -26,6 +29,7 @@ private const val WEATHER_CITY = "city"
 fun NativeWidgetConfig.encode(): String? {
     val lines = buildList {
         calendarIds?.let { ids -> add((listOf(CALENDAR_KEY) + ids.sorted()).joinToString("\t")) }
+        showAllDayEvents?.let { add("$ALL_DAY_KEY\t${if (it) 1 else 0}") }
         when (val location = weatherLocation) {
             null -> Unit
             WidgetWeatherLocation.Current -> add("$WEATHER_KEY\t$WEATHER_CURRENT")
@@ -44,6 +48,7 @@ fun decodeNativeWidgetConfig(encoded: String?): NativeWidgetConfig {
         val fields = line.split('\t')
         config = when (fields.firstOrNull()) {
             CALENDAR_KEY -> config.copy(calendarIds = fields.drop(1).toSet())
+            ALL_DAY_KEY -> config.copy(showAllDayEvents = fields.getOrNull(1)?.let { it == "1" })
             WEATHER_KEY -> config.copy(weatherLocation = decodeWeatherLocation(fields.drop(1)) ?: config.weatherLocation)
             else -> config
         }

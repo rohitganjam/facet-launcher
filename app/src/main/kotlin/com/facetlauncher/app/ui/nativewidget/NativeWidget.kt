@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.facetlauncher.app.R
+import com.facetlauncher.app.data.model.NativeWidgetRef
 import com.facetlauncher.app.data.model.NativeWidgetType
 import com.facetlauncher.app.domain.WidgetTier
 import com.facetlauncher.app.domain.isConfigurable
@@ -57,10 +58,12 @@ fun NativeWidget(
     state: NativeWidgetState,
     actions: NativeWidgetActions,
     modifier: Modifier = Modifier,
-    /** Opens the widget's own settings; an Agenda at Medium or Large offers it with a 3-dot button at the top right (Weather's is in its sheet). */
-    onConfigure: (() -> Unit)? = null,
+    /** Which placed widget this is, so it reads its own settings and its taps say which one: an Agenda at Medium or Large has a 3-dot button for them (Weather's is in its sheet). */
+    ref: NativeWidgetRef? = null,
 ) {
     val tier = type.tierFor(size.width.value.toInt(), size.height.value.toInt())
+    val shownState = state.withOverride(ref?.let { state.overrides[it] })
+    val openWeather = { actions.onOpenWeather(ref) }
     Box(
         modifier = modifier
             .size(size)
@@ -68,14 +71,14 @@ fun NativeWidget(
             .background(Surface.copy(alpha = SURFACE_ALPHA))
             .testTag("native_widget_${type.name}"),
     ) {
-        val configurable = onConfigure != null && type == NativeWidgetType.AGENDA && type.isConfigurable(size.width.value.toInt(), size.height.value.toInt())
+        val configurable = ref != null && type == NativeWidgetType.AGENDA && type.isConfigurable(size.width.value.toInt(), size.height.value.toInt())
         Crossfade(targetState = tier, modifier = Modifier.fillMaxSize().padding(CONTENT_INSET), label = "nativeWidgetTier") { shown ->
             Box(modifier = Modifier.fillMaxSize().testTag("native_widget_tier_${shown.name}")) {
-                NativeWidgetContent(type, shown, size, state, actions)
+                NativeWidgetContent(type, shown, size, shownState, actions, openWeather)
             }
         }
-        if (onConfigure != null && configurable) {
-            IconButton(onClick = onConfigure, modifier = Modifier.align(Alignment.TopEnd).padding(MENU_BUTTON_INSET).size(MENU_BUTTON_SIZE).testTag("native_widget_menu")) {
+        if (ref != null && configurable) {
+            IconButton(onClick = { actions.onConfigure(ref) }, modifier = Modifier.align(Alignment.TopEnd).padding(MENU_BUTTON_INSET).size(MENU_BUTTON_SIZE).testTag("native_widget_menu")) {
                 Icon(imageVector = Icons.Filled.MoreVert, contentDescription = stringResource(R.string.hub_widget_configure), tint = Muted, modifier = Modifier.size(MENU_ICON_SIZE))
             }
         }
@@ -83,10 +86,10 @@ fun NativeWidget(
 }
 
 @Composable
-private fun NativeWidgetContent(type: NativeWidgetType, tier: WidgetTier, size: DpSize, state: NativeWidgetState, actions: NativeWidgetActions) {
+private fun NativeWidgetContent(type: NativeWidgetType, tier: WidgetTier, size: DpSize, state: NativeWidgetState, actions: NativeWidgetActions, onOpenWeather: () -> Unit) {
     val inner = DpSize(size.width - CONTENT_INSET * 2, size.height - CONTENT_INSET * 2)
     when (type) {
-        NativeWidgetType.WEATHER -> WeatherNativeWidget(tier, inner, state.weather, actions.onOpenWeather, state.access.locationMissing, actions.onRequestLocationAccess)
+        NativeWidgetType.WEATHER -> WeatherNativeWidget(tier, inner, state.weather, onOpenWeather, state.access.locationMissing, actions.onRequestLocationAccess)
         NativeWidgetType.AGENDA -> AgendaNativeWidget(tier, state.calendar, actions.onOpenEvent, state.access.calendarMissing, actions.onRequestCalendarAccess)
         NativeWidgetType.NOW_PLAYING -> NowPlayingNativeWidget(tier, inner, state.media, actions.media)
     }

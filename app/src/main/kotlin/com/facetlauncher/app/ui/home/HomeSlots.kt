@@ -18,6 +18,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import com.facetlauncher.app.ui.nativewidget.NativeWidgetActions
+import com.facetlauncher.app.data.model.NativeWidgetRef
 import com.facetlauncher.app.ui.nativewidget.NativeWidgetPage
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
@@ -231,7 +232,7 @@ private fun ClockPage(frame: HomeFrame, page: ClockPageSpec, scaleOriginY: Float
         // The saved size, not the live drag: it only changes once a commit round-trips through Room, and the real provider push must not track every drag frame.
         clockWidgetCommittedWidthDp = widget?.widthDp,
         clockWidgetCommittedHeightDp = widget?.heightDp,
-        nativeWidget = widget?.nativeType?.let { NativeWidgetPage(it, state.nativeWidgets, nativeWidgetActions(actions)) },
+        nativeWidget = widget?.nativeType?.let { NativeWidgetPage(it, state.nativeWidgets, nativeWidgetActions(actions), NativeWidgetRef.Home(widget.itemId)) },
         onClockWidgetSizeChange = actions.widget.onSizeChange,
         onClockWidgetLongPress = callbacks.onLongPress,
         onClockWidgetNestedScrollStart = callbacks.onNestedScrollStart,
@@ -417,7 +418,8 @@ private fun UsageAccessStrip(onClick: () -> Unit, modifier: Modifier = Modifier)
 private const val SINGLE_COLUMN_ROW_WIDTH_FRACTION = 0.8f
 
 private fun nativeWidgetActions(actions: HomeScreenActions) = NativeWidgetActions(
-    onOpenWeather = actions.clock.onWeatherClick,
+    onOpenWeather = actions.clock.onOpenNativeWeather,
+    onConfigure = actions.clock.onConfigureNativeWidget,
     onOpenEvent = actions.clock.onEventClick,
     media = actions.media,
     onRequestCalendarAccess = actions.clock.onRequestCalendarAccess,
