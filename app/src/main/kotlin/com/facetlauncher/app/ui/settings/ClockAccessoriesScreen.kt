@@ -167,7 +167,7 @@ private fun LocationCard(uiState: ClockAccessoriesUiState, actions: ClockAccesso
             onChange = actions.onWeatherLocation,
             tagPrefix = "accessory_location",
             enabled = !uiState.isInheriting,
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+            modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp),
         )
     }
 }
