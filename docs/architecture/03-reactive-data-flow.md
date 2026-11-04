@@ -232,6 +232,7 @@ sequenceDiagram
 |---|---|---|
 | Notification badges | `FacetNotificationListenerService` (`@AndroidEntryPoint`) pushes `setActiveNotifications()` into `NotificationBadgeRepository`'s `MutableStateFlow` | `ObserveHomeScreenStateUseCase`, `DrawerViewModel` |
 | Media session | `MediaSessionRepository.observe()` — `callbackFlow` over `MediaSessionManager.OnActiveSessionsChangedListener` plus a `MediaController.Callback` per session (main-thread handler), gated on `NotificationBadgeRepository.mediaNotificationPackages` (a session only counts while its app has a media notification posted), cold: only subscribed while Home collects and the setting is on and access is granted | `ObserveHomeScreenStateUseCase` (`mediaPlayer`), transport calls via `HomeViewModel` |
+| Calendars | `CalendarRepository.observeCalendarChanges()` — `callbackFlow` over a `ContentObserver` on the calendar provider (and, best effort, the Work Profile's), started once from `FacetApplication` | `EnsureCalendarColorsUseCase.keepAssigned()`: a calendar added on the phone gets its colour at once |
 | Battery | `callbackFlow` over `ACTION_BATTERY_CHANGED` sticky broadcast | `ObserveClockAccessoriesUseCase` |
 | Headphones | `HeadphonesRepository.observeHeadphonesPluggedIn()` — `callbackFlow` over `AudioDeviceCallback` | `DeviceStateRepository` |
 | Wi-Fi | `WifiRepository.observeWifiState(includeSsid)` — synchronous read of current networks, then `ConnectivityManager` network callbacks; the location-info flag is only set when `includeSsid` (a named-network rule) | `DeviceStateRepository` |

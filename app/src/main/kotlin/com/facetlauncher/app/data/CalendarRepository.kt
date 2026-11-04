@@ -2,7 +2,10 @@ package com.facetlauncher.app.data
 
 import android.content.ContentResolver
 import android.content.ContentUris
+import android.database.ContentObserver
 import android.net.Uri
+import android.os.Handler
+import android.os.Looper
 import android.provider.CalendarContract
 import com.facetlauncher.app.data.di.IoDispatcher
 import com.facetlauncher.app.data.model.CalendarEvent
@@ -17,6 +20,9 @@ import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.withContext
 
 /** Wraps the system Calendar Provider (`READ_CALENDAR`) for F1's calendar list and today's events. */
@@ -49,6 +55,22 @@ open class CalendarRepository @Inject constructor(
                 }
             }
         }.orEmpty()
+    }
+
+    /**
+     * Emits once now and again whenever a calendar is added, removed or edited on the device. The Work Profile's provider is observed too
+     * (best effort: Android may not deliver its changes across profiles), so a screen that lists calendars should still reload on open.
+     */
+    open fun observeCalendarChanges(): Flow<Unit> = callbackFlow {
+        val observer = object : ContentObserver(Handler(Looper.getMainLooper())) {
+            override fun onChange(selfChange: Boolean) {
+                trySend(Unit)
+            }
+        }
+        contentResolver.registerContentObserver(CalendarContract.Calendars.CONTENT_URI, true, observer)
+        runCatching { contentResolver.registerContentObserver(CalendarContract.Calendars.ENTERPRISE_CONTENT_URI, true, observer) }
+        trySend(Unit)
+        awaitClose { contentResolver.unregisterContentObserver(observer) }
     }
 
     /** Every calendar the user can pick from: the personal ones, then the Work Profile's that its admin shares. */

@@ -8,6 +8,7 @@ import java.time.LocalDate
 import java.time.ZoneOffset
 import java.util.Calendar
 import java.util.TimeZone
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -381,5 +382,24 @@ class CalendarRepositoryTest {
         assertEquals(listOf("Personal", "Standup"), withWork.map { it.title })
         assertEquals(listOf("1", "work:1"), withWork.map { it.calendarId })
         assertEquals(listOf("Personal"), everyPersonal.map { it.title })
+    }
+
+    @Test
+    fun `observeCalendarChanges emits now and again each time the provider notifies`() = runTest {
+        // Given the observer the repository registers on the calendar provider
+        val registered = org.mockito.ArgumentCaptor.forClass(android.database.ContentObserver::class.java)
+        val emissions = mutableListOf<Unit>()
+        val job = launch(kotlinx.coroutines.test.UnconfinedTestDispatcher(testScheduler)) { repository.observeCalendarChanges().collect { emissions += it } }
+        org.mockito.Mockito.verify(contentResolver).registerContentObserver(eq(CalendarContract.Calendars.CONTENT_URI), eq(true), registered.capture())
+        assertEquals(1, emissions.size)
+
+        // When a calendar is added on the phone
+        registered.value.onChange(false)
+        org.robolectric.shadows.ShadowLooper.idleMainLooper()
+
+        // Then it emits again, and stops observing once collection ends
+        assertEquals(2, emissions.size)
+        job.cancel()
+        org.mockito.Mockito.verify(contentResolver).unregisterContentObserver(registered.value)
     }
 }

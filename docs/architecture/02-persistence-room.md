@@ -556,7 +556,7 @@ DataStore serialises writes and is main-safe; callers `viewModelScope.launch { }
 | `setShowCalendarIndicator(Boolean)` | `show_calendar_indicator` | set | `CalendarSettingsViewModel` |
 | `setCalendarItemsToShow(Int)` | `calendar_items_to_show` | set (clamped 1..3) | `CalendarSettingsViewModel` |
 | `setSelectedCalendarIds(Set<String>)` | `selected_calendar_ids` | set | `CalendarSettingsViewModel` |
-| `setCalendarColors(Map<String,String>)` | `calendar_colors` | set (encoded `id:color`) | `CalendarSettingsViewModel` after `AssignCalendarColorsUseCase` |
+| `setCalendarColors(Map<String,String>)` | `calendar_colors` | set (encoded `id:color`) | `EnsureCalendarColorsUseCase` (app-wide, on every calendar change), `CalendarSettingsViewModel` after `AssignCalendarColorsUseCase` |
 | `setListContentMode(ListContentMode)` | `list_content_mode` | set | `HomeAppsListSettingsViewModel`, `OnboardingViewModel` |
 | `setAppsToShowCount(Int)` | `apps_to_show_count` | set | `HomeAppsListSettingsViewModel`, `OnboardingViewModel` |
 | `setAppRowPosition(AppRowPosition)` | `app_row_position` | set | `AppearanceSettingsViewModel` |
@@ -667,7 +667,7 @@ its position (see chat history: calendar/appearance styling consolidation).
 | `show_calendar_indicator` | Boolean | `showCalendarIndicator` | `true` | Calendar-colour bar on Home event rows; facet-overridable via `overrideCalendar` |
 | `calendar_items_to_show` | Int | `calendarItemsToShow` | `3` | Events Home shows, clamped to 1..3 on read and write; facet-overridable via `overrideCalendar` |
 | `selected_calendar_ids` | Set<String> | `selectedCalendarIds` | `null` (= all calendars) | nullable — absent key means "every calendar" |
-| `calendar_colors` | Set<String> encoded `"<calendarId>:<colorName>"` | `calendarColors: Map<String,String>` | `{}` | Assigned by `AssignCalendarColorsUseCase`; entries without a `:` are dropped on read; not facet-overridable |
+| `calendar_colors` | Set<String> encoded `"<calendarId>:<colorName>"` | `calendarColors: Map<String,String>` | `{}` | Assigned by `AssignCalendarColorsUseCase`; split at the last `:` on read (a Work Profile id is `work:<n>`), entries without one are dropped; not facet-overridable |
 
 #### Home app list (global; overridden when `facets.overrideApps` / `overridingFavorites`)
 

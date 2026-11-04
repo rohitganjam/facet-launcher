@@ -202,9 +202,10 @@ class SettingsRepository @Inject constructor(
             calendarItemsToShow = (preferences[Keys.CALENDAR_ITEMS_TO_SHOW] ?: defaults.calendarItemsToShow)
                 .coerceIn(CalendarDisplayOptions.MIN_ITEMS, CalendarDisplayOptions.MAX_ITEMS),
             selectedCalendarIds = preferences[Keys.SELECTED_CALENDAR_IDS],
+            // "<calendar id>:<swatch>": split at the last colon, since a Work Profile calendar id ("work:1") has one of its own.
             calendarColors = preferences[Keys.CALENDAR_COLORS].orEmpty().mapNotNull { entry ->
-                val parts = entry.split(":", limit = 2)
-                if (parts.size == 2) parts[0] to parts[1] else null
+                val split = entry.lastIndexOf(':')
+                if (split > 0) entry.substring(0, split) to entry.substring(split + 1) else null
             }.toMap(),
             searchContactsEnabled = preferences[Keys.SEARCH_CONTACTS_ENABLED] ?: defaults.searchContactsEnabled,
             searchSettingsEnabled = preferences[Keys.SEARCH_SETTINGS_ENABLED] ?: defaults.searchSettingsEnabled,

@@ -77,6 +77,20 @@ class SettingsRepositoryTest {
     }
 
     @Test
+    fun `a work calendar keeps its colour across a round trip`() = runTest {
+        // Given colours for a personal calendar and a Work Profile one, whose id has a colon of its own
+        val repository = SettingsRepository(
+            PreferenceDataStoreFactory.create(produceFile = { tempFolder.newFile("colours-${System.nanoTime()}.preferences_pb") }),
+        )
+
+        // When they are stored and read back
+        repository.setCalendarColors(mapOf("1" to "BLUE", "work:1" to "INDIGO"))
+
+        // Then each id still maps to its own colour
+        assertEquals(mapOf("1" to "BLUE", "work:1" to "INDIGO"), repository.settings.first().calendarColors)
+    }
+
+    @Test
     fun `the gesture switches persist independently`() = runTest {
         // Given a fresh repository
         val repository = createRepository()

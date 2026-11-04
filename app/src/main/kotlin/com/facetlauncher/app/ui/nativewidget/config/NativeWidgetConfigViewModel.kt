@@ -9,6 +9,7 @@ import com.facetlauncher.app.data.model.CalendarInfo
 import com.facetlauncher.app.data.model.NativeWidgetConfig
 import com.facetlauncher.app.data.model.NativeWidgetRef
 import com.facetlauncher.app.data.model.WeatherCity
+import com.facetlauncher.app.domain.EnsureCalendarColorsUseCase
 import com.facetlauncher.app.domain.NativeWidgetSettings
 import com.facetlauncher.app.domain.ObserveNativeWidgetSettingsUseCase
 import com.facetlauncher.app.domain.SetNativeWidgetConfigUseCase
@@ -49,6 +50,7 @@ class NativeWidgetConfigViewModel @Inject constructor(
     private val calendarPermissionRepository: CalendarPermissionRepository,
     private val observeSettings: ObserveNativeWidgetSettingsUseCase,
     private val setConfig: SetNativeWidgetConfigUseCase,
+    private val ensureCalendarColors: EnsureCalendarColorsUseCase,
 ) : ViewModel() {
 
     private val calendars = MutableStateFlow<List<CalendarInfo>>(emptyList())
@@ -70,7 +72,9 @@ class NativeWidgetConfigViewModel @Inject constructor(
     /** Re-reads the calendar list: the permission may have been granted since this ViewModel was created. */
     fun reloadCalendars() {
         viewModelScope.launch {
-            calendars.value = if (calendarPermissionRepository.isGranted()) calendarRepository.getSelectableCalendars() else emptyList()
+            val list = if (calendarPermissionRepository.isGranted()) calendarRepository.getSelectableCalendars() else emptyList()
+            calendars.value = list
+            ensureCalendarColors(list)
         }
     }
 

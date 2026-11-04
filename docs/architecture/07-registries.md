@@ -17,7 +17,7 @@ dependency is not listed the class does not have it.
 | `BackupRepository` | SAF `Uri` file I/O + JSON | `Context` | `writeBackup(uri, bundle)`, `readBackup(uri)` (IO) | `ExportBackupUseCase`, `ImportBackupUseCase` |
 | `BatteryRepository` | `ACTION_BATTERY_CHANGED` sticky broadcast | `Context` | `observeBatteryStatus(): Flow` | `ObserveClockAccessoriesUseCase` |
 | `CalendarPermissionRepository` (`open`) | `checkSelfPermission(READ_CALENDAR)` | `Context` | `isGranted()` | `ObserveHomeScreenStateUseCase`, `ObserveFacetPreviewsUseCase`, `CalendarSettingsViewModel`, `PermissionsViewModel`, `AppearanceSettingsViewModel` |
-| `CalendarRepository` | `CalendarContract` via `ContentResolver` | `ContentResolver` | `getUpcomingEvents(ids, includeAllDay)` (IO, one-shot), calendar listing | same three + `CalendarSettingsViewModel`, `AppearanceSettingsViewModel` |
+| `CalendarRepository` | `CalendarContract` via `ContentResolver` | `ContentResolver` | `getUpcomingEvents(ids, includeAllDay)` (IO, one-shot), calendar listing (`getSelectableCalendars`, `getWorkCalendars`), `observeCalendarChanges()` (`callbackFlow` over a `ContentObserver` on the personal and Work Profile calendar URIs) | same three + `CalendarSettingsViewModel`, `AppearanceSettingsViewModel` |
 | `ContactPermissionRepository` | `checkSelfPermission(READ_CONTACTS)` | `Context` | `isGranted()` | `DrawerViewModel`, `PermissionsViewModel` |
 | `ContactRepository` | `ContactsContract` via `ContentResolver` | `ContentResolver`, `Context` | `searchContacts(q, limit)`, `getConnections(contactId)` (IO) | `DrawerViewModel` |
 | `DefaultAppRepository` | `PackageManager.resolveActivity` for browser/SMS/camera/mail/phone intents | `Context` | `getDefaultAppPackages()` (IO) | `SeedDefaultDockUseCase`, `ObserveIconPickerUseCase`, `HomeAppsListSettingsViewModel` |
@@ -99,7 +99,8 @@ pack (`IconPackRepository`, which reads that choice from `SettingsRepository`).
 | `CanUseTriggerUseCase` | pure Pro gate: `invoke(trigger, isPro)` (schedule free, device triggers Pro) and `entitledRuleIds(rules, isPro)` (free keeps the first two schedule rules in list order) | — | `RefreshAutomationStateUseCase`, `ObserveFacetAutomationUseCase`, `RuleEditorViewModel`, `SaveAutomationRuleUseCase` |
 | `AddFacetUseCase` | write: adds a facet unless at the limit (3 free, 10 Pro); returns `AddFacetResult` (`Added` / `LimitReached`) | `FacetRepository`, `EntitlementRepository` | `ManageFacetsViewModel`, `FacetCarouselViewModel` |
 | `AddToActiveListUseCase` | write: appends an app or folder to a list for the active facet, at the next position (apps and folders counted together) | `ResolveActivePlacementTargetUseCase`, `PlacementRepository`, `ObservePlacedItemsUseCase` | `DrawerViewModel` |
-| `AssignCalendarColorsUseCase` | pure | — | `CalendarSettingsViewModel` |
+| `AssignCalendarColorsUseCase` | pure | — | `CalendarSettingsViewModel`, `EnsureCalendarColorsUseCase` |
+| `EnsureCalendarColorsUseCase` (`@Singleton`, holds a mutex) | write + long-running collector: gives every calendar on the device, Work Profile ones included, its stable bar colour; `keepAssigned()` re-runs on each `observeCalendarChanges()` | `CalendarPermissionRepository`, `CalendarRepository`, `SettingsRepository`, `AssignCalendarColorsUseCase` | `FacetApplication` (collector for the app's life), `NativeWidgetConfigViewModel` |
 | `CleanUpUninstalledAppsUseCase` | long-running collector | `AppRepository`, `PlacementRepository`, `FolderRepository` | `LauncherViewModel` |
 | `CompactWidgetsUseCase` | pure grid | — | `HubViewModel` |
 | `DeleteFacetUseCase` | write (releases every widget id in the facet's clock stack first) | `FacetRepository`, `AppWidgetRepository` | `ManageFacetsViewModel`, `FacetCarouselViewModel` |
