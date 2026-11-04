@@ -1,5 +1,7 @@
 package com.facetlauncher.app.domain
 
+import com.facetlauncher.app.data.model.WidgetWeatherLocation
+import com.facetlauncher.app.data.model.WeatherCity
 import com.facetlauncher.app.data.model.ClockStackItemKind
 import com.facetlauncher.app.data.widgetItem
 import com.facetlauncher.app.data.clockItem
@@ -261,5 +263,16 @@ class ResolvedFacetStyleTest {
 
         // Then there is one clock page, so a preview draws a clock
         assertEquals(listOf(ClockStackItemKind.CLOCK), style.clockStack.map { it.kind })
+    }
+
+    @Test
+    fun `a facet's own weather location applies only while it overrides the clock`() {
+        // Given a facet with its own weather location
+        val oslo = WidgetWeatherLocation.City(WeatherCity("Oslo", 59.91, 10.75, "Europe/Oslo"))
+
+        // Then it shows while overriding the clock, and is ignored while inheriting or with no facet
+        assertEquals(oslo, resolveFacetStyle(facet { it.copy(overrideClock = true, clockWeatherLocation = oslo) }, settings).clock.weatherLocation)
+        assertEquals(null, resolveFacetStyle(facet { it.copy(overrideClock = false, clockWeatherLocation = oslo) }, settings).clock.weatherLocation)
+        assertEquals(null, resolveFacetStyle(null, settings).clock.weatherLocation)
     }
 }

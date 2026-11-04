@@ -961,6 +961,24 @@ class FacetDatabaseMigrationTest {
         cursor.close()
     }
 
+    @Test
+    fun migration40To41KeepsFacetsAndLeavesTheirClockWeatherLocationEmpty() {
+        // Given a v40 database with a facet
+        val dbV40 = helper.createDatabase(TEST_DB, 40)
+        insertFacetV27(dbV40, id = 1, name = "Work")
+        dbV40.close()
+
+        // When migrating to v41 (Room also validates the result against the exported v41 schema)
+        val dbV41 = helper.runMigrationsAndValidate(TEST_DB, 41, true, Migrations.MIGRATION_40_41)
+
+        // Then the facet is intact and follows Weather settings
+        val cursor = dbV41.query("SELECT name, clockWeatherLocation FROM facets")
+        cursor.moveToFirst()
+        assertEquals("Work", cursor.getString(0))
+        assertTrue(cursor.isNull(1))
+        cursor.close()
+    }
+
     /** A v27 facet row — the v25 shape plus the two calendar-display columns, which a freshly created database has no defaults for. */
     private fun insertFacetV27(db: androidx.sqlite.db.SupportSQLiteDatabase, id: Long, name: String) {
         insertFacetV25Columns(db, id, name, extraColumns = ", showCalendarIndicator, calendarItemsToShow", extraValues = ", 1, 3")

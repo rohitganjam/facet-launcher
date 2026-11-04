@@ -56,6 +56,12 @@ fun decodeNativeWidgetConfig(encoded: String?): NativeWidgetConfig {
     return config
 }
 
+/** The stored form of a weather location on its own (a facet's clock): the widget codec, so one format for both; `null` follows Weather settings. */
+fun encodeWeatherLocation(location: WidgetWeatherLocation?): String? = NativeWidgetConfig(weatherLocation = location).encode()
+
+/** The inverse of [encodeWeatherLocation]; a damaged value follows Weather settings. */
+fun decodeWeatherLocation(encoded: String?): WidgetWeatherLocation? = decodeNativeWidgetConfig(encoded).weatherLocation
+
 private fun decodeWeatherLocation(fields: List<String>): WidgetWeatherLocation? = when (fields.firstOrNull()) {
     WEATHER_CURRENT -> WidgetWeatherLocation.Current
     WEATHER_CITY -> fields.getOrNull(1)?.let { name ->

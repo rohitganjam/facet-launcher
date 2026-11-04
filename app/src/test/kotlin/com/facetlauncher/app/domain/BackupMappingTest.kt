@@ -141,4 +141,18 @@ class BackupMappingTest {
         // Then the item follows the same setting
         assertEquals(WidgetWeatherLocation.Current, decodeNativeWidgetConfig(item?.nativeWidgetConfig).weatherLocation)
     }
+
+    @Test
+    fun `a facet's own weather location survives a backup round trip and its absence stays absent`() {
+        // Given a facet with its own city, and one that follows Weather settings
+        val oslo = WidgetWeatherLocation.City(WeatherCity("Oslo", 59.91, 10.75, "Europe/Oslo"))
+
+        // Then the city comes back, and so does Current, and nothing stays nothing
+        assertEquals(oslo, facet.copy(clockWeatherLocation = oslo).toBackupFacet(favorites = emptyList(), dockApps = emptyList()).toFacet().clockWeatherLocation)
+        assertEquals(
+            WidgetWeatherLocation.Current,
+            facet.copy(clockWeatherLocation = WidgetWeatherLocation.Current).toBackupFacet(favorites = emptyList(), dockApps = emptyList()).toFacet().clockWeatherLocation,
+        )
+        assertEquals(null, facet.toBackupFacet(favorites = emptyList(), dockApps = emptyList()).toFacet().clockWeatherLocation)
+    }
 }

@@ -193,6 +193,8 @@ data class BackupFacet(
     val clockShowBattery: Boolean = true,
     val clockShowWeather: Boolean = false,
     val clockWeatherIconStyle: String = WeatherIconStyle.COLORED.name,
+    /** The facet's own weather location in the widget-location encoding (`encodeWeatherLocation`); `null` follows Weather settings. Defaulted, so no version bump. */
+    val clockWeatherLocation: String? = null,
     /** `null` in a backup from before placement was the facet's own: such a facet owned its placement exactly when it overrode the clock. */
     val clockPlacementOwn: Boolean? = null,
     val clockAlignment: String = ClockAlignment.LEFT.name,

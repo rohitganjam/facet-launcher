@@ -2,6 +2,8 @@ package com.facetlauncher.app.data.local
 
 import com.facetlauncher.app.data.model.ClockStackItem
 import com.facetlauncher.app.data.model.Facet
+import com.facetlauncher.app.data.model.decodeWeatherLocation
+import com.facetlauncher.app.data.model.encodeWeatherLocation
 
 internal fun FacetEntity.toFacet(clockStack: List<ClockStackItem> = emptyList()): Facet = Facet(
     id = id,
@@ -19,6 +21,7 @@ internal fun FacetEntity.toFacet(clockStack: List<ClockStackItem> = emptyList())
     clockShowBattery = clockShowBattery,
     clockShowWeather = clockShowWeather,
     clockWeatherIconStyle = clockWeatherIconStyle,
+    clockWeatherLocation = decodeWeatherLocation(clockWeatherLocation),
     clockPlacementOwn = clockPlacementOwn,
     clockAlignment = clockAlignment,
     clockZoneHeightDp = clockZoneHeightDp,
@@ -67,6 +70,7 @@ internal fun Facet.toEntity(): FacetEntity = FacetEntity(
     clockShowBattery = clockShowBattery,
     clockShowWeather = clockShowWeather,
     clockWeatherIconStyle = clockWeatherIconStyle,
+    clockWeatherLocation = encodeWeatherLocation(clockWeatherLocation),
     clockPlacementOwn = clockPlacementOwn,
     clockAlignment = clockAlignment,
     clockZoneHeightDp = clockZoneHeightDp,

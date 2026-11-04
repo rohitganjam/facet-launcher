@@ -29,6 +29,7 @@ import com.facetlauncher.app.data.model.effectiveCalendarDisplay
 import com.facetlauncher.app.data.model.landscape
 import com.facetlauncher.app.data.model.resolveLandscape
 import com.facetlauncher.app.data.model.WeatherIconStyle
+import com.facetlauncher.app.data.model.WidgetWeatherLocation
 import com.facetlauncher.app.data.model.resolveOverride
 import com.facetlauncher.app.data.model.resolveSentinel
 import kotlinx.collections.immutable.ImmutableList
@@ -48,6 +49,8 @@ data class ResolvedClockStyle(
     val showBattery: Boolean,
     val showWeather: Boolean,
     val weatherIconStyle: WeatherIconStyle,
+    /** Where this facet's clock shows the weather for; `null` follows Weather settings. */
+    val weatherLocation: WidgetWeatherLocation? = null,
 )
 
 /** The apps list in force. The look fields inherit per field via their `LAUNCHER_DEFAULT` sentinel; [contentMode] follows `overrideApps`. */
@@ -126,6 +129,7 @@ private fun resolveClockStyle(facet: Facet?, settings: LauncherSettings) = Resol
     showBattery = facet.resolveOverride({ it.overrideClock }, { it.clockShowBattery }, settings.showBatteryPercentage),
     showWeather = facet.resolveOverride({ it.overrideClock }, { it.clockShowWeather }, settings.showWeather),
     weatherIconStyle = facet.resolveOverride({ it.overrideClock }, { it.clockWeatherIconStyle }, settings.weatherIconStyle),
+    weatherLocation = facet.resolveOverride({ it.overrideClock }, { it.clockWeatherLocation }, null),
 )
 
 private fun resolveAppListStyle(facet: Facet?, settings: LauncherSettings) = ResolvedAppListStyle(

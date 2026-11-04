@@ -1,5 +1,7 @@
 package com.facetlauncher.app.data
 
+import com.facetlauncher.app.data.model.WidgetWeatherLocation
+import com.facetlauncher.app.data.model.WeatherCity
 import com.facetlauncher.app.data.model.DEFAULT_CLOCK_SCALE
 import com.facetlauncher.app.data.model.LandscapeOverrides
 import com.facetlauncher.app.data.model.landscape
@@ -505,5 +507,24 @@ class FacetRepositoryTest {
         assertNull(landscape.clockZoneHeightDp)
         assertNull(landscape.clockScale)
         assertEquals(AppRowPosition.CENTER, landscape.appRowPosition)
+    }
+
+    @Test
+    fun `setClockWeatherLocation stores a facet's own place and null gives it back to Weather settings`() = runTest {
+        // Given a facet that follows Weather settings
+        val repository = FacetRepository(FakeFacetDao(), FakeClockStackItemDao())
+        val facet = repository.addFacet()
+        assertNull(repository.observeFacets().first().single().clockWeatherLocation)
+
+        // When it chooses a city, then current location, then goes back
+        val oslo = WidgetWeatherLocation.City(WeatherCity("Oslo", 59.91, 10.75, "Europe/Oslo"))
+        repository.setClockWeatherLocation(facet.id, oslo)
+        assertEquals(oslo, repository.observeFacets().first().single().clockWeatherLocation)
+        repository.setClockWeatherLocation(facet.id, WidgetWeatherLocation.Current)
+        assertEquals(WidgetWeatherLocation.Current, repository.observeFacets().first().single().clockWeatherLocation)
+        repository.setClockWeatherLocation(facet.id, null)
+
+        // Then each choice came back through the stored row, and null follows Weather settings again
+        assertNull(repository.observeFacets().first().single().clockWeatherLocation)
     }
 }

@@ -79,4 +79,25 @@ class NativeWidgetConfigTest {
         assertNull(decoded.calendarIds)
         assertTrue(!decoded.followsLauncher)
     }
+
+    @Test
+    fun `a weather location on its own round trips through the shared encoding`() {
+        // Given each kind of location, and none
+        val current = WidgetWeatherLocation.Current
+        val city = WidgetWeatherLocation.City(oslo)
+
+        // Then each survives, and none stores nothing
+        assertEquals(current, decodeWeatherLocation(encodeWeatherLocation(current)))
+        assertEquals(city, decodeWeatherLocation(encodeWeatherLocation(city)))
+        assertNull(encodeWeatherLocation(null))
+        assertNull(decodeWeatherLocation(null))
+    }
+
+    @Test
+    fun `a damaged stored weather location follows Weather settings`() {
+        // Given a stored value that does not hold a whole location
+        // Then it decodes to nothing rather than a half-built place
+        assertNull(decodeWeatherLocation("wx\tcity\tOslo"))
+        assertNull(decodeWeatherLocation("not a location"))
+    }
 }

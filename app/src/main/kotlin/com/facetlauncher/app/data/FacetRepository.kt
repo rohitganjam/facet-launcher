@@ -28,6 +28,7 @@ import com.facetlauncher.app.data.model.Facet
 import com.facetlauncher.app.data.model.LandscapeOverrides
 import com.facetlauncher.app.data.model.ListContentMode
 import com.facetlauncher.app.data.model.WeatherIconStyle
+import com.facetlauncher.app.data.model.WidgetWeatherLocation
 import com.facetlauncher.app.data.model.landscape
 import com.facetlauncher.app.data.model.nativeClockPage
 import com.facetlauncher.app.data.model.withLandscape
@@ -132,6 +133,11 @@ class FacetRepository @Inject constructor(
 
     suspend fun setClockShowWeather(facetId: Long, enabled: Boolean) {
         update(facetId) { it.copy(clockShowWeather = enabled) }
+    }
+
+    /** See [Facet.clockWeatherLocation]; `null` follows Weather settings. */
+    suspend fun setClockWeatherLocation(facetId: Long, location: WidgetWeatherLocation?) {
+        update(facetId) { it.copy(clockWeatherLocation = location) }
     }
 
     /** See [Facet.clockWeatherIconStyle]. */

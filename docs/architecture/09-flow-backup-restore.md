@@ -133,7 +133,7 @@ show their own icons (the stored built-in style comes back).
 
 The weather options are additive and defaulted (`WeatherBackupTest`): the clock accessory switches
 (`showNextAlarm`, `showBatteryPercentage`, `showWeather`, and each facet's `clockShowAlarm`, `clockShowBattery`,
-`clockShowWeather`, `clockWeatherIconStyle`), the four units, the icon style, the location mode, and the chosen city as four flat fields (`weatherCityName`,
+`clockShowWeather`, `clockWeatherIconStyle`, `clockWeatherLocation` in the widget-location encoding, `null` follows Weather settings), the four units, the icon style, the location mode, and the chosen city as four flat fields (`weatherCityName`,
 `weatherCityLatitude`, `weatherCityLongitude`, `weatherCityTimezone`). A city is restored only when all four are present. The saved cities (`savedWeatherCities`, up to 10 of
 `BackupWeatherCity`) are an additive list; an older file has none, and the chosen city still shows in the list.
 The current location and the stored forecast (`weather_hours`, `weather_meta`) are never backed up.

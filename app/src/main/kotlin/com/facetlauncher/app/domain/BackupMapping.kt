@@ -36,6 +36,8 @@ import com.facetlauncher.app.data.model.ClockTemplateId
 import com.facetlauncher.app.data.model.DockDisplayMode
 import com.facetlauncher.app.data.model.ListContentMode
 import com.facetlauncher.app.data.model.WeatherIconStyle
+import com.facetlauncher.app.data.model.decodeWeatherLocation
+import com.facetlauncher.app.data.model.encodeWeatherLocation
 
 /** F14 Backup & Restore — entity <-> DTO mapping shared by [ExportBackupUseCase]/[ImportBackupUseCase]. Every enum round-trips through its raw name with a fallback to the field's own default, matching `Converters.kt`'s established pattern. */
 
@@ -84,6 +86,7 @@ fun Facet.toBackupFacet(
     clockShowBattery = clockShowBattery,
     clockShowWeather = clockShowWeather,
     clockWeatherIconStyle = clockWeatherIconStyle.name,
+    clockWeatherLocation = encodeWeatherLocation(clockWeatherLocation),
     clockPlacementOwn = clockPlacementOwn,
     clockAlignment = clockAlignment.name,
     clockZoneHeightDp = clockZoneHeightDp,
@@ -153,6 +156,7 @@ fun BackupFacet.toFacet(): Facet = Facet(
     clockShowBattery = clockShowBattery,
     clockShowWeather = clockShowWeather,
     clockWeatherIconStyle = clockWeatherIconStyle.toEnumOrDefault(WeatherIconStyle.COLORED),
+    clockWeatherLocation = decodeWeatherLocation(clockWeatherLocation),
     clockPlacementOwn = clockPlacementOwn ?: overrideClock,
     clockAlignment = clockAlignment.toEnumOrDefault(ClockAlignment.LEFT),
     clockZoneHeightDp = clockZoneHeightDp,

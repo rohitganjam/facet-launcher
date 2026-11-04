@@ -183,7 +183,7 @@ The accessory row under the date has three items, each with its own switch: `sho
 and `showWeather` (DataStore defaults; weather off). A facet has its own three (`clockShowAlarm/Battery/Weather`),
 used while `overrideClock` is on and resolved with the rest of the clock in `resolveFacetStyle`
 (`ResolvedClockStyle.showAlarm/showBattery/showWeather`), and its own weather picture style (`clockWeatherIconStyle`, resolved
-into `ResolvedClockStyle.weatherIconStyle`). Settings → Clock style → *Clock accessories* (a row after the clock options; the
+into `ResolvedClockStyle.weatherIconStyle`) and weather location (`clockWeatherLocation`, resolved into `ResolvedClockStyle.weatherLocation`; `null` follows Weather settings). Settings → Clock style → *Clock accessories* (a row after the clock options; the
 screen is `ClockAccessoriesScreen`, route `clockAccessories?facetId=`) edits them: card 1 alarm and battery, card 2 weather,
 card 3 Icons (while weather is on for that scope). Units and location are not here: they are *Weather settings*, a row in Settings → System
 (`UnitsAndLocationScreen`, route `unitsAndLocation`): the four units and the Location card, launcher-wide (`UnitsAndLocationViewModel`), so a

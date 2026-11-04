@@ -28,6 +28,8 @@ data class Facet(
     val clockShowWeather: Boolean = false,
     /** The weather picture style this facet uses while it overrides the clock block; see `LauncherSettings.weatherIconStyle`. */
     val clockWeatherIconStyle: WeatherIconStyle = WeatherIconStyle.COLORED,
+    /** Where this facet's clock shows the weather for while it overrides the clock block; `null` follows Weather settings. */
+    val clockWeatherLocation: WidgetWeatherLocation? = null,
     /**
      * Whether the placement fields below ([clockAlignment], [clockZoneHeightDp], [clockScale] and their landscape twins)
      * are this facet's own. `false` until the user first adjusts it on Home: the facet then shows the launcher's built-in
