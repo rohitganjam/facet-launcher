@@ -4497,3 +4497,6 @@ Decided with you: one icon size across Home, the dock, the drawer and folders (4
 - [x] Fixed: widgets from apps installed only in the Work Profile never showed in the picker. `getWidgetProviderOptions` looked the owning app's label up with the personal `PackageManager`, which threw for a work-only package and silently dropped the option. It now asks `AppRepository.appLabelFor(packageName, handle)` (`LauncherApps.getApplicationInfo` for the provider's own profile handle); a provider no profile can resolve is still skipped. The rest of the picker path (Hub and clock picker ViewModels, screen) only consumes `appLabel`; there are no other `getApplicationInfo`/icon lookups on it.
 - [x] Tests: `AppWidgetRepositoryTest` (work-only provider listed with its label and tagged WORK; unresolvable provider skipped). JVM only.
 - [ ] Check on a device with a real Work Profile that a work-only app's widgets appear in the Hub picker.
+
+## Work badge: briefcase
+- [x] The Work Profile badge on an app icon is now a briefcase at the icon's bottom-left, 20% of its height, in the launcher accent at 70% opacity (was a plain accent dot). Tests: `AppIconWorkBadgeTest` (size and corner), `AppPickerScreenTest` (badge present only on the work copy) on the `Medium_Phone_API_36.1` emulator.

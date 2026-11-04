@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Work
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Icon
@@ -150,7 +151,7 @@ fun AppIcon(
         // matches every other Android launcher's own convention for where a Work Profile badge
         // sits, so a user switching from another launcher isn't relearning icon language.
         if (isWorkApp) {
-            WorkProfileBadge(modifier = Modifier.align(Alignment.BottomStart))
+            WorkProfileBadge(iconSize = size, modifier = Modifier.align(Alignment.BottomStart))
         } else if (isOtherProfileApp) {
             OtherProfileBadge(modifier = Modifier.align(Alignment.BottomStart))
         }
@@ -169,17 +170,24 @@ fun NotificationBadge(count: Int, style: NotificationBadgeStyle, modifier: Modif
     }
 }
 
+/** The briefcase's height as a share of the icon's, and how opaque it is. */
+private const val WORK_BADGE_SIZE_FRACTION = 0.2f
+private const val WORK_BADGE_ALPHA = 0.7f
+
 /**
- * A themed marker for a Work Profile app's icon — deliberately not Android's own
- * [android.content.pm.PackageManager.getUserBadgedIcon] briefcase asset, which would render with
- * the OS's own baseline tones instead of this app's palette (CLAUDE.md's shape/theming rule).
- * Reuses [Badge]'s own plain-dot construction (same as [NotificationBadge]'s `DOT` style) so it
- * reads as the same visual family, just placed at a different corner and always-Accent (a Work
- * Profile marker isn't a count, so [NotificationBadgeStyle.COUNT] has no equivalent here).
+ * A themed briefcase for a Work Profile app's icon — deliberately not Android's own
+ * [android.content.pm.PackageManager.getUserBadgedIcon] asset, which would render with the OS's
+ * baseline tones instead of this app's palette (CLAUDE.md's shape/theming rule). [iconSize] is the
+ * icon it sits on; the briefcase is [WORK_BADGE_SIZE_FRACTION] of it, in [Accent] at [WORK_BADGE_ALPHA].
  */
 @Composable
-private fun WorkProfileBadge(modifier: Modifier = Modifier) {
-    Badge(containerColor = Accent, modifier = modifier.testTag("work_profile_badge"))
+private fun WorkProfileBadge(iconSize: Dp, modifier: Modifier = Modifier) {
+    Icon(
+        imageVector = Icons.Filled.Work,
+        contentDescription = null,
+        tint = Accent.copy(alpha = WORK_BADGE_ALPHA),
+        modifier = modifier.size(iconSize * WORK_BADGE_SIZE_FRACTION).testTag("work_profile_badge"),
+    )
 }
 
 /** Sibling to [WorkProfileBadge] for [com.facetlauncher.app.data.model.AppProfile.OTHER] apps — a small person glyph (not just a plain dot) so it reads as visually distinct from the Work badge at a glance. */
