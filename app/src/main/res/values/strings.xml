@@ -1122,7 +1122,7 @@
     <string name="clock_accessories_unit_rain">Rain</string>
     <string name="clock_accessories_unit_pressure">Pressure</string>
     <string name="clock_accessories_location">Location</string>
-    <string name="units_and_location_note">Units and location apply to every facet.</string>
+    <string name="units_and_location_note">Units apply to every facet. The location is the default: a facet\'s clock can choose its own in its clock settings.</string>
     <string name="weather_unit_auto">Automatic</string>
     <string name="weather_unit_celsius" translatable="false">Celsius (°C)</string>
     <string name="weather_unit_fahrenheit" translatable="false">Fahrenheit (°F)</string>
@@ -1205,7 +1205,7 @@
     <string name="native_widget_media_empty">Nothing playing</string>
     <string name="native_widget_picker_section">Facet widgets</string>
     <string name="hub_widget_configure">Configure</string>
-    <string name="hub_widget_config_use_launcher">Same as launcher settings</string>
+    <string name="hub_widget_config_use_launcher">Same as Weather settings</string>
     <string name="hub_widget_config_calendars">Calendars</string>
     <string name="hub_widget_config_location">Location</string>
     <string name="hub_widget_config_current_location">Current location</string>

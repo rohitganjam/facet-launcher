@@ -980,7 +980,7 @@
     <string name="clock_accessories_unit_rain">Regen</string>
     <string name="clock_accessories_unit_pressure">Luchtdruk</string>
     <string name="clock_accessories_location">Locatie</string>
-    <string name="units_and_location_note">Eenheden en locatie gelden voor elk facet.</string>
+    <string name="units_and_location_note">De eenheden gelden voor elke facet. De locatie is de standaard: de klok van een facet kan in de klokinstellingen een eigen locatie kiezen.</string>
     <string name="weather_unit_auto">Automatisch</string>
     <string name="weather_unit_option_kmh">Kilometer per uur (km/h)</string>
     <string name="weather_unit_option_mph">Mijl per uur (mph)</string>
@@ -1057,7 +1057,7 @@
     <string name="native_widget_media_empty">Er wordt niets afgespeeld</string>
     <string name="native_widget_picker_section">Facet-widgets</string>
     <string name="hub_widget_configure">Configureren</string>
-    <string name="hub_widget_config_use_launcher">Zelfde als de launcherinstellingen</string>
+    <string name="hub_widget_config_use_launcher">Zelfde als de weerinstellingen</string>
     <string name="hub_widget_config_calendars">Agenda\'s</string>
     <string name="hub_widget_config_location">Locatie</string>
     <string name="hub_widget_config_current_location">Huidige locatie</string>

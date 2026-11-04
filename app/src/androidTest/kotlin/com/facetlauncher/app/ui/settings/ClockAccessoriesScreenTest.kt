@@ -14,6 +14,8 @@ import com.facetlauncher.app.data.model.Facet
 import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.data.model.TemperatureUnit
 import com.facetlauncher.app.data.model.WeatherIconStyle
+import com.facetlauncher.app.data.model.WidgetWeatherLocation
+import com.facetlauncher.app.data.model.WeatherCity
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -173,5 +175,47 @@ class ClockAccessoriesScreenTest {
 
         // Then its switches are disabled
         composeRule.onNodeWithTag("accessory_weather_toggle").assertIsNotEnabled()
+    }
+
+    private val oslo = WeatherCity("Oslo", 59.91, 10.75, "Europe/Oslo")
+
+    @Test
+    fun aFacetOverridingTheClockPicksItsOwnWeatherLocationLikeAWidgetDoes() {
+        // Given a facet overriding the clock with weather on, and a city saved in Weather settings
+        var chosen: WidgetWeatherLocation? = WidgetWeatherLocation.Current
+        val facet = Facet(id = 1L, name = "Work", position = 1, overrideClock = true, clockShowWeather = true)
+        setContent(
+            ClockAccessoriesUiState(facet = facet, settings = LauncherSettings(showWeather = true, savedWeatherCities = listOf(oslo)), weatherEnabledAnywhere = true),
+            actions = ClockAccessoriesActions(onWeatherLocation = { chosen = it }),
+        )
+
+        // Then it follows Weather settings to begin with, and tapping a city chooses that city
+        composeRule.onNodeWithTag("accessory_location_follow").performScrollTo().assertIsEnabled()
+        composeRule.onNodeWithTag("accessory_location_city_Oslo").performScrollTo().performClick()
+        assertEquals(WidgetWeatherLocation.City(oslo), chosen)
+
+        // And "same as Weather settings" gives the place back
+        composeRule.onNodeWithTag("accessory_location_follow").performClick()
+        assertEquals(null, chosen)
+    }
+
+    @Test
+    fun theLocationCardIsNotOnTheLauncherDefaultScreen() {
+        // Given the default screen with weather on
+        setContent(ClockAccessoriesUiState(settings = LauncherSettings(showWeather = true), weatherEnabledAnywhere = true))
+
+        // Then there is no location card: the launcher-wide location is in Weather settings
+        composeRule.onNodeWithTag("accessory_location_follow").assertDoesNotExist()
+    }
+
+    @Test
+    fun aFacetThatInheritsTheClockShowsTheLocationDimmedAndCannotChangeIt() {
+        // Given a facet that inherits the clock, with weather shown
+        val facet = Facet(id = 1L, name = "Work", position = 1, overrideClock = false)
+        setContent(ClockAccessoriesUiState(facet = facet, settings = LauncherSettings(showWeather = true), weatherEnabledAnywhere = true))
+
+        // Then the choices are there but cannot be changed here
+        composeRule.onNodeWithTag("accessory_location_follow").performScrollTo().assertIsNotEnabled()
+        composeRule.onNodeWithTag("accessory_location_current").assertIsNotEnabled()
     }
 }

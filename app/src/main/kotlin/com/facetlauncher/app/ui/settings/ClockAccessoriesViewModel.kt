@@ -9,10 +9,14 @@ import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.model.Facet
 import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.data.model.NO_ACTIVE_FACET_ID
+import com.facetlauncher.app.data.model.WeatherCity
 import com.facetlauncher.app.data.model.WeatherIconStyle
+import com.facetlauncher.app.data.model.WidgetWeatherLocation
 import com.facetlauncher.app.domain.resolveFacetStyle
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -39,6 +43,13 @@ data class ClockAccessoriesUiState(
     val showBattery: Boolean get() = clockStyle.showBattery
     val showWeather: Boolean get() = clockStyle.showWeather
     val weatherIconStyle: WeatherIconStyle get() = clockStyle.weatherIconStyle
+
+    /** This facet's own weather location, `null` (same as Weather settings) while it follows them or inherits the clock. */
+    val weatherLocation: WidgetWeatherLocation? get() = clockStyle.weatherLocation
+    val savedCities: ImmutableList<WeatherCity> get() = settings.savedWeatherCities.toImmutableList()
+
+    /** The Location card: only on a facet's screen, and while that facet shows weather (dimmed, like the switches, while it inherits the clock). */
+    val showLocationCard: Boolean get() = isFacetScoped && showWeather
 
     /** The Icons card: on the default screen while weather is on somewhere, on a facet's while that facet shows weather. */
     val showIconStyleCard: Boolean get() = if (isFacetScoped) showWeather else weatherEnabledAnywhere
@@ -80,6 +91,11 @@ class ClockAccessoriesViewModel @Inject constructor(
     fun setShowWeather(enabled: Boolean) = write({ setShowWeather(enabled) }, { setClockShowWeather(it, enabled) })
 
     fun setWeatherIconStyle(style: WeatherIconStyle) = write({ setWeatherIconStyle(style) }, { setClockWeatherIconStyle(it, style) })
+
+    /** A facet's own place for its clock's weather; the launcher-wide location is edited in Weather settings, so this does nothing without a facet. */
+    fun setWeatherLocation(location: WidgetWeatherLocation?) {
+        if (facetId != NO_ACTIVE_FACET_ID) launch { facetRepository.setClockWeatherLocation(facetId, location) }
+    }
 
     /** Writes to this facet when the screen is scoped to one, else to the launcher defaults. */
     private fun write(global: suspend SettingsRepository.() -> Unit, facet: suspend FacetRepository.(Long) -> Unit) = launch {

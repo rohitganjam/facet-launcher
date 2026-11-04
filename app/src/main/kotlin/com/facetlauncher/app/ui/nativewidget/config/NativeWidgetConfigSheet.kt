@@ -15,14 +15,12 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.RadioButton
-import androidx.compose.material3.RadioButtonDefaults
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -37,10 +35,9 @@ import com.facetlauncher.app.data.model.NativeWidgetConfig
 import com.facetlauncher.app.data.model.NativeWidgetRef
 import com.facetlauncher.app.data.model.NativeWidgetType
 import com.facetlauncher.app.data.model.WeatherCity
-import com.facetlauncher.app.data.model.WidgetWeatherLocation
 import com.facetlauncher.app.data.model.selectsCalendar
-import com.facetlauncher.app.data.model.isSamePlaceAs
 import com.facetlauncher.app.ui.components.ThemedModalBottomSheet
+import com.facetlauncher.app.ui.components.WeatherLocationPicker
 import com.facetlauncher.app.ui.components.calendarSubtitle
 import com.facetlauncher.app.ui.components.calendarTitle
 import com.facetlauncher.app.ui.components.workCalendarPosition
@@ -157,30 +154,12 @@ private fun AgendaConfig(config: NativeWidgetConfig, state: NativeWidgetConfigUi
 
 @Composable
 private fun WeatherConfig(config: NativeWidgetConfig, savedCities: ImmutableList<WeatherCity>, onConfigChange: (NativeWidgetConfig) -> Unit) {
-    val location = config.weatherLocation
-    Column {
-        LocationRow(stringResource(R.string.hub_widget_config_use_launcher), location == null, "hub_widget_config_follow") { onConfigChange(config.copy(weatherLocation = null)) }
-        LocationRow(stringResource(R.string.hub_widget_config_current_location), location == WidgetWeatherLocation.Current, "hub_widget_config_current") {
-            onConfigChange(config.copy(weatherLocation = WidgetWeatherLocation.Current))
-        }
-        SectionLabel(stringResource(R.string.hub_widget_config_location))
-        if (savedCities.isEmpty()) Text(text = stringResource(R.string.hub_widget_config_no_cities), style = MaterialTheme.typography.bodyMedium, color = Muted)
-        savedCities.forEach { city ->
-            val selected = (location as? WidgetWeatherLocation.City)?.city?.isSamePlaceAs(city) == true
-            LocationRow(city.name, selected, "hub_widget_config_city_${city.name}") { onConfigChange(config.copy(weatherLocation = WidgetWeatherLocation.City(city))) }
-        }
-    }
-}
-
-@Composable
-private fun LocationRow(label: String, selected: Boolean, tag: String, onClick: () -> Unit) {
-    Row(
-        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick).padding(vertical = 4.dp).testTag(tag),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        RadioButton(selected = selected, onClick = null, colors = RadioButtonDefaults.colors(selectedColor = Accent))
-        Text(text = label, style = MaterialTheme.typography.bodyLarge, color = Ink, modifier = Modifier.padding(start = 12.dp))
-    }
+    WeatherLocationPicker(
+        location = config.weatherLocation,
+        savedCities = savedCities,
+        onChange = { onConfigChange(config.copy(weatherLocation = it)) },
+        tagPrefix = "hub_widget_config",
+    )
 }
 
 @Composable

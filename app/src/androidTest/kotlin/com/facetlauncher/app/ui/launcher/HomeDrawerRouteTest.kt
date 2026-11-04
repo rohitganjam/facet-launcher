@@ -3,7 +3,8 @@ package com.facetlauncher.app.ui.launcher
 import com.facetlauncher.app.data.AppVersion
 import com.facetlauncher.app.data.ReleaseNotesRepository
 import com.facetlauncher.app.domain.GroupAppsByLetterUseCase
-import com.facetlauncher.app.domain.ObserveWeatherUseCase
+import com.facetlauncher.app.domain.ClockWeather
+import com.facetlauncher.app.domain.ObserveClockWeatherUseCase
 import com.facetlauncher.app.domain.RefreshWeatherUseCase
 import com.facetlauncher.app.ui.drawer.DrawerListUseCases
 import android.app.AppOpsManager
@@ -473,9 +474,9 @@ class HomeDrawerRouteTest {
 
             // The weather sheet's and the What's new pill's state: nothing to show here, but HomeDrawerRoute needs both.
             val weatherViewModel = remember {
-                val observeWeather = mock(ObserveWeatherUseCase::class.java)
-                `when`(observeWeather()).thenReturn(flowOf(null))
-                WeatherViewModel(observeWeather, settingsRepository, mock(RefreshWeatherUseCase::class.java))
+                val observeClockWeather = mock(ObserveClockWeatherUseCase::class.java)
+                `when`(observeClockWeather()).thenReturn(flowOf(ClockWeather()))
+                WeatherViewModel(observeClockWeather, settingsRepository, mock(RefreshWeatherUseCase::class.java))
             }
             val whatsNewPillViewModel = remember { WhatsNewPillViewModel(settingsRepository, ReleaseNotesRepository(context), AppVersion()) }
 

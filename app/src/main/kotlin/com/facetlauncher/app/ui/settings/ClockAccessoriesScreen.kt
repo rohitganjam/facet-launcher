@@ -36,12 +36,14 @@ import com.facetlauncher.app.R
 import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.data.model.WeatherIconStyle
 import com.facetlauncher.app.data.model.WeatherLocationMode
+import com.facetlauncher.app.data.model.WidgetWeatherLocation
 import com.facetlauncher.app.ui.components.StickyHeaderScrollColumn
 import com.facetlauncher.app.ui.components.CardDivider
 import com.facetlauncher.app.ui.components.LabeledDropdownRow
 import com.facetlauncher.app.ui.components.SettingsCard
 import com.facetlauncher.app.ui.components.SettingsSectionHeader
 import com.facetlauncher.app.ui.components.SettingsToggleRow
+import com.facetlauncher.app.ui.components.WeatherLocationPicker
 import com.facetlauncher.app.ui.components.TextActionButton
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import com.facetlauncher.app.ui.theme.Ink
@@ -87,6 +89,11 @@ fun ClockAccessoriesScreen(
                 if (needsPermission) requestLocation.launch(Manifest.permission.ACCESS_COARSE_LOCATION)
             },
             onIconStyle = viewModel::setWeatherIconStyle,
+            onWeatherLocation = { location ->
+                viewModel.setWeatherLocation(location)
+                // "Current location" needs the permission; ask as it is chosen, so the weather can appear straight away.
+                if (location == WidgetWeatherLocation.Current && !uiState.locationPermissionGranted) requestLocation.launch(Manifest.permission.ACCESS_COARSE_LOCATION)
+            },
         ),
         modifier = modifier,
     )
@@ -97,6 +104,7 @@ data class ClockAccessoriesActions(
     val onShowBattery: (Boolean) -> Unit = {},
     val onShowWeather: (Boolean) -> Unit = {},
     val onIconStyle: (WeatherIconStyle) -> Unit = {},
+    val onWeatherLocation: (WidgetWeatherLocation?) -> Unit = {},
 )
 
 @Composable
@@ -117,6 +125,7 @@ internal fun ClockAccessoriesContent(
         if (uiState.isInheriting) InheritingNote(navigation.onOpenClockStyle)
         SwitchesCards(uiState, actions)
         if (uiState.showIconStyleCard) IconStyleCard(uiState, actions)
+        if (uiState.showLocationCard) LocationCard(uiState, actions)
     }
 }
 
@@ -139,6 +148,22 @@ private fun SwitchesCards(uiState: ClockAccessoriesUiState, actions: ClockAccess
     }
     SettingsCard {
         SettingsToggleRow(stringResource(R.string.clock_accessories_show_weather), uiState.showWeather, actions.onShowWeather, "accessory_weather_toggle", enabled = editable)
+    }
+}
+
+/** Where this facet's clock shows the weather for: the same control as a Weather widget's, defaulting to Weather settings. */
+@Composable
+private fun LocationCard(uiState: ClockAccessoriesUiState, actions: ClockAccessoriesActions) {
+    SettingsSectionHeader(stringResource(R.string.weather_location_title))
+    SettingsCard {
+        WeatherLocationPicker(
+            location = uiState.weatherLocation,
+            savedCities = uiState.savedCities,
+            onChange = actions.onWeatherLocation,
+            tagPrefix = "accessory_location",
+            enabled = !uiState.isInheriting,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+        )
     }
 }
 

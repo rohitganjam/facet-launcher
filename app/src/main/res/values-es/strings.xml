@@ -1044,7 +1044,7 @@
     <string name="clock_accessories_unit_rain">Lluvia</string>
     <string name="clock_accessories_unit_pressure">Presión</string>
     <string name="clock_accessories_location">Ubicación</string>
-    <string name="units_and_location_note">Las unidades y la ubicación se aplican a todas las facetas.</string>
+    <string name="units_and_location_note">Las unidades se aplican a todas las facetas. La ubicación es la predeterminada: el reloj de una faceta puede elegir la suya en sus ajustes del reloj.</string>
     <string name="weather_unit_auto">Automático</string>
     <string name="weather_unit_option_kmh">Kilómetros por hora (km/h)</string>
     <string name="weather_unit_option_mph">Millas por hora (mph)</string>
@@ -1116,7 +1116,7 @@
     <string name="native_widget_media_empty">Nada en reproducción</string>
     <string name="native_widget_picker_section">Widgets de Facet</string>
     <string name="hub_widget_configure">Configurar</string>
-    <string name="hub_widget_config_use_launcher">Igual que los ajustes del launcher</string>
+    <string name="hub_widget_config_use_launcher">Igual que los ajustes del tiempo</string>
     <string name="hub_widget_config_calendars">Calendarios</string>
     <string name="hub_widget_config_location">Ubicación</string>
     <string name="hub_widget_config_current_location">Ubicación actual</string>

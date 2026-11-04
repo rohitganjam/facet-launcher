@@ -1044,7 +1044,7 @@
     <string name="clock_accessories_unit_rain">Pluie</string>
     <string name="clock_accessories_unit_pressure">Pression</string>
     <string name="clock_accessories_location">Position</string>
-    <string name="units_and_location_note">Les unités et la position s\'appliquent à toutes les facettes.</string>
+    <string name="units_and_location_note">Les unités s\'appliquent à toutes les facettes. La position est celle par défaut : l\'horloge d\'une facette peut choisir la sienne dans ses réglages d\'horloge.</string>
     <string name="weather_unit_auto">Automatique</string>
     <string name="weather_unit_option_kmh">Kilomètres par heure (km/h)</string>
     <string name="weather_unit_option_mph">Miles par heure (mph)</string>
@@ -1116,7 +1116,7 @@
     <string name="native_widget_media_empty">Aucune lecture en cours</string>
     <string name="native_widget_picker_section">Widgets Facet</string>
     <string name="hub_widget_configure">Configurer</string>
-    <string name="hub_widget_config_use_launcher">Comme dans les réglages du lanceur</string>
+    <string name="hub_widget_config_use_launcher">Comme dans les réglages météo</string>
     <string name="hub_widget_config_calendars">Agendas</string>
     <string name="hub_widget_config_location">Position</string>
     <string name="hub_widget_config_current_location">Position actuelle</string>
