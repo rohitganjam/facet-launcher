@@ -20,5 +20,11 @@ class WidgetPlacementRepository @Inject constructor(private val widgetPlacementD
 
     suspend fun upsert(placement: WidgetPlacementEntity) = widgetPlacementDao.upsert(placement)
 
+    /** The id for the next widget Facet draws itself: one below the lowest stored, and always negative so it never meets a host-issued id. */
+    suspend fun nextNativeId(): Int = minOf(widgetPlacementDao.minAppWidgetId() ?: 0, 0) - 1
+
+    /** Removes every widget Facet draws itself, before a backup restore puts the saved ones back. Hosted widgets stay. */
+    suspend fun deleteAllNative() = widgetPlacementDao.deleteAllNative()
+
     suspend fun deleteById(appWidgetId: Int) = widgetPlacementDao.deleteById(appWidgetId)
 }

@@ -16,6 +16,7 @@ class DeleteWidgetUseCase @Inject constructor(
 ) {
     suspend operator fun invoke(appWidgetId: Int) {
         widgetPlacementRepository.deleteById(appWidgetId)
-        appWidgetRepository.deleteAppWidgetId(appWidgetId)
+        // A widget Facet draws itself has a negative id of its own and no host id to release.
+        if (appWidgetId >= 0) appWidgetRepository.deleteAppWidgetId(appWidgetId)
     }
 }

@@ -9,6 +9,7 @@ import com.facetlauncher.app.data.model.ClockAlignment
 import com.facetlauncher.app.data.model.ClockStackItem
 import com.facetlauncher.app.data.model.ClockStackItemKind
 import com.facetlauncher.app.data.model.MAX_CLOCK_STACK_ITEMS
+import com.facetlauncher.app.data.model.NativeWidgetType
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.flow.Flow
@@ -42,10 +43,37 @@ class ClockStackRepository @Inject constructor(
         append(facetId) { ClockStackItemEntity(facetId = facetId, position = it, kind = ClockStackItemKind.CLOCK) }
     }
 
+    /** Appends a widget Facet draws itself. `false`, and nothing written, when the stack is full. */
+    suspend fun addNativeWidget(facetId: Long, type: NativeWidgetType): Boolean = append(facetId) {
+        ClockStackItemEntity(facetId = facetId, position = it, kind = ClockStackItemKind.NATIVE_WIDGET, nativeWidgetType = type)
+    }
+
+    /** Appends restored native pages after what the facet has, with their sizes and alignments, up to the stack limit. Used by a backup restore. */
+    suspend fun restoreNativeWidgets(facetId: Long, pages: List<ClockStackItem>) = database.withTransaction {
+        pages.forEach { page ->
+            val count = dao.getAll(facetId).size
+            if (count >= MAX_CLOCK_STACK_ITEMS || page.nativeWidgetType == null) return@forEach
+            dao.insert(
+                ClockStackItemEntity(
+                    facetId = facetId, position = count, kind = ClockStackItemKind.NATIVE_WIDGET, nativeWidgetType = page.nativeWidgetType,
+                    widthDp = page.widthDp, heightDp = page.heightDp, alignment = page.alignment,
+                    landscapeWidthDp = page.landscapeWidthDp, landscapeHeightDp = page.landscapeHeightDp, landscapeAlignment = page.landscapeAlignment,
+                ),
+            )
+        }
+    }
+
+    /** Swaps the item for a widget Facet draws itself in place. `null` when the item does not exist, else what to release. */
+    suspend fun replaceWithNativeWidget(itemId: Long, type: NativeWidgetType): ReplacedItem? = database.withTransaction {
+        val item = dao.getById(itemId) ?: return@withTransaction null
+        dao.replace(itemId, ClockStackItemKind.NATIVE_WIDGET, null, type)
+        ReplacedItem(releasedAppWidgetId = item.appWidgetId)
+    }
+
     /** Swaps the item for a hosted widget in place. `null` when the item does not exist, else what to release. */
     suspend fun replaceWithWidget(itemId: Long, appWidgetId: Int): ReplacedItem? = database.withTransaction {
         val item = dao.getById(itemId) ?: return@withTransaction null
-        dao.replace(itemId, ClockStackItemKind.WIDGET, appWidgetId)
+        dao.replace(itemId, ClockStackItemKind.WIDGET, appWidgetId, null)
         ReplacedItem(releasedAppWidgetId = item.appWidgetId)
     }
 
@@ -53,7 +81,7 @@ class ClockStackRepository @Inject constructor(
     suspend fun replaceWithClock(itemId: Long): ReplacedItem? = database.withTransaction {
         val item = dao.getById(itemId) ?: return@withTransaction null
         if (dao.getAll(item.facetId).any { it.kind == ClockStackItemKind.CLOCK && it.id != itemId }) return@withTransaction null
-        dao.replace(itemId, ClockStackItemKind.CLOCK, null)
+        dao.replace(itemId, ClockStackItemKind.CLOCK, null, null)
         ReplacedItem(releasedAppWidgetId = item.appWidgetId)
     }
 

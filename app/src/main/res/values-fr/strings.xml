@@ -1108,4 +1108,10 @@
     <string name="accessibility_service_label">Facet double appui pour verrouiller</string>
     <string name="accessibility_service_description">Verrouille l\'écran quand vous appuyez deux fois sur un espace vide de l\'écran d\'accueil. Ne lit pas le contenu de l\'écran.</string>
     <string name="about_weather_credit">Données météo de MET Norway (CC BY 4.0). Noms de villes de GeoNames (CC BY 4.0).</string>
+    <string name="native_widget_weather">Météo</string>
+    <string name="native_widget_agenda">Agenda</string>
+    <string name="native_widget_now_playing">En cours de lecture</string>
+    <string name="native_widget_agenda_empty">Aucun événement à venir</string>
+    <string name="native_widget_media_empty">Aucune lecture en cours</string>
+    <string name="native_widget_picker_section">Widgets Facet</string>
 </resources>

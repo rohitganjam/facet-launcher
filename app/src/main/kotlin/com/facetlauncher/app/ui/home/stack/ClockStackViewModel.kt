@@ -11,6 +11,7 @@ import com.facetlauncher.app.data.di.IoDispatcher
 import com.facetlauncher.app.data.model.ClockStackItem
 import com.facetlauncher.app.data.model.ClockStackItemKind
 import com.facetlauncher.app.data.model.MAX_CLOCK_STACK_ITEMS
+import com.facetlauncher.app.data.model.NativeWidgetType
 import com.facetlauncher.app.data.model.NO_ACTIVE_FACET_ID
 import com.facetlauncher.app.data.model.clockStackLimit
 import com.facetlauncher.app.data.widget.AppWidgetRepository
@@ -38,6 +39,7 @@ data class ClockStackRow(
     val id: Long,
     val kind: ClockStackItemKind,
     val appWidgetId: Int?,
+    val nativeWidgetType: NativeWidgetType? = null,
     val providerName: String?,
     /** The clock opens Appearance; a widget can be configured only if its provider declares a configure activity. */
     val canConfigure: Boolean,
@@ -91,8 +93,9 @@ class ClockStackViewModel @Inject constructor(
         id = id,
         kind = kind,
         appWidgetId = appWidgetId,
+        nativeWidgetType = nativeWidgetType,
         providerName = appWidgetId?.let { appWidgetRepository.getProviderLabel(it) },
-        canConfigure = appWidgetId?.let { configureSender(it) != null } ?: true,
+        canConfigure = appWidgetId?.let { configureSender(it) != null } ?: (kind == ClockStackItemKind.CLOCK),
     )
 
     /** Read when an action runs, not from [uiState] (which only holds a value while something collects it). */

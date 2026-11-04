@@ -1,5 +1,6 @@
 package com.facetlauncher.app.ui.home.widget
 
+import com.facetlauncher.app.ui.nativewidget.ALL_NATIVE_WIDGETS
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -14,6 +15,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.facetlauncher.app.R
+import com.facetlauncher.app.data.model.NativeWidgetType
 import com.facetlauncher.app.ui.hub.picker.AddFailureReason
 import com.facetlauncher.app.ui.hub.picker.HubAddWidgetEvent
 import com.facetlauncher.app.ui.hub.picker.HubWidgetPickerContent
@@ -75,5 +77,7 @@ fun ClockWidgetPickerScreen(
         onBack = onDone,
         title = stringResource(R.string.clock_widget_picker_title),
         modifier = modifier,
+        nativeWidgets = ALL_NATIVE_WIDGETS,
+        onNativeWidgetSelect = { type -> viewModel.onNativeWidgetSelect(type, target) },
     )
 }

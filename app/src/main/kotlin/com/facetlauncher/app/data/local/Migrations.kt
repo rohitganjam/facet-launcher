@@ -661,6 +661,13 @@ object Migrations {
         }
     }
 
+    val MIGRATION_37_38: Migration = object : Migration(37, 38) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("ALTER TABLE clock_stack_items ADD COLUMN nativeWidgetType TEXT")
+            db.execSQL("ALTER TABLE widget_placements ADD COLUMN nativeWidgetType TEXT")
+        }
+    }
+
     val ALL: Array<Migration> = arrayOf(
         MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15, MIGRATION_15_16,
         MIGRATION_16_17, MIGRATION_17_18, MIGRATION_18_19, MIGRATION_19_20, MIGRATION_20_21, MIGRATION_21_22,
@@ -674,5 +681,6 @@ object Migrations {
         MIGRATION_34_35,
         MIGRATION_35_36,
         MIGRATION_36_37,
+        MIGRATION_37_38,
     )
 }

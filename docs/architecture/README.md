@@ -25,6 +25,7 @@ checked against source, not against planning docs; where the code diverges from
 | [16-flow-billing.md](16-flow-billing.md) | Flow: the one-time `facet_pro` Google Play purchase, the cached entitlement and its offline rules, Buy/Restore, what a lapse does, the debug override, and what the manifest says about `INTERNET` |
 | [17-flow-home-layout.md](17-flow-home-layout.md) | Flow: how `HomeScreen` picks portrait or landscape from the window shape, what each layout contains, and how landscape adjust mode works |
 | [19-flow-icon-packs.md](19-flow-icon-packs.md) | Flow: finding installed icon packs, reading `appfilter.xml` (text scan or resource), lookup and fallback theming, calendar icons, drawing, the Icons screen, backup |
+| [20-flow-native-widgets.md](20-flow-native-widgets.md) | Flow: widgets Facet draws itself (weather, agenda, now playing) on the Hub and Home's stack — storage, one size-driven layout contract, data, add/replace, backup |
 | [18-flow-weather.md](18-flow-weather.md) | Flow (in progress): the clock's weather accessory and sheet — MET Norway forecast, refresh gate, location and place names, cached hourly rows, settings |
 
 ## Stack at a glance

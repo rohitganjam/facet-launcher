@@ -4492,3 +4492,25 @@ Decided with you: one icon size across Home, the dock, the drawer and folders (4
 - [x] `OnboardingNotificationsPageTest` (5), `OnboardingScreenTest` (22) and `NotificationSettingsScreenTest` (shared cards) pass on the `Medium_Phone_API_36.1` emulator.
 - [ ] Native review of the new fr, de, es, pt, pt-rPT and nl strings (`onboarding_notifications_*`, machine-translated).
 - [ ] Check on a device: switch on from onboarding, grant in system Settings, return and see the switch on and the preview fill in.
+
+## Facet widgets: weather, agenda, now playing (direct request)
+Widgets the app draws itself, on the Hub grid and on Home's widget stack, behaving like hosted widgets (free resize, move, replace, remove, backup). Design and data flow: `docs/architecture/20-flow-native-widgets.md`.
+
+### Decisions
+- Both surfaces from the start; weather, agenda and now playing first; they count against the same Pro stack limit as any page.
+- Hub: reuse `widget_placements` with a negative id of our own and a `nativeWidgetType`, so move, resize, compact, landscape order and delete are unchanged. Home: a `NATIVE_WIDGET` stack kind with the same size and alignment fields as a hosted page.
+- One layout contract: a widget is drawn from a plain dp box and picks a Small, Medium or Large layout from it (`NativeWidgetSizing.tierFor`), so a size gives the same widget on Hub and Home. Minimum span per type on the Hub, minimum dp on Home.
+- No new repository or network use: the widgets read the weather, calendar and media state Home already holds.
+
+### Steps
+- [x] Data: `NativeWidgetType`, v38 migration (`widget_placements` and `clock_stack_items`), `ClockStackItemKind.NATIVE_WIDGET`, repository methods (`addNativeWidget`, `replaceWithNativeWidget`, `restoreNativeWidgets`, `nextNativeId`, `deleteAllNative`). Tests: `ClockStackRepositoryTest`, `WidgetPlacementRepositoryTest`, `FacetDatabaseMigrationTest.migration37To38…` (written, instrumented run not done).
+- [x] Sizing logic and the three widgets with a `@Preview` per tier in light and dark. Tests: `NativeWidgetSizingTest`, `NativeWidgetTest` (7, passed on the emulator).
+- [x] Home stack: state builder (size, floor, alignment, negative id), `ClockBlock` draws `NativeWidget`, add and replace through the clock widget picker, stack screen row, weather refresh while a weather widget is on Home. Tests: `HomeScreenStateBuilderTest`, `AddClockStackItemUseCaseTest`, `ReplaceClockStackItemUseCaseTest`, `ClockWidgetPickerViewModelTest`.
+- [x] Hub: no orphan state for native rows, tiles in portrait and landscape grids, resize floored at the minimum span, "Facet widgets" section in the picker, delete releases no host id, weather refresh while one is on the Hub. Tests: `ObserveHubStateUseCaseTest`, `DeleteWidgetUseCaseTest`, `HubWidgetPickerViewModelTest`, `HubWidgetPickerScreenTest` (5), `HubScreenTest` and `ClockStackScreenTest` still pass.
+- [x] Backup: `BackupWidgetPlacement.nativeWidgetType`, `BackupFacet.nativeStackPages`; import restores them directly. Tests: `ImportBackupUseCaseTest`, `BackupCoverageTest` (facet fields).
+- [x] Docs: new `20`, plus `02`, `04`, `09`, `10`, `13`, README; `TEST_REGISTRY.md` regenerated.
+- [x] Agenda shows the event's room under the title on Medium and Large (`CalendarEvent.location`, `roomLabel`). Tests: `CalendarEventTest`, `CalendarRepositoryTest`, `NativeWidgetTest`.
+- [ ] Check on a device: long-press-and-drag, resize handles and the corner handles on a Compose widget (the Hub grab gesture and Home's adjust mode were written against hosted views), and the tier changes while resizing.
+- [ ] Check on a device: weather widget with location off, and a weather widget on Home with the clock's weather accessory off.
+- [ ] Native review of the six new `native_widget_*` strings in es, es-419, fr, de, nl, pt, pt-rPT (machine-translated).
+- [ ] `BackupCoverageTest` "every launcher setting is exported" already fails on `homeOpensSearch` and `doubleTapToLock` (from the Gestures work, not this change).

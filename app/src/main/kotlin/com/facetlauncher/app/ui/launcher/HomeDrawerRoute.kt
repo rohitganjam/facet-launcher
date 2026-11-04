@@ -14,6 +14,8 @@ import com.facetlauncher.app.ui.home.HomeLayoutMode
 import com.facetlauncher.app.ui.home.HomeLiveState
 import com.facetlauncher.app.ui.home.HomeScreenContent
 import com.facetlauncher.app.ui.home.HomeWidgetSizing
+import com.facetlauncher.app.ui.nativewidget.NativeWidgetActions
+import com.facetlauncher.app.ui.nativewidget.NativeWidgetEnvironment
 import com.facetlauncher.app.ui.home.WhatsNewPillHost
 import com.facetlauncher.app.ui.home.WhatsNewPillViewModel
 import com.facetlauncher.app.ui.home.toHomeScreenState
@@ -160,7 +162,8 @@ fun HomeDrawerRoute(
     val lifecycleOwner = LocalLifecycleOwner.current
     // Counts resumes so the orphaned-widget check re-runs: the app can be uninstalled while Home is away.
     var resumeCount by remember { mutableIntStateOf(0) }
-    val weatherShown by rememberUpdatedState(homeUiState.style.clock.showWeather)
+    val hubHasWeather by hubViewModel.hasNativeWeather.collectAsStateWithLifecycle()
+    val weatherShown by rememberUpdatedState(homeUiState.style.clock.showWeather || homeUiState.showsNativeWeather || hubHasWeather)
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
@@ -333,6 +336,66 @@ fun HomeDrawerRoute(
         drawerState.settings.drawerListItemSize,
     )
 
+    val homeScreenState = homeUiState.style.toHomeScreenState(
+        landscape = homeLayoutMode == HomeLayoutMode.LANDSCAPE,
+        settings = homeUiState.settings,
+        content = HomeScreenContent(
+            listItems = homeUiState.appListItems,
+            dockItems = homeUiState.dockApps,
+            calendarEvents = homeUiState.calendarEvents,
+            badgeCounts = homeUiState.badgeCounts,
+            appMenuNotifications = appMenuNotifications,
+            folderCandidates = folders,
+            showUsageAccessPrompt = homeUiState.showUsageAccessPrompt,
+            clockAccessories = homeUiState.clockAccessories,
+            mediaPlayer = homeUiState.mediaPlayer,
+            weather = weatherUiState.weather,
+        ),
+        widgetSizing = HomeWidgetSizing(
+            defaultSizeDp = { widgetDefaultSizesDp[it] },
+            resizeFloorDp = { widgetResizeFloorsDp[it] },
+            isOrphaned = { widgetOrphans[it] == true },
+        ),
+        live = HomeLiveState(
+            adjustMode = clockAdjustMode,
+            draggingHandle = draggingHandle,
+            placementFacetId = homeUiState.activeFacet?.id,
+            styleOwnerFacetName = homeUiState.clockStyleOwningFacet?.name,
+            visibleClockItemId = homeUiState.visibleClockItemId,
+            isPro = homeUiState.isPro,
+        ),
+    )
+    val screenActions = homeScreenActions(
+        viewModel = homeViewModel,
+        inputs = HomeActionsInputs(homeUiState, homeLayoutMode, context, coroutineScope, widgetHosts),
+        itemActions = itemActions,
+        swipe = swipe,
+        hooks = HomeRouteHooks(
+            setAdjustMode = { clockAdjustMode = it },
+            setDraggingHandle = { draggingHandle = it },
+            setClockWidgetBounds = { clockWidgetBoundsInHomeRoot = it },
+            setAppListBounds = { appListBoundsInHomeRoot = it },
+            setClockPaneBounds = { clockPaneBoundsInHomeRoot = it },
+            setClockZoneBounds = { clockZoneBoundsInHomeRoot = it },
+            openClockWidgetPicker = { itemId ->
+                overlays.clockWidgetPickerItemId = itemId
+                overlays.showClockWidgetPicker = true
+            },
+            openWeather = {
+                overlays.showWeatherSheet = true
+                weatherViewModel.refresh(userInitiated = false)
+            },
+        ),
+        navigation = HomeNavigation(
+            toSettings = onNavigateToSettings,
+            toFacetSettings = onNavigateToFacetSettings,
+            toFacetPro = onNavigateToFacetPro,
+            toUsageAccessExplanation = onNavigateToUsageAccessExplanation,
+            toAppearance = onNavigateToAppearance,
+            toClockStack = onNavigateToClockStack,
+        ),
+    )
+
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -342,65 +405,8 @@ fun HomeDrawerRoute(
             },
     ) {
         HomeScreen(
-            state = homeUiState.style.toHomeScreenState(
-                landscape = homeLayoutMode == HomeLayoutMode.LANDSCAPE,
-                settings = homeUiState.settings,
-                content = HomeScreenContent(
-                    listItems = homeUiState.appListItems,
-                    dockItems = homeUiState.dockApps,
-                    calendarEvents = homeUiState.calendarEvents,
-                    badgeCounts = homeUiState.badgeCounts,
-                    appMenuNotifications = appMenuNotifications,
-                    folderCandidates = folders,
-                    showUsageAccessPrompt = homeUiState.showUsageAccessPrompt,
-                    clockAccessories = homeUiState.clockAccessories,
-                    mediaPlayer = homeUiState.mediaPlayer,
-                    weather = weatherUiState.weather,
-                ),
-                widgetSizing = HomeWidgetSizing(
-                    defaultSizeDp = { widgetDefaultSizesDp[it] },
-                    resizeFloorDp = { widgetResizeFloorsDp[it] },
-                    isOrphaned = { widgetOrphans[it] == true },
-                ),
-                live = HomeLiveState(
-                    adjustMode = clockAdjustMode,
-                    draggingHandle = draggingHandle,
-                    placementFacetId = homeUiState.activeFacet?.id,
-                    styleOwnerFacetName = homeUiState.clockStyleOwningFacet?.name,
-                    visibleClockItemId = homeUiState.visibleClockItemId,
-                    isPro = homeUiState.isPro,
-                ),
-            ),
-            actions = homeScreenActions(
-                viewModel = homeViewModel,
-                inputs = HomeActionsInputs(homeUiState, homeLayoutMode, context, coroutineScope, widgetHosts),
-                itemActions = itemActions,
-                swipe = swipe,
-                hooks = HomeRouteHooks(
-                    setAdjustMode = { clockAdjustMode = it },
-                    setDraggingHandle = { draggingHandle = it },
-                    setClockWidgetBounds = { clockWidgetBoundsInHomeRoot = it },
-                    setAppListBounds = { appListBoundsInHomeRoot = it },
-                    setClockPaneBounds = { clockPaneBoundsInHomeRoot = it },
-                    setClockZoneBounds = { clockZoneBoundsInHomeRoot = it },
-                    openClockWidgetPicker = { itemId ->
-                        overlays.clockWidgetPickerItemId = itemId
-                        overlays.showClockWidgetPicker = true
-                    },
-                    openWeather = {
-                        overlays.showWeatherSheet = true
-                        weatherViewModel.refresh(userInitiated = false)
-                    },
-                ),
-                navigation = HomeNavigation(
-                    toSettings = onNavigateToSettings,
-                    toFacetSettings = onNavigateToFacetSettings,
-                    toFacetPro = onNavigateToFacetPro,
-                    toUsageAccessExplanation = onNavigateToUsageAccessExplanation,
-                    toAppearance = onNavigateToAppearance,
-                    toClockStack = onNavigateToClockStack,
-                ),
-            ),
+            state = homeScreenState,
+            actions = screenActions,
             layoutMode = homeLayoutMode,
             landscapeSpace = homeLandscapeSpace,
             // Marks the app as fully drawn once Home has faded in, so startup timing covers what the user sees.
@@ -465,6 +471,14 @@ fun HomeDrawerRoute(
                 onManageClick = {}, // wired once there's a dedicated manage flow
                 modifier = Modifier.fillMaxSize().testTag("hub_screen"),
                 viewModel = hubViewModel,
+                nativeWidgets = NativeWidgetEnvironment(
+                    state = homeScreenState.nativeWidgets,
+                    actions = NativeWidgetActions(
+                        onOpenWeather = screenActions.clock.onWeatherClick,
+                        onOpenEvent = screenActions.clock.onEventClick,
+                        media = screenActions.media,
+                    ),
+                ),
             )
         }
         HomeAppDrawerOverlay(

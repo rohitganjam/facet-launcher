@@ -10,6 +10,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
 import com.facetlauncher.app.ui.hub.OrphanedWidgetTile
 import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.ui.unit.DpSize
+import com.facetlauncher.app.ui.nativewidget.NativeWidget
+import com.facetlauncher.app.ui.nativewidget.longPressFallback
+import com.facetlauncher.app.ui.nativewidget.NativeWidgetPage
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -130,6 +134,8 @@ fun ClockBlock(
     /** The size actually pushed to the widget's provider — only changes once, on drag-end commit. Falls back to [clockWidgetWidthDp]/[clockWidgetHeightDp] when not supplied (e.g. previews). */
     clockWidgetCommittedWidthDp: Dp? = null,
     clockWidgetCommittedHeightDp: Dp? = null,
+    /** Set when the widget page is one Facet draws itself; the hosted-widget params above are then unused except the size and long-press. */
+    nativeWidget: NativeWidgetPage? = null,
     onClockWidgetSizeChange: (appWidgetId: Int, widthDp: Int, heightDp: Int) -> Unit = { _, _, _ -> },
     /** Fired on a real long-press on the hosted widget's own surface — see [ClockWidgetTouchGate]'s own doc for why this can't be [clockContentModifier]'s Compose-level gesture, unlike the native clock. */
     onClockWidgetLongPress: () -> Unit = {},
@@ -175,6 +181,7 @@ fun ClockBlock(
                 clockWidgetHeightDp = clockWidgetHeightDp,
                 clockWidgetCommittedWidthDp = clockWidgetCommittedWidthDp,
                 clockWidgetCommittedHeightDp = clockWidgetCommittedHeightDp,
+                nativeWidget = nativeWidget,
                 onClockWidgetSizeChange = onClockWidgetSizeChange,
                 onClockWidgetLongPress = onClockWidgetLongPress,
                 onClockWidgetNestedScrollStart = onClockWidgetNestedScrollStart,
@@ -231,6 +238,7 @@ private fun ClockOrWidgetContent(
     clockWidgetHeightDp: Dp?,
     clockWidgetCommittedWidthDp: Dp?,
     clockWidgetCommittedHeightDp: Dp?,
+    nativeWidget: NativeWidgetPage?,
     onClockWidgetSizeChange: (appWidgetId: Int, widthDp: Int, heightDp: Int) -> Unit,
     onClockWidgetLongPress: () -> Unit,
     onClockWidgetNestedScrollStart: () -> Unit,
@@ -239,7 +247,15 @@ private fun ClockOrWidgetContent(
     onClockWidgetLeftoverFling: (velocityXPx: Float, velocityYPx: Float) -> Unit,
     clockContentModifier: Modifier,
 ) {
-    if (clockWidgetAppWidgetId != null && clockWidgetWidthDp != null && clockWidgetHeightDp != null) {
+    if (nativeWidget != null && clockWidgetWidthDp != null && clockWidgetHeightDp != null) {
+        NativeWidget(
+            type = nativeWidget.type,
+            size = DpSize(clockWidgetWidthDp, clockWidgetHeightDp),
+            state = nativeWidget.state,
+            actions = nativeWidget.actions,
+            modifier = Modifier.longPressFallback(onClockWidgetLongPress),
+        )
+    } else if (clockWidgetAppWidgetId != null && clockWidgetWidthDp != null && clockWidgetHeightDp != null) {
         ClockWidgetContent(
             appWidgetId = clockWidgetAppWidgetId,
             orphaned = clockWidgetOrphaned,

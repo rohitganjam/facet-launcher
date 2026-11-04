@@ -2,6 +2,7 @@ package com.facetlauncher.app.domain
 
 import com.facetlauncher.app.data.ClockStackRepository
 import com.facetlauncher.app.data.ReplacedItem
+import com.facetlauncher.app.data.model.NativeWidgetType
 import com.facetlauncher.app.data.widget.AppWidgetRepository
 import javax.inject.Inject
 
@@ -19,6 +20,9 @@ class ReplaceClockStackItemUseCase @Inject constructor(
 
     /** `false` when the item no longer exists; the caller then releases the widget id it had bound. */
     suspend fun withWidget(itemId: Long, appWidgetId: Int): Boolean = release(clockStackRepository.replaceWithWidget(itemId, appWidgetId))
+
+    /** `false` when the item no longer exists. Releases the hosted widget id the page held, if any. */
+    suspend fun withNativeWidget(itemId: Long, type: NativeWidgetType): Boolean = release(clockStackRepository.replaceWithNativeWidget(itemId, type))
 
     private fun release(replaced: ReplacedItem?): Boolean {
         replaced?.releasedAppWidgetId?.let { appWidgetRepository.deleteAppWidgetId(it) }

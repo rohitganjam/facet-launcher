@@ -1,5 +1,7 @@
 package com.facetlauncher.app.domain
 
+import com.facetlauncher.app.data.model.NativeWidgetType
+import com.facetlauncher.app.data.local.isNative
 import com.facetlauncher.app.data.WidgetPlacementRepository
 import com.facetlauncher.app.data.widget.AppWidgetRepository
 import javax.inject.Inject
@@ -19,6 +21,7 @@ data class HubWidgetState(
     val isOrphaned: Boolean,
     /** Place in the landscape Hub's flow order — see [com.facetlauncher.app.data.local.WidgetPlacementEntity.landscapeOrder]. */
     val landscapeOrder: Int? = null,
+    val nativeWidgetType: NativeWidgetType? = null,
 )
 
 data class HubDomainState(
@@ -56,7 +59,8 @@ class ObserveHubStateUseCase @Inject constructor(
         return combine(widgetPlacementRepository.observeAll(), refreshSignal) { placements, _ -> placements }.map { placements ->
             HubDomainState(
                 widgets = placements.map { placement ->
-                    val info = appWidgetRepository.getAppWidgetInfo(placement.appWidgetId)
+                    // A widget Facet draws itself has no provider to look up, so it is never an orphan.
+                    val info = if (placement.isNative) null else appWidgetRepository.getAppWidgetInfo(placement.appWidgetId)
                     HubWidgetState(
                         appWidgetId = placement.appWidgetId,
                         row = placement.row,
@@ -64,8 +68,9 @@ class ObserveHubStateUseCase @Inject constructor(
                         colSpan = placement.colSpan,
                         rowSpan = placement.rowSpan,
                         providerLabel = if (info != null) appWidgetRepository.getProviderLabel(placement.appWidgetId) else null,
-                        isOrphaned = info == null,
+                        isOrphaned = info == null && !placement.isNative,
                         landscapeOrder = placement.landscapeOrder,
+                        nativeWidgetType = placement.nativeWidgetType,
                     )
                 },
             )

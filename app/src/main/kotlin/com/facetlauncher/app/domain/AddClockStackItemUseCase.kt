@@ -2,6 +2,7 @@ package com.facetlauncher.app.domain
 
 import com.facetlauncher.app.data.ClockStackRepository
 import com.facetlauncher.app.data.EntitlementRepository
+import com.facetlauncher.app.data.model.NativeWidgetType
 import com.facetlauncher.app.data.model.clockStackLimit
 import javax.inject.Inject
 
@@ -26,6 +27,11 @@ class AddClockStackItemUseCase @Inject constructor(
         !hasRoom(facetId) -> AddClockStackItemResult.LIMIT_REACHED
         clockStackRepository.addClock(facetId) -> AddClockStackItemResult.ADDED
         else -> AddClockStackItemResult.CLOCK_ALREADY_IN_STACK
+    }
+
+    suspend fun addNativeWidget(facetId: Long, type: NativeWidgetType): AddClockStackItemResult = when {
+        !hasRoom(facetId) -> AddClockStackItemResult.LIMIT_REACHED
+        else -> if (clockStackRepository.addNativeWidget(facetId, type)) AddClockStackItemResult.ADDED else AddClockStackItemResult.LIMIT_REACHED
     }
 
     suspend fun addWidget(facetId: Long, appWidgetId: Int): AddClockStackItemResult = when {

@@ -4,11 +4,13 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.facetlauncher.app.data.WidgetPlacementRepository
 import com.facetlauncher.app.data.local.WidgetPlacementEntity
+import com.facetlauncher.app.data.model.NativeWidgetType
 import com.facetlauncher.app.data.model.WidgetProviderOption
 import com.facetlauncher.app.data.widget.AppWidgetRepository
 import com.facetlauncher.app.domain.HUB_MAX_WIDGETS
 import com.facetlauncher.app.domain.PlaceWidgetResult
 import com.facetlauncher.app.domain.PlaceWidgetUseCase
+import com.facetlauncher.app.domain.defaultSpan
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -89,6 +91,36 @@ class HubWidgetPickerViewModel @Inject constructor(
                 return@launch
             }
             proceedAfterBind(appWidgetId)
+        }
+    }
+
+    /** A widget Facet draws itself: no bind or configure, so it is placed on the grid at its default span right away. */
+    fun onNativeWidgetSelect(type: NativeWidgetType) {
+        viewModelScope.launch {
+            val existing = widgetPlacementRepository.observeAll().first()
+            val span = type.defaultSpan()
+            if (existing.size >= HUB_MAX_WIDGETS) {
+                _events.emit(HubAddWidgetEvent.AddFailed(AddFailureReason.HUB_FULL))
+                return@launch
+            }
+            when (val result = placeWidget(existing, span.cols, span.rows)) {
+                is PlaceWidgetResult.Placed -> {
+                    widgetPlacementRepository.upsert(
+                        WidgetPlacementEntity(
+                            appWidgetId = widgetPlacementRepository.nextNativeId(),
+                            providerPackageName = "",
+                            providerClassName = "",
+                            row = result.row,
+                            col = result.col,
+                            colSpan = span.cols,
+                            rowSpan = span.rows,
+                            nativeWidgetType = type,
+                        ),
+                    )
+                    _events.emit(HubAddWidgetEvent.WidgetAdded)
+                }
+                PlaceWidgetResult.HubFull -> _events.emit(HubAddWidgetEvent.AddFailed(AddFailureReason.HUB_FULL))
+            }
         }
     }
 

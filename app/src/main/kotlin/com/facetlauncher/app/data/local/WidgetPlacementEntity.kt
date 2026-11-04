@@ -3,6 +3,7 @@ package com.facetlauncher.app.data.local
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.facetlauncher.app.data.model.AppProfile
+import com.facetlauncher.app.data.model.NativeWidgetType
 
 /**
  * A widget placed in the Launcher Hub (F5). Keyed on the real `AppWidgetHost`-issued
@@ -33,4 +34,8 @@ data class WidgetPlacementEntity(
      * are shared by both orientations.
      */
     val landscapeOrder: Int? = null,
+    /** Set for a widget Facet draws itself; its [appWidgetId] is then a negative id of our own, not an `AppWidgetHost` one. */
+    val nativeWidgetType: NativeWidgetType? = null,
 )
+
+val WidgetPlacementEntity.isNative: Boolean get() = nativeWidgetType != null

@@ -1,5 +1,6 @@
 package com.facetlauncher.app.domain
 
+import com.facetlauncher.app.data.model.NativeWidgetType
 import android.appwidget.AppWidgetProviderInfo
 import com.facetlauncher.app.data.WidgetPlacementRepository
 import com.facetlauncher.app.data.local.WidgetPlacementEntity
@@ -83,5 +84,24 @@ class ObserveHubStateUseCaseTest {
         // Then it reports at-capacity
         assertTrue(state.isAtCapacity)
         assertEquals(HUB_MAX_WIDGETS, state.widgetCount)
+    }
+
+    @Test
+    fun `a widget Facet draws itself is never an orphan and is not looked up as a provider`() = runTest {
+        // Given a native placement with a negative id
+        val native = placement(id = -1).copy(providerPackageName = "", providerClassName = "", nativeWidgetType = NativeWidgetType.WEATHER)
+        val widgetPlacementRepository = mock(WidgetPlacementRepository::class.java)
+        `when`(widgetPlacementRepository.observeAll()).thenReturn(flowOf(listOf(native)))
+        val appWidgetRepository = mock(AppWidgetRepository::class.java)
+        `when`(appWidgetRepository.observeProviderChanges()).thenReturn(MutableSharedFlow())
+
+        // When observing Hub state
+        val state = ObserveHubStateUseCase(widgetPlacementRepository, appWidgetRepository)().first()
+
+        // Then it keeps its type and is not flagged orphaned, even though no provider resolves
+        val widget = state.widgets.single()
+        assertEquals(NativeWidgetType.WEATHER, widget.nativeWidgetType)
+        assertEquals(false, widget.isOrphaned)
+        assertEquals(null, widget.providerLabel)
     }
 }
