@@ -2,6 +2,12 @@ package com.facetlauncher.app.ui.home.weather
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.platform.testTag
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Icon
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.Icons
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -70,6 +76,8 @@ fun WeatherSheet(
     onChooseCity: () -> Unit,
     onOpenPermissions: () -> Unit,
     modifier: Modifier = Modifier,
+    /** Set when the sheet was opened from a Hub Weather widget: shows a 3-dot button that opens that widget's settings. */
+    onConfigure: (() -> Unit)? = null,
 ) {
     ThemedModalBottomSheet(onDismissRequest = onDismiss, modifier = modifier) {
         Column(
@@ -77,7 +85,12 @@ fun WeatherSheet(
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             val weather = uiState.weather
-            if (weather == null) EmptyWeather() else WeatherContent(weather, uiState)
+            if (weather == null) {
+                SummaryRow(summary = null, onConfigure = onConfigure)
+                EmptyWeather()
+            } else {
+                WeatherContent(weather, uiState, onConfigure)
+            }
             NoticeLine(uiState.notice, onAllowLocation = onOpenPermissions, onChooseCity = onChooseCity)
             FooterRow(uiState, onRefresh)
         }
@@ -93,12 +106,12 @@ private fun EmptyWeather() {
 }
 
 @Composable
-private fun WeatherContent(weather: WeatherState, uiState: WeatherUiState) {
+private fun WeatherContent(weather: WeatherState, uiState: WeatherUiState, onConfigure: (() -> Unit)?) {
     val units = uiState.units
     val pattern = if (uiState.use24HourTime) "HH:mm" else "h:mm a"
     val timeFormat = remember(pattern, weather.zone) { DateTimeFormatter.ofPattern(pattern, Locale.getDefault()).withZone(weather.zone) }
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        rainSummaryText(weather.summary, timeFormat, units.rain)?.let { SummaryBar(it) }
+        SummaryRow(summary = rainSummaryText(weather.summary, timeFormat, units.rain), onConfigure = onConfigure)
         Header(weather, units.temperature, uiState.iconStyle)
         HourlyStrip(weather, uiState, timeFormat)
         DetailsGrid(weather, units)
@@ -106,13 +119,29 @@ private fun WeatherContent(weather: WeatherState, uiState: WeatherUiState) {
     }
 }
 
+/** The rain summary line, with the 3-dot button of a Hub widget's sheet to its right: the summary gives up that width. */
 @Composable
-private fun SummaryBar(text: String) {
+private fun SummaryRow(summary: String?, onConfigure: (() -> Unit)?) {
+    if (summary == null && onConfigure == null) return
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+        if (summary != null) SummaryBar(summary, Modifier.weight(1f)) else Spacer(Modifier.weight(1f))
+        if (onConfigure != null) {
+            IconButton(onClick = onConfigure, modifier = Modifier.testTag("weather_sheet_menu")) {
+                Icon(imageVector = Icons.Filled.MoreVert, contentDescription = stringResource(R.string.hub_widget_configure), tint = Muted)
+            }
+        }
+    }
+}
+
+@Composable
+private fun SummaryBar(text: String, modifier: Modifier = Modifier) {
     Text(
         text = text,
         style = MaterialTheme.typography.bodyMedium,
         color = Ink,
-        modifier = Modifier.fillMaxWidth().background(SurfaceContainer, MaterialTheme.shapes.small).padding(horizontal = 12.dp, vertical = 10.dp),
+        maxLines = 2,
+        overflow = TextOverflow.Ellipsis,
+        modifier = modifier.background(SurfaceContainer, MaterialTheme.shapes.small).padding(horizontal = 12.dp, vertical = 10.dp),
     )
 }
 

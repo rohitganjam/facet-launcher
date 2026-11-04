@@ -2,8 +2,8 @@ package com.facetlauncher.app.ui.hub
 
 import androidx.compose.ui.unit.DpSize
 import com.facetlauncher.app.ui.nativewidget.NativeWidgetEnvironment
-import com.facetlauncher.app.domain.isConfigurable
 import com.facetlauncher.app.ui.nativewidget.NativeWidget
+import com.facetlauncher.app.ui.nativewidget.forHubWidget
 import com.facetlauncher.app.ui.nativewidget.withOverride
 import com.facetlauncher.app.domain.minSpan
 import android.appwidget.AppWidgetHostView
@@ -446,7 +446,8 @@ fun HubGrid(
                                     type = widget.nativeWidgetType,
                                     size = DpSize(tileWidth, tileHeight),
                                     state = nativeWidgets.state.withOverride(widget.nativeOverride),
-                                    actions = nativeWidgets.actions,
+                                    actions = nativeWidgets.actions.forHubWidget(widget.appWidgetId),
+                                    onConfigure = { nativeWidgets.actions.onConfigure(widget.appWidgetId) },
                                 )
                             } else if (widget.isOrphaned) {
                                 OrphanedWidgetTile(
@@ -512,15 +513,6 @@ fun HubGrid(
                                     },
                                     enabled = !widget.isOrphaned,
                                 )
-                                if (widget.nativeWidgetType?.isConfigurable(tileWidth.value.toInt(), tileHeight.value.toInt()) == true) {
-                                    ThemedDropdownMenuItem(
-                                        label = stringResource(R.string.hub_widget_configure),
-                                        onClick = {
-                                            showContextMenuForAppWidgetId = null
-                                            nativeWidgets.actions.onConfigure(widget.appWidgetId)
-                                        },
-                                    )
-                                }
                                 ThemedDropdownMenuItem(
                                     label = stringResource(R.string.hub_grid_remove_widget),
                                     onClick = {

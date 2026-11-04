@@ -19,6 +19,7 @@ import com.facetlauncher.app.ui.nativewidget.NativeWidgetAccessControls
 import com.facetlauncher.app.ui.nativewidget.NativeWidgetActions
 import com.facetlauncher.app.ui.nativewidget.NativeWidgetEnvironment
 import com.facetlauncher.app.ui.nativewidget.rememberNativeWidgetAccess
+import com.facetlauncher.app.ui.nativewidget.withWeatherOverride
 import com.facetlauncher.app.ui.home.WhatsNewPillHost
 import com.facetlauncher.app.ui.home.WhatsNewPillViewModel
 import com.facetlauncher.app.ui.home.toHomeScreenState
@@ -140,6 +141,7 @@ fun HomeDrawerRoute(
 ) {
     val homeUiState by homeViewModel.uiState.collectAsStateWithLifecycle()
     val weatherUiState by weatherViewModel.uiState.collectAsStateWithLifecycle()
+    val hubUiState by hubViewModel.uiState.collectAsStateWithLifecycle()
     val whatsNewVersion by whatsNewPillViewModel.version.collectAsStateWithLifecycle()
     val launcherUiState by launcherViewModel.uiState.collectAsStateWithLifecycle()
     val folders by drawerViewModel.folders.collectAsStateWithLifecycle()
@@ -387,6 +389,7 @@ fun HomeDrawerRoute(
                 overlays.showClockWidgetPicker = true
             },
             openWeather = {
+                overlays.weatherSheetWidgetId = null
                 overlays.showWeatherSheet = true
                 weatherViewModel.refresh(userInitiated = false)
             },
@@ -487,6 +490,11 @@ fun HomeDrawerRoute(
                         media = screenActions.media,
                         onRequestCalendarAccess = widgetAccess.requestCalendar,
                         onRequestLocationAccess = widgetAccess.requestLocation,
+                        onOpenHubWeather = { id ->
+                            overlays.weatherSheetWidgetId = id
+                            overlays.showWeatherSheet = true
+                            weatherViewModel.refresh(userInitiated = false)
+                        },
                     ),
                 ),
             )
@@ -536,8 +544,16 @@ fun HomeDrawerRoute(
             )
         }
         if (overlays.showWeatherSheet) {
+            val hubWidgetId = overlays.weatherSheetWidgetId
+            val hubWidget = hubWidgetId?.let { id -> hubUiState.widgets.firstOrNull { it.appWidgetId == id } }
             WeatherSheet(
-                uiState = weatherUiState.copy(iconStyle = homeUiState.style.clock.weatherIconStyle),
+                uiState = weatherUiState.copy(iconStyle = homeUiState.style.clock.weatherIconStyle).withWeatherOverride(hubWidget?.nativeOverride),
+                onConfigure = hubWidgetId?.let { id ->
+                    {
+                        overlays.showWeatherSheet = false
+                        hubViewModel.requestConfigure(id)
+                    }
+                },
                 onRefresh = { weatherViewModel.refresh() },
                 onDismiss = { overlays.showWeatherSheet = false },
                 onChooseCity = {

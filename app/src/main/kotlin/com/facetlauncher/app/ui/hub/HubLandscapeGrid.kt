@@ -2,8 +2,8 @@ package com.facetlauncher.app.ui.hub
 
 import androidx.compose.ui.unit.DpSize
 import com.facetlauncher.app.ui.nativewidget.NativeWidgetEnvironment
-import com.facetlauncher.app.domain.isConfigurable
 import com.facetlauncher.app.ui.nativewidget.NativeWidget
+import com.facetlauncher.app.ui.nativewidget.forHubWidget
 import com.facetlauncher.app.ui.nativewidget.withOverride
 import com.facetlauncher.app.domain.minSpan
 import android.appwidget.AppWidgetHostView
@@ -400,7 +400,8 @@ private fun LandscapeTileContent(
             type = widget.nativeWidgetType,
             size = DpSize(tileWidth, tileHeight),
             state = callbacks.nativeWidgets.state.withOverride(widget.nativeOverride),
-            actions = callbacks.nativeWidgets.actions,
+            actions = callbacks.nativeWidgets.actions.forHubWidget(widget.appWidgetId),
+            onConfigure = { callbacks.nativeWidgets.actions.onConfigure(widget.appWidgetId) },
         )
     } else if (widget.isOrphaned) {
         OrphanedWidgetTile(
@@ -428,15 +429,13 @@ private fun LandscapeTileContent(
         )
     }
 
-    LandscapeWidgetMenu(widget, tileWidth, tileHeight, state, callbacks)
+    LandscapeWidgetMenu(widget, state, callbacks)
 }
 
 /** The long-press menu of one landscape tile. */
 @Composable
 private fun LandscapeWidgetMenu(
     widget: HubLandscapeWidgetUi,
-    tileWidth: Dp,
-    tileHeight: Dp,
     state: LandscapeGridState,
     callbacks: LandscapeCallbacks,
 ) {
@@ -450,15 +449,6 @@ private fun LandscapeWidgetMenu(
             onClick = { state.startResize(widget.appWidgetId) },
             enabled = !widget.isOrphaned,
         )
-        if (widget.nativeWidgetType?.isConfigurable(tileWidth.value.toInt(), tileHeight.value.toInt()) == true) {
-            ThemedDropdownMenuItem(
-                label = stringResource(R.string.hub_widget_configure),
-                onClick = {
-                    state.menuForId = null
-                    callbacks.nativeWidgets.actions.onConfigure(widget.appWidgetId)
-                },
-            )
-        }
         ThemedDropdownMenuItem(
             label = stringResource(R.string.hub_grid_remove_widget),
             onClick = {

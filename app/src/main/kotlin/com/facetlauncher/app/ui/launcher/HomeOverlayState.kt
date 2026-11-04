@@ -24,6 +24,9 @@ internal class HomeOverlayState {
     /** The weather sheet, opened from the clock's weather accessory. It is its own bottom sheet window, so it is not part of [anyOpen]. */
     var showWeatherSheet by mutableStateOf(false)
 
+    /** The Hub Weather widget the sheet was opened from, `null` when it came from the clock's accessory. */
+    var weatherSheetWidgetId by mutableStateOf<Int?>(null)
+
     /** Private Space, over the app drawer. */
     var showPrivateSpace by mutableStateOf(false)
 

@@ -60,8 +60,7 @@ refresh gate and location rules as the accessory ([18](18-flow-weather.md)); not
 
 ### 3a. Per-widget settings (Hub)
 
-A Hub Weather or Agenda widget at Medium or Large (`isConfigurable`) has a **Configure** entry in its long-press menu (both
-grids). It opens `HubWidgetConfigSheet`, which edits `widget_placements.nativeWidgetConfig` (`NativeWidgetConfig`, one tab-separated
+A Hub Agenda at Medium or Large (`isConfigurable`) has a 3-dot button at its top right, and a Hub Weather widget opens its own weather sheet when tapped (`NativeWidgetActions.onOpenHubWeather`, which shows that widget's forecast), with a 3-dot button to the right of the rain summary. Either opens `HubWidgetConfigSheet`, which edits `widget_placements.nativeWidgetConfig` (`NativeWidgetConfig`, one tab-separated
 line per field): Agenda picks its own calendars, Weather picks the current location or one of the cities saved in the weather
 settings. A `null` field follows the launcher-wide setting; Now Playing and Home stack pages have none.
 

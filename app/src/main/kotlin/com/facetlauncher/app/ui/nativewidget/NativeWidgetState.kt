@@ -27,6 +27,8 @@ data class NativeWidgetActions(
     val media: HomeMediaActions = HomeMediaActions(),
     /** Opens the widget's own settings; the Hub's menu offers it for Weather and Agenda. */
     val onConfigure: (appWidgetId: Int) -> Unit = {},
+    /** A tap on a Hub Weather widget: its own weather sheet, which has the widget's settings. */
+    val onOpenHubWeather: (appWidgetId: Int) -> Unit = {},
     /** The "Allow" buttons of a widget whose permission is off. */
     val onRequestCalendarAccess: () -> Unit = {},
     val onRequestLocationAccess: () -> Unit = {},
@@ -56,3 +58,10 @@ fun NativeWidgetState.withOverride(override: NativeWidgetOverride?): NativeWidge
         },
     )
 }
+
+/** [this] for the Hub widget [appWidgetId]: a tap on its weather opens that widget's own weather sheet. */
+fun NativeWidgetActions.forHubWidget(appWidgetId: Int): NativeWidgetActions = copy(onOpenWeather = { onOpenHubWeather(appWidgetId) })
+
+/** The weather a Hub widget shows instead of the launcher's, for the sheet opened from it; unchanged when it follows the launcher. */
+fun WeatherUiState.withWeatherOverride(override: NativeWidgetOverride?): WeatherUiState =
+    if (override != null && (override.weather != null || override.weatherUnavailable)) copy(weather = override.weather) else this
