@@ -1,5 +1,10 @@
 package com.facetlauncher.app.data.model
 
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
+
 /** Where one Weather widget reads its forecast for, when it does not follow the launcher-wide location. */
 sealed interface WidgetWeatherLocation {
     data object Current : WidgetWeatherLocation
@@ -19,53 +24,52 @@ data class NativeWidgetConfig(
     val followsLauncher: Boolean get() = calendarIds == null && showAllDayEvents == null && weatherLocation == null
 }
 
-private const val CALENDAR_KEY = "cal"
-private const val ALL_DAY_KEY = "allday"
-private const val WEATHER_KEY = "wx"
-private const val WEATHER_CURRENT = "current"
-private const val WEATHER_CITY = "city"
+/** The stored shape of [NativeWidgetConfig]: JSON, with a field left out while it follows the launcher. */
+@Serializable
+private data class StoredConfig(
+    val calendarIds: List<String>? = null,
+    val showAllDayEvents: Boolean? = null,
+    val weather: StoredWeather? = null,
+)
 
-/** The stored form: one line per field, tab-separated; `null` when the widget follows the launcher. */
+/** A weather location: [city] unset means the phone's position, otherwise the chosen city. */
+@Serializable
+private data class StoredWeather(
+    val city: String? = null,
+    val latitude: Double? = null,
+    val longitude: Double? = null,
+    val timezone: String? = null,
+)
+
+private val configJson = Json { ignoreUnknownKeys = true }
+
+/** The stored form: JSON, or `null` when the widget follows the launcher. */
 fun NativeWidgetConfig.encode(): String? {
-    val lines = buildList {
-        calendarIds?.let { ids -> add((listOf(CALENDAR_KEY) + ids.sorted()).joinToString("\t")) }
-        showAllDayEvents?.let { add("$ALL_DAY_KEY\t${if (it) 1 else 0}") }
-        when (val location = weatherLocation) {
-            null -> Unit
-            WidgetWeatherLocation.Current -> add("$WEATHER_KEY\t$WEATHER_CURRENT")
-            is WidgetWeatherLocation.City -> with(location.city) {
-                add(listOf(WEATHER_KEY, WEATHER_CITY, name.replace('\t', ' ').replace('\n', ' '), latitude, longitude, timezone).joinToString("\t"))
-            }
-        }
+    if (followsLauncher) return null
+    val weather = when (val location = weatherLocation) {
+        null -> null
+        WidgetWeatherLocation.Current -> StoredWeather()
+        is WidgetWeatherLocation.City -> with(location.city) { StoredWeather(name, latitude, longitude, timezone) }
     }
-    return lines.takeIf { it.isNotEmpty() }?.joinToString("\n")
+    return configJson.encodeToString(StoredConfig(calendarIds?.sorted(), showAllDayEvents, weather))
 }
 
-/** The inverse of [encode]; a line that does not hold a whole value is skipped, so a damaged value follows the launcher. */
+/** The inverse of [encode]; a value that does not parse follows the launcher. */
 fun decodeNativeWidgetConfig(encoded: String?): NativeWidgetConfig {
-    var config = NativeWidgetConfig()
-    encoded.orEmpty().lines().forEach { line ->
-        val fields = line.split('\t')
-        config = when (fields.firstOrNull()) {
-            CALENDAR_KEY -> config.copy(calendarIds = fields.drop(1).toSet())
-            ALL_DAY_KEY -> config.copy(showAllDayEvents = fields.getOrNull(1)?.let { it == "1" })
-            WEATHER_KEY -> config.copy(weatherLocation = decodeWeatherLocation(fields.drop(1)) ?: config.weatherLocation)
-            else -> config
-        }
-    }
-    return config
+    if (encoded.isNullOrBlank()) return NativeWidgetConfig()
+    val stored = runCatching { configJson.decodeFromString<StoredConfig>(encoded) }.getOrNull() ?: return NativeWidgetConfig()
+    return NativeWidgetConfig(
+        calendarIds = stored.calendarIds?.toSet(),
+        showAllDayEvents = stored.showAllDayEvents,
+        weatherLocation = stored.weather?.toLocation(),
+    )
 }
+
+private fun StoredWeather.toLocation(): WidgetWeatherLocation? =
+    if (city == null) WidgetWeatherLocation.Current else weatherCityOrNull(city, latitude, longitude, timezone)?.let(WidgetWeatherLocation::City)
 
 /** The stored form of a weather location on its own (a facet's clock): the widget codec, so one format for both; `null` follows Weather settings. */
 fun encodeWeatherLocation(location: WidgetWeatherLocation?): String? = NativeWidgetConfig(weatherLocation = location).encode()
 
 /** The inverse of [encodeWeatherLocation]; a damaged value follows Weather settings. */
 fun decodeWeatherLocation(encoded: String?): WidgetWeatherLocation? = decodeNativeWidgetConfig(encoded).weatherLocation
-
-private fun decodeWeatherLocation(fields: List<String>): WidgetWeatherLocation? = when (fields.firstOrNull()) {
-    WEATHER_CURRENT -> WidgetWeatherLocation.Current
-    WEATHER_CITY -> fields.getOrNull(1)?.let { name ->
-        weatherCityOrNull(name, fields.getOrNull(2)?.toDoubleOrNull(), fields.getOrNull(3)?.toDoubleOrNull(), fields.getOrNull(4))
-    }?.let(WidgetWeatherLocation::City)
-    else -> null
-}

@@ -64,7 +64,7 @@ A Weather or Agenda widget can be set to its own calendars or location instead o
 the Hub (`widget_placements.nativeWidgetConfig`) or as a Home clock page (`clock_stack_items.nativeWidgetConfig`). Both go through one
 path, keyed by `NativeWidgetRef` (`Hub(appWidgetId)` or `Home(itemId)`):
 
-- `NativeWidgetConfig` (one tab-separated line per field) stores it: Agenda's chosen calendar ids and all-day choice (the sheet shows the
+- `NativeWidgetConfig` (JSON, a field left out while it follows the launcher; a value that does not parse follows the launcher) stores it: Agenda's chosen calendar ids and all-day choice (the sheet shows the
   launcher's Calendar options, starting from the launcher's current values, with no follow switch), Weather's current location or a saved
   city. A `null` field follows the launcher; Now Playing has none. `SetNativeWidgetConfigUseCase` writes either store and
   `ObserveNativeWidgetSettingsUseCase` reads it back.

@@ -3,8 +3,11 @@ package com.facetlauncher.app.data.model
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
-/** Bumped whenever [BackupBundle]'s shape changes — [com.facetlauncher.app.domain.ImportBackupUseCase] rejects anything newer than it understands. */
-const val CURRENT_BACKUP_VERSION = 3
+/**
+ * Bumped whenever [BackupBundle]'s shape changes — [com.facetlauncher.app.domain.ImportBackupUseCase] rejects anything newer than it understands.
+ * 4: a widget's setting and a facet's clock weather location are JSON, where version 3 and older wrote tab-separated lines.
+ */
+const val CURRENT_BACKUP_VERSION = 4
 
 /**
  * The full exported/imported settings snapshot for F14 Backup & Restore (PRD: "not limited to

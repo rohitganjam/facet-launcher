@@ -93,8 +93,9 @@ class ImportBackupUseCase @Inject constructor(
     private val widgetPlacementRepository: WidgetPlacementRepository,
 ) {
     suspend operator fun invoke(uri: Uri): ImportBackupResult {
-        val bundle = backupRepository.readBackup(uri) ?: return ImportBackupResult.InvalidFile
-        if (bundle.backupVersion > CURRENT_BACKUP_VERSION) return ImportBackupResult.UnsupportedVersion(bundle.backupVersion)
+        val read = backupRepository.readBackup(uri) ?: return ImportBackupResult.InvalidFile
+        if (read.backupVersion > CURRENT_BACKUP_VERSION) return ImportBackupResult.UnsupportedVersion(read.backupVersion)
+        val bundle = read.upgradedToCurrent()
 
         applySettings(bundle.settings)
 

@@ -4564,3 +4564,11 @@ Widgets the app draws itself, on the Hub grid and on Home's widget stack, behavi
 - [x] The clock's weather sheet has a 3-dot like a widget's, opening the active facet's Clock accessories; on that screen the Location card (facet scope) and a new *Weather settings* link (both scopes) come after the weather switch and the Icons card, and go away with the weather. Seen on the emulator (3-dot, order, link). Tests: `WeatherSheetTest` (new), `ClockAccessoriesScreenTest` (3 new), compiled and run below.
 - [x] The Location card on Clock accessories has more room inside (20dp sides, 16dp top and bottom, was 16 and 8); the widget settings sheet is unchanged.
 - [x] The weather location choices are spaced further apart (10dp above and below each row, was 4dp) in both the Clock accessories card and the Weather widget settings sheet, which share one picker; the card keeps 20dp side and 12dp top and bottom padding.
+
+## The clock as a Facet widget
+Design: [`docs/proposals/clock-as-facet-widget.md`](docs/proposals/clock-as-facet-widget.md). One branch (`clock-as-widget`), one schema bump (v42), in stages.
+- [x] Stage 1a, the config format: `NativeWidgetConfig` is stored as JSON (a field left out while it follows the launcher; a value that does not parse follows the launcher) instead of tab-separated lines, with no second reader. `MIGRATION_41_42` rewrites every stored setting (Hub widgets, Home stack pages, a facet's clock weather location) through `upgradeLegacyNativeWidgetConfig`; backup version 4, and `BackupBundle.upgradedToCurrent` converts an older backup before the import sees it. Tests: `NativeWidgetConfigTest`, `LegacyNativeWidgetConfigTest`, `BackupUpgradeTest`, `FacetDatabaseMigrationTest.migration41To42…`.
+- [ ] Stage 1b, the clock widget's config and the startup step that writes each clock's effective settings.
+- [ ] Stage 2, the clock as a native widget with dp sizing and its calendar block.
+- [ ] Stage 3, gestures and sheets, the empty zone.
+- [ ] Stage 4, settings clean-up, hints, docs.

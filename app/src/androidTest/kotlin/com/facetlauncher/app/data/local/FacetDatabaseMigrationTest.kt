@@ -2,7 +2,12 @@ package com.facetlauncher.app.data.local
 
 import androidx.room.testing.MigrationTestHelper
 import androidx.test.platform.app.InstrumentationRegistry
+import com.facetlauncher.app.data.model.WeatherCity
+import com.facetlauncher.app.data.model.WidgetWeatherLocation
+import com.facetlauncher.app.data.model.decodeNativeWidgetConfig
+import com.facetlauncher.app.data.model.decodeWeatherLocation
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -982,6 +987,46 @@ class FacetDatabaseMigrationTest {
         assertEquals("Work", cursor.getString(0))
         assertTrue(cursor.isNull(1))
         cursor.close()
+    }
+
+    @Test
+    fun migration41To42RewritesTabSeparatedWidgetSettingsAsJson() {
+        // Given a v41 database holding old-form settings on a Hub widget, two Home pages and a facet's clock weather location
+        helper.createDatabase(TEST_DB, 32).also { insertFacetV27(it, id = 1, name = "Work") }.close()
+        val dbV41 = helper.runMigrationsAndValidate(
+            TEST_DB, 41, true,
+            Migrations.MIGRATION_32_33, Migrations.MIGRATION_33_34, Migrations.MIGRATION_34_35, Migrations.MIGRATION_35_36,
+            Migrations.MIGRATION_36_37, Migrations.MIGRATION_37_38, Migrations.MIGRATION_38_39, Migrations.MIGRATION_39_40,
+            Migrations.MIGRATION_40_41,
+        )
+        fun hubWidget(id: Int, type: String, config: String?) = dbV41.execSQL(
+            "INSERT INTO widget_placements (appWidgetId, providerPackageName, providerClassName, row, col, colSpan, rowSpan, profile, userId, " +
+                "nativeWidgetType, nativeWidgetConfig) VALUES (?, '', '', 0, 0, 4, 2, 'PERSONAL', 0, ?, ?)",
+            arrayOf<Any?>(id, type, config),
+        )
+        hubWidget(-1, "WEATHER", "wx\tcity\tOslo\t59.91\t10.75\tEurope/Oslo")
+        hubWidget(-2, "AGENDA", "cal\t7\t3\nallday\t0")
+        hubWidget(-3, "NOW_PLAYING", null)
+        // (the facet already has its clock page, row 1, from the migration that introduced the stack)
+        dbV41.execSQL("INSERT INTO clock_stack_items (id, facetId, position, kind, nativeWidgetType, nativeWidgetConfig) VALUES (2, 1, 1, 'NATIVE_WIDGET', 'WEATHER', 'wx\tcurrent')")
+        dbV41.execSQL("UPDATE facets SET clockWeatherLocation = 'wx\tcurrent' WHERE id = 1")
+        dbV41.close()
+
+        // When migrating to v42 (Room also validates the result against the exported v42 schema)
+        val dbV42 = helper.runMigrationsAndValidate(TEST_DB, 42, true, Migrations.MIGRATION_41_42)
+        fun stored(sql: String) = dbV42.query(sql).use { it.moveToFirst(); it.getString(0) }
+
+        // Then each setting reads as the same choice in the current form, and a widget with none still has none
+        val oslo = decodeNativeWidgetConfig(stored("SELECT nativeWidgetConfig FROM widget_placements WHERE appWidgetId = -1"))
+        assertEquals(WidgetWeatherLocation.City(WeatherCity("Oslo", 59.91, 10.75, "Europe/Oslo")), oslo.weatherLocation)
+        val agenda = decodeNativeWidgetConfig(stored("SELECT nativeWidgetConfig FROM widget_placements WHERE appWidgetId = -2"))
+        assertEquals(setOf("3", "7"), agenda.calendarIds)
+        assertEquals(false, agenda.showAllDayEvents)
+        assertNull(stored("SELECT nativeWidgetConfig FROM widget_placements WHERE appWidgetId = -3"))
+        assertEquals(WidgetWeatherLocation.Current, decodeNativeWidgetConfig(stored("SELECT nativeWidgetConfig FROM clock_stack_items WHERE id = 2")).weatherLocation)
+        assertNull(stored("SELECT nativeWidgetConfig FROM clock_stack_items WHERE id = 1"))
+        assertEquals(WidgetWeatherLocation.Current, decodeWeatherLocation(stored("SELECT clockWeatherLocation FROM facets WHERE id = 1")))
+        assertTrue(stored("SELECT nativeWidgetConfig FROM widget_placements WHERE appWidgetId = -2").startsWith("{"))
     }
 
     /** A v27 facet row — the v25 shape plus the two calendar-display columns, which a freshly created database has no defaults for. */
