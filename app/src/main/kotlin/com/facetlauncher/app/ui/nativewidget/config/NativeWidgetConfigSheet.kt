@@ -93,7 +93,9 @@ internal fun NativeWidgetConfigContent(
 @Composable
 private fun AgendaConfig(config: NativeWidgetConfig, state: NativeWidgetConfigUiState, onConfigChange: (NativeWidgetConfig) -> Unit) {
     val showAllDay = config.showAllDayEvents ?: state.launcherShowAllDay
-    val chosen = config.calendarIds ?: state.launcherCalendarIds ?: state.calendars.map { it.id }.toSet()
+    // With nothing chosen, an Agenda starts from the launcher's calendars, or every personal one; a work calendar is only ever opted into.
+    val chosen = config.calendarIds ?: state.launcherCalendarIds ?: state.calendars.filterNot { it.isWork }.map { it.id }.toSet()
+    val workCount = state.calendars.count { it.isWork }
     fun change(allDay: Boolean = showAllDay, ids: Set<String> = chosen) = onConfigChange(config.copy(showAllDayEvents = allDay, calendarIds = ids))
     Column {
         Row(
@@ -111,7 +113,7 @@ private fun AgendaConfig(config: NativeWidgetConfig, state: NativeWidgetConfigUi
         }
         SectionLabel(stringResource(R.string.hub_widget_config_calendars))
         if (state.calendars.isEmpty()) Text(text = stringResource(R.string.hub_widget_config_no_calendars), style = MaterialTheme.typography.bodyMedium, color = Muted)
-        state.calendars.forEach { calendar ->
+        state.calendars.forEachIndexed { index, calendar ->
             val selected = calendar.id in chosen
             Row(
                 modifier = Modifier
@@ -123,8 +125,15 @@ private fun AgendaConfig(config: NativeWidgetConfig, state: NativeWidgetConfigUi
             ) {
                 Checkbox(checked = selected, onCheckedChange = null, colors = CheckboxDefaults.colors(checkedColor = Accent))
                 Column(modifier = Modifier.padding(start = 12.dp)) {
-                    Text(text = calendar.displayName, style = MaterialTheme.typography.bodyLarge, color = Ink)
-                    Text(text = calendar.accountName, style = MaterialTheme.typography.bodySmall, color = Muted)
+                    if (calendar.isWork) {
+                        val number = state.calendars.take(index + 1).count { it.isWork }
+                        val label = if (workCount > 1) stringResource(R.string.hub_widget_config_work_calendar_n, number) else stringResource(R.string.hub_widget_config_work_calendar)
+                        Text(text = label, style = MaterialTheme.typography.bodyLarge, color = Ink)
+                        Text(text = stringResource(R.string.facet_scope_work), style = MaterialTheme.typography.bodySmall, color = Muted)
+                    } else {
+                        Text(text = calendar.displayName, style = MaterialTheme.typography.bodyLarge, color = Ink)
+                        Text(text = calendar.accountName, style = MaterialTheme.typography.bodySmall, color = Muted)
+                    }
                 }
             }
         }

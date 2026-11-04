@@ -5,7 +5,12 @@ data class CalendarInfo(
     val id: String,
     val displayName: String,
     val accountName: String,
+    /** A Work Profile calendar read through Android's cross-profile (enterprise) calendar API, which shows no name or account. */
+    val isWork: Boolean = false,
 )
+
+/** The id prefix of a Work Profile calendar or event, so its ids never meet a personal calendar's. */
+const val WORK_CALENDAR_ID_PREFIX = "work:"
 
 /** One instance from [android.provider.CalendarContract.Instances], scoped to today. */
 data class CalendarEvent(

@@ -27,7 +27,7 @@ class NativeWidgetConfigSheetTest {
 
     private val oslo = WeatherCity("Oslo", 59.91, 10.75, "Europe/Oslo")
     private val state = NativeWidgetConfigUiState(
-        calendars = persistentListOf(CalendarInfo("1", "Personal", "me@example.com"), CalendarInfo("2", "Work", "me@work.com")),
+        calendars = persistentListOf(CalendarInfo("1", "Personal", "me@example.com"), CalendarInfo("2", "Work", "me@work.com"), CalendarInfo("work:1", "", "", isWork = true)),
         launcherShowAllDay = true,
         savedCities = persistentListOf(oslo),
     )
@@ -54,6 +54,20 @@ class NativeWidgetConfigSheetTest {
         composeRule.waitForIdle()
         assertEquals(false, saved?.showAllDayEvents)
         assertEquals(setOf("1", "2"), saved?.calendarIds)
+    }
+
+    @Test
+    fun aWorkProfileCalendarIsOptedIntoAlongsideThePersonalOnes() {
+        // Given an agenda that follows the launcher, which shows the personal calendars
+        var saved: NativeWidgetConfig? = null
+        show(NativeWidgetType.AGENDA, NativeWidgetConfig(), onChange = { saved = it })
+
+        // When ticking the work profile's calendar, which is listed as a Work calendar
+        composeRule.onNodeWithTag("hub_widget_config_calendar_work:1").performClick()
+
+        // Then it joins the personal calendars the agenda already showed
+        composeRule.waitForIdle()
+        assertEquals(setOf("1", "2", "work:1"), saved?.calendarIds)
     }
 
     @Test

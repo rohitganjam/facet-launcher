@@ -278,4 +278,74 @@ class CalendarRepositoryTest {
         // Then it degrades to an empty list rather than throwing
         assertEquals(emptyList<String>(), result.map { it.title })
     }
+
+    private fun isEnterprise(uri: Uri) = uri.toString().contains("/enterprise/")
+
+    private fun stubPersonalAndWorkInstances(personal: List<InstanceRow>, work: List<InstanceRow>) {
+        `when`(
+            contentResolver.query(
+                org.mockito.ArgumentMatchers.argThat<Uri> { it != null && !isEnterprise(it) },
+                any(Array<String>::class.java),
+                nullable(String::class.java),
+                nullable(Array<String>::class.java),
+                nullable(String::class.java),
+            ),
+        ).thenAnswer { instancesCursor(personal) }
+        `when`(
+            contentResolver.query(
+                org.mockito.ArgumentMatchers.argThat<Uri> { it != null && isEnterprise(it) },
+                any(Array<String>::class.java),
+                nullable(String::class.java),
+                nullable(Array<String>::class.java),
+                nullable(String::class.java),
+            ),
+        ).thenAnswer { instancesCursor(work) }
+    }
+
+    @Test
+    fun `getWorkCalendars lists the work profile's calendars with prefixed ids`() = runTest {
+        // Given the cross-profile provider exposing two calendars
+        val cursor = MatrixCursor(arrayOf(CalendarContract.Calendars._ID))
+        cursor.addRow(arrayOf<Any>(1L))
+        cursor.addRow(arrayOf<Any>(4L))
+        `when`(
+            contentResolver.query(eq(CalendarContract.Calendars.ENTERPRISE_CONTENT_URI), any(Array<String>::class.java), isNull(), isNull(), isNull()),
+        ).thenReturn(cursor)
+
+        // When listing them
+        val result = repository.getWorkCalendars()
+
+        // Then each is marked as work and its id cannot meet a personal calendar's
+        assertEquals(listOf("work:1", "work:4"), result.map { it.id })
+        assertEquals(listOf(true, true), result.map { it.isWork })
+    }
+
+    @Test
+    fun `getWorkCalendars is empty when the work profile does not share its calendars`() = runTest {
+        // Given the provider refusing cross-profile access
+        `when`(
+            contentResolver.query(eq(CalendarContract.Calendars.ENTERPRISE_CONTENT_URI), any(Array<String>::class.java), isNull(), isNull(), isNull()),
+        ).thenThrow(SecurityException("not allowed"))
+
+        // Then there are no work calendars rather than a crash
+        assertEquals(emptyList<String>(), repository.getWorkCalendars().map { it.id })
+    }
+
+    @Test
+    fun `getUpcomingEvents reads a work calendar only when it is listed`() = runTest {
+        // Given a personal event and a work event
+        stubPersonalAndWorkInstances(
+            personal = listOf(InstanceRow(eventId = 1, calendarId = 1, title = "Personal", beginMillis = 1_000L, allDay = false)),
+            work = listOf(InstanceRow(eventId = 9, calendarId = 1, title = "Standup", beginMillis = 2_000L, allDay = false)),
+        )
+
+        // When the work calendar is listed, then when no set is given
+        val withWork = repository.getUpcomingEvents(calendarIds = setOf("1", "work:1"), includeAllDay = true)
+        val everyPersonal = repository.getUpcomingEvents(calendarIds = null, includeAllDay = true)
+
+        // Then the work event appears only in the first, under a prefixed calendar id that is not the personal calendar 1
+        assertEquals(listOf("Personal", "Standup"), withWork.map { it.title })
+        assertEquals(listOf("1", "work:1"), withWork.map { it.calendarId })
+        assertEquals(listOf("Personal"), everyPersonal.map { it.title })
+    }
 }

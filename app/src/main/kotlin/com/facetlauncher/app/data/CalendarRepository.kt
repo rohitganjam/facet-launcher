@@ -1,10 +1,13 @@
 package com.facetlauncher.app.data
 
 import android.content.ContentResolver
+import android.content.ContentUris
+import android.net.Uri
 import android.provider.CalendarContract
 import com.facetlauncher.app.data.di.IoDispatcher
 import com.facetlauncher.app.data.model.CalendarEvent
 import com.facetlauncher.app.data.model.CalendarInfo
+import com.facetlauncher.app.data.model.WORK_CALENDAR_ID_PREFIX
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
@@ -48,15 +51,48 @@ open class CalendarRepository @Inject constructor(
     }
 
     /**
+     * The Work Profile's calendars, when its admin lets this app read them (`setCrossProfileCalendarPackages`) and the user has turned on
+     * showing work events: Android hides their names and accounts, so each is just an id, prefixed with [WORK_CALENDAR_ID_PREFIX], and
+     * a colour. Empty when there is no Work Profile, no permission or no access.
+     */
+    open suspend fun getWorkCalendars(): List<CalendarInfo> = withContext(ioDispatcher) {
+        runCatching {
+            contentResolver.query(CalendarContract.Calendars.ENTERPRISE_CONTENT_URI, arrayOf(CalendarContract.Calendars._ID), null, null, null)?.use { cursor ->
+                buildList {
+                    while (cursor.moveToNext()) add(CalendarInfo(id = WORK_CALENDAR_ID_PREFIX + cursor.getLong(0), displayName = "", accountName = "", isWork = true))
+                }
+            }
+        }.getOrNull().orEmpty()
+    }
+
+    /**
      * Events from local midnight today until noon tomorrow, ordered by start time. All-day events
      * count when dated today or tomorrow.
-     * @param calendarIds restrict to these calendar ids; `null` means every calendar.
+     * @param calendarIds restrict to these calendar ids; `null` means every personal calendar. A Work Profile calendar is read only
+     * when its [WORK_CALENDAR_ID_PREFIX] id is listed.
      * @param includeAllDay whether all-day events are included at all.
      */
     open suspend fun getUpcomingEvents(calendarIds: Set<String>?, includeAllDay: Boolean): List<CalendarEvent> = withContext(ioDispatcher) {
         val (begin, end) = upcomingWindow()
         val today = LocalDate.now()
+        val personal = queryInstances(CalendarContract.Instances.CONTENT_URI, begin, end, "", today, includeAllDay) { calendarIds == null || it in calendarIds }
+        val wanted = calendarIds.orEmpty().filter { it.startsWith(WORK_CALENDAR_ID_PREFIX) }.toSet()
+        val work = if (wanted.isEmpty()) emptyList() else runCatching {
+            queryInstances(CalendarContract.Instances.ENTERPRISE_CONTENT_URI, begin, end, WORK_CALENDAR_ID_PREFIX, today, includeAllDay) { it in wanted }
+        }.getOrDefault(emptyList())
+        (personal + work).sortedBy { it.startTimeMillis }
+    }
 
+    /** One provider's event instances in [begin]..[end], their calendar ids prefixed with [idPrefix] and kept when [accept] says so. */
+    private fun queryInstances(
+        baseUri: Uri,
+        begin: Long,
+        end: Long,
+        idPrefix: String,
+        today: LocalDate,
+        includeAllDay: Boolean,
+        accept: (calendarId: String) -> Boolean,
+    ): List<CalendarEvent> {
         val projection = arrayOf(
             CalendarContract.Instances.EVENT_ID,
             CalendarContract.Instances.CALENDAR_ID,
@@ -66,7 +102,8 @@ open class CalendarRepository @Inject constructor(
             CalendarContract.Instances.ALL_DAY,
             CalendarContract.Instances.EVENT_LOCATION,
         )
-        val events = CalendarContract.Instances.query(contentResolver, projection, begin, end)?.use { cursor ->
+        val uri = baseUri.buildUpon().also { ContentUris.appendId(it, begin) }.also { ContentUris.appendId(it, end) }.build()
+        return contentResolver.query(uri, projection, null, null, null)?.use { cursor ->
             val eventIdCol = cursor.getColumnIndexOrThrow(CalendarContract.Instances.EVENT_ID)
             val calendarIdCol = cursor.getColumnIndexOrThrow(CalendarContract.Instances.CALENDAR_ID)
             val titleCol = cursor.getColumnIndexOrThrow(CalendarContract.Instances.TITLE)
@@ -76,11 +113,10 @@ open class CalendarRepository @Inject constructor(
             val locationCol = cursor.getColumnIndexOrThrow(CalendarContract.Instances.EVENT_LOCATION)
             buildList {
                 while (cursor.moveToNext()) {
-                    val calendarId = cursor.getLong(calendarIdCol).toString()
+                    val calendarId = idPrefix + cursor.getLong(calendarIdCol)
                     val isAllDay = cursor.getInt(allDayCol) != 0
-                    val inSelectedCalendar = calendarIds == null || calendarId in calendarIds
                     val inAllDayWindow = !isAllDay || (includeAllDay && isOnTodayOrTomorrow(cursor.getLong(beginCol), today))
-                    if (!inSelectedCalendar || !inAllDayWindow) continue
+                    if (!accept(calendarId) || !inAllDayWindow) continue
                     add(
                         CalendarEvent(
                             id = cursor.getLong(eventIdCol),
@@ -95,7 +131,6 @@ open class CalendarRepository @Inject constructor(
                 }
             }
         }.orEmpty()
-        events.sortedBy { it.startTimeMillis }
     }
 
     /**

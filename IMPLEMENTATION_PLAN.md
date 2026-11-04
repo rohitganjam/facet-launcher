@@ -4538,3 +4538,5 @@ Widgets the app draws itself, on the Hub grid and on Home's widget stack, behavi
 ## Widget picker: Personal and Work tabs
 - [x] The Hub and Home clock-page pickers show a Personal | Work tab row when a Work Profile has widgets, each tab listing only its own (the Facet-drawn widgets sit on Personal); with no work widgets there are no tabs. The tab row is now one shared component (`ProfileTabRow`) used by the app drawer too. Tests: `PickerStateTest`, `HubWidgetPickerTabsTest`, `AppDrawerScreenTest` (still green).
 - [ ] Check on a device: the Work tab in the picker with a real Work Profile whose admin allows widgets.
+- [x] An Agenda widget's calendar list also offers the Work Profile's calendars (`CalendarRepository.getWorkCalendars`, enterprise URIs; ids `work:<n>`, shown as "Work calendar"), and its events (`getUpcomingEvents` reads them only when listed). Needs the work admin to allow the app (`setCrossProfileCalendarPackages`) and the user to show work events. Tests: `CalendarRepositoryTest` (3 new), `NativeWidgetConfigSheetTest`.
+- [ ] Check on a device with a real Work Profile and a calendar the admin shares.

@@ -1124,4 +1124,6 @@
     <string name="native_widget_calendar_off">O acesso ao calendário está desativado</string>
     <string name="native_widget_location_off">O acesso à localização está desativado</string>
     <string name="native_widget_allow">Permitir</string>
+    <string name="hub_widget_config_work_calendar">Calendário de trabalho</string>
+    <string name="hub_widget_config_work_calendar_n">Calendário de trabalho %1$d</string>
 </resources>

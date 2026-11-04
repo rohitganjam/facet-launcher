@@ -72,6 +72,10 @@ path, keyed by `NativeWidgetRef` (`Hub(appWidgetId)` or `Home(itemId)`):
   `NativeWidgetOverride` (its events, or its `WeatherState`) through `NativeWidgetOverrideResolver`, re-derived every five minutes.
   `NativeWidgetAccessViewModel` exposes the map; `HomeDrawerRoute` puts it in `NativeWidgetState.overrides`, and `NativeWidget` reads
   its own entry by its `ref`.
+- An Agenda's calendar list also offers the Work Profile's calendars, read through Android's cross-profile (enterprise) calendar API
+  (`CalendarRepository.getWorkCalendars`, `ENTERPRISE_CONTENT_URI`): they work only when the work admin allows this app
+  (`setCrossProfileCalendarPackages`) and the user has turned on showing work events, and Android hides their names, so each is listed as
+  "Work calendar" with an id prefixed `work:`. They are never ticked by default; the launcher-wide Agenda never includes them.
 - Forecasts are shared by place: `WidgetWeatherRepository` holds one in-memory forecast per place behind the same `WeatherRefreshPolicy`
   gate, so widgets on one city make one request, and a place equal to the launcher-wide one reads the launcher's own stored forecast and
   makes none. "Current location" while the launcher already follows the position is the launcher's forecast too.
