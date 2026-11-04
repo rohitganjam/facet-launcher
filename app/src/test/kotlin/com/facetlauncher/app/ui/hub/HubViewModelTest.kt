@@ -155,6 +155,9 @@ class HubViewModelTest {
         val state = MutableStateFlow(initial)
         override fun observeAll(): Flow<List<WidgetPlacementEntity>> = state
         override suspend fun getById(appWidgetId: Int): WidgetPlacementEntity? = state.value.find { it.appWidgetId == appWidgetId }
+        override suspend fun updateConfig(appWidgetId: Int, config: String?) {
+            state.value = state.value.map { if (it.appWidgetId == appWidgetId) it.copy(nativeWidgetConfig = config) else it }
+        }
         override suspend fun deleteAllNative() {
             state.value = state.value.filterNot { it.nativeWidgetType != null }
         }

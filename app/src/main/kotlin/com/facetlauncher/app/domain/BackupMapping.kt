@@ -1,5 +1,7 @@
 package com.facetlauncher.app.domain
 
+import com.facetlauncher.app.data.model.decodeNativeWidgetConfig
+import com.facetlauncher.app.data.model.encode
 import com.facetlauncher.app.data.model.NativeWidgetType
 import com.facetlauncher.app.data.model.ClockStackItemKind
 import com.facetlauncher.app.data.model.ClockStackItem
@@ -44,12 +46,13 @@ fun BackupAppEntry.toAppPlacementEntity(list: PlacementList, facetId: Long? = nu
     AppPlacementEntity(list = list, facetId = facetId, packageName = packageName, activityName = activityName, position = position, profile = profile.toEnumOrDefault(AppProfile.PERSONAL))
 
 fun WidgetPlacementEntity.toBackupPlacement(): BackupWidgetPlacement =
-    BackupWidgetPlacement(providerPackageName, providerClassName, row, col, colSpan, rowSpan, profile.name, landscapeOrder, nativeWidgetType?.name)
+    BackupWidgetPlacement(providerPackageName, providerClassName, row, col, colSpan, rowSpan, profile.name, landscapeOrder, nativeWidgetType?.name,
+        decodeNativeWidgetConfig(nativeWidgetConfig).copy(calendarIds = null).encode())
 
 /** A restored native placement under [appWidgetId], a negative id of its own; hosted widgets are never restored this way. */
 fun BackupWidgetPlacement.toNativePlacement(appWidgetId: Int, type: NativeWidgetType): WidgetPlacementEntity = WidgetPlacementEntity(
     appWidgetId = appWidgetId, providerPackageName = "", providerClassName = "", row = row, col = col, colSpan = colSpan, rowSpan = rowSpan,
-    landscapeOrder = landscapeOrder, nativeWidgetType = type,
+    landscapeOrder = landscapeOrder, nativeWidgetType = type, nativeWidgetConfig = nativeWidgetConfig,
 )
 
 fun FolderWithApps.toBackupFolder(): BackupFolder = BackupFolder(

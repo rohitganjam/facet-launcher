@@ -1,6 +1,8 @@
 package com.facetlauncher.app.data
 
+import com.facetlauncher.app.data.model.NativeWidgetConfig
 import com.facetlauncher.app.data.model.NativeWidgetType
+import com.facetlauncher.app.data.model.decodeNativeWidgetConfig
 import com.facetlauncher.app.data.local.WidgetPlacementDao
 import com.facetlauncher.app.data.local.WidgetPlacementEntity
 import kotlinx.coroutines.flow.Flow
@@ -19,6 +21,10 @@ private class FakeWidgetPlacementDao : WidgetPlacementDao {
     override fun observeAll(): Flow<List<WidgetPlacementEntity>> = state
 
     override suspend fun getById(appWidgetId: Int): WidgetPlacementEntity? = state.value.find { it.appWidgetId == appWidgetId }
+
+    override suspend fun updateConfig(appWidgetId: Int, config: String?) {
+        state.value = state.value.map { if (it.appWidgetId == appWidgetId) it.copy(nativeWidgetConfig = config) else it }
+    }
 
     override suspend fun deleteAllNative() {
         state.value = state.value.filterNot { it.nativeWidgetType != null }
@@ -117,6 +123,22 @@ class WidgetPlacementRepositoryTest {
 
         // When asking for the next id, then it is one below the lowest
         assertEquals(-3, repository.nextNativeId())
+    }
+
+    @Test
+    fun `setConfig stores a widget's own setting and clears it again when it follows the launcher`() = runTest {
+        // Given a native widget
+        val repository = WidgetPlacementRepository(FakeWidgetPlacementDao())
+        repository.upsert(placement(appWidgetId = -1).copy(nativeWidgetType = NativeWidgetType.AGENDA))
+
+        // When it is set to its own calendars, then back to following the launcher
+        repository.setConfig(-1, NativeWidgetConfig(calendarIds = setOf("2")))
+        val own = decodeNativeWidgetConfig(repository.getById(-1)?.nativeWidgetConfig)
+        repository.setConfig(-1, NativeWidgetConfig())
+
+        // Then the calendars were stored, and then nothing is
+        assertEquals(setOf("2"), own.calendarIds)
+        assertNull(repository.getById(-1)?.nativeWidgetConfig)
     }
 
     @Test

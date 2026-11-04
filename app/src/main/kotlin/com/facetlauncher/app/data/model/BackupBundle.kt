@@ -290,6 +290,8 @@ data class BackupWidgetPlacement(
     val landscapeOrder: Int? = null,
     /** Raw `NativeWidgetType.name` for a widget Facet draws itself: nothing to bind, so it is restored straight onto the Hub instead of joining the re-add queue. `null` for a hosted widget. */
     val nativeWidgetType: String? = null,
+    /** A Weather widget's own location, as `NativeWidgetConfig` encodes it. An Agenda widget's calendars are left out: their ids belong to this device. */
+    val nativeWidgetConfig: String? = null,
 )
 
 /** A widget Facet draws itself on a facet's clock stack: portable, since it has no `AppWidgetHost` id. A restored stack is the launcher clock followed by these, in order. */

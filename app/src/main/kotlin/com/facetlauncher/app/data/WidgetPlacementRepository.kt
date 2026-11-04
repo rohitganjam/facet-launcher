@@ -2,6 +2,8 @@ package com.facetlauncher.app.data
 
 import com.facetlauncher.app.data.local.WidgetPlacementDao
 import com.facetlauncher.app.data.local.WidgetPlacementEntity
+import com.facetlauncher.app.data.model.NativeWidgetConfig
+import com.facetlauncher.app.data.model.encode
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.flow.Flow
@@ -25,6 +27,8 @@ class WidgetPlacementRepository @Inject constructor(private val widgetPlacementD
 
     /** Removes every widget Facet draws itself, before a backup restore puts the saved ones back. Hosted widgets stay. */
     suspend fun deleteAllNative() = widgetPlacementDao.deleteAllNative()
+
+    suspend fun setConfig(appWidgetId: Int, config: NativeWidgetConfig) = widgetPlacementDao.updateConfig(appWidgetId, config.encode())
 
     suspend fun deleteById(appWidgetId: Int) = widgetPlacementDao.deleteById(appWidgetId)
 }

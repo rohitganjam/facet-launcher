@@ -25,6 +25,9 @@ interface WidgetPlacementDao {
     @Query("DELETE FROM widget_placements WHERE appWidgetId = :appWidgetId")
     suspend fun deleteById(appWidgetId: Int)
 
+    @Query("UPDATE widget_placements SET nativeWidgetConfig = :config WHERE appWidgetId = :appWidgetId")
+    suspend fun updateConfig(appWidgetId: Int, config: String?)
+
     @Query("DELETE FROM widget_placements WHERE nativeWidgetType IS NOT NULL")
     suspend fun deleteAllNative()
 

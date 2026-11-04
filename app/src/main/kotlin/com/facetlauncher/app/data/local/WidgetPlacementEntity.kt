@@ -36,6 +36,8 @@ data class WidgetPlacementEntity(
     val landscapeOrder: Int? = null,
     /** Set for a widget Facet draws itself; its [appWidgetId] is then a negative id of our own, not an `AppWidgetHost` one. */
     val nativeWidgetType: NativeWidgetType? = null,
+    /** What this widget is set to instead of the launcher-wide setting, as [com.facetlauncher.app.data.model.encode] writes it; `null` follows the launcher. */
+    val nativeWidgetConfig: String? = null,
 )
 
 val WidgetPlacementEntity.isNative: Boolean get() = nativeWidgetType != null
