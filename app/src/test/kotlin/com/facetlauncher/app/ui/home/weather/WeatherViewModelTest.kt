@@ -7,7 +7,8 @@ import com.facetlauncher.app.data.model.RainUnit
 import com.facetlauncher.app.data.model.TemperatureUnit
 import com.facetlauncher.app.data.model.WindSpeedUnit
 import com.facetlauncher.app.data.weather.RefreshOutcome
-import com.facetlauncher.app.domain.ObserveWeatherUseCase
+import com.facetlauncher.app.domain.ClockWeather
+import com.facetlauncher.app.domain.ObserveClockWeatherUseCase
 import com.facetlauncher.app.domain.RefreshWeatherUseCase
 import com.facetlauncher.app.domain.WeatherRefreshResult
 import java.time.Instant
@@ -37,14 +38,14 @@ import org.mockito.Mockito.`when`
 class WeatherViewModelTest {
 
     private val dispatcher = StandardTestDispatcher()
-    private val observeWeather = mock(ObserveWeatherUseCase::class.java)
+    private val observeClockWeather = mock(ObserveClockWeatherUseCase::class.java)
     private val settingsRepository = mock(SettingsRepository::class.java)
     private val refreshWeather = mock(RefreshWeatherUseCase::class.java)
 
     @Before
     fun setUp() {
         Dispatchers.setMain(dispatcher)
-        `when`(observeWeather.invoke()).thenReturn(flowOf(null))
+        `when`(observeClockWeather.invoke()).thenReturn(flowOf(ClockWeather()))
         `when`(settingsRepository.settings).thenReturn(flowOf(LauncherSettings()))
     }
 
@@ -53,7 +54,7 @@ class WeatherViewModelTest {
         Dispatchers.resetMain()
     }
 
-    private fun viewModel() = WeatherViewModel(observeWeather, settingsRepository, refreshWeather)
+    private fun viewModel() = WeatherViewModel(observeClockWeather, settingsRepository, refreshWeather)
 
     /** The state is combined and shared only while someone collects it, as the Home route does. */
     private fun TestScope.collecting(viewModel: WeatherViewModel) {
@@ -143,5 +144,39 @@ class WeatherViewModelTest {
         assertEquals(WeatherNotice.NEEDS_LOCATION_PERMISSION, WeatherViewModel.noticeFor(WeatherRefreshResult.NeedsLocationPermission, userInitiated = false))
         assertEquals(WeatherNotice.NO_LOCATION, WeatherViewModel.noticeFor(WeatherRefreshResult.NoLocation, userInitiated = false))
         assertEquals(WeatherNotice.NO_CITY, WeatherViewModel.noticeFor(WeatherRefreshResult.NoCity, userInitiated = false))
+    }
+
+    @Test
+    fun `with a place of its own a refresh looks that place up and leaves the launcher's forecast alone`() = runTest {
+        // Given the active facet shows a place of its own
+        `when`(observeClockWeather.invoke()).thenReturn(flowOf(ClockWeather(own = true)))
+        val viewModel = viewModel()
+        collecting(viewModel)
+        advanceUntilIdle()
+        assertEquals(true, viewModel.uiState.value.ownLocation)
+
+        // When Home resumes and the sheet's button is tapped
+        viewModel.onHomeResumed(weatherShown = true)
+        viewModel.refresh()
+        advanceUntilIdle()
+
+        // Then its own place is asked for again, and the launcher-wide refresh is not run for a forecast that is not on screen
+        verify(observeClockWeather, times(2)).refreshOwn()
+        verify(refreshWeather, never()).invoke()
+    }
+
+    @Test
+    fun `a facet's own place without location access says so, and without a forecast says it failed`() {
+        // Given a facet's own place that has no forecast
+        val noPermission = ClockWeather(own = true, unavailable = true, locationMissing = true)
+        val noForecast = ClockWeather(own = true, unavailable = true)
+
+        // Then the sheet is told to ask for location in the first case, and that the update failed in the second
+        assertEquals(WeatherNotice.NEEDS_LOCATION_PERMISSION, WeatherViewModel.ownNotice(noPermission))
+        assertEquals(WeatherNotice.FAILED, WeatherViewModel.ownNotice(noForecast))
+
+        // And nothing is said while there is a forecast, or when the launcher's own is on screen
+        assertNull(WeatherViewModel.ownNotice(ClockWeather(own = true)))
+        assertNull(WeatherViewModel.ownNotice(ClockWeather(unavailable = true)))
     }
 }

@@ -122,7 +122,12 @@ header, when sent, sets the earliest next attempt.
 
 ## 10. The screens
 
-- **`WeatherViewModel`** (`ui/home/weather/`) is the only consumer of `ObserveWeatherUseCase` and `RefreshWeatherUseCase`.
+- **`WeatherViewModel`** (`ui/home/weather/`) feeds the clock accessory and the weather sheet, and is the only consumer of `ObserveClockWeatherUseCase`
+  and `RefreshWeatherUseCase`. `ObserveClockWeatherUseCase` shows the launcher-wide forecast (`ObserveWeatherUseCase`), unless the active facet overrides
+  the clock with a location of its own (`Facet.clockWeatherLocation`, set in that facet's clock settings, `null` follows Weather settings). That place is
+  resolved through `NativeWidgetOverrideResolver`, exactly as a Weather widget's is (one forecast per place, shared), and the launcher's own forecast is
+  used again whenever it already covers that place. For such a facet the sheet's Refresh and Home's resume re-resolve the place (`refreshOwn`, still gated)
+  instead of running `RefreshWeatherUseCase`, and with no position allowed the sheet gets the "needs location permission" notice.
   It exposes `WeatherUiState` (the `WeatherState`, the resolved units, a `WeatherNotice`, `isRefreshing`). `onHomeResumed(shown)`
   refreshes only when weather is shown, so with it off nothing is read or requested; `refresh(userInitiated)` backs the
   sheet's button and maps the use case's result to a notice (already up to date, busy, offline, permission, no place).

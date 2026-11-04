@@ -117,6 +117,7 @@ pack (`IconPackRepository`, which reads that choice from `SettingsRepository`).
 | `ObserveFacetAutomationUseCase` | observe (`Flow<FacetAutomationScreenState>`: rule rows with facet names, "why Home looks like this" status, permission and Pro availability, `canAddRule`, `isPro`). Takes a refresh tick that re-reads permission grants | `AutomationRuleRepository`, `AutomationStateRepository`, `FacetRepository`, `SettingsRepository`, `AutomationPermissionRepository`, `EntitlementRepository`, `CanUseTriggerUseCase` | `FacetAutomationViewModel` |
 | `ObserveIconPickerUseCase` | observe (`Flow<IconPickerState>`): the built-in style cards' samples (own icons via `AppRepository.withOwnIcon`) and each installed pack by its own app icon; only the applied pack is read, for its coverage (emitted loading first) | `ObservePlacedItemsUseCase`, `GetInstalledAppsUseCase`, `AppRepository`, `IconPackRepository`, `DefaultAppRepository`, `SelectIconSamplesUseCase` | `IconsViewModel` |
 | `ObserveFacetPreviewsUseCase` | observe (`Flow<Map<Long, FacetPreviewData>>`) | `FacetRepository`, `SettingsRepository`, `ObservePlacedItemsUseCase`, `UsageStatsRepository`, `UsageAccessRepository`, `CalendarPermissionRepository`, `CalendarRepository` | `FacetCarouselViewModel` |
+| `ObserveClockWeatherUseCase` | observe (`Flow<ClockWeather>`): the launcher-wide forecast, or the active facet's own place (`ResolvedClockStyle.weatherLocation`, resolved through `NativeWidgetOverrideResolver` like a widget's) with why there is none; `refreshOwn()` looks it up again | `SettingsRepository`, `FacetRepository`, `ObserveWeatherUseCase`, `NativeWidgetOverrideResolver` | `WeatherViewModel` |
 | `ObserveWeatherUseCase` | observe (`Flow<WeatherState?>`): stored hours + fetch state + settings + a five-minute tick → now, the next 24 hourly points, local days from today, the rain summary, the place name and zone | `SettingsRepository`, `WeatherRepository`, `Clock` | `WeatherViewModel` |
 | `ObserveHomeScreenStateUseCase` | observe (holds `refreshTrigger`, see F8) | 9 repositories + `ObservePlacedItemsUseCase` + `ObserveClockAccessoriesUseCase` | `HomeViewModel` |
 | `ObserveHubStateUseCase` | observe (holds `refreshTrigger`) | `WidgetPlacementRepository`, `AppWidgetRepository` | `HubViewModel` |
@@ -181,7 +182,7 @@ Non-use-case files in `domain/`: `FlowCombine.kt` (6/7-ary `combine`), `HubGridC
 | `DockAppPickerViewModel` | `DockAppPickerScreen` | `facetId?` |
 | `ClockWidgetPickerViewModel` | `ClockWidgetPickerScreen` | — |
 | `ClockStyleGalleryViewModel` | `ClockStyleGalleryScreen` | `facetId?` |
-| `WeatherViewModel` | the weather sheet over Home (`WeatherSheet`): `WeatherUiState`, refresh, `onHomeResumed` | — |
+| `WeatherViewModel` | the weather sheet over Home (`WeatherSheet`) and the clock accessory: `WeatherUiState` (including whether the facet shows a place of its own), refresh, `onHomeResumed` | — |
 | `ClockAccessoriesViewModel` | `ClockAccessoriesScreen` (switches, icon style, location permission for the weather switch) | `facetId?` |
 | `UnitsAndLocationViewModel` | `UnitsAndLocationScreen` (the four units, the location row and its permission) | — |
 | `WeatherLocationViewModel` | `WeatherLocationScreen` (mode, permission, debounced city search) | — |

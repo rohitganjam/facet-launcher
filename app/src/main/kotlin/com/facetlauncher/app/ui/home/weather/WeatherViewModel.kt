@@ -9,7 +9,8 @@ import com.facetlauncher.app.data.model.RainUnit
 import com.facetlauncher.app.data.model.TemperatureUnit
 import com.facetlauncher.app.data.model.WindSpeedUnit
 import com.facetlauncher.app.data.weather.RefreshOutcome
-import com.facetlauncher.app.domain.ObserveWeatherUseCase
+import com.facetlauncher.app.domain.ClockWeather
+import com.facetlauncher.app.domain.ObserveClockWeatherUseCase
 import com.facetlauncher.app.domain.RefreshWeatherUseCase
 import com.facetlauncher.app.domain.WeatherRefreshResult
 import com.facetlauncher.app.domain.WeatherState
@@ -46,6 +47,8 @@ data class WeatherUiState(
     /** The launcher's 12 or 24-hour setting, for the hourly labels. */
     val use24HourTime: Boolean = false,
     val iconStyle: WeatherIconStyle = WeatherIconStyle.COLORED,
+    /** Whether the active facet shows a place of its own, so [weather] is not the launcher-wide forecast. */
+    val ownLocation: Boolean = false,
 )
 
 /**
@@ -56,7 +59,7 @@ data class WeatherUiState(
  */
 @HiltViewModel
 class WeatherViewModel @Inject constructor(
-    observeWeather: ObserveWeatherUseCase,
+    private val observeClockWeather: ObserveClockWeatherUseCase,
     settingsRepository: SettingsRepository,
     private val refreshWeather: RefreshWeatherUseCase,
 ) : ViewModel() {
@@ -65,20 +68,21 @@ class WeatherViewModel @Inject constructor(
     private val refreshing = MutableStateFlow(false)
     private var refreshJob: Job? = null
 
-    val uiState: StateFlow<WeatherUiState> = combine(observeWeather(), settingsRepository.settings, notice, refreshing) { weather, settings, notice, refreshing ->
+    val uiState: StateFlow<WeatherUiState> = combine(observeClockWeather(), settingsRepository.settings, notice, refreshing) { clock, settings, notice, refreshing ->
         val locale = Locale.getDefault()
         WeatherUiState(
-            weather = weather,
+            weather = clock.weather,
             units = ResolvedWeatherUnits(
                 temperature = WeatherUnits.resolve(settings.temperatureUnit, locale),
                 wind = WeatherUnits.resolve(settings.windSpeedUnit, locale),
                 rain = WeatherUnits.resolve(settings.rainUnit, locale),
                 pressure = WeatherUnits.resolve(settings.pressureUnit, locale),
             ),
-            notice = notice,
+            notice = notice ?: ownNotice(clock),
             isRefreshing = refreshing,
             use24HourTime = settings.use24HourTime,
             iconStyle = settings.weatherIconStyle,
+            ownLocation = clock.own,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(SUBSCRIPTION_TIMEOUT_MS), WeatherUiState())
 
@@ -90,6 +94,11 @@ class WeatherViewModel @Inject constructor(
     /** Refreshes now (through the gate). [userInitiated] taps also report "already up to date" and the like. */
     fun refresh(userInitiated: Boolean = true) {
         if (refreshJob?.isActive == true) return
+        if (uiState.value.ownLocation) {
+            // The facet shows a place of its own: look that up again; the launcher-wide forecast is not what is on screen.
+            observeClockWeather.refreshOwn()
+            return
+        }
         refreshJob = viewModelScope.launch {
             refreshing.value = true
             notice.value = noticeFor(refreshWeather(), userInitiated)
@@ -99,6 +108,13 @@ class WeatherViewModel @Inject constructor(
 
     internal companion object {
         const val SUBSCRIPTION_TIMEOUT_MS = 5_000L
+
+        /** What a facet's own place says when it has no forecast: the position is not allowed, or the request did not bring one. */
+        fun ownNotice(clock: ClockWeather): WeatherNotice? = when {
+            !clock.own || clock.weather != null || !clock.unavailable -> null
+            clock.locationMissing -> WeatherNotice.NEEDS_LOCATION_PERMISSION
+            else -> WeatherNotice.FAILED
+        }
 
         /** A user tap hears about every result; a quiet refresh only about the ones that need the user or say something is wrong. */
         fun noticeFor(result: WeatherRefreshResult, userInitiated: Boolean): WeatherNotice? = when (result) {
