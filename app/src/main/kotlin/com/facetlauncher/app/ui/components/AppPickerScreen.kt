@@ -55,6 +55,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import com.facetlauncher.app.R
 import com.facetlauncher.app.data.model.AppInfo
+import com.facetlauncher.app.data.model.AppProfile
 import com.facetlauncher.app.data.model.AppSortOption
 import com.facetlauncher.app.data.model.Folder
 import com.facetlauncher.app.data.model.SortDirection
@@ -414,10 +415,14 @@ private fun AppPickerRow(app: AppInfo, checked: Boolean, enabled: Boolean, tagPr
             checked = checked,
             onCheckedChange = { onToggle() },
             enabled = enabled,
-            modifier = Modifier.testTag("${tagPrefix}_row_${app.packageName}"),
+            modifier = Modifier.testTag(appRowTag(tagPrefix, app)),
         )
     }
 }
+
+/** The same app in a Work Profile shares its package, so only a non-personal row carries its profile to stay unique. */
+private fun appRowTag(tagPrefix: String, app: AppInfo): String =
+    "${tagPrefix}_row_${app.packageName}" + if (app.profile == AppProfile.PERSONAL) "" else "_${app.profile.name.lowercase()}"
 
 @Preview(showBackground = true, widthDp = 390, heightDp = 844)
 @Preview(name = "Dark", showBackground = true, widthDp = 390, heightDp = 844, uiMode = Configuration.UI_MODE_NIGHT_YES)

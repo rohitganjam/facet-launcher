@@ -26,6 +26,7 @@ import androidx.compose.ui.test.performTouchInput
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.room.Room
 import com.facetlauncher.app.data.AppRepository
+import com.facetlauncher.app.data.getTestableApps
 import com.facetlauncher.app.data.EntitlementRepository
 import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.FolderRepository
@@ -489,7 +490,7 @@ class FacetCarouselScreenTest {
                 facetRepository.setOverridingFavorites(only.id, true)
             },
             seedApps = { appRepository, placementRepository ->
-                val installed = appRepository.getInstalledApps()
+                val installed = appRepository.getTestableApps()
                 val favoriteApp = installed[0]
                 val dockApp = installed[1]
                 favoriteLabel = favoriteApp.label
@@ -529,7 +530,7 @@ class FacetCarouselScreenTest {
                 facetRepository.setAppListGridColumns(afterLayout.id, AppListGridColumns.FOUR)
             },
             seedApps = { appRepository, placementRepository ->
-                val installed = appRepository.getInstalledApps()
+                val installed = appRepository.getTestableApps()
                 (0 until 6).forEach { index ->
                     placementRepository.addApp(PlacementTarget(PlacementList.FAVORITES, facetId = facetId), app = installed[index], position = index)
                     packages += installed[index].packageName
@@ -573,7 +574,7 @@ class FacetCarouselScreenTest {
                 facetRepository.setAppListGridDisplayMode(afterLayout.id, AppListGridDisplayMode.TEXT)
             },
             seedApps = { appRepository, placementRepository ->
-                val app = appRepository.getInstalledApps()[0]
+                val app = appRepository.getTestableApps()[0]
                 packageName = app.packageName
                 placementRepository.addApp(PlacementTarget(PlacementList.FAVORITES, facetId = facetId), app = app, position = 0)
             },
@@ -623,7 +624,7 @@ class FacetCarouselScreenTest {
                 facetRepository.setOverridingFavorites(only.id, true)
             },
             seedApps = { appRepository, placementRepository ->
-                val favoriteApp = appRepository.getInstalledApps()[0]
+                val favoriteApp = appRepository.getTestableApps()[0]
                 favoriteLabel = favoriteApp.label
                 placementRepository.addApp(PlacementTarget(PlacementList.FAVORITES, facetId = facetId), app = favoriteApp, position = 0)
             },
@@ -652,7 +653,7 @@ class FacetCarouselScreenTest {
                 settings.setActiveFacetId(only.id)
             },
             seedApps = { appRepository, placementRepository ->
-                val dockApp = appRepository.getInstalledApps()[0]
+                val dockApp = appRepository.getTestableApps()[0]
                 dockLabel = dockApp.label
                 placementRepository.addApp(PlacementTarget.GlobalDock, dockApp, position = 0)
             },
@@ -681,7 +682,7 @@ class FacetCarouselScreenTest {
                 facetRepository.setOverridingFavorites(only.id, true)
             },
             seedApps = { appRepository, placementRepository ->
-                val favoriteApp = appRepository.getInstalledApps()[0]
+                val favoriteApp = appRepository.getTestableApps()[0]
                 favoriteLabel = favoriteApp.label
                 placementRepository.addApp(PlacementTarget(PlacementList.FAVORITES, facetId = facetId), app = favoriteApp, position = 0)
             },
@@ -705,7 +706,7 @@ class FacetCarouselScreenTest {
                 settings.setActiveFacetId(only.id)
             },
             seedApps = { appRepository, placementRepository ->
-                val dockApp = appRepository.getInstalledApps()[0]
+                val dockApp = appRepository.getTestableApps()[0]
                 dockLabel = dockApp.label
                 placementRepository.addApp(PlacementTarget.GlobalDock, dockApp, position = 0)
             },

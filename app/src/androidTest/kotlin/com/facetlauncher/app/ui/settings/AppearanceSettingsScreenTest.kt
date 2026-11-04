@@ -13,6 +13,7 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToNode
 import androidx.room.Room
 import com.facetlauncher.app.data.AppRepository
+import com.facetlauncher.app.data.getTestableApps
 import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.model.AppInfo
@@ -104,7 +105,7 @@ class AppearanceSettingsScreenTest {
         var dockLabel = ""
         setContent(
             seedApps = { appRepository, placementRepository, _ ->
-                val installed = appRepository.getInstalledApps()
+                val installed = appRepository.getTestableApps()
                 favorite1Label = installed[0].label
                 favorite2Label = installed[1].label
                 dockLabel = installed[2].label
@@ -132,7 +133,7 @@ class AppearanceSettingsScreenTest {
         var favoriteLabel = ""
         setContent(
             seedApps = { appRepository, placementRepository, _ ->
-                val app = appRepository.getInstalledApps()[0]
+                val app = appRepository.getTestableApps()[0]
                 favoriteLabel = app.label
                 placementRepository.addApp(PlacementTarget.GlobalFavorites, app, position = 0)
             },
@@ -447,7 +448,7 @@ class AppearanceSettingsScreenTest {
         setContent(
             facetId = facetId,
             seedApps = { appRepository, placementRepository, id ->
-                val installed = appRepository.getInstalledApps()
+                val installed = appRepository.getTestableApps()
                 globalFavoriteLabel = installed[0].label
                 globalDockLabel = installed[1].label
                 facetFavoriteLabel = installed[2].label
@@ -490,7 +491,7 @@ class AppearanceSettingsScreenTest {
                 facetRepository.updateOverridingDock(updated.id, overriding = true)
             },
             seedApps = { appRepository, placementRepository, id ->
-                val installed = appRepository.getInstalledApps()
+                val installed = appRepository.getTestableApps()
                 globalFavoriteLabel = installed[0].label
                 globalDockLabel = installed[1].label
                 facetFavoriteLabel = installed[2].label

@@ -16,6 +16,7 @@ import androidx.compose.ui.test.performTextInput
 import androidx.lifecycle.SavedStateHandle
 import androidx.room.Room
 import com.facetlauncher.app.data.AppRepository
+import com.facetlauncher.app.data.getTestableApps
 import com.facetlauncher.app.data.FolderRepository
 import com.facetlauncher.app.data.UsageAccessRepository
 import com.facetlauncher.app.data.UsageStatsRepository
@@ -87,7 +88,7 @@ class FolderAppPickerScreenTest {
     fun checkingAnAppAddsItToTheFolder() {
         // Given the picker, searched down to some real installed app
         var targetApp: AppInfo? = null
-        setContent { appRepository, _, _ -> targetApp = runBlocking { appRepository.getInstalledApps() }.first() }
+        setContent { appRepository, _, _ -> targetApp = runBlocking { appRepository.getTestableApps() }.first() }
         val app = requireNotNull(targetApp)
         val rowTag = "folder_app_picker_row_${app.packageName}"
 
@@ -112,7 +113,7 @@ class FolderAppPickerScreenTest {
         // Given an app already in the folder
         var seededApp: AppInfo? = null
         setContent { appRepository, folderRepository, folderId ->
-            val app = appRepository.getInstalledApps().first()
+            val app = appRepository.getTestableApps().first()
             seededApp = app
             folderRepository.addAppToFolder(folderId, app)
         }
@@ -137,7 +138,7 @@ class FolderAppPickerScreenTest {
         // Given two real apps already in the folder
         var folderApps: List<AppInfo> = emptyList()
         setContent { appRepository, folderRepository, folderId ->
-            val installed = appRepository.getInstalledApps()
+            val installed = appRepository.getTestableApps()
             folderApps = installed.take(2)
             folderApps.forEach { app -> folderRepository.addAppToFolder(folderId, app) }
         }

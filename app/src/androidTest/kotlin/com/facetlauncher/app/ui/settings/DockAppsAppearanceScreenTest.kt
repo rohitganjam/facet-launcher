@@ -13,6 +13,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToNode
 import com.facetlauncher.app.data.AppRepository
+import com.facetlauncher.app.data.getTestableApps
 import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.model.CalendarEvent
@@ -52,7 +53,7 @@ class DockAppsAppearanceScreenTest {
         val packages = mutableListOf<String>()
         setContent(
             seedApps = { appRepository, placementRepository, _ ->
-                val installed = appRepository.getInstalledApps()
+                val installed = appRepository.getTestableApps()
                 (0 until 6).forEach { index ->
                     placementRepository.addApp(PlacementTarget.GlobalFavorites, installed[index], position = index)
                     packages += installed[index].packageName
@@ -99,7 +100,7 @@ class DockAppsAppearanceScreenTest {
         var packageName = ""
         setContent(
             seedApps = { appRepository, placementRepository, _ ->
-                val app = appRepository.getInstalledApps()[0]
+                val app = appRepository.getTestableApps()[0]
                 packageName = app.packageName
                 placementRepository.addApp(PlacementTarget.GlobalFavorites, app, position = 0)
             },
@@ -138,7 +139,7 @@ class DockAppsAppearanceScreenTest {
         val packages = mutableListOf<String>()
         val settingsRepository = setContent(
             seedApps = { appRepository, placementRepository, _ ->
-                val installed = appRepository.getInstalledApps()
+                val installed = appRepository.getTestableApps()
                 (0 until 4).forEach { index ->
                     placementRepository.addApp(PlacementTarget.GlobalFavorites, installed[index], position = index)
                     packages += installed[index].packageName
@@ -199,7 +200,7 @@ class DockAppsAppearanceScreenTest {
         var packageName = ""
         setContent(
             seedApps = { appRepository, placementRepository, _ ->
-                val app = appRepository.getInstalledApps().first()
+                val app = appRepository.getTestableApps().first()
                 packageName = app.packageName
                 placementRepository.addApp(PlacementTarget.GlobalFavorites, app, position = 0)
             },

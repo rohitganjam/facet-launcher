@@ -15,9 +15,11 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.test.performTextReplacement
 import androidx.lifecycle.SavedStateHandle
 import androidx.room.Room
 import com.facetlauncher.app.data.AppRepository
+import com.facetlauncher.app.data.getTestableApps
 import com.facetlauncher.app.data.FolderRepository
 import com.facetlauncher.app.data.UsageAccessRepository
 import com.facetlauncher.app.data.UsageStatsRepository
@@ -86,7 +88,7 @@ class FavoritesPickerScreenTest {
     fun checkingAnAppAddsItToFavorites() {
         // Given the picker, searched down to some real installed app
         var targetApp: AppInfo? = null
-        setContent { appRepository, _, _ -> targetApp = runBlocking { appRepository.getInstalledApps() }.first() }
+        setContent { appRepository, _, _ -> targetApp = runBlocking { appRepository.getTestableApps() }.first() }
         val app = requireNotNull(targetApp)
         val rowTag = "favorites_picker_row_${app.packageName}"
 
@@ -113,7 +115,7 @@ class FavoritesPickerScreenTest {
     fun headerStaysVisibleAfterScrollingToAllApps() {
         // Given two real apps already favorited, so both "FAVORITES" and "ALL APPS" render
         setContent { appRepository, placementRepository, _ ->
-            val installed = runBlocking { appRepository.getInstalledApps() }
+            val installed = runBlocking { appRepository.getTestableApps() }
             installed.take(2).forEachIndexed { index, app -> placementRepository.addApp(PlacementTarget(PlacementList.FAVORITES, facetId), app, index) }
         }
         composeRule.waitUntil(timeoutMillis = 3_000) {
@@ -133,7 +135,7 @@ class FavoritesPickerScreenTest {
         // Given two real apps already favorited
         var favorites: List<AppInfo> = emptyList()
         setContent { appRepository, placementRepository, _ ->
-            val installed = runBlocking { appRepository.getInstalledApps() }
+            val installed = runBlocking { appRepository.getTestableApps() }
             favorites = installed.take(2)
             favorites.forEachIndexed { index, app -> placementRepository.addApp(PlacementTarget(PlacementList.FAVORITES, facetId), app, index) }
         }
@@ -153,7 +155,7 @@ class FavoritesPickerScreenTest {
         // Given favorites already at the cap
         var overflowApp: AppInfo? = null
         setContent { appRepository, placementRepository, _ ->
-            val installed = runBlocking { appRepository.getInstalledApps() }
+            val installed = runBlocking { appRepository.getTestableApps() }
             val capApps = installed.take(AppListLimits.MAX_FAVORITES)
             overflowApp = installed.getOrNull(AppListLimits.MAX_FAVORITES)
             runBlocking { capApps.forEachIndexed { index, app -> placementRepository.addApp(PlacementTarget(PlacementList.FAVORITES, facetId), app, index) } }
@@ -168,8 +170,9 @@ class FavoritesPickerScreenTest {
         composeRule.waitUntil(timeoutMillis = 3_000) {
             runCatching { composeRule.onNodeWithTag("favorites_picker_search").assertExists() }.isSuccess
         }
-        composeRule.onNodeWithTag("favorites_picker_search").performTextInput(app.label)
-        composeRule.waitUntil(timeoutMillis = 3_000) {
+        // The query can be dropped while the installed apps are still loading, so type it again until the row shows up
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onNodeWithTag("favorites_picker_search").performTextReplacement(app.label)
             runCatching { composeRule.onNodeWithTag(rowTag).assertExists() }.isSuccess
         }
         composeRule.onNodeWithTag(rowTag).assertIsOff()
@@ -280,7 +283,7 @@ class FavoritesPickerScreenTest {
         // When checking a real installed app — poll for its row, since the ViewModel's
         // installed-apps list comes from a real suspend fetch (same async-I/O-vs-idling gap as
         // checkingAnAppAddsItToFavorites above)
-        val app = runBlocking { appRepository.getInstalledApps() }.first()
+        val app = runBlocking { appRepository.getTestableApps() }.first()
         val rowTag = "favorites_picker_row_${app.packageName}"
         composeRule.waitUntil(timeoutMillis = 3_000) {
             runCatching { composeRule.onNodeWithTag(rowTag).assertExists() }.isSuccess
@@ -306,7 +309,7 @@ class FavoritesPickerScreenTest {
         // Given one real app already favorited, and at least one more not favorited
         var favorite: AppInfo? = null
         setContent { appRepository, placementRepository, _ ->
-            val installed = runBlocking { appRepository.getInstalledApps() }
+            val installed = runBlocking { appRepository.getTestableApps() }
             favorite = installed.first()
             placementRepository.addApp(PlacementTarget(PlacementList.FAVORITES, facetId), installed.first(), 0)
         }

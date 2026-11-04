@@ -19,6 +19,7 @@ import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.test.filters.SdkSuppress
 import com.facetlauncher.app.data.AppRepository
+import com.facetlauncher.app.data.getTestableApps
 import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.model.CalendarEvent
@@ -137,7 +138,7 @@ class FontsScreenTest {
         var favoriteLabel = ""
         setContent(
             seedApps = { appRepository, placementRepository, _ ->
-                val app = appRepository.getInstalledApps()[0]
+                val app = appRepository.getTestableApps()[0]
                 favoriteLabel = app.label
                 placementRepository.addApp(PlacementTarget.GlobalFavorites, app, position = 0)
             },

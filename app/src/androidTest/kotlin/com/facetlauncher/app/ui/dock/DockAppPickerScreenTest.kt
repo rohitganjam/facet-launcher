@@ -19,6 +19,7 @@ import androidx.compose.ui.test.performTextInput
 import androidx.lifecycle.SavedStateHandle
 import androidx.room.Room
 import com.facetlauncher.app.data.AppRepository
+import com.facetlauncher.app.data.getTestableApps
 import com.facetlauncher.app.data.FolderRepository
 import com.facetlauncher.app.data.UsageAccessRepository
 import com.facetlauncher.app.data.UsageStatsRepository
@@ -104,18 +105,18 @@ class DockAppPickerScreenTest {
         // repository the ViewModel uses, rather than assuming a specific package is visible —
         // package-visibility rules can differ between this test APK and the app under test)
         var targetApp: AppInfo? = null
-        setContent { appRepository, _, _ -> targetApp = runBlocking { appRepository.getInstalledApps() }.first() }
+        setContent { appRepository, _, _ -> targetApp = runBlocking { appRepository.getTestableApps() }.first() }
         val app = requireNotNull(targetApp)
         val rowTag = "dock_picker_row_${app.packageName}"
 
         // The ViewModel's installed-apps list comes from a real suspend fetch (init { launch { ... } }),
         // which isn't reliably caught by a single waitForIdle() — poll for the row before interacting
-        // (same async-I/O-vs-idling gap as elsewhere, see IMPLEMENTATION_PLAN.md)
+        // (same async-I/O-vs-idling gap as elsewhere, see IMPLEMENTATION_PLAN.md). Search first: the list is lazy and
+        // the app may sit below the fold, which a Work Profile's duplicate rows make likely.
+        composeRule.onNodeWithTag("dock_picker_search").performTextInput(app.label)
         composeRule.waitUntil(timeoutMillis = 3_000) {
             runCatching { composeRule.onNodeWithTag(rowTag).assertExists() }.isSuccess
         }
-        composeRule.onNodeWithTag("dock_picker_search").performTextInput(app.label)
-        composeRule.waitForIdle()
         composeRule.onNodeWithTag(rowTag).assertIsOff()
 
         // When it's checked
@@ -131,7 +132,7 @@ class DockAppPickerScreenTest {
     fun headerStaysVisibleAfterScrollingToAllApps() {
         // Given two real apps already in the dock, so both "IN DOCK" and "ALL APPS" render
         setContent { appRepository, placementRepository, _ ->
-            val installed = runBlocking { appRepository.getInstalledApps() }
+            val installed = runBlocking { appRepository.getTestableApps() }
             installed.take(2).forEachIndexed { index, app -> runBlocking { placementRepository.addApp(PlacementTarget.GlobalDock, app, index) } }
         }
         composeRule.waitUntil(timeoutMillis = 3_000) {
@@ -151,7 +152,7 @@ class DockAppPickerScreenTest {
         // Given two real apps already in the dock
         var dockApps: List<AppInfo> = emptyList()
         setContent { appRepository, placementRepository, _ ->
-            val installed = runBlocking { appRepository.getInstalledApps() }
+            val installed = runBlocking { appRepository.getTestableApps() }
             dockApps = installed.take(2)
             dockApps.forEachIndexed { index, app -> runBlocking { placementRepository.addApp(PlacementTarget.GlobalDock, app, index) } }
         }
@@ -171,7 +172,7 @@ class DockAppPickerScreenTest {
         // Given a dock with a single app — no floor blocks removing it (MIN_APPS = 0)
         var onlyDockApp: AppInfo? = null
         setContent { appRepository, placementRepository, _ ->
-            val app = runBlocking { appRepository.getInstalledApps() }.first()
+            val app = runBlocking { appRepository.getTestableApps() }.first()
             onlyDockApp = app
             runBlocking { placementRepository.addApp(PlacementTarget.GlobalDock, app, 0) }
         }
@@ -202,7 +203,7 @@ class DockAppPickerScreenTest {
         // already in facet 7's own dock and NOT in the shared default dock
         var seededApp: AppInfo? = null
         setContent(facetId = 7L) { appRepository, placementRepository, _ ->
-            val app = runBlocking { appRepository.getInstalledApps() }.first()
+            val app = runBlocking { appRepository.getTestableApps() }.first()
             seededApp = app
             runBlocking { placementRepository.addApp(PlacementTarget(PlacementList.DOCK, 7L), app, 0) }
             // deliberately leave the shared default dock empty

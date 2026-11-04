@@ -27,6 +27,7 @@ import androidx.test.espresso.intent.Intents
 import androidx.test.espresso.intent.VerificationModes
 import androidx.test.espresso.intent.matcher.IntentMatchers.hasAction
 import com.facetlauncher.app.data.AppRepository
+import com.facetlauncher.app.data.getTestableApps
 import com.facetlauncher.app.data.DefaultAppRepository
 import com.facetlauncher.app.data.FolderRepository
 import com.facetlauncher.app.data.SettingsRepository
@@ -312,7 +313,7 @@ class OnboardingScreenTest {
     fun `tapping Manage dock apps opens the full-screen dock picker`() {
         var seededApp: AppInfo? = null
         setContent { appRepository, placementRepository ->
-            val app = runBlocking { appRepository.getInstalledApps() }.first()
+            val app = runBlocking { appRepository.getTestableApps() }.first()
             seededApp = app
             placementRepository.addApp(PlacementTarget.GlobalDock, app, 0)
         }
@@ -333,7 +334,7 @@ class OnboardingScreenTest {
     fun `Clear all removes every dock app after confirming`() {
         var seededApp: AppInfo? = null
         setContent { appRepository, placementRepository ->
-            val app = runBlocking { appRepository.getInstalledApps() }.first()
+            val app = runBlocking { appRepository.getTestableApps() }.first()
             seededApp = app
             placementRepository.addApp(PlacementTarget.GlobalDock, app, 0)
         }
@@ -361,7 +362,7 @@ class OnboardingScreenTest {
     fun `Clear all removes every favorite after confirming`() {
         var seededApp: AppInfo? = null
         setContent { appRepository, placementRepository ->
-            val app = runBlocking { appRepository.getInstalledApps() }.first()
+            val app = runBlocking { appRepository.getTestableApps() }.first()
             seededApp = app
             placementRepository.addApp(PlacementTarget.GlobalFavorites, app, 0)
         }
