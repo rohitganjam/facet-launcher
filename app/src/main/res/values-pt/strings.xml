@@ -1115,12 +1115,12 @@
     <string name="native_widget_media_empty">Nada tocando</string>
     <string name="native_widget_picker_section">Widgets do Facet</string>
     <string name="hub_widget_configure">Configurar</string>
-    <string name="hub_widget_config_use_launcher">Igual às definições do launcher</string>
+    <string name="hub_widget_config_use_launcher">Igual às configurações do launcher</string>
     <string name="hub_widget_config_calendars">Calendários</string>
     <string name="hub_widget_config_location">Localização</string>
     <string name="hub_widget_config_current_location">Localização atual</string>
-    <string name="hub_widget_config_no_cities">As cidades guardadas nas definições do tempo aparecem aqui.</string>
-    <string name="hub_widget_config_no_calendars">Sem calendários para mostrar.</string>
+    <string name="hub_widget_config_no_cities">As cidades salvas nas configurações do clima aparecem aqui.</string>
+    <string name="hub_widget_config_no_calendars">Nenhum calendário para mostrar.</string>
     <string name="native_widget_calendar_off">O acesso ao calendário está desativado</string>
     <string name="native_widget_location_off">O acesso à localização está desativado</string>
     <string name="native_widget_allow">Permitir</string>
