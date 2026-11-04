@@ -1114,4 +1114,11 @@
     <string name="native_widget_agenda_empty">Aucun événement à venir</string>
     <string name="native_widget_media_empty">Aucune lecture en cours</string>
     <string name="native_widget_picker_section">Widgets Facet</string>
+    <string name="hub_widget_configure">Configurer</string>
+    <string name="hub_widget_config_use_launcher">Comme dans les réglages du lanceur</string>
+    <string name="hub_widget_config_calendars">Agendas</string>
+    <string name="hub_widget_config_location">Position</string>
+    <string name="hub_widget_config_current_location">Position actuelle</string>
+    <string name="hub_widget_config_no_cities">Les villes enregistrées dans les réglages météo apparaissent ici.</string>
+    <string name="hub_widget_config_no_calendars">Aucun agenda à afficher.</string>
 </resources>

@@ -58,6 +58,20 @@ Weather: `HomeDrawerRoute` keeps the forecast fresh while the clock's weather ac
 Home page (`HomeUiState.showsNativeWeather`) **or** on the Hub (`HubViewModel.hasNativeWeather`). It goes through the same
 refresh gate and location rules as the accessory ([18](18-flow-weather.md)); nothing is requested while none of the three is on.
 
+### 3a. Per-widget settings (Hub)
+
+A Hub Weather or Agenda widget at Medium or Large (`isConfigurable`) has a **Configure** entry in its long-press menu (both
+grids). It opens `HubWidgetConfigSheet`, which edits `widget_placements.nativeWidgetConfig` (`NativeWidgetConfig`, one tab-separated
+line per field): Agenda picks its own calendars, Weather picks the current location or one of the cities saved in the weather
+settings. A `null` field follows the launcher-wide setting; Now Playing and Home stack pages have none.
+
+`ObserveNativeWidgetOverridesUseCase` (behind the `NativeWidgetOverrides` interface `HubViewModel` reads) turns each widget with a
+setting into a `NativeWidgetOverride` (its events, or its `WeatherState`), re-derived every five minutes; `NativeWidgetState.withOverride`
+applies it on the tile. Forecasts are shared by place: `WidgetWeatherRepository` holds one in-memory forecast per place behind the
+same `WeatherRefreshPolicy` gate, so widgets on one city make one request, and a place equal to the launcher-wide one reads the
+launcher's own stored forecast and makes none. "Current location" while the launcher already follows the position is the launcher's
+forecast too.
+
 ## 4. Adding, replacing, removing
 
 - **Pickers.** Both `HubWidgetPickerContent` screens list a "Facet widgets" section (`NativeWidgetPickerSection`, each type
@@ -79,7 +93,7 @@ Additive, no `CURRENT_BACKUP_VERSION` bump. `BackupWidgetPlacement.nativeWidgetT
 carry the types with their sizes and alignments. Import writes the native Hub placements straight back
 (`deleteAllNative()` first, then new negative ids) instead of putting them in the re-add queue, and appends the native
 pages after a restored facet's launcher clock (`ClockStackRepository.restoreNativeWidgets`, up to the stack limit).
-An unknown type from a newer backup is skipped. Hosted widgets are unchanged.
+A Weather widget's own location (`BackupWidgetPlacement.nativeWidgetConfig`) travels too; an Agenda widget's calendar ids are left out, since they belong to the device. An unknown type from a newer backup is skipped. Hosted widgets are unchanged.
 
 ## 6. Tests
 

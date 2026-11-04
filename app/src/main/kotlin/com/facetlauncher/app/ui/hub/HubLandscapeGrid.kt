@@ -2,7 +2,9 @@ package com.facetlauncher.app.ui.hub
 
 import androidx.compose.ui.unit.DpSize
 import com.facetlauncher.app.ui.nativewidget.NativeWidgetEnvironment
+import com.facetlauncher.app.domain.isConfigurable
 import com.facetlauncher.app.ui.nativewidget.NativeWidget
+import com.facetlauncher.app.ui.nativewidget.withOverride
 import com.facetlauncher.app.domain.minSpan
 import android.appwidget.AppWidgetHostView
 import android.content.Context
@@ -397,7 +399,7 @@ private fun LandscapeTileContent(
         NativeWidget(
             type = widget.nativeWidgetType,
             size = DpSize(tileWidth, tileHeight),
-            state = callbacks.nativeWidgets.state,
+            state = callbacks.nativeWidgets.state.withOverride(widget.nativeOverride),
             actions = callbacks.nativeWidgets.actions,
         )
     } else if (widget.isOrphaned) {
@@ -426,6 +428,18 @@ private fun LandscapeTileContent(
         )
     }
 
+    LandscapeWidgetMenu(widget, tileWidth, tileHeight, state, callbacks)
+}
+
+/** The long-press menu of one landscape tile. */
+@Composable
+private fun LandscapeWidgetMenu(
+    widget: HubLandscapeWidgetUi,
+    tileWidth: Dp,
+    tileHeight: Dp,
+    state: LandscapeGridState,
+    callbacks: LandscapeCallbacks,
+) {
     ThemedDropdownMenu(
         expanded = widget.appWidgetId == state.menuForId,
         onDismissRequest = { state.menuForId = null },
@@ -436,6 +450,15 @@ private fun LandscapeTileContent(
             onClick = { state.startResize(widget.appWidgetId) },
             enabled = !widget.isOrphaned,
         )
+        if (widget.nativeWidgetType?.isConfigurable(tileWidth.value.toInt(), tileHeight.value.toInt()) == true) {
+            ThemedDropdownMenuItem(
+                label = stringResource(R.string.hub_widget_configure),
+                onClick = {
+                    state.menuForId = null
+                    callbacks.nativeWidgets.actions.onConfigure(widget.appWidgetId)
+                },
+            )
+        }
         ThemedDropdownMenuItem(
             label = stringResource(R.string.hub_grid_remove_widget),
             onClick = {

@@ -13,6 +13,7 @@ import com.facetlauncher.app.domain.DeleteWidgetUseCase
 import com.facetlauncher.app.domain.HubWidgetState
 import com.facetlauncher.app.domain.LandscapeHubUseCase
 import com.facetlauncher.app.domain.ObserveHubStateUseCase
+import com.facetlauncher.app.domain.NativeWidgetOverrides
 import com.facetlauncher.app.domain.ResolveWidgetDropUseCase
 import com.facetlauncher.app.domain.ResolveWidgetResizeUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -23,6 +24,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
@@ -39,12 +41,15 @@ class HubViewModel @Inject constructor(
     private val resolveWidgetResize: ResolveWidgetResizeUseCase,
     private val compactWidgets: CompactWidgetsUseCase,
     private val landscapeHub: LandscapeHubUseCase,
+    observeNativeWidgetOverrides: NativeWidgetOverrides = NativeWidgetOverrides { emptyFlow() },
 ) : ViewModel() {
 
     /** How many rows the landscape grid currently fits; 0 until the landscape screen reports it. */
     private val landscapeRows = MutableStateFlow(0)
 
-    val uiState = combine(observeHubState(), landscapeRows) { domainState, rows ->
+    private val overrides = observeNativeWidgetOverrides().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyMap())
+
+    val uiState = combine(observeHubState(), landscapeRows, overrides) { domainState, rows, nativeOverrides ->
         val byId = domainState.widgets.associateBy { it.appWidgetId }
         HubUiState(
             widgets = domainState.widgets.map { widget ->
@@ -58,6 +63,8 @@ class HubViewModel @Inject constructor(
                     isOrphaned = widget.isOrphaned,
                     landscapeOrder = widget.landscapeOrder,
                     nativeWidgetType = widget.nativeWidgetType,
+                    nativeWidgetConfig = widget.nativeWidgetConfig,
+                    nativeOverride = nativeOverrides[widget.appWidgetId],
                 )
             }.toImmutableList(),
             landscapeWidgets = if (rows > 0) {
@@ -72,6 +79,8 @@ class HubViewModel @Inject constructor(
                             providerLabel = widget.providerLabel,
                             isOrphaned = widget.isOrphaned,
                             nativeWidgetType = widget.nativeWidgetType,
+                            nativeWidgetConfig = widget.nativeWidgetConfig,
+                            nativeOverride = nativeOverrides[packed.id],
                         )
                     }
                 }.toImmutableList()

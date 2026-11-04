@@ -34,6 +34,10 @@ fun NativeWidgetType.minSizeDp(): Pair<Int, Int> = minSpan().let { spanDp(it.col
 /** The Home size in dp before the user resizes: the default span's size on a nominal Hub grid. */
 fun NativeWidgetType.defaultSizeDp(): Pair<Int, Int> = defaultSpan().let { spanDp(it.cols) to spanDp(it.rows) }
 
+/** Whether [this] has settings of its own to offer at this size: Weather and Agenda from [WidgetTier.MEDIUM] up, since the small layouts show too little for a choice to matter. */
+fun NativeWidgetType.isConfigurable(widthDp: Int, heightDp: Int): Boolean =
+    this != NativeWidgetType.NOW_PLAYING && tierFor(widthDp, heightDp) != WidgetTier.SMALL
+
 /** The layout [this] draws in a box of [widthDp] by [heightDp]; Hub tiles and Home pages both ask this, so a size gives the same layout on either. */
 fun NativeWidgetType.tierFor(widthDp: Int, heightDp: Int): WidgetTier = when (this) {
     NativeWidgetType.WEATHER -> weatherTier(widthDp, heightDp)

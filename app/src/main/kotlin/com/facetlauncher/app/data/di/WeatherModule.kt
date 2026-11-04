@@ -1,6 +1,8 @@
 package com.facetlauncher.app.data.di
 
 import com.facetlauncher.app.data.places.AndroidPlaceGeocoder
+import com.facetlauncher.app.domain.NativeWidgetOverrides
+import com.facetlauncher.app.domain.ObserveNativeWidgetOverridesUseCase
 import com.facetlauncher.app.data.places.PlaceGeocoder
 import com.facetlauncher.app.data.weather.MetWeatherApi
 import com.facetlauncher.app.data.weather.RoomWeatherStore
@@ -20,6 +22,9 @@ abstract class WeatherModule {
 
     @Binds
     abstract fun bindWeatherStore(store: RoomWeatherStore): WeatherStore
+
+    @Binds
+    abstract fun bindNativeWidgetOverrides(useCase: ObserveNativeWidgetOverridesUseCase): NativeWidgetOverrides
 
     @Binds
     abstract fun bindPlaceGeocoder(geocoder: AndroidPlaceGeocoder): PlaceGeocoder

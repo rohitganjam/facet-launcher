@@ -1,6 +1,8 @@
 package com.facetlauncher.app.domain
 
+import com.facetlauncher.app.data.model.NativeWidgetConfig
 import com.facetlauncher.app.data.model.NativeWidgetType
+import com.facetlauncher.app.data.model.decodeNativeWidgetConfig
 import com.facetlauncher.app.data.local.isNative
 import com.facetlauncher.app.data.WidgetPlacementRepository
 import com.facetlauncher.app.data.widget.AppWidgetRepository
@@ -22,6 +24,7 @@ data class HubWidgetState(
     /** Place in the landscape Hub's flow order — see [com.facetlauncher.app.data.local.WidgetPlacementEntity.landscapeOrder]. */
     val landscapeOrder: Int? = null,
     val nativeWidgetType: NativeWidgetType? = null,
+    val nativeWidgetConfig: NativeWidgetConfig = NativeWidgetConfig(),
 )
 
 data class HubDomainState(
@@ -71,6 +74,7 @@ class ObserveHubStateUseCase @Inject constructor(
                         isOrphaned = info == null && !placement.isNative,
                         landscapeOrder = placement.landscapeOrder,
                         nativeWidgetType = placement.nativeWidgetType,
+                        nativeWidgetConfig = decodeNativeWidgetConfig(placement.nativeWidgetConfig),
                     )
                 },
             )

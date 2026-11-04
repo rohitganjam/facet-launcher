@@ -4522,3 +4522,9 @@ Widgets the app draws itself, on the Hub grid and on Home's widget stack, behavi
 - [ ] Check on a device: weather widget with location off, and a weather widget on Home with the clock's weather accessory off.
 - [ ] Native review of the six new `native_widget_*` strings in es, es-419, fr, de, nl, pt, pt-rPT (machine-translated).
 - [ ] `BackupCoverageTest` "every launcher setting is exported" already fails on `homeOpensSearch` and `doubleTapToLock` (from the Gestures work, not this change).
+
+## Per-widget settings for Hub Weather and Agenda
+- [x] A Hub Weather or Agenda widget at Medium or Large has a Configure entry in its long-press menu. Agenda picks its own calendars (or follows the launcher's); Weather picks current location or a saved city (or follows the launcher's). Stored in `widget_placements.nativeWidgetConfig` (v39). Forecasts are shared per place (`WidgetWeatherRepository`; a place equal to the launcher's reads its stored forecast), so widgets on one city make one request. Home stack pages have no settings yet, and a Weather widget's own location is in backups while an Agenda widget's calendar ids are not.
+- [x] Tests: `NativeWidgetConfigTest`, `WidgetWeatherRepositoryTest`, `ObserveNativeWidgetOverridesUseCaseTest`, `NativeWidgetStateTest`, `WidgetPlacementRepositoryTest.setConfig…`; instrumented `HubWidgetConfigSheetTest` and `FacetDatabaseMigrationTest.migration38To39…`.
+- [ ] Native review of the new fr, de, es, pt, nl strings (`hub_widget_config_*`, `hub_widget_configure`; machine-translated).
+- [ ] Check on a device: Configure in the menu, an Agenda widget on one calendar, a Weather widget on a saved city.

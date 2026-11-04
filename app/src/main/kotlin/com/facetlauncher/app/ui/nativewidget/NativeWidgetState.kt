@@ -5,6 +5,7 @@ import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
 import com.facetlauncher.app.data.model.CalendarEvent
 import com.facetlauncher.app.data.model.NativeWidgetType
+import com.facetlauncher.app.domain.NativeWidgetOverride
 import com.facetlauncher.app.ui.home.HomeCalendarState
 import com.facetlauncher.app.ui.home.HomeMediaActions
 import com.facetlauncher.app.ui.home.HomeMediaState
@@ -23,6 +24,8 @@ data class NativeWidgetActions(
     val onOpenWeather: () -> Unit = {},
     val onOpenEvent: (CalendarEvent) -> Unit = {},
     val media: HomeMediaActions = HomeMediaActions(),
+    /** Opens the widget's own settings; the Hub's menu offers it for Weather and Agenda. */
+    val onConfigure: (appWidgetId: Int) -> Unit = {},
 )
 
 /** A native widget on a Home clock page: which widget, and what it reads and does. */
@@ -35,3 +38,12 @@ data class NativeWidgetEnvironment(val state: NativeWidgetState = NativeWidgetSt
 
 /** Every widget Facet can draw, as the stable list the pickers take. */
 val ALL_NATIVE_WIDGETS: ImmutableList<NativeWidgetType> = NativeWidgetType.entries.toImmutableList()
+
+/** [this] with what one widget is set to in place of the launcher-wide data; unchanged when [override] is `null`. */
+fun NativeWidgetState.withOverride(override: NativeWidgetOverride?): NativeWidgetState = when {
+    override == null -> this
+    else -> copy(
+        weather = if (override.weather != null || override.weatherUnavailable) weather.copy(weather = override.weather) else weather,
+        calendar = override.events?.let { calendar.copy(events = it.toImmutableList()) } ?: calendar,
+    )
+}
