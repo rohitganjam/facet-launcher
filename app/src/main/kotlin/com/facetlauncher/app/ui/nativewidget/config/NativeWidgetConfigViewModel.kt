@@ -58,6 +58,11 @@ class NativeWidgetConfigViewModel @Inject constructor(
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), NativeWidgetConfigUiState())
 
     init {
+        reloadCalendars()
+    }
+
+    /** Re-reads the calendar list: the permission may have been granted since this ViewModel was created. */
+    fun reloadCalendars() {
         viewModelScope.launch {
             calendars.value = if (calendarPermissionRepository.isGranted()) calendarRepository.getSelectableCalendars() else emptyList()
         }

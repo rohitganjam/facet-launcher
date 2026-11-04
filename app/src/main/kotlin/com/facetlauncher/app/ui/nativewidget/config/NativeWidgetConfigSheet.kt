@@ -18,6 +18,7 @@ import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -54,6 +55,7 @@ fun NativeWidgetConfigSheet(
     viewModel: NativeWidgetConfigViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    LaunchedEffect(ref) { viewModel.reloadCalendars() }
     val settings by remember(ref) { viewModel.settings(ref) }.collectAsStateWithLifecycle(initialValue = null)
     settings?.let {
         NativeWidgetConfigContent(
