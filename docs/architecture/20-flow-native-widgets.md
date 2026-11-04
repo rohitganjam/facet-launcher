@@ -72,6 +72,8 @@ same `WeatherRefreshPolicy` gate, so widgets on one city make one request, and a
 launcher's own stored forecast and makes none. "Current location" while the launcher already follows the position is the launcher's
 forecast too.
 
+On adding a Weather or Agenda widget from the Hub picker (one that has settings at its default size), the picker emits `HubAddWidgetEvent.NativeWidgetAdded(id)`; `HomeDrawerRoute` passes it to `HubViewModel.requestConfigure`, and `HubScreen` opens the config sheet for it, so the widget's calendars or location are chosen right after placing it. Now Playing just closes the picker.
+
 ### 3b. Missing permissions
 
 An Agenda widget without `READ_CALENDAR`, and a Weather widget for the current position without location, show "Calendar access is off" /

@@ -29,5 +29,8 @@ sealed interface HubAddWidgetEvent {
     data class LaunchBindPermission(val intent: Intent) : HubAddWidgetEvent
     data class LaunchConfigure(val intentSender: IntentSender) : HubAddWidgetEvent
     data object WidgetAdded : HubAddWidgetEvent
+
+    /** A widget Facet draws itself was placed and has settings to choose first: the Hub opens them for [appWidgetId]. */
+    data class NativeWidgetAdded(val appWidgetId: Int) : HubAddWidgetEvent
     data class AddFailed(val reason: AddFailureReason) : HubAddWidgetEvent
 }

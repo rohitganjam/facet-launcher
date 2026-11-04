@@ -513,7 +513,7 @@ fun HomeDrawerRoute(
             },
         )
         HomeWidgetPickerOverlay(overlays, onReset = widgetPickerViewModel::reset) {
-            HubWidgetPickerScreen(onDone = { overlays.showWidgetPicker = false }, viewModel = widgetPickerViewModel)
+            HubWidgetPickerScreen(onDone = { overlays.showWidgetPicker = false }, viewModel = widgetPickerViewModel, onConfigureNewWidget = hubViewModel::requestConfigure)
         }
         HomeFacetCarouselOverlay(swipe.facet, containerWidthPx, isOpen = isFacetOpen) {
             FacetCarouselScreen(

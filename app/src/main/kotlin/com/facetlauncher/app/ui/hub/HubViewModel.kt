@@ -22,6 +22,7 @@ import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.emptyFlow
@@ -96,6 +97,19 @@ class HubViewModel @Inject constructor(
         .map { placements -> placements.any { it.nativeWidgetType == NativeWidgetType.WEATHER } }
         .distinctUntilChanged()
         .stateIn(viewModelScope, SharingStarted.Eagerly, false)
+
+    private val _configureRequest = MutableStateFlow<Int?>(null)
+
+    /** A just-placed widget whose settings the Hub should open; cleared by [onConfigureRequestHandled]. */
+    val configureRequest: StateFlow<Int?> = _configureRequest
+
+    fun requestConfigure(appWidgetId: Int) {
+        _configureRequest.value = appWidgetId
+    }
+
+    fun onConfigureRequestHandled() {
+        _configureRequest.value = null
+    }
 
     /** The landscape grid reports how many rows fit, so the widgets can be packed to that height. */
     fun onLandscapeRowsChange(rows: Int) {

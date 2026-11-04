@@ -51,7 +51,7 @@ fun ClockWidgetPickerScreen(
             when (event) {
                 is HubAddWidgetEvent.LaunchBindPermission -> bindPermissionLauncher.launch(event.intent)
                 is HubAddWidgetEvent.LaunchConfigure -> configureLauncher.launch(IntentSenderRequest.Builder(event.intentSender).build())
-                HubAddWidgetEvent.WidgetAdded -> onDone()
+                HubAddWidgetEvent.WidgetAdded, is HubAddWidgetEvent.NativeWidgetAdded -> onDone()
                 is HubAddWidgetEvent.AddFailed -> {
                     failureMessage = when (event.reason) {
                         // HUB_FULL never fires here — this picker's uiState.remaining is always null (no capacity check).

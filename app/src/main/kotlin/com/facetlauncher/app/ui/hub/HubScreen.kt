@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -42,6 +43,13 @@ fun HubScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var configuringId by remember { mutableStateOf<Int?>(null) }
+    val configureRequest by viewModel.configureRequest.collectAsStateWithLifecycle()
+    LaunchedEffect(configureRequest) {
+        configureRequest?.let {
+            configuringId = it
+            viewModel.onConfigureRequestHandled()
+        }
+    }
     val environment = nativeWidgets.copy(actions = nativeWidgets.actions.copy(onConfigure = { configuringId = it }))
     uiState.widgets.firstOrNull { it.appWidgetId == configuringId }?.let { widget ->
         widget.nativeWidgetType?.let { type ->

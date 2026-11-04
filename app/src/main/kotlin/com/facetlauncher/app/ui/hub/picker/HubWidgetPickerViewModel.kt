@@ -10,7 +10,9 @@ import com.facetlauncher.app.data.widget.AppWidgetRepository
 import com.facetlauncher.app.domain.HUB_MAX_WIDGETS
 import com.facetlauncher.app.domain.PlaceWidgetResult
 import com.facetlauncher.app.domain.PlaceWidgetUseCase
+import com.facetlauncher.app.domain.defaultSizeDp
 import com.facetlauncher.app.domain.defaultSpan
+import com.facetlauncher.app.domain.isConfigurable
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -105,9 +107,10 @@ class HubWidgetPickerViewModel @Inject constructor(
             }
             when (val result = placeWidget(existing, span.cols, span.rows)) {
                 is PlaceWidgetResult.Placed -> {
+                    val appWidgetId = widgetPlacementRepository.nextNativeId()
                     widgetPlacementRepository.upsert(
                         WidgetPlacementEntity(
-                            appWidgetId = widgetPlacementRepository.nextNativeId(),
+                            appWidgetId = appWidgetId,
                             providerPackageName = "",
                             providerClassName = "",
                             row = result.row,
@@ -117,7 +120,8 @@ class HubWidgetPickerViewModel @Inject constructor(
                             nativeWidgetType = type,
                         ),
                     )
-                    _events.emit(HubAddWidgetEvent.WidgetAdded)
+                    val (widthDp, heightDp) = type.defaultSizeDp()
+                    _events.emit(if (type.isConfigurable(widthDp, heightDp)) HubAddWidgetEvent.NativeWidgetAdded(appWidgetId) else HubAddWidgetEvent.WidgetAdded)
                 }
                 PlaceWidgetResult.HubFull -> _events.emit(HubAddWidgetEvent.AddFailed(AddFailureReason.HUB_FULL))
             }

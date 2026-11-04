@@ -1,6 +1,7 @@
 package com.facetlauncher.app.ui.hub.picker
 
 import com.facetlauncher.app.data.model.NativeWidgetType
+import com.facetlauncher.app.domain.defaultSpan
 import android.appwidget.AppWidgetProviderInfo
 import android.content.ComponentName
 import android.content.Intent
@@ -379,7 +380,8 @@ class HubWidgetPickerViewModelTest {
         viewModel.onNativeWidgetSelect(NativeWidgetType.AGENDA)
         testDispatcher.scheduler.advanceUntilIdle()
 
-        assertEquals(listOf(HubAddWidgetEvent.WidgetAdded), events)
+        // A medium Agenda has calendars to choose, so the Hub is told to open them for the new widget
+        assertEquals(listOf(HubAddWidgetEvent.NativeWidgetAdded(-1)), events)
         verify(widgetPlacementRepository).upsert(
             WidgetPlacementEntity(appWidgetId = -1, providerPackageName = "", providerClassName = "", row = 1, col = 0, colSpan = 3, rowSpan = 2, nativeWidgetType = NativeWidgetType.AGENDA),
         )
@@ -404,6 +406,30 @@ class HubWidgetPickerViewModelTest {
 
         assertEquals(listOf(HubAddWidgetEvent.AddFailed(AddFailureReason.HUB_FULL)), events)
         verify(widgetPlacementRepository, never()).upsert(full.first())
+        job.cancel()
+    }
+
+    @Test
+    fun `selecting Now Playing places it without asking for settings`() = runTest {
+        // Given an empty Hub with room for it
+        val appWidgetRepository = mock(AppWidgetRepository::class.java)
+        val widgetPlacementRepository = mock(WidgetPlacementRepository::class.java)
+        val placeWidget = mock(PlaceWidgetUseCase::class.java)
+        `when`(widgetPlacementRepository.observeAll()).thenReturn(flowOf(emptyList()))
+        `when`(widgetPlacementRepository.nextNativeId()).thenReturn(-1)
+        val span = NativeWidgetType.NOW_PLAYING.defaultSpan()
+        `when`(placeWidget.invoke(emptyList(), span.cols, span.rows)).thenReturn(PlaceWidgetResult.Placed(row = 0, col = 0))
+        val viewModel = HubWidgetPickerViewModel(appWidgetRepository, widgetPlacementRepository, placeWidget)
+        val events = mutableListOf<HubAddWidgetEvent>()
+        val job = launch { viewModel.events.collect { events.add(it) } }
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // When Now Playing is chosen
+        viewModel.onNativeWidgetSelect(NativeWidgetType.NOW_PLAYING)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Then it has no settings, so the picker just closes
+        assertEquals(listOf(HubAddWidgetEvent.WidgetAdded), events)
         job.cancel()
     }
 }
