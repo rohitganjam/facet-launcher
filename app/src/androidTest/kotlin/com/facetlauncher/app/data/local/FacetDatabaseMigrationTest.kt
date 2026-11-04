@@ -963,13 +963,18 @@ class FacetDatabaseMigrationTest {
 
     @Test
     fun migration40To41KeepsFacetsAndLeavesTheirClockWeatherLocationEmpty() {
-        // Given a v40 database with a facet
-        val dbV40 = helper.createDatabase(TEST_DB, 40)
-        insertFacetV27(dbV40, id = 1, name = "Work")
-        dbV40.close()
+        // Given a v32 database with a facet
+        val dbV32 = helper.createDatabase(TEST_DB, 32)
+        insertFacetV27(dbV32, id = 1, name = "Work")
+        dbV32.close()
 
-        // When migrating to v41 (Room also validates the result against the exported v41 schema)
-        val dbV41 = helper.runMigrationsAndValidate(TEST_DB, 41, true, Migrations.MIGRATION_40_41)
+        // When migrating through to v41 (Room also validates the result against the exported v41 schema)
+        val dbV41 = helper.runMigrationsAndValidate(
+            TEST_DB, 41, true,
+            Migrations.MIGRATION_32_33, Migrations.MIGRATION_33_34, Migrations.MIGRATION_34_35, Migrations.MIGRATION_35_36,
+            Migrations.MIGRATION_36_37, Migrations.MIGRATION_37_38, Migrations.MIGRATION_38_39, Migrations.MIGRATION_39_40,
+            Migrations.MIGRATION_40_41,
+        )
 
         // Then the facet is intact and follows Weather settings
         val cursor = dbV41.query("SELECT name, clockWeatherLocation FROM facets")

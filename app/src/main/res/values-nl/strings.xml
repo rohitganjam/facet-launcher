@@ -1059,7 +1059,7 @@
     <string name="hub_widget_configure">Configureren</string>
     <string name="hub_widget_config_use_launcher">Zelfde als de weerinstellingen</string>
     <string name="hub_widget_config_calendars">Agenda\'s</string>
-    <string name="hub_widget_config_location">Locatie</string>
+    <string name="hub_widget_config_location">Opgeslagen steden</string>
     <string name="hub_widget_config_current_location">Huidige locatie</string>
     <string name="hub_widget_config_no_cities">Steden die in de weerinstellingen zijn opgeslagen verschijnen hier.</string>
     <string name="hub_widget_config_no_calendars">Geen agenda\'s om te tonen.</string>

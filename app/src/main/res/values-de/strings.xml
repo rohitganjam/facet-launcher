@@ -1118,7 +1118,7 @@
     <string name="hub_widget_configure">Konfigurieren</string>
     <string name="hub_widget_config_use_launcher">Wie in den Wetter-Einstellungen</string>
     <string name="hub_widget_config_calendars">Kalender</string>
-    <string name="hub_widget_config_location">Standort</string>
+    <string name="hub_widget_config_location">Gespeicherte Städte</string>
     <string name="hub_widget_config_current_location">Aktueller Standort</string>
     <string name="hub_widget_config_no_cities">In den Wetter-Einstellungen gespeicherte Städte erscheinen hier.</string>
     <string name="hub_widget_config_no_calendars">Keine Kalender vorhanden.</string>
