@@ -3,6 +3,7 @@ package com.facetlauncher.app.ui.hub.picker
 import com.facetlauncher.app.ui.nativewidget.ALL_NATIVE_WIDGETS
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.toImmutableList
 import android.content.res.Configuration
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.IntentSenderRequest
@@ -65,6 +66,8 @@ import com.facetlauncher.app.data.model.WidgetProviderOption
 import com.facetlauncher.app.ui.components.BackButton
 import com.facetlauncher.app.ui.components.StickyHeaderLayout
 import com.facetlauncher.app.ui.components.OtherScopeBadge
+import com.facetlauncher.app.ui.components.ProfileTab
+import com.facetlauncher.app.ui.components.ProfileTabRow
 import com.facetlauncher.app.ui.components.WorkScopeBadge
 import com.facetlauncher.app.data.model.NativeWidgetType
 import com.facetlauncher.app.ui.nativewidget.NativeWidgetPickerSection
@@ -133,6 +136,7 @@ fun HubWidgetPickerScreen(
         uiState = uiState,
         failureMessage = failureMessage,
         onQueryChange = viewModel::onQueryChange,
+        onTabChange = viewModel::onTabChange,
         onProviderSelect = viewModel::onProviderSelect,
         onBack = onDone,
         modifier = modifier,
@@ -148,6 +152,7 @@ internal fun HubWidgetPickerContent(
     onProviderSelect: (WidgetProviderOption) -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
+    onTabChange: (WidgetPickerTab) -> Unit = {},
     failureMessage: String? = null,
     /** `null` (the default) keeps the Hub's own "Add widget" title — PRD F15's clock widget picker overrides it. */
     title: String? = null,
@@ -173,6 +178,9 @@ internal fun HubWidgetPickerContent(
                         .padding(horizontal = WIDGET_PICKER_HORIZONTAL_PADDING),
                     contentPadding = PaddingValues(top = headerHeight),
                 ) {
+                    if (uiState.tabs.isNotEmpty()) {
+                        item { WidgetPickerTabRow(uiState = uiState, onTabChange = onTabChange) }
+                    }
                     item {
                         OutlinedTextField(
                             value = uiState.query,
@@ -192,27 +200,46 @@ internal fun HubWidgetPickerContent(
                             )
                         }
                     }
-                    if (uiState.query.isBlank()) {
+                    // The widgets Facet draws itself belong to the personal side.
+                    if (uiState.query.isBlank() && uiState.tab == WidgetPickerTab.PERSONAL) {
                         item { NativeWidgetPickerSection(types = nativeWidgets, onSelect = onNativeWidgetSelect) }
                     }
                     items(uiState.groups, key = { it.appLabel }) { group ->
                         WidgetProviderGroupRow(group = group, tileWidth = tileWidth, onProviderSelect = onProviderSelect)
                     }
-                    if (uiState.groups.isEmpty()) {
-                        item {
-                            Text(
-                                text = stringResource(R.string.hub_widget_picker_none_found),
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = Muted,
-                                modifier = Modifier.fillMaxWidth().padding(top = 32.dp),
-                                textAlign = TextAlign.Center,
-                            )
-                        }
-                    }
+                    if (uiState.groups.isEmpty()) item { NoWidgetsFound() }
                 }
             },
         )
     }
+}
+
+/** Personal/Work tabs above the list, shown only when a Work Profile has widgets: the same switcher as the app drawer's. */
+@Composable
+private fun WidgetPickerTabRow(uiState: HubWidgetPickerUiState, onTabChange: (WidgetPickerTab) -> Unit) {
+    val personal = stringResource(R.string.drawer_tab_personal)
+    val work = stringResource(R.string.facet_scope_work)
+    val items = remember(uiState.tabs, personal, work) {
+        uiState.tabs.map { ProfileTab(it.name, if (it == WidgetPickerTab.WORK) work else personal) }.toImmutableList()
+    }
+    ProfileTabRow(
+        tabs = items,
+        selectedKey = uiState.tab.name,
+        onSelect = { key -> onTabChange(WidgetPickerTab.valueOf(key)) },
+        tagPrefix = "hub_widget_picker_tab_",
+        modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
+    )
+}
+
+@Composable
+private fun NoWidgetsFound() {
+    Text(
+        text = stringResource(R.string.hub_widget_picker_none_found),
+        style = MaterialTheme.typography.bodyMedium,
+        color = Muted,
+        modifier = Modifier.fillMaxWidth().padding(top = 32.dp),
+        textAlign = TextAlign.Center,
+    )
 }
 
 private val WIDGET_PICKER_HORIZONTAL_PADDING = 24.dp

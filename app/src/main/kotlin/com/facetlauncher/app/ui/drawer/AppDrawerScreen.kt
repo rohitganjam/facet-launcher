@@ -136,6 +136,8 @@ import com.facetlauncher.app.ui.components.FolderContentsSheet
 import com.facetlauncher.app.ui.components.FolderSheetHeaderAction
 import com.facetlauncher.app.ui.components.FolderTileContextMenu
 import com.facetlauncher.app.ui.components.NotificationBadge
+import com.facetlauncher.app.ui.components.ProfileTab
+import com.facetlauncher.app.ui.components.ProfileTabRow
 import com.facetlauncher.app.ui.components.RecencyIcon
 import com.facetlauncher.app.ui.components.ThemedDropdownMenu
 import com.facetlauncher.app.ui.components.ThemedDropdownMenuItem
@@ -482,67 +484,22 @@ private fun BoxScope.ContactConnectionsOverlay(contact: ContactInfo?, connection
     }
 }
 
-/** Duration for [DrawerProfileTabRow]'s selection-indicator slide — matches `DockPickerTabRow`'s own `TAB_TRANSITION_DURATION_MS`. */
-private const val DRAWER_TAB_TRANSITION_DURATION_MS = 220
-
-/**
- * Personal/Work switcher shown above the app list only when a Work Profile exists — mirrors
- * `DockPickerTabRow`'s own pill/sliding-indicator construction (`DockAppPickerScreen.kt`) so it
- * reads as the same visual language rather than a one-off.
- */
+/** Personal/Work switcher shown above the app list only when a Work Profile exists: the shared [ProfileTabRow]. */
 @Composable
 private fun DrawerProfileTabRow(tabs: ImmutableList<DrawerTab>, selected: DrawerTab, onSelect: (DrawerTab) -> Unit, modifier: Modifier = Modifier) {
-    val selectedIndex = tabs.indexOf(selected).coerceAtLeast(0)
-    val density = LocalDensity.current
-    var rowSizePx by remember { mutableStateOf(IntSize.Zero) }
-
-    Box(
-        modifier = modifier
-            .clip(CircleShape)
-            .background(SurfaceContainer)
-            .padding(4.dp)
-            .onSizeChanged { rowSizePx = it },
-    ) {
-        if (rowSizePx.width > 0) {
-            val tabWidth = with(density) { (rowSizePx.width / tabs.size).toDp() }
-            val tabHeight = with(density) { rowSizePx.height.toDp() }
-            val indicatorOffset by animateDpAsState(
-                targetValue = tabWidth * selectedIndex,
-                animationSpec = tween(DRAWER_TAB_TRANSITION_DURATION_MS),
-                label = "drawer_profile_tab_indicator",
-            )
-            Box(
-                modifier = Modifier
-                    .offset(x = indicatorOffset)
-                    .size(width = tabWidth, height = tabHeight)
-                    .clip(CircleShape)
-                    .background(Accent),
-            )
-        }
-        Row {
-            tabs.forEach { tab ->
-                val isSelected = tab == selected
-                val testTagSuffix = when (tab) {
-                    DrawerTab.Personal -> "personal"
-                    is DrawerTab.Work -> "work_${tab.handle.hashCode()}"
-                }
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .clickable(onClick = { onSelect(tab) })
-                        .testTag("drawer_profile_tab_$testTagSuffix")
-                        .padding(vertical = 8.dp),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text(
-                        text = if (tab == DrawerTab.Personal) stringResource(R.string.drawer_tab_personal) else (tab as DrawerTab.Work).label,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = if (isSelected) Surface else Ink,
-                    )
-                }
-            }
-        }
+    val personalLabel = stringResource(R.string.drawer_tab_personal)
+    fun DrawerTab.key() = when (this) {
+        DrawerTab.Personal -> "personal"
+        is DrawerTab.Work -> "work_${handle.hashCode()}"
     }
+    val items = remember(tabs, personalLabel) { tabs.map { ProfileTab(it.key(), if (it is DrawerTab.Work) it.label else personalLabel) }.toImmutableList() }
+    ProfileTabRow(
+        tabs = items,
+        selectedKey = selected.key(),
+        onSelect = { key -> tabs.firstOrNull { it.key() == key }?.let(onSelect) },
+        tagPrefix = "drawer_profile_tab_",
+        modifier = modifier,
+    )
 }
 
 /**

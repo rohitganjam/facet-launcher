@@ -14,6 +14,8 @@ import com.facetlauncher.app.domain.ReplaceClockStackItemUseCase
 import com.facetlauncher.app.ui.hub.picker.AddFailureReason
 import com.facetlauncher.app.ui.hub.picker.HubAddWidgetEvent
 import com.facetlauncher.app.ui.hub.picker.HubWidgetPickerUiState
+import com.facetlauncher.app.ui.hub.picker.WidgetPickerTab
+import com.facetlauncher.app.ui.hub.picker.pickerState
 import com.facetlauncher.app.ui.hub.picker.toSortedGroups
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -57,19 +59,16 @@ class ClockWidgetPickerViewModel @Inject constructor(
     /** What this bind is for: set when the flow starts, since it must not change mid-flow even if the user swipes to another page. */
     private var pendingTarget: ClockWidgetPickerTarget? = null
 
-    val uiState: StateFlow<HubWidgetPickerUiState> = combine(query, allOptions) { currentQuery, options ->
+    private val tab = MutableStateFlow(WidgetPickerTab.PERSONAL)
+
+    val uiState: StateFlow<HubWidgetPickerUiState> = combine(query, tab, allOptions) { currentQuery, currentTab, options ->
         val currentOptions = options ?: appWidgetRepository.getWidgetProviderOptions().also { allOptions.value = it }
-        val filtered = if (currentQuery.isBlank()) {
-            currentOptions
-        } else {
-            currentOptions.filter { it.appLabel.contains(currentQuery, ignoreCase = true) }
-        }
-        HubWidgetPickerUiState(
-            query = currentQuery,
-            groups = filtered.toSortedGroups(),
-            remaining = null,
-        )
+        pickerState(currentOptions, currentQuery, currentTab, remaining = null)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), HubWidgetPickerUiState(remaining = null))
+
+    fun onTabChange(newTab: WidgetPickerTab) {
+        tab.value = newTab
+    }
 
     fun onQueryChange(newQuery: String) {
         query.value = newQuery
@@ -78,6 +77,7 @@ class ClockWidgetPickerViewModel @Inject constructor(
     /** Called when the picker is dismissed, so a fresh open starts clean — mirrors [com.facetlauncher.app.ui.hub.picker.HubWidgetPickerViewModel.reset]. */
     fun reset() {
         query.value = ""
+        tab.value = WidgetPickerTab.PERSONAL
         allOptions.value = null
     }
 

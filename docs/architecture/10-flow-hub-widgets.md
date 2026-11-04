@@ -44,6 +44,12 @@ flowchart LR
   (`userManager.userProfiles.flatMap { getInstalledProvidersForProfile(it) }`), so Work Profile
   widgets appear in the picker tagged with their `AppProfile`; `widget_placements.profile/userId`
   record which profile a placed widget came from.
+  The owning app's label is looked up through `LauncherApps` for the provider's own profile (`AppRepository.appLabelFor`), since the
+  personal `PackageManager` cannot see a work-only app. Android only returns a Work Profile's providers to the personal launcher for
+  packages the work admin has allowed (`addCrossProfileWidgetProvider`), so an unmanaged work profile contributes none.
+  The picker (the Hub's and the Home clock page's) splits the list by profile: when a Work Profile has widgets it shows a Personal | Work
+  tab row (`ProfileTabRow`, shared with the app drawer) and each tab lists only its own widgets (`pickerState`); with none there are no
+  tabs. The widgets Facet draws itself are on the Personal tab.
 
 ## 2. Add a widget (`HubWidgetPickerViewModel`)
 

@@ -49,24 +49,21 @@ class HubWidgetPickerViewModel @Inject constructor(
     /** The one add in flight, if any — carried across the bind/configure round trips back from the composable. */
     private var pendingAppWidgetId: Int? = null
 
+    private val tab = MutableStateFlow(WidgetPickerTab.PERSONAL)
+
     val uiState: StateFlow<HubWidgetPickerUiState> = combine(
         query,
+        tab,
         widgetPlacementRepository.observeAll(),
         allOptions,
-    ) { currentQuery, placements, options ->
+    ) { currentQuery, currentTab, placements, options ->
         val currentOptions = options ?: appWidgetRepository.getWidgetProviderOptions().also { allOptions.value = it }
-        val filtered = if (currentQuery.isBlank()) {
-            currentOptions
-        } else {
-            // Search only by app name, not widget name, per user request.
-            currentOptions.filter { it.appLabel.contains(currentQuery, ignoreCase = true) }
-        }
-        HubWidgetPickerUiState(
-            query = currentQuery,
-            groups = filtered.toSortedGroups(),
-            remaining = (HUB_MAX_WIDGETS - placements.size).coerceAtLeast(0),
-        )
+        pickerState(currentOptions, currentQuery, currentTab, remaining = (HUB_MAX_WIDGETS - placements.size).coerceAtLeast(0))
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), HubWidgetPickerUiState())
+
+    fun onTabChange(newTab: WidgetPickerTab) {
+        tab.value = newTab
+    }
 
     fun onQueryChange(newQuery: String) {
         query.value = newQuery
@@ -78,6 +75,7 @@ class HubWidgetPickerViewModel @Inject constructor(
      */
     fun reset() {
         query.value = ""
+        tab.value = WidgetPickerTab.PERSONAL
         allOptions.value = null
     }
 

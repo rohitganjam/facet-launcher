@@ -82,6 +82,7 @@ fun ClockWidgetPickerScreen(
         uiState = uiState,
         failureMessage = failureMessage,
         onQueryChange = viewModel::onQueryChange,
+        onTabChange = viewModel::onTabChange,
         onProviderSelect = { option -> viewModel.onProviderSelect(option, target) },
         onBack = onDone,
         title = stringResource(R.string.clock_widget_picker_title),
