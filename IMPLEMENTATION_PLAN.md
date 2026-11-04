@@ -4568,7 +4568,8 @@ Widgets the app draws itself, on the Hub grid and on Home's widget stack, behavi
 ## The clock as a Facet widget
 Design: [`docs/proposals/clock-as-facet-widget.md`](docs/proposals/clock-as-facet-widget.md). One branch (`clock-as-widget`), one schema bump (v42), in stages.
 - [x] Stage 1a, the config format: `NativeWidgetConfig` is stored as JSON (a field left out while it follows the launcher; a value that does not parse follows the launcher) instead of tab-separated lines, with no second reader. `MIGRATION_41_42` rewrites every stored setting (Hub widgets, Home stack pages, a facet's clock weather location) through `upgradeLegacyNativeWidgetConfig`; backup version 4, and `BackupBundle.upgradedToCurrent` converts an older backup before the import sees it. Tests: `NativeWidgetConfigTest`, `LegacyNativeWidgetConfigTest`, `BackupUpgradeTest`, `FacetDatabaseMigrationTest.migration41To42…`.
-- [ ] Stage 1b, the clock widget's config and the startup step that writes each clock's effective settings.
+- [x] Stage 1b, the clock's config: `ClockWidgetConfig` (look, accessories, weather location and `ClockCalendarConfig`: indicator, count, all-day, calendar ids with `null` meaning all calendars) is a section of the stored `NativeWidgetConfig`, and `effectiveClockConfig(facet, settings)` works out what each facet's clock shows today (its own values while it overrides, else the launcher's) so the later migration changes nothing on screen. Not used by Home yet. Tests: `ClockWidgetConfigTest` (incl. a check that its defaults match the launcher's), `EffectiveClockConfigTest`.
+- [ ] Stage 1c, the startup step that writes that config onto each facet's clock page, with the page's switch to a clock widget (lands with stage 2, since Home must read it at once).
 - [ ] Stage 2, the clock as a native widget with dp sizing and its calendar block.
 - [ ] Stage 3, gestures and sheets, the empty zone.
 - [ ] Stage 4, settings clean-up, hints, docs.

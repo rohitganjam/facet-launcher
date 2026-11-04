@@ -68,6 +68,8 @@ path, keyed by `NativeWidgetRef` (`Hub(appWidgetId)` or `Home(itemId)`):
   launcher's Calendar options, starting from the launcher's current values, with no follow switch), Weather's current location or a saved
   city. A `null` field follows the launcher; Now Playing has none. `SetNativeWidgetConfigUseCase` writes either store and
   `ObserveNativeWidgetSettingsUseCase` reads it back.
+  The config also has a `clock` section (`ClockWidgetConfig`: look, accessories, weather location, and the calendar under it) for the clock widget that is being
+  built (see `docs/proposals/clock-as-facet-widget.md`); nothing on Home reads it yet.
 - `ObserveNativeWidgetOverridesUseCase` turns every widget with a setting (Hub placements and the active facet's Home pages) into a
   `NativeWidgetOverride` (its events, or its `WeatherState`) through `NativeWidgetOverrideResolver`, re-derived every five minutes.
   `NativeWidgetAccessViewModel` exposes the map; `HomeDrawerRoute` puts it in `NativeWidgetState.overrides`, and `NativeWidget` reads
