@@ -4499,7 +4499,7 @@ Decided with you: one icon size across Home, the dock, the drawer and folders (4
 - [ ] Check on a device with a real Work Profile that a work-only app's widgets appear in the Hub picker.
 
 ## Work badge: briefcase
-- [x] The Work Profile badge on an app icon is now a briefcase at the icon's bottom-left, on a plate in the icon shape (launcher accent at 20%); the badge is 25% of the icon's height and the briefcase fills 75% of it, in the launcher accent at 70% opacity (was a plain accent dot). Tests: `AppIconWorkBadgeTest` (size and corner), `AppPickerScreenTest` (badge present only on the work copy) on the `Medium_Phone_API_36.1` emulator.
+- [x] The Work Profile badge on an app icon is now a briefcase at the icon's bottom-left, 25% of the icon's height (the glyph box; the visible briefcase is about 20%), in the launcher accent at 70% opacity; a backing plate was tried and dropped (was a plain accent dot). Tests: `AppIconWorkBadgeTest` (size and corner), `AppPickerScreenTest` (badge present only on the work copy) on the `Medium_Phone_API_36.1` emulator.
 
 ## Facet widgets: weather, agenda, now playing (direct request)
 Widgets the app draws itself, on the Hub grid and on Home's widget stack, behaving like hosted widgets (free resize, move, replace, remove, backup). Design and data flow: `docs/architecture/20-flow-native-widgets.md`.
