@@ -9,14 +9,14 @@ Today the clock is page 0 of a facet's clock stack (`ClockStackItemKind.CLOCK`) 
 draw-only scale (`clockScale`), its style and calendar settings are launcher-wide with a per-facet override
 (`overrideClock`, `overrideCalendar`), it cannot be removed, and the calendar events are bundled into `ClockBlock`.
 
-Make the clock a Facet widget (`NativeWidgetType.CLOCK`) like Weather, Agenda and Now playing: sized as a dp box, configured per
+Make the clock a Facet widget like Weather, Agenda and Now playing: sized as a dp box, configured per
 widget, removable and re-addable, with no launcher-wide default and no inherit/override.
 
 ## 2. Decisions
 
 | Topic | Decision |
 |---|---|
-| Widget kind | A Facet-drawn (Compose) widget, `NativeWidgetType.CLOCK`; never an `AppWidgetHost` widget. |
+| Widget kind | A Facet-drawn (Compose) widget, never an `AppWidgetHost` widget. It stays `ClockStackItemKind.CLOCK` on the stack, not a `NativeWidgetType`: that enum is the card widgets (Weather, Agenda, Now playing) that share one backed frame, one tier layout and the Hub; the clock has no backing, scales as one block and is not placeable on the Hub. |
 | New facet | Seeded with one clock page set to the built-in defaults (not the user's current settings). |
 | Settings model | Per clock: all clock style and accessory settings plus its calendar settings. No launcher default, no override flag. |
 | Where | Home clock stack only. Never on the Hub. Hub picker does not list it; the Home picker does ("Facet widgets" section). |
@@ -30,9 +30,9 @@ widget, removable and re-addable, with no launcher-wide default and no inherit/o
 
 ## 3. Data model
 
-- `ClockStackItemKind.CLOCK` goes away; the page becomes `NATIVE_WIDGET` with `nativeWidgetType = CLOCK`. Size and alignment fields on
-  `ClockStackItem` (`widthDp`, `heightDp`, `alignment`, landscape variants) now apply to the clock too; the "null means uses the
-  facet's scale" case is gone.
+- `ClockStackItemKind.CLOCK` stays as the clock's page kind. Size and alignment fields on `ClockStackItem` (`widthDp`, `heightDp`, `alignment`,
+  landscape variants) now apply to the clock too; the "null means uses the facet's scale" case is gone. The clock's settings live in the
+  page's `nativeWidgetConfig` (`NativeWidgetConfig.clock`).
 - `nativeWidgetConfig` (`NativeWidgetConfig`, currently a tab-separated line) gains the clock's fields: template, font, colour, accent
   colour, 24-hour, meridiem, date style, alarm, battery, weather, weather icon style, weather location, time zone (reserved), and the
   calendar block (indicator, item count, all-day, calendar selection). The codec has to outgrow tab-separated fields, so it moves to a
@@ -54,7 +54,7 @@ widget, removable and re-addable, with no launcher-wide default and no inherit/o
 
 Two stages, because a Room migration cannot read DataStore.
 
-1. **Room `MIGRATION_41_42`**: add the columns, switch page-0 rows to `NATIVE_WIDGET` / `CLOCK`, copy each facet's `clockScale` and
+1. **Room `MIGRATION_41_42`**: add the columns, copy each facet's `clockScale` and
    landscape scale into a pending field on the page, and rewrite every existing tab-separated `nativeWidgetConfig` (Hub and stack rows)
    into the new encoding. `Migration.migrate` is ordinary Kotlin, so it reads the rows and writes them back; the old format is decoded
    by a one-way converter that lives with the migration, not by the runtime codec.

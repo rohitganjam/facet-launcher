@@ -7,10 +7,12 @@ import android.icu.text.PluralRules
 import android.os.Bundle
 import com.facetlauncher.app.data.di.ApplicationScope
 import com.facetlauncher.app.domain.EnsureCalendarColorsUseCase
+import com.facetlauncher.app.domain.MaterializeClockConfigsUseCase
 import dagger.hilt.android.HiltAndroidApp
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.launchIn
 import java.util.Locale
 import kotlin.concurrent.thread
@@ -18,6 +20,7 @@ import kotlin.concurrent.thread
 @HiltAndroidApp
 class FacetApplication : Application() {
     @Inject lateinit var ensureCalendarColors: EnsureCalendarColorsUseCase
+    @Inject lateinit var materializeClockConfigs: MaterializeClockConfigsUseCase
 
     @Inject @ApplicationScope lateinit var applicationScope: CoroutineScope
 
@@ -25,6 +28,8 @@ class FacetApplication : Application() {
         super.onCreate()
         // A calendar added or removed on the phone gets its colour at once, not only when a screen that lists calendars opens.
         ensureCalendarColors.keepAssigned().catch { }.launchIn(applicationScope)
+        // Each clock gets the settings it shows today, so it no longer depends on the launcher-wide clock settings or an override switch.
+        flow { emit(materializeClockConfigs()) }.catch { }.launchIn(applicationScope)
         // Calendar access can be granted or revoked from system Settings while the process lives, with no callback.
         registerActivityLifecycleCallbacks(object : ActivityLifecycleCallbacks {
             override fun onActivityResumed(activity: Activity) = ensureCalendarColors.recheckAccess()
