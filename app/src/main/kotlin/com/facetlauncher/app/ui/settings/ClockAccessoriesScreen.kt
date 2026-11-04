@@ -54,6 +54,7 @@ import com.facetlauncher.app.ui.theme.SurfaceContainer
 data class ClockAccessoriesNavigation(
     val onBack: () -> Unit,
     val onOpenClockStyle: () -> Unit,
+    val onOpenWeatherSettings: () -> Unit = {},
 )
 
 /**
@@ -125,7 +126,11 @@ internal fun ClockAccessoriesContent(
         if (uiState.isInheriting) InheritingNote(navigation.onOpenClockStyle)
         SwitchesCards(uiState, actions)
         if (uiState.showIconStyleCard) IconStyleCard(uiState, actions)
-        if (uiState.showLocationCard) LocationCard(uiState, actions)
+        // Where the weather is for comes after how it looks, and goes away with the weather.
+        if (uiState.showWeather) {
+            if (uiState.showLocationCard) LocationCard(uiState, actions)
+            WeatherSettingsLink(navigation.onOpenWeatherSettings)
+        }
     }
 }
 
@@ -163,6 +168,20 @@ private fun LocationCard(uiState: ClockAccessoriesUiState, actions: ClockAccesso
             tagPrefix = "accessory_location",
             enabled = !uiState.isInheriting,
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+        )
+    }
+}
+
+/** A way back to Weather settings (units and the launcher-wide location) from where the clock's weather is set up, on the default screen and on every facet's. */
+@Composable
+private fun WeatherSettingsLink(onOpenWeatherSettings: () -> Unit) {
+    SettingsCard(fullBleedRows = true) {
+        ClickableRow(
+            title = stringResource(R.string.settings_weather_title),
+            subtitle = stringResource(R.string.settings_weather_subtitle),
+            onClick = onOpenWeatherSettings,
+            testTag = "accessory_weather_settings_row",
+            trailing = { NavigationChevron() },
         )
     }
 }

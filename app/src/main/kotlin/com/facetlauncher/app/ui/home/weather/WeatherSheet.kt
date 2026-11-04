@@ -76,7 +76,7 @@ fun WeatherSheet(
     onChooseCity: () -> Unit,
     onOpenPermissions: () -> Unit,
     modifier: Modifier = Modifier,
-    /** Set when the sheet was opened from a Hub Weather widget: shows a 3-dot button that opens that widget's settings. */
+    /** Shows a 3-dot button that opens the settings of what the sheet is showing: that widget's when it was opened from a Weather widget, else the clock's. */
     onConfigure: (() -> Unit)? = null,
 ) {
     ThemedModalBottomSheet(onDismissRequest = onDismiss, modifier = modifier) {

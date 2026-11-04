@@ -213,6 +213,7 @@ fun FacetNavHost(
                     navController.navigate(FacetDestinations.NOTIFICATION_ACCESS_EXPLANATION)
                 },
                 onNavigateToUnitsAndLocation = { navController.navigate(FacetDestinations.UNITS_AND_LOCATION) },
+                onNavigateToClockAccessories = { facetId -> navController.navigate(FacetDestinations.clockAccessories(facetId)) },
                 onNavigateToPermissions = { navController.navigate(FacetDestinations.PERMISSIONS) },
                 onNavigateToWhatsNew = { navController.navigate(FacetDestinations.WHATS_NEW) },
                 onNavigateToAppearance = { facetId -> navController.navigate(FacetDestinations.appearanceSettings(facetId)) },
@@ -291,6 +292,7 @@ fun FacetNavHost(
                         val dest = if (facetId != NO_ACTIVE_FACET_ID) FacetDestinations.facetClockStyleGallery(facetId) else FacetDestinations.CLOCK_STYLE_GALLERY
                         navController.navigate(dest)
                     },
+                    onOpenWeatherSettings = { navController.navigate(FacetDestinations.UNITS_AND_LOCATION) },
                 ),
             )
         }

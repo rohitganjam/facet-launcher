@@ -4,6 +4,8 @@ import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.hasTestTag
+import org.junit.Assert.assertTrue
+import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -217,5 +219,50 @@ class ClockAccessoriesScreenTest {
         // Then the choices are there but cannot be changed here
         composeRule.onNodeWithTag("accessory_location_follow").performScrollTo().assertIsNotEnabled()
         composeRule.onNodeWithTag("accessory_location_current").assertIsNotEnabled()
+    }
+
+
+    @Test
+    fun theLinkToWeatherSettingsComesAfterTheIconsCardAndOpensWeatherSettings() {
+        // Given weather on for the launcher default
+        var opened = false
+        setContent(
+            ClockAccessoriesUiState(settings = LauncherSettings(showWeather = true), weatherEnabledAnywhere = true),
+            navigation = ClockAccessoriesNavigation(onBack = {}, onOpenClockStyle = {}, onOpenWeatherSettings = { opened = true }),
+        )
+
+        // Then the Icons card follows the switch, and the link to Weather settings comes after the Icons card
+        val toggle = composeRule.onNodeWithTag("accessory_weather_toggle").getUnclippedBoundsInRoot()
+        val icons = composeRule.onNodeWithTag("icon_style_row").getUnclippedBoundsInRoot()
+        val link = composeRule.onNodeWithTag("accessory_weather_settings_row").getUnclippedBoundsInRoot()
+        assertTrue(icons.top >= toggle.bottom)
+        assertTrue(link.top >= icons.bottom)
+
+        // And tapping it opens Weather settings
+        composeRule.onNodeWithTag("accessory_weather_settings_row").performScrollTo().performClick()
+        assertEquals(true, opened)
+    }
+
+    @Test
+    fun theWeatherOptionsAreGoneWhileWeatherIsOff() {
+        // Given weather off
+        setContent(ClockAccessoriesUiState(settings = LauncherSettings(showWeather = false)))
+
+        // Then there is no link to Weather settings
+        composeRule.onNodeWithTag("accessory_weather_settings_row").assertDoesNotExist()
+    }
+
+    @Test
+    fun aFacetsLocationPickerComesAfterTheIconsCard() {
+        // Given a facet overriding the clock with weather on
+        val facet = Facet(id = 1L, name = "Work", position = 1, overrideClock = true, clockShowWeather = true)
+        setContent(ClockAccessoriesUiState(facet = facet, settings = LauncherSettings(showWeather = true), weatherEnabledAnywhere = true))
+
+        // Then the Icons card is under the switch, and its location picker is below the Icons card
+        val toggle = composeRule.onNodeWithTag("accessory_weather_toggle").getUnclippedBoundsInRoot()
+        val icons = composeRule.onNodeWithTag("icon_style_row").getUnclippedBoundsInRoot()
+        val picker = composeRule.onNodeWithTag("accessory_location_follow").getUnclippedBoundsInRoot()
+        assertTrue(icons.top >= toggle.bottom)
+        assertTrue(picker.top >= icons.bottom)
     }
 }

@@ -125,6 +125,7 @@ fun HomeDrawerRoute(
     onNavigateToNotificationAccessExplanation: () -> Unit = {},
     /** Opens the Units and location settings (where the weather location is chosen), from the weather sheet. */
     onNavigateToUnitsAndLocation: () -> Unit = {},
+    onNavigateToClockAccessories: (facetId: Long?) -> Unit = {},
     onNavigateToPermissions: () -> Unit = {},
     /** Opens What's new, from the pill that announces an update. */
     onNavigateToWhatsNew: () -> Unit = {},
@@ -551,10 +552,16 @@ fun HomeDrawerRoute(
             val sheetRef = overlays.weatherSheetRef
             WeatherSheet(
                 uiState = weatherUiState.copy(iconStyle = homeUiState.style.clock.weatherIconStyle).withWeatherOverride(sheetRef?.let { widgetAccess.overrides[it] }),
-                onConfigure = sheetRef?.let { ref ->
+                onConfigure = if (sheetRef != null) {
                     {
                         overlays.showWeatherSheet = false
-                        overlays.configureRef = ref
+                        overlays.configureRef = sheetRef
+                    }
+                } else {
+                    // The clock's own weather: its settings are the active facet's Clock accessories.
+                    {
+                        overlays.showWeatherSheet = false
+                        onNavigateToClockAccessories(homeUiState.activeFacet?.id)
                     }
                 },
                 onRefresh = { weatherViewModel.refresh() },
