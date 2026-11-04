@@ -15,6 +15,7 @@ import androidx.room.Room
 import com.facetlauncher.app.data.AppRepository
 import com.facetlauncher.app.data.getTestableApps
 import com.facetlauncher.app.data.FacetRepository
+import com.facetlauncher.app.data.model.ClockWidgetConfig
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.CalendarEvent
@@ -52,7 +53,8 @@ class AppearanceSettingsScreenTest {
         calendarEvents: List<CalendarEvent> = emptyList(),
         seed: suspend (FacetRepository, Long?) -> Unit = { _, _ -> },
         seedApps: suspend (AppRepository, PlacementRepository, Long?) -> Unit = { _, _, _ -> },
-    ): SettingsRepository = host.setContent(facetId, calendarGranted, notificationAccessGranted, calendarEvents, seed, seedApps) { viewModel ->
+        clockEdit: ((ClockWidgetConfig) -> ClockWidgetConfig)? = null,
+    ): SettingsRepository = host.setContent(facetId, calendarGranted, notificationAccessGranted, calendarEvents, seed, seedApps, clockEdit) { viewModel ->
         AppearanceSettingsScreen(
             onBack = onBack,
             onNavigateToClockStyleGallery = onNavigateToClockStyleGallery,
@@ -83,7 +85,8 @@ class AppearanceSettingsScreenTest {
         // Given the screen, scrolled to the Clock style row (moved in from the main Settings
         // list — see chat history: calendar/appearance styling consolidation)
         var navigated = false
-        setContent(onNavigateToClockStyleGallery = { navigated = true })
+        setContent(facetId = 1L, onNavigateToClockStyleGallery = { navigated = true })
+        awaitFacetScoped()
         composeRule.onNodeWithTag("appearance_settings_screen").performScrollToNode(hasTestTag("clock_style_gallery_row"))
 
         // When tapping it
@@ -183,12 +186,8 @@ class AppearanceSettingsScreenTest {
 
     @Test
     fun facetScopedClockRowReflectsTheFacetsOwnClockOverride() {
-        // Given a facet overriding the clock with a different template than the global default
-        setContent(facetId = 1L, seed = { facetRepository, facetId ->
-            val facet = com.facetlauncher.app.data.model.Facet(id = requireNotNull(facetId), name = "P", position = 0)
-            facetRepository.setOverrideClock(facet.id, true)
-            facetRepository.setClockTemplateId(facet.id, com.facetlauncher.app.data.model.ClockTemplateId.RULE_MERIDIEM)
-        })
+        // Given a facet whose clock has a different template than the launcher's built-in one
+        setContent(facetId = 1L, clockEdit = { it.copy(templateId = com.facetlauncher.app.data.model.ClockTemplateId.RULE_MERIDIEM) })
         awaitFacetScoped()
 
         // Then the preview clock is shown and the Clock row names the facet's own template, not the global one
@@ -213,15 +212,15 @@ class AppearanceSettingsScreenTest {
     }
 
     @Test
-    fun globalModeShowsFourSeparateSectionsInOrder() {
-        // Clock & calendar / Dock & Home / Notifications / General are each their own card, in that
-        // order. Each header is asserted right as it scrolls into view — not via cross-scroll bounds
-        // comparison, which breaks once an earlier item scrolls far enough to be disposed from the
-        // LazyColumn's composed range.
+    fun globalModeShowsThreeSeparateSectionsInOrderAndNoClockSection() {
+        // Dock & Home / Notifications / General are each their own card, in that order, and a clock has
+        // no launcher-wide settings, so there is no Clock & calendar section. Each header is asserted
+        // right as it scrolls into view — not via cross-scroll bounds comparison, which breaks once an
+        // earlier item scrolls far enough to be disposed from the LazyColumn's composed range.
         setContent()
 
-        composeRule.onNodeWithTag("appearance_settings_screen").performScrollToNode(hasTestTag("clock_style_gallery_row"))
-        composeRule.onNodeWithText("Clock & calendar").assertIsDisplayed()
+        composeRule.onNodeWithTag("clock_style_gallery_row").assertDoesNotExist()
+        composeRule.onNodeWithTag("appearance_calendar_settings_row").assertDoesNotExist()
         composeRule.onNodeWithTag("appearance_settings_screen").performScrollToNode(hasTestTag("appearance_dock_apps_row"))
         composeRule.onNodeWithText("Dock & home").assertIsDisplayed()
         composeRule.onNodeWithTag("appearance_settings_screen").performScrollToNode(hasTestTag("notification_settings_row"))
@@ -234,7 +233,8 @@ class AppearanceSettingsScreenTest {
     fun calendarRowNavigatesAndSitsUnderTheClockRow() {
         // Given the screen
         var navigated = false
-        setContent(onNavigateToCalendarSettings = { navigated = true })
+        setContent(facetId = 1L, onNavigateToCalendarSettings = { navigated = true })
+        awaitFacetScoped()
         composeRule.onNodeWithTag("appearance_settings_screen").performScrollToNode(hasTestTag("appearance_calendar_settings_row"))
 
         // When tapping the Calendars to display row
@@ -245,24 +245,25 @@ class AppearanceSettingsScreenTest {
     }
 
     @Test
-    fun calendarRowSubtitleShowsZeroWhenNothingHasBeenChosenYet() {
-        // Given a fresh install with calendar access — selectedCalendarIds is null, which is "none decided", not "all"
-        setContent(calendarGranted = true)
+    fun calendarRowSubtitleSaysAllCalendarsWhileTheClockFollowsEveryCalendar() {
+        // Given a clock on every calendar (no explicit selection), with calendar access
+        setContent(facetId = 1L, calendarGranted = true, clockEdit = { it })
+        awaitFacetScoped()
         composeRule.onNodeWithTag("appearance_settings_screen").performScrollToNode(hasTestTag("appearance_calendar_settings_row"))
 
-        // Then the row shows a literal zero (once the ViewModel's first real state replaces its initial one)
+        // Then the row says all calendars, not a count
         composeRule.waitUntil(timeoutMillis = 3_000) {
             runCatching {
-                composeRule.onNodeWithTag("appearance_calendar_settings_row").assertTextContains("0 calendars selected", substring = true)
+                composeRule.onNodeWithTag("appearance_calendar_settings_row").assertTextContains("All calendars", substring = true)
             }.isSuccess
         }
     }
 
     @Test
     fun calendarRowSaysAccessIsNeededWhenCalendarPermissionIsNotGranted() {
-        // Given a stored selection but no calendar permission (the default in these tests)
-        val settingsRepository = setContent(calendarGranted = false)
-        runBlocking { settingsRepository.setSelectedCalendarIds(setOf("cal-1", "cal-2")) }
+        // Given a clock with a stored selection but no calendar permission (the default in these tests)
+        setContent(facetId = 1L, calendarGranted = false, clockEdit = { it.copy(calendar = it.calendar.copy(calendarIds = setOf("cal-1", "cal-2"))) })
+        awaitFacetScoped()
         composeRule.onNodeWithTag("appearance_settings_screen").performScrollToNode(hasTestTag("appearance_calendar_settings_row"))
 
         // Then the row says access is needed, not a count of calendars nothing can read
@@ -283,9 +284,9 @@ class AppearanceSettingsScreenTest {
 
     @Test
     fun calendarRowSubtitleReflectsAnExplicitSelection() {
-        // Given 2 calendars explicitly selected, with calendar access
-        val settingsRepository = setContent(calendarGranted = true)
-        runBlocking { settingsRepository.setSelectedCalendarIds(setOf("cal-1", "cal-2")) }
+        // Given a clock with 2 calendars explicitly selected, with calendar access
+        setContent(facetId = 1L, calendarGranted = true, clockEdit = { it.copy(calendar = it.calendar.copy(calendarIds = setOf("cal-1", "cal-2"))) })
+        awaitFacetScoped()
         composeRule.onNodeWithTag("appearance_settings_screen").performScrollToNode(hasTestTag("appearance_calendar_settings_row"))
 
         // Then the row reflects the count and the all-day events visibility
@@ -297,14 +298,14 @@ class AppearanceSettingsScreenTest {
     }
 
     @Test
-    fun facetScopedCalendarRowSubtitleReflectsTheInheritedGlobalSelection() {
-        // Given a facet that isn't overriding calendar, with 2 calendars selected globally and calendar access
+    fun facetScopedCalendarRowSubtitleFollowsTheLauncherSelectionUntilTheClockHasItsOwn() {
+        // Given a clock with no settings of its own yet, with 2 calendars selected in the old launcher-wide setting and calendar access
         val settingsRepository = setContent(facetId = 1L, calendarGranted = true)
         awaitFacetScoped()
         runBlocking { settingsRepository.setSelectedCalendarIds(setOf("cal-1", "cal-2")) }
         composeRule.onNodeWithTag("appearance_settings_screen").performScrollToNode(hasTestTag("appearance_calendar_settings_row"))
 
-        // Then the facet's Appearance row shows the inherited count
+        // Then the row shows that count (what the clock showed before it got settings of its own)
         composeRule.waitUntil(timeoutMillis = 3_000) {
             runCatching {
                 composeRule.onNodeWithTag("appearance_calendar_settings_row").assertTextContains("2 calendars selected", substring = true)

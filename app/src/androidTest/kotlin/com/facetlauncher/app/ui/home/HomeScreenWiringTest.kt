@@ -445,18 +445,6 @@ class HomeScreenWiringTest {
         assertEquals(1, removed)
     }
 
-    @Test
-    fun theFacetThatOwnsTheClockStyleIsNamedOnTheClockSettingsRow() {
-        // Given a clock style owned by a facet called Work
-        val state = appState(PlacedItem.SingleApp(mail)).copy(clock = HomeClockState(placementFacetId = 3L, styleOwnerFacetName = "Work"))
-        setHome(state, HomeScreenActions(item = HomeItemActions(onAppClick = {})))
-
-        // When the clock menu opens
-        longPress("home_clock_block")
-
-        // Then the edit-styles row carries that name
-        composeRule.onNodeWithText("Work", substring = true).assertExists()
-    }
 
     @Test
     fun theBatteryReadingReachesTheClockAccessories() {

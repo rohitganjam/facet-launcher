@@ -13,6 +13,7 @@ import com.facetlauncher.app.data.model.Facet
 import com.facetlauncher.app.data.model.landscape
 import com.facetlauncher.app.domain.ResolvedFacetStyle
 import com.facetlauncher.app.domain.ObservePlacedItemsUseCase
+import com.facetlauncher.app.domain.effectiveClockConfig
 import com.facetlauncher.app.domain.resolveFacetStyle
 import com.facetlauncher.app.data.model.AppListColumnAlignment
 import com.facetlauncher.app.data.model.AppListGridColumns
@@ -99,11 +100,11 @@ data class AppearanceSettingsUiState(
     /** Mirrors `DockSettingsViewModel.DockSettingsUiState.dockItems`'s own resolution — same `overrideDock` flag. */
     val effectiveDockItems: List<PlacedItem> get() = if (facet?.overrideDock == true) facetDockItems else globalDockItems
 
-    /** The calendar row's summary — resolves exactly like `CalendarSettingsUiState` (the facet's own selection when `overrideCalendar`, else global). */
-    val effectiveShowAllDayEvents: Boolean get() = if (facet?.overrideCalendar == true) facet.showAllDayEvents else settings.showAllDayEvents
+    /** The calendar row's summary: this facet's clock's own calendar choices. */
+    val effectiveShowAllDayEvents: Boolean get() = style.clock.calendar.showAllDay
 
-    /** `null` (nothing explicitly chosen yet) counts as zero — it isn't "every calendar", it's "none decided". */
-    val selectedCalendarCount: Int get() = (if (facet?.overrideCalendar == true) facet.selectedCalendarIds ?: settings.selectedCalendarIds else settings.selectedCalendarIds)?.size ?: 0
+    /** The calendars this facet's clock shows; `null` is every calendar, calendars added later included. */
+    val selectedCalendarIds: Set<String>? get() = style.clock.calendar.calendarIds
 
     /** [settings] with the clock style resolved for this scope (the facet's own when `overrideClock`, else global) and the placement the facet shows. */
     val clockSettings: LauncherSettings get() = style.clock.let { clock ->
@@ -211,10 +212,8 @@ class AppearanceSettingsViewModel @Inject constructor(
      */
     private suspend fun observeCalendarEvents(facet: Facet?, settings: LauncherSettings): List<CalendarEvent> {
         if (!calendarPermissionRepository.isGranted()) return emptyList()
-        val overriding = facet?.overrideCalendar == true
-        val includeAllDay = if (overriding) facet.showAllDayEvents else settings.showAllDayEvents
-        val selectedCalendarIds = if (overriding) facet.selectedCalendarIds else settings.selectedCalendarIds
-        return calendarRepository.getUpcomingEvents(selectedCalendarIds, includeAllDay)
+        val calendar = effectiveClockConfig(facet, settings).calendar
+        return calendarRepository.getUpcomingEvents(calendar.calendarIds, calendar.showAllDay)
     }
 
     fun setThemeMode(mode: ThemeMode) {

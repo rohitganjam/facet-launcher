@@ -28,3 +28,7 @@ data class ClockCalendarConfig(
     val showAllDay: Boolean = true,
     val calendarIds: Set<String>? = null,
 )
+
+/** The settings stored on this facet's clock page, or `null` when it has none (yet) or no clock. */
+fun Facet.clockWidgetConfig(): ClockWidgetConfig? =
+    clockStack.firstOrNull { it.kind == ClockStackItemKind.CLOCK }?.let { decodeNativeWidgetConfig(it.nativeWidgetConfig).clock }

@@ -47,7 +47,7 @@ class MaterializeClockConfigsUseCaseTest {
         useCase()
 
         // Then the page is written the launcher's clock, as it shows now
-        verify(clockStackRepository).setConfig(7, NativeWidgetConfig(clock = effectiveClockConfig(Facet(id = 1, name = "Home", position = 0), launcherSettings)))
+        verify(clockStackRepository).setConfig(7, NativeWidgetConfig(clock = legacyClockConfig(Facet(id = 1, name = "Home", position = 0), launcherSettings)))
     }
 
     @Test
@@ -76,8 +76,8 @@ class MaterializeClockConfigsUseCaseTest {
         useCase()
 
         // Then its page gets its own template, not the launcher's
-        verify(clockStackRepository).setConfig(3, NativeWidgetConfig(clock = effectiveClockConfig(facet, launcherSettings)))
-        assertEquals(ClockTemplateId.entries.first(), effectiveClockConfig(facet, launcherSettings).templateId)
+        verify(clockStackRepository).setConfig(3, NativeWidgetConfig(clock = legacyClockConfig(facet, launcherSettings)))
+        assertEquals(ClockTemplateId.entries.first(), legacyClockConfig(facet, launcherSettings).templateId)
     }
 
     @Test

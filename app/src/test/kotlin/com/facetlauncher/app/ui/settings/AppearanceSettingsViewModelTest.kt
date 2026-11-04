@@ -12,6 +12,12 @@ import com.facetlauncher.app.data.NotificationAccessRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.WallpaperRepository
 import com.facetlauncher.app.data.model.Facet
+import com.facetlauncher.app.data.model.encode
+import com.facetlauncher.app.data.model.NativeWidgetConfig
+import com.facetlauncher.app.data.model.ClockWidgetConfig
+import com.facetlauncher.app.data.model.ClockStackItemKind
+import com.facetlauncher.app.data.model.ClockStackItem
+import com.facetlauncher.app.data.model.ClockCalendarConfig
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.AppListVerticalAlignment
 import com.facetlauncher.app.data.model.AppRowPosition
@@ -443,51 +449,44 @@ class AppearanceSettingsViewModelTest {
 
     // --- calendar row summary (the "Calendars to display" row lives in Appearance now) ---
 
+    private fun facetWithClock(config: ClockWidgetConfig) = Facet(
+        id = 1L, name = "Work", position = 0,
+        clockStack = listOf(ClockStackItem(id = 3, facetId = 1, position = 0, kind = ClockStackItemKind.CLOCK, nativeWidgetConfig = NativeWidgetConfig(clock = config).encode())),
+    )
+
     @Test
-    fun `calendar summary uses the global selection when no facet is overriding calendar`() {
-        // Given a facet that isn't overriding calendar, with its own (ignored) values
+    fun `calendar summary reads the facet's clock's own calendars`() {
+        // Given a facet whose clock has its own calendar choices, and different launcher-wide ones
         val state = AppearanceSettingsUiState(
             settings = LauncherSettings(showAllDayEvents = true, selectedCalendarIds = setOf("cal-2", "cal-3")),
-            facet = Facet(id = 1L, name = "Work", position = 0, overrideCalendar = false, showAllDayEvents = false, selectedCalendarIds = setOf("cal-1")),
+            facet = facetWithClock(ClockWidgetConfig(calendar = ClockCalendarConfig(showAllDay = false, calendarIds = setOf("cal-1")))),
         )
 
-        // Then the summary follows the global values
-        assertEquals(true, state.effectiveShowAllDayEvents)
-        assertEquals(2, state.selectedCalendarCount)
+        // Then the summary follows the clock's values
+        assertEquals(false, state.effectiveShowAllDayEvents)
+        assertEquals(setOf("cal-1"), state.selectedCalendarIds)
     }
 
     @Test
-    fun `calendar summary uses the facet's own values while it overrides calendar`() {
-        // Given a facet overriding calendar
+    fun `a clock on every calendar has no explicit selection`() {
+        // Given a clock left on all calendars
+        val state = AppearanceSettingsUiState(facet = facetWithClock(ClockWidgetConfig()))
+
+        // Then the selection is null, which the row words as all calendars
+        assertEquals(null, state.selectedCalendarIds)
+    }
+
+    @Test
+    fun `a clock without settings of its own yet shows what its facet showed before`() {
+        // Given a facet overriding the calendar, whose clock has no settings stored yet
         val state = AppearanceSettingsUiState(
-            settings = LauncherSettings(showAllDayEvents = true, selectedCalendarIds = setOf("cal-2", "cal-3")),
+            settings = LauncherSettings(showAllDayEvents = true),
             facet = Facet(id = 1L, name = "Work", position = 0, overrideCalendar = true, showAllDayEvents = false, selectedCalendarIds = setOf("cal-1")),
         )
 
-        // Then the summary follows the facet's values
+        // Then the facet's own calendar values still apply
         assertEquals(false, state.effectiveShowAllDayEvents)
-        assertEquals(1, state.selectedCalendarCount)
-    }
-
-    @Test
-    fun `calendar count is zero when nothing was chosen yet, not treated as every calendar`() {
-        // Given the global scope with no explicit selection
-        val state = AppearanceSettingsUiState(settings = LauncherSettings(selectedCalendarIds = null))
-
-        // Then it counts none
-        assertEquals(0, state.selectedCalendarCount)
-    }
-
-    @Test
-    fun `calendar count falls back to the global selection while overriding if the facet hasn't chosen its own`() {
-        // Given a facet overriding calendar but with no selection of its own
-        val state = AppearanceSettingsUiState(
-            settings = LauncherSettings(selectedCalendarIds = setOf("cal-1", "cal-2")),
-            facet = Facet(id = 1L, name = "Work", position = 0, overrideCalendar = true, selectedCalendarIds = null),
-        )
-
-        // Then it counts the global selection (like the calendar page itself does)
-        assertEquals(2, state.selectedCalendarCount)
+        assertEquals(setOf("cal-1"), state.selectedCalendarIds)
     }
 
     @Test

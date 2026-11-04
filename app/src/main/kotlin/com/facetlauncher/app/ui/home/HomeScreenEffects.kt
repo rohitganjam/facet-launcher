@@ -139,7 +139,7 @@ internal fun Modifier.homeEmptySpaceGestures(
 
 /** The clock adjust menu sheet. */
 @Composable
-internal fun ClockMenuSheet(clock: HomeClockState, stack: HomeClockStackState, hasWidget: Boolean, actions: HomeClockActions) {
+internal fun ClockMenuSheet(stack: HomeClockStackState, hasWidget: Boolean, actions: HomeClockActions) {
     val close = { actions.onAdjustModeChange(ClockAdjustMode.NONE) }
     val page = when {
         stack.isBlank -> ClockSheetPage.EMPTY
@@ -183,7 +183,6 @@ internal fun ClockMenuSheet(clock: HomeClockState, stack: HomeClockStackState, h
                 actions.onWidgetStackClick()
             },
             stackSummary = stackSummary,
-            overrideFacetName = clock.styleOwnerFacetName,
             page = page,
             canReplaceWithClock = !stack.hasClock,
         )

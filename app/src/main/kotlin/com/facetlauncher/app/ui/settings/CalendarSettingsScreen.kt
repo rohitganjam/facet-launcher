@@ -57,7 +57,6 @@ import com.facetlauncher.app.ui.components.calendarTitle
 import com.facetlauncher.app.ui.components.workCalendarPosition
 import com.facetlauncher.app.ui.components.BackButton
 import com.facetlauncher.app.ui.components.CardDivider
-import com.facetlauncher.app.ui.components.InheritOverrideCard
 import com.facetlauncher.app.ui.components.LabeledDropdownRow
 import com.facetlauncher.app.ui.components.dashedBorder
 import com.facetlauncher.app.ui.components.LocalSettingsRowInset
@@ -84,7 +83,6 @@ import com.facetlauncher.app.ui.theme.resolvedColor
 fun CalendarSettingsScreen(
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
-    onEditDefaults: (() -> Unit)? = null,
     viewModel: CalendarSettingsViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -110,12 +108,10 @@ fun CalendarSettingsScreen(
         onShowAllDayEventsChange = viewModel::setShowAllDayEvents,
         onShowCalendarIndicatorChange = viewModel::setShowCalendarIndicator,
         onItemsToShowChange = viewModel::setCalendarItemsToShow,
-        onOverridingChange = viewModel::setOverriding,
         onTurnOnClick = { requestPermission.launch(Manifest.permission.READ_CALENDAR) },
         onCalendarToggle = viewModel::setCalendarSelected,
         onSelectAllCalendarsChange = viewModel::setAllCalendarsSelected,
         modifier = modifier,
-        onEditDefaults = onEditDefaults,
     )
 }
 
@@ -126,15 +122,11 @@ private fun CalendarSettingsContent(
     onShowAllDayEventsChange: (Boolean) -> Unit,
     onShowCalendarIndicatorChange: (Boolean) -> Unit,
     onItemsToShowChange: (Int) -> Unit,
-    onOverridingChange: (Boolean) -> Unit,
     onTurnOnClick: () -> Unit,
     onCalendarToggle: (String, Boolean) -> Unit,
     onSelectAllCalendarsChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
-    onEditDefaults: (() -> Unit)? = null,
 ) {
-    // Every control below (all-day events, calendar selection) is read-only under Inherit and live under Override.
-    val controlsEnabled = !uiState.isFacetScoped || uiState.isOverriding
 
     StickyHeaderLayout(
         modifier = modifier,
@@ -154,20 +146,7 @@ private fun CalendarSettingsContent(
                 }
                 item { Spacer(modifier = Modifier.height(16.dp)) }
 
-                if (uiState.isFacetScoped) {
-                    item {
-                        InheritOverrideCard(
-                            overriding = uiState.isOverriding,
-                            onOverridingChange = onOverridingChange,
-                            testTagPrefix = "calendar",
-                            onEditDefaults = onEditDefaults,
-                            inheritSubtitle = stringResource(R.string.calendar_settings_follows_launcher_wide),
-                        )
-                    }
-                    item { Spacer(modifier = Modifier.height(16.dp)) }
-                }
-
-                item { DisplayOptionsCard(uiState, controlsEnabled, onShowAllDayEventsChange, onShowCalendarIndicatorChange, onItemsToShowChange) }
+                item { DisplayOptionsCard(uiState, true, onShowAllDayEventsChange, onShowCalendarIndicatorChange, onItemsToShowChange) }
 
                 item { Spacer(modifier = Modifier.height(16.dp)) }
 
@@ -374,7 +353,6 @@ private fun CalendarSettingsScreenPreview() {
             onShowAllDayEventsChange = {},
             onShowCalendarIndicatorChange = {},
             onItemsToShowChange = {},
-            onOverridingChange = {},
             onTurnOnClick = {},
             onCalendarToggle = { _, _ -> },
             onSelectAllCalendarsChange = {},

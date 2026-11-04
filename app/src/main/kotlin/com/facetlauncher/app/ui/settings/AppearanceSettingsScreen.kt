@@ -147,7 +147,8 @@ private fun AppearanceSettingsContent(
                         modifier = Modifier.padding(bottom = 20.dp).testTag("appearance_preview_card"),
                     )
                 }
-                clockAndCalendarSection(uiState, onNavigateToClockStyleGallery, onNavigateToCalendarSettings)
+                // A clock has no launcher-wide settings, so only a facet's own screen links to them.
+                if (uiState.isFacetScoped) clockAndCalendarSection(uiState, onNavigateToClockStyleGallery, onNavigateToCalendarSettings)
                 dockAndHomeSection(settings, uiState, onNavigateToDockAppsAppearance, onNavigateToAppDrawerSettings)
                 // Global only — no per-facet override exists for notifications, theme, accent, icons or fonts.
                 if (!uiState.isFacetScoped) {
@@ -185,7 +186,7 @@ private fun LazyListScope.clockAndCalendarSection(
                 subtitle = if (uiState.calendarAccessGranted) {
                     stringResource(
                         R.string.dot_join_2,
-                        pluralStringResource(R.plurals.settings_calendars_selected, uiState.selectedCalendarCount, uiState.selectedCalendarCount),
+                        uiState.selectedCalendarIds?.size?.let { pluralStringResource(R.plurals.settings_calendars_selected, it, it) } ?: stringResource(R.string.settings_calendars_all),
                         stringResource(if (uiState.effectiveShowAllDayEvents) R.string.settings_all_day_events_visible else R.string.settings_all_day_events_hidden),
                     )
                 } else {

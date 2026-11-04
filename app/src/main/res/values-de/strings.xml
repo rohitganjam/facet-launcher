@@ -254,6 +254,7 @@
         <item quantity="one">%1$d Kalender ausgewählt</item>
         <item quantity="other">%1$d Kalender ausgewählt</item>
     </plurals>
+    <string name="settings_calendars_all">Alle Kalender</string>
     <string name="settings_all_day_events_visible">Ganztägige Termine sichtbar</string>
     <string name="settings_all_day_events_hidden">Ganztägige Termine ausgeblendet</string>
     <string name="settings_dock_title">Dock</string>

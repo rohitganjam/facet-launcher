@@ -82,7 +82,6 @@ import java.time.ZoneId
 fun ClockStyleGalleryRoute(
     onBack: () -> Unit,
     onOpenClockAccessories: () -> Unit = {},
-    onEditDefaults: (() -> Unit)? = null,
     viewModel: ClockStyleGalleryViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -97,16 +96,9 @@ fun ClockStyleGalleryRoute(
             onShowMeridiemChange = viewModel::setClockShowMeridiem,
             onDateStyleChange = viewModel::setClockDateStyle,
             onResetClockPosition = viewModel::resetClockPosition,
-            onOverridingChange = viewModel::setOverridingClock,
             onOpenClockAccessories = onOpenClockAccessories,
-            onEditDefaults = onEditDefaults,
         ),
         onBack = onBack,
-        inheritSubtitle = stringResource(
-            R.string.dot_join_2,
-            stringResource(uiState.settings.clockTemplateId.displayNameRes),
-            stringResource(if (uiState.settings.use24HourTime) R.string.settings_time_format_24h else R.string.settings_time_format_12h),
-        ),
     )
 }
 
@@ -120,17 +112,12 @@ internal class ClockStyleGalleryActions(
     val onShowMeridiemChange: (Boolean) -> Unit = {},
     val onDateStyleChange: (ClockDateStyle) -> Unit = {},
     val onResetClockPosition: () -> Unit = {},
-    val onOverridingChange: (Boolean) -> Unit = {},
     val onOpenClockAccessories: () -> Unit = {},
-    /** Opens the launcher-wide clock style screen; `null` on that screen itself. */
-    val onEditDefaults: (() -> Unit)? = null,
 )
 
 /**
- * Stateless clock-style picker. Order: an Inherit/Override switch when this instance is facet-scoped, then the clock's
- * font, color, time, date and alignment controls, then every [ClockTemplateId] as its own selectable card — tapping one
- * selects it and gives it an [Accent] border. Every control below the Inherit/Override switch is dimmed and disabled
- * while inheriting: editing then would write to the facet's row without taking effect until Override is picked.
+ * Stateless clock-style picker. Order: the clock's font, color, time and date controls, then every [ClockTemplateId] as its
+ * own selectable card — tapping one selects it and gives it an [Accent] border.
  */
 @Composable
 private fun ClockStyleGalleryScreen(
@@ -138,9 +125,8 @@ private fun ClockStyleGalleryScreen(
     actions: ClockStyleGalleryActions,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
-    inheritSubtitle: String = "",
 ) {
-    val controlsEnabled = !uiState.isFacetScoped || uiState.isOverriding
+    val controlsEnabled = true
     val sample = rememberClockPreviewSample(uiState.showWeather, uiState.weatherIconStyle)
 
     StickyHeaderLayout(
@@ -156,26 +142,13 @@ private fun ClockStyleGalleryScreen(
                 contentPadding = PaddingValues(start = 24.dp, end = 24.dp, top = headerHeight + 16.dp, bottom = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(20.dp),
             ) {
-                if (uiState.isFacetScoped) {
-                    item {
-                        InheritOverrideCard(
-                            overriding = uiState.isOverriding,
-                            onOverridingChange = actions.onOverridingChange,
-                            testTagPrefix = "clock_style",
-                            onEditDefaults = actions.onEditDefaults,
-                            inheritSubtitle = inheritSubtitle,
-                        )
-                    }
-                }
                 item { SectionLabel(R.string.clock_style_clock_section) }
                 item { ClockStyleCard(uiState, controlsEnabled, actions) }
                 item { ClockAccessoriesLinkCard(actions.onOpenClockAccessories) }
-                if (uiState.isFacetScoped) {
-                    item { SectionLabel(R.string.clock_style_position_section) }
-                    item {
-                        SettingsCard(fullBleedRows = true) {
-                            ClockPositionResetRow(onClick = actions.onResetClockPosition)
-                        }
+                item { SectionLabel(R.string.clock_style_position_section) }
+                item {
+                    SettingsCard(fullBleedRows = true) {
+                        ClockPositionResetRow(onClick = actions.onResetClockPosition)
                     }
                 }
                 item { TemplateHints() }

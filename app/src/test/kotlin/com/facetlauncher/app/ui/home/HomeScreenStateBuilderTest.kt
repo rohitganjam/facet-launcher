@@ -285,7 +285,6 @@ class HomeScreenStateBuilderTest {
 
         assertEquals(ClockAdjustMode.NONE, state.clock.adjustMode)
         assertNull(state.clock.placementFacetId)
-        assertNull(state.clock.styleOwnerFacetName)
         assertNull(state.media.player)
         assertEquals(false, state.media.showSkipButtons)
     }

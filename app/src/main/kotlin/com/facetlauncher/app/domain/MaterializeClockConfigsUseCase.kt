@@ -11,7 +11,7 @@ import javax.inject.Singleton
 import kotlinx.coroutines.flow.first
 
 /**
- * Gives every clock page that has no settings of its own the ones it shows today ([effectiveClockConfig]), so a clock stops depending on
+ * Gives every clock page that has no settings of its own the ones it shows today ([legacyClockConfig]), so a clock stops depending on
  * the launcher-wide clock and calendar settings and on its facet's override switches. One pass, idempotent: a clock that has settings is left
  * alone, so it also covers a facet restored from an older backup and any clock page created before this ran.
  */
@@ -26,7 +26,7 @@ class MaterializeClockConfigsUseCase @Inject constructor(
         facetRepository.observeFacets().first().forEach { facet ->
             facet.clockStack
                 .filter { it.id != 0L && it.kind == ClockStackItemKind.CLOCK && decodeNativeWidgetConfig(it.nativeWidgetConfig).clock == null }
-                .forEach { page -> clockStackRepository.setConfig(page.id, NativeWidgetConfig(clock = effectiveClockConfig(facet, settings))) }
+                .forEach { page -> clockStackRepository.setConfig(page.id, NativeWidgetConfig(clock = legacyClockConfig(facet, settings))) }
         }
     }
 }

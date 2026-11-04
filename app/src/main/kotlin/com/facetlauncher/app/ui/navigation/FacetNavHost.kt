@@ -86,7 +86,6 @@ object FacetDestinations {
     const val CLOCK_ACCESSORIES = "clockAccessories?facetId={facetId}"
     const val UNITS_AND_LOCATION = "unitsAndLocation"
     const val WEATHER_LOCATION = "weatherLocation"
-    const val CLOCK_STYLE_GALLERY = "clockStyleGallery"
     const val FACET_CLOCK_STYLE_GALLERY = "facetClockStyleGallery/{facetId}"
     const val BACKUP_RESTORE = "backupRestore"
     const val APPEARANCE_SETTINGS = "appearanceSettings?facetId={facetId}"
@@ -267,10 +266,7 @@ fun FacetNavHost(
             val facetId = backStackEntry.arguments?.getLong("facetId") ?: NO_ACTIVE_FACET_ID
             AppearanceSettingsScreen(
                 onBack = { navController.popBackStackSafely() },
-                onNavigateToClockStyleGallery = {
-                    val dest = if (facetId != NO_ACTIVE_FACET_ID) FacetDestinations.facetClockStyleGallery(facetId) else FacetDestinations.CLOCK_STYLE_GALLERY
-                    navController.navigate(dest)
-                },
+                onNavigateToClockStyleGallery = { navController.navigate(FacetDestinations.facetClockStyleGallery(facetId)) },
                 onNavigateToCalendarSettings = { navController.navigate(FacetDestinations.calendarSettings(facetId)) },
                 onNavigateToNotificationSettings = { navController.navigate(FacetDestinations.NOTIFICATION_SETTINGS) },
                 onNavigateToDockAppsAppearance = { navController.navigate(FacetDestinations.dockAppsAppearance(facetId)) },
@@ -288,10 +284,6 @@ fun FacetNavHost(
             ClockAccessoriesScreen(
                 navigation = ClockAccessoriesNavigation(
                     onBack = { navController.popBackStackSafely() },
-                    onOpenClockStyle = {
-                        val dest = if (facetId != NO_ACTIVE_FACET_ID) FacetDestinations.facetClockStyleGallery(facetId) else FacetDestinations.CLOCK_STYLE_GALLERY
-                        navController.navigate(dest)
-                    },
                     onOpenWeatherSettings = { navController.navigate(FacetDestinations.UNITS_AND_LOCATION) },
                 ),
             )
@@ -351,12 +343,6 @@ fun FacetNavHost(
         settingsComposable(FacetDestinations.APP_DRAWER_SETTINGS) {
             AppDrawerSettingsScreen(onBack = { navController.popBackStackSafely() })
         }
-        settingsComposable(FacetDestinations.CLOCK_STYLE_GALLERY) {
-            ClockStyleGalleryRoute(
-                onBack = { navController.popBackStackSafely() },
-                onOpenClockAccessories = { navController.navigate(FacetDestinations.clockAccessories()) },
-            )
-        }
         settingsComposable(
             FacetDestinations.FACET_CLOCK_STYLE_GALLERY,
             arguments = listOf(navArgument("facetId") { type = NavType.LongType }),
@@ -365,7 +351,6 @@ fun FacetNavHost(
             ClockStyleGalleryRoute(
                 onBack = { navController.popBackStackSafely() },
                 onOpenClockAccessories = { navController.navigate(FacetDestinations.clockAccessories(facetId)) },
-                onEditDefaults = { navController.navigate(FacetDestinations.CLOCK_STYLE_GALLERY) },
             )
         }
         settingsComposable(FacetDestinations.PERMISSIONS) {
@@ -501,7 +486,6 @@ fun FacetNavHost(
             val facetId = backStackEntry.arguments?.getLong("facetId")?.takeIf { it != NO_ACTIVE_FACET_ID }
             CalendarSettingsScreen(
                 onBack = { navController.popBackStackSafely() },
-                onEditDefaults = facetId?.let { { navController.navigate(FacetDestinations.calendarSettings()) } },
             )
         }
     }

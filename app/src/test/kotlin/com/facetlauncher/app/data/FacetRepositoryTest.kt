@@ -107,63 +107,8 @@ class FacetRepositoryTest {
         assertTrue(repository.observeFacets().first().isEmpty())
     }
 
-    @Test
-    fun `setUse24HourTime round-trips true and false`() = runTest {
-        val dao = FakeFacetDao()
-        val repository = FacetRepository(dao, FakeClockStackItemDao())
-        val facet = repository.addFacet()
-        repository.setUse24HourTime(facet.id, true)
-        assertEquals(true, repository.observeFacets().first().single().use24HourTime)
-        repository.setUse24HourTime(facet.id, false)
-        assertEquals(false, repository.observeFacets().first().single().use24HourTime)
-    }
 
-    @Test
-    fun `updateOverridingClock sets all fields and flag together`() = runTest {
-        val dao = FakeFacetDao()
-        val repository = FacetRepository(dao, FakeClockStackItemDao())
-        val facet = repository.addFacet()
-        repository.updateOverridingClock(
-            facetId = facet.id,
-            overriding = true,
-            templateId = ClockTemplateId.VERTICAL_STACK_BOLD_HOUR,
-            fontOption = ClockFontOption.MANROPE,
-            colorOption = ClockColorOption.THEME,
-            use24HourTime = true,
-            showMeridiem = true,
-            accentColorOption = ClockColorOption.ACCENT_PRIMARY,
-            dateStyle = ClockDateStyle.FULL,
-        )
-        val stored = repository.observeFacets().first().single()
-        assertEquals(true, stored.overrideClock)
-        assertEquals(ClockTemplateId.VERTICAL_STACK_BOLD_HOUR, stored.clockTemplateId)
-        assertEquals(ClockFontOption.MANROPE, stored.clockFontOption)
-        assertEquals(ClockColorOption.THEME, stored.clockColorOption)
-        assertEquals(true, stored.use24HourTime)
-        assertEquals(true, stored.clockShowMeridiem)
-        // Placement is not part of the override: it stays as it was
-        assertEquals(false, stored.clockPlacementOwn)
-        assertEquals(ClockAlignment.LEFT, stored.clockAlignment)
-    }
 
-    @Test
-    fun `setClockAccentColorOption and setClockDateStyle round-trip independently`() = runTest {
-        val dao = FakeFacetDao()
-        val repository = FacetRepository(dao, FakeClockStackItemDao())
-        val facet = repository.addFacet()
-
-        repository.setClockAccentColorOption(facet.id, ClockColorOption.ACCENT_SECONDARY)
-
-        val stored = repository.observeFacets().first().single()
-        assertEquals(ClockColorOption.ACCENT_SECONDARY, stored.clockAccentColorOption)
-        assertEquals(ClockDateStyle.FULL, stored.clockDateStyle)
-
-        repository.setClockDateStyle(stored.id, ClockDateStyle.CONDENSED)
-
-        val restored = repository.observeFacets().first().single()
-        assertEquals(ClockColorOption.ACCENT_SECONDARY, restored.clockAccentColorOption)
-        assertEquals(ClockDateStyle.CONDENSED, restored.clockDateStyle)
-    }
 
     @Test
     fun `setClockPlacement makes the placement the facet's own, with landscape twins kept apart`() = runTest {
@@ -349,54 +294,8 @@ class FacetRepositoryTest {
         assertEquals(12, repository.observeFacets().first().single().appsToShowCount)
     }
 
-    @Test
-    fun `calendar display setters write the facet and clamp the item count`() = runTest {
-        val repository = FacetRepository(FakeFacetDao(), FakeClockStackItemDao())
-        val facet = repository.addFacet()
 
-        repository.setShowCalendarIndicator(facet.id, false)
-        repository.setCalendarItemsToShow(repository.observeFacets().first().single().id, 2)
-        val stored = repository.observeFacets().first().single()
-        assertEquals(false, stored.showCalendarIndicator)
-        assertEquals(2, stored.calendarItemsToShow)
 
-        repository.setCalendarItemsToShow(stored.id, 0)
-        assertEquals(1, repository.observeFacets().first().single().calendarItemsToShow)
-        repository.setCalendarItemsToShow(stored.id, 9)
-        assertEquals(3, repository.observeFacets().first().single().calendarItemsToShow)
-    }
-
-    @Test
-    fun `updateOverridingCalendar sets selection fields and flag together, design fields untouched`() = runTest {
-        val dao = FakeFacetDao()
-        val repository = FacetRepository(dao, FakeClockStackItemDao())
-        val facet = repository.addFacet()
-        repository.updateOverridingCalendar(
-            facet.id,
-            overriding = true,
-            showAllDayEvents = false,
-            selectedCalendarIds = setOf("1", "2"),
-            showCalendarIndicator = true,
-            calendarItemsToShow = 3,
-        )
-        val stored = repository.observeFacets().first().single()
-        assertEquals(true, stored.overrideCalendar)
-        assertEquals(false, stored.showAllDayEvents)
-        assertEquals(setOf("1", "2"), stored.selectedCalendarIds)
-    }
-
-    @Test
-    fun `setSelectedCalendarIds round-trips, null means every calendar selected`() = runTest {
-        val dao = FakeFacetDao()
-        val repository = FacetRepository(dao, FakeClockStackItemDao())
-        val facet = repository.addFacet()
-
-        repository.setSelectedCalendarIds(facet.id, setOf("10", "20", "30"))
-        assertEquals(setOf("10", "20", "30"), repository.observeFacets().first().single().selectedCalendarIds)
-
-        repository.setSelectedCalendarIds(repository.observeFacets().first().single().id, null)
-        assertEquals(null, repository.observeFacets().first().single().selectedCalendarIds)
-    }
 
     @Test
     fun `each facet comes with its own clock stack in swipe order`() = runTest {
@@ -509,22 +408,4 @@ class FacetRepositoryTest {
         assertEquals(AppRowPosition.CENTER, landscape.appRowPosition)
     }
 
-    @Test
-    fun `setClockWeatherLocation stores a facet's own place and null gives it back to Weather settings`() = runTest {
-        // Given a facet that follows Weather settings
-        val repository = FacetRepository(FakeFacetDao(), FakeClockStackItemDao())
-        val facet = repository.addFacet()
-        assertNull(repository.observeFacets().first().single().clockWeatherLocation)
-
-        // When it chooses a city, then current location, then goes back
-        val oslo = WidgetWeatherLocation.City(WeatherCity("Oslo", 59.91, 10.75, "Europe/Oslo"))
-        repository.setClockWeatherLocation(facet.id, oslo)
-        assertEquals(oslo, repository.observeFacets().first().single().clockWeatherLocation)
-        repository.setClockWeatherLocation(facet.id, WidgetWeatherLocation.Current)
-        assertEquals(WidgetWeatherLocation.Current, repository.observeFacets().first().single().clockWeatherLocation)
-        repository.setClockWeatherLocation(facet.id, null)
-
-        // Then each choice came back through the stored row, and null follows Weather settings again
-        assertNull(repository.observeFacets().first().single().clockWeatherLocation)
-    }
 }

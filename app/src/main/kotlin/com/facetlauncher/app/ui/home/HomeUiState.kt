@@ -117,10 +117,6 @@ data class HomeUiState(
     /** The visible page's saved widget size for [mode]: landscape's own where saved, else the portrait one; `null` before any resize. */
     fun clockWidgetSizeDp(mode: HomeLayoutMode): Pair<Int, Int>? = visibleClockItem?.sizeDp?.of(mode == HomeLayoutMode.LANDSCAPE)
 
-    /** The facet whose own clock style is in force (it overrides the clock), or `null` while the launcher-wide style applies: the sheet's scope badge. Placement is not part of it. */
-    val clockStyleOwningFacet: Facet?
-        get() = activeFacet?.takeIf { it.overrideClock }
-
     /** Names the facet overriding the Dock right now, for [com.facetlauncher.app.ui.components.QuickPlacementBadge] — `null` for the launcher-wide default, mirroring [com.facetlauncher.app.domain.QuickPlacementAction.facetName]'s own convention. */
     val dockOverrideFacetName: String?
         get() = activeFacet?.takeIf { it.overrideDock }?.name

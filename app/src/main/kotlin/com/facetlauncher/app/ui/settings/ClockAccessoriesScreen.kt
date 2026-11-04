@@ -35,7 +35,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.facetlauncher.app.R
 import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.data.model.WeatherIconStyle
-import com.facetlauncher.app.data.model.WeatherLocationMode
 import com.facetlauncher.app.data.model.WidgetWeatherLocation
 import com.facetlauncher.app.ui.components.StickyHeaderScrollColumn
 import com.facetlauncher.app.ui.components.CardDivider
@@ -50,10 +49,9 @@ import com.facetlauncher.app.ui.theme.Ink
 import com.facetlauncher.app.ui.theme.Muted
 import com.facetlauncher.app.ui.theme.SurfaceContainer
 
-/** What this screen does beyond editing: open the clock style (which owns a facet's Inherit/Override switch) and the units and location screen. */
+/** What this screen does beyond editing: go back, and open the Weather settings screen. */
 data class ClockAccessoriesNavigation(
     val onBack: () -> Unit,
-    val onOpenClockStyle: () -> Unit,
     val onOpenWeatherSettings: () -> Unit = {},
 )
 
@@ -86,7 +84,7 @@ fun ClockAccessoriesScreen(
             onShowWeather = { enabled ->
                 viewModel.setShowWeather(enabled)
                 // "Use current location" needs the permission; ask as the switch goes on, so the weather can appear straight away.
-                val needsPermission = enabled && uiState.settings.weatherLocationMode == WeatherLocationMode.CURRENT && !uiState.locationPermissionGranted
+                val needsPermission = enabled && uiState.weatherNeedsPosition && !uiState.locationPermissionGranted
                 if (needsPermission) requestLocation.launch(Manifest.permission.ACCESS_COARSE_LOCATION)
             },
             onIconStyle = viewModel::setWeatherIconStyle,
@@ -123,36 +121,26 @@ internal fun ClockAccessoriesContent(
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         ClockAccessoriesPreview(uiState)
-        if (uiState.isInheriting) InheritingNote(navigation.onOpenClockStyle)
         SwitchesCards(uiState, actions)
         if (uiState.showIconStyleCard) IconStyleCard(uiState, actions)
         // Where the weather is for comes after how it looks, and goes away with the weather.
         if (uiState.showWeather) {
-            if (uiState.showLocationCard) LocationCard(uiState, actions)
+            LocationCard(uiState, actions)
             WeatherSettingsLink(navigation.onOpenWeatherSettings)
         }
     }
 }
 
-@Composable
-private fun InheritingNote(onOpenClockStyle: () -> Unit) {
-    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Text(stringResource(R.string.clock_accessories_inheriting), style = MaterialTheme.typography.bodyMedium, color = Ink)
-        TextActionButton(stringResource(R.string.clock_accessories_open_clock_style), onOpenClockStyle)
-    }
-}
-
-/** Cards one and two: the alarm and battery switches, then the weather switch. A facet that inherits shows what it inherits, dimmed. */
+/** Cards one and two: the alarm and battery switches, then the weather switch. */
 @Composable
 private fun SwitchesCards(uiState: ClockAccessoriesUiState, actions: ClockAccessoriesActions) {
-    val editable = !uiState.isInheriting
     SettingsCard {
-        SettingsToggleRow(stringResource(R.string.clock_accessories_show_alarm), uiState.showAlarm, actions.onShowAlarm, "accessory_alarm_toggle", enabled = editable)
+        SettingsToggleRow(stringResource(R.string.clock_accessories_show_alarm), uiState.showAlarm, actions.onShowAlarm, "accessory_alarm_toggle")
         CardDivider()
-        SettingsToggleRow(stringResource(R.string.clock_accessories_show_battery), uiState.showBattery, actions.onShowBattery, "accessory_battery_toggle", enabled = editable)
+        SettingsToggleRow(stringResource(R.string.clock_accessories_show_battery), uiState.showBattery, actions.onShowBattery, "accessory_battery_toggle")
     }
     SettingsCard {
-        SettingsToggleRow(stringResource(R.string.clock_accessories_show_weather), uiState.showWeather, actions.onShowWeather, "accessory_weather_toggle", enabled = editable)
+        SettingsToggleRow(stringResource(R.string.clock_accessories_show_weather), uiState.showWeather, actions.onShowWeather, "accessory_weather_toggle")
     }
 }
 
@@ -166,7 +154,6 @@ private fun LocationCard(uiState: ClockAccessoriesUiState, actions: ClockAccesso
             savedCities = uiState.savedCities,
             onChange = actions.onWeatherLocation,
             tagPrefix = "accessory_location",
-            enabled = !uiState.isInheriting,
             modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp),
         )
     }
@@ -197,7 +184,6 @@ private fun IconStyleCard(uiState: ClockAccessoriesUiState, actions: ClockAccess
             selected = uiState.weatherIconStyle,
             label = { stringResource(weatherIconStyleLabel(it)) },
             onSelect = actions.onIconStyle,
-            enabled = !uiState.isInheriting,
             testTag = "icon_style_row",
         )
         CardDivider()
@@ -211,8 +197,8 @@ private fun IconStyleCard(uiState: ClockAccessoriesUiState, actions: ClockAccess
 private fun ClockAccessoriesScreenPreview() {
     FacetLauncherTheme {
         ClockAccessoriesContent(
-            uiState = ClockAccessoriesUiState(settings = LauncherSettings(showWeather = true), weatherEnabledAnywhere = true, locationPermissionGranted = true),
-            navigation = ClockAccessoriesNavigation(onBack = {}, onOpenClockStyle = {}),
+            uiState = ClockAccessoriesUiState(settings = LauncherSettings(showWeather = true), locationPermissionGranted = true),
+            navigation = ClockAccessoriesNavigation(onBack = {}),
             actions = ClockAccessoriesActions(),
         )
     }

@@ -26,11 +26,11 @@ flowchart TB
         OFP --> P3["calendarEvents: per-facet selection or global\n(gated by calendar permission)"]
         WP["WallpaperRepository.currentHomeWallpaper()"] --> CAR
     end
-    subgraph OVERRIDE["Destination screens — each owns its own Inherit/Override switch"]
-        C1["ClockStyleGalleryScreen\nupdateOverridingClock(facet, overriding, clock design + 3 accessory switches)"]
+    subgraph OVERRIDE["Destination screens — each owns its own Inherit/Override switch (the clock and calendar screens do not: a clock holds its own settings)"]
+        C1["ClockStyleGalleryScreen, ClockAccessoriesScreen\nUpdateClockConfigUseCase(facet, change) — the clock's own settings"]
         C2["HomeAppsListSettingsScreen\nupdateOverridingApps(...) — content only now\n(mode, count, favorites); copies default favorites into\nthe facet's own Favorites list (app_placements) first if empty"]
         C3["DockSettingsScreen\nupdateOverridingDock(facet, overriding) — content only now\n(the dock's own app list); same copy-on-first-override into the facet's own Dock list (app_placements)"]
-        C4["CalendarSettingsScreen\nupdateOverridingCalendar(...)"]
+        C4["CalendarSettingsScreen\nUpdateClockConfigUseCase(facet, calendar change)"]
     end
     subgraph LOOK["DockAppsAppearanceScreen — no override switch, sentinel per field"]
         A1["dockDisplayMode / appRowPosition /\nappRowPresentation / appListVerticalAlignment /\nappListLayout / appListColumnAlignment /\nappListGridColumns / appListGridDisplayMode\nfacetRepository.setXxx(facet, value) — writes directly,\nno overriding flag to flip first"]
@@ -62,10 +62,10 @@ flowchart TB
   exception — it navigates to `AppearanceSettingsScreen` (dual-mode, `facetId?`), which has no
   switch of its own (see the `LOOK` subgraph above).
 - **`AppearanceSettingsScreen` is a hub of short sections**, each a card of one or two rows that open their own screen — "Clock &
-  calendar" (the Clock Style row, shown in both scopes — in facet scope it opens that facet's own
-  `ClockStyleGalleryRoute` (with a `facetId`), and its subtitle and the preview clock resolve through
-  `overrideClock` via `AppearanceSettingsUiState.clockSettings` — plus "Calendars to display", whose subtext is the
-  selection summary, or "Needs calendar access" while `READ_CALENDAR` isn't granted, like the Notifications row below;
+  calendar" (facet scope only: a clock has no launcher-wide settings. The Clock Style row opens that facet's own
+  `ClockStyleGalleryRoute` (with a `facetId`), and its subtitle and the preview clock resolve through the clock's own settings via
+  `AppearanceSettingsUiState.clockSettings` — plus "Calendars to display", whose subtext is the
+  selection summary ("All calendars" while the clock follows every calendar), or "Needs calendar access" while `READ_CALENDAR` isn't granted, like the Notifications row below;
   `AppearanceSettingsViewModel` re-reads both grants on resume), "Dock & home" (one
   "Dock & Apps appearance" row → `DockAppsAppearanceScreen`, both scopes, route `dockAppsAppearance?facetId=`), and, global
   only, "Notifications" and "Look & Feel" (three rows: "General settings" → `ThemesAndColorsScreen` with a static "Themes, accent, status bar" subtitle, "Fonts" → `FontsScreen`, "Icons" → `IconsScreen`, the last two showing their current value).
@@ -116,8 +116,8 @@ flowchart TB
   identical to `HomeAppsListSettingsViewModel`/`DockSettingsViewModel`'s own resolution. Calendar
   events come from `CalendarRepository.getUpcomingEvents`, gated by `CalendarPermissionRepository
   .isGranted()` (empty when ungranted, never a sample fallback), with facet-or-global
-  `showAllDayEvents`/`selectedCalendarIds` resolved the same way `ObserveHomeScreenStateUseCase`
-  resolves them. The calendar indicator / item-count pair (`CalendarDisplayOptions`) resolves via `Facet?.effectiveCalendarDisplay` (gated by `overrideCalendar`) (through `resolveFacetStyle`) into `HomeScreenState.calendarDisplay` and is applied in `CalendarEventsBlock` after ended events are dropped. The clock uses its own real system-default `Clock`, not a fixed reference instant.
+  `showAllDay`/`calendarIds` of the clock's calendar settings resolved the same way `ObserveHomeScreenStateUseCase`
+  resolves them. The calendar indicator / item-count pair (`CalendarDisplayOptions`) comes from the clock's own settings (through `resolveFacetStyle`) into `HomeScreenState.calendarDisplay` and is applied in `CalendarEventsBlock` after ended events are dropped. The clock uses its own real system-default `Clock`, not a fixed reference instant.
 - **`FacetCarouselScreen`'s `FacetPreviewPage` renders `ScaledHomeScreen`**, fed by
   `FacetCarouselUiState.style(facetId)` and the facet's `FacetPreviewData` (its effective favorites, dock
   and calendar events). Its tiles are tappable (`onCardClick` applies the facet), unlike the read-only
@@ -137,7 +137,7 @@ flowchart TB
 - **One resolver for everything a facet overrides:** `domain/ResolvedFacetStyle.kt`'s
   `resolveFacetStyle(facet, settings)` returns the clock block, apps-list look, dock display mode,
   calendar display, the clock and list placement in each orientation (`clockPlacement`, `listAlignment`,
-  with the landscape rules; the clock's is the facet's own once `clockPlacementOwn`, else the launcher's built-in fallback, and never follows `overrideClock`) and the facet's clock stack (`clockStack`: each page's kind, widget id, size and alignment per orientation). Home
+  with the landscape rules; the clock's is the facet's own once `clockPlacementOwn`, else the launcher's built-in fallback) and the facet's clock stack (`clockStack`: each page's kind, widget id, size and alignment per orientation). Home
   (`HomeUiState`) and every preview read it, so a preview cannot show anything Home would not:
   `FacetCarouselUiState`, `AppearanceUiState`, `CalendarSettingsUiState`, `FacetSettingsUiState`,
   `HomeAppsListUiState`, `DockSettingsUiState` and `ClockStyleGalleryUiState` all delegate to it. The
@@ -179,19 +179,19 @@ chooses which three are usable. Disabled means:
 
 ### 1b. Clock accessories — alarm, battery, weather
 
-The accessory row under the date has three items, each with its own switch: `showNextAlarm`, `showBatteryPercentage`
-and `showWeather` (DataStore defaults; weather off). A facet has its own three (`clockShowAlarm/Battery/Weather`),
-used while `overrideClock` is on and resolved with the rest of the clock in `resolveFacetStyle`
-(`ResolvedClockStyle.showAlarm/showBattery/showWeather`), and its own weather picture style (`clockWeatherIconStyle`, resolved
-into `ResolvedClockStyle.weatherIconStyle`) and weather location (`clockWeatherLocation`, resolved into `ResolvedClockStyle.weatherLocation`; `null` follows Weather settings). Settings → Clock style → *Clock accessories* (a row after the clock options; the
+The accessory row under the date has three items, each with its own switch. They are settings of each facet's clock (`ClockWidgetConfig.showAlarm/showBattery/showWeather`, with the weather picture
+style `weatherIconStyle` and the weather place `weatherLocation`, `null` following Weather settings), stored on the clock's page in the clock stack
+(`NativeWidgetConfig.clock`, [20](20-flow-native-widgets.md)) and resolved by `resolveFacetStyle` (`ResolvedFacetStyle.clock`). There is no
+launcher-wide default and no override switch: a new facet's clock starts from the built-in defaults, and a facet that existed before
+this change had the values it showed copied onto its clock by `MaterializeClockConfigsUseCase` (until that has run for a clock,
+`legacyClockConfig` supplies the same values from the old launcher-wide settings and the facet's old override fields, which stay stored but unread).
+Every edit goes through `UpdateClockConfigUseCase(facetId, change)`. Settings → Clock style → *Clock accessories* (a row after the clock options; the
 screen is `ClockAccessoriesScreen`, route `clockAccessories?facetId=`) edits them: card 1 alarm and battery, card 2 weather,
-card 3 Icons (while weather is on for that scope), then, while weather is on for that scope, on a facet's screen a *Location* card with the same picker as a Weather widget (`WeatherLocationPicker`): same as Weather settings, current location, or a saved city, stored as `Facet.clockWeatherLocation` and dimmed while the facet inherits the clock, then a *Weather settings* row (both scopes) back to the launcher-wide screen. Units and location themselves are not here: they are *Weather settings*, a row in Settings → System
+card 3 Icons (while weather is on), then, while weather is on, a *Location* card with the same picker as a Weather widget (`WeatherLocationPicker`): same as Weather settings, current location, or a saved city, then a *Weather settings* row back to the launcher-wide screen. Units and location themselves are not here: they are *Weather settings*, a row in Settings → System
 (`UnitsAndLocationScreen`, route `unitsAndLocation`): the four units and the Location card, launcher-wide (`UnitsAndLocationViewModel`), so a
-Weather widget can reach them whether or not the clock shows weather. A facet that inherits shows the inherited values dimmed with a link to its
-clock style, where the Inherit/Override switch lives; turning Override on seeds the three switches and the icon style from the
-defaults (`ClockStyleGalleryViewModel.setOverridingClock`).
+Weather widget can reach them whether or not the clock shows weather.
 
-Every `InheritOverrideCard` on a facet-scoped screen (clock style, calendar, dock, home apps list) shows an *Edit defaults* link on the selected Inherit row; it opens the launcher-wide version of that screen (`onEditDefaults`, wired in `FacetNavHost`).
+The Home sheet no longer names a facet on its *Clock & calendar settings* row (the old scope badge): a clock's settings are always its own. Dock and Home apps list screens still carry an `InheritOverrideCard` with an *Edit defaults* link (`onEditDefaults`, wired in `FacetNavHost`).
 
 `HomeScreenStateBuilder` gates the items: the alarm and battery only when their switch is on, the weather
 (`HomeWeatherState`, from `ObserveWeatherUseCase`) only when its switch is on and the forecast is not outdated.

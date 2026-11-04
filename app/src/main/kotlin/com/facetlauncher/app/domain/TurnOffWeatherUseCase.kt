@@ -2,16 +2,20 @@ package com.facetlauncher.app.domain
 
 import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.SettingsRepository
-import kotlinx.coroutines.flow.first
 import javax.inject.Inject
+import kotlinx.coroutines.flow.first
 
-/** Turns weather off for the launcher default and for every facet, so nothing keeps asking for a place. */
+/** Turns weather off for every facet's clock (and the launcher's own switch), so nothing keeps asking for a place. */
 class TurnOffWeatherUseCase @Inject constructor(
     private val settingsRepository: SettingsRepository,
     private val facetRepository: FacetRepository,
+    private val updateClockConfig: UpdateClockConfigUseCase,
 ) {
     suspend operator fun invoke() {
         settingsRepository.setShowWeather(false)
-        facetRepository.observeFacets().first().filter { it.clockShowWeather }.forEach { facetRepository.setClockShowWeather(it.id, false) }
+        val settings = settingsRepository.settings.first()
+        facetRepository.observeFacets().first()
+            .filter { effectiveClockConfig(it, settings).showWeather }
+            .forEach { facet -> updateClockConfig(facet.id) { it.copy(showWeather = false) } }
     }
 }

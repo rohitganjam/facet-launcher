@@ -25,7 +25,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.facetlauncher.app.R
 import com.facetlauncher.app.ui.components.CardDivider
-import com.facetlauncher.app.ui.components.FacetScopeBadge
 import com.facetlauncher.app.ui.components.SettingsCard
 import com.facetlauncher.app.ui.components.SettingsIconBadge
 import com.facetlauncher.app.ui.components.SettingsIconBadgeInset
@@ -47,12 +46,6 @@ import com.facetlauncher.app.ui.theme.SurfaceContainer
  * settings destinations) of icon-badge rows on the dimmer sheet tone ([SurfaceContainer], set by
  * the host), with full-width press highlights.
  *
- * "Clock & calendar settings"'s own label text never changes; a trailing [FacetScopeBadge]
- * names which style set it edits instead — "Global" or the overriding facet's own real name — same
- * pattern as [com.facetlauncher.app.ui.components.QuickPlacementBadge] on the app context menu's
- * Favorites/Dock rows (decided explicitly by the user to apply that same badge logic here, over
- * folding the distinction into the sentence itself — see chat history).
- *
  * The widget rows follow the page showing (PRD F15's clock stack). On the clock page: its settings and "Replace
  * with custom widget". On a widget page: "Replace with clock" (hidden while [canReplaceWithClock] is false, as the
  * clock is already on another page) and "Replace custom widget". Replacing swaps the visible page in place and is
@@ -69,8 +62,6 @@ fun ClockAdjustSheet(
     onWidgetStackClick: () -> Unit,
     /** What the Widget stack row says is in the stack: "Clock", "3 pages", "Empty…". */
     stackSummary: String,
-    /** Non-null names the facet whose own clock styles are in effect right now; `null` means the launcher-wide default applies — see [FacetScopeBadge]. */
-    overrideFacetName: String?,
     modifier: Modifier = Modifier,
     /** What the page showing is: the clock, a hosted `AppWidget` (PRD F15), or nothing (an empty stack) — see this composable's own doc. */
     page: ClockSheetPage = ClockSheetPage.CLOCK,
@@ -98,7 +89,6 @@ fun ClockAdjustSheet(
                 onClockSettingsClick = onClockSettingsClick,
                 onReplaceWithWidgetClick = onReplaceWithWidgetClick,
                 onReplaceWithClockClick = onReplaceWithClockClick,
-                overrideFacetName = overrideFacetName,
                 page = page,
                 canReplaceWithClock = canReplaceWithClock,
             )
@@ -144,7 +134,6 @@ private fun ClockPageRows(
     onClockSettingsClick: () -> Unit,
     onReplaceWithWidgetClick: () -> Unit,
     onReplaceWithClockClick: () -> Unit,
-    overrideFacetName: String?,
     page: ClockSheetPage,
     canReplaceWithClock: Boolean,
 ) = Column {
@@ -157,7 +146,6 @@ private fun ClockPageRows(
             subtitle = stringResource(R.string.clock_adjust_clock_settings_subtitle),
             onClick = onClockSettingsClick,
             testTag = "clock_adjust_clock_settings",
-            trailingContent = { FacetScopeBadge(facetName = overrideFacetName) },
         )
         CardDivider(startInset = SettingsIconBadgeInset)
         AdjustRow(
@@ -228,7 +216,6 @@ private fun ClockAdjustSheetPreview() {
             onReplaceWithClockClick = {},
             onWidgetStackClick = {},
             stackSummary = "Clock",
-            overrideFacetName = null,
             modifier = Modifier.background(SurfaceContainer),
         )
     }
@@ -247,7 +234,6 @@ private fun ClockAdjustSheetCustomWidgetPreview() {
             onReplaceWithClockClick = {},
             onWidgetStackClick = {},
             stackSummary = "1 widget",
-            overrideFacetName = null,
             page = ClockSheetPage.WIDGET,
             modifier = Modifier.background(SurfaceContainer),
         )

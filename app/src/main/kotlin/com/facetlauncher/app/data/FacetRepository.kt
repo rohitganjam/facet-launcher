@@ -87,64 +87,6 @@ class FacetRepository @Inject constructor(
         update(facetId) { it.copy(name = newName) }
     }
 
-    /** Reverts this facet to inheriting the global default or switches to overriding. */
-    suspend fun setOverrideClock(facetId: Long, overriding: Boolean) {
-        update(facetId) { it.copy(overrideClock = overriding) }
-    }
-
-    suspend fun setClockTemplateId(facetId: Long, id: ClockTemplateId) {
-        update(facetId) { it.copy(clockTemplateId = id) }
-    }
-
-    suspend fun setClockFontOption(facetId: Long, option: ClockFontOption) {
-        update(facetId) { it.copy(clockFontOption = option) }
-    }
-
-    suspend fun setClockColorOption(facetId: Long, option: ClockColorOption) {
-        update(facetId) { it.copy(clockColorOption = option) }
-    }
-
-    /** See [Facet.clockAccentColorOption]. */
-    suspend fun setClockAccentColorOption(facetId: Long, option: ClockColorOption) {
-        update(facetId) { it.copy(clockAccentColorOption = option) }
-    }
-
-    suspend fun setUse24HourTime(facetId: Long, enabled: Boolean) {
-        update(facetId) { it.copy(use24HourTime = enabled) }
-    }
-
-    /** See [Facet.clockDateStyle]. */
-    suspend fun setClockDateStyle(facetId: Long, dateStyle: ClockDateStyle) {
-        update(facetId) { it.copy(clockDateStyle = dateStyle) }
-    }
-
-    suspend fun setClockShowMeridiem(facetId: Long, enabled: Boolean) {
-        update(facetId) { it.copy(clockShowMeridiem = enabled) }
-    }
-
-    /** See [Facet.clockShowAlarm]. */
-    suspend fun setClockShowAlarm(facetId: Long, enabled: Boolean) {
-        update(facetId) { it.copy(clockShowAlarm = enabled) }
-    }
-
-    suspend fun setClockShowBattery(facetId: Long, enabled: Boolean) {
-        update(facetId) { it.copy(clockShowBattery = enabled) }
-    }
-
-    suspend fun setClockShowWeather(facetId: Long, enabled: Boolean) {
-        update(facetId) { it.copy(clockShowWeather = enabled) }
-    }
-
-    /** See [Facet.clockWeatherLocation]; `null` follows Weather settings. */
-    suspend fun setClockWeatherLocation(facetId: Long, location: WidgetWeatherLocation?) {
-        update(facetId) { it.copy(clockWeatherLocation = location) }
-    }
-
-    /** See [Facet.clockWeatherIconStyle]. */
-    suspend fun setClockWeatherIconStyle(facetId: Long, style: WeatherIconStyle) {
-        update(facetId) { it.copy(clockWeatherIconStyle = style) }
-    }
-
     /**
      * Makes the clock placement the facet's own ([Facet.clockPlacementOwn]) with these values; [landscape]'s clock fields
      * are the landscape twins, `null` meaning "same as portrait". Other landscape fields are left alone.
@@ -175,46 +117,6 @@ class FacetRepository @Inject constructor(
         update(facetId) {
             it.copy(clockPlacementOwn = false, clockZoneHeightDp = null, clockAlignment = ClockAlignment.LEFT, clockScale = DEFAULT_CLOCK_SCALE)
                 .withLandscape(it.landscape.copy(clockZoneHeightDp = null, clockAlignment = null, clockScale = null))
-        }
-    }
-
-    /**
-     * Seeds the facet's clock *style* from the effective values and toggles the override flag. One toggle for the
-     * whole style and accessories block, which is one visual unit, not independent decisions: template, font, colours,
-     * date, time format and the alarm, battery and weather accessories. Placement (alignment, scale, divider) is not
-     * part of it: it is always the facet's own ([Facet.clockPlacementOwn]). The calendar *selection* is separate, see
-     * [updateOverridingCalendar]. One atomic write, to avoid clobbering.
-     */
-    suspend fun updateOverridingClock(
-        facetId: Long,
-        overriding: Boolean,
-        templateId: ClockTemplateId,
-        fontOption: ClockFontOption,
-        colorOption: ClockColorOption,
-        use24HourTime: Boolean,
-        showMeridiem: Boolean,
-        accentColorOption: ClockColorOption,
-        dateStyle: ClockDateStyle,
-        showAlarm: Boolean = true,
-        showBattery: Boolean = true,
-        showWeather: Boolean = false,
-        weatherIconStyle: WeatherIconStyle = WeatherIconStyle.COLORED,
-    ) {
-        update(facetId) {
-            it.copy(
-                overrideClock = overriding,
-                clockShowAlarm = showAlarm,
-                clockShowBattery = showBattery,
-                clockShowWeather = showWeather,
-                clockWeatherIconStyle = weatherIconStyle,
-                clockTemplateId = templateId,
-                clockFontOption = fontOption,
-                clockColorOption = colorOption,
-                use24HourTime = use24HourTime,
-                clockShowMeridiem = showMeridiem,
-                clockAccentColorOption = accentColorOption,
-                clockDateStyle = dateStyle,
-            )
         }
     }
 
@@ -307,52 +209,6 @@ class FacetRepository @Inject constructor(
      */
     suspend fun updateOverridingDock(facetId: Long, overriding: Boolean) {
         update(facetId) { it.copy(overrideDock = overriding) }
-    }
-
-    /** Reverts this facet to inheriting the global default or switches to overriding. */
-    suspend fun setOverrideCalendar(facetId: Long, overriding: Boolean) {
-        update(facetId) { it.copy(overrideCalendar = overriding) }
-    }
-
-    suspend fun setShowAllDayEvents(facetId: Long, enabled: Boolean) {
-        update(facetId) { it.copy(showAllDayEvents = enabled) }
-    }
-
-    suspend fun setShowCalendarIndicator(facetId: Long, enabled: Boolean) {
-        update(facetId) { it.copy(showCalendarIndicator = enabled) }
-    }
-
-    suspend fun setCalendarItemsToShow(facetId: Long, count: Int) {
-        update(facetId) { it.copy(calendarItemsToShow = count.coerceIn(CalendarDisplayOptions.MIN_ITEMS, CalendarDisplayOptions.MAX_ITEMS)) }
-    }
-
-    suspend fun setSelectedCalendarIds(facetId: Long, ids: Set<String>?) {
-        update(facetId) { it.copy(selectedCalendarIds = ids) }
-    }
-
-    /**
-     * Seeds the facet's calendar *selection* (which calendars, which kinds of events — content,
-     * not design) from effective values and toggles the override flag. Atomic upsert to avoid
-     * clobbering. See [updateOverridingClock] for the separate, merged Clock+Calendar *design*
-     * override this deliberately excludes (font/color moved there — see chat history).
-     */
-    suspend fun updateOverridingCalendar(
-        facetId: Long,
-        overriding: Boolean,
-        showAllDayEvents: Boolean,
-        selectedCalendarIds: Set<String>?,
-        showCalendarIndicator: Boolean,
-        calendarItemsToShow: Int,
-    ) {
-        update(facetId) {
-            it.copy(
-                overrideCalendar = overriding,
-                showAllDayEvents = showAllDayEvents,
-                showCalendarIndicator = showCalendarIndicator,
-                calendarItemsToShow = calendarItemsToShow,
-                selectedCalendarIds = selectedCalendarIds,
-            )
-        }
     }
 
     suspend fun deleteFacet(facetId: Long) {

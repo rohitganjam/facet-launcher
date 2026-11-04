@@ -14,7 +14,7 @@ import com.facetlauncher.app.domain.ClockAccessoryState
 import com.facetlauncher.app.data.model.ClockAlignment
 import com.facetlauncher.app.data.model.ClockStackItemKind
 import com.facetlauncher.app.data.model.NativeWidgetType
-import com.facetlauncher.app.domain.ResolvedClockStyle
+import com.facetlauncher.app.data.model.ClockWidgetConfig
 import com.facetlauncher.app.ui.home.weather.ResolvedWeatherUnits
 import com.facetlauncher.app.ui.home.weather.WeatherUiState
 import com.facetlauncher.app.ui.nativewidget.NativeWidgetState
@@ -59,7 +59,6 @@ data class HomeLiveState(
     val adjustMode: ClockAdjustMode = ClockAdjustMode.NONE,
     val draggingHandle: Boolean = false,
     val placementFacetId: Long? = null,
-    val styleOwnerFacetName: String? = null,
     /** The clock stack page showing; `null`, or one no longer in the stack, shows the first. */
     val visibleClockItemId: Long? = null,
     /** Without Pro only the first clock page shows. */
@@ -113,7 +112,6 @@ fun ResolvedFacetStyle.toHomeScreenState(
         launcherFontOption = settings.launcherFontOption,
         placement = clockPlacement.of(landscape).withPageAlignment(shownClockPages(live).let { it.getOrNull(it.visibleIndex(live.visibleClockItemId)) }, landscape),
         placementFacetId = live.placementFacetId,
-        styleOwnerFacetName = live.styleOwnerFacetName,
         adjustMode = live.adjustMode,
         draggingHandle = live.draggingHandle,
     ),
@@ -206,7 +204,7 @@ private fun ResolvedClockItem.toNativeWidgetState(type: NativeWidgetType, landsc
 }
 
 /** What the widgets Facet draws itself read: the full weather with its units, and the calendar and media Home already holds. */
-private fun HomeScreenState.withNativeWidgets(settings: LauncherSettings, weather: WeatherState?, clockStyle: ResolvedClockStyle): HomeScreenState {
+private fun HomeScreenState.withNativeWidgets(settings: LauncherSettings, weather: WeatherState?, clockStyle: ClockWidgetConfig): HomeScreenState {
     val locale = Locale.getDefault()
     val ui = WeatherUiState(
         weather = weather,
