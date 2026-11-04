@@ -1213,6 +1213,6 @@
     <string name="native_widget_calendar_off">Calendar access is off</string>
     <string name="native_widget_location_off">Location access is off</string>
     <string name="native_widget_allow">Allow</string>
-    <string name="hub_widget_config_work_calendar">Work calendar</string>
-    <string name="hub_widget_config_work_calendar_n">Work calendar %1$d</string>
+    <string name="calendar_work_calendar">Work calendar</string>
+    <string name="calendar_work_calendar_n">Work calendar %1$d</string>
 </resources>

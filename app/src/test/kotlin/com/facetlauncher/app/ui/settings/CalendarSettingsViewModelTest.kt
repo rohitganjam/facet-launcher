@@ -25,6 +25,8 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.mockito.ArgumentMatchers.any
@@ -65,6 +67,33 @@ class CalendarSettingsViewModelTest {
         runBlocking { `when`(calendarRepository.getUpcomingEvents(any(), anyBoolean())).thenReturn(todayEvents) }
         val savedStateHandle = if (facetId != null) SavedStateHandle(mapOf("facetId" to facetId)) else SavedStateHandle()
         return CalendarSettingsViewModel(savedStateHandle, settingsRepository, facetRepository, calendarPermissionRepository, calendarRepository, wallpaperRepository, AssignCalendarColorsUseCase())
+    }
+
+    @Test
+    fun `a work calendar is off until chosen and joins the personal ones when ticked`() = runTest {
+        // Given two personal calendars and a work one, with calendar access
+        val settingsRepository = mock(SettingsRepository::class.java)
+        val calendarPermissionRepository = mock(CalendarPermissionRepository::class.java)
+        `when`(calendarPermissionRepository.isGranted()).thenReturn(true)
+        val calendarRepository = mock(CalendarRepository::class.java)
+        runBlocking {
+            `when`(calendarRepository.getSelectableCalendars())
+                .thenReturn(listOf(CalendarInfo("1", "A", "a"), CalendarInfo("2", "B", "b"), CalendarInfo("work:1", "", "", isWork = true)))
+        }
+        val viewModel = createViewModel(settingsRepository = settingsRepository, calendarPermissionRepository = calendarPermissionRepository, calendarRepository = calendarRepository)
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Then with nothing chosen the personal ones show and the work one does not
+        assertTrue(viewModel.uiState.value.isCalendarSelected("1"))
+        assertFalse(viewModel.uiState.value.isCalendarSelected("work:1"))
+
+        // When ticking the work calendar
+        viewModel.setCalendarSelected("work:1", true)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Then it joins the personal calendars already showing
+        verify(settingsRepository).setSelectedCalendarIds(setOf("1", "2", "work:1"))
     }
 
     @Test
@@ -232,7 +261,7 @@ class CalendarSettingsViewModelTest {
         `when`(calendarPermissionRepository.isGranted()).thenReturn(true)
         val calendarRepository = mock(CalendarRepository::class.java)
         val calendars = listOf(CalendarInfo(id = "1", displayName = "Work", accountName = "work@example.com"))
-        `when`(calendarRepository.getCalendars()).thenReturn(calendars)
+        `when`(calendarRepository.getSelectableCalendars()).thenReturn(calendars)
 
         val viewModel = createViewModel(calendarPermissionRepository = calendarPermissionRepository, calendarRepository = calendarRepository)
         backgroundScope.launch { viewModel.uiState.collect {} }
@@ -247,7 +276,7 @@ class CalendarSettingsViewModelTest {
         val calendarPermissionRepository = mock(CalendarPermissionRepository::class.java)
         `when`(calendarPermissionRepository.isGranted()).thenReturn(true)
         val calendarRepository = mock(CalendarRepository::class.java)
-        `when`(calendarRepository.getCalendars()).thenReturn(emptyList())
+        `when`(calendarRepository.getSelectableCalendars()).thenReturn(emptyList())
         val events = listOf(CalendarEvent(id = 1, calendarId = "1", title = "Standup", startTimeMillis = 0, endTimeMillis = 1, isAllDay = false))
         val viewModel = createViewModel(
             calendarPermissionRepository = calendarPermissionRepository,
@@ -297,7 +326,7 @@ class CalendarSettingsViewModelTest {
             CalendarInfo(id = "1", displayName = "Work", accountName = "work@example.com"),
             CalendarInfo(id = "2", displayName = "Personal", accountName = "personal@example.com"),
         )
-        `when`(calendarRepository.getCalendars()).thenReturn(calendars)
+        `when`(calendarRepository.getSelectableCalendars()).thenReturn(calendars)
         val settingsRepository = mock(SettingsRepository::class.java)
 
         val viewModel = createViewModel(
@@ -325,7 +354,7 @@ class CalendarSettingsViewModelTest {
             CalendarInfo(id = "1", displayName = "Work", accountName = "work@example.com"),
             CalendarInfo(id = "2", displayName = "Personal", accountName = "personal@example.com"),
         )
-        `when`(calendarRepository.getCalendars()).thenReturn(calendars)
+        `when`(calendarRepository.getSelectableCalendars()).thenReturn(calendars)
         val settingsRepository = mock(SettingsRepository::class.java)
 
         val viewModel = createViewModel(
@@ -348,7 +377,7 @@ class CalendarSettingsViewModelTest {
         `when`(calendarPermissionRepository.isGranted()).thenReturn(true)
         val calendarRepository = mock(CalendarRepository::class.java)
         val calendars = listOf(CalendarInfo(id = "1", displayName = "Work", accountName = "work@example.com"))
-        `when`(calendarRepository.getCalendars()).thenReturn(calendars)
+        `when`(calendarRepository.getSelectableCalendars()).thenReturn(calendars)
         val settingsRepository = mock(SettingsRepository::class.java)
 
         val viewModel = createViewModel(

@@ -14,6 +14,7 @@ import com.facetlauncher.app.domain.resolveFacetStyle
 import com.facetlauncher.app.data.model.CalendarDisplayOptions
 import com.facetlauncher.app.data.model.CalendarEvent
 import com.facetlauncher.app.data.model.CalendarInfo
+import com.facetlauncher.app.data.model.selectsCalendar
 import com.facetlauncher.app.data.model.ClockAlignment
 import com.facetlauncher.app.data.model.HomeWallpaper
 import com.facetlauncher.app.data.model.LauncherSettings
@@ -62,7 +63,7 @@ data class CalendarSettingsUiState(
     /** The calendar's colour swatch, or `null` when the indicator is off (the picker then drops its colour dots too). */
     fun calendarSwatch(calendarId: String): AccentSwatch? =
         if (calendarDisplay.showIndicator) calendarColors[calendarId]?.let { runCatching { AccentSwatch.valueOf(it) }.getOrNull() } else null
-    fun isCalendarSelected(calendarId: String): Boolean = effectiveSelectedCalendarIds?.let { calendarId in it } ?: true
+    fun isCalendarSelected(calendarId: String): Boolean = effectiveSelectedCalendarIds.selectsCalendar(calendarId)
 }
 
 /**
@@ -145,7 +146,7 @@ class CalendarSettingsViewModel @Inject constructor(
         isCalendarAccessGranted.value = granted
         if (granted) {
             viewModelScope.launch {
-                val calendarList = calendarRepository.getCalendars()
+                val calendarList = calendarRepository.getSelectableCalendars()
                 calendars.value = calendarList
 
                 // Every calendar gets a stable bar color the moment this list loads — not just
@@ -202,7 +203,7 @@ class CalendarSettingsViewModel @Inject constructor(
     /** Toggling one calendar materializes an implicit "all selected" (`null`) into an explicit set first — writes the facet's own override when overriding, otherwise the global default (same routing [setShowAllDayEvents] already uses). */
     fun setCalendarSelected(calendarId: String, selected: Boolean) {
         val state = uiState.value
-        val current = state.effectiveSelectedCalendarIds ?: state.calendars.map { it.id }.toSet()
+        val current = state.calendars.filter { state.isCalendarSelected(it.id) }.map { it.id }.toSet()
         val updated = if (selected) current + calendarId else current - calendarId
         writeSelectedCalendarIds(state.facet, updated)
     }

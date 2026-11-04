@@ -32,8 +32,12 @@ import com.facetlauncher.app.data.model.NativeWidgetRef
 import com.facetlauncher.app.data.model.NativeWidgetType
 import com.facetlauncher.app.data.model.WeatherCity
 import com.facetlauncher.app.data.model.WidgetWeatherLocation
+import com.facetlauncher.app.data.model.selectsCalendar
 import com.facetlauncher.app.data.model.isSamePlaceAs
 import com.facetlauncher.app.ui.components.ThemedModalBottomSheet
+import com.facetlauncher.app.ui.components.calendarSubtitle
+import com.facetlauncher.app.ui.components.calendarTitle
+import com.facetlauncher.app.ui.components.workCalendarPosition
 import com.facetlauncher.app.ui.nativewidget.labelRes
 import com.facetlauncher.app.ui.theme.Accent
 import com.facetlauncher.app.ui.theme.Ink
@@ -93,9 +97,9 @@ internal fun NativeWidgetConfigContent(
 @Composable
 private fun AgendaConfig(config: NativeWidgetConfig, state: NativeWidgetConfigUiState, onConfigChange: (NativeWidgetConfig) -> Unit) {
     val showAllDay = config.showAllDayEvents ?: state.launcherShowAllDay
-    // With nothing chosen, an Agenda starts from the launcher's calendars, or every personal one; a work calendar is only ever opted into.
-    val chosen = config.calendarIds ?: state.launcherCalendarIds ?: state.calendars.filterNot { it.isWork }.map { it.id }.toSet()
-    val workCount = state.calendars.count { it.isWork }
+    // With nothing chosen, an Agenda starts from the launcher's calendars (the same rule the settings and the query use).
+    val source = config.calendarIds ?: state.launcherCalendarIds
+    val chosen = state.calendars.filter { source.selectsCalendar(it.id) }.map { it.id }.toSet()
     fun change(allDay: Boolean = showAllDay, ids: Set<String> = chosen) = onConfigChange(config.copy(showAllDayEvents = allDay, calendarIds = ids))
     Column {
         Row(
@@ -113,7 +117,7 @@ private fun AgendaConfig(config: NativeWidgetConfig, state: NativeWidgetConfigUi
         }
         SectionLabel(stringResource(R.string.hub_widget_config_calendars))
         if (state.calendars.isEmpty()) Text(text = stringResource(R.string.hub_widget_config_no_calendars), style = MaterialTheme.typography.bodyMedium, color = Muted)
-        state.calendars.forEachIndexed { index, calendar ->
+        state.calendars.forEach { calendar ->
             val selected = calendar.id in chosen
             Row(
                 modifier = Modifier
@@ -125,15 +129,8 @@ private fun AgendaConfig(config: NativeWidgetConfig, state: NativeWidgetConfigUi
             ) {
                 Checkbox(checked = selected, onCheckedChange = null, colors = CheckboxDefaults.colors(checkedColor = Accent))
                 Column(modifier = Modifier.padding(start = 12.dp)) {
-                    if (calendar.isWork) {
-                        val number = state.calendars.take(index + 1).count { it.isWork }
-                        val label = if (workCount > 1) stringResource(R.string.hub_widget_config_work_calendar_n, number) else stringResource(R.string.hub_widget_config_work_calendar)
-                        Text(text = label, style = MaterialTheme.typography.bodyLarge, color = Ink)
-                        Text(text = stringResource(R.string.facet_scope_work), style = MaterialTheme.typography.bodySmall, color = Muted)
-                    } else {
-                        Text(text = calendar.displayName, style = MaterialTheme.typography.bodyLarge, color = Ink)
-                        Text(text = calendar.accountName, style = MaterialTheme.typography.bodySmall, color = Muted)
-                    }
+                    Text(text = workCalendarPosition(calendar, state.calendars).let { (number, count) -> calendarTitle(calendar, number, count) }, style = MaterialTheme.typography.bodyLarge, color = Ink)
+                    Text(text = calendarSubtitle(calendar), style = MaterialTheme.typography.bodySmall, color = Muted)
                 }
             }
         }

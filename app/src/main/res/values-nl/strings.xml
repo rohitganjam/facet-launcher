@@ -1065,6 +1065,6 @@
     <string name="native_widget_calendar_off">Toegang tot agenda staat uit</string>
     <string name="native_widget_location_off">Toegang tot locatie staat uit</string>
     <string name="native_widget_allow">Toestaan</string>
-    <string name="hub_widget_config_work_calendar">Werkagenda</string>
-    <string name="hub_widget_config_work_calendar_n">Werkagenda %1$d</string>
+    <string name="calendar_work_calendar">Werkagenda</string>
+    <string name="calendar_work_calendar_n">Werkagenda %1$d</string>
 </resources>

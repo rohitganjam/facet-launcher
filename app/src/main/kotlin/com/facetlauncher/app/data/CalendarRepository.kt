@@ -8,6 +8,7 @@ import com.facetlauncher.app.data.di.IoDispatcher
 import com.facetlauncher.app.data.model.CalendarEvent
 import com.facetlauncher.app.data.model.CalendarInfo
 import com.facetlauncher.app.data.model.WORK_CALENDAR_ID_PREFIX
+import com.facetlauncher.app.data.model.selectsCalendar
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
@@ -50,6 +51,9 @@ open class CalendarRepository @Inject constructor(
         }.orEmpty()
     }
 
+    /** Every calendar the user can pick from: the personal ones, then the Work Profile's that its admin shares. */
+    open suspend fun getSelectableCalendars(): List<CalendarInfo> = getCalendars() + getWorkCalendars()
+
     /**
      * The Work Profile's calendars, when its admin lets this app read them (`setCrossProfileCalendarPackages`) and the user has turned on
      * showing work events: Android hides their names and accounts, so each is just an id, prefixed with [WORK_CALENDAR_ID_PREFIX], and
@@ -75,7 +79,7 @@ open class CalendarRepository @Inject constructor(
     open suspend fun getUpcomingEvents(calendarIds: Set<String>?, includeAllDay: Boolean): List<CalendarEvent> = withContext(ioDispatcher) {
         val (begin, end) = upcomingWindow()
         val today = LocalDate.now()
-        val personal = queryInstances(CalendarContract.Instances.CONTENT_URI, begin, end, "", today, includeAllDay) { calendarIds == null || it in calendarIds }
+        val personal = queryInstances(CalendarContract.Instances.CONTENT_URI, begin, end, "", today, includeAllDay) { calendarIds.selectsCalendar(it) }
         val wanted = calendarIds.orEmpty().filter { it.startsWith(WORK_CALENDAR_ID_PREFIX) }.toSet()
         val work = if (wanted.isEmpty()) emptyList() else runCatching {
             queryInstances(CalendarContract.Instances.ENTERPRISE_CONTENT_URI, begin, end, WORK_CALENDAR_ID_PREFIX, today, includeAllDay) { it in wanted }

@@ -59,7 +59,7 @@ class NativeWidgetConfigViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            calendars.value = if (calendarPermissionRepository.isGranted()) calendarRepository.getCalendars() + calendarRepository.getWorkCalendars() else emptyList()
+            calendars.value = if (calendarPermissionRepository.isGranted()) calendarRepository.getSelectableCalendars() else emptyList()
         }
     }
 

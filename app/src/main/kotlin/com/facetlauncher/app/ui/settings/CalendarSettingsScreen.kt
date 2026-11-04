@@ -52,6 +52,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.facetlauncher.app.R
 import com.facetlauncher.app.data.model.CalendarDisplayOptions
 import com.facetlauncher.app.data.model.CalendarInfo
+import com.facetlauncher.app.ui.components.calendarSubtitle
+import com.facetlauncher.app.ui.components.calendarTitle
+import com.facetlauncher.app.ui.components.workCalendarPosition
 import com.facetlauncher.app.ui.components.BackButton
 import com.facetlauncher.app.ui.components.CardDivider
 import com.facetlauncher.app.ui.components.InheritOverrideCard
@@ -282,6 +285,7 @@ private fun CalendarsCard(
                 uiState.calendars.forEach { calendar ->
                     CalendarPickerRow(
                         calendar = calendar,
+                        workPosition = workCalendarPosition(calendar, uiState.calendars),
                         swatch = uiState.calendarSwatch(calendar.id),
                         checked = uiState.isCalendarSelected(calendar.id),
                         onToggle = { onCalendarToggle(calendar.id, !uiState.isCalendarSelected(calendar.id)) },
@@ -310,7 +314,7 @@ private fun CalendarSettingsHeader(onBack: () -> Unit, modifier: Modifier = Modi
 }
 
 @Composable
-private fun CalendarPickerRow(calendar: CalendarInfo, swatch: AccentSwatch?, checked: Boolean, onToggle: () -> Unit, modifier: Modifier = Modifier) {
+private fun CalendarPickerRow(calendar: CalendarInfo, workPosition: Pair<Int, Int>, swatch: AccentSwatch?, checked: Boolean, onToggle: () -> Unit, modifier: Modifier = Modifier) {
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -330,8 +334,8 @@ private fun CalendarPickerRow(calendar: CalendarInfo, swatch: AccentSwatch?, che
             )
         }
         Column(modifier = Modifier.weight(1f)) {
-            Text(text = calendar.displayName, style = MaterialTheme.typography.bodyLarge, color = Ink)
-            Text(text = calendar.accountName, style = MaterialTheme.typography.bodyMedium, color = Muted)
+            Text(text = calendarTitle(calendar, workPosition.first, workPosition.second), style = MaterialTheme.typography.bodyLarge, color = Ink)
+            Text(text = calendarSubtitle(calendar), style = MaterialTheme.typography.bodyMedium, color = Muted)
         }
         Checkbox(
             checked = checked,

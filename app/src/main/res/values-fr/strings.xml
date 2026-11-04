@@ -1124,6 +1124,6 @@
     <string name="native_widget_calendar_off">L\'accès à l\'agenda est désactivé</string>
     <string name="native_widget_location_off">L\'accès à la position est désactivé</string>
     <string name="native_widget_allow">Autoriser</string>
-    <string name="hub_widget_config_work_calendar">Agenda professionnel</string>
-    <string name="hub_widget_config_work_calendar_n">Agenda professionnel %1$d</string>
+    <string name="calendar_work_calendar">Agenda professionnel</string>
+    <string name="calendar_work_calendar_n">Agenda professionnel %1$d</string>
 </resources>

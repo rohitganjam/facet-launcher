@@ -12,6 +12,13 @@ data class CalendarInfo(
 /** The id prefix of a Work Profile calendar or event, so its ids never meet a personal calendar's. */
 const val WORK_CALENDAR_ID_PREFIX = "work:"
 
+/**
+ * Whether the calendar [id] is selected by this set of chosen ids, the one rule the launcher's Calendar settings, an Agenda widget's
+ * settings and the event query all share: `null` means every personal calendar, and a Work Profile calendar is only ever selected when listed.
+ */
+fun Set<String>?.selectsCalendar(id: String): Boolean =
+    if (id.startsWith(WORK_CALENDAR_ID_PREFIX)) this?.contains(id) == true else this?.contains(id) ?: true
+
 /** One instance from [android.provider.CalendarContract.Instances], scoped to today. */
 data class CalendarEvent(
     val id: Long,

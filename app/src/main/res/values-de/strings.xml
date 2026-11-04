@@ -1124,6 +1124,6 @@
     <string name="native_widget_calendar_off">Kalenderzugriff ist aus</string>
     <string name="native_widget_location_off">Standortzugriff ist aus</string>
     <string name="native_widget_allow">Erlauben</string>
-    <string name="hub_widget_config_work_calendar">Arbeitskalender</string>
-    <string name="hub_widget_config_work_calendar_n">Arbeitskalender %1$d</string>
+    <string name="calendar_work_calendar">Arbeitskalender</string>
+    <string name="calendar_work_calendar_n">Arbeitskalender %1$d</string>
 </resources>
