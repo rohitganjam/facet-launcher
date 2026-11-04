@@ -98,7 +98,7 @@ internal fun AgendaNativeWidget(tier: WidgetTier, calendar: HomeCalendarState, o
                 if (showRoom) {
                     Text(
                         stringResource(R.string.native_widget_agenda), style = MaterialTheme.typography.titleMedium, color = Accent, maxLines = 1,
-                        modifier = Modifier.heightIn(min = HEADER_HEIGHT).testTag("agenda_header"),
+                        modifier = Modifier.padding(top = 4.dp, bottom = 10.dp).heightIn(min = HEADER_HEIGHT).testTag("agenda_header"),
                     )
                 }
                 val row: @Composable (AgendaLine) -> Unit = { line ->
