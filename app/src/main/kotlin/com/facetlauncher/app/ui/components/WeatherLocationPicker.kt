@@ -62,7 +62,7 @@ fun WeatherLocationPicker(
 @Composable
 private fun LocationRow(label: String, selected: Boolean, tag: String, enabled: Boolean, onClick: () -> Unit) {
     Row(
-        modifier = Modifier.fillMaxWidth().clickable(enabled = enabled, onClick = onClick).padding(vertical = 4.dp).testTag(tag),
+        modifier = Modifier.fillMaxWidth().clickable(enabled = enabled, onClick = onClick).padding(vertical = ROW_VERTICAL_PADDING).testTag(tag),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         RadioButton(selected = selected, onClick = null, enabled = enabled, colors = RadioButtonDefaults.colors(selectedColor = Accent))
@@ -74,3 +74,6 @@ private fun LocationRow(label: String, selected: Boolean, tag: String, enabled: 
         )
     }
 }
+
+/** Space above and below each choice, so the list is easy to read and to tap in a settings card and in a widget's sheet alike. */
+private val ROW_VERTICAL_PADDING = 10.dp
