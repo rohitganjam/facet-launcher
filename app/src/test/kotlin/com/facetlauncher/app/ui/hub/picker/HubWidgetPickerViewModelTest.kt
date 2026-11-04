@@ -1,5 +1,6 @@
 package com.facetlauncher.app.ui.hub.picker
 
+import com.facetlauncher.app.data.model.NativeWidgetType
 import android.appwidget.AppWidgetProviderInfo
 import android.content.ComponentName
 import android.content.Intent
@@ -360,5 +361,49 @@ class HubWidgetPickerViewModelTest {
         verify(appWidgetRepository, org.mockito.Mockito.times(2)).getWidgetProviderOptions()
 
         uiStateJob.cancel()
+    }
+
+    @Test
+    fun `selecting a Facet widget places it at its default span with a negative id and no host binding`() = runTest {
+        val appWidgetRepository = mock(AppWidgetRepository::class.java)
+        val widgetPlacementRepository = mock(WidgetPlacementRepository::class.java)
+        val placeWidget = mock(PlaceWidgetUseCase::class.java)
+        `when`(widgetPlacementRepository.observeAll()).thenReturn(flowOf(emptyList()))
+        `when`(widgetPlacementRepository.nextNativeId()).thenReturn(-1)
+        `when`(placeWidget.invoke(emptyList(), 3, 2)).thenReturn(PlaceWidgetResult.Placed(row = 1, col = 0))
+        val viewModel = HubWidgetPickerViewModel(appWidgetRepository, widgetPlacementRepository, placeWidget)
+        val events = mutableListOf<HubAddWidgetEvent>()
+        val job = launch { viewModel.events.collect { events.add(it) } }
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        viewModel.onNativeWidgetSelect(NativeWidgetType.AGENDA)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(listOf(HubAddWidgetEvent.WidgetAdded), events)
+        verify(widgetPlacementRepository).upsert(
+            WidgetPlacementEntity(appWidgetId = -1, providerPackageName = "", providerClassName = "", row = 1, col = 0, colSpan = 3, rowSpan = 2, nativeWidgetType = NativeWidgetType.AGENDA),
+        )
+        verify(appWidgetRepository, never()).allocateAppWidgetId()
+        job.cancel()
+    }
+
+    @Test
+    fun `selecting a Facet widget on a full Hub fails with HUB_FULL and writes nothing`() = runTest {
+        val appWidgetRepository = mock(AppWidgetRepository::class.java)
+        val widgetPlacementRepository = mock(WidgetPlacementRepository::class.java)
+        val placeWidget = mock(PlaceWidgetUseCase::class.java)
+        val full = List(HUB_MAX_WIDGETS) { WidgetPlacementEntity(it + 1, "p", "c", row = it, col = 0, colSpan = 1, rowSpan = 1) }
+        `when`(widgetPlacementRepository.observeAll()).thenReturn(flowOf(full))
+        val viewModel = HubWidgetPickerViewModel(appWidgetRepository, widgetPlacementRepository, placeWidget)
+        val events = mutableListOf<HubAddWidgetEvent>()
+        val job = launch { viewModel.events.collect { events.add(it) } }
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        viewModel.onNativeWidgetSelect(NativeWidgetType.WEATHER)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(listOf(HubAddWidgetEvent.AddFailed(AddFailureReason.HUB_FULL)), events)
+        verify(widgetPlacementRepository, never()).upsert(full.first())
+        job.cancel()
     }
 }

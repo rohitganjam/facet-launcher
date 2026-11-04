@@ -1,5 +1,6 @@
 package com.facetlauncher.app.data
 
+import com.facetlauncher.app.data.model.NativeWidgetType
 import com.facetlauncher.app.data.local.WidgetPlacementDao
 import com.facetlauncher.app.data.local.WidgetPlacementEntity
 import kotlinx.coroutines.flow.Flow
@@ -18,6 +19,12 @@ private class FakeWidgetPlacementDao : WidgetPlacementDao {
     override fun observeAll(): Flow<List<WidgetPlacementEntity>> = state
 
     override suspend fun getById(appWidgetId: Int): WidgetPlacementEntity? = state.value.find { it.appWidgetId == appWidgetId }
+
+    override suspend fun deleteAllNative() {
+        state.value = state.value.filterNot { it.nativeWidgetType != null }
+    }
+
+    override suspend fun minAppWidgetId(): Int? = state.value.minOfOrNull { it.appWidgetId }
 
     override suspend fun upsert(placement: WidgetPlacementEntity) {
         state.value = state.value.filterNot { it.appWidgetId == placement.appWidgetId } + placement
@@ -96,5 +103,33 @@ class WidgetPlacementRepositoryTest {
         val remaining = repository.observeAll().first()
         assertEquals(1, remaining.size)
         assertEquals(2, remaining.single().appWidgetId)
+    }
+
+    @Test
+    fun `nextNativeId is negative and below every stored id`() = runTest {
+        // Given hosted widgets and one native widget already stored
+        val repository = WidgetPlacementRepository(FakeWidgetPlacementDao())
+        assertEquals(-1, repository.nextNativeId())
+        repository.upsert(placement(appWidgetId = 40))
+        assertEquals(-1, repository.nextNativeId())
+        repository.upsert(placement(appWidgetId = -1))
+        repository.upsert(placement(appWidgetId = -2))
+
+        // When asking for the next id, then it is one below the lowest
+        assertEquals(-3, repository.nextNativeId())
+    }
+
+    @Test
+    fun `deleteAllNative removes the widgets Facet draws itself and keeps hosted ones`() = runTest {
+        // Given a hosted widget and a native one
+        val repository = WidgetPlacementRepository(FakeWidgetPlacementDao())
+        repository.upsert(placement(appWidgetId = 4))
+        repository.upsert(placement(appWidgetId = -1).copy(nativeWidgetType = NativeWidgetType.WEATHER))
+
+        // When the native ones are cleared
+        repository.deleteAllNative()
+
+        // Then only the hosted one is left
+        assertEquals(listOf(4), repository.observeAll().first().map { it.appWidgetId })
     }
 }

@@ -1108,4 +1108,10 @@
     <string name="accessibility_service_label">Facet doble toque para bloquear</string>
     <string name="accessibility_service_description">Bloquea la pantalla cuando tocas dos veces un espacio vacío de la pantalla de inicio. No lee el contenido de la pantalla.</string>
     <string name="about_weather_credit">Datos del tiempo de MET Norway (CC BY 4.0). Nombres de ciudades de GeoNames (CC BY 4.0).</string>
+    <string name="native_widget_weather">Tiempo</string>
+    <string name="native_widget_agenda">Agenda</string>
+    <string name="native_widget_now_playing">Reproduciendo</string>
+    <string name="native_widget_agenda_empty">No hay eventos próximos</string>
+    <string name="native_widget_media_empty">Nada en reproducción</string>
+    <string name="native_widget_picker_section">Widgets de Facet</string>
 </resources>

@@ -1,5 +1,6 @@
 package com.facetlauncher.app.domain
 
+import com.facetlauncher.app.data.ClockStackRepository
 import android.net.Uri
 import com.facetlauncher.app.data.BackupRepository
 import com.facetlauncher.app.data.FacetRepository
@@ -56,7 +57,7 @@ class WeatherBackupTest {
 
     private val importUseCase = ImportBackupUseCase(
         backupRepository, settingsRepository, facetRepository, placementRepository, folderRepository,
-        mock(RepairOrphanedProfileRowsUseCase::class.java),
+        mock(RepairOrphanedProfileRowsUseCase::class.java), mock(ClockStackRepository::class.java), widgetPlacementRepository,
     )
 
     @Test

@@ -64,6 +64,7 @@ open class CalendarRepository @Inject constructor(
             CalendarContract.Instances.BEGIN,
             CalendarContract.Instances.END,
             CalendarContract.Instances.ALL_DAY,
+            CalendarContract.Instances.EVENT_LOCATION,
         )
         val events = CalendarContract.Instances.query(contentResolver, projection, begin, end)?.use { cursor ->
             val eventIdCol = cursor.getColumnIndexOrThrow(CalendarContract.Instances.EVENT_ID)
@@ -72,6 +73,7 @@ open class CalendarRepository @Inject constructor(
             val beginCol = cursor.getColumnIndexOrThrow(CalendarContract.Instances.BEGIN)
             val endCol = cursor.getColumnIndexOrThrow(CalendarContract.Instances.END)
             val allDayCol = cursor.getColumnIndexOrThrow(CalendarContract.Instances.ALL_DAY)
+            val locationCol = cursor.getColumnIndexOrThrow(CalendarContract.Instances.EVENT_LOCATION)
             buildList {
                 while (cursor.moveToNext()) {
                     val calendarId = cursor.getLong(calendarIdCol).toString()
@@ -87,6 +89,7 @@ open class CalendarRepository @Inject constructor(
                             startTimeMillis = cursor.getLong(beginCol),
                             endTimeMillis = cursor.getLong(endCol),
                             isAllDay = isAllDay,
+                            location = cursor.getString(locationCol).orEmpty(),
                         ),
                     )
                 }

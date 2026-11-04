@@ -16,13 +16,13 @@ app/src/main/kotlin/com/facetlauncher/app/
 │   ├── local/                     (21)  Room: FacetDatabase, 8 entities, 8 DAOs, Converters, Migrations
 │   ├── places/                    (4)   Place names and cities: CityRepository over the bundled CityList (assets/cities.tsv), PlaceGeocoder + AndroidPlaceGeocoder (the device Geocoder), GeoDistance
 │   ├── weather/                   (6)   The weather forecast: MetWeatherApi (the only network code), MetForecastParser, WeatherRefreshPolicy (the refresh gate), WeatherRepository, WeatherStore + RoomWeatherStore (see 18)
-│   ├── model/                     (49)  Immutable value types & enums shared by every layer
+│   ├── model/                     (51)  Immutable value types & enums shared by every layer
 │   │                                    (AppInfo, PlacedItem, PlacementList, PlacementTarget, LauncherSettings, AppProfile, Clock*Option,
 │   │                                    FacetDeepLink's build/parse pair, …)
 │   ├── widget/                    (2)   AppWidgetRepository + LauncherAppWidgetHost (AppWidgetHost subclass)
 │   └── FacetNotificationListenerService.kt   @AndroidEntryPoint service feeding NotificationBadgeRepository (its component is also what MediaSessionRepository reads sessions through)
 │
-├── domain/                        (64)  54 *UseCase classes + FlowCombine.kt, HubGridConstants.kt, BackupMapping.kt, WeatherUnits.kt, WeatherDay.kt, RainSummary.kt
+├── domain/                        (65)  54 *UseCase classes + FlowCombine.kt, HubGridConstants.kt, NativeWidgetSizing.kt, BackupMapping.kt, WeatherUnits.kt, WeatherDay.kt, RainSummary.kt
 │                                        Composes ≥1 repositories, or pure logic (grid placement, ranking, grouping)
 │
 └── ui/
@@ -49,6 +49,7 @@ app/src/main/kotlin/com/facetlauncher/app/
     │   └── widget/                (3)   ClockWidgetPickerScreen / ClockWidgetPickerViewModel / ClockWidgetPickerTarget (custom clock widget bind flow; Replace a page or Add one)
     ├── drawer/                    (6)   AppDrawerScreen / DrawerViewModel, AlphabetRail, ContactConnectionsSheet,
     │                                    PrivateSpaceScreen / PrivateSpaceViewModel
+    ├── nativewidget/              (8)   The widgets Facet draws itself ([20](20-flow-native-widgets.md)): `NativeWidget` (size → tier → content), `WeatherNativeWidget`, `AgendaNativeWidget`, `NowPlayingNativeWidget`, `NativeWidgetState` (state, actions, Hub environment), `NativeWidgetPickerSection`, `LongPressFallback`, previews
     ├── hub/                       (13)  HubScreen / HubViewModel / HubUiState, HubGrid, widget tiles, resize/grab gestures
     │   └── picker/                (3)   HubWidgetPickerScreen / ViewModel / UiState
     ├── facets/                    (9)   FacetCarousel, FacetSettings, ManageFacets, FavoritesPicker (screen + VM each)

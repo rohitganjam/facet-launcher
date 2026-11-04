@@ -1,5 +1,8 @@
 package com.facetlauncher.app.ui.hub.picker
 
+import com.facetlauncher.app.ui.nativewidget.ALL_NATIVE_WIDGETS
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.ImmutableList
 import android.content.res.Configuration
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.IntentSenderRequest
@@ -61,6 +64,8 @@ import com.facetlauncher.app.ui.components.BackButton
 import com.facetlauncher.app.ui.components.StickyHeaderLayout
 import com.facetlauncher.app.ui.components.OtherScopeBadge
 import com.facetlauncher.app.ui.components.WorkScopeBadge
+import com.facetlauncher.app.data.model.NativeWidgetType
+import com.facetlauncher.app.ui.nativewidget.NativeWidgetPickerSection
 import com.facetlauncher.app.ui.theme.ErrorColor
 import com.facetlauncher.app.ui.theme.Hairline
 import com.facetlauncher.app.ui.theme.Ink
@@ -122,6 +127,8 @@ fun HubWidgetPickerScreen(
         onProviderSelect = viewModel::onProviderSelect,
         onBack = onDone,
         modifier = modifier,
+        nativeWidgets = ALL_NATIVE_WIDGETS,
+        onNativeWidgetSelect = viewModel::onNativeWidgetSelect,
     )
 }
 
@@ -135,6 +142,9 @@ internal fun HubWidgetPickerContent(
     failureMessage: String? = null,
     /** `null` (the default) keeps the Hub's own "Add widget" title — PRD F15's clock widget picker overrides it. */
     title: String? = null,
+    /** The widgets Facet draws itself, offered first. */
+    nativeWidgets: ImmutableList<NativeWidgetType> = persistentListOf(),
+    onNativeWidgetSelect: (NativeWidgetType) -> Unit = {},
 ) {
     BoxWithConstraints(
         modifier = modifier
@@ -172,6 +182,9 @@ internal fun HubWidgetPickerContent(
                                 modifier = Modifier.fillMaxWidth().testTag("hub_widget_picker_error").padding(bottom = 12.dp),
                             )
                         }
+                    }
+                    if (uiState.query.isBlank()) {
+                        item { NativeWidgetPickerSection(types = nativeWidgets, onSelect = onNativeWidgetSelect) }
                     }
                     items(uiState.groups, key = { it.appLabel }) { group ->
                         WidgetProviderGroupRow(group = group, tileWidth = tileWidth, onProviderSelect = onProviderSelect)

@@ -1,5 +1,6 @@
 package com.facetlauncher.app.ui.home.widget
 
+import com.facetlauncher.app.data.model.NativeWidgetType
 import android.appwidget.AppWidgetProviderInfo
 import android.content.ComponentName
 import android.content.Intent
@@ -221,5 +222,30 @@ class ClockWidgetPickerViewModelTest {
 
         assertEquals(HubAddWidgetEvent.WidgetAdded, events.last())
         verify(replaceClockStackItem).withWidget(5L, 8)
+    }
+
+    @Test
+    fun `a Facet widget replaces the page without binding anything`() = runTest {
+        `when`(replaceClockStackItem.withNativeWidget(5L, NativeWidgetType.WEATHER)).thenReturn(true)
+        val viewModel = viewModel()
+        val events = collect(viewModel)
+
+        viewModel.onNativeWidgetSelect(NativeWidgetType.WEATHER, ClockWidgetPickerTarget.Replace(5L))
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(listOf(HubAddWidgetEvent.WidgetAdded), events)
+        verify(appWidgetRepository, never()).allocateAppWidgetId()
+    }
+
+    @Test
+    fun `a Facet widget add that finds the stack full emits AddFailed`() = runTest {
+        `when`(addClockStackItem.addNativeWidget(9L, NativeWidgetType.AGENDA)).thenReturn(AddClockStackItemResult.LIMIT_REACHED)
+        val viewModel = viewModel()
+        val events = collect(viewModel)
+
+        viewModel.onNativeWidgetSelect(NativeWidgetType.AGENDA, ClockWidgetPickerTarget.Add(9L))
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(listOf(HubAddWidgetEvent.AddFailed(AddFailureReason.SETUP_CANCELLED)), events)
     }
 }

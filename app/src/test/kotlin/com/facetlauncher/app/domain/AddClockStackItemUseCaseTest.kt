@@ -1,5 +1,6 @@
 package com.facetlauncher.app.domain
 
+import com.facetlauncher.app.data.model.NativeWidgetType
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import com.facetlauncher.app.data.ClockStackRepository
@@ -108,5 +109,12 @@ class AddClockStackItemUseCaseTest {
         // Then nothing is removed, but there is no room to add more
         assertEquals(2, repository.getAll(facetId).size)
         assertFalse(useCase().hasRoom(facetId))
+    }
+
+    @Test
+    fun `a free facet with an empty stack can add one Facet widget and then no more`() = runTest {
+        assertEquals(AddClockStackItemResult.ADDED, useCase().addNativeWidget(facetId, NativeWidgetType.WEATHER))
+        assertEquals(AddClockStackItemResult.LIMIT_REACHED, useCase().addNativeWidget(facetId, NativeWidgetType.AGENDA))
+        assertEquals(listOf(ClockStackItemKind.NATIVE_WIDGET), kinds())
     }
 }

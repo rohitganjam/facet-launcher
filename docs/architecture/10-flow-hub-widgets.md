@@ -5,6 +5,8 @@ The Hub is Facet's widget surface: a 5-column grid (`HUB_COLUMNS = 5`, `HUB_MAX_
 Two stores cooperate: the **system** `AppWidgetService` owns bindings (which `appWidgetId` maps to
 which provider), Facet's Room `widget_placements` owns *where* each id sits.
 
+The Hub also holds widgets the app draws itself (weather, agenda, now playing). They share `widget_placements`, and so the move, resize, delete and landscape paths below, but have a negative id, no provider and no orphan state; see [20](20-flow-native-widgets.md).
+
 ## 1. Who owns what
 
 ```mermaid

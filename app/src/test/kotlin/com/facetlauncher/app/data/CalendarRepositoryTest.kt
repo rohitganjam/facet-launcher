@@ -50,10 +50,11 @@ class CalendarRepositoryTest {
                 CalendarContract.Instances.BEGIN,
                 CalendarContract.Instances.END,
                 CalendarContract.Instances.ALL_DAY,
+                CalendarContract.Instances.EVENT_LOCATION,
             ),
         )
         rows.forEach { row ->
-            cursor.addRow(arrayOf<Any>(row.eventId, row.calendarId, row.title, row.beginMillis, row.endMillis, if (row.allDay) 1 else 0))
+            cursor.addRow(arrayOf<Any?>(row.eventId, row.calendarId, row.title, row.beginMillis, row.endMillis, if (row.allDay) 1 else 0, row.location))
         }
         return cursor
     }
@@ -65,6 +66,7 @@ class CalendarRepositoryTest {
         val beginMillis: Long,
         val endMillis: Long = beginMillis + 1_000L,
         val allDay: Boolean,
+        val location: String? = null,
     )
 
     private fun stubInstances(rows: List<InstanceRow>) {
@@ -113,6 +115,23 @@ class CalendarRepositoryTest {
         // Then they come back ordered by start time, end time carried through unchanged
         assertEquals(listOf("Earlier", "Later"), result.map { it.title })
         assertEquals(listOf(1_500L, 2_500L), result.map { it.endTimeMillis })
+    }
+
+    @Test
+    fun `getUpcomingEvents carries the location through, blank when there is none`() = runTest {
+        // Given one event with a location and one without
+        stubInstances(
+            listOf(
+                InstanceRow(eventId = 1, calendarId = 1, title = "Scrum", beginMillis = 1_000L, allDay = false, location = "BLR-Innovate-2-Marie Curie (4)"),
+                InstanceRow(eventId = 2, calendarId = 1, title = "Demo", beginMillis = 2_000L, allDay = false, location = null),
+            ),
+        )
+
+        // When fetching events
+        val result = repository.getUpcomingEvents(calendarIds = null, includeAllDay = true)
+
+        // Then the location is mapped and a missing one is empty
+        assertEquals(listOf("BLR-Innovate-2-Marie Curie (4)", ""), result.map { it.location })
     }
 
     @Test

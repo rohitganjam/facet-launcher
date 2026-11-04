@@ -7,6 +7,7 @@ import androidx.room.PrimaryKey
 import com.facetlauncher.app.data.model.ClockAlignment
 import com.facetlauncher.app.data.model.ClockStackItem
 import com.facetlauncher.app.data.model.ClockStackItemKind
+import com.facetlauncher.app.data.model.NativeWidgetType
 
 /** One item of a facet's clock stack, ordered by [position]; see [ClockStackItem]. A facet with no rows has the plain native clock. */
 @Entity(
@@ -20,6 +21,7 @@ data class ClockStackItemEntity(
     val position: Int,
     val kind: ClockStackItemKind,
     val appWidgetId: Int? = null,
+    val nativeWidgetType: NativeWidgetType? = null,
     val widthDp: Int? = null,
     val heightDp: Int? = null,
     val alignment: ClockAlignment? = null,
@@ -29,7 +31,7 @@ data class ClockStackItemEntity(
 )
 
 fun ClockStackItemEntity.toModel() = ClockStackItem(
-    id = id, facetId = facetId, position = position, kind = kind, appWidgetId = appWidgetId,
+    id = id, facetId = facetId, position = position, kind = kind, appWidgetId = appWidgetId, nativeWidgetType = nativeWidgetType,
     widthDp = widthDp, heightDp = heightDp, alignment = alignment,
     landscapeWidthDp = landscapeWidthDp, landscapeHeightDp = landscapeHeightDp, landscapeAlignment = landscapeAlignment,
 )

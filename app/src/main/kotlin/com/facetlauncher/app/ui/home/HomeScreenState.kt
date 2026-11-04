@@ -20,6 +20,8 @@ import com.facetlauncher.app.data.model.AppRowPresentation
 import com.facetlauncher.app.data.model.CalendarDisplayOptions
 import com.facetlauncher.app.data.model.CalendarEvent
 import com.facetlauncher.app.data.model.ClockAlignment
+import com.facetlauncher.app.data.model.NativeWidgetType
+import com.facetlauncher.app.ui.nativewidget.NativeWidgetState
 import com.facetlauncher.app.data.model.ClockColorOption
 import com.facetlauncher.app.data.model.ClockDateStyle
 import com.facetlauncher.app.data.model.ClockFontOption
@@ -81,6 +83,8 @@ data class HomeClockWidgetState(
     val minHeightDp: Dp?,
     /** The provider's app was uninstalled: Home draws a placeholder with a Remove action instead of the widget. */
     val isOrphaned: Boolean = false,
+    /** Set for a widget Facet draws itself; [appWidgetId] is then a negative id of its own and no provider is involved. */
+    val nativeType: NativeWidgetType? = null,
 )
 
 /** A clock stack page next to the visible one: its own widget (`null` for the native clock) and alignment. */
@@ -178,6 +182,7 @@ data class HomeScreenState(
     val clockStack: HomeClockStackState = HomeClockStackState(),
     val calendar: HomeCalendarState = HomeCalendarState(),
     val media: HomeMediaState = HomeMediaState(),
+    val nativeWidgets: NativeWidgetState = NativeWidgetState(),
 )
 
 /** What the clock block and its adjust mode report or ask for. */

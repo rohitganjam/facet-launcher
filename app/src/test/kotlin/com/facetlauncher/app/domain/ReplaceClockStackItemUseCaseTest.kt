@@ -1,5 +1,6 @@
 package com.facetlauncher.app.domain
 
+import com.facetlauncher.app.data.model.NativeWidgetType
 import com.facetlauncher.app.data.ClockStackRepository
 import com.facetlauncher.app.data.ReplacedItem
 import com.facetlauncher.app.data.widget.AppWidgetRepository
@@ -80,6 +81,27 @@ class ReplaceClockStackItemUseCaseTest {
 
         // Then nothing is released
         assertFalse(replaced)
+        verifyNoInteractions(appWidgetRepository)
+    }
+
+    @Test
+    fun `withNativeWidget releases the host id the replaced page held`() = runTest {
+        // Given a page that held hosted widget 10
+        `when`(clockStackRepository.replaceWithNativeWidget(5L, NativeWidgetType.AGENDA)).thenReturn(ReplacedItem(releasedAppWidgetId = 10))
+
+        // When a Facet widget replaces it
+        val replaced = useCase.withNativeWidget(5L, NativeWidgetType.AGENDA)
+
+        // Then the old id is released
+        assertTrue(replaced)
+        verify(appWidgetRepository).deleteAppWidgetId(10)
+    }
+
+    @Test
+    fun `withNativeWidget reports a page that no longer exists`() = runTest {
+        `when`(clockStackRepository.replaceWithNativeWidget(5L, NativeWidgetType.AGENDA)).thenReturn(null)
+
+        assertFalse(useCase.withNativeWidget(5L, NativeWidgetType.AGENDA))
         verifyNoInteractions(appWidgetRepository)
     }
 }

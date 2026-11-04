@@ -13,6 +13,14 @@ import com.facetlauncher.app.data.model.WeatherIconStyle
 import com.facetlauncher.app.domain.ClockAccessoryState
 import com.facetlauncher.app.data.model.ClockAlignment
 import com.facetlauncher.app.data.model.ClockStackItemKind
+import com.facetlauncher.app.data.model.NativeWidgetType
+import com.facetlauncher.app.domain.ResolvedClockStyle
+import com.facetlauncher.app.ui.home.weather.ResolvedWeatherUnits
+import com.facetlauncher.app.ui.home.weather.WeatherUiState
+import com.facetlauncher.app.ui.nativewidget.NativeWidgetState
+import com.facetlauncher.app.data.model.isWidget
+import com.facetlauncher.app.domain.defaultSizeDp
+import com.facetlauncher.app.domain.minSizeDp
 import com.facetlauncher.app.domain.ClockPlacement
 import com.facetlauncher.app.domain.ResolvedClockItem
 import com.facetlauncher.app.domain.ResolvedFacetStyle
@@ -132,7 +140,7 @@ fun ResolvedFacetStyle.toHomeScreenState(
         weather = content.weather?.takeIf { clock.showWeather && !it.isOutdated }?.toHomeWeather(settings, clock.weatherIconStyle),
     ),
     media = HomeMediaState(player = content.mediaPlayer, showSkipButtons = settings.showMediaSkipButtons),
-)
+).withNativeWidgets(settings, content.weather, clock)
 
 private fun WeatherState.toHomeWeather(settings: LauncherSettings, iconStyle: WeatherIconStyle) = HomeWeatherState(
     symbolCode = now.symbolCode,
@@ -144,13 +152,13 @@ private fun WeatherState.toHomeWeather(settings: LauncherSettings, iconStyle: We
 
 /** A widget page keeps its own alignment, the clock page the facet's: `null` or an unset alignment leaves [this] as resolved. */
 private fun ClockPlacement.withPageAlignment(page: ResolvedClockItem?, landscape: Boolean): ClockPlacement =
-    page?.takeIf { it.kind == ClockStackItemKind.WIDGET }?.alignment?.of(landscape)?.let { copy(alignment = it) } ?: this
+    page?.takeIf { it.kind.isWidget }?.alignment?.of(landscape)?.let { copy(alignment = it) } ?: this
 
 /** A page as drawn beside the visible one: a widget page keeps its own alignment, the clock page uses the facet's [clockAlignment]. */
 private fun ResolvedClockItem.toNeighbor(clockAlignment: ClockAlignment, landscape: Boolean, widgetSizing: HomeWidgetSizing) = HomeClockNeighbor(
     itemId = id,
     widget = toWidgetState(landscape, widgetSizing),
-    alignment = if (kind == ClockStackItemKind.WIDGET) alignment.of(landscape) ?: clockAlignment else clockAlignment,
+    alignment = if (kind.isWidget) alignment.of(landscape) ?: clockAlignment else clockAlignment,
 )
 
 /** The clock pages Home shows: all of them with Pro, else the first. */
@@ -163,7 +171,10 @@ internal fun List<ResolvedClockItem>.visibleIndex(itemId: Long?): Int = indexOfF
 private val ORPHANED_WIDGET_SIZE_DP = 160 to 110
 
 /** The hosted widget a stack page draws; `null` for the native clock. */
-private fun ResolvedClockItem.toWidgetState(landscape: Boolean, widgetSizing: HomeWidgetSizing): HomeClockWidgetState? {
+private fun ResolvedClockItem.toWidgetState(landscape: Boolean, widgetSizing: HomeWidgetSizing): HomeClockWidgetState? =
+    nativeWidgetType?.let { toNativeWidgetState(it, landscape) } ?: toHostedWidgetState(landscape, widgetSizing)
+
+private fun ResolvedClockItem.toHostedWidgetState(landscape: Boolean, widgetSizing: HomeWidgetSizing): HomeClockWidgetState? {
     val widgetId = appWidgetId ?: return null
     val orphaned = widgetSizing.isOrphaned(widgetId)
     val size = sizeDp.of(landscape) ?: widgetSizing.defaultSizeDp(widgetId) ?: ORPHANED_WIDGET_SIZE_DP.takeIf { orphaned }
@@ -177,4 +188,36 @@ private fun ResolvedClockItem.toWidgetState(landscape: Boolean, widgetSizing: Ho
         minWidthDp = floor?.first?.dp,
         minHeightDp = floor?.second?.dp,
     )
+}
+
+/** A native page has no provider to ask, so its size, floor and id come from its type; the id is negative so it never meets a host-issued one. */
+private fun ResolvedClockItem.toNativeWidgetState(type: NativeWidgetType, landscape: Boolean): HomeClockWidgetState {
+    val size = sizeDp.of(landscape) ?: type.defaultSizeDp()
+    val floor = type.minSizeDp()
+    return HomeClockWidgetState(
+        itemId = id,
+        appWidgetId = -id.toInt() - 1,
+        widthDp = size.first.dp,
+        heightDp = size.second.dp,
+        minWidthDp = floor.first.dp,
+        minHeightDp = floor.second.dp,
+        nativeType = type,
+    )
+}
+
+/** What the widgets Facet draws itself read: the full weather with its units, and the calendar and media Home already holds. */
+private fun HomeScreenState.withNativeWidgets(settings: LauncherSettings, weather: WeatherState?, clockStyle: ResolvedClockStyle): HomeScreenState {
+    val locale = Locale.getDefault()
+    val ui = WeatherUiState(
+        weather = weather,
+        units = ResolvedWeatherUnits(
+            temperature = WeatherUnits.resolve(settings.temperatureUnit, locale),
+            wind = WeatherUnits.resolve(settings.windSpeedUnit, locale),
+            rain = WeatherUnits.resolve(settings.rainUnit, locale),
+            pressure = WeatherUnits.resolve(settings.pressureUnit, locale),
+        ),
+        use24HourTime = clockStyle.use24HourTime,
+        iconStyle = clockStyle.weatherIconStyle,
+    )
+    return copy(nativeWidgets = NativeWidgetState(weather = ui, calendar = calendar, media = media))
 }

@@ -1,5 +1,9 @@
 package com.facetlauncher.app.ui.hub
 
+import androidx.compose.ui.unit.DpSize
+import com.facetlauncher.app.ui.nativewidget.NativeWidgetEnvironment
+import com.facetlauncher.app.ui.nativewidget.NativeWidget
+import com.facetlauncher.app.domain.minSpan
 import android.appwidget.AppWidgetHostView
 import android.content.Context
 import androidx.compose.animation.core.Animatable
@@ -70,6 +74,7 @@ private class LandscapeCallbacks(
     val onWidgetDrop: (appWidgetId: Int, dropRow: Int, dropCol: Int) -> Unit,
     val onWidgetDroppedOnTrash: (Int) -> Unit,
     val onWidgetResize: (appWidgetId: Int, colSpan: Int, rowSpan: Int) -> Unit,
+    val nativeWidgets: NativeWidgetEnvironment,
 )
 
 /** The widgets as one stable value, so the pieces below can take them without an unstable `List` parameter. */
@@ -116,11 +121,11 @@ private class LandscapeGridState(val scrollState: ScrollState) {
     val isBusy: Boolean get() = grabbedId != null || resizingId != null
 
     fun liveColSpan(widget: HubLandscapeWidgetUi, geometry: LandscapeGeometry): Int =
-        if (widget.appWidgetId == resizingId) resizedSpan(widget.colSpan, resizeDeltaPx.x, geometry.pitchPx) else widget.colSpan
+        if (widget.appWidgetId == resizingId) resizedSpan(widget.colSpan, resizeDeltaPx.x, geometry.pitchPx, widget.nativeWidgetType?.minSpan()?.cols ?: 1) else widget.colSpan
 
     fun liveRowSpan(widget: HubLandscapeWidgetUi, geometry: LandscapeGeometry): Int =
         if (widget.appWidgetId == resizingId) {
-            resizedSpan(widget.rowSpan, resizeDeltaPx.y, geometry.pitchPx).coerceAtMost((geometry.rows - widget.row).coerceAtLeast(1))
+            resizedSpan(widget.rowSpan, resizeDeltaPx.y, geometry.pitchPx, widget.nativeWidgetType?.minSpan()?.rows ?: 1).coerceAtMost((geometry.rows - widget.row).coerceAtLeast(1))
         } else {
             widget.rowSpan
         }
@@ -210,16 +215,17 @@ fun HubLandscapeGrid(
     onWidgetDroppedOnTrash: (Int) -> Unit,
     onWidgetResize: (appWidgetId: Int, colSpan: Int, rowSpan: Int) -> Unit,
     modifier: Modifier = Modifier,
+    nativeWidgets: NativeWidgetEnvironment = NativeWidgetEnvironment(),
 ) {
     val density = LocalDensity.current
     val scrollState = rememberScrollState()
     val gridState = remember(scrollState) { LandscapeGridState(scrollState) }
     val currentOnRowsChange by rememberUpdatedState(onRowsChange)
     val callbacks = remember(
-        createHostView, onWidgetSizeChange, onRemoveOrphan, onKeepOrphanSpace, onWidgetDrop, onWidgetDroppedOnTrash, onWidgetResize,
+        createHostView, onWidgetSizeChange, onRemoveOrphan, onKeepOrphanSpace, onWidgetDrop, onWidgetDroppedOnTrash, onWidgetResize, nativeWidgets,
     ) {
         LandscapeCallbacks(
-            createHostView, onWidgetSizeChange, onRemoveOrphan, onKeepOrphanSpace, onWidgetDrop, onWidgetDroppedOnTrash, onWidgetResize,
+            createHostView, onWidgetSizeChange, onRemoveOrphan, onKeepOrphanSpace, onWidgetDrop, onWidgetDroppedOnTrash, onWidgetResize, nativeWidgets,
         )
     }
     AutoScrollEffect(gridState)
@@ -387,7 +393,14 @@ private fun LandscapeTileContent(
     callbacks: LandscapeCallbacks,
 ) {
     val isResizing = widget.appWidgetId == state.resizingId
-    if (widget.isOrphaned) {
+    if (widget.nativeWidgetType != null) {
+        NativeWidget(
+            type = widget.nativeWidgetType,
+            size = DpSize(tileWidth, tileHeight),
+            state = callbacks.nativeWidgets.state,
+            actions = callbacks.nativeWidgets.actions,
+        )
+    } else if (widget.isOrphaned) {
         OrphanedWidgetTile(
             providerLabel = widget.providerLabel,
             onRemove = { callbacks.onRemoveOrphan(widget.appWidgetId) },

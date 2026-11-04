@@ -55,6 +55,7 @@ import androidx.compose.ui.zIndex
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.facetlauncher.app.R
+import com.facetlauncher.app.ui.nativewidget.labelRes
 import com.facetlauncher.app.data.model.ClockStackItemKind
 import com.facetlauncher.app.data.model.ProReason
 import com.facetlauncher.app.domain.AddClockStackItemResult
@@ -328,6 +329,7 @@ private fun ClockStackRowItem(
 ) {
     val name = when {
         row.kind == ClockStackItemKind.CLOCK -> stringResource(R.string.clock_stack_row_clock)
+        row.nativeWidgetType != null -> stringResource(row.nativeWidgetType.labelRes())
         else -> row.providerName ?: stringResource(R.string.clock_stack_row_unavailable)
     }
     Row(

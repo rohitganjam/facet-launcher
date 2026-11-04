@@ -132,7 +132,7 @@ private fun Modifier.squareToHeight(): Modifier = layout { measurable, constrain
 }
 
 @Composable
-private fun MediaArt(state: MediaPlayerState, tint: Color, onOpen: () -> Unit) {
+internal fun MediaArt(state: MediaPlayerState, tint: Color, onOpen: () -> Unit) {
     Box(
         modifier = Modifier
             .squareToHeight()
@@ -192,7 +192,7 @@ private fun MediaText(
 }
 
 @Composable
-private fun MediaTransport(
+internal fun MediaTransport(
     state: MediaPlayerState,
     showSkipButtons: Boolean,
     tint: Color,
@@ -254,7 +254,7 @@ private fun TransportButton(
 }
 
 @Composable
-private fun MediaProgressLine(
+internal fun MediaProgressLine(
     state: MediaPlayerState,
     color: Color,
     modifier: Modifier = Modifier,

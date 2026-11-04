@@ -61,7 +61,7 @@ class HubViewModelTest {
         val viewModel = HubViewModel(
             observeHubState,
             mock(AppWidgetRepository::class.java),
-            mock(WidgetPlacementRepository::class.java),
+            emptyPlacementRepository(),
             mock(DeleteWidgetUseCase::class.java),
             ResolveWidgetDropUseCase(),
             ResolveWidgetResizeUseCase(),
@@ -85,7 +85,7 @@ class HubViewModelTest {
         val viewModel = HubViewModel(
             observeHubState,
             mock(AppWidgetRepository::class.java),
-            mock(WidgetPlacementRepository::class.java),
+            emptyPlacementRepository(),
             mock(DeleteWidgetUseCase::class.java),
             ResolveWidgetDropUseCase(),
             ResolveWidgetResizeUseCase(),
@@ -107,7 +107,7 @@ class HubViewModelTest {
         val viewModel = HubViewModel(
             observeHubState,
             mock(AppWidgetRepository::class.java),
-            mock(WidgetPlacementRepository::class.java),
+            emptyPlacementRepository(),
             mock(DeleteWidgetUseCase::class.java),
             ResolveWidgetDropUseCase(),
             ResolveWidgetResizeUseCase(),
@@ -129,7 +129,7 @@ class HubViewModelTest {
         val viewModel = HubViewModel(
             observeHubState,
             appWidgetRepository,
-            mock(WidgetPlacementRepository::class.java),
+            emptyPlacementRepository(),
             mock(DeleteWidgetUseCase::class.java),
             ResolveWidgetDropUseCase(),
             ResolveWidgetResizeUseCase(),
@@ -144,12 +144,21 @@ class HubViewModelTest {
         verify(appWidgetRepository).stopListening()
     }
 
+    /** A repository that stores nothing, for tests that only look at how the view model maps the domain state. */
+    private fun emptyPlacementRepository() = mock(WidgetPlacementRepository::class.java).also {
+        `when`(it.observeAll()).thenReturn(flowOf(emptyList()))
+    }
+
     // --- Landscape ---
 
     private class InMemoryWidgetPlacementDao(initial: List<WidgetPlacementEntity>) : WidgetPlacementDao {
         val state = MutableStateFlow(initial)
         override fun observeAll(): Flow<List<WidgetPlacementEntity>> = state
         override suspend fun getById(appWidgetId: Int): WidgetPlacementEntity? = state.value.find { it.appWidgetId == appWidgetId }
+        override suspend fun deleteAllNative() {
+            state.value = state.value.filterNot { it.nativeWidgetType != null }
+        }
+        override suspend fun minAppWidgetId(): Int? = state.value.minOfOrNull { it.appWidgetId }
         override suspend fun upsert(placement: WidgetPlacementEntity) {
             state.value = state.value.filterNot { it.appWidgetId == placement.appWidgetId } + placement
         }

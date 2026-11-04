@@ -114,4 +114,22 @@ class HubWidgetPickerScreenTest {
         // Then the error is visible, not a silent no-op
         composeRule.onNodeWithTag("hub_widget_picker_error").assertIsDisplayed()
     }
+
+    @Test
+    fun facetWidgetsAreOfferedAndPickingOneFinishesTheFlow() {
+        // Given the picker
+        var done = 0
+        setContent(onDone = { done++ })
+
+        // Then the three widgets Facet draws itself are offered
+        composeRule.onNodeWithText("Facet widgets").assertIsDisplayed()
+        composeRule.onNodeWithTag("native_widget_option_WEATHER").assertIsDisplayed()
+        composeRule.onNodeWithTag("native_widget_option_AGENDA").assertIsDisplayed()
+        composeRule.onNodeWithTag("native_widget_option_NOW_PLAYING").assertIsDisplayed()
+
+        // When one is picked, it is placed with no bind step and the picker closes
+        composeRule.onNodeWithTag("native_widget_option_WEATHER").performClick()
+        composeRule.waitUntil(timeoutMillis = 5_000) { done == 1 }
+        assertEquals(1, done)
+    }
 }

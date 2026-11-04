@@ -897,6 +897,29 @@ class FacetDatabaseMigrationTest {
         shrink.close()
     }
 
+    @Test
+    fun migration37To38KeepsPlacementsAndLeavesTheNativeTypeEmpty() {
+        // Given a v37 database with a hosted widget placement
+        val dbV37 = helper.createDatabase(TEST_DB, 37)
+        dbV37.execSQL(
+            "INSERT INTO widget_placements (appWidgetId, providerPackageName, providerClassName, row, col, colSpan, rowSpan, profile, userId) " +
+                "VALUES (5, 'com.example.widget', '.WidgetProvider', 1, 2, 2, 2, 'PERSONAL', -1)",
+        )
+        dbV37.close()
+
+        // When migrating to v38 (Room also validates the result against the exported v38 schema)
+        val dbV38 = helper.runMigrationsAndValidate(TEST_DB, 38, true, Migrations.MIGRATION_37_38)
+
+        // Then the placement is intact and is not a native widget
+        val cursor = dbV38.query("SELECT appWidgetId, row, col, nativeWidgetType FROM widget_placements")
+        cursor.moveToFirst()
+        assertEquals(5, cursor.getInt(0))
+        assertEquals(1, cursor.getInt(1))
+        assertEquals(2, cursor.getInt(2))
+        assertTrue(cursor.isNull(3))
+        cursor.close()
+    }
+
     /** A v27 facet row — the v25 shape plus the two calendar-display columns, which a freshly created database has no defaults for. */
     private fun insertFacetV27(db: androidx.sqlite.db.SupportSQLiteDatabase, id: Long, name: String) {
         insertFacetV25Columns(db, id, name, extraColumns = ", showCalendarIndicator, calendarItemsToShow", extraValues = ", 1, 3")
