@@ -112,7 +112,7 @@ visible; the Permissions screen in Settings still works.
   `HomeClockWidgetState.minWidthDp/minHeightDp` from `minSizeDp`. A native page's state carries a negative `appWidgetId` derived from
   its item id, so the existing "this page is a widget" logic (size, alignment, no calendar block) applies; only the leaf
   (`ClockBlock`) branches on `nativeType`, drawing `NativeWidget` instead of `ClockWidgetTile`. A long press anywhere on the page opens the clock menu: the widgets have no long-press action, so `longPressFallback` (`LongPressFallback.kt`) runs Home's. It watches before the children, which would otherwise consume the touch with their own tap handlers, and takes the rest of the touch once it fires so the tap does not also run.
-  Tapping a Work Profile event opens the work Calendar app (`openWorkCalendarApp` in `HomeScreenActionsBuilder.kt`, via `LauncherApps.startMainActivity` for the default calendar package in the work profile): its event id means nothing to the personal app. It opens the app, not the event.
+  Tapping a Work Profile event opens the work Calendar app (`openCalendarEvent` in `CalendarEventOpener.kt`, via `LauncherApps.startMainActivity` for the default calendar package in the work profile): its event id means nothing to the personal app. It opens the app, not the event.
 - **Remove.** Hub trash and the stack screen's Remove. `ClockStackScreen` labels the row with the widget's name and offers no Configure.
 
 ## 5. Backup
