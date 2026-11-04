@@ -4544,3 +4544,4 @@ Widgets the app draws itself, on the Hub grid and on Home's widget stack, behavi
 - [x] Fixed: the Agenda's sample events in the picker sat in the year 2096 (`previewCalendarState`); they now start at 09:00 tomorrow. The picker cards also lost their Work chip (the tab says it); `WorkScopeBadge` is gone.
 - [x] Fixed: an Agenda's settings sheet listed no calendars when calendar access was granted after its ViewModel was created; it reloads each time it opens. Test: `NativeWidgetConfigViewModelTest`.
 - [ ] `HubWidgetPickerTabsTest` now asserts the Work chip is absent: compiled, not run on the emulator (a run wipes its app data).
+- [x] The Agenda settings sheet shows each calendar's colour dot (its swatch from Appearance, the accent when unset), the same colour as its event bars. Test: `NativeWidgetConfigSheetTest.everyCalendarRowShowsItsColourDot` compiled, not run on the emulator (a run wipes its app data).

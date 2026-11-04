@@ -15,9 +15,12 @@ import com.facetlauncher.app.domain.SetNativeWidgetConfigUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.ImmutableMap
 import kotlinx.collections.immutable.ImmutableSet
 import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.collections.immutable.toImmutableList
+import kotlinx.collections.immutable.toImmutableMap
 import kotlinx.collections.immutable.toImmutableSet
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -34,6 +37,8 @@ data class NativeWidgetConfigUiState(
     /** What the launcher's Calendar settings are now: an Agenda's choices start from these. `null` ids means every calendar. */
     val launcherCalendarIds: ImmutableSet<String>? = null,
     val launcherShowAllDay: Boolean = true,
+    /** A calendar id -> [com.facetlauncher.app.ui.theme.AccentSwatch] name: the colour of its event bars in the Agenda. */
+    val calendarColors: ImmutableMap<String, String> = persistentMapOf(),
 )
 
 /** What a widget's settings sheet lists (calendars, saved cities) and writes back, for a widget on the Hub or on Home alike. */
@@ -54,6 +59,7 @@ class NativeWidgetConfigViewModel @Inject constructor(
             savedCities = settings.savedWeatherCities.toImmutableList(),
             launcherCalendarIds = settings.selectedCalendarIds?.toImmutableSet(),
             launcherShowAllDay = settings.showAllDayEvents,
+            calendarColors = settings.calendarColors.toImmutableMap(),
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), NativeWidgetConfigUiState())
 

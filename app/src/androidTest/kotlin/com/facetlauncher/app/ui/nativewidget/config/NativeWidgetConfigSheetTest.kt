@@ -116,4 +116,14 @@ class NativeWidgetConfigSheetTest {
         composeRule.waitForIdle()
         assertEquals(WidgetWeatherLocation.Current, saved?.weatherLocation)
     }
+
+    @Test
+    fun everyCalendarRowShowsItsColourDot() {
+        // Given an agenda settings sheet listing a personal and a work calendar
+        show(NativeWidgetType.AGENDA, NativeWidgetConfig(), onChange = {})
+
+        // Then each row carries the dot that matches its event bars in the widget
+        composeRule.onNodeWithTag("hub_widget_config_calendar_color_1", useUnmergedTree = true).assertExists()
+        composeRule.onNodeWithTag("hub_widget_config_calendar_color_work:1", useUnmergedTree = true).assertExists()
+    }
 }

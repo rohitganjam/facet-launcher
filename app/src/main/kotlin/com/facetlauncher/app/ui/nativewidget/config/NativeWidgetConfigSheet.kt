@@ -1,11 +1,15 @@
 package com.facetlauncher.app.ui.nativewidget.config
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Checkbox
@@ -22,6 +26,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -41,10 +46,12 @@ import com.facetlauncher.app.ui.components.calendarTitle
 import com.facetlauncher.app.ui.components.workCalendarPosition
 import com.facetlauncher.app.ui.nativewidget.labelRes
 import com.facetlauncher.app.ui.theme.Accent
+import com.facetlauncher.app.ui.theme.AccentSwatch
 import com.facetlauncher.app.ui.theme.Ink
 import com.facetlauncher.app.ui.theme.Muted
 import com.facetlauncher.app.ui.theme.Surface
 import com.facetlauncher.app.ui.theme.SurfaceContainer
+import com.facetlauncher.app.ui.theme.resolvedColor
 import kotlinx.collections.immutable.ImmutableList
 
 /** The settings of one Weather or Agenda widget, on the Hub or on Home: its own calendars or location, or the launcher's. */
@@ -130,6 +137,15 @@ private fun AgendaConfig(config: NativeWidgetConfig, state: NativeWidgetConfigUi
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Checkbox(checked = selected, onCheckedChange = null, colors = CheckboxDefaults.colors(checkedColor = Accent))
+                val swatch = state.calendarColors[calendar.id]?.let { runCatching { AccentSwatch.valueOf(it) }.getOrNull() }
+                Box(
+                    modifier = Modifier
+                        .padding(start = 12.dp)
+                        .size(12.dp)
+                        .clip(CircleShape)
+                        .background(swatch?.resolvedColor() ?: Accent)
+                        .testTag("hub_widget_config_calendar_color_${calendar.id}"),
+                )
                 Column(modifier = Modifier.padding(start = 12.dp)) {
                     Text(text = workCalendarPosition(calendar, state.calendars).let { (number, count) -> calendarTitle(calendar, number, count) }, style = MaterialTheme.typography.bodyLarge, color = Ink)
                     Text(text = calendarSubtitle(calendar), style = MaterialTheme.typography.bodySmall, color = Muted)
