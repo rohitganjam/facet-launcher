@@ -190,6 +190,8 @@ data class HomeScreenState(
 data class HomeClockActions(
     val onClockClick: () -> Unit = {},
     val onWeatherClick: () -> Unit = {},
+    val onRequestCalendarAccess: () -> Unit = {},
+    val onRequestLocationAccess: () -> Unit = {},
     val onBatteryClick: () -> Unit = {},
     val onClockSettingsClick: () -> Unit = {},
     val onNavigateToSettings: () -> Unit = {},

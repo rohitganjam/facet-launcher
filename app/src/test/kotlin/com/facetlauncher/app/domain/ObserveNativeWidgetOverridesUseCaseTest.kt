@@ -153,6 +153,7 @@ class ObserveNativeWidgetOverridesUseCaseTest {
         // Then it shows no forecast instead of the launcher's city
         val override = useCase()().first()[-1]
         assertEquals(true, override?.weatherUnavailable)
+        assertEquals(true, override?.locationMissing)
         assertNull(override?.weather)
     }
 }

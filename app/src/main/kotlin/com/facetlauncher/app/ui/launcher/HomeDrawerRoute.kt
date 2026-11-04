@@ -14,8 +14,11 @@ import com.facetlauncher.app.ui.home.HomeLayoutMode
 import com.facetlauncher.app.ui.home.HomeLiveState
 import com.facetlauncher.app.ui.home.HomeScreenContent
 import com.facetlauncher.app.ui.home.HomeWidgetSizing
+import com.facetlauncher.app.ui.nativewidget.NativeWidgetAccess
+import com.facetlauncher.app.ui.nativewidget.NativeWidgetAccessControls
 import com.facetlauncher.app.ui.nativewidget.NativeWidgetActions
 import com.facetlauncher.app.ui.nativewidget.NativeWidgetEnvironment
+import com.facetlauncher.app.ui.nativewidget.rememberNativeWidgetAccess
 import com.facetlauncher.app.ui.home.WhatsNewPillHost
 import com.facetlauncher.app.ui.home.WhatsNewPillViewModel
 import com.facetlauncher.app.ui.home.toHomeScreenState
@@ -129,6 +132,7 @@ fun HomeDrawerRoute(
     drawerViewModel: DrawerViewModel = hiltViewModel(),
     privateSpaceViewModel: PrivateSpaceViewModel = hiltViewModel(),
     hubViewModel: HubViewModel = hiltViewModel(),
+    widgetAccess: NativeWidgetAccessControls = rememberNativeWidgetAccess(),
     widgetPickerViewModel: HubWidgetPickerViewModel = hiltViewModel(),
     clockWidgetPickerViewModel: ClockWidgetPickerViewModel = hiltViewModel(),
     facetViewModel: FacetCarouselViewModel = hiltViewModel(),
@@ -336,7 +340,7 @@ fun HomeDrawerRoute(
         drawerState.settings.drawerListItemSize,
     )
 
-    val homeScreenState = homeUiState.style.toHomeScreenState(
+    val styledHomeScreenState = homeUiState.style.toHomeScreenState(
         landscape = homeLayoutMode == HomeLayoutMode.LANDSCAPE,
         settings = homeUiState.settings,
         content = HomeScreenContent(
@@ -365,7 +369,8 @@ fun HomeDrawerRoute(
             isPro = homeUiState.isPro,
         ),
     )
-    val screenActions = homeScreenActions(
+    val homeScreenState = styledHomeScreenState.copy(nativeWidgets = styledHomeScreenState.nativeWidgets.copy(access = widgetAccess.access))
+    val builtScreenActions = homeScreenActions(
         viewModel = homeViewModel,
         inputs = HomeActionsInputs(homeUiState, homeLayoutMode, context, coroutineScope, widgetHosts),
         itemActions = itemActions,
@@ -394,6 +399,9 @@ fun HomeDrawerRoute(
             toAppearance = onNavigateToAppearance,
             toClockStack = onNavigateToClockStack,
         ),
+    )
+    val screenActions = builtScreenActions.copy(
+        clock = builtScreenActions.clock.copy(onRequestCalendarAccess = widgetAccess.requestCalendar, onRequestLocationAccess = widgetAccess.requestLocation),
     )
 
     Box(
@@ -477,6 +485,8 @@ fun HomeDrawerRoute(
                         onOpenWeather = screenActions.clock.onWeatherClick,
                         onOpenEvent = screenActions.clock.onEventClick,
                         media = screenActions.media,
+                        onRequestCalendarAccess = widgetAccess.requestCalendar,
+                        onRequestLocationAccess = widgetAccess.requestLocation,
                     ),
                 ),
             )

@@ -1121,4 +1121,7 @@
     <string name="hub_widget_config_current_location">Ubicación actual</string>
     <string name="hub_widget_config_no_cities">Las ciudades guardadas en los ajustes del tiempo aparecen aquí.</string>
     <string name="hub_widget_config_no_calendars">No hay calendarios que mostrar.</string>
+    <string name="native_widget_calendar_off">El acceso al calendario está desactivado</string>
+    <string name="native_widget_location_off">El acceso a la ubicación está desactivado</string>
+    <string name="native_widget_allow">Permitir</string>
 </resources>

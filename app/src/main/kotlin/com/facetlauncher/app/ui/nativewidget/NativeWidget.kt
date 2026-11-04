@@ -65,8 +65,8 @@ fun NativeWidget(
 private fun NativeWidgetContent(type: NativeWidgetType, tier: WidgetTier, size: DpSize, state: NativeWidgetState, actions: NativeWidgetActions) {
     val inner = DpSize(size.width - CONTENT_INSET * 2, size.height - CONTENT_INSET * 2)
     when (type) {
-        NativeWidgetType.WEATHER -> WeatherNativeWidget(tier, inner, state.weather, actions.onOpenWeather)
-        NativeWidgetType.AGENDA -> AgendaNativeWidget(tier, state.calendar, actions.onOpenEvent)
+        NativeWidgetType.WEATHER -> WeatherNativeWidget(tier, inner, state.weather, actions.onOpenWeather, state.access.locationMissing, actions.onRequestLocationAccess)
+        NativeWidgetType.AGENDA -> AgendaNativeWidget(tier, state.calendar, actions.onOpenEvent, state.access.calendarMissing, actions.onRequestCalendarAccess)
         NativeWidgetType.NOW_PLAYING -> NowPlayingNativeWidget(tier, inner, state.media, actions.media)
     }
 }

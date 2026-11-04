@@ -72,6 +72,15 @@ same `WeatherRefreshPolicy` gate, so widgets on one city make one request, and a
 launcher's own stored forecast and makes none. "Current location" while the launcher already follows the position is the launcher's
 forecast too.
 
+### 3b. Missing permissions
+
+An Agenda widget without `READ_CALENDAR`, and a Weather widget for the current position without location, show "Calendar access is off" /
+"Location access is off" with an **Allow** button in place of their empty text. `NativeWidgetAccessViewModel` reads both permissions (re-read
+on resume, since neither has a grant-change callback) and `HomeDrawerRoute` puts the result in `NativeWidgetState.access` for Home pages and the
+Hub; Allow runs the runtime request (`READ_CALENDAR`, `ACCESS_COARSE_LOCATION`). A Hub widget set to its own location asks for location only when
+its own setting is the current position (`NativeWidgetOverride.locationMissing`). If Android no longer shows the dialog, the button does nothing
+visible; the Permissions screen in Settings still works.
+
 ## 4. Adding, replacing, removing
 
 - **Pickers.** Both `HubWidgetPickerContent` screens list a "Facet widgets" section (`NativeWidgetPickerSection`, each type

@@ -420,4 +420,6 @@ private fun nativeWidgetActions(actions: HomeScreenActions) = NativeWidgetAction
     onOpenWeather = actions.clock.onWeatherClick,
     onOpenEvent = actions.clock.onEventClick,
     media = actions.media,
+    onRequestCalendarAccess = actions.clock.onRequestCalendarAccess,
+    onRequestLocationAccess = actions.clock.onRequestLocationAccess,
 )

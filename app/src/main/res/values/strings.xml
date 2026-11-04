@@ -1210,4 +1210,7 @@
     <string name="hub_widget_config_current_location">Current location</string>
     <string name="hub_widget_config_no_cities">Cities saved in Weather settings appear here.</string>
     <string name="hub_widget_config_no_calendars">No calendars to show.</string>
+    <string name="native_widget_calendar_off">Calendar access is off</string>
+    <string name="native_widget_location_off">Location access is off</string>
+    <string name="native_widget_allow">Allow</string>
 </resources>

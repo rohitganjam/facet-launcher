@@ -76,7 +76,7 @@ private sealed interface AgendaLine {
 
 /** Upcoming events: as many one-line rows as fit when Small, otherwise a scrolling list of up to 20 under the widget heading. */
 @Composable
-internal fun AgendaNativeWidget(tier: WidgetTier, calendar: HomeCalendarState, onOpenEvent: (CalendarEvent) -> Unit, modifier: Modifier = Modifier) {
+internal fun AgendaNativeWidget(tier: WidgetTier, calendar: HomeCalendarState, onOpenEvent: (CalendarEvent) -> Unit, calendarMissing: Boolean, onAllowCalendar: () -> Unit, modifier: Modifier = Modifier) {
     val clock = remember { Clock.systemDefaultZone() }
     val now by rememberTickingNow(clock)
     val nowMillis = now.atZone(clock.zone).toInstant().toEpochMilli()
@@ -89,7 +89,9 @@ internal fun AgendaNativeWidget(tier: WidgetTier, calendar: HomeCalendarState, o
     BoxWithConstraints(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.CenterStart) {
         val smallFit = ((maxHeight - SMALL_VERTICAL_PADDING * 2) / SMALL_ROW_HEIGHT).toInt().coerceAtLeast(1)
         val lines = remember(upcoming, tier, zone, smallFit) { upcoming.toLines(zone, showHeadings = showRoom, limit = if (showRoom) MAX_EVENTS else smallFit) }
-        if (upcoming.isEmpty()) {
+        if (upcoming.isEmpty() && calendarMissing) {
+            AccessPrompt(stringResource(R.string.native_widget_calendar_off), onAllowCalendar, "agenda_calendar_prompt")
+        } else if (upcoming.isEmpty()) {
             Text(stringResource(R.string.native_widget_agenda_empty), style = MaterialTheme.typography.bodyMedium, color = Muted, maxLines = 2, overflow = TextOverflow.Ellipsis)
         } else {
             Column(modifier = Modifier.fillMaxSize()) {

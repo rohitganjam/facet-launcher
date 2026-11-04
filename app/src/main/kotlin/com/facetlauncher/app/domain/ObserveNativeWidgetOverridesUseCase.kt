@@ -33,6 +33,8 @@ data class NativeWidgetOverride(
     val weather: WeatherState? = null,
     /** The widget is set to its own location but there is no forecast for it yet (no position, no permission, offline). */
     val weatherUnavailable: Boolean = false,
+    /** The widget is unavailable because it wants the position and the location permission is off. */
+    val locationMissing: Boolean = false,
 )
 
 /** What [HubViewModel][com.facetlauncher.app.ui.hub.HubViewModel] reads; an interface so a test can pass a fixed answer. */
@@ -81,13 +83,14 @@ class ObserveNativeWidgetOverridesUseCase @Inject constructor(
     }
 
     private suspend fun weatherFor(location: WidgetWeatherLocation, settings: LauncherSettings): NativeWidgetOverride? {
+        val unavailable = NativeWidgetOverride(weatherUnavailable = true, locationMissing = location == WidgetWeatherLocation.Current && !locationRepository.isPermissionGranted())
         val target = targetFor(location, settings) ?: return null
-        val (place, ownSettings) = target.takeIf { it.first != null }?.let { it.first!! to it.second } ?: return NativeWidgetOverride(weatherUnavailable = true)
+        val (place, ownSettings) = target.takeIf { it.first != null }?.let { it.first!! to it.second } ?: return unavailable
         val forecast = launcherForecastFor(place) ?: widgetWeatherRepository.refresh(place)
         // A chosen city carries its own name; only a position needs one looked up.
         val named = if (forecast != null && location == WidgetWeatherLocation.Current) nameIfMissing(place, forecast) else forecast
         return named?.let { NativeWidgetOverride(weather = ObserveWeatherUseCase.buildWeatherState(ownSettings, it.hours, it.state, clock.instant())) }
-            ?: NativeWidgetOverride(weatherUnavailable = true)
+            ?: unavailable
     }
 
     /**

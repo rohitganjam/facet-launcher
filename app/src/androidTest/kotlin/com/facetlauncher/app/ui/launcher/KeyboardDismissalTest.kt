@@ -30,6 +30,8 @@ import androidx.test.espresso.Espresso
 import com.facetlauncher.app.data.AppRepository
 import com.facetlauncher.app.data.BatteryRepository
 import com.facetlauncher.app.data.CalendarPermissionRepository
+import com.facetlauncher.app.ui.nativewidget.NativeWidgetAccess
+import com.facetlauncher.app.ui.nativewidget.NativeWidgetAccessControls
 import com.facetlauncher.app.data.CalendarRepository
 import com.facetlauncher.app.data.ContactPermissionRepository
 import com.facetlauncher.app.data.ContactRepository
@@ -391,6 +393,7 @@ class KeyboardDismissalTest {
                     onNavigateToUsageAccessExplanation = {},
                     homeViewModel = homeViewModel,
                     weatherViewModel = weatherViewModel,
+                        widgetAccess = NativeWidgetAccessControls(NativeWidgetAccess(), {}, {}),
                     whatsNewPillViewModel = whatsNewPillViewModel,
                     drawerViewModel = drawerViewModel,
                     privateSpaceViewModel = privateSpaceViewModel,

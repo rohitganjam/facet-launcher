@@ -1062,4 +1062,7 @@
     <string name="hub_widget_config_current_location">Huidige locatie</string>
     <string name="hub_widget_config_no_cities">Steden die in de weerinstellingen zijn opgeslagen verschijnen hier.</string>
     <string name="hub_widget_config_no_calendars">Geen agenda\'s om te tonen.</string>
+    <string name="native_widget_calendar_off">Toegang tot agenda staat uit</string>
+    <string name="native_widget_location_off">Toegang tot locatie staat uit</string>
+    <string name="native_widget_allow">Toestaan</string>
 </resources>

@@ -17,6 +17,7 @@ data class NativeWidgetState(
     val weather: WeatherUiState = WeatherUiState(),
     val calendar: HomeCalendarState = HomeCalendarState(),
     val media: HomeMediaState = HomeMediaState(),
+    val access: NativeWidgetAccess = NativeWidgetAccess(),
 )
 
 @Immutable
@@ -26,6 +27,9 @@ data class NativeWidgetActions(
     val media: HomeMediaActions = HomeMediaActions(),
     /** Opens the widget's own settings; the Hub's menu offers it for Weather and Agenda. */
     val onConfigure: (appWidgetId: Int) -> Unit = {},
+    /** The "Allow" buttons of a widget whose permission is off. */
+    val onRequestCalendarAccess: () -> Unit = {},
+    val onRequestLocationAccess: () -> Unit = {},
 )
 
 /** A native widget on a Home clock page: which widget, and what it reads and does. */
@@ -45,5 +49,10 @@ fun NativeWidgetState.withOverride(override: NativeWidgetOverride?): NativeWidge
     else -> copy(
         weather = if (override.weather != null || override.weatherUnavailable) weather.copy(weather = override.weather) else weather,
         calendar = override.events?.let { calendar.copy(events = it.toImmutableList()) } ?: calendar,
+        access = when {
+            override.weatherUnavailable -> access.copy(locationMissing = override.locationMissing)
+            override.weather != null -> access.copy(locationMissing = false)
+            else -> access
+        },
     )
 }

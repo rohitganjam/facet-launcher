@@ -4528,3 +4528,5 @@ Widgets the app draws itself, on the Hub grid and on Home's widget stack, behavi
 - [x] Tests: `NativeWidgetConfigTest`, `WidgetWeatherRepositoryTest`, `ObserveNativeWidgetOverridesUseCaseTest`, `NativeWidgetStateTest`, `WidgetPlacementRepositoryTest.setConfig…`; instrumented `HubWidgetConfigSheetTest` and `FacetDatabaseMigrationTest.migration38To39…`.
 - [ ] Native review of the new fr, de, es, pt, nl strings (`hub_widget_config_*`, `hub_widget_configure`; machine-translated).
 - [ ] Check on a device: Configure in the menu, an Agenda widget on one calendar, a Weather widget on a saved city.
+- [x] Agenda and Weather widgets whose calendar or location permission is off show what is missing and an Allow button (Hub and Home pages), which runs the runtime request. `NativeWidgetAccessViewModel`; tests `NativeWidgetAccessViewModelTest`, `NativeWidgetStateTest`, `NativeWidgetAccessPromptTest` (instrumented).
+- [ ] Check on a device: Allow on an Agenda widget with calendar access revoked, and on a Weather widget for the current position with location revoked. After "Don't ask again" the button does nothing visible.

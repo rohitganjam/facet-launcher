@@ -1121,4 +1121,7 @@
     <string name="hub_widget_config_current_location">Position actuelle</string>
     <string name="hub_widget_config_no_cities">Les villes enregistrées dans les réglages météo apparaissent ici.</string>
     <string name="hub_widget_config_no_calendars">Aucun agenda à afficher.</string>
+    <string name="native_widget_calendar_off">L\'accès à l\'agenda est désactivé</string>
+    <string name="native_widget_location_off">L\'accès à la position est désactivé</string>
+    <string name="native_widget_allow">Autoriser</string>
 </resources>

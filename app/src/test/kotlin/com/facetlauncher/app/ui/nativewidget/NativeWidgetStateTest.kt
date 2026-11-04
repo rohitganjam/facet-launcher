@@ -4,6 +4,7 @@ import com.facetlauncher.app.data.model.CalendarEvent
 import com.facetlauncher.app.data.model.NativeWidgetType
 import com.facetlauncher.app.domain.NativeWidgetOverride
 import com.facetlauncher.app.domain.isConfigurable
+import com.facetlauncher.app.ui.nativewidget.NativeWidgetAccess
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -60,5 +61,30 @@ class NativeWidgetStateTest {
         assertTrue(NativeWidgetType.WEATHER.isConfigurable(300, 100))
         assertTrue(NativeWidgetType.AGENDA.isConfigurable(300, 150))
         assertTrue(NativeWidgetType.AGENDA.isConfigurable(300, 300))
+    }
+
+    @Test
+    fun `a widget unavailable for want of location access says so`() {
+        // Given the launcher state with no location problem
+        val state = NativeWidgetState()
+
+        // When a widget set to the position has no permission
+        val shown = state.withOverride(NativeWidgetOverride(weatherUnavailable = true, locationMissing = true))
+
+        // Then its own state asks for access
+        assertTrue(shown.access.locationMissing)
+        assertFalse(state.access.locationMissing)
+    }
+
+    @Test
+    fun `a widget with its own forecast no longer asks for location access`() {
+        // Given a launcher state that is missing location access
+        val state = NativeWidgetState(access = NativeWidgetAccess(locationMissing = true))
+
+        // When a widget set to a city has a forecast of its own
+        val shown = state.withOverride(NativeWidgetOverride(weather = com.facetlauncher.app.ui.home.previewWeather()))
+
+        // Then it shows the forecast with no prompt
+        assertFalse(shown.access.locationMissing)
     }
 }

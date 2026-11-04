@@ -47,10 +47,12 @@ private val DAY_ROW_HEIGHT = 30.dp
 
 /** Weather in the box it is given: the icon and temperature, then the condition and range, then the hours and the days ahead. */
 @Composable
-internal fun WeatherNativeWidget(tier: WidgetTier, size: DpSize, ui: WeatherUiState, onOpen: () -> Unit, modifier: Modifier = Modifier) {
+internal fun WeatherNativeWidget(tier: WidgetTier, size: DpSize, ui: WeatherUiState, onOpen: () -> Unit, locationMissing: Boolean, onAllowLocation: () -> Unit, modifier: Modifier = Modifier) {
     val weather = ui.weather
     Box(modifier = modifier.fillMaxSize().clickable(onClick = onOpen), contentAlignment = Alignment.Center) {
-        if (weather == null) {
+        if (weather == null && locationMissing) {
+            AccessPrompt(stringResource(R.string.native_widget_location_off), onAllowLocation, "weather_location_prompt")
+        } else if (weather == null) {
             Text(stringResource(R.string.weather_empty), style = MaterialTheme.typography.bodyMedium, color = Muted, maxLines = 2, overflow = TextOverflow.Ellipsis)
         } else {
             when (tier) {
