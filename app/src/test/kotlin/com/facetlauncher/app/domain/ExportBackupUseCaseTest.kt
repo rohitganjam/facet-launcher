@@ -80,6 +80,8 @@ class ExportBackupUseCaseTest {
                     appListShrinkToFit = com.facetlauncher.app.data.model.AppListShrinkToFit.ON,
                     iconScalePercent = 112,
                     showNotificationsInAppMenu = false,
+                    homeOpensSearch = true,
+                    doubleTapToLock = true,
                 ),
             ),
         )
@@ -127,6 +129,8 @@ class ExportBackupUseCaseTest {
         assertEquals("BOTH_RIGHT", bundle.settings.appListColumnAlignment)
         assertEquals("FIVE", bundle.settings.appListGridColumns)
         assertEquals(false, bundle.settings.showNotificationsInAppMenu)
+        assertEquals(true, bundle.settings.homeOpensSearch)
+        assertEquals(true, bundle.settings.doubleTapToLock)
         assertEquals("TEXT", bundle.settings.appListGridDisplayMode)
         assertEquals(0, bundle.settings.activeFacetIndex)
         assertEquals(1, bundle.dockApps.size)

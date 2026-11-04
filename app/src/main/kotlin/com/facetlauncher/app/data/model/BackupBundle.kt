@@ -78,6 +78,8 @@ data class BackupSettings(
     val showMediaPlayerOnHome: Boolean = false,
     val showMediaSkipButtons: Boolean = true,
     val showNotificationsInAppMenu: Boolean = true,
+    val homeOpensSearch: Boolean = false,
+    val doubleTapToLock: Boolean = false,
     val showDrawerIcons: Boolean,
     val showDrawerLabels: Boolean,
     val searchBarPosition: String,

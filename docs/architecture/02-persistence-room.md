@@ -747,8 +747,8 @@ accessibility grant, and the pair is small enough to set again after a restore.
 
 | Key | Type | Field | Default |
 |---|---|---|---|
-| `home_opens_search` | Boolean | `homeOpensSearch` | `false` — a Home press on bare Home opens the Drawer with search focused |
-| `double_tap_to_lock` | Boolean | `doubleTapToLock` | `false` — the switch only reads on while the accessibility service is also enabled |
+| `home_opens_search` | Boolean | `homeOpensSearch` | `false` — a Home press on bare Home opens the Drawer with search focused. In `BackupSettings` (defaulted, no version bump) |
+| `double_tap_to_lock` | Boolean | `doubleTapToLock` | `false` — the switch only reads on while the accessibility service is also enabled. In `BackupSettings` (defaulted, no version bump) |
 
 #### Notifications
 

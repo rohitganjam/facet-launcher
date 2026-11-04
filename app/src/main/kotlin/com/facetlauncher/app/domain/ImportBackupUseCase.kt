@@ -188,6 +188,8 @@ class ImportBackupUseCase @Inject constructor(
             setShowMediaPlayerOnHome(settings.showMediaPlayerOnHome)
             setShowMediaSkipButtons(settings.showMediaSkipButtons)
             setShowNotificationsInAppMenu(settings.showNotificationsInAppMenu)
+            setHomeOpensSearch(settings.homeOpensSearch)
+            setDoubleTapToLock(settings.doubleTapToLock)
             setShowDrawerIcons(settings.showDrawerIcons)
             setShowDrawerLabels(settings.showDrawerLabels)
             setSearchBarPosition(settings.searchBarPosition.toEnumOrDefault(SearchBarPosition.TOP))

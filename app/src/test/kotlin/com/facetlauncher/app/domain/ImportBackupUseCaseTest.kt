@@ -74,6 +74,8 @@ class ImportBackupUseCaseTest {
         notificationDotsEnabled = false,
         notificationBadgeStyle = "COUNT",
         showNotificationsInAppMenu = false,
+        homeOpensSearch = true,
+        doubleTapToLock = true,
         showDrawerIcons = false,
         showDrawerLabels = false,
         searchBarPosition = "BOTTOM",
@@ -189,6 +191,8 @@ class ImportBackupUseCaseTest {
         // ...every other setting field is applied...
         verify(settingsRepository).setUse24HourTime(true)
         verify(settingsRepository).setShowNotificationsInAppMenu(false)
+        verify(settingsRepository).setHomeOpensSearch(true)
+        verify(settingsRepository).setDoubleTapToLock(true)
         verify(settingsRepository).setThemeMode(com.facetlauncher.app.data.model.ThemeMode.DARK)
         verify(settingsRepository).setSystemBarIconStyle(com.facetlauncher.app.data.model.SystemBarIconStyle.LIGHT)
         verify(settingsRepository).setAppListLayout(com.facetlauncher.app.data.model.AppListLayout.GRID)
