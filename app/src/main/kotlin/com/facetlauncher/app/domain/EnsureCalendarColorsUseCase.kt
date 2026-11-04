@@ -9,6 +9,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -16,6 +17,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.retryWhen
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.sync.Mutex
@@ -60,7 +62,16 @@ class EnsureCalendarColorsUseCase @Inject constructor(
         .map { permission.isGranted() }
         .distinctUntilChanged()
         .flatMapLatest { granted ->
-            if (granted) calendars.observeCalendarChanges().map { assignKeepingObserverAlive() } else flow { clearColors() }
+            if (granted) {
+                // A failure of the observation itself (registering with the provider) is retried, not left to end it for good.
+                calendars.observeCalendarChanges().map { assignKeepingObserverAlive() }.retryWhen { cause, attempt ->
+                    if (cause is CancellationException) return@retryWhen false
+                    delay(minOf(RETRY_BASE_MILLIS shl minOf(attempt.toInt(), RETRY_MAX_SHIFT), RETRY_MAX_MILLIS))
+                    true
+                }
+            } else {
+                flow { clearColors() }
+            }
         }
 
     /** One failed assignment (the provider hiccuping, access revoked mid-query) must not end the observation: the next change tries again. */
@@ -73,3 +84,7 @@ class EnsureCalendarColorsUseCase @Inject constructor(
         if (settings.settings.first().calendarColors.isNotEmpty()) settings.setCalendarColors(emptyMap())
     }
 }
+
+private const val RETRY_BASE_MILLIS = 1_000L
+private const val RETRY_MAX_MILLIS = 60_000L
+private const val RETRY_MAX_SHIFT = 6

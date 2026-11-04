@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -164,5 +165,87 @@ class EnsureCalendarColorsUseCaseTest {
 
         // Then it observes again
         assertEquals(2, observers)
+    }
+
+    @Test
+    fun `after the process was killed a restart colours calendars added while it was dead`() = runTest {
+        // Given calendars that appeared while the app was not running (no colours stored) and a fresh process
+        recordSaves()
+        val restarted = useCase(mapOf("1" to "BLUE"))
+        `when`(permission.isGranted()).thenReturn(true)
+        `when`(calendars.getSelectableCalendars()).thenReturn(listOf(CalendarInfo("1", "Home", "me"), CalendarInfo("5", "Added meanwhile", "me")))
+        `when`(calendars.observeCalendarChanges()).thenReturn(flowOf(Unit)) // the repository emits once as soon as it is observed
+
+        // When the new process starts keeping colours assigned, with no change event of its own
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { restarted.keepAssigned().collect {} }
+
+        // Then it catches up at once, leaving the existing colour alone
+        assertEquals("BLUE", saved?.get("1"))
+        assertNotNull(saved?.get("5"))
+    }
+
+    @Test
+    fun `rechecking when access has not changed does not register the observer again`() = runTest {
+        // Given access that stays granted
+        recordSaves()
+        val useCase = useCase()
+        `when`(permission.isGranted()).thenReturn(true)
+        `when`(calendars.getSelectableCalendars()).thenReturn(emptyList())
+        var observers = 0
+        `when`(calendars.observeCalendarChanges()).thenAnswer { callbackFlow<Unit> { observers++; awaitClose { } } }
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { useCase.keepAssigned().collect {} }
+
+        // When the app resumes several times
+        repeat(3) { useCase.recheckAccess(); runCurrent() }
+
+        // Then the observer was registered once
+        assertEquals(1, observers)
+    }
+
+    @Test
+    fun `an observation that fails is retried after a back-off`() = runTest {
+        // Given the provider refusing the first registration and accepting the second
+        recordSaves()
+        val useCase = useCase()
+        `when`(permission.isGranted()).thenReturn(true)
+        `when`(calendars.getSelectableCalendars()).thenReturn(listOf(CalendarInfo("7", "New", "me")))
+        var attempts = 0
+        `when`(calendars.observeCalendarChanges()).thenAnswer {
+            callbackFlow<Unit> {
+                attempts++
+                if (attempts == 1) throw SecurityException("provider not ready")
+                trySend(Unit)
+                awaitClose { }
+            }
+        }
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { useCase.keepAssigned().collect {} }
+        assertEquals(1, attempts)
+        assertEquals(null, saved)
+
+        // When the back-off has passed
+        advanceTimeBy(1_001)
+        runCurrent()
+
+        // Then it observes again and assigns
+        assertEquals(2, attempts)
+        assertNotNull(saved?.get("7"))
+    }
+
+    @Test
+    fun `stopping the collection unregisters the observer`() = runTest {
+        // Given an observation in progress
+        val useCase = useCase()
+        `when`(permission.isGranted()).thenReturn(true)
+        `when`(calendars.getSelectableCalendars()).thenReturn(emptyList())
+        var stopped = 0
+        `when`(calendars.observeCalendarChanges()).thenAnswer { callbackFlow<Unit> { awaitClose { stopped++ } } }
+        val job = backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { useCase.keepAssigned().collect {} }
+
+        // When the collection is cancelled
+        job.cancel()
+        runCurrent()
+
+        // Then the observer was released
+        assertEquals(1, stopped)
     }
 }

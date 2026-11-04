@@ -402,4 +402,20 @@ class CalendarRepositoryTest {
         job.cancel()
         org.mockito.Mockito.verify(contentResolver).unregisterContentObserver(registered.value)
     }
+
+    @Test
+    fun `observeCalendarChanges still observes the personal calendars when the work profile cannot be observed`() = runTest {
+        // Given the cross-profile provider refusing an observer
+        `when`(contentResolver.registerContentObserver(eq(CalendarContract.Calendars.ENTERPRISE_CONTENT_URI), eq(true), any(android.database.ContentObserver::class.java)))
+            .thenThrow(SecurityException("not allowed"))
+        val emissions = mutableListOf<Unit>()
+
+        // When observing
+        val job = launch(kotlinx.coroutines.test.UnconfinedTestDispatcher(testScheduler)) { repository.observeCalendarChanges().collect { emissions += it } }
+
+        // Then the personal provider is observed and it still emits
+        org.mockito.Mockito.verify(contentResolver).registerContentObserver(eq(CalendarContract.Calendars.CONTENT_URI), eq(true), any(android.database.ContentObserver::class.java))
+        assertEquals(1, emissions.size)
+        job.cancel()
+    }
 }
