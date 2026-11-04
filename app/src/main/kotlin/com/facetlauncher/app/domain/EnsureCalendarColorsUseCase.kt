@@ -7,6 +7,7 @@ import com.facetlauncher.app.data.model.CalendarInfo
 import com.facetlauncher.app.ui.theme.AccentSwatch
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
@@ -59,8 +60,14 @@ class EnsureCalendarColorsUseCase @Inject constructor(
         .map { permission.isGranted() }
         .distinctUntilChanged()
         .flatMapLatest { granted ->
-            if (granted) calendars.observeCalendarChanges().map { invoke() } else flow { clearColors() }
+            if (granted) calendars.observeCalendarChanges().map { assignKeepingObserverAlive() } else flow { clearColors() }
         }
+
+    /** One failed assignment (the provider hiccuping, access revoked mid-query) must not end the observation: the next change tries again. */
+    private suspend fun assignKeepingObserverAlive() {
+        // Left for the next change or the next start; only a cancellation must go on up.
+        runCatching { invoke() }.onFailure { if (it is CancellationException) throw it }
+    }
 
     private suspend fun clearColors() = lock.withLock {
         if (settings.settings.first().calendarColors.isNotEmpty()) settings.setCalendarColors(emptyMap())

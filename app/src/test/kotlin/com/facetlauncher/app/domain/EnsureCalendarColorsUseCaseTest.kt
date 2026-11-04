@@ -93,6 +93,27 @@ class EnsureCalendarColorsUseCaseTest {
     }
 
     @Test
+    fun `one failed assignment does not end the observation`() = runTest {
+        // Given the provider failing on the first change and working on the second
+        recordSaves()
+        val useCase = useCase()
+        val changes = MutableSharedFlow<Unit>()
+        `when`(permission.isGranted()).thenReturn(true)
+        `when`(calendars.getSelectableCalendars())
+            .thenThrow(SecurityException("revoked mid-query"))
+            .thenReturn(listOf(CalendarInfo("7", "New", "me")))
+        `when`(calendars.observeCalendarChanges()).thenReturn(changes)
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { useCase.keepAssigned().collect {} }
+
+        // When the first change fails and a second arrives
+        changes.emit(Unit)
+        changes.emit(Unit)
+
+        // Then the second is still handled
+        assertNotNull(saved?.get("7"))
+    }
+
+    @Test
     fun `without access nothing is observed and the stored colours are cleared`() = runTest {
         // Given colours stored earlier and no calendar access now
         recordSaves()
