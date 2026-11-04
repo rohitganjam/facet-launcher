@@ -7,6 +7,8 @@ data class CalendarInfo(
     val accountName: String,
     /** A Work Profile calendar read through Android's cross-profile (enterprise) calendar API, which shows no name or account. */
     val isWork: Boolean = false,
+    /** A few upcoming event titles of a Work Profile calendar: Android hides its name, so these are what lets the user tell calendars apart. */
+    val sampleTitles: List<String> = emptyList(),
 )
 
 /** The id prefix of a Work Profile calendar or event, so its ids never meet a personal calendar's. */

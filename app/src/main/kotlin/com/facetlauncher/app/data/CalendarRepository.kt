@@ -60,13 +60,23 @@ open class CalendarRepository @Inject constructor(
      * a colour. Empty when there is no Work Profile, no permission or no access.
      */
     open suspend fun getWorkCalendars(): List<CalendarInfo> = withContext(ioDispatcher) {
-        runCatching {
+        val ids = runCatching {
             contentResolver.query(CalendarContract.Calendars.ENTERPRISE_CONTENT_URI, arrayOf(CalendarContract.Calendars._ID), null, null, null)?.use { cursor ->
-                buildList {
-                    while (cursor.moveToNext()) add(CalendarInfo(id = WORK_CALENDAR_ID_PREFIX + cursor.getLong(0), displayName = "", accountName = "", isWork = true))
-                }
+                buildList { while (cursor.moveToNext()) add(WORK_CALENDAR_ID_PREFIX + cursor.getLong(0)) }
             }
         }.getOrNull().orEmpty()
+        val titles = if (ids.isEmpty()) emptyMap() else sampleWorkTitles()
+        ids.map { CalendarInfo(id = it, displayName = "", accountName = "", isWork = true, sampleTitles = titles[it].orEmpty()) }
+    }
+
+    /** Up to [SAMPLE_TITLES] distinct upcoming event titles per work calendar id, the only thing that tells those calendars apart. */
+    private fun sampleWorkTitles(): Map<String, List<String>> {
+        val now = System.currentTimeMillis()
+        val events = runCatching {
+            queryInstances(CalendarContract.Instances.ENTERPRISE_CONTENT_URI, now, now + SAMPLE_WINDOW_MILLIS, WORK_CALENDAR_ID_PREFIX, LocalDate.now(), includeAllDay = true) { true }
+        }.getOrDefault(emptyList())
+        return events.sortedBy { it.startTimeMillis }.groupBy { it.calendarId }
+            .mapValues { (_, list) -> list.map { it.title.trim() }.filter { it.isNotEmpty() }.distinct().take(SAMPLE_TITLES) }
     }
 
     /**
@@ -164,3 +174,6 @@ open class CalendarRepository @Inject constructor(
         return begin.timeInMillis to end.timeInMillis
     }
 }
+
+private const val SAMPLE_TITLES = 3
+private const val SAMPLE_WINDOW_MILLIS = 14L * 24 * 60 * 60 * 1000

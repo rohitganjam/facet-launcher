@@ -22,6 +22,10 @@ fun calendarTitle(calendar: CalendarInfo, workNumber: Int, workCount: Int): Stri
     else -> stringResource(R.string.calendar_work_calendar)
 }
 
-/** The line under [calendarTitle]: the account, or "Work" for a Work Profile calendar. */
+/** The line under [calendarTitle]: the account, or for a Work Profile calendar "Work" and a few of its event titles, which are all that identify it. */
 @Composable
-fun calendarSubtitle(calendar: CalendarInfo): String = if (calendar.isWork) stringResource(R.string.facet_scope_work) else calendar.accountName
+fun calendarSubtitle(calendar: CalendarInfo): String = when {
+    !calendar.isWork -> calendar.accountName
+    calendar.sampleTitles.isEmpty() -> stringResource(R.string.facet_scope_work)
+    else -> stringResource(R.string.facet_scope_work) + " · " + calendar.sampleTitles.joinToString(", ")
+}

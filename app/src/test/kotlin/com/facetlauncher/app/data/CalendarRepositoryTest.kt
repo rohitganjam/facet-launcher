@@ -321,6 +321,40 @@ class CalendarRepositoryTest {
     }
 
     @Test
+    fun `getWorkCalendars carries a few distinct upcoming event titles per calendar`() = runTest {
+        // Given two work calendars, the first with a repeated title, a blank one and four others
+        val calendars = MatrixCursor(arrayOf(CalendarContract.Calendars._ID))
+        calendars.addRow(arrayOf<Any>(1L))
+        calendars.addRow(arrayOf<Any>(2L))
+        val rows = listOf(
+            InstanceRow(eventId = 1, calendarId = 1, title = "Standup", beginMillis = 1_000L, allDay = false),
+            InstanceRow(eventId = 2, calendarId = 1, title = "Standup", beginMillis = 2_000L, allDay = false),
+            InstanceRow(eventId = 3, calendarId = 1, title = " ", beginMillis = 3_000L, allDay = false),
+            InstanceRow(eventId = 4, calendarId = 1, title = "Design review", beginMillis = 4_000L, allDay = false),
+            InstanceRow(eventId = 5, calendarId = 1, title = "1:1", beginMillis = 5_000L, allDay = false),
+            InstanceRow(eventId = 6, calendarId = 1, title = "Retro", beginMillis = 6_000L, allDay = false),
+            InstanceRow(eventId = 7, calendarId = 2, title = "Dentist", beginMillis = 7_000L, allDay = false),
+        )
+        `when`(
+            contentResolver.query(
+                any(Uri::class.java),
+                any(Array<String>::class.java), nullable(String::class.java), nullable(Array<String>::class.java), nullable(String::class.java),
+            ),
+        ).thenAnswer { instancesCursor(rows) }
+        // The calendar list is stubbed last, so it wins for its own URI over the catch-all above
+        `when`(
+            contentResolver.query(eq(CalendarContract.Calendars.ENTERPRISE_CONTENT_URI), any(Array<String>::class.java), isNull(), isNull(), isNull()),
+        ).thenReturn(calendars)
+
+        // When listing them
+        val result = repository.getWorkCalendars()
+
+        // Then each carries at most three distinct, non-blank titles in start order
+        assertEquals(listOf("Standup", "Design review", "1:1"), result[0].sampleTitles)
+        assertEquals(listOf("Dentist"), result[1].sampleTitles)
+    }
+
+    @Test
     fun `getWorkCalendars is empty when the work profile does not share its calendars`() = runTest {
         // Given the provider refusing cross-profile access
         `when`(

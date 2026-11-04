@@ -4540,3 +4540,7 @@ Widgets the app draws itself, on the Hub grid and on Home's widget stack, behavi
 - [ ] Check on a device: the Work tab in the picker with a real Work Profile whose admin allows widgets.
 - [x] An Agenda widget's calendar list also offers the Work Profile's calendars (`CalendarRepository.getWorkCalendars`, enterprise URIs; ids `work:<n>`, shown as "Work calendar"), and its events (`getUpcomingEvents` reads them only when listed). Needs the work admin to allow the app (`setCrossProfileCalendarPackages`) and the user to show work events. Tests: `CalendarRepositoryTest` (3 new), `NativeWidgetConfigSheetTest`.
 - [ ] Check on a device with a real Work Profile and a calendar the admin shares.
+- [x] A work calendar is told apart by a few of its upcoming event titles (`CalendarInfo.sampleTitles`, `calendarSubtitle`): Android hides its name and account, and the enterprise provider rejects every identifying column (verified with `content query`). Test: `CalendarRepositoryTest`.
+- [x] Fixed: the Agenda's sample events in the picker sat in the year 2096 (`previewCalendarState`); they now start at 09:00 tomorrow. The picker cards also lost their Work chip (the tab says it); `WorkScopeBadge` is gone.
+- [x] Fixed: an Agenda's settings sheet listed no calendars when calendar access was granted after its ViewModel was created; it reloads each time it opens. Test: `NativeWidgetConfigViewModelTest`.
+- [ ] `HubWidgetPickerTabsTest` now asserts the Work chip is absent: compiled, not run on the emulator (a run wipes its app data).
