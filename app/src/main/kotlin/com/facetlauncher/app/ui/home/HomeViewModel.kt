@@ -10,7 +10,7 @@ import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.LockScreenController
 import com.facetlauncher.app.data.MediaSessionRepository
 import com.facetlauncher.app.data.SettingsRepository
-import com.facetlauncher.app.data.model.ClockStackItemKind
+import com.facetlauncher.app.data.model.isWidget
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.ClockAlignment
 import com.facetlauncher.app.data.model.Facet
@@ -170,7 +170,7 @@ class HomeViewModel @Inject constructor(
     /** Fired by the adjust-mode alignment toolbar: a widget page keeps its own alignment, the clock page the facet's. */
     fun onClockAlignmentCommit(alignment: ClockAlignment, mode: HomeLayoutMode = HomeLayoutMode.PORTRAIT) {
         val page = _uiState.value.visibleClockItem
-        if (page?.kind == ClockStackItemKind.WIDGET) {
+        if (page?.kind?.isWidget == true) {
             viewModelScope.launch { clockWidgetFacet.commitPageAlignment(page.id, alignment, mode) }
         } else {
             commitPlacement(mode) { it.copy(alignment = alignment) }

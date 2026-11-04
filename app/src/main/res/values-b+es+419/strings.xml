@@ -118,4 +118,10 @@
     <string name="gesture_long_press_title">Mantener presionado un espacio vacío</string>
     <string name="gesture_home_opens_search_subtitle">Presiona Inicio cuando ya estés en la pantalla de inicio para abrir el cajón con la búsqueda lista.</string>
     <string name="about_weather_credit">Datos del clima de MET Norway (CC BY 4.0). Nombres de ciudades de GeoNames (CC BY 4.0).</string>
+    <string name="native_widget_weather">Clima</string>
+    <string name="native_widget_agenda">Agenda</string>
+    <string name="native_widget_now_playing">Reproduciendo</string>
+    <string name="native_widget_agenda_empty">No hay eventos próximos</string>
+    <string name="native_widget_media_empty">Nada en reproducción</string>
+    <string name="native_widget_picker_section">Widgets de Facet</string>
 </resources>

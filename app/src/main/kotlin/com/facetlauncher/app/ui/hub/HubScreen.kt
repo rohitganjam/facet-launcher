@@ -1,5 +1,6 @@
 package com.facetlauncher.app.ui.hub
 
+import com.facetlauncher.app.ui.nativewidget.NativeWidgetEnvironment
 import android.appwidget.AppWidgetHostView
 import android.content.Context
 import androidx.compose.foundation.background
@@ -33,6 +34,7 @@ fun HubScreen(
     modifier: Modifier = Modifier,
     opacity: Float = 0.6f,
     viewModel: HubViewModel = hiltViewModel(),
+    nativeWidgets: NativeWidgetEnvironment = NativeWidgetEnvironment(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     HubContent(
@@ -52,6 +54,7 @@ fun HubScreen(
         onWidgetResize = viewModel::onWidgetResize,
         opacity = opacity,
         modifier = modifier,
+        nativeWidgets = nativeWidgets,
     )
 }
 
@@ -73,6 +76,7 @@ private fun HubContent(
     onWidgetResize: (appWidgetId: Int, row: Int, col: Int, colSpan: Int, rowSpan: Int) -> Unit,
     opacity: Float,
     modifier: Modifier = Modifier,
+    nativeWidgets: NativeWidgetEnvironment = NativeWidgetEnvironment(),
 ) {
     StickyHeaderLayout(
         // Edge-to-edge is enforced unconditionally at this app's targetSdk (36) — without this,
@@ -111,6 +115,7 @@ private fun HubContent(
                                 onWidgetDroppedOnTrash = onWidgetDroppedOnTrash,
                                 onWidgetResize = onLandscapeWidgetResize,
                                 modifier = Modifier.weight(1f),
+                                nativeWidgets = nativeWidgets,
                             )
                         } else {
                             HubGrid(
@@ -124,6 +129,7 @@ private fun HubContent(
                                 onWidgetDroppedOnTrash = onWidgetDroppedOnTrash,
                                 onWidgetResize = onWidgetResize,
                                 modifier = Modifier.weight(1f),
+                                nativeWidgets = nativeWidgets,
                             )
                         }
                     }

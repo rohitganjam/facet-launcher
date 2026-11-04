@@ -1,5 +1,9 @@
 package com.facetlauncher.app.ui.home
 
+import com.facetlauncher.app.domain.minSizeDp
+import com.facetlauncher.app.domain.defaultSizeDp
+import com.facetlauncher.app.data.nativeItem
+import com.facetlauncher.app.data.model.NativeWidgetType
 import com.facetlauncher.app.data.widgetItem
 import com.facetlauncher.app.data.clockItem
 import androidx.compose.ui.unit.dp
@@ -317,5 +321,46 @@ class HomeScreenStateBuilderTest {
         assertEquals(300.dp, stack.next?.widget?.widthDp)
         assertEquals(200.dp, stack.next?.widget?.heightDp)
         assertEquals(true, stack.next?.widget?.isOrphaned)
+    }
+
+    @Test
+    fun `a native widget page gets its saved size, else its default, with the floor of its smallest layout`() {
+        // Given one resized agenda page and one weather page that never was
+        val saved = Facet(id = 1L, name = "A", position = 0, clockStack = listOf(nativeItem(NativeWidgetType.AGENDA, id = 7L, widthDp = 300, heightDp = 200)))
+        val unsized = Facet(id = 1L, name = "B", position = 0, clockStack = listOf(nativeItem(NativeWidgetType.WEATHER, id = 8L)))
+
+        // When Home's state is built
+        val savedWidget = build(saved, landscape = false).widget
+        val unsizedWidget = build(unsized, landscape = false).widget
+
+        // Then the saved size wins, the unsized takes the type's default, and both carry the type, a negative id and the type's floor
+        assertEquals(NativeWidgetType.AGENDA, savedWidget?.nativeType)
+        assertEquals(300.dp, savedWidget?.widthDp)
+        assertEquals(NativeWidgetType.WEATHER.defaultSizeDp().first.dp, unsizedWidget?.widthDp)
+        assertEquals(NativeWidgetType.WEATHER.minSizeDp().first.dp, unsizedWidget?.minWidthDp)
+        assertEquals(true, (savedWidget?.appWidgetId ?: 0) < 0)
+        assertEquals(false, savedWidget?.isOrphaned)
+    }
+
+    @Test
+    fun `a native widget page keeps its own alignment like a hosted one`() {
+        val page = nativeItem(NativeWidgetType.NOW_PLAYING, id = 9L).copy(alignment = ClockAlignment.CENTER)
+        val facet = Facet(id = 1L, name = "A", position = 0, clockPlacementOwn = true, clockAlignment = ClockAlignment.LEFT, clockStack = listOf(page))
+
+        assertEquals(ClockAlignment.CENTER, build(facet, landscape = false).clock.placement.alignment)
+    }
+
+    @Test
+    fun `the widgets Facet draws itself read the forecast with its units and Home's calendar and media`() {
+        // Given content with a forecast
+        val withWeather = content.copy(weather = previewWeather())
+
+        // When Home's state is built
+        val state = resolveFacetStyle(null, settings).toHomeScreenState(false, settings, withWeather)
+
+        // Then the native widgets hold the full forecast and the same calendar and media Home holds
+        assertEquals(withWeather.weather, state.nativeWidgets.weather.weather)
+        assertEquals(state.calendar, state.nativeWidgets.calendar)
+        assertEquals(state.media, state.nativeWidgets.media)
     }
 }

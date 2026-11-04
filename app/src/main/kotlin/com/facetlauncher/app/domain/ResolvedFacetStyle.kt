@@ -16,6 +16,7 @@ import com.facetlauncher.app.data.model.ClockDateStyle
 import com.facetlauncher.app.data.model.ClockFontOption
 import com.facetlauncher.app.data.model.ClockStackItem
 import com.facetlauncher.app.data.model.ClockStackItemKind
+import com.facetlauncher.app.data.model.NativeWidgetType
 import com.facetlauncher.app.data.model.clockStackLimit
 import com.facetlauncher.app.data.model.nativeClockPage
 import com.facetlauncher.app.data.model.ClockTemplateId
@@ -78,6 +79,7 @@ data class ResolvedClockItem(
     val id: Long,
     val kind: ClockStackItemKind,
     val appWidgetId: Int?,
+    val nativeWidgetType: NativeWidgetType? = null,
     val sizeDp: Oriented<Pair<Int, Int>?>,
     val alignment: Oriented<ClockAlignment?>,
 )
@@ -203,6 +205,7 @@ private fun ClockStackItem.resolve(): ResolvedClockItem {
         id = id,
         kind = kind,
         appWidgetId = appWidgetId,
+        nativeWidgetType = nativeWidgetType,
         sizeDp = Oriented(
             portrait = size(widthDp, heightDp),
             landscape = size(landscapeWidthDp ?: widthDp, landscapeHeightDp ?: heightDp),

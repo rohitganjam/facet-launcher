@@ -1,5 +1,6 @@
 package com.facetlauncher.app.ui.hub
 
+import com.facetlauncher.app.data.model.NativeWidgetType
 import android.appwidget.AppWidgetHostView
 import android.content.Context
 import androidx.lifecycle.ViewModel
@@ -21,6 +22,8 @@ import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -54,6 +57,7 @@ class HubViewModel @Inject constructor(
                     providerLabel = widget.providerLabel,
                     isOrphaned = widget.isOrphaned,
                     landscapeOrder = widget.landscapeOrder,
+                    nativeWidgetType = widget.nativeWidgetType,
                 )
             }.toImmutableList(),
             landscapeWidgets = if (rows > 0) {
@@ -67,6 +71,7 @@ class HubViewModel @Inject constructor(
                             rowSpan = packed.rowSpan,
                             providerLabel = widget.providerLabel,
                             isOrphaned = widget.isOrphaned,
+                            nativeWidgetType = widget.nativeWidgetType,
                         )
                     }
                 }.toImmutableList()
@@ -76,6 +81,12 @@ class HubViewModel @Inject constructor(
             isLoading = false,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), HubUiState())
+
+    /** Whether a weather widget is on the Hub, so Home keeps the forecast fresh even while the Hub is closed. */
+    val hasNativeWeather = widgetPlacementRepository.observeAll()
+        .map { placements -> placements.any { it.nativeWidgetType == NativeWidgetType.WEATHER } }
+        .distinctUntilChanged()
+        .stateIn(viewModelScope, SharingStarted.Eagerly, false)
 
     /** The landscape grid reports how many rows fit, so the widgets can be packed to that height. */
     fun onLandscapeRowsChange(rows: Int) {

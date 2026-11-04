@@ -239,6 +239,8 @@ data class BackupFacet(
     val dockFolderPlacements: List<BackupFolderPlacement> = emptyList(),
     /** A folder placed in this facet's own Favorites list — only meaningful when [overridingFavorites], mirrors [favorites] on the folder side. Defaulted — tolerant-reader discipline. */
     val favoriteFolderPlacements: List<BackupFolderPlacement> = emptyList(),
+    /** The widgets Facet draws itself on this facet's clock stack; defaulted so older backups restore to just the launcher clock. */
+    val nativeStackPages: List<BackupNativeStackPage> = emptyList(),
 )
 
 /** A single app-list entry — dock, default favorites, or one facet's own favorites. */
@@ -286,6 +288,20 @@ data class BackupWidgetPlacement(
     val profile: String = "PERSONAL",
     /** The widget's place in the landscape Hub's flow order, if it had one — defaulted so older backups import as "no order" (landscape then follows portrait's reading order). */
     val landscapeOrder: Int? = null,
+    /** Raw `NativeWidgetType.name` for a widget Facet draws itself: nothing to bind, so it is restored straight onto the Hub instead of joining the re-add queue. `null` for a hosted widget. */
+    val nativeWidgetType: String? = null,
+)
+
+/** A widget Facet draws itself on a facet's clock stack: portable, since it has no `AppWidgetHost` id. A restored stack is the launcher clock followed by these, in order. */
+@Serializable
+data class BackupNativeStackPage(
+    val type: String,
+    val widthDp: Int? = null,
+    val heightDp: Int? = null,
+    val alignment: String? = null,
+    val landscapeWidthDp: Int? = null,
+    val landscapeHeightDp: Int? = null,
+    val landscapeAlignment: String? = null,
 )
 
 /** A saved weather city in a backup file. */

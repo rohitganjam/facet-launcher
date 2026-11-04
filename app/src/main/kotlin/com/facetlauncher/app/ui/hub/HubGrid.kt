@@ -1,5 +1,9 @@
 package com.facetlauncher.app.ui.hub
 
+import androidx.compose.ui.unit.DpSize
+import com.facetlauncher.app.ui.nativewidget.NativeWidgetEnvironment
+import com.facetlauncher.app.ui.nativewidget.NativeWidget
+import com.facetlauncher.app.domain.minSpan
 import android.appwidget.AppWidgetHostView
 import android.content.Context
 import androidx.compose.animation.core.Animatable
@@ -120,6 +124,7 @@ fun HubGrid(
     onWidgetDroppedOnTrash: (Int) -> Unit,
     onWidgetResize: (appWidgetId: Int, row: Int, col: Int, colSpan: Int, rowSpan: Int) -> Unit,
     modifier: Modifier = Modifier,
+    nativeWidgets: NativeWidgetEnvironment = NativeWidgetEnvironment(),
 ) {
     val density = LocalDensity.current
     val haptics = LocalHapticFeedback.current
@@ -252,11 +257,13 @@ fun HubGrid(
                         val isMenuOpen = widget.appWidgetId == showContextMenuForAppWidgetId
                         val baseColSpan = widget.colSpan
                         val baseRowSpan = widget.rowSpan
+                        val minColSpan = widget.nativeWidgetType?.minSpan()?.cols ?: 1
+                        val minRowSpan = widget.nativeWidgetType?.minSpan()?.rows ?: 1
 
                         val liveColSpan = if (isResizing) {
                             when (horizontalResizeEdge) {
-                                ResizeEdge.END -> resizedSpan(baseColSpan, resizeDeltaPx.x, cellWidthPx)
-                                ResizeEdge.START -> resizedSpan(baseColSpan, -resizeDeltaPx.x, cellWidthPx)
+                                ResizeEdge.END -> resizedSpan(baseColSpan, resizeDeltaPx.x, cellWidthPx, minColSpan)
+                                ResizeEdge.START -> resizedSpan(baseColSpan, -resizeDeltaPx.x, cellWidthPx, minColSpan)
                                 null -> baseColSpan
                             }
                         } else {
@@ -264,8 +271,8 @@ fun HubGrid(
                         }
                         val liveRowSpan = if (isResizing) {
                             when (verticalResizeEdge) {
-                                ResizeEdge.END -> resizedSpan(baseRowSpan, resizeDeltaPx.y, rowHeightPx)
-                                ResizeEdge.START -> resizedSpan(baseRowSpan, -resizeDeltaPx.y, rowHeightPx)
+                                ResizeEdge.END -> resizedSpan(baseRowSpan, resizeDeltaPx.y, rowHeightPx, minRowSpan)
+                                ResizeEdge.START -> resizedSpan(baseRowSpan, -resizeDeltaPx.y, rowHeightPx, minRowSpan)
                                 null -> baseRowSpan
                             }
                         } else {
@@ -432,7 +439,14 @@ fun HubGrid(
                                     )
                                 },
                         ) {
-                            if (widget.isOrphaned) {
+                            if (widget.nativeWidgetType != null) {
+                                NativeWidget(
+                                    type = widget.nativeWidgetType,
+                                    size = DpSize(tileWidth, tileHeight),
+                                    state = nativeWidgets.state,
+                                    actions = nativeWidgets.actions,
+                                )
+                            } else if (widget.isOrphaned) {
                                 OrphanedWidgetTile(
                                     providerLabel = widget.providerLabel,
                                     onRemove = { onRemoveOrphan(widget.appWidgetId) },
@@ -523,14 +537,16 @@ fun HubGrid(
                 if (resizingWidget != null) {
                     val baseColSpan = resizingWidget.colSpan
                     val baseRowSpan = resizingWidget.rowSpan
+                    val minColSpan = resizingWidget.nativeWidgetType?.minSpan()?.cols ?: 1
+                    val minRowSpan = resizingWidget.nativeWidgetType?.minSpan()?.rows ?: 1
                     val liveColSpan = when (horizontalResizeEdge) {
-                        ResizeEdge.END -> resizedSpan(baseColSpan, resizeDeltaPx.x, cellWidthPx)
-                        ResizeEdge.START -> resizedSpan(baseColSpan, -resizeDeltaPx.x, cellWidthPx)
+                        ResizeEdge.END -> resizedSpan(baseColSpan, resizeDeltaPx.x, cellWidthPx, minColSpan)
+                        ResizeEdge.START -> resizedSpan(baseColSpan, -resizeDeltaPx.x, cellWidthPx, minColSpan)
                         null -> baseColSpan
                     }
                     val liveRowSpan = when (verticalResizeEdge) {
-                        ResizeEdge.END -> resizedSpan(baseRowSpan, resizeDeltaPx.y, rowHeightPx)
-                        ResizeEdge.START -> resizedSpan(baseRowSpan, -resizeDeltaPx.y, rowHeightPx)
+                        ResizeEdge.END -> resizedSpan(baseRowSpan, resizeDeltaPx.y, rowHeightPx, minRowSpan)
+                        ResizeEdge.START -> resizedSpan(baseRowSpan, -resizeDeltaPx.y, rowHeightPx, minRowSpan)
                         null -> baseRowSpan
                     }
                     val liveCol = if (horizontalResizeEdge == ResizeEdge.START) {
@@ -581,7 +597,7 @@ fun HubGrid(
                             // the final rect here rather than closing over liveColSpan/liveRowSpan
                             // (plain vals, frozen at that one capture).
                             onDragEnd = {
-                                val finalColSpan = resizedSpan(baseColSpan, resizeDeltaPx.x, cellWidthPx)
+                                val finalColSpan = resizedSpan(baseColSpan, resizeDeltaPx.x, cellWidthPx, minColSpan)
                                 currentOnWidgetResized.value(resizingWidget.appWidgetId, resizingWidget.row, resizingWidget.col, finalColSpan, baseRowSpan)
                                 // Resize mode itself stays active (resizingAppWidgetId is left
                                 // untouched) so the user can immediately grab another handle —
@@ -598,7 +614,7 @@ fun HubGrid(
                         WidgetResizeHandle(
                             onDrag = { delta -> horizontalResizeEdge = ResizeEdge.START; resizeDeltaPx += Offset(delta.x, 0f) },
                             onDragEnd = {
-                                val finalColSpan = resizedSpan(baseColSpan, -resizeDeltaPx.x, cellWidthPx)
+                                val finalColSpan = resizedSpan(baseColSpan, -resizeDeltaPx.x, cellWidthPx, minColSpan)
                                 val finalCol = resizingWidget.col + baseColSpan - finalColSpan
                                 currentOnWidgetResized.value(resizingWidget.appWidgetId, resizingWidget.row, finalCol, finalColSpan, baseRowSpan)
                                 // See the right handle's onDragEnd above — resize mode stays
@@ -619,13 +635,13 @@ fun HubGrid(
                                 // drag position — resizeDeltaPx is read fresh here (a State),
                                 // unlike tileHeight/resizeOffsetY which are safe to read stale
                                 // since row/col/rowHeight don't change mid-resize.
-                                val liveSpan = resizedSpan(baseRowSpan, resizeDeltaPx.y, rowHeightPx)
+                                val liveSpan = resizedSpan(baseRowSpan, resizeDeltaPx.y, rowHeightPx, minRowSpan)
                                 val contentBottomPx = resizeOffsetY.toPx(density) + (rowHeight * liveSpan + HUB_GRID_GAP * (liveSpan - 1)).toPx(density)
                                 val viewportBottomPx = scrollState.value.toFloat() + viewportHeightPx
                                 autoScrollDirection = if (contentBottomPx > viewportBottomPx - autoScrollEdgeZonePx && scrollState.value < scrollState.maxValue) 1 else 0
                             },
                             onDragEnd = {
-                                val finalRowSpan = resizedSpan(baseRowSpan, resizeDeltaPx.y, rowHeightPx)
+                                val finalRowSpan = resizedSpan(baseRowSpan, resizeDeltaPx.y, rowHeightPx, minRowSpan)
                                 currentOnWidgetResized.value(resizingWidget.appWidgetId, resizingWidget.row, resizingWidget.col, baseColSpan, finalRowSpan)
                                 // See the right handle's onDragEnd above — resize mode stays
                                 // active; only this drag's own transient state resets.
@@ -641,14 +657,14 @@ fun HubGrid(
                             onDrag = { delta ->
                                 verticalResizeEdge = ResizeEdge.START
                                 resizeDeltaPx += Offset(0f, delta.y)
-                                val liveSpan = resizedSpan(baseRowSpan, -resizeDeltaPx.y, rowHeightPx)
+                                val liveSpan = resizedSpan(baseRowSpan, -resizeDeltaPx.y, rowHeightPx, minRowSpan)
                                 val liveRowForAutoScroll = resizingWidget.row + baseRowSpan - liveSpan
                                 val contentTopPx = (liveRowForAutoScroll * (rowHeightPx + HUB_GRID_GAP.toPx(density)))
                                 val viewportTopPx = scrollState.value.toFloat()
                                 autoScrollDirection = if (contentTopPx < viewportTopPx + autoScrollEdgeZonePx && scrollState.value > 0) -1 else 0
                             },
                             onDragEnd = {
-                                val finalRowSpan = resizedSpan(baseRowSpan, -resizeDeltaPx.y, rowHeightPx)
+                                val finalRowSpan = resizedSpan(baseRowSpan, -resizeDeltaPx.y, rowHeightPx, minRowSpan)
                                 val finalRow = resizingWidget.row + baseRowSpan - finalRowSpan
                                 currentOnWidgetResized.value(resizingWidget.appWidgetId, finalRow, resizingWidget.col, baseColSpan, finalRowSpan)
                                 // See the right handle's onDragEnd above — resize mode stays
@@ -705,6 +721,6 @@ fun HubGrid(
 
 private fun Dp.toPx(density: Density): Float = with(density) { this@toPx.toPx() }
 
-/** Grows/shrinks by whole cells only, floored at 1 — matches how the commit-time span is computed. */
-internal fun resizedSpan(baseSpan: Int, deltaPx: Float, cellSizePx: Float): Int =
-    (baseSpan + (deltaPx / cellSizePx).roundToInt()).coerceAtLeast(1)
+/** Grows/shrinks by whole cells only, floored at [minSpan] (1 unless the widget has a larger smallest layout) — matches how the commit-time span is computed. */
+internal fun resizedSpan(baseSpan: Int, deltaPx: Float, cellSizePx: Float, minSpan: Int = 1): Int =
+    (baseSpan + (deltaPx / cellSizePx).roundToInt()).coerceAtLeast(minSpan)

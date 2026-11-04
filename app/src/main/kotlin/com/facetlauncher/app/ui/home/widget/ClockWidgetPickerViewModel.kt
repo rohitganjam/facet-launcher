@@ -3,6 +3,7 @@ package com.facetlauncher.app.ui.home.widget
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.facetlauncher.app.data.model.WidgetProviderOption
+import com.facetlauncher.app.data.model.NativeWidgetType
 import com.facetlauncher.app.data.widget.AppWidgetRepository
 import com.facetlauncher.app.domain.AddClockStackItemResult
 import com.facetlauncher.app.domain.AddClockStackItemUseCase
@@ -87,6 +88,17 @@ class ClockWidgetPickerViewModel @Inject constructor(
                 return@launch
             }
             proceedAfterBind(appWidgetId)
+        }
+    }
+
+    /** A widget Facet draws itself: nothing to bind or configure, so it goes straight into the stack as [target] says. */
+    fun onNativeWidgetSelect(type: NativeWidgetType, target: ClockWidgetPickerTarget) {
+        viewModelScope.launch {
+            val stored = when (target) {
+                is ClockWidgetPickerTarget.Replace -> replaceClockStackItem.withNativeWidget(target.itemId, type)
+                is ClockWidgetPickerTarget.Add -> addClockStackItem.addNativeWidget(target.facetId, type) == AddClockStackItemResult.ADDED
+            }
+            _events.emit(if (stored) HubAddWidgetEvent.WidgetAdded else HubAddWidgetEvent.AddFailed(AddFailureReason.SETUP_CANCELLED))
         }
     }
 

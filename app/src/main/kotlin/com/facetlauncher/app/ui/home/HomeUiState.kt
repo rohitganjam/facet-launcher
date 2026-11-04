@@ -1,5 +1,6 @@
 package com.facetlauncher.app.ui.home
 
+import com.facetlauncher.app.data.model.NativeWidgetType
 import com.facetlauncher.app.domain.ListAlignment
 import com.facetlauncher.app.domain.ClockPlacement
 import com.facetlauncher.app.data.model.Facet
@@ -78,6 +79,9 @@ data class HomeUiState(
 
     /** The visible page's widget id; `null` when it is the native clock. */
     val clockWidgetAppWidgetId: Int? get() = visibleClockItem?.appWidgetId
+
+    /** Whether a weather widget is on a page Home shows, which needs the forecast even with the clock's weather accessory off. */
+    val showsNativeWeather: Boolean get() = clockStack.any { it.nativeWidgetType == NativeWidgetType.WEATHER }
 
     /** Every widget id in the stack: all of them need the host listening, not only the visible one. */
     val clockStackWidgetIds: List<Int> get() = clockStack.mapNotNull { it.appWidgetId }

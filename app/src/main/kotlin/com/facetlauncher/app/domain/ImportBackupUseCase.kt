@@ -1,5 +1,8 @@
 package com.facetlauncher.app.domain
 
+import com.facetlauncher.app.data.model.NativeWidgetType
+import com.facetlauncher.app.data.WidgetPlacementRepository
+import com.facetlauncher.app.data.ClockStackRepository
 import android.net.Uri
 import com.facetlauncher.app.data.model.PlacementList
 import com.facetlauncher.app.data.BackupRepository
@@ -86,6 +89,8 @@ class ImportBackupUseCase @Inject constructor(
     private val placementRepository: PlacementRepository,
     private val folderRepository: FolderRepository,
     private val repairOrphanedProfileRows: RepairOrphanedProfileRowsUseCase,
+    private val clockStackRepository: ClockStackRepository,
+    private val widgetPlacementRepository: WidgetPlacementRepository,
 ) {
     suspend operator fun invoke(uri: Uri): ImportBackupResult {
         val bundle = backupRepository.readBackup(uri) ?: return ImportBackupResult.InvalidFile
@@ -104,6 +109,7 @@ class ImportBackupUseCase @Inject constructor(
         var activeFacetId: Long? = null
         bundle.facets.forEachIndexed { index, backupFacet ->
             val newId = facetRepository.restoreFacet(backupFacet.toFacet())
+            clockStackRepository.restoreNativeWidgets(newId, backupFacet.nativeStackPages.mapNotNull { it.toStackItem() })
             val favoritesTarget = PlacementTarget(PlacementList.FAVORITES, newId)
             val dockTarget = PlacementTarget(PlacementList.DOCK, newId)
             backupFacet.favorites.forEach { entry ->
@@ -142,6 +148,8 @@ class ImportBackupUseCase @Inject constructor(
             }
         }
 
+        val hostedPlacements = restoreNativeHubWidgets(bundle.widgetPlacements)
+
         // BackupAppEntry has no portable userId (see BackupBundle's own doc comment), so every
         // restored row lands at the -1 orphaned sentinel and won't hydrate against installed apps
         // until resolved — same repair LauncherViewModel.init runs once per app launch, but run
@@ -152,8 +160,19 @@ class ImportBackupUseCase @Inject constructor(
             facetCount = bundle.facets.size,
             dockAppCount = bundle.dockApps.size,
             defaultFavoriteCount = bundle.defaultFavoriteApps.size,
-            pendingWidgetPlacements = bundle.widgetPlacements,
+            pendingWidgetPlacements = hostedPlacements,
         )
+    }
+
+    /** A widget Facet draws itself has no binding to redo, so it goes straight back on the Hub; returns the hosted ones, which wait in the re-add queue. */
+    private suspend fun restoreNativeHubWidgets(placements: List<BackupWidgetPlacement>): List<BackupWidgetPlacement> {
+        widgetPlacementRepository.deleteAllNative()
+        val (native, hosted) = placements.partition { it.nativeWidgetType != null }
+        native.forEach { placement ->
+            val type = placement.nativeWidgetType?.toEnumOrNull<NativeWidgetType>() ?: return@forEach
+            widgetPlacementRepository.upsert(placement.toNativePlacement(widgetPlacementRepository.nextNativeId(), type))
+        }
+        return hosted
     }
 
     private suspend fun applySettings(settings: BackupSettings) {

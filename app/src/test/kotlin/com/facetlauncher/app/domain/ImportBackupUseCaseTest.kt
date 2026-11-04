@@ -1,5 +1,12 @@
 package com.facetlauncher.app.domain
 
+import com.facetlauncher.app.data.model.NativeWidgetType
+import com.facetlauncher.app.data.model.ClockStackItemKind
+import com.facetlauncher.app.data.model.ClockStackItem
+import com.facetlauncher.app.data.model.BackupNativeStackPage
+import com.facetlauncher.app.data.local.WidgetPlacementEntity
+import com.facetlauncher.app.data.WidgetPlacementRepository
+import com.facetlauncher.app.data.ClockStackRepository
 import com.facetlauncher.app.LandscapeTransformCaptor
 import com.facetlauncher.app.data.model.AppListColumnAlignment
 import com.facetlauncher.app.data.model.AppListVerticalAlignment
@@ -43,6 +50,8 @@ class ImportBackupUseCaseTest {
     private val placementRepository = mock(PlacementRepository::class.java)
     private val folderRepository = mock(FolderRepository::class.java)
     private val repairOrphanedProfileRows = mock(RepairOrphanedProfileRowsUseCase::class.java)
+    private val clockStackRepository = mock(ClockStackRepository::class.java)
+    private val widgetPlacementRepository = mock(WidgetPlacementRepository::class.java)
 
     private val useCase = ImportBackupUseCase(
         backupRepository,
@@ -51,6 +60,8 @@ class ImportBackupUseCaseTest {
         placementRepository,
         folderRepository,
         repairOrphanedProfileRows,
+        clockStackRepository,
+        widgetPlacementRepository,
     )
 
     private fun minimalSettings(activeFacetIndex: Int? = null) = BackupSettings(
@@ -343,5 +354,48 @@ class ImportBackupUseCaseTest {
         val captor = LandscapeTransformCaptor()
         verify(settingsRepository).updateLandscape(captor.capture())
         assertEquals(LandscapeOverrides(), captor.last(LandscapeOverrides(appRowPosition = AppRowPosition.LEFT, appListColumnAlignment = AppListColumnAlignment.MIRRORED)))
+    }
+
+    @Test
+    fun `widgets Facet draws itself are restored straight away and hosted ones wait in the re-add queue`() = runTest {
+        // Given a backup with a native weather widget on the Hub and a native agenda page on a facet's stack, next to a hosted widget
+        val uri = mock(Uri::class.java)
+        val facet = BackupFacet(
+            name = "Work", position = 0, overrideClock = false, clockTemplateId = "LIGHT_STACK",
+            clockFontOption = "LAUNCHER_DEFAULT", clockColorOption = "THEME", use24HourTime = false,
+            clockShowMeridiem = false, overrideApps = false, appRowPosition = "LEFT",
+            appRowPresentation = "ICON_AND_TEXT", listContentMode = "FAVORITES", appsToShowCount = 5,
+            overridingFavorites = false, overrideCalendar = false, showAllDayEvents = true, favorites = emptyList(),
+            overrideDock = false, dockDisplayMode = "ICONS", dockApps = emptyList(),
+            nativeStackPages = listOf(
+                BackupNativeStackPage(type = "AGENDA", widthDp = 300, heightDp = 200, alignment = "CENTER"),
+                BackupNativeStackPage(type = "FROM_THE_FUTURE"),
+            ),
+        )
+        val bundle = BackupBundle(
+            exportedAtEpochMillis = 0L, settings = minimalSettings(), facets = listOf(facet), dockApps = emptyList(), defaultFavoriteApps = emptyList(),
+            widgetPlacements = listOf(
+                BackupWidgetPlacement("", "", row = 0, col = 0, colSpan = 2, rowSpan = 2, nativeWidgetType = "WEATHER"),
+                BackupWidgetPlacement("com.example.widgets", ".W", row = 2, col = 0, colSpan = 2, rowSpan = 1),
+            ),
+        )
+        `when`(backupRepository.readBackup(uri)).thenReturn(bundle)
+        `when`(facetRepository.restoreFacet(facet.toFacet())).thenReturn(5L)
+        `when`(widgetPlacementRepository.nextNativeId()).thenReturn(-1)
+
+        // When importing
+        val result = useCase(uri) as ImportBackupResult.Success
+
+        // Then the stale native widgets go, the saved one returns under a negative id of its own, the unknown stack type is skipped
+        verify(widgetPlacementRepository).deleteAllNative()
+        verify(widgetPlacementRepository).upsert(
+            WidgetPlacementEntity(appWidgetId = -1, providerPackageName = "", providerClassName = "", row = 0, col = 0, colSpan = 2, rowSpan = 2, nativeWidgetType = NativeWidgetType.WEATHER),
+        )
+        verify(clockStackRepository).restoreNativeWidgets(
+            5L,
+            listOf(ClockStackItem(0L, 0L, 0, ClockStackItemKind.NATIVE_WIDGET, nativeWidgetType = NativeWidgetType.AGENDA, widthDp = 300, heightDp = 200, alignment = ClockAlignment.CENTER)),
+        )
+        // And only the hosted widget is queued for re-adding
+        assertEquals(listOf("com.example.widgets"), result.pendingWidgetPlacements.map { it.providerPackageName })
     }
 }

@@ -17,6 +17,7 @@ import com.facetlauncher.app.data.BackupRepository
 import com.facetlauncher.app.data.FolderRepository
 import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.SettingsRepository
+import com.facetlauncher.app.data.ClockStackRepository
 import com.facetlauncher.app.data.WidgetPlacementRepository
 import com.facetlauncher.app.data.local.FacetDatabase
 import com.facetlauncher.app.data.widget.AppWidgetRepository
@@ -65,6 +66,8 @@ class BackupRestoreScreenTest {
                         RepairOrphanedProfileRowsUseCase(
                             appRepository, placementRepository, folderRepository,
                         ),
+                        ClockStackRepository(database, database.clockStackItemDao()),
+                        widgetPlacementRepository,
                     ),
                     appRepository,
                     appWidgetRepository,

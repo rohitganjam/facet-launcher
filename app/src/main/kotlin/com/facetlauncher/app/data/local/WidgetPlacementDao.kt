@@ -16,11 +16,17 @@ interface WidgetPlacementDao {
     @Query("SELECT * FROM widget_placements WHERE appWidgetId = :appWidgetId LIMIT 1")
     suspend fun getById(appWidgetId: Int): WidgetPlacementEntity?
 
+    @Query("SELECT MIN(appWidgetId) FROM widget_placements")
+    suspend fun minAppWidgetId(): Int?
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsert(placement: WidgetPlacementEntity)
 
     @Query("DELETE FROM widget_placements WHERE appWidgetId = :appWidgetId")
     suspend fun deleteById(appWidgetId: Int)
+
+    @Query("DELETE FROM widget_placements WHERE nativeWidgetType IS NOT NULL")
+    suspend fun deleteAllNative()
 
     @Delete
     suspend fun delete(placement: WidgetPlacementEntity)

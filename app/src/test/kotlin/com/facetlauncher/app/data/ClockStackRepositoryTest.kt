@@ -7,6 +7,7 @@ import com.facetlauncher.app.data.local.FacetEntity
 import com.facetlauncher.app.data.model.ClockAlignment
 import com.facetlauncher.app.data.model.ClockStackItemKind
 import com.facetlauncher.app.data.model.MAX_CLOCK_STACK_ITEMS
+import com.facetlauncher.app.data.model.NativeWidgetType
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.After
@@ -274,5 +275,84 @@ class ClockStackRepositoryTest {
 
         // Then its items go with it
         assertTrue(repository.getAll(facetId).isEmpty())
+    }
+
+    @Test
+    fun `a native widget is added with its type and no widget id`() = runTest {
+        // Given a native widget added to the stack
+        assertTrue(repository.addNativeWidget(facetId, NativeWidgetType.WEATHER))
+
+        // Then it is stored as a native page carrying only its type
+        val item = repository.getAll(facetId).single()
+        assertEquals(ClockStackItemKind.NATIVE_WIDGET, item.kind)
+        assertEquals(NativeWidgetType.WEATHER, item.nativeWidgetType)
+        assertNull(item.appWidgetId)
+    }
+
+    @Test
+    fun `native widgets count against the stack limit`() = runTest {
+        // Given a full stack
+        repeat(MAX_CLOCK_STACK_ITEMS) { assertTrue(repository.addNativeWidget(facetId, NativeWidgetType.AGENDA)) }
+
+        // Then a sixth is refused
+        assertFalse(repository.addNativeWidget(facetId, NativeWidgetType.AGENDA))
+    }
+
+    @Test
+    fun `replaceWithNativeWidget swaps a hosted widget in place, resets its size and releases its id`() = runTest {
+        // Given a sized hosted widget
+        repository.addWidget(facetId, 10)
+        val id = repository.getAll(facetId).single().id
+        repository.setSize(id, 300, 200)
+
+        // When replaced by a native widget
+        val replaced = repository.replaceWithNativeWidget(id, NativeWidgetType.NOW_PLAYING)
+
+        // Then its widget id is handed back and the page is the native widget at no size
+        assertEquals(10, replaced?.releasedAppWidgetId)
+        val item = repository.getAll(facetId).single()
+        assertEquals(NativeWidgetType.NOW_PLAYING, item.nativeWidgetType)
+        assertNull(item.appWidgetId)
+        assertNull(item.widthDp)
+    }
+
+    @Test
+    fun `replacing a native widget with the clock or a hosted widget drops its type`() = runTest {
+        // Given a native widget
+        repository.addNativeWidget(facetId, NativeWidgetType.AGENDA)
+        val id = repository.getAll(facetId).single().id
+
+        // When it becomes a hosted widget
+        repository.replaceWithWidget(id, 7)
+
+        // Then the type is gone
+        assertNull(repository.getAll(facetId).single().nativeWidgetType)
+    }
+
+    @Test
+    fun `removing a native widget releases no widget id`() = runTest {
+        // Given a native widget
+        repository.addNativeWidget(facetId, NativeWidgetType.WEATHER)
+
+        // When removed, then there is nothing to release and the stack is empty
+        assertNull(repository.remove(repository.getAll(facetId).single().id))
+        assertTrue(repository.getAll(facetId).isEmpty())
+    }
+
+    @Test
+    fun `restoreNativeWidgets appends the pages after the clock with their sizes and stops at the limit`() = runTest {
+        // Given a facet that starts as the clock
+        repository.addClock(facetId)
+        val pages = List(MAX_CLOCK_STACK_ITEMS) { nativeItem(NativeWidgetType.AGENDA, widthDp = 100 + it, heightDp = 80).copy(alignment = ClockAlignment.RIGHT) }
+
+        // When a restore appends more pages than fit
+        repository.restoreNativeWidgets(facetId, pages)
+
+        // Then the clock stays first, the pages keep their order, size and alignment, and the stack is full at the limit
+        val stored = repository.getAll(facetId)
+        assertEquals(MAX_CLOCK_STACK_ITEMS, stored.size)
+        assertEquals(ClockStackItemKind.CLOCK, stored.first().kind)
+        assertEquals(listOf(100, 101, 102, 103), stored.drop(1).map { it.widthDp })
+        assertEquals(ClockAlignment.RIGHT, stored.last().alignment)
     }
 }
