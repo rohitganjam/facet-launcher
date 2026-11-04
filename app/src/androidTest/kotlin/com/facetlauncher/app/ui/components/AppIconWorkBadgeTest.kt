@@ -17,7 +17,7 @@ class AppIconWorkBadgeTest {
     val composeRule = createComposeRule()
 
     @Test
-    fun workBadgeIsAFifthOfTheIconHeightAtItsBottomLeft() {
+    fun workBadgeIsAQuarterOfTheIconHeightAtItsBottomLeft() {
         // Given a Work app's 50dp icon
         composeRule.setContent {
             FacetLauncherTheme {
@@ -28,8 +28,8 @@ class AppIconWorkBadgeTest {
         // When reading the badge's bounds
         val bounds = composeRule.onNodeWithTag("work_profile_badge", useUnmergedTree = true).getUnclippedBoundsInRoot()
 
-        // Then it is 10dp square, flush with the icon's bottom-left corner
-        assertEquals(10f, bounds.height.value, 0.5f)
+        // Then it is 12.5dp square, flush with the icon's bottom-left corner
+        assertEquals(12.5f, bounds.height.value, 0.5f)
         assertEquals(bounds.height.value, bounds.width.value, 0.5f)
         assertEquals(0f, bounds.left.value, 0.5f)
         assertEquals(50f, bounds.bottom.value, 0.5f)

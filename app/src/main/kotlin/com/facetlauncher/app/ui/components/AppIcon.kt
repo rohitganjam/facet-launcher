@@ -3,6 +3,7 @@ package com.facetlauncher.app.ui.components
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Person
@@ -170,24 +171,36 @@ fun NotificationBadge(count: Int, style: NotificationBadgeStyle, modifier: Modif
     }
 }
 
-/** The briefcase's height as a share of the icon's, and how opaque it is. */
-private const val WORK_BADGE_SIZE_FRACTION = 0.2f
+/** The badge's height as a share of the icon's, the briefcase's share of the badge, and the opacity of the briefcase and of the plate behind it. */
+private const val WORK_BADGE_SIZE_FRACTION = 0.25f
+private const val WORK_BADGE_GLYPH_FRACTION = 0.75f
 private const val WORK_BADGE_ALPHA = 0.7f
+private const val WORK_BADGE_PLATE_ALPHA = 0.2f
 
 /**
  * A themed briefcase for a Work Profile app's icon — deliberately not Android's own
  * [android.content.pm.PackageManager.getUserBadgedIcon] asset, which would render with the OS's
  * baseline tones instead of this app's palette (CLAUDE.md's shape/theming rule). [iconSize] is the
- * icon it sits on; the briefcase is [WORK_BADGE_SIZE_FRACTION] of it, in [Accent] at [WORK_BADGE_ALPHA].
+ * icon it sits on; the badge, plate included, is [WORK_BADGE_SIZE_FRACTION] of it. The plate takes the
+ * user's icon shape (the default squircle unless they changed it) and is [Accent] at [WORK_BADGE_PLATE_ALPHA].
  */
 @Composable
 private fun WorkProfileBadge(iconSize: Dp, modifier: Modifier = Modifier) {
-    Icon(
-        imageVector = Icons.Filled.Work,
-        contentDescription = null,
-        tint = Accent.copy(alpha = WORK_BADGE_ALPHA),
-        modifier = modifier.size(iconSize * WORK_BADGE_SIZE_FRACTION).testTag("work_profile_badge"),
-    )
+    val plateShape = LocalIconShape.current.shape.toComposeShape()
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = modifier
+            .size(iconSize * WORK_BADGE_SIZE_FRACTION)
+            .background(Accent.copy(alpha = WORK_BADGE_PLATE_ALPHA), plateShape)
+            .testTag("work_profile_badge"),
+    ) {
+        Icon(
+            imageVector = Icons.Filled.Work,
+            contentDescription = null,
+            tint = Accent.copy(alpha = WORK_BADGE_ALPHA),
+            modifier = Modifier.fillMaxSize(WORK_BADGE_GLYPH_FRACTION),
+        )
+    }
 }
 
 /** Sibling to [WorkProfileBadge] for [com.facetlauncher.app.data.model.AppProfile.OTHER] apps — a small person glyph (not just a plain dot) so it reads as visually distinct from the Work badge at a glance. */

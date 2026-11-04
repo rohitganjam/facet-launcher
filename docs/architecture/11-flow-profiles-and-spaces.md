@@ -46,7 +46,7 @@ flowchart LR
 - **Launching** a Work app: `LauncherActivity.launchApp` sees `app.userHandle != myUserHandle()`
   and uses `launcherApps.startMainActivity(component, handle, null, null)` instead of a plain
   `Intent` — the only API that can start an activity in another profile.
-- **Badges**: `AppIcon` draws the Work badge from `AppInfo.profile == WORK`: a briefcase at the icon's bottom-left, 20% of its height, Accent at 70% opacity.
+- **Badges**: `AppIcon` draws the Work badge from `AppInfo.profile == WORK`: a briefcase at the icon's bottom-left on a plate in the icon shape; the badge is 25% of the icon's height, the briefcase Accent at 70% opacity, the plate Accent at 20%.
 - Widgets from the Work Profile are enumerated per handle and placed with `profile/userId`
   ([10](10-flow-hub-widgets.md) §1).
 
