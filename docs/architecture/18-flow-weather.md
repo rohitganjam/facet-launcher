@@ -139,7 +139,7 @@ header, when sent, sets the earliest next attempt.
   request is made, or App info once Android stops asking. Settings → Permissions → Location now says it serves both the
   Wi-Fi network name and weather. Switching weather on, or choosing "Use current location", still asks once inline.
 - **`ClockAccessoriesScreen`** (`clockAccessories?facetId=`) edits the switches and the icon style; **`UnitsAndLocationScreen`**
-  (`unitsAndLocation`, linked from it for the default and every facet) edits the units and links to **`WeatherLocationScreen`**
+  (`unitsAndLocation`, titled "Weather settings", a row in Settings → System) edits the units and links to **`WeatherLocationScreen`**
   (`weatherLocation`) for the location mode and city. The permission is requested with `ACCESS_COARSE_LOCATION` only, from the
   Location card, and its state is re-read on resume. The city search runs 400 ms after the last keystroke
   (`WeatherLocationViewModel`) through `SearchPlacesUseCase`.

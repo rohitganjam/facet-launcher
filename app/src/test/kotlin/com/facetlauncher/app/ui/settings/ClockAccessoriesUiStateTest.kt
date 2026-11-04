@@ -17,11 +17,10 @@ class ClockAccessoriesUiStateTest {
     )
 
     @Test
-    fun `the default screen shows the icons card and the units and location link while weather is on somewhere`() {
+    fun `the default screen shows the icons card while weather is on somewhere`() {
         val state = ClockAccessoriesUiState(settings = settings, weatherEnabledAnywhere = true)
 
         assertTrue(state.showIconStyleCard)
-        assertTrue(state.showUnitsAndLocationLink)
     }
 
     @Test
@@ -48,14 +47,7 @@ class ClockAccessoriesUiStateTest {
     }
 
     @Test
-    fun `a facet gets the same units and location link as the default screen`() {
-        val state = ClockAccessoriesUiState(facet = facet(overrideClock = true), settings = settings, weatherEnabledAnywhere = true)
-
-        assertTrue(state.showUnitsAndLocationLink)
-    }
-
-    @Test
-    fun `a facet has no icons card and no link when weather is off everywhere`() {
+    fun `a facet has no icons card when weather is off everywhere`() {
         val state = ClockAccessoriesUiState(
             facet = facet(overrideClock = true, showWeather = false),
             settings = settings.copy(showWeather = false),
@@ -63,6 +55,5 @@ class ClockAccessoriesUiStateTest {
         )
 
         assertFalse(state.showIconStyleCard)
-        assertFalse(state.showUnitsAndLocationLink)
     }
 }

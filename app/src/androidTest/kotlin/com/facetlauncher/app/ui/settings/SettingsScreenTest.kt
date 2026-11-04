@@ -55,6 +55,7 @@ class SettingsScreenTest {
         onNavigateToHomeAppsListSettings: () -> Unit = {},
         onNavigateToFolders: () -> Unit = {},
         onNavigateToGestures: () -> Unit = {},
+        onNavigateToWeatherSettings: () -> Unit = {},
         onNavigateToPermissions: () -> Unit = {},
         onNavigateToBackupRestore: () -> Unit = {},
         onNavigateToWhatsNew: () -> Unit = {},
@@ -94,6 +95,7 @@ class SettingsScreenTest {
                     onNavigateToHomeAppsListSettings = onNavigateToHomeAppsListSettings,
                     onNavigateToFolders = onNavigateToFolders,
                     onNavigateToGestures = onNavigateToGestures,
+                    onNavigateToWeatherSettings = onNavigateToWeatherSettings,
                     onNavigateToPermissions = onNavigateToPermissions,
                     onNavigateToBackupRestore = onNavigateToBackupRestore,
                     onNavigateToWhatsNew = onNavigateToWhatsNew,
@@ -261,6 +263,19 @@ class SettingsScreenTest {
         composeRule.onNodeWithTag("gestures_row").performClick()
 
         // Then its callback fires
+        assertEquals(true, navigated)
+    }
+
+    @Test
+    fun weatherSettingsRowIsInSystemAndOpensTheWeatherScreen() {
+        // Given the settings screen, scrolled to the Weather settings row (under SYSTEM)
+        var navigated = false
+        setContent(onNavigateToWeatherSettings = { navigated = true })
+        composeRule.onNodeWithTag("settings_screen").performScrollToNode(hasTestTag("weather_settings_row"))
+
+        // Then it reads "Weather settings", and tapping it fires its callback
+        composeRule.onNodeWithText("Weather settings").assertExists()
+        composeRule.onNodeWithTag("weather_settings_row").performClick()
         assertEquals(true, navigated)
     }
 

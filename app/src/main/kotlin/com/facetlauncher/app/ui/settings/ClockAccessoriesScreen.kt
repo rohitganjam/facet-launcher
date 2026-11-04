@@ -52,7 +52,6 @@ import com.facetlauncher.app.ui.theme.SurfaceContainer
 data class ClockAccessoriesNavigation(
     val onBack: () -> Unit,
     val onOpenClockStyle: () -> Unit,
-    val onOpenUnitsAndLocation: () -> Unit = {},
 )
 
 /**
@@ -118,7 +117,6 @@ internal fun ClockAccessoriesContent(
         if (uiState.isInheriting) InheritingNote(navigation.onOpenClockStyle)
         SwitchesCards(uiState, actions)
         if (uiState.showIconStyleCard) IconStyleCard(uiState, actions)
-        if (uiState.showUnitsAndLocationLink) UnitsAndLocationCard(navigation.onOpenUnitsAndLocation)
     }
 }
 
@@ -160,20 +158,6 @@ private fun IconStyleCard(uiState: ClockAccessoriesUiState, actions: ClockAccess
         )
         CardDivider()
         WeatherIconsPreviewRow(style = uiState.weatherIconStyle)
-    }
-}
-
-/** A link to the launcher-wide units and weather location, from the default screen and from every facet. */
-@Composable
-private fun UnitsAndLocationCard(onOpenUnitsAndLocation: () -> Unit) {
-    SettingsCard(fullBleedRows = true) {
-        ClickableRow(
-            title = stringResource(R.string.units_and_location_title),
-            subtitle = stringResource(R.string.units_and_location_subtitle),
-            onClick = onOpenUnitsAndLocation,
-            testTag = "accessory_units_and_location_row",
-            trailing = { NavigationChevron() },
-        )
     }
 }
 

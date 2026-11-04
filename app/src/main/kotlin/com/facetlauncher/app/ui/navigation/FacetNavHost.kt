@@ -234,6 +234,7 @@ fun FacetNavHost(
                 onNavigateToHomeAppsListSettings = { navController.navigate(FacetDestinations.homeAppsListSettings()) },
                 onNavigateToFolders = { navController.navigate(FacetDestinations.FOLDERS_SETTINGS) },
                 onNavigateToGestures = { navController.navigate(FacetDestinations.GESTURES) },
+                onNavigateToWeatherSettings = { navController.navigate(FacetDestinations.UNITS_AND_LOCATION) },
                 onNavigateToPermissions = { navController.navigate(FacetDestinations.PERMISSIONS) },
                 onNavigateToBackupRestore = { navController.navigate(FacetDestinations.BACKUP_RESTORE) },
                 onNavigateToWhatsNew = { navController.navigate(FacetDestinations.WHATS_NEW) },
@@ -290,7 +291,6 @@ fun FacetNavHost(
                         val dest = if (facetId != NO_ACTIVE_FACET_ID) FacetDestinations.facetClockStyleGallery(facetId) else FacetDestinations.CLOCK_STYLE_GALLERY
                         navController.navigate(dest)
                     },
-                    onOpenUnitsAndLocation = { navController.navigate(FacetDestinations.UNITS_AND_LOCATION) },
                 ),
             )
         }

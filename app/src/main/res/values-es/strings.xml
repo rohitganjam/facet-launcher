@@ -296,6 +296,8 @@
         <item quantity="one">%d carpeta</item>
         <item quantity="other">%d carpetas</item>
     </plurals>
+    <string name="settings_weather_title">Ajustes del tiempo</string>
+    <string name="settings_weather_subtitle">Ubicación y unidades</string>
     <string name="settings_permissions_title">Permisos</string>
     <string name="settings_permissions_subtitle">Consulta a qué puede acceder Facet Launcher y por qué</string>
     <string name="settings_backup_restore_title">Copia de seguridad y restauración</string>
@@ -1064,8 +1066,7 @@
     <string name="weather_location_none">Ninguna aún</string>
     <string name="weather_permission_location_subtitle">Necesario para mostrar el tiempo de donde estás. Facet solo lee una posición aproximada, y solo mientras Home está abierto.</string>
     <string name="clock_accessories_icons">Iconos</string>
-    <string name="units_and_location_title">Unidades y ubicación</string>
-    <string name="units_and_location_subtitle">Se aplica a todas las facetas</string>
+    <string name="units_and_location_title">Ajustes del tiempo</string>
     <string name="weather_icon_style">Iconos del tiempo</string>
     <string name="weather_icon_style_monochrome">Monocromo</string>
     <string name="weather_icon_style_colored">En color</string>

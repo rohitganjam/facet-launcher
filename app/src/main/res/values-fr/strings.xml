@@ -296,6 +296,8 @@
         <item quantity="one">%d dossier</item>
         <item quantity="other">%d dossiers</item>
     </plurals>
+    <string name="settings_weather_title">Réglages météo</string>
+    <string name="settings_weather_subtitle">Position et unités</string>
     <string name="settings_permissions_title">Autorisations</string>
     <string name="settings_permissions_subtitle">Découvrez à quoi Facet Launcher peut accéder et pourquoi</string>
     <string name="settings_backup_restore_title">Sauvegarde et restauration</string>
@@ -1064,8 +1066,7 @@
     <string name="weather_location_none">Aucune pour l\'instant</string>
     <string name="weather_permission_location_subtitle">Nécessaire pour afficher la météo là où vous êtes. Facet ne lit qu\'une position approximative, et seulement quand Home est ouvert.</string>
     <string name="clock_accessories_icons">Icônes</string>
-    <string name="units_and_location_title">Unités et position</string>
-    <string name="units_and_location_subtitle">S\'applique à toutes les facettes</string>
+    <string name="units_and_location_title">Réglages météo</string>
     <string name="weather_icon_style">Icônes météo</string>
     <string name="weather_icon_style_monochrome">Monochrome</string>
     <string name="weather_icon_style_colored">En couleur</string>

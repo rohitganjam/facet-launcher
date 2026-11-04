@@ -185,9 +185,9 @@ used while `overrideClock` is on and resolved with the rest of the clock in `res
 (`ResolvedClockStyle.showAlarm/showBattery/showWeather`), and its own weather picture style (`clockWeatherIconStyle`, resolved
 into `ResolvedClockStyle.weatherIconStyle`). Settings → Clock style → *Clock accessories* (a row after the clock options; the
 screen is `ClockAccessoriesScreen`, route `clockAccessories?facetId=`) edits them: card 1 alarm and battery, card 2 weather,
-card 3 Icons (while weather is on for that scope), then a *Units and location* link (default screen and every facet alike, while
-weather is on in the default or any facet) to `UnitsAndLocationScreen` (route `unitsAndLocation`): the four units and the
-Location card, launcher-wide, never per facet (`UnitsAndLocationViewModel`). A facet that inherits shows the inherited values dimmed with a link to its
+card 3 Icons (while weather is on for that scope). Units and location are not here: they are *Weather settings*, a row in Settings → System
+(`UnitsAndLocationScreen`, route `unitsAndLocation`): the four units and the Location card, launcher-wide (`UnitsAndLocationViewModel`), so a
+Weather widget can reach them whether or not the clock shows weather. A facet that inherits shows the inherited values dimmed with a link to its
 clock style, where the Inherit/Override switch lives; turning Override on seeds the three switches and the icon style from the
 defaults (`ClockStyleGalleryViewModel.setOverridingClock`).
 

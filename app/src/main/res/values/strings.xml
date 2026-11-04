@@ -336,6 +336,8 @@
         <item quantity="one">%d folder</item>
         <item quantity="other">%d folders</item>
     </plurals>
+    <string name="settings_weather_title">Weather settings</string>
+    <string name="settings_weather_subtitle">Location and units</string>
     <string name="settings_permissions_title">Permissions</string>
     <string name="settings_permissions_subtitle">See what Facet Launcher can access and why</string>
     <string name="settings_backup_restore_title">Backup &amp; restore</string>
@@ -1146,8 +1148,7 @@
     <string name="weather_location_none">None yet</string>
     <string name="weather_permission_location_subtitle">Needed to show the weather where you are. Facet only reads an approximate position, and only while Home is open.</string>
     <string name="clock_accessories_icons">Icons</string>
-    <string name="units_and_location_title">Units and location</string>
-    <string name="units_and_location_subtitle">Applies to every facet</string>
+    <string name="units_and_location_title">Weather settings</string>
     <string name="weather_icon_style">Weather icons</string>
     <string name="weather_icon_style_monochrome">Monochrome</string>
     <string name="weather_icon_style_colored">Colored</string>

@@ -40,12 +40,8 @@ data class ClockAccessoriesUiState(
     val showWeather: Boolean get() = clockStyle.showWeather
     val weatherIconStyle: WeatherIconStyle get() = clockStyle.weatherIconStyle
 
-
     /** The Icons card: on the default screen while weather is on somewhere, on a facet's while that facet shows weather. */
     val showIconStyleCard: Boolean get() = if (isFacetScoped) showWeather else weatherEnabledAnywhere
-
-    /** Units and location are launcher-wide, so the default screen and every facet link to the same screen while weather is on somewhere. */
-    val showUnitsAndLocationLink: Boolean get() = weatherEnabledAnywhere
 }
 
 @HiltViewModel

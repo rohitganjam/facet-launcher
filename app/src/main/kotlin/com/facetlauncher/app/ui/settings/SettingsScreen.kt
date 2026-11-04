@@ -35,6 +35,7 @@ import androidx.compose.material.icons.outlined.SettingsBackupRestore
 import androidx.compose.material.icons.outlined.Shield
 import androidx.compose.material.icons.outlined.TouchApp
 import androidx.compose.material.icons.outlined.Wallpaper
+import androidx.compose.material.icons.outlined.WbSunny
 import androidx.compose.material.icons.outlined.Work
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -96,6 +97,7 @@ fun SettingsScreen(
     onNavigateToHomeAppsListSettings: () -> Unit,
     onNavigateToFolders: () -> Unit,
     onNavigateToGestures: () -> Unit,
+    onNavigateToWeatherSettings: () -> Unit,
     onNavigateToPermissions: () -> Unit,
     onNavigateToBackupRestore: () -> Unit,
     onNavigateToWhatsNew: () -> Unit,
@@ -116,6 +118,7 @@ fun SettingsScreen(
         onNavigateToHomeAppsListSettings = onNavigateToHomeAppsListSettings,
         onNavigateToFolders = onNavigateToFolders,
         onNavigateToGestures = onNavigateToGestures,
+        onNavigateToWeatherSettings = onNavigateToWeatherSettings,
         onNavigateToPermissions = onNavigateToPermissions,
         onNavigateToBackupRestore = onNavigateToBackupRestore,
         onNavigateToWhatsNew = onNavigateToWhatsNew,
@@ -138,6 +141,7 @@ private fun SettingsContent(
     onNavigateToHomeAppsListSettings: () -> Unit,
     onNavigateToFolders: () -> Unit,
     onNavigateToGestures: () -> Unit,
+    onNavigateToWeatherSettings: () -> Unit,
     onNavigateToPermissions: () -> Unit,
     onNavigateToBackupRestore: () -> Unit,
     onNavigateToWhatsNew: () -> Unit,
@@ -184,6 +188,7 @@ private fun SettingsContent(
                     SystemCard(
                         uiState = uiState,
                         onNavigateToGestures = onNavigateToGestures,
+                        onNavigateToWeatherSettings = onNavigateToWeatherSettings,
                         onNavigateToPermissions = onNavigateToPermissions,
                         onNavigateToBackupRestore = onNavigateToBackupRestore,
                         onSetDefaultLauncher = { defaultLauncherLauncher.launch(onRequestDefaultLauncherIntent()) },
@@ -288,6 +293,7 @@ private fun HomeAppsCard(
 private fun SystemCard(
     uiState: SettingsUiState,
     onNavigateToGestures: () -> Unit,
+    onNavigateToWeatherSettings: () -> Unit,
     onNavigateToPermissions: () -> Unit,
     onNavigateToBackupRestore: () -> Unit,
     onSetDefaultLauncher: () -> Unit,
@@ -301,6 +307,14 @@ private fun SystemCard(
             onClick = onNavigateToGestures,
             testTag = "gestures_row",
             leadingIcon = iconBadge(Icons.Outlined.TouchApp, SettingsSectionHue.SYSTEM),
+        )
+        CardDivider(startInset = SettingsIconBadgeInset)
+        ClickableRow(
+            title = stringResource(R.string.settings_weather_title),
+            subtitle = stringResource(R.string.settings_weather_subtitle),
+            onClick = onNavigateToWeatherSettings,
+            testTag = "weather_settings_row",
+            leadingIcon = iconBadge(Icons.Outlined.WbSunny, SettingsSectionHue.SYSTEM),
         )
         CardDivider(startInset = SettingsIconBadgeInset)
         ClickableRow(
@@ -457,6 +471,7 @@ private fun SettingsScreenPreview() {
             onNavigateToHomeAppsListSettings = {},
             onNavigateToFolders = {},
             onNavigateToGestures = {},
+            onNavigateToWeatherSettings = {},
             onNavigateToPermissions = {},
             onNavigateToBackupRestore = {},
             onNavigateToWhatsNew = {},

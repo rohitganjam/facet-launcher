@@ -61,8 +61,8 @@ data class UnitsAndLocationActions(
 )
 
 /**
- * "Units and location": how weather numbers are written and where the weather is for. Launcher-wide, so one screen for every
- * facet, opened from the Clock accessories screen of the launcher defaults and of each facet.
+ * "Weather settings": how weather numbers are written and where the weather is for. Launcher-wide, so one screen for every
+ * facet, opened from Settings > System.
  */
 @Composable
 fun UnitsAndLocationScreen(

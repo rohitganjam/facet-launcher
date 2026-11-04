@@ -46,41 +46,24 @@ class ClockAccessoriesScreenTest {
     }
 
     @Test
-    fun iconsAndUnitsAndLocationLinkAreHiddenWhileWeatherIsOffEverywhere() {
+    fun iconsAreHiddenWhileWeatherIsOffEverywhere() {
         // Given weather off for the default and every facet
         setContent(ClockAccessoriesUiState(weatherEnabledAnywhere = false))
 
-        // Then the switches show but the Icons card and the link do not
+        // Then the switches show but the Icons card does not
         composeRule.onNodeWithTag("accessory_weather_toggle").assertIsEnabled()
         composeRule.onNodeWithTag("icon_style_row").assertDoesNotExist()
-        composeRule.onNodeWithTag("accessory_units_and_location_row").assertDoesNotExist()
     }
 
     @Test
-    fun iconsAndUnitsAndLocationLinkShowOnceWeatherIsOnSomewhere() {
+    fun iconsShowOnceWeatherIsOnSomewhere() {
         // Given weather on for the launcher default
         setContent(ClockAccessoriesUiState(settings = LauncherSettings(showWeather = true), weatherEnabledAnywhere = true))
 
-        // Then the Icons card and the link are there, and units and location themselves are not on this screen
+        // Then the Icons card is there, and units and location are not on this screen: they live in Weather settings
         composeRule.onNodeWithTag("icon_style_row").assertExists()
-        composeRule.onNodeWithTag("accessory_units_and_location_row").assertExists()
+        composeRule.onNodeWithTag("accessory_units_and_location_row").assertDoesNotExist()
         composeRule.onNodeWithTag("unit_temperature_row").assertDoesNotExist()
-    }
-
-    @Test
-    fun theUnitsAndLocationRowOpensThatScreen() {
-        // Given weather on
-        var opened = false
-        setContent(
-            ClockAccessoriesUiState(settings = LauncherSettings(showWeather = true), weatherEnabledAnywhere = true),
-            navigation = ClockAccessoriesNavigation(onBack = {}, onOpenClockStyle = {}, onOpenUnitsAndLocation = { opened = true }),
-        )
-
-        // When tapping it
-        composeRule.onNodeWithTag("accessory_units_and_location_row").performScrollTo().performClick()
-
-        // Then it navigates there
-        assertEquals(true, opened)
     }
 
     @Test
@@ -109,25 +92,19 @@ class ClockAccessoriesScreenTest {
     }
 
     @Test
-    fun aFacetThatOverridesTheClockEditsItsOwnIconStyleAndLinksToUnitsAndLocation() {
+    fun aFacetThatOverridesTheClockEditsItsOwnIconStyle() {
         // Given a facet that overrides the clock with weather on and its own monochrome icons
-        var opened = false
         val facet = Facet(
             id = 1L, name = "Work", position = 1, overrideClock = true, clockShowWeather = true,
             clockWeatherIconStyle = WeatherIconStyle.MONOCHROME,
         )
         setContent(
             ClockAccessoriesUiState(facet = facet, settings = LauncherSettings(showWeather = true), weatherEnabledAnywhere = true),
-            navigation = ClockAccessoriesNavigation(onBack = {}, onOpenClockStyle = {}, onOpenUnitsAndLocation = { opened = true }),
         )
 
         // Then its own icon style shows and can be edited
         composeRule.onNodeWithTag("icon_style_row").assertIsEnabled()
         composeRule.onNodeWithTag("weather_icons_preview_MONOCHROME").assertExists()
-
-        // And the same Units and location row as the default screen opens that screen
-        composeRule.onNodeWithTag("accessory_units_and_location_row").performScrollTo().performClick()
-        assertEquals(true, opened)
     }
 
     @Test

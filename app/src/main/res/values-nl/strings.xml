@@ -299,6 +299,8 @@
         <item quantity="one">%d map</item>
         <item quantity="other">%d mappen</item>
     </plurals>
+    <string name="settings_weather_title">Weerinstellingen</string>
+    <string name="settings_weather_subtitle">Locatie en eenheden</string>
     <string name="settings_permissions_title">Machtigingen</string>
     <string name="settings_permissions_subtitle">Bekijk waartoe Facet Launcher toegang heeft en waarom</string>
     <string name="settings_backup_restore_title">Back-up en herstel</string>
@@ -1001,8 +1003,7 @@
     <string name="weather_location_none">Nog geen</string>
     <string name="weather_permission_location_subtitle">Nodig om het weer te tonen waar je bent. Facet leest alleen een geschatte positie, en alleen terwijl Home open is.</string>
     <string name="clock_accessories_icons">Pictogrammen</string>
-    <string name="units_and_location_title">Eenheden en locatie</string>
-    <string name="units_and_location_subtitle">Geldt voor elk facet</string>
+    <string name="units_and_location_title">Weerinstellingen</string>
     <string name="weather_icon_style">Weerpictogrammen</string>
     <string name="weather_icon_style_monochrome">Monochroom</string>
     <string name="weather_icon_style_colored">Gekleurd</string>
