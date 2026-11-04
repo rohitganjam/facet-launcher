@@ -1,8 +1,10 @@
 package com.facetlauncher.app
 
+import android.app.Activity
 import android.app.Application
 import android.content.Context
 import android.icu.text.PluralRules
+import android.os.Bundle
 import com.facetlauncher.app.data.di.ApplicationScope
 import com.facetlauncher.app.domain.EnsureCalendarColorsUseCase
 import dagger.hilt.android.HiltAndroidApp
@@ -23,6 +25,16 @@ class FacetApplication : Application() {
         super.onCreate()
         // A calendar added or removed on the phone gets its colour at once, not only when a screen that lists calendars opens.
         ensureCalendarColors.keepAssigned().catch { }.launchIn(applicationScope)
+        // Calendar access can be granted or revoked from system Settings while the process lives, with no callback.
+        registerActivityLifecycleCallbacks(object : ActivityLifecycleCallbacks {
+            override fun onActivityResumed(activity: Activity) = ensureCalendarColors.recheckAccess()
+            override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) = Unit
+            override fun onActivityStarted(activity: Activity) = Unit
+            override fun onActivityPaused(activity: Activity) = Unit
+            override fun onActivityStopped(activity: Activity) = Unit
+            override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) = Unit
+            override fun onActivityDestroyed(activity: Activity) = Unit
+        })
     }
 
     override fun attachBaseContext(base: Context) {

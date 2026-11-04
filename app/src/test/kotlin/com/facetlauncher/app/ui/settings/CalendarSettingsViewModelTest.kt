@@ -272,6 +272,27 @@ class CalendarSettingsViewModelTest {
     }
 
     @Test
+    fun `revoked access drops the calendar list that was loaded`() = runTest {
+        // Given a list loaded while access was granted
+        val calendarPermissionRepository = mock(CalendarPermissionRepository::class.java)
+        `when`(calendarPermissionRepository.isGranted()).thenReturn(true)
+        val calendarRepository = mock(CalendarRepository::class.java)
+        `when`(calendarRepository.getSelectableCalendars()).thenReturn(listOf(CalendarInfo(id = "1", displayName = "Work", accountName = "work@example.com")))
+        val viewModel = createViewModel(calendarPermissionRepository = calendarPermissionRepository, calendarRepository = calendarRepository)
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        testDispatcher.scheduler.advanceUntilIdle()
+        assertEquals(1, viewModel.uiState.value.calendars.size)
+
+        // When access is revoked and the screen resumes
+        `when`(calendarPermissionRepository.isGranted()).thenReturn(false)
+        viewModel.refreshCalendarAccess()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Then no calendars are kept
+        assertEquals(emptyList<CalendarInfo>(), viewModel.uiState.value.calendars)
+    }
+
+    @Test
     fun `granted access loads today's real events for the preview`() = runTest {
         val calendarPermissionRepository = mock(CalendarPermissionRepository::class.java)
         `when`(calendarPermissionRepository.isGranted()).thenReturn(true)

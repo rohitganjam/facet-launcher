@@ -156,6 +156,8 @@ class CalendarSettingsViewModel @Inject constructor(
                 val updated = assignCalendarColorsUseCase(calendarList.map { it.id }, existing, calendarColorPalette)
                 if (updated != existing) settingsRepository.setCalendarColors(updated)
             }
+        } else {
+            calendars.value = emptyList()
         }
     }
 
