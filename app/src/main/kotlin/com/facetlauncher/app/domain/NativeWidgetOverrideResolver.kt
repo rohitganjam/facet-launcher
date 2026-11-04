@@ -49,7 +49,7 @@ class NativeWidgetOverrideResolver @Inject constructor(
 
     private suspend fun overrideFor(type: NativeWidgetType?, config: NativeWidgetConfig, settings: LauncherSettings): NativeWidgetOverride? = when (type) {
         NativeWidgetType.AGENDA -> NativeWidgetOverride(events = agendaEvents(config, settings)).takeUnless { config.calendarIds == null && config.showAllDayEvents == null }
-        NativeWidgetType.WEATHER -> config.weatherLocation?.let { weatherFor(it, settings) }
+        NativeWidgetType.WEATHER -> weatherFor(config.weatherLocation, settings)
         else -> null
     }
 
@@ -61,7 +61,14 @@ class NativeWidgetOverrideResolver @Inject constructor(
             emptyList()
         }
 
-    private suspend fun weatherFor(location: WidgetWeatherLocation, settings: LauncherSettings): NativeWidgetOverride? {
+    /**
+     * A Weather widget shows its forecast whether or not the launcher's own Weather is on: it follows the launcher (no entry here) only
+     * while that is on and for the same place, and otherwise fetches for its place itself, as long as the position it needs is allowed.
+     * [chosen] is `null` for a widget that follows the launcher's own location setting.
+     */
+    private suspend fun weatherFor(chosen: WidgetWeatherLocation?, settings: LauncherSettings): NativeWidgetOverride? {
+        if (chosen == null && settings.showWeather) return null
+        val location = chosen ?: launcherLocation(settings) ?: return NativeWidgetOverride(weatherUnavailable = true)
         val unavailable = NativeWidgetOverride(weatherUnavailable = true, locationMissing = location == WidgetWeatherLocation.Current && !locationRepository.isPermissionGranted())
         val target = targetFor(location, settings) ?: return null
         val (place, ownSettings) = target.takeIf { it.first != null }?.let { it.first!! to it.second } ?: return unavailable
@@ -72,15 +79,21 @@ class NativeWidgetOverrideResolver @Inject constructor(
             ?: unavailable
     }
 
+    /** What the launcher's own Weather setting points at: the position, or its chosen city (`null` when none is chosen yet). */
+    private fun launcherLocation(settings: LauncherSettings): WidgetWeatherLocation? = when (settings.weatherLocationMode) {
+        WeatherLocationMode.CURRENT -> WidgetWeatherLocation.Current
+        WeatherLocationMode.CITY -> settings.weatherCity?.let { WidgetWeatherLocation.City(it) }
+    }
+
     /**
      * Which place [location] means and the settings to derive its weather with; `null` when the widget just follows the launcher
-     * (current location while the launcher already follows the position), a `null` place when the position is not available.
+     * (current location while the launcher's Weather is on and already follows the position), a `null` place when the position is not available.
      */
     private suspend fun targetFor(location: WidgetWeatherLocation, settings: LauncherSettings): Pair<WeatherPlace?, LauncherSettings>? = when (location) {
         is WidgetWeatherLocation.City -> WeatherPlace.rounded(location.city.latitude, location.city.longitude) to
             settings.copy(weatherLocationMode = WeatherLocationMode.CITY, weatherCity = location.city)
         WidgetWeatherLocation.Current -> when {
-            settings.weatherLocationMode == WeatherLocationMode.CURRENT -> null
+            settings.showWeather && settings.weatherLocationMode == WeatherLocationMode.CURRENT -> null
             else -> currentPlace()?.let { it to settings.copy(weatherLocationMode = WeatherLocationMode.CURRENT, weatherCity = null) } ?: (null to settings)
         }
     }

@@ -92,6 +92,11 @@ path, keyed by `NativeWidgetRef` (`Hub(appWidgetId)` or `Home(itemId)`):
 
 ### 3b. Missing permissions
 
+A Weather widget does not depend on the launcher's own Weather (the clock accessory) being on. `NativeWidgetOverrideResolver.weatherFor` leaves a widget
+without an entry (it follows the launcher's state) only while the launcher's Weather is on and points at the same place; otherwise it resolves the place
+itself (the position, which needs location access, or the chosen or the launcher's city) and fetches through `WidgetWeatherRepository`. Without the position it
+is marked `locationMissing`, which is what shows the Allow prompt below.
+
 An Agenda widget without `READ_CALENDAR`, and a Weather widget for the current position without location, show "Calendar access is off" /
 "Location access is off" with an **Allow** button in place of their empty text. `NativeWidgetAccessViewModel` reads both permissions (re-read
 on resume, since neither has a grant-change callback) and `HomeDrawerRoute` puts the result in `NativeWidgetState.access` for Home pages and the

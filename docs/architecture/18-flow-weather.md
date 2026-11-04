@@ -7,7 +7,7 @@ screens are covered in `13 §1b`.
 ## 1. Network and permissions
 
 - `INTERNET` is declared in `AndroidManifest.xml` and used only by the weather request to MET Norway.
-  Nothing touches the network, location or the geocoder while weather is off.
+  Nothing touches the network, location or the geocoder while weather is off, with one exception: a Weather widget placed on the Hub or Home fetches its own forecast (for the position, only while location access is granted, or for a chosen city) whether or not the launcher's Weather is on. With no widget placed, weather off still means no request.
 - The `verifyInternetPermission` Gradle task (part of `check` and the release build) fails if the merged
   manifest of either variant loses the permission, for example through a stray `tools:node="remove"`.
 - `ACCESS_COARSE_LOCATION` was already declared for Wi-Fi automation (docs 15); weather requests it on its own

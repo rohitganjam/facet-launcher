@@ -3,6 +3,7 @@ package com.facetlauncher.app.domain
 import com.facetlauncher.app.data.CalendarPermissionRepository
 import com.facetlauncher.app.data.ClockStackRepository
 import com.facetlauncher.app.data.CalendarRepository
+import com.facetlauncher.app.data.DeviceLocation
 import com.facetlauncher.app.data.LocationRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.WidgetPlacementRepository
@@ -171,11 +172,11 @@ class ObserveNativeWidgetOverridesUseCaseTest {
     }
 
     @Test
-    fun `a widget set to current location follows the launcher when the launcher already does`() = runTest {
+    fun `a widget set to current location follows the launcher when its weather is on and already follows the position`() = runTest {
         // Given the launcher follows the position and a widget is set to current location
         given(
             native(-1, NativeWidgetType.WEATHER, NativeWidgetConfig(weatherLocation = WidgetWeatherLocation.Current)),
-            launcher = LauncherSettings(weatherLocationMode = WeatherLocationMode.CURRENT),
+            launcher = LauncherSettings(showWeather = true, weatherLocationMode = WeatherLocationMode.CURRENT),
         )
 
         // Then it has no override of its own
@@ -196,5 +197,72 @@ class ObserveNativeWidgetOverridesUseCaseTest {
         assertEquals(true, override?.weatherUnavailable)
         assertEquals(true, override?.locationMissing)
         assertNull(override?.weather)
+    }
+
+    private val fix = DeviceLocation(oslo.latitude, oslo.longitude, null)
+
+    @Test
+    fun `a weather widget fetches for the position when the launcher's weather is off and access is granted`() = runTest {
+        // Given the launcher's Weather off, a widget following the launcher, and location access
+        given(native(-1, NativeWidgetType.WEATHER, NativeWidgetConfig()), launcher = LauncherSettings(showWeather = false, weatherLocationMode = WeatherLocationMode.CURRENT))
+        `when`(location.isPermissionGranted()).thenReturn(true)
+        `when`(location.recentLocation(RefreshWeatherUseCase.RECENT_FIX_MS)).thenReturn(fix)
+        `when`(widgetWeather.refresh(osloPlace)).thenReturn(WidgetForecast(hours, WeatherFetchState(place = osloPlace, fetchedAt = now, placeName = "Oslo")))
+
+        // When observing
+        val override = useCase()().first()[NativeWidgetRef.Hub(-1)]
+
+        // Then it shows its own forecast anyway
+        assertEquals("Oslo", override?.weather?.placeName)
+        verify(widgetWeather).refresh(osloPlace)
+    }
+
+    @Test
+    fun `a weather widget set to current location also fetches when the launcher's weather is off`() = runTest {
+        // Given the launcher's Weather off but pointing at the position, and a widget set to current location
+        given(
+            native(-1, NativeWidgetType.WEATHER, NativeWidgetConfig(weatherLocation = WidgetWeatherLocation.Current)),
+            launcher = LauncherSettings(showWeather = false, weatherLocationMode = WeatherLocationMode.CURRENT),
+        )
+        `when`(location.isPermissionGranted()).thenReturn(true)
+        `when`(location.recentLocation(RefreshWeatherUseCase.RECENT_FIX_MS)).thenReturn(fix)
+        `when`(widgetWeather.refresh(osloPlace)).thenReturn(WidgetForecast(hours, WeatherFetchState(place = osloPlace, fetchedAt = now, placeName = "Oslo")))
+
+        // Then it has its own forecast rather than waiting for the launcher's
+        assertEquals("Oslo", useCase()().first()[NativeWidgetRef.Hub(-1)]?.weather?.placeName)
+    }
+
+    @Test
+    fun `a weather widget needing the position without access says the location is missing`() = runTest {
+        // Given the launcher's Weather off, a widget following it, and no location access
+        given(native(-1, NativeWidgetType.WEATHER, NativeWidgetConfig()), launcher = LauncherSettings(showWeather = false, weatherLocationMode = WeatherLocationMode.CURRENT))
+        `when`(location.isPermissionGranted()).thenReturn(false)
+
+        // Then it is unavailable, flagged so the widget offers to allow location, and nothing is fetched
+        val override = useCase()().first()[NativeWidgetRef.Hub(-1)]
+        assertEquals(true, override?.weatherUnavailable)
+        assertEquals(true, override?.locationMissing)
+        verify(widgetWeather, never()).refresh(osloPlace)
+    }
+
+    @Test
+    fun `a weather widget following the launcher's city fetches it while the launcher's weather is off`() = runTest {
+        // Given the launcher's Weather off but set to Oslo, and a widget following it
+        given(native(-1, NativeWidgetType.WEATHER, NativeWidgetConfig()), launcher = LauncherSettings(showWeather = false, weatherLocationMode = WeatherLocationMode.CITY, weatherCity = oslo))
+        `when`(widgetWeather.refresh(osloPlace)).thenReturn(WidgetForecast(hours, WeatherFetchState(place = osloPlace, fetchedAt = now)))
+
+        // Then it shows Oslo without needing any permission
+        assertEquals("Oslo", useCase()().first()[NativeWidgetRef.Hub(-1)]?.weather?.placeName)
+    }
+
+    @Test
+    fun `a weather widget with the launcher on a city that was never chosen is unavailable without asking for location`() = runTest {
+        // Given the launcher's Weather off, set to a city that was never chosen
+        given(native(-1, NativeWidgetType.WEATHER, NativeWidgetConfig()), launcher = LauncherSettings(showWeather = false, weatherLocationMode = WeatherLocationMode.CITY, weatherCity = null))
+
+        // Then it is unavailable, and it is not a location-permission problem
+        val override = useCase()().first()[NativeWidgetRef.Hub(-1)]
+        assertEquals(true, override?.weatherUnavailable)
+        assertEquals(false, override?.locationMissing)
     }
 }
