@@ -133,7 +133,7 @@ internal fun Modifier.homeEmptySpaceGestures(
         ClockAdjustMode.NONE -> Modifier.pointerInput(mode) {
             detectTapGestures(onDoubleTap = { onDoubleTap() }, onLongPress = { onModeChange(ClockAdjustMode.MENU) })
         }
-        ClockAdjustMode.MENU, ClockAdjustMode.STYLE_MENU -> Modifier
+        ClockAdjustMode.MENU, ClockAdjustMode.STYLE_MENU, ClockAdjustMode.CALENDAR_SETTINGS -> Modifier
     },
 )
 
@@ -197,10 +197,7 @@ internal fun ClockStyleSheet(actions: HomeClockActions) {
                 close()
                 actions.onClockStylesClick()
             },
-            onCalendarSettingsClick = {
-                close()
-                actions.onCalendarSettingsClick()
-            },
+            onCalendarSettingsClick = { actions.onAdjustModeChange(ClockAdjustMode.CALENDAR_SETTINGS) },
         )
     }
 }

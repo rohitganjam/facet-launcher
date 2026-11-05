@@ -1,6 +1,5 @@
 package com.facetlauncher.app.ui.settings
 
-import android.app.WallpaperManager
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.test.assertIsDisplayed
@@ -12,7 +11,6 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
-import androidx.lifecycle.SavedStateHandle
 import androidx.room.Room
 import com.facetlauncher.app.domain.AssignCalendarColorsUseCase
 import com.facetlauncher.app.data.CalendarPermissionRepository
@@ -24,7 +22,6 @@ import com.facetlauncher.app.domain.UpdateClockConfigUseCase
 import com.facetlauncher.app.data.model.ClockWidgetConfig
 import com.facetlauncher.app.data.ClockStackRepository
 import com.facetlauncher.app.data.SettingsRepository
-import com.facetlauncher.app.data.WallpaperRepository
 import com.facetlauncher.app.data.local.FacetDatabase
 import com.facetlauncher.app.data.model.CalendarEvent
 import com.facetlauncher.app.data.model.CalendarInfo
@@ -40,7 +37,7 @@ private fun clockOf(settingsRepository: SettingsRepository, facetRepository: Fac
     effectiveClockConfig(facetRepository.observeFacets().first().single(), settingsRepository.settings.first())
 }
 
-class CalendarSettingsScreenTest {
+class CalendarSettingsSheetTest {
 
     @get:Rule
     val composeRule = createComposeRule()
@@ -60,18 +57,16 @@ class CalendarSettingsScreenTest {
                 facetRepository = FacetRepository(database.facetDao(), database.clockStackItemDao())
                 runBlocking { facetRepository.addFacet() } // seeds id 1L with its clock page
                 CalendarSettingsViewModel(
-                    SavedStateHandle(mapOf("facetId" to 1L)),
                     settingsRepository,
                     facetRepository,
                     FakeCalendarPermissionRepository(context, granted = false),
                     CalendarRepository(context.contentResolver),
-                    WallpaperRepository(WallpaperManager.getInstance(context)),
                     AssignCalendarColorsUseCase(),
                     UpdateClockConfigUseCase(settingsRepository, facetRepository, ClockStackRepository(database, database.clockStackItemDao())),
                 )
             }
             FacetLauncherTheme {
-                CalendarSettingsScreen(onBack = {}, viewModel = viewModel)
+                CalendarSettingsSheet(facetId = 1L, onDismiss = {}, viewModel = viewModel)
             }
         }
         composeRule.waitForIdle()
@@ -89,25 +84,6 @@ class CalendarSettingsScreenTest {
 
         // Then the clock stores the change
         composeRule.waitUntil(timeoutMillis = 3_000) { !clockOf(settingsRepository, facetRepository).calendar.showAllDay }
-    }
-
-    @Test
-    fun previewStripShowsAboveTheControls() {
-        // Given the global entry point, When composed
-        setContent()
-
-        // Then the wallpaper preview strip is present
-        composeRule.onNodeWithTag("calendar_preview_strip").assertExists()
-    }
-
-    @Test
-    fun previewStripShowsNoEventsWithoutCalendarAccess() {
-        // Given calendar access is not granted, When composed
-        setContent()
-
-        // Then the strip carries no mock events and no sample note
-        composeRule.onNodeWithText("Team standup").assertDoesNotExist()
-        composeRule.onNodeWithTag("calendar_preview_sample_note").assertDoesNotExist()
     }
 
     @Test
@@ -141,7 +117,7 @@ class CalendarSettingsScreenTest {
 
     @Test
     fun permissionDeniedStripRendersAndIsClickableWhenUngranted() {
-        // Given the screen, READ_CALENDAR not granted (fake repository, not real device state)
+        // Given the sheet, READ_CALENDAR not granted (fake repository, not real device state)
         setContent()
 
         // Then the calendars-to-display card shows the permission-denied strip, wired to a real click action
@@ -161,7 +137,7 @@ private class FakeCalendarRepository(
     override suspend fun getUpcomingEvents(calendarIds: Set<String>?, includeAllDay: Boolean): List<CalendarEvent> = todayEvents
 }
 
-class CalendarSettingsScreenGrantedTest {
+class CalendarSettingsSheetGrantedTest {
 
     @get:Rule
     val composeRule = createComposeRule()
@@ -181,46 +157,17 @@ class CalendarSettingsScreenGrantedTest {
                 val facetRepository = FacetRepository(database.facetDao(), database.clockStackItemDao()).also { facets = it }
                 runBlocking { facetRepository.addFacet() } // seeds id 1L with its clock page
                 CalendarSettingsViewModel(
-                    SavedStateHandle(mapOf("facetId" to 1L)),
                     settingsRepository,
                     facetRepository,
                     FakeCalendarPermissionRepository(context, granted = true),
                     FakeCalendarRepository(context.contentResolver, calendars, todayEvents),
-                    WallpaperRepository(WallpaperManager.getInstance(context)),
                     AssignCalendarColorsUseCase(),
                     UpdateClockConfigUseCase(settingsRepository, facetRepository, ClockStackRepository(database, database.clockStackItemDao())),
                 )
             }
-            FacetLauncherTheme { CalendarSettingsScreen(onBack = {}, viewModel = viewModel) }
+            FacetLauncherTheme { CalendarSettingsSheet(facetId = 1L, onDismiss = {}, viewModel = viewModel) }
         }
         return settingsRepository to facets
-    }
-
-    @Test
-    fun previewStripShowsLabelledSamplesWhenTodayHasNoEvents() {
-        // Given access granted but nothing on today
-        setContent(listOf(CalendarInfo(id = "1", displayName = "Facet Test Calendar", accountName = "facet-test@example.com")))
-
-        // Then the sample events appear with the sample note
-        composeRule.waitUntil(timeoutMillis = 5_000) {
-            runCatching { composeRule.onNodeWithTag("calendar_preview_sample_note").assertExists() }.isSuccess
-        }
-        composeRule.onNodeWithText("Team standup").assertExists()
-    }
-
-    @Test
-    fun previewStripShowsRealEventsWithoutTheSampleNote() {
-        // Given access granted and a real event today
-        val now = System.currentTimeMillis()
-        val event = CalendarEvent(id = 1, calendarId = "1", title = "Real dentist", startTimeMillis = now + 3_600_000, endTimeMillis = now + 7_200_000, isAllDay = false)
-        setContent(listOf(CalendarInfo(id = "1", displayName = "Facet Test Calendar", accountName = "facet-test@example.com")), listOf(event))
-
-        // Then the real event shows in the strip and no samples or note do
-        composeRule.waitUntil(timeoutMillis = 5_000) {
-            runCatching { composeRule.onNodeWithText("Real dentist").assertExists() }.isSuccess
-        }
-        composeRule.onNodeWithText("Team standup").assertDoesNotExist()
-        composeRule.onNodeWithTag("calendar_preview_sample_note").assertDoesNotExist()
     }
 
     @Test
@@ -283,9 +230,5 @@ class CalendarSettingsScreenGrantedTest {
         // Then it's actually visible on screen — not just present off-screen in a Column
         // that never scrolled at all
         composeRule.onNodeWithText("Calendar Number 12", substring = true).assertIsDisplayed()
-
-        // And the pinned header stayed on screen the whole time, not scrolled away with the list
-        composeRule.onNodeWithText("Calendar settings").assertIsDisplayed()
-        composeRule.onNodeWithTag("back_button").assertIsDisplayed()
     }
 }

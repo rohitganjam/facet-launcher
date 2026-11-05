@@ -18,6 +18,7 @@ import androidx.compose.ui.test.up
 import androidx.compose.foundation.layout.width
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.height
+import androidx.compose.ui.unit.width as dpRectWidth
 import com.facetlauncher.app.data.model.CalendarEvent
 import com.facetlauncher.app.data.model.ClockAlignment
 import com.facetlauncher.app.data.model.ClockColorOption
@@ -281,6 +282,39 @@ class ClockBlockTest {
 
         // Then its callback fires with that exact event
         assertEquals(earlier, clicked)
+    }
+
+    @Test
+    fun theEventsBlockIsAsWideAsItsRowsAndSitsOnTheClocksSide() {
+        // Given a wide block with one short event, aligned left and then right
+        val fixedClock = Clock.fixed(Instant.parse("2026-08-27T09:05:00Z"), ZoneOffset.UTC)
+        val event = CalendarEvent(
+            id = 1, calendarId = "1", title = "Gym",
+            startTimeMillis = Instant.parse("2026-08-27T10:00:00Z").toEpochMilli(),
+            endTimeMillis = Instant.parse("2026-08-27T11:00:00Z").toEpochMilli(),
+            isAllDay = false,
+        )
+        var alignment by mutableStateOf(ClockAlignment.LEFT)
+        composeRule.setContent {
+            FacetLauncherTheme {
+                ClockBlock(
+                    clock = fixedClock, locale = Locale.US, events = persistentListOf(event),
+                    clockAlignment = alignment, modifier = androidx.compose.ui.Modifier.width(400.dp),
+                )
+            }
+        }
+
+        // Then the events block hugs its row instead of spanning the width, on the left edge
+        val left = composeRule.onNodeWithTag("clock_event_rows").getUnclippedBoundsInRoot()
+        assertTrue("block is narrower than the container: ${left.dpRectWidth}", left.dpRectWidth < 300.dp)
+        assertTrue("block starts at the left edge: ${left.left}", left.left < 8.dp)
+
+        // And when the clock aligns right it moves to the right edge with it
+        alignment = ClockAlignment.RIGHT
+        composeRule.waitForIdle()
+        val right = composeRule.onNodeWithTag("clock_event_rows").getUnclippedBoundsInRoot()
+        assertTrue("block ends at the right edge: ${right.right}", right.right > 392.dp)
+        assertEquals(left.dpRectWidth.value, right.dpRectWidth.value, 0.5f)
     }
 
     @Test

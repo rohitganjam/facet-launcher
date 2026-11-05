@@ -12,16 +12,10 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.WindowInsetsSides
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.systemBars
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Checkbox
@@ -31,6 +25,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TriStateCheckbox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -55,40 +50,36 @@ import com.facetlauncher.app.data.model.CalendarInfo
 import com.facetlauncher.app.ui.components.calendarSubtitle
 import com.facetlauncher.app.ui.components.calendarTitle
 import com.facetlauncher.app.ui.components.workCalendarPosition
-import com.facetlauncher.app.ui.components.BackButton
 import com.facetlauncher.app.ui.components.CardDivider
 import com.facetlauncher.app.ui.components.LabeledDropdownRow
 import com.facetlauncher.app.ui.components.dashedBorder
 import com.facetlauncher.app.ui.components.LocalSettingsRowInset
 import com.facetlauncher.app.ui.components.SettingsCard
-import com.facetlauncher.app.ui.components.StickyHeaderLayout
+import com.facetlauncher.app.ui.components.ThemedModalBottomSheet
 import com.facetlauncher.app.ui.theme.Accent
 import com.facetlauncher.app.ui.theme.AccentSwatch
 import com.facetlauncher.app.ui.theme.Ink
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import com.facetlauncher.app.ui.theme.Muted
-import com.facetlauncher.app.ui.theme.Surface
 import com.facetlauncher.app.ui.theme.SurfaceContainer
 import com.facetlauncher.app.ui.theme.resolvedColor
 
 /**
- * "Calendars to display" (`4l`) — calendar *selection* only (which calendars, all-day events);
- * font/color/weight moved to `ClockStyleGalleryScreen` (see `CalendarSettingsViewModel`'s own doc
- * comment). Reached from Settings' "Calendars to display" row (no facet scope) or a facet's
- * "Calendars to display" row (scoped, with its own inherit/override header per `3f`'s pattern).
- * Real `READ_CALENDAR` runtime request + a live `CalendarContract` query back the "Calendars to
- * display" card once granted.
+ * The calendar under a facet's clock as a bottom sheet over Home: all-day events, the indicator, how many events show and which calendars.
+ * Real `READ_CALENDAR` runtime request + a live `CalendarContract` query back the calendar list once granted.
  */
 @Composable
-fun CalendarSettingsScreen(
-    onBack: () -> Unit,
+fun CalendarSettingsSheet(
+    facetId: Long,
+    onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: CalendarSettingsViewModel = hiltViewModel(),
 ) {
+    LaunchedEffect(facetId) { viewModel.bind(facetId) }
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     // READ_CALENDAR has no grant-change callback — re-check whenever the user returns to this
-    // screen (e.g. from the system permission dialog, or having granted it via App info).
+    // sheet (e.g. from the system permission dialog, or having granted it via App info).
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
@@ -102,23 +93,22 @@ fun CalendarSettingsScreen(
         viewModel.refreshCalendarAccess()
     }
 
-    CalendarSettingsContent(
-        uiState = uiState,
-        onBack = onBack,
-        onShowAllDayEventsChange = viewModel::setShowAllDayEvents,
-        onShowCalendarIndicatorChange = viewModel::setShowCalendarIndicator,
-        onItemsToShowChange = viewModel::setCalendarItemsToShow,
-        onTurnOnClick = { requestPermission.launch(Manifest.permission.READ_CALENDAR) },
-        onCalendarToggle = viewModel::setCalendarSelected,
-        onSelectAllCalendarsChange = viewModel::setAllCalendarsSelected,
-        modifier = modifier,
-    )
+    ThemedModalBottomSheet(onDismissRequest = onDismiss, modifier = modifier, skipPartiallyExpanded = true, containerColor = SurfaceContainer) {
+        CalendarSettingsContent(
+            uiState = uiState,
+            onShowAllDayEventsChange = viewModel::setShowAllDayEvents,
+            onShowCalendarIndicatorChange = viewModel::setShowCalendarIndicator,
+            onItemsToShowChange = viewModel::setCalendarItemsToShow,
+            onTurnOnClick = { requestPermission.launch(Manifest.permission.READ_CALENDAR) },
+            onCalendarToggle = viewModel::setCalendarSelected,
+            onSelectAllCalendarsChange = viewModel::setAllCalendarsSelected,
+        )
+    }
 }
 
 @Composable
 private fun CalendarSettingsContent(
     uiState: CalendarSettingsUiState,
-    onBack: () -> Unit,
     onShowAllDayEventsChange: (Boolean) -> Unit,
     onShowCalendarIndicatorChange: (Boolean) -> Unit,
     onItemsToShowChange: (Int) -> Unit,
@@ -127,33 +117,25 @@ private fun CalendarSettingsContent(
     onSelectAllCalendarsChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-
-    StickyHeaderLayout(
-        modifier = modifier,
-        header = { CalendarSettingsHeader(onBack = onBack) },
-        content = { headerHeight ->
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(SurfaceContainer)
-                    .testTag("calendar_settings_screen")
-                    .windowInsetsPadding(WindowInsets.systemBars)
-                    .padding(horizontal = 24.dp),
-                contentPadding = PaddingValues(top = headerHeight),
-            ) {
-                item {
-                    CalendarPreviewStrip(uiState = uiState)
-                }
-                item { Spacer(modifier = Modifier.height(16.dp)) }
-
-                item { DisplayOptionsCard(uiState, true, onShowAllDayEventsChange, onShowCalendarIndicatorChange, onItemsToShowChange) }
-
-                item { Spacer(modifier = Modifier.height(16.dp)) }
-
-                item { CalendarsCard(uiState, onSelectAllCalendarsChange, onCalendarToggle, onTurnOnClick) }
-            }
-        },
-    )
+    LazyColumn(
+        modifier = modifier
+            .fillMaxWidth()
+            .testTag("calendar_settings_sheet")
+            .padding(horizontal = 24.dp),
+        contentPadding = PaddingValues(bottom = 16.dp),
+    ) {
+        item {
+            Text(
+                text = stringResource(R.string.calendar_settings_header_title),
+                style = MaterialTheme.typography.headlineSmall,
+                color = Ink,
+                modifier = Modifier.padding(bottom = 16.dp),
+            )
+        }
+        item { DisplayOptionsCard(uiState, true, onShowAllDayEventsChange, onShowCalendarIndicatorChange, onItemsToShowChange) }
+        item { Spacer(modifier = Modifier.height(16.dp)) }
+        item { CalendarsCard(uiState, onSelectAllCalendarsChange, onCalendarToggle, onTurnOnClick) }
+    }
 }
 
 /** All-day events, the calendar indicator and how many items to show; read-only while a facet inherits. */
@@ -276,23 +258,6 @@ private fun CalendarsCard(
 }
 
 @Composable
-private fun CalendarSettingsHeader(onBack: () -> Unit, modifier: Modifier = Modifier) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .background(SurfaceContainer)
-            .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Top))
-            .padding(horizontal = 24.dp)
-            .padding(top = 24.dp, bottom = 16.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        BackButton(onClick = onBack)
-        Text(text = stringResource(R.string.calendar_settings_header_title), style = MaterialTheme.typography.headlineSmall, color = Ink)
-    }
-}
-
-@Composable
 private fun CalendarPickerRow(calendar: CalendarInfo, workPosition: Pair<Int, Int>, swatch: AccentSwatch?, checked: Boolean, onToggle: () -> Unit, modifier: Modifier = Modifier) {
     Row(
         modifier = modifier
@@ -342,20 +307,20 @@ private fun PermissionDeniedStrip(message: String, actionLabel: String, testTag:
     }
 }
 
-@Preview(showBackground = true, widthDp = 390, heightDp = 844)
-@Preview(name = "Dark", showBackground = true, widthDp = 390, heightDp = 844, uiMode = Configuration.UI_MODE_NIGHT_YES)
+@Preview(showBackground = true, widthDp = 390)
+@Preview(name = "Dark", showBackground = true, widthDp = 390, uiMode = Configuration.UI_MODE_NIGHT_YES)
 @Composable
-private fun CalendarSettingsScreenPreview() {
+private fun CalendarSettingsContentPreview() {
     FacetLauncherTheme {
         CalendarSettingsContent(
             uiState = CalendarSettingsUiState(),
-            onBack = {},
             onShowAllDayEventsChange = {},
             onShowCalendarIndicatorChange = {},
             onItemsToShowChange = {},
             onTurnOnClick = {},
             onCalendarToggle = { _, _ -> },
             onSelectAllCalendarsChange = {},
+            modifier = Modifier.background(SurfaceContainer),
         )
     }
 }

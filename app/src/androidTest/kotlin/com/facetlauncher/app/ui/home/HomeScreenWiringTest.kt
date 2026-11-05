@@ -265,7 +265,7 @@ class HomeScreenWiringTest {
         val calls = mutableListOf<String>()
         val actions = HomeScreenActions(
             item = HomeItemActions(onAppClick = {}),
-            clock = HomeClockActions(onClockStylesClick = { calls += "styles" }, onCalendarSettingsClick = { calls += "calendar" }),
+            clock = HomeClockActions(onClockStylesClick = { calls += "styles" }),
         )
         setHome(appState(PlacedItem.SingleApp(mail)), actions)
 
@@ -276,11 +276,12 @@ class HomeScreenWiringTest {
         composeRule.onNodeWithTag("clock_style_sheet").assertExists()
         composeRule.onNodeWithTag("clock_adjust_sheet").assertDoesNotExist()
 
-        // And each row reaches its own action
+        // And the styles row reaches its action, while the calendar row swaps this sheet for the calendar settings one
         composeRule.onNodeWithTag("clock_style_sheet_styles").performClick()
         longPress("home_clock_block")
         composeRule.onNodeWithTag("clock_style_sheet_calendar").performClick()
-        assertEquals(listOf("styles", "calendar"), calls)
+        composeRule.onNodeWithTag("clock_style_sheet").assertDoesNotExist()
+        assertEquals(listOf("styles"), calls)
     }
 
     @Test

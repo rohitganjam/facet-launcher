@@ -24,9 +24,8 @@ internal class HomeNavigation(
     val toFacetSettings: (facetId: Long) -> Unit,
     val toFacetPro: (ProReason) -> Unit,
     val toUsageAccessExplanation: () -> Unit,
-    /** One facet's clock style options, and the calendar settings of its clock. */
+    /** One facet's clock style options. */
     val toClockStyle: (facetId: Long) -> Unit,
-    val toCalendarSettings: (facetId: Long) -> Unit,
     val toClockStack: () -> Unit,
 )
 
@@ -95,7 +94,6 @@ private fun homeClockActions(
         onWeatherClick = hooks.openWeather,
         onBatteryClick = { inputs.context.openBatterySettings() },
         onClockStylesClick = { state.activeFacet?.let { navigation.toClockStyle(it.id) } },
-        onCalendarSettingsClick = { state.activeFacet?.let { navigation.toCalendarSettings(it.id) } },
         onNavigateToSettings = navigation.toSettings,
         onNavigateToFacetSettings = { state.activeFacet?.let { navigation.toFacetSettings(it.id) } },
         onWidgetStackClick = navigation.toClockStack,

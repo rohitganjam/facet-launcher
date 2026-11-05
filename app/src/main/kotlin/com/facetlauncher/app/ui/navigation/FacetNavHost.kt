@@ -35,7 +35,6 @@ import com.facetlauncher.app.ui.settings.LicenseTextScreen
 import com.facetlauncher.app.ui.settings.LicensesScreen
 import com.facetlauncher.app.ui.settings.AppDrawerSettingsScreen
 import com.facetlauncher.app.ui.settings.AppearanceSettingsScreen
-import com.facetlauncher.app.ui.settings.CalendarSettingsScreen
 import com.facetlauncher.app.ui.settings.DockAppsAppearanceScreen
 import com.facetlauncher.app.ui.settings.DockSettingsScreen
 import com.facetlauncher.app.ui.settings.FontsScreen
@@ -73,7 +72,6 @@ object FacetDestinations {
     const val FACET_PRO = "facetPro/{reason}"
     const val FACET_SETTINGS = "facetSettings/{facetId}"
     const val FAVORITES_PICKER = "favoritesPicker?facetId={facetId}"
-    const val CALENDAR_SETTINGS = "calendarSettings?facetId={facetId}"
     const val USAGE_ACCESS_EXPLANATION = "usageAccessExplanation"
     const val PERMISSIONS = "permissions"
     const val GESTURES = "gestures"
@@ -134,10 +132,6 @@ object FacetDestinations {
     /** Omitting [facetId] (or passing [NO_ACTIVE_FACET_ID]) opens the launcher-wide Dock & Apps appearance. */
     fun dockAppsAppearance(facetId: Long? = null) =
         if (facetId != null && facetId != NO_ACTIVE_FACET_ID) "dockAppsAppearance?facetId=$facetId" else "dockAppsAppearance"
-
-    /** Omitting [facetId] (or passing [NO_ACTIVE_FACET_ID]) opens the global (non-facet-scoped) entry point. */
-    fun calendarSettings(facetId: Long? = null) =
-        if (facetId != null && facetId != NO_ACTIVE_FACET_ID) "calendarSettings?facetId=$facetId" else "calendarSettings"
 
     /** Omitting [facetId] (or passing [NO_ACTIVE_FACET_ID]) opens the launcher-wide Clock accessories. */
     /** The widget stack of [facetId]; omitting it (or passing [NO_ACTIVE_FACET_ID]) opens the active facet's. */
@@ -220,7 +214,6 @@ fun FacetNavHost(
                 onNavigateToPermissions = { navController.navigate(FacetDestinations.PERMISSIONS) },
                 onNavigateToWhatsNew = { navController.navigate(FacetDestinations.WHATS_NEW) },
                 onNavigateToClockStyle = { facetId -> navController.navigate(FacetDestinations.facetClockStyleGallery(facetId)) },
-                onNavigateToCalendarSettings = { facetId -> navController.navigate(FacetDestinations.calendarSettings(facetId)) },
                 onNavigateToClockStack = { navController.navigate(FacetDestinations.clockStack()) },
                 launcherViewModel = launcherViewModel,
             )
@@ -482,15 +475,6 @@ fun FacetNavHost(
             FavoritesPickerScreen(
                 onDone = { navController.popBackStackSafely() },
                 onNavigateToUsageAccessExplanation = { navController.navigate(FacetDestinations.USAGE_ACCESS_EXPLANATION) },
-            )
-        }
-        settingsComposable(
-            FacetDestinations.CALENDAR_SETTINGS,
-            arguments = listOf(navArgument("facetId") { type = NavType.LongType; defaultValue = NO_ACTIVE_FACET_ID }),
-        ) { backStackEntry ->
-            val facetId = backStackEntry.arguments?.getLong("facetId")?.takeIf { it != NO_ACTIVE_FACET_ID }
-            CalendarSettingsScreen(
-                onBack = { navController.popBackStackSafely() },
             )
         }
     }

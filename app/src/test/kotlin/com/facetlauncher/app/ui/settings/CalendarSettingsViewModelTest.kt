@@ -1,13 +1,11 @@
 package com.facetlauncher.app.ui.settings
 
 import com.facetlauncher.app.data.clockItemWith
-import androidx.lifecycle.SavedStateHandle
 import com.facetlauncher.app.domain.AssignCalendarColorsUseCase
 import com.facetlauncher.app.data.CalendarPermissionRepository
 import com.facetlauncher.app.data.CalendarRepository
 import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.SettingsRepository
-import com.facetlauncher.app.data.WallpaperRepository
 import com.facetlauncher.app.data.model.Facet
 import com.facetlauncher.app.domain.UpdateClockConfigUseCase
 import com.facetlauncher.app.data.model.encode
@@ -18,9 +16,7 @@ import com.facetlauncher.app.data.model.ClockStackItem
 import com.facetlauncher.app.data.model.ClockCalendarConfig
 import com.facetlauncher.app.data.ClockStackRepository
 import com.facetlauncher.app.data.model.CalendarDisplayOptions
-import com.facetlauncher.app.data.model.CalendarEvent
 import com.facetlauncher.app.data.model.CalendarInfo
-import com.facetlauncher.app.data.model.HomeWallpaper
 import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.ui.theme.AccentSwatch
 import kotlinx.coroutines.Dispatchers
@@ -38,8 +34,6 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
-import org.mockito.ArgumentMatchers.any
-import org.mockito.ArgumentMatchers.anyBoolean
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
@@ -65,11 +59,6 @@ class CalendarSettingsViewModelTest {
 
     private fun stored(calendar: ClockCalendarConfig) = NativeWidgetConfig(clock = ClockWidgetConfig(calendar = calendar))
 
-    private fun unavailableWallpaperRepository(): WallpaperRepository =
-        mock(WallpaperRepository::class.java).also { repository ->
-            runBlocking { `when`(repository.currentHomeWallpaper()).thenReturn(HomeWallpaper.Unavailable) }
-        }
-
     private fun createViewModel(
         facet: Facet? = facetWith(ClockWidgetConfig()),
         settingsRepository: SettingsRepository = mock(SettingsRepository::class.java),
@@ -77,18 +66,14 @@ class CalendarSettingsViewModelTest {
         calendarPermissionRepository: CalendarPermissionRepository = mock(CalendarPermissionRepository::class.java),
         calendarRepository: CalendarRepository = mock(CalendarRepository::class.java),
         clockStackRepository: ClockStackRepository = this.clockStackRepository,
-        wallpaperRepository: WallpaperRepository = unavailableWallpaperRepository(),
-        todayEvents: List<CalendarEvent> = emptyList(),
     ): CalendarSettingsViewModel {
         `when`(settingsRepository.settings).thenReturn(flowOf(LauncherSettings()))
         `when`(facetRepository.observeFacets()).thenReturn(flowOf(listOfNotNull(facet)))
         facet?.let { runBlocking { `when`(facetRepository.getById(it.id)).thenReturn(it) } }
-        runBlocking { `when`(calendarRepository.getUpcomingEvents(any(), anyBoolean())).thenReturn(todayEvents) }
-        val savedStateHandle = if (facet != null) SavedStateHandle(mapOf("facetId" to facet.id)) else SavedStateHandle()
         return CalendarSettingsViewModel(
-            savedStateHandle, settingsRepository, facetRepository, calendarPermissionRepository, calendarRepository, wallpaperRepository,
+            settingsRepository, facetRepository, calendarPermissionRepository, calendarRepository,
             AssignCalendarColorsUseCase(), UpdateClockConfigUseCase(settingsRepository, facetRepository, clockStackRepository),
-        )
+        ).also { viewModel -> facet?.let { viewModel.bind(it.id) } }
     }
 
 
@@ -150,37 +135,6 @@ class CalendarSettingsViewModelTest {
 
         // Then no calendars are kept
         assertEquals(emptyList<CalendarInfo>(), viewModel.uiState.value.calendars)
-    }
-
-    @Test
-    fun `granted access loads today's real events for the preview`() = runTest {
-        val calendarPermissionRepository = mock(CalendarPermissionRepository::class.java)
-        `when`(calendarPermissionRepository.isGranted()).thenReturn(true)
-        val calendarRepository = mock(CalendarRepository::class.java)
-        `when`(calendarRepository.getSelectableCalendars()).thenReturn(emptyList())
-        val events = listOf(CalendarEvent(id = 1, calendarId = "1", title = "Standup", startTimeMillis = 0, endTimeMillis = 1, isAllDay = false))
-        val viewModel = createViewModel(
-            calendarPermissionRepository = calendarPermissionRepository,
-            calendarRepository = calendarRepository,
-            todayEvents = events,
-        )
-        backgroundScope.launch { viewModel.uiState.collect {} }
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        assertEquals(events, viewModel.uiState.value.previewEvents)
-    }
-
-    @Test
-    fun `ungranted access never queries events for the preview`() = runTest {
-        val calendarPermissionRepository = mock(CalendarPermissionRepository::class.java)
-        `when`(calendarPermissionRepository.isGranted()).thenReturn(false)
-        val calendarRepository = mock(CalendarRepository::class.java)
-        val viewModel = createViewModel(calendarPermissionRepository = calendarPermissionRepository, calendarRepository = calendarRepository)
-        backgroundScope.launch { viewModel.uiState.collect {} }
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        assertEquals(emptyList<CalendarEvent>(), viewModel.uiState.value.previewEvents)
-        runBlocking { verify(calendarRepository, org.mockito.Mockito.never()).getUpcomingEvents(any(), anyBoolean()) }
     }
 
     @Test
@@ -279,6 +233,32 @@ class CalendarSettingsViewModelTest {
 
         assertEquals(CalendarDisplayOptions(showIndicator = false, itemsToShow = 1), viewModel.uiState.value.calendarDisplay)
         assertEquals(false, viewModel.uiState.value.effectiveShowAllDayEvents)
+    }
+
+    @Test
+    fun `binding another facet switches the settings to that facet`() = runTest {
+        // Given a view model bound to one facet, and a second facet with a different clock calendar
+        val first = facetWith(ClockWidgetConfig(calendar = ClockCalendarConfig(itemsToShow = 1)))
+        val second = first.copy(id = 6L, clockStack = listOf(clockItemWith(ClockWidgetConfig(calendar = ClockCalendarConfig(itemsToShow = 4)))))
+        val facetRepository = mock(FacetRepository::class.java)
+        val settingsRepository = mock(SettingsRepository::class.java)
+        `when`(facetRepository.observeFacets()).thenReturn(flowOf(listOf(first, second)))
+        `when`(settingsRepository.settings).thenReturn(flowOf(LauncherSettings()))
+        val viewModel = CalendarSettingsViewModel(
+            settingsRepository, facetRepository, mock(CalendarPermissionRepository::class.java), mock(CalendarRepository::class.java),
+            AssignCalendarColorsUseCase(), UpdateClockConfigUseCase(settingsRepository, facetRepository, clockStackRepository),
+        )
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        viewModel.bind(first.id)
+        testDispatcher.scheduler.advanceUntilIdle()
+        assertEquals(1, viewModel.uiState.value.calendarDisplay.itemsToShow)
+
+        // When bound to the second facet
+        viewModel.bind(second.id)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Then the state follows it
+        assertEquals(4, viewModel.uiState.value.calendarDisplay.itemsToShow)
     }
 
     @Test

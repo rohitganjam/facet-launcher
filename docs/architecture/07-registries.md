@@ -195,7 +195,7 @@ Non-use-case files in `domain/`: `FlowCombine.kt` (6/7-ary `combine`), `HubGridC
 | `AppDrawerSettingsViewModel` | `AppDrawerSettingsScreen` (settings, plus the wallpaper behind its preview) | — |
 | `DockSettingsViewModel` | `DockSettingsScreen` | `facetId?` |
 | `HomeAppsListSettingsViewModel` | `HomeAppsListSettingsScreen` | `facetId?` |
-| `CalendarSettingsViewModel` | `CalendarSettingsScreen` | `facetId?` |
+| `CalendarSettingsViewModel` | `CalendarSettingsSheet` | `bind(facetId)` |
 | `NotificationSettingsViewModel` | `NotificationSettingsScreen` | — |
 | `NotificationAccessExplanationViewModel` | `NotificationAccessExplanationScreen` | — |
 | `GesturesViewModel` | `GesturesScreen` (Settings → Gestures: the built-in gestures and the two opt-in switches) | — |

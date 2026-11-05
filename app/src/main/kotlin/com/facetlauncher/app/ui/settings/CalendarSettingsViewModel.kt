@@ -1,23 +1,17 @@
 package com.facetlauncher.app.ui.settings
 
-import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.facetlauncher.app.data.CalendarPermissionRepository
 import com.facetlauncher.app.data.CalendarRepository
 import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.SettingsRepository
-import com.facetlauncher.app.data.WallpaperRepository
 import com.facetlauncher.app.data.model.Facet
-import com.facetlauncher.app.domain.ResolvedFacetStyle
 import com.facetlauncher.app.domain.resolveFacetStyle
 import com.facetlauncher.app.data.model.CalendarDisplayOptions
-import com.facetlauncher.app.data.model.CalendarEvent
 import com.facetlauncher.app.data.model.CalendarInfo
 import com.facetlauncher.app.data.model.ClockCalendarConfig
 import com.facetlauncher.app.data.model.selectsCalendar
-import com.facetlauncher.app.data.model.ClockAlignment
-import com.facetlauncher.app.data.model.HomeWallpaper
 import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.data.model.NO_ACTIVE_FACET_ID
 import com.facetlauncher.app.domain.AssignCalendarColorsUseCase
@@ -25,38 +19,25 @@ import com.facetlauncher.app.domain.UpdateClockConfigUseCase
 import com.facetlauncher.app.ui.theme.AccentSwatch
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
-import kotlinx.collections.immutable.ImmutableList
-import kotlinx.collections.immutable.persistentListOf
-import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 data class CalendarSettingsUiState(
     val facet: Facet? = null,
-    /** Launcher-wide settings — the preview strip reads the font/colour fields from here. */
+    /** Launcher-wide settings — a facet without a clock page of its own reads its defaults from here. */
     val settings: LauncherSettings = LauncherSettings(),
-    val homeWallpaper: HomeWallpaper = HomeWallpaper.Unavailable,
     val isCalendarAccessGranted: Boolean = false,
     val calendars: List<CalendarInfo> = emptyList(),
-    /** Real upcoming events (midnight today to noon tomorrow) for the effective selection; empty when access is off or none are due. */
-    val previewEvents: ImmutableList<CalendarEvent> = persistentListOf(),
     /** Calendar id -> `AccentSwatch` enum name — see [com.facetlauncher.app.data.model.LauncherSettings.calendarColors]. Always global, never facet-scoped (a bar color isn't a "which calendars"/"show all-day" kind of decision). */
     val calendarColors: Map<String, String> = emptyMap(),
 ) {
-    private val style: ResolvedFacetStyle by lazy(LazyThreadSafetyMode.NONE) { resolveFacetStyle(facet, settings) }
-    private val calendar: ClockCalendarConfig get() = style.clock.calendar
+    private val calendar: ClockCalendarConfig by lazy(LazyThreadSafetyMode.NONE) { resolveFacetStyle(facet, settings).clock.calendar }
     val effectiveShowAllDayEvents: Boolean get() = calendar.showAllDay
     val calendarDisplay: CalendarDisplayOptions get() = CalendarDisplayOptions(calendar.showIndicator, calendar.itemsToShow)
-    /** The clock-block look the preview strip renders with. */
-    val previewUse24HourTime: Boolean get() = style.clock.use24HourTime
-    val previewClockAlignment: ClockAlignment get() = style.clockPlacement.portrait.alignment
     /** `null` means every calendar is selected, calendars added later included. */
     val effectiveSelectedCalendarIds: Set<String>? get() = calendar.calendarIds
     /** The calendar's colour swatch, or `null` when the indicator is off (the picker then drops its colour dots too). */
@@ -65,68 +46,46 @@ data class CalendarSettingsUiState(
     fun isCalendarSelected(calendarId: String): Boolean = effectiveSelectedCalendarIds.selectsCalendar(calendarId)
 }
 
-/** The calendar under one facet's clock: which calendars, all-day events, the indicator and how many events show. */
+/** The calendar under one facet's clock: which calendars, all-day events, the indicator and how many events show. Call [bind] with the facet first. */
 @HiltViewModel
 class CalendarSettingsViewModel @Inject constructor(
-    savedStateHandle: SavedStateHandle,
     private val settingsRepository: SettingsRepository,
     private val facetRepository: FacetRepository,
     private val calendarPermissionRepository: CalendarPermissionRepository,
     private val calendarRepository: CalendarRepository,
-    private val wallpaperRepository: WallpaperRepository,
     private val assignCalendarColorsUseCase: AssignCalendarColorsUseCase,
     private val updateClockConfig: UpdateClockConfigUseCase,
 ) : ViewModel() {
 
-    private val facetId: Long = savedStateHandle.get<Long>("facetId") ?: NO_ACTIVE_FACET_ID
+    private val facetId = MutableStateFlow(NO_ACTIVE_FACET_ID)
 
     private val calendarColorPalette = AccentSwatch.entries.map { it.name }
 
     private val isCalendarAccessGranted = MutableStateFlow(calendarPermissionRepository.isGranted())
     private val calendars = MutableStateFlow<List<CalendarInfo>>(emptyList())
-    private val homeWallpaper = MutableStateFlow<HomeWallpaper>(HomeWallpaper.Unavailable)
-
-    private val previewEvents = MutableStateFlow<List<CalendarEvent>>(emptyList())
-
-    private fun buildUiState(
-        settings: LauncherSettings,
-        facets: List<Facet>,
-        granted: Boolean,
-        calendarList: List<CalendarInfo> = emptyList(),
-        wallpaper: HomeWallpaper = HomeWallpaper.Unavailable,
-        events: List<CalendarEvent> = emptyList(),
-    ) = CalendarSettingsUiState(
-        facet = if (facetId == NO_ACTIVE_FACET_ID) null else facets.find { it.id == facetId },
-        settings = settings,
-        homeWallpaper = wallpaper,
-        isCalendarAccessGranted = granted,
-        calendars = calendarList,
-        previewEvents = events.toImmutableList(),
-        calendarColors = settings.calendarColors,
-    )
 
     val uiState: StateFlow<CalendarSettingsUiState> = combine(
         settingsRepository.settings,
         facetRepository.observeFacets(),
-        combine(isCalendarAccessGranted, calendars, previewEvents) { granted, calendarList, events -> Triple(granted, calendarList, events) },
-        homeWallpaper,
-    ) { settings, facets, (granted, calendarList, events), wallpaper ->
-        buildUiState(settings, facets, granted, calendarList, wallpaper, events)
+        facetId,
+        combine(isCalendarAccessGranted, calendars) { granted, calendarList -> granted to calendarList },
+    ) { settings, facets, id, (granted, calendarList) ->
+        CalendarSettingsUiState(
+            facet = facets.find { it.id == id },
+            settings = settings,
+            isCalendarAccessGranted = granted,
+            calendars = calendarList,
+            calendarColors = settings.calendarColors,
+        )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), CalendarSettingsUiState())
 
     init {
         refreshCalendarAccess()
-        viewModelScope.launch { homeWallpaper.value = wallpaperRepository.currentHomeWallpaper() }
-        // Reload the preview's events whenever access or the effective calendar selection changes.
-        viewModelScope.launch {
-            combine(settingsRepository.settings, facetRepository.observeFacets(), isCalendarAccessGranted) { settings, facets, granted ->
-                buildUiState(settings, facets, granted)
-            }.map { Triple(it.isCalendarAccessGranted, it.effectiveSelectedCalendarIds, it.effectiveShowAllDayEvents) }
-                .distinctUntilChanged()
-                .collectLatest { (granted, calendarIds, includeAllDay) ->
-                    previewEvents.value = if (granted) calendarRepository.getUpcomingEvents(calendarIds, includeAllDay) else emptyList()
-                }
-        }
+    }
+
+    /** Which facet's clock these settings edit; the sheet calls it each time it opens. */
+    fun bind(id: Long) {
+        facetId.value = id
     }
 
     /** `READ_CALENDAR` has no grant-change callback — call on resume, and right after the runtime request returns. */
@@ -173,7 +132,8 @@ class CalendarSettingsViewModel @Inject constructor(
     }
 
     private fun changeCalendar(edit: (ClockCalendarConfig) -> ClockCalendarConfig) {
-        if (facetId == NO_ACTIVE_FACET_ID) return
-        viewModelScope.launch { updateClockConfig(facetId) { it.copy(calendar = edit(it.calendar)) } }
+        val id = facetId.value
+        if (id == NO_ACTIVE_FACET_ID) return
+        viewModelScope.launch { updateClockConfig(id) { it.copy(calendar = edit(it.calendar)) } }
     }
 }

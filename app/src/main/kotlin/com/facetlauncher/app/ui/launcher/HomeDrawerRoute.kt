@@ -21,6 +21,7 @@ import com.facetlauncher.app.ui.nativewidget.NativeWidgetAccessControls
 import com.facetlauncher.app.ui.nativewidget.NativeWidgetActions
 import com.facetlauncher.app.ui.nativewidget.NativeWidgetEnvironment
 import com.facetlauncher.app.ui.nativewidget.config.NativeWidgetConfigSheet
+import com.facetlauncher.app.ui.settings.CalendarSettingsSheet
 import com.facetlauncher.app.ui.nativewidget.rememberNativeWidgetAccess
 import com.facetlauncher.app.ui.nativewidget.withWeatherOverride
 import com.facetlauncher.app.ui.home.WhatsNewPillHost
@@ -121,7 +122,6 @@ fun HomeDrawerRoute(
     onNavigateToUsageAccessExplanation: () -> Unit,
     /** Opens one facet's clock style options, and the calendar settings of its clock. */
     onNavigateToClockStyle: (facetId: Long) -> Unit = { _ -> },
-    onNavigateToCalendarSettings: (facetId: Long) -> Unit = { _ -> },
     onNavigateToClockStack: () -> Unit = {},
     /** Opens the screen that explains and grants notification access, from an app menu's "Enable notifications". */
     onNavigateToNotificationAccessExplanation: () -> Unit = {},
@@ -408,7 +408,6 @@ fun HomeDrawerRoute(
             toFacetPro = onNavigateToFacetPro,
             toUsageAccessExplanation = onNavigateToUsageAccessExplanation,
             toClockStyle = onNavigateToClockStyle,
-            toCalendarSettings = onNavigateToCalendarSettings,
             toClockStack = onNavigateToClockStack,
         ),
     )
@@ -582,6 +581,9 @@ fun HomeDrawerRoute(
                     onNavigateToPermissions()
                 },
             )
+        }
+        if (clockAdjustMode == ClockAdjustMode.CALENDAR_SETTINGS) {
+            homeUiState.activeFacet?.let { facet -> CalendarSettingsSheet(facetId = facet.id, onDismiss = { clockAdjustMode = ClockAdjustMode.NONE }) }
         }
         overlays.configureRef?.let { ref -> NativeWidgetConfigSheet(ref = ref, onDismiss = { overlays.configureRef = null }) }
         HomeOneTimePrompts(

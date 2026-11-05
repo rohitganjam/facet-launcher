@@ -203,7 +203,7 @@ fun ClockBlock(
                 alignment = clockAlignment,
                 display = calendarDisplay,
                 onEventClick = onEventClick,
-                modifier = Modifier.longPressFallback(onCalendarLongPress),
+                modifier = Modifier.align(clockAlignment.resolve()).longPressFallback(onCalendarLongPress),
             )
         }
     }
