@@ -56,7 +56,7 @@ data class HomeWidgetSizing(
 
 /** The parts of Home's state that only the live screen has: the adjust mode and which facet owns the clock position. */
 data class HomeLiveState(
-    val adjustMode: ClockAdjustMode = ClockAdjustMode.NONE,
+    val adjustMode: HomeMenuMode = HomeMenuMode.NONE,
     val draggingHandle: Boolean = false,
     val placementFacetId: Long? = null,
     /** The clock stack page showing; `null`, or one no longer in the stack, shows the first. */

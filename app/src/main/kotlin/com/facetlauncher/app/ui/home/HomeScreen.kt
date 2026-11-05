@@ -24,7 +24,7 @@ import com.facetlauncher.app.data.model.AppListVerticalAlignment
 import com.facetlauncher.app.data.model.AppRowPosition
 import com.facetlauncher.app.data.model.AppRowPresentation
 import com.facetlauncher.app.data.model.PlacedItem
-import com.facetlauncher.app.ui.home.ClockAdjustMode
+import com.facetlauncher.app.ui.home.HomeMenuMode
 import com.facetlauncher.app.ui.home.HomeDockState
 import com.facetlauncher.app.ui.home.HomeItemActions
 import com.facetlauncher.app.ui.home.HomeLayoutMode
@@ -79,10 +79,10 @@ fun HomeScreen(
         if (frame.isLandscape) HomeLandscapeContent(frame) else HomePortraitContent(frame)
         val adjustEnv = ClockAdjustEnv(layout, frame.geometry, frame.metrics, clock, state.widget, actions, frame.widgetMinPx, frame.landscapeDockReserve)
         ClockAdjustOverlays(adjustEnv, landscape = frame.isLandscape)
-        ClockAdjustPills(adjustEnv, adjusting = clock.adjustMode == ClockAdjustMode.ADJUST, landscape = frame.isLandscape)
+        ClockAdjustPills(adjustEnv, adjusting = clock.adjustMode == HomeMenuMode.ADJUST, landscape = frame.isLandscape)
         HomeBoundsReporting(frame)
-        if (clock.adjustMode == ClockAdjustMode.MENU) ClockMenuSheet(state.clockStack, actions.clock)
-        if (clock.adjustMode == ClockAdjustMode.STYLE_MENU) ClockStyleSheet(actions.clock)
+        if (clock.adjustMode == HomeMenuMode.MENU) HomeMenuSheet(state.clockStack, actions.clock)
+        if (clock.adjustMode == HomeMenuMode.WIDGET_MENU) WidgetSheet(state.clockStack, state.widget, actions.clock)
     }
 }
 

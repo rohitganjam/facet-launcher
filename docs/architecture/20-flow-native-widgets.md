@@ -84,9 +84,11 @@ path, keyed by `NativeWidgetRef` (`Hub(appWidgetId)` or `Home(itemId)`):
 - Forecasts are shared by place: `WidgetWeatherRepository` holds one in-memory forecast per place behind the same `WeatherRefreshPolicy`
   gate, so widgets on one city make one request, and a place equal to the launcher-wide one reads the launcher's own stored forecast and
   makes none. "Current location" while the launcher already follows the position is the launcher's forecast too.
-- A **medium or large Agenda** (`isConfigurable`) has a 3-dot button at its top right; a **Weather** widget opens its own weather sheet when
-  tapped (`NativeWidgetActions.onOpenWeather(ref)`, which shows that widget's forecast), with a 3-dot button to the right of the rain
-  summary. Both call `onConfigure(ref)`, and `HomeDrawerRoute` opens `NativeWidgetConfigSheet(ref)` (`HomeOverlayState.configureRef`).
+- A widget's settings are opened from its long-press menu, not a button on it. On Home the widget sheet has "Agenda settings" or "Weather
+  settings" (`HomeClockActions.onConfigureNativeWidget`); on the Hub the context menu has Configure widget (`hub_grid_configure_widget`).
+  Now playing has none. Both call `onConfigure(ref)`, and `HomeDrawerRoute` opens `NativeWidgetConfigSheet(ref)` (`HomeOverlayState.configureRef`).
+  A **Weather** widget also opens its own weather sheet when tapped (`NativeWidgetActions.onOpenWeather(ref)`, which shows that widget's
+  forecast), with a 3-dot button to the right of the rain summary that calls the same `onConfigure(ref)`.
 - On adding a Weather or Agenda widget (one that has settings at its default size), from the Hub picker or to a Home page, the picker emits
   `HubAddWidgetEvent.NativeWidgetAdded(ref)` (`Hub(id)` or `Home(itemId)`, the latter from `AddClockStackItemUseCase`'s `AddedPage`) and the
   route, or the widget stack screen when the add started there, opens the sheet for it.

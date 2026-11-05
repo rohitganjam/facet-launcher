@@ -37,7 +37,7 @@ import com.facetlauncher.app.data.model.MediaPlayerState
 import com.facetlauncher.app.data.model.NotificationBadgeStyle
 import com.facetlauncher.app.data.model.PlacedItem
 import com.facetlauncher.app.ui.components.AppMenuNotifications
-import com.facetlauncher.app.ui.home.ClockAdjustMode
+import com.facetlauncher.app.ui.home.HomeMenuMode
 import com.facetlauncher.app.ui.home.HomeItemActions
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.ImmutableMap
@@ -67,7 +67,7 @@ data class HomeClockState(
     val placementFacetId: Long? = null,
     /** The clock page's saved box width in dp for this orientation; `null` until it has been resized, when the placement's scale applies. */
     val boxWidthDp: Int? = null,
-    val adjustMode: ClockAdjustMode = ClockAdjustMode.NONE,
+    val adjustMode: HomeMenuMode = HomeMenuMode.NONE,
     /** True while a handle is being dragged, which suppresses the screen's own gestures. */
     val draggingHandle: Boolean = false,
 )
@@ -212,7 +212,7 @@ data class HomeClockActions(
     /** Saves the clock page's box, aspect-locked, in dp; Home's frame turns a scale commit into this once the clock is measured. */
     val onBoxSizeCommit: (widthDp: Int, heightDp: Int) -> Unit = { _, _ -> },
     val onAlignmentChange: (ClockAlignment) -> Unit = {},
-    val onAdjustModeChange: (ClockAdjustMode) -> Unit = {},
+    val onAdjustModeChange: (HomeMenuMode) -> Unit = {},
     val onDraggingHandleChange: (Boolean) -> Unit = {},
     /** How far a swipe has displaced the visible page, as a fraction of the zone's width; read while drawing so a swipe does not recompose Home. */
     val pageOffset: () -> Float = { 0f },

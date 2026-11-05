@@ -66,9 +66,9 @@ class HomeScreenWiringTest {
     )
 
     /** Hoists the adjust mode as `HomeDrawerRoute` does, so a long-press on the clock really opens its menu. */
-    private fun setHome(state: HomeScreenState, actions: HomeScreenActions) {
+    private fun setHome(state: HomeScreenState, actions: HomeScreenActions, initialMode: HomeMenuMode = HomeMenuMode.NONE) {
         composeRule.setContent {
-            var adjustMode by remember { mutableStateOf(ClockAdjustMode.NONE) }
+            var adjustMode by remember { mutableStateOf(initialMode) }
             FacetLauncherTheme {
                 HomeScreen(
                     state = state.copy(clock = state.clock.copy(adjustMode = adjustMode)),
@@ -241,26 +241,26 @@ class HomeScreenWiringTest {
         )
         setHome(appState(PlacedItem.SingleApp(mail)), actions)
 
-        // When free space is long-pressed and each row tapped (a tap closes the sheet, so it is reopened each time)
+        // When the widget is long-pressed for replace and remove, and free space for the settings rows (a tap closes the sheet, so it is reopened each time)
         fun openFromFreeSpace() {
             composeRule.onNodeWithTag("home_screen_root").performTouchInput { longClick(Offset(width * 0.75f, 4f)) }
             composeRule.waitForIdle()
         }
+        longPress("home_clock_block")
+        composeRule.onNodeWithTag("widget_sheet_replace").performClick()
+        longPress("home_clock_block")
+        composeRule.onNodeWithTag("widget_sheet_remove").performClick()
         openFromFreeSpace()
-        composeRule.onNodeWithTag("clock_adjust_replace_widget").performClick()
+        composeRule.onNodeWithTag("home_sheet_facet_settings").performClick()
         openFromFreeSpace()
-        composeRule.onNodeWithTag("clock_adjust_remove_widget").performClick()
-        openFromFreeSpace()
-        composeRule.onNodeWithTag("clock_adjust_facet_settings").performClick()
-        openFromFreeSpace()
-        composeRule.onNodeWithTag("clock_adjust_launcher_settings").performClick()
+        composeRule.onNodeWithTag("home_sheet_launcher_settings").performClick()
 
         // Then each reached its own callback
         assertEquals(listOf("replace", "remove", "facet-settings", "settings"), calls)
     }
 
     @Test
-    fun longPressingTheClockOpensTheClockSheetNotTheHomeSheet() {
+    fun longPressingTheClockOpensTheWidgetSheetNotTheHomeSheet() {
         // Given the native clock showing, and counters on the clock sheet's actions
         val calls = mutableListOf<String>()
         val actions = HomeScreenActions(
@@ -272,20 +272,20 @@ class HomeScreenWiringTest {
         // When the clock is long-pressed
         longPress("home_clock_block")
 
-        // Then the clock's two rows show, not the Home sheet
-        composeRule.onNodeWithTag("clock_style_sheet").assertExists()
-        composeRule.onNodeWithTag("clock_adjust_sheet").assertDoesNotExist()
+        // Then the widget sheet shows, not the Home sheet
+        composeRule.onNodeWithTag("widget_sheet").assertExists()
+        composeRule.onNodeWithTag("home_menu_sheet").assertDoesNotExist()
 
         // And the styles row reaches its action, while the calendar row swaps this sheet for the calendar settings one
         composeRule.onNodeWithTag("clock_style_sheet_styles").performClick()
         longPress("home_clock_block")
         composeRule.onNodeWithTag("clock_style_sheet_calendar").performClick()
-        composeRule.onNodeWithTag("clock_style_sheet").assertDoesNotExist()
+        composeRule.onNodeWithTag("widget_sheet").assertDoesNotExist()
         assertEquals(listOf("styles"), calls)
     }
 
     @Test
-    fun longPressingTheCalendarUnderTheClockOpensTheClockSheetAndATapStillOpensTheEvent() {
+    fun longPressingTheCalendarUnderTheClockOpensTheWidgetSheetAndATapStillOpensTheEvent() {
         // Given an event under the clock, and counters on the event tap
         val now = System.currentTimeMillis()
         val event = CalendarEvent(id = 7L, calendarId = "1", title = "Planning", startTimeMillis = now + 3_600_000, endTimeMillis = now + 7_200_000, isAllDay = false)
@@ -299,12 +299,12 @@ class HomeScreenWiringTest {
 
         // Then the tap opened the event, and the long-press opened the clock's own sheet without opening it again
         assertEquals(listOf(7L), opened)
-        composeRule.onNodeWithTag("clock_style_sheet").assertExists()
-        composeRule.onNodeWithTag("clock_adjust_sheet").assertDoesNotExist()
+        composeRule.onNodeWithTag("widget_sheet").assertExists()
+        composeRule.onNodeWithTag("home_menu_sheet").assertDoesNotExist()
     }
 
     @Test
-    fun longPressingFreeSpaceOpensTheHomeSheetNotTheClockSheet() {
+    fun longPressingFreeSpaceOpensTheHomeSheetNotTheWidgetSheet() {
         // Given the native clock showing
         setHome(appState(PlacedItem.SingleApp(mail)), HomeScreenActions(item = HomeItemActions(onAppClick = {})))
 
@@ -313,8 +313,8 @@ class HomeScreenWiringTest {
         composeRule.waitForIdle()
 
         // Then the Home sheet shows, not the clock's
-        composeRule.onNodeWithTag("clock_adjust_sheet").assertExists()
-        composeRule.onNodeWithTag("clock_style_sheet").assertDoesNotExist()
+        composeRule.onNodeWithTag("home_menu_sheet").assertExists()
+        composeRule.onNodeWithTag("widget_sheet").assertDoesNotExist()
     }
 
     @Test
@@ -347,7 +347,7 @@ class HomeScreenWiringTest {
         // When free space is long-pressed and Add widget tapped
         composeRule.onNodeWithTag("home_screen_root").performTouchInput { longClick(Offset(width * 0.75f, 4f)) }
         composeRule.waitForIdle()
-        composeRule.onNodeWithTag("clock_adjust_add_widget").performClick()
+        composeRule.onNodeWithTag("home_sheet_add_widget").performClick()
 
         // Then the add action fired
         assertEquals(1, added)
@@ -376,18 +376,16 @@ class HomeScreenWiringTest {
             ),
             onAppListBoundsChange = { listBounds = it },
         )
-        setHome(state, actions)
+        // The widget host swallows its own touches, so the widget sheet starts open instead of being opened by a long-press.
+        setHome(state, actions, initialMode = HomeMenuMode.WIDGET_MENU)
 
         // Then the widget was hosted by its id, and Home reported where the widget and the list are
         assertEquals(42, hostedId)
         assertNotNull(widgetBounds)
         assertNotNull(listBounds)
 
-        // When the menu's "Replace widget" row is tapped
-        // The widget host swallows its own touches, so the menu is opened from empty space as in the landscape tests.
-        composeRule.onNodeWithTag("home_screen_root").performTouchInput { longClick(Offset(width * 0.75f, 4f)) }
-        composeRule.waitForIdle()
-        composeRule.onNodeWithTag("clock_adjust_replace_widget").performClick()
+        // When the widget sheet's "Replace widget" row is tapped
+        composeRule.onNodeWithTag("widget_sheet_replace").performClick()
 
         // Then that action fired
         assertEquals(1, switched)

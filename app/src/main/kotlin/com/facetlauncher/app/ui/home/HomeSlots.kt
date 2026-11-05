@@ -53,7 +53,7 @@ import com.facetlauncher.app.data.model.DockDisplayMode
 import com.facetlauncher.app.data.model.MediaPlayerState
 import com.facetlauncher.app.ui.components.AppIconSize
 import com.facetlauncher.app.ui.components.dashedBorder
-import com.facetlauncher.app.ui.home.ClockAdjustMode
+import com.facetlauncher.app.ui.home.HomeMenuMode
 import com.facetlauncher.app.ui.home.DockIcon
 import com.facetlauncher.app.ui.home.MediaPlayerRow
 import com.facetlauncher.app.ui.home.clock.LocalBatteryClick
@@ -218,7 +218,7 @@ private fun ClockPage(frame: HomeFrame, page: ClockPageSpec, scaleOriginY: Float
         homeAppsFontWeight = state.list.look.labelFontWeightOption,
         appLabelColorOption = state.list.look.labelColorOption,
         onEventClick = actions.clock.onEventClick,
-        onCalendarLongPress = { actions.clock.onAdjustModeChange(ClockAdjustMode.STYLE_MENU) },
+        onCalendarLongPress = { actions.clock.onAdjustModeChange(HomeMenuMode.WIDGET_MENU) },
         launcherFontOption = clock.launcherFontOption,
         nextAlarmMillis = state.calendar.nextAlarmMillis,
         batteryPercent = state.calendar.batteryPercent,
@@ -256,7 +256,7 @@ private class WidgetPageCallbacks(
 private fun widgetPageCallbacks(actions: HomeScreenActions, visible: Boolean) = if (visible) {
     WidgetPageCallbacks(
         onRemove = actions.widget.onRemoveOrphan,
-        onLongPress = { actions.clock.onAdjustModeChange(ClockAdjustMode.MENU) },
+        onLongPress = { actions.clock.onAdjustModeChange(HomeMenuMode.WIDGET_MENU) },
         onNestedScrollStart = actions.widget.onNestedScrollStart,
         onLeftoverScroll = actions.widget.onLeftoverScroll,
         onNestedScrollStop = actions.widget.onNestedScrollStop,
@@ -266,13 +266,13 @@ private fun widgetPageCallbacks(actions: HomeScreenActions, visible: Boolean) = 
     WidgetPageCallbacks({}, {}, {}, { _, _ -> }, {}, { _, _ -> })
 }
 
-/** A tap on the clock opens the clock app, a long press opens the clock's own sheet (styles and calendar). */
+/** A tap on the clock opens the clock app, a long press opens the widget's sheet. */
 @Composable
 private fun clockTapModifier(clock: HomeClockActions): Modifier = Modifier
     .pointerInput(Unit) {
         detectTapGestures(
             onTap = { clock.onClockClick() },
-            onLongPress = { clock.onAdjustModeChange(ClockAdjustMode.STYLE_MENU) },
+            onLongPress = { clock.onAdjustModeChange(HomeMenuMode.WIDGET_MENU) },
         )
     }
     .testTag(homeTag("home_clock_block"))

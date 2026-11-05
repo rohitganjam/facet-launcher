@@ -4,7 +4,7 @@
     <string name="quick_placement_add_to">Agregar a %1$s</string>
     <string name="app_menu_notifications_access_needed">Las notificaciones necesitan acceso desde la configuración del sistema.</string>
     <string name="app_picker_no_folders_yet">Aún no hay carpetas. Mantén presionada una app y elige \"Agregar a carpeta\" para crear una.</string>
-    <string name="gesture_hint_clock_hold">Mantén presionado un espacio vacío de la pantalla de inicio para cambiar el tamaño y la posición del reloj</string>
+    <string name="gesture_hint_clock_hold">Mantén presionado un widget para cambiar su tamaño y su posición</string>
 
     <string name="settings_header_title">Configuración</string>
     <string name="settings_facets_subtitle">Crea y administra la configuración específica de cada faceta</string>
@@ -77,8 +77,8 @@
     <string name="facet_settings_dock_settings_title">Configuración del Dock</string>
     <string name="home_usage_access_needed">Más usadas necesita acceso de uso desde la configuración del sistema.</string>
 
-    <string name="clock_style_long_press_hint">Mantén presionado un espacio vacío de la pantalla de inicio para ajustar el tamaño y la posición del reloj.</string>
-    <string name="clock_adjust_facet_settings_subtitle">Configuración específica de la faceta: lista de apps, dock, reloj y calendario</string>
+    <string name="clock_style_long_press_hint">Mantén presionado el reloj en la pantalla de inicio para ajustar su tamaño y su posición.</string>
+    <string name="home_sheet_facet_settings_subtitle">Configuración específica de la faceta: lista de apps, dock, reloj y calendario</string>
     <string name="hub_widget_picker_setup_cancelled">La configuración no terminó, así que ese widget no se agregó</string>
     <string name="hub_widget_picker_title">Agregar widget</string>
     <string name="hub_header_add">Agregar</string>
@@ -86,7 +86,7 @@
     <string name="hub_at_capacity_message">Lleno con 20 widgets — quita uno para agregar otro.</string>
     <string name="facet_settings_apps_list_settings_title">Configuración de la lista de apps</string>
     <string name="appearance_general_title">Configuración general</string>
-    <string name="clock_adjust_stack_empty">Vacía · agrega un reloj o un widget</string>
+    <string name="widget_sheet_stack_empty">Vacía · agrega un reloj o un widget</string>
     <string name="clock_stack_full_free_hint">Quita el widget actual para agregar otro, o actualiza a Pro para tener hasta 5.</string>
     <string name="clock_stack_empty">No hay nada aquí, así que la zona del reloj en Inicio queda vacía hasta que agregues algo.</string>
     <string name="clock_stack_add">Agregar widget</string>

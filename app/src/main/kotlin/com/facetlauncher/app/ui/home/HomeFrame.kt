@@ -24,7 +24,7 @@ import kotlin.math.roundToInt
 import androidx.compose.ui.unit.dp
 import com.facetlauncher.app.data.model.landscape
 import com.facetlauncher.app.data.model.MediaPlayerState
-import com.facetlauncher.app.ui.home.ClockAdjustMode
+import com.facetlauncher.app.ui.home.HomeMenuMode
 import com.facetlauncher.app.ui.home.HomeClockWidgetState
 import com.facetlauncher.app.ui.home.HomeItemLook
 import com.facetlauncher.app.ui.home.HomeItemStyle
@@ -162,7 +162,7 @@ private fun clockGeometryInputs(
     val placement = state.clock.placement
     return ClockGeometryInputs(
         landscape = landscape,
-        adjusting = state.clock.adjustMode == ClockAdjustMode.ADJUST,
+        adjusting = state.clock.adjustMode == HomeMenuMode.ADJUST,
         alignment = placement.alignment,
         scale = placement.scale,
         liveScale = layout.liveScale,

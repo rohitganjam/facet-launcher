@@ -73,7 +73,7 @@ deleted when old backups stop being supported. New backups carry the clock in `n
 - The clock widget's box is aspect locked. Resize handles scale the clock; minimum is the smallest legible clock, maximum the screen width.
 - The calendar block sits under the clock, aligned with it, at its own fixed height and content width. It can be wider than a small clock.
   A long-press anywhere on the clock or calendar belongs to the widget.
-- `clockScale`, `ClockFit.maxScale`, the scale re-clamp and the corner scale handles go; `ClockAdjustMode`'s handles become the stack's
+- `clockScale`, `ClockFit.maxScale`, the scale re-clamp and the corner scale handles go; `HomeMenuMode`'s handles become the stack's
   standard dp resize.
 - Landscape keeps its pane layout; its scale becomes its own landscape box (`landscapeWidthDp`/`landscapeHeightDp` already exist) with the
   top/middle/bottom alignment.
@@ -85,7 +85,7 @@ deleted when old backups stop being supported. New backups carry the clock in `n
 | Gesture | Result |
 |---|---|
 | Long-press on the clock or its calendar | A small sheet with two rows: **Clock styles** (opens the full-screen clock options for that clock) and **Calendar settings** (the shared calendar sheet). |
-| Long-press on free Home space | The Home sheet (today's `ClockAdjustSheet`) with constant rows: **Adjust widget size & position** (the only way into resize mode), **Replace widget**, **Remove widget** (**Add widget** when there is none), **Widget stack**, then facet and launcher settings. |
+| Long-press on free Home space | The Home sheet (today's `HomeSheets`) with constant rows: **Adjust widget size & position** (the only way into resize mode), **Replace widget**, **Remove widget** (**Add widget** when there is none), **Widget stack**, then facet and launcher settings. |
 | Long-press on Weather / Agenda / Now playing | As today (Home's behaviour through `longPressFallback`). Their on-widget 3-dots stay. |
 | 3-dot in the weather forecast sheet opened from a clock | Opens that clock's accessory controls (icons on or off, location, and so on). |
 | Tap on the clock text / date | As today (opens the Clock or Calendar app). |

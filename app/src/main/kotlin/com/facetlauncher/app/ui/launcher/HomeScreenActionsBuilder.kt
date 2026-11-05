@@ -5,7 +5,7 @@ import android.content.Intent
 import android.provider.AlarmClock
 import androidx.compose.ui.geometry.Rect
 import com.facetlauncher.app.data.model.ProReason
-import com.facetlauncher.app.ui.home.ClockAdjustMode
+import com.facetlauncher.app.ui.home.HomeMenuMode
 import com.facetlauncher.app.ui.home.ClockWidgetHostCache
 import com.facetlauncher.app.ui.home.HomeClockActions
 import com.facetlauncher.app.ui.home.HomeClockWidgetActions
@@ -31,7 +31,7 @@ internal class HomeNavigation(
 
 /** The route's own state that Home's actions change. */
 internal class HomeRouteHooks(
-    val setAdjustMode: (ClockAdjustMode) -> Unit,
+    val setAdjustMode: (HomeMenuMode) -> Unit,
     val setDraggingHandle: (Boolean) -> Unit,
     val setClockWidgetBounds: (Rect?) -> Unit,
     val setAppListBounds: (Rect?) -> Unit,

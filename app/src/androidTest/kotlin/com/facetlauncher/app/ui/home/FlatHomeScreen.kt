@@ -50,7 +50,7 @@ internal fun FlatHomeScreen(
     clockAlignment: ClockAlignment = ClockAlignment.LEFT,
     clockScale: Float = 0.8f,
     clockZoneHeightDp: Float? = null,
-    clockAdjustMode: ClockAdjustMode = ClockAdjustMode.NONE,
+    homeMenuMode: HomeMenuMode = HomeMenuMode.NONE,
     clockPageCount: Int = 1,
     draggingHandle: Boolean = false,
     onClockZoneHeightCommit: (Float) -> Unit = {},
@@ -58,7 +58,7 @@ internal fun FlatHomeScreen(
     clockBoxWidthDp: Int? = null,
     onClockBoxSizeCommit: (Int, Int) -> Unit = { _, _ -> },
     onClockAlignmentChange: (ClockAlignment) -> Unit = {},
-    onAdjustModeChange: (ClockAdjustMode) -> Unit = {},
+    onAdjustModeChange: (HomeMenuMode) -> Unit = {},
     onDraggingHandleChange: (Boolean) -> Unit = {},
     onClockClick: () -> Unit = {},
     onNavigateToSettings: () -> Unit = {},
@@ -91,7 +91,7 @@ internal fun FlatHomeScreen(
             clock = HomeClockState(
                 placement = ClockPlacement(clockAlignment, clockZoneHeightDp, clockScale),
                 boxWidthDp = clockBoxWidthDp,
-                adjustMode = clockAdjustMode,
+                adjustMode = homeMenuMode,
                 draggingHandle = draggingHandle,
             ),
             widget = clockWidgetAppWidgetId?.let {

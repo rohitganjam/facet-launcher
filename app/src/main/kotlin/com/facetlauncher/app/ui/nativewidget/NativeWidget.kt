@@ -32,13 +32,11 @@ import com.facetlauncher.app.ui.theme.Surface
 /** The inset around a widget's content, matching the 4dp padding hosted widgets get. */
 private val CONTENT_INSET = 8.dp
 
-/** The 3-dot button's touch size, icon size and distance from the widget's corner. */
-private val MENU_BUTTON_SIZE = 28.dp
-private val MENU_ICON_SIZE = 18.dp
-private val MENU_BUTTON_INSET = 4.dp
-
 /** Opacity of the widget's backing, the drawer's default so it reads over a busy wallpaper like a hosted tile. */
 private const val SURFACE_ALPHA = 0.6f
+
+/** Whether a native widget has settings to open: Weather (its location) and Agenda (its calendars), not Now playing. */
+val NativeWidgetType.hasSettings: Boolean get() = this != NativeWidgetType.NOW_PLAYING
 
 @StringRes
 fun NativeWidgetType.labelRes(): Int = when (this) {
@@ -58,7 +56,7 @@ fun NativeWidget(
     state: NativeWidgetState,
     actions: NativeWidgetActions,
     modifier: Modifier = Modifier,
-    /** Which placed widget this is, so it reads its own settings and its taps say which one: an Agenda at Medium or Large has a 3-dot button for them (Weather's is in its sheet). */
+    /** Which placed widget this is, so it reads its own settings and its taps say which one. */
     ref: NativeWidgetRef? = null,
 ) {
     val tier = type.tierFor(size.width.value.toInt(), size.height.value.toInt())
@@ -71,15 +69,9 @@ fun NativeWidget(
             .background(Surface.copy(alpha = SURFACE_ALPHA))
             .testTag("native_widget_${type.name}"),
     ) {
-        val configurable = ref != null && type == NativeWidgetType.AGENDA && type.isConfigurable(size.width.value.toInt(), size.height.value.toInt())
         Crossfade(targetState = tier, modifier = Modifier.fillMaxSize().padding(CONTENT_INSET), label = "nativeWidgetTier") { shown ->
             Box(modifier = Modifier.fillMaxSize().testTag("native_widget_tier_${shown.name}")) {
                 NativeWidgetContent(type, shown, size, shownState, actions, openWeather)
-            }
-        }
-        if (ref != null && configurable) {
-            IconButton(onClick = { actions.onConfigure(ref) }, modifier = Modifier.align(Alignment.TopEnd).padding(MENU_BUTTON_INSET).size(MENU_BUTTON_SIZE).testTag("native_widget_menu")) {
-                Icon(imageVector = Icons.Filled.MoreVert, contentDescription = stringResource(R.string.hub_widget_configure), tint = Muted, modifier = Modifier.size(MENU_ICON_SIZE))
             }
         }
     }

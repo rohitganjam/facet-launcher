@@ -20,7 +20,7 @@
     <string name="inherit_override_inherit_default">Herdar predefinição</string>
     <string name="inherit_override_edit_defaults">Editar predefinições</string>
     <string name="gesture_hint_all_your_apps">Todas as suas apps</string>
-    <string name="gesture_hint_clock_hold">Mantenha premido um espaço vazio no ecrã inicial para redimensionar ou mover o relógio</string>
+    <string name="gesture_hint_clock_hold">Mantenha premido um widget para o redimensionar ou mover</string>
     <string name="gesture_hint_got_it">Percebi</string>
     <string name="home_surface_preview_nothing_yet">Ainda não há nada para mostrar</string>
 
@@ -116,7 +116,7 @@
     <string name="clock_style_font_label">Tipo de letra</string>
     <string name="clock_style_primary_font_color">Cor primária do tipo de letra</string>
     <string name="clock_style_show_meridiem">Mostrar AM/PM</string>
-    <string name="clock_style_long_press_hint">Mantenha premido um espaço vazio no ecrã inicial para ajustar o tamanho e a posição do relógio.</string>
+    <string name="clock_style_long_press_hint">Mantenha premido o relógio no ecrã inicial para ajustar o tamanho e a posição.</string>
     <string name="clock_style_reset_position">Repor posição do widget do relógio</string>
 
     <string name="backup_restore_confirm_message">Importar substitui cada faceta, o dock e os favoritos predefinidos pelo conteúdo do ficheiro da cópia de segurança. Esta ação não pode ser anulada.</string>

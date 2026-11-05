@@ -209,7 +209,7 @@
     <string name="gesture_hint_widgets">Widgets</string>
     <string name="gesture_hint_all_your_apps">Todos os seus apps</string>
     <string name="gesture_hint_arrow_up">↑</string>
-    <string name="gesture_hint_clock_hold">Mantenha pressionado um espaço vazio na tela inicial para redimensionar ou mover o relógio</string>
+    <string name="gesture_hint_clock_hold">Mantenha pressionado um widget para redimensioná-lo ou movê-lo</string>
     <string name="gesture_hint_got_it">Entendi</string>
 
     <!-- FacetScopeBadge -->
@@ -832,13 +832,17 @@
     <string name="clock_style_date_style">Estilo de data</string>
     <string name="clock_style_position_section">POSIÇÃO</string>
     <string name="clock_style_tap_to_select">ESTILOS DE RELÓGIO — TOQUE PARA SELECIONAR</string>
-    <string name="clock_style_long_press_hint">Toque e segure um espaço vazio na tela inicial para ajustar o tamanho e a posição do relógio.</string>
+    <string name="clock_style_long_press_hint">Toque e segure o relógio na tela inicial para ajustar o tamanho e a posição dele.</string>
     <string name="clock_style_applied">Aplicado</string>
     <string name="clock_style_reset_position">Redefinir posição do widget do relógio</string>
 
-    <!-- ClockAdjustSheet -->
-    <string name="clock_adjust_adjust_size_position">Ajustar tamanho e posição do widget</string>
-    <string name="clock_adjust_size_position_subtitle">Redimensione ou reposicione o widget</string>
+    <!-- HomeSheets -->
+    <string name="widget_sheet_adjust_label">Ajustar tamanho e posição do widget</string>
+    <string name="widget_sheet_adjust_subtitle">Redimensione ou reposicione o widget</string>
+    <string name="widget_sheet_settings">Definições de %1$s</string>
+    <string name="widget_sheet_weather_settings_subtitle">De onde é a previsão</string>
+    <string name="widget_sheet_agenda_settings_subtitle">Que calendários e eventos aparecem</string>
+    <string name="hub_grid_configure_widget">Configurar widget</string>
     <string name="clock_adjust_alignment_heading">Alinhamento</string>
     <string name="clock_adjust_align_left">Alinhar à esquerda</string>
     <string name="clock_adjust_align_center">Centralizar</string>
@@ -846,7 +850,7 @@
     <string name="clock_adjust_align_top">Alinhar ao topo</string>
     <string name="clock_adjust_align_middle">Alinhar ao meio</string>
     <string name="clock_adjust_align_bottom">Alinhar embaixo</string>
-    <string name="clock_adjust_facet_settings_subtitle">Lista de apps, dock, relógio e calendário específicos da faceta</string>
+    <string name="home_sheet_facet_settings_subtitle">Lista de apps, dock, relógio e calendário específicos da faceta</string>
 
     <!-- HubWidgetPickerScreen -->
     <string name="hub_widget_picker_full">Cheio — remova um widget primeiro</string>
@@ -950,21 +954,21 @@
     <string name="facet_settings_appearance_home_icon_only">Início: apenas ícone</string>
     <string name="facet_settings_appearance_home_icon_and_text">Início: ícone e texto</string>
     <string name="facet_settings_appearance_home_text_only">Início: apenas texto</string>
-    <string name="clock_adjust_replace_widget">Substituir widget personalizado</string>
-    <string name="clock_adjust_replace_widget_subtitle">Escolher outro widget para esta página</string>
-    <string name="clock_adjust_remove_widget">Remover widget</string>
-    <string name="clock_adjust_remove_widget_subtitle">Tirar esta página da pilha</string>
-    <string name="clock_adjust_add_widget">Adicionar widget</string>
-    <string name="clock_adjust_add_widget_subtitle">Escolha um widget para o topo do início</string>
+    <string name="widget_sheet_replace">Substituir widget personalizado</string>
+    <string name="widget_sheet_replace_subtitle">Escolher outro widget para esta página</string>
+    <string name="widget_sheet_remove">Remover widget</string>
+    <string name="widget_sheet_remove_subtitle">Tirar esta página da pilha</string>
+    <string name="home_sheet_add_widget">Adicionar widget</string>
+    <string name="home_sheet_add_widget_subtitle">Escolha um widget para o topo do início</string>
     <string name="clock_style_sheet_styles">Estilos do relógio</string>
     <string name="clock_style_sheet_styles_subtitle">Modelo, fonte, cores, hora e data</string>
     <string name="clock_style_sheet_calendar">Definições do calendário</string>
     <string name="clock_style_sheet_calendar_subtitle">Que calendários aparecem sob o relógio</string>
-    <string name="clock_adjust_widget_stack">Pilha de widgets</string>
-    <string name="clock_adjust_stack_empty">Vazia · adicione um relógio ou um widget</string>
-    <string name="clock_adjust_stack_clock">Relógio</string>
-    <string name="clock_adjust_stack_one_widget">1 widget</string>
-    <string name="clock_adjust_stack_pages">%1$d páginas</string>
+    <string name="widget_sheet_stack">Pilha de widgets</string>
+    <string name="widget_sheet_stack_empty">Vazia · adicione um relógio ou um widget</string>
+    <string name="widget_sheet_stack_clock">Relógio</string>
+    <string name="widget_sheet_stack_one_widget">1 widget</string>
+    <string name="widget_sheet_stack_pages">%1$d páginas</string>
     <!-- ClockStackScreen (the widget stack: reorder, remove, configure, add) -->
     <string name="clock_stack_title">Pilha de widgets</string>
     <string name="clock_stack_counter">%1$d de %2$d</string>

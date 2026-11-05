@@ -83,7 +83,7 @@ class HomeScreenTest {
         onClockBoxSizeCommit: (Int, Int) -> Unit = { _, _ -> },
         onClockAlignmentChange: (ClockAlignment) -> Unit = {},
     ) {
-        var adjustMode by remember { mutableStateOf(ClockAdjustMode.NONE) }
+        var adjustMode by remember { mutableStateOf(HomeMenuMode.NONE) }
         var dragging by remember { mutableStateOf(false) }
         FacetLauncherTheme {
             FlatHomeScreen(
@@ -99,7 +99,7 @@ class HomeScreenTest {
                 clockBoxWidthDp = clockBoxWidthDp,
                 onClockBoxSizeCommit = onClockBoxSizeCommit,
                 onClockAlignmentChange = onClockAlignmentChange,
-                clockAdjustMode = adjustMode,
+                homeMenuMode = adjustMode,
                 onAdjustModeChange = { adjustMode = it },
                 draggingHandle = dragging,
                 onDraggingHandleChange = { dragging = it },
@@ -115,11 +115,16 @@ class HomeScreenTest {
         composeRule.onNodeWithTag("home_screen_root").performTouchInput { longClick(besideClock) }
     }
 
-    /** Long-presses empty space, then picks "Adjust widget size & position" — reveals the move handle AND the resize handles. */
+    /** Long-presses the clock (the widget's sheet opens). */
+    private fun longPressClock() {
+        composeRule.onNodeWithTag("home_clock_block").performTouchInput { longClick() }
+    }
+
+    /** Long-presses the clock, then picks "Adjust widget size & position" — reveals the move handle AND the resize handles. */
     private fun enterAdjustMode() {
-        longPressEmptySpace()
+        longPressClock()
         composeRule.waitForIdle()
-        composeRule.onNodeWithTag("clock_adjust_open").performClick()
+        composeRule.onNodeWithTag("widget_sheet_adjust").performClick()
         composeRule.waitForIdle()
     }
 
@@ -758,14 +763,14 @@ class HomeScreenTest {
     fun adjustMenuSheetIsHiddenUntilTheClockIsLongPressed() {
         // Given the default layout
         composeRule.setContent { TestHomeScreen(appListItems = apps(3)) }
-        composeRule.onNodeWithTag("clock_adjust_sheet").assertDoesNotExist()
+        composeRule.onNodeWithTag("home_menu_sheet").assertDoesNotExist()
 
         // When the clock is long-pressed
         longPressEmptySpace()
         composeRule.waitForIdle()
 
         // Then the adjustment menu sheet appears
-        composeRule.onNodeWithTag("clock_adjust_sheet").assertIsDisplayed()
+        composeRule.onNodeWithTag("home_menu_sheet").assertIsDisplayed()
     }
 
     @Test
@@ -774,21 +779,21 @@ class HomeScreenTest {
         composeRule.setContent { TestHomeScreen(appListItems = apps(3)) }
         longPressEmptySpace()
         composeRule.waitForIdle()
-        composeRule.onNodeWithTag("clock_adjust_sheet").assertIsDisplayed()
+        composeRule.onNodeWithTag("home_menu_sheet").assertIsDisplayed()
 
         // When dismissing it with system back
         Espresso.pressBack()
         composeRule.waitForIdle()
 
         // Then it's hidden again
-        composeRule.onNodeWithTag("clock_adjust_sheet").assertDoesNotExist()
+        composeRule.onNodeWithTag("home_menu_sheet").assertDoesNotExist()
     }
 
     @Test
     fun longPressingEmptyHomeSpaceOpensTheSameAdjustMenuSheet() {
         // Given the default (left-aligned) layout, which leaves real empty space to the clock's right
         composeRule.setContent { TestHomeScreen(appListItems = apps(3)) }
-        composeRule.onNodeWithTag("clock_adjust_sheet").assertDoesNotExist()
+        composeRule.onNodeWithTag("home_menu_sheet").assertDoesNotExist()
         val rootWidth = composeRule.onRoot().fetchSemanticsNode().boundsInRoot.right
         val clockBounds = composeRule.onNodeWithTag("home_clock_block").fetchSemanticsNode().boundsInRoot
         val besideClock = Offset((clockBounds.right + rootWidth) / 2f, clockBounds.center.y)
@@ -798,7 +803,7 @@ class HomeScreenTest {
         composeRule.waitForIdle()
 
         // Then the same clock adjust sheet opens
-        composeRule.onNodeWithTag("clock_adjust_sheet").assertIsDisplayed()
+        composeRule.onNodeWithTag("home_menu_sheet").assertIsDisplayed()
     }
 
     @Test
@@ -814,7 +819,7 @@ class HomeScreenTest {
         composeRule.waitForIdle()
 
         // Then the same adjust menu sheet opens, rather than nothing (or an app's context menu)
-        composeRule.onNodeWithTag("clock_adjust_sheet").assertIsDisplayed()
+        composeRule.onNodeWithTag("home_menu_sheet").assertIsDisplayed()
     }
 
     /**
@@ -834,12 +839,12 @@ class HomeScreenTest {
         // Given Home at rest, then the adjust menu
         composeRule.setContent { TestHomeScreen(appListItems = apps(3)) }
         composeRule.onNodeWithTag("clock_adjust_toolbar").assertDoesNotExist()
-        longPressEmptySpace()
+        longPressClock()
         composeRule.waitForIdle()
         composeRule.onNodeWithTag("clock_adjust_toolbar").assertDoesNotExist()
 
         // When entering adjust mode, the toolbar shows
-        composeRule.onNodeWithTag("clock_adjust_open").performClick()
+        composeRule.onNodeWithTag("widget_sheet_adjust").performClick()
         waitForToolbar()
         composeRule.onNodeWithTag("clock_adjust_toolbar").assertIsDisplayed()
 
@@ -953,7 +958,7 @@ class HomeScreenTest {
         // to recompose.
         composeRule.onNodeWithTag("home_screen_root").performTouchInput { longClick(besideClock) }
         composeRule.waitForIdle()
-        composeRule.onNodeWithTag("clock_adjust_sheet").assertIsDisplayed()
+        composeRule.onNodeWithTag("home_menu_sheet").assertIsDisplayed()
     }
 
     @Test
@@ -961,13 +966,13 @@ class HomeScreenTest {
         // Given the sheet opened via a long-press on the clock, with a hoisted settings callback
         var navigated = false
         composeRule.setContent {
-            var adjustMode by remember { mutableStateOf(ClockAdjustMode.NONE) }
+            var adjustMode by remember { mutableStateOf(HomeMenuMode.NONE) }
             FacetLauncherTheme {
                 FlatHomeScreen(
                     appListItems = apps(3).map { PlacedItem.SingleApp(it) },
                     dockApps = emptyList(),
                     onAppClick = {},
-                    clockAdjustMode = adjustMode,
+                    homeMenuMode = adjustMode,
                     onAdjustModeChange = { adjustMode = it },
                     onNavigateToSettings = { navigated = true },
                 )
@@ -975,15 +980,15 @@ class HomeScreenTest {
         }
         longPressEmptySpace()
         composeRule.waitForIdle()
-        composeRule.onNodeWithTag("clock_adjust_sheet").assertIsDisplayed()
+        composeRule.onNodeWithTag("home_menu_sheet").assertIsDisplayed()
 
         // When "Launcher settings" is tapped
-        composeRule.onNodeWithTag("clock_adjust_launcher_settings").performClick()
+        composeRule.onNodeWithTag("home_sheet_launcher_settings").performClick()
         composeRule.waitForIdle()
 
         // Then the callback fires and the sheet closes
         assertTrue(navigated)
-        composeRule.onNodeWithTag("clock_adjust_sheet").assertDoesNotExist()
+        composeRule.onNodeWithTag("home_menu_sheet").assertDoesNotExist()
     }
 
     @Test
@@ -991,13 +996,13 @@ class HomeScreenTest {
         // Given the sheet opened via a long-press on the clock, with a hoisted facet-settings callback
         var navigated = false
         composeRule.setContent {
-            var adjustMode by remember { mutableStateOf(ClockAdjustMode.NONE) }
+            var adjustMode by remember { mutableStateOf(HomeMenuMode.NONE) }
             FacetLauncherTheme {
                 FlatHomeScreen(
                     appListItems = apps(3).map { PlacedItem.SingleApp(it) },
                     dockApps = emptyList(),
                     onAppClick = {},
-                    clockAdjustMode = adjustMode,
+                    homeMenuMode = adjustMode,
                     onAdjustModeChange = { adjustMode = it },
                     onNavigateToFacetSettings = { navigated = true },
                 )
@@ -1005,15 +1010,15 @@ class HomeScreenTest {
         }
         longPressEmptySpace()
         composeRule.waitForIdle()
-        composeRule.onNodeWithTag("clock_adjust_sheet").assertIsDisplayed()
+        composeRule.onNodeWithTag("home_menu_sheet").assertIsDisplayed()
 
         // When "Facet settings" is tapped
-        composeRule.onNodeWithTag("clock_adjust_facet_settings").performClick()
+        composeRule.onNodeWithTag("home_sheet_facet_settings").performClick()
         composeRule.waitForIdle()
 
         // Then the callback fires and the sheet closes
         assertTrue(navigated)
-        composeRule.onNodeWithTag("clock_adjust_sheet").assertDoesNotExist()
+        composeRule.onNodeWithTag("home_menu_sheet").assertDoesNotExist()
     }
 
     @Test

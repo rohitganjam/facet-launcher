@@ -50,7 +50,7 @@ flowchart TB
   slate — fixed colours, independent of the accent); `SettingsSectionHeader` is the sentence-case
   title above a card. Buttons are `PrimaryButton`, `TonalButton`, `SurfaceButton` and
   `TextActionButton` (M3 `TextButton`), all pills. The same kit lays out `SettingsScreen`,
-  `FacetSettingsScreen`, `FoldersSettingsScreen`, `BackupRestoreScreen`, `ClockAdjustSheet` and the
+  `FacetSettingsScreen`, `FoldersSettingsScreen`, `BackupRestoreScreen`, `HomeSheets` and the
   carousel's Launcher settings row.
 - **`FacetSettingsScreen` is a plain nav list** — a Rename row, an "Appearance" card (the
   Appearance row), then an "Apps and folders" card with Apps list / Dock rows, mirroring `SettingsScreen`'s own

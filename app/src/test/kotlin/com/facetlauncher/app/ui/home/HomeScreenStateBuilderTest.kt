@@ -308,7 +308,7 @@ class HomeScreenStateBuilderTest {
     fun `the live-only parts default to a quiet Home`() {
         val state = build(null, landscape = false)
 
-        assertEquals(ClockAdjustMode.NONE, state.clock.adjustMode)
+        assertEquals(HomeMenuMode.NONE, state.clock.adjustMode)
         assertNull(state.clock.placementFacetId)
         assertNull(state.media.player)
         assertEquals(false, state.media.showSkipButtons)

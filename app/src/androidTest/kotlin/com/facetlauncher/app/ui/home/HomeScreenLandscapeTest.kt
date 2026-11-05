@@ -16,6 +16,7 @@ import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.longClick
+import androidx.test.espresso.Espresso
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
@@ -65,11 +66,14 @@ class HomeScreenLandscapeTest {
         val onSizeCommit: (Int, Int) -> Unit = { _, _ -> },
     )
 
-    /** Long-presses empty space (the top strip) to open the clock menu, then picks "Adjust". */
+    /** Long-presses the clock to open the widget sheet, then picks "Adjust". */
     private fun enterAdjustModeFromEmptySpace() {
-        composeRule.onNodeWithTag("home_screen_root").performTouchInput { longClick(Offset(width * 0.75f, 4f)) }
+        // A hosted widget swallows the test's touches, so those tests start with the widget sheet open
+        if (composeRule.onAllNodesWithTag("widget_sheet").fetchSemanticsNodes().isEmpty()) {
+            composeRule.onNodeWithTag("home_clock_block").performTouchInput { longClick() }
+        }
         composeRule.waitForIdle()
-        composeRule.onNodeWithTag("clock_adjust_open").performClick()
+        composeRule.onNodeWithTag("widget_sheet_adjust").performClick()
         composeRule.waitForIdle()
     }
 
@@ -96,8 +100,9 @@ class HomeScreenLandscapeTest {
         landscapeSpace: HomeLandscapeSpace? = null,
         allowLandscape: Boolean = true,
         clockPageCount: Int = 1,
+        initialMode: HomeMenuMode = HomeMenuMode.NONE,
     ) {
-        var adjustMode by remember { mutableStateOf(ClockAdjustMode.NONE) }
+        var adjustMode by remember { mutableStateOf(initialMode) }
         var dragging by remember { mutableStateOf(false) }
         CompositionLocalProvider(LocalAllowLandscape provides allowLandscape) {
             FacetLauncherTheme {
@@ -125,7 +130,7 @@ class HomeScreenLandscapeTest {
                     onClockAlignmentChange = onClockAlignmentChange,
                     mediaPlayer = mediaPlayer,
                     appListVerticalAlignment = appListVerticalAlignment,
-                    clockAdjustMode = adjustMode,
+                    homeMenuMode = adjustMode,
                     clockPageCount = clockPageCount,
                     onAdjustModeChange = { adjustMode = it },
                     draggingHandle = dragging,
@@ -135,11 +140,14 @@ class HomeScreenLandscapeTest {
         }
     }
 
-    /** Long-presses empty space (the clock's own long-press opens the clock sheet), then picks "Adjust widget size & position". */
+    /** Long-presses the clock (its widget sheet opens), then picks "Adjust widget size & position". */
     private fun enterAdjustMode() {
-        composeRule.onNodeWithTag("home_screen_root").performTouchInput { longClick(Offset(width * 0.75f, 4f)) }
+        // A hosted widget swallows the test's touches, so those tests start with the widget sheet open
+        if (composeRule.onAllNodesWithTag("widget_sheet").fetchSemanticsNodes().isEmpty()) {
+            composeRule.onNodeWithTag("home_clock_block").performTouchInput { longClick() }
+        }
         composeRule.waitForIdle()
-        composeRule.onNodeWithTag("clock_adjust_open").performClick()
+        composeRule.onNodeWithTag("widget_sheet_adjust").performClick()
         composeRule.waitForIdle()
     }
 
@@ -488,14 +496,20 @@ class HomeScreenLandscapeTest {
     }
 
     @Test
-    fun theLongPressMenuOffersAdjustInLandscape() {
+    fun theClockLongPressSheetOffersAdjustInLandscapeAndFreeSpaceDoesNot() {
         composeRule.setContent { LandscapeHome() }
+
+        composeRule.onNodeWithTag("home_clock_block").performTouchInput { longClick() }
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("widget_sheet").assertExists()
+        composeRule.onNodeWithTag("widget_sheet_adjust").assertExists()
+        Espresso.pressBack()
+        composeRule.waitForIdle()
 
         composeRule.onNodeWithTag("home_screen_root").performTouchInput { longClick(Offset(width * 0.75f, 4f)) }
         composeRule.waitForIdle()
-
-        composeRule.onNodeWithTag("clock_adjust_sheet").assertExists()
-        composeRule.onNodeWithTag("clock_adjust_open").assertExists()
+        composeRule.onNodeWithTag("home_menu_sheet").assertExists()
+        composeRule.onNodeWithTag("widget_sheet_adjust").assertDoesNotExist()
     }
 
     // --- A hosted (custom) clock widget in landscape ---
@@ -504,18 +518,15 @@ class HomeScreenLandscapeTest {
 
     @Test
     fun aCustomClockWidgetStillOffersAdjustInLandscape() {
-        composeRule.setContent { LandscapeHome(widget = TestClockWidget(widthDp = 180, heightDp = 90)) }
+        composeRule.setContent { LandscapeHome(initialMode = HomeMenuMode.WIDGET_MENU, widget = TestClockWidget(widthDp = 180, heightDp = 90)) }
         composeRule.onNodeWithTag("clock_widget_host_$WIDGET_ID").assertExists()
 
-        composeRule.onNodeWithTag("home_screen_root").performTouchInput { longClick(Offset(width * 0.75f, 4f)) }
-        composeRule.waitForIdle()
-
-        composeRule.onNodeWithTag("clock_adjust_open").assertExists()
+        composeRule.onNodeWithTag("widget_sheet_adjust").assertExists()
     }
 
     @Test
     fun adjustModeForACustomWidgetShowsTheDividerThePillAndCornerHandles() {
-        composeRule.setContent { LandscapeHome(widget = TestClockWidget(widthDp = 180, heightDp = 90)) }
+        composeRule.setContent { LandscapeHome(initialMode = HomeMenuMode.WIDGET_MENU, widget = TestClockWidget(widthDp = 180, heightDp = 90)) }
 
         enterAdjustModeFromEmptySpace()
 
@@ -530,7 +541,7 @@ class HomeScreenLandscapeTest {
     fun draggingACustomWidgetCornerHandleSavesTheNewSize() {
         var committed: Pair<Int, Int>? = null
         composeRule.setContent {
-            LandscapeHome(widget = TestClockWidget(widthDp = 180, heightDp = 90, onSizeCommit = { w, h -> committed = w to h }))
+            LandscapeHome(initialMode = HomeMenuMode.WIDGET_MENU, widget = TestClockWidget(widthDp = 180, heightDp = 90, onSizeCommit = { w, h -> committed = w to h }))
         }
         enterAdjustModeFromEmptySpace()
 
@@ -561,7 +572,7 @@ class HomeScreenLandscapeTest {
     fun pullingTheDividerLeftShrinksACustomWidgetToOneHubCellAndSavesIt() {
         var committed: Pair<Int, Int>? = null
         composeRule.setContent {
-            LandscapeHome(
+            LandscapeHome(initialMode = HomeMenuMode.WIDGET_MENU, 
                 widget = TestClockWidget(widthDp = 200, heightDp = 90, minWidthDp = 120, minHeightDp = 120, onSizeCommit = { w, h -> committed = w to h }),
             )
         }
