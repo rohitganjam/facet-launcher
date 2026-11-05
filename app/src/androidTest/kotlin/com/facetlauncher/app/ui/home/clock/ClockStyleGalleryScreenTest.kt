@@ -13,7 +13,12 @@ import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onRoot
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.width
+import org.junit.Assert.assertTrue
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToNode
@@ -90,10 +95,11 @@ class ClockStyleGalleryScreenTest {
     }
 
     @Test
-    fun headerStaysVisibleAfterScrollingThroughTheTemplateList() {
-        // Given the gallery, scrolled all the way to the last template card
+    fun headerStaysVisibleAfterScrollingThePageAndTheTemplateRow() {
+        // Given the gallery, scrolled all the way down the page and along to the last template card
         setContent()
-        composeRule.onNodeWithTag("clock_style_gallery_list")
+        composeRule.onNodeWithTag("clock_style_gallery_list").performScrollToNode(hasTestTag("clock_accessories_row"))
+        composeRule.onNodeWithTag("clock_template_row")
             .performScrollToNode(hasTestTag("clock_template_card_${ClockTemplateId.entries.last().name}"))
 
         // Then the pinned header (title + back button) is still on screen, not scrolled away
@@ -102,16 +108,33 @@ class ClockStyleGalleryScreenTest {
     }
 
     @Test
+    fun templatesSitAtTheTopOfThePageInARowNoCardWiderThanThreeQuartersOfTheScreen() {
+        // Given the gallery
+        setContent()
+        val screenWidth = composeRule.onRoot().getUnclippedBoundsInRoot().width
+
+        // Then the template row comes before the clock controls, and every card it holds fits within 75% of the screen
+        val rowBottom = composeRule.onNodeWithTag("clock_template_row").getUnclippedBoundsInRoot().bottom
+        val controlsTop = composeRule.onNodeWithTag("clock_font_row").getUnclippedBoundsInRoot().top
+        assertTrue("templates above the controls: $rowBottom vs $controlsTop", rowBottom <= controlsTop)
+        ClockTemplateId.entries.forEach { id ->
+            composeRule.onNodeWithTag("clock_template_row").performScrollToNode(hasTestTag("clock_template_card_${id.name}"))
+            val width = composeRule.onNodeWithTag("clock_template_card_${id.name}").getUnclippedBoundsInRoot().width
+            assertTrue("${id.name} is ${width} wide on a $screenWidth screen", width <= screenWidth * 0.75f + 1.dp)
+        }
+    }
+
+    @Test
     fun tappingATemplateCardPersistsItAsTheChosenTemplate() {
         // Given the gallery, Light stack applied by default — scrolled into view since the sections
         // above it can push the template list lower than the initially-composed viewport on some screen sizes.
         val (settingsRepository, facetRepository) = setContent()
-        composeRule.onNodeWithTag("clock_style_gallery_list")
+        composeRule.onNodeWithTag("clock_template_row")
             .performScrollToNode(hasTestTag("clock_template_card_${ClockTemplateId.LIGHT_STACK.name}"))
         composeRule.onNodeWithTag("clock_template_card_${ClockTemplateId.LIGHT_STACK.name}").assertExists()
 
         // When tapping a different template's card
-        composeRule.onNodeWithTag("clock_style_gallery_list")
+        composeRule.onNodeWithTag("clock_template_row")
             .performScrollToNode(hasTestTag("clock_template_card_${ClockTemplateId.VERTICAL_STACK_BOLD_HOUR.name}"))
         composeRule.onNodeWithTag("clock_template_card_${ClockTemplateId.VERTICAL_STACK_BOLD_HOUR.name}").performClick()
 
@@ -132,7 +155,7 @@ class ClockStyleGalleryScreenTest {
         composeRule.onNodeWithTag("clock_accent_color_row").assertExists()
 
         // When switching to Accent Field, which does have one
-        composeRule.onNodeWithTag("clock_style_gallery_list")
+        composeRule.onNodeWithTag("clock_template_row")
             .performScrollToNode(hasTestTag("clock_template_card_${ClockTemplateId.ACCENT_FIELD.name}"))
         composeRule.onNodeWithTag("clock_template_card_${ClockTemplateId.ACCENT_FIELD.name}").performClick()
         composeRule.waitUntil(timeoutMillis = 3_000) {
