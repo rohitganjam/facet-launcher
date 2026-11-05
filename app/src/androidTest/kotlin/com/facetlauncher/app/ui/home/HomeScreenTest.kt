@@ -103,9 +103,17 @@ class HomeScreenTest {
         }
     }
 
-    /** Long-presses the clock, then picks "Adjust size & position" — reveals the move handle AND the resize handles. */
+    /** Long-presses the free space beside the clock (a long-press on the clock itself opens the clock sheet). */
+    private fun longPressEmptySpace() {
+        val rootWidth = composeRule.onRoot().fetchSemanticsNode().boundsInRoot.right
+        val clockBounds = composeRule.onNodeWithTag("home_clock_block").fetchSemanticsNode().boundsInRoot
+        val besideClock = Offset((clockBounds.right + rootWidth) / 2f, clockBounds.center.y)
+        composeRule.onNodeWithTag("home_screen_root").performTouchInput { longClick(besideClock) }
+    }
+
+    /** Long-presses empty space, then picks "Adjust size & position" — reveals the move handle AND the resize handles. */
     private fun enterAdjustMode() {
-        composeRule.onNodeWithTag("home_clock_block").performTouchInput { longClick() }
+        longPressEmptySpace()
         composeRule.waitForIdle()
         composeRule.onNodeWithTag("clock_adjust_open").performClick()
         composeRule.waitForIdle()
@@ -749,7 +757,7 @@ class HomeScreenTest {
         composeRule.onNodeWithTag("clock_adjust_sheet").assertDoesNotExist()
 
         // When the clock is long-pressed
-        composeRule.onNodeWithTag("home_clock_block").performTouchInput { longClick() }
+        longPressEmptySpace()
         composeRule.waitForIdle()
 
         // Then the adjustment menu sheet appears
@@ -760,7 +768,7 @@ class HomeScreenTest {
     fun dismissingTheRevealedSheetHidesItAgain() {
         // Given the sheet revealed via a long-press on the clock
         composeRule.setContent { TestHomeScreen(appListItems = apps(3)) }
-        composeRule.onNodeWithTag("home_clock_block").performTouchInput { longClick() }
+        longPressEmptySpace()
         composeRule.waitForIdle()
         composeRule.onNodeWithTag("clock_adjust_sheet").assertIsDisplayed()
 
@@ -822,7 +830,7 @@ class HomeScreenTest {
         // Given Home at rest, then the adjust menu
         composeRule.setContent { TestHomeScreen(appListItems = apps(3)) }
         composeRule.onNodeWithTag("clock_adjust_toolbar").assertDoesNotExist()
-        composeRule.onNodeWithTag("home_clock_block").performTouchInput { longClick() }
+        longPressEmptySpace()
         composeRule.waitForIdle()
         composeRule.onNodeWithTag("clock_adjust_toolbar").assertDoesNotExist()
 
@@ -961,7 +969,7 @@ class HomeScreenTest {
                 )
             }
         }
-        composeRule.onNodeWithTag("home_clock_block").performTouchInput { longClick() }
+        longPressEmptySpace()
         composeRule.waitForIdle()
         composeRule.onNodeWithTag("clock_adjust_sheet").assertIsDisplayed()
 
@@ -991,7 +999,7 @@ class HomeScreenTest {
                 )
             }
         }
-        composeRule.onNodeWithTag("home_clock_block").performTouchInput { longClick() }
+        longPressEmptySpace()
         composeRule.waitForIdle()
         composeRule.onNodeWithTag("clock_adjust_sheet").assertIsDisplayed()
 

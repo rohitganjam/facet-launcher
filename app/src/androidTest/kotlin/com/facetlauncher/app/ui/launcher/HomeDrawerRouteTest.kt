@@ -535,6 +535,14 @@ class HomeDrawerRouteTest {
         }
     }
 
+    /** Long-presses the free space beside the clock: a long-press on the clock itself opens the clock sheet, not the Home sheet. */
+    private fun longPressEmptyHomeSpace() {
+        val rootWidth = composeRule.onRoot().fetchSemanticsNode().boundsInRoot.right
+        val clockBounds = composeRule.onNodeWithTag("home_clock_block").fetchSemanticsNode().boundsInRoot
+        val besideClock = Offset((clockBounds.right + rootWidth) / 2f, clockBounds.center.y)
+        composeRule.onNodeWithTag("home_screen_root").performTouchInput { longClick(besideClock) }
+    }
+
     /** Gives the active facet a second clock page (a widget with no provider, drawn as the orphaned placeholder) and waits for the dots that show a stack. */
     private fun seedSecondClockPage(appWidgetId: Int = 4242) {
         runBlocking { seedClockStack(appWidgetId) }
@@ -572,7 +580,7 @@ class HomeDrawerRouteTest {
         // Given a two-page stack and the clock in adjust mode
         setContent()
         seedSecondClockPage()
-        composeRule.onNodeWithTag("home_clock_block").performTouchInput { longClick() }
+        longPressEmptyHomeSpace()
         composeRule.waitForIdle()
         composeRule.onNodeWithTag("clock_adjust_open").performClick()
         composeRule.waitForIdle()
@@ -743,7 +751,7 @@ class HomeDrawerRouteTest {
         // Given the clock adjust sheet is open
         setContent()
         composeRule.onNodeWithTag("home_app_list_scroll_region").assertExists()
-        composeRule.onNodeWithTag("home_clock_block").performTouchInput { longClick() }
+        longPressEmptyHomeSpace()
         composeRule.onNodeWithTag("clock_adjust_sheet").assertIsDisplayed()
 
         // When Home is pressed
