@@ -286,10 +286,6 @@ data class LauncherSettings(
     val activeFacetId: Long = NO_ACTIVE_FACET_ID,
     /** Global Calendar setting (`4l`) — whether all-day events render on the clock. */
     val showAllDayEvents: Boolean = true,
-    /** Whether each Home calendar event row shows its calendar-color bar. */
-    val showCalendarIndicator: Boolean = true,
-    /** How many calendar events Home shows (1..[CalendarDisplayOptions.MAX_ITEMS]). */
-    val calendarItemsToShow: Int = CalendarDisplayOptions.MAX_ITEMS,
     /** [CalendarContract.Calendars][android.provider.CalendarContract.Calendars] ids to show events from. `null` means "not yet initialized" — distinct from an empty set (user explicitly deselected everything) so a first-time grant can default to all calendars. */
     val selectedCalendarIds: Set<String>? = null,
     /**
@@ -364,23 +360,7 @@ data class LauncherSettings(
     val listContentMode: ListContentMode = ListContentMode.FAVORITES,
     /** Only meaningful when [listContentMode] isn't [ListContentMode.FAVORITES] — see [AppListLimits]. */
     val appsToShowCount: Int = AppListLimits.DEFAULT_APPS_TO_SHOW,
-    /** Global default clock look — see the clock template gallery, reached from Settings' Clock card. */
-    val clockTemplateId: ClockTemplateId = ClockTemplateId.LIGHT_STACK,
-    val clockFontOption: ClockFontOption = ClockFontOption.LAUNCHER_DEFAULT,
-    val clockColorOption: ClockColorOption = ClockColorOption.THEME,
-    /**
-     * The color a template's own accent glyph/shape renders in — see [ClockTemplateId.usesAccentColor]
-     * for which templates actually read this (every other template ignores it entirely). Same
-     * option set as [clockColorOption], independently pickable.
-     */
-    val clockAccentColorOption: ClockColorOption = ClockColorOption.ACCENT_PRIMARY,
-    /** Ignored (no AM/PM to show) whenever [use24HourTime] is on, regardless of this value. */
-    val clockShowMeridiem: Boolean = false,
-    /** "Full" ("Thursday, 27 August") vs "Condensed" ("Thu, 27 Aug") — applies to every template that renders its date line through `ClockTemplates.kt`'s shared `dateFormatter()`. */
-    val clockDateStyle: ClockDateStyle = ClockDateStyle.FULL,
-    /** The clock accessories: the launcher-wide defaults, overridden per facet through its clock block (`overrideClock`). */
-    val showNextAlarm: Boolean = true,
-    val showBatteryPercentage: Boolean = true,
+    /** Whether weather shows beside the clock by default: read by Weather widgets and the weather turn-off. A clock keeps its own switches. */
     val showWeather: Boolean = false,
     /** Launcher-wide only, never per facet: the units weather is shown in, and where it is for. */
     val temperatureUnit: TemperatureUnit = TemperatureUnit.AUTO,

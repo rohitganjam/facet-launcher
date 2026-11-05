@@ -134,10 +134,11 @@ data class BackupSettings(
     val appListShrinkToFit: String = AppListShrinkToFit.OFF.name,
     val listContentMode: String,
     val appsToShowCount: Int,
-    val clockTemplateId: String,
-    val clockFontOption: String,
-    val clockColorOption: String,
-    val clockShowMeridiem: Boolean,
+    /** Legacy (version 4 and older): the launcher-wide clock look, read once to give an older backup's clocks their settings. No longer written. */
+    val clockTemplateId: String = ClockTemplateId.LIGHT_STACK.name,
+    val clockFontOption: String = ClockFontOption.LAUNCHER_DEFAULT.name,
+    val clockColorOption: String = ClockColorOption.THEME.name,
+    val clockShowMeridiem: Boolean = false,
     val homeAppsFontWeight: String = FontWeightOption.REGULAR.name,
     /**
      * Added after the first release of this format; all defaulted, so an older backup restores to

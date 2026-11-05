@@ -139,8 +139,6 @@ class SettingsRepositoryTest {
         assertEquals(RecentlyInstalledPosition.SHOW_FIRST, settings.recentlyInstalledPosition)
         assertEquals(NO_ACTIVE_FACET_ID, settings.activeFacetId)
         assertEquals(true, settings.showAllDayEvents)
-        assertEquals(true, settings.showCalendarIndicator)
-        assertEquals(3, settings.calendarItemsToShow)
         assertEquals(null, settings.selectedCalendarIds)
         assertEquals(emptyMap<String, String>(), settings.calendarColors)
         assertEquals(false, settings.searchContactsEnabled)
@@ -149,10 +147,6 @@ class SettingsRepositoryTest {
         assertEquals(AppRowPresentation.ICON_AND_TEXT, settings.appRowPresentation)
         assertEquals(ListContentMode.FAVORITES, settings.listContentMode)
         assertEquals(6, settings.appsToShowCount)
-        assertEquals(ClockTemplateId.LIGHT_STACK, settings.clockTemplateId)
-        assertEquals(ClockFontOption.LAUNCHER_DEFAULT, settings.clockFontOption)
-        assertEquals(ClockColorOption.THEME, settings.clockColorOption)
-        assertFalse(settings.clockShowMeridiem)
         assertEquals(LauncherFontOption.SYSTEM, settings.launcherFontOption)
         assertEquals(FontScaleOption.DEFAULT, settings.fontScaleOption)
         assertEquals(ClockColorOption.THEME, settings.appLabelColorOption)
@@ -254,22 +248,6 @@ class SettingsRepositoryTest {
     }
 
     @Test
-    fun `setClockAccentColorOption and setClockDateStyle round-trip independently`() = runTest {
-        // Given a repository
-        val repository = createRepository()
-
-        // When each is changed
-        repository.setClockAccentColorOption(ClockColorOption.ACCENT_SECONDARY)
-        repository.setClockDateStyle(ClockDateStyle.CONDENSED)
-
-        // Then the new values come back, independently of each other and of the main color option
-        val settings = repository.settings.first()
-        assertEquals(ClockColorOption.ACCENT_SECONDARY, settings.clockAccentColorOption)
-        assertEquals(ClockDateStyle.CONDENSED, settings.clockDateStyle)
-        assertEquals(ClockColorOption.THEME, settings.clockColorOption)
-    }
-
-    @Test
     fun `setClockScale persists and round-trips`() = runTest {
         // Given a repository
         val repository = createRepository()
@@ -322,25 +300,6 @@ class SettingsRepositoryTest {
     }
 
     @Test
-    fun `clock style setters round-trip through the settings flow`() = runTest {
-        // Given a repository
-        val repository = createRepository()
-
-        // When each clock style setting is changed
-        repository.setClockTemplateId(ClockTemplateId.VERTICAL_STACK_BOLD_HOUR)
-        repository.setClockFontOption(ClockFontOption.POPPINS)
-        repository.setClockColorOption(ClockColorOption.THEME_INVERTED)
-        repository.setClockShowMeridiem(true)
-
-        // Then the new values come back
-        val settings = repository.settings.first()
-        assertEquals(ClockTemplateId.VERTICAL_STACK_BOLD_HOUR, settings.clockTemplateId)
-        assertEquals(ClockFontOption.POPPINS, settings.clockFontOption)
-        assertEquals(ClockColorOption.THEME_INVERTED, settings.clockColorOption)
-        assertEquals(true, settings.clockShowMeridiem)
-    }
-
-    @Test
     fun `each setter round-trips through the settings flow`() = runTest {
         // Given a repository
         val repository = createRepository()
@@ -369,8 +328,6 @@ class SettingsRepositoryTest {
         repository.setRecentlyInstalledPosition(RecentlyInstalledPosition.SHOW_LAST)
         repository.setActiveFacetId(7L)
         repository.setShowAllDayEvents(false)
-        repository.setShowCalendarIndicator(false)
-        repository.setCalendarItemsToShow(2)
         repository.setSelectedCalendarIds(setOf("cal-1", "cal-2"))
         repository.setCalendarColors(mapOf("cal-1" to "BLUE", "cal-2" to "TEAL"))
         repository.setSearchContactsEnabled(true)
@@ -409,8 +366,6 @@ class SettingsRepositoryTest {
         assertEquals(RecentlyInstalledPosition.SHOW_LAST, settings.recentlyInstalledPosition)
         assertEquals(7L, settings.activeFacetId)
         assertEquals(false, settings.showAllDayEvents)
-        assertEquals(false, settings.showCalendarIndicator)
-        assertEquals(2, settings.calendarItemsToShow)
         assertEquals(setOf("cal-1", "cal-2"), settings.selectedCalendarIds)
         assertEquals(mapOf("cal-1" to "BLUE", "cal-2" to "TEAL"), settings.calendarColors)
         assertEquals(true, settings.searchContactsEnabled)

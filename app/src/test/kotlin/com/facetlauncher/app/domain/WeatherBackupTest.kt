@@ -70,7 +70,7 @@ class WeatherBackupTest {
         `when`(settingsRepository.settings).thenReturn(
             flowOf(
                 LauncherSettings(
-                    showNextAlarm = false, showBatteryPercentage = true, showWeather = true,
+                    showWeather = true,
                     temperatureUnit = TemperatureUnit.FAHRENHEIT, windSpeedUnit = WindSpeedUnit.MPH,
                     rainUnit = RainUnit.INCH, pressureUnit = PressureUnit.INHG,
                     weatherLocationMode = WeatherLocationMode.CITY, weatherIconStyle = WeatherIconStyle.COLORED, weatherCity = pune, savedWeatherCities = listOf(pune, london),
@@ -89,8 +89,6 @@ class WeatherBackupTest {
 
         // Then the launcher carries them and the clock its own
         val settings = bundle.settings
-        assertFalse(settings.showNextAlarm)
-        assertTrue(settings.showBatteryPercentage)
         assertTrue(settings.showWeather)
         assertEquals(listOf("FAHRENHEIT", "MPH", "INCH", "INHG"), listOf(settings.temperatureUnit, settings.windSpeedUnit, settings.rainUnit, settings.pressureUnit))
         assertEquals("CITY", settings.weatherLocationMode)
@@ -136,8 +134,6 @@ class WeatherBackupTest {
 
         importUseCase(uri)
 
-        verify(settingsRepository).setShowNextAlarm(false)
-        verify(settingsRepository).setShowBatteryPercentage(false)
         verify(settingsRepository).setShowWeather(true)
         verify(settingsRepository).setTemperatureUnit(TemperatureUnit.FAHRENHEIT)
         verify(settingsRepository).setWindSpeedUnit(WindSpeedUnit.MPH)
@@ -156,8 +152,6 @@ class WeatherBackupTest {
 
         importUseCase(uri)
 
-        verify(settingsRepository).setShowNextAlarm(true)
-        verify(settingsRepository).setShowBatteryPercentage(true)
         verify(settingsRepository).setShowWeather(false)
         verify(settingsRepository).setTemperatureUnit(TemperatureUnit.AUTO)
         verify(settingsRepository).setWeatherLocationMode(WeatherLocationMode.CURRENT)

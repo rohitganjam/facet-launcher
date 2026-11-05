@@ -92,8 +92,6 @@ private fun LauncherSettings.toBackupSettings(activeFacetIndex: Int?): BackupSet
     drawerFolderDisplayMode = drawerFolderDisplayMode.name,
     activeFacetIndex = activeFacetIndex,
     showAllDayEvents = showAllDayEvents,
-    showCalendarIndicator = showCalendarIndicator,
-    calendarItemsToShow = calendarItemsToShow,
     searchContactsEnabled = searchContactsEnabled,
     themeMode = themeMode.name,
     systemBarIconStyle = systemBarIconStyle.name,
@@ -116,15 +114,9 @@ private fun LauncherSettings.toBackupSettings(activeFacetIndex: Int?): BackupSet
     appListGridDisplayMode = appListGridDisplayMode.name, appListShrinkToFit = appListShrinkToFit.name,
     listContentMode = listContentMode.name,
     appsToShowCount = appsToShowCount,
-    clockTemplateId = clockTemplateId.name,
-    clockFontOption = clockFontOption.name,
-    clockColorOption = clockColorOption.name,
-    clockShowMeridiem = clockShowMeridiem,
     homeAppsFontWeight = homeAppsFontWeight.name,
     recentlyInstalledPosition = recentlyInstalledPosition.name,
     searchSettingsEnabled = searchSettingsEnabled,
-    clockAccentColorOption = clockAccentColorOption.name,
-    clockDateStyle = clockDateStyle.name,
     clockAlignment = clockAlignment.name,
     clockZoneHeightDp = clockZoneHeightDp,
     clockScale = clockScale,
@@ -137,8 +129,6 @@ private fun LauncherSettings.toBackupSettings(activeFacetIndex: Int?): BackupSet
 
 /** The clock accessory switches and weather options; the chosen city goes out as four flat fields, the current location never. */
 private fun BackupSettings.withAccessoriesAndWeather(settings: LauncherSettings): BackupSettings = copy(
-    showNextAlarm = settings.showNextAlarm,
-    showBatteryPercentage = settings.showBatteryPercentage,
     showWeather = settings.showWeather,
     temperatureUnit = settings.temperatureUnit.name,
     windSpeedUnit = settings.windSpeedUnit.name,

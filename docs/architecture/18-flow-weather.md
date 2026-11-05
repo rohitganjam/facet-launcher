@@ -58,11 +58,9 @@ single `weather_meta` row (`docs/02`), replacing the hours in one transaction.
 
 ## 5. Settings and facet fields
 
-The launcher-wide options are DataStore keys (`docs/02 §5`): the accessory switches `show_next_alarm`,
-`show_battery_percentage`, `show_weather`, the four units, the location mode and the chosen city. The units, mode and city
-are never per facet. The three switches have a per-facet value on `Facet` (`clockShowAlarm`, `clockShowBattery`,
-`clockShowWeather`) that are read from the clock's own `ClockWidgetConfig` (`showAlarm/showBattery/showWeather`). Home already uses the alarm and battery
-switches: `HomeScreenStateBuilder` drops the alarm or the battery from the accessory row when its switch is off.
+The launcher-wide options are DataStore keys (`docs/02 §5`): `show_weather`, the four units, the location mode and the chosen city. The units, mode and city
+are never per facet. A clock's alarm, battery and weather switches and its icon style are its own, in its `ClockWidgetConfig`
+(`showAlarm`, `showBattery`, `showWeather`, `weatherIconStyle`). Home drops the alarm or the battery from the accessory row when its switch is off.
 Backup carries all of these except the current location and the cache (`docs/09 §4`).
 
 ## 6. Where it is for (`LocationRepository`, `RefreshWeatherUseCase`)

@@ -45,7 +45,7 @@ class ClockAccessoriesUiStateTest {
     fun `the switches and icon style are the clock's own`() {
         val state = ClockAccessoriesUiState(
             facet = facetWith(ClockWidgetConfig(showAlarm = false, showBattery = false, showWeather = true, weatherIconStyle = WeatherIconStyle.MONOCHROME)),
-            settings = LauncherSettings(showNextAlarm = true, showBatteryPercentage = true, weatherIconStyle = WeatherIconStyle.COLORED),
+            settings = LauncherSettings(weatherIconStyle = WeatherIconStyle.COLORED),
         )
 
         assertFalse(state.showAlarm)

@@ -10,30 +10,6 @@ class ClockWidgetConfigTest {
     private val oslo = WeatherCity("Oslo", 59.91, 10.75, "Europe/Oslo")
 
     @Test
-    fun `a clock's built-in defaults match the launcher's own defaults`() {
-        // Given the config a new clock starts from and the launcher's defaults for the same things
-        val config = ClockWidgetConfig()
-        val settings = LauncherSettings()
-
-        // Then they agree, so a new clock looks like a fresh install's clock
-        assertEquals(settings.clockTemplateId, config.templateId)
-        assertEquals(settings.clockFontOption, config.fontOption)
-        assertEquals(settings.clockColorOption, config.colorOption)
-        assertEquals(settings.clockAccentColorOption, config.accentColorOption)
-        assertEquals(settings.use24HourTime, config.use24HourTime)
-        assertEquals(settings.clockShowMeridiem, config.showMeridiem)
-        assertEquals(settings.clockDateStyle, config.dateStyle)
-        assertEquals(settings.showNextAlarm, config.showAlarm)
-        assertEquals(settings.showBatteryPercentage, config.showBattery)
-        assertEquals(settings.showWeather, config.showWeather)
-        assertEquals(settings.weatherIconStyle, config.weatherIconStyle)
-        assertEquals(settings.showCalendarIndicator, config.calendar.showIndicator)
-        assertEquals(settings.calendarItemsToShow, config.calendar.itemsToShow)
-        assertEquals(settings.showAllDayEvents, config.calendar.showAllDay)
-        assertEquals(settings.selectedCalendarIds, config.calendar.calendarIds)
-    }
-
-    @Test
     fun `a clock with every field changed round trips`() {
         // Given a clock set away from every default
         val config = NativeWidgetConfig(

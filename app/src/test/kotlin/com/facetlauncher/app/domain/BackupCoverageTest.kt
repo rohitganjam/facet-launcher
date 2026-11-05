@@ -58,7 +58,12 @@ class BackupCoverageTest {
         val weatherCityGroup = setOf("weatherCityName", "weatherCityLatitude", "weatherCityLongitude", "weatherCityTimezone")
         val expected = (fieldNames(LauncherSettings::class.java) - notBackedUp - "landscape" - "weatherCity")
             .map { renamed[it] ?: it }.toSet() + landscapeGroup + weatherCityGroup
-        val exported = fieldNames(BackupSettings::class.java) - "activeFacetIndex"
+        // The launcher-wide clock look and accessories of version 4 and older are still read, to give an older backup's clocks their settings, but not written
+        val legacyClockFields = setOf(
+            "clockTemplateId", "clockFontOption", "clockColorOption", "clockAccentColorOption", "clockShowMeridiem", "clockDateStyle",
+            "showNextAlarm", "showBatteryPercentage", "showCalendarIndicator", "calendarItemsToShow",
+        )
+        val exported = fieldNames(BackupSettings::class.java) - "activeFacetIndex" - legacyClockFields
 
         // Then the backup holds exactly those
         assertEquals(expected, exported)

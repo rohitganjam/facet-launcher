@@ -265,7 +265,7 @@ class ImportBackupUseCaseTest {
             BackupBundle(
                 exportedAtEpochMillis = 0L,
                 settings = minimalSettings().copy(
-                    clockAccentColorOption = "ACCENT_SECONDARY", clockDateStyle = "CONDENSED", clockAlignment = "RIGHT",
+                    clockAlignment = "RIGHT",
                     clockZoneHeightDp = 240f, clockScale = 1.3f, appListVerticalAlignment = "TOP",
                     recentlyInstalledPosition = "SHOW_LAST", searchSettingsEnabled = true,
                 ),
@@ -275,8 +275,6 @@ class ImportBackupUseCaseTest {
 
         useCase(uri)
 
-        verify(settingsRepository).setClockAccentColorOption(ClockColorOption.ACCENT_SECONDARY)
-        verify(settingsRepository).setClockDateStyle(com.facetlauncher.app.data.model.ClockDateStyle.CONDENSED)
         verify(settingsRepository).setClockAlignment(ClockAlignment.RIGHT)
         verify(settingsRepository).setClockZoneHeight(240f)
         verify(settingsRepository).setClockScale(1.3f)

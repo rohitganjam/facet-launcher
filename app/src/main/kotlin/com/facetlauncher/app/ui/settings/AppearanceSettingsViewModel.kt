@@ -105,22 +105,6 @@ data class AppearanceSettingsUiState(
 
     /** The calendars this facet's clock shows; `null` is every calendar, calendars added later included. */
     val selectedCalendarIds: Set<String>? get() = style.clock.calendar.calendarIds
-
-    /** [settings] with the clock style resolved for this scope (the facet's own when `overrideClock`, else global) and the placement the facet shows. */
-    val clockSettings: LauncherSettings get() = style.clock.let { clock ->
-        settings.copy(
-            clockTemplateId = clock.templateId,
-            clockFontOption = clock.fontOption,
-            clockColorOption = clock.colorOption,
-            clockAccentColorOption = clock.accentColorOption,
-            use24HourTime = clock.use24HourTime,
-            clockShowMeridiem = clock.showMeridiem,
-            clockDateStyle = clock.dateStyle,
-            clockAlignment = style.clockPlacement.portrait.alignment,
-            clockScale = style.clockPlacement.portrait.scale,
-            clockZoneHeightDp = style.clockPlacement.portrait.zoneHeightDp,
-        )
-    }
 }
 
 /**

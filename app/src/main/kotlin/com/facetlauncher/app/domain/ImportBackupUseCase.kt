@@ -207,8 +207,6 @@ class ImportBackupUseCase @Inject constructor(
             setSearchBarPosition(settings.searchBarPosition.toEnumOrDefault(SearchBarPosition.TOP))
             setDrawerFolderDisplayMode(settings.drawerFolderDisplayMode.toEnumOrDefault(DrawerFolderDisplayMode.DO_NOT_SHOW))
             setShowAllDayEvents(settings.showAllDayEvents)
-            setShowCalendarIndicator(settings.showCalendarIndicator)
-            setCalendarItemsToShow(settings.calendarItemsToShow)
             setSearchContactsEnabled(settings.searchContactsEnabled)
             setThemeMode(settings.themeMode.toEnumOrDefault(ThemeMode.SYSTEM))
             setSystemBarIconStyle(settings.systemBarIconStyle.toEnumOrDefault(SystemBarIconStyle.MATCH_THEME))
@@ -237,10 +235,6 @@ class ImportBackupUseCase @Inject constructor(
             setAppListShrinkToFit(settings.appListShrinkToFit.toEnumOrDefault(AppListShrinkToFit.OFF))
             setListContentMode(settings.listContentMode.toEnumOrDefault(ListContentMode.FAVORITES))
             setAppsToShowCount(settings.appsToShowCount)
-            setClockTemplateId(settings.clockTemplateId.toEnumOrDefault(ClockTemplateId.LIGHT_STACK))
-            setClockFontOption(settings.clockFontOption.toEnumOrDefault(ClockFontOption.LAUNCHER_DEFAULT))
-            setClockColorOption(settings.clockColorOption.toEnumOrDefault(ClockColorOption.THEME))
-            setClockShowMeridiem(settings.clockShowMeridiem)
             setHomeAppsFontWeight(settings.homeAppsFontWeight.toEnumOrDefault(FontWeightOption.REGULAR))
         }
     }
@@ -248,8 +242,6 @@ class ImportBackupUseCase @Inject constructor(
     /** The clock accessory switches and the weather options; the chosen city comes back only when all four of its fields are present. */
     private suspend fun applyAccessoriesAndWeather(settings: BackupSettings) {
         with(settingsRepository) {
-            setShowNextAlarm(settings.showNextAlarm)
-            setShowBatteryPercentage(settings.showBatteryPercentage)
             setShowWeather(settings.showWeather)
             setTemperatureUnit(settings.temperatureUnit.toEnumOrDefault(TemperatureUnit.AUTO))
             setWindSpeedUnit(settings.windSpeedUnit.toEnumOrDefault(WindSpeedUnit.AUTO))
@@ -265,8 +257,6 @@ class ImportBackupUseCase @Inject constructor(
     /** The clock's look and placement, and the whole landscape group, which a full restore replaces. */
     private suspend fun applyClockPlacement(settings: BackupSettings) {
         with(settingsRepository) {
-            setClockAccentColorOption(settings.clockAccentColorOption.toEnumOrDefault(ClockColorOption.ACCENT_PRIMARY))
-            setClockDateStyle(settings.clockDateStyle.toEnumOrDefault(ClockDateStyle.FULL))
             applyAccessoriesAndWeather(settings)
             setClockAlignment(settings.clockAlignment.toEnumOrDefault(ClockAlignment.LEFT))
             setClockScale(settings.clockScale)
