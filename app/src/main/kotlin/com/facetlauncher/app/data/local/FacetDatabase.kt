@@ -1,7 +1,10 @@
 package com.facetlauncher.app.data.local
 
+import androidx.room.AutoMigration
 import androidx.room.Database
+import androidx.room.DeleteColumn
 import androidx.room.RoomDatabase
+import androidx.room.migration.AutoMigrationSpec
 import androidx.room.TypeConverters
 
 @Database(
@@ -13,6 +16,7 @@ import androidx.room.TypeConverters
     ],
     version = FacetDatabase.VERSION,
     exportSchema = true,
+    autoMigrations = [AutoMigration(from = 42, to = 43, spec = DropFacetClockColumns::class)],
 )
 @TypeConverters(Converters::class)
 // One abstract accessor per DAO, so the count grows with every table.
@@ -30,6 +34,37 @@ abstract class FacetDatabase : RoomDatabase() {
     companion object {
         // A named constant, not a magic number scattered across DatabaseModule/Migrations/tests —
         // see Migrations.kt for what bumping this requires from here on.
-        const val VERSION = 42
+        const val VERSION = 43
     }
 }
+
+/**
+ * 42→43: a facet no longer keeps clock or calendar settings (a clock holds its own, on its page in `clock_stack_items`) and the hosted-clock
+ * columns that migration 34→35 already emptied go too. Room rebuilds the table, since SQLite on minSdk 30 cannot drop a column.
+ */
+@DeleteColumn.Entries(
+    DeleteColumn(tableName = "facets", columnName = "overrideClock"),
+    DeleteColumn(tableName = "facets", columnName = "clockTemplateId"),
+    DeleteColumn(tableName = "facets", columnName = "clockFontOption"),
+    DeleteColumn(tableName = "facets", columnName = "clockColorOption"),
+    DeleteColumn(tableName = "facets", columnName = "clockAccentColorOption"),
+    DeleteColumn(tableName = "facets", columnName = "use24HourTime"),
+    DeleteColumn(tableName = "facets", columnName = "clockShowMeridiem"),
+    DeleteColumn(tableName = "facets", columnName = "clockDateStyle"),
+    DeleteColumn(tableName = "facets", columnName = "clockShowAlarm"),
+    DeleteColumn(tableName = "facets", columnName = "clockShowBattery"),
+    DeleteColumn(tableName = "facets", columnName = "clockShowWeather"),
+    DeleteColumn(tableName = "facets", columnName = "clockWeatherIconStyle"),
+    DeleteColumn(tableName = "facets", columnName = "clockWeatherLocation"),
+    DeleteColumn(tableName = "facets", columnName = "overrideCalendar"),
+    DeleteColumn(tableName = "facets", columnName = "showAllDayEvents"),
+    DeleteColumn(tableName = "facets", columnName = "showCalendarIndicator"),
+    DeleteColumn(tableName = "facets", columnName = "calendarItemsToShow"),
+    DeleteColumn(tableName = "facets", columnName = "selectedCalendarIdsCsv"),
+    DeleteColumn(tableName = "facets", columnName = "clockWidgetAppWidgetId"),
+    DeleteColumn(tableName = "facets", columnName = "clockWidgetWidthDp"),
+    DeleteColumn(tableName = "facets", columnName = "clockWidgetHeightDp"),
+    DeleteColumn(tableName = "facets", columnName = "landscapeClockWidgetWidthDp"),
+    DeleteColumn(tableName = "facets", columnName = "landscapeClockWidgetHeightDp"),
+)
+class DropFacetClockColumns : AutoMigrationSpec

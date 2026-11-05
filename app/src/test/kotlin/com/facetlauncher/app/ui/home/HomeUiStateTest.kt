@@ -1,6 +1,8 @@
 package com.facetlauncher.app.ui.home
 
 import com.facetlauncher.app.data.clockItem
+import com.facetlauncher.app.data.clockItemWith
+import com.facetlauncher.app.data.model.ClockWidgetConfig
 import com.facetlauncher.app.data.widgetItem
 import com.facetlauncher.app.domain.ListAlignment
 import com.facetlauncher.app.domain.ClockPlacement
@@ -24,23 +26,23 @@ import org.junit.Test
 class HomeUiStateTest {
 
     @Test
-    fun `effective 24 hour time falls back to the global default when the active facet has no override`() {
+    fun `effective 24 hour time is the built-in one while the active clock has no settings of its own`() {
         val state = HomeUiState(
-            settings = LauncherSettings(use24HourTime = true, activeFacetId = 1L),
-            facets = listOf(Facet(id = 1L, name = "Facet 1", position = 0, overrideClock = false)),
-        )
-
-        assertEquals(true, state.effectiveUse24HourTime)
-    }
-
-    @Test
-    fun `effective 24 hour time uses the active facet's override when set`() {
-        val state = HomeUiState(
-            settings = LauncherSettings(use24HourTime = true, activeFacetId = 1L),
-            facets = listOf(Facet(id = 1L, name = "Facet 1", position = 0, overrideClock = true, use24HourTime = false)),
+            settings = LauncherSettings(activeFacetId = 1L),
+            facets = listOf(Facet(id = 1L, name = "Facet 1", position = 0)),
         )
 
         assertEquals(false, state.effectiveUse24HourTime)
+    }
+
+    @Test
+    fun `effective 24 hour time follows the active facet's clock`() {
+        val state = HomeUiState(
+            settings = LauncherSettings(activeFacetId = 1L),
+            facets = listOf(Facet(id = 1L, name = "Facet 1", position = 0, clockStack = listOf(clockItemWith(ClockWidgetConfig(use24HourTime = true))))),
+        )
+
+        assertEquals(true, state.effectiveUse24HourTime)
     }
 
     @Test

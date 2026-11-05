@@ -176,8 +176,7 @@ The accessory row under the date has three items, each with its own switch. They
 style `weatherIconStyle` and the weather place `weatherLocation`, `null` following Weather settings), stored on the clock's page in the clock stack
 (`NativeWidgetConfig.clock`, [20](20-flow-native-widgets.md)) and resolved by `resolveFacetStyle` (`ResolvedFacetStyle.clock`). There is no
 launcher-wide default and no override switch: a new facet's clock starts from the built-in defaults, and a facet that existed before
-this change had the values it showed copied onto its clock by `MaterializeClockConfigsUseCase` (until that has run for a clock,
-`legacyClockConfig` supplies the same values from the old launcher-wide settings and the facet's old override fields, which stay stored but unread).
+per-clock settings had the values it showed copied onto its clock in the release that introduced them (a clock with no stored settings shows the built-in defaults).
 Every edit goes through `UpdateClockConfigUseCase(facetId, change)`. Settings → Clock style → *Clock accessories* (a row after the clock options; the
 screen is `ClockAccessoriesScreen`, route `clockAccessories?facetId=`) edits them: card 1 alarm and battery, card 2 weather,
 card 3 Icons (while weather is on), then, while weather is on, a *Location* card with the same picker as a Weather widget (`WeatherLocationPicker`): same as Weather settings, current location, or a saved city, then a *Weather settings* row back to the launcher-wide screen. Units and location themselves are not here: they are *Weather settings*, a row in Settings → System

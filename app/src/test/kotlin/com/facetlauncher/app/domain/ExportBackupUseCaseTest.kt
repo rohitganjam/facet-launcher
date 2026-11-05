@@ -61,8 +61,6 @@ class ExportBackupUseCaseTest {
             id = 7,
             name = "Work",
             position = 0,
-            clockColorOption = ClockColorOption.ACCENT_PRIMARY,
-            selectedCalendarIds = setOf("3", "4"),
             appListLayout = AppListLayout.TWO_COLUMN,
             appListColumnAlignment = AppListColumnAlignment.MIRRORED,
             appListGridColumns = AppListGridColumns.SIX,
@@ -114,10 +112,8 @@ class ExportBackupUseCaseTest {
         verify(backupRepository).writeBackup(uri, bundle)
         assertEquals(1, bundle.facets.size)
         assertEquals("Work", bundle.facets[0].name)
-        assertEquals("ACCENT_PRIMARY", bundle.facets[0].clockColorOption)
         assertEquals(1, bundle.facets[0].favorites.size)
         assertEquals("com.example.a", bundle.facets[0].favorites[0].packageName)
-        assertEquals(listOf("3", "4"), bundle.facets[0].selectedCalendarIds)
         assertEquals("TWO_COLUMN", bundle.facets[0].appListLayout)
         assertEquals("MIRRORED", bundle.facets[0].appListColumnAlignment)
         assertEquals("SIX", bundle.facets[0].appListGridColumns)
@@ -188,7 +184,6 @@ class ExportBackupUseCaseTest {
     fun `exports the clock and list settings for the launcher and each facet`() = runTest {
         val facet = Facet(
             id = 7, name = "Work", position = 0,
-            clockAccentColorOption = ClockColorOption.ACCENT_SECONDARY, clockDateStyle = ClockDateStyle.CONDENSED,
             clockAlignment = ClockAlignment.RIGHT, clockZoneHeightDp = 210f, clockScale = 1.1f,
             appListVerticalAlignment = AppListVerticalAlignment.TOP,
             landscapeClockAlignment = ClockAlignment.CENTER, landscapeClockZoneHeightDp = 300f, landscapeClockScale = 0.9f,
@@ -197,7 +192,6 @@ class ExportBackupUseCaseTest {
         `when`(settingsRepository.settings).thenReturn(
             flowOf(
                 LauncherSettings(
-                    clockAccentColorOption = ClockColorOption.ACCENT_SECONDARY, clockDateStyle = ClockDateStyle.CONDENSED,
                     clockAlignment = ClockAlignment.RIGHT, clockZoneHeightDp = 240f, clockScale = 1.3f,
                     appListVerticalAlignment = AppListVerticalAlignment.TOP, recentlyInstalledPosition = RecentlyInstalledPosition.SHOW_LAST,
                     searchSettingsEnabled = true,
@@ -216,8 +210,6 @@ class ExportBackupUseCaseTest {
         val bundle = useCase(mock(Uri::class.java))
 
         val settings = bundle.settings
-        assertEquals("ACCENT_SECONDARY", settings.clockAccentColorOption)
-        assertEquals("CONDENSED", settings.clockDateStyle)
         assertEquals("RIGHT", settings.clockAlignment)
         assertEquals(240f, settings.clockZoneHeightDp)
         assertEquals(1.3f, settings.clockScale)
@@ -232,8 +224,6 @@ class ExportBackupUseCaseTest {
         assertEquals(1.0f, settings.landscapeClockScale)
         assertEquals("TOP", settings.landscapeAppListVerticalAlignment)
         val exported = bundle.facets[0]
-        assertEquals("ACCENT_SECONDARY", exported.clockAccentColorOption)
-        assertEquals("CONDENSED", exported.clockDateStyle)
         assertEquals("RIGHT", exported.clockAlignment)
         assertEquals(210f, exported.clockZoneHeightDp)
         assertEquals(1.1f, exported.clockScale)

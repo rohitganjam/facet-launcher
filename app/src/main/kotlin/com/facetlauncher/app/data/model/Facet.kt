@@ -13,23 +13,6 @@ data class Facet(
     val name: String,
     val position: Int,
 
-    // Clock + Calendar design block — one override flag for the whole visual unit.
-    val overrideClock: Boolean = false,
-    val clockTemplateId: ClockTemplateId = ClockTemplateId.LIGHT_STACK,
-    val clockFontOption: ClockFontOption = ClockFontOption.LAUNCHER_DEFAULT,
-    val clockColorOption: ClockColorOption = ClockColorOption.THEME,
-    val clockAccentColorOption: ClockColorOption = ClockColorOption.ACCENT_PRIMARY,
-    val use24HourTime: Boolean = false,
-    val clockShowMeridiem: Boolean = false,
-    val clockDateStyle: ClockDateStyle = ClockDateStyle.FULL,
-    /** The clock accessories this facet shows while it overrides the clock block; see `LauncherSettings.showNextAlarm`. */
-    val clockShowAlarm: Boolean = true,
-    val clockShowBattery: Boolean = true,
-    val clockShowWeather: Boolean = false,
-    /** The weather picture style this facet uses while it overrides the clock block; see `LauncherSettings.weatherIconStyle`. */
-    val clockWeatherIconStyle: WeatherIconStyle = WeatherIconStyle.COLORED,
-    /** Where this facet's clock shows the weather for while it overrides the clock block; `null` follows Weather settings. */
-    val clockWeatherLocation: WidgetWeatherLocation? = null,
     /**
      * Whether the placement fields below ([clockAlignment], [clockZoneHeightDp], [clockScale] and their landscape twins)
      * are this facet's own. `false` until the user first adjusts it on Home: the facet then shows the launcher's built-in
@@ -75,13 +58,6 @@ data class Facet(
     val overrideDock: Boolean = false,
     val dockDisplayMode: DockDisplayMode = DockDisplayMode.LAUNCHER_DEFAULT,
 
-    // Calendar selection section
-    val overrideCalendar: Boolean = false,
-    val showAllDayEvents: Boolean = true,
-    val showCalendarIndicator: Boolean = true,
-    val calendarItemsToShow: Int = CalendarDisplayOptions.MAX_ITEMS,
-    /** `null` means every calendar is implicitly selected. */
-    val selectedCalendarIds: Set<String>? = null,
 )
 
 /**
@@ -134,14 +110,6 @@ fun Facet.withLandscape(overrides: LandscapeOverrides): Facet = copy(
     landscapeAppListVerticalAlignment = overrides.appListVerticalAlignment,
     landscapeAppListColumnAlignment = overrides.appListColumnAlignment,
 )
-
-/** The calendar display options in force for `this` facet (or the launcher-wide ones when it's `null` or not overriding the calendar). */
-fun Facet?.effectiveCalendarDisplay(settings: LauncherSettings): CalendarDisplayOptions =
-    if (this?.overrideCalendar == true) {
-        CalendarDisplayOptions(showCalendarIndicator, calendarItemsToShow)
-    } else {
-        CalendarDisplayOptions(settings.showCalendarIndicator, settings.calendarItemsToShow)
-    }
 
 /** Where [list] lives for `this` facet: its own rows when it overrides that list, else the launcher-wide default (also the answer when there is no active facet). */
 fun Facet?.placementTarget(list: PlacementList): PlacementTarget = when {

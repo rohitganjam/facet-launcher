@@ -477,19 +477,6 @@ class AppearanceSettingsViewModelTest {
     }
 
     @Test
-    fun `a clock without settings of its own yet shows what its facet showed before`() {
-        // Given a facet overriding the calendar, whose clock has no settings stored yet
-        val state = AppearanceSettingsUiState(
-            settings = LauncherSettings(showAllDayEvents = true),
-            facet = Facet(id = 1L, name = "Work", position = 0, overrideCalendar = true, showAllDayEvents = false, selectedCalendarIds = setOf("cal-1")),
-        )
-
-        // Then the facet's own calendar values still apply
-        assertEquals(false, state.effectiveShowAllDayEvents)
-        assertEquals(setOf("cal-1"), state.selectedCalendarIds)
-    }
-
-    @Test
     fun `setHideStatusBar writes to SettingsRepository`() = runTest {
         val settingsRepository = mock(SettingsRepository::class.java)
         val viewModel = createViewModel(settingsRepository = settingsRepository)

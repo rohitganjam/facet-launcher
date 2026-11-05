@@ -304,7 +304,7 @@ class HomeViewModelTest {
             notificationShadeRepository = mock(NotificationShadeRepository::class.java),
             settingsRepository = settingsRepository,
             settings = LauncherSettings(activeFacetId = 1L),
-            facets = listOf(Facet(id = 1L, name = "Work", position = 0, overrideClock = true)),
+            facets = listOf(Facet(id = 1L, name = "Work", position = 0, clockPlacementOwn = true)),
             clockWidgetFacet = controller,
         )
         testDispatcher.scheduler.advanceUntilIdle()

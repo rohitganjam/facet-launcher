@@ -49,16 +49,15 @@ class UpdateClockConfigUseCaseTest {
     }
 
     @Test
-    fun `a clock with nothing stored yet keeps what it shows when it is first changed`() = runTest {
-        // Given a facet that follows the launcher's clock, and a clock page with no settings
-        val launcher = LauncherSettings(clockTemplateId = ClockTemplateId.entries.last(), use24HourTime = true)
-        given(Facet(id = 1, name = "Home", position = 0, clockStack = listOf(page(4, ClockStackItemKind.CLOCK))), launcher)
+    fun `a clock with nothing stored yet starts from the defaults when it is first changed`() = runTest {
+        // Given a clock page with no settings
+        given(Facet(id = 1, name = "Home", position = 0, clockStack = listOf(page(4, ClockStackItemKind.CLOCK))), LauncherSettings())
 
         // When a setting changes
         useCase(1) { it.copy(showBattery = false) }
 
-        // Then the launcher's look the clock was showing is stored with the change, not the built-in look
-        verify(clockStackRepository).setConfig(4, NativeWidgetConfig(clock = legacyClockConfig(Facet(id = 1, name = "Home", position = 0), launcher).copy(showBattery = false)))
+        // Then the built-in settings are stored with the change
+        verify(clockStackRepository).setConfig(4, NativeWidgetConfig(clock = ClockWidgetConfig().copy(showBattery = false)))
     }
 
     @Test

@@ -5,6 +5,9 @@ import com.facetlauncher.app.data.model.WeatherCity
 import com.facetlauncher.app.data.model.ClockStackItemKind
 import com.facetlauncher.app.data.widgetItem
 import com.facetlauncher.app.data.clockItem
+import com.facetlauncher.app.data.clockItemWith
+import com.facetlauncher.app.data.model.ClockCalendarConfig
+import com.facetlauncher.app.data.model.ClockWidgetConfig
 import com.facetlauncher.app.data.model.Facet
 import com.facetlauncher.app.data.model.AppListLayout
 import com.facetlauncher.app.data.model.AppRowPosition
@@ -21,11 +24,9 @@ import org.junit.Test
 class ResolvedFacetStyleTest {
 
     private val settings = LauncherSettings(
-        clockTemplateId = ClockTemplateId.RULE_MERIDIEM,
         clockAlignment = ClockAlignment.RIGHT,
         clockScale = 1.2f,
         clockZoneHeightDp = 300f,
-        use24HourTime = true,
         listContentMode = ListContentMode.FAVORITES,
         appRowPosition = AppRowPosition.CENTER,
         appListLayout = AppListLayout.GRID,
@@ -41,62 +42,47 @@ class ResolvedFacetStyleTest {
         // When resolving
         val style = resolveFacetStyle(null, settings)
 
-        // Then every field is the launcher's
-        assertEquals(ClockTemplateId.RULE_MERIDIEM, style.clock.templateId)
+        // Then the clock is the built-in one and every other field is the launcher's
+        assertEquals(ClockWidgetConfig(), style.clock)
         assertEquals(ClockAlignment.RIGHT, style.clockPlacement.portrait.alignment)
         assertEquals(1.2f, style.clockPlacement.portrait.scale, 0f)
         assertEquals(300f, style.clockPlacement.portrait.zoneHeightDp)
-        assertEquals(true, style.clock.use24HourTime)
         assertEquals(AppRowPosition.CENTER, style.appList.rowPosition)
         assertEquals(AppListLayout.GRID, style.appList.layout)
         assertEquals(DockDisplayMode.ICONS, style.dockDisplayMode)
     }
 
     @Test
-    fun `a facet not overriding the clock keeps the launcher's clock style even if its own columns differ`() {
-        val style = resolveFacetStyle(
-            facet { it.copy(overrideClock = false, clockTemplateId = ClockTemplateId.DATE_FORWARD) },
-            settings,
-        )
-
-        assertEquals(ClockTemplateId.RULE_MERIDIEM, style.clock.templateId)
-    }
-
-    @Test
-    fun `a facet overriding the clock supplies the clock style but not the placement`() {
-        // Given a facet that overrides the clock, with placement columns that differ from the launcher's but not owned
+    fun `a facet's clock supplies the clock style but not the placement`() {
+        // Given a facet whose clock is set to its own look, with placement columns that differ from the launcher's but not owned
         val style = resolveFacetStyle(
             facet {
                 it.copy(
-                    overrideClock = true,
-                    clockTemplateId = ClockTemplateId.DATE_FORWARD,
+                    clockStack = listOf(clockItemWith(ClockWidgetConfig(templateId = ClockTemplateId.DATE_FORWARD, use24HourTime = true))),
                     clockAlignment = ClockAlignment.LEFT,
                     clockScale = 0.5f,
-                    use24HourTime = false,
                 )
             },
             settings,
         )
 
-        // Then the style is the facet's, and the placement is still the launcher's fallback
+        // Then the style is the clock's, and the placement is still the launcher's fallback
         assertEquals(ClockTemplateId.DATE_FORWARD, style.clock.templateId)
-        assertEquals(false, style.clock.use24HourTime)
+        assertEquals(true, style.clock.use24HourTime)
         assertEquals(ClockAlignment.RIGHT, style.clockPlacement.portrait.alignment)
         assertEquals(1.2f, style.clockPlacement.portrait.scale, 0f)
     }
 
     @Test
-    fun `a facet that owns its placement uses it whether or not it overrides the clock`() {
-        for (overriding in listOf(true, false)) {
-            val style = resolveFacetStyle(
-                facet { it.copy(overrideClock = overriding, clockPlacementOwn = true, clockAlignment = ClockAlignment.LEFT, clockScale = 0.5f, clockZoneHeightDp = 120f) },
-                settings,
-            )
+    fun `a facet that owns its placement uses it`() {
+        val style = resolveFacetStyle(
+            facet { it.copy(clockPlacementOwn = true, clockAlignment = ClockAlignment.LEFT, clockScale = 0.5f, clockZoneHeightDp = 120f) },
+            settings,
+        )
 
-            assertEquals(ClockAlignment.LEFT, style.clockPlacement.portrait.alignment)
-            assertEquals(0.5f, style.clockPlacement.portrait.scale, 0f)
-            assertEquals(120f, style.clockPlacement.portrait.zoneHeightDp)
-        }
+        assertEquals(ClockAlignment.LEFT, style.clockPlacement.portrait.alignment)
+        assertEquals(0.5f, style.clockPlacement.portrait.scale, 0f)
+        assertEquals(120f, style.clockPlacement.portrait.zoneHeightDp)
     }
 
     @Test
@@ -157,8 +143,8 @@ class ResolvedFacetStyleTest {
     }
 
     @Test
-    fun `the hosted clock widget is the facet's own and is not gated by the clock override`() {
-        val withWidget = facet { it.copy(overrideClock = false, clockStack = listOf(widgetItem(41, widthDp = 160, heightDp = 90))) }
+    fun `the hosted clock widget is the facet's own`() {
+        val withWidget = facet { it.copy(clockStack = listOf(widgetItem(41, widthDp = 160, heightDp = 90))) }
 
         val style = resolveFacetStyle(withWidget, settings)
 
@@ -245,15 +231,15 @@ class ResolvedFacetStyleTest {
     }
 
     @Test
-    fun `calendar display follows overrideCalendar`() {
+    fun `calendar display follows the clock's own calendar`() {
         val style = resolveFacetStyle(
-            facet { it.copy(overrideCalendar = true, showCalendarIndicator = false, calendarItemsToShow = 2) },
+            facet { it.copy(clockStack = listOf(clockItemWith(ClockWidgetConfig(calendar = ClockCalendarConfig(showIndicator = false, itemsToShow = 2))))) },
             settings,
         )
-        val inherited = resolveFacetStyle(facet { it.copy(overrideCalendar = false, calendarItemsToShow = 2) }, settings)
+        val defaults = resolveFacetStyle(facet(), settings)
 
         assertEquals(CalendarDisplayOptions(showIndicator = false, itemsToShow = 2), style.calendarDisplay)
-        assertEquals(CalendarDisplayOptions(settings.showCalendarIndicator, settings.calendarItemsToShow), inherited.calendarDisplay)
+        assertEquals(CalendarDisplayOptions(), defaults.calendarDisplay)
     }
 
     @Test
@@ -266,13 +252,13 @@ class ResolvedFacetStyleTest {
     }
 
     @Test
-    fun `a facet's own weather location applies only while it overrides the clock`() {
-        // Given a facet with its own weather location
+    fun `a clock's own weather location applies, and none follows Weather settings`() {
+        // Given a clock with its own weather location
         val oslo = WidgetWeatherLocation.City(WeatherCity("Oslo", 59.91, 10.75, "Europe/Oslo"))
 
-        // Then it shows while overriding the clock, and is ignored while inheriting or with no facet
-        assertEquals(oslo, resolveFacetStyle(facet { it.copy(overrideClock = true, clockWeatherLocation = oslo) }, settings).clock.weatherLocation)
-        assertEquals(null, resolveFacetStyle(facet { it.copy(overrideClock = false, clockWeatherLocation = oslo) }, settings).clock.weatherLocation)
+        // Then it shows, and a clock with none, or no facet, follows Weather settings
+        assertEquals(oslo, resolveFacetStyle(facet { it.copy(clockStack = listOf(clockItemWith(ClockWidgetConfig(weatherLocation = oslo)))) }, settings).clock.weatherLocation)
+        assertEquals(null, resolveFacetStyle(facet(), settings).clock.weatherLocation)
         assertEquals(null, resolveFacetStyle(null, settings).clock.weatherLocation)
     }
 }

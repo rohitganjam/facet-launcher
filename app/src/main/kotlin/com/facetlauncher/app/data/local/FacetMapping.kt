@@ -2,26 +2,11 @@ package com.facetlauncher.app.data.local
 
 import com.facetlauncher.app.data.model.ClockStackItem
 import com.facetlauncher.app.data.model.Facet
-import com.facetlauncher.app.data.model.decodeWeatherLocation
-import com.facetlauncher.app.data.model.encodeWeatherLocation
 
 internal fun FacetEntity.toFacet(clockStack: List<ClockStackItem> = emptyList()): Facet = Facet(
     id = id,
     name = name,
     position = position,
-    overrideClock = overrideClock,
-    clockTemplateId = clockTemplateId,
-    clockFontOption = clockFontOption,
-    clockColorOption = clockColorOption,
-    clockAccentColorOption = clockAccentColorOption,
-    use24HourTime = use24HourTime,
-    clockShowMeridiem = clockShowMeridiem,
-    clockDateStyle = clockDateStyle,
-    clockShowAlarm = clockShowAlarm,
-    clockShowBattery = clockShowBattery,
-    clockShowWeather = clockShowWeather,
-    clockWeatherIconStyle = clockWeatherIconStyle,
-    clockWeatherLocation = decodeWeatherLocation(clockWeatherLocation),
     clockPlacementOwn = clockPlacementOwn,
     clockAlignment = clockAlignment,
     clockZoneHeightDp = clockZoneHeightDp,
@@ -47,30 +32,12 @@ internal fun FacetEntity.toFacet(clockStack: List<ClockStackItem> = emptyList())
     overridingFavorites = overridingFavorites,
     overrideDock = overrideDock,
     dockDisplayMode = dockDisplayMode,
-    overrideCalendar = overrideCalendar,
-    showAllDayEvents = showAllDayEvents,
-    showCalendarIndicator = showCalendarIndicator,
-    calendarItemsToShow = calendarItemsToShow,
-    selectedCalendarIds = selectedCalendarIdsCsv?.split(",")?.filter { it.isNotEmpty() }?.toSet(),
 )
 
 internal fun Facet.toEntity(): FacetEntity = FacetEntity(
     id = id,
     name = name,
     position = position,
-    overrideClock = overrideClock,
-    clockTemplateId = clockTemplateId,
-    clockFontOption = clockFontOption,
-    clockColorOption = clockColorOption,
-    clockAccentColorOption = clockAccentColorOption,
-    use24HourTime = use24HourTime,
-    clockShowMeridiem = clockShowMeridiem,
-    clockDateStyle = clockDateStyle,
-    clockShowAlarm = clockShowAlarm,
-    clockShowBattery = clockShowBattery,
-    clockShowWeather = clockShowWeather,
-    clockWeatherIconStyle = clockWeatherIconStyle,
-    clockWeatherLocation = encodeWeatherLocation(clockWeatherLocation),
     clockPlacementOwn = clockPlacementOwn,
     clockAlignment = clockAlignment,
     clockZoneHeightDp = clockZoneHeightDp,
@@ -95,9 +62,4 @@ internal fun Facet.toEntity(): FacetEntity = FacetEntity(
     overridingFavorites = overridingFavorites,
     overrideDock = overrideDock,
     dockDisplayMode = dockDisplayMode,
-    overrideCalendar = overrideCalendar,
-    showAllDayEvents = showAllDayEvents,
-    showCalendarIndicator = showCalendarIndicator,
-    calendarItemsToShow = calendarItemsToShow,
-    selectedCalendarIdsCsv = selectedCalendarIds?.joinToString(","),
 )

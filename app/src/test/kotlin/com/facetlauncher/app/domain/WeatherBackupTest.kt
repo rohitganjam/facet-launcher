@@ -11,7 +11,10 @@ import com.facetlauncher.app.data.WidgetPlacementRepository
 import com.facetlauncher.app.data.model.BackupBundle
 import com.facetlauncher.app.data.model.BackupSettings
 import com.facetlauncher.app.data.model.BackupWeatherCity
+import com.facetlauncher.app.data.clockItemWith
+import com.facetlauncher.app.data.model.ClockWidgetConfig
 import com.facetlauncher.app.data.model.Facet
+import com.facetlauncher.app.data.model.decodeNativeWidgetConfig
 import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.data.model.PlacementList
 import com.facetlauncher.app.data.model.PlacementTarget
@@ -61,9 +64,9 @@ class WeatherBackupTest {
     )
 
     @Test
-    fun `export writes the accessory switches, units, mode and city for the launcher and the switches for each facet`() = runTest {
-        // Given weather configured, and a facet that overrides the accessories
-        val facet = Facet(id = 7, name = "Work", position = 0, clockShowAlarm = false, clockShowBattery = false, clockShowWeather = true, clockWeatherIconStyle = WeatherIconStyle.MONOCHROME)
+    fun `export writes the accessory switches, units, mode and city for the launcher and the clock's own settings for each facet`() = runTest {
+        // Given weather configured, and a clock with its own accessories
+        val facet = Facet(id = 7, name = "Work", position = 0, clockStack = listOf(clockItemWith(ClockWidgetConfig(showAlarm = false, showBattery = false, showWeather = true, weatherIconStyle = WeatherIconStyle.MONOCHROME), facetId = 7)))
         `when`(settingsRepository.settings).thenReturn(
             flowOf(
                 LauncherSettings(
@@ -84,7 +87,7 @@ class WeatherBackupTest {
         // When exported
         val bundle = export(mock(Uri::class.java))
 
-        // Then the launcher and the facet carry them
+        // Then the launcher carries them and the clock its own
         val settings = bundle.settings
         assertFalse(settings.showNextAlarm)
         assertTrue(settings.showBatteryPercentage)
@@ -94,11 +97,8 @@ class WeatherBackupTest {
         assertEquals("COLORED", settings.weatherIconStyle)
         assertEquals(listOf("Pune", 18.52, 73.86, "Asia/Kolkata"), listOf(settings.weatherCityName, settings.weatherCityLatitude, settings.weatherCityLongitude, settings.weatherCityTimezone))
         assertEquals(listOf(BackupWeatherCity("Pune", 18.52, 73.86, "Asia/Kolkata"), BackupWeatherCity("London", 51.51, -0.13, "Europe/London")), settings.savedWeatherCities)
-        val exported = bundle.facets[0]
-        assertFalse(exported.clockShowAlarm)
-        assertFalse(exported.clockShowBattery)
-        assertTrue(exported.clockShowWeather)
-        assertEquals("MONOCHROME", exported.clockWeatherIconStyle)
+        val clock = decodeNativeWidgetConfig(bundle.facets[0].clockConfig).clock
+        assertEquals(ClockWidgetConfig(showAlarm = false, showBattery = false, showWeather = true, weatherIconStyle = WeatherIconStyle.MONOCHROME), clock)
     }
 
     // --- restore ---

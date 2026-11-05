@@ -1,5 +1,6 @@
 package com.facetlauncher.app.ui.settings
 
+import com.facetlauncher.app.data.clockItemWith
 import androidx.lifecycle.SavedStateHandle
 import com.facetlauncher.app.domain.AssignCalendarColorsUseCase
 import com.facetlauncher.app.data.CalendarPermissionRepository
@@ -98,8 +99,12 @@ class CalendarSettingsViewModelTest {
     @Test
     fun `calendar swatches are hidden when the indicator is off`() {
         val colors = mapOf("1" to AccentSwatch.entries.first().name)
-        val on = CalendarSettingsUiState(settings = LauncherSettings(showCalendarIndicator = true), calendarColors = colors)
-        val off = CalendarSettingsUiState(settings = LauncherSettings(showCalendarIndicator = false), calendarColors = colors)
+        fun facetWith(showIndicator: Boolean) = Facet(
+            id = 1L, name = "Work", position = 0,
+            clockStack = listOf(clockItemWith(ClockWidgetConfig(calendar = ClockCalendarConfig(showIndicator = showIndicator)))),
+        )
+        val on = CalendarSettingsUiState(facet = facetWith(true), calendarColors = colors)
+        val off = CalendarSettingsUiState(facet = facetWith(false), calendarColors = colors)
 
         assertEquals(AccentSwatch.entries.first(), on.calendarSwatch("1"))
         assertEquals(null, off.calendarSwatch("1"))

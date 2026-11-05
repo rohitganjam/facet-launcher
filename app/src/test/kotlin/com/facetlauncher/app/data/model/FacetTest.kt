@@ -56,25 +56,25 @@ class FacetTest {
     @Test
     fun `resolveOverride returns the facet value when overriding is true`() {
         // Given a facet whose override flag is on
-        val facet = Facet(name = "Work", position = 0, overrideClock = true)
+        val facet = Facet(name = "Work", position = 0, overrideApps = true, appsToShowCount = 7)
 
         // When resolving against that flag
-        val result = facet.resolveOverride({ it.overrideClock }, { it.clockTemplateId }, com.facetlauncher.app.data.model.ClockTemplateId.ROBOTO_FLEX_WIDE)
+        val result = facet.resolveOverride({ it.overrideApps }, { it.appsToShowCount }, 3)
 
         // Then the facet's own stored value wins
-        assertEquals(facet.clockTemplateId, result)
+        assertEquals(7, result)
     }
 
     @Test
     fun `resolveOverride returns the global value when overriding is false`() {
         // Given a facet whose override flag is off
-        val facet = Facet(name = "Work", position = 0, overrideClock = false)
+        val facet = Facet(name = "Work", position = 0, overrideApps = false, appsToShowCount = 7)
 
         // When resolving against that flag
-        val result = facet.resolveOverride({ it.overrideClock }, { it.clockTemplateId }, com.facetlauncher.app.data.model.ClockTemplateId.ROBOTO_FLEX_WIDE)
+        val result = facet.resolveOverride({ it.overrideApps }, { it.appsToShowCount }, 3)
 
         // Then the global default wins, even though the facet has its own stored value
-        assertEquals(com.facetlauncher.app.data.model.ClockTemplateId.ROBOTO_FLEX_WIDE, result)
+        assertEquals(3, result)
     }
 
     @Test

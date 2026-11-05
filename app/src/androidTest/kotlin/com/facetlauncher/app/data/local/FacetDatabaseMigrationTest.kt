@@ -1,6 +1,8 @@
 package com.facetlauncher.app.data.local
 
+import androidx.room.migration.AutoMigrationSpec
 import androidx.room.testing.MigrationTestHelper
+import androidx.sqlite.db.framework.FrameworkSQLiteOpenHelperFactory
 import androidx.test.platform.app.InstrumentationRegistry
 import com.facetlauncher.app.data.model.WeatherCity
 import com.facetlauncher.app.data.model.WidgetWeatherLocation
@@ -33,6 +35,8 @@ class FacetDatabaseMigrationTest {
     val helper: MigrationTestHelper = MigrationTestHelper(
         InstrumentationRegistry.getInstrumentation(),
         FacetDatabase::class.java,
+        listOf<AutoMigrationSpec>(DropFacetClockColumns()),
+        FrameworkSQLiteOpenHelperFactory(),
     )
 
     @Test
@@ -1027,6 +1031,41 @@ class FacetDatabaseMigrationTest {
         assertNull(stored("SELECT nativeWidgetConfig FROM clock_stack_items WHERE id = 1"))
         assertEquals(WidgetWeatherLocation.Current, decodeWeatherLocation(stored("SELECT clockWeatherLocation FROM facets WHERE id = 1")))
         assertTrue(stored("SELECT nativeWidgetConfig FROM widget_placements WHERE appWidgetId = -2").startsWith("{"))
+    }
+
+    @Test
+    fun migration42To43DropsTheFacetClockColumnsAndKeepsEverythingElse() {
+        // Given a v42 database whose facet still holds clock and calendar settings, a placement and its clock page
+        helper.createDatabase(TEST_DB, 32).also { insertFacetV27(it, id = 1, name = "Work") }.close()
+        val dbV42 = helper.runMigrationsAndValidate(
+            TEST_DB, 42, true,
+            Migrations.MIGRATION_32_33, Migrations.MIGRATION_33_34, Migrations.MIGRATION_34_35, Migrations.MIGRATION_35_36,
+            Migrations.MIGRATION_36_37, Migrations.MIGRATION_37_38, Migrations.MIGRATION_38_39, Migrations.MIGRATION_39_40,
+            Migrations.MIGRATION_40_41, Migrations.MIGRATION_41_42,
+        )
+        dbV42.execSQL(
+            "UPDATE facets SET overrideClock = 1, clockTemplateId = 'DATE_FORWARD', use24HourTime = 1, overrideCalendar = 1, " +
+                "selectedCalendarIdsCsv = '3,4', clockScale = 1.1, clockAlignment = 'RIGHT', clockPlacementOwn = 1 WHERE id = 1",
+        )
+        dbV42.close()
+
+        // When migrating to v43 (Room also validates the result against the exported v43 schema)
+        val dbV43 = helper.runMigrationsAndValidate(TEST_DB, 43, true)
+
+        // Then the clock and calendar columns are gone, the rest of the row is intact, and the facet's clock page is still there
+        val columns = dbV43.query("SELECT * FROM facets LIMIT 1").use { it.columnNames.toSet() }
+        assertTrue("overrideClock" !in columns && "clockTemplateId" !in columns && "selectedCalendarIdsCsv" !in columns && "clockWidgetAppWidgetId" !in columns)
+        dbV43.query("SELECT name, clockScale, clockAlignment, clockPlacementOwn FROM facets WHERE id = 1").use {
+            assertTrue(it.moveToFirst())
+            assertEquals("Work", it.getString(0))
+            assertEquals(1.1f, it.getFloat(1), 0.001f)
+            assertEquals("RIGHT", it.getString(2))
+            assertEquals(1, it.getInt(3))
+        }
+        dbV43.query("SELECT COUNT(*) FROM clock_stack_items WHERE facetId = 1 AND kind = 'CLOCK'").use {
+            it.moveToFirst()
+            assertEquals(1, it.getInt(0))
+        }
     }
 
     /** A v27 facet row — the v25 shape plus the two calendar-display columns, which a freshly created database has no defaults for. */

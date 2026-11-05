@@ -165,12 +165,9 @@ class ImportBackupUseCaseTest {
         // `null` placeholder, which Kotlin's compiler-inserted non-null check on
         // restoreFacet's `facet: Facet` parameter rejects outright.
         val expectedFacetEntity = Facet(
-            id = 0, name = "Work", position = 0, overrideClock = false,
-            clockTemplateId = ClockTemplateId.LIGHT_STACK, clockFontOption = ClockFontOption.LAUNCHER_DEFAULT,
-            clockColorOption = ClockColorOption.THEME, use24HourTime = false, clockShowMeridiem = false,
+            id = 0, name = "Work", position = 0,
             overrideApps = false, appRowPosition = AppRowPosition.LEFT, appRowPresentation = AppRowPresentation.ICON_AND_TEXT,
             listContentMode = ListContentMode.FAVORITES, appsToShowCount = 5, overridingFavorites = true,
-            overrideCalendar = false, showAllDayEvents = true, selectedCalendarIds = setOf("3", "4"),
             overrideDock = true, dockDisplayMode = com.facetlauncher.app.data.model.DockDisplayMode.TEXT,
         )
         `when`(facetRepository.restoreFacet(expectedFacetEntity)).thenReturn(99L)

@@ -6,6 +6,8 @@ import com.facetlauncher.app.data.model.BackupFacet
 import com.facetlauncher.app.data.model.BackupNativeStackPage
 import com.facetlauncher.app.data.model.BackupWidgetPlacement
 import com.facetlauncher.app.data.model.CURRENT_BACKUP_VERSION
+import com.facetlauncher.app.data.model.ClockCalendarConfig
+import com.facetlauncher.app.data.model.ClockTemplateId
 import com.facetlauncher.app.data.model.Facet
 import com.facetlauncher.app.data.model.WidgetWeatherLocation
 import com.facetlauncher.app.data.model.decodeNativeWidgetConfig
@@ -62,5 +64,44 @@ class BackupUpgradeTest {
         assertEquals(null, upgraded.widgetPlacements.single().nativeWidgetConfig)
         assertEquals(null, upgraded.facets.single().clockWeatherLocation)
         assertEquals(null, upgraded.facets.single().nativeStackPages.single().nativeWidgetConfig)
+    }
+
+    @Test
+    fun `an older backup's clock gets the facet's own settings while the facet overrode the clock and the calendar`() {
+        // Given a version 4 facet that overrode both, with a launcher that says otherwise
+        val old = facet(null, null).copy(
+            overrideClock = true, clockTemplateId = "DATE_FORWARD", use24HourTime = true, clockShowAlarm = false, clockShowWeather = true,
+            overrideCalendar = true, showAllDayEvents = false, calendarItemsToShow = 2, selectedCalendarIds = listOf("9"),
+        )
+        val launcher = minimalBackupSettings().copy(clockTemplateId = "LIGHT_STACK", use24HourTime = false)
+
+        // When upgraded
+        val clock = decodeNativeWidgetConfig(bundle(4, old, placement(null)).copy(settings = launcher).upgradedToCurrent().facets.single().clockConfig).clock!!
+
+        // Then the clock carries the facet's values
+        assertEquals(ClockTemplateId.DATE_FORWARD, clock.templateId)
+        assertEquals(true, clock.use24HourTime)
+        assertEquals(false, clock.showAlarm)
+        assertEquals(true, clock.showWeather)
+        assertEquals(ClockCalendarConfig(showIndicator = true, itemsToShow = 2, showAllDay = false, calendarIds = setOf("9")), clock.calendar)
+    }
+
+    @Test
+    fun `an older backup's clock gets the launcher's settings while the facet inherited them`() {
+        // Given a version 4 facet that overrode nothing, and a launcher with its own look and accessories
+        val launcher = minimalBackupSettings().copy(
+            clockTemplateId = "RULE_MERIDIEM", use24HourTime = true, showNextAlarm = false, showBatteryPercentage = false, showAllDayEvents = false,
+        )
+
+        // When upgraded
+        val clock = decodeNativeWidgetConfig(bundle(4, facet(null, null), placement(null)).copy(settings = launcher).upgradedToCurrent().facets.single().clockConfig).clock!!
+
+        // Then the clock carries the launcher's values, and follows every calendar
+        assertEquals(ClockTemplateId.RULE_MERIDIEM, clock.templateId)
+        assertEquals(true, clock.use24HourTime)
+        assertEquals(false, clock.showAlarm)
+        assertEquals(false, clock.showBattery)
+        assertEquals(false, clock.calendar.showAllDay)
+        assertEquals(null, clock.calendar.calendarIds)
     }
 }

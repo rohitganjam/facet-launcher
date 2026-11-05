@@ -1,5 +1,6 @@
 package com.facetlauncher.app.domain
 
+import com.facetlauncher.app.data.model.BackupFacet
 import com.facetlauncher.app.data.model.NativeWidgetType
 import com.facetlauncher.app.data.WidgetPlacementRepository
 import com.facetlauncher.app.data.ClockStackRepository
@@ -109,26 +110,7 @@ class ImportBackupUseCase @Inject constructor(
         facetRepository.deleteAllFacets()
         var activeFacetId: Long? = null
         bundle.facets.forEachIndexed { index, backupFacet ->
-            val newId = facetRepository.restoreFacet(backupFacet.toFacet())
-            clockStackRepository.restoreNativeWidgets(newId, backupFacet.nativeStackPages.mapNotNull { it.toStackItem() })
-            val favoritesTarget = PlacementTarget(PlacementList.FAVORITES, newId)
-            val dockTarget = PlacementTarget(PlacementList.DOCK, newId)
-            backupFacet.favorites.forEach { entry ->
-                placementRepository.restoreApp(entry.toAppPlacementEntity(PlacementList.FAVORITES, newId))
-            }
-            backupFacet.dockApps.forEach { entry ->
-                placementRepository.restoreApp(entry.toAppPlacementEntity(PlacementList.DOCK, newId))
-            }
-            backupFacet.dockFolderPlacements.forEach { placement ->
-                newFolderIdByIndex[placement.folderIndex]?.let { folderId ->
-                    placementRepository.restoreFolderPlacement(dockTarget, folderId, placement.position)
-                }
-            }
-            backupFacet.favoriteFolderPlacements.forEach { placement ->
-                newFolderIdByIndex[placement.folderIndex]?.let { folderId ->
-                    placementRepository.restoreFolderPlacement(favoritesTarget, folderId, placement.position)
-                }
-            }
+            val newId = restoreFacet(backupFacet, newFolderIdByIndex)
             if (index == bundle.settings.activeFacetIndex) activeFacetId = newId
         }
         activeFacetId?.let { settingsRepository.setActiveFacetId(it) }
@@ -163,6 +145,35 @@ class ImportBackupUseCase @Inject constructor(
             defaultFavoriteCount = bundle.defaultFavoriteApps.size,
             pendingWidgetPlacements = hostedPlacements,
         )
+    }
+
+    /** Restores one facet: its row, clock and widget pages, favorites and dock; returns the new row id. */
+    private suspend fun restoreFacet(backupFacet: BackupFacet, newFolderIdByIndex: Map<Int, Long>): Long {
+        val newId = facetRepository.restoreFacet(backupFacet.toFacet())
+        clockStackRepository.restoreClock(
+            newId, backupFacet.clockConfig, backupFacet.clockWidthDp, backupFacet.clockHeightDp,
+            backupFacet.clockLandscapeWidthDp, backupFacet.clockLandscapeHeightDp,
+        )
+        clockStackRepository.restoreNativeWidgets(newId, backupFacet.nativeStackPages.mapNotNull { it.toStackItem() })
+        val favoritesTarget = PlacementTarget(PlacementList.FAVORITES, newId)
+        val dockTarget = PlacementTarget(PlacementList.DOCK, newId)
+        backupFacet.favorites.forEach { entry ->
+            placementRepository.restoreApp(entry.toAppPlacementEntity(PlacementList.FAVORITES, newId))
+        }
+        backupFacet.dockApps.forEach { entry ->
+            placementRepository.restoreApp(entry.toAppPlacementEntity(PlacementList.DOCK, newId))
+        }
+        backupFacet.dockFolderPlacements.forEach { placement ->
+            newFolderIdByIndex[placement.folderIndex]?.let { folderId ->
+                placementRepository.restoreFolderPlacement(dockTarget, folderId, placement.position)
+            }
+        }
+        backupFacet.favoriteFolderPlacements.forEach { placement ->
+            newFolderIdByIndex[placement.folderIndex]?.let { folderId ->
+                placementRepository.restoreFolderPlacement(favoritesTarget, folderId, placement.position)
+            }
+        }
+        return newId
     }
 
     /** A widget Facet draws itself has no binding to redo, so it goes straight back on the Hub; returns the hosted ones, which wait in the re-add queue. */

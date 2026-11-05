@@ -7,6 +7,8 @@ import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.FakeEntitlementRepository
 import com.facetlauncher.app.data.local.FacetEntity
 import com.facetlauncher.app.data.SettingsRepository
+import com.facetlauncher.app.data.clockItemWith
+import com.facetlauncher.app.data.model.ClockWidgetConfig
 import com.facetlauncher.app.data.model.Facet
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.AppListColumnAlignment
@@ -70,20 +72,20 @@ class FacetSettingsViewModelTest {
     }
 
     @Test
-    fun `clock template falls back to the global default when not overriding`() {
+    fun `clock template is the built-in one while the clock has no settings of its own`() {
         val state = FacetSettingsUiState(
-            facet = Facet(id = 1L, name = "Work", position = 0, overrideClock = false, clockTemplateId = ClockTemplateId.RULE_MERIDIEM),
-            settings = LauncherSettings(clockTemplateId = ClockTemplateId.LIGHT_STACK),
+            facet = Facet(id = 1L, name = "Work", position = 0),
+            settings = LauncherSettings(),
         )
 
         assertEquals(ClockTemplateId.LIGHT_STACK, state.clockTemplateId)
     }
 
     @Test
-    fun `clock template uses this facet's own value when overriding`() {
+    fun `clock template is the one the facet's clock is set to`() {
         val state = FacetSettingsUiState(
-            facet = Facet(id = 1L, name = "Work", position = 0, overrideClock = true, clockTemplateId = ClockTemplateId.RULE_MERIDIEM),
-            settings = LauncherSettings(clockTemplateId = ClockTemplateId.LIGHT_STACK),
+            facet = Facet(id = 1L, name = "Work", position = 0, clockStack = listOf(clockItemWith(ClockWidgetConfig(templateId = ClockTemplateId.RULE_MERIDIEM)))),
+            settings = LauncherSettings(),
         )
 
         assertEquals(ClockTemplateId.RULE_MERIDIEM, state.clockTemplateId)
