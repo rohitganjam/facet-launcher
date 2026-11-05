@@ -79,6 +79,8 @@ class HomeScreenTest {
         onClockZoneHeightCommit: (Float) -> Unit = {},
         clockScale: Float = 0.8f,
         onClockScaleCommit: (Float) -> Unit = {},
+        clockBoxWidthDp: Int? = null,
+        onClockBoxSizeCommit: (Int, Int) -> Unit = { _, _ -> },
         onClockAlignmentChange: (ClockAlignment) -> Unit = {},
     ) {
         var adjustMode by remember { mutableStateOf(ClockAdjustMode.NONE) }
@@ -94,6 +96,8 @@ class HomeScreenTest {
                 onClockZoneHeightCommit = onClockZoneHeightCommit,
                 clockScale = clockScale,
                 onClockScaleCommit = onClockScaleCommit,
+                clockBoxWidthDp = clockBoxWidthDp,
+                onClockBoxSizeCommit = onClockBoxSizeCommit,
                 onClockAlignmentChange = onClockAlignmentChange,
                 clockAdjustMode = adjustMode,
                 onAdjustModeChange = { adjustMode = it },
@@ -1094,15 +1098,18 @@ class HomeScreenTest {
 
     @Test
     fun draggingTheResizeHandleScalesTheClock() {
-        var committedScale = 1f
+        var committedBox: Pair<Int, Int>? = null
+        var boxWidth by mutableStateOf<Int?>(null)
+        var density = 1f
         composeRule.setContent {
-            var scale by remember { mutableStateOf(1f) }
+            density = androidx.compose.ui.platform.LocalDensity.current.density
             // Clock pushed down so there's headroom above it to actually grow into.
             TestHomeScreen(
                 appListItems = apps(1),
                 clockZoneHeightDp = 900f,
-                clockScale = scale,
-                onClockScaleCommit = { committedScale = it; scale = it },
+                clockScale = 1f,
+                clockBoxWidthDp = boxWidth,
+                onClockBoxSizeCommit = { w, h -> committedBox = w to h; boxWidth = w },
             )
         }
         val widthBefore = composeRule.onNodeWithTag("home_clock_block").fetchSemanticsNode().boundsInRoot.width
@@ -1126,33 +1133,77 @@ class HomeScreenTest {
         val heightAfter = composeRule.onNodeWithTag("home_clock_block").fetchSemanticsNode().boundsInRoot.height
         assertTrue("Width should have increased", widthAfter > widthBefore)
         assertTrue("Height should have increased", heightAfter > heightBefore)
-        assertTrue("Committed scale should be > 1f", committedScale > 1f)
+        assertTrue("The saved box should be wider than the clock was", committedBox!!.first * density > widthBefore)
+    }
+
+    @Test
+    fun aSavedBoxSetsTheClocksDrawnWidthAndResizingSavesANewBox() {
+        // Given a clock whose saved box is 160dp wide, with room above it to grow
+        var committed: Pair<Int, Int>? = null
+        var boxWidth by mutableStateOf(160)
+        var density = 1f
+        composeRule.setContent {
+            density = androidx.compose.ui.platform.LocalDensity.current.density
+            TestHomeScreen(
+                appListItems = apps(1),
+                clockZoneHeightDp = 900f,
+                clockBoxWidthDp = boxWidth,
+                onClockBoxSizeCommit = { w, h -> committed = w to h; boxWidth = w },
+            )
+        }
+        composeRule.waitForIdle()
+        val widthBefore = composeRule.onNodeWithTag("home_clock_block").fetchSemanticsNode().boundsInRoot.width
+
+        // Then the clock's drawn width follows the box, not the placement's scale
+        assertEquals(160f * density, widthBefore, 2f * density)
+
+        // When a resize handle is dragged out
+        enterAdjustMode()
+        composeRule.onNodeWithTag("clock_resize_handle_right").performTouchInput {
+            down(center)
+            moveBy(Offset(20f, -10f))
+            moveBy(Offset(60f, -30f))
+            moveBy(Offset(60f, -30f))
+            up()
+        }
+        composeRule.waitForIdle()
+
+        // Then a larger, aspect-locked box is saved in dp and the clock draws at it
+        val saved = committed
+        assertTrue("A box should have been saved, got $saved", saved != null && saved.first > 160)
+        val widthAfter = composeRule.onNodeWithTag("home_clock_block").fetchSemanticsNode().boundsInRoot.width
+        assertEquals(saved!!.first * density, widthAfter, 2f * density)
     }
 
     @Test
     fun clockScaleIsClampedToItsBounds() {
-        var committedScale = 1f
+        var committedWidthPx = 0f
+        var boxWidth by mutableStateOf<Int?>(null)
+        var density = 1f
         composeRule.setContent {
-            var scale by remember { mutableStateOf(1f) }
+            density = androidx.compose.ui.platform.LocalDensity.current.density
             TestHomeScreen(
                 appListItems = apps(1),
                 clockZoneHeightDp = 900f,
-                clockScale = scale,
-                onClockScaleCommit = { committedScale = it; scale = it },
+                clockScale = 1f,
+                clockBoxWidthDp = boxWidth,
+                onClockBoxSizeCommit = { w, _ -> committedWidthPx = w * density; boxWidth = w },
             )
         }
+        // The clock's natural width, drawn at scale 1
+        val natural = composeRule.onNodeWithTag("home_clock_block").fetchSemanticsNode().boundsInRoot.width
 
-        // When dragging far out, the committed scale can't exceed the 2.0 ceiling (it may land
+        // When dragging far out, the committed width can't exceed twice the natural one (it may land
         // lower — the real cap is whatever still fits the screen). First move captures the grab
         // offset, the rest scale.
         enterAdjustMode()
         dragResizeHandleBy(Offset(3240f, -2170f))
-        assertTrue("grew past 1f", committedScale > 1f)
-        assertTrue("clamped at or below 2.0", committedScale <= 2.0f + 0.01f)
+        assertTrue("grew past natural", committedWidthPx > natural)
+        assertTrue("clamped at or below 2.0", committedWidthPx <= natural * 2.0f + 2f * density)
 
         // When dragging far in (still in adjust mode), it clamps to the hard 0.5 floor.
         dragResizeHandleBy(Offset(-3240f, 2170f))
-        assertEquals(0.5f, committedScale, 0.01f)
+        assertEquals(natural * 0.5f, committedWidthPx, 2f * density)
     }
 
     @Test

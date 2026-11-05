@@ -1,5 +1,6 @@
 package com.facetlauncher.app.ui.home
 
+import com.facetlauncher.app.data.clockItem
 import com.facetlauncher.app.data.widgetItem
 import com.facetlauncher.app.domain.ClockPlacement
 import com.facetlauncher.app.PlacementChangeCaptor
@@ -328,6 +329,35 @@ class HomeViewModelTest {
         val change = PlacementChangeCaptor()
         verify(controller).commitPlacement(eqOf(1L), eqOf(HomeLayoutMode.LANDSCAPE), change.capture())
         assertEquals(shown.copy(zoneHeightDp = 310f), change.applied(shown))
+    }
+
+    @Test
+    fun `the clock page's box is saved against the page, in the orientation being adjusted`() = runTest {
+        // Given the visible page is the clock
+        val controller = mock(ClockWidgetFacetController::class.java)
+        val facet = Facet(id = 1L, name = "Work", position = 0, clockStack = listOf(clockItem(id = 7L, facetId = 1L)))
+        val viewModel = placementViewModel(facets = listOf(facet), controller = controller)
+
+        // When the box is committed, in portrait and in landscape
+        viewModel.onClockBoxSizeCommit(220, 90)
+        viewModel.onClockBoxSizeCommit(300, 120, HomeLayoutMode.LANDSCAPE)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Then each is saved on the clock page
+        verify(controller).commitSize(7L, 220, 90, HomeLayoutMode.PORTRAIT)
+        verify(controller).commitSize(7L, 300, 120, HomeLayoutMode.LANDSCAPE)
+    }
+
+    @Test
+    fun `a widget page is not given the clock's box`() = runTest {
+        val controller = mock(ClockWidgetFacetController::class.java)
+        val facet = Facet(id = 1L, name = "Work", position = 0, clockStack = listOf(widgetItem(41, id = 7L, facetId = 1L)))
+        val viewModel = placementViewModel(facets = listOf(facet), controller = controller)
+
+        viewModel.onClockBoxSizeCommit(220, 90)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        verify(controller, org.mockito.Mockito.never()).commitSize(7L, 220, 90, HomeLayoutMode.PORTRAIT)
     }
 
     @Test

@@ -65,6 +65,8 @@ data class HomeClockState(
     /** The facet whose clock override governs the placement now (`null`: the launcher-wide default), and its name for the menu badge. */
     /** The facet whose placement Home shows (always the active one), so a change of facet re-fits the clock. */
     val placementFacetId: Long? = null,
+    /** The clock page's saved box width in dp for this orientation; `null` until it has been resized, when the placement's scale applies. */
+    val boxWidthDp: Int? = null,
     val adjustMode: ClockAdjustMode = ClockAdjustMode.NONE,
     /** True while a handle is being dragged, which suppresses the screen's own gestures. */
     val draggingHandle: Boolean = false,
@@ -208,6 +210,8 @@ data class HomeClockActions(
     val onEventClick: (CalendarEvent) -> Unit = {},
     val onZoneHeightCommit: (Float) -> Unit = {},
     val onScaleCommit: (Float) -> Unit = {},
+    /** Saves the clock page's box, aspect-locked, in dp; Home's frame turns a scale commit into this once the clock is measured. */
+    val onBoxSizeCommit: (widthDp: Int, heightDp: Int) -> Unit = { _, _ -> },
     val onAlignmentChange: (ClockAlignment) -> Unit = {},
     val onAdjustModeChange: (ClockAdjustMode) -> Unit = {},
     val onDraggingHandleChange: (Boolean) -> Unit = {},

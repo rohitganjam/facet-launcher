@@ -92,6 +92,8 @@ The live drag value is clamped too, so the handle follows the finger as soon as 
 
 ## 3. Portrait-only logic that landscape must not run
 
+The clock is sized as a box in dp, stored on its clock page (`clock_stack_items.widthDp`/`heightDp` and the landscape twins, aspect-locked). `rememberHomeFrame` turns the saved width into the draw scale once the clock is measured (`withBoxScale`: width over the natural width, so a new template keeps the box's width) and turns the resize handles' scale commit into a box (`withBoxCommit` to `HomeClockActions.onBoxSizeCommit`, saved by `HomeViewModel.onClockBoxSizeCommit`). A clock page never resized has no box and draws at the facet's `clockScale` until its first resize; the geometry maths below still works in scale.
+
 The scale re-clamp (`ClockScaleReclampEffect`, using `ClockFit.maxScale`) is portrait geometry, and in
 landscape it would persist a wrong `clockScale`, so it is skipped. It also waits until the height handle has room to move (`isClockGeometryMeasured`: ceiling above floor, read from the latest frame): until the content height reaches the geometry the handle sits at its floor and the fit reads as the minimum scale. If the geometry never settles it saves nothing. The compact-spacing check reserves
 nothing above the list in landscape (`HomeMediaLayout.listTopTargetPx` is 0).

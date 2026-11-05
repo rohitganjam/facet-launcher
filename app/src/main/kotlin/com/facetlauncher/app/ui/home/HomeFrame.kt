@@ -19,6 +19,8 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntSize
+import kotlin.math.roundToInt
 import androidx.compose.ui.unit.dp
 import com.facetlauncher.app.data.model.landscape
 import com.facetlauncher.app.data.model.MediaPlayerState
@@ -99,6 +101,8 @@ internal fun rememberHomeFrame(
 ): HomeFrame {
     val density = LocalDensity.current
     val landscape = mode == HomeLayoutMode.LANDSCAPE
+    val state = state.withBoxScale(layout.clockBoxSize, density)
+    val actions = actions.withBoxCommit(layout.clockBoxSize, density)
     val metrics = clockMetrics(density)
     val widgetMinPx = clockWidgetMinPx(state.widget, landscape, density)
     val geometry = computeClockGeometry(clockGeometryInputs(state, layout, landscape, metrics, widgetMinPx, density))
@@ -318,5 +322,34 @@ internal fun HomeFrame.neighborWidgetSizePx(widget: HomeClockWidgetState): Offse
     return Offset(
         widthPx.coerceIn(min.x, maxOf(min.x, room.x)),
         heightPx.coerceIn(min.y, maxOf(min.y, room.y)),
+    )
+}
+
+/**
+ * The clock is saved as a box in dp, not a scale: the scale it draws at is that width over the clock's natural width as
+ * measured now, so a new template keeps the box's width. Until the clock is measured, or while the page has no box yet,
+ * the placement's own scale stands.
+ */
+internal fun HomeScreenState.withBoxScale(natural: IntSize?, density: Density): HomeScreenState {
+    val widthDp = clock.boxWidthDp ?: return this
+    if (natural == null || natural.width <= 0) return this
+    val scale = with(density) { widthDp.dp.toPx() } / natural.width
+    return copy(clock = clock.copy(placement = clock.placement.copy(scale = scale)))
+}
+
+/** Turns the resize handles' scale commit into the box they mean, in dp and aspect-locked; before the clock is measured it saves the scale as before. */
+internal fun HomeScreenActions.withBoxCommit(natural: IntSize?, density: Density): HomeScreenActions {
+    if (natural == null || natural.width <= 0 || natural.height <= 0) return this
+    return copy(
+        clock = clock.copy(
+            onScaleCommit = { scale ->
+                with(density) {
+                    clock.onBoxSizeCommit(
+                        (natural.width * scale).toDp().value.roundToInt(),
+                        (natural.height * scale).toDp().value.roundToInt(),
+                    )
+                }
+            },
+        ),
     )
 }

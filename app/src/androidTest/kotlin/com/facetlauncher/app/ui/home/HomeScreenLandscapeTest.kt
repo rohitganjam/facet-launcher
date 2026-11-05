@@ -88,6 +88,7 @@ class HomeScreenLandscapeTest {
         onClockZoneHeightCommit: (Float) -> Unit = {},
         clockScale: Float = 0.8f,
         onClockScaleCommit: (Float) -> Unit = {},
+        onClockBoxSizeCommit: (Int, Int) -> Unit = { _, _ -> },
         onClockAlignmentChange: (ClockAlignment) -> Unit = {},
         mediaPlayer: MediaPlayerState? = null,
         appListVerticalAlignment: AppListVerticalAlignment = AppListVerticalAlignment.BOTTOM,
@@ -120,6 +121,7 @@ class HomeScreenLandscapeTest {
                     onClockZoneHeightCommit = onClockZoneHeightCommit,
                     clockScale = clockScale,
                     onClockScaleCommit = onClockScaleCommit,
+                    onClockBoxSizeCommit = onClockBoxSizeCommit,
                     onClockAlignmentChange = onClockAlignmentChange,
                     mediaPlayer = mediaPlayer,
                     appListVerticalAlignment = appListVerticalAlignment,
@@ -375,9 +377,11 @@ class HomeScreenLandscapeTest {
     fun draggingTheDividerLeftShrinksTheClockDownToItsSmallestScaleAndStopsThere() {
         // Given the default 0.8 clock scale
         var saved by mutableStateOf<Float?>(null)
-        var scaleCommitted: Float? = null
+        var boxCommitted: Pair<Int, Int>? = null
+        var density = 1f
         composeRule.setContent {
-            LandscapeHome(clockZoneHeightDp = saved, onClockZoneHeightCommit = { saved = it }, onClockScaleCommit = { scaleCommitted = it })
+            density = androidx.compose.ui.platform.LocalDensity.current.density
+            LandscapeHome(clockZoneHeightDp = saved, onClockZoneHeightCommit = { saved = it }, onClockBoxSizeCommit = { w, h -> boxCommitted = w to h })
         }
         enterAdjustMode()
         val paneBefore = boundsOf("home_clock_pane").width
@@ -393,8 +397,8 @@ class HomeScreenLandscapeTest {
         assert(clockAfter.width < clockBefore) { "clock should shrink: $clockBefore -> ${clockAfter.width}" }
         assert(clockAfter.width >= clockBefore * 0.5f / 0.8f - 2f) { "clock should not go below its smallest scale: $clockBefore -> ${clockAfter.width}" }
         assert(clockAfter.right <= boundsOf("home_clock_pane").right) { "clock $clockAfter should still fit its pane" }
-        // And, as in portrait, the shrunk scale was saved on release
-        assert(scaleCommitted != null && scaleCommitted!! < 0.8f) { "expected the shrunk scale to be saved, got $scaleCommitted" }
+        // And, as in portrait, the shrunk box was saved on release, narrower than the clock was
+        assert(boxCommitted != null && boxCommitted!!.first * density < clockBefore) { "expected the shrunk box to be saved, got $boxCommitted" }
     }
 
     @Test
@@ -469,8 +473,8 @@ class HomeScreenLandscapeTest {
 
     @Test
     fun draggingAScaleHandleSavesANewScale() {
-        var committed: Float? = null
-        composeRule.setContent { LandscapeHome(onClockScaleCommit = { committed = it }) }
+        var committed: Pair<Int, Int>? = null
+        composeRule.setContent { LandscapeHome(onClockBoxSizeCommit = { w, h -> committed = w to h }) }
         enterAdjustMode()
 
         composeRule.onNodeWithTag("clock_resize_handle_right").performTouchInput {
@@ -480,7 +484,7 @@ class HomeScreenLandscapeTest {
         }
         composeRule.waitForIdle()
 
-        assert(committed != null) { "a scale should be committed after dragging a handle" }
+        assert(committed != null) { "a box should be saved after dragging a handle" }
     }
 
     @Test

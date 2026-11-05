@@ -16,6 +16,7 @@ import com.facetlauncher.app.data.model.ClockAlignment
 import com.facetlauncher.app.data.model.Facet
 import com.facetlauncher.app.data.model.LandscapeOverrides
 import com.facetlauncher.app.data.model.Folder
+import com.facetlauncher.app.data.model.ClockStackItemKind
 import com.facetlauncher.app.domain.ClockPlacement
 import com.facetlauncher.app.domain.ObserveHomeScreenStateUseCase
 import com.facetlauncher.app.domain.ObserveQuickAddStateUseCase
@@ -165,6 +166,12 @@ class HomeViewModel @Inject constructor(
     fun onClockZoneHeightCommit(heightDp: Float, mode: HomeLayoutMode = HomeLayoutMode.PORTRAIT) = commitPlacement(mode) { it.copy(zoneHeightDp = heightDp) }
 
     /** Fired once, on release, by the clock's resize handles. */
+    /** Saves the visible clock page's box; a widget page keeps its own size, saved elsewhere. */
+    fun onClockBoxSizeCommit(widthDp: Int, heightDp: Int, mode: HomeLayoutMode = HomeLayoutMode.PORTRAIT) {
+        val page = _uiState.value.visibleClockItem?.takeIf { it.kind == ClockStackItemKind.CLOCK } ?: return
+        viewModelScope.launch { clockWidgetFacet.commitSize(page.id, widthDp, heightDp, mode) }
+    }
+
     fun onClockScaleCommit(scale: Float, mode: HomeLayoutMode = HomeLayoutMode.PORTRAIT) = commitPlacement(mode) { it.copy(scale = scale) }
 
     /** Fired by the adjust-mode alignment toolbar: a widget page keeps its own alignment, the clock page the facet's. */

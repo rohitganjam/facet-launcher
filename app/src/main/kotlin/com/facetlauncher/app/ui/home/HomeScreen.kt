@@ -62,6 +62,9 @@ fun HomeScreen(
         snapshotFlow { currentFrame.isFullyRevealed }.first { it }
         currentOnFullyReveal()
     }
+    // The frame's own state and actions: the clock's saved box turned into a scale, and a scale commit into a box.
+    val state = frame.state
+    val actions = frame.actions
     val clock = state.clock
     Box(
         modifier = modifier

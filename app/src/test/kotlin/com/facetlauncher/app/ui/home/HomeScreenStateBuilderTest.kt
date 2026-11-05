@@ -175,6 +175,30 @@ class HomeScreenStateBuilderTest {
     }
 
     @Test
+    fun `the clock page shows its saved box width for each orientation and a widget page has none`() {
+        // Given a clock page with a box in both orientations, then a widget page
+        val clock = clockItem(id = 10L, position = 0).copy(widthDp = 200, heightDp = 80, landscapeWidthDp = 320, landscapeHeightDp = 130)
+        val facet = Facet(id = 1L, name = "A", position = 0, clockStack = listOf(clock, widgetItem(41, id = 11L, position = 1)))
+        val style = resolveFacetStyle(facet, settings)
+
+        // When building each page, in each orientation
+        fun boxOf(pageId: Long, landscape: Boolean) =
+            style.toHomeScreenState(landscape, settings, content, live = HomeLiveState(visibleClockItemId = pageId)).clock.boxWidthDp
+
+        // Then the clock page carries its width and the widget page none (it sizes itself)
+        assertEquals(200, boxOf(10L, landscape = false))
+        assertEquals(320, boxOf(10L, landscape = true))
+        assertNull(boxOf(11L, landscape = false))
+    }
+
+    @Test
+    fun `a clock page that was never resized has no box`() {
+        val facet = Facet(id = 1L, name = "A", position = 0, clockStack = listOf(clockItem(position = 0)))
+
+        assertNull(build(facet, landscape = false).clock.boxWidthDp)
+    }
+
+    @Test
     fun `a widget page with no alignment of its own uses the facet's`() {
         val facet = Facet(id = 1L, name = "A", position = 0, clockPlacementOwn = true, clockAlignment = ClockAlignment.CENTER, clockStack = listOf(widgetItem(41, id = 11L)))
 

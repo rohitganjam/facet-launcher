@@ -109,6 +109,7 @@ private fun homeClockActions(
         onEventClick = { event -> openCalendarEvent(inputs.context, event) },
         onZoneHeightCommit = { viewModel.onClockZoneHeightCommit(it, mode) },
         onScaleCommit = { viewModel.onClockScaleCommit(it, mode) },
+        onBoxSizeCommit = { width, height -> viewModel.onClockBoxSizeCommit(width, height, mode) },
         onAlignmentChange = { viewModel.onClockAlignmentCommit(it, mode) },
         onAdjustModeChange = hooks.setAdjustMode,
         onDraggingHandleChange = hooks.setDraggingHandle,

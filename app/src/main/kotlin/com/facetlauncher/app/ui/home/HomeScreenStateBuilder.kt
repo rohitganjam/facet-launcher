@@ -112,6 +112,8 @@ fun ResolvedFacetStyle.toHomeScreenState(
         launcherFontOption = settings.launcherFontOption,
         placement = clockPlacement.of(landscape).withPageAlignment(shownClockPages(live).let { it.getOrNull(it.visibleIndex(live.visibleClockItemId)) }, landscape),
         placementFacetId = live.placementFacetId,
+        boxWidthDp = shownClockPages(live).let { it.getOrNull(it.visibleIndex(live.visibleClockItemId)) }
+            ?.takeIf { it.kind == ClockStackItemKind.CLOCK }?.sizeDp?.of(landscape)?.first,
         adjustMode = live.adjustMode,
         draggingHandle = live.draggingHandle,
     ),
