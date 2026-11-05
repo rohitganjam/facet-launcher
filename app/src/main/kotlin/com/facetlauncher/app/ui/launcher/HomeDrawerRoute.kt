@@ -14,6 +14,7 @@ import com.facetlauncher.app.ui.home.HomeLayoutMode
 import com.facetlauncher.app.ui.home.HomeLiveState
 import com.facetlauncher.app.ui.home.HomeScreenContent
 import com.facetlauncher.app.ui.home.HomeWidgetSizing
+import com.facetlauncher.app.data.model.ClockStackItemKind
 import com.facetlauncher.app.data.model.NativeWidgetRef
 import com.facetlauncher.app.ui.nativewidget.NativeWidgetAccess
 import com.facetlauncher.app.ui.nativewidget.NativeWidgetAccessControls
@@ -551,6 +552,7 @@ fun HomeDrawerRoute(
                 onDone = { overlays.showClockWidgetPicker = false },
                 viewModel = clockWidgetPickerViewModel,
                 onConfigureNewWidget = { overlays.configureRef = it },
+                clockAvailable = homeUiState.clockStack.none { it.kind == ClockStackItemKind.CLOCK },
             )
         }
         if (overlays.showWeatherSheet) {

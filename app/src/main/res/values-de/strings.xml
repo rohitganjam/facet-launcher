@@ -1115,6 +1115,7 @@
     <string name="accessibility_service_label">Facet Doppeltippen zum Sperren</string>
     <string name="accessibility_service_description">Sperrt das Display, wenn du auf dem Startbildschirm doppelt auf eine leere Fläche tippst. Liest keine Bildschirminhalte.</string>
     <string name="about_weather_credit">Wetterdaten von MET Norway (CC BY 4.0). Städtenamen von GeoNames (CC BY 4.0).</string>
+    <string name="native_widget_clock">Uhr</string>
     <string name="native_widget_weather">Wetter</string>
     <string name="native_widget_agenda">Termine</string>
     <string name="native_widget_now_playing">Wiedergabe</string>

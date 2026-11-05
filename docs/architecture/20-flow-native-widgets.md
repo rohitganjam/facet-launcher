@@ -109,7 +109,7 @@ visible; the Permissions screen in Settings still works.
 
 ## 4. Adding, replacing, removing
 
-- **Pickers.** Both `HubWidgetPickerContent` screens list a "Facet widgets" section (`NativeWidgetPickerSection`, each type
+- **Pickers.** Both `HubWidgetPickerContent` screens list a "Facet widgets" section (`NativeWidgetPickerSection`, each type The Home picker (`ClockWidgetPickerScreen`) also offers the **Clock** first in that section while the facet has none (`clockAvailable`, from `HomeDrawerRoute`), through `ClockWidgetPickerViewModel.onClockSelect` (replace the page with the clock, or append it); the Hub picker never does.
   drawn at its default size with sample data) above the installed apps' widgets.
 - **Hub.** `HubWidgetPickerViewModel.onNativeWidgetSelect` places it at `defaultSpan` through `PlaceWidgetUseCase` with
   `nextNativeId()`; there is no bind or configure step. The 20-widget cap still applies.

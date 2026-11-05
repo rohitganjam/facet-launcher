@@ -1115,6 +1115,7 @@
     <string name="accessibility_service_label">Facet toque duplo para bloquear</string>
     <string name="accessibility_service_description">Bloqueia a tela quando você toca duas vezes em um espaço vazio da tela inicial. Não lê o conteúdo da tela.</string>
     <string name="about_weather_credit">Dados do clima da MET Norway (CC BY 4.0). Nomes de cidades do GeoNames (CC BY 4.0).</string>
+    <string name="native_widget_clock">Relógio</string>
     <string name="native_widget_weather">Clima</string>
     <string name="native_widget_agenda">Agenda</string>
     <string name="native_widget_now_playing">Tocando agora</string>

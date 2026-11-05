@@ -1204,6 +1204,7 @@
 
     <!-- About: credits -->
     <string name="about_weather_credit">Weather data from MET Norway (CC BY 4.0). City names from GeoNames (CC BY 4.0).</string>
+    <string name="native_widget_clock">Clock</string>
     <string name="native_widget_weather">Weather</string>
     <string name="native_widget_agenda">Agenda</string>
     <string name="native_widget_now_playing">Now playing</string>

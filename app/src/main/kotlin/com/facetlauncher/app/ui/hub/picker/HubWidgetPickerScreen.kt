@@ -158,6 +158,9 @@ internal fun HubWidgetPickerContent(
     /** The widgets Facet draws itself, offered first. */
     nativeWidgets: ImmutableList<NativeWidgetType> = persistentListOf(),
     onNativeWidgetSelect: (NativeWidgetType) -> Unit = {},
+    /** The Home pickers offer the clock too, while the facet has none. */
+    showClockOption: Boolean = false,
+    onClockSelect: () -> Unit = {},
 ) {
     BoxWithConstraints(
         modifier = modifier
@@ -201,7 +204,7 @@ internal fun HubWidgetPickerContent(
                     }
                     // The widgets Facet draws itself belong to the personal side.
                     if (uiState.query.isBlank() && uiState.tab == WidgetPickerTab.PERSONAL) {
-                        item { NativeWidgetPickerSection(types = nativeWidgets, onSelect = onNativeWidgetSelect) }
+                        item { NativeWidgetPickerSection(types = nativeWidgets, onSelect = onNativeWidgetSelect, showClock = showClockOption, onClockSelect = onClockSelect) }
                     }
                     items(uiState.groups, key = { it.appLabel }) { group ->
                         WidgetProviderGroupRow(group = group, tileWidth = tileWidth, onProviderSelect = onProviderSelect)

@@ -1056,6 +1056,7 @@
     <string name="accessibility_service_description">Vergrendelt het scherm wanneer je dubbeltikt op lege ruimte op Home. Leest geen schermcontent.</string>
 
     <string name="about_weather_credit">Weergegevens van MET Norway (CC BY 4.0). Plaatsnamen van GeoNames (CC BY 4.0).</string>
+    <string name="native_widget_clock">Klok</string>
     <string name="native_widget_weather">Weer</string>
     <string name="native_widget_agenda">Agenda</string>
     <string name="native_widget_now_playing">Nu aan het spelen</string>
