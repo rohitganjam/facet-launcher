@@ -243,7 +243,7 @@
     <string name="gesture_hint_widgets">Widgets</string>
     <string name="gesture_hint_all_your_apps">All your apps</string>
     <string name="gesture_hint_arrow_up">↑</string>
-    <string name="gesture_hint_clock_hold">Press and hold the clock to resize or move it</string>
+    <string name="gesture_hint_clock_hold">Press and hold empty space on Home to resize or move the clock</string>
     <string name="gesture_hint_got_it">Got it</string>
 
     <!-- FacetScopeBadge -->
@@ -936,7 +936,7 @@
     <string name="clock_style_date_style">Date style</string>
     <string name="clock_style_position_section">POSITION</string>
     <string name="clock_style_tap_to_select">CLOCK STYLES — TAP TO SELECT</string>
-    <string name="clock_style_long_press_hint">Long-press clock on home screen to adjust size and vertical position.</string>
+    <string name="clock_style_long_press_hint">Press and hold empty space on Home to adjust the clock\'s size and position.</string>
     <string name="clock_style_applied">Applied</string>
     <string name="clock_style_reset_position">Reset clock widget position</string>
 

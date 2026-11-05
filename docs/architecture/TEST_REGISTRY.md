@@ -1753,8 +1753,8 @@ How to read: one section per tier, one table per package (mirrors `app/src/main`
 
 <details><summary><code>ObserveNativeWidgetOverridesUseCaseTest</code> — 13 cases</summary>
 
-- an agenda widget with its own calendars reads only those
-- an agenda with only its own all-day choice keeps the launcher's calendars
+- an agenda widget with its own calendars reads only those, and a new one reads every calendar
+- an agenda with only its own all-day choice still reads every calendar
 - a Home page with its own calendars is resolved like a Hub widget
 - an agenda widget without calendar access shows no events
 - a weather widget set to the launcher's own city makes no request

@@ -218,7 +218,7 @@
     <string name="gesture_hint_widgets">Widgets</string>
     <string name="gesture_hint_all_your_apps">Al je apps</string>
     <string name="gesture_hint_arrow_up">↑</string>
-    <string name="gesture_hint_clock_hold">Houd de klok ingedrukt om hem te vergroten of te verplaatsen</string>
+    <string name="gesture_hint_clock_hold">Houd een lege plek op het startscherm ingedrukt om de klok te vergroten of te verplaatsen</string>
     <string name="gesture_hint_got_it">Begrepen</string>
 
     <string name="facet_scope_global">Algemeen</string>
@@ -827,7 +827,7 @@
     <string name="clock_style_date_style">Datumstijl</string>
     <string name="clock_style_position_section">POSITIE</string>
     <string name="clock_style_tap_to_select">KLOKSTIJLEN — TIK OM TE KIEZEN</string>
-    <string name="clock_style_long_press_hint">Houd de klok op het startscherm ingedrukt om grootte en verticale positie aan te passen.</string>
+    <string name="clock_style_long_press_hint">Houd een lege plek op het startscherm ingedrukt om grootte en positie van de klok aan te passen.</string>
     <string name="clock_style_applied">Toegepast</string>
     <string name="clock_style_reset_position">Positie van klokwidget resetten</string>
 

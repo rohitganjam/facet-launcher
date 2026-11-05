@@ -209,7 +209,7 @@
     <string name="gesture_hint_widgets">Widgets</string>
     <string name="gesture_hint_all_your_apps">Alle deine Apps</string>
     <string name="gesture_hint_arrow_up">↑</string>
-    <string name="gesture_hint_clock_hold">Uhr gedrückt halten, um Größe und Position zu ändern</string>
+    <string name="gesture_hint_clock_hold">Leeren Platz auf dem Startbildschirm gedrückt halten, um Größe und Position der Uhr zu ändern</string>
     <string name="gesture_hint_got_it">Verstanden</string>
 
     <!-- FacetScopeBadge -->
@@ -832,7 +832,7 @@
     <string name="clock_style_date_style">Datumsstil</string>
     <string name="clock_style_position_section">POSITION</string>
     <string name="clock_style_tap_to_select">UHRSTILE — ZUM AUSWÄHLEN TIPPEN</string>
-    <string name="clock_style_long_press_hint">Drücke lange auf die Uhr auf dem Startbildschirm, um Größe und vertikale Position anzupassen.</string>
+    <string name="clock_style_long_press_hint">Drücke lange auf einen leeren Platz auf dem Startbildschirm, um Größe und Position der Uhr anzupassen.</string>
     <string name="clock_style_applied">Angewendet</string>
     <string name="clock_style_reset_position">Uhr-Widget-Position zurücksetzen</string>
 

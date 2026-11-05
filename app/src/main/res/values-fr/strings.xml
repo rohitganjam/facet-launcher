@@ -209,7 +209,7 @@
     <string name="gesture_hint_widgets">Widgets</string>
     <string name="gesture_hint_all_your_apps">Toutes vos apps</string>
     <string name="gesture_hint_arrow_up">↑</string>
-    <string name="gesture_hint_clock_hold">Appuyez longuement sur l\'horloge pour la redimensionner ou la déplacer</string>
+    <string name="gesture_hint_clock_hold">Appuyez longuement sur un espace vide de l\'écran d\'accueil pour redimensionner ou déplacer l\'horloge</string>
     <string name="gesture_hint_got_it">Compris</string>
 
     <!-- FacetScopeBadge -->
@@ -832,7 +832,7 @@
     <string name="clock_style_date_style">Style de date</string>
     <string name="clock_style_position_section">POSITION</string>
     <string name="clock_style_tap_to_select">STYLES D\'HORLOGE — APPUYEZ POUR SÉLECTIONNER</string>
-    <string name="clock_style_long_press_hint">Appuyez longuement sur l\'horloge de l\'écran d\'accueil pour ajuster la taille et la position verticale.</string>
+    <string name="clock_style_long_press_hint">Appuyez longuement sur un espace vide de l\'écran d\'accueil pour ajuster la taille et la position de l\'horloge.</string>
     <string name="clock_style_applied">Appliqué</string>
     <string name="clock_style_reset_position">Réinitialiser la position du widget horloge</string>
 

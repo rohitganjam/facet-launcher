@@ -20,7 +20,7 @@
     <string name="inherit_override_inherit_default">Herdar predefinição</string>
     <string name="inherit_override_edit_defaults">Editar predefinições</string>
     <string name="gesture_hint_all_your_apps">Todas as suas apps</string>
-    <string name="gesture_hint_clock_hold">Mantenha o relógio premido para redimensionar ou mover</string>
+    <string name="gesture_hint_clock_hold">Mantenha premido um espaço vazio no ecrã inicial para redimensionar ou mover o relógio</string>
     <string name="gesture_hint_got_it">Percebi</string>
     <string name="home_surface_preview_nothing_yet">Ainda não há nada para mostrar</string>
 
@@ -116,7 +116,7 @@
     <string name="clock_style_font_label">Tipo de letra</string>
     <string name="clock_style_primary_font_color">Cor primária do tipo de letra</string>
     <string name="clock_style_show_meridiem">Mostrar AM/PM</string>
-    <string name="clock_style_long_press_hint">Mantenha premido o relógio no ecrã inicial para ajustar o tamanho e a posição vertical.</string>
+    <string name="clock_style_long_press_hint">Mantenha premido um espaço vazio no ecrã inicial para ajustar o tamanho e a posição do relógio.</string>
     <string name="clock_style_reset_position">Repor posição do widget do relógio</string>
 
     <string name="backup_restore_confirm_message">Importar substitui cada faceta, o dock e os favoritos predefinidos pelo conteúdo do ficheiro da cópia de segurança. Esta ação não pode ser anulada.</string>
@@ -268,7 +268,6 @@
     <string name="facet_settings_dock_settings_title">Definições do dock</string>
     <string name="home_usage_access_needed">\"Mais usados\" precisa de acesso à utilização através das definições do sistema.</string>
 
-    <string name="clock_adjust_clock_settings">Definições de relógio e calendário</string>
     <string name="clock_adjust_align_bottom">Alinhar em baixo</string>
     <string name="hub_widget_picker_search">Pesquisar widgets</string>
     <string name="hub_orphaned_app_uninstalled">A app foi desinstalada</string>
@@ -317,6 +316,7 @@
     <string name="accessibility_access_explanation_body">Isto requer o serviço de acessibilidade do Facet, ativado nas definições do sistema — o Facet não o pode ativar diretamente. Serve apenas para bloquear o ecrã: não lê o que está no ecrã, não observa o que escreve e não envia nada para fora do seu dispositivo. O desbloqueio por impressão digital ou rosto continua a funcionar.</string>
     <string name="accessibility_service_description">Bloqueia o ecrã quando toca duas vezes num espaço vazio do ecrã inicial. Não lê o conteúdo do ecrã.</string>
     <string name="about_weather_credit">Dados meteorológicos da MET Norway (CC BY 4.0). Nomes de cidades do GeoNames (CC BY 4.0).</string>
+    <string name="native_widget_clock">Relógio</string>
     <string name="native_widget_weather">Meteorologia</string>
     <string name="native_widget_agenda">Agenda</string>
     <string name="native_widget_now_playing">A reproduzir</string>

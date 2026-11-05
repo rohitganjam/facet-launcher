@@ -64,9 +64,9 @@ A Weather or Agenda widget can be set to its own calendars or location instead o
 the Hub (`widget_placements.nativeWidgetConfig`) or as a Home clock page (`clock_stack_items.nativeWidgetConfig`). Both go through one
 path, keyed by `NativeWidgetRef` (`Hub(appWidgetId)` or `Home(itemId)`):
 
-- `NativeWidgetConfig` (JSON, a field left out while it follows the launcher; a value that does not parse follows the launcher) stores it: Agenda's chosen calendar ids and all-day choice (the sheet shows the
-  launcher's Calendar options, starting from the launcher's current values, with no follow switch), Weather's current location or a saved
-  city. A `null` field follows the launcher; Now Playing has none. `SetNativeWidgetConfigUseCase` writes either store and
+- `NativeWidgetConfig` (JSON, a field left out while it follows the launcher; a value that does not parse follows the launcher) stores it: Agenda's chosen calendar ids and all-day choice (an Agenda never follows the launcher: `null` ids mean every calendar,
+  calendars added later included, and `null` all-day means shown, so a new Agenda starts on every calendar), Weather's current location or a saved
+  city (`null` follows the launcher's Weather settings); Now Playing has none. `SetNativeWidgetConfigUseCase` writes either store and
   `ObserveNativeWidgetSettingsUseCase` reads it back.
   The config also has a `clock` section (`ClockWidgetConfig`: look, accessories, weather location, and the calendar under it) for the clock widget that is being
   stack (see `docs/proposals/clock-as-facet-widget.md`): Home, the previews and the clock settings screens read and write it through `resolveFacetStyle` and

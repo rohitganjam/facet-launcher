@@ -209,7 +209,7 @@
     <string name="gesture_hint_widgets">Widgets</string>
     <string name="gesture_hint_all_your_apps">Todas tus apps</string>
     <string name="gesture_hint_arrow_up">↑</string>
-    <string name="gesture_hint_clock_hold">Mantén pulsado el reloj para cambiar su tamaño y posición</string>
+    <string name="gesture_hint_clock_hold">Mantén pulsado un espacio vacío de la pantalla de inicio para cambiar el tamaño y la posición del reloj</string>
     <string name="gesture_hint_got_it">Entendido</string>
 
     <!-- FacetScopeBadge -->
@@ -832,7 +832,7 @@
     <string name="clock_style_date_style">Estilo de fecha</string>
     <string name="clock_style_position_section">POSICIÓN</string>
     <string name="clock_style_tap_to_select">ESTILOS DE RELOJ — TOCA PARA SELECCIONAR</string>
-    <string name="clock_style_long_press_hint">Mantén pulsado el reloj en la pantalla de inicio para ajustar el tamaño y la posición vertical.</string>
+    <string name="clock_style_long_press_hint">Mantén pulsado un espacio vacío de la pantalla de inicio para ajustar el tamaño y la posición del reloj.</string>
     <string name="clock_style_applied">Aplicado</string>
     <string name="clock_style_reset_position">Restablecer posición del widget de reloj</string>
 

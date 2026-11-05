@@ -4,7 +4,7 @@
     <string name="quick_placement_add_to">Agregar a %1$s</string>
     <string name="app_menu_notifications_access_needed">Las notificaciones necesitan acceso desde la configuración del sistema.</string>
     <string name="app_picker_no_folders_yet">Aún no hay carpetas. Mantén presionada una app y elige \"Agregar a carpeta\" para crear una.</string>
-    <string name="gesture_hint_clock_hold">Mantén presionado el reloj para cambiar su tamaño y posición</string>
+    <string name="gesture_hint_clock_hold">Mantén presionado un espacio vacío de la pantalla de inicio para cambiar el tamaño y la posición del reloj</string>
 
     <string name="settings_header_title">Configuración</string>
     <string name="settings_facets_subtitle">Crea y administra la configuración específica de cada faceta</string>
@@ -77,8 +77,7 @@
     <string name="facet_settings_dock_settings_title">Configuración del Dock</string>
     <string name="home_usage_access_needed">Más usadas necesita acceso de uso desde la configuración del sistema.</string>
 
-    <string name="clock_style_long_press_hint">Mantén presionado el reloj en la pantalla de inicio para ajustar el tamaño y la posición vertical.</string>
-    <string name="clock_adjust_clock_settings">Configuración de reloj y calendario</string>
+    <string name="clock_style_long_press_hint">Mantén presionado un espacio vacío de la pantalla de inicio para ajustar el tamaño y la posición del reloj.</string>
     <string name="clock_adjust_facet_settings_subtitle">Configuración específica de la faceta: lista de apps, dock, reloj y calendario</string>
     <string name="hub_widget_picker_setup_cancelled">La configuración no terminó, así que ese widget no se agregó</string>
     <string name="hub_widget_picker_title">Agregar widget</string>
@@ -118,6 +117,7 @@
     <string name="gesture_long_press_title">Mantener presionado un espacio vacío</string>
     <string name="gesture_home_opens_search_subtitle">Presiona Inicio cuando ya estés en la pantalla de inicio para abrir el cajón con la búsqueda lista.</string>
     <string name="about_weather_credit">Datos del clima de MET Norway (CC BY 4.0). Nombres de ciudades de GeoNames (CC BY 4.0).</string>
+    <string name="native_widget_clock">Reloj</string>
     <string name="native_widget_weather">Clima</string>
     <string name="native_widget_agenda">Agenda</string>
     <string name="native_widget_now_playing">Reproduciendo</string>
