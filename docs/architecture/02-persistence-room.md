@@ -9,7 +9,7 @@
 | `DataStore<Preferences>` | `facet_entitlement` (`datastore/facet_entitlement.preferences_pb`) | The cached Pro state (`pro_purchased`; excluded from Android backups and device transfer by `res/xml/data_extraction_rules.xml`), so Pro works offline and at cold start; debug builds also keep `debug_entitlement_mode` here | `PlayEntitlementRepository`, only from an explicit Google Play answer | Same as `facet_settings`; **not** in the backup file, so a restore can never grant Pro |
 | `DataStore<Preferences>` | `facet_automation` (`datastore/facet_automation.preferences_pb`) | Facet-automation bookkeeping: the baseline facet, the ordered active rule ids, the suppressed rule ids (§5.7) | `AutomationStateRepository` (via `ActivateFacetByIdUseCase`) | Same as `facet_settings`; **not** in the backup file |
 | System `AppWidgetService` | Android framework, keyed by `HUB_APP_WIDGET_HOST_ID = 1024` | Which `appWidgetId`s are bound to which providers for this host | `LauncherAppWidgetHost` via `AppWidgetRepository` (allocate/bind/delete) | App data clear **does not** clear it → orphan detection in `ObserveHubStateUseCase` |
-| Backup file | User-picked SAF `Uri` (`CreateDocument`/`OpenDocument`), JSON via `kotlinx-serialization` | `BackupBundle` v3: settings + facets + placements + folders + widget placements (raw rows, unhydrated) | `BackupRepository` (`ExportBackupUseCase` / `ImportBackupUseCase`) | Whatever the user does with the file — Facet keeps no copy |
+| Backup file | User-picked SAF `Uri` (`CreateDocument`/`OpenDocument`), JSON via `kotlinx-serialization` | `BackupBundle` v4: settings + facets + placements + folders + widget placements (raw rows, unhydrated) | `BackupRepository` (`ExportBackupUseCase` / `ImportBackupUseCase`) | Whatever the user does with the file — Facet keeps no copy |
 | In-memory only | `NotificationBadgeRepository.badgeCounts` (`MutableStateFlow`) | Per-package non-silent notification counts | `FacetNotificationListenerService` | Process lifetime only |
 
 Nothing else is persisted: no `SharedPreferences`, no files in `filesDir`/`cacheDir`, no network.
@@ -17,8 +17,9 @@ Nothing else is persisted: no `SharedPreferences`, no files in `filesDir`/`cache
 **Global defaults vs per-facet overrides.** The clock, app-list and dock *defaults* the
 user sets in Settings are DataStore keys (`clock_template_id`, `clock_alignment`,
 `list_content_mode`, `dock_display_mode`, …). The `facets` table carries the same fields again
-as *overrides*, each block gated by a flag (`overrideClock`, `overrideApps`, `overrideDock`,
-`overrideCalendar`, `overridingFavorites`); `Facet.resolveOverride(...)` picks the facet
+as *overrides*, each block gated by a flag (`overrideApps`, `overrideDock`, `overridingFavorites`; the
+legacy `overrideClock` and `overrideCalendar` only feed `legacyClockConfig` until a clock page holds its own config,
+see [03](03-reactive-data-flow.md) §4 and [13](13-flow-facets-theme-notifications-onboarding.md)); `Facet.resolveOverride(...)` picks the facet
 value when its flag is set and the DataStore value otherwise. The ER diagram in §1 is Room only —
 the defaults are in §5. The calendar events strip is the one exception to this pattern — it has no
 design fields of its own anywhere (Room or DataStore); it reads the global-only
@@ -622,7 +623,7 @@ DataStore level either.
 The same 73 keys, grouped the way Settings screens present them, with the `LauncherSettings` field
 each maps to. Defaults are `LauncherSettings()`'s constructor defaults.
 
-#### Clock design (global; the style and accessories are overridden per facet when `facets.overrideClock`)
+#### Clock design (legacy: read only by `MaterializeClockConfigsUseCase` and the fallback `legacyClockConfig`; a clock now holds its own `ClockWidgetConfig`)
 
 The placement keys here (`clock_alignment`, `clock_zone_height_dp`, `clock_scale` and the landscape twins) are no longer
 edited anywhere: they are the launcher's built-in fallback for a facet that has not adjusted its own placement
@@ -662,7 +663,7 @@ its position (see chat history: calendar/appearance styling consolidation).
 | `landscape_clock_zone_height_dp` | Float | `landscapeClockZoneHeightDp` | `null` (= `clock_zone_height_dp`) | landscape's divider position (the clock pane width) |
 | `landscape_clock_scale` | Float | `landscapeClockScale` | `null` (= `clock_scale`) | removed by `resetClockScale()` too |
 
-#### Calendar selection (global; overridden when `facets.overrideCalendar`)
+#### Calendar selection (legacy: copied into each clock's own calendar config at startup)
 
 | Key | Type | Field | Default | Notes |
 |---|---|---|---|---|
@@ -813,7 +814,7 @@ baseline facet was deleted.
 
 ## 6. Backup file format (`BackupBundle`, `data/model/BackupBundle.kt`)
 
-`CURRENT_BACKUP_VERSION = 3`; `kotlinx-serialization` JSON written/read by `BackupRepository`
+`CURRENT_BACKUP_VERSION = 4`; `kotlinx-serialization` JSON written/read by `BackupRepository`
 through a user-chosen SAF `Uri`. Import refuses `backupVersion > CURRENT_BACKUP_VERSION`, accepts
 older (fields added since carry defaults). Contents: `settings: BackupSettings` — every DataStore key except
 the ones below, with `activeFacetIndex` instead of `active_facet_id` and the `landscape_*` keys as flat

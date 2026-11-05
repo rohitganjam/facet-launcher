@@ -161,5 +161,5 @@ Settings, and never inherited by choice. `CommitClockPlacementUseCase` saves eac
 facet: on the first one it copies the placement the facet is showing (the launcher's fallback) into the facet in both
 orientations and sets `facets.clockPlacementOwn`, so changing one value does not move the others. A widget page keeps
 its own alignment on its stack item (`ClockWidgetFacetController.commitPageAlignment`); the clock page uses the
-facet's. "Reset clock position" on the facet's clock style screen clears the flag. `overrideClock` only governs the
-clock's style, calendar and accessories.
+facet's. "Reset clock position" on the facet's clock style screen clears the flag. The clock's style, calendar and accessories live in its own
+`ClockWidgetConfig`, not on the facet.
