@@ -1,7 +1,7 @@
 # Proposal: the clock as a Facet widget
 
-Status: design agreed in discussion, not started. Branch `clock-as-widget`. Nothing here is built yet; once it is, the
-living docs (`docs/architecture/`) replace this file.
+Status: built (branches `clock-as-widget` and `drop-legacy-clock-columns`). The living docs (`docs/architecture/`) describe what shipped; this file keeps
+the reasoning. The open questions at the end are settled as noted there.
 
 ## 1. Goal
 
@@ -125,10 +125,12 @@ The clock is Home's most tuned surface (fit maths, landscape pane, calendar foll
 migration must finish before Home's first draw. Hint strings (`gesture_hint_clock_hold`, `clock_style_long_press_hint`) become wrong and are
 redesigned later.
 
-## 11. Open
+## 11. Open (settled as built)
 
-- Hint design (existing hints reworded, to explore later).
-- Resize handles: do they cover only the clock, or the clock plus a calendar wider than it?
-- Vertical anchor of a page's box inside the shared zone when the box is shorter than the zone.
-- Backup: whether `CURRENT_BACKUP_VERSION` must bump so an older app can tell a new backup's config encoding apart (settle in stage 1).
-- Per-facet calendar colours and per-clock time zones (later).
+- Hint design: the two clock hints now point at long-pressing free space; a fuller redesign of the hints is still later.
+- Resize handles cover only the clock (time, date and accessories), not the calendar under it: the calendar keeps its own size and is as
+  wide as its rows, so a calendar wider than the clock does not move the handles.
+- Vertical anchor: a box shorter than the zone sits at the top of the zone; the zone's height is the divider's, as before.
+- Backup: `CURRENT_BACKUP_VERSION` is 5 (the clock's config and box ride on each facet); older backups are converted on import.
+- Not built, later: per-facet calendar colours and per-clock time zones. More than one clock per facet is out of scope: a facet has one
+  clock or none.
