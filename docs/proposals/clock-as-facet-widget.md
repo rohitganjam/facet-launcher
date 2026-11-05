@@ -85,7 +85,7 @@ deleted when old backups stop being supported. New backups carry the clock in `n
 | Gesture | Result |
 |---|---|
 | Long-press on the clock or its calendar | A small sheet with two rows: **Clock styles** (opens the full-screen clock options for that clock) and **Calendar settings** (the shared calendar sheet). |
-| Long-press on free Home space | The Home sheet (today's `ClockAdjustSheet`) with constant rows: **Adjust size & position** (the only way into resize mode), **Replace widget**, **Remove widget** (**Add widget** when there is none), **Widget stack**, then facet and launcher settings. |
+| Long-press on free Home space | The Home sheet (today's `ClockAdjustSheet`) with constant rows: **Adjust widget size & position** (the only way into resize mode), **Replace widget**, **Remove widget** (**Add widget** when there is none), **Widget stack**, then facet and launcher settings. |
 | Long-press on Weather / Agenda / Now playing | As today (Home's behaviour through `longPressFallback`). Their on-widget 3-dots stay. |
 | 3-dot in the weather forecast sheet opened from a clock | Opens that clock's accessory controls (icons on or off, location, and so on). |
 | Tap on the clock text / date | As today (opens the Clock or Calendar app). |

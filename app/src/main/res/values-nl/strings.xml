@@ -831,8 +831,8 @@
     <string name="clock_style_applied">Toegepast</string>
     <string name="clock_style_reset_position">Positie van klokwidget resetten</string>
 
-    <string name="clock_adjust_adjust_size_position">Grootte en positie van de klok aanpassen</string>
-    <string name="clock_adjust_size_position_subtitle">De klok vergroten of verplaatsen</string>
+    <string name="clock_adjust_adjust_size_position">Grootte en positie van de widget aanpassen</string>
+    <string name="clock_adjust_size_position_subtitle">De widget vergroten of verplaatsen</string>
     <string name="clock_adjust_alignment_heading">Uitlijning</string>
     <string name="clock_adjust_align_left">Links uitlijnen</string>
     <string name="clock_adjust_align_center">Centreren</string>

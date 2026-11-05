@@ -837,8 +837,8 @@
     <string name="clock_style_reset_position">Réinitialiser la position du widget horloge</string>
 
     <!-- ClockAdjustSheet -->
-    <string name="clock_adjust_adjust_size_position">Ajuster la taille et la position de l\'horloge</string>
-    <string name="clock_adjust_size_position_subtitle">Redimensionner ou repositionner l\'horloge</string>
+    <string name="clock_adjust_adjust_size_position">Ajuster la taille et la position du widget</string>
+    <string name="clock_adjust_size_position_subtitle">Redimensionner ou repositionner le widget</string>
     <string name="clock_adjust_alignment_heading">Alignement</string>
     <string name="clock_adjust_align_left">Aligner à gauche</string>
     <string name="clock_adjust_align_center">Centrer</string>

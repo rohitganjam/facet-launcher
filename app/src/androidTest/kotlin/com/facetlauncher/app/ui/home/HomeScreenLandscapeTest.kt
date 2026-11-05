@@ -135,7 +135,7 @@ class HomeScreenLandscapeTest {
         }
     }
 
-    /** Long-presses empty space (the clock's own long-press opens the clock sheet), then picks "Adjust size & position". */
+    /** Long-presses empty space (the clock's own long-press opens the clock sheet), then picks "Adjust widget size & position". */
     private fun enterAdjustMode() {
         composeRule.onNodeWithTag("home_screen_root").performTouchInput { longClick(Offset(width * 0.75f, 4f)) }
         composeRule.waitForIdle()

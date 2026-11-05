@@ -115,7 +115,7 @@ class HomeScreenTest {
         composeRule.onNodeWithTag("home_screen_root").performTouchInput { longClick(besideClock) }
     }
 
-    /** Long-presses empty space, then picks "Adjust size & position" — reveals the move handle AND the resize handles. */
+    /** Long-presses empty space, then picks "Adjust widget size & position" — reveals the move handle AND the resize handles. */
     private fun enterAdjustMode() {
         longPressEmptySpace()
         composeRule.waitForIdle()
