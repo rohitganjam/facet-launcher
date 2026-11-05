@@ -16,7 +16,7 @@ import androidx.room.TypeConverters
     ],
     version = FacetDatabase.VERSION,
     exportSchema = true,
-    autoMigrations = [AutoMigration(from = 42, to = 43, spec = DropFacetClockColumns::class)],
+    autoMigrations = [AutoMigration(from = 43, to = 44, spec = DropFacetClockColumns::class)],
 )
 @TypeConverters(Converters::class)
 // One abstract accessor per DAO, so the count grows with every table.
@@ -34,13 +34,14 @@ abstract class FacetDatabase : RoomDatabase() {
     companion object {
         // A named constant, not a magic number scattered across DatabaseModule/Migrations/tests —
         // see Migrations.kt for what bumping this requires from here on.
-        const val VERSION = 43
+        const val VERSION = 44
     }
 }
 
 /**
- * 42→43: a facet no longer keeps clock or calendar settings (a clock holds its own, on its page in `clock_stack_items`) and the hosted-clock
- * columns that migration 34→35 already emptied go too. Room rebuilds the table, since SQLite on minSdk 30 cannot drop a column.
+ * 43→44: a facet no longer keeps clock or calendar settings (a clock holds its own, on its page in `clock_stack_items`, copied there by
+ * the 42→43 step, [materializeClockConfigs]) and the hosted-clock columns that migration 34→35 already emptied go too. Room rebuilds
+ * the table, since SQLite on minSdk 30 cannot drop a column.
  */
 @DeleteColumn.Entries(
     DeleteColumn(tableName = "facets", columnName = "overrideClock"),

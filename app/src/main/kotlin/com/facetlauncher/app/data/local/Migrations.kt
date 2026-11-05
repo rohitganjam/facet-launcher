@@ -2,6 +2,7 @@ package com.facetlauncher.app.data.local
 
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
+import com.facetlauncher.app.data.model.ClockWidgetConfig
 import com.facetlauncher.app.data.model.upgradeLegacyNativeWidgetConfig
 
 /**
@@ -703,6 +704,14 @@ object Migrations {
             buildList<Pair<Long, String?>> { while (cursor.moveToNext()) add(cursor.getLong(0) to upgradeLegacyNativeWidgetConfig(cursor.getString(1))) }
         }
         rewrites.forEach { (key, upgraded) -> db.execSQL("UPDATE $table SET $column = ? WHERE $keyColumn = ?", arrayOf<Any?>(upgraded, key)) }
+    }
+
+    /**
+     * 42→43 changes no schema: it copies each facet's clock and calendar settings onto its clock page, so the 43→44 column drop loses nothing.
+     * [launcherClock] reads the launcher-wide values from the settings DataStore, which a migration cannot reach on its own.
+     */
+    fun migration42To43(launcherClock: () -> ClockWidgetConfig): Migration = object : Migration(42, 43) {
+        override fun migrate(db: SupportSQLiteDatabase) = materializeClockConfigs(db, launcherClock())
     }
 
     val ALL: Array<Migration> = arrayOf(

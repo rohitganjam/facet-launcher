@@ -2,11 +2,11 @@
   "formatVersion": 1,
   "database": {
     "version": 43,
-    "identityHash": "20db82a29d52cbe230944294e426682d",
+    "identityHash": "16763c5572cd80a6d59c0f0bad291e3d",
     "entities": [
       {
         "tableName": "facets",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL, `position` INTEGER NOT NULL, `clockPlacementOwn` INTEGER NOT NULL, `clockAlignment` TEXT NOT NULL, `clockZoneHeightDp` REAL, `clockScale` REAL NOT NULL, `landscapeClockAlignment` TEXT, `landscapeClockZoneHeightDp` REAL, `landscapeClockScale` REAL, `overrideApps` INTEGER NOT NULL, `appRowPosition` TEXT NOT NULL, `landscapeAppRowPosition` TEXT, `landscapeAppListVerticalAlignment` TEXT, `landscapeAppListColumnAlignment` TEXT, `appRowPresentation` TEXT NOT NULL, `listContentMode` TEXT NOT NULL, `appsToShowCount` INTEGER NOT NULL, `appListVerticalAlignment` TEXT NOT NULL, `appListLayout` TEXT NOT NULL, `appListColumnAlignment` TEXT NOT NULL, `appListGridColumns` TEXT NOT NULL, `appListGridDisplayMode` TEXT NOT NULL, `appListShrinkToFit` TEXT NOT NULL, `overridingFavorites` INTEGER NOT NULL, `overrideDock` INTEGER NOT NULL, `dockDisplayMode` TEXT NOT NULL)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL, `position` INTEGER NOT NULL, `overrideClock` INTEGER NOT NULL, `clockTemplateId` TEXT NOT NULL, `clockFontOption` TEXT NOT NULL, `clockColorOption` TEXT NOT NULL, `clockAccentColorOption` TEXT NOT NULL, `use24HourTime` INTEGER NOT NULL, `clockShowMeridiem` INTEGER NOT NULL, `clockDateStyle` TEXT NOT NULL, `clockShowAlarm` INTEGER NOT NULL, `clockShowBattery` INTEGER NOT NULL, `clockShowWeather` INTEGER NOT NULL, `clockWeatherIconStyle` TEXT NOT NULL, `clockWeatherLocation` TEXT, `clockPlacementOwn` INTEGER NOT NULL, `clockAlignment` TEXT NOT NULL, `clockZoneHeightDp` REAL, `clockScale` REAL NOT NULL, `clockWidgetAppWidgetId` INTEGER, `clockWidgetWidthDp` INTEGER, `clockWidgetHeightDp` INTEGER, `landscapeClockWidgetWidthDp` INTEGER, `landscapeClockWidgetHeightDp` INTEGER, `landscapeClockAlignment` TEXT, `landscapeClockZoneHeightDp` REAL, `landscapeClockScale` REAL, `overrideApps` INTEGER NOT NULL, `appRowPosition` TEXT NOT NULL, `landscapeAppRowPosition` TEXT, `landscapeAppListVerticalAlignment` TEXT, `landscapeAppListColumnAlignment` TEXT, `appRowPresentation` TEXT NOT NULL, `listContentMode` TEXT NOT NULL, `appsToShowCount` INTEGER NOT NULL, `appListVerticalAlignment` TEXT NOT NULL, `appListLayout` TEXT NOT NULL, `appListColumnAlignment` TEXT NOT NULL, `appListGridColumns` TEXT NOT NULL, `appListGridDisplayMode` TEXT NOT NULL, `appListShrinkToFit` TEXT NOT NULL, `overridingFavorites` INTEGER NOT NULL, `overrideDock` INTEGER NOT NULL, `dockDisplayMode` TEXT NOT NULL, `overrideCalendar` INTEGER NOT NULL, `showAllDayEvents` INTEGER NOT NULL, `showCalendarIndicator` INTEGER NOT NULL, `calendarItemsToShow` INTEGER NOT NULL, `selectedCalendarIdsCsv` TEXT)",
         "fields": [
           {
             "fieldPath": "id",
@@ -25,6 +25,83 @@
             "columnName": "position",
             "affinity": "INTEGER",
             "notNull": true
+          },
+          {
+            "fieldPath": "overrideClock",
+            "columnName": "overrideClock",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "clockTemplateId",
+            "columnName": "clockTemplateId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "clockFontOption",
+            "columnName": "clockFontOption",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "clockColorOption",
+            "columnName": "clockColorOption",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "clockAccentColorOption",
+            "columnName": "clockAccentColorOption",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "use24HourTime",
+            "columnName": "use24HourTime",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "clockShowMeridiem",
+            "columnName": "clockShowMeridiem",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "clockDateStyle",
+            "columnName": "clockDateStyle",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "clockShowAlarm",
+            "columnName": "clockShowAlarm",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "clockShowBattery",
+            "columnName": "clockShowBattery",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "clockShowWeather",
+            "columnName": "clockShowWeather",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "clockWeatherIconStyle",
+            "columnName": "clockWeatherIconStyle",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "clockWeatherLocation",
+            "columnName": "clockWeatherLocation",
+            "affinity": "TEXT"
           },
           {
             "fieldPath": "clockPlacementOwn",
@@ -48,6 +125,31 @@
             "columnName": "clockScale",
             "affinity": "REAL",
             "notNull": true
+          },
+          {
+            "fieldPath": "clockWidgetAppWidgetId",
+            "columnName": "clockWidgetAppWidgetId",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "clockWidgetWidthDp",
+            "columnName": "clockWidgetWidthDp",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "clockWidgetHeightDp",
+            "columnName": "clockWidgetHeightDp",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "landscapeClockWidgetWidthDp",
+            "columnName": "landscapeClockWidgetWidthDp",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "landscapeClockWidgetHeightDp",
+            "columnName": "landscapeClockWidgetHeightDp",
+            "affinity": "INTEGER"
           },
           {
             "fieldPath": "landscapeClockAlignment",
@@ -162,6 +264,35 @@
             "columnName": "dockDisplayMode",
             "affinity": "TEXT",
             "notNull": true
+          },
+          {
+            "fieldPath": "overrideCalendar",
+            "columnName": "overrideCalendar",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "showAllDayEvents",
+            "columnName": "showAllDayEvents",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "showCalendarIndicator",
+            "columnName": "showCalendarIndicator",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "calendarItemsToShow",
+            "columnName": "calendarItemsToShow",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "selectedCalendarIdsCsv",
+            "columnName": "selectedCalendarIdsCsv",
+            "affinity": "TEXT"
           }
         ],
         "primaryKey": {
@@ -943,7 +1074,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '20db82a29d52cbe230944294e426682d')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '16763c5572cd80a6d59c0f0bad291e3d')"
     ]
   }
 }

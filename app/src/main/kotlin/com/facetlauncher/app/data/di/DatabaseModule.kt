@@ -12,12 +12,19 @@ import com.facetlauncher.app.data.local.FacetDao
 import com.facetlauncher.app.data.local.FolderDao
 import com.facetlauncher.app.data.local.WeatherDao
 import com.facetlauncher.app.data.local.WidgetPlacementDao
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
+import com.facetlauncher.app.data.local.legacyLauncherClock
+import com.facetlauncher.app.data.model.ClockWidgetConfig
+import dagger.Lazy
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
 
 @Module
 @InstallIn(SingletonComponent::class)
@@ -25,9 +32,15 @@ object DatabaseModule {
 
     @Provides
     @Singleton
-    fun provideFacetDatabase(@ApplicationContext context: Context): FacetDatabase =
+    fun provideFacetDatabase(@ApplicationContext context: Context, settingsDataStore: Lazy<DataStore<Preferences>>): FacetDatabase =
         Room.databaseBuilder(context, FacetDatabase::class.java, "facet.db")
             .addMigrations(*Migrations.ALL)
+            // Read only when 42→43 runs, off the main thread (Room opens the database on its own executor).
+            .addMigrations(
+                Migrations.migration42To43 {
+                    runCatching { runBlocking { settingsDataStore.get().data.first().legacyLauncherClock() } }.getOrDefault(ClockWidgetConfig())
+                },
+            )
             // Real installs now hold real user data (facets, dock/favorite layout, widget
             // placements) — a destructive fallback on *upgrade* would silently wipe all of it the
             // next time the schema version bumps and nobody remembered to add a Migration. Letting
