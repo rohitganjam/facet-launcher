@@ -86,7 +86,7 @@ object FacetDestinations {
     const val WEATHER_LOCATION = "weatherLocation"
     const val FACET_CLOCK_STYLE_GALLERY = "facetClockStyleGallery/{facetId}"
     const val BACKUP_RESTORE = "backupRestore"
-    const val APPEARANCE_SETTINGS = "appearanceSettings?facetId={facetId}"
+    const val APPEARANCE_SETTINGS = "appearanceSettings"
     const val DOCK_APPS_APPEARANCE = "dockAppsAppearance?facetId={facetId}"
     const val THEMES_AND_COLORS = "themesAndColors"
     const val FONTS = "fonts"
@@ -124,10 +124,6 @@ object FacetDestinations {
     /** Omitting [facetId] (or passing [NO_ACTIVE_FACET_ID]) opens the launcher-wide default dock. */
     fun dockSettings(facetId: Long? = null) =
         if (facetId != null && facetId != NO_ACTIVE_FACET_ID) "dockSettings?facetId=$facetId" else "dockSettings"
-
-    /** Omitting [facetId] (or passing [NO_ACTIVE_FACET_ID]) opens the global (non-facet-scoped) Appearance screen. */
-    fun appearanceSettings(facetId: Long? = null) =
-        if (facetId != null && facetId != NO_ACTIVE_FACET_ID) "appearanceSettings?facetId=$facetId" else "appearanceSettings"
 
     /** Omitting [facetId] (or passing [NO_ACTIVE_FACET_ID]) opens the launcher-wide Dock & Apps appearance. */
     fun dockAppsAppearance(facetId: Long? = null) =
@@ -227,7 +223,7 @@ fun FacetNavHost(
                 onViewFacets = { navController.navigate(FacetDestinations.FACET_MANAGE) },
                 onViewFacetAutomation = { navController.navigate(FacetDestinations.FACET_AUTOMATION) },
                 onViewFacetPro = { navController.navigate(FacetDestinations.facetPro(ProReason.ABOUT)) },
-                onNavigateToAppearance = { navController.navigate(FacetDestinations.appearanceSettings()) },
+                onNavigateToAppearance = { navController.navigate(FacetDestinations.APPEARANCE_SETTINGS) },
                 onNavigateToDockSettings = { navController.navigate(FacetDestinations.dockSettings()) },
                 onNavigateToHomeAppsListSettings = { navController.navigate(FacetDestinations.homeAppsListSettings()) },
                 onNavigateToFolders = { navController.navigate(FacetDestinations.FOLDERS_SETTINGS) },
@@ -257,15 +253,11 @@ fun FacetNavHost(
         settingsComposable(FacetDestinations.WHATS_NEW) {
             WhatsNewScreen(onBack = { navController.popBackStackSafely() })
         }
-        settingsComposable(
-            FacetDestinations.APPEARANCE_SETTINGS,
-            arguments = listOf(navArgument("facetId") { type = NavType.LongType; defaultValue = NO_ACTIVE_FACET_ID }),
-        ) { backStackEntry ->
-            val facetId = backStackEntry.arguments?.getLong("facetId") ?: NO_ACTIVE_FACET_ID
+        settingsComposable(FacetDestinations.APPEARANCE_SETTINGS) {
             AppearanceSettingsScreen(
                 onBack = { navController.popBackStackSafely() },
                 onNavigateToNotificationSettings = { navController.navigate(FacetDestinations.NOTIFICATION_SETTINGS) },
-                onNavigateToDockAppsAppearance = { navController.navigate(FacetDestinations.dockAppsAppearance(facetId)) },
+                onNavigateToDockAppsAppearance = { navController.navigate(FacetDestinations.dockAppsAppearance()) },
                 onNavigateToAppDrawerSettings = { navController.navigate(FacetDestinations.APP_DRAWER_SETTINGS) },
                 onNavigateToThemesAndColors = { navController.navigate(FacetDestinations.THEMES_AND_COLORS) },
                 onNavigateToFonts = { navController.navigate(FacetDestinations.FONTS) },

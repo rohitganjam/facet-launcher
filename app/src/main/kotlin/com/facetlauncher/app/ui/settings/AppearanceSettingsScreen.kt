@@ -62,7 +62,6 @@ import com.facetlauncher.app.ui.theme.SurfaceContainer
  * Settings → Appearance (`3c`) — a live preview of Home, then a section per area, each a short list of rows that open their own screen:
  * Clock & calendar (clock style, calendars to display), Dock & home ("Dock & Apps appearance" → [DockAppsAppearanceScreen]),
  * Notifications (global only → the Notifications page) and Look & Feel (global only: "General settings" → [ThemesAndColorsScreen], "Fonts" → [FontsScreen], "Icons" → [IconsScreen]).
- * With a `facetId` it is a facet's own Appearance screen: the same layout minus the global-only sections.
  */
 @Composable
 fun AppearanceSettingsScreen(
@@ -142,11 +141,8 @@ private fun AppearanceSettingsContent(
                     )
                 }
                 dockAndHomeSection(settings, uiState, onNavigateToDockAppsAppearance, onNavigateToAppDrawerSettings)
-                // Global only — no per-facet override exists for notifications, theme, accent, icons or fonts.
-                if (!uiState.isFacetScoped) {
-                    notificationsSection(settings, uiState.notificationAccessGranted, onNavigateToNotificationSettings)
-                    generalSection(settings, onNavigateToThemesAndColors, onNavigateToFonts, onNavigateToIcons)
-                }
+                notificationsSection(settings, uiState.notificationAccessGranted, onNavigateToNotificationSettings)
+                generalSection(settings, onNavigateToThemesAndColors, onNavigateToFonts, onNavigateToIcons)
             }
         },
     )
@@ -185,7 +181,7 @@ private fun notificationsSummary(settings: LauncherSettings, accessGranted: Bool
 }
 
 
-/** Rows into [DockAppsAppearanceScreen] and (global only) [AppDrawerSettingsScreen]; the first summarises the dock and Home list as the facet settings row does ("Dock icons · Home icon & text"). */
+/** Rows into [DockAppsAppearanceScreen] and [AppDrawerSettingsScreen]; the first summarises the dock and Home list as the facet settings row does ("Dock icons · Home icon & text"). */
 private fun LazyListScope.dockAndHomeSection(
     settings: LauncherSettings,
     uiState: AppearanceSettingsUiState,
@@ -206,17 +202,14 @@ private fun LazyListScope.dockAndHomeSection(
                 testTag = "appearance_dock_apps_row",
                 leadingIcon = iconBadge(Icons.Outlined.Dock, SettingsSectionHue.APPEARANCE),
             )
-            // Launcher-wide only: the drawer has no per-facet override.
-            if (!uiState.isFacetScoped) {
-                CardDivider(startInset = SettingsIconBadgeInset)
-                ClickableRow(
-                    title = stringResource(R.string.settings_app_drawer_title),
-                    subtitle = appDrawerSummary(settings.drawerPresentation, settings.searchContactsEnabled, settings.searchSettingsEnabled),
-                    onClick = onNavigateToAppDrawerSettings,
-                    testTag = "app_drawer_settings_row",
-                    leadingIcon = iconBadge(Icons.Outlined.Apps, SettingsSectionHue.APPEARANCE),
-                )
-            }
+            CardDivider(startInset = SettingsIconBadgeInset)
+            ClickableRow(
+                title = stringResource(R.string.settings_app_drawer_title),
+                subtitle = appDrawerSummary(settings.drawerPresentation, settings.searchContactsEnabled, settings.searchSettingsEnabled),
+                onClick = onNavigateToAppDrawerSettings,
+                testTag = "app_drawer_settings_row",
+                leadingIcon = iconBadge(Icons.Outlined.Apps, SettingsSectionHue.APPEARANCE),
+            )
         }
     }
 }

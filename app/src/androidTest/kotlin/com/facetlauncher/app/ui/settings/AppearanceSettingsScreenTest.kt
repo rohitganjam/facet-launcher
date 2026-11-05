@@ -140,26 +140,6 @@ class AppearanceSettingsScreenTest {
     }
 
     @Test
-    fun facetScopedModeKeepsTheDockAppsRowButHidesEveryGlobalOnlyRow() {
-        // Given a facet-scoped entry point — waited for the facet-scoped combine() to settle first
-        // (the `facets` flow is a real Room query; the screen briefly renders as global/unscoped on
-        // its very first composition until it emits — see chat history).
-        setContent(facetId = 1L)
-        awaitFacetScoped()
-
-        // Then the Dock & Apps appearance row (the moved-in look fields) is here...
-        composeRule.onNodeWithTag("appearance_settings_screen").performScrollToNode(hasTestTag("appearance_dock_apps_row"))
-        composeRule.onNodeWithTag("appearance_dock_apps_row").assertExists()
-        composeRule.onNodeWithTag("app_drawer_settings_row").assertDoesNotExist()
-        // ...but the purely-global rows (notifications, fonts / themes / icons) are gone — no
-        // per-facet override exists for those yet (see this screen's own doc comment)
-        composeRule.onNodeWithTag("notification_settings_row").assertDoesNotExist()
-        composeRule.onNodeWithTag("general_themes_colors_row").assertDoesNotExist()
-        composeRule.onNodeWithTag("general_fonts_row").assertDoesNotExist()
-        composeRule.onNodeWithTag("general_icons_row").assertDoesNotExist()
-    }
-
-    @Test
     fun globalModeShowsThreeSeparateSectionsInOrderAndNoClockSection() {
         // Dock & Home / Notifications / General are each their own card, in that order, and a clock has
         // no launcher-wide settings, so there is no Clock & calendar section. Each header is asserted
@@ -248,28 +228,6 @@ class AppearanceSettingsScreenTest {
     }
 
     @Test
-    fun notificationRowIsGlobalOnly() {
-        // Given a facet-scoped Appearance screen
-        setContent(facetId = 1L)
-        awaitFacetScoped()
-
-        // Then there's no Notifications row (notifications have no per-facet override)
-        composeRule.onNodeWithTag("notification_settings_row").assertDoesNotExist()
-    }
-
-    @Test
-    fun facetScopedModeShowsDockAndHomeButNotGeneral() {
-        // A clock has no settings here; Dock & home shows in facet mode, General is global-only.
-        setContent(facetId = 1L)
-        awaitFacetScoped()
-
-        composeRule.onNodeWithText("Clock & calendar").assertDoesNotExist()
-        composeRule.onNodeWithTag("appearance_settings_screen").performScrollToNode(hasTestTag("appearance_dock_apps_row"))
-        composeRule.onNodeWithText("Dock & home").assertIsDisplayed()
-        composeRule.onNodeWithText("Look & Feel").assertDoesNotExist()
-    }
-
-    @Test
     fun previewCardShowsRealCalendarEventsWhenPermissionIsGranted() {
         // The calendar preview moved here from ClockStyleGalleryScreen (see chat history) — real
         // events for the effective calendar selection, not sample/mock data. Timed relative to
@@ -299,84 +257,6 @@ class AppearanceSettingsScreenTest {
     }
 
     @Test
-    fun facetScopedPreviewShowsTheDefaultFavoritesAndDockWhileNotOverriding() {
-        // "in facet settings - consume the resolved output between facet and defaults" (see chat
-        // history) — a facet not overriding apps/dock content shows the launcher-wide default in
-        // its own preview, not its own (unused) stale rows.
-        val facetId = 1L
-        var globalFavoriteLabel = ""
-        var globalDockLabel = ""
-        var facetFavoriteLabel = ""
-        var facetDockLabel = ""
-        setContent(
-            facetId = facetId,
-            seedApps = { appRepository, placementRepository, id ->
-                val installed = appRepository.getTestableApps()
-                globalFavoriteLabel = installed[0].label
-                globalDockLabel = installed[1].label
-                facetFavoriteLabel = installed[2].label
-                facetDockLabel = installed[3].label
-                placementRepository.addApp(PlacementTarget.GlobalFavorites, installed[0], position = 0)
-                placementRepository.addApp(PlacementTarget.GlobalDock, installed[1], position = 0)
-                placementRepository.addApp(PlacementTarget(PlacementList.FAVORITES, id!!), installed[2], position = 0)
-                placementRepository.addApp(PlacementTarget(PlacementList.DOCK, id), installed[3], position = 0)
-            },
-        )
-
-        // Polled — same real-Room-query settle lesson as previewCardShowsTheRealFavoritesAndDockApps.
-        composeRule.waitUntil(timeoutMillis = 5_000) {
-            composeRule.onAllNodesWithText(globalFavoriteLabel).fetchSemanticsNodes().isNotEmpty()
-        }
-        composeRule.onNodeWithText(globalFavoriteLabel).assertExists()
-        composeRule.onNodeWithContentDescription(globalDockLabel).assertExists()
-        composeRule.onNodeWithText(facetFavoriteLabel).assertDoesNotExist()
-        composeRule.onNodeWithContentDescription(facetDockLabel).assertDoesNotExist()
-    }
-
-    @Test
-    fun facetScopedPreviewShowsThatFacetsOwnFavoritesAndDockWhileOverriding() {
-        // The inverse of facetScopedPreviewShowsTheDefaultFavoritesAndDockWhileNotOverriding — once
-        // a facet overrides apps/dock content, its own rows win over the launcher-wide default.
-        val facetId = 1L
-        var globalFavoriteLabel = ""
-        var globalDockLabel = ""
-        var facetFavoriteLabel = ""
-        var facetDockLabel = ""
-        setContent(
-            facetId = facetId,
-            seed = { facetRepository, id ->
-                // Re-fetched between writes — `facetDao.update` replaces the whole row, so reusing
-                // the same (now-stale) `facet` snapshot for the second call would clobber the first
-                // call's own field change back to its old value.
-                val facet = facetRepository.getById(id!!)!!
-                facetRepository.setOverrideApps(facet.id, overriding = true)
-                val updated = facetRepository.getById(id)!!
-                facetRepository.updateOverridingDock(updated.id, overriding = true)
-            },
-            seedApps = { appRepository, placementRepository, id ->
-                val installed = appRepository.getTestableApps()
-                globalFavoriteLabel = installed[0].label
-                globalDockLabel = installed[1].label
-                facetFavoriteLabel = installed[2].label
-                facetDockLabel = installed[3].label
-                placementRepository.addApp(PlacementTarget.GlobalFavorites, installed[0], position = 0)
-                placementRepository.addApp(PlacementTarget.GlobalDock, installed[1], position = 0)
-                placementRepository.addApp(PlacementTarget(PlacementList.FAVORITES, id!!), installed[2], position = 0)
-                placementRepository.addApp(PlacementTarget(PlacementList.DOCK, id), installed[3], position = 0)
-            },
-        )
-
-        // Polled — same real-Room-query settle lesson as previewCardShowsTheRealFavoritesAndDockApps.
-        composeRule.waitUntil(timeoutMillis = 5_000) {
-            composeRule.onAllNodesWithText(facetFavoriteLabel).fetchSemanticsNodes().isNotEmpty()
-        }
-        composeRule.onNodeWithText(globalFavoriteLabel).assertDoesNotExist()
-        composeRule.onNodeWithContentDescription(globalDockLabel).assertDoesNotExist()
-        composeRule.onNodeWithText(facetFavoriteLabel).assertExists()
-        composeRule.onNodeWithContentDescription(facetDockLabel).assertExists()
-    }
-
-    @Test
     fun dockAppsRowSummarisesDockAndHomeAndNavigates() {
         // Given the global screen — dock icons and the Home list as icon + text by default
         var navigated = false
@@ -386,21 +266,6 @@ class AppearanceSettingsScreenTest {
         composeRule.onNodeWithTag("appearance_dock_apps_row").assertTextContains("Dock icons · Home icon & text", substring = true)
 
         // When tapping it
-        composeRule.onNodeWithTag("appearance_dock_apps_row").performClick()
-
-        // Then its callback fires
-        assertEquals(true, navigated)
-    }
-
-    @Test
-    fun facetScopedDockAppsRowNavigates() {
-        // Given a facet-scoped screen
-        var navigated = false
-        setContent(facetId = 1L, onNavigateToDockAppsAppearance = { navigated = true })
-        awaitFacetScoped()
-        composeRule.onNodeWithTag("appearance_settings_screen").performScrollToNode(hasTestTag("appearance_dock_apps_row"))
-
-        // When tapping the row
         composeRule.onNodeWithTag("appearance_dock_apps_row").performClick()
 
         // Then its callback fires
