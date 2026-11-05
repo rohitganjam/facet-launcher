@@ -4,6 +4,8 @@ import androidx.annotation.StringRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -11,6 +13,8 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.only
@@ -19,7 +23,6 @@ import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
@@ -38,6 +41,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.layout.SubcomposeLayout
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.Constraints
@@ -315,20 +319,42 @@ private fun TemplateCarousel(
     val cardMaxWidth = LocalConfiguration.current.screenWidthDp.dp * TEMPLATE_CARD_MAX_WIDTH_FRACTION
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         TemplateHints()
-        LazyRow(
-            // The list pads its sides; the row steps out of that padding so the cards scroll edge to edge.
-            modifier = Modifier.fullBleed(LIST_SIDE_PADDING).testTag("clock_template_row"),
-            contentPadding = PaddingValues(horizontal = LIST_SIDE_PADDING),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            items(ClockTemplateId.entries.toList()) { id ->
-                ClockTemplateCard(id, uiState, controlsEnabled, sample, cardMaxWidth, onTemplateSelect)
+        // The list pads its sides; the row steps out of that padding so the cards scroll edge to edge.
+        Box(modifier = Modifier.fullBleed(LIST_SIDE_PADDING).horizontalScroll(rememberScrollState()).testTag("clock_template_row")) {
+            EqualSizeRow(spacing = 12.dp, modifier = Modifier.padding(horizontal = LIST_SIDE_PADDING)) { measuring ->
+                ClockTemplateId.entries.forEach { id ->
+                    ClockTemplateCard(id, uiState, controlsEnabled, sample, cardMaxWidth, onTemplateSelect, tagged = !measuring)
+                }
             }
         }
     }
 }
 
 private val LIST_SIDE_PADDING = 24.dp
+
+/**
+ * Lays the cards out side by side, every one as wide and as tall as the largest, so the row moves evenly. A measure can only happen once per
+ * child, so the cards are composed twice: once to find the largest (`measuring` is true, nothing in it is tagged) and once to show.
+ */
+@Composable
+private fun EqualSizeRow(spacing: Dp, modifier: Modifier = Modifier, content: @Composable (measuring: Boolean) -> Unit) {
+    SubcomposeLayout(modifier = modifier) { constraints ->
+        val cards = { measuring: Boolean -> subcompose(measuring) { content(measuring) } }
+        val natural = cards(true).map { it.measure(Constraints(maxWidth = Constraints.Infinity)) }
+        val cellWidth = natural.maxOfOrNull { it.width } ?: 0
+        val height = natural.maxOfOrNull { it.height } ?: 0
+        val placeables = cards(false).map { it.measure(Constraints.fixed(cellWidth, height)) }
+        val gap = spacing.roundToPx()
+        val width = placeables.sumOf { it.width } + gap * (placeables.size - 1).coerceAtLeast(0)
+        layout(width.coerceIn(constraints.minWidth, constraints.maxWidth), height) {
+            var x = 0
+            placeables.forEach { placeable ->
+                placeable.place(x, 0)
+                x += placeable.width + gap
+            }
+        }
+    }
+}
 
 /** Widens this by [padding] on each side, so content inside a padded list can reach the screen edges. */
 private fun Modifier.fullBleed(padding: Dp): Modifier = layout { measurable, constraints ->
@@ -363,6 +389,7 @@ private fun ClockTemplateCard(
     sample: ClockPreviewSample,
     cardMaxWidth: Dp,
     onTemplateSelect: (ClockTemplateId) -> Unit,
+    tagged: Boolean = true,
 ) {
     val selected = id == uiState.templateId
     val shape = MaterialTheme.shapes.medium
@@ -370,12 +397,13 @@ private fun ClockTemplateCard(
     Column(
         modifier = Modifier
             .widthIn(min = TemplateCardMinWidth, max = cardMaxWidth)
+            .fillMaxHeight()
             .clip(shape)
             .background(Surface, shape)
             .border(width = if (selected) 2.dp else 1.dp, color = if (selected) Accent else Hairline, shape = shape)
             .clickable(enabled = controlsEnabled, onClick = { onTemplateSelect(id) })
             .alpha(if (controlsEnabled) 1f else 0.4f)
-            .testTag("clock_template_card_${id.name}")
+            .then(if (tagged) Modifier.testTag("clock_template_card_${id.name}") else Modifier)
             .padding(TemplateCardPadding),
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
