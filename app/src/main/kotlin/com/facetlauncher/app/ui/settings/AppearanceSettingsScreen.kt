@@ -67,8 +67,6 @@ import com.facetlauncher.app.ui.theme.SurfaceContainer
 @Composable
 fun AppearanceSettingsScreen(
     onBack: () -> Unit,
-    onNavigateToClockStyleGallery: () -> Unit,
-    onNavigateToCalendarSettings: () -> Unit,
     onNavigateToNotificationSettings: () -> Unit,
     onNavigateToDockAppsAppearance: () -> Unit,
     onNavigateToAppDrawerSettings: () -> Unit,
@@ -99,8 +97,6 @@ fun AppearanceSettingsScreen(
         uiState = uiState,
         homeWallpaper = homeWallpaper,
         onBack = onBack,
-        onNavigateToClockStyleGallery = onNavigateToClockStyleGallery,
-        onNavigateToCalendarSettings = onNavigateToCalendarSettings,
         onNavigateToNotificationSettings = onNavigateToNotificationSettings,
         onNavigateToDockAppsAppearance = onNavigateToDockAppsAppearance,
         onNavigateToAppDrawerSettings = onNavigateToAppDrawerSettings,
@@ -117,8 +113,6 @@ private fun AppearanceSettingsContent(
     uiState: AppearanceSettingsUiState,
     homeWallpaper: HomeWallpaper,
     onBack: () -> Unit,
-    onNavigateToClockStyleGallery: () -> Unit,
-    onNavigateToCalendarSettings: () -> Unit,
     onNavigateToNotificationSettings: () -> Unit,
     onNavigateToDockAppsAppearance: () -> Unit,
     onNavigateToAppDrawerSettings: () -> Unit,
@@ -147,8 +141,6 @@ private fun AppearanceSettingsContent(
                         modifier = Modifier.padding(bottom = 20.dp).testTag("appearance_preview_card"),
                     )
                 }
-                // A clock has no launcher-wide settings, so only a facet's own screen links to them.
-                if (uiState.isFacetScoped) clockAndCalendarSection(uiState, onNavigateToClockStyleGallery, onNavigateToCalendarSettings)
                 dockAndHomeSection(settings, uiState, onNavigateToDockAppsAppearance, onNavigateToAppDrawerSettings)
                 // Global only — no per-facet override exists for notifications, theme, accent, icons or fonts.
                 if (!uiState.isFacetScoped) {
@@ -158,47 +150,6 @@ private fun AppearanceSettingsContent(
             }
         },
     )
-}
-
-/** The clock-style row, then "Calendars to display" — a link to the (facet-aware) calendar page, which owns the inherit/override switch and the permission request. */
-private fun LazyListScope.clockAndCalendarSection(
-    uiState: AppearanceSettingsUiState,
-    onNavigateToClockStyleGallery: () -> Unit,
-    onNavigateToCalendarSettings: () -> Unit,
-) {
-    item { SettingsSectionHeader(stringResource(R.string.appearance_section_clock)) }
-    item {
-        SettingsCard(fullBleedRows = true) {
-            ClickableRow(
-                title = stringResource(R.string.settings_clock_calendar_title),
-                subtitle = stringResource(
-                    R.string.dot_join_2,
-                    stringResource(uiState.clockSettings.clockTemplateId.displayNameRes),
-                    stringResource(if (uiState.clockSettings.use24HourTime) R.string.settings_time_format_24h else R.string.settings_time_format_12h),
-                ),
-                onClick = onNavigateToClockStyleGallery,
-                testTag = "clock_style_gallery_row",
-                leadingIcon = iconBadge(Icons.Outlined.Schedule, SettingsSectionHue.APPEARANCE),
-            )
-            CardDivider(startInset = SettingsIconBadgeInset)
-            ClickableRow(
-                title = stringResource(R.string.settings_calendars_title),
-                subtitle = if (uiState.calendarAccessGranted) {
-                    stringResource(
-                        R.string.dot_join_2,
-                        uiState.selectedCalendarIds?.size?.let { pluralStringResource(R.plurals.settings_calendars_selected, it, it) } ?: stringResource(R.string.settings_calendars_all),
-                        stringResource(if (uiState.effectiveShowAllDayEvents) R.string.settings_all_day_events_visible else R.string.settings_all_day_events_hidden),
-                    )
-                } else {
-                    // Like the Notifications row: with no access nothing is read, so a stored selection would be a misleading summary.
-                    stringResource(R.string.settings_calendars_needs_access)
-                },
-                onClick = onNavigateToCalendarSettings,
-                testTag = "appearance_calendar_settings_row",
-                leadingIcon = iconBadge(Icons.Outlined.CalendarMonth, SettingsSectionHue.APPEARANCE),
-            )
-        }
-    }
 }
 
 /** Global only — a link to the Notifications page (badges, and the Home media player). */
@@ -347,8 +298,6 @@ private fun AppearanceSettingsScreenPreview() {
             uiState = AppearanceSettingsUiState(globalFavorites = DesignTimeFavorites, globalDockItems = DesignTimeDockItems),
             homeWallpaper = HomeWallpaper.Unavailable,
             onBack = {},
-            onNavigateToClockStyleGallery = {},
-            onNavigateToCalendarSettings = {},
             onNavigateToNotificationSettings = {},
             onNavigateToDockAppsAppearance = {},
             onNavigateToAppDrawerSettings = {},
@@ -372,8 +321,6 @@ private fun AppearanceSettingsScreenFacetScopedPreview() {
             ),
             homeWallpaper = HomeWallpaper.Unavailable,
             onBack = {},
-            onNavigateToClockStyleGallery = {},
-            onNavigateToCalendarSettings = {},
             onNavigateToNotificationSettings = {},
             onNavigateToDockAppsAppearance = {},
             onNavigateToAppDrawerSettings = {},

@@ -271,8 +271,6 @@ fun FacetNavHost(
             val facetId = backStackEntry.arguments?.getLong("facetId") ?: NO_ACTIVE_FACET_ID
             AppearanceSettingsScreen(
                 onBack = { navController.popBackStackSafely() },
-                onNavigateToClockStyleGallery = { navController.navigate(FacetDestinations.facetClockStyleGallery(facetId)) },
-                onNavigateToCalendarSettings = { navController.navigate(FacetDestinations.calendarSettings(facetId)) },
                 onNavigateToNotificationSettings = { navController.navigate(FacetDestinations.NOTIFICATION_SETTINGS) },
                 onNavigateToDockAppsAppearance = { navController.navigate(FacetDestinations.dockAppsAppearance(facetId)) },
                 onNavigateToAppDrawerSettings = { navController.navigate(FacetDestinations.APP_DRAWER_SETTINGS) },

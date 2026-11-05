@@ -10,9 +10,6 @@ import androidx.room.Room
 import com.facetlauncher.app.data.AppRepository
 import com.facetlauncher.app.data.CalendarRepository
 import com.facetlauncher.app.data.FacetRepository
-import com.facetlauncher.app.domain.UpdateClockConfigUseCase
-import com.facetlauncher.app.data.model.ClockWidgetConfig
-import com.facetlauncher.app.data.ClockStackRepository
 import com.facetlauncher.app.data.FolderRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.local.FacetDatabase
@@ -75,8 +72,6 @@ internal class AppearanceScreenTestHost(private val composeRule: ComposeContentT
         calendarEvents: List<CalendarEvent> = emptyList(),
         seed: suspend (FacetRepository, Long?) -> Unit = { _, _ -> },
         seedApps: suspend (AppRepository, PlacementRepository, Long?) -> Unit = { _, _, _ -> },
-        /** Changes the seeded facet's clock settings (its clock then holds its own, as after the startup pass). */
-        clockEdit: ((ClockWidgetConfig) -> ClockWidgetConfig)? = null,
         screen: @Composable (AppearanceSettingsViewModel) -> Unit,
     ): SettingsRepository {
         lateinit var settingsRepository: SettingsRepository
@@ -110,9 +105,6 @@ internal class AppearanceScreenTestHost(private val composeRule: ComposeContentT
                     }
                 }
                 runBlocking { seed(facetRepository, facetId) }
-                if (facetId != null && clockEdit != null) {
-                    runBlocking { UpdateClockConfigUseCase(settingsRepository, facetRepository, ClockStackRepository(database, database.clockStackItemDao()))(facetId, clockEdit) }
-                }
                 runBlocking { seedApps(appRepository, placementRepository, facetId) }
                 AppearanceSettingsViewModel(
                     SavedStateHandle(facetId?.let { mapOf("facetId" to it) } ?: emptyMap()),
