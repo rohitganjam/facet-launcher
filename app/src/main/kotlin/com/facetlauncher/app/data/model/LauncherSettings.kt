@@ -421,11 +421,6 @@ data class LauncherSettings(
     /** Only meaningful in the list layouts — see [AppListShrinkToFit]. */
     val appListShrinkToFit: AppListShrinkToFit = AppListShrinkToFit.OFF,
     /**
-     * Home clock's scale factor — the default every facet inherits.
-     * Uniform scaling ensures proportions are preserved.
-     */
-    val clockScale: Float = 0.8f,
-    /**
      * Whether Home may use its landscape layout and the screen may rotate. Off keeps everything in portrait and hides
      * the landscape settings. Launcher-wide and device-local (not facet-overridable, not backed up).
      */

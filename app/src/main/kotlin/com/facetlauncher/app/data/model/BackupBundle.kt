@@ -167,12 +167,10 @@ data class BackupSettings(
     val clockAlignment: String = ClockAlignment.LEFT.name,
     /** `null` until the clock's divider was first dragged. */
     val clockZoneHeightDp: Float? = null,
-    val clockScale: Float = 0.8f,
     val appListVerticalAlignment: String = AppListVerticalAlignment.BOTTOM.name,
     /** Landscape's own clock and list values; `null` is "same as portrait". Like [landscapeAppRowPosition], flat and optional. */
     val landscapeClockAlignment: String? = null,
     val landscapeClockZoneHeightDp: Float? = null,
-    val landscapeClockScale: Float? = null,
     val landscapeAppListVerticalAlignment: String? = null,
 )
 
@@ -205,10 +203,8 @@ data class BackupFacet(
     val clockPlacementOwn: Boolean? = null,
     val clockAlignment: String = ClockAlignment.LEFT.name,
     val clockZoneHeightDp: Float? = null,
-    val clockScale: Float = 0.8f,
     val landscapeClockAlignment: String? = null,
     val landscapeClockZoneHeightDp: Float? = null,
-    val landscapeClockScale: Float? = null,
     val landscapeAppListVerticalAlignment: String? = null,
     val appListVerticalAlignment: String = AppListVerticalAlignment.LAUNCHER_DEFAULT.name,
     val overrideApps: Boolean,

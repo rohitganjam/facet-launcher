@@ -328,7 +328,7 @@ internal fun HomeFrame.neighborWidgetSizePx(widget: HomeClockWidgetState): Offse
 /**
  * The clock is saved as a box in dp, not a scale: the scale it draws at is that width over the clock's natural width as
  * measured now, so a new template keeps the box's width. Until the clock is measured, or while the page has no box yet,
- * the placement's own scale stands.
+ * the placement's scale (the default) stands.
  */
 internal fun HomeScreenState.withBoxScale(natural: IntSize?, density: Density): HomeScreenState {
     val widthDp = clock.boxWidthDp ?: return this
@@ -337,7 +337,7 @@ internal fun HomeScreenState.withBoxScale(natural: IntSize?, density: Density): 
     return copy(clock = clock.copy(placement = clock.placement.copy(scale = scale)))
 }
 
-/** Turns the resize handles' scale commit into the box they mean, in dp and aspect-locked; before the clock is measured it saves the scale as before. */
+/** Turns the resize handles' scale commit into the box they mean, in dp and aspect-locked; before the clock is measured there is nothing to save. */
 internal fun HomeScreenActions.withBoxCommit(natural: IntSize?, density: Density): HomeScreenActions {
     if (natural == null || natural.width <= 0 || natural.height <= 0) return this
     return copy(

@@ -259,14 +259,12 @@ class ImportBackupUseCase @Inject constructor(
         with(settingsRepository) {
             applyAccessoriesAndWeather(settings)
             setClockAlignment(settings.clockAlignment.toEnumOrDefault(ClockAlignment.LEFT))
-            setClockScale(settings.clockScale)
             // A null height means the divider was never dragged; a restore must clear a height set since.
             if (settings.clockZoneHeightDp != null) setClockZoneHeight(settings.clockZoneHeightDp) else resetClockZoneHeight()
             updateLandscape {
                 it.copy(
                     clockAlignment = settings.landscapeClockAlignment?.toEnumOrNull(),
                     clockZoneHeightDp = settings.landscapeClockZoneHeightDp,
-                    clockScale = settings.landscapeClockScale,
                     appRowPosition = settings.landscapeAppRowPosition?.toEnumOrNull(),
                     appListVerticalAlignment = settings.landscapeAppListVerticalAlignment?.toEnumOrNull(),
                     appListColumnAlignment = settings.landscapeAppListColumnAlignment?.toEnumOrNull(),

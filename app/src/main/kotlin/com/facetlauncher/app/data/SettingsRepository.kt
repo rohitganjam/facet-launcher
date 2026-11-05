@@ -129,12 +129,10 @@ private object Keys {
     val HOME_APPS_FONT_WEIGHT = stringPreferencesKey("home_apps_font_weight")
     val CLOCK_ALIGNMENT = stringPreferencesKey("clock_alignment")
     val CLOCK_ZONE_HEIGHT_DP = floatPreferencesKey("clock_zone_height_dp")
-    val CLOCK_SCALE = floatPreferencesKey("clock_scale")
     val ALLOW_LANDSCAPE = booleanPreferencesKey("allow_landscape")
     val HIDE_STATUS_BAR = booleanPreferencesKey("hide_status_bar")
     val LANDSCAPE_CLOCK_ALIGNMENT = stringPreferencesKey("landscape_clock_alignment")
     val LANDSCAPE_CLOCK_ZONE_HEIGHT_DP = floatPreferencesKey("landscape_clock_zone_height_dp")
-    val LANDSCAPE_CLOCK_SCALE = floatPreferencesKey("landscape_clock_scale")
     val APP_LIST_VERTICAL_ALIGNMENT = stringPreferencesKey("app_list_vertical_alignment")
     val LANDSCAPE_APP_LIST_VERTICAL_ALIGNMENT = stringPreferencesKey("landscape_app_list_vertical_alignment")
     val APP_LIST_LAYOUT = stringPreferencesKey("app_list_layout")
@@ -250,7 +248,6 @@ class SettingsRepository @Inject constructor(
             clockAlignment = preferences[Keys.CLOCK_ALIGNMENT]?.let { runCatching { ClockAlignment.valueOf(it) }.getOrNull() }
                 ?: defaults.clockAlignment,
             clockZoneHeightDp = preferences[Keys.CLOCK_ZONE_HEIGHT_DP],
-            clockScale = preferences[Keys.CLOCK_SCALE] ?: defaults.clockScale,
             allowLandscape = preferences[Keys.ALLOW_LANDSCAPE] ?: defaults.allowLandscape,
             hideStatusBar = preferences[Keys.HIDE_STATUS_BAR] ?: defaults.hideStatusBar,
             landscape = preferences.toLandscapeOverrides(),
@@ -567,11 +564,6 @@ class SettingsRepository @Inject constructor(
         }
     }
 
-    suspend fun setClockScale(scale: Float) {
-        dataStore.edit {
-            it[Keys.CLOCK_SCALE] = scale
-        }
-    }
 
     /** Changes the launcher-wide landscape values in one write; a `null` field is removed ("same as portrait"). */
     suspend fun updateLandscape(transform: (LandscapeOverrides) -> LandscapeOverrides) {
@@ -659,7 +651,6 @@ private fun MutablePreferences.writeWeatherCity(city: WeatherCity?) {
 private fun Preferences.toLandscapeOverrides() = LandscapeOverrides(
     clockAlignment = this[Keys.LANDSCAPE_CLOCK_ALIGNMENT]?.let { runCatching { ClockAlignment.valueOf(it) }.getOrNull() },
     clockZoneHeightDp = this[Keys.LANDSCAPE_CLOCK_ZONE_HEIGHT_DP],
-    clockScale = this[Keys.LANDSCAPE_CLOCK_SCALE],
     appRowPosition = this[Keys.LANDSCAPE_APP_ROW_POSITION]?.let { runCatching { AppRowPosition.valueOf(it) }.getOrNull() },
     appListVerticalAlignment = this[Keys.LANDSCAPE_APP_LIST_VERTICAL_ALIGNMENT]?.let { runCatching { AppListVerticalAlignment.valueOf(it) }.getOrNull() },
     appListColumnAlignment = this[Keys.LANDSCAPE_APP_LIST_COLUMN_ALIGNMENT]?.let { runCatching { AppListColumnAlignment.valueOf(it) }.getOrNull() },
@@ -669,7 +660,6 @@ private fun Preferences.toLandscapeOverrides() = LandscapeOverrides(
 private fun MutablePreferences.writeLandscape(overrides: LandscapeOverrides) {
     setOrRemove(Keys.LANDSCAPE_CLOCK_ALIGNMENT, overrides.clockAlignment?.name)
     setOrRemove(Keys.LANDSCAPE_CLOCK_ZONE_HEIGHT_DP, overrides.clockZoneHeightDp)
-    setOrRemove(Keys.LANDSCAPE_CLOCK_SCALE, overrides.clockScale)
     setOrRemove(Keys.LANDSCAPE_APP_ROW_POSITION, overrides.appRowPosition?.name)
     setOrRemove(Keys.LANDSCAPE_APP_LIST_VERTICAL_ALIGNMENT, overrides.appListVerticalAlignment?.name)
     setOrRemove(Keys.LANDSCAPE_APP_LIST_COLUMN_ALIGNMENT, overrides.appListColumnAlignment?.name)

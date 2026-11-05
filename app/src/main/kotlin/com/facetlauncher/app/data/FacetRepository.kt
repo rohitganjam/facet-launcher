@@ -16,7 +16,6 @@ import com.facetlauncher.app.data.model.AppListVerticalAlignment
 import com.facetlauncher.app.data.model.AppRowPosition
 import com.facetlauncher.app.data.model.AppRowPresentation
 import com.facetlauncher.app.data.model.CalendarDisplayOptions
-import com.facetlauncher.app.data.model.DEFAULT_CLOCK_SCALE
 import com.facetlauncher.app.data.model.ClockAlignment
 import com.facetlauncher.app.data.model.ClockColorOption
 import com.facetlauncher.app.data.model.ClockDateStyle
@@ -91,14 +90,13 @@ class FacetRepository @Inject constructor(
      * Makes the clock placement the facet's own ([Facet.clockPlacementOwn]) with these values; [landscape]'s clock fields
      * are the landscape twins, `null` meaning "same as portrait". Other landscape fields are left alone.
      */
-    suspend fun setClockPlacement(facetId: Long, alignment: ClockAlignment, zoneHeightDp: Float?, scale: Float, landscape: LandscapeOverrides) {
+    suspend fun setClockPlacement(facetId: Long, alignment: ClockAlignment, zoneHeightDp: Float?, landscape: LandscapeOverrides) {
         update(facetId) {
-            it.copy(clockPlacementOwn = true, clockAlignment = alignment, clockZoneHeightDp = zoneHeightDp, clockScale = scale)
+            it.copy(clockPlacementOwn = true, clockAlignment = alignment, clockZoneHeightDp = zoneHeightDp)
                 .withLandscape(
                     it.landscape.copy(
                         clockAlignment = landscape.clockAlignment,
                         clockZoneHeightDp = landscape.clockZoneHeightDp,
-                        clockScale = landscape.clockScale,
                     ),
                 )
         }
@@ -111,13 +109,14 @@ class FacetRepository @Inject constructor(
 
     /**
      * "Reset clock position" for this facet: it stops owning its placement ([Facet.clockPlacementOwn]) and goes back to
-     * the launcher's fallback, with its own values cleared, in one atomic write.
+     * the launcher's fallback, with its own values cleared, and its clock page loses its saved box (back to the default size).
      */
     suspend fun resetClockPosition(facetId: Long) {
         update(facetId) {
-            it.copy(clockPlacementOwn = false, clockZoneHeightDp = null, clockAlignment = ClockAlignment.LEFT, clockScale = DEFAULT_CLOCK_SCALE)
-                .withLandscape(it.landscape.copy(clockZoneHeightDp = null, clockAlignment = null, clockScale = null))
+            it.copy(clockPlacementOwn = false, clockZoneHeightDp = null, clockAlignment = ClockAlignment.LEFT)
+                .withLandscape(it.landscape.copy(clockZoneHeightDp = null, clockAlignment = null))
         }
+        clockStackItemDao.clearClockBoxes(facetId)
     }
 
     /** Reverts this facet to inheriting the global default or switches to overriding. */

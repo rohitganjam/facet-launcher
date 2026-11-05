@@ -153,7 +153,6 @@ class SettingsRepositoryTest {
         assertEquals(FontWeightOption.REGULAR, settings.homeAppsFontWeight)
         assertEquals(ClockAlignment.LEFT, settings.clockAlignment)
         assertEquals(null, settings.clockZoneHeightDp)
-        assertEquals(0.8f, settings.clockScale, 0.0001f)
         assertEquals(AppListVerticalAlignment.BOTTOM, settings.appListVerticalAlignment)
         assertEquals(AppListLayout.SINGLE_COLUMN, settings.appListLayout)
         assertEquals(AppListColumnAlignment.BOTH_LEFT, settings.appListColumnAlignment)
@@ -245,18 +244,6 @@ class SettingsRepositoryTest {
         val settings = repository.settings.first()
         assertEquals(ClockAlignment.CENTER, settings.clockAlignment)
         assertEquals(AppListVerticalAlignment.TOP, settings.appListVerticalAlignment)
-    }
-
-    @Test
-    fun `setClockScale persists and round-trips`() = runTest {
-        // Given a repository
-        val repository = createRepository()
-
-        // When the clock scale is set
-        repository.setClockScale(1.5f)
-
-        // Then it round-trips exactly
-        assertEquals(1.5f, repository.settings.first().clockScale, 0.0001f)
     }
 
     @Test
@@ -602,7 +589,6 @@ class SettingsRepositoryTest {
         val written = LandscapeOverrides(
             clockAlignment = ClockAlignment.CENTER,
             clockZoneHeightDp = 310f,
-            clockScale = 1.2f,
             appRowPosition = AppRowPosition.CENTER,
             appListVerticalAlignment = AppListVerticalAlignment.TOP,
             appListColumnAlignment = AppListColumnAlignment.MIRRORED,
@@ -614,26 +600,24 @@ class SettingsRepositoryTest {
         assertEquals(written, saved.landscape)
         assertEquals(ClockAlignment.LEFT, saved.clockAlignment)
         assertEquals(null, saved.clockZoneHeightDp)
-        assertEquals(0.8f, saved.clockScale, 0.001f)
         assertEquals(AppRowPosition.LEFT, saved.appRowPosition)
     }
 
     @Test
     fun `updateLandscape changes only the fields it names and a null clears one`() = runTest {
         val repository = createRepository()
-        repository.updateLandscape { it.copy(clockScale = 1.2f, appRowPosition = AppRowPosition.RIGHT) }
+        repository.updateLandscape { it.copy(appRowPosition = AppRowPosition.RIGHT) }
 
         repository.updateLandscape { it.copy(appRowPosition = null) }
 
         val landscape = repository.settings.first().landscape
-        assertEquals(1.2f, landscape.clockScale!!, 0.001f)
         assertEquals(null, landscape.appRowPosition)
     }
 
     @Test
     fun `resetting the clock height clears its landscape value too`() = runTest {
         val repository = createRepository()
-        repository.updateLandscape { it.copy(clockZoneHeightDp = 310f, clockScale = 1.2f, clockAlignment = ClockAlignment.CENTER) }
+        repository.updateLandscape { it.copy(clockZoneHeightDp = 310f, clockAlignment = ClockAlignment.CENTER) }
 
         repository.resetClockZoneHeight()
 

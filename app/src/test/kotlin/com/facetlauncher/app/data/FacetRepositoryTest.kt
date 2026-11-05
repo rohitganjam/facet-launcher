@@ -119,8 +119,8 @@ class FacetRepositoryTest {
 
         // When a placement is saved with its own landscape alignment
         repository.setClockPlacement(
-            facetId = facet.id, alignment = ClockAlignment.CENTER, zoneHeightDp = 220f, scale = 1.5f,
-            landscape = LandscapeOverrides(clockAlignment = ClockAlignment.RIGHT, clockZoneHeightDp = 310f, clockScale = null),
+            facetId = facet.id, alignment = ClockAlignment.CENTER, zoneHeightDp = 220f,
+            landscape = LandscapeOverrides(clockAlignment = ClockAlignment.RIGHT, clockZoneHeightDp = 310f),
         )
 
         // Then the facet owns it, portrait and landscape separately
@@ -128,10 +128,8 @@ class FacetRepositoryTest {
         assertEquals(true, stored.clockPlacementOwn)
         assertEquals(ClockAlignment.CENTER, stored.clockAlignment)
         assertEquals(220f, stored.clockZoneHeightDp)
-        assertEquals(1.5f, stored.clockScale, 0.001f)
         assertEquals(ClockAlignment.RIGHT, stored.landscape.clockAlignment)
         assertEquals(310f, stored.landscape.clockZoneHeightDp)
-        assertNull(stored.landscape.clockScale)
     }
 
     @Test
@@ -142,7 +140,7 @@ class FacetRepositoryTest {
         repository.updateLandscape(facet.id) { it.copy(appRowPosition = AppRowPosition.CENTER) }
 
         // When the clock placement is saved
-        repository.setClockPlacement(facet.id, ClockAlignment.RIGHT, null, 1f, LandscapeOverrides(clockAlignment = ClockAlignment.CENTER))
+        repository.setClockPlacement(facet.id, ClockAlignment.RIGHT, null, LandscapeOverrides(clockAlignment = ClockAlignment.CENTER))
 
         // Then the app row position is untouched
         assertEquals(AppRowPosition.CENTER, repository.getById(facet.id)!!.landscape.appRowPosition)
@@ -153,7 +151,7 @@ class FacetRepositoryTest {
         // Given a facet that owns a dragged placement in both orientations
         val repository = FacetRepository(FakeFacetDao(), FakeClockStackItemDao())
         val facet = repository.addFacet()
-        repository.setClockPlacement(facet.id, ClockAlignment.CENTER, 220f, 1.5f, LandscapeOverrides(clockAlignment = ClockAlignment.RIGHT, clockZoneHeightDp = 310f, clockScale = 1.1f))
+        repository.setClockPlacement(facet.id, ClockAlignment.CENTER, 220f, LandscapeOverrides(clockAlignment = ClockAlignment.RIGHT, clockZoneHeightDp = 310f))
 
         // When it is reset
         repository.resetClockPosition(facet.id)
@@ -163,7 +161,6 @@ class FacetRepositoryTest {
         assertEquals(false, stored.clockPlacementOwn)
         assertNull(stored.clockZoneHeightDp)
         assertEquals(ClockAlignment.LEFT, stored.clockAlignment)
-        assertEquals(DEFAULT_CLOCK_SCALE, stored.clockScale, 0.001f)
         assertEquals(LandscapeOverrides(), stored.landscape)
     }
 
@@ -356,17 +353,40 @@ class FacetRepositoryTest {
     }
 
     @Test
+    fun `resetClockPosition also forgets the clock page's saved box and leaves widget pages alone`() = runTest {
+        // Given a facet whose clock page and a widget page both have a saved size
+        val dao = FakeClockStackItemDao()
+        val repository = FacetRepository(FakeFacetDao(), dao)
+        val facet = repository.addFacet()
+        val clock = dao.getAll(facet.id).single { it.kind == ClockStackItemKind.CLOCK }
+        dao.setSize(clock.id, 200, 90)
+        dao.setLandscapeSize(clock.id, 180, 80)
+        val widgetId = dao.insert(ClockStackItemEntity(facetId = facet.id, position = 1, kind = ClockStackItemKind.WIDGET, appWidgetId = 7, widthDp = 300, heightDp = 120))
+
+        // When the clock position is reset
+        repository.resetClockPosition(facet.id)
+
+        // Then the clock goes back to its default size in both orientations, and the widget keeps its own
+        val pages = dao.getAll(facet.id)
+        val reset = pages.single { it.id == clock.id }
+        assertNull(reset.widthDp)
+        assertNull(reset.heightDp)
+        assertNull(reset.landscapeWidthDp)
+        assertNull(reset.landscapeHeightDp)
+        assertEquals(300, pages.single { it.id == widgetId }.widthDp)
+    }
+
+    @Test
     fun `landscape values are saved apart from the portrait ones`() = runTest {
         val repository = FacetRepository(FakeFacetDao(), FakeClockStackItemDao())
         val facet = repository.addFacet()
-        repository.setClockPlacement(facet.id, ClockAlignment.RIGHT, null, 0.8f, LandscapeOverrides())
+        repository.setClockPlacement(facet.id, ClockAlignment.RIGHT, null, LandscapeOverrides())
         repository.setAppRowPosition(repository.observeFacets().first().single().id, AppRowPosition.RIGHT)
 
         // When landscape values are written
         val written = LandscapeOverrides(
             clockAlignment = ClockAlignment.CENTER,
             clockZoneHeightDp = 310f,
-            clockScale = 1.1f,
             appRowPosition = AppRowPosition.CENTER,
             appListVerticalAlignment = AppListVerticalAlignment.TOP,
             appListColumnAlignment = AppListColumnAlignment.MIRRORED,
@@ -384,12 +404,11 @@ class FacetRepositoryTest {
     fun `updateLandscape changes only the fields it names and a null clears one`() = runTest {
         val repository = FacetRepository(FakeFacetDao(), FakeClockStackItemDao())
         val facet = repository.addFacet()
-        repository.updateLandscape(facet.id) { it.copy(clockScale = 1.1f, appRowPosition = AppRowPosition.CENTER) }
+        repository.updateLandscape(facet.id) { it.copy(appRowPosition = AppRowPosition.CENTER) }
 
         repository.updateLandscape(repository.observeFacets().first().single().id) { it.copy(appRowPosition = null) }
 
         val landscape = repository.observeFacets().first().single().landscape
-        assertEquals(1.1f, landscape.clockScale!!, 0.001f)
         assertNull(landscape.appRowPosition)
     }
 
@@ -397,14 +416,13 @@ class FacetRepositoryTest {
     fun `resetClockPosition clears the landscape clock props too`() = runTest {
         val repository = FacetRepository(FakeFacetDao(), FakeClockStackItemDao())
         val facet = repository.addFacet()
-        repository.updateLandscape(facet.id) { it.copy(clockAlignment = ClockAlignment.CENTER, clockZoneHeightDp = 310f, clockScale = 1.1f, appRowPosition = AppRowPosition.CENTER) }
+        repository.updateLandscape(facet.id) { it.copy(clockAlignment = ClockAlignment.CENTER, clockZoneHeightDp = 310f, appRowPosition = AppRowPosition.CENTER) }
 
         repository.resetClockPosition(repository.observeFacets().first().single().id)
 
         val landscape = repository.observeFacets().first().single().landscape
         assertNull(landscape.clockAlignment)
         assertNull(landscape.clockZoneHeightDp)
-        assertNull(landscape.clockScale)
         assertEquals(AppRowPosition.CENTER, landscape.appRowPosition)
     }
 

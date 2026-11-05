@@ -119,11 +119,9 @@ private fun LauncherSettings.toBackupSettings(activeFacetIndex: Int?): BackupSet
     searchSettingsEnabled = searchSettingsEnabled,
     clockAlignment = clockAlignment.name,
     clockZoneHeightDp = clockZoneHeightDp,
-    clockScale = clockScale,
     appListVerticalAlignment = appListVerticalAlignment.name,
     landscapeClockAlignment = landscape.clockAlignment?.name,
     landscapeClockZoneHeightDp = landscape.clockZoneHeightDp,
-    landscapeClockScale = landscape.clockScale,
     landscapeAppListVerticalAlignment = landscape.appListVerticalAlignment?.name,
 ).withAccessoriesAndWeather(this)
 

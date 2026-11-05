@@ -22,6 +22,7 @@ import com.facetlauncher.app.data.model.clockStackLimit
 import com.facetlauncher.app.data.model.nativeClockPage
 import com.facetlauncher.app.data.model.ClockTemplateId
 import com.facetlauncher.app.data.model.DockDisplayMode
+import com.facetlauncher.app.data.model.DEFAULT_CLOCK_SCALE
 import com.facetlauncher.app.data.model.Facet
 import com.facetlauncher.app.data.model.LandscapeOverrides
 import com.facetlauncher.app.data.model.LauncherSettings
@@ -128,10 +129,9 @@ private fun resolveClockPlacement(facet: Facet?, settings: LauncherSettings): Or
     }
     val alignment = prop({ it.clockAlignment }, { it.clockAlignment }, settings.clockAlignment, global.clockAlignment)
     val zoneHeight = prop({ it.clockZoneHeightDp }, { it.clockZoneHeightDp }, settings.clockZoneHeightDp, global.clockZoneHeightDp)
-    val scale = prop({ it.clockScale }, { it.clockScale }, settings.clockScale, global.clockScale)
     return Oriented(
-        ClockPlacement(alignment.portrait, zoneHeight.portrait, scale.portrait),
-        ClockPlacement(alignment.landscape, zoneHeight.landscape, scale.landscape),
+        ClockPlacement(alignment.portrait, zoneHeight.portrait, DEFAULT_CLOCK_SCALE),
+        ClockPlacement(alignment.landscape, zoneHeight.landscape, DEFAULT_CLOCK_SCALE),
     )
 }
 

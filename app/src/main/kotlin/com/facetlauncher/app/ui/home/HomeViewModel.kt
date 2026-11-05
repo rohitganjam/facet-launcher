@@ -172,8 +172,6 @@ class HomeViewModel @Inject constructor(
         viewModelScope.launch { clockWidgetFacet.commitSize(page.id, widthDp, heightDp, mode) }
     }
 
-    fun onClockScaleCommit(scale: Float, mode: HomeLayoutMode = HomeLayoutMode.PORTRAIT) = commitPlacement(mode) { it.copy(scale = scale) }
-
     /** Fired by the adjust-mode alignment toolbar: a widget page keeps its own alignment, the clock page the facet's. */
     fun onClockAlignmentCommit(alignment: ClockAlignment, mode: HomeLayoutMode = HomeLayoutMode.PORTRAIT) {
         val page = _uiState.value.visibleClockItem

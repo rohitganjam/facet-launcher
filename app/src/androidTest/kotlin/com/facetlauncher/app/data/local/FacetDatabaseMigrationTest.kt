@@ -1122,12 +1122,13 @@ class FacetDatabaseMigrationTest {
         // Then the clock and calendar columns are gone, the rest of the row is intact, and the facet's clock page still has its settings
         val columns = dbV44.query("SELECT * FROM facets LIMIT 1").use { it.columnNames.toSet() }
         assertTrue("overrideClock" !in columns && "clockTemplateId" !in columns && "selectedCalendarIdsCsv" !in columns && "clockWidgetAppWidgetId" !in columns)
-        dbV44.query("SELECT name, clockScale, clockAlignment, clockPlacementOwn FROM facets WHERE id = 1").use {
+        // The scale is gone too: a clock's size is the box on its page
+        assertTrue("clockScale" !in columns && "landscapeClockScale" !in columns)
+        dbV44.query("SELECT name, clockAlignment, clockPlacementOwn FROM facets WHERE id = 1").use {
             assertTrue(it.moveToFirst())
             assertEquals("Work", it.getString(0))
-            assertEquals(1.1f, it.getFloat(1), 0.001f)
-            assertEquals("RIGHT", it.getString(2))
-            assertEquals(1, it.getInt(3))
+            assertEquals("RIGHT", it.getString(1))
+            assertEquals(1, it.getInt(2))
         }
         assertEquals(setOf("3", "4"), clockOf(dbV44, 1)!!.calendar.calendarIds)
         assertEquals(launcherClock, clockOf(dbV44, 2))

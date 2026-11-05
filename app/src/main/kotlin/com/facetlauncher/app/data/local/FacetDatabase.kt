@@ -67,5 +67,7 @@ abstract class FacetDatabase : RoomDatabase() {
     DeleteColumn(tableName = "facets", columnName = "clockWidgetHeightDp"),
     DeleteColumn(tableName = "facets", columnName = "landscapeClockWidgetWidthDp"),
     DeleteColumn(tableName = "facets", columnName = "landscapeClockWidgetHeightDp"),
+    DeleteColumn(tableName = "facets", columnName = "clockScale"),
+    DeleteColumn(tableName = "facets", columnName = "landscapeClockScale"),
 )
 class DropFacetClockColumns : AutoMigrationSpec

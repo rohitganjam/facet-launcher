@@ -13,6 +13,7 @@ import com.facetlauncher.app.data.model.AppListLayout
 import com.facetlauncher.app.data.model.AppRowPosition
 import com.facetlauncher.app.data.model.CalendarDisplayOptions
 import com.facetlauncher.app.data.model.ClockAlignment
+import com.facetlauncher.app.data.model.DEFAULT_CLOCK_SCALE
 import com.facetlauncher.app.data.model.ClockTemplateId
 import com.facetlauncher.app.data.model.DockDisplayMode
 import com.facetlauncher.app.data.model.LandscapeOverrides
@@ -25,7 +26,6 @@ class ResolvedFacetStyleTest {
 
     private val settings = LauncherSettings(
         clockAlignment = ClockAlignment.RIGHT,
-        clockScale = 1.2f,
         clockZoneHeightDp = 300f,
         listContentMode = ListContentMode.FAVORITES,
         appRowPosition = AppRowPosition.CENTER,
@@ -45,7 +45,7 @@ class ResolvedFacetStyleTest {
         // Then the clock is the built-in one and every other field is the launcher's
         assertEquals(ClockWidgetConfig(), style.clock)
         assertEquals(ClockAlignment.RIGHT, style.clockPlacement.portrait.alignment)
-        assertEquals(1.2f, style.clockPlacement.portrait.scale, 0f)
+        assertEquals(DEFAULT_CLOCK_SCALE, style.clockPlacement.portrait.scale, 0f)
         assertEquals(300f, style.clockPlacement.portrait.zoneHeightDp)
         assertEquals(AppRowPosition.CENTER, style.appList.rowPosition)
         assertEquals(AppListLayout.GRID, style.appList.layout)
@@ -60,7 +60,6 @@ class ResolvedFacetStyleTest {
                 it.copy(
                     clockStack = listOf(clockItemWith(ClockWidgetConfig(templateId = ClockTemplateId.DATE_FORWARD, use24HourTime = true))),
                     clockAlignment = ClockAlignment.LEFT,
-                    clockScale = 0.5f,
                 )
             },
             settings,
@@ -70,18 +69,18 @@ class ResolvedFacetStyleTest {
         assertEquals(ClockTemplateId.DATE_FORWARD, style.clock.templateId)
         assertEquals(true, style.clock.use24HourTime)
         assertEquals(ClockAlignment.RIGHT, style.clockPlacement.portrait.alignment)
-        assertEquals(1.2f, style.clockPlacement.portrait.scale, 0f)
+        assertEquals(DEFAULT_CLOCK_SCALE, style.clockPlacement.portrait.scale, 0f)
     }
 
     @Test
     fun `a facet that owns its placement uses it`() {
         val style = resolveFacetStyle(
-            facet { it.copy(clockPlacementOwn = true, clockAlignment = ClockAlignment.LEFT, clockScale = 0.5f, clockZoneHeightDp = 120f) },
+            facet { it.copy(clockPlacementOwn = true, clockAlignment = ClockAlignment.LEFT, clockZoneHeightDp = 120f) },
             settings,
         )
 
         assertEquals(ClockAlignment.LEFT, style.clockPlacement.portrait.alignment)
-        assertEquals(0.5f, style.clockPlacement.portrait.scale, 0f)
+        assertEquals(DEFAULT_CLOCK_SCALE, style.clockPlacement.portrait.scale, 0f)
         assertEquals(120f, style.clockPlacement.portrait.zoneHeightDp)
     }
 
@@ -94,22 +93,24 @@ class ResolvedFacetStyleTest {
 
     @Test
     fun `a facet that does not own its placement shows the launcher's, in both orientations, whatever its own columns say`() {
-        val withLandscape = settings.copy(landscape = LandscapeOverrides(clockScale = 1.5f))
-        val style = resolveFacetStyle(facet { it.copy(clockPlacementOwn = false, clockScale = 0.5f, landscapeClockScale = 0.9f) }, withLandscape)
+        val withLandscape = settings.copy(landscape = LandscapeOverrides(clockZoneHeightDp = 310f))
+        val style = resolveFacetStyle(facet { it.copy(clockPlacementOwn = false, clockZoneHeightDp = 55f) }, withLandscape)
 
-        assertEquals(1.2f, style.clockPlacement.portrait.scale, 0f)
-        assertEquals(1.5f, style.clockPlacement.landscape.scale, 0f)
+        assertEquals(settings.clockZoneHeightDp, style.clockPlacement.portrait.zoneHeightDp)
+        assertEquals(310f, style.clockPlacement.landscape.zoneHeightDp)
+        // The size is the clock page's saved box, so the placement only carries the default scale for a clock without one
+        assertEquals(DEFAULT_CLOCK_SCALE, style.clockPlacement.landscape.scale, 0f)
     }
 
     @Test
     fun `an owning facet's landscape clock values win, then its portrait ones, never the launcher's landscape`() {
-        val withLandscapeScale = settings.copy(landscape = LandscapeOverrides(clockScale = 2.0f, clockAlignment = ClockAlignment.CENTER))
+        val withLandscapeScale = settings.copy(landscape = LandscapeOverrides(clockAlignment = ClockAlignment.CENTER))
         val style = resolveFacetStyle(
-            facet { it.copy(clockPlacementOwn = true, clockScale = 0.5f, clockAlignment = ClockAlignment.RIGHT, landscapeClockScale = 0.9f) },
+            facet { it.copy(clockPlacementOwn = true, clockAlignment = ClockAlignment.RIGHT) },
             withLandscapeScale,
         )
 
-        assertEquals(0.9f, style.clockPlacement.landscape.scale, 0f)
+        assertEquals(DEFAULT_CLOCK_SCALE, style.clockPlacement.landscape.scale, 0f)
         assertEquals(ClockAlignment.RIGHT, style.clockPlacement.landscape.alignment)
     }
 

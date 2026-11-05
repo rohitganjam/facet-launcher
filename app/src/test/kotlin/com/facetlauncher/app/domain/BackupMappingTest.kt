@@ -67,9 +67,9 @@ class BackupMappingTest {
     fun `a facet's clock and list settings survive a backup round trip`() {
         // Given a facet with every clock and list field the first backup format left out
         val original = facet.copy(
-            clockAlignment = ClockAlignment.RIGHT, clockZoneHeightDp = 210f, clockScale = 1.1f,
+            clockAlignment = ClockAlignment.RIGHT, clockZoneHeightDp = 210f,
             appListVerticalAlignment = AppListVerticalAlignment.TOP,
-            landscapeClockAlignment = ClockAlignment.CENTER, landscapeClockZoneHeightDp = 300f, landscapeClockScale = 0.9f,
+            landscapeClockAlignment = ClockAlignment.CENTER, landscapeClockZoneHeightDp = 300f,
             landscapeAppListVerticalAlignment = AppListVerticalAlignment.BOTTOM,
             appListShrinkToFit = com.facetlauncher.app.data.model.AppListShrinkToFit.ON,
         )
@@ -127,7 +127,6 @@ class BackupMappingTest {
 
         // Then the new fields take their defaults
         assertEquals(ClockAlignment.LEFT, restored.clockAlignment)
-        assertEquals(0.8f, restored.clockScale)
         assertNull(restored.clockZoneHeightDp)
         assertEquals(AppListVerticalAlignment.LAUNCHER_DEFAULT, restored.appListVerticalAlignment)
         assertNull(restored.landscapeClockAlignment)

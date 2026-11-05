@@ -27,7 +27,7 @@ How to read: one section per tier, one table per package (mirrors `app/src/main`
 | [DefaultLauncherRepositoryTest](app/src/test/kotlin/com/facetlauncher/app/data/DefaultLauncherRepositoryTest.kt) | `app/src/main/kotlin/com/facetlauncher/app/data/DefaultLauncherRepository.kt` | 7 | Robolectric, runTest |
 | [DeviceStateRepositoryTest](app/src/test/kotlin/com/facetlauncher/app/data/DeviceStateRepositoryTest.kt) | `app/src/main/kotlin/com/facetlauncher/app/data/DeviceStateRepository.kt` | 11 | runTest |
 | [EntitlementBackupRulesTest](app/src/test/kotlin/com/facetlauncher/app/data/EntitlementBackupRulesTest.kt) |  | 3 |  |
-| [FacetRepositoryTest](app/src/test/kotlin/com/facetlauncher/app/data/FacetRepositoryTest.kt) | `app/src/main/kotlin/com/facetlauncher/app/data/FacetRepository.kt` | 21 | runTest |
+| [FacetRepositoryTest](app/src/test/kotlin/com/facetlauncher/app/data/FacetRepositoryTest.kt) | `app/src/main/kotlin/com/facetlauncher/app/data/FacetRepository.kt` | 22 | runTest |
 | [FacetShortcutRepositoryTest](app/src/test/kotlin/com/facetlauncher/app/data/FacetShortcutRepositoryTest.kt) | `app/src/main/kotlin/com/facetlauncher/app/data/FacetShortcutRepository.kt` | 3 | Robolectric |
 | [FolderRepositoryTest](app/src/test/kotlin/com/facetlauncher/app/data/FolderRepositoryTest.kt) | `app/src/main/kotlin/com/facetlauncher/app/data/FolderRepository.kt` | 9 | Robolectric, runTest |
 | [HeadphonesRepositoryTest](app/src/test/kotlin/com/facetlauncher/app/data/HeadphonesRepositoryTest.kt) | `app/src/main/kotlin/com/facetlauncher/app/data/HeadphonesRepository.kt` | 6 | Robolectric, runTest |
@@ -48,7 +48,7 @@ How to read: one section per tier, one table per package (mirrors `app/src/main`
 | [ProPurchaseMappingTest](app/src/test/kotlin/com/facetlauncher/app/data/ProPurchaseMappingTest.kt) | `app/src/main/kotlin/com/facetlauncher/app/data/ProPurchaseMapping.kt` | 6 | Robolectric |
 | [ReleaseNotesParserTest](app/src/test/kotlin/com/facetlauncher/app/data/ReleaseNotesParserTest.kt) | `app/src/main/kotlin/com/facetlauncher/app/data/ReleaseNotesParser.kt` | 6 |  |
 | [ReleaseNotesRepositoryTest](app/src/test/kotlin/com/facetlauncher/app/data/ReleaseNotesRepositoryTest.kt) | `app/src/main/kotlin/com/facetlauncher/app/data/ReleaseNotesRepository.kt` | 4 | Robolectric, runTest |
-| [SettingsRepositoryTest](app/src/test/kotlin/com/facetlauncher/app/data/SettingsRepositoryTest.kt) | `app/src/main/kotlin/com/facetlauncher/app/data/SettingsRepository.kt` | 33 | runTest |
+| [SettingsRepositoryTest](app/src/test/kotlin/com/facetlauncher/app/data/SettingsRepositoryTest.kt) | `app/src/main/kotlin/com/facetlauncher/app/data/SettingsRepository.kt` | 32 | runTest |
 | [SystemSettingsRepositoryTest](app/src/test/kotlin/com/facetlauncher/app/data/SystemSettingsRepositoryTest.kt) | `app/src/main/kotlin/com/facetlauncher/app/data/SystemSettingsRepository.kt` | 6 | Robolectric, runTest |
 | [UsageStatsRepositoryTest](app/src/test/kotlin/com/facetlauncher/app/data/UsageStatsRepositoryTest.kt) | `app/src/main/kotlin/com/facetlauncher/app/data/UsageStatsRepository.kt` | 8 | Robolectric, runTest |
 | [WakeEventsRepositoryTest](app/src/test/kotlin/com/facetlauncher/app/data/WakeEventsRepositoryTest.kt) | `app/src/main/kotlin/com/facetlauncher/app/data/WakeEventsRepository.kt` | 5 | Robolectric, runTest |
@@ -283,7 +283,7 @@ How to read: one section per tier, one table per package (mirrors `app/src/main`
 
 </details>
 
-<details><summary><code>FacetRepositoryTest</code> — 21 cases</summary>
+<details><summary><code>FacetRepositoryTest</code> — 22 cases</summary>
 
 - addFacet names it Facet N and appends after the last position
 - renameFacet updates only the name
@@ -303,6 +303,7 @@ How to read: one section per tier, one table per package (mirrors `app/src/main`
 - a facet with no stack rows has an empty clock stack
 - a new facet starts with the native clock as its one page
 - a restored facet starts with the native clock too
+- resetClockPosition also forgets the clock page's saved box and leaves widget pages alone
 - landscape values are saved apart from the portrait ones
 - updateLandscape changes only the fields it names and a null clears one
 - resetClockPosition clears the landscape clock props too
@@ -551,7 +552,7 @@ How to read: one section per tier, one table per package (mirrors `app/src/main`
 
 </details>
 
-<details><summary><code>SettingsRepositoryTest</code> — 33 cases</summary>
+<details><summary><code>SettingsRepositoryTest</code> — 32 cases</summary>
 
 - a grid size stored by an older version loads as the nearest density
 - a work calendar keeps its colour across a round trip
@@ -563,7 +564,6 @@ How to read: one section per tier, one table per package (mirrors `app/src/main`
 - markCoachMarkSeen is additive
 - clearCoachMarkSeen removes only that id
 - setClockAlignment and setAppListVerticalAlignment round-trip independently
-- setClockScale persists and round-trips
 - setClockZoneHeight persists and round-trips
 - resetClockZoneHeight clears the value back to null
 - setHomeAppsFontWeight persists and round-trips
@@ -2665,7 +2665,7 @@ How to read: one section per tier, one table per package (mirrors `app/src/main`
 - is loading until the use case emits, then reflects the real state
 - stops loading on its own after the timeout even if the underlying flow never emits
 - the divider commit goes to the active facet's own placement
-- scale and alignment commits change only their own value
+- an alignment commit changes only the alignment
 - the placement commits go to the facet even when it overrides the clock, and never to the launcher settings
 - landscape commits pass the landscape mode
 - the clock page's box is saved against the page, in the orientation being adjusted

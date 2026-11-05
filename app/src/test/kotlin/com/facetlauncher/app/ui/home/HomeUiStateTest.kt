@@ -10,6 +10,7 @@ import com.facetlauncher.app.data.model.LandscapeOverrides
 import com.facetlauncher.app.data.model.AppListVerticalAlignment
 import com.facetlauncher.app.data.model.AppListColumnAlignment
 import com.facetlauncher.app.data.model.ClockAlignment
+import com.facetlauncher.app.data.model.DEFAULT_CLOCK_SCALE
 import com.facetlauncher.app.data.model.Facet
 import com.facetlauncher.app.data.model.AppRowPosition
 import com.facetlauncher.app.data.model.AppRowPresentation
@@ -280,7 +281,7 @@ class HomeUiStateTest {
         val state = HomeUiState(
             settings = LauncherSettings(
                 clockAlignment = ClockAlignment.RIGHT,
-                landscape = LandscapeOverrides(clockAlignment = ClockAlignment.CENTER, clockScale = 0.9f),
+                landscape = LandscapeOverrides(clockAlignment = ClockAlignment.CENTER),
             ),
         )
 
@@ -289,9 +290,9 @@ class HomeUiStateTest {
 
     @Test
     fun `clock placement in landscape falls back to the portrait values when no landscape value is set`() {
-        val state = HomeUiState(settings = LauncherSettings(clockAlignment = ClockAlignment.RIGHT, clockZoneHeightDp = 200f, clockScale = 1.2f))
+        val state = HomeUiState(settings = LauncherSettings(clockAlignment = ClockAlignment.RIGHT, clockZoneHeightDp = 200f))
 
-        assertEquals(ClockPlacement(ClockAlignment.RIGHT, 200f, 1.2f), state.clockPlacement(landscape))
+        assertEquals(ClockPlacement(ClockAlignment.RIGHT, 200f, DEFAULT_CLOCK_SCALE), state.clockPlacement(landscape))
     }
 
     @Test
@@ -299,29 +300,29 @@ class HomeUiStateTest {
         val state = HomeUiState(
             settings = LauncherSettings(
                 clockAlignment = ClockAlignment.RIGHT,
-                landscape = LandscapeOverrides(clockAlignment = ClockAlignment.CENTER, clockZoneHeightDp = 310f, clockScale = 0.9f),
+                landscape = LandscapeOverrides(clockAlignment = ClockAlignment.CENTER, clockZoneHeightDp = 310f),
             ),
         )
 
-        assertEquals(ClockPlacement(ClockAlignment.CENTER, 310f, 0.9f), state.clockPlacement(landscape))
+        assertEquals(ClockPlacement(ClockAlignment.CENTER, 310f, DEFAULT_CLOCK_SCALE), state.clockPlacement(landscape))
     }
 
     @Test
     fun `a facet that owns its placement uses its landscape values, then its own portrait values, never the launcher's landscape ones`() {
         val facet = Facet(
             id = 1L, name = "Facet 1", position = 0, clockPlacementOwn = true,
-            clockAlignment = ClockAlignment.RIGHT, clockScale = 1.4f,
+            clockAlignment = ClockAlignment.RIGHT,
             landscapeClockAlignment = ClockAlignment.CENTER,
         )
         val state = HomeUiState(
-            settings = LauncherSettings(activeFacetId = 1L, landscape = LandscapeOverrides(clockAlignment = ClockAlignment.LEFT, clockScale = 0.5f)),
+            settings = LauncherSettings(activeFacetId = 1L, landscape = LandscapeOverrides(clockAlignment = ClockAlignment.LEFT)),
             facets = listOf(facet),
         )
 
         val placement = state.clockPlacement(landscape)
 
         assertEquals(ClockAlignment.CENTER, placement.alignment)
-        assertEquals(1.4f, placement.scale)
+        assertEquals(DEFAULT_CLOCK_SCALE, placement.scale)
     }
 
     @Test

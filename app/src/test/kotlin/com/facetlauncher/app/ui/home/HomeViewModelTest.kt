@@ -282,17 +282,16 @@ class HomeViewModelTest {
     }
 
     @Test
-    fun `scale and alignment commits change only their own value`() = runTest {
+    fun `an alignment commit changes only the alignment`() = runTest {
         val controller = mock(ClockWidgetFacetController::class.java)
         val viewModel = placementViewModel(controller = controller)
 
-        viewModel.onClockScaleCommit(1.4f)
         viewModel.onClockAlignmentCommit(ClockAlignment.CENTER)
         testDispatcher.scheduler.advanceUntilIdle()
 
         val change = PlacementChangeCaptor()
-        verify(controller, org.mockito.Mockito.times(2)).commitPlacement(eqOf(1L), eqOf(HomeLayoutMode.PORTRAIT), change.capture())
-        assertEquals(listOf(shown.copy(scale = 1.4f), shown.copy(alignment = ClockAlignment.CENTER)), change.appliedEach(shown))
+        verify(controller).commitPlacement(eqOf(1L), eqOf(HomeLayoutMode.PORTRAIT), change.capture())
+        assertEquals(listOf(shown.copy(alignment = ClockAlignment.CENTER)), change.appliedEach(shown))
     }
 
     @Test

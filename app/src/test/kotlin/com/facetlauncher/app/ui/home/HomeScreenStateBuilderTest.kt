@@ -34,12 +34,11 @@ class HomeScreenStateBuilderTest {
     private val settings = LauncherSettings(
         activeFacetId = 1L,
         clockAlignment = ClockAlignment.RIGHT,
-        clockScale = 1.2f,
         clockZoneHeightDp = 300f,
         appRowPosition = AppRowPosition.CENTER,
         appListVerticalAlignment = AppListVerticalAlignment.TOP,
         showMediaSkipButtons = false,
-        landscape = LandscapeOverrides(clockScale = 2.0f, appRowPosition = AppRowPosition.RIGHT),
+        landscape = LandscapeOverrides(appRowPosition = AppRowPosition.RIGHT),
     )
 
     private val content = HomeScreenContent(listItems = emptyList(), dockItems = emptyList(), calendarEvents = emptyList())
@@ -53,9 +52,9 @@ class HomeScreenStateBuilderTest {
         val facets = listOf(
             null,
             Facet(id = 1L, name = "Inherits", position = 0),
-            Facet(id = 1L, name = "Overrides", position = 0, clockPlacementOwn = true, clockAlignment = ClockAlignment.LEFT, clockScale = 0.5f, clockZoneHeightDp = 120f),
+            Facet(id = 1L, name = "Overrides", position = 0, clockPlacementOwn = true, clockAlignment = ClockAlignment.LEFT, clockZoneHeightDp = 120f),
             Facet(id = 1L, name = "Never dragged", position = 0, clockPlacementOwn = true, clockZoneHeightDp = null),
-            Facet(id = 1L, name = "Own landscape", position = 0, landscapeAppRowPosition = AppRowPosition.LEFT, landscapeClockScale = 0.9f),
+            Facet(id = 1L, name = "Own landscape", position = 0, landscapeAppRowPosition = AppRowPosition.LEFT),
         )
 
         for (facet in facets) {

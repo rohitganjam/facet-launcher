@@ -235,7 +235,7 @@ class ImportBackupUseCaseTest {
                 exportedAtEpochMillis = 0L,
                 settings = minimalSettings().copy(
                     landscapeAppRowPosition = "CENTER", landscapeAppListColumnAlignment = "MIRRORED",
-                    landscapeClockAlignment = "RIGHT", landscapeClockZoneHeightDp = 310f, landscapeClockScale = 1.1f,
+                    landscapeClockAlignment = "RIGHT", landscapeClockZoneHeightDp = 310f,
                     landscapeAppListVerticalAlignment = "TOP",
                 ),
                 facets = emptyList(), dockApps = emptyList(), defaultFavoriteApps = emptyList(), widgetPlacements = emptyList(),
@@ -247,10 +247,10 @@ class ImportBackupUseCaseTest {
         val captor = LandscapeTransformCaptor()
         verify(settingsRepository).updateLandscape(captor.capture())
         // A full restore replaces the group: the old scale is gone, the backed-up values are in
-        val before = LandscapeOverrides(clockScale = 1.2f, appRowPosition = AppRowPosition.LEFT)
+        val before = LandscapeOverrides(appRowPosition = AppRowPosition.LEFT)
         assertEquals(
             LandscapeOverrides(
-                clockAlignment = ClockAlignment.RIGHT, clockZoneHeightDp = 310f, clockScale = 1.1f,
+                clockAlignment = ClockAlignment.RIGHT, clockZoneHeightDp = 310f,
                 appRowPosition = AppRowPosition.CENTER, appListVerticalAlignment = AppListVerticalAlignment.TOP,
                 appListColumnAlignment = AppListColumnAlignment.MIRRORED,
             ),
@@ -266,7 +266,7 @@ class ImportBackupUseCaseTest {
                 exportedAtEpochMillis = 0L,
                 settings = minimalSettings().copy(
                     clockAlignment = "RIGHT",
-                    clockZoneHeightDp = 240f, clockScale = 1.3f, appListVerticalAlignment = "TOP",
+                    clockZoneHeightDp = 240f, appListVerticalAlignment = "TOP",
                     recentlyInstalledPosition = "SHOW_LAST", searchSettingsEnabled = true,
                 ),
                 facets = emptyList(), dockApps = emptyList(), defaultFavoriteApps = emptyList(), widgetPlacements = emptyList(),
@@ -277,7 +277,6 @@ class ImportBackupUseCaseTest {
 
         verify(settingsRepository).setClockAlignment(ClockAlignment.RIGHT)
         verify(settingsRepository).setClockZoneHeight(240f)
-        verify(settingsRepository).setClockScale(1.3f)
         verify(settingsRepository).setAppListVerticalAlignment(AppListVerticalAlignment.TOP)
         verify(settingsRepository).setRecentlyInstalledPosition(com.facetlauncher.app.data.model.RecentlyInstalledPosition.SHOW_LAST)
         verify(settingsRepository).setSearchSettingsEnabled(true)

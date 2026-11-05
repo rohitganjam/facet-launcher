@@ -51,7 +51,7 @@ class BackupCoverageTest {
         // drawerGridDensity is stored as drawerGridSize, and the landscape group as flat landscape* fields
         val renamed = mapOf("drawerGridDensity" to "drawerGridSize")
         val landscapeGroup = setOf(
-            "landscapeClockAlignment", "landscapeClockZoneHeightDp", "landscapeClockScale",
+            "landscapeClockAlignment", "landscapeClockZoneHeightDp",
             "landscapeAppRowPosition", "landscapeAppListVerticalAlignment", "landscapeAppListColumnAlignment",
         )
         // the chosen weather city is saved as four flat fields (the current location never is)

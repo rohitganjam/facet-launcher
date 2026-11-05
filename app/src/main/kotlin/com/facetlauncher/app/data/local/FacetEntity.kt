@@ -32,12 +32,9 @@ data class FacetEntity(
     val clockAlignment: ClockAlignment = ClockAlignment.LEFT,
     /** `null` until this facet drags the clock's grab handle for the first time — see [com.facetlauncher.app.data.model.LauncherSettings.clockZoneHeightDp]. */
     val clockZoneHeightDp: Float? = null,
-    /** Home clock's scale factor — see [com.facetlauncher.app.data.model.LauncherSettings.clockScale]. */
-    val clockScale: Float = 0.8f,
-    /** Landscape's own clock alignment (top, middle or bottom there), zone height (its divider position) and scale; `null` uses the portrait value above. */
+    /** Landscape's own clock alignment (top, middle or bottom there), zone height (its divider position); `null` uses the portrait value above. */
     val landscapeClockAlignment: ClockAlignment? = null,
     val landscapeClockZoneHeightDp: Float? = null,
-    val landscapeClockScale: Float? = null,
 
     // Apps section
     val overrideApps: Boolean = false,

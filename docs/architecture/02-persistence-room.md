@@ -41,7 +41,6 @@ erDiagram
         boolean clockPlacementOwn "false until first adjusted on Home: then alignment, zone height, scale and their landscape twins are the facet's own"
         string clockAlignment "own placement, used while clockPlacementOwn"
         float clockZoneHeightDp "nullable"
-        float clockScale
         boolean overrideApps
         string appRowPosition
         string appRowPresentation
@@ -254,7 +253,7 @@ Every DAO follows the same shape, which is what makes the reactive layer uniform
 | `FolderPlacementDao` | `observe(list, ownerKey)` | `upsert` (REPLACE) | `deleteByFolderId(list, ownerKey, folderId)`, `deleteAllForOwner(list, ownerKey)` | — |
 | `FolderDao` | `observeAllWithApps()` (`@Transaction`, `FolderWithApps`) | `insertFolder(folder): Long`, `renameFolder(id, name)`, `upsertFolderApp(app): Long` | `deleteFolder(id)`, `deleteAllFolders()`, `deleteFolderApp(folderId, pkg, activity, userId)`, `deleteFolderAppsByPackage(pkg, userId)`, `deleteFolderAppsByUserId(userId)` | `getOrphanedFolderApps()` |
 | `AutomationRuleDao` | `observeAll()` (`ORDER BY position ASC, id ASC`) | `insert(rule): Long`, `update(rule)`, `setEnabled(id, enabled)` | `deleteById(id)` | `getById(id)`, `maxPosition()` (`-1` when empty) |
-| `ClockStackItemDao` | `observe(facetId)`, `observeAll()` (`ORDER BY position, id`) | `insert` | `delete(id)`, `deleteAll(facetId)` | `getAll(facetId)`, `getById(id)`; updates `replace` (swaps the kind, widget id and native type, resets the sizes), `setPosition`, `setSize`, `setLandscapeSize`, `setAlignment`, `setLandscapeAlignment`. `ClockStackRepository` wraps add (clock, hosted widget, native widget), replace, remove, reorder, clear and a backup's `restoreNativeWidgets` in `database.withTransaction`, caps a stack at `MAX_CLOCK_STACK_ITEMS` (5) and allows one `CLOCK` item |
+| `ClockStackItemDao` | `observe(facetId)`, `observeAll()` (`ORDER BY position, id`) | `insert` | `delete(id)`, `deleteAll(facetId)` | `getAll(facetId)`, `getById(id)`; updates `clearClockBoxes(facetId)` (a facet's clock pages only, both orientations), `replace` (swaps the kind, widget id and native type, resets the sizes), `setPosition`, `setSize`, `setLandscapeSize`, `setAlignment`, `setLandscapeAlignment`. `ClockStackRepository` wraps add (clock, hosted widget, native widget), replace, remove, reorder, clear and a backup's `restoreNativeWidgets` in `database.withTransaction`, caps a stack at `MAX_CLOCK_STACK_ITEMS` (5) and allows one `CLOCK` item |
 | `WeatherDao` | `observeHours()` (`ORDER BY timeEpochSecond ASC`), `observeMeta()` (the one row, or `null`) | `insertHours(list)` (REPLACE), `upsertMeta(meta)` (REPLACE) | `clearHours()` | `getHours()`, `getMeta()`. `RoomWeatherStore.replaceHours` clears and inserts inside `database.withTransaction`, so a reader never sees half a forecast; `writeState` stores `placeName` and `placeNameSource` with the rest of the fetch state, and `WeatherRepository` drops them when the place changes |
 | `WidgetPlacementDao` | `observeAll()` (no ORDER BY — grid position is `row`/`col`, not `position`) | `upsert(placement)` (REPLACE on `appWidgetId`) | `deleteById(appWidgetId)`, `delete(placement)` | `getById(appWidgetId)` |
 
@@ -291,7 +290,7 @@ same fields as the row except `selectedCalendarIds`, which is a real `Set<String
 comma-joined `selectedCalendarIdsCsv`. The override helpers (`resolveOverride`, `resolveSentinel`,
 `landscape`, `placementTarget`, …) are extensions on `Facet`.
 
-Every facet write takes a facet id (`setClockScale(facetId, …)`). The repository re-reads the row and
+Every facet write takes a facet id (`setClockPlacement(facetId, …)`). The repository re-reads the row and
 writes back the change, so a caller holding an older `Facet` cannot overwrite a newer edit.
 `FacetMappingTest` fails if a column is added to `FacetEntity` without a matching `Facet` field.
 
@@ -354,7 +353,7 @@ Room.databaseBuilder(context, FacetDatabase::class.java, "facet.db")
 | 40→41 | `facets.clockWeatherLocation` (`TEXT`, nullable, no default): where the facet's clock shows the weather for, in the widget-location encoding (`encodeWeatherLocation`), used while the facet overrides the clock; `NULL` follows Weather settings. Existing rows stay `NULL`. `FacetDatabaseMigrationTest.migration40To41…` checks a facet survives with a `NULL` location |
 | 41→42 | No schema change. A widget's setting (`widget_placements.nativeWidgetConfig`, `clock_stack_items.nativeWidgetConfig`) and a facet's clock weather location (`facets.clockWeatherLocation`) are rewritten from the tab-separated lines to JSON (`NativeWidgetConfig.encode`), through `upgradeLegacyNativeWidgetConfig` (`LegacyNativeWidgetConfig.kt`), which only this migration and the importer of an older backup read. `FacetDatabaseMigrationTest.migration41To42…` seeds old-form values and reads them back |
 | 42→43 | No schema change. `Migrations.migration42To43` (`materializeClockConfigs`, `ClockConfigMigration.kt`) gives every `clock_stack_items` CLOCK row without a clock config the settings it showed: the facet's own `facets` clock and calendar columns while it overrides the clock or the calendar, the launcher-wide values otherwise. The launcher-wide values come from the settings DataStore, which a migration cannot reach, so `DatabaseModule` passes a reader (`Preferences.legacyLauncherClock`, the one place the retired keys are still read) that runs only when this step does. A page that already has a config is left alone. `FacetDatabaseMigrationTest.migration42To43GivesEachClockPage…`, `…LeavesAClockPageThatAlreadyHasSettingsAlone`, `LegacyLauncherClockTest`. |
-| 43→44 | **Auto-migration** (`@AutoMigration(from = 43, to = 44, spec = DropFacetClockColumns)`): `facets` loses `overrideClock`, `clockTemplateId`, `clockFontOption`, `clockColorOption`, `clockAccentColorOption`, `use24HourTime`, `clockShowMeridiem`, `clockDateStyle`, `clockShowAlarm`, `clockShowBattery`, `clockShowWeather`, `clockWeatherIconStyle`, `clockWeatherLocation`, `overrideCalendar`, `showAllDayEvents`, `showCalendarIndicator`, `calendarItemsToShow`, `selectedCalendarIdsCsv` and the five retired hosted-clock columns. Nothing is lost: 42→43 has already copied the settings onto each clock page, and the two steps run in one upgrade, so a jump from any older version is safe. Room rebuilds the table because SQLite on minSdk 30 cannot drop a column. `FacetDatabaseMigrationTest.migration43To44DropsTheFacetClockColumnsAndKeepsEverythingElse`. |
+| 43→44 | **Auto-migration** (`@AutoMigration(from = 43, to = 44, spec = DropFacetClockColumns)`): `facets` loses `overrideClock`, `clockTemplateId`, `clockFontOption`, `clockColorOption`, `clockAccentColorOption`, `use24HourTime`, `clockShowMeridiem`, `clockDateStyle`, `clockShowAlarm`, `clockShowBattery`, `clockShowWeather`, `clockWeatherIconStyle`, `clockWeatherLocation`, `overrideCalendar`, `showAllDayEvents`, `showCalendarIndicator`, `calendarItemsToShow`, `selectedCalendarIdsCsv`, the five retired hosted-clock columns and `clockScale` / `landscapeClockScale`. The clock settings are not lost: 42→43 has already copied them onto each clock page, and the two steps run in one upgrade, so a jump from any older version is safe. The scale is: a clock's size is the box on its page (`clock_stack_items.widthDp`/`heightDp`), which cannot be worked out in a migration (it needs the drawn size of the clock's template and font), so a clock that was never resized goes back to the default size (`DEFAULT_CLOCK_SCALE`, 0.8). The launcher-wide `clock_scale` / `landscape_clock_scale` DataStore keys are no longer read or written. Room rebuilds the table because SQLite on minSdk 30 cannot drop a column. `FacetDatabaseMigrationTest.migration43To44DropsTheFacetClockColumnsAndKeepsEverythingElse`. |
 
 The landscape twins are handled as one `LandscapeOverrides` group (clock alignment, divider, scale, widget size, row position, vertical and column alignment; every field nullable). Settings hold it as `LauncherSettings.landscape`, read from the six `landscape_*` keys and written only through `updateLandscape`. A facet keeps the flat columns above (so the schema is unchanged) and exposes the group as `FacetEntity.landscape` / `withLandscape(...)`, written through `FacetRepository.updateLandscape`. `resolveLandscape` is the one resolution rule (see [17](17-flow-home-layout.md) §1.0).
 
@@ -378,12 +377,10 @@ erDiagram
         boolean use_24_hour_time "default false"
         string clock_alignment "ClockAlignment, default LEFT; also positions the calendar events strip"
         float clock_zone_height_dp "nullable, absent = template height"
-        float clock_scale "default 0.8"
         boolean allow_landscape "default true; off = portrait only"
         boolean hide_status_bar "default false; hides the status bar over Home, Hub and Drawer"
         string landscape_clock_alignment "nullable, absent = use clock_alignment"
         float landscape_clock_zone_height_dp "nullable, absent = use clock_zone_height_dp"
-        float landscape_clock_scale "nullable, absent = use clock_scale"
         boolean show_all_day_events "default true"
         stringset selected_calendar_ids "nullable, absent = all calendars"
         stringset calendar_colors "entries calendarId:colorName"
@@ -518,8 +515,6 @@ DataStore serialises writes and is main-safe; callers `viewModelScope.launch { }
 | `setShowWeather(Boolean)` | `show_weather` | set | `TurnOffWeatherUseCase`, weather settings |
 | `setClockZoneHeight(Float)` | `clock_zone_height_dp` | set | `HomeViewModel` (zone drag handle) |
 | `resetClockZoneHeight()` | `clock_zone_height_dp` and `landscape_clock_zone_height_dp` | **remove** | `ClockStyleGalleryViewModel` |
-| `setClockScale(Float)` | `clock_scale` | set | `HomeViewModel` (corner handle) |
-| `resetClockScale()` | `clock_scale` and `landscape_clock_scale` | **remove** |
 | `updateLandscape((LandscapeOverrides) -> LandscapeOverrides)` | all six `landscape_*` keys | set each field, or **remove** it when `null` | `HomeViewModel` (landscape adjust commits), `AppearanceSettingsViewModel` (Landscape alignment rows), `ClockStyleGalleryViewModel` (Reset position), `ImportBackupUseCase` |
 | `setShowAllDayEvents(Boolean)` | `show_all_day_events` | set | `CalendarSettingsViewModel` |
 | `setSelectedCalendarIds(Set<String>)` | `selected_calendar_ids` | set | `CalendarSettingsViewModel` |
@@ -588,7 +583,7 @@ each maps to. Defaults are `LauncherSettings()`'s constructor defaults.
 
 #### Clock (a clock holds its own style, accessories and calendar in `ClockWidgetConfig`; only these launcher-wide keys remain)
 
-The placement keys here (`clock_alignment`, `clock_zone_height_dp`, `clock_scale` and the landscape twins) are no longer
+The placement keys here (`clock_alignment`, `clock_zone_height_dp` and the landscape twins) are no longer
 edited anywhere: they are the launcher's built-in fallback for a facet that has not adjusted its own placement
 (`facets.clockPlacementOwn` false). The first adjustment on Home copies what the facet shows into the facet.
 
@@ -611,12 +606,10 @@ its position (see chat history: calendar/appearance styling consolidation).
 | `weather_icon_style` | String | `weatherIconStyle` | `COLORED` | `MONOCHROME` or `COLORED` weather pictures; the launcher default, a facet overriding the clock uses its own `clockWeatherIconStyle` |
 | `clock_alignment` | String (`ClockAlignment`) | `clockAlignment` | `LEFT` | also positions the calendar events strip |
 | `clock_zone_height_dp` | Float | `clockZoneHeightDp` | `null` (= template's natural height) | nullable — `resetClockZoneHeight()` removes the key |
-| `clock_scale` | Float | `clockScale` | `0.8` | `resetClockScale()` removes the key |
 | `allow_landscape` | Boolean | `allowLandscape` | `true` | launcher-wide: off keeps Home in portrait, locks the screen to portrait and hides the landscape settings |
 | `hide_status_bar` | Boolean | `hideStatusBar` | `false` | launcher-wide: hides the status bar over Home, Hub and Drawer; a swipe-down shows it for 3 s ([13](13-flow-facets-theme-notifications-onboarding.md) §2a) |
 | `landscape_clock_alignment` | String (`ClockAlignment`) | `landscapeClockAlignment` | `null` (= `clock_alignment`) | landscape's own placement, written from Home's adjust mode in landscape |
 | `landscape_clock_zone_height_dp` | Float | `landscapeClockZoneHeightDp` | `null` (= `clock_zone_height_dp`) | landscape's divider position (the clock pane width) |
-| `landscape_clock_scale` | Float | `landscapeClockScale` | `null` (= `clock_scale`) | removed by `resetClockScale()` too |
 
 #### Calendar selection (global; the Agenda widget and the clock keep their own)
 

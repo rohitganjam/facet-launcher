@@ -184,19 +184,19 @@ class ExportBackupUseCaseTest {
     fun `exports the clock and list settings for the launcher and each facet`() = runTest {
         val facet = Facet(
             id = 7, name = "Work", position = 0,
-            clockAlignment = ClockAlignment.RIGHT, clockZoneHeightDp = 210f, clockScale = 1.1f,
+            clockAlignment = ClockAlignment.RIGHT, clockZoneHeightDp = 210f,
             appListVerticalAlignment = AppListVerticalAlignment.TOP,
-            landscapeClockAlignment = ClockAlignment.CENTER, landscapeClockZoneHeightDp = 300f, landscapeClockScale = 0.9f,
+            landscapeClockAlignment = ClockAlignment.CENTER, landscapeClockZoneHeightDp = 300f,
             landscapeAppListVerticalAlignment = AppListVerticalAlignment.BOTTOM,
         )
         `when`(settingsRepository.settings).thenReturn(
             flowOf(
                 LauncherSettings(
-                    clockAlignment = ClockAlignment.RIGHT, clockZoneHeightDp = 240f, clockScale = 1.3f,
+                    clockAlignment = ClockAlignment.RIGHT, clockZoneHeightDp = 240f,
                     appListVerticalAlignment = AppListVerticalAlignment.TOP, recentlyInstalledPosition = RecentlyInstalledPosition.SHOW_LAST,
                     searchSettingsEnabled = true,
                     iconPackPackage = "com.example.pack", iconPackFallback = com.facetlauncher.app.data.model.IconPackFallback.KEEP_DEFAULT, forceIconShape = true,
-                    landscape = LandscapeOverrides(clockAlignment = ClockAlignment.LEFT, clockZoneHeightDp = 280f, clockScale = 1.0f, appListVerticalAlignment = AppListVerticalAlignment.TOP),
+                    landscape = LandscapeOverrides(clockAlignment = ClockAlignment.LEFT, clockZoneHeightDp = 280f, appListVerticalAlignment = AppListVerticalAlignment.TOP),
                 ),
             ),
         )
@@ -212,7 +212,6 @@ class ExportBackupUseCaseTest {
         val settings = bundle.settings
         assertEquals("RIGHT", settings.clockAlignment)
         assertEquals(240f, settings.clockZoneHeightDp)
-        assertEquals(1.3f, settings.clockScale)
         assertEquals("TOP", settings.appListVerticalAlignment)
         assertEquals("SHOW_LAST", settings.recentlyInstalledPosition)
         assertEquals(true, settings.searchSettingsEnabled)
@@ -221,16 +220,13 @@ class ExportBackupUseCaseTest {
         assertEquals(true, settings.forceIconShape)
         assertEquals("LEFT", settings.landscapeClockAlignment)
         assertEquals(280f, settings.landscapeClockZoneHeightDp)
-        assertEquals(1.0f, settings.landscapeClockScale)
         assertEquals("TOP", settings.landscapeAppListVerticalAlignment)
         val exported = bundle.facets[0]
         assertEquals("RIGHT", exported.clockAlignment)
         assertEquals(210f, exported.clockZoneHeightDp)
-        assertEquals(1.1f, exported.clockScale)
         assertEquals("TOP", exported.appListVerticalAlignment)
         assertEquals("CENTER", exported.landscapeClockAlignment)
         assertEquals(300f, exported.landscapeClockZoneHeightDp)
-        assertEquals(0.9f, exported.landscapeClockScale)
         assertEquals("BOTTOM", exported.landscapeAppListVerticalAlignment)
     }
 }

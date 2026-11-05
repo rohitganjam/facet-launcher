@@ -1,6 +1,6 @@
 package com.facetlauncher.app.data.model
 
-/** The clock scale a facet starts with, and that "Reset clock position" returns to. */
+/** The scale a clock without a saved box draws at; the saved size is the box on its page. */
 const val DEFAULT_CLOCK_SCALE = 0.8f
 
 /**
@@ -14,7 +14,7 @@ data class Facet(
     val position: Int,
 
     /**
-     * Whether the placement fields below ([clockAlignment], [clockZoneHeightDp], [clockScale] and their landscape twins)
+     * Whether the placement fields below ([clockAlignment], [clockZoneHeightDp] and their landscape twins)
      * are this facet's own. `false` until the user first adjusts it on Home: the facet then shows the launcher's built-in
      * fallback placement. Placement is never inherited by choice, so the clock override does not touch it.
      */
@@ -22,17 +22,15 @@ data class Facet(
     val clockAlignment: ClockAlignment = ClockAlignment.LEFT,
     /** `null` until the facet drags the clock's grab handle for the first time. */
     val clockZoneHeightDp: Float? = null,
-    val clockScale: Float = DEFAULT_CLOCK_SCALE,
     /**
      * What the clock slot shows, in swipe order: the native clock and hosted widgets, each with its own size and
      * alignment. Empty draws nothing there. Held in its own table and loaded by `FacetRepository`; a facet built by
      * hand (a preview, a test) starts with the native clock, as a new facet does.
      */
     val clockStack: List<ClockStackItem> = listOf(nativeClockPage()),
-    /** Landscape's own clock alignment, zone height and scale; `null` uses the portrait value. */
+    /** Landscape's own clock alignment and zone height; `null` uses the portrait value. */
     val landscapeClockAlignment: ClockAlignment? = null,
     val landscapeClockZoneHeightDp: Float? = null,
-    val landscapeClockScale: Float? = null,
 
     // Apps section
     val overrideApps: Boolean = false,
@@ -95,7 +93,6 @@ val Facet.landscape: LandscapeOverrides
     get() = LandscapeOverrides(
         clockAlignment = landscapeClockAlignment,
         clockZoneHeightDp = landscapeClockZoneHeightDp,
-        clockScale = landscapeClockScale,
         appRowPosition = landscapeAppRowPosition,
         appListVerticalAlignment = landscapeAppListVerticalAlignment,
         appListColumnAlignment = landscapeAppListColumnAlignment,
@@ -105,7 +102,6 @@ val Facet.landscape: LandscapeOverrides
 fun Facet.withLandscape(overrides: LandscapeOverrides): Facet = copy(
     landscapeClockAlignment = overrides.clockAlignment,
     landscapeClockZoneHeightDp = overrides.clockZoneHeightDp,
-    landscapeClockScale = overrides.clockScale,
     landscapeAppRowPosition = overrides.appRowPosition,
     landscapeAppListVerticalAlignment = overrides.appListVerticalAlignment,
     landscapeAppListColumnAlignment = overrides.appListColumnAlignment,

@@ -241,7 +241,7 @@ class ClockStyleGalleryScreenTest {
         val (_, facetRepository) = setContent()
         runBlocking {
             val id = facetRepository.observeFacets().first().single().id
-            facetRepository.setClockPlacement(id, com.facetlauncher.app.data.model.ClockAlignment.RIGHT, 180f, 1.4f, com.facetlauncher.app.data.model.LandscapeOverrides())
+            facetRepository.setClockPlacement(id, com.facetlauncher.app.data.model.ClockAlignment.RIGHT, 180f, com.facetlauncher.app.data.model.LandscapeOverrides())
         }
         composeRule.waitUntil(timeoutMillis = 3_000) {
             runBlocking { facetRepository.observeFacets().first().single().clockPlacementOwn }

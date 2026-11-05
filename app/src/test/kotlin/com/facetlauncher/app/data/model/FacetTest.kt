@@ -108,7 +108,6 @@ class FacetTest {
         val overrides = LandscapeOverrides(
             clockAlignment = ClockAlignment.CENTER,
             clockZoneHeightDp = 310f,
-            clockScale = 1.1f,
             appRowPosition = AppRowPosition.CENTER,
             appListVerticalAlignment = AppListVerticalAlignment.TOP,
             appListColumnAlignment = AppListColumnAlignment.MIRRORED,

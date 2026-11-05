@@ -14,7 +14,6 @@ data class LandscapeOverrides(
     val clockAlignment: ClockAlignment? = null,
     /** The divider position: in landscape, the width of the clock pane. */
     val clockZoneHeightDp: Float? = null,
-    val clockScale: Float? = null,
     val appRowPosition: AppRowPosition? = null,
     val appListVerticalAlignment: AppListVerticalAlignment? = null,
     val appListColumnAlignment: AppListColumnAlignment? = null,

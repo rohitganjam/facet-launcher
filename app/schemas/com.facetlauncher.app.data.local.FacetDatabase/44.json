@@ -2,11 +2,11 @@
   "formatVersion": 1,
   "database": {
     "version": 44,
-    "identityHash": "20db82a29d52cbe230944294e426682d",
+    "identityHash": "91fa7e0eceafc7f991d15cde3ae6c1cf",
     "entities": [
       {
         "tableName": "facets",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL, `position` INTEGER NOT NULL, `clockPlacementOwn` INTEGER NOT NULL, `clockAlignment` TEXT NOT NULL, `clockZoneHeightDp` REAL, `clockScale` REAL NOT NULL, `landscapeClockAlignment` TEXT, `landscapeClockZoneHeightDp` REAL, `landscapeClockScale` REAL, `overrideApps` INTEGER NOT NULL, `appRowPosition` TEXT NOT NULL, `landscapeAppRowPosition` TEXT, `landscapeAppListVerticalAlignment` TEXT, `landscapeAppListColumnAlignment` TEXT, `appRowPresentation` TEXT NOT NULL, `listContentMode` TEXT NOT NULL, `appsToShowCount` INTEGER NOT NULL, `appListVerticalAlignment` TEXT NOT NULL, `appListLayout` TEXT NOT NULL, `appListColumnAlignment` TEXT NOT NULL, `appListGridColumns` TEXT NOT NULL, `appListGridDisplayMode` TEXT NOT NULL, `appListShrinkToFit` TEXT NOT NULL, `overridingFavorites` INTEGER NOT NULL, `overrideDock` INTEGER NOT NULL, `dockDisplayMode` TEXT NOT NULL)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL, `position` INTEGER NOT NULL, `clockPlacementOwn` INTEGER NOT NULL, `clockAlignment` TEXT NOT NULL, `clockZoneHeightDp` REAL, `landscapeClockAlignment` TEXT, `landscapeClockZoneHeightDp` REAL, `overrideApps` INTEGER NOT NULL, `appRowPosition` TEXT NOT NULL, `landscapeAppRowPosition` TEXT, `landscapeAppListVerticalAlignment` TEXT, `landscapeAppListColumnAlignment` TEXT, `appRowPresentation` TEXT NOT NULL, `listContentMode` TEXT NOT NULL, `appsToShowCount` INTEGER NOT NULL, `appListVerticalAlignment` TEXT NOT NULL, `appListLayout` TEXT NOT NULL, `appListColumnAlignment` TEXT NOT NULL, `appListGridColumns` TEXT NOT NULL, `appListGridDisplayMode` TEXT NOT NULL, `appListShrinkToFit` TEXT NOT NULL, `overridingFavorites` INTEGER NOT NULL, `overrideDock` INTEGER NOT NULL, `dockDisplayMode` TEXT NOT NULL)",
         "fields": [
           {
             "fieldPath": "id",
@@ -44,12 +44,6 @@
             "affinity": "REAL"
           },
           {
-            "fieldPath": "clockScale",
-            "columnName": "clockScale",
-            "affinity": "REAL",
-            "notNull": true
-          },
-          {
             "fieldPath": "landscapeClockAlignment",
             "columnName": "landscapeClockAlignment",
             "affinity": "TEXT"
@@ -57,11 +51,6 @@
           {
             "fieldPath": "landscapeClockZoneHeightDp",
             "columnName": "landscapeClockZoneHeightDp",
-            "affinity": "REAL"
-          },
-          {
-            "fieldPath": "landscapeClockScale",
-            "columnName": "landscapeClockScale",
             "affinity": "REAL"
           },
           {
@@ -943,7 +932,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '20db82a29d52cbe230944294e426682d')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '91fa7e0eceafc7f991d15cde3ae6c1cf')"
     ]
   }
 }
