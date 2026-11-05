@@ -58,15 +58,8 @@ flowchart TB
   the same hue as on Settings, inset dividers, no chevrons. It no longer hosts any Inherit/Override switch itself; each destination screen owns its
   own (`InheritOverrideCard`, `controlsEnabled = !isFacetScoped || isOverriding`) so the toggle
   sits on the same screen as the controls it gates, and `setOverriding*` calls now live in that
-  destination's own ViewModel rather than `FacetSettingsViewModel`. The "Appearance" row is the one
-  exception — it navigates to `AppearanceSettingsScreen` (dual-mode, `facetId?`), which has no
-  switch of its own (see the `LOOK` subgraph above).
-- **`AppearanceSettingsScreen` is a hub of short sections**, each a card of one or two rows that open their own screen — "Clock &
-  calendar" (facet scope only: a clock has no launcher-wide settings. The Clock Style row opens that facet's own
-  `ClockStyleGalleryRoute` (with a `facetId`), and its subtitle and the preview clock resolve through the clock's own settings via
-  `AppearanceSettingsUiState.clockSettings` — plus "Calendars to display", whose subtext is the
-  selection summary ("All calendars" while the clock follows every calendar), or "Needs calendar access" while `READ_CALENDAR` isn't granted, like the Notifications row below;
-  `AppearanceSettingsViewModel` re-reads both grants on resume), "Dock & home" (one
+  destination's own ViewModel rather than `FacetSettingsViewModel`. The facet's Home section links to `DockAppsAppearanceScreen` and the widget stack instead of a separate Appearance row (see the `LOOK` subgraph above).
+- **`AppearanceSettingsScreen` is a hub of short sections**, each a card of one or two rows that open their own screen. It has no clock or calendar rows: a clock's style, accessories and calendar settings are reached only from the clock's own sheet and the widget stack (a facet's settings has no Appearance row either; its Home section opens Dock & apps appearance directly). It shows "Dock & home" (one
   "Dock & Apps appearance" row → `DockAppsAppearanceScreen`, both scopes, route `dockAppsAppearance?facetId=`), and, global
   only, "Notifications" and "Look & Feel" (three rows: "General settings" → `ThemesAndColorsScreen` with a static "Themes, accent, status bar" subtitle, "Fonts" → `FontsScreen`, "Icons" → `IconsScreen`, the last two showing their current value).
   The two moved-out screens each show the same live `AppearancePreviewCard` above their controls and share
