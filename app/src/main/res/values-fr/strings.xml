@@ -791,7 +791,7 @@
     </plurals>
     <string name="facet_carousel_reorder">Réorganiser</string>
     <string name="facet_carousel_launcher_settings">Réglages du launcher</string>
-    <string name="facet_carousel_launcher_settings_subtitle">Apparence, horloge par défaut, favoris, tiroir et plus</string>
+    <string name="facet_carousel_launcher_settings_subtitle">Apparence, favoris, tiroir et plus</string>
     <string name="facet_carousel_active">Active</string>
     <string name="facet_carousel_no_favorites">Aucun favori pour l\'instant</string>
     <string name="preview_media_title">Lecture en cours</string>
@@ -850,7 +850,7 @@
     <string name="clock_adjust_align_top">Aligner en haut</string>
     <string name="clock_adjust_align_middle">Aligner au milieu</string>
     <string name="clock_adjust_align_bottom">Aligner en bas</string>
-    <string name="home_sheet_facet_settings_subtitle">Réglages propres à la facette : liste d\'apps, dock, horloge et calendrier</string>
+    <string name="home_sheet_facet_settings_subtitle">Widgets, liste d\'apps et dock propres à la facette</string>
 
     <!-- HubWidgetPickerScreen -->
     <string name="hub_widget_picker_full">Complet — retirez un widget d\'abord</string>

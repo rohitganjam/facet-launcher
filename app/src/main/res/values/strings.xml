@@ -879,7 +879,7 @@
     </plurals>
     <string name="facet_carousel_reorder">Reorder</string>
     <string name="facet_carousel_launcher_settings">Launcher settings</string>
-    <string name="facet_carousel_launcher_settings_subtitle">Appearance, Default clock, favorites, drawer and more</string>
+    <string name="facet_carousel_launcher_settings_subtitle">Appearance, favorites, drawer and more</string>
     <string name="facet_carousel_active">Active</string>
     <string name="facet_carousel_no_favorites">No favorites yet</string>
     <string name="preview_media_title">Now playing</string>
@@ -955,7 +955,7 @@
     <string name="clock_adjust_align_top">Align top</string>
     <string name="clock_adjust_align_middle">Align middle</string>
     <string name="clock_adjust_align_bottom">Align bottom</string>
-    <string name="home_sheet_facet_settings_subtitle">Facet-specific apps list, dock, clock &amp; calendar settings</string>
+    <string name="home_sheet_facet_settings_subtitle">Facet-specific widgets, apps list and dock</string>
     <!-- PRD F15 — replaces this facet's native clock with a hosted third-party AppWidget -->
     <string name="widget_sheet_replace">Replace widget</string>
     <string name="widget_sheet_replace_subtitle">Choose a different widget for this page</string>

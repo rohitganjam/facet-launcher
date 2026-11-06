@@ -779,7 +779,7 @@
     </plurals>
     <string name="facet_carousel_reorder">Volgorde wijzigen</string>
     <string name="facet_carousel_launcher_settings">Launcher-instellingen</string>
-    <string name="facet_carousel_launcher_settings_subtitle">Uiterlijk, standaardklok, favorieten, lade en meer</string>
+    <string name="facet_carousel_launcher_settings_subtitle">Uiterlijk, favorieten, lade en meer</string>
     <string name="facet_carousel_active">Actief</string>
     <string name="facet_carousel_no_favorites">Nog geen favorieten</string>
     <string name="preview_media_title">Nu aan het afspelen</string>
@@ -844,7 +844,7 @@
     <string name="clock_adjust_align_top">Boven uitlijnen</string>
     <string name="clock_adjust_align_middle">Midden uitlijnen</string>
     <string name="clock_adjust_align_bottom">Onder uitlijnen</string>
-    <string name="home_sheet_facet_settings_subtitle">Facetspecifieke appslijst, dock, klok- en agenda-instellingen</string>
+    <string name="home_sheet_facet_settings_subtitle">Facetspecifieke widgets, appslijst en dock</string>
     <string name="widget_sheet_replace">Eigen widget vervangen</string>
     <string name="widget_sheet_replace_subtitle">Kies een andere widget voor deze pagina</string>
     <string name="widget_sheet_remove">Widget verwijderen</string>

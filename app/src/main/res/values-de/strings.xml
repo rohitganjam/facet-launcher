@@ -791,7 +791,7 @@
     </plurals>
     <string name="facet_carousel_reorder">Neu anordnen</string>
     <string name="facet_carousel_launcher_settings">Launcher-Einstellungen</string>
-    <string name="facet_carousel_launcher_settings_subtitle">Design, Standarduhr, Favoriten, Drawer und mehr</string>
+    <string name="facet_carousel_launcher_settings_subtitle">Design, Favoriten, Drawer und mehr</string>
     <string name="facet_carousel_active">Aktiv</string>
     <string name="facet_carousel_no_favorites">Noch keine Favoriten</string>
     <string name="preview_media_title">Wiedergabe</string>
@@ -850,7 +850,7 @@
     <string name="clock_adjust_align_top">Oben ausrichten</string>
     <string name="clock_adjust_align_middle">Mittig ausrichten</string>
     <string name="clock_adjust_align_bottom">Unten ausrichten</string>
-    <string name="home_sheet_facet_settings_subtitle">Facettenspezifische App-Liste, Dock-, Uhr- &amp; Kalendereinstellungen</string>
+    <string name="home_sheet_facet_settings_subtitle">Facettenspezifische Widgets, App-Liste und Dock</string>
 
     <!-- HubWidgetPickerScreen -->
     <string name="hub_widget_picker_full">Voll — entferne zuerst ein Widget</string>

@@ -78,7 +78,7 @@
     <string name="home_usage_access_needed">Más usadas necesita acceso de uso desde la configuración del sistema.</string>
 
     <string name="clock_style_long_press_hint">Mantén presionado el reloj en la pantalla de inicio para ajustar su tamaño y su posición.</string>
-    <string name="home_sheet_facet_settings_subtitle">Configuración específica de la faceta: lista de apps, dock, reloj y calendario</string>
+    <string name="home_sheet_facet_settings_subtitle">Widgets, lista de apps y dock específicos de la faceta</string>
     <string name="hub_widget_picker_setup_cancelled">La configuración no terminó, así que ese widget no se agregó</string>
     <string name="hub_widget_picker_title">Agregar widget</string>
     <string name="hub_header_add">Agregar</string>
