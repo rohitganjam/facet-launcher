@@ -70,8 +70,10 @@ private fun ClockScaleReclampEffect(frame: HomeFrame) {
                 .first()
         } ?: return@LaunchedEffect
         val box = layout.measureClockBox() ?: return@LaunchedEffect
-        val fit = latestFrame.geometry.fit.maxScale(box.size, box.topLeft, box.rootWidthPx)
-        if (clock.placement.scale > fit + 0.01f) frame.actions.clock.onScaleCommit(fit)
+        // The frame the effect started with predates this measurement: its scale and commit conversion used the previous page's natural size.
+        val settled = latestFrame
+        val fit = settled.geometry.fit.maxScale(box.size, box.topLeft, box.rootWidthPx)
+        if (settled.state.clock.placement.scale > fit + 0.01f) settled.actions.clock.onScaleCommit(fit)
     }
 }
 
