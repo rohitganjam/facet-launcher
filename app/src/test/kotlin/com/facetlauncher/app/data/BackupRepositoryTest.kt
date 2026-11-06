@@ -3,7 +3,6 @@ package com.facetlauncher.app.data
 import android.net.Uri
 import androidx.test.core.app.ApplicationProvider
 import com.facetlauncher.app.data.model.BackupBundle
-import com.facetlauncher.app.data.model.BackupSettings
 import java.io.File
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -18,16 +17,7 @@ class BackupRepositoryTest {
     private val context get() = ApplicationProvider.getApplicationContext<android.content.Context>()
     private val repository = BackupRepository(context)
 
-    private fun minimalSettings() = BackupSettings(
-        use24HourTime = false, dockDisplayMode = "ICONS", drawerPresentation = "LIST", drawerGridSize = "FIVE_BY_SIX",
-        drawerListItemSize = "REGULAR", drawerOpacity = 0.6f, notificationDotsEnabled = true, notificationBadgeStyle = "DOT",
-        showDrawerIcons = true, showDrawerLabels = true, searchBarPosition = "TOP", activeFacetIndex = null,
-        showAllDayEvents = true, searchContactsEnabled = false, themeMode = "SYSTEM", accentFromSystem = true,
-        customAccentSwatch = null, wallpaperAccentRole = "PRIMARY", iconRenderMode = "SYSTEM_DEFAULT", launcherFontOption = "SYSTEM",
-        appLabelColorOption = "THEME", appRowPosition = "LEFT", appRowPresentation = "ICON_AND_TEXT",
-        listContentMode = "FAVORITES", appsToShowCount = 5, clockTemplateId = "LIGHT_STACK",
-        clockFontOption = "LAUNCHER_DEFAULT", clockColorOption = "THEME", clockShowMeridiem = false,
-    )
+    private fun minimalSettings() = minimalBackupSettings()
 
     @Test
     fun `a written bundle reads back byte-for-byte equal`() = runTest {

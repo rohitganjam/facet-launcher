@@ -209,7 +209,7 @@
     <string name="gesture_hint_widgets">Widgets</string>
     <string name="gesture_hint_all_your_apps">Toutes vos apps</string>
     <string name="gesture_hint_arrow_up">↑</string>
-    <string name="gesture_hint_clock_hold">Appuyez longuement sur l\'horloge pour la redimensionner ou la déplacer</string>
+    <string name="gesture_hint_clock_hold">Appuyez longuement sur un widget pour le redimensionner ou le déplacer</string>
     <string name="gesture_hint_got_it">Compris</string>
 
     <!-- FacetScopeBadge -->
@@ -254,6 +254,7 @@
         <item quantity="one">%1$d calendrier sélectionné</item>
         <item quantity="other">%1$d calendriers sélectionnés</item>
     </plurals>
+    <string name="settings_calendars_all">Tous les agendas</string>
     <string name="settings_all_day_events_visible">Événements toute la journée visibles</string>
     <string name="settings_all_day_events_hidden">Événements toute la journée masqués</string>
     <string name="settings_dock_title">Dock</string>
@@ -790,7 +791,7 @@
     </plurals>
     <string name="facet_carousel_reorder">Réorganiser</string>
     <string name="facet_carousel_launcher_settings">Réglages du launcher</string>
-    <string name="facet_carousel_launcher_settings_subtitle">Apparence, horloge par défaut, favoris, tiroir et plus</string>
+    <string name="facet_carousel_launcher_settings_subtitle">Apparence, favoris, tiroir et plus</string>
     <string name="facet_carousel_active">Active</string>
     <string name="facet_carousel_no_favorites">Aucun favori pour l\'instant</string>
     <string name="preview_media_title">Lecture en cours</string>
@@ -831,13 +832,17 @@
     <string name="clock_style_date_style">Style de date</string>
     <string name="clock_style_position_section">POSITION</string>
     <string name="clock_style_tap_to_select">STYLES D\'HORLOGE — APPUYEZ POUR SÉLECTIONNER</string>
-    <string name="clock_style_long_press_hint">Appuyez longuement sur l\'horloge de l\'écran d\'accueil pour ajuster la taille et la position verticale.</string>
+    <string name="clock_style_long_press_hint">Appuyez longuement sur l\'horloge sur l\'écran d\'accueil pour ajuster sa taille et sa position.</string>
     <string name="clock_style_applied">Appliqué</string>
     <string name="clock_style_reset_position">Réinitialiser la position du widget horloge</string>
 
-    <!-- ClockAdjustSheet -->
-    <string name="clock_adjust_adjust_size_position">Ajuster la taille et la position de l\'horloge</string>
-    <string name="clock_adjust_size_position_subtitle">Redimensionner ou repositionner l\'horloge</string>
+    <!-- HomeSheets -->
+    <string name="widget_sheet_adjust_label">Ajuster la taille et la position du widget</string>
+    <string name="widget_sheet_adjust_subtitle">Redimensionner ou repositionner le widget</string>
+    <string name="widget_sheet_settings">Paramètres de %1$s</string>
+    <string name="widget_sheet_weather_settings_subtitle">Le lieu des prévisions</string>
+    <string name="widget_sheet_agenda_settings_subtitle">Les calendriers et événements affichés</string>
+    <string name="hub_grid_configure_widget">Configurer le widget</string>
     <string name="clock_adjust_alignment_heading">Alignement</string>
     <string name="clock_adjust_align_left">Aligner à gauche</string>
     <string name="clock_adjust_align_center">Centrer</string>
@@ -845,9 +850,7 @@
     <string name="clock_adjust_align_top">Aligner en haut</string>
     <string name="clock_adjust_align_middle">Aligner au milieu</string>
     <string name="clock_adjust_align_bottom">Aligner en bas</string>
-    <string name="clock_adjust_clock_settings">Réglages de l\'horloge et du calendrier</string>
-    <string name="clock_adjust_clock_settings_subtitle">Modèles, polices, couleurs, calendrier</string>
-    <string name="clock_adjust_facet_settings_subtitle">Réglages propres à la facette : liste d\'apps, dock, horloge et calendrier</string>
+    <string name="home_sheet_facet_settings_subtitle">Widgets, liste d\'apps et dock propres à la facette</string>
 
     <!-- HubWidgetPickerScreen -->
     <string name="hub_widget_picker_full">Complet — retirez un widget d\'abord</string>
@@ -940,6 +943,9 @@
     <string name="appearance_general_subtitle">Thèmes, accent, barre d’état</string>
     <string name="appearance_section_look_feel">Aspect et ergonomie</string>
     <string name="appearance_icon_shape">Forme des icônes</string>
+    <string name="facet_settings_section_home">Accueil</string>
+    <string name="facet_settings_widgets_title">Widgets</string>
+    <string name="facet_settings_widgets_subtitle">Ce qui se trouve en haut de l\'accueil de cette facette</string>
     <string name="facet_settings_appearance_title">Apparence</string>
     <string name="facet_settings_appearance_clock_label">Horloge : %1$s</string>
     <string name="facet_settings_appearance_dock_icons">Icônes du dock</string>
@@ -948,17 +954,21 @@
     <string name="facet_settings_appearance_home_icon_only">Accueil : icône seule</string>
     <string name="facet_settings_appearance_home_icon_and_text">Accueil : icône et texte</string>
     <string name="facet_settings_appearance_home_text_only">Accueil : texte seul</string>
-    <string name="clock_adjust_replace_with_widget">Remplacer par un widget personnalisé</string>
-    <string name="clock_adjust_replace_with_widget_subtitle">Remplace l\'horloge par un widget de votre choix</string>
-    <string name="clock_adjust_replace_with_clock">Remplacer par l\'horloge</string>
-    <string name="clock_adjust_replace_with_clock_subtitle">Utiliser l\'horloge propre à Facet sur cette page</string>
-    <string name="clock_adjust_replace_widget">Remplacer le widget personnalisé</string>
-    <string name="clock_adjust_replace_widget_subtitle">Choisir un autre widget pour cette page</string>
-    <string name="clock_adjust_widget_stack">Pile de widgets</string>
-    <string name="clock_adjust_stack_empty">Vide · ajoutez une horloge ou un widget</string>
-    <string name="clock_adjust_stack_clock">Horloge</string>
-    <string name="clock_adjust_stack_one_widget">1 widget</string>
-    <string name="clock_adjust_stack_pages">%1$d pages</string>
+    <string name="widget_sheet_replace">Remplacer le widget personnalisé</string>
+    <string name="widget_sheet_replace_subtitle">Choisir un autre widget pour cette page</string>
+    <string name="widget_sheet_remove">Retirer le widget</string>
+    <string name="widget_sheet_remove_subtitle">Retirer cette page de la pile</string>
+    <string name="home_sheet_add_widget">Ajouter un widget</string>
+    <string name="home_sheet_add_widget_subtitle">Choisir un widget pour le haut de l\'accueil</string>
+    <string name="clock_style_sheet_styles">Styles d\'horloge</string>
+    <string name="clock_style_sheet_styles_subtitle">Modèle, police, couleurs, heure et date</string>
+    <string name="clock_style_sheet_calendar">Réglages de l\'agenda</string>
+    <string name="clock_style_sheet_calendar_subtitle">Quels agendas apparaissent sous l\'horloge</string>
+    <string name="widget_sheet_stack">Pile de widgets</string>
+    <string name="widget_sheet_stack_empty">Vide · ajoutez une horloge ou un widget</string>
+    <string name="widget_sheet_stack_clock">Horloge</string>
+    <string name="widget_sheet_stack_one_widget">1 widget</string>
+    <string name="widget_sheet_stack_pages">%1$d pages</string>
     <!-- ClockStackScreen (the widget stack: reorder, remove, configure, add) -->
     <string name="clock_stack_title">Pile de widgets</string>
     <string name="clock_stack_counter">%1$d sur %2$d</string>
@@ -1109,6 +1119,7 @@
     <string name="accessibility_service_label">Facet double appui pour verrouiller</string>
     <string name="accessibility_service_description">Verrouille l\'écran quand vous appuyez deux fois sur un espace vide de l\'écran d\'accueil. Ne lit pas le contenu de l\'écran.</string>
     <string name="about_weather_credit">Données météo de MET Norway (CC BY 4.0). Noms de villes de GeoNames (CC BY 4.0).</string>
+    <string name="native_widget_clock">Horloge</string>
     <string name="native_widget_weather">Météo</string>
     <string name="native_widget_agenda">Agenda</string>
     <string name="native_widget_now_playing">En cours de lecture</string>

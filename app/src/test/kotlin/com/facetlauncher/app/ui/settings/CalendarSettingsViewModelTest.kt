@@ -1,17 +1,22 @@
 package com.facetlauncher.app.ui.settings
 
-import androidx.lifecycle.SavedStateHandle
+import com.facetlauncher.app.data.clockItemWith
 import com.facetlauncher.app.domain.AssignCalendarColorsUseCase
 import com.facetlauncher.app.data.CalendarPermissionRepository
 import com.facetlauncher.app.data.CalendarRepository
 import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.SettingsRepository
-import com.facetlauncher.app.data.WallpaperRepository
 import com.facetlauncher.app.data.model.Facet
+import com.facetlauncher.app.domain.UpdateClockConfigUseCase
+import com.facetlauncher.app.data.model.encode
+import com.facetlauncher.app.data.model.NativeWidgetConfig
+import com.facetlauncher.app.data.model.ClockWidgetConfig
+import com.facetlauncher.app.data.model.ClockStackItemKind
+import com.facetlauncher.app.data.model.ClockStackItem
+import com.facetlauncher.app.data.model.ClockCalendarConfig
+import com.facetlauncher.app.data.ClockStackRepository
 import com.facetlauncher.app.data.model.CalendarDisplayOptions
-import com.facetlauncher.app.data.model.CalendarEvent
 import com.facetlauncher.app.data.model.CalendarInfo
-import com.facetlauncher.app.data.model.HomeWallpaper
 import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.ui.theme.AccentSwatch
 import kotlinx.coroutines.Dispatchers
@@ -29,8 +34,6 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
-import org.mockito.ArgumentMatchers.any
-import org.mockito.ArgumentMatchers.anyBoolean
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
@@ -46,214 +49,56 @@ class CalendarSettingsViewModelTest {
     @After
     fun tearDown() { Dispatchers.resetMain() }
 
-    private fun unavailableWallpaperRepository(): WallpaperRepository =
-        mock(WallpaperRepository::class.java).also { repository ->
-            runBlocking { `when`(repository.currentHomeWallpaper()).thenReturn(HomeWallpaper.Unavailable) }
-        }
+    private val clockStackRepository = mock(ClockStackRepository::class.java)
+
+    /** A facet with a clock page (id 9) holding [config]. */
+    private fun facetWith(config: ClockWidgetConfig) = Facet(
+        id = 5L, name = "Work", position = 0,
+        clockStack = listOf(ClockStackItem(id = 9, facetId = 5, position = 0, kind = ClockStackItemKind.CLOCK, nativeWidgetConfig = NativeWidgetConfig(clock = config).encode())),
+    )
+
+    private fun stored(calendar: ClockCalendarConfig) = NativeWidgetConfig(clock = ClockWidgetConfig(calendar = calendar))
 
     private fun createViewModel(
-        facetId: Long? = null,
-        globalShowAllDayEvents: Boolean = true,
-        facet: Facet? = null,
+        facet: Facet? = facetWith(ClockWidgetConfig()),
         settingsRepository: SettingsRepository = mock(SettingsRepository::class.java),
         facetRepository: FacetRepository = mock(FacetRepository::class.java),
         calendarPermissionRepository: CalendarPermissionRepository = mock(CalendarPermissionRepository::class.java),
         calendarRepository: CalendarRepository = mock(CalendarRepository::class.java),
-        wallpaperRepository: WallpaperRepository = unavailableWallpaperRepository(),
-        todayEvents: List<CalendarEvent> = emptyList(),
+        clockStackRepository: ClockStackRepository = this.clockStackRepository,
     ): CalendarSettingsViewModel {
-        `when`(settingsRepository.settings).thenReturn(flowOf(LauncherSettings(showAllDayEvents = globalShowAllDayEvents)))
+        `when`(settingsRepository.settings).thenReturn(flowOf(LauncherSettings()))
         `when`(facetRepository.observeFacets()).thenReturn(flowOf(listOfNotNull(facet)))
-        runBlocking { `when`(calendarRepository.getUpcomingEvents(any(), anyBoolean())).thenReturn(todayEvents) }
-        val savedStateHandle = if (facetId != null) SavedStateHandle(mapOf("facetId" to facetId)) else SavedStateHandle()
-        return CalendarSettingsViewModel(savedStateHandle, settingsRepository, facetRepository, calendarPermissionRepository, calendarRepository, wallpaperRepository, AssignCalendarColorsUseCase())
+        facet?.let { runBlocking { `when`(facetRepository.getById(it.id)).thenReturn(it) } }
+        return CalendarSettingsViewModel(
+            settingsRepository, facetRepository, calendarPermissionRepository, calendarRepository,
+            AssignCalendarColorsUseCase(), UpdateClockConfigUseCase(settingsRepository, facetRepository, clockStackRepository),
+        ).also { viewModel -> facet?.let { viewModel.bind(it.id) } }
     }
 
-    @Test
-    fun `a work calendar is off until chosen and joins the personal ones when ticked`() = runTest {
-        // Given two personal calendars and a work one, with calendar access
-        val settingsRepository = mock(SettingsRepository::class.java)
-        val calendarPermissionRepository = mock(CalendarPermissionRepository::class.java)
-        `when`(calendarPermissionRepository.isGranted()).thenReturn(true)
-        val calendarRepository = mock(CalendarRepository::class.java)
-        runBlocking {
-            `when`(calendarRepository.getSelectableCalendars())
-                .thenReturn(listOf(CalendarInfo("1", "A", "a"), CalendarInfo("2", "B", "b"), CalendarInfo("work:1", "", "", isWork = true)))
-        }
-        val viewModel = createViewModel(settingsRepository = settingsRepository, calendarPermissionRepository = calendarPermissionRepository, calendarRepository = calendarRepository)
-        backgroundScope.launch { viewModel.uiState.collect {} }
-        testDispatcher.scheduler.advanceUntilIdle()
 
-        // Then with nothing chosen the personal ones show and the work one does not
-        assertTrue(viewModel.uiState.value.isCalendarSelected("1"))
-        assertFalse(viewModel.uiState.value.isCalendarSelected("work:1"))
 
-        // When ticking the work calendar
-        viewModel.setCalendarSelected("work:1", true)
-        testDispatcher.scheduler.advanceUntilIdle()
 
-        // Then it joins the personal calendars already showing
-        verify(settingsRepository).setSelectedCalendarIds(setOf("1", "2", "work:1"))
-    }
 
-    @Test
-    fun `global mode toggling writes SettingsRepository directly`() = runTest {
-        val settingsRepository = mock(SettingsRepository::class.java)
-        val viewModel = createViewModel(settingsRepository = settingsRepository)
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        viewModel.setShowAllDayEvents(false)
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        verify(settingsRepository).setShowAllDayEvents(false)
-    }
-
-    @Test
-    fun `global mode writes the indicator and item count to SettingsRepository`() = runTest {
-        val settingsRepository = mock(SettingsRepository::class.java)
-        val viewModel = createViewModel(settingsRepository = settingsRepository)
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        viewModel.setShowCalendarIndicator(false)
-        viewModel.setCalendarItemsToShow(2)
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        verify(settingsRepository).setShowCalendarIndicator(false)
-        verify(settingsRepository).setCalendarItemsToShow(2)
-    }
-
-    @Test
-    fun `facet-scoped mode writes the indicator and item count to the facet`() = runTest {
-        val facet = Facet(id = 5L, name = "Work", position = 0, overrideCalendar = true)
-        val facetRepository = mock(FacetRepository::class.java)
-        val viewModel = createViewModel(facetId = 5L, facet = facet, facetRepository = facetRepository)
-        backgroundScope.launch { viewModel.uiState.collect {} }
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        viewModel.setShowCalendarIndicator(false)
-        viewModel.setCalendarItemsToShow(1)
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        verify(facetRepository).setShowCalendarIndicator(facet.id, false)
-        verify(facetRepository).setCalendarItemsToShow(facet.id, 1)
-    }
-
-    @Test
-    fun `calendar display follows the facet only while it overrides the calendar`() {
-        val settings = LauncherSettings(showCalendarIndicator = true, calendarItemsToShow = 3)
-        val facet = Facet(id = 5L, name = "Work", position = 0, showCalendarIndicator = false, calendarItemsToShow = 1)
-
-        val inheriting = CalendarSettingsUiState(facet = facet.copy(overrideCalendar = false), settings = settings)
-        val overriding = CalendarSettingsUiState(facet = facet.copy(overrideCalendar = true), settings = settings)
-
-        assertEquals(CalendarDisplayOptions(showIndicator = true, itemsToShow = 3), inheriting.calendarDisplay)
-        assertEquals(CalendarDisplayOptions(showIndicator = false, itemsToShow = 1), overriding.calendarDisplay)
-    }
 
     @Test
     fun `calendar swatches are hidden when the indicator is off`() {
         val colors = mapOf("1" to AccentSwatch.entries.first().name)
-        val on = CalendarSettingsUiState(settings = LauncherSettings(showCalendarIndicator = true), calendarColors = colors)
-        val off = CalendarSettingsUiState(settings = LauncherSettings(showCalendarIndicator = false), calendarColors = colors)
+        fun facetWith(showIndicator: Boolean) = Facet(
+            id = 1L, name = "Work", position = 0,
+            clockStack = listOf(clockItemWith(ClockWidgetConfig(calendar = ClockCalendarConfig(showIndicator = showIndicator)))),
+        )
+        val on = CalendarSettingsUiState(facet = facetWith(true), calendarColors = colors)
+        val off = CalendarSettingsUiState(facet = facetWith(false), calendarColors = colors)
 
         assertEquals(AccentSwatch.entries.first(), on.calendarSwatch("1"))
         assertEquals(null, off.calendarSwatch("1"))
         assertEquals(null, on.calendarSwatch("unknown"))
     }
 
-    @Test
-    fun `facet-scoped mode toggling writes the facet's own override`() = runTest {
-        val facet = Facet(id = 5L, name = "Work", position = 0, overrideCalendar = true)
-        val facetRepository = mock(FacetRepository::class.java)
-        val viewModel = createViewModel(facetId = 5L, facet = facet, facetRepository = facetRepository)
-        backgroundScope.launch { viewModel.uiState.collect {} }
-        testDispatcher.scheduler.advanceUntilIdle()
 
-        viewModel.setShowAllDayEvents(false)
-        testDispatcher.scheduler.advanceUntilIdle()
 
-        verify(facetRepository).setShowAllDayEvents(facet.id, false)
-    }
 
-    @Test
-    fun `switching to override seeds the facet's stored value with the current effective one`() = runTest {
-        val facet = Facet(id = 5L, name = "Work", position = 0, overrideCalendar = false)
-        val facetRepository = mock(FacetRepository::class.java)
-        val viewModel = createViewModel(
-            facetId = 5L,
-            globalShowAllDayEvents = true,
-            facet = facet,
-            facetRepository = facetRepository,
-        )
-        backgroundScope.launch { viewModel.uiState.collect {} }
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        viewModel.setOverriding(true)
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        verify(facetRepository).updateOverridingCalendar(
-            facet.id,
-            overriding = true,
-            showAllDayEvents = true,
-            selectedCalendarIds = null,
-            showCalendarIndicator = true,
-            calendarItemsToShow = CalendarDisplayOptions.MAX_ITEMS,
-        )
-    }
-
-    @Test
-    fun `switching back to inherit toggles the override flag`() = runTest {
-        val facet = Facet(id = 5L, name = "Work", position = 0, overrideCalendar = true, showAllDayEvents = false)
-        val facetRepository = mock(FacetRepository::class.java)
-        val viewModel = createViewModel(facetId = 5L, facet = facet, facetRepository = facetRepository)
-        backgroundScope.launch { viewModel.uiState.collect {} }
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        viewModel.setOverriding(false)
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        verify(facetRepository).updateOverridingCalendar(
-            facet.id,
-            overriding = false,
-            showAllDayEvents = false,
-            selectedCalendarIds = null,
-            showCalendarIndicator = true,
-            calendarItemsToShow = CalendarDisplayOptions.MAX_ITEMS,
-        )
-    }
-
-    @Test
-    fun `switching to override seeds the facet's selectedCalendarIds with the current effective set`() = runTest {
-        val facet = Facet(id = 5L, name = "Work", position = 0, overrideCalendar = false)
-        val facetRepository = mock(FacetRepository::class.java)
-        val settingsRepository = mock(SettingsRepository::class.java)
-        `when`(settingsRepository.settings).thenReturn(flowOf(LauncherSettings(selectedCalendarIds = setOf("7", "8"))))
-        `when`(facetRepository.observeFacets()).thenReturn(flowOf(listOf(facet)))
-        val savedStateHandle = SavedStateHandle(mapOf("facetId" to 5L))
-        val viewModel = CalendarSettingsViewModel(
-            savedStateHandle,
-            settingsRepository,
-            facetRepository,
-            mock(CalendarPermissionRepository::class.java),
-            mock(CalendarRepository::class.java),
-            unavailableWallpaperRepository(),
-            AssignCalendarColorsUseCase(),
-        )
-        backgroundScope.launch { viewModel.uiState.collect {} }
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        viewModel.setOverriding(true)
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        verify(facetRepository).updateOverridingCalendar(
-            facet.id,
-            overriding = true,
-            showAllDayEvents = true,
-            selectedCalendarIds = setOf("7", "8"),
-            showCalendarIndicator = true,
-            calendarItemsToShow = CalendarDisplayOptions.MAX_ITEMS,
-        )
-    }
 
     @Test
     fun `granted access fetches the real calendar list`() = runTest {
@@ -293,37 +138,6 @@ class CalendarSettingsViewModelTest {
     }
 
     @Test
-    fun `granted access loads today's real events for the preview`() = runTest {
-        val calendarPermissionRepository = mock(CalendarPermissionRepository::class.java)
-        `when`(calendarPermissionRepository.isGranted()).thenReturn(true)
-        val calendarRepository = mock(CalendarRepository::class.java)
-        `when`(calendarRepository.getSelectableCalendars()).thenReturn(emptyList())
-        val events = listOf(CalendarEvent(id = 1, calendarId = "1", title = "Standup", startTimeMillis = 0, endTimeMillis = 1, isAllDay = false))
-        val viewModel = createViewModel(
-            calendarPermissionRepository = calendarPermissionRepository,
-            calendarRepository = calendarRepository,
-            todayEvents = events,
-        )
-        backgroundScope.launch { viewModel.uiState.collect {} }
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        assertEquals(events, viewModel.uiState.value.previewEvents)
-    }
-
-    @Test
-    fun `ungranted access never queries events for the preview`() = runTest {
-        val calendarPermissionRepository = mock(CalendarPermissionRepository::class.java)
-        `when`(calendarPermissionRepository.isGranted()).thenReturn(false)
-        val calendarRepository = mock(CalendarRepository::class.java)
-        val viewModel = createViewModel(calendarPermissionRepository = calendarPermissionRepository, calendarRepository = calendarRepository)
-        backgroundScope.launch { viewModel.uiState.collect {} }
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        assertEquals(emptyList<CalendarEvent>(), viewModel.uiState.value.previewEvents)
-        runBlocking { verify(calendarRepository, org.mockito.Mockito.never()).getUpcomingEvents(any(), anyBoolean()) }
-    }
-
-    @Test
     fun `ungranted access never queries the calendar list`() = runTest {
         val calendarPermissionRepository = mock(CalendarPermissionRepository::class.java)
         `when`(calendarPermissionRepository.isGranted()).thenReturn(false)
@@ -338,80 +152,122 @@ class CalendarSettingsViewModelTest {
         verify(calendarRepository, org.mockito.Mockito.never()).getCalendars()
     }
 
-    @Test
-    fun `deselecting a calendar while implicitly all-selected persists the full set minus that one`() = runTest {
-        val calendarPermissionRepository = mock(CalendarPermissionRepository::class.java)
-        `when`(calendarPermissionRepository.isGranted()).thenReturn(true)
+    private fun granted(vararg calendars: CalendarInfo): Pair<CalendarPermissionRepository, CalendarRepository> {
+        val permission = mock(CalendarPermissionRepository::class.java)
+        `when`(permission.isGranted()).thenReturn(true)
         val calendarRepository = mock(CalendarRepository::class.java)
-        val calendars = listOf(
-            CalendarInfo(id = "1", displayName = "Work", accountName = "work@example.com"),
-            CalendarInfo(id = "2", displayName = "Personal", accountName = "personal@example.com"),
-        )
-        `when`(calendarRepository.getSelectableCalendars()).thenReturn(calendars)
-        val settingsRepository = mock(SettingsRepository::class.java)
+        runBlocking { `when`(calendarRepository.getSelectableCalendars()).thenReturn(calendars.toList()) }
+        return permission to calendarRepository
+    }
 
-        val viewModel = createViewModel(
-            settingsRepository = settingsRepository,
-            calendarPermissionRepository = calendarPermissionRepository,
-            calendarRepository = calendarRepository,
-        )
+    private val twoPersonalOneWork = arrayOf(CalendarInfo("1", "A", "a"), CalendarInfo("2", "B", "b"), CalendarInfo("work:1", "", "", isWork = true))
+
+    @Test
+    fun `a work calendar is off until chosen and joins the personal ones when ticked`() = runTest {
+        // Given two personal calendars and a work one, on a clock that follows every calendar
+        val (permission, calendarRepository) = granted(*twoPersonalOneWork)
+        val viewModel = createViewModel(calendarPermissionRepository = permission, calendarRepository = calendarRepository)
         backgroundScope.launch { viewModel.uiState.collect {} }
         testDispatcher.scheduler.advanceUntilIdle()
 
-        // When deselecting calendar "1" while selectedCalendarIds is still implicitly null (all selected)
-        viewModel.setCalendarSelected("1", selected = false)
+        // Then with nothing chosen the personal ones show and the work one does not
+        assertTrue(viewModel.uiState.value.isCalendarSelected("1"))
+        assertFalse(viewModel.uiState.value.isCalendarSelected("work:1"))
+
+        // When ticking the work calendar
+        viewModel.setCalendarSelected("work:1", true)
         testDispatcher.scheduler.advanceUntilIdle()
 
-        // Then it persists the full set minus that one, not just "not 1"
-        verify(settingsRepository).setSelectedCalendarIds(setOf("2"))
+        // Then the clock stores the personal calendars already showing plus the work one
+        verify(clockStackRepository).setConfig(9, stored(ClockCalendarConfig(calendarIds = setOf("1", "2", "work:1"))))
     }
 
     @Test
-    fun `selecting all persists every currently-loaded calendar id`() = runTest {
-        val calendarPermissionRepository = mock(CalendarPermissionRepository::class.java)
-        `when`(calendarPermissionRepository.isGranted()).thenReturn(true)
-        val calendarRepository = mock(CalendarRepository::class.java)
-        val calendars = listOf(
-            CalendarInfo(id = "1", displayName = "Work", accountName = "work@example.com"),
-            CalendarInfo(id = "2", displayName = "Personal", accountName = "personal@example.com"),
-        )
-        `when`(calendarRepository.getSelectableCalendars()).thenReturn(calendars)
-        val settingsRepository = mock(SettingsRepository::class.java)
+    fun `deselecting a calendar while on every calendar stores the full set minus that one`() = runTest {
+        val (permission, calendarRepository) = granted(CalendarInfo("1", "A", "a"), CalendarInfo("2", "B", "b"))
+        val viewModel = createViewModel(calendarPermissionRepository = permission, calendarRepository = calendarRepository)
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        testDispatcher.scheduler.advanceUntilIdle()
 
-        val viewModel = createViewModel(
-            settingsRepository = settingsRepository,
-            calendarPermissionRepository = calendarPermissionRepository,
-            calendarRepository = calendarRepository,
-        )
+        viewModel.setCalendarSelected("1", false)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        verify(clockStackRepository).setConfig(9, stored(ClockCalendarConfig(calendarIds = setOf("2"))))
+    }
+
+    @Test
+    fun `selecting all stores every loaded calendar and deselecting all stores none`() = runTest {
+        val (permission, calendarRepository) = granted(CalendarInfo("1", "A", "a"), CalendarInfo("2", "B", "b"))
+        val viewModel = createViewModel(facet = facetWith(ClockWidgetConfig(calendar = ClockCalendarConfig(calendarIds = setOf("1")))), calendarPermissionRepository = permission, calendarRepository = calendarRepository)
         backgroundScope.launch { viewModel.uiState.collect {} }
         testDispatcher.scheduler.advanceUntilIdle()
 
         viewModel.setAllCalendarsSelected(true)
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        verify(settingsRepository).setSelectedCalendarIds(setOf("1", "2"))
-    }
-
-    @Test
-    fun `deselecting all persists an empty set`() = runTest {
-        val calendarPermissionRepository = mock(CalendarPermissionRepository::class.java)
-        `when`(calendarPermissionRepository.isGranted()).thenReturn(true)
-        val calendarRepository = mock(CalendarRepository::class.java)
-        val calendars = listOf(CalendarInfo(id = "1", displayName = "Work", accountName = "work@example.com"))
-        `when`(calendarRepository.getSelectableCalendars()).thenReturn(calendars)
-        val settingsRepository = mock(SettingsRepository::class.java)
-
-        val viewModel = createViewModel(
-            settingsRepository = settingsRepository,
-            calendarPermissionRepository = calendarPermissionRepository,
-            calendarRepository = calendarRepository,
-        )
-        backgroundScope.launch { viewModel.uiState.collect {} }
-        testDispatcher.scheduler.advanceUntilIdle()
-
         viewModel.setAllCalendarsSelected(false)
         testDispatcher.scheduler.advanceUntilIdle()
 
-        verify(settingsRepository).setSelectedCalendarIds(emptySet())
+        verify(clockStackRepository).setConfig(9, stored(ClockCalendarConfig(calendarIds = setOf("1", "2"))))
+        verify(clockStackRepository).setConfig(9, stored(ClockCalendarConfig(calendarIds = emptySet())))
+    }
+
+    @Test
+    fun `the all-day switch, the indicator and the item count are stored on the clock`() = runTest {
+        val viewModel = createViewModel()
+
+        viewModel.setShowAllDayEvents(false)
+        viewModel.setShowCalendarIndicator(false)
+        viewModel.setCalendarItemsToShow(2)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        verify(clockStackRepository).setConfig(9, stored(ClockCalendarConfig(showAllDay = false)))
+        verify(clockStackRepository).setConfig(9, stored(ClockCalendarConfig(showIndicator = false)))
+        verify(clockStackRepository).setConfig(9, stored(ClockCalendarConfig(itemsToShow = 2)))
+    }
+
+    @Test
+    fun `the display options are the clock's own`() = runTest {
+        val own = ClockWidgetConfig(calendar = ClockCalendarConfig(showIndicator = false, itemsToShow = 1, showAllDay = false))
+        val viewModel = createViewModel(facet = facetWith(own))
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(CalendarDisplayOptions(showIndicator = false, itemsToShow = 1), viewModel.uiState.value.calendarDisplay)
+        assertEquals(false, viewModel.uiState.value.effectiveShowAllDayEvents)
+    }
+
+    @Test
+    fun `binding another facet switches the settings to that facet`() = runTest {
+        // Given a view model bound to one facet, and a second facet with a different clock calendar
+        val first = facetWith(ClockWidgetConfig(calendar = ClockCalendarConfig(itemsToShow = 1)))
+        val second = first.copy(id = 6L, clockStack = listOf(clockItemWith(ClockWidgetConfig(calendar = ClockCalendarConfig(itemsToShow = 4)))))
+        val facetRepository = mock(FacetRepository::class.java)
+        val settingsRepository = mock(SettingsRepository::class.java)
+        `when`(facetRepository.observeFacets()).thenReturn(flowOf(listOf(first, second)))
+        `when`(settingsRepository.settings).thenReturn(flowOf(LauncherSettings()))
+        val viewModel = CalendarSettingsViewModel(
+            settingsRepository, facetRepository, mock(CalendarPermissionRepository::class.java), mock(CalendarRepository::class.java),
+            AssignCalendarColorsUseCase(), UpdateClockConfigUseCase(settingsRepository, facetRepository, clockStackRepository),
+        )
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        viewModel.bind(first.id)
+        testDispatcher.scheduler.advanceUntilIdle()
+        assertEquals(1, viewModel.uiState.value.calendarDisplay.itemsToShow)
+
+        // When bound to the second facet
+        viewModel.bind(second.id)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Then the state follows it
+        assertEquals(4, viewModel.uiState.value.calendarDisplay.itemsToShow)
+    }
+
+    @Test
+    fun `with no facet nothing is written`() = runTest {
+        val viewModel = createViewModel(facet = null)
+
+        viewModel.setShowAllDayEvents(false)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        verify(clockStackRepository, org.mockito.Mockito.never()).setConfig(9, stored(ClockCalendarConfig(showAllDay = false)))
     }
 }

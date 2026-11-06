@@ -1,5 +1,7 @@
 package com.facetlauncher.app.ui.home.stack
 
+import androidx.lifecycle.SavedStateHandle
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
@@ -46,6 +48,8 @@ class ClockStackScreenAddFlowTest {
     private val facets = FacetRepository(database.facetDao(), database.clockStackItemDao())
     private val stack = ClockStackRepository(database, database.clockStackItemDao())
     private val opened = mutableListOf<ProReason>()
+    private val styleFacets = mutableListOf<Long>()
+    private var shownFacetId = 0L
 
     /** A facet with its launcher clock, active; [withClock] false removes the clock so the stack is empty. */
     private fun show(isPro: Boolean, withClock: Boolean) {
@@ -56,13 +60,14 @@ class ClockStackScreenAddFlowTest {
             if (!withClock) stack.getAll(id).forEach { stack.remove(it.id) }
             id
         }
+        shownFacetId = facetId
         val appWidgets = mock(AppWidgetRepository::class.java)
         val viewModel = ClockStackViewModel(
-            settings, stack, appWidgets, RemoveClockStackItemUseCase(stack, appWidgets), AddClockStackItemUseCase(stack, entitlement), entitlement, Dispatchers.IO,
+            SavedStateHandle(), settings, stack, appWidgets, RemoveClockStackItemUseCase(stack, appWidgets), AddClockStackItemUseCase(stack, entitlement), entitlement, Dispatchers.IO,
         )
         composeRule.setContent {
             FacetLauncherTheme {
-                ClockStackScreen(onBack = {}, onOpenFacetPro = { opened += it }, onOpenAppearance = {}, viewModel = viewModel)
+                ClockStackScreen(onBack = {}, onOpenFacetPro = { opened += it }, onOpenClockStyle = { styleFacets += it }, viewModel = viewModel)
             }
         }
         composeRule.waitUntil(timeoutMillis = 5_000) {
@@ -73,6 +78,29 @@ class ClockStackScreenAddFlowTest {
 
     private fun androidx.compose.ui.test.junit4.ComposeContentTestRule.onAllNodesWithTagExists(tag: String) =
         onAllNodesWithTag(tag).fetchSemanticsNodes().isNotEmpty()
+
+    @Test
+    fun `configuring the launcher clock offers clock styles and calendar settings and styles opens that screen`() {
+        // Given a Pro facet whose stack holds the launcher clock
+        show(isPro = true, withClock = true)
+        val clockId = runBlocking { stack.getAll(shownFacetId).single().id }
+
+        // When the clock row's Configure is tapped
+        composeRule.onNodeWithTag("clock_stack_configure_$clockId").performClick()
+
+        // Then a sheet offers both settings and nothing has navigated yet
+        composeRule.onNodeWithTag("clock_stack_clock_sheet").assertIsDisplayed()
+        composeRule.onNodeWithTag("clock_style_sheet_calendar").assertIsDisplayed()
+        assertEquals(emptyList<Long>(), styleFacets)
+
+        // When Clock styles is chosen
+        composeRule.onNodeWithTag("clock_style_sheet_styles").performClick()
+
+        // Then the style gallery opens for that facet and the sheet is gone
+        composeRule.waitForIdle()
+        assertEquals(listOf(shownFacetId), styleFacets)
+        composeRule.onAllNodesWithTag("clock_stack_clock_sheet").assertCountEquals(0)
+    }
 
     @Test
     fun `a free stack at its limit sends Add to the Facet Pro screen`() {

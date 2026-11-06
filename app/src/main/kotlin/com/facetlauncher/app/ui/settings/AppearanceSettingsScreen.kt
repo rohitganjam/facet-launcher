@@ -60,15 +60,12 @@ import com.facetlauncher.app.ui.theme.SurfaceContainer
 
 /**
  * Settings → Appearance (`3c`) — a live preview of Home, then a section per area, each a short list of rows that open their own screen:
- * Clock & calendar (clock style, calendars to display), Dock & home ("Dock & Apps appearance" → [DockAppsAppearanceScreen]),
+ * Dock & home ("Dock & Apps appearance" → [DockAppsAppearanceScreen]),
  * Notifications (global only → the Notifications page) and Look & Feel (global only: "General settings" → [ThemesAndColorsScreen], "Fonts" → [FontsScreen], "Icons" → [IconsScreen]).
- * With a `facetId` it is a facet's own Appearance screen: the same layout minus the global-only sections.
  */
 @Composable
 fun AppearanceSettingsScreen(
     onBack: () -> Unit,
-    onNavigateToClockStyleGallery: () -> Unit,
-    onNavigateToCalendarSettings: () -> Unit,
     onNavigateToNotificationSettings: () -> Unit,
     onNavigateToDockAppsAppearance: () -> Unit,
     onNavigateToAppDrawerSettings: () -> Unit,
@@ -99,8 +96,6 @@ fun AppearanceSettingsScreen(
         uiState = uiState,
         homeWallpaper = homeWallpaper,
         onBack = onBack,
-        onNavigateToClockStyleGallery = onNavigateToClockStyleGallery,
-        onNavigateToCalendarSettings = onNavigateToCalendarSettings,
         onNavigateToNotificationSettings = onNavigateToNotificationSettings,
         onNavigateToDockAppsAppearance = onNavigateToDockAppsAppearance,
         onNavigateToAppDrawerSettings = onNavigateToAppDrawerSettings,
@@ -117,8 +112,6 @@ private fun AppearanceSettingsContent(
     uiState: AppearanceSettingsUiState,
     homeWallpaper: HomeWallpaper,
     onBack: () -> Unit,
-    onNavigateToClockStyleGallery: () -> Unit,
-    onNavigateToCalendarSettings: () -> Unit,
     onNavigateToNotificationSettings: () -> Unit,
     onNavigateToDockAppsAppearance: () -> Unit,
     onNavigateToAppDrawerSettings: () -> Unit,
@@ -147,57 +140,12 @@ private fun AppearanceSettingsContent(
                         modifier = Modifier.padding(bottom = 20.dp).testTag("appearance_preview_card"),
                     )
                 }
-                clockAndCalendarSection(uiState, onNavigateToClockStyleGallery, onNavigateToCalendarSettings)
                 dockAndHomeSection(settings, uiState, onNavigateToDockAppsAppearance, onNavigateToAppDrawerSettings)
-                // Global only — no per-facet override exists for notifications, theme, accent, icons or fonts.
-                if (!uiState.isFacetScoped) {
-                    notificationsSection(settings, uiState.notificationAccessGranted, onNavigateToNotificationSettings)
-                    generalSection(settings, onNavigateToThemesAndColors, onNavigateToFonts, onNavigateToIcons)
-                }
+                notificationsSection(settings, uiState.notificationAccessGranted, onNavigateToNotificationSettings)
+                generalSection(settings, onNavigateToThemesAndColors, onNavigateToFonts, onNavigateToIcons)
             }
         },
     )
-}
-
-/** The clock-style row, then "Calendars to display" — a link to the (facet-aware) calendar page, which owns the inherit/override switch and the permission request. */
-private fun LazyListScope.clockAndCalendarSection(
-    uiState: AppearanceSettingsUiState,
-    onNavigateToClockStyleGallery: () -> Unit,
-    onNavigateToCalendarSettings: () -> Unit,
-) {
-    item { SettingsSectionHeader(stringResource(R.string.appearance_section_clock)) }
-    item {
-        SettingsCard(fullBleedRows = true) {
-            ClickableRow(
-                title = stringResource(R.string.settings_clock_calendar_title),
-                subtitle = stringResource(
-                    R.string.dot_join_2,
-                    stringResource(uiState.clockSettings.clockTemplateId.displayNameRes),
-                    stringResource(if (uiState.clockSettings.use24HourTime) R.string.settings_time_format_24h else R.string.settings_time_format_12h),
-                ),
-                onClick = onNavigateToClockStyleGallery,
-                testTag = "clock_style_gallery_row",
-                leadingIcon = iconBadge(Icons.Outlined.Schedule, SettingsSectionHue.APPEARANCE),
-            )
-            CardDivider(startInset = SettingsIconBadgeInset)
-            ClickableRow(
-                title = stringResource(R.string.settings_calendars_title),
-                subtitle = if (uiState.calendarAccessGranted) {
-                    stringResource(
-                        R.string.dot_join_2,
-                        pluralStringResource(R.plurals.settings_calendars_selected, uiState.selectedCalendarCount, uiState.selectedCalendarCount),
-                        stringResource(if (uiState.effectiveShowAllDayEvents) R.string.settings_all_day_events_visible else R.string.settings_all_day_events_hidden),
-                    )
-                } else {
-                    // Like the Notifications row: with no access nothing is read, so a stored selection would be a misleading summary.
-                    stringResource(R.string.settings_calendars_needs_access)
-                },
-                onClick = onNavigateToCalendarSettings,
-                testTag = "appearance_calendar_settings_row",
-                leadingIcon = iconBadge(Icons.Outlined.CalendarMonth, SettingsSectionHue.APPEARANCE),
-            )
-        }
-    }
 }
 
 /** Global only — a link to the Notifications page (badges, and the Home media player). */
@@ -233,7 +181,7 @@ private fun notificationsSummary(settings: LauncherSettings, accessGranted: Bool
 }
 
 
-/** Rows into [DockAppsAppearanceScreen] and (global only) [AppDrawerSettingsScreen]; the first summarises the dock and Home list as the facet settings row does ("Dock icons · Home icon & text"). */
+/** Rows into [DockAppsAppearanceScreen] and [AppDrawerSettingsScreen]; the first summarises the dock and Home list as the facet settings row does ("Dock icons · Home icon & text"). */
 private fun LazyListScope.dockAndHomeSection(
     settings: LauncherSettings,
     uiState: AppearanceSettingsUiState,
@@ -254,17 +202,14 @@ private fun LazyListScope.dockAndHomeSection(
                 testTag = "appearance_dock_apps_row",
                 leadingIcon = iconBadge(Icons.Outlined.Dock, SettingsSectionHue.APPEARANCE),
             )
-            // Launcher-wide only: the drawer has no per-facet override.
-            if (!uiState.isFacetScoped) {
-                CardDivider(startInset = SettingsIconBadgeInset)
-                ClickableRow(
-                    title = stringResource(R.string.settings_app_drawer_title),
-                    subtitle = appDrawerSummary(settings.drawerPresentation, settings.searchContactsEnabled, settings.searchSettingsEnabled),
-                    onClick = onNavigateToAppDrawerSettings,
-                    testTag = "app_drawer_settings_row",
-                    leadingIcon = iconBadge(Icons.Outlined.Apps, SettingsSectionHue.APPEARANCE),
-                )
-            }
+            CardDivider(startInset = SettingsIconBadgeInset)
+            ClickableRow(
+                title = stringResource(R.string.settings_app_drawer_title),
+                subtitle = appDrawerSummary(settings.drawerPresentation, settings.searchContactsEnabled, settings.searchSettingsEnabled),
+                onClick = onNavigateToAppDrawerSettings,
+                testTag = "app_drawer_settings_row",
+                leadingIcon = iconBadge(Icons.Outlined.Apps, SettingsSectionHue.APPEARANCE),
+            )
         }
     }
 }
@@ -346,8 +291,6 @@ private fun AppearanceSettingsScreenPreview() {
             uiState = AppearanceSettingsUiState(globalFavorites = DesignTimeFavorites, globalDockItems = DesignTimeDockItems),
             homeWallpaper = HomeWallpaper.Unavailable,
             onBack = {},
-            onNavigateToClockStyleGallery = {},
-            onNavigateToCalendarSettings = {},
             onNavigateToNotificationSettings = {},
             onNavigateToDockAppsAppearance = {},
             onNavigateToAppDrawerSettings = {},
@@ -371,8 +314,6 @@ private fun AppearanceSettingsScreenFacetScopedPreview() {
             ),
             homeWallpaper = HomeWallpaper.Unavailable,
             onBack = {},
-            onNavigateToClockStyleGallery = {},
-            onNavigateToCalendarSettings = {},
             onNavigateToNotificationSettings = {},
             onNavigateToDockAppsAppearance = {},
             onNavigateToAppDrawerSettings = {},

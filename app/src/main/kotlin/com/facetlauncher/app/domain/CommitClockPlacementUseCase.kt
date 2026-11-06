@@ -7,7 +7,7 @@ import javax.inject.Inject
 import kotlinx.coroutines.flow.first
 
 /**
- * Saves a change to a facet's clock placement (alignment, scale, divider) from Home's adjust mode. Placement is always
+ * Saves a change to a facet's clock placement (alignment, divider) from Home's adjust mode. Placement is always
  * the facet's own: the first time it is adjusted, the placement the facet is showing, which is the launcher's fallback
  * until then, is copied into the facet in both orientations, so changing one value never moves the others. Spans
  * [FacetRepository] and [SettingsRepository] (the fallback), so it is a use case.
@@ -26,12 +26,10 @@ class CommitClockPlacementUseCase @Inject constructor(
             facetId = facetId,
             alignment = portrait.alignment,
             zoneHeightDp = portrait.zoneHeightDp,
-            scale = portrait.scale,
             // A landscape value equal to portrait's stays null, which means "same as portrait".
             landscape = LandscapeOverrides(
                 clockAlignment = inLandscape.alignment.takeIf { it != portrait.alignment },
                 clockZoneHeightDp = inLandscape.zoneHeightDp.takeIf { it != portrait.zoneHeightDp },
-                clockScale = inLandscape.scale.takeIf { it != portrait.scale },
             ),
         )
     }

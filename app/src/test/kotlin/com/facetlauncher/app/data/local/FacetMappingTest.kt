@@ -34,19 +34,16 @@ class FacetMappingTest {
 
     @Test
     fun `a facet with every group set round-trips through the entity unchanged`() {
-        // Given a facet with non-default values across the clock, landscape, apps, dock and calendar groups
+        // Given a facet with non-default values across the clock placement, landscape, apps and dock groups
         val facet = Facet(
             id = 7,
             name = "Work",
             position = 2,
-            overrideClock = true,
-            clockTemplateId = ClockTemplateId.DATE_FORWARD,
+            clockPlacementOwn = true,
             clockAlignment = ClockAlignment.RIGHT,
             clockZoneHeightDp = 210f,
-            clockScale = 1.1f,
             landscapeClockAlignment = ClockAlignment.CENTER,
             landscapeClockZoneHeightDp = 300f,
-            landscapeClockScale = 0.9f,
             overrideApps = true,
             appRowPosition = AppRowPosition.CENTER,
             landscapeAppRowPosition = AppRowPosition.RIGHT,
@@ -58,11 +55,6 @@ class FacetMappingTest {
             overridingFavorites = true,
             overrideDock = true,
             dockDisplayMode = DockDisplayMode.TEXT,
-            overrideCalendar = true,
-            showAllDayEvents = false,
-            showCalendarIndicator = false,
-            calendarItemsToShow = 2,
-            selectedCalendarIds = setOf("3", "4"),
         )
 
         // When mapped to the Room row and back
@@ -71,15 +63,5 @@ class FacetMappingTest {
 
         // Then nothing is lost
         assertEquals(facet, result)
-    }
-
-    @Test
-    fun `calendar ids are stored comma-joined and null means every calendar`() {
-        val selected = Facet(name = "A", position = 0, selectedCalendarIds = setOf("1", "2")).toEntity()
-        val all = Facet(name = "A", position = 0, selectedCalendarIds = null).toEntity()
-
-        assertEquals("1,2", selected.selectedCalendarIdsCsv)
-        assertEquals(null, all.selectedCalendarIdsCsv)
-        assertEquals(null, all.toFacet().selectedCalendarIds)
     }
 }

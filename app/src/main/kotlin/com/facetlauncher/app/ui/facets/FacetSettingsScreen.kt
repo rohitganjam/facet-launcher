@@ -14,6 +14,7 @@ import androidx.compose.material.icons.outlined.Dock
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.FormatListBulleted
 import androidx.compose.material.icons.outlined.Palette
+import androidx.compose.material.icons.outlined.Widgets
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -52,7 +53,8 @@ fun FacetSettingsScreen(
     onBack: () -> Unit,
     onNavigateToAppsList: (facetId: Long) -> Unit,
     onNavigateToDockSettings: (facetId: Long) -> Unit,
-    onNavigateToAppearance: (facetId: Long) -> Unit,
+    onNavigateToDockAppsAppearance: (facetId: Long) -> Unit,
+    onNavigateToWidgets: (facetId: Long) -> Unit,
     onFacetApply: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: FacetSettingsViewModel = hiltViewModel(),
@@ -64,7 +66,8 @@ fun FacetSettingsScreen(
         onBack = onBack,
         onAppsListClick = { onNavigateToAppsList(viewModel.facetId) },
         onDockClick = { onNavigateToDockSettings(viewModel.facetId) },
-        onAppearanceClick = { onNavigateToAppearance(viewModel.facetId) },
+        onDockAppsAppearanceClick = { onNavigateToDockAppsAppearance(viewModel.facetId) },
+        onWidgetsClick = { onNavigateToWidgets(viewModel.facetId) },
         onRename = viewModel::renameFacet,
         onApplyFacet = { viewModel.applyFacet(); onFacetApply() },
         modifier = modifier,
@@ -77,7 +80,8 @@ private fun FacetSettingsContent(
     onBack: () -> Unit,
     onAppsListClick: () -> Unit,
     onDockClick: () -> Unit,
-    onAppearanceClick: () -> Unit,
+    onDockAppsAppearanceClick: () -> Unit,
+    onWidgetsClick: () -> Unit,
     onRename: (String) -> Unit,
     onApplyFacet: () -> Unit,
     modifier: Modifier = Modifier,
@@ -117,8 +121,8 @@ private fun FacetSettingsContent(
                     }
                 }
 
-                item { SettingsSectionHeader(stringResource(R.string.settings_section_appearance)) }
-                item { AppearanceCard(uiState, onAppearanceClick) }
+                item { SettingsSectionHeader(stringResource(R.string.facet_settings_section_home)) }
+                item { HomeCard(uiState, onWidgetsClick, onDockAppsAppearanceClick) }
 
                 item { SettingsSectionHeader(stringResource(R.string.settings_section_home_apps)) }
                 item { HomeAppsCard(uiState, onAppsListClick, onDockClick) }
@@ -137,20 +141,28 @@ private fun FacetSettingsContent(
     }
 }
 
+/** What is at the top of this facet's Home (its widgets), and how its apps list and dock look. */
 @Composable
-private fun AppearanceCard(uiState: FacetSettingsUiState, onAppearanceClick: () -> Unit) {
+private fun HomeCard(uiState: FacetSettingsUiState, onWidgetsClick: () -> Unit, onDockAppsAppearanceClick: () -> Unit) {
     SettingsCard(fullBleedRows = true) {
         FacetSettingsRow(
-            title = stringResource(R.string.facet_settings_appearance_title),
+            title = stringResource(R.string.facet_settings_widgets_title),
+            subtitle = stringResource(R.string.facet_settings_widgets_subtitle),
+            onClick = onWidgetsClick,
+            testTag = "facet_widgets_row",
+            leadingIcon = { SettingsIconBadge(Icons.Outlined.Widgets, SettingsSectionHue.APPEARANCE) },
+        )
+        CardDivider(startInset = SettingsIconBadgeInset)
+        FacetSettingsRow(
+            title = stringResource(R.string.appearance_dock_apps_title),
             subtitle = stringResource(
-                R.string.dot_join_3,
-                stringResource(R.string.facet_settings_appearance_clock_label, stringResource(uiState.clockTemplateId.displayNameRes)),
+                R.string.dot_join_2,
                 uiState.dockDisplayMode.appearanceSummaryLabel(),
                 uiState.appRowPresentation.appearanceSummaryLabel(),
             ),
-            onClick = onAppearanceClick,
+            onClick = onDockAppsAppearanceClick,
             testTag = "facet_appearance_row",
-            leadingIcon = { SettingsIconBadge(Icons.Outlined.Palette, SettingsSectionHue.APPEARANCE) },
+            leadingIcon = { SettingsIconBadge(Icons.Outlined.Dock, SettingsSectionHue.APPEARANCE) },
         )
     }
 }
@@ -200,7 +212,8 @@ private fun FacetSettingsScreenPreview() {
             onBack = {},
             onAppsListClick = {},
             onDockClick = {},
-            onAppearanceClick = {},
+            onDockAppsAppearanceClick = {},
+            onWidgetsClick = {},
             onRename = {},
             onApplyFacet = {},
         )

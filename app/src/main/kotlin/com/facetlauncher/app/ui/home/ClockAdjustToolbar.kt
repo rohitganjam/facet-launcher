@@ -47,7 +47,7 @@ import com.facetlauncher.app.ui.theme.Muted
 import com.facetlauncher.app.ui.theme.Surface
 
 /**
- * The floating "Alignment" pill shown during [ClockAdjustMode.ADJUST], just below the height handle:
+ * The floating "Alignment" pill shown during [HomeMenuMode.ADJUST], just below the height handle:
  * left / center / right for the clock (or hosted widget), applied immediately. In landscape
  * ([vertical]) the same three values are top / middle / bottom of the clock pane. It swallows taps on its
  * own surface, enabled or not — Home's root treats any tap that reaches it unconsumed as "empty space" and

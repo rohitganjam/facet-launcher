@@ -25,7 +25,14 @@ class BackupCoverageTest {
             "clockStack", // hosted widgets are AppWidgetHost ids, which are not portable, so they are re-added by hand; the native pages go out as nativeStackPages
         )
         val expected = fieldNames(Facet::class.java) - notBackedUp
-        val exported = fieldNames(BackupFacet::class.java) - setOf("dockApps", "favorites", "dockFolderPlacements", "favoriteFolderPlacements", "nativeStackPages")
+        // The clock's settings and box go out through the clock page ([clockConfig] and the box fields); the facet-level clock and calendar fields are legacy, read from older backups only
+        val legacyClockFields = setOf(
+            "overrideClock", "clockTemplateId", "clockFontOption", "clockColorOption", "use24HourTime", "clockShowMeridiem", "clockAccentColorOption", "clockDateStyle",
+            "clockShowAlarm", "clockShowBattery", "clockShowWeather", "clockWeatherIconStyle", "clockWeatherLocation",
+            "overrideCalendar", "showAllDayEvents", "showCalendarIndicator", "calendarItemsToShow", "selectedCalendarIds",
+        )
+        val clockPageFields = setOf("clockConfig", "clockWidthDp", "clockHeightDp", "clockLandscapeWidthDp", "clockLandscapeHeightDp")
+        val exported = fieldNames(BackupFacet::class.java) - setOf("dockApps", "favorites", "dockFolderPlacements", "favoriteFolderPlacements", "nativeStackPages") - legacyClockFields - clockPageFields
 
         // Then the backup holds exactly those
         assertEquals(expected, exported)
@@ -44,14 +51,19 @@ class BackupCoverageTest {
         // drawerGridDensity is stored as drawerGridSize, and the landscape group as flat landscape* fields
         val renamed = mapOf("drawerGridDensity" to "drawerGridSize")
         val landscapeGroup = setOf(
-            "landscapeClockAlignment", "landscapeClockZoneHeightDp", "landscapeClockScale",
+            "landscapeClockAlignment", "landscapeClockZoneHeightDp",
             "landscapeAppRowPosition", "landscapeAppListVerticalAlignment", "landscapeAppListColumnAlignment",
         )
         // the chosen weather city is saved as four flat fields (the current location never is)
         val weatherCityGroup = setOf("weatherCityName", "weatherCityLatitude", "weatherCityLongitude", "weatherCityTimezone")
         val expected = (fieldNames(LauncherSettings::class.java) - notBackedUp - "landscape" - "weatherCity")
             .map { renamed[it] ?: it }.toSet() + landscapeGroup + weatherCityGroup
-        val exported = fieldNames(BackupSettings::class.java) - "activeFacetIndex"
+        // The launcher-wide clock look and accessories of version 4 and older are still read, to give an older backup's clocks their settings, but not written
+        val legacyClockFields = setOf(
+            "clockTemplateId", "clockFontOption", "clockColorOption", "clockAccentColorOption", "clockShowMeridiem", "clockDateStyle",
+            "showNextAlarm", "showBatteryPercentage", "showCalendarIndicator", "calendarItemsToShow",
+        )
+        val exported = fieldNames(BackupSettings::class.java) - "activeFacetIndex" - legacyClockFields
 
         // Then the backup holds exactly those
         assertEquals(expected, exported)

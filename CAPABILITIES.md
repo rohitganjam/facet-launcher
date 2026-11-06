@@ -45,12 +45,12 @@ starting at `HOME`.
 | Capability | Where | Notes |
 |---|---|---|
 | Custom clock widget | `ui/home/ClockBlock.kt`, `ui/home/clock/ClockTemplates.kt` | ~36 templates (`ClockTemplateId`) — typographic + shape-based. Ticks off `ACTION_TIME_TICK` (no polling). 12/24h. Per-template accent color, meridiem, date style (Full/Condensed). |
-| Clock style gallery | `ui/home/clock/ClockStyleGalleryScreen.kt` | Global + per-facet picker. Includes Phase 10 "advanced" templates (Roboto Flex Wide/Narrow/Tech). |
-| Clock position + size | `ui/home/ClockZoneHandle.kt`, `ClockCornerHandle.kt`, `ClockAdjustSheet.kt`, `ClockAdjustToolbar.kt` | Long-press clock → bottom sheet (`ThemedModalBottomSheet`) → adjust mode: height handle (drag vertical zone), corner-drag resize (`clockScale` 0.5–2.0, default 0.8), and an "Alignment" pill (left / center / right) just below the handle — dims to 25% and disables while dragging, no Done button (tap the clock or empty space to exit). "Edit clock styles" stays in the sheet. Global + per-facet. |
+| Clock style gallery | `ui/home/clock/ClockStyleGalleryScreen.kt` | Picks the style of the clock that was pressed (its own settings, per facet); templates scroll in a row at the top. Calendar settings is a bottom sheet from the same long-press sheet. Includes Phase 10 "advanced" templates (Roboto Flex Wide/Narrow/Tech). |
+| Widget position + size | `ui/home/ClockZoneHandle.kt`, `ClockCornerHandle.kt`, `HomeSheets.kt`, `ClockAdjustToolbar.kt` | Long-press a widget (the clock, its events, a Facet widget or a hosted one) → that widget's bottom sheet (`ThemedModalBottomSheet`) → "Adjust widget size & position": height handle (drag vertical zone), corner-drag resize (the clock's size is saved as a dp box; unsized it draws at 0.8×), and an "Alignment" pill (left / center / right) just below the handle — dims to 25% and disables while dragging, no Done button (tap the widget or empty space to exit). The same sheet has the widget's settings (Clock styles and Calendar settings for the clock, "<Widget> settings" for Weather and Agenda), Replace, Remove and the Widget stack. Per-facet. |
 | Custom widget in place of the clock | `ui/home/ClockWidgetFacetController.kt`, `ClockWidgetHostController.kt`, `domain/SwitchFacetToNativeClockUseCase.kt` | Long-press sheet → "Use custom widget" swaps a clock-stack page (the native clock) for **any widget** (not limited to clock widgets), per facet, **free** (own `AppWidgetHost` id, own saved size). Switching back to the native clock releases the widget id. Replacing a page, removing and reordering never need Pro. |
 | Widget stack (clock stack) | `ui/home/stack/ClockStackScreen.kt`, `data/ClockStackRepository.kt`, `domain/AddClockStackItemUseCase.kt`, `ReplaceClockStackItemUseCase.kt` | A facet's clock area holds several swipeable pages (the native clock plus hosted widgets), with page dots during and just after a swipe; reorder, configure, remove and add on the Widget stack screen. Each facet remembers its last page. **Pro:** free keeps one page, Pro allows up to 5; only *adding* past the limit is gated (Pro pill opens Facet Pro). After a lapse the stack stays saved but Home shows only the first page. See `docs/architecture/16-flow-billing.md`. |
 | Landscape / large-screen Home | `ui/home/HomeLayoutMode.kt`, `HomeContent.kt`, `HomeLandscapeLayout.kt`, `HomeClockGeometry.kt`, `data/model/LandscapeOverrides.kt` | Portrait when the window is taller than wide or under 600dp, else landscape (clock pane, apps pane, dock; compact or roomy by height). "Allow landscape mode" (Dock & Apps appearance) off locks everything to portrait. Landscape has its own clock alignment, divider width, scale, hosted-widget size and list alignment, each falling back to portrait until set, at both launcher and facet level. See `docs/architecture/17-flow-home-layout.md`. |
-| Clock alignment | `ClockAlignment` (LEFT/CENTER/RIGHT) | One value governs the clock (or hosted widget) and the calendar strip. Per-facet override (`overrideClock`, with height + scale). Set from adjust mode's Alignment pill or Clock Style. |
+| Clock alignment | `ClockAlignment` (LEFT/CENTER/RIGHT) | One value governs the clock (or hosted widget) and the calendar strip. Per-facet (with the divider height; the clock's size is its own dp box). Set from adjust mode's Alignment pill. |
 | Calendar events on clock | `ClockBlock.kt` + `ui/home/clock/CalendarEventsBlock.kt` | Real `CalendarContract` query. Event rows below the date, accent rule on next upcoming, tap → opens calendar app at that event. All-day toggle, per-calendar accent colors, per-calendar selection. **Gated on `READ_CALENDAR`** — shows a dashed permission strip when denied. |
 | App list (Favorites / Recents / Most Used) | `ui/home/HomeSlots.kt`, `HomeAppList.kt`, `domain/ObserveHomeScreenStateUseCase.kt` | Per-facet `ListContentMode`. Section heading is dynamic (FAVORITES/RECENTS/MOST USED). |
 | — Favorites | `data/FavoriteAppRepository.kt`, `DefaultFavoriteAppRepository.kt` | Up to 8. Global **Default favorites** list + per-facet override (`overridingFavorites`). Uninstall-collapse + hard delete. Reorder in Settings, not the picker. |
@@ -64,7 +64,7 @@ starting at `HOME`.
 | Home ↔ Drawer gesture | `ui/launcher/HomeDrawerRoute.kt` | Swipe up opens drawer (follow-finger, velocity + distance commit). |
 | Home press / Home gesture | `LauncherActivity.onNewIntent` → `LauncherViewModel.homePressedEvent`; `ui/components/DismissOnHomePress.kt`, `ThemedModalBottomSheet.kt` | Collapses everything to bare Home: Drawer/Hub/carousel close (each close in its own job — an interrupted animation must never end the collector), clock sheet + widget picker reset, every sheet/dialog dismisses. Samsung's swipe-up gesture injects `KEYCODE_HOME`, so it takes the same path. |
 | Swipe down → notification shade | `data/NotificationShadeRepository.kt` | Wired in `HomeDrawerRoute`; `EXPAND_STATUS_BAR`. Not fully verified on-device per the plan. |
-| Swipe left → Switch Facets | `ui/facets/FacetCarouselScreen.kt` | Opens the facet carousel (swipe right opens the Hub). A long-press on empty space opens a quick-settings sheet instead (adjust clock, clock styles, custom widget, Facet settings, Launcher settings). |
+| Swipe left → Switch Facets | `ui/facets/FacetCarouselScreen.kt` | Opens the facet carousel (swipe right opens the Hub). A long-press on empty space opens a sheet with Facet settings and Launcher settings (and Add widget and Widget stack while the stack is empty); a long-press on a widget opens that widget's own sheet instead. |
 | Return-to-home on HOME intent | `LauncherActivity.onNewIntent` → `LauncherViewModel.onHomePressed` | Pops nav back to Home. Marked "not yet tested" in the plan (Phase 7). |
 | Live wallpaper behind UI | `res/values/themes.xml` | `windowShowWallpaper=true` + transparent window background — OS composites the real wallpaper. No `WallpaperManager` code. `values-v29/themes.xml` also turns off the system status/nav contrast scrims. |
 
@@ -97,12 +97,13 @@ starting at `HOME`.
 - **Manage Facets** (`ManageFacetsScreen`) — Settings → Facets. A Facet automation card at the top, then a drag-to-reorder list, per-row
   overflow (Facet settings / Delete), pinned "Add facet" row (capped at 3).
 - **Add facet** — a new facet is named `Facet N` and **inherits the launcher-wide defaults**
-  (default favorites, dock, clock style) until it overrides them. It does not copy
+  (default favorites and dock) until it overrides them; its clock starts from the built-in defaults. It does not copy
   another facet's settings.
 - **Delete facet** — `ConfirmDialog` required; blocked at 1 remaining.
-- **Facet settings** (`FacetSettingsScreen`) — Activate (header), a Rename row, an Appearance
-  card (which holds the facet's Clock Style and its Calendars to display), and an Apps and folders card
-  with one destination per other overridable area: Apps list, Dock. Laid out like the main
+- **Facet settings** (`FacetSettingsScreen`) — Activate (header), a Rename row, a Home card
+  (Widgets, Dock & Apps appearance), and an Apps and folders card
+  with one destination per other overridable area: Apps list, Dock. A clock's style and calendar
+  are its own, set from the clock's long-press sheet. Laid out like the main
   Settings screen. Each destination
   has its own Inherit/Override switch, so a facet only stores what differs from the defaults.
 - **Per-facet widget in the clock slot** — a facet can replace its native clock with any hosted widget (own
@@ -186,7 +187,7 @@ from the `release_notes/` change log. English only. Backfilled from 0.1.10.
 | Icon shape | `IconShape` (SQUIRCLE default, ROUNDED, CIRCLE, SQUARE) | Global outline for app icons, picked in Appearance with each option drawn in its own shape; the selected one gets an accent ring with a gap. An applied icon pack's shape wins for the icons it draws. |
 | Icon size | `iconScalePercent`, `AppIconSize` + `LocalIconScale` (`ui/components/AppIcon.kt`) | One size for every app icon on Home, the dock, the drawer, folders and Private Space (44dp at 100%; Compact rows 36dp), scaled 80–120% in 1% steps from the Icons screen. Settings screens and pickers stay fixed. Global. |
 | Live preview card | `AppearanceSettingsScreen.kt` | Wallpaper-backed sample of app rows + dock icon. |
-| Appearance screen order | `AppearanceSettingsScreen.kt` | Preview, then a Clock & calendar card (the Clock Style and Calendars to display rows), Dock & home (one "Dock & Apps appearance" row), and — global only — Notifications (a "Notifications and media" row) and General (one "Fonts, themes and icons" row). The same screen serves a facet, which has only the first two. |
+| Appearance screen order | `AppearanceSettingsScreen.kt` | Preview, then Dock & home (one "Dock & Apps appearance" row), Notifications (a "Notifications and media" row) and General (one "Fonts, themes and icons" row). Launcher-wide only; there is no Clock & calendar section (a clock's settings live on the clock). |
 | Per-app label rename | **Not built.** | |
 | Third-party icon packs | `data/iconpack/`, `ui/settings/IconsScreen.kt` (see [19](docs/architecture/19-flow-icon-packs.md)) | Free. Installed packs (Nova/ADW/Apex/GO theme intents) shown by their own app icon under "External"; one applies launcher-wide in place of the built-in style. Exact activity then package lookup, `iconback`/`iconmask`/`iconupon` theming for missed apps ("Match pack") or their own icon ("Keep default"), calendar packs dated by day, Open pack, Get more / Find icon packs (Play Store search). Unapplied if the pack is uninstalled or missing after a restore. Backed up. |
 
@@ -203,9 +204,7 @@ four sections, each a card of icon-badge rows:
     trigger; one card with an icon, a message and an "Add rule" row when empty)
 - **Appearance**
   - Change wallpaper → `ACTION_SET_WALLPAPER` system picker
-  - Appearance → `AppearanceSettingsScreen` (Clock & calendar: Clock Style row → clock
-    style gallery, Calendars to display → `CalendarSettingsScreen` (show all-day events, calendar
-    picker — real once granted); Dock & home → "Dock & Apps appearance" → `DockAppsAppearanceScreen`
+  - Appearance → `AppearanceSettingsScreen` (Dock & home → "Dock & Apps appearance" → `DockAppsAppearanceScreen`
     (dock style, app list layout, position, presentation, alignment; both scopes; live preview);
     Notifications section with a "Notifications and media" row → `NotificationSettingsScreen`
     (badges on/off + Dot/Count style, and the Home media player: on/off, skip buttons, Flat/Wavy

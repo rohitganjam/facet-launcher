@@ -5,7 +5,7 @@ import android.content.Intent
 import android.provider.AlarmClock
 import androidx.compose.ui.geometry.Rect
 import com.facetlauncher.app.data.model.ProReason
-import com.facetlauncher.app.ui.home.ClockAdjustMode
+import com.facetlauncher.app.ui.home.HomeMenuMode
 import com.facetlauncher.app.ui.home.ClockWidgetHostCache
 import com.facetlauncher.app.ui.home.HomeClockActions
 import com.facetlauncher.app.ui.home.HomeClockWidgetActions
@@ -24,21 +24,22 @@ internal class HomeNavigation(
     val toFacetSettings: (facetId: Long) -> Unit,
     val toFacetPro: (ProReason) -> Unit,
     val toUsageAccessExplanation: () -> Unit,
-    /** The clock style gallery, global (`null`) or for one facet. */
-    /** Settings > Appearance, global (`null`) or for one facet. */
-    val toAppearance: (Long?) -> Unit,
+    /** One facet's clock style options. */
+    val toClockStyle: (facetId: Long) -> Unit,
     val toClockStack: () -> Unit,
 )
 
 /** The route's own state that Home's actions change. */
 internal class HomeRouteHooks(
-    val setAdjustMode: (ClockAdjustMode) -> Unit,
+    val setAdjustMode: (HomeMenuMode) -> Unit,
     val setDraggingHandle: (Boolean) -> Unit,
     val setClockWidgetBounds: (Rect?) -> Unit,
     val setAppListBounds: (Rect?) -> Unit,
     val setClockPaneBounds: (Rect?) -> Unit,
     val setClockZoneBounds: (Rect?) -> Unit,
     val openClockWidgetPicker: (itemId: Long) -> Unit,
+    /** Opens the picker to add a page to the facet's stack. */
+    val openAddClockWidgetPicker: (facetId: Long) -> Unit,
     val openWeather: () -> Unit = {},
 )
 
@@ -92,19 +93,20 @@ private fun homeClockActions(
         onClockClick = { inputs.context.openClockApp() },
         onWeatherClick = hooks.openWeather,
         onBatteryClick = { inputs.context.openBatterySettings() },
-        onClockSettingsClick = { navigation.toAppearance(state.activeFacet?.id) },
+        onClockStylesClick = { state.activeFacet?.let { navigation.toClockStyle(it.id) } },
         onNavigateToSettings = navigation.toSettings,
         onNavigateToFacetSettings = { state.activeFacet?.let { navigation.toFacetSettings(it.id) } },
         onWidgetStackClick = navigation.toClockStack,
-        onReplaceWithWidgetClick = { state.visibleClockItem?.let { hooks.openClockWidgetPicker(it.id) } },
-        onReplaceWithClockClick = {
+        onReplaceWidgetClick = { state.visibleClockItem?.let { hooks.openClockWidgetPicker(it.id) } },
+        onRemoveWidgetClick = {
             state.visibleClockItem?.let { item ->
-                inputs.coroutineScope.launch { viewModel.clockWidgetFacet.replaceWithClock(item.id) }
+                inputs.coroutineScope.launch { viewModel.clockWidgetFacet.remove(item.id) }
             }
         },
+        onAddWidgetClick = { state.activeFacet?.let { hooks.openAddClockWidgetPicker(it.id) } },
         onEventClick = { event -> openCalendarEvent(inputs.context, event) },
         onZoneHeightCommit = { viewModel.onClockZoneHeightCommit(it, mode) },
-        onScaleCommit = { viewModel.onClockScaleCommit(it, mode) },
+        onBoxSizeCommit = { width, height -> viewModel.onClockBoxSizeCommit(width, height, mode) },
         onAlignmentChange = { viewModel.onClockAlignmentCommit(it, mode) },
         onAdjustModeChange = hooks.setAdjustMode,
         onDraggingHandleChange = hooks.setDraggingHandle,

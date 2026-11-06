@@ -4,6 +4,8 @@ import androidx.annotation.StringRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -11,11 +13,14 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -34,6 +39,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.TransformOrigin
+import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.layout.SubcomposeLayout
+import androidx.compose.ui.layout.layout
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.unit.Dp
+import kotlin.math.roundToInt
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -82,7 +95,6 @@ import java.time.ZoneId
 fun ClockStyleGalleryRoute(
     onBack: () -> Unit,
     onOpenClockAccessories: () -> Unit = {},
-    onEditDefaults: (() -> Unit)? = null,
     viewModel: ClockStyleGalleryViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -97,16 +109,9 @@ fun ClockStyleGalleryRoute(
             onShowMeridiemChange = viewModel::setClockShowMeridiem,
             onDateStyleChange = viewModel::setClockDateStyle,
             onResetClockPosition = viewModel::resetClockPosition,
-            onOverridingChange = viewModel::setOverridingClock,
             onOpenClockAccessories = onOpenClockAccessories,
-            onEditDefaults = onEditDefaults,
         ),
         onBack = onBack,
-        inheritSubtitle = stringResource(
-            R.string.dot_join_2,
-            stringResource(uiState.settings.clockTemplateId.displayNameRes),
-            stringResource(if (uiState.settings.use24HourTime) R.string.settings_time_format_24h else R.string.settings_time_format_12h),
-        ),
     )
 }
 
@@ -120,17 +125,12 @@ internal class ClockStyleGalleryActions(
     val onShowMeridiemChange: (Boolean) -> Unit = {},
     val onDateStyleChange: (ClockDateStyle) -> Unit = {},
     val onResetClockPosition: () -> Unit = {},
-    val onOverridingChange: (Boolean) -> Unit = {},
     val onOpenClockAccessories: () -> Unit = {},
-    /** Opens the launcher-wide clock style screen; `null` on that screen itself. */
-    val onEditDefaults: (() -> Unit)? = null,
 )
 
 /**
- * Stateless clock-style picker. Order: an Inherit/Override switch when this instance is facet-scoped, then the clock's
- * font, color, time, date and alignment controls, then every [ClockTemplateId] as its own selectable card — tapping one
- * selects it and gives it an [Accent] border. Every control below the Inherit/Override switch is dimmed and disabled
- * while inheriting: editing then would write to the facet's row without taking effect until Override is picked.
+ * Stateless clock-style picker. Order: every [ClockTemplateId] as its own selectable card in a horizontally scrolling row under its hints
+ * (tapping one selects it and gives it an [Accent] border), then the clock's font, color, time and date controls.
  */
 @Composable
 private fun ClockStyleGalleryScreen(
@@ -138,9 +138,8 @@ private fun ClockStyleGalleryScreen(
     actions: ClockStyleGalleryActions,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
-    inheritSubtitle: String = "",
 ) {
-    val controlsEnabled = !uiState.isFacetScoped || uiState.isOverriding
+    val controlsEnabled = true
     val sample = rememberClockPreviewSample(uiState.showWeather, uiState.weatherIconStyle)
 
     StickyHeaderLayout(
@@ -156,31 +155,15 @@ private fun ClockStyleGalleryScreen(
                 contentPadding = PaddingValues(start = 24.dp, end = 24.dp, top = headerHeight + 16.dp, bottom = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(20.dp),
             ) {
-                if (uiState.isFacetScoped) {
-                    item {
-                        InheritOverrideCard(
-                            overriding = uiState.isOverriding,
-                            onOverridingChange = actions.onOverridingChange,
-                            testTagPrefix = "clock_style",
-                            onEditDefaults = actions.onEditDefaults,
-                            inheritSubtitle = inheritSubtitle,
-                        )
-                    }
-                }
+                item { TemplateCarousel(uiState, controlsEnabled, sample, actions.onTemplateSelect) }
                 item { SectionLabel(R.string.clock_style_clock_section) }
                 item { ClockStyleCard(uiState, controlsEnabled, actions) }
                 item { ClockAccessoriesLinkCard(actions.onOpenClockAccessories) }
-                if (uiState.isFacetScoped) {
-                    item { SectionLabel(R.string.clock_style_position_section) }
-                    item {
-                        SettingsCard(fullBleedRows = true) {
-                            ClockPositionResetRow(onClick = actions.onResetClockPosition)
-                        }
+                item { SectionLabel(R.string.clock_style_position_section) }
+                item {
+                    SettingsCard(fullBleedRows = true) {
+                        ClockPositionResetRow(onClick = actions.onResetClockPosition)
                     }
-                }
-                item { TemplateHints() }
-                items(ClockTemplateId.entries.toList()) { id ->
-                    ClockTemplateCard(id, uiState, controlsEnabled, sample, actions.onTemplateSelect)
                 }
             }
         },
@@ -320,6 +303,83 @@ private fun rememberClockPreviewSample(showWeather: Boolean, weatherIconStyle: W
     return ClockPreviewSample(now, nextAlarmMillis, weather)
 }
 
+/** The most of the screen width a template card may take; a wider clock is scaled down to fit. */
+private const val TEMPLATE_CARD_MAX_WIDTH_FRACTION = 0.75f
+private val TemplateCardPadding = 16.dp
+private val TemplateCardMinWidth = 140.dp
+
+/** The hints, then every template in one horizontally scrolling row that runs to the screen edges. */
+@Composable
+private fun TemplateCarousel(
+    uiState: ClockStyleGalleryUiState,
+    controlsEnabled: Boolean,
+    sample: ClockPreviewSample,
+    onTemplateSelect: (ClockTemplateId) -> Unit,
+) {
+    val cardMaxWidth = LocalConfiguration.current.screenWidthDp.dp * TEMPLATE_CARD_MAX_WIDTH_FRACTION
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        TemplateHints()
+        // The list pads its sides; the row steps out of that padding so the cards scroll edge to edge.
+        Box(modifier = Modifier.fullBleed(LIST_SIDE_PADDING).horizontalScroll(rememberScrollState()).testTag("clock_template_row")) {
+            EqualSizeRow(spacing = 12.dp, modifier = Modifier.padding(horizontal = LIST_SIDE_PADDING)) { measuring ->
+                ClockTemplateId.entries.forEach { id ->
+                    ClockTemplateCard(id, uiState, controlsEnabled, sample, cardMaxWidth, onTemplateSelect, tagged = !measuring)
+                }
+            }
+        }
+    }
+}
+
+private val LIST_SIDE_PADDING = 24.dp
+
+/**
+ * Lays the cards out side by side, every one as wide and as tall as the largest, so the row moves evenly. A measure can only happen once per
+ * child, so the cards are composed twice: once to find the largest (`measuring` is true, nothing in it is tagged) and once to show.
+ */
+@Composable
+private fun EqualSizeRow(spacing: Dp, modifier: Modifier = Modifier, content: @Composable (measuring: Boolean) -> Unit) {
+    SubcomposeLayout(modifier = modifier) { constraints ->
+        val cards = { measuring: Boolean -> subcompose(measuring) { content(measuring) } }
+        val natural = cards(true).map { it.measure(Constraints(maxWidth = Constraints.Infinity)) }
+        val cellWidth = natural.maxOfOrNull { it.width } ?: 0
+        val height = natural.maxOfOrNull { it.height } ?: 0
+        val placeables = cards(false).map { it.measure(Constraints.fixed(cellWidth, height)) }
+        val gap = spacing.roundToPx()
+        val width = placeables.sumOf { it.width } + gap * (placeables.size - 1).coerceAtLeast(0)
+        layout(width.coerceIn(constraints.minWidth, constraints.maxWidth), height) {
+            var x = 0
+            placeables.forEach { placeable ->
+                placeable.place(x, 0)
+                x += placeable.width + gap
+            }
+        }
+    }
+}
+
+/** Widens this by [padding] on each side, so content inside a padded list can reach the screen edges. */
+private fun Modifier.fullBleed(padding: Dp): Modifier = layout { measurable, constraints ->
+    val extra = padding.roundToPx() * 2
+    val placeable = measurable.measure(constraints.copy(minWidth = constraints.minWidth + extra, maxWidth = constraints.maxWidth + extra))
+    layout(constraints.maxWidth, placeable.height) { placeable.place(-extra / 2, 0) }
+}
+
+/** Draws [content] at its natural size, or scaled down from the top-left to fit [maxWidth] when it is wider. */
+@Composable
+private fun ScaleDownToFit(maxWidth: Dp, modifier: Modifier = Modifier, content: @Composable () -> Unit) {
+    Layout(content = content, modifier = modifier) { measurables, _ ->
+        val placeable = measurables.single().measure(Constraints(maxWidth = Constraints.Infinity))
+        val limit = maxWidth.roundToPx()
+        val scale = if (placeable.width > limit) limit.toFloat() / placeable.width else 1f
+        layout((placeable.width * scale).roundToInt(), (placeable.height * scale).roundToInt()) {
+            placeable.placeWithLayer(0, 0) {
+                scaleX = scale
+                scaleY = scale
+                transformOrigin = TransformOrigin(0f, 0f)
+            }
+        }
+    }
+}
+
 /** One selectable template: its name, a check while applied, and a live preview in the current style. */
 @Composable
 private fun ClockTemplateCard(
@@ -327,32 +387,34 @@ private fun ClockTemplateCard(
     uiState: ClockStyleGalleryUiState,
     controlsEnabled: Boolean,
     sample: ClockPreviewSample,
+    cardMaxWidth: Dp,
     onTemplateSelect: (ClockTemplateId) -> Unit,
+    tagged: Boolean = true,
 ) {
     val selected = id == uiState.templateId
     val shape = MaterialTheme.shapes.medium
     val textColor = uiState.colorOption.resolve()
     Column(
         modifier = Modifier
-            .fillMaxWidth()
+            .widthIn(min = TemplateCardMinWidth, max = cardMaxWidth)
+            .fillMaxHeight()
             .clip(shape)
             .background(Surface, shape)
             .border(width = if (selected) 2.dp else 1.dp, color = if (selected) Accent else Hairline, shape = shape)
             .clickable(enabled = controlsEnabled, onClick = { onTemplateSelect(id) })
             .alpha(if (controlsEnabled) 1f else 0.4f)
-            .testTag("clock_template_card_${id.name}")
-            .padding(16.dp),
+            .then(if (tagged) Modifier.testTag("clock_template_card_${id.name}") else Modifier)
+            .padding(TemplateCardPadding),
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(text = stringResource(id.displayNameRes), style = MaterialTheme.typography.titleSmall, color = Ink)
             if (selected) Icon(Icons.Default.Check, contentDescription = stringResource(R.string.clock_style_applied), tint = Accent)
         }
-        ClockDisplay(
+        ScaleDownToFit(maxWidth = cardMaxWidth - TemplateCardPadding * 2) { ClockDisplay(
             templateId = id,
             fontOption = uiState.fontOption,
             now = sample.now,
@@ -372,7 +434,7 @@ private fun ClockTemplateCard(
             batteryPercent = SAMPLE_BATTERY_PERCENT,
             isCharging = false,
             weather = sample.weather,
-        )
+        ) }
     }
 }
 

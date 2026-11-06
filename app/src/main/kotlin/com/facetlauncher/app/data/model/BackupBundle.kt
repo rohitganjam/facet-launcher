@@ -3,8 +3,12 @@ package com.facetlauncher.app.data.model
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
-/** Bumped whenever [BackupBundle]'s shape changes — [com.facetlauncher.app.domain.ImportBackupUseCase] rejects anything newer than it understands. */
-const val CURRENT_BACKUP_VERSION = 3
+/**
+ * Bumped whenever [BackupBundle]'s shape changes — [com.facetlauncher.app.domain.ImportBackupUseCase] rejects anything newer than it understands.
+ * 4: a widget's setting and a facet's clock weather location are JSON, where version 3 and older wrote tab-separated lines.
+ * 5: a facet's clock carries its own settings and box ([BackupFacet.clockConfig]); the facet-level clock and calendar fields of version 4 and older are read once on import (`upgradedToCurrent`) and no longer written.
+ */
+const val CURRENT_BACKUP_VERSION = 5
 
 /**
  * The full exported/imported settings snapshot for F14 Backup & Restore (PRD: "not limited to
@@ -130,10 +134,11 @@ data class BackupSettings(
     val appListShrinkToFit: String = AppListShrinkToFit.OFF.name,
     val listContentMode: String,
     val appsToShowCount: Int,
-    val clockTemplateId: String,
-    val clockFontOption: String,
-    val clockColorOption: String,
-    val clockShowMeridiem: Boolean,
+    /** Legacy (version 4 and older): the launcher-wide clock look, read once to give an older backup's clocks their settings. No longer written. */
+    val clockTemplateId: String = ClockTemplateId.LIGHT_STACK.name,
+    val clockFontOption: String = ClockFontOption.LAUNCHER_DEFAULT.name,
+    val clockColorOption: String = ClockColorOption.THEME.name,
+    val clockShowMeridiem: Boolean = false,
     val homeAppsFontWeight: String = FontWeightOption.REGULAR.name,
     /**
      * Added after the first release of this format; all defaulted, so an older backup restores to
@@ -162,12 +167,10 @@ data class BackupSettings(
     val clockAlignment: String = ClockAlignment.LEFT.name,
     /** `null` until the clock's divider was first dragged. */
     val clockZoneHeightDp: Float? = null,
-    val clockScale: Float = 0.8f,
     val appListVerticalAlignment: String = AppListVerticalAlignment.BOTTOM.name,
     /** Landscape's own clock and list values; `null` is "same as portrait". Like [landscapeAppRowPosition], flat and optional. */
     val landscapeClockAlignment: String? = null,
     val landscapeClockZoneHeightDp: Float? = null,
-    val landscapeClockScale: Float? = null,
     val landscapeAppListVerticalAlignment: String? = null,
 )
 
@@ -176,12 +179,13 @@ data class BackupSettings(
 data class BackupFacet(
     val name: String,
     val position: Int,
-    val overrideClock: Boolean,
-    val clockTemplateId: String,
-    val clockFontOption: String,
-    val clockColorOption: String,
-    val use24HourTime: Boolean,
-    val clockShowMeridiem: Boolean,
+    /** Legacy (version 4 and older): the facet-level clock and calendar fields below are only read, to give an older backup's clock its settings. */
+    val overrideClock: Boolean = false,
+    val clockTemplateId: String = ClockTemplateId.LIGHT_STACK.name,
+    val clockFontOption: String = ClockFontOption.LAUNCHER_DEFAULT.name,
+    val clockColorOption: String = ClockColorOption.THEME.name,
+    val use24HourTime: Boolean = false,
+    val clockShowMeridiem: Boolean = false,
     /**
      * Added after the first release of this format; all defaulted, so an older backup restores to
      * today's defaults — no version bump. The hosted clock widget (its id and size) is left out:
@@ -199,10 +203,8 @@ data class BackupFacet(
     val clockPlacementOwn: Boolean? = null,
     val clockAlignment: String = ClockAlignment.LEFT.name,
     val clockZoneHeightDp: Float? = null,
-    val clockScale: Float = 0.8f,
     val landscapeClockAlignment: String? = null,
     val landscapeClockZoneHeightDp: Float? = null,
-    val landscapeClockScale: Float? = null,
     val landscapeAppListVerticalAlignment: String? = null,
     val appListVerticalAlignment: String = AppListVerticalAlignment.LAUNCHER_DEFAULT.name,
     val overrideApps: Boolean,
@@ -225,12 +227,12 @@ data class BackupFacet(
     val dockDisplayMode: String = DockDisplayMode.ICONS.name,
     /** This facet's own dock — only meaningful when [overrideDock], but exported unconditionally for simplicity; restoring is harmless either way since the launcher-wide dock governs whenever it isn't. */
     val dockApps: List<BackupAppEntry> = emptyList(),
-    val overrideCalendar: Boolean,
-    val showAllDayEvents: Boolean,
+    val overrideCalendar: Boolean = false,
+    val showAllDayEvents: Boolean = true,
     val showCalendarIndicator: Boolean = true,
     val calendarItemsToShow: Int = CalendarDisplayOptions.MAX_ITEMS,
     /**
-     * `null` means every calendar is implicitly selected — see [com.facetlauncher.app.data.local.FacetEntity.selectedCalendarIdsCsv]'s
+     * Legacy (version 4 and older). `null` means every calendar is implicitly selected — see the clock's `ClockCalendarConfig.calendarIds`'s
      * own doc comment. A real JSON array here (not the Room column's comma-joined encoding),
      * matching how [BackupBundle] generally favors the more portable/readable shape. Defaulted
      * (not required) so an older backup missing this field still deserializes cleanly — see
@@ -245,6 +247,13 @@ data class BackupFacet(
     val favoriteFolderPlacements: List<BackupFolderPlacement> = emptyList(),
     /** The widgets Facet draws itself on this facet's clock stack; defaulted so older backups restore to just the launcher clock. */
     val nativeStackPages: List<BackupNativeStackPage> = emptyList(),
+    /** The clock's own settings in the widget-setting encoding, calendar ids left out (they are device-specific); `null` gives the clock its defaults. Version 5. */
+    val clockConfig: String? = null,
+    /** The clock's box in dp, in portrait and landscape; `null` until it was resized. Version 5. */
+    val clockWidthDp: Int? = null,
+    val clockHeightDp: Int? = null,
+    val clockLandscapeWidthDp: Int? = null,
+    val clockLandscapeHeightDp: Int? = null,
 )
 
 /** A single app-list entry — dock, default favorites, or one facet's own favorites. */

@@ -19,10 +19,12 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntSize
+import kotlin.math.roundToInt
 import androidx.compose.ui.unit.dp
 import com.facetlauncher.app.data.model.landscape
 import com.facetlauncher.app.data.model.MediaPlayerState
-import com.facetlauncher.app.ui.home.ClockAdjustMode
+import com.facetlauncher.app.ui.home.HomeMenuMode
 import com.facetlauncher.app.ui.home.HomeClockWidgetState
 import com.facetlauncher.app.ui.home.HomeItemLook
 import com.facetlauncher.app.ui.home.HomeItemStyle
@@ -99,10 +101,14 @@ internal fun rememberHomeFrame(
 ): HomeFrame {
     val density = LocalDensity.current
     val landscape = mode == HomeLayoutMode.LANDSCAPE
+    val state = state.withBoxScale(layout.clockBoxSize, density)
+    val actions = actions.withBoxCommit(layout.clockBoxSize, density)
     val metrics = clockMetrics(density)
     val widgetMinPx = clockWidgetMinPx(state.widget, landscape, density)
     val geometry = computeClockGeometry(clockGeometryInputs(state, layout, landscape, metrics, widgetMinPx, density))
-    val media = rememberHomeMediaLayout(state.media.player, layout, geometry.handle.handlePx, metrics.minGapPx, landscape, state.clockStack.pageCount > 1, density)
+    // With nothing at the top the media row starts there, after its own gap; otherwise it sits just above the divider, under the clock.
+    val mediaRowAnchorPx = if (state.clockStack.isBlank) 0f else geometry.handle.handlePx - metrics.minGapPx
+    val media = rememberHomeMediaLayout(state.media.player, layout, geometry.handle.handlePx, mediaRowAnchorPx, landscape, state.clockStack.pageCount > 1, density)
     val itemStyle = rememberHomeItemStyle(state.list.look)
     return HomeFrame(
         state = state,
@@ -156,7 +162,7 @@ private fun clockGeometryInputs(
     val placement = state.clock.placement
     return ClockGeometryInputs(
         landscape = landscape,
-        adjusting = state.clock.adjustMode == ClockAdjustMode.ADJUST,
+        adjusting = state.clock.adjustMode == HomeMenuMode.ADJUST,
         alignment = placement.alignment,
         scale = placement.scale,
         liveScale = layout.liveScale,
@@ -188,13 +194,13 @@ private fun clockWidgetMeasure(widget: HomeClockWidgetState, layout: HomeScreenL
     )
 }
 
-/** The media row's fade, and the list tops that follow it. Landscape's list fills its own pane from the top, so nothing is reserved above it there. */
+/** The media row's fade (its top is [rowAnchorPx] plus a gap), and the list tops that follow it. Landscape's list fills its own pane from the top, so nothing is reserved above it there. */
 @Composable
 private fun rememberHomeMediaLayout(
     player: MediaPlayerState?,
     layout: HomeScreenLayout,
     handlePx: Float,
-    minGapPx: Float,
+    rowAnchorPx: Float,
     landscape: Boolean,
     showsPageDots: Boolean,
     density: Density,
@@ -205,7 +211,7 @@ private fun rememberHomeMediaLayout(
         animationSpec = tween(durationMillis = 200, easing = EmphasizedDecelerateEasing),
         label = "mediaPlayerAppearance",
     )
-    val rowTopPx = handlePx - minGapPx + with(density) { HOME_MEDIA_ROW_TOP_GAP.toPx() }
+    val rowTopPx = rowAnchorPx + with(density) { HOME_MEDIA_ROW_TOP_GAP.toPx() }
     val belowGapPx = with(density) { HOME_MEDIA_ROW_BOTTOM_GAP.toPx() }
     // The dots get their own row under the divider (and under the media row), which pushes the list down while the stack has several pages.
     val dotsRowPx = if (showsPageDots && !landscape) with(density) { CLOCK_PAGE_DOTS_ROW_HEIGHT.toPx() } else 0f
@@ -316,5 +322,34 @@ internal fun HomeFrame.neighborWidgetSizePx(widget: HomeClockWidgetState): Offse
     return Offset(
         widthPx.coerceIn(min.x, maxOf(min.x, room.x)),
         heightPx.coerceIn(min.y, maxOf(min.y, room.y)),
+    )
+}
+
+/**
+ * The clock is saved as a box in dp, not a scale: the scale it draws at is that width over the clock's natural width as
+ * measured now, so a new template keeps the box's width. Until the clock is measured, or while the page has no box yet,
+ * the placement's scale (the default) stands.
+ */
+internal fun HomeScreenState.withBoxScale(natural: IntSize?, density: Density): HomeScreenState {
+    val widthDp = clock.boxWidthDp ?: return this
+    if (natural == null || natural.width <= 0) return this
+    val scale = with(density) { widthDp.dp.toPx() } / natural.width
+    return copy(clock = clock.copy(placement = clock.placement.copy(scale = scale)))
+}
+
+/** Turns the resize handles' scale commit into the box they mean, in dp and aspect-locked; before the clock is measured there is nothing to save. */
+internal fun HomeScreenActions.withBoxCommit(natural: IntSize?, density: Density): HomeScreenActions {
+    if (natural == null || natural.width <= 0 || natural.height <= 0) return this
+    return copy(
+        clock = clock.copy(
+            onScaleCommit = { scale ->
+                with(density) {
+                    clock.onBoxSizeCommit(
+                        (natural.width * scale).toDp().value.roundToInt(),
+                        (natural.height * scale).toDp().value.roundToInt(),
+                    )
+                }
+            },
+        ),
     )
 }

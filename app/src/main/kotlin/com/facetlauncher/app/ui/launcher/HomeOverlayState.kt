@@ -1,5 +1,6 @@
 package com.facetlauncher.app.ui.launcher
 
+import com.facetlauncher.app.ui.home.widget.ClockWidgetPickerTarget
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.Stable
@@ -19,8 +20,8 @@ internal class HomeOverlayState {
     /** The clock widget picker, over Home itself (it opens from the clock adjust sheet, not from the Hub). */
     var showClockWidgetPicker by mutableStateOf(false)
 
-    /** The stack page being replaced: set when the flow starts and fixed for its duration, like `ClockWidgetPickerViewModel`'s own pending item. */
-    var clockWidgetPickerItemId by mutableStateOf<Long?>(null)
+    /** What the picker's choice does (replace a page or add one): set when the flow starts and fixed for its duration, like `ClockWidgetPickerViewModel`'s own pending target. */
+    var clockWidgetPickerTarget by mutableStateOf<ClockWidgetPickerTarget?>(null)
 
     /** The weather sheet, opened from the clock's weather accessory. It is its own bottom sheet window, so it is not part of [anyOpen]. */
     var showWeatherSheet by mutableStateOf(false)

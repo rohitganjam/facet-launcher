@@ -1,5 +1,6 @@
 package com.facetlauncher.app.ui.home
 
+import com.facetlauncher.app.data.clockItem
 import com.facetlauncher.app.data.widgetItem
 import com.facetlauncher.app.domain.ClockPlacement
 import com.facetlauncher.app.PlacementChangeCaptor
@@ -281,17 +282,16 @@ class HomeViewModelTest {
     }
 
     @Test
-    fun `scale and alignment commits change only their own value`() = runTest {
+    fun `an alignment commit changes only the alignment`() = runTest {
         val controller = mock(ClockWidgetFacetController::class.java)
         val viewModel = placementViewModel(controller = controller)
 
-        viewModel.onClockScaleCommit(1.4f)
         viewModel.onClockAlignmentCommit(ClockAlignment.CENTER)
         testDispatcher.scheduler.advanceUntilIdle()
 
         val change = PlacementChangeCaptor()
-        verify(controller, org.mockito.Mockito.times(2)).commitPlacement(eqOf(1L), eqOf(HomeLayoutMode.PORTRAIT), change.capture())
-        assertEquals(listOf(shown.copy(scale = 1.4f), shown.copy(alignment = ClockAlignment.CENTER)), change.appliedEach(shown))
+        verify(controller).commitPlacement(eqOf(1L), eqOf(HomeLayoutMode.PORTRAIT), change.capture())
+        assertEquals(listOf(shown.copy(alignment = ClockAlignment.CENTER)), change.appliedEach(shown))
     }
 
     @Test
@@ -303,7 +303,7 @@ class HomeViewModelTest {
             notificationShadeRepository = mock(NotificationShadeRepository::class.java),
             settingsRepository = settingsRepository,
             settings = LauncherSettings(activeFacetId = 1L),
-            facets = listOf(Facet(id = 1L, name = "Work", position = 0, overrideClock = true)),
+            facets = listOf(Facet(id = 1L, name = "Work", position = 0, clockPlacementOwn = true)),
             clockWidgetFacet = controller,
         )
         testDispatcher.scheduler.advanceUntilIdle()
@@ -328,6 +328,35 @@ class HomeViewModelTest {
         val change = PlacementChangeCaptor()
         verify(controller).commitPlacement(eqOf(1L), eqOf(HomeLayoutMode.LANDSCAPE), change.capture())
         assertEquals(shown.copy(zoneHeightDp = 310f), change.applied(shown))
+    }
+
+    @Test
+    fun `the clock page's box is saved against the page, in the orientation being adjusted`() = runTest {
+        // Given the visible page is the clock
+        val controller = mock(ClockWidgetFacetController::class.java)
+        val facet = Facet(id = 1L, name = "Work", position = 0, clockStack = listOf(clockItem(id = 7L, facetId = 1L)))
+        val viewModel = placementViewModel(facets = listOf(facet), controller = controller)
+
+        // When the box is committed, in portrait and in landscape
+        viewModel.onClockBoxSizeCommit(220, 90)
+        viewModel.onClockBoxSizeCommit(300, 120, HomeLayoutMode.LANDSCAPE)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Then each is saved on the clock page
+        verify(controller).commitSize(7L, 220, 90, HomeLayoutMode.PORTRAIT)
+        verify(controller).commitSize(7L, 300, 120, HomeLayoutMode.LANDSCAPE)
+    }
+
+    @Test
+    fun `a widget page is not given the clock's box`() = runTest {
+        val controller = mock(ClockWidgetFacetController::class.java)
+        val facet = Facet(id = 1L, name = "Work", position = 0, clockStack = listOf(widgetItem(41, id = 7L, facetId = 1L)))
+        val viewModel = placementViewModel(facets = listOf(facet), controller = controller)
+
+        viewModel.onClockBoxSizeCommit(220, 90)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        verify(controller, org.mockito.Mockito.never()).commitSize(7L, 220, 90, HomeLayoutMode.PORTRAIT)
     }
 
     @Test

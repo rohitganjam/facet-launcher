@@ -79,9 +79,11 @@ class HomeScreenTest {
         onClockZoneHeightCommit: (Float) -> Unit = {},
         clockScale: Float = 0.8f,
         onClockScaleCommit: (Float) -> Unit = {},
+        clockBoxWidthDp: Int? = null,
+        onClockBoxSizeCommit: (Int, Int) -> Unit = { _, _ -> },
         onClockAlignmentChange: (ClockAlignment) -> Unit = {},
     ) {
-        var adjustMode by remember { mutableStateOf(ClockAdjustMode.NONE) }
+        var adjustMode by remember { mutableStateOf(HomeMenuMode.NONE) }
         var dragging by remember { mutableStateOf(false) }
         FacetLauncherTheme {
             FlatHomeScreen(
@@ -94,8 +96,10 @@ class HomeScreenTest {
                 onClockZoneHeightCommit = onClockZoneHeightCommit,
                 clockScale = clockScale,
                 onClockScaleCommit = onClockScaleCommit,
+                clockBoxWidthDp = clockBoxWidthDp,
+                onClockBoxSizeCommit = onClockBoxSizeCommit,
                 onClockAlignmentChange = onClockAlignmentChange,
-                clockAdjustMode = adjustMode,
+                homeMenuMode = adjustMode,
                 onAdjustModeChange = { adjustMode = it },
                 draggingHandle = dragging,
                 onDraggingHandleChange = { dragging = it },
@@ -103,11 +107,24 @@ class HomeScreenTest {
         }
     }
 
-    /** Long-presses the clock, then picks "Adjust size & position" — reveals the move handle AND the resize handles. */
-    private fun enterAdjustMode() {
+    /** Long-presses the free space beside the clock (a long-press on the clock itself opens the clock sheet). */
+    private fun longPressEmptySpace() {
+        val rootWidth = composeRule.onRoot().fetchSemanticsNode().boundsInRoot.right
+        val clockBounds = composeRule.onNodeWithTag("home_clock_block").fetchSemanticsNode().boundsInRoot
+        val besideClock = Offset((clockBounds.right + rootWidth) / 2f, clockBounds.center.y)
+        composeRule.onNodeWithTag("home_screen_root").performTouchInput { longClick(besideClock) }
+    }
+
+    /** Long-presses the clock (the widget's sheet opens). */
+    private fun longPressClock() {
         composeRule.onNodeWithTag("home_clock_block").performTouchInput { longClick() }
+    }
+
+    /** Long-presses the clock, then picks "Adjust widget size & position" — reveals the move handle AND the resize handles. */
+    private fun enterAdjustMode() {
+        longPressClock()
         composeRule.waitForIdle()
-        composeRule.onNodeWithTag("clock_adjust_open").performClick()
+        composeRule.onNodeWithTag("widget_sheet_adjust").performClick()
         composeRule.waitForIdle()
     }
 
@@ -746,37 +763,37 @@ class HomeScreenTest {
     fun adjustMenuSheetIsHiddenUntilTheClockIsLongPressed() {
         // Given the default layout
         composeRule.setContent { TestHomeScreen(appListItems = apps(3)) }
-        composeRule.onNodeWithTag("clock_adjust_sheet").assertDoesNotExist()
+        composeRule.onNodeWithTag("home_menu_sheet").assertDoesNotExist()
 
         // When the clock is long-pressed
-        composeRule.onNodeWithTag("home_clock_block").performTouchInput { longClick() }
+        longPressEmptySpace()
         composeRule.waitForIdle()
 
         // Then the adjustment menu sheet appears
-        composeRule.onNodeWithTag("clock_adjust_sheet").assertIsDisplayed()
+        composeRule.onNodeWithTag("home_menu_sheet").assertIsDisplayed()
     }
 
     @Test
     fun dismissingTheRevealedSheetHidesItAgain() {
         // Given the sheet revealed via a long-press on the clock
         composeRule.setContent { TestHomeScreen(appListItems = apps(3)) }
-        composeRule.onNodeWithTag("home_clock_block").performTouchInput { longClick() }
+        longPressEmptySpace()
         composeRule.waitForIdle()
-        composeRule.onNodeWithTag("clock_adjust_sheet").assertIsDisplayed()
+        composeRule.onNodeWithTag("home_menu_sheet").assertIsDisplayed()
 
         // When dismissing it with system back
         Espresso.pressBack()
         composeRule.waitForIdle()
 
         // Then it's hidden again
-        composeRule.onNodeWithTag("clock_adjust_sheet").assertDoesNotExist()
+        composeRule.onNodeWithTag("home_menu_sheet").assertDoesNotExist()
     }
 
     @Test
     fun longPressingEmptyHomeSpaceOpensTheSameAdjustMenuSheet() {
         // Given the default (left-aligned) layout, which leaves real empty space to the clock's right
         composeRule.setContent { TestHomeScreen(appListItems = apps(3)) }
-        composeRule.onNodeWithTag("clock_adjust_sheet").assertDoesNotExist()
+        composeRule.onNodeWithTag("home_menu_sheet").assertDoesNotExist()
         val rootWidth = composeRule.onRoot().fetchSemanticsNode().boundsInRoot.right
         val clockBounds = composeRule.onNodeWithTag("home_clock_block").fetchSemanticsNode().boundsInRoot
         val besideClock = Offset((clockBounds.right + rootWidth) / 2f, clockBounds.center.y)
@@ -786,7 +803,7 @@ class HomeScreenTest {
         composeRule.waitForIdle()
 
         // Then the same clock adjust sheet opens
-        composeRule.onNodeWithTag("clock_adjust_sheet").assertIsDisplayed()
+        composeRule.onNodeWithTag("home_menu_sheet").assertIsDisplayed()
     }
 
     @Test
@@ -802,7 +819,7 @@ class HomeScreenTest {
         composeRule.waitForIdle()
 
         // Then the same adjust menu sheet opens, rather than nothing (or an app's context menu)
-        composeRule.onNodeWithTag("clock_adjust_sheet").assertIsDisplayed()
+        composeRule.onNodeWithTag("home_menu_sheet").assertIsDisplayed()
     }
 
     /**
@@ -822,12 +839,12 @@ class HomeScreenTest {
         // Given Home at rest, then the adjust menu
         composeRule.setContent { TestHomeScreen(appListItems = apps(3)) }
         composeRule.onNodeWithTag("clock_adjust_toolbar").assertDoesNotExist()
-        composeRule.onNodeWithTag("home_clock_block").performTouchInput { longClick() }
+        longPressClock()
         composeRule.waitForIdle()
         composeRule.onNodeWithTag("clock_adjust_toolbar").assertDoesNotExist()
 
         // When entering adjust mode, the toolbar shows
-        composeRule.onNodeWithTag("clock_adjust_open").performClick()
+        composeRule.onNodeWithTag("widget_sheet_adjust").performClick()
         waitForToolbar()
         composeRule.onNodeWithTag("clock_adjust_toolbar").assertIsDisplayed()
 
@@ -941,7 +958,7 @@ class HomeScreenTest {
         // to recompose.
         composeRule.onNodeWithTag("home_screen_root").performTouchInput { longClick(besideClock) }
         composeRule.waitForIdle()
-        composeRule.onNodeWithTag("clock_adjust_sheet").assertIsDisplayed()
+        composeRule.onNodeWithTag("home_menu_sheet").assertIsDisplayed()
     }
 
     @Test
@@ -949,29 +966,29 @@ class HomeScreenTest {
         // Given the sheet opened via a long-press on the clock, with a hoisted settings callback
         var navigated = false
         composeRule.setContent {
-            var adjustMode by remember { mutableStateOf(ClockAdjustMode.NONE) }
+            var adjustMode by remember { mutableStateOf(HomeMenuMode.NONE) }
             FacetLauncherTheme {
                 FlatHomeScreen(
                     appListItems = apps(3).map { PlacedItem.SingleApp(it) },
                     dockApps = emptyList(),
                     onAppClick = {},
-                    clockAdjustMode = adjustMode,
+                    homeMenuMode = adjustMode,
                     onAdjustModeChange = { adjustMode = it },
                     onNavigateToSettings = { navigated = true },
                 )
             }
         }
-        composeRule.onNodeWithTag("home_clock_block").performTouchInput { longClick() }
+        longPressEmptySpace()
         composeRule.waitForIdle()
-        composeRule.onNodeWithTag("clock_adjust_sheet").assertIsDisplayed()
+        composeRule.onNodeWithTag("home_menu_sheet").assertIsDisplayed()
 
         // When "Launcher settings" is tapped
-        composeRule.onNodeWithTag("clock_adjust_launcher_settings").performClick()
+        composeRule.onNodeWithTag("home_sheet_launcher_settings").performClick()
         composeRule.waitForIdle()
 
         // Then the callback fires and the sheet closes
         assertTrue(navigated)
-        composeRule.onNodeWithTag("clock_adjust_sheet").assertDoesNotExist()
+        composeRule.onNodeWithTag("home_menu_sheet").assertDoesNotExist()
     }
 
     @Test
@@ -979,29 +996,29 @@ class HomeScreenTest {
         // Given the sheet opened via a long-press on the clock, with a hoisted facet-settings callback
         var navigated = false
         composeRule.setContent {
-            var adjustMode by remember { mutableStateOf(ClockAdjustMode.NONE) }
+            var adjustMode by remember { mutableStateOf(HomeMenuMode.NONE) }
             FacetLauncherTheme {
                 FlatHomeScreen(
                     appListItems = apps(3).map { PlacedItem.SingleApp(it) },
                     dockApps = emptyList(),
                     onAppClick = {},
-                    clockAdjustMode = adjustMode,
+                    homeMenuMode = adjustMode,
                     onAdjustModeChange = { adjustMode = it },
                     onNavigateToFacetSettings = { navigated = true },
                 )
             }
         }
-        composeRule.onNodeWithTag("home_clock_block").performTouchInput { longClick() }
+        longPressEmptySpace()
         composeRule.waitForIdle()
-        composeRule.onNodeWithTag("clock_adjust_sheet").assertIsDisplayed()
+        composeRule.onNodeWithTag("home_menu_sheet").assertIsDisplayed()
 
         // When "Facet settings" is tapped
-        composeRule.onNodeWithTag("clock_adjust_facet_settings").performClick()
+        composeRule.onNodeWithTag("home_sheet_facet_settings").performClick()
         composeRule.waitForIdle()
 
         // Then the callback fires and the sheet closes
         assertTrue(navigated)
-        composeRule.onNodeWithTag("clock_adjust_sheet").assertDoesNotExist()
+        composeRule.onNodeWithTag("home_menu_sheet").assertDoesNotExist()
     }
 
     @Test
@@ -1086,15 +1103,18 @@ class HomeScreenTest {
 
     @Test
     fun draggingTheResizeHandleScalesTheClock() {
-        var committedScale = 1f
+        var committedBox: Pair<Int, Int>? = null
+        var boxWidth by mutableStateOf<Int?>(null)
+        var density = 1f
         composeRule.setContent {
-            var scale by remember { mutableStateOf(1f) }
+            density = androidx.compose.ui.platform.LocalDensity.current.density
             // Clock pushed down so there's headroom above it to actually grow into.
             TestHomeScreen(
                 appListItems = apps(1),
                 clockZoneHeightDp = 900f,
-                clockScale = scale,
-                onClockScaleCommit = { committedScale = it; scale = it },
+                clockScale = 1f,
+                clockBoxWidthDp = boxWidth,
+                onClockBoxSizeCommit = { w, h -> committedBox = w to h; boxWidth = w },
             )
         }
         val widthBefore = composeRule.onNodeWithTag("home_clock_block").fetchSemanticsNode().boundsInRoot.width
@@ -1118,33 +1138,77 @@ class HomeScreenTest {
         val heightAfter = composeRule.onNodeWithTag("home_clock_block").fetchSemanticsNode().boundsInRoot.height
         assertTrue("Width should have increased", widthAfter > widthBefore)
         assertTrue("Height should have increased", heightAfter > heightBefore)
-        assertTrue("Committed scale should be > 1f", committedScale > 1f)
+        assertTrue("The saved box should be wider than the clock was", committedBox!!.first * density > widthBefore)
+    }
+
+    @Test
+    fun aSavedBoxSetsTheClocksDrawnWidthAndResizingSavesANewBox() {
+        // Given a clock whose saved box is 160dp wide, with room above it to grow
+        var committed: Pair<Int, Int>? = null
+        var boxWidth by mutableStateOf(160)
+        var density = 1f
+        composeRule.setContent {
+            density = androidx.compose.ui.platform.LocalDensity.current.density
+            TestHomeScreen(
+                appListItems = apps(1),
+                clockZoneHeightDp = 900f,
+                clockBoxWidthDp = boxWidth,
+                onClockBoxSizeCommit = { w, h -> committed = w to h; boxWidth = w },
+            )
+        }
+        composeRule.waitForIdle()
+        val widthBefore = composeRule.onNodeWithTag("home_clock_block").fetchSemanticsNode().boundsInRoot.width
+
+        // Then the clock's drawn width follows the box, not the placement's scale
+        assertEquals(160f * density, widthBefore, 2f * density)
+
+        // When a resize handle is dragged out
+        enterAdjustMode()
+        composeRule.onNodeWithTag("clock_resize_handle_right").performTouchInput {
+            down(center)
+            moveBy(Offset(20f, -10f))
+            moveBy(Offset(60f, -30f))
+            moveBy(Offset(60f, -30f))
+            up()
+        }
+        composeRule.waitForIdle()
+
+        // Then a larger, aspect-locked box is saved in dp and the clock draws at it
+        val saved = committed
+        assertTrue("A box should have been saved, got $saved", saved != null && saved.first > 160)
+        val widthAfter = composeRule.onNodeWithTag("home_clock_block").fetchSemanticsNode().boundsInRoot.width
+        assertEquals(saved!!.first * density, widthAfter, 2f * density)
     }
 
     @Test
     fun clockScaleIsClampedToItsBounds() {
-        var committedScale = 1f
+        var committedWidthPx = 0f
+        var boxWidth by mutableStateOf<Int?>(null)
+        var density = 1f
         composeRule.setContent {
-            var scale by remember { mutableStateOf(1f) }
+            density = androidx.compose.ui.platform.LocalDensity.current.density
             TestHomeScreen(
                 appListItems = apps(1),
                 clockZoneHeightDp = 900f,
-                clockScale = scale,
-                onClockScaleCommit = { committedScale = it; scale = it },
+                clockScale = 1f,
+                clockBoxWidthDp = boxWidth,
+                onClockBoxSizeCommit = { w, _ -> committedWidthPx = w * density; boxWidth = w },
             )
         }
+        // The clock's natural width, drawn at scale 1
+        val natural = composeRule.onNodeWithTag("home_clock_block").fetchSemanticsNode().boundsInRoot.width
 
-        // When dragging far out, the committed scale can't exceed the 2.0 ceiling (it may land
+        // When dragging far out, the committed width can't exceed twice the natural one (it may land
         // lower — the real cap is whatever still fits the screen). First move captures the grab
         // offset, the rest scale.
         enterAdjustMode()
         dragResizeHandleBy(Offset(3240f, -2170f))
-        assertTrue("grew past 1f", committedScale > 1f)
-        assertTrue("clamped at or below 2.0", committedScale <= 2.0f + 0.01f)
+        assertTrue("grew past natural", committedWidthPx > natural)
+        assertTrue("clamped at or below 2.0", committedWidthPx <= natural * 2.0f + 2f * density)
 
         // When dragging far in (still in adjust mode), it clamps to the hard 0.5 floor.
         dragResizeHandleBy(Offset(-3240f, 2170f))
-        assertEquals(0.5f, committedScale, 0.01f)
+        assertEquals(natural * 0.5f, committedWidthPx, 2f * density)
     }
 
     @Test

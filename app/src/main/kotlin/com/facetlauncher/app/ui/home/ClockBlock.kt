@@ -93,6 +93,8 @@ fun ClockBlock(
     /** Settings → Appearance → "Font Color" — see [com.facetlauncher.app.data.model.LauncherSettings.appLabelColorOption]; also styles [CalendarEventsBlock] now. */
     appLabelColorOption: ClockColorOption = ClockColorOption.THEME,
     onEventClick: (CalendarEvent) -> Unit = {},
+    /** A long-press on the events under the clock; it belongs to the clock, so it opens the clock's own sheet. */
+    onCalendarLongPress: () -> Unit = {},
     launcherFontOption: LauncherFontOption = LauncherFontOption.SYSTEM,
     /** Settings → Clock & Calendar Style → "Clock alignment" — aligns the time/date content itself, not just this block's own position within its container (that's the caller's job, e.g. [HomeScreen]/[com.facetlauncher.app.ui.facets.FacetCarouselScreen]). Also positions [CalendarEventsBlock] now, which no longer has an alignment of its own (see chat history). */
     clockAlignment: ClockAlignment = ClockAlignment.LEFT,
@@ -201,6 +203,7 @@ fun ClockBlock(
                 alignment = clockAlignment,
                 display = calendarDisplay,
                 onEventClick = onEventClick,
+                modifier = Modifier.align(clockAlignment.resolve()).longPressFallback(onCalendarLongPress),
             )
         }
     }

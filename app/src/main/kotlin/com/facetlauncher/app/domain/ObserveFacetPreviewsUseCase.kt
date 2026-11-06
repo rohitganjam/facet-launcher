@@ -35,9 +35,8 @@ data class FacetPreviewData(
 /**
  * Each facet's *effective* preview content, keyed by facet id — a facet overriding its own
  * content mode (Favorites/Recents/Most Used) or favorites shows those; one still inheriting
- * shows the launcher-wide default list instead, and the same for calendar events (gated by
- * `overrideCalendar`, mirroring [ObserveHomeScreenStateUseCase.observeCalendarEvents] exactly,
- * including which calendars are selected). The dock follows the same shape — a facet overriding
+ * shows the launcher-wide default list instead; calendar events come from the facet's clock's
+ * own calendar choices, as [ObserveHomeScreenStateUseCase.observeCalendarEvents] reads them. The dock follows the same shape — a facet overriding
  * its own dock (`overrideDock`) shows that list, one still inheriting shows the launcher-wide
  * default. Spans [FacetRepository],
  * [SettingsRepository], [ObservePlacedItemsUseCase],
@@ -125,8 +124,7 @@ class ObserveFacetPreviewsUseCase @Inject constructor(
 
     private fun observeCalendarEvents(facet: Facet, settings: LauncherSettings): Flow<List<CalendarEvent>> {
         if (!calendarPermissionRepository.isGranted()) return flowOf(emptyList())
-        val includeAllDay = if (facet.overrideCalendar) facet.showAllDayEvents else settings.showAllDayEvents
-        val selectedCalendarIds = if (facet.overrideCalendar) facet.selectedCalendarIds else settings.selectedCalendarIds
-        return flow { emit(calendarRepository.getUpcomingEvents(selectedCalendarIds, includeAllDay)) }
+        val calendar = effectiveClockConfig(facet, settings).calendar
+        return flow { emit(calendarRepository.getUpcomingEvents(calendar.calendarIds, calendar.showAllDay)) }
     }
 }

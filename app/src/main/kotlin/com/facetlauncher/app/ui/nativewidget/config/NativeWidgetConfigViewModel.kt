@@ -36,8 +36,6 @@ data class NativeWidgetConfigUiState(
     /** The cities saved in the launcher-wide weather settings. */
     val savedCities: ImmutableList<WeatherCity> = persistentListOf(),
     /** What the launcher's Calendar settings are now: an Agenda's choices start from these. `null` ids means every calendar. */
-    val launcherCalendarIds: ImmutableSet<String>? = null,
-    val launcherShowAllDay: Boolean = true,
     /** A calendar id -> [com.facetlauncher.app.ui.theme.AccentSwatch] name: the colour of its event bars in the Agenda. */
     val calendarColors: ImmutableMap<String, String> = persistentMapOf(),
 )
@@ -59,8 +57,6 @@ class NativeWidgetConfigViewModel @Inject constructor(
         NativeWidgetConfigUiState(
             calendars = calendarList.toImmutableList(),
             savedCities = settings.savedWeatherCities.toImmutableList(),
-            launcherCalendarIds = settings.selectedCalendarIds?.toImmutableSet(),
-            launcherShowAllDay = settings.showAllDayEvents,
             calendarColors = settings.calendarColors.toImmutableMap(),
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), NativeWidgetConfigUiState())

@@ -58,6 +58,16 @@ class FakeClockStackItemDao(initial: List<ClockStackItemEntity> = emptyList()) :
     override suspend fun setLandscapeSize(id: Long, widthDp: Int, heightDp: Int) =
         change(id) { it.copy(landscapeWidthDp = widthDp, landscapeHeightDp = heightDp) }
 
+    override suspend fun clearClockBoxes(facetId: Long) {
+        rows.value = rows.value.map {
+            if (it.facetId == facetId && it.kind == ClockStackItemKind.CLOCK) {
+                it.copy(widthDp = null, heightDp = null, landscapeWidthDp = null, landscapeHeightDp = null)
+            } else {
+                it
+            }
+        }
+    }
+
     override suspend fun setAlignment(id: Long, alignment: ClockAlignment?) = change(id) { it.copy(alignment = alignment) }
 
     override suspend fun setLandscapeAlignment(id: Long, alignment: ClockAlignment?) = change(id) { it.copy(landscapeAlignment = alignment) }

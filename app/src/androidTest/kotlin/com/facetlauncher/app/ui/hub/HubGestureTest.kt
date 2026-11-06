@@ -27,6 +27,11 @@ import com.facetlauncher.app.domain.LandscapeHubUseCase
 import com.facetlauncher.app.domain.OrderWidgetsForLandscapeUseCase
 import com.facetlauncher.app.domain.ReorderLandscapeWidgetUseCase
 import com.facetlauncher.app.domain.ResolveWidgetDropUseCase
+import com.facetlauncher.app.data.model.NativeWidgetRef
+import com.facetlauncher.app.data.model.NativeWidgetType
+import com.facetlauncher.app.ui.nativewidget.NativeWidgetActions
+import com.facetlauncher.app.ui.nativewidget.NativeWidgetEnvironment
+import org.junit.Assert.assertEquals
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.runBlocking
@@ -63,7 +68,7 @@ class HubGestureTest {
 
     private fun resolvableInfo() = AppWidgetProviderInfo()
 
-    private fun setContent(placements: List<WidgetPlacementEntity>, resolvable: Set<Int> = emptySet()) {
+    private fun setContent(placements: List<WidgetPlacementEntity>, resolvable: Set<Int> = emptySet(), nativeWidgets: NativeWidgetEnvironment = NativeWidgetEnvironment()) {
         composeRule.setContent {
             val context = LocalContext.current
             val viewModel = remember {
@@ -91,7 +96,7 @@ class HubGestureTest {
                 )
             }
             FacetLauncherTheme {
-                HubScreen(onAddClick = {}, onManageClick = {}, viewModel = viewModel)
+                HubScreen(onAddClick = {}, onManageClick = {}, nativeWidgets = nativeWidgets, viewModel = viewModel)
             }
         }
         composeRule.waitForIdle()
@@ -160,6 +165,37 @@ class HubGestureTest {
 
         composeRule.onNodeWithText("Resize widget").assertExists()
         composeRule.onNodeWithText("Remove widget").assertExists()
+    }
+
+    @Test
+    fun theContextMenuOffersConfigureOnlyForAWidgetWithSettingsAndItOpensThem() {
+        // Given an Agenda, a Now playing widget and a hosted widget on the Hub
+        var configured: NativeWidgetRef? = null
+        val environment = NativeWidgetEnvironment(actions = NativeWidgetActions(onConfigure = { configured = it }))
+        setContent(
+            listOf(
+                placement(id = -5, row = 0, col = 0).copy(nativeWidgetType = NativeWidgetType.AGENDA),
+                placement(id = -6, row = 1, col = 0).copy(nativeWidgetType = NativeWidgetType.NOW_PLAYING),
+                placement(id = 10, row = 2, col = 0),
+            ),
+            resolvable = setOf(10),
+            nativeWidgets = environment,
+        )
+
+        // When the Agenda's menu is opened (a long-press released in place)
+        longPress("hub_widget_tile_-5")
+        composeRule.onNodeWithTag("hub_widget_tile_-5").performTouchInput { up() }
+
+        // Then it offers Configure, which opens its settings
+        composeRule.onNodeWithText("Configure widget").assertExists()
+        composeRule.onNodeWithText("Configure widget").performClick()
+        assertEquals(NativeWidgetRef.Hub(-5), configured)
+
+        // And the Now playing widget and the hosted one do not offer it
+        longPress("hub_widget_tile_-6")
+        composeRule.onNodeWithTag("hub_widget_tile_-6").performTouchInput { up() }
+        composeRule.onNodeWithText("Resize widget").assertExists()
+        composeRule.onNodeWithText("Configure widget").assertDoesNotExist()
     }
 
     @Test

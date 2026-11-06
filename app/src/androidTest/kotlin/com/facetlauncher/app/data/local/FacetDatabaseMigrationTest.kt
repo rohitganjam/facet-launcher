@@ -1,8 +1,20 @@
 package com.facetlauncher.app.data.local
 
+import androidx.room.migration.AutoMigrationSpec
 import androidx.room.testing.MigrationTestHelper
+import androidx.sqlite.db.framework.FrameworkSQLiteOpenHelperFactory
 import androidx.test.platform.app.InstrumentationRegistry
+import com.facetlauncher.app.data.model.ClockCalendarConfig
+import com.facetlauncher.app.data.model.ClockTemplateId
+import com.facetlauncher.app.data.model.ClockWidgetConfig
+import com.facetlauncher.app.data.model.NativeWidgetConfig
+import com.facetlauncher.app.data.model.WeatherCity
+import com.facetlauncher.app.data.model.WidgetWeatherLocation
+import com.facetlauncher.app.data.model.decodeNativeWidgetConfig
+import com.facetlauncher.app.data.model.decodeWeatherLocation
+import com.facetlauncher.app.data.model.encode
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -28,6 +40,8 @@ class FacetDatabaseMigrationTest {
     val helper: MigrationTestHelper = MigrationTestHelper(
         InstrumentationRegistry.getInstrumentation(),
         FacetDatabase::class.java,
+        listOf<AutoMigrationSpec>(DropFacetClockColumns()),
+        FrameworkSQLiteOpenHelperFactory(),
     )
 
     @Test
@@ -982,6 +996,142 @@ class FacetDatabaseMigrationTest {
         assertEquals("Work", cursor.getString(0))
         assertTrue(cursor.isNull(1))
         cursor.close()
+    }
+
+    @Test
+    fun migration41To42RewritesTabSeparatedWidgetSettingsAsJson() {
+        // Given a v41 database holding old-form settings on a Hub widget, two Home pages and a facet's clock weather location
+        helper.createDatabase(TEST_DB, 32).also { insertFacetV27(it, id = 1, name = "Work") }.close()
+        val dbV41 = helper.runMigrationsAndValidate(
+            TEST_DB, 41, true,
+            Migrations.MIGRATION_32_33, Migrations.MIGRATION_33_34, Migrations.MIGRATION_34_35, Migrations.MIGRATION_35_36,
+            Migrations.MIGRATION_36_37, Migrations.MIGRATION_37_38, Migrations.MIGRATION_38_39, Migrations.MIGRATION_39_40,
+            Migrations.MIGRATION_40_41,
+        )
+        fun hubWidget(id: Int, type: String, config: String?) = dbV41.execSQL(
+            "INSERT INTO widget_placements (appWidgetId, providerPackageName, providerClassName, row, col, colSpan, rowSpan, profile, userId, " +
+                "nativeWidgetType, nativeWidgetConfig) VALUES (?, '', '', 0, 0, 4, 2, 'PERSONAL', 0, ?, ?)",
+            arrayOf<Any?>(id, type, config),
+        )
+        hubWidget(-1, "WEATHER", "wx\tcity\tOslo\t59.91\t10.75\tEurope/Oslo")
+        hubWidget(-2, "AGENDA", "cal\t7\t3\nallday\t0")
+        hubWidget(-3, "NOW_PLAYING", null)
+        // (the facet already has its clock page, row 1, from the migration that introduced the stack)
+        dbV41.execSQL("INSERT INTO clock_stack_items (id, facetId, position, kind, nativeWidgetType, nativeWidgetConfig) VALUES (2, 1, 1, 'NATIVE_WIDGET', 'WEATHER', 'wx\tcurrent')")
+        dbV41.execSQL("UPDATE facets SET clockWeatherLocation = 'wx\tcurrent' WHERE id = 1")
+        dbV41.close()
+
+        // When migrating to v42 (Room also validates the result against the exported v42 schema)
+        val dbV42 = helper.runMigrationsAndValidate(TEST_DB, 42, true, Migrations.MIGRATION_41_42)
+        fun stored(sql: String) = dbV42.query(sql).use { it.moveToFirst(); it.getString(0) }
+
+        // Then each setting reads as the same choice in the current form, and a widget with none still has none
+        val oslo = decodeNativeWidgetConfig(stored("SELECT nativeWidgetConfig FROM widget_placements WHERE appWidgetId = -1"))
+        assertEquals(WidgetWeatherLocation.City(WeatherCity("Oslo", 59.91, 10.75, "Europe/Oslo")), oslo.weatherLocation)
+        val agenda = decodeNativeWidgetConfig(stored("SELECT nativeWidgetConfig FROM widget_placements WHERE appWidgetId = -2"))
+        assertEquals(setOf("3", "7"), agenda.calendarIds)
+        assertEquals(false, agenda.showAllDayEvents)
+        assertNull(stored("SELECT nativeWidgetConfig FROM widget_placements WHERE appWidgetId = -3"))
+        assertEquals(WidgetWeatherLocation.Current, decodeNativeWidgetConfig(stored("SELECT nativeWidgetConfig FROM clock_stack_items WHERE id = 2")).weatherLocation)
+        assertNull(stored("SELECT nativeWidgetConfig FROM clock_stack_items WHERE id = 1"))
+        assertEquals(WidgetWeatherLocation.Current, decodeWeatherLocation(stored("SELECT clockWeatherLocation FROM facets WHERE id = 1")))
+        assertTrue(stored("SELECT nativeWidgetConfig FROM widget_placements WHERE appWidgetId = -2").startsWith("{"))
+    }
+
+    private val launcherClock = ClockWidgetConfig(
+        templateId = ClockTemplateId.DATE_FORWARD, use24HourTime = true, showWeather = true,
+        calendar = ClockCalendarConfig(itemsToShow = 2, calendarIds = setOf("9")),
+    )
+
+    /** A v42 database with three facets (each with its clock page): 1 overrides the clock and calendar, 2 overrides nothing, 3 overrides only the calendar. */
+    private fun createV42WithClockFacets() {
+        helper.createDatabase(TEST_DB, 32).also {
+            insertFacetV27(it, id = 1, name = "Work")
+            insertFacetV27(it, id = 2, name = "Home")
+            insertFacetV27(it, id = 3, name = "Play")
+        }.close()
+        val dbV42 = helper.runMigrationsAndValidate(
+            TEST_DB, 42, true,
+            Migrations.MIGRATION_32_33, Migrations.MIGRATION_33_34, Migrations.MIGRATION_34_35, Migrations.MIGRATION_35_36,
+            Migrations.MIGRATION_36_37, Migrations.MIGRATION_37_38, Migrations.MIGRATION_38_39, Migrations.MIGRATION_39_40,
+            Migrations.MIGRATION_40_41, Migrations.MIGRATION_41_42,
+        )
+        dbV42.execSQL(
+            "UPDATE facets SET overrideClock = 1, clockTemplateId = 'LIGHT_STACK', use24HourTime = 0, clockShowWeather = 0, " +
+                "clockShowAlarm = 0, overrideCalendar = 1, selectedCalendarIdsCsv = '3,4', calendarItemsToShow = 4, " +
+                "clockScale = 1.1, clockAlignment = 'RIGHT', clockPlacementOwn = 1 WHERE id = 1",
+        )
+        dbV42.execSQL("UPDATE facets SET overrideCalendar = 1, showAllDayEvents = 0, selectedCalendarIdsCsv = '', calendarItemsToShow = 1 WHERE id = 3")
+        dbV42.close()
+    }
+
+    private fun clockOf(db: androidx.sqlite.db.SupportSQLiteDatabase, facetId: Long): ClockWidgetConfig? =
+        db.query("SELECT nativeWidgetConfig FROM clock_stack_items WHERE facetId = $facetId AND kind = 'CLOCK'").use {
+            assertTrue(it.moveToFirst())
+            decodeNativeWidgetConfig(it.getString(0)).clock
+        }
+
+    @Test
+    fun migration42To43GivesEachClockPageTheSettingsItShowedFromItsFacetOrTheLauncher() {
+        // Given a v42 database whose facets hold their own, mixed, or no clock and calendar overrides
+        createV42WithClockFacets()
+
+        // When migrating to v43, with the launcher-wide settings read from the DataStore
+        val dbV43 = helper.runMigrationsAndValidate(TEST_DB, 43, true, Migrations.migration42To43 { launcherClock })
+
+        // Then an overriding facet's clock has its own values, and one that overrides nothing has the launcher's
+        val own = clockOf(dbV43, 1)!!
+        assertEquals(ClockTemplateId.LIGHT_STACK, own.templateId)
+        assertEquals(false, own.use24HourTime)
+        assertEquals(false, own.showWeather)
+        assertEquals(false, own.showAlarm)
+        assertEquals(ClockCalendarConfig(showIndicator = true, itemsToShow = 4, showAllDay = true, calendarIds = setOf("3", "4")), own.calendar)
+        assertEquals(launcherClock, clockOf(dbV43, 2))
+
+        // And a facet overriding only the calendar keeps the launcher's clock with its own calendar, an empty selection staying "no calendars"
+        val calendarOnly = clockOf(dbV43, 3)!!
+        assertEquals(launcherClock.copy(calendar = ClockCalendarConfig(showIndicator = true, itemsToShow = 1, showAllDay = false, calendarIds = emptySet())), calendarOnly)
+    }
+
+    @Test
+    fun migration42To43LeavesAClockPageThatAlreadyHasSettingsAlone() {
+        // Given a clock page that already holds its own settings
+        createV42WithClockFacets()
+        val kept = ClockWidgetConfig(templateId = ClockTemplateId.LIGHT_STACK, showBattery = false)
+        helper.runMigrationsAndValidate(TEST_DB, 42, true).also {
+            it.execSQL("UPDATE clock_stack_items SET nativeWidgetConfig = ? WHERE facetId = 2 AND kind = 'CLOCK'", arrayOf<Any?>(NativeWidgetConfig(clock = kept).encode()))
+            it.close()
+        }
+
+        // When migrating to v43
+        val dbV43 = helper.runMigrationsAndValidate(TEST_DB, 43, true, Migrations.migration42To43 { launcherClock })
+
+        // Then its settings are untouched
+        assertEquals(kept, clockOf(dbV43, 2))
+    }
+
+    @Test
+    fun migration43To44DropsTheFacetClockColumnsAndKeepsEverythingElse() {
+        // Given a v42 database, taken through 42 to 43 so each clock page holds its settings
+        createV42WithClockFacets()
+        helper.runMigrationsAndValidate(TEST_DB, 43, true, Migrations.migration42To43 { launcherClock }).close()
+
+        // When migrating to v44 (Room also validates the result against the exported v44 schema)
+        val dbV44 = helper.runMigrationsAndValidate(TEST_DB, 44, true)
+
+        // Then the clock and calendar columns are gone, the rest of the row is intact, and the facet's clock page still has its settings
+        val columns = dbV44.query("SELECT * FROM facets LIMIT 1").use { it.columnNames.toSet() }
+        assertTrue("overrideClock" !in columns && "clockTemplateId" !in columns && "selectedCalendarIdsCsv" !in columns && "clockWidgetAppWidgetId" !in columns)
+        // The scale is gone too: a clock's size is the box on its page
+        assertTrue("clockScale" !in columns && "landscapeClockScale" !in columns)
+        dbV44.query("SELECT name, clockAlignment, clockPlacementOwn FROM facets WHERE id = 1").use {
+            assertTrue(it.moveToFirst())
+            assertEquals("Work", it.getString(0))
+            assertEquals("RIGHT", it.getString(1))
+            assertEquals(1, it.getInt(2))
+        }
+        assertEquals(setOf("3", "4"), clockOf(dbV44, 1)!!.calendar.calendarIds)
+        assertEquals(launcherClock, clockOf(dbV44, 2))
     }
 
     /** A v27 facet row — the v25 shape plus the two calendar-display columns, which a freshly created database has no defaults for. */

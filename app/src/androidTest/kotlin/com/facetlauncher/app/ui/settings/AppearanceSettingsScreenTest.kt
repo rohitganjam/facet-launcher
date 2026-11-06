@@ -4,7 +4,6 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.createComposeRule
-import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
@@ -38,8 +37,6 @@ class AppearanceSettingsScreenTest {
 
     private fun setContent(
         onBack: () -> Unit = {},
-        onNavigateToClockStyleGallery: () -> Unit = {},
-        onNavigateToCalendarSettings: () -> Unit = {},
         onNavigateToNotificationSettings: () -> Unit = {},
         onNavigateToDockAppsAppearance: () -> Unit = {},
         onNavigateToAppDrawerSettings: () -> Unit = {},
@@ -55,8 +52,6 @@ class AppearanceSettingsScreenTest {
     ): SettingsRepository = host.setContent(facetId, calendarGranted, notificationAccessGranted, calendarEvents, seed, seedApps) { viewModel ->
         AppearanceSettingsScreen(
             onBack = onBack,
-            onNavigateToClockStyleGallery = onNavigateToClockStyleGallery,
-            onNavigateToCalendarSettings = onNavigateToCalendarSettings,
             onNavigateToNotificationSettings = onNavigateToNotificationSettings,
             onNavigateToDockAppsAppearance = onNavigateToDockAppsAppearance,
             onNavigateToAppDrawerSettings = onNavigateToAppDrawerSettings,
@@ -76,21 +71,6 @@ class AppearanceSettingsScreenTest {
         // Then the pinned header (title + back button) is still on screen, not scrolled away
         composeRule.onNodeWithText("Customization").assertIsDisplayed()
         composeRule.onNodeWithTag("back_button").assertIsDisplayed()
-    }
-
-    @Test
-    fun clockStyleGalleryRowIsClickable() {
-        // Given the screen, scrolled to the Clock style row (moved in from the main Settings
-        // list — see chat history: calendar/appearance styling consolidation)
-        var navigated = false
-        setContent(onNavigateToClockStyleGallery = { navigated = true })
-        composeRule.onNodeWithTag("appearance_settings_screen").performScrollToNode(hasTestTag("clock_style_gallery_row"))
-
-        // When tapping it
-        composeRule.onNodeWithTag("clock_style_gallery_row").performClick()
-
-        // Then its callback fires
-        org.junit.Assert.assertEquals(true, navigated)
     }
 
     @Test
@@ -160,156 +140,21 @@ class AppearanceSettingsScreenTest {
     }
 
     @Test
-    fun facetScopedModeKeepsClockRowAndPreviewButHidesEveryGlobalOnlyRow() {
-        // Given a facet-scoped entry point — waited for the facet-scoped combine() to settle first
-        // (the `facets` flow is a real Room query; the screen briefly renders as global/unscoped on
-        // its very first composition until it emits — see chat history).
-        setContent(facetId = 1L)
-        awaitFacetScoped()
-
-        // Then the Dock & Apps appearance row (the moved-in look fields) and the Clock row are here...
-        composeRule.onNodeWithTag("appearance_settings_screen").performScrollToNode(hasTestTag("appearance_dock_apps_row"))
-        composeRule.onNodeWithTag("appearance_dock_apps_row").assertExists()
-        composeRule.onNodeWithTag("app_drawer_settings_row").assertDoesNotExist()
-        composeRule.onNodeWithTag("appearance_settings_screen").performScrollToNode(hasTestTag("clock_style_gallery_row"))
-        composeRule.onNodeWithTag("clock_style_gallery_row").assertExists()
-        // ...but the purely-global rows (notifications, fonts / themes / icons) are gone — no
-        // per-facet override exists for those yet (see this screen's own doc comment)
-        composeRule.onNodeWithTag("notification_settings_row").assertDoesNotExist()
-        composeRule.onNodeWithTag("general_themes_colors_row").assertDoesNotExist()
-        composeRule.onNodeWithTag("general_fonts_row").assertDoesNotExist()
-        composeRule.onNodeWithTag("general_icons_row").assertDoesNotExist()
-    }
-
-    @Test
-    fun facetScopedClockRowReflectsTheFacetsOwnClockOverride() {
-        // Given a facet overriding the clock with a different template than the global default
-        setContent(facetId = 1L, seed = { facetRepository, facetId ->
-            val facet = com.facetlauncher.app.data.model.Facet(id = requireNotNull(facetId), name = "P", position = 0)
-            facetRepository.setOverrideClock(facet.id, true)
-            facetRepository.setClockTemplateId(facet.id, com.facetlauncher.app.data.model.ClockTemplateId.RULE_MERIDIEM)
-        })
-        awaitFacetScoped()
-
-        // Then the preview clock is shown and the Clock row names the facet's own template, not the global one
-        composeRule.onNodeWithTag("appearance_preview_home_clock_block").assertExists()
-        composeRule.onNodeWithTag("appearance_settings_screen").performScrollToNode(hasTestTag("clock_style_gallery_row"))
-        composeRule.onNodeWithTag("clock_style_gallery_row").assertTextContains("Ruler", substring = true)
-    }
-
-    @Test
-    fun facetScopedClockRowOpensTheClockStyleGallery() {
-        // Given a facet-scoped screen
-        var navigated = false
-        setContent(facetId = 1L, onNavigateToClockStyleGallery = { navigated = true })
-        awaitFacetScoped()
-
-        // When tapping the Clock row
-        composeRule.onNodeWithTag("appearance_settings_screen").performScrollToNode(hasTestTag("clock_style_gallery_row"))
-        composeRule.onNodeWithTag("clock_style_gallery_row").performClick()
-
-        // Then it navigates
-        composeRule.waitUntil(timeoutMillis = 3_000) { navigated }
-    }
-
-    @Test
-    fun globalModeShowsFourSeparateSectionsInOrder() {
-        // Clock & calendar / Dock & Home / Notifications / General are each their own card, in that
-        // order. Each header is asserted right as it scrolls into view — not via cross-scroll bounds
-        // comparison, which breaks once an earlier item scrolls far enough to be disposed from the
-        // LazyColumn's composed range.
+    fun globalModeShowsThreeSeparateSectionsInOrderAndNoClockSection() {
+        // Dock & Home / Notifications / General are each their own card, in that order, and a clock has
+        // no launcher-wide settings, so there is no Clock & calendar section. Each header is asserted
+        // right as it scrolls into view — not via cross-scroll bounds comparison, which breaks once an
+        // earlier item scrolls far enough to be disposed from the LazyColumn's composed range.
         setContent()
 
-        composeRule.onNodeWithTag("appearance_settings_screen").performScrollToNode(hasTestTag("clock_style_gallery_row"))
-        composeRule.onNodeWithText("Clock & calendar").assertIsDisplayed()
+        composeRule.onNodeWithTag("clock_style_gallery_row").assertDoesNotExist()
+        composeRule.onNodeWithTag("appearance_calendar_settings_row").assertDoesNotExist()
         composeRule.onNodeWithTag("appearance_settings_screen").performScrollToNode(hasTestTag("appearance_dock_apps_row"))
         composeRule.onNodeWithText("Dock & home").assertIsDisplayed()
         composeRule.onNodeWithTag("appearance_settings_screen").performScrollToNode(hasTestTag("notification_settings_row"))
         composeRule.onNodeWithTag("notification_settings_row").assertIsDisplayed()
         composeRule.onNodeWithTag("appearance_settings_screen").performScrollToNode(hasTestTag("general_icons_row"))
         composeRule.onNodeWithText("Look & Feel").assertIsDisplayed()
-    }
-
-    @Test
-    fun calendarRowNavigatesAndSitsUnderTheClockRow() {
-        // Given the screen
-        var navigated = false
-        setContent(onNavigateToCalendarSettings = { navigated = true })
-        composeRule.onNodeWithTag("appearance_settings_screen").performScrollToNode(hasTestTag("appearance_calendar_settings_row"))
-
-        // When tapping the Calendars to display row
-        composeRule.onNodeWithTag("appearance_calendar_settings_row").performClick()
-
-        // Then its callback fires
-        assertEquals(true, navigated)
-    }
-
-    @Test
-    fun calendarRowSubtitleShowsZeroWhenNothingHasBeenChosenYet() {
-        // Given a fresh install with calendar access — selectedCalendarIds is null, which is "none decided", not "all"
-        setContent(calendarGranted = true)
-        composeRule.onNodeWithTag("appearance_settings_screen").performScrollToNode(hasTestTag("appearance_calendar_settings_row"))
-
-        // Then the row shows a literal zero (once the ViewModel's first real state replaces its initial one)
-        composeRule.waitUntil(timeoutMillis = 3_000) {
-            runCatching {
-                composeRule.onNodeWithTag("appearance_calendar_settings_row").assertTextContains("0 calendars selected", substring = true)
-            }.isSuccess
-        }
-    }
-
-    @Test
-    fun calendarRowSaysAccessIsNeededWhenCalendarPermissionIsNotGranted() {
-        // Given a stored selection but no calendar permission (the default in these tests)
-        val settingsRepository = setContent(calendarGranted = false)
-        runBlocking { settingsRepository.setSelectedCalendarIds(setOf("cal-1", "cal-2")) }
-        composeRule.onNodeWithTag("appearance_settings_screen").performScrollToNode(hasTestTag("appearance_calendar_settings_row"))
-
-        // Then the row says access is needed, not a count of calendars nothing can read
-        composeRule.onNodeWithTag("appearance_calendar_settings_row").assertTextContains("Needs calendar access", substring = true)
-        composeRule.onAllNodesWithText("2 calendars selected", substring = true).assertCountEquals(0)
-    }
-
-    @Test
-    fun facetScopedCalendarRowAlsoSaysAccessIsNeeded() {
-        // Given a facet-scoped screen without calendar permission
-        setContent(facetId = 1L, calendarGranted = false)
-        awaitFacetScoped()
-        composeRule.onNodeWithTag("appearance_settings_screen").performScrollToNode(hasTestTag("appearance_calendar_settings_row"))
-
-        // Then the facet's row says so too
-        composeRule.onNodeWithTag("appearance_calendar_settings_row").assertTextContains("Needs calendar access", substring = true)
-    }
-
-    @Test
-    fun calendarRowSubtitleReflectsAnExplicitSelection() {
-        // Given 2 calendars explicitly selected, with calendar access
-        val settingsRepository = setContent(calendarGranted = true)
-        runBlocking { settingsRepository.setSelectedCalendarIds(setOf("cal-1", "cal-2")) }
-        composeRule.onNodeWithTag("appearance_settings_screen").performScrollToNode(hasTestTag("appearance_calendar_settings_row"))
-
-        // Then the row reflects the count and the all-day events visibility
-        composeRule.waitUntil(timeoutMillis = 3_000) {
-            runCatching {
-                composeRule.onNodeWithTag("appearance_calendar_settings_row").assertTextContains("2 calendars selected · All-day events visible", substring = true)
-            }.isSuccess
-        }
-    }
-
-    @Test
-    fun facetScopedCalendarRowSubtitleReflectsTheInheritedGlobalSelection() {
-        // Given a facet that isn't overriding calendar, with 2 calendars selected globally and calendar access
-        val settingsRepository = setContent(facetId = 1L, calendarGranted = true)
-        awaitFacetScoped()
-        runBlocking { settingsRepository.setSelectedCalendarIds(setOf("cal-1", "cal-2")) }
-        composeRule.onNodeWithTag("appearance_settings_screen").performScrollToNode(hasTestTag("appearance_calendar_settings_row"))
-
-        // Then the facet's Appearance row shows the inherited count
-        composeRule.waitUntil(timeoutMillis = 3_000) {
-            runCatching {
-                composeRule.onNodeWithTag("appearance_calendar_settings_row").assertTextContains("2 calendars selected", substring = true)
-            }.isSuccess
-        }
     }
 
     @Test
@@ -383,30 +228,6 @@ class AppearanceSettingsScreenTest {
     }
 
     @Test
-    fun notificationRowIsGlobalOnly() {
-        // Given a facet-scoped Appearance screen
-        setContent(facetId = 1L)
-        awaitFacetScoped()
-
-        // Then there's no Notifications row (notifications have no per-facet override)
-        composeRule.onNodeWithTag("notification_settings_row").assertDoesNotExist()
-    }
-
-    @Test
-    fun facetScopedModeShowsClockAndDockAndHomeButNotGeneral() {
-        // The Clock & calendar section lives in facet mode too (above Dock & home); General is global-only.
-        setContent(facetId = 1L)
-        composeRule.waitUntil(timeoutMillis = 5_000) {
-            composeRule.onAllNodesWithText("Clock & calendar").fetchSemanticsNodes().isNotEmpty()
-        }
-
-        composeRule.onNodeWithText("Clock & calendar").assertIsDisplayed()
-        composeRule.onNodeWithTag("appearance_settings_screen").performScrollToNode(hasTestTag("appearance_dock_apps_row"))
-        composeRule.onNodeWithText("Dock & home").assertIsDisplayed()
-        composeRule.onNodeWithText("Look & Feel").assertDoesNotExist()
-    }
-
-    @Test
     fun previewCardShowsRealCalendarEventsWhenPermissionIsGranted() {
         // The calendar preview moved here from ClockStyleGalleryScreen (see chat history) — real
         // events for the effective calendar selection, not sample/mock data. Timed relative to
@@ -436,84 +257,6 @@ class AppearanceSettingsScreenTest {
     }
 
     @Test
-    fun facetScopedPreviewShowsTheDefaultFavoritesAndDockWhileNotOverriding() {
-        // "in facet settings - consume the resolved output between facet and defaults" (see chat
-        // history) — a facet not overriding apps/dock content shows the launcher-wide default in
-        // its own preview, not its own (unused) stale rows.
-        val facetId = 1L
-        var globalFavoriteLabel = ""
-        var globalDockLabel = ""
-        var facetFavoriteLabel = ""
-        var facetDockLabel = ""
-        setContent(
-            facetId = facetId,
-            seedApps = { appRepository, placementRepository, id ->
-                val installed = appRepository.getTestableApps()
-                globalFavoriteLabel = installed[0].label
-                globalDockLabel = installed[1].label
-                facetFavoriteLabel = installed[2].label
-                facetDockLabel = installed[3].label
-                placementRepository.addApp(PlacementTarget.GlobalFavorites, installed[0], position = 0)
-                placementRepository.addApp(PlacementTarget.GlobalDock, installed[1], position = 0)
-                placementRepository.addApp(PlacementTarget(PlacementList.FAVORITES, id!!), installed[2], position = 0)
-                placementRepository.addApp(PlacementTarget(PlacementList.DOCK, id), installed[3], position = 0)
-            },
-        )
-
-        // Polled — same real-Room-query settle lesson as previewCardShowsTheRealFavoritesAndDockApps.
-        composeRule.waitUntil(timeoutMillis = 5_000) {
-            composeRule.onAllNodesWithText(globalFavoriteLabel).fetchSemanticsNodes().isNotEmpty()
-        }
-        composeRule.onNodeWithText(globalFavoriteLabel).assertExists()
-        composeRule.onNodeWithContentDescription(globalDockLabel).assertExists()
-        composeRule.onNodeWithText(facetFavoriteLabel).assertDoesNotExist()
-        composeRule.onNodeWithContentDescription(facetDockLabel).assertDoesNotExist()
-    }
-
-    @Test
-    fun facetScopedPreviewShowsThatFacetsOwnFavoritesAndDockWhileOverriding() {
-        // The inverse of facetScopedPreviewShowsTheDefaultFavoritesAndDockWhileNotOverriding — once
-        // a facet overrides apps/dock content, its own rows win over the launcher-wide default.
-        val facetId = 1L
-        var globalFavoriteLabel = ""
-        var globalDockLabel = ""
-        var facetFavoriteLabel = ""
-        var facetDockLabel = ""
-        setContent(
-            facetId = facetId,
-            seed = { facetRepository, id ->
-                // Re-fetched between writes — `facetDao.update` replaces the whole row, so reusing
-                // the same (now-stale) `facet` snapshot for the second call would clobber the first
-                // call's own field change back to its old value.
-                val facet = facetRepository.getById(id!!)!!
-                facetRepository.setOverrideApps(facet.id, overriding = true)
-                val updated = facetRepository.getById(id)!!
-                facetRepository.updateOverridingDock(updated.id, overriding = true)
-            },
-            seedApps = { appRepository, placementRepository, id ->
-                val installed = appRepository.getTestableApps()
-                globalFavoriteLabel = installed[0].label
-                globalDockLabel = installed[1].label
-                facetFavoriteLabel = installed[2].label
-                facetDockLabel = installed[3].label
-                placementRepository.addApp(PlacementTarget.GlobalFavorites, installed[0], position = 0)
-                placementRepository.addApp(PlacementTarget.GlobalDock, installed[1], position = 0)
-                placementRepository.addApp(PlacementTarget(PlacementList.FAVORITES, id!!), installed[2], position = 0)
-                placementRepository.addApp(PlacementTarget(PlacementList.DOCK, id), installed[3], position = 0)
-            },
-        )
-
-        // Polled — same real-Room-query settle lesson as previewCardShowsTheRealFavoritesAndDockApps.
-        composeRule.waitUntil(timeoutMillis = 5_000) {
-            composeRule.onAllNodesWithText(facetFavoriteLabel).fetchSemanticsNodes().isNotEmpty()
-        }
-        composeRule.onNodeWithText(globalFavoriteLabel).assertDoesNotExist()
-        composeRule.onNodeWithContentDescription(globalDockLabel).assertDoesNotExist()
-        composeRule.onNodeWithText(facetFavoriteLabel).assertExists()
-        composeRule.onNodeWithContentDescription(facetDockLabel).assertExists()
-    }
-
-    @Test
     fun dockAppsRowSummarisesDockAndHomeAndNavigates() {
         // Given the global screen — dock icons and the Home list as icon + text by default
         var navigated = false
@@ -523,21 +266,6 @@ class AppearanceSettingsScreenTest {
         composeRule.onNodeWithTag("appearance_dock_apps_row").assertTextContains("Dock icons · Home icon & text", substring = true)
 
         // When tapping it
-        composeRule.onNodeWithTag("appearance_dock_apps_row").performClick()
-
-        // Then its callback fires
-        assertEquals(true, navigated)
-    }
-
-    @Test
-    fun facetScopedDockAppsRowNavigates() {
-        // Given a facet-scoped screen
-        var navigated = false
-        setContent(facetId = 1L, onNavigateToDockAppsAppearance = { navigated = true })
-        awaitFacetScoped()
-        composeRule.onNodeWithTag("appearance_settings_screen").performScrollToNode(hasTestTag("appearance_dock_apps_row"))
-
-        // When tapping the row
         composeRule.onNodeWithTag("appearance_dock_apps_row").performClick()
 
         // Then its callback fires

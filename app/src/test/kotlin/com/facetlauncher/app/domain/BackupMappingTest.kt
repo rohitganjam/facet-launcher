@@ -8,7 +8,13 @@ import com.facetlauncher.app.data.model.WeatherCity
 import com.facetlauncher.app.data.model.WidgetWeatherLocation
 import com.facetlauncher.app.data.model.decodeNativeWidgetConfig
 import com.facetlauncher.app.data.model.encode
+import com.facetlauncher.app.data.clockItem
+import com.facetlauncher.app.data.clockItemWith
+import com.facetlauncher.app.data.model.ClockCalendarConfig
+import com.facetlauncher.app.data.model.ClockTemplateId
+import com.facetlauncher.app.data.model.ClockWidgetConfig
 import com.facetlauncher.app.data.model.Facet
+import com.facetlauncher.app.data.model.decodeNativeWidgetConfig
 import com.facetlauncher.app.data.model.AppListColumnAlignment
 import com.facetlauncher.app.data.model.AppListVerticalAlignment
 import com.facetlauncher.app.data.model.AppRowPosition
@@ -61,10 +67,9 @@ class BackupMappingTest {
     fun `a facet's clock and list settings survive a backup round trip`() {
         // Given a facet with every clock and list field the first backup format left out
         val original = facet.copy(
-            clockAccentColorOption = ClockColorOption.ACCENT_SECONDARY, clockDateStyle = ClockDateStyle.CONDENSED,
-            clockAlignment = ClockAlignment.RIGHT, clockZoneHeightDp = 210f, clockScale = 1.1f,
+            clockAlignment = ClockAlignment.RIGHT, clockZoneHeightDp = 210f,
             appListVerticalAlignment = AppListVerticalAlignment.TOP,
-            landscapeClockAlignment = ClockAlignment.CENTER, landscapeClockZoneHeightDp = 300f, landscapeClockScale = 0.9f,
+            landscapeClockAlignment = ClockAlignment.CENTER, landscapeClockZoneHeightDp = 300f,
             landscapeAppListVerticalAlignment = AppListVerticalAlignment.BOTTOM,
             appListShrinkToFit = com.facetlauncher.app.data.model.AppListShrinkToFit.ON,
         )
@@ -77,16 +82,30 @@ class BackupMappingTest {
     }
 
     @Test
-    fun `a facet's weather icon style survives a backup round trip and an unknown name falls back to coloured`() {
-        // Given a facet with its own monochrome icons
-        val original = facet.copy(clockWeatherIconStyle = WeatherIconStyle.MONOCHROME)
+    fun `a clock's own settings go out in the backup without calendar ids and come back as they were`() {
+        // Given a facet whose clock has its own look, weather and a calendar choice
+        val oslo = WidgetWeatherLocation.City(WeatherCity("Oslo", 59.91, 10.75, "Europe/Oslo"))
+        val config = ClockWidgetConfig(
+            templateId = ClockTemplateId.entries.last(), weatherIconStyle = WeatherIconStyle.MONOCHROME, weatherLocation = oslo,
+            calendar = ClockCalendarConfig(itemsToShow = 2, calendarIds = setOf("3", "4")),
+        )
+        val original = facet.copy(clockStack = listOf(clockItemWith(config)))
 
-        // When it goes out and comes back
+        // When it goes out
         val backup = original.toBackupFacet(favorites = emptyList(), dockApps = emptyList())
 
-        // Then the style is kept, and a name this version doesn't know restores to the coloured default
-        assertEquals(WeatherIconStyle.MONOCHROME, backup.toFacet().clockWeatherIconStyle)
-        assertEquals(WeatherIconStyle.COLORED, backup.copy(clockWeatherIconStyle = "SKETCH").toFacet().clockWeatherIconStyle)
+        // Then the clock's settings are carried, calendar ids left out as they are device-specific, and decode to the same values
+        val expected = config.copy(calendar = config.calendar.copy(calendarIds = null))
+        assertEquals(expected, decodeNativeWidgetConfig(backup.clockConfig).clock)
+    }
+
+    @Test
+    fun `a clock's box goes out in the backup`() {
+        val clockPage = clockItem().copy(widthDp = 200, heightDp = 80, landscapeWidthDp = 320, landscapeHeightDp = 130)
+
+        val backup = facet.copy(clockStack = listOf(clockPage)).toBackupFacet(favorites = emptyList(), dockApps = emptyList())
+
+        assertEquals(listOf(200, 80, 320, 130), listOf(backup.clockWidthDp, backup.clockHeightDp, backup.clockLandscapeWidthDp, backup.clockLandscapeHeightDp))
     }
 
     @Test
@@ -108,7 +127,6 @@ class BackupMappingTest {
 
         // Then the new fields take their defaults
         assertEquals(ClockAlignment.LEFT, restored.clockAlignment)
-        assertEquals(0.8f, restored.clockScale)
         assertNull(restored.clockZoneHeightDp)
         assertEquals(AppListVerticalAlignment.LAUNCHER_DEFAULT, restored.appListVerticalAlignment)
         assertNull(restored.landscapeClockAlignment)
@@ -140,19 +158,5 @@ class BackupMappingTest {
 
         // Then the item follows the same setting
         assertEquals(WidgetWeatherLocation.Current, decodeNativeWidgetConfig(item?.nativeWidgetConfig).weatherLocation)
-    }
-
-    @Test
-    fun `a facet's own weather location survives a backup round trip and its absence stays absent`() {
-        // Given a facet with its own city, and one that follows Weather settings
-        val oslo = WidgetWeatherLocation.City(WeatherCity("Oslo", 59.91, 10.75, "Europe/Oslo"))
-
-        // Then the city comes back, and so does Current, and nothing stays nothing
-        assertEquals(oslo, facet.copy(clockWeatherLocation = oslo).toBackupFacet(favorites = emptyList(), dockApps = emptyList()).toFacet().clockWeatherLocation)
-        assertEquals(
-            WidgetWeatherLocation.Current,
-            facet.copy(clockWeatherLocation = WidgetWeatherLocation.Current).toBackupFacet(favorites = emptyList(), dockApps = emptyList()).toFacet().clockWeatherLocation,
-        )
-        assertEquals(null, facet.toBackupFacet(favorites = emptyList(), dockApps = emptyList()).toFacet().clockWeatherLocation)
     }
 }

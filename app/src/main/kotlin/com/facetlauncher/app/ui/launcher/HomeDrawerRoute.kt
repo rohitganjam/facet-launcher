@@ -14,12 +14,14 @@ import com.facetlauncher.app.ui.home.HomeLayoutMode
 import com.facetlauncher.app.ui.home.HomeLiveState
 import com.facetlauncher.app.ui.home.HomeScreenContent
 import com.facetlauncher.app.ui.home.HomeWidgetSizing
+import com.facetlauncher.app.data.model.ClockStackItemKind
 import com.facetlauncher.app.data.model.NativeWidgetRef
 import com.facetlauncher.app.ui.nativewidget.NativeWidgetAccess
 import com.facetlauncher.app.ui.nativewidget.NativeWidgetAccessControls
 import com.facetlauncher.app.ui.nativewidget.NativeWidgetActions
 import com.facetlauncher.app.ui.nativewidget.NativeWidgetEnvironment
 import com.facetlauncher.app.ui.nativewidget.config.NativeWidgetConfigSheet
+import com.facetlauncher.app.ui.settings.CalendarSettingsSheet
 import com.facetlauncher.app.ui.nativewidget.rememberNativeWidgetAccess
 import com.facetlauncher.app.ui.nativewidget.withWeatherOverride
 import com.facetlauncher.app.ui.home.WhatsNewPillHost
@@ -71,7 +73,7 @@ import com.facetlauncher.app.ui.drawer.DrawerViewModel
 import com.facetlauncher.app.ui.drawer.PrivateSpaceViewModel
 import com.facetlauncher.app.ui.facets.FacetCarouselScreen
 import com.facetlauncher.app.ui.facets.FacetCarouselViewModel
-import com.facetlauncher.app.ui.home.ClockAdjustMode
+import com.facetlauncher.app.ui.home.HomeMenuMode
 import com.facetlauncher.app.ui.home.ClockWidgetHostCache
 import com.facetlauncher.app.ui.home.HomeItemActions
 import com.facetlauncher.app.ui.home.HomeScreen
@@ -118,8 +120,8 @@ fun HomeDrawerRoute(
     onNavigateToManageFacets: () -> Unit,
     onNavigateToFacetPro: (ProReason) -> Unit,
     onNavigateToUsageAccessExplanation: () -> Unit,
-    /** Navigates to the clock style gallery, either global (null) or facet-scoped. */
-    onNavigateToAppearance: (Long?) -> Unit = { _ -> },
+    /** Opens one facet's clock style options, and the calendar settings of its clock. */
+    onNavigateToClockStyle: (facetId: Long) -> Unit = { _ -> },
     onNavigateToClockStack: () -> Unit = {},
     /** Opens the screen that explains and grants notification access, from an app menu's "Enable notifications". */
     onNavigateToNotificationAccessExplanation: () -> Unit = {},
@@ -190,7 +192,7 @@ fun HomeDrawerRoute(
     var containerWidthPx by remember { mutableFloatStateOf(1000f) }
 
     val overlays = remember { HomeOverlayState() }
-    var clockAdjustMode by remember { mutableStateOf(ClockAdjustMode.NONE) }
+    var homeMenuMode by remember { mutableStateOf(HomeMenuMode.NONE) }
     // Landscape only: the clock pane scrolls its own content, so swiping up to open the drawer works on the apps side only.
     var clockPaneBoundsInHomeRoot by remember { mutableStateOf<Rect?>(null) }
     // Portrait only: everything above the divider. A horizontal drag in it or in the landscape clock pane turns the clock stack's pages.
@@ -202,7 +204,7 @@ fun HomeDrawerRoute(
             containerHeightPx = { containerHeightPx },
             containerWidthPx = { containerWidthPx },
             coroutineScope = coroutineScope,
-            endClockAdjust = { clockAdjustMode = ClockAdjustMode.NONE },
+            endClockAdjust = { homeMenuMode = HomeMenuMode.NONE },
             // A hidden status bar comes back first; the next swipe-down (bar showing) opens the shade.
             expandNotificationShade = {
                 if (systemBarsState?.revealStatusBar() != true) homeViewModel.expandNotificationShade()
@@ -233,10 +235,10 @@ fun HomeDrawerRoute(
             val onBareHome = launcherViewModel.homePressedWhileResumed && launcherViewModel.uiState.value.homeOpensSearch &&
                 homeSwipeGate?.isBlocked != true &&
                 swipe.drawer.progress.value == 0f && swipe.hub.progress.value == 0f && swipe.facet.progress.value == 0f &&
-                clockAdjustMode == ClockAdjustMode.NONE && !overlays.showWidgetPicker &&
+                homeMenuMode == HomeMenuMode.NONE && !overlays.showWidgetPicker &&
                 !overlays.showClockWidgetPicker && !overlays.showPrivateSpace
             focusManager.clearFocus()
-            clockAdjustMode = ClockAdjustMode.NONE
+            homeMenuMode = HomeMenuMode.NONE
             overlays.showClockWidgetPicker = false
             // Each close in its own job: a drag that interrupts one animation throws a
             // CancellationException, which must end that job only — inline, it escaped `collect`
@@ -279,7 +281,7 @@ fun HomeDrawerRoute(
     // Cancel clock adjustment when navigating away from Home.
     LaunchedEffect(isDrawerOpen, isHubOpen, isFacetOpen) {
         if (isDrawerOpen || isHubOpen || isFacetOpen) {
-            clockAdjustMode = ClockAdjustMode.NONE
+            homeMenuMode = HomeMenuMode.NONE
         }
     }
 
@@ -358,6 +360,7 @@ fun HomeDrawerRoute(
             clockAccessories = homeUiState.clockAccessories,
             mediaPlayer = homeUiState.mediaPlayer,
             weather = weatherUiState.weather,
+            weatherRefreshing = weatherUiState.isRefreshing,
         ),
         widgetSizing = HomeWidgetSizing(
             defaultSizeDp = { widgetDefaultSizesDp[it] },
@@ -365,10 +368,9 @@ fun HomeDrawerRoute(
             isOrphaned = { widgetOrphans[it] == true },
         ),
         live = HomeLiveState(
-            adjustMode = clockAdjustMode,
+            adjustMode = homeMenuMode,
             draggingHandle = draggingHandle,
             placementFacetId = homeUiState.activeFacet?.id,
-            styleOwnerFacetName = homeUiState.clockStyleOwningFacet?.name,
             visibleClockItemId = homeUiState.visibleClockItemId,
             isPro = homeUiState.isPro,
         ),
@@ -385,14 +387,18 @@ fun HomeDrawerRoute(
         itemActions = itemActions,
         swipe = swipe,
         hooks = HomeRouteHooks(
-            setAdjustMode = { clockAdjustMode = it },
+            setAdjustMode = { homeMenuMode = it },
             setDraggingHandle = { draggingHandle = it },
             setClockWidgetBounds = { clockWidgetBoundsInHomeRoot = it },
             setAppListBounds = { appListBoundsInHomeRoot = it },
             setClockPaneBounds = { clockPaneBoundsInHomeRoot = it },
             setClockZoneBounds = { clockZoneBoundsInHomeRoot = it },
             openClockWidgetPicker = { itemId ->
-                overlays.clockWidgetPickerItemId = itemId
+                overlays.clockWidgetPickerTarget = ClockWidgetPickerTarget.Replace(itemId)
+                overlays.showClockWidgetPicker = true
+            },
+            openAddClockWidgetPicker = { facetId ->
+                overlays.clockWidgetPickerTarget = ClockWidgetPickerTarget.Add(facetId)
                 overlays.showClockWidgetPicker = true
             },
             openWeather = { openWeatherSheet(null) },
@@ -402,7 +408,7 @@ fun HomeDrawerRoute(
             toFacetSettings = onNavigateToFacetSettings,
             toFacetPro = onNavigateToFacetPro,
             toUsageAccessExplanation = onNavigateToUsageAccessExplanation,
-            toAppearance = onNavigateToAppearance,
+            toClockStyle = onNavigateToClockStyle,
             toClockStack = onNavigateToClockStack,
         ),
     )
@@ -443,10 +449,10 @@ fun HomeDrawerRoute(
                 }
                 // Receives the app list's own leftover vertical scroll once it bottoms/tops out.
                 .nestedScroll(appListNestedScroll)
-                .pointerInput(draggingHandle, clockAdjustMode, homeSwipeBlocked) {
+                .pointerInput(draggingHandle, homeMenuMode, homeSwipeBlocked) {
                     // Suppress screen-wide gestures while dragging a handle or with a long-press sheet open.
                     if (draggingHandle || homeSwipeBlocked) return@pointerInput
-                    if (clockAdjustMode == ClockAdjustMode.ADJUST) {
+                    if (homeMenuMode == HomeMenuMode.ADJUST) {
                         // Only the clock pages turn. This runs after the handles in the pointer chain, so a handle keeps its own drags.
                         detectHorizontalDragGestures(
                             onDragStart = swipe::onAdjustDragStart,
@@ -456,7 +462,7 @@ fun HomeDrawerRoute(
                         )
                         return@pointerInput
                     }
-                    if (clockAdjustMode != ClockAdjustMode.NONE) return@pointerInput
+                    if (homeMenuMode != HomeMenuMode.NONE) return@pointerInput
 
                     detectHomeSwipeGestures(
                         shouldClaim = { position ->
@@ -540,12 +546,13 @@ fun HomeDrawerRoute(
                 viewModel = facetViewModel,
             )
         }
-        HomeClockWidgetPickerOverlay(overlays, onReset = clockWidgetPickerViewModel::reset) { itemId ->
+        HomeClockWidgetPickerOverlay(overlays, onReset = clockWidgetPickerViewModel::reset) { target ->
             ClockWidgetPickerScreen(
-                target = ClockWidgetPickerTarget.Replace(itemId),
+                target = target,
                 onDone = { overlays.showClockWidgetPicker = false },
                 viewModel = clockWidgetPickerViewModel,
                 onConfigureNewWidget = { overlays.configureRef = it },
+                clockAvailable = homeUiState.clockStack.none { it.kind == ClockStackItemKind.CLOCK },
             )
         }
         if (overlays.showWeatherSheet) {
@@ -575,6 +582,9 @@ fun HomeDrawerRoute(
                     onNavigateToPermissions()
                 },
             )
+        }
+        if (homeMenuMode == HomeMenuMode.CALENDAR_SETTINGS) {
+            homeUiState.activeFacet?.let { facet -> CalendarSettingsSheet(facetId = facet.id, onDismiss = { homeMenuMode = HomeMenuMode.NONE }) }
         }
         overlays.configureRef?.let { ref -> NativeWidgetConfigSheet(ref = ref, onDismiss = { overlays.configureRef = null }) }
         HomeOneTimePrompts(

@@ -535,6 +535,18 @@ class HomeDrawerRouteTest {
         }
     }
 
+    /** Long-presses the free space beside the clock: a long-press on the clock itself opens the clock sheet, not the Home sheet. */
+    private fun longPressHomeClock() {
+        composeRule.onNodeWithTag("home_clock_block").performTouchInput { longClick() }
+    }
+
+    private fun longPressEmptyHomeSpace() {
+        val rootWidth = composeRule.onRoot().fetchSemanticsNode().boundsInRoot.right
+        val clockBounds = composeRule.onNodeWithTag("home_clock_block").fetchSemanticsNode().boundsInRoot
+        val besideClock = Offset((clockBounds.right + rootWidth) / 2f, clockBounds.center.y)
+        composeRule.onNodeWithTag("home_screen_root").performTouchInput { longClick(besideClock) }
+    }
+
     /** Gives the active facet a second clock page (a widget with no provider, drawn as the orphaned placeholder) and waits for the dots that show a stack. */
     private fun seedSecondClockPage(appWidgetId: Int = 4242) {
         runBlocking { seedClockStack(appWidgetId) }
@@ -572,9 +584,9 @@ class HomeDrawerRouteTest {
         // Given a two-page stack and the clock in adjust mode
         setContent()
         seedSecondClockPage()
-        composeRule.onNodeWithTag("home_clock_block").performTouchInput { longClick() }
+        longPressHomeClock()
         composeRule.waitForIdle()
-        composeRule.onNodeWithTag("clock_adjust_open").performClick()
+        composeRule.onNodeWithTag("widget_sheet_adjust").performClick()
         composeRule.waitForIdle()
         composeRule.onNodeWithTag("clock_adjust_toolbar").assertIsDisplayed()
 
@@ -739,19 +751,19 @@ class HomeDrawerRouteTest {
     }
 
     @Test
-    fun homePressClosesTheClockAdjustSheet() {
-        // Given the clock adjust sheet is open
+    fun homePressClosesTheHomeSheet() {
+        // Given the Home sheet is open
         setContent()
         composeRule.onNodeWithTag("home_app_list_scroll_region").assertExists()
-        composeRule.onNodeWithTag("home_clock_block").performTouchInput { longClick() }
-        composeRule.onNodeWithTag("clock_adjust_sheet").assertIsDisplayed()
+        longPressEmptyHomeSpace()
+        composeRule.onNodeWithTag("home_menu_sheet").assertIsDisplayed()
 
         // When Home is pressed
         composeRule.runOnUiThread { launcherViewModel.onHomePressed() }
         settleAnimation()
 
         // Then the sheet closes
-        composeRule.onNodeWithTag("clock_adjust_sheet").assertDoesNotExist()
+        composeRule.onNodeWithTag("home_menu_sheet").assertDoesNotExist()
     }
 
     @Test
@@ -1745,7 +1757,7 @@ class HomeDrawerRouteTest {
         // ...with a hint for every gesture, including the clock long-press (the overlay is clickable, so
         // its children's text merges into this one node — and the Hub's own "Widgets" header is composed
         // behind it, so a global text lookup would be ambiguous)
-        listOf("Press and hold the clock to resize or move it", "Switch facets", "Widgets", "All your apps").forEach { hint ->
+        listOf("Press and hold a widget to resize or move it", "Switch facets", "Widgets", "All your apps").forEach { hint ->
             composeRule.onNodeWithTag("gesture_hint_overlay").assertTextContains(hint, substring = true)
         }
 

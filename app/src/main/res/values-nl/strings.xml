@@ -218,7 +218,7 @@
     <string name="gesture_hint_widgets">Widgets</string>
     <string name="gesture_hint_all_your_apps">Al je apps</string>
     <string name="gesture_hint_arrow_up">↑</string>
-    <string name="gesture_hint_clock_hold">Houd de klok ingedrukt om hem te vergroten of te verplaatsen</string>
+    <string name="gesture_hint_clock_hold">Houd een widget ingedrukt om hem te vergroten of te verplaatsen</string>
     <string name="gesture_hint_got_it">Begrepen</string>
 
     <string name="facet_scope_global">Algemeen</string>
@@ -257,6 +257,7 @@
         <item quantity="one">%1$d agenda geselecteerd</item>
         <item quantity="other">%1$d agenda\'s geselecteerd</item>
     </plurals>
+    <string name="settings_calendars_all">Alle agenda\'s</string>
     <string name="settings_all_day_events_visible">Evenementen van een hele dag zichtbaar</string>
     <string name="settings_all_day_events_hidden">Evenementen van een hele dag verborgen</string>
     <string name="settings_dock_title">Dock</string>
@@ -778,7 +779,7 @@
     </plurals>
     <string name="facet_carousel_reorder">Volgorde wijzigen</string>
     <string name="facet_carousel_launcher_settings">Launcher-instellingen</string>
-    <string name="facet_carousel_launcher_settings_subtitle">Uiterlijk, standaardklok, favorieten, lade en meer</string>
+    <string name="facet_carousel_launcher_settings_subtitle">Uiterlijk, favorieten, lade en meer</string>
     <string name="facet_carousel_active">Actief</string>
     <string name="facet_carousel_no_favorites">Nog geen favorieten</string>
     <string name="preview_media_title">Nu aan het afspelen</string>
@@ -804,6 +805,9 @@
         <item quantity="other">%1$d apps</item>
     </plurals>
     <string name="facet_settings_dock_settings_title">Dock-instellingen</string>
+    <string name="facet_settings_section_home">Home</string>
+    <string name="facet_settings_widgets_title">Widgets</string>
+    <string name="facet_settings_widgets_subtitle">Wat bovenaan de Home van deze facet staat</string>
     <string name="facet_settings_appearance_title">Uiterlijk</string>
     <string name="facet_settings_appearance_clock_label">Klok: %1$s</string>
     <string name="facet_settings_appearance_dock_icons">Dock-pictogrammen</string>
@@ -823,12 +827,16 @@
     <string name="clock_style_date_style">Datumstijl</string>
     <string name="clock_style_position_section">POSITIE</string>
     <string name="clock_style_tap_to_select">KLOKSTIJLEN — TIK OM TE KIEZEN</string>
-    <string name="clock_style_long_press_hint">Houd de klok op het startscherm ingedrukt om grootte en verticale positie aan te passen.</string>
+    <string name="clock_style_long_press_hint">Houd de klok op het startscherm ingedrukt om grootte en positie aan te passen.</string>
     <string name="clock_style_applied">Toegepast</string>
     <string name="clock_style_reset_position">Positie van klokwidget resetten</string>
 
-    <string name="clock_adjust_adjust_size_position">Grootte en positie van de klok aanpassen</string>
-    <string name="clock_adjust_size_position_subtitle">De klok vergroten of verplaatsen</string>
+    <string name="widget_sheet_adjust_label">Grootte en positie van de widget aanpassen</string>
+    <string name="widget_sheet_adjust_subtitle">De widget vergroten of verplaatsen</string>
+    <string name="widget_sheet_settings">Instellingen voor %1$s</string>
+    <string name="widget_sheet_weather_settings_subtitle">Waar het weerbericht voor geldt</string>
+    <string name="widget_sheet_agenda_settings_subtitle">Welke agenda\'s en afspraken worden getoond</string>
+    <string name="hub_grid_configure_widget">Widget configureren</string>
     <string name="clock_adjust_alignment_heading">Uitlijning</string>
     <string name="clock_adjust_align_left">Links uitlijnen</string>
     <string name="clock_adjust_align_center">Centreren</string>
@@ -836,20 +844,22 @@
     <string name="clock_adjust_align_top">Boven uitlijnen</string>
     <string name="clock_adjust_align_middle">Midden uitlijnen</string>
     <string name="clock_adjust_align_bottom">Onder uitlijnen</string>
-    <string name="clock_adjust_clock_settings">Klok- en agenda-instellingen</string>
-    <string name="clock_adjust_clock_settings_subtitle">Sjablonen, lettertypen, kleuren, agenda</string>
-    <string name="clock_adjust_facet_settings_subtitle">Facetspecifieke appslijst, dock, klok- en agenda-instellingen</string>
-    <string name="clock_adjust_replace_with_widget">Vervangen door eigen widget</string>
-    <string name="clock_adjust_replace_with_widget_subtitle">Vervang de klok door een widget naar keuze</string>
-    <string name="clock_adjust_replace_with_clock">Vervangen door klok</string>
-    <string name="clock_adjust_replace_with_clock_subtitle">Gebruik de eigen klok van Facet op deze pagina</string>
-    <string name="clock_adjust_replace_widget">Eigen widget vervangen</string>
-    <string name="clock_adjust_replace_widget_subtitle">Kies een andere widget voor deze pagina</string>
-    <string name="clock_adjust_widget_stack">Widgetstapel</string>
-    <string name="clock_adjust_stack_empty">Leeg · voeg een klok of widget toe</string>
-    <string name="clock_adjust_stack_clock">Klok</string>
-    <string name="clock_adjust_stack_one_widget">1 widget</string>
-    <string name="clock_adjust_stack_pages">%1$d pagina\'s</string>
+    <string name="home_sheet_facet_settings_subtitle">Facetspecifieke widgets, appslijst en dock</string>
+    <string name="widget_sheet_replace">Eigen widget vervangen</string>
+    <string name="widget_sheet_replace_subtitle">Kies een andere widget voor deze pagina</string>
+    <string name="widget_sheet_remove">Widget verwijderen</string>
+    <string name="widget_sheet_remove_subtitle">Deze pagina uit de stapel halen</string>
+    <string name="home_sheet_add_widget">Widget toevoegen</string>
+    <string name="home_sheet_add_widget_subtitle">Kies een widget voor de bovenkant van Home</string>
+    <string name="clock_style_sheet_styles">Klokstijlen</string>
+    <string name="clock_style_sheet_styles_subtitle">Sjabloon, lettertype, kleuren, tijd en datum</string>
+    <string name="clock_style_sheet_calendar">Agenda-instellingen</string>
+    <string name="clock_style_sheet_calendar_subtitle">Welke agenda\'s onder de klok staan</string>
+    <string name="widget_sheet_stack">Widgetstapel</string>
+    <string name="widget_sheet_stack_empty">Leeg · voeg een klok of widget toe</string>
+    <string name="widget_sheet_stack_clock">Klok</string>
+    <string name="widget_sheet_stack_one_widget">1 widget</string>
+    <string name="widget_sheet_stack_pages">%1$d pagina\'s</string>
     <string name="clock_stack_title">Widgetstapel</string>
     <string name="clock_stack_counter">%1$d van %2$d</string>
     <string name="clock_stack_drag_hint">Sleep om de volgorde te wijzigen. Veeg op Home naar links en rechts door de stapel.</string>
@@ -1050,6 +1060,7 @@
     <string name="accessibility_service_description">Vergrendelt het scherm wanneer je dubbeltikt op lege ruimte op Home. Leest geen schermcontent.</string>
 
     <string name="about_weather_credit">Weergegevens van MET Norway (CC BY 4.0). Plaatsnamen van GeoNames (CC BY 4.0).</string>
+    <string name="native_widget_clock">Klok</string>
     <string name="native_widget_weather">Weer</string>
     <string name="native_widget_agenda">Agenda</string>
     <string name="native_widget_now_playing">Nu aan het spelen</string>

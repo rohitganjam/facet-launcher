@@ -2,6 +2,8 @@ package com.facetlauncher.app.data.local
 
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
+import com.facetlauncher.app.data.model.ClockWidgetConfig
+import com.facetlauncher.app.data.model.upgradeLegacyNativeWidgetConfig
 
 /**
  * Every real Room [Migration] this app ships, wired into [FacetDatabase]'s builder via
@@ -688,6 +690,30 @@ object Migrations {
         }
     }
 
+    /** A widget's own setting, and a facet's clock weather location, move from the tab-separated lines to JSON (see `LegacyNativeWidgetConfig`). */
+    val MIGRATION_41_42: Migration = object : Migration(41, 42) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            rewriteLegacyConfigs(db, table = "widget_placements", keyColumn = "appWidgetId", column = "nativeWidgetConfig")
+            rewriteLegacyConfigs(db, table = "clock_stack_items", keyColumn = "id", column = "nativeWidgetConfig")
+            rewriteLegacyConfigs(db, table = "facets", keyColumn = "id", column = "clockWeatherLocation")
+        }
+    }
+
+    private fun rewriteLegacyConfigs(db: SupportSQLiteDatabase, table: String, keyColumn: String, column: String) {
+        val rewrites = db.query("SELECT $keyColumn, $column FROM $table WHERE $column IS NOT NULL").use { cursor ->
+            buildList<Pair<Long, String?>> { while (cursor.moveToNext()) add(cursor.getLong(0) to upgradeLegacyNativeWidgetConfig(cursor.getString(1))) }
+        }
+        rewrites.forEach { (key, upgraded) -> db.execSQL("UPDATE $table SET $column = ? WHERE $keyColumn = ?", arrayOf<Any?>(upgraded, key)) }
+    }
+
+    /**
+     * 42→43 changes no schema: it copies each facet's clock and calendar settings onto its clock page, so the 43→44 column drop loses nothing.
+     * [launcherClock] reads the launcher-wide values from the settings DataStore, which a migration cannot reach on its own.
+     */
+    fun migration42To43(launcherClock: () -> ClockWidgetConfig): Migration = object : Migration(42, 43) {
+        override fun migrate(db: SupportSQLiteDatabase) = materializeClockConfigs(db, launcherClock())
+    }
+
     val ALL: Array<Migration> = arrayOf(
         MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15, MIGRATION_15_16,
         MIGRATION_16_17, MIGRATION_17_18, MIGRATION_18_19, MIGRATION_19_20, MIGRATION_20_21, MIGRATION_21_22,
@@ -705,5 +731,6 @@ object Migrations {
         MIGRATION_38_39,
         MIGRATION_39_40,
         MIGRATION_40_41,
+        MIGRATION_41_42,
     )
 }

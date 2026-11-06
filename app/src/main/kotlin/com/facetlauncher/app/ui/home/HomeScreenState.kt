@@ -37,7 +37,7 @@ import com.facetlauncher.app.data.model.MediaPlayerState
 import com.facetlauncher.app.data.model.NotificationBadgeStyle
 import com.facetlauncher.app.data.model.PlacedItem
 import com.facetlauncher.app.ui.components.AppMenuNotifications
-import com.facetlauncher.app.ui.home.ClockAdjustMode
+import com.facetlauncher.app.ui.home.HomeMenuMode
 import com.facetlauncher.app.ui.home.HomeItemActions
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.ImmutableMap
@@ -65,9 +65,9 @@ data class HomeClockState(
     /** The facet whose clock override governs the placement now (`null`: the launcher-wide default), and its name for the menu badge. */
     /** The facet whose placement Home shows (always the active one), so a change of facet re-fits the clock. */
     val placementFacetId: Long? = null,
-    /** Names the facet whose own clock style is in force, for the sheet's scope badge; `null` is the launcher-wide style. */
-    val styleOwnerFacetName: String? = null,
-    val adjustMode: ClockAdjustMode = ClockAdjustMode.NONE,
+    /** The clock page's saved box width in dp for this orientation; `null` until it has been resized, when the placement's scale applies. */
+    val boxWidthDp: Int? = null,
+    val adjustMode: HomeMenuMode = HomeMenuMode.NONE,
     /** True while a handle is being dragged, which suppresses the screen's own gestures. */
     val draggingHandle: Boolean = false,
 )
@@ -197,17 +197,22 @@ data class HomeClockActions(
     val onRequestCalendarAccess: () -> Unit = {},
     val onRequestLocationAccess: () -> Unit = {},
     val onBatteryClick: () -> Unit = {},
-    val onClockSettingsClick: () -> Unit = {},
+    /** The clock's own sheet: the full-screen clock style options, and the calendar settings. */
+    val onClockStylesClick: () -> Unit = {},
     val onNavigateToSettings: () -> Unit = {},
     val onNavigateToFacetSettings: () -> Unit = {},
-    val onReplaceWithWidgetClick: () -> Unit = {},
-    val onReplaceWithClockClick: () -> Unit = {},
+    /** The Home sheet's rows for the page showing: swap it through the widget picker, take it off the stack, or add the first one. */
+    val onReplaceWidgetClick: () -> Unit = {},
+    val onRemoveWidgetClick: () -> Unit = {},
+    val onAddWidgetClick: () -> Unit = {},
     val onWidgetStackClick: () -> Unit = {},
     val onEventClick: (CalendarEvent) -> Unit = {},
     val onZoneHeightCommit: (Float) -> Unit = {},
     val onScaleCommit: (Float) -> Unit = {},
+    /** Saves the clock page's box, aspect-locked, in dp; Home's frame turns a scale commit into this once the clock is measured. */
+    val onBoxSizeCommit: (widthDp: Int, heightDp: Int) -> Unit = { _, _ -> },
     val onAlignmentChange: (ClockAlignment) -> Unit = {},
-    val onAdjustModeChange: (ClockAdjustMode) -> Unit = {},
+    val onAdjustModeChange: (HomeMenuMode) -> Unit = {},
     val onDraggingHandleChange: (Boolean) -> Unit = {},
     /** How far a swipe has displaced the visible page, as a fraction of the zone's width; read while drawing so a swipe does not recompose Home. */
     val pageOffset: () -> Float = { 0f },

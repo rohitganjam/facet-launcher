@@ -81,7 +81,7 @@ class FacetDaoTest {
         placementDao.upsert(AppPlacementEntity(list = PlacementList.DOCK, facetId = id, packageName = "com.example.b", activityName = ".Main", position = 0))
 
         // When an unrelated field (e.g. toggling clock override) is updated on that same facet
-        dao.update(FacetEntity(id = id, name = "Facet 1", position = 0, overrideClock = true))
+        dao.update(FacetEntity(id = id, name = "Facet 1", position = 0, clockPlacementOwn = true))
 
         // Then the favorites and dock apps are untouched — a real UPDATE never cascades a delete
         assertEquals(1, placementDao.observe(PlacementList.FAVORITES, id).first().size)

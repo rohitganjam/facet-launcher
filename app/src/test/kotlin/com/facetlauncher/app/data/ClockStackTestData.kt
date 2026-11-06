@@ -2,7 +2,10 @@ package com.facetlauncher.app.data
 
 import com.facetlauncher.app.data.model.ClockStackItem
 import com.facetlauncher.app.data.model.ClockStackItemKind
+import com.facetlauncher.app.data.model.ClockWidgetConfig
+import com.facetlauncher.app.data.model.NativeWidgetConfig
 import com.facetlauncher.app.data.model.NativeWidgetType
+import com.facetlauncher.app.data.model.encode
 
 fun widgetItem(
     appWidgetId: Int,
@@ -20,6 +23,10 @@ fun widgetItem(
 
 fun clockItem(id: Long = 100L, facetId: Long = 1L, position: Int = 0) =
     ClockStackItem(id = id, facetId = facetId, position = position, kind = ClockStackItemKind.CLOCK)
+
+/** A clock page that holds [config] as its own settings. */
+fun clockItemWith(config: ClockWidgetConfig, id: Long = 100L, facetId: Long = 1L, position: Int = 0) =
+    clockItem(id, facetId, position).copy(nativeWidgetConfig = NativeWidgetConfig(clock = config).encode())
 
 fun nativeItem(
     type: NativeWidgetType,

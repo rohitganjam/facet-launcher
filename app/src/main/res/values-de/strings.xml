@@ -209,7 +209,7 @@
     <string name="gesture_hint_widgets">Widgets</string>
     <string name="gesture_hint_all_your_apps">Alle deine Apps</string>
     <string name="gesture_hint_arrow_up">↑</string>
-    <string name="gesture_hint_clock_hold">Uhr gedrückt halten, um Größe und Position zu ändern</string>
+    <string name="gesture_hint_clock_hold">Widget gedrückt halten, um Größe und Position zu ändern</string>
     <string name="gesture_hint_got_it">Verstanden</string>
 
     <!-- FacetScopeBadge -->
@@ -254,6 +254,7 @@
         <item quantity="one">%1$d Kalender ausgewählt</item>
         <item quantity="other">%1$d Kalender ausgewählt</item>
     </plurals>
+    <string name="settings_calendars_all">Alle Kalender</string>
     <string name="settings_all_day_events_visible">Ganztägige Termine sichtbar</string>
     <string name="settings_all_day_events_hidden">Ganztägige Termine ausgeblendet</string>
     <string name="settings_dock_title">Dock</string>
@@ -790,7 +791,7 @@
     </plurals>
     <string name="facet_carousel_reorder">Neu anordnen</string>
     <string name="facet_carousel_launcher_settings">Launcher-Einstellungen</string>
-    <string name="facet_carousel_launcher_settings_subtitle">Design, Standarduhr, Favoriten, Drawer und mehr</string>
+    <string name="facet_carousel_launcher_settings_subtitle">Design, Favoriten, Drawer und mehr</string>
     <string name="facet_carousel_active">Aktiv</string>
     <string name="facet_carousel_no_favorites">Noch keine Favoriten</string>
     <string name="preview_media_title">Wiedergabe</string>
@@ -831,13 +832,17 @@
     <string name="clock_style_date_style">Datumsstil</string>
     <string name="clock_style_position_section">POSITION</string>
     <string name="clock_style_tap_to_select">UHRSTILE — ZUM AUSWÄHLEN TIPPEN</string>
-    <string name="clock_style_long_press_hint">Drücke lange auf die Uhr auf dem Startbildschirm, um Größe und vertikale Position anzupassen.</string>
+    <string name="clock_style_long_press_hint">Drücke lange auf die Uhr auf dem Startbildschirm, um Größe und Position anzupassen.</string>
     <string name="clock_style_applied">Angewendet</string>
     <string name="clock_style_reset_position">Uhr-Widget-Position zurücksetzen</string>
 
-    <!-- ClockAdjustSheet -->
-    <string name="clock_adjust_adjust_size_position">Uhrgröße &amp; -position anpassen</string>
-    <string name="clock_adjust_size_position_subtitle">Größe oder Position der Uhr ändern</string>
+    <!-- HomeSheets -->
+    <string name="widget_sheet_adjust_label">Widget-Größe &amp; -Position anpassen</string>
+    <string name="widget_sheet_adjust_subtitle">Größe oder Position des Widgets ändern</string>
+    <string name="widget_sheet_settings">%1$s-Einstellungen</string>
+    <string name="widget_sheet_weather_settings_subtitle">Für welchen Ort die Vorhersage gilt</string>
+    <string name="widget_sheet_agenda_settings_subtitle">Welche Kalender und Termine angezeigt werden</string>
+    <string name="hub_grid_configure_widget">Widget konfigurieren</string>
     <string name="clock_adjust_alignment_heading">Ausrichtung</string>
     <string name="clock_adjust_align_left">Linksbündig</string>
     <string name="clock_adjust_align_center">Zentriert</string>
@@ -845,9 +850,7 @@
     <string name="clock_adjust_align_top">Oben ausrichten</string>
     <string name="clock_adjust_align_middle">Mittig ausrichten</string>
     <string name="clock_adjust_align_bottom">Unten ausrichten</string>
-    <string name="clock_adjust_clock_settings">Uhr- und Kalendereinstellungen</string>
-    <string name="clock_adjust_clock_settings_subtitle">Vorlagen, Schriftarten, Farben, Kalender</string>
-    <string name="clock_adjust_facet_settings_subtitle">Facettenspezifische App-Liste, Dock-, Uhr- &amp; Kalendereinstellungen</string>
+    <string name="home_sheet_facet_settings_subtitle">Facettenspezifische Widgets, App-Liste und Dock</string>
 
     <!-- HubWidgetPickerScreen -->
     <string name="hub_widget_picker_full">Voll — entferne zuerst ein Widget</string>
@@ -940,6 +943,9 @@
     <string name="appearance_general_subtitle">Designs, Akzent, Statusleiste</string>
     <string name="appearance_section_look_feel">Optik und Bedienung</string>
     <string name="appearance_icon_shape">Symbolform</string>
+    <string name="facet_settings_section_home">Startseite</string>
+    <string name="facet_settings_widgets_title">Widgets</string>
+    <string name="facet_settings_widgets_subtitle">Was oben auf der Startseite dieser Facette steht</string>
     <string name="facet_settings_appearance_title">Darstellung</string>
     <string name="facet_settings_appearance_clock_label">Uhr: %1$s</string>
     <string name="facet_settings_appearance_dock_icons">Dock-Symbole</string>
@@ -948,17 +954,21 @@
     <string name="facet_settings_appearance_home_icon_only">Start: nur Symbol</string>
     <string name="facet_settings_appearance_home_icon_and_text">Start: Symbol &amp; Text</string>
     <string name="facet_settings_appearance_home_text_only">Start: nur Text</string>
-    <string name="clock_adjust_replace_with_widget">Durch eigenes Widget ersetzen</string>
-    <string name="clock_adjust_replace_with_widget_subtitle">Ersetzt die Uhr durch ein Widget deiner Wahl</string>
-    <string name="clock_adjust_replace_with_clock">Durch Uhr ersetzen</string>
-    <string name="clock_adjust_replace_with_clock_subtitle">Die eigene Uhr von Facet auf dieser Seite verwenden</string>
-    <string name="clock_adjust_replace_widget">Eigenes Widget ersetzen</string>
-    <string name="clock_adjust_replace_widget_subtitle">Ein anderes Widget für diese Seite wählen</string>
-    <string name="clock_adjust_widget_stack">Widget-Stapel</string>
-    <string name="clock_adjust_stack_empty">Leer · Uhr oder Widget hinzufügen</string>
-    <string name="clock_adjust_stack_clock">Uhr</string>
-    <string name="clock_adjust_stack_one_widget">1 Widget</string>
-    <string name="clock_adjust_stack_pages">%1$d Seiten</string>
+    <string name="widget_sheet_replace">Eigenes Widget ersetzen</string>
+    <string name="widget_sheet_replace_subtitle">Ein anderes Widget für diese Seite wählen</string>
+    <string name="widget_sheet_remove">Widget entfernen</string>
+    <string name="widget_sheet_remove_subtitle">Diese Seite aus dem Stapel nehmen</string>
+    <string name="home_sheet_add_widget">Widget hinzufügen</string>
+    <string name="home_sheet_add_widget_subtitle">Ein Widget für den oberen Bereich wählen</string>
+    <string name="clock_style_sheet_styles">Uhrstile</string>
+    <string name="clock_style_sheet_styles_subtitle">Vorlage, Schrift, Farben, Zeit und Datum</string>
+    <string name="clock_style_sheet_calendar">Kalendereinstellungen</string>
+    <string name="clock_style_sheet_calendar_subtitle">Welche Kalender unter der Uhr erscheinen</string>
+    <string name="widget_sheet_stack">Widget-Stapel</string>
+    <string name="widget_sheet_stack_empty">Leer · Uhr oder Widget hinzufügen</string>
+    <string name="widget_sheet_stack_clock">Uhr</string>
+    <string name="widget_sheet_stack_one_widget">1 Widget</string>
+    <string name="widget_sheet_stack_pages">%1$d Seiten</string>
     <!-- ClockStackScreen (the widget stack: reorder, remove, configure, add) -->
     <string name="clock_stack_title">Widget-Stapel</string>
     <string name="clock_stack_counter">%1$d von %2$d</string>
@@ -1109,6 +1119,7 @@
     <string name="accessibility_service_label">Facet Doppeltippen zum Sperren</string>
     <string name="accessibility_service_description">Sperrt das Display, wenn du auf dem Startbildschirm doppelt auf eine leere Fläche tippst. Liest keine Bildschirminhalte.</string>
     <string name="about_weather_credit">Wetterdaten von MET Norway (CC BY 4.0). Städtenamen von GeoNames (CC BY 4.0).</string>
+    <string name="native_widget_clock">Uhr</string>
     <string name="native_widget_weather">Wetter</string>
     <string name="native_widget_agenda">Termine</string>
     <string name="native_widget_now_playing">Wiedergabe</string>

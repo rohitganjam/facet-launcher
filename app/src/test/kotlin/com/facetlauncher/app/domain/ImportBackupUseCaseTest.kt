@@ -165,12 +165,9 @@ class ImportBackupUseCaseTest {
         // `null` placeholder, which Kotlin's compiler-inserted non-null check on
         // restoreFacet's `facet: Facet` parameter rejects outright.
         val expectedFacetEntity = Facet(
-            id = 0, name = "Work", position = 0, overrideClock = false,
-            clockTemplateId = ClockTemplateId.LIGHT_STACK, clockFontOption = ClockFontOption.LAUNCHER_DEFAULT,
-            clockColorOption = ClockColorOption.THEME, use24HourTime = false, clockShowMeridiem = false,
+            id = 0, name = "Work", position = 0,
             overrideApps = false, appRowPosition = AppRowPosition.LEFT, appRowPresentation = AppRowPresentation.ICON_AND_TEXT,
             listContentMode = ListContentMode.FAVORITES, appsToShowCount = 5, overridingFavorites = true,
-            overrideCalendar = false, showAllDayEvents = true, selectedCalendarIds = setOf("3", "4"),
             overrideDock = true, dockDisplayMode = com.facetlauncher.app.data.model.DockDisplayMode.TEXT,
         )
         `when`(facetRepository.restoreFacet(expectedFacetEntity)).thenReturn(99L)
@@ -238,7 +235,7 @@ class ImportBackupUseCaseTest {
                 exportedAtEpochMillis = 0L,
                 settings = minimalSettings().copy(
                     landscapeAppRowPosition = "CENTER", landscapeAppListColumnAlignment = "MIRRORED",
-                    landscapeClockAlignment = "RIGHT", landscapeClockZoneHeightDp = 310f, landscapeClockScale = 1.1f,
+                    landscapeClockAlignment = "RIGHT", landscapeClockZoneHeightDp = 310f,
                     landscapeAppListVerticalAlignment = "TOP",
                 ),
                 facets = emptyList(), dockApps = emptyList(), defaultFavoriteApps = emptyList(), widgetPlacements = emptyList(),
@@ -250,10 +247,10 @@ class ImportBackupUseCaseTest {
         val captor = LandscapeTransformCaptor()
         verify(settingsRepository).updateLandscape(captor.capture())
         // A full restore replaces the group: the old scale is gone, the backed-up values are in
-        val before = LandscapeOverrides(clockScale = 1.2f, appRowPosition = AppRowPosition.LEFT)
+        val before = LandscapeOverrides(appRowPosition = AppRowPosition.LEFT)
         assertEquals(
             LandscapeOverrides(
-                clockAlignment = ClockAlignment.RIGHT, clockZoneHeightDp = 310f, clockScale = 1.1f,
+                clockAlignment = ClockAlignment.RIGHT, clockZoneHeightDp = 310f,
                 appRowPosition = AppRowPosition.CENTER, appListVerticalAlignment = AppListVerticalAlignment.TOP,
                 appListColumnAlignment = AppListColumnAlignment.MIRRORED,
             ),
@@ -268,8 +265,8 @@ class ImportBackupUseCaseTest {
             BackupBundle(
                 exportedAtEpochMillis = 0L,
                 settings = minimalSettings().copy(
-                    clockAccentColorOption = "ACCENT_SECONDARY", clockDateStyle = "CONDENSED", clockAlignment = "RIGHT",
-                    clockZoneHeightDp = 240f, clockScale = 1.3f, appListVerticalAlignment = "TOP",
+                    clockAlignment = "RIGHT",
+                    clockZoneHeightDp = 240f, appListVerticalAlignment = "TOP",
                     recentlyInstalledPosition = "SHOW_LAST", searchSettingsEnabled = true,
                 ),
                 facets = emptyList(), dockApps = emptyList(), defaultFavoriteApps = emptyList(), widgetPlacements = emptyList(),
@@ -278,11 +275,8 @@ class ImportBackupUseCaseTest {
 
         useCase(uri)
 
-        verify(settingsRepository).setClockAccentColorOption(ClockColorOption.ACCENT_SECONDARY)
-        verify(settingsRepository).setClockDateStyle(com.facetlauncher.app.data.model.ClockDateStyle.CONDENSED)
         verify(settingsRepository).setClockAlignment(ClockAlignment.RIGHT)
         verify(settingsRepository).setClockZoneHeight(240f)
-        verify(settingsRepository).setClockScale(1.3f)
         verify(settingsRepository).setAppListVerticalAlignment(AppListVerticalAlignment.TOP)
         verify(settingsRepository).setRecentlyInstalledPosition(com.facetlauncher.app.data.model.RecentlyInstalledPosition.SHOW_LAST)
         verify(settingsRepository).setSearchSettingsEnabled(true)

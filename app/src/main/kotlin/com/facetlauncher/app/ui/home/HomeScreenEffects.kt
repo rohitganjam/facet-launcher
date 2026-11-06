@@ -12,13 +12,14 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import com.facetlauncher.app.R
+import com.facetlauncher.app.data.model.NativeWidgetRef
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.toSize
 import com.facetlauncher.app.ui.components.ThemedModalBottomSheet
-import com.facetlauncher.app.ui.home.ClockAdjustMode
+import com.facetlauncher.app.ui.home.HomeMenuMode
 import com.facetlauncher.app.ui.home.HomeClockActions
 import com.facetlauncher.app.ui.home.HomeClockState
 import com.facetlauncher.app.ui.theme.SurfaceContainer
@@ -69,8 +70,10 @@ private fun ClockScaleReclampEffect(frame: HomeFrame) {
                 .first()
         } ?: return@LaunchedEffect
         val box = layout.measureClockBox() ?: return@LaunchedEffect
-        val fit = latestFrame.geometry.fit.maxScale(box.size, box.topLeft, box.rootWidthPx)
-        if (clock.placement.scale > fit + 0.01f) frame.actions.clock.onScaleCommit(fit)
+        // The frame the effect started with predates this measurement: its scale and commit conversion used the previous page's natural size.
+        val settled = latestFrame
+        val fit = settled.geometry.fit.maxScale(box.size, box.topLeft, box.rootWidthPx)
+        if (settled.state.clock.placement.scale > fit + 0.01f) settled.actions.clock.onScaleCommit(fit)
     }
 }
 
@@ -124,44 +127,37 @@ internal fun HomeBoundsReporting(frame: HomeFrame) {
  * coroutine across the switch, leaving a stale handler running.
  */
 internal fun Modifier.homeEmptySpaceGestures(
-    mode: ClockAdjustMode,
-    onModeChange: (ClockAdjustMode) -> Unit,
+    mode: HomeMenuMode,
+    onModeChange: (HomeMenuMode) -> Unit,
     onDoubleTap: () -> Unit = {},
 ): Modifier = this.then(
     when (mode) {
-        ClockAdjustMode.ADJUST -> Modifier.pointerInput(mode) { detectTapGestures(onTap = { onModeChange(ClockAdjustMode.NONE) }) }
-        ClockAdjustMode.NONE -> Modifier.pointerInput(mode) {
-            detectTapGestures(onDoubleTap = { onDoubleTap() }, onLongPress = { onModeChange(ClockAdjustMode.MENU) })
+        HomeMenuMode.ADJUST -> Modifier.pointerInput(mode) { detectTapGestures(onTap = { onModeChange(HomeMenuMode.NONE) }) }
+        HomeMenuMode.NONE -> Modifier.pointerInput(mode) {
+            detectTapGestures(onDoubleTap = { onDoubleTap() }, onLongPress = { onModeChange(HomeMenuMode.MENU) })
         }
-        ClockAdjustMode.MENU -> Modifier
+        HomeMenuMode.MENU, HomeMenuMode.WIDGET_MENU, HomeMenuMode.CALENDAR_SETTINGS -> Modifier
     },
 )
 
-/** The clock adjust menu sheet. */
+/** What the stack row of the sheets says is in the stack. */
 @Composable
-internal fun ClockMenuSheet(clock: HomeClockState, stack: HomeClockStackState, hasWidget: Boolean, actions: HomeClockActions) {
-    val close = { actions.onAdjustModeChange(ClockAdjustMode.NONE) }
-    val page = when {
-        stack.isBlank -> ClockSheetPage.EMPTY
-        hasWidget -> ClockSheetPage.WIDGET
-        else -> ClockSheetPage.CLOCK
-    }
-    val stackSummary = when {
-        stack.isBlank -> stringResource(R.string.clock_adjust_stack_empty)
-        stack.pageCount == 1 -> stringResource(if (stack.hasClock) R.string.clock_adjust_stack_clock else R.string.clock_adjust_stack_one_widget)
-        else -> stringResource(R.string.clock_adjust_stack_pages, stack.pageCount)
-    }
+private fun stackSummaryText(stack: HomeClockStackState): String = when {
+    stack.isBlank -> stringResource(R.string.widget_sheet_stack_empty)
+    stack.pageCount == 1 -> stringResource(if (stack.hasClock) R.string.widget_sheet_stack_clock else R.string.widget_sheet_stack_one_widget)
+    else -> stringResource(R.string.widget_sheet_stack_pages, stack.pageCount)
+}
+
+/** The Home sheet, opened by a long-press on free space: the facet's and the launcher's settings (and, while the stack is empty, add a widget and the widget stack). */
+@Composable
+internal fun HomeMenuSheet(stack: HomeClockStackState, actions: HomeClockActions) {
+    val close = { actions.onAdjustModeChange(HomeMenuMode.NONE) }
     ThemedModalBottomSheet(
         onDismissRequest = close,
         skipPartiallyExpanded = true,
         containerColor = SurfaceContainer,
     ) {
-        ClockAdjustSheet(
-            onAdjustClick = { actions.onAdjustModeChange(ClockAdjustMode.ADJUST) },
-            onClockSettingsClick = {
-                close()
-                actions.onClockSettingsClick()
-            },
+        HomeMenuSheetContent(
             onFacetSettingsClick = {
                 close()
                 actions.onNavigateToFacetSettings()
@@ -170,22 +166,64 @@ internal fun ClockMenuSheet(clock: HomeClockState, stack: HomeClockStackState, h
                 close()
                 actions.onNavigateToSettings()
             },
-            onReplaceWithWidgetClick = {
+            onAddWidgetClick = {
                 close()
-                actions.onReplaceWithWidgetClick()
-            },
-            onReplaceWithClockClick = {
-                close()
-                actions.onReplaceWithClockClick()
+                actions.onAddWidgetClick()
             },
             onWidgetStackClick = {
                 close()
                 actions.onWidgetStackClick()
             },
-            stackSummary = stackSummary,
-            overrideFacetName = clock.styleOwnerFacetName,
-            page = page,
-            canReplaceWithClock = !stack.hasClock,
+            stackSummary = stackSummaryText(stack),
+            stackEmpty = stack.isBlank,
+        )
+    }
+}
+
+/** What a long-press on the page showing acts on: the clock when there is no widget, a native widget by its type, a hosted widget otherwise. */
+internal fun HomeClockWidgetState?.sheetTarget(): WidgetSheetTarget = when {
+    this == null -> WidgetSheetTarget.Clock
+    nativeType != null -> WidgetSheetTarget.Native(nativeType)
+    else -> WidgetSheetTarget.Hosted
+}
+
+/**
+ * The widget's own sheet, opened by a long-press on the clock, its calendar or any widget page: that widget's settings, then adjust size and
+ * position, replace, remove and the widget stack. A native widget's settings row opens the same settings its 3-dot button used to.
+ */
+@Composable
+internal fun WidgetSheet(stack: HomeClockStackState, widget: HomeClockWidgetState?, actions: HomeClockActions) {
+    val close = { actions.onAdjustModeChange(HomeMenuMode.NONE) }
+    ThemedModalBottomSheet(
+        onDismissRequest = close,
+        skipPartiallyExpanded = true,
+        containerColor = SurfaceContainer,
+    ) {
+        WidgetSheetContent(
+            target = widget.sheetTarget(),
+            onClockStylesClick = {
+                close()
+                actions.onClockStylesClick()
+            },
+            onCalendarSettingsClick = { actions.onAdjustModeChange(HomeMenuMode.CALENDAR_SETTINGS) },
+            onWidgetSettingsClick = {
+                close()
+                widget?.takeIf { it.nativeType != null }?.let { actions.onConfigureNativeWidget(NativeWidgetRef.Home(it.itemId)) }
+            },
+            onAdjustClick = { actions.onAdjustModeChange(HomeMenuMode.ADJUST) },
+            onReplaceWidgetClick = {
+                close()
+                actions.onReplaceWidgetClick()
+            },
+            onRemoveWidgetClick = {
+                close()
+                actions.onRemoveWidgetClick()
+            },
+            onWidgetStackClick = {
+                close()
+                actions.onWidgetStackClick()
+            },
+            stackSummary = stackSummaryText(stack),
         )
     }
 }

@@ -12,6 +12,7 @@ data class ClockPlacement(
     val alignment: ClockAlignment,
     /** The divider position; in landscape, the clock pane's width. `null` until it has been dragged. */
     val zoneHeightDp: Float?,
+    /** The scale a clock without a saved box draws at ([com.facetlauncher.app.data.model.DEFAULT_CLOCK_SCALE]); the box on its page sets the size otherwise. */
     val scale: Float,
 )
 

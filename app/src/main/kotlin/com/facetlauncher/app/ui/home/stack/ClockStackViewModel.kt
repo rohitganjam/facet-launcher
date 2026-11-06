@@ -2,6 +2,7 @@ package com.facetlauncher.app.ui.home.stack
 
 import android.content.IntentSender
 import androidx.compose.runtime.Immutable
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.facetlauncher.app.data.ClockStackRepository
@@ -62,12 +63,13 @@ data class ClockStackUiState(
 }
 
 /**
- * The widget stack screen: the active facet's clock stack as a list to reorder, remove from, configure and add to.
+ * The widget stack screen: a facet's clock stack (the active one unless the route names another) as a list to reorder, remove from, configure and add to.
  * Replacing a page is on Home's sheet, not here.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class ClockStackViewModel @Inject constructor(
+    savedStateHandle: SavedStateHandle,
     private val settingsRepository: SettingsRepository,
     private val clockStackRepository: ClockStackRepository,
     private val appWidgetRepository: AppWidgetRepository,
@@ -77,8 +79,11 @@ class ClockStackViewModel @Inject constructor(
     @IoDispatcher ioDispatcher: CoroutineDispatcher,
 ) : ViewModel() {
 
+    /** The facet whose stack this is: the one in the route, else whichever is active. */
+    private val routeFacetId: Long? = savedStateHandle.get<Long>("facetId")?.takeIf { it != NO_ACTIVE_FACET_ID }
+
     val uiState: StateFlow<ClockStackUiState> = settingsRepository.settings
-        .map { it.activeFacetId }
+        .map { routeFacetId ?: it.activeFacetId }
         .distinctUntilChanged()
         .flatMapLatest { facetId ->
             combine(clockStackRepository.observe(facetId), entitlementRepository.isPro) { items, isPro ->
@@ -99,7 +104,7 @@ class ClockStackViewModel @Inject constructor(
     )
 
     /** Read when an action runs, not from [uiState] (which only holds a value while something collects it). */
-    private suspend fun activeFacetId() = settingsRepository.settings.first().activeFacetId
+    private suspend fun activeFacetId() = routeFacetId ?: settingsRepository.settings.first().activeFacetId
 
     fun reorder(orderedRowIds: List<Long>) {
         viewModelScope.launch { clockStackRepository.reorder(activeFacetId(), orderedRowIds) }

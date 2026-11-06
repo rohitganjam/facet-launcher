@@ -36,11 +36,9 @@ class WeatherSettingsTest {
     private val pune = WeatherCity("Pune", 18.52, 73.86, "Asia/Kolkata")
 
     @Test
-    fun `accessories and weather default to alarm and battery on, weather off, units automatic`() = runTest {
+    fun `weather defaults to off with units automatic`() = runTest {
         val settings = SettingsRepository(createDataStore()).settings.first()
 
-        assertTrue(settings.showNextAlarm)
-        assertTrue(settings.showBatteryPercentage)
         assertFalse(settings.showWeather)
         assertEquals(TemperatureUnit.AUTO, settings.temperatureUnit)
         assertEquals(WindSpeedUnit.AUTO, settings.windSpeedUnit)
@@ -52,16 +50,12 @@ class WeatherSettingsTest {
     }
 
     @Test
-    fun `the three accessory switches round-trip independently`() = runTest {
+    fun `the weather switch round-trips`() = runTest {
         val repository = SettingsRepository(createDataStore())
 
-        repository.setShowNextAlarm(false)
         repository.setShowWeather(true)
 
-        val settings = repository.settings.first()
-        assertFalse(settings.showNextAlarm)
-        assertTrue(settings.showBatteryPercentage)
-        assertTrue(settings.showWeather)
+        assertTrue(repository.settings.first().showWeather)
     }
 
     @Test

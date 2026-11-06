@@ -87,8 +87,6 @@ private object Keys {
     val RECENTLY_INSTALLED_POSITION = stringPreferencesKey("recently_installed_position")
     val ACTIVE_FACET_ID = longPreferencesKey("active_facet_id")
     val SHOW_ALL_DAY_EVENTS = booleanPreferencesKey("show_all_day_events")
-    val SHOW_CALENDAR_INDICATOR = booleanPreferencesKey("show_calendar_indicator")
-    val CALENDAR_ITEMS_TO_SHOW = intPreferencesKey("calendar_items_to_show")
     val SELECTED_CALENDAR_IDS = stringSetPreferencesKey("selected_calendar_ids")
     val CALENDAR_COLORS = stringSetPreferencesKey("calendar_colors")
     val SEARCH_CONTACTS_ENABLED = booleanPreferencesKey("search_contacts_enabled")
@@ -116,14 +114,6 @@ private object Keys {
     val APP_ROW_PRESENTATION = stringPreferencesKey("app_row_presentation")
     val LIST_CONTENT_MODE = stringPreferencesKey("list_content_mode")
     val APPS_TO_SHOW_COUNT = intPreferencesKey("apps_to_show_count")
-    val CLOCK_TEMPLATE_ID = stringPreferencesKey("clock_template_id")
-    val CLOCK_FONT_OPTION = stringPreferencesKey("clock_font_option")
-    val CLOCK_COLOR_OPTION = stringPreferencesKey("clock_color_option")
-    val CLOCK_ACCENT_COLOR_OPTION = stringPreferencesKey("clock_accent_color_option")
-    val CLOCK_SHOW_MERIDIEM = booleanPreferencesKey("clock_show_meridiem")
-    val CLOCK_DATE_STYLE = stringPreferencesKey("clock_date_style")
-    val SHOW_NEXT_ALARM = booleanPreferencesKey("show_next_alarm")
-    val SHOW_BATTERY_PERCENTAGE = booleanPreferencesKey("show_battery_percentage")
     val SHOW_WEATHER = booleanPreferencesKey("show_weather")
     val TEMPERATURE_UNIT = stringPreferencesKey("temperature_unit")
     val WIND_SPEED_UNIT = stringPreferencesKey("wind_speed_unit")
@@ -139,12 +129,10 @@ private object Keys {
     val HOME_APPS_FONT_WEIGHT = stringPreferencesKey("home_apps_font_weight")
     val CLOCK_ALIGNMENT = stringPreferencesKey("clock_alignment")
     val CLOCK_ZONE_HEIGHT_DP = floatPreferencesKey("clock_zone_height_dp")
-    val CLOCK_SCALE = floatPreferencesKey("clock_scale")
     val ALLOW_LANDSCAPE = booleanPreferencesKey("allow_landscape")
     val HIDE_STATUS_BAR = booleanPreferencesKey("hide_status_bar")
     val LANDSCAPE_CLOCK_ALIGNMENT = stringPreferencesKey("landscape_clock_alignment")
     val LANDSCAPE_CLOCK_ZONE_HEIGHT_DP = floatPreferencesKey("landscape_clock_zone_height_dp")
-    val LANDSCAPE_CLOCK_SCALE = floatPreferencesKey("landscape_clock_scale")
     val APP_LIST_VERTICAL_ALIGNMENT = stringPreferencesKey("app_list_vertical_alignment")
     val LANDSCAPE_APP_LIST_VERTICAL_ALIGNMENT = stringPreferencesKey("landscape_app_list_vertical_alignment")
     val APP_LIST_LAYOUT = stringPreferencesKey("app_list_layout")
@@ -198,9 +186,6 @@ class SettingsRepository @Inject constructor(
             } ?: defaults.recentlyInstalledPosition,
             activeFacetId = preferences[Keys.ACTIVE_FACET_ID] ?: defaults.activeFacetId,
             showAllDayEvents = preferences[Keys.SHOW_ALL_DAY_EVENTS] ?: defaults.showAllDayEvents,
-            showCalendarIndicator = preferences[Keys.SHOW_CALENDAR_INDICATOR] ?: defaults.showCalendarIndicator,
-            calendarItemsToShow = (preferences[Keys.CALENDAR_ITEMS_TO_SHOW] ?: defaults.calendarItemsToShow)
-                .coerceIn(CalendarDisplayOptions.MIN_ITEMS, CalendarDisplayOptions.MAX_ITEMS),
             selectedCalendarIds = preferences[Keys.SELECTED_CALENDAR_IDS],
             // "<calendar id>:<swatch>": split at the last colon, since a Work Profile calendar id ("work:1") has one of its own.
             calendarColors = preferences[Keys.CALENDAR_COLORS].orEmpty().mapNotNull { entry ->
@@ -243,19 +228,6 @@ class SettingsRepository @Inject constructor(
             listContentMode = preferences[Keys.LIST_CONTENT_MODE]?.let { runCatching { ListContentMode.valueOf(it) }.getOrNull() }
                 ?: defaults.listContentMode,
             appsToShowCount = preferences[Keys.APPS_TO_SHOW_COUNT] ?: defaults.appsToShowCount,
-            clockTemplateId = preferences[Keys.CLOCK_TEMPLATE_ID]?.let { runCatching { ClockTemplateId.valueOf(it) }.getOrNull() }
-                ?: defaults.clockTemplateId,
-            clockFontOption = preferences[Keys.CLOCK_FONT_OPTION]?.let { runCatching { ClockFontOption.valueOf(it) }.getOrNull() }
-                ?: defaults.clockFontOption,
-            clockColorOption = preferences[Keys.CLOCK_COLOR_OPTION]?.let { runCatching { ClockColorOption.valueOf(it) }.getOrNull() }
-                ?: defaults.clockColorOption,
-            clockAccentColorOption = preferences[Keys.CLOCK_ACCENT_COLOR_OPTION]?.let { runCatching { ClockColorOption.valueOf(it) }.getOrNull() }
-                ?: defaults.clockAccentColorOption,
-            clockShowMeridiem = preferences[Keys.CLOCK_SHOW_MERIDIEM] ?: defaults.clockShowMeridiem,
-            clockDateStyle = preferences[Keys.CLOCK_DATE_STYLE]?.let { runCatching { ClockDateStyle.valueOf(it) }.getOrNull() }
-                ?: defaults.clockDateStyle,
-            showNextAlarm = preferences[Keys.SHOW_NEXT_ALARM] ?: defaults.showNextAlarm,
-            showBatteryPercentage = preferences[Keys.SHOW_BATTERY_PERCENTAGE] ?: defaults.showBatteryPercentage,
             showWeather = preferences[Keys.SHOW_WEATHER] ?: defaults.showWeather,
             temperatureUnit = preferences[Keys.TEMPERATURE_UNIT]?.let { runCatching { TemperatureUnit.valueOf(it) }.getOrNull() }
                 ?: defaults.temperatureUnit,
@@ -276,7 +248,6 @@ class SettingsRepository @Inject constructor(
             clockAlignment = preferences[Keys.CLOCK_ALIGNMENT]?.let { runCatching { ClockAlignment.valueOf(it) }.getOrNull() }
                 ?: defaults.clockAlignment,
             clockZoneHeightDp = preferences[Keys.CLOCK_ZONE_HEIGHT_DP],
-            clockScale = preferences[Keys.CLOCK_SCALE] ?: defaults.clockScale,
             allowLandscape = preferences[Keys.ALLOW_LANDSCAPE] ?: defaults.allowLandscape,
             hideStatusBar = preferences[Keys.HIDE_STATUS_BAR] ?: defaults.hideStatusBar,
             landscape = preferences.toLandscapeOverrides(),
@@ -370,13 +341,7 @@ class SettingsRepository @Inject constructor(
         dataStore.edit { it[Keys.SHOW_ALL_DAY_EVENTS] = enabled }
     }
 
-    suspend fun setShowCalendarIndicator(enabled: Boolean) {
-        dataStore.edit { it[Keys.SHOW_CALENDAR_INDICATOR] = enabled }
-    }
 
-    suspend fun setCalendarItemsToShow(count: Int) {
-        dataStore.edit { it[Keys.CALENDAR_ITEMS_TO_SHOW] = count.coerceIn(CalendarDisplayOptions.MIN_ITEMS, CalendarDisplayOptions.MAX_ITEMS) }
-    }
 
     suspend fun setSearchBarPosition(position: SearchBarPosition) {
         dataStore.edit { it[Keys.SEARCH_BAR_POSITION] = position.name }
@@ -501,38 +466,13 @@ class SettingsRepository @Inject constructor(
         dataStore.edit { it[Keys.APPS_TO_SHOW_COUNT] = count.coerceIn(AppListLimits.MIN_APPS_TO_SHOW, AppListLimits.MAX_APPS_TO_SHOW) }
     }
 
-    suspend fun setClockTemplateId(templateId: ClockTemplateId) {
-        dataStore.edit { it[Keys.CLOCK_TEMPLATE_ID] = templateId.name }
-    }
 
-    suspend fun setClockFontOption(fontOption: ClockFontOption) {
-        dataStore.edit { it[Keys.CLOCK_FONT_OPTION] = fontOption.name }
-    }
 
-    suspend fun setClockColorOption(colorOption: ClockColorOption) {
-        dataStore.edit { it[Keys.CLOCK_COLOR_OPTION] = colorOption.name }
-    }
 
-    /** See [LauncherSettings.clockAccentColorOption]. */
-    suspend fun setClockAccentColorOption(colorOption: ClockColorOption) {
-        dataStore.edit { it[Keys.CLOCK_ACCENT_COLOR_OPTION] = colorOption.name }
-    }
 
-    suspend fun setClockShowMeridiem(enabled: Boolean) {
-        dataStore.edit { it[Keys.CLOCK_SHOW_MERIDIEM] = enabled }
-    }
 
-    suspend fun setClockDateStyle(dateStyle: ClockDateStyle) {
-        dataStore.edit { it[Keys.CLOCK_DATE_STYLE] = dateStyle.name }
-    }
 
-    suspend fun setShowNextAlarm(enabled: Boolean) {
-        dataStore.edit { it[Keys.SHOW_NEXT_ALARM] = enabled }
-    }
 
-    suspend fun setShowBatteryPercentage(enabled: Boolean) {
-        dataStore.edit { it[Keys.SHOW_BATTERY_PERCENTAGE] = enabled }
-    }
 
     suspend fun setShowWeather(enabled: Boolean) {
         dataStore.edit { it[Keys.SHOW_WEATHER] = enabled }
@@ -624,11 +564,6 @@ class SettingsRepository @Inject constructor(
         }
     }
 
-    suspend fun setClockScale(scale: Float) {
-        dataStore.edit {
-            it[Keys.CLOCK_SCALE] = scale
-        }
-    }
 
     /** Changes the launcher-wide landscape values in one write; a `null` field is removed ("same as portrait"). */
     suspend fun updateLandscape(transform: (LandscapeOverrides) -> LandscapeOverrides) {
@@ -716,7 +651,6 @@ private fun MutablePreferences.writeWeatherCity(city: WeatherCity?) {
 private fun Preferences.toLandscapeOverrides() = LandscapeOverrides(
     clockAlignment = this[Keys.LANDSCAPE_CLOCK_ALIGNMENT]?.let { runCatching { ClockAlignment.valueOf(it) }.getOrNull() },
     clockZoneHeightDp = this[Keys.LANDSCAPE_CLOCK_ZONE_HEIGHT_DP],
-    clockScale = this[Keys.LANDSCAPE_CLOCK_SCALE],
     appRowPosition = this[Keys.LANDSCAPE_APP_ROW_POSITION]?.let { runCatching { AppRowPosition.valueOf(it) }.getOrNull() },
     appListVerticalAlignment = this[Keys.LANDSCAPE_APP_LIST_VERTICAL_ALIGNMENT]?.let { runCatching { AppListVerticalAlignment.valueOf(it) }.getOrNull() },
     appListColumnAlignment = this[Keys.LANDSCAPE_APP_LIST_COLUMN_ALIGNMENT]?.let { runCatching { AppListColumnAlignment.valueOf(it) }.getOrNull() },
@@ -726,7 +660,6 @@ private fun Preferences.toLandscapeOverrides() = LandscapeOverrides(
 private fun MutablePreferences.writeLandscape(overrides: LandscapeOverrides) {
     setOrRemove(Keys.LANDSCAPE_CLOCK_ALIGNMENT, overrides.clockAlignment?.name)
     setOrRemove(Keys.LANDSCAPE_CLOCK_ZONE_HEIGHT_DP, overrides.clockZoneHeightDp)
-    setOrRemove(Keys.LANDSCAPE_CLOCK_SCALE, overrides.clockScale)
     setOrRemove(Keys.LANDSCAPE_APP_ROW_POSITION, overrides.appRowPosition?.name)
     setOrRemove(Keys.LANDSCAPE_APP_LIST_VERTICAL_ALIGNMENT, overrides.appListVerticalAlignment?.name)
     setOrRemove(Keys.LANDSCAPE_APP_LIST_COLUMN_ALIGNMENT, overrides.appListColumnAlignment?.name)

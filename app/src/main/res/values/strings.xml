@@ -243,7 +243,7 @@
     <string name="gesture_hint_widgets">Widgets</string>
     <string name="gesture_hint_all_your_apps">All your apps</string>
     <string name="gesture_hint_arrow_up">↑</string>
-    <string name="gesture_hint_clock_hold">Press and hold the clock to resize or move it</string>
+    <string name="gesture_hint_clock_hold">Press and hold a widget to resize or move it</string>
     <string name="gesture_hint_got_it">Got it</string>
 
     <!-- FacetScopeBadge -->
@@ -294,6 +294,7 @@
         <item quantity="one">%1$d calendar selected</item>
         <item quantity="other">%1$d calendars selected</item>
     </plurals>
+    <string name="settings_calendars_all">All calendars</string>
     <string name="settings_all_day_events_visible">All-day events visible</string>
     <string name="settings_all_day_events_hidden">All-day events hidden</string>
     <string name="settings_dock_title">Dock</string>
@@ -878,7 +879,7 @@
     </plurals>
     <string name="facet_carousel_reorder">Reorder</string>
     <string name="facet_carousel_launcher_settings">Launcher settings</string>
-    <string name="facet_carousel_launcher_settings_subtitle">Appearance, Default clock, favorites, drawer and more</string>
+    <string name="facet_carousel_launcher_settings_subtitle">Appearance, favorites, drawer and more</string>
     <string name="facet_carousel_active">Active</string>
     <string name="facet_carousel_no_favorites">No favorites yet</string>
     <string name="preview_media_title">Now playing</string>
@@ -910,6 +911,9 @@
         <item quantity="other">%1$d apps</item>
     </plurals>
     <string name="facet_settings_dock_settings_title">Dock settings</string>
+    <string name="facet_settings_section_home">Home</string>
+    <string name="facet_settings_widgets_title">Widgets</string>
+    <string name="facet_settings_widgets_subtitle">What sits at the top of this facet\'s Home</string>
     <string name="facet_settings_appearance_title">Appearance</string>
     <string name="facet_settings_appearance_clock_label">%1$s clock</string>
     <string name="facet_settings_appearance_dock_icons">Dock icons</string>
@@ -932,14 +936,18 @@
     <string name="clock_style_date_style">Date style</string>
     <string name="clock_style_position_section">POSITION</string>
     <string name="clock_style_tap_to_select">CLOCK STYLES — TAP TO SELECT</string>
-    <string name="clock_style_long_press_hint">Long-press clock on home screen to adjust size and vertical position.</string>
+    <string name="clock_style_long_press_hint">Press and hold the clock on Home to adjust its size and position.</string>
     <string name="clock_style_applied">Applied</string>
     <string name="clock_style_reset_position">Reset clock widget position</string>
 
-    <!-- ClockAdjustSheet ("Launcher settings"/its subtitle reuse facet_carousel_launcher_settings/
+    <!-- HomeSheets ("Launcher settings"/its subtitle reuse facet_carousel_launcher_settings/
          facet_carousel_launcher_settings_subtitle; "Facet settings" reuses facet_carousel_facet_settings) -->
-    <string name="clock_adjust_adjust_size_position">Adjust clock size &amp; position</string>
-    <string name="clock_adjust_size_position_subtitle">Resize or reposition the clock</string>
+    <string name="widget_sheet_adjust_label">Adjust widget size &amp; position</string>
+    <string name="widget_sheet_adjust_subtitle">Resize or reposition the widget</string>
+    <string name="widget_sheet_settings">%1$s settings</string>
+    <string name="widget_sheet_weather_settings_subtitle">Where the forecast is for</string>
+    <string name="widget_sheet_agenda_settings_subtitle">Which calendars and events show</string>
+    <string name="hub_grid_configure_widget">Configure widget</string>
     <string name="clock_adjust_alignment_heading">Alignment</string>
     <string name="clock_adjust_align_left">Align left</string>
     <string name="clock_adjust_align_center">Align center</string>
@@ -947,21 +955,23 @@
     <string name="clock_adjust_align_top">Align top</string>
     <string name="clock_adjust_align_middle">Align middle</string>
     <string name="clock_adjust_align_bottom">Align bottom</string>
-    <string name="clock_adjust_clock_settings">Clock &amp; calendar settings</string>
-    <string name="clock_adjust_clock_settings_subtitle">Templates, fonts, colors, calendar</string>
-    <string name="clock_adjust_facet_settings_subtitle">Facet-specific apps list, dock, clock &amp; calendar settings</string>
+    <string name="home_sheet_facet_settings_subtitle">Facet-specific widgets, apps list and dock</string>
     <!-- PRD F15 — replaces this facet's native clock with a hosted third-party AppWidget -->
-    <string name="clock_adjust_replace_with_widget">Replace with custom widget</string>
-    <string name="clock_adjust_replace_with_widget_subtitle">Swap the clock for a widget of your choice</string>
-    <string name="clock_adjust_replace_with_clock">Replace with clock</string>
-    <string name="clock_adjust_replace_with_clock_subtitle">Use Facet\'s own clock on this page</string>
-    <string name="clock_adjust_replace_widget">Replace custom widget</string>
-    <string name="clock_adjust_replace_widget_subtitle">Choose a different widget for this page</string>
-    <string name="clock_adjust_widget_stack">Widget stack</string>
-    <string name="clock_adjust_stack_empty">Empty · add a clock or a widget</string>
-    <string name="clock_adjust_stack_clock">Clock</string>
-    <string name="clock_adjust_stack_one_widget">1 widget</string>
-    <string name="clock_adjust_stack_pages">%1$d pages</string>
+    <string name="widget_sheet_replace">Replace widget</string>
+    <string name="widget_sheet_replace_subtitle">Choose a different widget for this page</string>
+    <string name="widget_sheet_remove">Remove widget</string>
+    <string name="widget_sheet_remove_subtitle">Take this page off the stack</string>
+    <string name="home_sheet_add_widget">Add widget</string>
+    <string name="home_sheet_add_widget_subtitle">Choose a widget for the top of Home</string>
+    <string name="clock_style_sheet_styles">Clock styles</string>
+    <string name="clock_style_sheet_styles_subtitle">Template, font, colors, time and date</string>
+    <string name="clock_style_sheet_calendar">Calendar settings</string>
+    <string name="clock_style_sheet_calendar_subtitle">Which calendars show under the clock</string>
+    <string name="widget_sheet_stack">Widget stack</string>
+    <string name="widget_sheet_stack_empty">Empty · add a clock or a widget</string>
+    <string name="widget_sheet_stack_clock">Clock</string>
+    <string name="widget_sheet_stack_one_widget">1 widget</string>
+    <string name="widget_sheet_stack_pages">%1$d pages</string>
     <!-- ClockStackScreen (the widget stack: reorder, remove, configure, add) -->
     <string name="clock_stack_title">Widget stack</string>
     <string name="clock_stack_counter">%1$d of %2$d</string>
@@ -1198,6 +1208,7 @@
 
     <!-- About: credits -->
     <string name="about_weather_credit">Weather data from MET Norway (CC BY 4.0). City names from GeoNames (CC BY 4.0).</string>
+    <string name="native_widget_clock">Clock</string>
     <string name="native_widget_weather">Weather</string>
     <string name="native_widget_agenda">Agenda</string>
     <string name="native_widget_now_playing">Now playing</string>
