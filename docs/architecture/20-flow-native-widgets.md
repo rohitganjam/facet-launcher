@@ -114,7 +114,7 @@ still shows its empty text while that place loads.
 
 ## 4. Adding, replacing, removing
 
-- **Pickers.** Both `HubWidgetPickerContent` screens list a "Facet widgets" section (`NativeWidgetPickerSection`, each type The Home picker (`ClockWidgetPickerScreen`) also offers the **Clock** first in that section while the facet has none (`clockAvailable`, from `HomeDrawerRoute`), through `ClockWidgetPickerViewModel.onClockSelect` (replace the page with the clock, or append it); the Hub picker never does.
+- **Pickers.** Both `HubWidgetPickerContent` screens list a "Facet widgets" section (`NativeWidgetPickerSection`: one header with a count, then a bordered tile per type like an installed widget's, its sample scaled to fit and its name below, two tiles per row as in the app groups). The Home picker (`ClockWidgetPickerScreen`) also offers the **Clock** first in that section while the facet has none (`clockAvailable`, from `HomeDrawerRoute`), through `ClockWidgetPickerViewModel.onClockSelect` (replace the page with the clock, or append it); the Hub picker never does.
   drawn at its default size with sample data) above the installed apps' widgets.
 - **Hub.** `HubWidgetPickerViewModel.onNativeWidgetSelect` places it at `defaultSpan` through `PlaceWidgetUseCase` with
   `nextNativeId()`; there is no bind or configure step. The 20-widget cap still applies.
