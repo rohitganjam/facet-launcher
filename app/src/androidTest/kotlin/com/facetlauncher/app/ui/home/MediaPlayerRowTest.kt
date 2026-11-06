@@ -5,6 +5,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toPixelMap
 import androidx.compose.ui.test.captureToImage
@@ -12,6 +13,7 @@ import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.height
 import androidx.compose.ui.unit.width
+import androidx.compose.foundation.layout.width as layoutWidth
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
@@ -218,4 +220,48 @@ class MediaPlayerRowTest {
     private companion object {
         const val INK_THRESHOLD = 0.08f
     }
+
+    @Test
+    fun aTitleTooLongForTheRowScrolls() {
+        // Given a narrow row with the clock paused
+        composeRule.mainClock.autoAdvance = false
+        val longTitle = "A very long track title that cannot possibly fit in the space it is given on the home screen"
+        val state = track.copy(title = longTitle)
+        composeRule.setContent {
+            FacetLauncherTheme {
+                androidx.compose.foundation.layout.Box(Modifier.layoutWidth(220.dp)) {
+                    MediaPlayerRow(state = state, showSkipButtons = true, onPrevious = {}, onPlayPause = {}, onNext = {}, onOpen = {})
+                }
+            }
+        }
+        composeRule.mainClock.advanceTimeByFrame()
+
+        // When the marquee's start delay and some scrolling pass
+        val before = composeRule.onNodeWithTag("home_media_title", useUnmergedTree = true).captureToImage().toPixels()
+        composeRule.mainClock.advanceTimeBy(4_000)
+        val after = composeRule.onNodeWithTag("home_media_title", useUnmergedTree = true).captureToImage().toPixels()
+
+        // Then the long title has moved
+        assertTrue("the long title should scroll", !before.contentEquals(after))
+    }
+
+    @Test
+    fun aTitleThatFitsTheRowStaysPut() {
+        // Given a row wide enough for the title, with the clock paused
+        composeRule.mainClock.autoAdvance = false
+        composeRule.setContent {
+            FacetLauncherTheme { MediaPlayerRow(state = track, showSkipButtons = true, onPrevious = {}, onPlayPause = {}, onNext = {}, onOpen = {}) }
+        }
+        composeRule.mainClock.advanceTimeByFrame()
+
+        // When time passes
+        val before = composeRule.onNodeWithTag("home_media_title", useUnmergedTree = true).captureToImage().toPixels()
+        composeRule.mainClock.advanceTimeBy(4_000)
+        val after = composeRule.onNodeWithTag("home_media_title", useUnmergedTree = true).captureToImage().toPixels()
+
+        // Then it has not moved
+        assertTrue("a short title should stay put", before.contentEquals(after))
+    }
+
+    private fun androidx.compose.ui.graphics.ImageBitmap.toPixels() = IntArray(width * height).also { readPixels(it) }
 }

@@ -2,6 +2,7 @@ package com.facetlauncher.app.ui.nativewidget
 
 import android.content.res.Configuration
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -89,7 +90,7 @@ private fun TallPlayer(player: MediaPlayerState, size: DpSize, showSkip: Boolean
 @Composable
 private fun TrackText(player: MediaPlayerState, onOpen: () -> Unit, horizontalAlignment: Alignment.Horizontal, modifier: Modifier = Modifier) {
     Column(modifier = modifier.clickable(onClick = onOpen), horizontalAlignment = horizontalAlignment, verticalArrangement = Arrangement.spacedBy(2.dp)) {
-        Text(player.title, style = MaterialTheme.typography.titleSmall, color = Ink, maxLines = 1, overflow = TextOverflow.Ellipsis,)
+        Text(player.title, style = MaterialTheme.typography.titleSmall, color = Ink, maxLines = 1, softWrap = false, modifier = Modifier.basicMarquee(iterations = Int.MAX_VALUE))
         player.artist?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = Muted, maxLines = 1, overflow = TextOverflow.Ellipsis) }
     }
 }
