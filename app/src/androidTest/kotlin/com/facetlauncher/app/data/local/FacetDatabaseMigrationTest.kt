@@ -1134,6 +1134,49 @@ class FacetDatabaseMigrationTest {
         assertEquals(launcherClock, clockOf(dbV44, 2))
     }
 
+    @Test
+    fun migration37To44KeepsAPopulatedDatabaseAndMovesEachClockOntoItsPage() {
+        // Given a v37 database holding facets with clock overrides and a hosted widget placement
+        helper.createDatabase(TEST_DB, 32).also {
+            insertFacetV27(it, id = 1, name = "Work")
+            insertFacetV27(it, id = 2, name = "Home")
+        }.close()
+        helper.runMigrationsAndValidate(
+            TEST_DB, 37, true,
+            Migrations.MIGRATION_32_33, Migrations.MIGRATION_33_34, Migrations.MIGRATION_34_35, Migrations.MIGRATION_35_36,
+            Migrations.MIGRATION_36_37,
+        ).also {
+            it.execSQL(
+                "UPDATE facets SET overrideClock = 1, clockTemplateId = 'LIGHT_STACK', use24HourTime = 0, overrideCalendar = 1, " +
+                    "selectedCalendarIdsCsv = '3,4', calendarItemsToShow = 4, clockAlignment = 'RIGHT' WHERE id = 1",
+            )
+            it.execSQL(
+                "INSERT INTO widget_placements (appWidgetId, providerPackageName, providerClassName, row, col, colSpan, rowSpan, profile, userId) " +
+                    "VALUES (5, 'com.example.widget', '.WidgetProvider', 1, 2, 2, 2, 'PERSONAL', -1)",
+            )
+            it.close()
+        }
+
+        // When migrating the whole way to v44 (Room validates the result against the exported v44 schema)
+        val dbV44 = helper.runMigrationsAndValidate(
+            TEST_DB, 44, true,
+            Migrations.MIGRATION_37_38, Migrations.MIGRATION_38_39, Migrations.MIGRATION_39_40, Migrations.MIGRATION_40_41,
+            Migrations.MIGRATION_41_42, Migrations.migration42To43 { launcherClock },
+        )
+
+        // Then the facets and the widget placement survived, and each facet's clock page holds the settings it showed
+        assertEquals(2, dbV44.query("SELECT COUNT(*) FROM facets").use { it.moveToFirst(); it.getInt(0) })
+        dbV44.query("SELECT appWidgetId, row, col FROM widget_placements").use {
+            assertTrue(it.moveToFirst())
+            assertEquals(listOf(5, 1, 2), listOf(it.getInt(0), it.getInt(1), it.getInt(2)))
+        }
+        val own = clockOf(dbV44, 1)!!
+        assertEquals(ClockTemplateId.LIGHT_STACK, own.templateId)
+        assertEquals(false, own.use24HourTime)
+        assertEquals(setOf("3", "4"), own.calendar.calendarIds)
+        assertEquals(launcherClock, clockOf(dbV44, 2))
+    }
+
     /** A v27 facet row — the v25 shape plus the two calendar-display columns, which a freshly created database has no defaults for. */
     private fun insertFacetV27(db: androidx.sqlite.db.SupportSQLiteDatabase, id: Long, name: String) {
         insertFacetV25Columns(db, id, name, extraColumns = ", showCalendarIndicator, calendarItemsToShow", extraValues = ", 1, 3")
