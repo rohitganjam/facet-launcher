@@ -102,7 +102,7 @@ With two or more clock pages the portrait list also moves down by `CLOCK_PAGE_DO
 
 ## 4. Landscape adjust mode
 
-Long-pressing free space opens the Home sheet, whose first row is "Adjust clock size & position" ([12](12-flow-drawer-search-and-app-actions.md) §4; a long-press on the clock itself opens the clock's own two-row sheet instead). The controls:
+Long-pressing a widget (the clock, the events under it, a Facet widget or a hosted one) opens that widget's sheet, whose "Adjust widget size & position" row enters adjust mode ([12](12-flow-drawer-search-and-app-actions.md) §4); the free-space Home sheet has no such row. The controls:
 
 - **Divider handle.** `ClockZoneHandle(dragOrientation = Horizontal)`: a full-height rail in the gap
   between the panes, dragged left and right. The pane width is saved in landscape's own
@@ -158,7 +158,7 @@ facet-preview cards, and gesture thresholds for a short window.
 
 ## 5. Who owns the placement
 
-A facet's clock placement (alignment, scale, divider, landscape twins) is always set from this screen, never from
+A facet's clock placement (alignment, divider height, landscape twins; the size is the clock page's dp box) is always set from this screen, never from
 Settings, and never inherited by choice. `CommitClockPlacementUseCase` saves each adjust-mode commit to the active
 facet: on the first one it copies the placement the facet is showing (the launcher's fallback) into the facet in both
 orientations and sets `facets.clockPlacementOwn`, so changing one value does not move the others. A widget page keeps

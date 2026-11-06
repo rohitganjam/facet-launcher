@@ -52,8 +52,8 @@ flowchart TB
   `TextActionButton` (M3 `TextButton`), all pills. The same kit lays out `SettingsScreen`,
   `FacetSettingsScreen`, `FoldersSettingsScreen`, `BackupRestoreScreen`, `HomeSheets` and the
   carousel's Launcher settings row.
-- **`FacetSettingsScreen` is a plain nav list** — a Rename row, an "Appearance" card (the
-  Appearance row), then an "Apps and folders" card with Apps list / Dock rows, mirroring `SettingsScreen`'s own
+- **`FacetSettingsScreen` is a plain nav list** — a Rename row, a Home card (Widgets, and
+  Dock & Apps appearance), then an "Apps and folders" card with Apps list / Dock rows, mirroring `SettingsScreen`'s own
   layout: tonal `SettingsCard`s (28dp, no shadow or border), a `SettingsIconBadge` on each row in
   the same hue as on Settings, inset dividers, no chevrons. It no longer hosts any Inherit/Override switch itself; each destination screen owns its
   own (`InheritOverrideCard`, `controlsEnabled = !isFacetScoped || isOverriding`) so the toggle

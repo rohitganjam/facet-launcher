@@ -301,7 +301,7 @@ gets corner resize handles, a full-width height handle (`ClockZoneHandle`, 48dp 
 `ClockAdjustToolbar` — an "Alignment" pill with left / center / right. The toolbar sits *below* the height
 handle (strip + `CLOCK_ADJUST_TOOLBAR_GAP`), not under the clock: the clock block is pinned only 24dp
 (`HOME_CLOCK_MIN_GAP`) above the handle, too little room for it. It writes through
-`HomeViewModel.onClockAlignmentCommit` to the facet: the clock page's alignment, scale and divider height are the facet's own (`CommitClockPlacementUseCase`, copy-on-first-adjust, see [17](17-flow-home-layout.md)), and a widget page saves its own alignment against its stack item. The Clock Style screen has no alignment row any more. Changing alignment re-clamps an oversized clock through the existing `clockAlignment`-keyed effect. The
+`HomeViewModel.onClockAlignmentCommit` to the facet: the clock page's alignment and divider height are the facet's own (its size is the page's dp box) (`CommitClockPlacementUseCase`, copy-on-first-adjust, see [17](17-flow-home-layout.md)), and a widget page saves its own alignment against its stack item. The Clock Style screen has no alignment row any more. Changing alignment re-clamps an oversized clock through the existing `clockAlignment`-keyed effect. The
 toolbar dims to 25% and its options are disabled while any handle or resize drag is active, and becomes usable again
 ~200ms after release, so a thumb coming off the handle can't tap it (it stays composed, so it doesn't pop in and out).
 It swallows taps on its own surface even when disabled, because Home's root exits adjust mode on any tap that reaches

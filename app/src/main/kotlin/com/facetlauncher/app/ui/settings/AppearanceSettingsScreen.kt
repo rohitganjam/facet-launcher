@@ -60,7 +60,7 @@ import com.facetlauncher.app.ui.theme.SurfaceContainer
 
 /**
  * Settings → Appearance (`3c`) — a live preview of Home, then a section per area, each a short list of rows that open their own screen:
- * Clock & calendar (clock style, calendars to display), Dock & home ("Dock & Apps appearance" → [DockAppsAppearanceScreen]),
+ * Dock & home ("Dock & Apps appearance" → [DockAppsAppearanceScreen]),
  * Notifications (global only → the Notifications page) and Look & Feel (global only: "General settings" → [ThemesAndColorsScreen], "Fonts" → [FontsScreen], "Icons" → [IconsScreen]).
  */
 @Composable

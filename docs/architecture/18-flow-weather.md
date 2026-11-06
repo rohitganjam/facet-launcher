@@ -121,7 +121,7 @@ header, when sent, sets the earliest next attempt.
 
 - **`WeatherViewModel`** (`ui/home/weather/`) feeds the clock accessory and the weather sheet, and is the only consumer of `ObserveClockWeatherUseCase`
   and `RefreshWeatherUseCase`. `ObserveClockWeatherUseCase` shows the launcher-wide forecast (`ObserveWeatherUseCase`), unless the active facet overrides
-  the clock with a location of its own (`Facet.clockWeatherLocation`, set in that facet's clock settings with `WeatherLocationPicker`, the control a widget's settings use too; `null` follows Weather settings). That place is
+  the clock with a location of its own (`ClockWidgetConfig.weatherLocation`, on the clock's page, set in the clock's accessories settings with `WeatherLocationPicker`, the control a widget's settings use too; `null` follows Weather settings). That place is
   resolved through `NativeWidgetOverrideResolver`, exactly as a Weather widget's is (one forecast per place, shared), and the launcher's own forecast is
   used again whenever it already covers that place. For such a facet the sheet's Refresh and Home's resume re-resolve the place (`refreshOwn`, still gated)
   instead of running `RefreshWeatherUseCase`, and with no position allowed the sheet gets the "needs location permission" notice. The clock's weather sheet has the same 3-dot as a widget's; it opens the active facet's Clock accessories (`HomeDrawerRoute.onNavigateToClockAccessories`), where the Location card and the link to Weather settings follow the Icons card.

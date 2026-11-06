@@ -447,7 +447,7 @@ class AppearanceSettingsViewModelTest {
         assertEquals(true, viewModel.uiState.value.calendarAccessGranted)
     }
 
-    // --- calendar row summary (the "Calendars to display" row lives in Appearance now) ---
+    // --- helpers ---
 
     private fun facetWithClock(config: ClockWidgetConfig) = Facet(
         id = 1L, name = "Work", position = 0,
