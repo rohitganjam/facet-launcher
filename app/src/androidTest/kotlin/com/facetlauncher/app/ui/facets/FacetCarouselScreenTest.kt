@@ -754,7 +754,7 @@ class FacetCarouselScreenTest {
 
         // Then the row renders its title + subtitle
         composeRule.onNodeWithText("Launcher settings").assertExists()
-        composeRule.onNodeWithText("Appearance, Default clock, favorites, drawer and more").assertExists()
+        composeRule.onNodeWithText("Appearance, favorites, drawer and more").assertExists()
 
         // When tapping the "Launcher settings" row below the carousel
         composeRule.onNodeWithTag("facet_carousel_launcher_settings").performClick()
