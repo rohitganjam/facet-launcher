@@ -108,25 +108,7 @@ fun WidgetSheetContent(
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         when (target) {
-            WidgetSheetTarget.Clock -> SettingsCard(fullBleedRows = true) {
-                AdjustRow(
-                    icon = Icons.Outlined.Palette,
-                    hue = SettingsSectionHue.APPEARANCE,
-                    label = stringResource(R.string.clock_style_sheet_styles),
-                    subtitle = stringResource(R.string.clock_style_sheet_styles_subtitle),
-                    onClick = onClockStylesClick,
-                    testTag = "clock_style_sheet_styles",
-                )
-                CardDivider(startInset = SettingsIconBadgeInset)
-                AdjustRow(
-                    icon = Icons.Outlined.CalendarMonth,
-                    hue = SettingsSectionHue.APPEARANCE,
-                    label = stringResource(R.string.clock_style_sheet_calendar),
-                    subtitle = stringResource(R.string.clock_style_sheet_calendar_subtitle),
-                    onClick = onCalendarSettingsClick,
-                    testTag = "clock_style_sheet_calendar",
-                )
-            }
+            WidgetSheetTarget.Clock -> ClockSettingsCard(onClockStylesClick, onCalendarSettingsClick)
             is WidgetSheetTarget.Native -> if (target.type.hasSettings) {
                 SettingsCard(fullBleedRows = true) {
                     AdjustRow(
@@ -169,6 +151,30 @@ private fun WidgetStackRow(stackSummary: String, onWidgetStackClick: () -> Unit)
         onClick = onWidgetStackClick,
         testTag = "widget_sheet_stack",
     )
+}
+
+/** The clock's two settings screens: its styles, and the calendar under it. Shared by Home's widget sheet and the widget stack's Configure. */
+@Composable
+internal fun ClockSettingsCard(onClockStylesClick: () -> Unit, onCalendarSettingsClick: () -> Unit) {
+    SettingsCard(fullBleedRows = true) {
+            AdjustRow(
+                icon = Icons.Outlined.Palette,
+                hue = SettingsSectionHue.APPEARANCE,
+                label = stringResource(R.string.clock_style_sheet_styles),
+                subtitle = stringResource(R.string.clock_style_sheet_styles_subtitle),
+                onClick = onClockStylesClick,
+                testTag = "clock_style_sheet_styles",
+            )
+            CardDivider(startInset = SettingsIconBadgeInset)
+            AdjustRow(
+                icon = Icons.Outlined.CalendarMonth,
+                hue = SettingsSectionHue.APPEARANCE,
+                label = stringResource(R.string.clock_style_sheet_calendar),
+                subtitle = stringResource(R.string.clock_style_sheet_calendar_subtitle),
+                onClick = onCalendarSettingsClick,
+                testTag = "clock_style_sheet_calendar",
+            )
+        }
 }
 
 @Composable

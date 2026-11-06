@@ -72,7 +72,9 @@ import com.facetlauncher.app.ui.components.TextActionButton
 import com.facetlauncher.app.ui.components.ThemedModalBottomSheet
 import com.facetlauncher.app.ui.nativewidget.config.NativeWidgetConfigSheet
 import com.facetlauncher.app.ui.components.rememberDragReorderState
+import com.facetlauncher.app.ui.home.ClockSettingsCard
 import com.facetlauncher.app.ui.home.widget.ClockWidgetPickerScreen
+import com.facetlauncher.app.ui.settings.CalendarSettingsSheet
 import com.facetlauncher.app.ui.home.widget.ClockWidgetPickerTarget
 import com.facetlauncher.app.ui.settings.ClickableRow
 import com.facetlauncher.app.ui.theme.Accent
@@ -106,6 +108,7 @@ fun ClockStackScreen(
     val scope = rememberCoroutineScope()
     var showPicker by remember { mutableStateOf(false) }
     var showChooser by remember { mutableStateOf(false) }
+    var clockSheet by remember { mutableStateOf(ClockSheet.NONE) }
     // The settings of a widget just added, opened over this screen.
     var configureRef by remember { mutableStateOf<NativeWidgetRef?>(null) }
     // A widget's own configure screen: nothing to read back, the host view redraws itself.
@@ -120,7 +123,7 @@ fun ClockStackScreen(
             onConfigure = { row ->
                 val sender = row.appWidgetId?.let { viewModel.configureSender(it) }
                 when {
-                    row.kind == ClockStackItemKind.CLOCK -> onOpenClockStyle(uiState.facetId)
+                    row.kind == ClockStackItemKind.CLOCK -> clockSheet = ClockSheet.CONFIGURE
                     sender != null -> configureLauncher.launch(IntentSenderRequest.Builder(sender).build())
                 }
             },
@@ -147,6 +150,8 @@ fun ClockStackScreen(
 
     configureRef?.let { ref -> NativeWidgetConfigSheet(ref = ref, onDismiss = { configureRef = null }) }
 
+    ClockConfigureSheets(uiState.facetId, clockSheet, onSheetChange = { clockSheet = it }, onOpenClockStyle = onOpenClockStyle)
+
     if (showChooser) {
         AddChooserSheet(
             onDismiss = { showChooser = false },
@@ -160,6 +165,28 @@ fun ClockStackScreen(
             },
         )
     }
+}
+
+/** Which of the launcher clock's Configure sheets is open. */
+private enum class ClockSheet { NONE, CONFIGURE, CALENDAR }
+
+/** The launcher clock's Configure: a sheet offering its styles (a full screen) and its calendar settings (a second sheet). */
+@Composable
+private fun ClockConfigureSheets(facetId: Long, sheet: ClockSheet, onSheetChange: (ClockSheet) -> Unit, onOpenClockStyle: (facetId: Long) -> Unit) {
+    if (sheet == ClockSheet.CONFIGURE) {
+        ThemedModalBottomSheet(onDismissRequest = { onSheetChange(ClockSheet.NONE) }, skipPartiallyExpanded = true, containerColor = SurfaceContainer) {
+            Column(modifier = Modifier.fillMaxWidth().padding(start = 24.dp, end = 24.dp, top = 4.dp, bottom = 16.dp).testTag("clock_stack_clock_sheet")) {
+                ClockSettingsCard(
+                    onClockStylesClick = {
+                        onSheetChange(ClockSheet.NONE)
+                        onOpenClockStyle(facetId)
+                    },
+                    onCalendarSettingsClick = { onSheetChange(ClockSheet.CALENDAR) },
+                )
+            }
+        }
+    }
+    if (sheet == ClockSheet.CALENDAR) CalendarSettingsSheet(facetId = facetId, onDismiss = { onSheetChange(ClockSheet.NONE) })
 }
 
 @Composable

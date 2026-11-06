@@ -304,6 +304,23 @@ class HomeScreenWiringTest {
     }
 
     @Test
+    fun longPressingAFacetWidgetOpensTheWidgetSheetNotTheHomeSheet() {
+        // Given a Facet Agenda widget on the page
+        val widget = HomeClockWidgetState(
+            itemId = 1L, appWidgetId = -1, widthDp = 260.dp, heightDp = 160.dp, minWidthDp = 60.dp, minHeightDp = 60.dp,
+            nativeType = com.facetlauncher.app.data.model.NativeWidgetType.AGENDA,
+        )
+        setHome(appState(PlacedItem.SingleApp(mail)).copy(widget = widget), HomeScreenActions(item = HomeItemActions(onAppClick = {})))
+
+        // When the widget is long-pressed
+        longPress("native_widget_AGENDA")
+
+        // Then its own sheet shows, not the Home sheet
+        composeRule.onNodeWithTag("widget_sheet").assertExists()
+        composeRule.onNodeWithTag("home_menu_sheet").assertDoesNotExist()
+    }
+
+    @Test
     fun longPressingFreeSpaceOpensTheHomeSheetNotTheWidgetSheet() {
         // Given the native clock showing
         setHome(appState(PlacedItem.SingleApp(mail)), HomeScreenActions(item = HomeItemActions(onAppClick = {})))
