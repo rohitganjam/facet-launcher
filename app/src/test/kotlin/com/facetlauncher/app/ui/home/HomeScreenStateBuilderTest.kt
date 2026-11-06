@@ -387,4 +387,18 @@ class HomeScreenStateBuilderTest {
         assertEquals(state.calendar, state.nativeWidgets.calendar)
         assertEquals(state.media, state.nativeWidgets.media)
     }
+
+    @Test
+    fun `a running weather refresh reaches the widgets Facet draws itself`() {
+        // Given content with no forecast yet and a refresh running, then the same with none running
+        val refreshing = content.copy(weatherRefreshing = true)
+
+        // When Home's state is built
+        val running = resolveFacetStyle(null, settings).toHomeScreenState(false, settings, refreshing)
+        val idle = resolveFacetStyle(null, settings).toHomeScreenState(false, settings, content)
+
+        // Then the widgets' weather says it is refreshing only while it is
+        assertEquals(true, running.nativeWidgets.weather.isRefreshing)
+        assertEquals(false, idle.nativeWidgets.weather.isRefreshing)
+    }
 }

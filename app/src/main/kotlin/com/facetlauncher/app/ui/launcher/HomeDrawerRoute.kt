@@ -360,6 +360,7 @@ fun HomeDrawerRoute(
             clockAccessories = homeUiState.clockAccessories,
             mediaPlayer = homeUiState.mediaPlayer,
             weather = weatherUiState.weather,
+            weatherRefreshing = weatherUiState.isRefreshing,
         ),
         widgetSizing = HomeWidgetSizing(
             defaultSizeDp = { widgetDefaultSizesDp[it] },

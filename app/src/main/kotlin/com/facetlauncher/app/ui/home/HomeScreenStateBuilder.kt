@@ -44,6 +44,8 @@ data class HomeScreenContent(
     val clockAccessories: ClockAccessoryState? = null,
     val mediaPlayer: MediaPlayerState? = null,
     val weather: WeatherState? = null,
+    /** A weather refresh is running, so a Weather widget with no forecast yet shows a loader rather than its empty or permission text. */
+    val weatherRefreshing: Boolean = false,
 )
 
 /** Where a hosted clock widget gets its size when its facet never resized it, and its smallest size. Both are `null` for an unknown provider. */
@@ -140,7 +142,7 @@ fun ResolvedFacetStyle.toHomeScreenState(
         weather = content.weather?.takeIf { clock.showWeather && !it.isOutdated }?.toHomeWeather(settings, clock.weatherIconStyle),
     ),
     media = HomeMediaState(player = content.mediaPlayer, showSkipButtons = settings.showMediaSkipButtons),
-).withNativeWidgets(settings, content.weather, clock)
+).withNativeWidgets(settings, content.weather, content.weatherRefreshing, clock)
 
 private fun WeatherState.toHomeWeather(settings: LauncherSettings, iconStyle: WeatherIconStyle) = HomeWeatherState(
     symbolCode = now.symbolCode,
@@ -206,10 +208,11 @@ private fun ResolvedClockItem.toNativeWidgetState(type: NativeWidgetType, landsc
 }
 
 /** What the widgets Facet draws itself read: the full weather with its units, and the calendar and media Home already holds. */
-private fun HomeScreenState.withNativeWidgets(settings: LauncherSettings, weather: WeatherState?, clockStyle: ClockWidgetConfig): HomeScreenState {
+private fun HomeScreenState.withNativeWidgets(settings: LauncherSettings, weather: WeatherState?, weatherRefreshing: Boolean, clockStyle: ClockWidgetConfig): HomeScreenState {
     val locale = Locale.getDefault()
     val ui = WeatherUiState(
         weather = weather,
+        isRefreshing = weatherRefreshing,
         units = ResolvedWeatherUnits(
             temperature = WeatherUnits.resolve(settings.temperatureUnit, locale),
             wind = WeatherUnits.resolve(settings.windSpeedUnit, locale),

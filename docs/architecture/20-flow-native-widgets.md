@@ -108,6 +108,9 @@ on resume, since neither has a grant-change callback) and `HomeDrawerRoute` puts
 Hub; Allow runs the runtime request (`READ_CALENDAR`, `ACCESS_COARSE_LOCATION`). A Hub widget set to its own location asks for location only when
 its own setting is the current position (`NativeWidgetOverride.locationMissing`). If Android no longer shows the dialog, the button does nothing
 visible; the Permissions screen in Settings still works.
+While a launcher-wide weather refresh runs and a Weather widget has no forecast yet, it shows a loader (`weather_loading`) instead of the prompt or its empty
+text: `HomeScreenContent.weatherRefreshing` carries `WeatherViewModel`'s `isRefreshing` into `NativeWidgetState.weather`. A widget set to a place of its own
+still shows its empty text while that place loads.
 
 ## 4. Adding, replacing, removing
 
