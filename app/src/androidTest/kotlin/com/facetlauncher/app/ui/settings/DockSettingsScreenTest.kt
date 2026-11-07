@@ -88,7 +88,7 @@ class DockSettingsScreenTest {
     fun headerAndPreviewRender() {
         setContent()
         composeRule.onNodeWithTag("back_button").assertIsDisplayed()
-        composeRule.onNodeWithText("Default dock").assertIsDisplayed()
+        composeRule.onNodeWithText("Default Dock Apps").assertIsDisplayed()
         composeRule.onNodeWithTag("dock_settings_preview_card").assertExists()
     }
 
@@ -165,7 +165,7 @@ class DockSettingsScreenTest {
         composeRule.onNodeWithTag("add_dock_app_row").assertIsEnabled()
         composeRule.onAllNodesWithTag("dock_settings_inherit_row").assertCountEquals(0)
         composeRule.onAllNodesWithTag("dock_settings_override_row").assertCountEquals(0)
-        composeRule.onNodeWithText("Dock").assertIsDisplayed()
+        composeRule.onNodeWithText("Dock Apps").assertIsDisplayed()
     }
 
     @Test
@@ -208,7 +208,7 @@ class DockSettingsScreenTest {
     fun launcherScopeIsTitledAsTheDefaultAndOffersNoReset() {
         setContent()
 
-        composeRule.onNodeWithText("Default dock").assertIsDisplayed()
+        composeRule.onNodeWithText("Default Dock Apps").assertIsDisplayed()
         composeRule.onNodeWithTag("defaults_screen_note").assertExists()
         composeRule.onAllNodesWithTag("dock_settings_reset_row").assertCountEquals(0)
     }

@@ -182,7 +182,7 @@ private fun DockSettingsHeader(isFacetScoped: Boolean, onBack: () -> Unit, modif
     ) {
         BackButton(onClick = onBack)
         Text(
-            text = stringResource(if (isFacetScoped) R.string.settings_dock_title else R.string.settings_default_dock_title),
+            text = stringResource(if (isFacetScoped) R.string.facet_settings_dock_settings_title else R.string.settings_default_dock_title),
             style = MaterialTheme.typography.headlineSmall,
             color = Ink,
         )

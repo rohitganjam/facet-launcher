@@ -7,7 +7,10 @@
     <string name="gesture_hint_clock_hold">Mantén presionado un widget para cambiar su tamaño y su posición</string>
 
     <string name="settings_header_title">Configuración</string>
-    <string name="settings_facets_subtitle">Crea y administra la configuración específica de cada faceta</string>
+    <string name="settings_facets_title">Administrar facetas</string>
+    <string name="settings_facets_subtitle">Agrega, cambia el nombre, reordena y elimina facetas</string>
+    <string name="settings_active_facet_title">Configuración de %1$s</string>
+    <string name="settings_active_facet_subtitle">Configuración específica de %1$s, tu faceta actual</string>
     <string name="settings_settings_search">Búsqueda de configuración %1$s</string>
     <string name="settings_backup_restore_subtitle">Exporta la configuración como archivo · los widgets deben agregarse de nuevo al importar</string>
     <string name="app_drawer_search_settings_title">Buscar en configuración</string>
@@ -78,7 +81,7 @@
     <string name="facet_carousel_launcher_settings">Configuración del launcher</string>
     <string name="facet_carousel_facet_settings">Configuración de faceta</string>
     <string name="facet_carousel_add_facet">Agregar faceta</string>
-    <string name="facet_settings_dock_settings_title">Configuración del Dock</string>
+    <string name="facet_settings_dock_settings_title">Apps del dock</string>
     <string name="home_usage_access_needed">Más usadas necesita acceso de uso desde la configuración del sistema.</string>
 
     <string name="clock_style_long_press_hint">Mantén presionado el reloj en la pantalla de inicio para ajustar su tamaño y su posición.</string>
@@ -88,7 +91,7 @@
     <string name="hub_header_add">Agregar</string>
     <string name="hub_empty_state_subtitle">Agrega un widget para empezar.</string>
     <string name="hub_at_capacity_message">Lleno con 20 widgets — quita uno para agregar otro.</string>
-    <string name="facet_settings_apps_list_settings_title">Configuración de la lista de apps</string>
+    <string name="facet_settings_apps_list_settings_title">Lista de apps</string>
     <string name="appearance_general_title">Configuración general</string>
     <string name="widget_sheet_stack_empty">Vacía · agrega un reloj o un widget</string>
     <string name="clock_stack_full_free_hint">Quita el widget actual para agregar otro, o actualiza a Pro para tener hasta 5.</string>

@@ -16,6 +16,9 @@ data class SettingsUiState(
     /** Drives the Facet Pro card: the upsell for a free user, the live summary for a Pro user. */
     val isPro: Boolean = false,
     val facetCount: Int = 0,
+    /** The active facet, for the "<name> Settings" row; `null` (no row) until one resolves. */
+    val activeFacetId: Long? = null,
+    val activeFacetName: String? = null,
     /** Automation rules that are switched on. */
     val triggersRunning: Int = 0,
     val isDefaultLauncher: Boolean = false,

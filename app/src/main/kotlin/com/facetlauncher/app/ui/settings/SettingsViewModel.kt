@@ -45,6 +45,7 @@ class SettingsViewModel @Inject constructor(
         entitlementRepository.isPro,
         facetRepository.observeFacets(),
     ) { screenState, isDefaultLauncher, workProfiles, automationRules, isPro, facets ->
+        val activeFacet = facets.find { it.id == screenState.settings.activeFacetId }
         SettingsUiState(
             settings = screenState.settings,
             dockItems = screenState.dockItems.toImmutableList(),
@@ -56,6 +57,8 @@ class SettingsViewModel @Inject constructor(
             automationRuleCount = automationRules.size,
             isPro = isPro,
             facetCount = facets.size,
+            activeFacetId = activeFacet?.id,
+            activeFacetName = activeFacet?.name,
             triggersRunning = automationRules.count { it.enabled },
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SettingsUiState())

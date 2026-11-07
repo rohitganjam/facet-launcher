@@ -238,8 +238,10 @@
     <string name="settings_section_home_apps">Apps en mappen</string>
     <string name="settings_section_system">Systeem</string>
     <string name="settings_section_about">Over</string>
-    <string name="settings_facets_title">Facets</string>
-    <string name="settings_facets_subtitle">Facetspecifieke instellingen maken en beheren</string>
+    <string name="settings_facets_title">Facetten beheren</string>
+    <string name="settings_facets_subtitle">Facetten toevoegen, hernoemen, ordenen en verwijderen</string>
+    <string name="settings_active_facet_title">Instellingen van %1$s</string>
+    <string name="settings_active_facet_subtitle">Instellingen speciaal voor %1$s, je huidige facet</string>
     <string name="settings_change_wallpaper_title">Achtergrond wijzigen</string>
     <string name="settings_change_wallpaper_subtitle">Wijzig je systeemachtergrond</string>
     <string name="settings_appearance_title">Aanpassing</string>
@@ -256,7 +258,7 @@
     <string name="settings_all_day_events_visible">Evenementen van een hele dag zichtbaar</string>
     <string name="settings_all_day_events_hidden">Evenementen van een hele dag verborgen</string>
     <string name="settings_dock_title">Dock</string>
-    <string name="settings_default_dock_title">Standaarddock</string>
+    <string name="settings_default_dock_title">Standaard dock-apps</string>
     <string name="home_apps_list_default_header_title">Standaard appslijst</string>
     <string name="settings_default_look_subtitle">Standaarduiterlijk van de dock en de apps op het startscherm in nieuwe facetten</string>
     <string name="defaults_screen_note">Wordt gebruikt wanneer je een facet maakt of terugzet.</string>
@@ -379,7 +381,6 @@
     <string name="app_list_grid_display_mode_icons">Pictogrammen</string>
     <string name="app_list_grid_display_mode_text">Tekst</string>
 
-    <string name="home_apps_list_header_title">Appslijst op startscherm</string>
     <string name="home_apps_list_position">Uitlijning van startschermapps</string>
     <string name="home_apps_list_list_position">Positie van de appslijst</string>
     <string name="appearance_allow_landscape_title">Liggende modus toestaan</string>
@@ -805,7 +806,7 @@
         <item quantity="one">%1$d app</item>
         <item quantity="other">%1$d apps</item>
     </plurals>
-    <string name="facet_settings_dock_settings_title">Dock-instellingen</string>
+    <string name="facet_settings_dock_settings_title">Dock-apps</string>
     <string name="facet_settings_section_home">Home</string>
     <string name="facet_settings_widgets_title">Widgets</string>
     <string name="facet_settings_widgets_subtitle">Wat bovenaan de Home van deze facet staat</string>
@@ -910,7 +911,7 @@
     <string name="hub_at_capacity_message">Vol bij 20 widgets — verwijder er een om een andere toe te voegen.</string>
     <string name="hub_at_capacity_manage">Beheren</string>
 
-    <string name="facet_settings_apps_list_settings_title">Instellingen voor appslijst</string>
+    <string name="facet_settings_apps_list_settings_title">Appslijst</string>
 
     <string name="clock_accessory_separator_dot">·</string>
 

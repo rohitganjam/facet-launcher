@@ -234,8 +234,10 @@
     <string name="settings_section_home_apps">Apps und Ordner</string>
     <string name="settings_section_system">System</string>
     <string name="settings_section_about">Über</string>
-    <string name="settings_facets_title">Facetten</string>
-    <string name="settings_facets_subtitle">Facettenspezifische Einstellungen erstellen und verwalten</string>
+    <string name="settings_facets_title">Facetten verwalten</string>
+    <string name="settings_facets_subtitle">Facetten hinzufügen, umbenennen, sortieren und löschen</string>
+    <string name="settings_active_facet_title">%1$s-Einstellungen</string>
+    <string name="settings_active_facet_subtitle">Einstellungen speziell für %1$s, deine aktuelle Facette</string>
     <string name="settings_change_wallpaper_title">Hintergrundbild ändern</string>
     <string name="settings_change_wallpaper_subtitle">Ändere das Hintergrundbild deines Systems</string>
     <string name="settings_appearance_title">Anpassung</string>
@@ -252,7 +254,7 @@
     <string name="settings_all_day_events_visible">Ganztägige Termine sichtbar</string>
     <string name="settings_all_day_events_hidden">Ganztägige Termine ausgeblendet</string>
     <string name="settings_dock_title">Dock</string>
-    <string name="settings_default_dock_title">Standard-Dock</string>
+    <string name="settings_default_dock_title">Standard-Dock-Apps</string>
     <string name="home_apps_list_default_header_title">Standard-App-Liste</string>
     <string name="settings_default_look_subtitle">Standarddarstellung von Dock und Startbildschirm-Apps in neuen Facetten</string>
     <string name="defaults_screen_note">Wird verwendet, wenn du eine Facette erstellst oder zurücksetzt.</string>
@@ -378,7 +380,6 @@
     <string name="app_list_grid_display_mode_text">Text</string>
 
     <!-- HomeAppsListSettingsScreen -->
-    <string name="home_apps_list_header_title">Startbildschirm-App-Liste</string>
     <string name="home_apps_list_position">Position</string>
     <string name="home_apps_list_list_position">Listenposition</string>
     <string name="appearance_allow_landscape_title">Querformat erlauben</string>
@@ -828,7 +829,7 @@
         <item quantity="one">%1$d App</item>
         <item quantity="other">%1$d Apps</item>
     </plurals>
-    <string name="facet_settings_dock_settings_title">Dock-Einstellungen</string>
+    <string name="facet_settings_dock_settings_title">Dock-Apps</string>
     <string name="facet_settings_rename_explanation">Benenne diese Facette um.</string>
 
     <!-- HomeScreen -->
@@ -901,7 +902,7 @@
     <string name="hub_at_capacity_manage">Verwalten</string>
 
     <!-- FacetSettingsScreen leftover -->
-    <string name="facet_settings_apps_list_settings_title">App-Listeneinstellungen</string>
+    <string name="facet_settings_apps_list_settings_title">App-Liste</string>
 
     <!-- ClockAccessoryRow -->
     <string name="clock_accessory_separator_dot">·</string>

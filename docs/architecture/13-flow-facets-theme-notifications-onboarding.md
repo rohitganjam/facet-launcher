@@ -6,7 +6,7 @@ Four smaller flows that don't fit the earlier docs but are load-bearing for how 
 
 A *facet* is a named Home configuration (`facets` row). Exactly one is active
 (`active_facet_id` in DataStore). A facet **owns** its dock, favorites, list content and look. The launcher-wide
-values (Settings → Apps and folders: *Default dock*, *Default apps list*, *Dock & Apps appearance*) are only a
+values (Settings → Apps and folders: *Default Dock Apps*, *Default Apps list*, *Dock & Apps appearance*; a facet's own screens are *Dock Apps*, *Apps List* and *Dock & Apps appearance*) are only a
 seed: `ApplyFacetDefaultsUseCase` copies them into a facet when it is created and again when the user taps *Reset to default* on
 one of its screens. Editing a facet never touches the defaults, and editing the defaults never touches an existing facet.
 

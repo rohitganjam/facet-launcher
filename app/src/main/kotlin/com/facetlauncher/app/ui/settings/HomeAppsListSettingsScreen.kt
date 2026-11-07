@@ -218,7 +218,7 @@ private fun HomeAppsListSettingsHeader(isFacetScoped: Boolean, onBack: () -> Uni
     ) {
         BackButton(onClick = onBack)
         Text(
-            text = stringResource(if (isFacetScoped) R.string.home_apps_list_header_title else R.string.home_apps_list_default_header_title),
+            text = stringResource(if (isFacetScoped) R.string.facet_settings_apps_list_settings_title else R.string.home_apps_list_default_header_title),
             style = MaterialTheme.typography.headlineSmall,
             color = Ink,
         )

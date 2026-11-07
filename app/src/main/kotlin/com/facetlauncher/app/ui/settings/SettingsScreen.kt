@@ -33,6 +33,7 @@ import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Palette
 import androidx.compose.material.icons.outlined.SettingsBackupRestore
 import androidx.compose.material.icons.outlined.Shield
+import androidx.compose.material.icons.outlined.Tune
 import androidx.compose.material.icons.outlined.TouchApp
 import androidx.compose.material.icons.outlined.Wallpaper
 import androidx.compose.material.icons.outlined.WbSunny
@@ -91,6 +92,7 @@ fun SettingsScreen(
     onBack: () -> Unit,
     onViewFacets: () -> Unit,
     onViewFacetAutomation: () -> Unit,
+    onViewActiveFacetSettings: (Long) -> Unit,
     onViewFacetPro: () -> Unit,
     onNavigateToAppearance: () -> Unit,
     onNavigateToDockSettings: () -> Unit,
@@ -113,6 +115,7 @@ fun SettingsScreen(
         onBack = onBack,
         onViewFacets = onViewFacets,
         onViewFacetAutomation = onViewFacetAutomation,
+        onViewActiveFacetSettings = onViewActiveFacetSettings,
         onViewFacetPro = onViewFacetPro,
         onNavigateToAppearance = onNavigateToAppearance,
         onNavigateToDockSettings = onNavigateToDockSettings,
@@ -137,6 +140,7 @@ private fun SettingsContent(
     onBack: () -> Unit,
     onViewFacets: () -> Unit,
     onViewFacetAutomation: () -> Unit,
+    onViewActiveFacetSettings: (Long) -> Unit,
     onViewFacetPro: () -> Unit,
     onNavigateToAppearance: () -> Unit,
     onNavigateToDockSettings: () -> Unit,
@@ -178,7 +182,7 @@ private fun SettingsContent(
             ) {
                 item { ProSettingsCard(isPro = uiState.isPro, facetCount = uiState.facetCount, triggersRunning = uiState.triggersRunning, onClick = onViewFacetPro) }
                 item { SettingsSectionHeader(stringResource(R.string.settings_section_facets)) }
-                item { FacetsCard(uiState.automationRuleCount, onViewFacets, onViewFacetAutomation) }
+                item { FacetsCard(uiState, onViewActiveFacetSettings, onViewFacets, onViewFacetAutomation) }
 
                 item { SettingsSectionHeader(stringResource(R.string.settings_section_appearance)) }
                 item { AppearanceCard(onNavigateToAppearance) }
@@ -212,8 +216,21 @@ private fun SettingsContent(
 }
 
 @Composable
-private fun FacetsCard(automationRuleCount: Int, onViewFacets: () -> Unit, onViewFacetAutomation: () -> Unit) {
+private fun FacetsCard(uiState: SettingsUiState, onViewActiveFacetSettings: (Long) -> Unit, onViewFacets: () -> Unit, onViewFacetAutomation: () -> Unit) {
+    val automationRuleCount = uiState.automationRuleCount
     SettingsCard(fullBleedRows = true) {
+        val activeId = uiState.activeFacetId
+        val activeName = uiState.activeFacetName
+        if (activeId != null && activeName != null) {
+            ClickableRow(
+                title = stringResource(R.string.settings_active_facet_title, activeName),
+                subtitle = stringResource(R.string.settings_active_facet_subtitle, activeName),
+                onClick = { onViewActiveFacetSettings(activeId) },
+                testTag = "active_facet_settings_row",
+                leadingIcon = iconBadge(Icons.Outlined.Tune, SettingsSectionHue.FACETS),
+            )
+            CardDivider(startInset = SettingsIconBadgeInset)
+        }
         ClickableRow(
             title = stringResource(R.string.settings_facets_title),
             subtitle = stringResource(R.string.settings_facets_subtitle),
@@ -478,6 +495,7 @@ private fun SettingsScreenPreview() {
             onBack = {},
             onViewFacets = {},
             onViewFacetAutomation = {},
+            onViewActiveFacetSettings = {},
             onNavigateToAppearance = {},
             onNavigateToDockSettings = {},
             onNavigateToHomeAppsListSettings = {},

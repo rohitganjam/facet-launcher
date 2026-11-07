@@ -234,8 +234,10 @@
     <string name="settings_section_home_apps">Apps y carpetas</string>
     <string name="settings_section_system">Sistema</string>
     <string name="settings_section_about">Acerca de</string>
-    <string name="settings_facets_title">Facetas</string>
-    <string name="settings_facets_subtitle">Crea y gestiona ajustes específicos de cada faceta</string>
+    <string name="settings_facets_title">Gestionar facetas</string>
+    <string name="settings_facets_subtitle">Añade, renombra, reordena y elimina facetas</string>
+    <string name="settings_active_facet_title">Ajustes de %1$s</string>
+    <string name="settings_active_facet_subtitle">Ajustes específicos de %1$s, tu faceta actual</string>
     <string name="settings_change_wallpaper_title">Cambiar fondo de pantalla</string>
     <string name="settings_change_wallpaper_subtitle">Cambia el fondo de pantalla del sistema</string>
     <string name="settings_appearance_title">Personalización</string>
@@ -252,7 +254,7 @@
     <string name="settings_all_day_events_visible">Eventos de todo el día visibles</string>
     <string name="settings_all_day_events_hidden">Eventos de todo el día ocultos</string>
     <string name="settings_dock_title">Dock</string>
-    <string name="settings_default_dock_title">Dock predeterminado</string>
+    <string name="settings_default_dock_title">Apps del dock predeterminadas</string>
     <string name="home_apps_list_default_header_title">Lista de apps predeterminada</string>
     <string name="settings_default_look_subtitle">Aspecto predeterminado del dock y las apps de inicio en las facetas nuevas</string>
     <string name="defaults_screen_note">Se usa al crear una faceta o restablecer una.</string>
@@ -378,7 +380,6 @@
     <string name="app_list_grid_display_mode_text">Texto</string>
 
     <!-- HomeAppsListSettingsScreen -->
-    <string name="home_apps_list_header_title">Lista de apps de inicio</string>
     <string name="home_apps_list_position">Posición</string>
     <string name="home_apps_list_list_position">Posición de la lista</string>
     <string name="appearance_allow_landscape_title">Permitir modo horizontal</string>
@@ -828,7 +829,7 @@
         <item quantity="one">%1$d app</item>
         <item quantity="other">%1$d apps</item>
     </plurals>
-    <string name="facet_settings_dock_settings_title">Ajustes del Dock</string>
+    <string name="facet_settings_dock_settings_title">Apps del dock</string>
     <string name="facet_settings_rename_explanation">Renombra esta faceta.</string>
 
     <!-- HomeScreen -->
@@ -901,7 +902,7 @@
     <string name="hub_at_capacity_manage">Gestionar</string>
 
     <!-- FacetSettingsScreen leftover -->
-    <string name="facet_settings_apps_list_settings_title">Ajustes de la lista de apps</string>
+    <string name="facet_settings_apps_list_settings_title">Lista de apps</string>
 
     <!-- ClockAccessoryRow -->
     <string name="clock_accessory_separator_dot">·</string>

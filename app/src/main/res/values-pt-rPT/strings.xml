@@ -23,7 +23,10 @@
     <string name="home_surface_preview_nothing_yet">Ainda não há nada para mostrar</string>
 
     <string name="settings_header_title">Definições</string>
-    <string name="settings_facets_subtitle">Crie e gira definições específicas de cada faceta</string>
+    <string name="settings_facets_title">Gerir facetas</string>
+    <string name="settings_facets_subtitle">Adicione, mude o nome, reordene e elimine facetas</string>
+    <string name="settings_active_facet_title">Definições de %1$s</string>
+    <string name="settings_active_facet_subtitle">Definições específicas de %1$s, a sua faceta atual</string>
     <string name="settings_change_wallpaper_title">Alterar imagem de fundo</string>
     <string name="settings_change_wallpaper_subtitle">Altere a imagem de fundo do sistema</string>
     <string name="settings_calendars_title">Calendários a mostrar</string>
@@ -57,7 +60,6 @@
     <string name="recently_installed_position_do_not_show">Não mostrar</string>
     <string name="app_list_layout_grid">Grelha</string>
 
-    <string name="home_apps_list_header_title">Lista de apps do ecrã inicial</string>
     <string name="appearance_allow_landscape_subtitle">Usa um esquema em paisagem quando o ecrã é suficientemente largo. Desativado mantém o início em retrato.</string>
     <string name="home_apps_list_grid_columns">Colunas da grelha</string>
     <string name="home_apps_list_grid_display">Apresentação da grelha</string>
@@ -259,14 +261,14 @@
     <string name="preview_media_title">A reproduzir</string>
     <string name="manage_facets_delete_message">Esta ação não pode ser anulada. Os favoritos dela também serão removidos.</string>
     <string name="manage_facets_header_title">Gerir facetas</string>
-    <string name="facet_settings_dock_settings_title">Definições do dock</string>
+    <string name="facet_settings_dock_settings_title">Apps do dock</string>
     <string name="home_usage_access_needed">\"Mais usados\" precisa de acesso à utilização através das definições do sistema.</string>
 
     <string name="clock_adjust_align_bottom">Alinhar em baixo</string>
     <string name="hub_widget_picker_search">Pesquisar widgets</string>
     <string name="hub_orphaned_app_uninstalled">A app foi desinstalada</string>
     <string name="hub_at_capacity_manage">Gerir</string>
-    <string name="facet_settings_apps_list_settings_title">Definições da lista de apps</string>
+    <string name="facet_settings_apps_list_settings_title">Lista de apps</string>
     <string name="icon_pack_fallback_keep_default">Ícones predefinidos</string>
 
     <string name="weather_accessory_description">%1$s, %2$s. Abre os detalhes do tempo</string>
@@ -318,7 +320,7 @@
     <string name="native_widget_media_empty">Nada em reprodução</string>
     <string name="native_widget_picker_section">Widgets do Facet</string>
 
-    <string name="settings_default_dock_title">Dock predefinido</string>
+    <string name="settings_default_dock_title">Apps do dock predefinidas</string>
     <string name="home_apps_list_default_header_title">Lista de apps predefinida</string>
     <string name="settings_default_look_subtitle">Aspeto predefinido do dock e das apps do ecrã inicial em novas facetas</string>
     <string name="defaults_screen_note">Usado quando cria uma faceta ou repõe uma.</string>

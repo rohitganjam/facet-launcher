@@ -5,7 +5,9 @@ import android.os.UserManager
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.test.assert
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertHasClickAction
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.hasAnyDescendant
@@ -48,6 +50,9 @@ class SettingsScreenTest {
         onBack: () -> Unit = {},
         onViewFacets: () -> Unit = {},
         onViewFacetAutomation: () -> Unit = {},
+        activeFacetName: String? = null,
+        onActiveFacetCreated: (Long) -> Unit = {},
+        onViewActiveFacetSettings: (Long) -> Unit = {},
         onViewFacetPro: () -> Unit = {},
         entitlement: EntitlementRepository = EntitlementRepository(),
         onNavigateToAppearance: () -> Unit = {},
@@ -76,13 +81,22 @@ class SettingsScreenTest {
                 val folderRepository = FolderRepository(database.folderDao(), appRepository)
                 val placementRepository = PlacementRepository(database.appPlacementDao(), database.folderPlacementDao())
                 val observePlacedItems = ObservePlacedItemsUseCase(placementRepository, folderRepository, appRepository)
+                val facetRepository = FacetRepository(database.facetDao(), database.clockStackItemDao())
+                if (activeFacetName != null) {
+                    runBlocking {
+                        val facet = facetRepository.addFacet()
+                        facetRepository.renameFacet(facet.id, activeFacetName)
+                        settingsRepository.setActiveFacetId(facet.id)
+                        onActiveFacetCreated(facet.id)
+                    }
+                }
                 SettingsViewModel(
                     ObserveSettingsScreenStateUseCase(settingsRepository, observePlacedItems, folderRepository),
                     DefaultLauncherRepository(context),
                     WorkProfileRepository(context.getSystemService(UserManager::class.java), appRepository, context),
                     AutomationRuleRepository(database.automationRuleDao(), database.facetDao()),
                     entitlement,
-                    FacetRepository(database.facetDao(), database.clockStackItemDao()),
+                    facetRepository,
                 )
             }
             FacetLauncherTheme {
@@ -90,6 +104,7 @@ class SettingsScreenTest {
                     onBack = onBack,
                     onViewFacets = onViewFacets,
                     onViewFacetAutomation = onViewFacetAutomation,
+                    onViewActiveFacetSettings = onViewActiveFacetSettings,
                     onViewFacetPro = onViewFacetPro,
                     onNavigateToAppearance = onNavigateToAppearance,
                     onNavigateToDockSettings = onNavigateToDockSettings,
@@ -253,6 +268,43 @@ class SettingsScreenTest {
 
         // Then its callback fires
         assertEquals(true, viewFacetsClicked)
+    }
+
+    @Test
+    fun manageFacetsRowSaysWhatItDoes() {
+        setContent()
+
+        composeRule.onNodeWithTag("view_facets_row").assertTextContains("Manage Facets", substring = true)
+        composeRule.onNodeWithTag("view_facets_row").assertTextContains("Add, rename, reorder and delete facets", substring = true)
+    }
+
+    @Test
+    fun activeFacetSettingsRowIsFirstNamesTheFacetAndOpensItsSettings() {
+        // Given an active facet named Work
+        var facetId = 0L
+        var opened: Long? = null
+        setContent(activeFacetName = "Work", onActiveFacetCreated = { facetId = it }, onViewActiveFacetSettings = { opened = it })
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            composeRule.onAllNodesWithTag("active_facet_settings_row").fetchSemanticsNodes().isNotEmpty()
+        }
+
+        // Then the row names the facet and says the settings are for it, and sits above Manage Facets
+        composeRule.onNodeWithTag("active_facet_settings_row").assertTextContains("Work Settings", substring = true)
+        composeRule.onNodeWithTag("active_facet_settings_row").assertTextContains("Settings specific to Work, your current facet", substring = true)
+        val rowTop = composeRule.onNodeWithTag("active_facet_settings_row").fetchSemanticsNode().boundsInRoot.top
+        val manageTop = composeRule.onNodeWithTag("view_facets_row").fetchSemanticsNode().boundsInRoot.top
+        assertEquals(true, rowTop < manageTop)
+
+        // When tapping it, it opens that facet's settings
+        composeRule.onNodeWithTag("active_facet_settings_row").performClick()
+        assertEquals(facetId, opened)
+    }
+
+    @Test
+    fun noActiveFacetSettingsRowWithoutAnActiveFacet() {
+        setContent()
+
+        composeRule.onAllNodesWithTag("active_facet_settings_row").assertCountEquals(0)
     }
 
 

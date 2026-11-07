@@ -222,6 +222,7 @@ fun FacetNavHost(
                 onBack = { navController.popBackStackSafely() },
                 onViewFacets = { navController.navigate(FacetDestinations.FACET_MANAGE) },
                 onViewFacetAutomation = { navController.navigate(FacetDestinations.FACET_AUTOMATION) },
+                onViewActiveFacetSettings = { facetId -> navController.navigate(FacetDestinations.facetSettings(facetId)) },
                 onViewFacetPro = { navController.navigate(FacetDestinations.facetPro(ProReason.ABOUT)) },
                 onNavigateToAppearance = { navController.navigate(FacetDestinations.APPEARANCE_SETTINGS) },
                 onNavigateToDockSettings = { navController.navigate(FacetDestinations.dockSettings()) },

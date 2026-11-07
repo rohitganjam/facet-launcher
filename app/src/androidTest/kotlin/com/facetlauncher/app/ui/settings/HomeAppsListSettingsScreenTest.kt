@@ -100,7 +100,7 @@ class HomeAppsListSettingsScreenTest {
     @Test
     fun headerAndPreviewRender() {
         setContent()
-        composeRule.onNodeWithText("Default apps list").assertIsDisplayed()
+        composeRule.onNodeWithText("Default Apps list").assertIsDisplayed()
         composeRule.onNodeWithTag("back_button").assertIsDisplayed()
         composeRule.onNodeWithTag("home_apps_list_preview_card").assertExists()
     }
@@ -205,7 +205,7 @@ class HomeAppsListSettingsScreenTest {
         composeRule.onAllNodesWithTag("home_apps_list_inherit_row").assertCountEquals(0)
         composeRule.onAllNodesWithTag("home_apps_list_override_row").assertCountEquals(0)
         composeRule.onNodeWithTag("default_list_content_row").assertIsEnabled()
-        composeRule.onNodeWithText("Home Apps List").assertIsDisplayed()
+        composeRule.onNodeWithText("Apps List").assertIsDisplayed()
     }
 
     @Test
@@ -245,7 +245,7 @@ class HomeAppsListSettingsScreenTest {
     fun launcherScopeIsTitledAsTheDefaultAndOffersNoReset() {
         setContent()
 
-        composeRule.onNodeWithText("Default apps list").assertIsDisplayed()
+        composeRule.onNodeWithText("Default Apps list").assertIsDisplayed()
         composeRule.onAllNodesWithTag("home_apps_list_reset_row").assertCountEquals(0)
     }
 
