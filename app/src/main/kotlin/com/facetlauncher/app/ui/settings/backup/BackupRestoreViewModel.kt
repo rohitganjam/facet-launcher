@@ -174,10 +174,10 @@ class BackupRestoreViewModel @Inject constructor(
             failAndRelease(appWidgetId)
             return
         }
-        val configureIntentSender = appWidgetRepository.createConfigureIntentSender(appWidgetId, info)
-        if (configureIntentSender != null) {
+        val configureIntent = appWidgetRepository.createConfigureIntent(appWidgetId, info)
+        if (configureIntent != null) {
             pendingAppWidgetId = appWidgetId
-            _events.emit(BackupRestoreEvent.LaunchConfigure(configureIntentSender))
+            _events.emit(BackupRestoreEvent.LaunchConfigure(configureIntent))
             return
         }
         finishPlacing(appWidgetId)

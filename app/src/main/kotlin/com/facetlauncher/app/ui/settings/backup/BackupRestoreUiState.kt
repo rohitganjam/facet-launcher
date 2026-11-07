@@ -1,7 +1,6 @@
 package com.facetlauncher.app.ui.settings.backup
 
 import android.content.Intent
-import android.content.IntentSender
 import com.facetlauncher.app.data.model.BackupWidgetPlacement
 
 /**
@@ -37,5 +36,5 @@ sealed interface BackupRestoreMessage {
 /** One-off effects the composable must act on (system Activity-result detours during a widget re-add) — not folded into [BackupRestoreUiState], mirroring `ui/hub/picker/HubAddWidgetEvent.kt`. */
 sealed interface BackupRestoreEvent {
     data class LaunchBindPermission(val intent: Intent) : BackupRestoreEvent
-    data class LaunchConfigure(val intentSender: IntentSender) : BackupRestoreEvent
+    data class LaunchConfigure(val intent: Intent) : BackupRestoreEvent
 }

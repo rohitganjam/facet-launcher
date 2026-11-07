@@ -3,7 +3,6 @@ package com.facetlauncher.app.ui.settings.backup
 import android.app.Activity
 import android.content.res.Configuration
 import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -91,7 +90,7 @@ fun BackupRestoreScreen(
     val importLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         viewModel.onImportFileChosen(uri)
     }
-    val configureLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
+    val configureLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         viewModel.onConfigureResult(result.resultCode == Activity.RESULT_OK)
     }
     val bindPermissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
@@ -102,7 +101,7 @@ fun BackupRestoreScreen(
         viewModel.events.collect { event ->
             when (event) {
                 is BackupRestoreEvent.LaunchBindPermission -> bindPermissionLauncher.launch(event.intent)
-                is BackupRestoreEvent.LaunchConfigure -> configureLauncher.launch(IntentSenderRequest.Builder(event.intentSender).build())
+                is BackupRestoreEvent.LaunchConfigure -> configureLauncher.launch(event.intent)
             }
         }
     }

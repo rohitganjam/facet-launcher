@@ -195,6 +195,8 @@ dependencies {
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.11.0")
     testImplementation("org.mockito:mockito-core:5.24.0")
     testImplementation("androidx.test:core:1.7.0")
+    testImplementation("com.google.dagger:hilt-android-testing:2.60.1")
+    kspTest("com.google.dagger:hilt-compiler:2.60.1")
 
     androidTestImplementation(platform("androidx.compose:compose-bom:2026.09.00"))
     androidTestImplementation("androidx.test.ext:junit:1.3.0")

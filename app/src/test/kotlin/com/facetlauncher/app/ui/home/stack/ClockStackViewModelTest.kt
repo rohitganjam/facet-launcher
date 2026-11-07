@@ -112,7 +112,7 @@ class ClockStackViewModelTest {
         repository.addWidget(facetId, 8)
         val info = mock(android.appwidget.AppWidgetProviderInfo::class.java)
         `when`(appWidgetRepository.getAppWidgetInfo(7)).thenReturn(info)
-        `when`(appWidgetRepository.createConfigureIntentSender(7, info)).thenReturn(mock(android.content.IntentSender::class.java))
+        `when`(appWidgetRepository.createConfigureIntent(7, info)).thenReturn(android.content.Intent("configure"))
 
         val rows = viewModel().current().rows
 

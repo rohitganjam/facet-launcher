@@ -3,7 +3,6 @@ package com.facetlauncher.app.ui.settings.backup
 import android.appwidget.AppWidgetProviderInfo
 import android.content.ComponentName
 import android.content.Intent
-import android.content.IntentSender
 import android.net.Uri
 import android.os.Process
 import com.facetlauncher.app.data.AppRepository
@@ -179,7 +178,7 @@ class BackupRestoreViewModelTest {
         info.provider = provider
         info.configure = null
         `when`(appWidgetRepository.getAppWidgetInfo(5)).thenReturn(info)
-        `when`(appWidgetRepository.createConfigureIntentSender(5, info)).thenReturn(null)
+        `when`(appWidgetRepository.createConfigureIntent(5, info)).thenReturn(null)
         `when`(appWidgetRepository.profileForWidget(5)).thenReturn(AppProfile.PERSONAL)
         `when`(appWidgetRepository.userIdForWidget(5)).thenReturn(0)
         `when`(widgetPlacementRepository.observeAll()).thenReturn(flowOf(emptyList()))

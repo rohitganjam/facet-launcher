@@ -131,6 +131,14 @@
             </intent-filter>
         </activity>
 
+        <!-- Opens a widget's configure activity through AppWidgetHost and returns its result (data/widget/WidgetConfigureActivity.kt). -->
+        <activity
+            android:name=".data.widget.WidgetConfigureActivity"
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboardHidden|uiMode|density"
+            android:excludeFromRecents="true"
+            android:exported="false"
+            android:theme="@style/Theme.FacetLauncher.Trampoline" />
+
         <!-- F13 Notification badges — special-access permission, granted per-app via system
              Settings (ACTION_NOTIFICATION_LISTENER_SETTINGS), never a runtime dialog. The
              android:permission attribute (not a <uses-permission>) is what restricts binding to

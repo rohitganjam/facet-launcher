@@ -1,5 +1,6 @@
 package com.facetlauncher.app.data.widget
 
+import android.app.Activity
 import android.appwidget.AppWidgetHost
 import android.appwidget.AppWidgetHostView
 import android.appwidget.AppWidgetManager
@@ -7,7 +8,6 @@ import android.appwidget.AppWidgetProviderInfo
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
-import android.content.IntentSender
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.drawable.BitmapDrawable
@@ -142,16 +142,21 @@ class AppWidgetRepository @Inject constructor(
         }
 
     /**
-     * `null` when [provider] declares no configure activity — the add flow skips straight to
-     * placing it. A configure Activity is frequently *not* exported (it's only meant to be
-     * reachable through the widget host that owns the id), so this must launch through
-     * [LauncherAppWidgetHost.configureIntentSender] rather than a bare `Intent` — see its doc
-     * comment for why a raw `Intent` crashes on providers like Slack's.
+     * `null` when [provider] declares no configure activity, so the add flow places it straight away. Otherwise an Intent for
+     * [WidgetConfigureActivity], to launch with StartActivityForResult: it opens the provider's configure activity through
+     * [startConfigureActivity] and returns that activity's result.
      */
-    fun createConfigureIntentSender(appWidgetId: Int, provider: AppWidgetProviderInfo): IntentSender? {
+    fun createConfigureIntent(appWidgetId: Int, provider: AppWidgetProviderInfo): Intent? {
         provider.configure ?: return null
-        return host.configureIntentSender(appWidgetId)
+        return Intent(context, WidgetConfigureActivity::class.java).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
     }
+
+    /**
+     * Starts [appWidgetId]'s configure activity for [activity]'s result. Goes through the host, never a bare Intent: the
+     * activity is often not exported, and a Work Profile provider's lives in another user. `false` if it couldn't start.
+     */
+    fun startConfigureActivity(activity: Activity, appWidgetId: Int, requestCode: Int): Boolean =
+        runCatching { host.startAppWidgetConfigureActivityForResult(activity, appWidgetId, 0, requestCode, null) }.isSuccess
 
     /** `null` means orphaned — the provider's app was uninstalled (or the id is otherwise unknown). */
     fun getAppWidgetInfo(appWidgetId: Int): AppWidgetProviderInfo? = appWidgetManager.getAppWidgetInfo(appWidgetId)

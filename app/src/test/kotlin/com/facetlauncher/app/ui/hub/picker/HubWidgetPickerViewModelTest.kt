@@ -6,7 +6,6 @@ import com.facetlauncher.app.domain.defaultSpan
 import android.appwidget.AppWidgetProviderInfo
 import android.content.ComponentName
 import android.content.Intent
-import android.content.IntentSender
 import com.facetlauncher.app.data.WidgetPlacementRepository
 import com.facetlauncher.app.data.local.WidgetPlacementEntity
 import com.facetlauncher.app.data.model.AppProfile
@@ -65,7 +64,7 @@ class HubWidgetPickerViewModelTest {
         info.provider = provider
         info.configure = null
         `when`(appWidgetRepository.getAppWidgetInfo(1)).thenReturn(info)
-        `when`(appWidgetRepository.createConfigureIntentSender(1, info)).thenReturn(null)
+        `when`(appWidgetRepository.createConfigureIntent(1, info)).thenReturn(null)
         `when`(appWidgetRepository.defaultSpan(1)).thenReturn(2 to 1)
         `when`(appWidgetRepository.profileForWidget(1)).thenReturn(AppProfile.PERSONAL)
         `when`(appWidgetRepository.userIdForWidget(1)).thenReturn(0)
@@ -104,7 +103,7 @@ class HubWidgetPickerViewModelTest {
         info.provider = provider
         info.configure = null
         `when`(appWidgetRepository.getAppWidgetInfo(1)).thenReturn(info)
-        `when`(appWidgetRepository.createConfigureIntentSender(1, info)).thenReturn(null)
+        `when`(appWidgetRepository.createConfigureIntent(1, info)).thenReturn(null)
         `when`(appWidgetRepository.defaultSpan(1)).thenReturn(2 to 1)
         // The placement's profile/userId come from the system (profileForWidget/userIdForWidget),
         // not carried through from the picker option — see HubWidgetPickerViewModel.finishPlacing's own doc.
@@ -196,8 +195,8 @@ class HubWidgetPickerViewModelTest {
         info.provider = provider
         info.configure = configureComponent
         `when`(appWidgetRepository.getAppWidgetInfo(1)).thenReturn(info)
-        val configureIntentSender = mock(IntentSender::class.java)
-        `when`(appWidgetRepository.createConfigureIntentSender(1, info)).thenReturn(configureIntentSender)
+        val configureIntent = Intent("configure")
+        `when`(appWidgetRepository.createConfigureIntent(1, info)).thenReturn(configureIntent)
 
         val viewModel = HubWidgetPickerViewModel(appWidgetRepository, widgetPlacementRepository, placeWidget)
         val events = mutableListOf<HubAddWidgetEvent>()
@@ -210,7 +209,7 @@ class HubWidgetPickerViewModelTest {
         viewModel.onProviderSelect(option)
         testDispatcher.scheduler.advanceUntilIdle()
 
-        assertEquals(listOf(HubAddWidgetEvent.LaunchConfigure(configureIntentSender)), events)
+        assertEquals(listOf(HubAddWidgetEvent.LaunchConfigure(configureIntent)), events)
         job.cancel()
         uiStateJob.cancel()
     }

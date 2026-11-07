@@ -6,7 +6,6 @@ import com.facetlauncher.app.domain.AddedPage
 import android.appwidget.AppWidgetProviderInfo
 import android.content.ComponentName
 import android.content.Intent
-import android.content.IntentSender
 import com.facetlauncher.app.data.model.WidgetProviderOption
 import com.facetlauncher.app.data.widget.AppWidgetRepository
 import com.facetlauncher.app.domain.AddClockStackItemResult
@@ -58,7 +57,7 @@ class ClockWidgetPickerViewModelTest {
         val info = AppWidgetProviderInfo()
         info.provider = provider
         `when`(appWidgetRepository.getAppWidgetInfo(appWidgetId)).thenReturn(info)
-        `when`(appWidgetRepository.createConfigureIntentSender(appWidgetId, info)).thenReturn(null)
+        `when`(appWidgetRepository.createConfigureIntent(appWidgetId, info)).thenReturn(null)
         return info
     }
 
@@ -188,8 +187,8 @@ class ClockWidgetPickerViewModelTest {
         val info = AppWidgetProviderInfo()
         info.provider = provider
         `when`(appWidgetRepository.getAppWidgetInfo(7)).thenReturn(info)
-        val sender = mock(IntentSender::class.java)
-        `when`(appWidgetRepository.createConfigureIntentSender(7, info)).thenReturn(sender)
+        val sender = Intent("configure")
+        `when`(appWidgetRepository.createConfigureIntent(7, info)).thenReturn(sender)
         val viewModel = viewModel()
         val events = collect(viewModel)
 
@@ -212,7 +211,7 @@ class ClockWidgetPickerViewModelTest {
         val info = AppWidgetProviderInfo()
         info.provider = provider
         `when`(appWidgetRepository.getAppWidgetInfo(8)).thenReturn(info)
-        `when`(appWidgetRepository.createConfigureIntentSender(8, info)).thenReturn(mock(IntentSender::class.java))
+        `when`(appWidgetRepository.createConfigureIntent(8, info)).thenReturn(Intent("configure"))
         `when`(replaceClockStackItem.withWidget(5L, 8)).thenReturn(true)
         val viewModel = viewModel()
         val events = collect(viewModel)

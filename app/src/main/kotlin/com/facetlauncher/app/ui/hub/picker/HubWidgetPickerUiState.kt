@@ -2,7 +2,6 @@ package com.facetlauncher.app.ui.hub.picker
 
 import android.content.Intent
 import com.facetlauncher.app.data.model.NativeWidgetRef
-import android.content.IntentSender
 import com.facetlauncher.app.data.model.AppProfile
 import com.facetlauncher.app.data.model.WidgetProviderOption
 import kotlinx.collections.immutable.ImmutableList
@@ -52,7 +51,7 @@ enum class AddFailureReason { HUB_FULL, SETUP_CANCELLED }
 /** One-off effects the composable must act on (system Activity-result detours) — not folded into [HubWidgetPickerUiState]. */
 sealed interface HubAddWidgetEvent {
     data class LaunchBindPermission(val intent: Intent) : HubAddWidgetEvent
-    data class LaunchConfigure(val intentSender: IntentSender) : HubAddWidgetEvent
+    data class LaunchConfigure(val intent: Intent) : HubAddWidgetEvent
     data object WidgetAdded : HubAddWidgetEvent
 
     /** A widget Facet draws itself was placed and has settings to choose first: they open for [ref]. */

@@ -1,6 +1,6 @@
 package com.facetlauncher.app.ui.home.stack
 
-import android.content.IntentSender
+import android.content.Intent
 import androidx.compose.runtime.Immutable
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
@@ -100,7 +100,7 @@ class ClockStackViewModel @Inject constructor(
         appWidgetId = appWidgetId,
         nativeWidgetType = nativeWidgetType,
         providerName = appWidgetId?.let { appWidgetRepository.getProviderLabel(it) },
-        canConfigure = appWidgetId?.let { configureSender(it) != null } ?: (kind == ClockStackItemKind.CLOCK),
+        canConfigure = appWidgetId?.let { configureIntent(it) != null } ?: (kind == ClockStackItemKind.CLOCK),
     )
 
     /** Read when an action runs, not from [uiState] (which only holds a value while something collects it). */
@@ -120,6 +120,6 @@ class ClockStackViewModel @Inject constructor(
     suspend fun addClock(): AddClockStackItemResult = addClockStackItem.addClock(activeFacetId())
 
     /** Launches the widget's own configure screen; `null` when its provider declares none. */
-    fun configureSender(appWidgetId: Int): IntentSender? =
-        appWidgetRepository.getAppWidgetInfo(appWidgetId)?.let { appWidgetRepository.createConfigureIntentSender(appWidgetId, it) }
+    fun configureIntent(appWidgetId: Int): Intent? =
+        appWidgetRepository.getAppWidgetInfo(appWidgetId)?.let { appWidgetRepository.createConfigureIntent(appWidgetId, it) }
 }

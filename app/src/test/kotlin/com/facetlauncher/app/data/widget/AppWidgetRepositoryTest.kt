@@ -1,9 +1,10 @@
 package com.facetlauncher.app.data.widget
 
+import android.app.Activity
 import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProviderInfo
 import android.content.ComponentName
-import android.content.IntentSender
+import android.content.ActivityNotFoundException
 import android.content.pm.ActivityInfo
 import android.content.pm.ApplicationInfo
 import android.content.pm.LauncherApps
@@ -86,9 +87,7 @@ class AppWidgetRepositoryTest {
      * [AppWidgetProviderInfo.loadLabel]/`loadIcon`/`loadPreviewImage` all read a private
      * `providerInfo: ActivityInfo` field that's normally populated by the real system service —
      * a bare `AppWidgetProviderInfo()` in a test leaves it null and NPEs the moment
-     * `getWidgetProviderOptions()` calls `loadLabel`. Set via reflection (mirroring
-     * `LauncherAppWidgetHost.configureIntentSender`'s own existing reflection use for a similarly
-     * unreachable-by-public-API field), matching [applicationInfo]'s package.
+     * `getWidgetProviderOptions()` calls `loadLabel`. Set via reflection (the field has no public setter), matching [applicationInfo]'s package.
      */
     private fun AppWidgetProviderInfo.withResolvableLabel(applicationInfo: ApplicationInfo): AppWidgetProviderInfo = apply {
         // nonLocalizedLabel set directly — sidesteps needing a real resource-backed label
@@ -128,29 +127,54 @@ class AppWidgetRepositoryTest {
     }
 
     @Test
-    fun `createConfigureIntentSender returns null when the provider declares no configure activity`() {
+    fun `createConfigureIntent returns null when the provider declares no configure activity`() {
         // Given a provider with no configure component
         val repository = AppWidgetRepository(context, mock(AppWidgetManager::class.java), mock(LauncherAppWidgetHost::class.java), personalOnlyUserManager(), fakeAppRepository())
         val provider = AppWidgetProviderInfo().apply { configure = null }
 
         // Then no configure step is needed
-        assertNull(repository.createConfigureIntentSender(appWidgetId = 7, provider = provider))
+        assertNull(repository.createConfigureIntent(appWidgetId = 7, provider = provider))
     }
 
     @Test
-    fun `createConfigureIntentSender delegates to the host's own permission-scoped sender when a configure activity is declared`() {
-        // Given a provider that declares a configure activity, and the host's own IntentSender for it
-        // (must come from AppWidgetHost, not a bare Intent — a configure Activity is very often not
-        // exported, e.g. Slack's, and a bare Intent hits the OS's exported-Activity check and crashes)
-        val host = mock(LauncherAppWidgetHost::class.java)
-        val sender = mock(IntentSender::class.java)
-        `when`(host.configureIntentSender(7)).thenReturn(sender)
-        val repository = AppWidgetRepository(context, mock(AppWidgetManager::class.java), host, personalOnlyUserManager(), fakeAppRepository())
-        val configureComponent = ComponentName("com.example.widgets", ".ConfigureActivity")
-        val provider = AppWidgetProviderInfo().apply { configure = configureComponent }
+    fun `createConfigureIntent targets the in-app trampoline, never the provider's activity directly`() {
+        // Given a provider that declares a configure activity (often not exported, or in the Work Profile)
+        val repository = AppWidgetRepository(context, mock(AppWidgetManager::class.java), mock(LauncherAppWidgetHost::class.java), personalOnlyUserManager(), fakeAppRepository())
+        val provider = AppWidgetProviderInfo().apply { configure = ComponentName("com.example.widgets", ".ConfigureActivity") }
 
-        // Then it returns exactly the host's sender for this widget id
-        assertEquals(sender, repository.createConfigureIntentSender(appWidgetId = 7, provider = provider))
+        // When building the configure intent
+        val intent = repository.createConfigureIntent(appWidgetId = 7, provider = provider)
+
+        // Then it opens WidgetConfigureActivity for this widget id
+        assertEquals(ComponentName(context, WidgetConfigureActivity::class.java), intent?.component)
+        assertEquals(7, intent?.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, -1))
+    }
+
+    @Test
+    fun `startConfigureActivity starts it through the host for the activity's result`() {
+        // Given a host and an activity
+        val host = mock(LauncherAppWidgetHost::class.java)
+        val activity = mock(Activity::class.java)
+        val repository = AppWidgetRepository(context, mock(AppWidgetManager::class.java), host, personalOnlyUserManager(), fakeAppRepository())
+
+        // When starting widget 7's configure activity
+        val started = repository.startConfigureActivity(activity, appWidgetId = 7, requestCode = 3)
+
+        // Then the host starts it, which works across profiles and for unexported activities
+        assertTrue(started)
+        verify(host).startAppWidgetConfigureActivityForResult(activity, 7, 0, 3, null)
+    }
+
+    @Test
+    fun `startConfigureActivity reports false when the configure activity can't be found`() {
+        // Given a host that can't resolve the configure activity
+        val host = mock(LauncherAppWidgetHost::class.java)
+        val activity = mock(Activity::class.java)
+        `when`(host.startAppWidgetConfigureActivityForResult(activity, 7, 0, 3, null)).thenThrow(ActivityNotFoundException())
+        val repository = AppWidgetRepository(context, mock(AppWidgetManager::class.java), host, personalOnlyUserManager(), fakeAppRepository())
+
+        // Then starting it fails without crashing
+        assertFalse(repository.startConfigureActivity(activity, appWidgetId = 7, requestCode = 3))
     }
 
     @Test
@@ -434,5 +458,26 @@ class AppWidgetRepositoryTest {
 
         // Then the system's own bind-permission dialog is told which profile this is
         assertEquals(workHandle, intent.getParcelableExtra<UserHandle>(AppWidgetManager.EXTRA_APPWIDGET_PROVIDER_PROFILE))
+    }
+
+    @Test
+    fun `a Work Profile widget is configured through the same host call, by widget id alone`() {
+        // Given a widget bound to a Work Profile provider whose configure activity lives in the work user
+        val workHandle = mock(UserHandle::class.java)
+        val host = mock(LauncherAppWidgetHost::class.java)
+        val activity = mock(Activity::class.java)
+        val repository = AppWidgetRepository(context, mock(AppWidgetManager::class.java), host, personalOnlyUserManager(), fakeAppRepository())
+        val provider = AppWidgetProviderInfo().apply { configure = ComponentName("com.work.widgets", ".ConfigureActivity") }
+        repository.createBindIntent(appWidgetId = 9, provider = provider.configure, userHandle = workHandle)
+
+        // When building the configure intent and starting it
+        val intent = repository.createConfigureIntent(appWidgetId = 9, provider = provider)
+        val started = repository.startConfigureActivity(activity, appWidgetId = 9, requestCode = 1)
+
+        // Then the intent only names the trampoline (never the work activity), and the host, which routes across profiles, starts it
+        assertEquals(ComponentName(context, WidgetConfigureActivity::class.java), intent?.component)
+        assertNull(intent?.getParcelableExtra<UserHandle>(AppWidgetManager.EXTRA_APPWIDGET_PROVIDER_PROFILE))
+        assertTrue(started)
+        verify(host).startAppWidgetConfigureActivityForResult(activity, 9, 0, 1, null)
     }
 }

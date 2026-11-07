@@ -6,7 +6,6 @@ import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
 import android.content.res.Configuration
 import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -95,7 +94,7 @@ fun HubWidgetPickerScreen(
     val configureNewWidget by rememberUpdatedState(onConfigureNewWidget)
     var failureMessage by remember { mutableStateOf<String?>(null) }
 
-    val configureLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
+    val configureLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         viewModel.onConfigureResult(result.resultCode == android.app.Activity.RESULT_OK)
     }
     val bindPermissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
@@ -108,7 +107,7 @@ fun HubWidgetPickerScreen(
         viewModel.events.collect { event ->
             when (event) {
                 is HubAddWidgetEvent.LaunchBindPermission -> bindPermissionLauncher.launch(event.intent)
-                is HubAddWidgetEvent.LaunchConfigure -> configureLauncher.launch(IntentSenderRequest.Builder(event.intentSender).build())
+                is HubAddWidgetEvent.LaunchConfigure -> configureLauncher.launch(event.intent)
                 HubAddWidgetEvent.WidgetAdded -> onDone()
                 is HubAddWidgetEvent.NativeWidgetAdded -> {
                     configureNewWidget(event.ref)
