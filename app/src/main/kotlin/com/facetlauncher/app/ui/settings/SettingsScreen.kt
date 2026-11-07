@@ -27,7 +27,6 @@ import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Layers
 import androidx.compose.material.icons.outlined.AutoMode
 import androidx.compose.material.icons.outlined.Dock
-import com.facetlauncher.app.ui.facets.appearanceSummaryLabel
 import androidx.compose.material.icons.outlined.Folder
 import androidx.compose.material.icons.outlined.FormatListBulleted
 import androidx.compose.material.icons.outlined.Home
@@ -285,12 +284,8 @@ private fun HomeAppsCard(
         )
         CardDivider(startInset = SettingsIconBadgeInset)
         ClickableRow(
-            title = stringResource(R.string.appearance_default_dock_apps_title),
-            subtitle = stringResource(
-                R.string.dot_join_2,
-                uiState.settings.dockDisplayMode.appearanceSummaryLabel(),
-                uiState.settings.appRowPresentation.appearanceSummaryLabel(),
-            ),
+            title = stringResource(R.string.appearance_dock_apps_title),
+            subtitle = stringResource(R.string.settings_default_look_subtitle),
             onClick = onNavigateToDockAppsAppearance,
             testTag = "dock_apps_appearance_row",
             leadingIcon = iconBadge(Icons.Outlined.Dock, SettingsSectionHue.HOME_APPS),

@@ -6,7 +6,7 @@ Four smaller flows that don't fit the earlier docs but are load-bearing for how 
 
 A *facet* is a named Home configuration (`facets` row). Exactly one is active
 (`active_facet_id` in DataStore). A facet **owns** its dock, favorites, list content and look. The launcher-wide
-values (Settings → Apps and folders: *Default dock*, *Default apps list*, *Default dock & apps appearance*) are only a
+values (Settings → Apps and folders: *Default dock*, *Default apps list*, *Dock & Apps appearance*) are only a
 seed: `ApplyFacetDefaultsUseCase` copies them into a facet when it is created and again when the user taps *Reset to default* on
 one of its screens. Editing a facet never touches the defaults, and editing the defaults never touches an existing facet.
 
@@ -36,7 +36,7 @@ flowchart TB
     end
     subgraph LOOK["DockAppsAppearanceScreen — the facet's own look"]
         A1["dockDisplayMode / appRowPosition /\nappRowPresentation / appListVerticalAlignment /\nappListLayout / appListColumnAlignment /\nappListGridColumns / appListGridDisplayMode / appListShrinkToFit\nfacetRepository.setXxx(facet, value) — writes directly\n+ Reset to default → ApplyFacetDefaultsUseCase(LOOK)"]
-        A2["The same screen at launcher scope edits the defaults a new or reset facet is seeded from\n(titled Default dock & apps appearance, reached from Settings → Apps and folders)"]
+        A2["The same screen at launcher scope edits the defaults a new or reset facet is seeded from\n(same title, reached from a Settings → Apps and folders row whose subtitle says what it does)"]
         A3["Landscape alignment (appRowPosition / appListColumnAlignment /\nappListVerticalAlignment): nullable landscape twins, null = Same as portrait\n(LandscapeOverrides group, resolved once by HomeUiState.listAlignment(mode))"]
     end
     EAF["EnsureActiveFacetUseCase.keepUsable()\nno facets → addFacet(); active not found or disabled → first selectable facet"] --> S1

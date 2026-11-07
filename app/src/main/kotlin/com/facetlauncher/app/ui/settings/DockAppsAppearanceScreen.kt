@@ -103,7 +103,7 @@ private fun DockAppsAppearanceContent(
 ) {
     StickyHeaderLayout(
         modifier = modifier,
-        header = { AppearanceSettingsHeader(title = dockAppsTitle(uiState.isFacetScoped), onBack = onBack) },
+        header = { AppearanceSettingsHeader(title = stringResource(R.string.appearance_dock_apps_title), onBack = onBack) },
         content = { headerHeight ->
             LazyColumn(
                 modifier = Modifier
@@ -157,10 +157,6 @@ private fun DockAppsAppearanceContent(
         },
     )
 }
-
-@Composable
-private fun dockAppsTitle(isFacetScoped: Boolean): String =
-    stringResource(if (isFacetScoped) R.string.appearance_dock_apps_title else R.string.appearance_default_dock_apps_title)
 
 /** A facet's Reset to default row, or at launcher scope the note that these values only seed new facets. */
 private fun LazyListScope.resetOrDefaultsNoteItems(isFacetScoped: Boolean, onResetToDefault: () -> Unit) {
