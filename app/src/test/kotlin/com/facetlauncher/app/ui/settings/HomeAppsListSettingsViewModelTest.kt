@@ -153,6 +153,22 @@ class HomeAppsListSettingsViewModelTest {
     }
 
     @Test
+    fun `copy to facets applies the apps list defaults to exactly the chosen facets`() = runTest {
+        val applyDefaults = mock(ApplyFacetDefaultsUseCase::class.java)
+        val facets = listOf(Facet(id = 1L, name = "A", position = 0), Facet(id = 2L, name = "B", position = 1))
+        val viewModel = createViewModel(facets = facets, applyFacetDefaults = applyDefaults)
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        viewModel.copyToFacets(setOf(2L))
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(listOf(1L, 2L), viewModel.uiState.value.facets.map { it.id })
+        verify(applyDefaults).invoke(2L, FacetDefaultsScope.APPS_LIST)
+        verify(applyDefaults, org.mockito.Mockito.never()).invoke(1L, FacetDefaultsScope.APPS_LIST)
+    }
+
+    @Test
     fun `reset to default applies the apps list defaults to the facet`() = runTest {
         val applyDefaults = mock(ApplyFacetDefaultsUseCase::class.java)
         val viewModel = createViewModel(facetId = 7L, facets = listOf(Facet(id = 7L, name = "Work", position = 0)), applyFacetDefaults = applyDefaults)

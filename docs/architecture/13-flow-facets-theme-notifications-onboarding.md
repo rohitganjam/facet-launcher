@@ -8,7 +8,7 @@ A *facet* is a named Home configuration (`facets` row). Exactly one is active
 (`active_facet_id` in DataStore). A facet **owns** its dock, favorites, list content and look. The launcher-wide
 values (Settings → Apps and folders: *Default Dock Apps*, *Default Apps list*, *Dock & Apps appearance*; a facet's own screens are *Dock Apps*, *Apps List* and *Dock & Apps appearance*) are only a
 seed: `ApplyFacetDefaultsUseCase` copies them into a facet when it is created and again when the user taps *Reset to default* on
-one of its screens. Editing a facet never touches the defaults, and editing the defaults never touches an existing facet.
+one of its screens. Editing a facet never touches the defaults, and editing the defaults never touches an existing facet, unless the user asks: each launcher-level default screen has a *Copy to facets* row that opens a bottom sheet (`CopyToFacetsSheet`, every facet checked to start, the current one marked) and, on confirm, applies that screen's scope to the facets left checked.
 
 ```mermaid
 flowchart TB
@@ -36,7 +36,7 @@ flowchart TB
     end
     subgraph LOOK["DockAppsAppearanceScreen — the facet's own look"]
         A1["dockDisplayMode / appRowPosition /\nappRowPresentation / appListVerticalAlignment /\nappListLayout / appListColumnAlignment /\nappListGridColumns / appListGridDisplayMode / appListShrinkToFit\nfacetRepository.setXxx(facet, value) — writes directly\n+ Reset to default → ApplyFacetDefaultsUseCase(LOOK)"]
-        A2["The same screen at launcher scope edits the defaults a new or reset facet is seeded from\n(same title, reached from a Settings → Apps and folders row whose subtitle says what it does)"]
+        A2["The same screen at launcher scope edits the defaults a new or reset facet is seeded from\n(same title, reached from a Settings → Apps and folders row whose subtitle says what it does)\n+ Copy to facets → ApplyFacetDefaultsUseCase(LOOK) for each facet picked in the sheet"]
         A3["Landscape alignment (appRowPosition / appListColumnAlignment /\nappListVerticalAlignment): nullable landscape twins, null = Same as portrait\n(LandscapeOverrides group, resolved once by HomeUiState.listAlignment(mode))"]
     end
     EAF["EnsureActiveFacetUseCase.keepUsable()\nno facets → addFacet(); active not found or disabled → first selectable facet"] --> S1

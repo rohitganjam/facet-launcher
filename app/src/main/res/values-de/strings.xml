@@ -1139,4 +1139,16 @@
     <string name="native_widget_allow">Erlauben</string>
     <string name="calendar_work_calendar">Arbeitskalender</string>
     <string name="calendar_work_calendar_n">Arbeitskalender %1$d</string>
+    <string name="copy_to_facets_title">Auf Facetten kopieren</string>
+    <string name="copy_to_facets_current">Aktuell</string>
+    <plurals name="copy_to_facets_confirm">
+        <item quantity="one">Auf %d Facette kopieren</item>
+        <item quantity="other">Auf %d Facetten kopieren</item>
+    </plurals>
+    <string name="copy_dock_subtitle">Ersetzt das Dock der gewählten Facetten durch dieses</string>
+    <string name="copy_dock_sheet_message">Ersetzt das Dock jeder ausgewählten Facette durch das Standard-Dock.</string>
+    <string name="copy_apps_subtitle">Ersetzt die App-Liste der gewählten Facetten durch diese</string>
+    <string name="copy_apps_sheet_message">Ersetzt Favoriten, Listeninhalt und App-Anzahl jeder ausgewählten Facette durch die Standardwerte.</string>
+    <string name="copy_look_subtitle">Ersetzt Dock- und App-Darstellung der gewählten Facetten durch diese</string>
+    <string name="copy_look_sheet_message">Ersetzt Dock-Stil, Listenlayout und Ausrichtung jeder ausgewählten Facette durch die Standardwerte.</string>
 </resources>

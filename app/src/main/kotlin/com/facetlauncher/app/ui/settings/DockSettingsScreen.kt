@@ -53,6 +53,7 @@ import com.facetlauncher.app.ui.components.AppIconSize
 import com.facetlauncher.app.ui.components.BackButton
 import com.facetlauncher.app.ui.components.CardDivider
 import com.facetlauncher.app.ui.components.HomeSurfacePreview
+import com.facetlauncher.app.ui.components.CopyToFacetsCard
 import com.facetlauncher.app.ui.components.DefaultsNote
 import com.facetlauncher.app.ui.components.ResetToDefaultCard
 import com.facetlauncher.app.ui.components.LabeledDropdownRow
@@ -87,6 +88,7 @@ fun DockSettingsScreen(
         onAddDockApp = onAddDockApp,
         onReorderDockItems = viewModel::reorderDockItems,
         onResetToDefault = viewModel::resetToDefault,
+        onCopyToFacets = viewModel::copyToFacets,
         modifier = modifier,
     )
 }
@@ -98,6 +100,7 @@ private fun DockSettingsContent(
     onAddDockApp: () -> Unit,
     onReorderDockItems: (List<PlacedItem>) -> Unit,
     onResetToDefault: () -> Unit,
+    onCopyToFacets: (Set<Long>) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     StickyHeaderLayout(
@@ -136,6 +139,17 @@ private fun DockSettingsContent(
                         )
                     }
                 } else {
+                    item { Spacer(modifier = Modifier.height(16.dp)) }
+                    item {
+                        CopyToFacetsCard(
+                            facets = uiState.facets,
+                            activeFacetId = uiState.settings.activeFacetId,
+                            subtitle = stringResource(R.string.copy_dock_subtitle),
+                            sheetMessage = stringResource(R.string.copy_dock_sheet_message),
+                            onCopy = onCopyToFacets,
+                            testTagPrefix = "dock_settings",
+                        )
+                    }
                     item { DefaultsNote(modifier = Modifier.padding(top = 12.dp)) }
                 }
             }
@@ -298,6 +312,7 @@ private fun DockSettingsScreenPreview() {
             onAddDockApp = {},
             onReorderDockItems = {},
             onResetToDefault = {},
+            onCopyToFacets = {},
         )
     }
 }

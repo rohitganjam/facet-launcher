@@ -56,6 +56,8 @@ private const val PREVIEW_APP_COUNT = 3
  */
 data class HomeAppsListUiState(
     val facet: Facet? = null,
+    /** Every facet, for the default screen's "Copy to facets". */
+    val facets: ImmutableList<Facet> = persistentListOf(),
     val settings: LauncherSettings = LauncherSettings(),
     /** The launcher-wide default Favorites list, which seeds new facets. */
     val globalFavorites: ImmutableList<PlacedItem> = persistentListOf(),
@@ -125,6 +127,7 @@ class HomeAppsListSettingsViewModel @Inject constructor(
         val (wallpaper, installed, preferred) = previewInputs
         HomeAppsListUiState(
             facet = facets.find { it.id == facetId },
+            facets = facets.toImmutableList(),
             settings = settings,
             globalFavorites = globalFavorites.toImmutableList(),
             facetFavorites = facetFavorites.toImmutableList(),
@@ -158,6 +161,11 @@ class HomeAppsListSettingsViewModel @Inject constructor(
         viewModelScope.launch {
             placementRepository.reorderItems(PlacementTarget(PlacementList.FAVORITES, facetId), orderedItems)
         }
+    }
+
+    /** "Copy to facets": replaces the Favorites, content mode and count of each chosen facet with the launcher-wide ones. */
+    fun copyToFacets(facetIds: Set<Long>) {
+        viewModelScope.launch { facetIds.forEach { applyFacetDefaults(it, FacetDefaultsScope.APPS_LIST) } }
     }
 
     /** "Reset to default": replaces this facet's Favorites, content mode and count with the launcher-wide ones. */

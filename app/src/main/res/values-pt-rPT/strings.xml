@@ -332,4 +332,8 @@
     <string name="reset_apps_confirm_message">Isto substitui os favoritos, o conteúdo da lista e o número de apps desta faceta pelos valores predefinidos. Os favoritos que escolheu aqui serão perdidos.</string>
     <string name="reset_look_subtitle">Substituir o aspeto do dock e da lista pelo predefinido</string>
     <string name="reset_look_confirm_message">Isto substitui o estilo do dock, o esquema da lista e o alinhamento desta faceta pelos valores predefinidos.</string>
+    <string name="copy_dock_sheet_message">Substitui o dock de cada faceta selecionada pelo dock predefinido.</string>
+    <string name="copy_apps_sheet_message">Substitui os favoritos, o conteúdo da lista e o número de apps de cada faceta selecionada pelos valores predefinidos.</string>
+    <string name="copy_look_subtitle">Substitui o aspeto do dock e das apps das facetas escolhidas por este</string>
+    <string name="copy_look_sheet_message">Substitui o estilo do dock, o esquema da lista e o alinhamento de cada faceta selecionada pelos valores predefinidos.</string>
 </resources>

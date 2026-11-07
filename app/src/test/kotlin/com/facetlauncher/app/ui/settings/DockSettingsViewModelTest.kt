@@ -148,6 +148,23 @@ class DockSettingsViewModelTest {
     }
 
     @Test
+    fun `copy to facets applies the dock defaults to exactly the chosen facets`() = runTest {
+        val applyDefaults = mock(ApplyFacetDefaultsUseCase::class.java)
+        val facets = listOf(Facet(id = 1L, name = "A", position = 0), Facet(id = 2L, name = "B", position = 1), Facet(id = 3L, name = "C", position = 2))
+        val viewModel = createViewModel(facets = facets, applyFacetDefaults = applyDefaults)
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        viewModel.copyToFacets(setOf(1L, 3L))
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(listOf(1L, 2L, 3L), viewModel.uiState.value.facets.map { it.id })
+        verify(applyDefaults).invoke(1L, FacetDefaultsScope.DOCK)
+        verify(applyDefaults).invoke(3L, FacetDefaultsScope.DOCK)
+        verify(applyDefaults, org.mockito.Mockito.never()).invoke(2L, FacetDefaultsScope.DOCK)
+    }
+
+    @Test
     fun `reset to default applies the dock defaults to the facet`() = runTest {
         val applyDefaults = mock(ApplyFacetDefaultsUseCase::class.java)
         val viewModel = createViewModel(facetId = 3L, facets = listOf(Facet(id = 3L, name = "Work", position = 0)), applyFacetDefaults = applyDefaults)

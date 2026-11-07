@@ -41,6 +41,8 @@ import com.facetlauncher.app.data.model.PlacementList
  */
 data class DockSettingsUiState(
     val facet: Facet? = null,
+    /** Every facet, for the default screen's "Copy to facets". */
+    val facets: ImmutableList<Facet> = persistentListOf(),
     val settings: LauncherSettings = LauncherSettings(),
     val globalDockItems: ImmutableList<PlacedItem> = persistentListOf(),
     val facetDockItems: ImmutableList<PlacedItem> = persistentListOf(),
@@ -88,6 +90,7 @@ class DockSettingsViewModel @Inject constructor(
         val (facetDockItems, globalDockItems) = dockItems
         DockSettingsUiState(
             facet = facets.find { it.id == facetId },
+            facets = facets.toImmutableList(),
             settings = settings,
             globalDockItems = globalDockItems.toImmutableList(),
             facetDockItems = facetDockItems.toImmutableList(),
@@ -105,6 +108,11 @@ class DockSettingsViewModel @Inject constructor(
         viewModelScope.launch {
             placementRepository.reorderItems(PlacementTarget(PlacementList.DOCK, facetId), orderedItems)
         }
+    }
+
+    /** "Copy to facets": replaces the dock of each chosen facet with a copy of the launcher-wide one. */
+    fun copyToFacets(facetIds: Set<Long>) {
+        viewModelScope.launch { facetIds.forEach { applyFacetDefaults(it, FacetDefaultsScope.DOCK) } }
     }
 
     /** "Reset to default": replaces this facet's dock with a copy of the launcher-wide one. */

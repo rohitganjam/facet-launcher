@@ -1139,4 +1139,16 @@
     <string name="native_widget_allow">Permitir</string>
     <string name="calendar_work_calendar">Calendario de trabajo</string>
     <string name="calendar_work_calendar_n">Calendario de trabajo %1$d</string>
+    <string name="copy_to_facets_title">Copiar a facetas</string>
+    <string name="copy_to_facets_current">Actual</string>
+    <plurals name="copy_to_facets_confirm">
+        <item quantity="one">Copiar a %d faceta</item>
+        <item quantity="other">Copiar a %d facetas</item>
+    </plurals>
+    <string name="copy_dock_subtitle">Sustituye el dock de las facetas que elijas por este</string>
+    <string name="copy_dock_sheet_message">Sustituye el dock de cada faceta seleccionada por el dock predeterminado.</string>
+    <string name="copy_apps_subtitle">Sustituye la lista de apps de las facetas que elijas por esta</string>
+    <string name="copy_apps_sheet_message">Sustituye los favoritos, el contenido de la lista y el número de apps de cada faceta seleccionada por los valores predeterminados.</string>
+    <string name="copy_look_subtitle">Sustituye el aspecto del dock y de las apps de las facetas que elijas por este</string>
+    <string name="copy_look_sheet_message">Sustituye el estilo del dock, el diseño de la lista y la alineación de cada faceta seleccionada por los valores predeterminados.</string>
 </resources>

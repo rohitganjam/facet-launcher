@@ -1139,4 +1139,16 @@
     <string name="native_widget_allow">Autoriser</string>
     <string name="calendar_work_calendar">Agenda professionnel</string>
     <string name="calendar_work_calendar_n">Agenda professionnel %1$d</string>
+    <string name="copy_to_facets_title">Copier vers des facettes</string>
+    <string name="copy_to_facets_current">Actuelle</string>
+    <plurals name="copy_to_facets_confirm">
+        <item quantity="one">Copier vers %d facette</item>
+        <item quantity="other">Copier vers %d facettes</item>
+    </plurals>
+    <string name="copy_dock_subtitle">Remplace le dock des facettes choisies par celui-ci</string>
+    <string name="copy_dock_sheet_message">Remplace le dock de chaque facette sélectionnée par le dock par défaut.</string>
+    <string name="copy_apps_subtitle">Remplace la liste d\'apps des facettes choisies par celle-ci</string>
+    <string name="copy_apps_sheet_message">Remplace les favoris, le contenu de la liste et le nombre d\'apps de chaque facette sélectionnée par les valeurs par défaut.</string>
+    <string name="copy_look_subtitle">Remplace l\'apparence du dock et des apps des facettes choisies par celle-ci</string>
+    <string name="copy_look_sheet_message">Remplace le style du dock, la disposition de la liste et l\'alignement de chaque facette sélectionnée par les valeurs par défaut.</string>
 </resources>

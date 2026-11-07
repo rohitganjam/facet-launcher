@@ -34,6 +34,7 @@ import com.facetlauncher.app.data.model.AppRowPresentation
 import com.facetlauncher.app.data.model.DockDisplayMode
 import com.facetlauncher.app.data.model.HomeWallpaper
 import com.facetlauncher.app.ui.components.CardDivider
+import com.facetlauncher.app.ui.components.CopyToFacetsCard
 import com.facetlauncher.app.ui.components.DefaultsNote
 import com.facetlauncher.app.ui.components.LabeledDropdownRow
 import com.facetlauncher.app.ui.components.ResetToDefaultCard
@@ -76,6 +77,7 @@ fun DockAppsAppearanceScreen(
         onAppListGridDisplayModeChange = viewModel::setAppListGridDisplayMode,
         onAppListShrinkToFitChange = viewModel::setAppListShrinkToFit,
         onResetToDefault = viewModel::resetLookToDefault,
+        onCopyToFacets = viewModel::copyLookToFacets,
         modifier = modifier,
     )
 }
@@ -98,6 +100,7 @@ private fun DockAppsAppearanceContent(
     onAppListGridColumnsChange: (AppListGridColumns) -> Unit,
     onAppListGridDisplayModeChange: (AppListGridDisplayMode) -> Unit,
     onResetToDefault: () -> Unit,
+    onCopyToFacets: (Set<Long>) -> Unit,
     modifier: Modifier = Modifier,
     onAppListShrinkToFitChange: (AppListShrinkToFit) -> Unit = {},
 ) {
@@ -152,15 +155,19 @@ private fun DockAppsAppearanceContent(
                         onLandscapeAppListVerticalAlignmentChange,
                     )
                 }
-                resetOrDefaultsNoteItems(uiState.isFacetScoped, onResetToDefault)
+                resetOrDefaultsNoteItems(uiState, onResetToDefault, onCopyToFacets)
             }
         },
     )
 }
 
-/** A facet's Reset to default row, or at launcher scope the note that these values only seed new facets. */
-private fun LazyListScope.resetOrDefaultsNoteItems(isFacetScoped: Boolean, onResetToDefault: () -> Unit) {
-    if (isFacetScoped) {
+/** A facet's Reset to default row, or at launcher scope Copy to facets and the note that these values only seed new facets. */
+private fun LazyListScope.resetOrDefaultsNoteItems(
+    uiState: AppearanceSettingsUiState,
+    onResetToDefault: () -> Unit,
+    onCopyToFacets: (Set<Long>) -> Unit,
+) {
+    if (uiState.isFacetScoped) {
         item { Spacer(modifier = Modifier.height(16.dp)) }
         item {
             ResetToDefaultCard(
@@ -171,6 +178,17 @@ private fun LazyListScope.resetOrDefaultsNoteItems(isFacetScoped: Boolean, onRes
             )
         }
     } else {
+        item { Spacer(modifier = Modifier.height(16.dp)) }
+        item {
+            CopyToFacetsCard(
+                facets = uiState.facets,
+                activeFacetId = uiState.settings.activeFacetId,
+                subtitle = stringResource(R.string.copy_look_subtitle),
+                sheetMessage = stringResource(R.string.copy_look_sheet_message),
+                onCopy = onCopyToFacets,
+                testTagPrefix = "dock_apps_appearance",
+            )
+        }
         item { DefaultsNote(modifier = Modifier.padding(top = 12.dp)) }
     }
 }
@@ -387,6 +405,7 @@ private fun DockAppsAppearanceScreenPreview() {
             onAppListGridColumnsChange = {},
             onAppListGridDisplayModeChange = {},
             onResetToDefault = {},
+            onCopyToFacets = {},
         )
     }
 }

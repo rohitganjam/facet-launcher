@@ -13,7 +13,11 @@ import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollToNode
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.lifecycle.SavedStateHandle
 import androidx.room.Room
@@ -202,6 +206,50 @@ class DockSettingsScreenTest {
         val defaultDock = runBlocking { facetPlacements!!.getRawApps(PlacementTarget.GlobalDock).map { it.packageName } }
         composeRule.waitUntil(timeoutMillis = 5_000) { owned() == defaultDock }
         assertEquals(1, before.size)
+    }
+
+    @Test
+    fun copyToFacetsCopiesTheDefaultDockOntoTheSelectedFacetsOnly() {
+        // Given two facets and a launcher-wide default dock with one app
+        var placements: PlacementRepository? = null
+        val facetIds = mutableListOf<Long>()
+        setContent(
+            seed = { appRepository, placementRepository, _, facetRepository ->
+                placements = placementRepository
+                facetIds += facetRepository.addFacet().id
+                facetIds += facetRepository.addFacet().id
+                placementRepository.addApp(PlacementTarget.GlobalDock, appRepository.getTestableApps()[0], position = 0)
+            },
+        )
+        composeRule.waitForIdle()
+
+        // When opening Copy to facets (scrolled into view), deselecting the second facet and confirming
+        composeRule.onNodeWithTag("dock_settings_screen").performScrollToNode(hasTestTag("dock_settings_copy_row"))
+        // The row only takes taps once the facets have loaded
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodes(hasTestTag("dock_settings_copy_row") and hasClickAction()).fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onNodeWithTag("dock_settings_copy_row").performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnClick)
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithTag("copy_to_facets_row_${facetIds[1]}").fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onNodeWithTag("copy_to_facets_row_${facetIds[1]}").performClick()
+        composeRule.onNodeWithTag("copy_to_facets_confirm").performClick()
+
+        // Then the first facet's dock is a copy of the default and the second one is untouched
+        val dockOf = { id: Long -> runBlocking { placements!!.getRawApps(PlacementTarget(PlacementList.DOCK, id)).size } }
+        composeRule.waitUntil(timeoutMillis = 5_000) { dockOf(facetIds[0]) == 1 }
+        assertEquals(0, dockOf(facetIds[1]))
+    }
+
+    @Test
+    fun facetScopedScreenHasNoCopyToFacets() {
+        setContent(facetId = 1L)
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            composeRule.onAllNodesWithTag("dock_settings_reset_row").fetchSemanticsNodes().isNotEmpty()
+        }
+
+        composeRule.onAllNodesWithTag("dock_settings_copy_row").assertCountEquals(0)
     }
 
     @Test

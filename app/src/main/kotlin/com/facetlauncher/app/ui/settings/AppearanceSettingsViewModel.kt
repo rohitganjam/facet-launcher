@@ -12,6 +12,9 @@ import com.facetlauncher.app.data.WallpaperRepository
 import com.facetlauncher.app.data.model.Facet
 import com.facetlauncher.app.data.model.landscape
 import com.facetlauncher.app.domain.ApplyFacetDefaultsUseCase
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toImmutableList
 import com.facetlauncher.app.domain.FacetDefaultsScope
 import com.facetlauncher.app.domain.ResolvedFacetStyle
 import com.facetlauncher.app.domain.ObservePlacedItemsUseCase
@@ -66,6 +69,8 @@ import com.facetlauncher.app.data.model.PlacementList
 data class AppearanceSettingsUiState(
     val settings: LauncherSettings = LauncherSettings(),
     val facet: Facet? = null,
+    /** Every facet, for the default screen's "Copy to facets". */
+    val facets: ImmutableList<Facet> = persistentListOf(),
     val facetFavorites: List<PlacedItem> = emptyList(),
     val globalFavorites: List<PlacedItem> = emptyList(),
     val facetDockItems: List<PlacedItem> = emptyList(),
@@ -140,7 +145,7 @@ class AppearanceSettingsViewModel @Inject constructor(
 
     val uiState: StateFlow<AppearanceSettingsUiState> = combine(
         settingsRepository.settings,
-        facetId?.let { facetRepository.observeFacets() } ?: flowOf(emptyList()),
+        facetRepository.observeFacets(),
         combine(facetFavoritesFlow, globalFavoritesFlow, ::Pair),
         combine(facetDockItemsFlow, globalDockItemsFlow, ::Pair),
         combine(isNotificationAccessGranted, isCalendarAccessGranted, ::Pair),
@@ -151,6 +156,7 @@ class AppearanceSettingsViewModel @Inject constructor(
         AppearanceSettingsUiState(
             settings = settings,
             facet = facet,
+            facets = facets.toImmutableList(),
             facetFavorites = facetFavorites,
             globalFavorites = globalFavorites,
             facetDockItems = facetDockItems,
@@ -249,6 +255,11 @@ class AppearanceSettingsViewModel @Inject constructor(
 
     fun setHomeAppsFontWeight(weight: FontWeightOption) {
         viewModelScope.launch { settingsRepository.setHomeAppsFontWeight(weight) }
+    }
+
+    /** "Copy to facets": replaces the dock and apps look of each chosen facet with the launcher-wide one. */
+    fun copyLookToFacets(facetIds: Set<Long>) {
+        viewModelScope.launch { facetIds.forEach { applyFacetDefaults(it, FacetDefaultsScope.LOOK) } }
     }
 
     /** "Reset to default": replaces this facet's dock and apps look with the launcher-wide one. */

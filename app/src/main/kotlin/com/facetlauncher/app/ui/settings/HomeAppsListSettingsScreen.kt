@@ -57,6 +57,7 @@ import com.facetlauncher.app.ui.components.AppIconSize
 import com.facetlauncher.app.ui.components.BackButton
 import com.facetlauncher.app.ui.components.CardDivider
 import com.facetlauncher.app.ui.components.HomeSurfacePreview
+import com.facetlauncher.app.ui.components.CopyToFacetsCard
 import com.facetlauncher.app.ui.components.DefaultsNote
 import com.facetlauncher.app.ui.components.ResetToDefaultCard
 import com.facetlauncher.app.ui.components.LabeledDropdownRow
@@ -94,6 +95,7 @@ fun HomeAppsListSettingsScreen(
         onAppsToShowCountChange = viewModel::setAppsToShowCount,
         onReorderFavorites = viewModel::reorderFavorites,
         onResetToDefault = viewModel::resetToDefault,
+        onCopyToFacets = viewModel::copyToFacets,
         modifier = modifier,
     )
 }
@@ -107,6 +109,7 @@ private fun HomeAppsListSettingsContent(
     onAppsToShowCountChange: (Int) -> Unit,
     onReorderFavorites: (List<PlacedItem>) -> Unit,
     onResetToDefault: () -> Unit,
+    onCopyToFacets: (Set<Long>) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     StickyHeaderLayout(
@@ -150,6 +153,17 @@ private fun HomeAppsListSettingsContent(
                         )
                     }
                 } else {
+                    item { Spacer(modifier = Modifier.height(16.dp)) }
+                    item {
+                        CopyToFacetsCard(
+                            facets = uiState.facets,
+                            activeFacetId = uiState.settings.activeFacetId,
+                            subtitle = stringResource(R.string.copy_apps_subtitle),
+                            sheetMessage = stringResource(R.string.copy_apps_sheet_message),
+                            onCopy = onCopyToFacets,
+                            testTagPrefix = "home_apps_list",
+                        )
+                    }
                     item { DefaultsNote(modifier = Modifier.padding(top = 12.dp)) }
                 }
             }
@@ -346,6 +360,7 @@ private fun HomeAppsListSettingsScreenPreview() {
             onAppsToShowCountChange = {},
             onReorderFavorites = {},
             onResetToDefault = {},
+            onCopyToFacets = {},
         )
     }
 }
