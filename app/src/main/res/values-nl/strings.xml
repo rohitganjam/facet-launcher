@@ -248,7 +248,7 @@
     <string name="settings_change_wallpaper_title">Achtergrond wijzigen</string>
     <string name="settings_change_wallpaper_subtitle">Wijzig je systeemachtergrond</string>
     <string name="settings_appearance_title">Aanpassing</string>
-    <string name="settings_appearance_subtitle">Klok, agenda, startscherm, meldingen en thema\'s aanpassen</string>
+    <string name="settings_appearance_subtitle">Startscherm, meldingen en thema\'s aanpassen</string>
     <string name="settings_clock_calendar_title">Klokstijl</string>
     <string name="settings_time_format_24h">24-uurs tijd</string>
     <string name="settings_time_format_12h">12-uurs tijd</string>
@@ -445,7 +445,6 @@
 
     <string name="appearance_header_title">Aanpassing</string>
     <string name="appearance_section_dock_home">Dock en startscherm</string>
-    <string name="appearance_section_clock">Klok en agenda</string>
     <string name="appearance_dock_apps_title">Uiterlijk van dock en apps</string>
     <string name="appearance_general_title">Kleuren en thema\'s</string>
     <string name="appearance_general_subtitle">Thema\'s, accent, statusbalk</string>

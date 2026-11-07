@@ -245,7 +245,7 @@
     <string name="settings_change_wallpaper_title">Cambiar fondo de pantalla</string>
     <string name="settings_change_wallpaper_subtitle">Cambia el fondo de pantalla del sistema</string>
     <string name="settings_appearance_title">Personalización</string>
-    <string name="settings_appearance_subtitle">Personaliza reloj, calendario, inicio, notificaciones, temas</string>
+    <string name="settings_appearance_subtitle">Personaliza inicio, notificaciones, temas</string>
     <string name="settings_clock_calendar_title">Estilo de reloj</string>
     <string name="settings_time_format_24h">Formato de 24 horas</string>
     <string name="settings_time_format_12h">Formato de 12 horas</string>
@@ -942,7 +942,6 @@
     <string name="app_list_grid_columns_launcher_default">Columnas predeterminadas del launcher</string>
     <string name="app_list_grid_display_mode_launcher_default">Estilo predeterminado del launcher</string>
     <string name="appearance_section_dock_home">Dock e inicio</string>
-    <string name="appearance_section_clock">Reloj y calendario</string>
     <string name="appearance_dock_apps_title">Apariencia del dock y las apps</string>
     <string name="appearance_general_title">Colores y temas</string>
     <string name="appearance_general_subtitle">Temas, acento, barra de estado</string>
