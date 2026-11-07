@@ -164,6 +164,7 @@ private fun ThemeCard(
         CardDivider()
         LabeledDropdownRow(
             title = stringResource(R.string.appearance_system_bar_icons),
+            subtitle = stringResource(R.string.appearance_system_bar_icons_subtitle),
             options = SystemBarIconStyle.entries,
             selected = settings.systemBarIconStyle,
             label = { stringResource(it.displayNameRes) },

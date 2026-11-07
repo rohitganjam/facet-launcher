@@ -9,12 +9,12 @@ import org.junit.Test
 class DrawerGridLayoutTest {
 
     @Test
-    fun `phone width gives six five and four columns`() {
-        // Given the grid width measured on a 393dp wide phone (after the rail and start padding)
-        val width = 297.dp
+    fun `phone width gives five five and four columns`() {
+        // Given the grid width on a 393dp wide phone (after the rail and the 36dp start padding)
+        val width = 323.dp
 
         // Then each density gets its own column count
-        assertEquals(6, drawerGridColumns(width, DrawerGridDensity.COMPACT))
+        assertEquals(5, drawerGridColumns(width, DrawerGridDensity.COMPACT))
         assertEquals(5, drawerGridColumns(width, DrawerGridDensity.REGULAR))
         assertEquals(4, drawerGridColumns(width, DrawerGridDensity.SPACIOUS))
     }
@@ -23,7 +23,7 @@ class DrawerGridLayoutTest {
     fun `a wider window gets more columns at every density`() {
         DrawerGridDensity.entries.forEach { density ->
             // Given the same density on a phone and on an unfolded foldable
-            val phone = drawerGridColumns(297.dp, density)
+            val phone = drawerGridColumns(323.dp, density)
             val foldable = drawerGridColumns(745.dp, density)
 
             // Then the wider window is denser
@@ -59,8 +59,8 @@ class DrawerGridLayoutTest {
         val width = 745.dp
         val height = 540.dp
 
-        assertEquals(15 to 6, drawerGridColumns(width, DrawerGridDensity.COMPACT) to drawerGridRows(height, DrawerGridDensity.COMPACT))
-        assertEquals(12 to 5, drawerGridColumns(width, DrawerGridDensity.REGULAR) to drawerGridRows(height, DrawerGridDensity.REGULAR))
+        assertEquals(13 to 6, drawerGridColumns(width, DrawerGridDensity.COMPACT) to drawerGridRows(height, DrawerGridDensity.COMPACT))
+        assertEquals(11 to 5, drawerGridColumns(width, DrawerGridDensity.REGULAR) to drawerGridRows(height, DrawerGridDensity.REGULAR))
         assertEquals(9 to 5, drawerGridColumns(width, DrawerGridDensity.SPACIOUS) to drawerGridRows(height, DrawerGridDensity.SPACIOUS))
     }
 

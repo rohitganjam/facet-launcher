@@ -253,7 +253,7 @@ class ThemesAndColorsScreenTest {
         setContent(onBack = { backPressed = true })
 
         // Then its own title shows, with the live preview card above the controls
-        composeRule.onNodeWithText("General settings").assertIsDisplayed()
+        composeRule.onNodeWithText("Colors and Themes").assertIsDisplayed()
         composeRule.onNodeWithTag("appearance_preview_card").assertExists()
 
         // When tapping back

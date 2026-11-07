@@ -76,7 +76,7 @@ Spacious 44 + 16. A text-only Home row keeps the icon's height. Home's list uses
 `appListShrinkToFit` on (`AppListShrinkToFit`, facet-overridable, off by default) `HomeFrame`'s one-shot fit check drops it
 to Compact when the Regular list wouldn't fit, otherwise the list keeps Regular rows and scrolls. The dock is not part
 of the check. "Icons and text" (`DockDisplayMode.ICONS_AND_TEXT`, `AppListGridDisplayMode.ICONS_AND_TEXT`) puts a
-one-line name under each dock or grid icon (`HomeTileLabel`, Home's label style, max width `GRID_LABEL_WIDTH` × scale).
+one-line name under each dock or grid icon (`HomeTileLabel`, Home's label style, the dock caps its width at `GRID_LABEL_WIDTH` × scale, a grid tile takes its whole cell; grid cells sit 2dp apart).
 
 A folder sheet follows where it was opened: from Home's grid layout it is a grid with Home's grid columns and display
 (`HomeItemLook.drawerPresentation`/`folderGridColumns`/`folderGridDisplayMode`, set by `toHomeScreenState`), from the

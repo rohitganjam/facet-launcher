@@ -90,7 +90,6 @@
     <string name="hub_empty_state_subtitle">Agrega un widget para empezar.</string>
     <string name="hub_at_capacity_message">Lleno con 20 widgets — quita uno para agregar otro.</string>
     <string name="facet_settings_apps_list_settings_title">Configuración de la lista de apps</string>
-    <string name="appearance_general_title">Configuración general</string>
     <string name="clock_adjust_stack_empty">Vacía · agrega un reloj o un widget</string>
     <string name="clock_stack_full_free_hint">Quita el widget actual para agregar otro, o actualiza a Pro para tener hasta 5.</string>
     <string name="clock_stack_empty">No hay nada aquí, así que la zona del reloj en Inicio queda vacía hasta que agregues algo.</string>

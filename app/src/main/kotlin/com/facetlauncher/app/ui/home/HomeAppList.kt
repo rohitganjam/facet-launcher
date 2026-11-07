@@ -157,7 +157,7 @@ internal fun HomeAppGrid(
         columns = GridCells.Fixed(columns),
         modifier = modifier.fillMaxWidth().testTag(homeTag("home_app_grid")),
         verticalArrangement = Arrangement.spacedBy(16.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        horizontalArrangement = Arrangement.spacedBy(2.dp),
     ) {
         items(content.items, key = { it.stableKey() }) { item ->
             when (item) {
@@ -206,7 +206,7 @@ internal fun HomeAppGridTile(
                     modifier = Modifier.testTag(homeTag("home_app_icon_${app.packageName}")),
                 )
                 if (displayMode == AppListGridDisplayMode.ICONS_AND_TEXT) {
-                    HomeTileLabel(app.label, style, Modifier.testTag(homeTag("home_app_label_${app.packageName}")))
+                    HomeTileLabel(app.label, style, Modifier.testTag(homeTag("home_app_label_${app.packageName}")), Dp.Unspecified)
                 }
             }
         }
@@ -214,9 +214,17 @@ internal fun HomeAppGridTile(
     }
 }
 
-/** An icon tile's name under it ("Icons and text" on Home's grid and the dock): one line, in Home's label style. */
+/**
+ * An icon tile's name under it ("Icons and text" on Home's grid and the dock): one line, in Home's label style.
+ * [maxWidth] caps it where the cell is not known (the dock); a grid tile passes [Dp.Unspecified] to take its whole cell.
+ */
 @Composable
-internal fun HomeTileLabel(text: String, style: HomeItemStyle, modifier: Modifier = Modifier) {
+internal fun HomeTileLabel(
+    text: String,
+    style: HomeItemStyle,
+    modifier: Modifier = Modifier,
+    maxWidth: Dp = AppIconSize.scaled(AppIconSize.GRID_LABEL_WIDTH),
+) {
     Text(
         text = text,
         style = MaterialTheme.typography.labelLarge.copy(shadow = homeAppLabelShadow(style.labelColor), fontWeight = style.labelFontWeight),
@@ -224,7 +232,7 @@ internal fun HomeTileLabel(text: String, style: HomeItemStyle, modifier: Modifie
         textAlign = TextAlign.Center,
         maxLines = 1,
         overflow = TextOverflow.Ellipsis,
-        modifier = modifier.padding(top = 7.dp).widthIn(max = AppIconSize.scaled(AppIconSize.GRID_LABEL_WIDTH)),
+        modifier = modifier.padding(top = 7.dp).widthIn(max = maxWidth),
     )
 }
 
@@ -259,7 +267,7 @@ internal fun HomeFolderGridTile(
         } else {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 FolderTileGlyph(folder = folder, size = AppIconSize.scaled())
-                if (displayMode == AppListGridDisplayMode.ICONS_AND_TEXT) HomeTileLabel(folder.name, style)
+                if (displayMode == AppListGridDisplayMode.ICONS_AND_TEXT) HomeTileLabel(folder.name, style, maxWidth = Dp.Unspecified)
             }
         }
         if (sheetOpen) FolderItemSheet(folder, { sheetOpen = false }, actions, style)

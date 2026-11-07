@@ -1335,8 +1335,8 @@ private fun DrawerAppRow(
 private val GRID_CONTENT_TOP_PADDING = 4.dp
 private val GRID_CONTENT_BOTTOM_PADDING = 16.dp
 private val GRID_VERTICAL_SPACING = 20.dp
-private val GRID_HORIZONTAL_SPACING = 4.dp
-private val GRID_START_PADDING = 48.dp
+private val GRID_HORIZONTAL_SPACING = 2.dp
+private val GRID_START_PADDING = 36.dp
 
 /**
  * Grid layout (`1i`): [density]-driven columns, icons `44×44`/`13dp` corners, centered label
@@ -1474,7 +1474,6 @@ private fun DrawerGridTile(
                 textAlign = TextAlign.Center,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.widthIn(max = AppIconSize.scaled(appearance.gridDensity.labelWidth())),
             )
         }
         AppContextMenu(
@@ -1529,7 +1528,6 @@ private fun DrawerFolderTile(
                 textAlign = TextAlign.Center,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.widthIn(max = AppIconSize.scaled(appearance.gridDensity.labelWidth())),
             )
         }
         if (sheetOpen) {

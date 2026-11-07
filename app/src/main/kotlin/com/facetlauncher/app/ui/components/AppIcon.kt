@@ -70,8 +70,8 @@ object AppIconSize {
     /** The mini icons inside a folder tile, and other glyphs that small; scaled with their tile. */
     val FOLDER_MINI = 20.dp
 
-    /** The widest a grid tile's one-line label runs, under an [ICON]; scaled with it. */
-    val GRID_LABEL_WIDTH = 56.dp
+    /** The widest a dock tile's one-line label runs (and the Home preview's), under an [ICON]: 64dp, as the dock holds at most five icons; scaled with it. */
+    val GRID_LABEL_WIDTH = 64.dp
 
     /** [base] at the user's Icon size setting. */
     @Composable

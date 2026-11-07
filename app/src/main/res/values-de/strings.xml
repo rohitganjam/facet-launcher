@@ -439,7 +439,8 @@
     <!-- AppearanceSettingsScreen -->
     <string name="appearance_header_title">Anpassung</string>
     <string name="appearance_launcher_theme">Launcher-Design</string>
-    <string name="appearance_system_bar_icons">Symbole der Statusleiste</string>
+    <string name="appearance_system_bar_icons">Farben der Systemleisten</string>
+    <string name="appearance_system_bar_icons_subtitle">Symbolfarbe für Status- und Navigationsleiste</string>
     <string name="appearance_hide_status_bar_title">Statusleiste ausblenden</string>
     <string name="appearance_hide_status_bar_subtitle">Auf Home, Hub und im App-Menü ausgeblendet. Nach unten wischen zeigt sie kurz an.</string>
     <string name="appearance_launcher_font">Launcher-Schriftstil</string>
@@ -940,7 +941,7 @@
     <string name="appearance_section_dock_home">Dock &amp; Startseite</string>
     <string name="appearance_section_clock">Uhr &amp; Kalender</string>
     <string name="appearance_dock_apps_title">Dock- &amp; App-Darstellung</string>
-    <string name="appearance_general_title">Allgemeine Einstellungen</string>
+    <string name="appearance_general_title">Farben und Designs</string>
     <string name="appearance_general_subtitle">Designs, Akzent, Statusleiste</string>
     <string name="appearance_section_look_feel">Optik und Bedienung</string>
     <string name="appearance_icon_shape">Symbolform</string>

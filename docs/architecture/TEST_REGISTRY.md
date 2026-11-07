@@ -2192,7 +2192,7 @@ How to read: one section per tier, one table per package (mirrors `app/src/main`
 
 <details><summary><code>DrawerGridLayoutTest</code> — 7 cases</summary>
 
-- phone width gives six five and four columns
+- phone width gives five five and four columns
 - a wider window gets more columns at every density
 - looser density never has more columns or rows than a tighter one
 - typical phone height gives seven six and five rows

@@ -439,7 +439,8 @@
     <!-- AppearanceSettingsScreen -->
     <string name="appearance_header_title">Personnalisation</string>
     <string name="appearance_launcher_theme">Thème du launcher</string>
-    <string name="appearance_system_bar_icons">Icônes de la barre d\'état</string>
+    <string name="appearance_system_bar_icons">Couleurs des barres système</string>
+    <string name="appearance_system_bar_icons_subtitle">Couleur des icônes des barres d’état et de navigation</string>
     <string name="appearance_hide_status_bar_title">Masquer la barre d\'état</string>
     <string name="appearance_hide_status_bar_subtitle">Masquée sur l\'accueil, le Hub et le menu des apps. Balayez vers le bas pour l\'afficher quelques secondes.</string>
     <string name="appearance_launcher_font">Style de police du launcher</string>
@@ -940,7 +941,7 @@
     <string name="appearance_section_dock_home">Dock et accueil</string>
     <string name="appearance_section_clock">Horloge et calendrier</string>
     <string name="appearance_dock_apps_title">Apparence du dock et des apps</string>
-    <string name="appearance_general_title">Réglages généraux</string>
+    <string name="appearance_general_title">Couleurs et thèmes</string>
     <string name="appearance_general_subtitle">Thèmes, accent, barre d’état</string>
     <string name="appearance_section_look_feel">Aspect et ergonomie</string>
     <string name="appearance_icon_shape">Forme des icônes</string>

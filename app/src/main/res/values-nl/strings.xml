@@ -446,11 +446,12 @@
     <string name="appearance_section_dock_home">Dock en startscherm</string>
     <string name="appearance_section_clock">Klok en agenda</string>
     <string name="appearance_dock_apps_title">Uiterlijk van dock en apps</string>
-    <string name="appearance_general_title">Algemene instellingen</string>
+    <string name="appearance_general_title">Kleuren en thema\'s</string>
     <string name="appearance_general_subtitle">Thema\'s, accent, statusbalk</string>
     <string name="appearance_section_look_feel">Uiterlijk en gevoel</string>
     <string name="appearance_launcher_theme">Launcherthema</string>
-    <string name="appearance_system_bar_icons">Pictogrammen in de statusbalk</string>
+    <string name="appearance_system_bar_icons">Kleuren van systeembalken</string>
+    <string name="appearance_system_bar_icons_subtitle">Pictogramkleur voor de status- en navigatiebalk</string>
     <string name="appearance_hide_status_bar_title">Statusbalk verbergen</string>
     <string name="appearance_hide_status_bar_subtitle">Verborgen op Home, Hub en het appmenu. Veeg omlaag om hem enkele seconden te tonen.</string>
     <string name="appearance_icon_shape">Pictogramvorm</string>

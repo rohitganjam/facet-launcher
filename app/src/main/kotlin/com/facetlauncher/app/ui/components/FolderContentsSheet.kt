@@ -455,7 +455,7 @@ private fun FolderContentsGrid(
     val perRow = columns.coerceAtLeast(1)
     Column(modifier = modifier.verticalScroll(rememberScrollState()).padding(horizontal = 20.dp, vertical = 12.dp)) {
         folder.apps.chunked(perRow).forEach { rowApps ->
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(2.dp), modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)) {
                 rowApps.forEach { app ->
                     FolderContentsGridTile(
                         app = app,
@@ -497,14 +497,12 @@ private fun FolderContentsGridTile(
             if (displayMode != AppListGridDisplayMode.ICONS) {
                 Text(
                     text = app.label,
-                    style = MaterialTheme.typography.labelSmall,
+                    style = MaterialTheme.typography.labelLarge,
                     color = Ink,
                     textAlign = TextAlign.Center,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier
-                        .padding(top = if (displayMode == AppListGridDisplayMode.TEXT) 0.dp else 7.dp)
-                        .widthIn(max = AppIconSize.scaled(AppIconSize.GRID_LABEL_WIDTH)),
+                    modifier = Modifier.padding(top = if (displayMode == AppListGridDisplayMode.TEXT) 0.dp else 7.dp),
                 )
             }
         }

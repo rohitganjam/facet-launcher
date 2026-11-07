@@ -10,13 +10,10 @@ private const val MIN_ROWS = 2
 
 /** Ideal cell width per density; the real width stretches to fill the available space. */
 private fun DrawerGridDensity.targetCellWidth(): Dp = when (this) {
-    DrawerGridDensity.COMPACT -> 50.dp
-    DrawerGridDensity.REGULAR -> 60.dp
+    DrawerGridDensity.COMPACT -> 56.dp
+    DrawerGridDensity.REGULAR -> 64.dp
     DrawerGridDensity.SPACIOUS -> 80.dp
 }
-
-/** The widest a tile's one-line label runs: the cell less a 4dp gap to its neighbour. */
-internal fun DrawerGridDensity.labelWidth(): Dp = targetCellWidth() - 4.dp
 
 /** Ideal row pitch (tile plus vertical gap) per density. */
 private fun DrawerGridDensity.targetRowPitch(): Dp = when (this) {
@@ -25,9 +22,9 @@ private fun DrawerGridDensity.targetRowPitch(): Dp = when (this) {
     DrawerGridDensity.SPACIOUS -> 120.dp
 }
 
-/** Columns that fit [availableWidth] at [density]'s ideal cell width, never fewer than [MIN_COLUMNS]. */
+/** Whole columns that fit [availableWidth] at [density]'s cell width, so a cell is never narrower than that; at least [MIN_COLUMNS]. */
 internal fun drawerGridColumns(availableWidth: Dp, density: DrawerGridDensity): Int =
-    (availableWidth / density.targetCellWidth()).roundToInt().coerceAtLeast(MIN_COLUMNS)
+    (availableWidth / density.targetCellWidth()).toInt().coerceAtLeast(MIN_COLUMNS)
 
 /** Rows that fit [availableHeight] at [density]'s ideal row pitch, never fewer than [MIN_ROWS]. */
 internal fun drawerGridRows(availableHeight: Dp, density: DrawerGridDensity): Int =

@@ -100,7 +100,8 @@
         <item>Tempo</item>
     </string-array>
 
-    <string name="appearance_system_bar_icons">Ícones da barra de estado</string>
+    <string name="appearance_system_bar_icons">Cores das barras do sistema</string>
+    <string name="appearance_system_bar_icons_subtitle">Cor dos ícones das barras de estado e de navegação</string>
     <string name="appearance_hide_status_bar_title">Ocultar a barra de estado</string>
     <string name="appearance_hide_status_bar_subtitle">Oculta no início, no Hub e no menu de apps. Deslize para baixo para a mostrar durante alguns segundos.</string>
     <string name="appearance_launcher_font">Estilo do tipo de letra do launcher</string>
@@ -111,7 +112,7 @@
     <string name="appearance_font_weight">Espessura do tipo de letra</string>
     <string name="appearance_wallpaper_colors">Cores da imagem de fundo</string>
     <string name="appearance_section_look_feel">Aspeto e comportamento</string>
-    <string name="appearance_general_title">Definições gerais</string>
+    <string name="appearance_general_title">Cores e temas</string>
     <string name="appearance_general_subtitle">Temas, destaque, barra de estado</string>
     <string name="clock_style_font_label">Tipo de letra</string>
     <string name="clock_style_primary_font_color">Cor primária do tipo de letra</string>

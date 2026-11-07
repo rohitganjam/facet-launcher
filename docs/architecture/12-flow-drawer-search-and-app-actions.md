@@ -119,14 +119,14 @@ either, just the row's own position in its flat `LazyColumn`. The row there
 
 Grid presentation only. `COMPACT`/`REGULAR`/`SPACIOUS` pick a target cell width and row pitch
 (`ui/drawer/DrawerGridLayout.kt`); the column and row counts are computed from the viewport, so one
-setting fits a phone, a foldable and a tablet (a typical phone gets 6/5/4 columns and 7/6/5 rows).
+setting fits a phone, a foldable and a tablet (a typical phone gets 5/5/4 columns and 7/6/5 rows).
 `DrawerGridContent` derives both counts from its own constraints and divides the height into equal
 rows; search results use the same column count, laid out as equal-weight cells so tiles sit on the
 same grid. The setting persists under the old `drawer_grid_size` key; the retired `FIVE_BY_SIX`-style
 names still load (`DrawerGridDensity.fromStored`) and map to the nearest density. Home's own grid
 (`AppListGridColumns`) is a separate setting and still fixed-column. Density changes the cells, never the icon: grid
-icons are always `AppIconSize.ICON` × the Icon size setting, with a one-line label (`showDrawerLabels`) at most
-`GRID_LABEL_WIDTH` × that scale.
+icons are always `AppIconSize.ICON` × the Icon size setting, with a one-line label (`showDrawerLabels`) as wide as its cell
+(columns round down, so a cell is never narrower than the density's cell width; cells sit 2dp apart).
 
 ### 1e. List item size and folder sheets
 

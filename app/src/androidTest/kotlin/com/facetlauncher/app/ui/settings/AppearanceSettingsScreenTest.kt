@@ -556,7 +556,7 @@ class AppearanceSettingsScreenTest {
         composeRule.onNodeWithTag("appearance_settings_screen").performScrollToNode(hasTestTag("general_icons_row"))
 
         // Then General reads its static subtitle and the others name their page and current value
-        composeRule.onNodeWithTag("general_themes_colors_row").assertTextContains("General settings", substring = true)
+        composeRule.onNodeWithTag("general_themes_colors_row").assertTextContains("Colors and Themes", substring = true)
         composeRule.onNodeWithTag("general_themes_colors_row").assertTextContains("Themes, accent, status bar", substring = true)
         composeRule.onNodeWithTag("general_fonts_row").assertTextContains("Fonts", substring = true)
         composeRule.onNodeWithTag("general_icons_row").assertTextContains("Default", substring = true)
