@@ -150,7 +150,7 @@ private fun ReleaseSection(release: ReleaseNotes, kind: ReleaseSectionKind) {
         bullets.forEach { bullet ->
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 Box(modifier = Modifier.padding(top = 8.dp).size(5.dp).background(Muted, CircleShape))
-                Text(text = bullet, style = MaterialTheme.typography.bodyMedium, color = Ink)
+                Text(text = boldMarkdown(bullet), style = MaterialTheme.typography.bodyMedium, color = Ink)
             }
         }
     }
@@ -166,7 +166,7 @@ private fun WhatsNewScreenPreview() {
                 releases = listOf(
                     ReleaseNotes(
                         version = "0.1.25",
-                        newFeatures = listOf("An optional media player row on your home screen."),
+                        newFeatures = listOf("An optional **media player** row on your home screen."),
                         improvements = listOf("Tapping the media row opens the player app."),
                     ),
                     ReleaseNotes(version = "0.1.24", newFeatures = emptyList(), improvements = listOf("More space under the calendar.")),

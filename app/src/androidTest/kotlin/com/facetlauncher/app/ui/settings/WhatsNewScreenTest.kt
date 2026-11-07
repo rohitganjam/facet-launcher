@@ -52,6 +52,15 @@ class WhatsNewScreenTest {
     )
 
     @Test
+    fun boldMarkersAreHiddenAndTheirTextIsShown() {
+        // Given a bullet with a **bold** run
+        setContent(listOf(ReleaseNotes("9.9.9", newFeatures = listOf("Try the **new search** tiles."), improvements = emptyList())))
+
+        // Then the sentence reads without the markers
+        composeRule.onNodeWithText("Try the new search tiles.").assertIsDisplayed()
+    }
+
+    @Test
     fun eachReleaseShowsItsVersionAndBullets() {
         // Given two releases
         setContent(sample)
