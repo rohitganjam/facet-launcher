@@ -254,7 +254,7 @@
     <string name="settings_dock_title">Dock</string>
     <string name="settings_default_dock_title">Dock padrão</string>
     <string name="home_apps_list_default_header_title">Lista de apps padrão</string>
-    <string name="settings_default_look_subtitle">Como o dock e os apps da tela inicial aparecem em novas facetas</string>
+    <string name="settings_default_look_subtitle">Aparência padrão do dock e dos apps da tela inicial em novas facetas</string>
     <string name="defaults_screen_note">Usado quando você cria uma faceta ou redefine uma.</string>
     <string name="reset_to_default_title">Redefinir para o padrão</string>
     <string name="reset_to_default_confirm">Redefinir</string>

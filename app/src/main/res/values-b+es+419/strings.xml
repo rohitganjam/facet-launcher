@@ -128,4 +128,11 @@
     <string name="native_widget_agenda_empty">No hay eventos próximos</string>
     <string name="native_widget_media_empty">Nada en reproducción</string>
     <string name="native_widget_picker_section">Widgets de Facet</string>
+
+    <string name="reset_dock_subtitle">Reemplaza este dock por el predeterminado</string>
+    <string name="reset_dock_confirm_message">Esto reemplaza el dock de esta faceta por el dock predeterminado. Las apps que colocaste aquí se perderán.</string>
+    <string name="reset_apps_subtitle">Reemplaza esta lista por la predeterminada</string>
+    <string name="reset_apps_confirm_message">Esto reemplaza los favoritos, el contenido de la lista y el número de apps de esta faceta por los valores predeterminados. Los favoritos que elegiste aquí se perderán.</string>
+    <string name="reset_look_subtitle">Reemplaza el aspecto del dock y de la lista por el predeterminado</string>
+    <string name="reset_look_confirm_message">Esto reemplaza el estilo del dock, el diseño de la lista y la alineación de esta faceta por los valores predeterminados.</string>
 </resources>

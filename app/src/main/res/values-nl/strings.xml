@@ -258,7 +258,7 @@
     <string name="settings_dock_title">Dock</string>
     <string name="settings_default_dock_title">Standaarddock</string>
     <string name="home_apps_list_default_header_title">Standaard appslijst</string>
-    <string name="settings_default_look_subtitle">Hoe de dock en de apps op het startscherm eruitzien in nieuwe facetten</string>
+    <string name="settings_default_look_subtitle">Standaarduiterlijk van de dock en de apps op het startscherm in nieuwe facetten</string>
     <string name="defaults_screen_note">Wordt gebruikt wanneer je een facet maakt of terugzet.</string>
     <string name="reset_to_default_title">Terugzetten naar standaard</string>
     <string name="reset_to_default_confirm">Terugzetten</string>

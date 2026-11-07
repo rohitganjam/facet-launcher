@@ -317,4 +317,17 @@
     <string name="native_widget_agenda_empty">Sem eventos próximos</string>
     <string name="native_widget_media_empty">Nada em reprodução</string>
     <string name="native_widget_picker_section">Widgets do Facet</string>
+
+    <string name="settings_default_dock_title">Dock predefinido</string>
+    <string name="home_apps_list_default_header_title">Lista de apps predefinida</string>
+    <string name="settings_default_look_subtitle">Aspeto predefinido do dock e das apps do ecrã inicial em novas facetas</string>
+    <string name="defaults_screen_note">Usado quando cria uma faceta ou repõe uma.</string>
+    <string name="reset_to_default_title">Repor predefinição</string>
+    <string name="reset_to_default_confirm">Repor</string>
+    <string name="reset_dock_subtitle">Substituir este dock pelo dock predefinido</string>
+    <string name="reset_dock_confirm_message">Isto substitui o dock desta faceta pelo dock predefinido. As apps que colocou aqui serão perdidas.</string>
+    <string name="reset_apps_subtitle">Substituir esta lista pela predefinida</string>
+    <string name="reset_apps_confirm_message">Isto substitui os favoritos, o conteúdo da lista e o número de apps desta faceta pelos valores predefinidos. Os favoritos que escolheu aqui serão perdidos.</string>
+    <string name="reset_look_subtitle">Substituir o aspeto do dock e da lista pelo predefinido</string>
+    <string name="reset_look_confirm_message">Isto substitui o estilo do dock, o esquema da lista e o alinhamento desta faceta pelos valores predefinidos.</string>
 </resources>

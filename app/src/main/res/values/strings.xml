@@ -294,7 +294,7 @@
     <string name="settings_dock_title">Dock</string>
     <string name="settings_default_dock_title">Default dock</string>
     <string name="home_apps_list_default_header_title">Default apps list</string>
-    <string name="settings_default_look_subtitle">How the dock and Home apps look in new facets</string>
+    <string name="settings_default_look_subtitle">Default Dock and Home apps look in new facets</string>
     <string name="defaults_screen_note">Used when you create a facet or reset one.</string>
     <string name="reset_to_default_title">Reset to default</string>
     <string name="reset_to_default_confirm">Reset</string>
