@@ -156,7 +156,7 @@ private fun ContactGridTile(contact: ContactInfo, onClick: () -> Unit, modifier:
 @Composable
 private fun ResultTile(label: String, onClick: () -> Unit, modifier: Modifier = Modifier, icon: @Composable () -> Unit) {
     Column(
-        modifier = modifier.fillMaxWidth().clickable(onClick = onClick),
+        modifier = modifier.fillMaxWidth().clickable(onClick = onClick).padding(top = 2.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         icon()

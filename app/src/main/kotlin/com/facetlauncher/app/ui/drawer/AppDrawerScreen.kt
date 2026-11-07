@@ -1372,7 +1372,8 @@ private fun DrawerGridTile(
         modifier = modifier
             .fillMaxWidth()
             .longPressReleaseClickable(onClick = onClick, onLongPress = { menuExpanded = true })
-            .testTag("drawer_grid_tile_${app.packageName}"),
+            .testTag("drawer_grid_tile_${app.packageName}")
+            .padding(top = 2.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         // The row height can exceed the icon+label's own height — center them within it.
         verticalArrangement = Arrangement.Center,
