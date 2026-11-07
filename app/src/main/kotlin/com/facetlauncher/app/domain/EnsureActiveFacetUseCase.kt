@@ -18,6 +18,7 @@ class EnsureActiveFacetUseCase @Inject constructor(
     private val facetRepository: FacetRepository,
     private val settingsRepository: SettingsRepository,
     private val selectableFacets: SelectableFacetsUseCase,
+    private val applyFacetDefaults: ApplyFacetDefaultsUseCase,
 ) {
     /**
      * Runs [invoke] now and again whenever the set of selectable facets changes (an add, a delete, a
@@ -35,7 +36,8 @@ class EnsureActiveFacetUseCase @Inject constructor(
         val selectableIds = selectableFacets()
         val activeIsUsable = activeId != NO_ACTIVE_FACET_ID && activeId in selectableIds
         if (!activeIsUsable) {
-            val resolvedFacet = facets.firstOrNull { it.id in selectableIds } ?: facetRepository.addFacet()
+            val resolvedFacet = facets.firstOrNull { it.id in selectableIds }
+                ?: facetRepository.addFacet().also { applyFacetDefaults.applyAll(it.id) }
             settingsRepository.setActiveFacetId(resolvedFacet.id)
         }
     }

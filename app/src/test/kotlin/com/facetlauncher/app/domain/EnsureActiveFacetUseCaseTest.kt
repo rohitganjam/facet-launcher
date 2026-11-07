@@ -5,6 +5,12 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.Preferences
 import com.facetlauncher.app.data.FacetRepository
+import com.facetlauncher.app.data.FakeAppPlacementDao
+import com.facetlauncher.app.data.FakeFolderPlacementDao
+import com.facetlauncher.app.data.PlacementRepository
+import com.facetlauncher.app.data.local.AppPlacementEntity
+import com.facetlauncher.app.data.model.PlacementList
+import com.facetlauncher.app.data.model.PlacementTarget
 import com.facetlauncher.app.data.FakeEntitlementRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.local.FacetDao
@@ -60,6 +66,18 @@ class EnsureActiveFacetUseCaseTest {
         return SettingsRepository(dataStore)
     }
 
+    private fun ensureActive(
+        facetRepository: FacetRepository,
+        settingsRepository: SettingsRepository,
+        entitlement: FakeEntitlementRepository = FakeEntitlementRepository(),
+        placementRepository: PlacementRepository = PlacementRepository(FakeAppPlacementDao(), FakeFolderPlacementDao()),
+    ) = EnsureActiveFacetUseCase(
+        facetRepository,
+        settingsRepository,
+        SelectableFacetsUseCase(facetRepository, entitlement),
+        ApplyFacetDefaultsUseCase(facetRepository, placementRepository, settingsRepository),
+    )
+
     @Test
     fun `seeds a default facet and sets it active when the database is empty`() = runTest {
         // Given no facets and no active facet id
@@ -67,12 +85,29 @@ class EnsureActiveFacetUseCaseTest {
         val settingsRepository = createSettingsRepository()
 
         // When ensuring an active facet
-        EnsureActiveFacetUseCase(facetRepository, settingsRepository, SelectableFacetsUseCase(facetRepository, FakeEntitlementRepository()))()
+        ensureActive(facetRepository, settingsRepository)()
 
         // Then exactly one facet now exists and it's the active one
         val facets = facetRepository.observeFacets().first()
         assertEquals(1, facets.size)
         assertEquals(facets.single().id, settingsRepository.settings.first().activeFacetId)
+    }
+
+    @Test
+    fun `the first facet starts with a copy of the launcher dock`() = runTest {
+        // Given a launcher-wide dock with one app, and no facets
+        val facetRepository = FacetRepository(FakeFacetDao(), FakeClockStackItemDao())
+        val settingsRepository = createSettingsRepository()
+        val placementRepository = PlacementRepository(FakeAppPlacementDao(), FakeFolderPlacementDao())
+        placementRepository.restoreApp(AppPlacementEntity(list = PlacementList.DOCK, packageName = "com.example.a", activityName = ".Main", position = 0))
+
+        // When the first facet is created
+        ensureActive(facetRepository, settingsRepository, placementRepository = placementRepository)()
+
+        // Then the facet owns its own dock row for that app
+        val facetId = facetRepository.observeFacets().first().single().id
+        val rows = placementRepository.getRawApps(PlacementTarget(PlacementList.DOCK, facetId))
+        assertEquals(listOf("com.example.a"), rows.map { it.packageName })
     }
 
     @Test
@@ -84,7 +119,7 @@ class EnsureActiveFacetUseCaseTest {
         settingsRepository.setActiveFacetId(facet.id)
 
         // When ensuring an active facet again
-        EnsureActiveFacetUseCase(facetRepository, settingsRepository, SelectableFacetsUseCase(facetRepository, FakeEntitlementRepository()))()
+        ensureActive(facetRepository, settingsRepository)()
 
         // Then it's unchanged, and no second facet was created
         assertEquals(facet.id, settingsRepository.settings.first().activeFacetId)
@@ -100,7 +135,7 @@ class EnsureActiveFacetUseCaseTest {
         settingsRepository.setActiveFacetId(facet.id + 999)
 
         // When ensuring an active facet
-        EnsureActiveFacetUseCase(facetRepository, settingsRepository, SelectableFacetsUseCase(facetRepository, FakeEntitlementRepository()))()
+        ensureActive(facetRepository, settingsRepository)()
 
         // Then it falls back to the real facet rather than creating a redundant one
         assertEquals(facet.id, settingsRepository.settings.first().activeFacetId)
@@ -116,7 +151,7 @@ class EnsureActiveFacetUseCaseTest {
         settingsRepository.setActiveFacetId(facets[4].id)
 
         // When ensuring an active facet
-        EnsureActiveFacetUseCase(facetRepository, settingsRepository, SelectableFacetsUseCase(facetRepository, FakeEntitlementRepository(initial = false)))()
+        ensureActive(facetRepository, settingsRepository, FakeEntitlementRepository(initial = false))()
 
         // Then the first facet takes over and nothing is deleted
         assertEquals(facets[0].id, settingsRepository.settings.first().activeFacetId)
@@ -131,7 +166,7 @@ class EnsureActiveFacetUseCaseTest {
         val facets = List(5) { facetRepository.addFacet() }
         settingsRepository.setActiveFacetId(facets[4].id)
         val entitlement = FakeEntitlementRepository(initial = true)
-        val job = launch { EnsureActiveFacetUseCase(facetRepository, settingsRepository, SelectableFacetsUseCase(facetRepository, entitlement)).keepUsable() }
+        val job = launch { ensureActive(facetRepository, settingsRepository, entitlement).keepUsable() }
         testScheduler.advanceUntilIdle()
         assertEquals("pro keeps it", facets[4].id, settingsRepository.settings.first().activeFacetId)
 

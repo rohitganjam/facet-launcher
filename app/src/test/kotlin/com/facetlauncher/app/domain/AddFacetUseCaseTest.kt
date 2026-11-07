@@ -9,6 +9,7 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import org.mockito.ArgumentMatchers.anyLong
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.never
 import org.mockito.Mockito.verify
@@ -24,35 +25,49 @@ class AddFacetUseCaseTest {
         }
     }
 
+    private val applyDefaults = mock(ApplyFacetDefaultsUseCase::class.java)
+
+    private fun useCase(repository: FacetRepository, pro: Boolean) =
+        AddFacetUseCase(repository, FakeEntitlementRepository(pro), applyDefaults)
+
     @Test
     fun `a free user adds a facet below three`() = runTest {
-        val result = AddFacetUseCase(repository(2), FakeEntitlementRepository(false))()
+        val result = useCase(repository(2), pro = false)()
 
         assertTrue(result is AddFacetResult.Added)
     }
 
     @Test
-    fun `a free user at three is refused and nothing is added`() = runTest {
+    fun `a new facet is seeded from the launcher defaults`() = runTest {
+        val result = useCase(repository(1), pro = false)()
+
+        assertTrue(result is AddFacetResult.Added)
+        verify(applyDefaults).applyAll(99L)
+    }
+
+    @Test
+    fun `a free user at three is refused and nothing is added or seeded`() = runTest {
         val repository = repository(3)
 
-        val result = AddFacetUseCase(repository, FakeEntitlementRepository(false))()
+        val result = useCase(repository, pro = false)()
 
         assertEquals(AddFacetResult.LimitReached, result)
         verify(repository, never()).addFacet()
+        verify(applyDefaults, never()).applyAll(anyLong())
     }
 
     @Test
     fun `a pro user can go past three`() = runTest {
-        assertTrue(AddFacetUseCase(repository(3), FakeEntitlementRepository(true))() is AddFacetResult.Added)
+        assertTrue(useCase(repository(3), pro = true)() is AddFacetResult.Added)
     }
 
     @Test
     fun `a pro user at ten is refused`() = runTest {
-        assertEquals(AddFacetResult.LimitReached, AddFacetUseCase(repository(10), FakeEntitlementRepository(true))())
+        assertEquals(AddFacetResult.LimitReached, useCase(repository(10), pro = true)())
     }
 
     @Test
     fun `a free user who still has more than three after a refund cannot add`() = runTest {
-        assertEquals(AddFacetResult.LimitReached, AddFacetUseCase(repository(7), FakeEntitlementRepository(false))())
+        assertEquals(AddFacetResult.LimitReached, useCase(repository(7), pro = false)())
     }
 }

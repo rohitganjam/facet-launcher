@@ -17,6 +17,7 @@ import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.data.widget.AppWidgetRepository
 import com.facetlauncher.app.domain.ActivateFacetByIdUseCase
 import com.facetlauncher.app.domain.AddFacetUseCase
+import com.facetlauncher.app.domain.ApplyFacetDefaultsUseCase
 import com.facetlauncher.app.domain.DeleteFacetUseCase
 import com.facetlauncher.app.domain.RefreshAutomationStateUseCase
 import com.facetlauncher.app.domain.SelectableFacetsUseCase
@@ -95,7 +96,7 @@ class ManageFacetsViewModelTest {
         settings,
         deleteFacetUseCase(facetRepository),
         ActivateFacetByIdUseCase(SelectableFacetsUseCase(facetRepository, entitlement), settings, automationState, mock(RefreshAutomationStateUseCase::class.java)),
-        AddFacetUseCase(facetRepository, entitlement),
+        AddFacetUseCase(facetRepository, entitlement, mock(ApplyFacetDefaultsUseCase::class.java)),
         entitlement,
         mock(AutomationRuleRepository::class.java).also {
             `when`(it.observeRules()).thenReturn(flowOf(List(ruleCount) { AutomationRule(it + 1L, 1L, AutomationTrigger.Headphones()) }))

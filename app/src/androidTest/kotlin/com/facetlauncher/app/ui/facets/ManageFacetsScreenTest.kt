@@ -28,6 +28,7 @@ import com.facetlauncher.app.data.widget.AppWidgetRepository
 import com.facetlauncher.app.data.widget.LauncherAppWidgetHost
 import com.facetlauncher.app.domain.ActivateFacetByIdUseCase
 import com.facetlauncher.app.domain.AddFacetUseCase
+import com.facetlauncher.app.domain.ApplyFacetDefaultsUseCase
 import com.facetlauncher.app.domain.DeleteFacetUseCase
 import com.facetlauncher.app.ui.FakeEntitlementRepository
 import com.facetlauncher.app.ui.testAutomation
@@ -39,6 +40,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
+import org.mockito.Mockito.mock
 
 class ManageFacetsScreenTest {
 
@@ -83,7 +85,7 @@ class ManageFacetsScreenTest {
                     settingsRepository,
                     DeleteFacetUseCase(facetRepository, appWidgetRepository),
                     testAutomation(context, database, facetRepository, settingsRepository, entitlement).activate,
-                    AddFacetUseCase(facetRepository, entitlement),
+                    AddFacetUseCase(facetRepository, entitlement, mock(ApplyFacetDefaultsUseCase::class.java)),
                     entitlement,
                     AutomationRuleRepository(database.automationRuleDao(), database.facetDao()),
                 )

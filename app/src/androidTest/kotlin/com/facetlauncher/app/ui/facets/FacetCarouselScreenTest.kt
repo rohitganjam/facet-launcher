@@ -41,6 +41,7 @@ import com.facetlauncher.app.data.widget.AppWidgetRepository
 import com.facetlauncher.app.data.widget.LauncherAppWidgetHost
 import com.facetlauncher.app.domain.ActivateFacetByIdUseCase
 import com.facetlauncher.app.domain.AddFacetUseCase
+import com.facetlauncher.app.domain.ApplyFacetDefaultsUseCase
 import com.facetlauncher.app.domain.DeleteFacetUseCase
 import com.facetlauncher.app.domain.ObserveFacetPreviewsUseCase
 import com.facetlauncher.app.ui.FakeEntitlementRepository
@@ -54,6 +55,7 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
+import org.mockito.Mockito.mock
 import com.facetlauncher.app.data.PlacementRepository
 import com.facetlauncher.app.domain.ObservePlacedItemsUseCase
 import com.facetlauncher.app.data.model.PlacementTarget
@@ -136,7 +138,7 @@ class FacetCarouselScreenTest {
                         calendarRepository,
                     ),
                     testAutomation(context, database, facetRepository, settingsRepository, entitlement).activate,
-                    AddFacetUseCase(facetRepository, entitlement),
+                    AddFacetUseCase(facetRepository, entitlement, mock(ApplyFacetDefaultsUseCase::class.java)),
                     entitlement,
                 )
             }

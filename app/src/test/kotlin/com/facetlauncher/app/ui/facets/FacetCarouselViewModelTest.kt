@@ -11,6 +11,7 @@ import com.facetlauncher.app.data.model.HomeWallpaper
 import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.domain.ActivateFacetByIdUseCase
 import com.facetlauncher.app.domain.AddFacetUseCase
+import com.facetlauncher.app.domain.ApplyFacetDefaultsUseCase
 import com.facetlauncher.app.domain.DeleteFacetUseCase
 import com.facetlauncher.app.domain.ObserveFacetPreviewsUseCase
 import com.facetlauncher.app.domain.RefreshAutomationStateUseCase
@@ -72,7 +73,7 @@ class FacetCarouselViewModelTest {
             DeleteFacetUseCase(facetRepository, mock(com.facetlauncher.app.data.widget.AppWidgetRepository::class.java)),
             observeFacetPreviews,
             ActivateFacetByIdUseCase(SelectableFacetsUseCase(facetRepository, FakeEntitlementRepository()), settingsRepository, automationState, mock(RefreshAutomationStateUseCase::class.java)),
-            AddFacetUseCase(facetRepository, FakeEntitlementRepository()),
+            AddFacetUseCase(facetRepository, FakeEntitlementRepository(), mock(ApplyFacetDefaultsUseCase::class.java)),
             FakeEntitlementRepository(),
         )
 

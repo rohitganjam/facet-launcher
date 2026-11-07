@@ -18,11 +18,14 @@ sealed interface AddFacetResult {
 class AddFacetUseCase @Inject constructor(
     private val facetRepository: FacetRepository,
     private val entitlementRepository: EntitlementRepository,
+    private val applyFacetDefaults: ApplyFacetDefaultsUseCase,
 ) {
     suspend operator fun invoke(): AddFacetResult {
         val count = facetRepository.observeFacets().first().size
         return if (FacetLimits.canAdd(count, entitlementRepository.isPro.value)) {
-            AddFacetResult.Added(facetRepository.addFacet())
+            val facet = facetRepository.addFacet()
+            applyFacetDefaults.applyAll(facet.id)
+            AddFacetResult.Added(facet)
         } else {
             AddFacetResult.LimitReached
         }

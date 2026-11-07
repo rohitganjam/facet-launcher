@@ -85,6 +85,15 @@ class PlacementRepository @Inject constructor(
         reorderItems(target, items)
     }
 
+    /** Replaces [to]'s list with a copy of [from]'s stored rows (apps and folder placements), uninstalled apps included. */
+    suspend fun copyList(from: PlacementTarget, to: PlacementTarget) {
+        val apps = getRawApps(from)
+        val folders = getRawFolderPlacements(from)
+        deleteAll(to)
+        apps.forEach { appPlacementDao.upsert(it.copy(id = 0, list = to.list, facetId = to.facetId, ownerKey = to.ownerKey)) }
+        folders.forEach { folderPlacementDao.upsert(it.copy(id = 0, list = to.list, facetId = to.facetId, ownerKey = to.ownerKey)) }
+    }
+
     /** Rewrites `position` across apps and folder placements to match [orderedItems]'s order. */
     suspend fun reorderItems(target: PlacementTarget, orderedItems: List<PlacedItem>) {
         orderedItems.forEachIndexed { index, item ->
