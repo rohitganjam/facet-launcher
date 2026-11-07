@@ -645,16 +645,15 @@ internal fun DrawerSearchResults(
             appsSection(apps, appearance, actions, appMenuNotifications, folderCandidates)
         }
         if (hasContactsSection) {
-            contactsSection(sources, appearance.listItemSize, onContactClick)
+            contactsSection(sources, appearance, onContactClick)
         }
         if (sources.settingsEntries.isNotEmpty()) {
             item { SearchSectionHeader(R.string.drawer_search_section_settings) }
-            items(sources.settingsEntries, key = { "settings_" + it.id }) { entry ->
-                SettingsResultRow(
-                    entry = entry,
-                    itemSize = appearance.listItemSize,
-                    onClick = { focusManager.clearFocus(); sources.onSettingsEntryClick(entry) },
-                )
+            item {
+                SettingsResultsGrid(sources.settingsEntries, appearance) { entry ->
+                    focusManager.clearFocus()
+                    sources.onSettingsEntryClick(entry)
+                }
             }
         }
     }
@@ -700,7 +699,7 @@ internal fun SearchSectionHeader(@StringRes textRes: Int) {
 /** The contacts section: its header, the permission or setting prompt when one applies, then the matching contacts. */
 private fun LazyListScope.contactsSection(
     sources: DrawerSearchSources,
-    itemSize: DrawerListItemSize,
+    appearance: DrawerAppearance,
     onContactClick: (ContactInfo) -> Unit,
 ) {
     item { SearchSectionHeader(R.string.drawer_search_section_contacts) }
@@ -709,16 +708,12 @@ private fun LazyListScope.contactsSection(
     } else if (sources.showContactsSettingPrompt) {
         item { ContactsSettingOffStrip(onClick = sources.onContactsSettingPromptClick, modifier = Modifier.padding(bottom = 4.dp)) }
     }
-    items(sources.contacts, key = { "contact_" + it.id }) { contact ->
-        ContactRow(contact = contact, itemSize = itemSize, onClick = { onContactClick(contact) })
+    if (sources.contacts.isNotEmpty()) {
+        item { ContactResultsGrid(sources.contacts, appearance, onContactClick) }
     }
 }
 
-/**
- * Matching apps as rows of equal-weight tiles, in the same column count as the browse grid. A LazyVerticalGrid can't nest
- * inside the results' LazyColumn, and the tile count here is tiny, so chunked rows are simpler than a second scroll container.
- * No fixed row height: the browse grid's "fill N screen rows" doesn't apply here.
- */
+/** Matching apps as tiles in the same column count as the browse grid; no fixed row height, the browse grid's "fill N screen rows" doesn't apply here. */
 @Composable
 internal fun SearchAppsGrid(
     apps: ImmutableList<AppInfo>,
@@ -728,28 +723,16 @@ internal fun SearchAppsGrid(
     folderCandidates: ImmutableList<Folder>?,
     maxRows: Int = Int.MAX_VALUE,
 ) {
-    BoxWithConstraints {
-        val columns = drawerGridColumns(maxWidth, appearance.gridDensity)
-        Column {
-            apps.chunked(columns).take(maxRows).forEach { rowApps ->
-                Row(horizontalArrangement = Arrangement.spacedBy(GRID_HORIZONTAL_SPACING), modifier = Modifier.padding(bottom = 20.dp)) {
-                    rowApps.forEach { app ->
-                        Box(modifier = Modifier.weight(1f)) {
-                            DrawerGridTile(
-                                app = app,
-                                onClick = { actions.onAppClick(app) },
-                                appearance = appearance,
-                                badgeCount = appearance.badgeCounts[app.packageName],
-                                appMenuNotifications = appMenuNotifications,
-                                actions = actions,
-                                folderCandidates = folderCandidates,
-                            )
-                        }
-                    }
-                    repeat(columns - rowApps.size) { Spacer(modifier = Modifier.weight(1f)) }
-                }
-            }
-        }
+    SearchTileGrid(apps, appearance, maxRows = maxRows) { app ->
+        DrawerGridTile(
+            app = app,
+            onClick = { actions.onAppClick(app) },
+            appearance = appearance,
+            badgeCount = appearance.badgeCounts[app.packageName],
+            appMenuNotifications = appMenuNotifications,
+            actions = actions,
+            folderCandidates = folderCandidates,
+        )
     }
 }
 
@@ -816,66 +799,6 @@ internal fun Modifier.drawerDashedBorder(color: Color, cornerRadius: androidx.co
         style = Stroke(width = strokeWidth.toPx(), pathEffect = PathEffect.dashPathEffect(floatArrayOf(8f, 6f), 0f)),
         cornerRadius = androidx.compose.ui.geometry.CornerRadius(cornerRadius.toPx()),
     )
-}
-
-/**
- * One contact match — an avatar/initials + name, tapping opens [ContactConnectionsSheet] (Phase 9)
- * rather than expanding an inline chip row in place. [itemSize] scales the avatar/row padding the
- * same way [DrawerAppRow]'s icon does, so contacts and apps read as one consistent list rather
- * than contacts staying pinned at Compact regardless of the chosen size (see chat history).
- */
-@Composable
-private fun ContactRow(contact: ContactInfo, onClick: () -> Unit, modifier: Modifier = Modifier, itemSize: DrawerListItemSize = DrawerListItemSize.COMPACT) {
-    val avatarSize = AppIconSize.forRow(itemSize)
-
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .testTag("contact_row_${contact.id}")
-            .padding(vertical = itemSize.verticalPaddingDp.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(14.dp),
-    ) {
-        Box(
-            modifier = Modifier.size(avatarSize).clip(CircleShape).background(IconTile),
-            contentAlignment = Alignment.Center,
-        ) {
-            Text(
-                text = contact.displayName.firstOrNull()?.uppercaseChar()?.toString().orEmpty(),
-                style = MaterialTheme.typography.bodyMedium,
-                color = Surface,
-            )
-        }
-        Text(text = contact.displayName, style = MaterialTheme.typography.bodyLarge, color = DrawerAppTextColor)
-    }
-}
-
-/**
- * One system Settings deep-link match — a plain glyph (not an [AppIcon]/avatar tile, so no
- * Material shape decision applies here, see CLAUDE.md's shape section) plus the screen's label;
- * tapping fires the caller's [android.provider.Settings.ACTION_*] intent. [itemSize] scales the
- * glyph/row padding the same way [ContactRow] does, so this section reads as part of the same list.
- */
-@Composable
-private fun SettingsResultRow(entry: SettingsSearchEntry, onClick: () -> Unit, modifier: Modifier = Modifier, itemSize: DrawerListItemSize = DrawerListItemSize.COMPACT) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .testTag("settings_result_row_${entry.id}")
-            .padding(vertical = itemSize.verticalPaddingDp.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(14.dp),
-    ) {
-        Icon(
-            imageVector = Icons.Default.Settings,
-            contentDescription = null,
-            tint = Muted,
-            modifier = Modifier.size(AppIconSize.forRow(itemSize)),
-        )
-        Text(text = entry.label, style = MaterialTheme.typography.bodyLarge, color = DrawerAppTextColor)
-    }
 }
 
 /** `4q` — shown when a search matches nothing at all (apps and contacts both empty). No web fallback. */
@@ -1335,7 +1258,7 @@ private fun DrawerAppRow(
 private val GRID_CONTENT_TOP_PADDING = 4.dp
 private val GRID_CONTENT_BOTTOM_PADDING = 16.dp
 private val GRID_VERTICAL_SPACING = 20.dp
-private val GRID_HORIZONTAL_SPACING = 2.dp
+internal val GRID_HORIZONTAL_SPACING = 2.dp
 private val GRID_START_PADDING = 36.dp
 
 /**

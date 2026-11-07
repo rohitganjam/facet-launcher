@@ -15,7 +15,12 @@ import androidx.test.core.app.ApplicationProvider
 import com.facetlauncher.app.data.model.ConnectionDetail
 import com.facetlauncher.app.data.model.ContactConnectionType
 import kotlinx.coroutines.test.runTest
+import android.graphics.Bitmap
+import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -39,7 +44,7 @@ class ContactRepositoryTest {
         ).thenReturn(null)
     }
 
-    private data class Row(val contactId: String, val displayName: String, val number: String)
+    private data class Row(val contactId: String, val displayName: String, val number: String, val photoUri: String? = null)
 
     private fun stubPhoneQuery(query: String, rows: List<Row>) {
         val cursor = MatrixCursor(
@@ -47,9 +52,10 @@ class ContactRepositoryTest {
                 ContactsContract.CommonDataKinds.Phone.CONTACT_ID,
                 ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME,
                 ContactsContract.CommonDataKinds.Phone.NUMBER,
+                ContactsContract.CommonDataKinds.Phone.PHOTO_THUMBNAIL_URI,
             ),
         )
-        rows.forEach { row -> cursor.addRow(arrayOf(row.contactId, row.displayName, row.number)) }
+        rows.forEach { row -> cursor.addRow(arrayOf(row.contactId, row.displayName, row.number, row.photoUri)) }
         `when`(
             contentResolver.query(
                 eq(ContactsContract.CommonDataKinds.Phone.CONTENT_URI),
@@ -72,6 +78,37 @@ class ContactRepositoryTest {
         // Then it comes back with the expected fields
         assertEquals(listOf("Jane Doe"), result.map { it.displayName })
         assertEquals(listOf("555-1234"), result.map { it.phoneNumber })
+    }
+
+    @Test
+    fun `searchContacts loads the contact photo when it has one`() = runTest {
+        // Given a contact with a thumbnail the provider can open, and one without
+        val photoUri = "content://com.android.contacts/contacts/1/photo"
+        val png = ByteArrayOutputStream().also { Bitmap.createBitmap(4, 4, Bitmap.Config.ARGB_8888).compress(Bitmap.CompressFormat.PNG, 100, it) }
+        `when`(contentResolver.openInputStream(Uri.parse(photoUri))).thenReturn(ByteArrayInputStream(png.toByteArray()))
+        stubPhoneQuery("J", listOf(Row("1", "Jane Doe", "1", photoUri), Row("2", "Jon Roe", "2")))
+
+        // When searching
+        val result = repository.searchContacts("J", limit = 5)
+
+        // Then only the first has a photo
+        assertNotNull(result[0].photo)
+        assertNull(result[1].photo)
+    }
+
+    @Test
+    fun `searchContacts leaves the photo empty when the thumbnail cannot be read`() = runTest {
+        // Given a thumbnail uri the provider fails to open
+        val photoUri = "content://com.android.contacts/contacts/1/photo"
+        `when`(contentResolver.openInputStream(Uri.parse(photoUri))).thenThrow(java.io.FileNotFoundException())
+        stubPhoneQuery("J", listOf(Row("1", "Jane Doe", "1", photoUri)))
+
+        // When searching
+        val result = repository.searchContacts("J", limit = 5)
+
+        // Then the contact still comes back, without a photo
+        assertEquals(listOf("Jane Doe"), result.map { it.displayName })
+        assertNull(result.single().photo)
     }
 
     @Test

@@ -131,8 +131,8 @@ icons are always `AppIconSize.ICON` × the Icon size setting, with a one-line la
 ### 1e. List item size and folder sheets
 
 List presentation only. `DrawerListItemSize` is a row's icon and the padding above and below it: Compact 36dp + 4,
-Regular 44dp + 12, Spacious 44dp + 16 (icons × the Icon size setting, see [17 §2b](17-flow-home-layout.md)). Contact and
-Settings search rows and Private Space's rows use the same sizes. A folder opened from the drawer follows the drawer:
+Regular 44dp + 12, Spacious 44dp + 16 (icons × the Icon size setting, see [17 §2b](17-flow-home-layout.md)). Private Space's rows use the same sizes (search results are
+tiles, not rows, see §4). A folder opened from the drawer follows the drawer:
 from the grid, `FolderContentsSheet` is a grid with the drawer grid's column count (`DrawerFolderTile.gridColumns`)
 and its labels on or off; from the list (or "Recently installed", or Private Space), a list of Regular rows whatever
 the List item size.
@@ -156,7 +156,7 @@ list), `consumeWindowInsets(systemBars)` stops the drawer padding for the status
 The drawer's search bar (`DrawerSearchBar`) is a button: tapping it, or a Home press on bare Home with "Home button opens search" on (`DrawerSearchBarConfig.focusRequest`), opens `DrawerSearchSheet` (`ui/drawer/DrawerSearchSheet.kt`) inside `AppDrawerScreen`'s root `Box`. The sheet slides in from the bar's edge (bottom for `SearchBarPosition.BOTTOM`, else top; `FacetTransitionEasing`) over a 40% scrim, with its own focused field at that edge, a back arrow and a clear button. While it is open the browse list is hidden from semantics (`clearAndSetSemantics`).
 
 - **Start view (empty query):** `SearchSuggestions`, grid sections capped at two rows each: *Recently installed or updated* (`RecentlyChangedAppsUseCase`, first install or last update within 72h, over the drawer's `apps`), *Frequently used* and *Last used* (`DrawerViewModel.loadUsageSuggestions()` → `UsageStatsRepository.getMostUsedApps` / `getRecentApps`, asked for each time the sheet opens, filtered to apps the drawer lists by `AppInfo.listKey`). Without Usage Access the two usage sections give way to one strip (`onUsageAccessClick` → the Usage Access explanation route).
-- **Typing:** `DrawerSearchResults` unchanged (apps, contacts, settings) but always a grid: `DrawerAppearance.forSearchSheet()` uses the drawer's grid density when the drawer is a grid, else Regular.
+- **Typing:** `DrawerSearchResults` unchanged (apps, contacts, settings) but always a grid: `DrawerAppearance.forSearchSheet()` uses the drawer's grid density when the drawer is a grid, else Regular. All three sections are tiles in `SearchTileGrid` (`ui/drawer/SearchResultTiles.kt`, the app grid's column count): apps as `DrawerGridTile`, contacts as `ContactGridTile` (the contact's thumbnail, `ContactInfo.photo`, loaded by `ContactRepository.searchContacts` from `PHOTO_THUMBNAIL_URI`, else their initial) and settings as `SettingsGridTile`. Contact and settings tiles are clipped to the user's icon shape (`LocalIconShape`), the label under them. Each settings entry has its own glyph, `SettingsSearchEntry.icon()` keyed by catalog id (`SETTING_ICONS`), the generic cog for an id with none.
 - **Closing:** Back, the back arrow, the scrim and the Home button close the sheet and clear the query, leaving the drawer open (`BackHandler`, `DismissOnHomePress`). While open it calls `BlockHomeSwipesWhileShown()` so a drag on it never pulls the drawer shut. The drawer closing also closes it.
 
 ## 2. Search pipeline

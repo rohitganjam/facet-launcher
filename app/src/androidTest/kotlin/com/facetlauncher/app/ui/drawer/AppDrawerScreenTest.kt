@@ -51,6 +51,9 @@ import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.flow.MutableSharedFlow
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import org.junit.Rule
 import org.junit.Test
 
@@ -806,7 +809,7 @@ class AppDrawerScreenTest {
     }
 
     @Test
-    fun tappingAContactRowOpensTheConnectionsSheetForThem() {
+    fun tappingAContactTileOpensTheConnectionsSheetForThem() {
         // Given a search that also has a contact match, with a fake connections provider
         // standing in for ContactRepository.getConnections (Phase 9 — see chat history)
         var query by mutableStateOf("")
@@ -839,8 +842,8 @@ class AppDrawerScreenTest {
         composeRule.onNodeWithText("Jane Doe").assertExists()
         composeRule.onNodeWithTag("contact_connections_sheet").assertDoesNotExist()
 
-        // When tapping the contact row
-        composeRule.onNodeWithTag("contact_row_1").performClick()
+        // When tapping the contact tile
+        composeRule.onNodeWithTag("contact_result_tile_1").performClick()
 
         // Then the connections sheet opens, showing their name and fetched Call connection
         composeRule.waitUntil(timeoutMillis = 3_000) {
@@ -887,7 +890,7 @@ class AppDrawerScreenTest {
         }
         composeRule.openSearchSheet()
         composeRule.onNodeWithTag("drawer_search_field").performTextInput("Jane")
-        composeRule.onNodeWithTag("contact_row_1").performClick()
+        composeRule.onNodeWithTag("contact_result_tile_1").performClick()
         composeRule.waitUntil(timeoutMillis = 3_000) {
             runCatching { composeRule.onNodeWithTag("contact_connections_sheet").assertIsDisplayed() }.isSuccess
         }
@@ -922,7 +925,7 @@ class AppDrawerScreenTest {
     }
 
     @Test
-    fun tappingASettingsResultRowFiresItsOwnClickCallback() {
+    fun tappingASettingsResultTileFiresItsOwnClickCallback() {
         // Given a search that also has a settings match
         var query by mutableStateOf("")
         val entry = SettingsSearchEntry(id = "wifi", label = "Wi-Fi", action = "android.settings.WIFI_SETTINGS")
@@ -948,11 +951,55 @@ class AppDrawerScreenTest {
         composeRule.onNodeWithText("SETTINGS").assertExists()
         composeRule.onNodeWithText("Wi-Fi").assertExists()
 
-        // When tapping the settings row
-        composeRule.onNodeWithTag("settings_result_row_wifi").performClick()
+        // When tapping the settings tile
+        composeRule.onNodeWithTag("settings_result_tile_wifi").performClick()
 
         // Then its own click callback fires with that entry
         assertEquals(entry, clickedEntry)
+    }
+
+    @Test
+    fun settingsAndContactResultsSitSideBySideAsGridTiles() {
+        // Given a search with two settings matches and two contacts, one with a photo
+        var query by mutableStateOf("")
+        val settings = listOf(
+            SettingsSearchEntry(id = "wifi", label = "Wi-Fi", action = "android.settings.WIFI_SETTINGS"),
+            SettingsSearchEntry(id = "bluetooth", label = "Bluetooth", action = "android.settings.BLUETOOTH_SETTINGS"),
+        )
+        val contacts = listOf(
+            ContactInfo(id = "1", displayName = "Jane Doe", phoneNumber = "555-1234", photo = ImageBitmap(8, 8)),
+            ContactInfo(id = "2", displayName = "Jon Roe", phoneNumber = "555-5678"),
+        )
+        composeRule.setContent {
+            FacetLauncherTheme {
+                AppDrawerScreen(
+                    apps = apps.toImmutableList(),
+                    actions = DrawerItemActions(onAppClick = {}),
+                    query = query,
+                    onQueryChange = { query = it },
+                    searchSources = DrawerSearchSources(
+                        contacts = contacts.toImmutableList(),
+                        settingsEntries = settings.toImmutableList(),
+                    ),
+                )
+            }
+        }
+        composeRule.openSearchSheet()
+
+        // When the results show
+        composeRule.onNodeWithTag("drawer_search_field").performTextInput("j")
+
+        // Then each pair shares a row: same top, different left
+        listOf("settings_result_tile_wifi" to "settings_result_tile_bluetooth", "contact_result_tile_1" to "contact_result_tile_2").forEach { (a, b) ->
+            val first = composeRule.onNodeWithTag(a).getUnclippedBoundsInRoot()
+            val second = composeRule.onNodeWithTag(b).getUnclippedBoundsInRoot()
+            assertEquals(first.top, second.top)
+            assertTrue(second.left > first.left)
+        }
+
+        // And only the contact with a photo draws it
+        composeRule.onNodeWithTag("contact_result_photo_1", useUnmergedTree = true).assertExists()
+        composeRule.onNodeWithTag("contact_result_photo_2", useUnmergedTree = true).assertDoesNotExist()
     }
 
     @Test

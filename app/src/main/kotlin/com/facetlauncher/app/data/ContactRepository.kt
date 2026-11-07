@@ -5,8 +5,10 @@ import android.content.ContentResolver
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.BitmapFactory
 import android.net.Uri
 import android.provider.ContactsContract
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.core.graphics.drawable.toBitmap
 import com.facetlauncher.app.data.di.IoDispatcher
@@ -57,6 +59,7 @@ class ContactRepository @Inject constructor(
             ContactsContract.CommonDataKinds.Phone.CONTACT_ID,
             ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME,
             ContactsContract.CommonDataKinds.Phone.NUMBER,
+            ContactsContract.CommonDataKinds.Phone.PHOTO_THUMBNAIL_URI,
         )
         val selection = "${ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME} LIKE ?"
         val selectionArgs = arrayOf("%$query%")
@@ -66,6 +69,7 @@ class ContactRepository @Inject constructor(
             val idCol = cursor.getColumnIndexOrThrow(ContactsContract.CommonDataKinds.Phone.CONTACT_ID)
             val nameCol = cursor.getColumnIndexOrThrow(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME)
             val numberCol = cursor.getColumnIndexOrThrow(ContactsContract.CommonDataKinds.Phone.NUMBER)
+            val photoCol = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.PHOTO_THUMBNAIL_URI)
             val seenContactIds = mutableSetOf<String>()
             buildList {
                 while (cursor.moveToNext() && size < limit) {
@@ -78,11 +82,20 @@ class ContactRepository @Inject constructor(
                             id = contactId,
                             displayName = cursor.getString(nameCol).orEmpty(),
                             phoneNumber = cursor.getString(numberCol).orEmpty(),
+                            photo = if (photoCol >= 0) loadPhoto(cursor.getString(photoCol)) else null,
                         ),
                     )
                 }
             }
         }.orEmpty()
+    }
+
+    /** The contact's thumbnail, or `null` when it has none or can't be read. */
+    private fun loadPhoto(uri: String?): ImageBitmap? {
+        if (uri.isNullOrEmpty()) return null
+        return runCatching {
+            contentResolver.openInputStream(Uri.parse(uri))?.use { BitmapFactory.decodeStream(it) }?.asImageBitmap()
+        }.getOrNull()
     }
 
     /**

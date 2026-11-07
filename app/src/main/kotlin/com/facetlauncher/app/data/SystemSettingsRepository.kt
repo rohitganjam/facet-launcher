@@ -14,7 +14,7 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-private data class CatalogEntry(
+internal data class CatalogEntry(
     val id: String,
     @param:StringRes val labelRes: Int,
     val action: String,
@@ -22,7 +22,7 @@ private data class CatalogEntry(
 )
 
 /** Curated system Settings deep links for the Drawer's "Search settings" section — every [CatalogEntry.action] is a stable AOSP `Settings.ACTION_*` constant, not an OEM-specific one. */
-private val SETTINGS_CATALOG = listOf(
+internal val SETTINGS_CATALOG = listOf(
     CatalogEntry("wifi", R.string.settings_catalog_wifi, Settings.ACTION_WIFI_SETTINGS, listOf("wifi", "wi-fi", "wireless", "internet", "network")),
     CatalogEntry("bluetooth", R.string.settings_catalog_bluetooth, Settings.ACTION_BLUETOOTH_SETTINGS, listOf("bluetooth", "pair", "pairing")),
     CatalogEntry("airplane_mode", R.string.settings_catalog_airplane_mode, Settings.ACTION_AIRPLANE_MODE_SETTINGS, listOf("airplane", "flight mode")),
