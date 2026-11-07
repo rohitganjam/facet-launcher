@@ -245,7 +245,7 @@
     <string name="settings_change_wallpaper_title">Hintergrundbild ändern</string>
     <string name="settings_change_wallpaper_subtitle">Ändere das Hintergrundbild deines Systems</string>
     <string name="settings_appearance_title">Anpassung</string>
-    <string name="settings_appearance_subtitle">Uhr, Kalender, Startbildschirm, Benachrichtigungen, Designs anpassen</string>
+    <string name="settings_appearance_subtitle">Startbildschirm, Benachrichtigungen, Designs anpassen</string>
     <string name="settings_clock_calendar_title">Uhrstil</string>
     <string name="settings_time_format_24h">24-Stunden-Format</string>
     <string name="settings_time_format_12h">12-Stunden-Format</string>
@@ -937,7 +937,6 @@
     <string name="app_list_grid_columns_launcher_default">Standardspalten des Launchers</string>
     <string name="app_list_grid_display_mode_launcher_default">Standardstil des Launchers</string>
     <string name="appearance_section_dock_home">Dock &amp; Startseite</string>
-    <string name="appearance_section_clock">Uhr &amp; Kalender</string>
     <string name="appearance_dock_apps_title">Dock- &amp; App-Darstellung</string>
     <string name="appearance_general_title">Allgemeine Einstellungen</string>
     <string name="appearance_general_subtitle">Designs, Akzent, Statusleiste</string>

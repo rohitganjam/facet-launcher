@@ -156,7 +156,7 @@ class SettingsScreenTest {
         var navigated = false
         setContent(onNavigateToAppearance = { navigated = true })
         composeRule.onNodeWithTag("settings_screen").performScrollToNode(hasTestTag("appearance_row"))
-        composeRule.onNodeWithTag("appearance_row").assertTextContains("Customize clock, calendar, home, notifications, themes", substring = true)
+        composeRule.onNodeWithTag("appearance_row").assertTextContains("Customize home, notifications, themes", substring = true)
 
         // When tapping it
         composeRule.onNodeWithTag("appearance_row").performClick()
