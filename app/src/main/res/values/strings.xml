@@ -496,7 +496,7 @@
 
     <!-- AppearanceSettingsScreen -->
     <string name="appearance_header_title">Launcher appearance</string>
-    <string name="appearance_dock_apps_title">Dock &amp; Apps appearance</string>
+    <string name="appearance_dock_apps_title">Dock &amp; Apps layout</string>
     <string name="appearance_general_title">Colors and Themes</string>
     <string name="appearance_general_subtitle">Themes, accent, status bar</string>
     <string name="appearance_section_look_feel">Look &amp; Feel</string>

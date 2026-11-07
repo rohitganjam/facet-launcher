@@ -125,7 +125,7 @@ object FacetDestinations {
     fun dockSettings(facetId: Long? = null) =
         if (facetId != null && facetId != NO_ACTIVE_FACET_ID) "dockSettings?facetId=$facetId" else "dockSettings"
 
-    /** Omitting [facetId] (or passing [NO_ACTIVE_FACET_ID]) opens the launcher-wide Dock & Apps appearance. */
+    /** Omitting [facetId] (or passing [NO_ACTIVE_FACET_ID]) opens the launcher-wide Dock & Apps layout. */
     fun dockAppsAppearance(facetId: Long? = null) =
         if (facetId != null && facetId != NO_ACTIVE_FACET_ID) "dockAppsAppearance?facetId=$facetId" else "dockAppsAppearance"
 

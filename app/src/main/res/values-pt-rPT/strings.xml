@@ -339,4 +339,5 @@
     <string name="settings_appearance_title">Aspeto do launcher</string>
     <string name="settings_appearance_subtitle">Temas, tipos de letra e ícones</string>
     <string name="appearance_header_title">Aspeto do launcher</string>
+    <string name="appearance_dock_apps_title">Esquema do dock e das apps</string>
 </resources>

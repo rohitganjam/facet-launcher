@@ -364,7 +364,7 @@ class DockAppsAppearanceScreenTest {
         setContent(onBack = { backPressed = true })
 
         // Then its own title shows, with the live preview card above the controls
-        composeRule.onNodeWithText("Dock & Apps appearance").assertIsDisplayed()
+        composeRule.onNodeWithText("Dock & Apps layout").assertIsDisplayed()
         composeRule.onNodeWithTag("appearance_preview_card").assertExists()
 
         // When tapping back

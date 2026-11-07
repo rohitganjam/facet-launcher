@@ -443,7 +443,7 @@
     <string name="system_bar_icons_dark">Donker</string>
 
     <string name="appearance_header_title">Uiterlijk van de launcher</string>
-    <string name="appearance_dock_apps_title">Uiterlijk van dock en apps</string>
+    <string name="appearance_dock_apps_title">Indeling van dock en apps</string>
     <string name="appearance_general_title">Kleuren en thema\'s</string>
     <string name="appearance_general_subtitle">Thema\'s, accent, statusbalk</string>
     <string name="appearance_section_look_feel">Uiterlijk en gevoel</string>

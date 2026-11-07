@@ -33,7 +33,7 @@ internal fun homeLandscapeSpaceFor(height: Dp): HomeLandscapeSpace =
     if (height < HOME_LANDSCAPE_COMPACT_HEIGHT) HomeLandscapeSpace.COMPACT else HomeLandscapeSpace.ROOMY
 
 /**
- * Whether the landscape layout is allowed at all (Settings → Appearance → Dock & Apps appearance). When it is
+ * Whether the landscape layout is allowed at all (Settings → Appearance → Dock & Apps layout). When it is
  * off, [rememberHomeLayoutMode] is always portrait. Provided app-wide by `LauncherActivity`; allowed by default
  * wherever nothing provides it (previews, tests).
  */

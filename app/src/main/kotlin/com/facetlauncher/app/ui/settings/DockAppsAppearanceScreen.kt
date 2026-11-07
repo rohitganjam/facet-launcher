@@ -47,7 +47,7 @@ import com.facetlauncher.app.ui.theme.SurfaceContainer
 import kotlin.enums.EnumEntries
 
 /**
- * Dock & Apps appearance — how the Dock and the Home apps list look and sit (dock style, list layout,
+ * Dock & Apps layout — how the Dock and the Home apps list look and sit (dock style, list layout,
  * position, presentation, vertical alignment). Serves both scopes: with a `facetId` it edits that facet's own look and offers
  * Reset to default; without one it edits the defaults a new facet starts with. Shares [AppearanceSettingsViewModel] with [AppearanceSettingsScreen].
  */

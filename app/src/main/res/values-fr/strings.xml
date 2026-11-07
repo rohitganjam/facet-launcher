@@ -939,7 +939,7 @@
     <string name="icons_screen_shape_and_size">Forme et taille</string>
     <string name="icons_screen_force_shape">Forcer la forme des icônes</string>
     <string name="icons_screen_force_shape_description">Découpe aussi les icônes du pack selon la forme ci-dessus</string>
-    <string name="appearance_dock_apps_title">Apparence du dock et des apps</string>
+    <string name="appearance_dock_apps_title">Disposition du dock et des apps</string>
     <string name="appearance_general_title">Couleurs et thèmes</string>
     <string name="appearance_general_subtitle">Thèmes, accent, barre d’état</string>
     <string name="appearance_section_look_feel">Aspect et ergonomie</string>

@@ -226,7 +226,7 @@ class SettingsScreenTest {
         var navigated = false
         setContent(onNavigateToDockAppsAppearance = { navigated = true })
         composeRule.onNodeWithTag("settings_screen").performScrollToNode(hasTestTag("dock_apps_appearance_row"))
-        composeRule.onNodeWithTag("dock_apps_appearance_row").assertTextContains("Dock & Apps appearance", substring = true)
+        composeRule.onNodeWithTag("dock_apps_appearance_row").assertTextContains("Dock & Apps layout", substring = true)
         composeRule.onNodeWithTag("dock_apps_appearance_row").assertTextContains("Default Dock and Home apps look in new facets", substring = true)
 
         // When tapping it

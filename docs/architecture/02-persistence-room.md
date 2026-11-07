@@ -449,7 +449,7 @@ Notifications, Permission bookkeeping, and First-run.
 
 **The Home look keys follow the same rule.** `appRowPosition`/`appRowPresentation`/`appListVerticalAlignment`/
 `dockDisplayMode`/`appListLayout`/`appListColumnAlignment`/`appListGridColumns`/`appListGridDisplayMode`/
-`appListShrinkToFit` and the three landscape twins are edited on *Dock & Apps appearance* (Settings → Apps and
+`appListShrinkToFit` and the three landscape twins are edited on *Dock & Apps layout* (Settings → Apps and
 folders, and each facet's own copy of the screen). The launcher-wide values only seed a new or reset facet
 (`ApplyFacetDefaultsUseCase`, scope `LOOK`); a facet's value is always its own, with no `LAUNCHER_DEFAULT`
 marker. A facet's landscape twin is its own too, `null` meaning "same as portrait".

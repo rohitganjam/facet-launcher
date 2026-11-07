@@ -6,7 +6,7 @@ Four smaller flows that don't fit the earlier docs but are load-bearing for how 
 
 A *facet* is a named Home configuration (`facets` row). Exactly one is active
 (`active_facet_id` in DataStore). A facet **owns** its dock, favorites, list content and look. The launcher-wide
-values (Settings → Apps and folders: *Default Dock Apps*, *Default Apps list*, *Dock & Apps appearance*; a facet's own screens are *Dock Apps*, *Apps List* and *Dock & Apps appearance*) are only a
+values (Settings → Apps and folders: *Default Dock Apps*, *Default Apps list*, *Dock & Apps layout*; a facet's own screens are *Dock Apps*, *Apps List* and *Dock & Apps layout*) are only a
 seed: `ApplyFacetDefaultsUseCase` copies them into a facet when it is created and again when the user taps *Reset to default* on
 one of its screens. Editing a facet never touches the defaults, and editing the defaults never touches an existing facet, unless the user asks: each launcher-level default screen has a *Copy to facets* row that opens a bottom sheet (`CopyToFacetsSheet`, every facet checked to start, the current one marked) and, on confirm, applies that screen's scope to the facets left checked.
 
@@ -55,12 +55,12 @@ flowchart TB
   `FacetSettingsScreen`, `FoldersSettingsScreen`, `BackupRestoreScreen`, `HomeSheets` and the
   carousel's Launcher settings row.
 - **`FacetSettingsScreen` is a plain nav list** — a Rename row, a Home card (Widgets), then an "Apps and folders" card with
-  Apps list / Dock / Dock & Apps appearance rows, mirroring `SettingsScreen`'s own
+  Apps list / Dock / Dock & Apps layout rows, mirroring `SettingsScreen`'s own
   layout: tonal `SettingsCard`s (28dp, no shadow or border), a `SettingsIconBadge` on each row in
   the same hue as on Settings, inset dividers, no chevrons. There is no Inherit/Override switch anywhere: each of the three destination
   screens edits the facet's own values and, at facet scope, ends with a *Reset to default* row (`ResetToDefaultCard`, behind a `ConfirmDialog`
   that names what is lost) that calls `ApplyFacetDefaultsUseCase` for that screen's scope (see the diagram above).
-- **`AppearanceSettingsScreen` is a hub of short sections**, each a card of one or two rows that open their own screen. It has no clock or calendar rows: a clock's style, accessories and calendar settings are reached only from the clock's own sheet and the widget stack (a facet's settings has no Appearance row either; its Home section opens Dock & apps appearance directly). It shows only "Look & Feel": the App Drawer and Notifications rows are on the main Settings screen's Customization card, below the Launcher appearance row that opens this screen (`SettingsViewModel` reads the notification access for the latter). (Dock & Apps appearance, Home list's look is no longer here: *Dock & Apps appearance*, route
+- **`AppearanceSettingsScreen` is a hub of short sections**, each a card of one or two rows that open their own screen. It has no clock or calendar rows: a clock's style, accessories and calendar settings are reached only from the clock's own sheet and the widget stack (a facet's settings has no Appearance row either; its Home section opens Dock & apps appearance directly). It shows only "Look & Feel": the App Drawer and Notifications rows are on the main Settings screen's Customization card, below the Launcher appearance row that opens this screen (`SettingsViewModel` reads the notification access for the latter). (Dock & Apps layout, Home list's look is no longer here: *Dock & Apps layout*, route
   `dockAppsAppearance?facetId=`, is reached from Settings → Apps and folders for the defaults and from a facet's own settings), and, global
   only, the Look & Feel section (three rows: "Colors and Themes" → `ThemesAndColorsScreen` with a static "Themes, accent, status bar" subtitle, "Fonts" → `FontsScreen`, "Icons" → `IconsScreen`, the last two showing their current value).
   The two moved-out screens each show the same live `AppearancePreviewCard` above their controls and share

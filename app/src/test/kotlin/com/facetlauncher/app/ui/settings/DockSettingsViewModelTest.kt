@@ -126,7 +126,7 @@ class DockSettingsViewModelTest {
 
     @Test
     fun `dockDisplayMode is the facet's own value`() = runTest {
-        // A facet with an explicit dockDisplayMode (set from Dock & Apps appearance) shows it here —
+        // A facet with an explicit dockDisplayMode (set from Dock & Apps layout) shows it here —
         // the preview needs it, even though this screen does not edit it.
         val facet = Facet(id = 3L, name = "Work", position = 0, dockDisplayMode = DockDisplayMode.TEXT)
         val viewModel = createViewModel(facetId = 3L, facets = listOf(facet))

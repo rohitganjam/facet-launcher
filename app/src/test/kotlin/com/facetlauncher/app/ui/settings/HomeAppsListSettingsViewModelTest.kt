@@ -136,7 +136,7 @@ class HomeAppsListSettingsViewModelTest {
 
     @Test
     fun `appRowPosition and appRowPresentation are the facet's own values`() = runTest {
-        // A facet with explicit look values (set from Dock & Apps appearance) shows them here —
+        // A facet with explicit look values (set from Dock & Apps layout) shows them here —
         // the preview needs them, even though this screen does not edit them.
         val facet = Facet(
             id = 7L, name = "Work", position = 0,
