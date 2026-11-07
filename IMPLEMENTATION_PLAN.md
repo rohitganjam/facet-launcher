@@ -4568,6 +4568,7 @@ Widgets the app draws itself, on the Hub grid and on Home's widget stack, behavi
 ## Search sheet
 
 - [x] Tapping the drawer's search bar (or Home press with "Home button opens search") opens a search sheet from the bar's edge. Empty query: grids of recently installed or updated, frequently used and last used apps (usage sections need Usage Access, else one prompt strip). Typing: today's results, always a grid at the drawer's grid density (Compact when the drawer is a list). Back, scrim and Home close it back to the drawer. Tests: `RecentlyChangedAppsUseCaseTest`, `DrawerViewModelTest` (usage suggestions), `AppDrawerScreenTest`, `KeyboardDismissalTest`, `HomeDrawerRouteTest`.
+- [x] Settings and contact results are grid tiles like the app results, in the user's icon shape. Contacts show their photo when they have one (else their initial); each searchable setting has its own icon (`SETTING_ICONS`). Tests: `SettingsSearchIconTest`, `ContactRepositoryTest`, `AppDrawerScreenTest`.
 - [ ] Native review of the four new `drawer_search_*` strings in de, es, es-419, fr, nl, pt, pt-PT (machine-translated).
 
 ## The clock as a Facet widget
