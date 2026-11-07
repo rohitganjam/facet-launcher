@@ -2,7 +2,6 @@ package com.facetlauncher.app.ui.home.widget
 
 import com.facetlauncher.app.ui.nativewidget.ALL_NATIVE_WIDGETS
 import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -45,7 +44,7 @@ fun ClockWidgetPickerScreen(
     val configureNewWidget by rememberUpdatedState(onConfigureNewWidget)
     var failureMessage by remember { mutableStateOf<String?>(null) }
 
-    val configureLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
+    val configureLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         viewModel.onConfigureResult(result.resultCode == android.app.Activity.RESULT_OK)
     }
     val bindPermissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
@@ -57,7 +56,7 @@ fun ClockWidgetPickerScreen(
         viewModel.events.collect { event ->
             when (event) {
                 is HubAddWidgetEvent.LaunchBindPermission -> bindPermissionLauncher.launch(event.intent)
-                is HubAddWidgetEvent.LaunchConfigure -> configureLauncher.launch(IntentSenderRequest.Builder(event.intentSender).build())
+                is HubAddWidgetEvent.LaunchConfigure -> configureLauncher.launch(event.intent)
                 HubAddWidgetEvent.WidgetAdded -> onDone()
                 is HubAddWidgetEvent.NativeWidgetAdded -> {
                     configureNewWidget(event.ref)

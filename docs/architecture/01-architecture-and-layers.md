@@ -118,11 +118,13 @@ flowchart TB
     subgraph EP["Entry points"]
         ACT["LauncherActivity\n@AndroidEntryPoint\n@Inject lateinit var launcherApps\n@Inject lateinit var clockWidgetHost (previews)"]
         SVC["FacetNotificationListenerService\n@AndroidEntryPoint\n@Inject lateinit var notificationBadgeRepository"]
+        WCA["WidgetConfigureActivity\n@AndroidEntryPoint\n@Inject lateinit var appWidgetRepository"]
     end
 
     REPOS --> UCS
     REPOS --> VMS
     REPOS --> SVC
+    REPOS --> WCA
     SC --> ACT
     VMC -- "hiltViewModel() in FacetNavHost\nby viewModels() in LauncherActivity" --> ACT
 ```

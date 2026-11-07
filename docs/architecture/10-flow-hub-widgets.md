@@ -75,9 +75,10 @@ sequenceDiagram
         P->>VM: onBindResult(granted)   (false → failAndRelease)
     end
     VM->>VM: proceedAfterBind(id)
-    VM->>AWR: createConfigureIntentSender(id, info)
+    VM->>AWR: createConfigureIntent(id, info)
     alt provider has a configure activity
-        VM-->>P: HubAddWidgetEvent.LaunchConfigure(intentSender)
+        VM-->>P: HubAddWidgetEvent.LaunchConfigure(intent)
+        P->>SYS: WidgetConfigureActivity → startConfigureActivity → host.startAppWidgetConfigureActivityForResult
         P->>VM: onConfigureResult(ok)   (false → failAndRelease)
     end
     VM->>VM: finishPlacing(id, providerPackage, providerClass)
@@ -87,6 +88,12 @@ sequenceDiagram
     VM-->>P: HubAddWidgetEvent.WidgetAdded
     Note over VM,AWR: any failure path → failAndRelease: deleteAppWidgetId(id) + AddFailed(reason)
 ```
+
+**Configure** always goes through `WidgetConfigureActivity`, an invisible in-app trampoline: the only public way to open a
+provider's configure activity is `AppWidgetHost.startAppWidgetConfigureActivityForResult`, which needs an Activity and a
+request code, and it is the only way that reaches a Work Profile provider or an unexported configure activity. The trampoline
+returns the provider's result (`RESULT_CANCELED` if it couldn't start). The Widget stack's add, replace and Configure, and
+backup restore, use the same intent.
 
 `PlaceWidgetUseCase` is pure: it scans rows top-down, columns left-right for the first
 rectangle that doesn't overlap an existing placement; with `preferredRow/Col` (backup restore) it

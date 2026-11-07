@@ -7,4 +7,10 @@
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:windowNoTitle">true</item>
     </style>
+
+    <!-- Invisible and without animations: WidgetConfigureActivity only forwards a result. -->
+    <style name="Theme.FacetLauncher.Trampoline" parent="android:Theme.Translucent.NoTitleBar">
+        <item name="android:windowAnimationStyle">@null</item>
+        <item name="android:windowNoTitle">true</item>
+    </style>
 </resources>

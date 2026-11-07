@@ -156,10 +156,10 @@ class ClockWidgetPickerViewModel @Inject constructor(
             failAndRelease(appWidgetId, AddFailureReason.SETUP_CANCELLED)
             return
         }
-        val configureIntentSender = appWidgetRepository.createConfigureIntentSender(appWidgetId, info)
-        if (configureIntentSender != null) {
+        val configureIntent = appWidgetRepository.createConfigureIntent(appWidgetId, info)
+        if (configureIntent != null) {
             pendingAppWidgetId = appWidgetId
-            _events.emit(HubAddWidgetEvent.LaunchConfigure(configureIntentSender))
+            _events.emit(HubAddWidgetEvent.LaunchConfigure(configureIntent))
             return
         }
         finishBinding(appWidgetId)

@@ -3,7 +3,6 @@ package com.facetlauncher.app.ui.home.stack
 import android.content.res.Configuration
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -112,7 +111,7 @@ fun ClockStackScreen(
     // The settings of a widget just added, opened over this screen.
     var configureRef by remember { mutableStateOf<NativeWidgetRef?>(null) }
     // A widget's own configure screen: nothing to read back, the host view redraws itself.
-    val configureLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) {}
+    val configureLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) {}
 
     Box(modifier = modifier.fillMaxSize()) {
         ClockStackContent(
@@ -121,10 +120,10 @@ fun ClockStackScreen(
             onReorder = viewModel::reorder,
             onRemove = viewModel::remove,
             onConfigure = { row ->
-                val sender = row.appWidgetId?.let { viewModel.configureSender(it) }
+                val configureIntent = row.appWidgetId?.let { viewModel.configureIntent(it) }
                 when {
                     row.kind == ClockStackItemKind.CLOCK -> clockSheet = ClockSheet.CONFIGURE
-                    sender != null -> configureLauncher.launch(IntentSenderRequest.Builder(sender).build())
+                    configureIntent != null -> configureLauncher.launch(configureIntent)
                 }
             },
             onAdd = {
