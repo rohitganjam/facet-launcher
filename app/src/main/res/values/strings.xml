@@ -229,12 +229,6 @@
     <string name="app_picker_tab_apps">Apps</string>
     <string name="app_picker_tab_folders">Folders</string>
 
-    <!-- InheritOverrideCard -->
-    <string name="inherit_override_follows_default">Follows the launcher-wide default</string>
-    <string name="inherit_override_inherit_default">Inherit default</string>
-    <string name="inherit_override_override_for_facet">Override for this facet</string>
-    <string name="inherit_override_changes_dont_affect_others">Changes here don\'t affect other facets</string>
-    <string name="inherit_override_edit_defaults">Edit defaults</string>
 
     <!-- GestureHintOverlay -->
     <string name="gesture_hint_switch_facets">Switch facets</string>
@@ -298,6 +292,18 @@
     <string name="settings_all_day_events_visible">All-day events visible</string>
     <string name="settings_all_day_events_hidden">All-day events hidden</string>
     <string name="settings_dock_title">Dock</string>
+    <string name="settings_default_dock_title">Default dock</string>
+    <string name="home_apps_list_default_header_title">Default apps list</string>
+    <string name="appearance_default_dock_apps_title">Default dock &amp; apps appearance</string>
+    <string name="defaults_screen_note">Used when you create a facet or reset one.</string>
+    <string name="reset_to_default_title">Reset to default</string>
+    <string name="reset_to_default_confirm">Reset</string>
+    <string name="reset_dock_subtitle">Replace this dock with the default dock</string>
+    <string name="reset_dock_confirm_message">This replaces the dock of this facet with the default dock. The apps you placed here will be lost.</string>
+    <string name="reset_apps_subtitle">Replace this list with the default</string>
+    <string name="reset_apps_confirm_message">This replaces this facet\'s favorites, list content and app count with the defaults. The favorites you chose here will be lost.</string>
+    <string name="reset_look_subtitle">Replace the dock and list look with the default</string>
+    <string name="reset_look_confirm_message">This replaces this facet\'s dock style, list layout and alignment with the defaults.</string>
     <plurals name="settings_dock_apps_count">
         <item quantity="one">%d Dock App</item>
         <item quantity="other">%d Dock Apps</item>
@@ -399,36 +405,28 @@
     <string name="app_row_position_left">Left</string>
     <string name="app_row_position_center">Center</string>
     <string name="app_row_position_right">Right</string>
-    <string name="app_row_position_launcher_default">Default launcher position</string>
     <string name="app_row_presentation_icon_only">Icon Only</string>
     <string name="app_row_presentation_icon_and_text">Icon &amp; Text</string>
     <string name="app_row_presentation_text_only">Text Only</string>
-    <string name="app_row_presentation_launcher_default">Default launcher style</string>
     <string name="app_list_vertical_alignment_top">Top</string>
     <string name="app_list_vertical_alignment_bottom">Bottom</string>
-    <string name="app_list_vertical_alignment_launcher_default">Default launcher position</string>
     <string name="list_content_mode_favorites">Favorites</string>
     <string name="list_content_mode_recents">Recents</string>
     <string name="list_content_mode_most_used">Most used</string>
     <string name="dock_display_mode_icons">Icons</string>
     <string name="dock_display_mode_text">Text</string>
-    <string name="dock_display_mode_launcher_default">Default launcher style</string>
     <string name="app_list_layout_single_column">Single column</string>
     <string name="app_list_layout_two_column">Two columns</string>
     <string name="app_list_layout_grid">Grid</string>
-    <string name="app_list_layout_launcher_default">Default launcher layout</string>
     <string name="app_list_column_alignment_both_left">Both left</string>
     <string name="app_list_column_alignment_both_right">Both right</string>
     <string name="app_list_column_alignment_mirrored">Left &amp; right</string>
-    <string name="app_list_column_alignment_launcher_default">Default launcher alignment</string>
     <string name="app_list_grid_columns_three">3 columns</string>
     <string name="app_list_grid_columns_four">4 columns</string>
     <string name="app_list_grid_columns_five">5 columns</string>
     <string name="app_list_grid_columns_six">6 columns</string>
-    <string name="app_list_grid_columns_launcher_default">Default launcher columns</string>
     <string name="app_list_grid_display_mode_icons">Icons</string>
     <string name="app_list_grid_display_mode_text">Text</string>
-    <string name="app_list_grid_display_mode_launcher_default">Default launcher style</string>
 
     <!-- HomeAppsListSettingsScreen -->
     <string name="home_apps_list_header_title">Home Apps List</string>
@@ -445,7 +443,6 @@
     <string name="home_apps_list_grid_columns">Grid columns</string>
     <string name="home_apps_list_grid_display">Grid display</string>
     <string name="home_apps_list_shrink_to_fit">Shrink list to fit</string>
-    <string name="app_list_shrink_to_fit_launcher_default">Default launcher style</string>
     <string name="app_list_shrink_to_fit_off">Off</string>
     <string name="app_list_shrink_to_fit_on">On</string>
     <string name="app_list_grid_display_mode_icons_and_text">Icons and text</string>
@@ -498,7 +495,6 @@
 
     <!-- AppearanceSettingsScreen -->
     <string name="appearance_header_title">Customization</string>
-    <string name="appearance_section_dock_home">Dock &amp; home</string>
     <string name="appearance_dock_apps_title">Dock &amp; Apps appearance</string>
     <string name="appearance_general_title">Colors and Themes</string>
     <string name="appearance_general_subtitle">Themes, accent, status bar</string>

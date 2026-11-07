@@ -2,11 +2,13 @@
 
 Four smaller flows that don't fit the earlier docs but are load-bearing for how Home looks.
 
-## 1. Facets — create, switch, preview, override
+## 1. Facets — create, switch, preview, reset
 
 A *facet* is a named Home configuration (`facets` row). Exactly one is active
-(`active_facet_id` in DataStore). Each facet can inherit every setting from the global DataStore
-defaults or override a whole block at a time.
+(`active_facet_id` in DataStore). A facet **owns** its dock, favorites, list content and look. The launcher-wide
+values (Settings → Apps and folders: *Default dock*, *Default apps list*, *Default dock & apps appearance*) are only a
+seed: `ApplyFacetDefaultsUseCase` copies them into a facet when it is created and again when the user taps *Reset to default* on
+one of its screens. Editing a facet never touches the defaults, and editing the defaults never touches an existing facet.
 
 ```mermaid
 flowchart TB
@@ -15,26 +17,26 @@ flowchart TB
         EXT["Deep link / dynamic shortcut\n(external trigger — see 14)"] --> UC
         MANA["ManageFacetsScreen / FacetSettingsScreen\n(Apply facet)"] --> UC
         UC --> S1["settingsRepository.setActiveFacetId(id)"]
-        CAR -- "addFacet()" --> S2["facetRepository.addFacet()\n(name 'Facet N', position = count)"]
+        CAR -- "AddFacetUseCase" --> S2["facetRepository.addFacet() (name 'Facet N', position = count)\nthen ApplyFacetDefaultsUseCase.applyAll(id): dock, favorites + content, look"]
         MAN["ManageFacetsScreen"] -- "reorderFacets / deleteFacet / rename" --> S3["FacetRepository update/delete\n(delete cascades all per-facet placements)"]
         S1 --> HOME["ObserveHomeScreenStateUseCase\nactiveFacet = facets.first { id == activeFacetId }\n→ flatMapLatest re-subscribes every facet-scoped flow"]
     end
     subgraph PREVIEW["Carousel previews"]
         OFP["ObserveFacetPreviewsUseCase\nFlow&lt;Map&lt;facetId, FacetPreviewData&gt;&gt;"]
-        OFP --> P1["favorites: own (overridingFavorites) or default"]
-        OFP --> P2["dockApps: own (overrideDock) or default"]
-        OFP --> P3["calendarEvents: per-facet selection or global\n(gated by calendar permission)"]
+        OFP --> P1["favorites: the facet's own"]
+        OFP --> P2["dockApps: the facet's own"]
+        OFP --> P3["calendarEvents: the clock's own selection\n(gated by calendar permission)"]
         WP["WallpaperRepository.currentHomeWallpaper()"] --> CAR
     end
-    subgraph OVERRIDE["Destination screens — each owns its own Inherit/Override switch (the clock and calendar screens do not: a clock holds its own settings)"]
+    subgraph OWN["Destination screens — each edits the facet's own values (no Inherit/Override switch)"]
         C1["ClockStyleGalleryScreen, ClockAccessoriesScreen\nUpdateClockConfigUseCase(facet, change) — the clock's own settings"]
-        C2["HomeAppsListSettingsScreen\nupdateOverridingApps(...) — content only now\n(mode, count, favorites); copies default favorites into\nthe facet's own Favorites list (app_placements) first if empty"]
-        C3["DockSettingsScreen\nupdateOverridingDock(facet, overriding) — content only now\n(the dock's own app list); same copy-on-first-override into the facet's own Dock list (app_placements)"]
+        C2["HomeAppsListSettingsScreen\nsetListContentMode / setAppsToShowCount / reorderFavorites on the facet\n+ Reset to default → ApplyFacetDefaultsUseCase(APPS_LIST)"]
+        C3["DockSettingsScreen\nreorderDockItems on the facet's Dock list (app_placements)\n+ Reset to default → ApplyFacetDefaultsUseCase(DOCK)"]
         C4["CalendarSettingsSheet\nUpdateClockConfigUseCase(facet, calendar change)"]
     end
-    subgraph LOOK["DockAppsAppearanceScreen — no override switch, sentinel per field"]
-        A1["dockDisplayMode / appRowPosition /\nappRowPresentation / appListVerticalAlignment /\nappListLayout / appListColumnAlignment /\nappListGridColumns / appListGridDisplayMode\nfacetRepository.setXxx(facet, value) — writes directly,\nno overriding flag to flip first"]
-        A2["LAUNCHER_DEFAULT picked → facet inherits that field live\n(resolveSentinel), filtered out of the dropdown at global scope"]
+    subgraph LOOK["DockAppsAppearanceScreen — the facet's own look"]
+        A1["dockDisplayMode / appRowPosition /\nappRowPresentation / appListVerticalAlignment /\nappListLayout / appListColumnAlignment /\nappListGridColumns / appListGridDisplayMode / appListShrinkToFit\nfacetRepository.setXxx(facet, value) — writes directly\n+ Reset to default → ApplyFacetDefaultsUseCase(LOOK)"]
+        A2["The same screen at launcher scope edits the defaults a new or reset facet is seeded from\n(titled Default dock & apps appearance, reached from Settings → Apps and folders)"]
         A3["Landscape alignment (appRowPosition / appListColumnAlignment /\nappListVerticalAlignment): nullable landscape twins, null = Same as portrait\n(LandscapeOverrides group, resolved once by HomeUiState.listAlignment(mode))"]
     end
     EAF["EnsureActiveFacetUseCase.keepUsable()\nno facets → addFacet(); active not found or disabled → first selectable facet"] --> S1
@@ -52,15 +54,14 @@ flowchart TB
   `TextActionButton` (M3 `TextButton`), all pills. The same kit lays out `SettingsScreen`,
   `FacetSettingsScreen`, `FoldersSettingsScreen`, `BackupRestoreScreen`, `HomeSheets` and the
   carousel's Launcher settings row.
-- **`FacetSettingsScreen` is a plain nav list** — a Rename row, a Home card (Widgets, and
-  Dock & Apps appearance), then an "Apps and folders" card with Apps list / Dock rows, mirroring `SettingsScreen`'s own
+- **`FacetSettingsScreen` is a plain nav list** — a Rename row, a Home card (Widgets), then an "Apps and folders" card with
+  Apps list / Dock / Dock & Apps appearance rows, mirroring `SettingsScreen`'s own
   layout: tonal `SettingsCard`s (28dp, no shadow or border), a `SettingsIconBadge` on each row in
-  the same hue as on Settings, inset dividers, no chevrons. It no longer hosts any Inherit/Override switch itself; each destination screen owns its
-  own (`InheritOverrideCard`, `controlsEnabled = !isFacetScoped || isOverriding`) so the toggle
-  sits on the same screen as the controls it gates, and `setOverriding*` calls now live in that
-  destination's own ViewModel rather than `FacetSettingsViewModel`. The facet's Home section links to `DockAppsAppearanceScreen` and the widget stack instead of a separate Appearance row (see the `LOOK` subgraph above).
-- **`AppearanceSettingsScreen` is a hub of short sections**, each a card of one or two rows that open their own screen. It has no clock or calendar rows: a clock's style, accessories and calendar settings are reached only from the clock's own sheet and the widget stack (a facet's settings has no Appearance row either; its Home section opens Dock & apps appearance directly). It shows "Dock & home" (one
-  "Dock & Apps appearance" row → `DockAppsAppearanceScreen`, both scopes, route `dockAppsAppearance?facetId=`), and, global
+  the same hue as on Settings, inset dividers, no chevrons. There is no Inherit/Override switch anywhere: each of the three destination
+  screens edits the facet's own values and, at facet scope, ends with a *Reset to default* row (`ResetToDefaultCard`, behind a `ConfirmDialog`
+  that names what is lost) that calls `ApplyFacetDefaultsUseCase` for that screen's scope (see the diagram above).
+- **`AppearanceSettingsScreen` is a hub of short sections**, each a card of one or two rows that open their own screen. It has no clock or calendar rows: a clock's style, accessories and calendar settings are reached only from the clock's own sheet and the widget stack (a facet's settings has no Appearance row either; its Home section opens Dock & apps appearance directly). It shows an App Drawer row (the dock and Home list's look is no longer here: *Dock & Apps appearance*, route
+  `dockAppsAppearance?facetId=`, is reached from Settings → Apps and folders for the defaults and from a facet's own settings), and, global
   only, "Notifications" and "Look & Feel" (three rows: "Colors and Themes" → `ThemesAndColorsScreen` with a static "Themes, accent, status bar" subtitle, "Fonts" → `FontsScreen`, "Icons" → `IconsScreen`, the last two showing their current value).
   The two moved-out screens each show the same live `AppearancePreviewCard` above their controls and share
   `AppearanceSettingsViewModel` (a separate instance per back-stack entry). `DockAppsAppearanceScreen` holds the `LOOK`
@@ -104,9 +105,9 @@ flowchart TB
   not on `ClockStyleGalleryScreen` — that screen dropped its own calendar-preview block entirely
   (see chat history). The preview's `favorites`/`dockItems`/`calendarEvents` are this scope's real,
   live content, not sampled installed apps or fixed sample events: `AppearanceSettingsViewModel`
-  observes `ObservePlacedItemsUseCase` for the facet's own and the launcher-wide Favorites and Dock, resolved facet-or-global via `effectiveFavorites`/`effectiveDockItems`
-  (`if (facet?.overrideApps == true) facetFavorites else globalFavorites`, same for dock) —
-  identical to `HomeAppsListSettingsViewModel`/`DockSettingsViewModel`'s own resolution. Calendar
+  observes `ObservePlacedItemsUseCase` for the facet's own and the launcher-wide Favorites and Dock, picked by scope via `effectiveFavorites`/`effectiveDockItems`
+  (`if (facet != null) facetFavorites else globalFavorites`, same for dock) —
+  identical to `HomeAppsListSettingsViewModel`/`DockSettingsViewModel`'s own choice. Calendar
   events come from `CalendarRepository.getUpcomingEvents`, gated by `CalendarPermissionRepository
   .isGranted()` (empty when ungranted, never a sample fallback), with facet-or-global
   `showAllDay`/`calendarIds` of the clock's calendar settings resolved the same way `ObserveHomeScreenStateUseCase`
@@ -125,9 +126,12 @@ flowchart TB
 - **Switching is one DataStore write.** Everything downstream is reactive:
   `ObserveHomeScreenStateUseCase` recomputes `activeFacet` from `combine(settings, facets)` and
   `flatMapLatest` tears down the previous facet's Room subscriptions.
-- **Turning an override on copies the inherited list** (`replaceItems(facetId, defaultItems)`)
-  so the card never goes blank — the facet's own list (its `app_placements` / `folder_placements` rows for that `list` and `facetId`) becomes an independent copy from that moment.
-- **One resolver for everything a facet overrides:** `domain/ResolvedFacetStyle.kt`'s
+- **Creating or resetting copies the default, it does not link to it.** `ApplyFacetDefaultsUseCase` copies the launcher-wide rows
+  (`PlacementRepository.copyList`, apps and folder placements) and values into the facet, so its list (its `app_placements` /
+  `folder_placements` rows for that `list` and `facetId`) is an independent copy from that moment. The default dock is seeded
+  (`SeedDefaultDockUseCase`) before the first facet is created, and onboarding's choices, made on the launcher-wide lists, are copied onto the
+  existing facets when it finishes (`OnboardingViewModel.finish`).
+- **One resolver for everything a facet owns:** `domain/ResolvedFacetStyle.kt`'s
   `resolveFacetStyle(facet, settings)` returns the clock block, apps-list look, dock display mode,
   calendar display, the clock and list placement in each orientation (`clockPlacement`, `listAlignment`,
   with the landscape rules; the clock's is the facet's own once `clockPlacementOwn`, else the launcher's built-in fallback) and the facet's clock stack (`clockStack`: each page's kind, widget id, size and alignment per orientation). Home
@@ -135,7 +139,7 @@ flowchart TB
   `FacetCarouselUiState`, `AppearanceUiState`, `CalendarSettingsUiState`, `FacetSettingsUiState`,
   `HomeAppsListUiState`, `DockSettingsUiState` and `ClockStyleGalleryUiState` all delegate to it. The
   last four hold the launcher's `LauncherSettings` as `settings` instead of a `globalX` field per
-  value. `ResolvedFacetStyleTest` covers the override, sentinel, landscape and widget rules, and
+  value. `ResolvedFacetStyleTest` covers the own-value, landscape and widget rules, and
   `HomeScreenStateBuilderTest` checks that the state a preview is built from has the same placement as Home resolves for the same facet.
 - **The widget stack screen** (`ClockStackScreen`, route `clockStack`, reached from the Home sheet's Widget stack row) lists the active facet's clock stack with a drag handle, Configure (the clock opens the facet's Appearance screen, a widget its own configure activity) and Remove on each row, an Add row, and the counter against the plan's limit. It hosts the clock widget picker itself for Add; the picker also offers the widgets Facet draws itself ([20](20-flow-native-widgets.md)), which list by name and have no Configure. Add opens a chooser (launcher clock or custom widget) while the clock is not in the stack, and goes straight to the picker when it is.
 - **A hosted clock widget shows in previews.** The first page of the stack, when it is a widget, is part of the state (`HomeClockWidgetState`),
@@ -183,7 +187,7 @@ card 3 Icons (while weather is on), then, while weather is on, a *Location* card
 (`UnitsAndLocationScreen`, route `unitsAndLocation`): the four units and the Location card, launcher-wide (`UnitsAndLocationViewModel`), so a
 Weather widget can reach them whether or not the clock shows weather.
 
-The Home sheet no longer has a *Clock & calendar settings* row or its facet scope badge: a clock's settings are always its own, reached from the clock's own sheet (a long-press on the clock or its calendar, [12](12-flow-drawer-search-and-app-actions.md) §4). A facet's settings screen has a *Home* section with *Widgets* (that facet's widget stack, `clockStack?facetId=`) and *Dock & apps appearance* (`DockAppsAppearanceScreen` directly, with no Appearance hub in between), above the existing *Apps and folders* section. Dock and Home apps list screens still carry an `InheritOverrideCard` with an *Edit defaults* link (`onEditDefaults`, wired in `FacetNavHost`).
+The Home sheet no longer has a *Clock & calendar settings* row or its facet scope badge: a clock's settings are always its own, reached from the clock's own sheet (a long-press on the clock or its calendar, [12](12-flow-drawer-search-and-app-actions.md) §4). A facet's settings screen has a *Home* section with *Widgets* (that facet's widget stack, `clockStack?facetId=`), above the *Apps and folders* section with *Apps list*, *Dock* and *Dock & apps appearance* (`DockAppsAppearanceScreen` directly, with no Appearance hub in between). Those three screens edit the facet's own values and end with *Reset to default*; at launcher scope they are the *Default …* screens under Settings → Apps and folders and carry a one-line note that they are used when a facet is created or reset.
 
 `HomeScreenStateBuilder` gates the items: the alarm and battery only when their switch is on, the weather
 (`HomeWeatherState`, from `ObserveWeatherUseCase`) only when its switch is on and the forecast is not outdated.

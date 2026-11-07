@@ -46,13 +46,12 @@ internal fun DockDisplayMode.displayLabel(): String = stringResource(displayName
 @Composable
 internal fun AppRowPresentation.displayLabel(): String = stringResource(displayNameRes)
 
-/** "Dock icons"/"Dock text" for the Appearance row's subtext, which names the surface. `LAUNCHER_DEFAULT` never reaches it — the state resolves the sentinel — so it just falls back to its plain label. */
+/** "Dock icons"/"Dock text" for the Appearance row's subtext, which names the surface. */
 @Composable
 internal fun DockDisplayMode.appearanceSummaryLabel(): String = when (this) {
     DockDisplayMode.ICONS -> stringResource(R.string.facet_settings_appearance_dock_icons)
     DockDisplayMode.TEXT -> stringResource(R.string.facet_settings_appearance_dock_text)
     DockDisplayMode.ICONS_AND_TEXT -> stringResource(R.string.facet_settings_appearance_dock_icons_and_text)
-    DockDisplayMode.LAUNCHER_DEFAULT -> displayLabel()
 }
 
 /** "Home icon only"/"Home icon & text"/"Home text only" — the Home app list's presentation, named for the surface. */
@@ -61,7 +60,6 @@ internal fun AppRowPresentation.appearanceSummaryLabel(): String = when (this) {
     AppRowPresentation.ICON_ONLY -> stringResource(R.string.facet_settings_appearance_home_icon_only)
     AppRowPresentation.ICON_AND_TEXT -> stringResource(R.string.facet_settings_appearance_home_icon_and_text)
     AppRowPresentation.TEXT_ONLY -> stringResource(R.string.facet_settings_appearance_home_text_only)
-    AppRowPresentation.LAUNCHER_DEFAULT -> displayLabel()
 }
 
 /**

@@ -36,41 +36,22 @@ data class FacetEntity(
     val landscapeClockAlignment: ClockAlignment? = null,
     val landscapeClockZoneHeightDp: Float? = null,
 
-    // Apps section
-    val overrideApps: Boolean = false,
-    /** Look/placement, not content — editable from Settings → Appearance now, resolved independently of [overrideApps] via [resolveSentinel]. See [com.facetlauncher.app.data.model.DockDisplayMode]'s own doc for the sentinel model. */
-    val appRowPosition: AppRowPosition = AppRowPosition.LAUNCHER_DEFAULT,
+    // Apps section: the facet's own values (copied from the launcher defaults when it is created)
+    val appRowPosition: AppRowPosition = AppRowPosition.LEFT,
     /** Landscape's own value for [appRowPosition], [appListVerticalAlignment] and [appListColumnAlignment]; `null` is "same as portrait". */
     val landscapeAppRowPosition: AppRowPosition? = null,
     val landscapeAppListVerticalAlignment: AppListVerticalAlignment? = null,
     val landscapeAppListColumnAlignment: AppListColumnAlignment? = null,
-    val appRowPresentation: AppRowPresentation = AppRowPresentation.LAUNCHER_DEFAULT,
+    val appRowPresentation: AppRowPresentation = AppRowPresentation.ICON_AND_TEXT,
     val listContentMode: ListContentMode = ListContentMode.FAVORITES,
     val appsToShowCount: Int = AppListLimits.DEFAULT_APPS_TO_SHOW,
-    /** Look/placement, not content — see [appRowPosition]'s own doc for why this is a `LAUNCHER_DEFAULT`-sentinel field rather than [overrideApps]-gated. */
-    val appListVerticalAlignment: AppListVerticalAlignment = AppListVerticalAlignment.LAUNCHER_DEFAULT,
-    /** Look, not content — see [appRowPosition]'s own doc for the sentinel model. */
-    val appListLayout: AppListLayout = AppListLayout.LAUNCHER_DEFAULT,
-    /** Look, not content — see [appRowPosition]'s own doc for the sentinel model. */
-    val appListColumnAlignment: AppListColumnAlignment = AppListColumnAlignment.LAUNCHER_DEFAULT,
-    /** Look, not content — see [appRowPosition]'s own doc for the sentinel model. */
-    val appListGridColumns: AppListGridColumns = AppListGridColumns.LAUNCHER_DEFAULT,
-    /** Look, not content — see [appRowPosition]'s own doc for the sentinel model. */
-    val appListGridDisplayMode: AppListGridDisplayMode = AppListGridDisplayMode.LAUNCHER_DEFAULT,
-    /** Look, not content — see [appRowPosition]'s own doc for the sentinel model. */
-    val appListShrinkToFit: AppListShrinkToFit = AppListShrinkToFit.LAUNCHER_DEFAULT,
-    /**
-     * Independent of [overrideApps] flag for the mode/count, but typically switched 
-     * together in the UI (see [com.facetlauncher.app.ui.facets.FacetSettingsViewModel.setOverridingApps]).
-     * [false] = use global default favorites; [true] = use this facet's own list.
-     */
-    val overridingFavorites: Boolean = false,
+    val appListVerticalAlignment: AppListVerticalAlignment = AppListVerticalAlignment.BOTTOM,
+    val appListLayout: AppListLayout = AppListLayout.SINGLE_COLUMN,
+    val appListColumnAlignment: AppListColumnAlignment = AppListColumnAlignment.BOTH_LEFT,
+    val appListGridColumns: AppListGridColumns = AppListGridColumns.FOUR,
+    val appListGridDisplayMode: AppListGridDisplayMode = AppListGridDisplayMode.ICONS,
+    val appListShrinkToFit: AppListShrinkToFit = AppListShrinkToFit.OFF,
 
-    // Dock section — one override flag for the whole Home dock: which apps it holds (this
-    // facet's own [com.facetlauncher.app.data.local.FacetDockAppEntity] list rather than the
-    // launcher-wide default) plus its Icons/Text display style. Mirrors the Apps section's single
-    // `overrideApps` flag exactly.
-    val overrideDock: Boolean = false,
-    /** Look, not content — editable from Settings → Appearance now, resolved independently of [overrideDock] via [resolveSentinel] (that flag still gates only the dock's own app list). See [com.facetlauncher.app.data.model.DockDisplayMode]'s own doc for the sentinel model. */
-    val dockDisplayMode: DockDisplayMode = DockDisplayMode.LAUNCHER_DEFAULT,
+    // Dock section
+    val dockDisplayMode: DockDisplayMode = DockDisplayMode.ICONS,
 )

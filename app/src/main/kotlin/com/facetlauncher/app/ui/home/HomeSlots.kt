@@ -371,7 +371,7 @@ private fun HomeAppListBody(frame: HomeFrame) {
             columns = gridColumns(frame),
             displayMode = list.gridDisplayMode,
         )
-        AppListLayout.SINGLE_COLUMN, AppListLayout.LAUNCHER_DEFAULT -> HomeAppListColumn(
+        AppListLayout.SINGLE_COLUMN -> HomeAppListColumn(
             content = frame.listContent,
             actions = frame.actions.item,
             position = position,
@@ -383,7 +383,7 @@ private fun HomeAppListBody(frame: HomeFrame) {
             horizontalAlignment = when (position) {
                 AppRowPosition.RIGHT -> Alignment.End
                 AppRowPosition.CENTER -> Alignment.CenterHorizontally
-                AppRowPosition.LEFT, AppRowPosition.LAUNCHER_DEFAULT -> Alignment.Start
+                AppRowPosition.LEFT -> Alignment.Start
             },
         )
     }

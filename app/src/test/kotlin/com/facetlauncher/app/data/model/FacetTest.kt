@@ -6,75 +6,31 @@ import org.junit.Test
 class FacetTest {
 
     @Test
-    fun `resolveSentinel returns the global value when there is no facet`() {
-        // Given no facet at all
+    fun `placementTarget names the facet's own list`() {
+        // Given a facet
+        val facet = Facet(id = 4, name = "Work", position = 0)
+
+        // Then both of its lists are its own, owned by its id
+        assertEquals(PlacementTarget(PlacementList.DOCK, 4), facet.placementTarget(PlacementList.DOCK))
+        assertEquals(PlacementTarget(PlacementList.FAVORITES, 4), facet.placementTarget(PlacementList.FAVORITES))
+    }
+
+    @Test
+    fun `placementTarget is the launcher-wide list when there is no facet`() {
         val facet: Facet? = null
 
-        // When resolving a sentinel-defaulted field
-        val result = facet.resolveSentinel({ it.appRowPosition }, AppRowPosition.LAUNCHER_DEFAULT, AppRowPosition.RIGHT)
-
-        // Then the global value wins, since there's nothing to resolve against
-        assertEquals(AppRowPosition.RIGHT, result)
+        assertEquals(PlacementTarget.GlobalDock, facet.placementTarget(PlacementList.DOCK))
+        assertEquals(PlacementTarget.GlobalFavorites, facet.placementTarget(PlacementList.FAVORITES))
     }
 
     @Test
-    fun `resolveSentinel returns the facet value when it is not the sentinel`() {
-        // Given a facet with its own real, non-sentinel value for this field
-        val facet = Facet(name = "Work", position = 0, appRowPosition = AppRowPosition.CENTER)
+    fun `a new facet starts from the launcher's built-in look`() {
+        val facet = Facet(name = "Plain", position = 0)
 
-        // When resolving that field
-        val result = facet.resolveSentinel({ it.appRowPosition }, AppRowPosition.LAUNCHER_DEFAULT, AppRowPosition.RIGHT)
-
-        // Then the facet's own stored value wins, independent of any override flag
-        assertEquals(AppRowPosition.CENTER, result)
-    }
-
-    @Test
-    fun `resolveSentinel returns the global value when the facet's field is the sentinel`() {
-        // Given a facet whose field is still at its LAUNCHER_DEFAULT sentinel
-        val facet = Facet(name = "Work", position = 0, appRowPosition = AppRowPosition.LAUNCHER_DEFAULT)
-
-        // When resolving that field
-        val result = facet.resolveSentinel({ it.appRowPosition }, AppRowPosition.LAUNCHER_DEFAULT, AppRowPosition.RIGHT)
-
-        // Then the global default wins
-        assertEquals(AppRowPosition.RIGHT, result)
-    }
-
-    @Test
-    fun `resolveOverride returns the global value when there is no facet`() {
-        // Given no facet at all
-        val facet: Facet? = null
-
-        // When resolving with any overriding/facetValue lambdas
-        val result = facet.resolveOverride({ true }, { "facet" }, "global")
-
-        // Then the global value wins, since there's nothing to override with
-        assertEquals("global", result)
-    }
-
-    @Test
-    fun `resolveOverride returns the facet value when overriding is true`() {
-        // Given a facet whose override flag is on
-        val facet = Facet(name = "Work", position = 0, overrideApps = true, appsToShowCount = 7)
-
-        // When resolving against that flag
-        val result = facet.resolveOverride({ it.overrideApps }, { it.appsToShowCount }, 3)
-
-        // Then the facet's own stored value wins
-        assertEquals(7, result)
-    }
-
-    @Test
-    fun `resolveOverride returns the global value when overriding is false`() {
-        // Given a facet whose override flag is off
-        val facet = Facet(name = "Work", position = 0, overrideApps = false, appsToShowCount = 7)
-
-        // When resolving against that flag
-        val result = facet.resolveOverride({ it.overrideApps }, { it.appsToShowCount }, 3)
-
-        // Then the global default wins, even though the facet has its own stored value
-        assertEquals(3, result)
+        assertEquals(LauncherSettings().appRowPosition, facet.appRowPosition)
+        assertEquals(LauncherSettings().appRowPresentation, facet.appRowPresentation)
+        assertEquals(LauncherSettings().appListLayout, facet.appListLayout)
+        assertEquals(LauncherSettings().dockDisplayMode, facet.dockDisplayMode)
     }
 
     @Test
@@ -89,12 +45,12 @@ class FacetTest {
 
     @Test
     fun `resolveLandscape uses the launcher's landscape value when the facet's portrait value does not apply`() {
-        assertEquals(AppRowPosition.CENTER, resolveLandscape(null, AppRowPosition.LAUNCHER_DEFAULT, false, AppRowPosition.CENTER, AppRowPosition.LEFT))
+        assertEquals(AppRowPosition.CENTER, resolveLandscape(null, AppRowPosition.RIGHT, false, AppRowPosition.CENTER, AppRowPosition.LEFT))
     }
 
     @Test
     fun `resolveLandscape ends at the launcher's portrait value with nothing set for landscape`() {
-        assertEquals(AppRowPosition.LEFT, resolveLandscape(null, AppRowPosition.LAUNCHER_DEFAULT, false, null, AppRowPosition.LEFT))
+        assertEquals(AppRowPosition.LEFT, resolveLandscape(null, AppRowPosition.RIGHT, false, null, AppRowPosition.LEFT))
     }
 
     @Test

@@ -33,6 +33,8 @@ import org.robolectric.RobolectricTestRunner
 import com.facetlauncher.app.data.model.PlacementTarget
 import com.facetlauncher.app.data.model.PlacementList
 import com.facetlauncher.app.data.PlacementRepository
+import com.facetlauncher.app.domain.ApplyFacetDefaultsUseCase
+import com.facetlauncher.app.domain.FacetDefaultsScope
 import com.facetlauncher.app.domain.ObservePlacedItemsUseCase
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -63,6 +65,7 @@ class DockSettingsViewModelTest {
         facetRepository: FacetRepository = mock(FacetRepository::class.java),
         placementRepository: PlacementRepository = mock(PlacementRepository::class.java),
         observePlacedItems: ObservePlacedItemsUseCase = mock(ObservePlacedItemsUseCase::class.java),
+        applyFacetDefaults: ApplyFacetDefaultsUseCase = mock(ApplyFacetDefaultsUseCase::class.java),
     ): DockSettingsViewModel {
         `when`(settingsRepository.settings).thenReturn(flowOf(LauncherSettings()))
         `when`(facetRepository.observeFacets()).thenReturn(MutableStateFlow(facets))
@@ -75,6 +78,7 @@ class DockSettingsViewModelTest {
             placementRepository,
             observePlacedItems,
             fakeWallpaperRepository(),
+            applyFacetDefaults,
         )
     }
 
@@ -121,15 +125,47 @@ class DockSettingsViewModelTest {
     }
 
     @Test
-    fun `dockDisplayMode resolves independently of overrideDock via its own LAUNCHER_DEFAULT sentinel`() = runTest {
-        // A facet not overriding dock content, but with an explicit dockDisplayMode (set from
-        // Appearance), still resolves to that value here — its own preview needs it, even though
-        // this screen no longer edits it (see chat history).
-        val facet = Facet(id = 3L, name = "Work", position = 0, overrideDock = false, dockDisplayMode = DockDisplayMode.TEXT)
+    fun `dockDisplayMode is the facet's own value`() = runTest {
+        // A facet with an explicit dockDisplayMode (set from Dock & Apps appearance) shows it here —
+        // the preview needs it, even though this screen does not edit it.
+        val facet = Facet(id = 3L, name = "Work", position = 0, dockDisplayMode = DockDisplayMode.TEXT)
         val viewModel = createViewModel(facetId = 3L, facets = listOf(facet))
         backgroundScope.launch { viewModel.uiState.collect {} }
         testDispatcher.scheduler.advanceUntilIdle()
 
         assertEquals(DockDisplayMode.TEXT, viewModel.uiState.value.dockDisplayMode)
+    }
+
+    @Test
+    fun `a facet-scoped screen lists that facet's own dock, not the launcher's`() = runTest {
+        val facet = Facet(id = 3L, name = "Work", position = 0)
+        val viewModel = createViewModel(facetId = 3L, facets = listOf(facet), dockItems = listOf(PlacedItem.SingleApp(appInfo(1))))
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(true, viewModel.uiState.value.isFacetScoped)
+        assertEquals(1, viewModel.uiState.value.dockItems.size)
+    }
+
+    @Test
+    fun `reset to default applies the dock defaults to the facet`() = runTest {
+        val applyDefaults = mock(ApplyFacetDefaultsUseCase::class.java)
+        val viewModel = createViewModel(facetId = 3L, facets = listOf(Facet(id = 3L, name = "Work", position = 0)), applyFacetDefaults = applyDefaults)
+
+        viewModel.resetToDefault()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        verify(applyDefaults).invoke(3L, FacetDefaultsScope.DOCK)
+    }
+
+    @Test
+    fun `reset to default does nothing at launcher scope`() = runTest {
+        val applyDefaults = mock(ApplyFacetDefaultsUseCase::class.java)
+        val viewModel = createViewModel(applyFacetDefaults = applyDefaults)
+
+        viewModel.resetToDefault()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        org.mockito.Mockito.verifyNoInteractions(applyDefaults)
     }
 }

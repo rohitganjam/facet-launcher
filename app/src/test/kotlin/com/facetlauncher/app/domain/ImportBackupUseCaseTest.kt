@@ -166,9 +166,9 @@ class ImportBackupUseCaseTest {
         // restoreFacet's `facet: Facet` parameter rejects outright.
         val expectedFacetEntity = Facet(
             id = 0, name = "Work", position = 0,
-            overrideApps = false, appRowPosition = AppRowPosition.LEFT, appRowPresentation = AppRowPresentation.ICON_AND_TEXT,
-            listContentMode = ListContentMode.FAVORITES, appsToShowCount = 5, overridingFavorites = true,
-            overrideDock = true, dockDisplayMode = com.facetlauncher.app.data.model.DockDisplayMode.TEXT,
+            appRowPosition = AppRowPosition.LEFT, appRowPresentation = AppRowPresentation.ICON_AND_TEXT,
+            listContentMode = ListContentMode.FAVORITES, appsToShowCount = 5,
+            dockDisplayMode = com.facetlauncher.app.data.model.DockDisplayMode.TEXT,
         )
         `when`(facetRepository.restoreFacet(expectedFacetEntity)).thenReturn(99L)
 

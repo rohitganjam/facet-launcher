@@ -97,7 +97,7 @@ class ApplyFacetDefaultsUseCaseTest {
         // Then the facet's dock is a copy of the launcher dock, and favorites and look are untouched
         assertEquals(listOf("com.example.a", "com.example.b"), packages(PlacementList.DOCK, facet.id))
         assertEquals(emptyList<String>(), packages(PlacementList.FAVORITES, facet.id))
-        assertEquals(DockDisplayMode.LAUNCHER_DEFAULT, facetRepository.getById(facet.id)!!.dockDisplayMode)
+        assertEquals(DockDisplayMode.ICONS, facetRepository.getById(facet.id)!!.dockDisplayMode)
     }
 
     @Test

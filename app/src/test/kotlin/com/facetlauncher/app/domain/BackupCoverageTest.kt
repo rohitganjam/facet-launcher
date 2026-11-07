@@ -32,7 +32,9 @@ class BackupCoverageTest {
             "overrideCalendar", "showAllDayEvents", "showCalendarIndicator", "calendarItemsToShow", "selectedCalendarIds",
         )
         val clockPageFields = setOf("clockConfig", "clockWidthDp", "clockHeightDp", "clockLandscapeWidthDp", "clockLandscapeHeightDp")
-        val exported = fieldNames(BackupFacet::class.java) - setOf("dockApps", "favorites", "dockFolderPlacements", "favoriteFolderPlacements", "nativeStackPages") - legacyClockFields - clockPageFields
+        // The override flags of version 5 and older are read once, to give a facet the launcher's lists and look it showed, and no longer written
+        val legacyHomeFields = setOf("overrideApps", "overridingFavorites", "overrideDock")
+        val exported = fieldNames(BackupFacet::class.java) - setOf("dockApps", "favorites", "dockFolderPlacements", "favoriteFolderPlacements", "nativeStackPages") - legacyClockFields - clockPageFields - legacyHomeFields
 
         // Then the backup holds exactly those
         assertEquals(expected, exported)

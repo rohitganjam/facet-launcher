@@ -3,7 +3,10 @@ package com.facetlauncher.app.ui.onboarding
 import com.facetlauncher.app.domain.ObservePlacedItemsUseCase
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.SettingsRepository
+import com.facetlauncher.app.domain.ApplyFacetDefaultsUseCase
+import com.facetlauncher.app.domain.FacetDefaultsScope
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.DrawerPresentation
 import com.facetlauncher.app.data.model.ListContentMode
@@ -14,6 +17,7 @@ import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import com.facetlauncher.app.data.PlacementRepository
@@ -36,6 +40,8 @@ class OnboardingViewModel @Inject constructor(
     private val placementRepository: PlacementRepository,
     private val observePlacedItems: ObservePlacedItemsUseCase,
     private val settingsRepository: SettingsRepository,
+    private val facetRepository: FacetRepository,
+    private val applyFacetDefaults: ApplyFacetDefaultsUseCase,
 ) : ViewModel() {
 
     val uiState: StateFlow<OnboardingUiState> = combine(
@@ -95,5 +101,19 @@ class OnboardingViewModel @Inject constructor(
     /** Clears the default dock in one action, instead of unchecking every app in the picker. */
     fun clearDockApps() {
         viewModelScope.launch { placementRepository.deleteAll(PlacementTarget.GlobalDock) }
+    }
+
+    /**
+     * The choices above edit the launcher-wide defaults, but a facet owns its own copy (the first one was made before this
+     * screen opened), so they are copied onto the existing facets here, before [onDone] leaves onboarding.
+     */
+    fun finish(onDone: () -> Unit) {
+        viewModelScope.launch {
+            facetRepository.observeFacets().first().forEach { facet ->
+                applyFacetDefaults(facet.id, FacetDefaultsScope.DOCK)
+                applyFacetDefaults(facet.id, FacetDefaultsScope.APPS_LIST)
+            }
+            onDone()
+        }
     }
 }

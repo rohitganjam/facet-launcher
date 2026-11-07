@@ -14,6 +14,8 @@ import com.facetlauncher.app.data.model.HomeWallpaper
 import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.data.model.ListContentMode
 import com.facetlauncher.app.data.model.PlacedItem
+import com.facetlauncher.app.domain.ApplyFacetDefaultsUseCase
+import com.facetlauncher.app.domain.FacetDefaultsScope
 import com.facetlauncher.app.domain.GetInstalledAppsUseCase
 import com.facetlauncher.app.domain.SelectPreviewAppsUseCase
 import kotlinx.coroutines.Dispatchers
@@ -70,6 +72,7 @@ class HomeAppsListSettingsViewModelTest {
         facetRepository: FacetRepository = mock(FacetRepository::class.java),
         placementRepository: PlacementRepository = mock(PlacementRepository::class.java),
         observePlacedItems: ObservePlacedItemsUseCase = mock(ObservePlacedItemsUseCase::class.java),
+        applyFacetDefaults: ApplyFacetDefaultsUseCase = mock(ApplyFacetDefaultsUseCase::class.java),
     ): HomeAppsListSettingsViewModel {
         val getInstalledApps = mock(GetInstalledAppsUseCase::class.java)
         val defaultAppRepository = mock(DefaultAppRepository::class.java)
@@ -89,6 +92,7 @@ class HomeAppsListSettingsViewModelTest {
             defaultAppRepository,
             getInstalledApps,
             SelectPreviewAppsUseCase(),
+            applyFacetDefaults,
         )
     }
 
@@ -131,12 +135,11 @@ class HomeAppsListSettingsViewModelTest {
     }
 
     @Test
-    fun `appRowPosition and appRowPresentation resolve independently of overrideApps via their own LAUNCHER_DEFAULT sentinel`() = runTest {
-        // A facet not overriding apps content, but with explicit look values (set from
-        // Appearance), still resolves to them here — its own preview needs it, even though this
-        // screen no longer edits them (see chat history).
+    fun `appRowPosition and appRowPresentation are the facet's own values`() = runTest {
+        // A facet with explicit look values (set from Dock & Apps appearance) shows them here —
+        // the preview needs them, even though this screen does not edit them.
         val facet = Facet(
-            id = 7L, name = "Work", position = 0, overrideApps = false,
+            id = 7L, name = "Work", position = 0,
             appRowPosition = AppRowPosition.RIGHT, appRowPresentation = AppRowPresentation.TEXT_ONLY,
             appListVerticalAlignment = AppListVerticalAlignment.TOP,
         )
@@ -147,6 +150,28 @@ class HomeAppsListSettingsViewModelTest {
         assertEquals(AppRowPosition.RIGHT, viewModel.uiState.value.appRowPosition)
         assertEquals(AppRowPresentation.TEXT_ONLY, viewModel.uiState.value.appRowPresentation)
         assertEquals(AppListVerticalAlignment.TOP, viewModel.uiState.value.appListVerticalAlignment)
+    }
+
+    @Test
+    fun `reset to default applies the apps list defaults to the facet`() = runTest {
+        val applyDefaults = mock(ApplyFacetDefaultsUseCase::class.java)
+        val viewModel = createViewModel(facetId = 7L, facets = listOf(Facet(id = 7L, name = "Work", position = 0)), applyFacetDefaults = applyDefaults)
+
+        viewModel.resetToDefault()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        verify(applyDefaults).invoke(7L, FacetDefaultsScope.APPS_LIST)
+    }
+
+    @Test
+    fun `reset to default does nothing at launcher scope`() = runTest {
+        val applyDefaults = mock(ApplyFacetDefaultsUseCase::class.java)
+        val viewModel = createViewModel(applyFacetDefaults = applyDefaults)
+
+        viewModel.resetToDefault()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        org.mockito.Mockito.verifyNoInteractions(applyDefaults)
     }
 
     @Test

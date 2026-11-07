@@ -152,11 +152,6 @@ class FacetRepository @Inject constructor(
         }
     }
 
-    /** Reverts this facet to inheriting the global default or switches to overriding. */
-    suspend fun setOverrideApps(facetId: Long, overriding: Boolean) {
-        update(facetId) { it.copy(overrideApps = overriding) }
-    }
-
     suspend fun setAppRowPosition(facetId: Long, position: AppRowPosition) {
         update(facetId) { it.copy(appRowPosition = position) }
     }
@@ -198,49 +193,8 @@ class FacetRepository @Inject constructor(
         update(facetId) { it.copy(appListShrinkToFit = shrinkToFit) }
     }
 
-    suspend fun setOverridingFavorites(facetId: Long, overriding: Boolean) {
-        update(facetId) { it.copy(overridingFavorites = overriding) }
-    }
-
-    /**
-     * Seeds the facet's app *content* settings from effective values and toggles the override
-     * flag. Atomic upsert to avoid clobbering. `appRowPosition`/`appRowPresentation`/
-     * `appListVerticalAlignment`/`appListLayout`/`appListColumnAlignment`/`appListGridColumns`/
-     * `appListGridDisplayMode` are no longer part of this bundle — they're "look" fields, edited
-     * from Settings → Appearance independently now, resolved via their own `LAUNCHER_DEFAULT`
-     * sentinel regardless of [overriding] (see [setAppRowPosition]/[setAppRowPresentation]/
-     * [setAppListVerticalAlignment] and [com.facetlauncher.app.data.local.resolveSentinel]).
-     */
-    suspend fun updateOverridingApps(
-        facetId: Long,
-        overriding: Boolean,
-        mode: ListContentMode,
-        count: Int,
-        overridingFavorites: Boolean,
-    ) {
-        update(facetId) {
-            it.copy(
-                overrideApps = overriding,
-                listContentMode = mode,
-                appsToShowCount = count.coerceIn(AppListLimits.MIN_APPS_TO_SHOW, AppListLimits.MAX_APPS_TO_SHOW),
-                overridingFavorites = overridingFavorites,
-            )
-        }
-    }
-
     suspend fun setDockDisplayMode(facetId: Long, mode: DockDisplayMode) {
         update(facetId) { it.copy(dockDisplayMode = mode) }
-    }
-
-    /**
-     * The Dock card's single Inherit/Override switch — governs only the dock's own app list (this
-     * facet's own [com.facetlauncher.app.data.local.FacetDockAppEntity] rows) now; its Icons/Text
-     * display style is edited from Settings → Appearance independently, resolved via its own
-     * `LAUNCHER_DEFAULT` sentinel regardless of [overriding] (see [setDockDisplayMode] and
-     * [com.facetlauncher.app.data.local.resolveSentinel]).
-     */
-    suspend fun updateOverridingDock(facetId: Long, overriding: Boolean) {
-        update(facetId) { it.copy(overrideDock = overriding) }
     }
 
     suspend fun deleteFacet(facetId: Long) {

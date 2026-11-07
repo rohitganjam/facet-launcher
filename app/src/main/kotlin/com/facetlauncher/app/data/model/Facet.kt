@@ -32,48 +32,25 @@ data class Facet(
     val landscapeClockAlignment: ClockAlignment? = null,
     val landscapeClockZoneHeightDp: Float? = null,
 
-    // Apps section
-    val overrideApps: Boolean = false,
-    /** The look fields inherit per field through their `LAUNCHER_DEFAULT` sentinel, independent of [overrideApps]. */
-    val appRowPosition: AppRowPosition = AppRowPosition.LAUNCHER_DEFAULT,
+    // Apps section: the facet's own values, seeded from the launcher defaults when it is created (see ApplyFacetDefaultsUseCase).
+    val appRowPosition: AppRowPosition = AppRowPosition.LEFT,
     /** Landscape's own [appRowPosition], [appListVerticalAlignment] and [appListColumnAlignment]; `null` is "same as portrait". */
     val landscapeAppRowPosition: AppRowPosition? = null,
     val landscapeAppListVerticalAlignment: AppListVerticalAlignment? = null,
     val landscapeAppListColumnAlignment: AppListColumnAlignment? = null,
-    val appRowPresentation: AppRowPresentation = AppRowPresentation.LAUNCHER_DEFAULT,
+    val appRowPresentation: AppRowPresentation = AppRowPresentation.ICON_AND_TEXT,
     val listContentMode: ListContentMode = ListContentMode.FAVORITES,
     val appsToShowCount: Int = AppListLimits.DEFAULT_APPS_TO_SHOW,
-    val appListVerticalAlignment: AppListVerticalAlignment = AppListVerticalAlignment.LAUNCHER_DEFAULT,
-    val appListLayout: AppListLayout = AppListLayout.LAUNCHER_DEFAULT,
-    val appListColumnAlignment: AppListColumnAlignment = AppListColumnAlignment.LAUNCHER_DEFAULT,
-    val appListGridColumns: AppListGridColumns = AppListGridColumns.LAUNCHER_DEFAULT,
-    val appListGridDisplayMode: AppListGridDisplayMode = AppListGridDisplayMode.LAUNCHER_DEFAULT,
-    val appListShrinkToFit: AppListShrinkToFit = AppListShrinkToFit.LAUNCHER_DEFAULT,
-    /** `true`: the facet has its own Favorites list; `false`: it uses the launcher-wide one. */
-    val overridingFavorites: Boolean = false,
+    val appListVerticalAlignment: AppListVerticalAlignment = AppListVerticalAlignment.BOTTOM,
+    val appListLayout: AppListLayout = AppListLayout.SINGLE_COLUMN,
+    val appListColumnAlignment: AppListColumnAlignment = AppListColumnAlignment.BOTH_LEFT,
+    val appListGridColumns: AppListGridColumns = AppListGridColumns.FOUR,
+    val appListGridDisplayMode: AppListGridDisplayMode = AppListGridDisplayMode.ICONS,
+    val appListShrinkToFit: AppListShrinkToFit = AppListShrinkToFit.OFF,
 
     // Dock section
-    val overrideDock: Boolean = false,
-    val dockDisplayMode: DockDisplayMode = DockDisplayMode.LAUNCHER_DEFAULT,
-
+    val dockDisplayMode: DockDisplayMode = DockDisplayMode.ICONS,
 )
-
-/**
- * The recurring shape behind every "this facet's X, falling back to the launcher default when it
- * isn't overriding" property: [overriding] picks which flag governs, [facetValue] reads the facet's
- * stored value, [globalValue] is used when there is no facet or it isn't overriding.
- */
-inline fun <T> Facet?.resolveOverride(overriding: (Facet) -> Boolean, facetValue: (Facet) -> T, globalValue: T): T =
-    if (this != null && overriding(this)) facetValue(this) else globalValue
-
-/**
- * Per-field override via a `LAUNCHER_DEFAULT`-style sentinel, with no separate override flag:
- * [facetValue] is the stored value, [sentinel] its "inherit" marker, [globalValue] the launcher default.
- */
-inline fun <T> Facet?.resolveSentinel(facetValue: (Facet) -> T, sentinel: T, globalValue: T): T {
-    val value = this?.let(facetValue) ?: return globalValue
-    return if (value == sentinel) globalValue else value
-}
 
 /**
  * Landscape resolution, one rule for every prop: the facet's landscape value (callers pass `null` when the
@@ -107,10 +84,5 @@ fun Facet.withLandscape(overrides: LandscapeOverrides): Facet = copy(
     landscapeAppListColumnAlignment = overrides.appListColumnAlignment,
 )
 
-/** Where [list] lives for `this` facet: its own rows when it overrides that list, else the launcher-wide default (also the answer when there is no active facet). */
-fun Facet?.placementTarget(list: PlacementList): PlacementTarget = when {
-    this == null -> PlacementTarget(list)
-    list == PlacementList.DOCK && overrideDock -> PlacementTarget(list, id)
-    list == PlacementList.FAVORITES && overridingFavorites -> PlacementTarget(list, id)
-    else -> PlacementTarget(list)
-}
+/** Where [list] lives for `this` facet: its own rows (the launcher-wide list when there is no active facet). */
+fun Facet?.placementTarget(list: PlacementList): PlacementTarget = PlacementTarget(list, this?.id)

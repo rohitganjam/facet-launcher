@@ -226,6 +226,7 @@ fun FacetNavHost(
                 onNavigateToAppearance = { navController.navigate(FacetDestinations.APPEARANCE_SETTINGS) },
                 onNavigateToDockSettings = { navController.navigate(FacetDestinations.dockSettings()) },
                 onNavigateToHomeAppsListSettings = { navController.navigate(FacetDestinations.homeAppsListSettings()) },
+                onNavigateToDockAppsAppearance = { navController.navigate(FacetDestinations.dockAppsAppearance()) },
                 onNavigateToFolders = { navController.navigate(FacetDestinations.FOLDERS_SETTINGS) },
                 onNavigateToGestures = { navController.navigate(FacetDestinations.GESTURES) },
                 onNavigateToWeatherSettings = { navController.navigate(FacetDestinations.UNITS_AND_LOCATION) },
@@ -257,7 +258,6 @@ fun FacetNavHost(
             AppearanceSettingsScreen(
                 onBack = { navController.popBackStackSafely() },
                 onNavigateToNotificationSettings = { navController.navigate(FacetDestinations.NOTIFICATION_SETTINGS) },
-                onNavigateToDockAppsAppearance = { navController.navigate(FacetDestinations.dockAppsAppearance()) },
                 onNavigateToAppDrawerSettings = { navController.navigate(FacetDestinations.APP_DRAWER_SETTINGS) },
                 onNavigateToThemesAndColors = { navController.navigate(FacetDestinations.THEMES_AND_COLORS) },
                 onNavigateToFonts = { navController.navigate(FacetDestinations.FONTS) },
@@ -314,7 +314,6 @@ fun FacetNavHost(
             DockSettingsScreen(
                 onBack = { navController.popBackStackSafely() },
                 onAddDockApp = { navController.navigate(FacetDestinations.dockPicker(facetId)) },
-                onEditDefaults = facetId?.let { { navController.navigate(FacetDestinations.dockSettings()) } },
             )
         }
         settingsComposable(
@@ -325,7 +324,6 @@ fun FacetNavHost(
             HomeAppsListSettingsScreen(
                 onBack = { navController.popBackStackSafely() },
                 onEditFavorites = { navController.navigate(FacetDestinations.favoritesPicker(facetId)) },
-                onEditDefaults = facetId?.let { { navController.navigate(FacetDestinations.homeAppsListSettings()) } },
             )
         }
         settingsComposable(FacetDestinations.APP_DRAWER_SETTINGS) {

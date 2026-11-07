@@ -39,14 +39,10 @@ import com.facetlauncher.app.data.model.PlacementList
 data class FacetSettingsUiState(
     val facet: Facet? = null,
     val activeFacetId: Long = 0L,
-    /** This facet's own favorites — only meaningful/used while [isOverridingApps] is true. */
+    /** This facet's own favorites. */
     val favorites: List<PlacedItem> = emptyList(),
-    /** The launcher-wide default Favorites list — shown read-only while inheriting. */
-    val defaultFavorites: List<PlacedItem> = emptyList(),
-    /** This facet's own dock — only meaningful/used while [isOverridingDock] is true. */
+    /** This facet's own dock. */
     val dockApps: List<PlacedItem> = emptyList(),
-    /** The launcher-wide default dock — shown read-only while inheriting, and copied in when the facet switches to Override with an empty list. */
-    val defaultDockApps: List<PlacedItem> = emptyList(),
     val settings: LauncherSettings = LauncherSettings(),
 ) {
     /** Gates the header's "Apply facet" button — see [FacetSettingsHeader]'s own doc. */
@@ -63,9 +59,6 @@ data class FacetSettingsUiState(
     val clockAlignment: ClockAlignment get() = style.clockPlacement.portrait.alignment
     val clockZoneHeightDp: Float? get() = style.clockPlacement.portrait.zoneHeightDp
 
-    /** The Apps card's single inherit/override switch — governs list content mode, apps-to-show, and favorites together now (position/presentation moved to Settings → Appearance — see chat history). */
-    val isOverridingApps: Boolean get() = facet?.overrideApps ?: false
-    /** Look, not content: resolved independently of [isOverridingApps] through each field's own `LAUNCHER_DEFAULT` sentinel. */
     val appRowPosition: AppRowPosition get() = style.appList.rowPosition
     val appRowPresentation: AppRowPresentation get() = style.appList.rowPresentation
     val appListLayout: AppListLayout get() = style.appList.layout
@@ -73,16 +66,11 @@ data class FacetSettingsUiState(
     val appListGridColumns: AppListGridColumns get() = style.appList.gridColumns
     val appListGridDisplayMode: AppListGridDisplayMode get() = style.appList.gridDisplayMode
     val listContentMode: ListContentMode get() = style.appList.contentMode
-    val appsToShowCount: Int get() = if (isOverridingApps) facet?.appsToShowCount ?: settings.appsToShowCount else settings.appsToShowCount
-    val effectiveFavorites: List<PlacedItem> get() = if (facet?.overridingFavorites == true) favorites else defaultFavorites
-    val favoritesLabel: String get() = "${effectiveFavorites.size} of ${AppListLimits.MAX_FAVORITES}"
+    val appsToShowCount: Int get() = facet?.appsToShowCount ?: settings.appsToShowCount
+    val favoritesLabel: String get() = "${favorites.size} of ${AppListLimits.MAX_FAVORITES}"
 
-    /** The Dock card's single inherit/override switch — governs only the dock's own app list now (Icons/Text display style moved to Settings → Appearance — see chat history). */
-    val isOverridingDock: Boolean get() = facet?.overrideDock ?: false
-    /** Look, not content — see [appRowPosition]'s own doc for the resolution shape. */
     val dockDisplayMode: DockDisplayMode get() = style.dockDisplayMode
-    val effectiveDockApps: List<PlacedItem> get() = if (isOverridingDock) dockApps else defaultDockApps
-    val dockLabel: String get() = "${effectiveDockApps.size} of ${AppListLimits.MAX_DOCK_APPS}"
+    val dockLabel: String get() = "${dockApps.size} of ${AppListLimits.MAX_DOCK_APPS}"
 }
 
 @HiltViewModel
@@ -99,26 +87,14 @@ class FacetSettingsViewModel @Inject constructor(
     val uiState: StateFlow<FacetSettingsUiState> = combine(
         facetRepository.observeFacets(),
         settingsRepository.settings,
-        combine(
-            observePlacedItems.items(PlacementTarget(PlacementList.FAVORITES, facetId)),
-            observePlacedItems.items(PlacementTarget.GlobalFavorites),
-            ::Pair,
-        ),
-        combine(
-            observePlacedItems.items(PlacementTarget(PlacementList.DOCK, facetId)),
-            observePlacedItems.items(PlacementTarget.GlobalDock),
-            ::Pair,
-        ),
-    ) { facets, settings, favs, docks ->
-        val (favorites, defaultFavorites) = favs
-        val (dockApps, defaultDockApps) = docks
+        observePlacedItems.items(PlacementTarget(PlacementList.FAVORITES, facetId)),
+        observePlacedItems.items(PlacementTarget(PlacementList.DOCK, facetId)),
+    ) { facets, settings, favorites, dockApps ->
         FacetSettingsUiState(
             facet = facets.find { it.id == facetId },
             activeFacetId = settings.activeFacetId,
             favorites = favorites,
-            defaultFavorites = defaultFavorites,
             dockApps = dockApps,
-            defaultDockApps = defaultDockApps,
             settings = settings,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), FacetSettingsUiState())

@@ -52,7 +52,7 @@ class FacetDatabaseMigrationTest {
     val helper: MigrationTestHelper = MigrationTestHelper(
         InstrumentationRegistry.getInstrumentation(),
         FacetDatabase::class.java,
-        listOf<AutoMigrationSpec>(DropFacetClockColumns()),
+        listOf<AutoMigrationSpec>(DropFacetClockColumns(), DropFacetOverrideFlags()),
         FrameworkSQLiteOpenHelperFactory(),
     )
 
@@ -1325,6 +1325,26 @@ class FacetDatabaseMigrationTest {
         // And an explicit landscape value survives while the portrait value resolves
         assertEquals("LEFT", facetString(db45, "landscapeAppRowPosition", 3))
         assertEquals("RIGHT", facetString(db45, "appRowPosition", 3))
+    }
+
+    @Test
+    fun migration45To46DropsTheOverrideFlagsAndKeepsTheFacetsOwnValues() {
+        // Given a v44 database taken through 44 to 45, whose facet inherited the launcher's dock and look
+        val db44 = helper.createDatabase(TEST_DB, 44)
+        insertFacetV44(db44, 1)
+        insertApp(db44, "DOCK", 0, "com.example.a", 0)
+        db44.close()
+        helper.runMigrationsAndValidate(TEST_DB, 45, true, Migrations.migration44To45 { launcherSettings }).close()
+
+        // When migrating to v46 (Room also validates the result against the exported v46 schema)
+        val db46 = helper.runMigrationsAndValidate(TEST_DB, 46, true)
+
+        // Then the flags are gone, and the facet keeps the values and dock the 44 to 45 step gave it
+        val columns = db46.query("SELECT * FROM facets LIMIT 1").use { it.columnNames.toSet() }
+        assertTrue("overrideApps" !in columns && "overridingFavorites" !in columns && "overrideDock" !in columns)
+        assertEquals("RIGHT", facetString(db46, "appRowPosition", 1))
+        assertEquals("TEXT", facetString(db46, "dockDisplayMode", 1))
+        assertEquals(listOf("com.example.a"), packagesOf(db46, "DOCK", 1))
     }
 
     @Test

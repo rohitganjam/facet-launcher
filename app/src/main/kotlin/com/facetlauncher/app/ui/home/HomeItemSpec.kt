@@ -119,11 +119,10 @@ internal fun FolderItemMenu(folder: Folder, expanded: Boolean, onDismiss: () -> 
 }
 
 /**
- * How a row's content is packed. RIGHT hugs the trailing edge, CENTER centres the group, LEFT (and the
- * `LAUNCHER_DEFAULT` sentinel, which callers always resolve away) hugs the start.
+ * How a row's content is packed. RIGHT hugs the trailing edge, CENTER centres the group, LEFT hugs the start.
  */
 internal fun appRowArrangement(position: AppRowPosition): Arrangement.Horizontal = when (position) {
     AppRowPosition.RIGHT -> Arrangement.spacedBy(14.dp, Alignment.End)
     AppRowPosition.CENTER -> Arrangement.spacedBy(14.dp, Alignment.CenterHorizontally)
-    AppRowPosition.LEFT, AppRowPosition.LAUNCHER_DEFAULT -> Arrangement.spacedBy(14.dp)
+    AppRowPosition.LEFT -> Arrangement.spacedBy(14.dp)
 }

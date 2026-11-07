@@ -23,27 +23,16 @@ class ResolveActivePlacementTargetUseCaseTest {
         return ResolveActivePlacementTargetUseCase(settingsRepository, facetRepository)
     }
 
-    private fun facet(overrideDock: Boolean = false, overridingFavorites: Boolean = false) =
-        Facet(id = 1L, name = "P1", position = 0, overrideDock = overrideDock, overridingFavorites = overridingFavorites)
+    private fun facet() = Facet(id = 1L, name = "P1", position = 0)
 
     @Test
-    fun `a facet overriding its dock resolves the dock to its own list`() = runTest {
-        assertEquals(PlacementTarget(PlacementList.DOCK, 1L), useCase(facet(overrideDock = true))(PlacementList.DOCK))
+    fun `the active facet's dock resolves to its own list`() = runTest {
+        assertEquals(PlacementTarget(PlacementList.DOCK, 1L), useCase(facet())(PlacementList.DOCK))
     }
 
     @Test
-    fun `a facet not overriding its dock resolves the dock to the launcher-wide list`() = runTest {
-        assertEquals(PlacementTarget.GlobalDock, useCase(facet(overrideDock = false, overridingFavorites = true))(PlacementList.DOCK))
-    }
-
-    @Test
-    fun `a facet overriding its favorites resolves favorites to its own list`() = runTest {
-        assertEquals(PlacementTarget(PlacementList.FAVORITES, 1L), useCase(facet(overridingFavorites = true))(PlacementList.FAVORITES))
-    }
-
-    @Test
-    fun `a facet not overriding its favorites resolves favorites to the launcher-wide list`() = runTest {
-        assertEquals(PlacementTarget.GlobalFavorites, useCase(facet(overrideDock = true, overridingFavorites = false))(PlacementList.FAVORITES))
+    fun `the active facet's favorites resolve to its own list`() = runTest {
+        assertEquals(PlacementTarget(PlacementList.FAVORITES, 1L), useCase(facet())(PlacementList.FAVORITES))
     }
 
     @Test

@@ -3,19 +3,8 @@ package com.facetlauncher.app.data.model
 import androidx.annotation.StringRes
 import com.facetlauncher.app.R
 
-/**
- * [LAUNCHER_DEFAULT] is facet-only (filtered out of the option list at global scope, same
- * technique as [com.facetlauncher.app.data.model.ClockFontOption]'s own sentinel) — a facet
- * carrying it inherits whatever [LauncherSettings.dockDisplayMode] currently is, live, rather
- * than being pinned to a value copied at the moment it stopped overriding. Editable from
- * Settings → Appearance now, not Dock's own screen (see chat history — dock/app "look" controls
- * moved out of their content screens into Appearance, alongside [AppRowPosition]/
- * [AppRowPresentation]/[AppListVerticalAlignment]); [com.facetlauncher.app.data.model.Facet.dockDisplayMode]'s
- * resolution no longer goes through `overrideDock` (that flag still gates the dock's own app
- * list) — see [com.facetlauncher.app.data.model.resolveSentinel].
- */
+/** How the Home dock draws its entries. The launcher-wide value only seeds a new facet; each facet holds its own. */
 enum class DockDisplayMode(@param:StringRes val displayNameRes: Int) {
-    LAUNCHER_DEFAULT(R.string.dock_display_mode_launcher_default),
     ICONS(R.string.dock_display_mode_icons),
     TEXT(R.string.dock_display_mode_text),
 
@@ -131,17 +120,14 @@ enum class NotificationBadgeStyle(@param:StringRes val displayNameRes: Int) {
  * `LEFT`'s normal reading order (icon then label) but centers that group within the row's full
  * width instead of packing it to either edge.
  */
-/** [LAUNCHER_DEFAULT] is facet-only — see [DockDisplayMode]'s own doc for the sentinel's exact shape. */
 enum class AppRowPosition(@param:StringRes val displayNameRes: Int) {
-    LAUNCHER_DEFAULT(R.string.app_row_position_launcher_default),
     LEFT(R.string.app_row_position_left),
     CENTER(R.string.app_row_position_center),
     RIGHT(R.string.app_row_position_right),
 }
 
-/** What renders per app-list row — independent of [AppRowPosition]. `ICON_AND_TEXT` is the default, unchanged look. [LAUNCHER_DEFAULT] is facet-only — see [DockDisplayMode]'s own doc for the sentinel's exact shape. */
+/** What renders per app-list row — independent of [AppRowPosition]. `ICON_AND_TEXT` is the default, unchanged look. */
 enum class AppRowPresentation(@param:StringRes val displayNameRes: Int) {
-    LAUNCHER_DEFAULT(R.string.app_row_presentation_launcher_default),
     ICON_ONLY(R.string.app_row_presentation_icon_only),
     ICON_AND_TEXT(R.string.app_row_presentation_icon_and_text),
     TEXT_ONLY(R.string.app_row_presentation_text_only),
@@ -154,9 +140,8 @@ enum class ClockAlignment(@param:StringRes val displayNameRes: Int) {
     RIGHT(R.string.app_row_position_right),
 }
 
-/** Home app list's vertical anchor. `BOTTOM` is today's unchanged behavior (list sits right above the dock). `TOP` anchors it immediately below the clock's grab handle instead. [LAUNCHER_DEFAULT] is facet-only — see [DockDisplayMode]'s own doc for the sentinel's exact shape. */
+/** Home app list's vertical anchor. `BOTTOM` is today's unchanged behavior (list sits right above the dock). `TOP` anchors it immediately below the clock's grab handle instead. */
 enum class AppListVerticalAlignment(@param:StringRes val displayNameRes: Int) {
-    LAUNCHER_DEFAULT(R.string.app_list_vertical_alignment_launcher_default),
     TOP(R.string.app_list_vertical_alignment_top),
     BOTTOM(R.string.app_list_vertical_alignment_bottom),
 }
@@ -167,10 +152,8 @@ enum class AppListVerticalAlignment(@param:StringRes val displayNameRes: Int) {
  * catalog). `SINGLE_COLUMN` is today's unchanged default. `TWO_COLUMN` splits the list interleaved
  * by original order (index 0,2,4… left column top-to-bottom; 1,3,5… right, see
  * [AppListColumnAlignment]). `GRID` renders it as a [AppListGridColumns]-wide grid instead of rows.
- * [LAUNCHER_DEFAULT] is facet-only — see [DockDisplayMode]'s own doc for the sentinel's exact shape.
  */
 enum class AppListLayout(@param:StringRes val displayNameRes: Int) {
-    LAUNCHER_DEFAULT(R.string.app_list_layout_launcher_default),
     SINGLE_COLUMN(R.string.app_list_layout_single_column),
     TWO_COLUMN(R.string.app_list_layout_two_column),
     GRID(R.string.app_list_layout_grid),
@@ -180,11 +163,9 @@ enum class AppListLayout(@param:StringRes val displayNameRes: Int) {
  * Only meaningful when [AppListLayout.TWO_COLUMN] is active. `BOTH_LEFT`/`BOTH_RIGHT` render every
  * row in both columns with that same [AppRowPosition] (icon-then-label or label-then-icon, packed
  * to each column's own start/end edge). `MIRRORED` renders the left column `LEFT`-style and the
- * right column `RIGHT`-style, so each column's icon hugs the screen's own outer edge. [LAUNCHER_DEFAULT]
- * is facet-only — see [DockDisplayMode]'s own doc for the sentinel's exact shape.
+ * right column `RIGHT`-style, so each column's icon hugs the screen's own outer edge.
  */
 enum class AppListColumnAlignment(@param:StringRes val displayNameRes: Int) {
-    LAUNCHER_DEFAULT(R.string.app_list_column_alignment_launcher_default),
     BOTH_LEFT(R.string.app_list_column_alignment_both_left),
     BOTH_RIGHT(R.string.app_list_column_alignment_both_right),
     MIRRORED(R.string.app_list_column_alignment_mirrored),
@@ -204,14 +185,10 @@ fun AppListColumnAlignment.toColumnPositions(): Pair<AppRowPosition, AppRowPosit
     AppListColumnAlignment.BOTH_RIGHT -> AppRowPosition.RIGHT to AppRowPosition.RIGHT
     // The original "left aligns to the edge, right aligns to the other edge" request.
     AppListColumnAlignment.MIRRORED -> AppRowPosition.LEFT to AppRowPosition.RIGHT
-    // Never reached — callers always pass an already-resolved effective value, same as
-    // AppRowPosition's own identical LAUNCHER_DEFAULT handling.
-    AppListColumnAlignment.LAUNCHER_DEFAULT -> AppRowPosition.LEFT to AppRowPosition.LEFT
 }
 
-/** Only meaningful when [AppListLayout.GRID] is active — how many tiles wide the grid renders. [LAUNCHER_DEFAULT] is facet-only — see [DockDisplayMode]'s own doc for the sentinel's exact shape. */
+/** Only meaningful when [AppListLayout.GRID] is active — how many tiles wide the grid renders. */
 enum class AppListGridColumns(val columns: Int, @param:StringRes val displayNameRes: Int) {
-    LAUNCHER_DEFAULT(0, R.string.app_list_grid_columns_launcher_default),
     THREE(3, R.string.app_list_grid_columns_three),
     FOUR(4, R.string.app_list_grid_columns_four),
     FIVE(5, R.string.app_list_grid_columns_five),
@@ -220,11 +197,9 @@ enum class AppListGridColumns(val columns: Int, @param:StringRes val displayName
 
 /**
  * Only meaningful when [AppListLayout.GRID] is active — what a grid tile renders. Shaped like
- * [DockDisplayMode] and a separate setting from the Dock's own. [LAUNCHER_DEFAULT] is facet-only — see
- * [DockDisplayMode]'s own doc for the sentinel's exact shape.
+ * [DockDisplayMode] and a separate setting from the Dock's own.
  */
 enum class AppListGridDisplayMode(@param:StringRes val displayNameRes: Int) {
-    LAUNCHER_DEFAULT(R.string.app_list_grid_display_mode_launcher_default),
     ICONS(R.string.app_list_grid_display_mode_icons),
     TEXT(R.string.app_list_grid_display_mode_text),
 
@@ -234,10 +209,9 @@ enum class AppListGridDisplayMode(@param:StringRes val displayNameRes: Int) {
 
 /**
  * Whether Home's list (not the grid) drops to Compact rows when Regular rows wouldn't fit; [OFF] keeps Regular rows
- * and the list scrolls. [LAUNCHER_DEFAULT] is facet-only — see [DockDisplayMode]'s own doc for the sentinel's shape.
+ * and the list scrolls.
  */
 enum class AppListShrinkToFit(@param:StringRes val displayNameRes: Int) {
-    LAUNCHER_DEFAULT(R.string.app_list_shrink_to_fit_launcher_default),
     OFF(R.string.app_list_shrink_to_fit_off),
     ON(R.string.app_list_shrink_to_fit_on),
 }

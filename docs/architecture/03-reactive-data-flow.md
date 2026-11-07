@@ -133,15 +133,14 @@ flowchart TB
     AF["activeFacet =\nfacets.firstOrNull { id == settings.activeFacetId }"]
 
     AF --> ALI
-    S --> ALI
     RT["refreshTrigger\nMutableSharedFlow(replay=1)"] --> ALI
-    ALI{{"flatMapLatest → observeAppListItems(facet, settings)"}}
-    ALI -- "FAVORITES" --> FAV["ObservePlacedItemsUseCase.items(facet.placementTarget(FAVORITES))\n(the facet's own list if overridingFavorites, else the launcher-wide one)"]
+    ALI{{"flatMapLatest → observeAppListItems(facet)"}}
+    ALI -- "FAVORITES" --> FAV["ObservePlacedItemsUseCase.items(facet.placementTarget(FAVORITES))\n(the facet's own list)"]
     ALI -- "RECENTS / MOST_USED\n(one-shot flow { emit(...) })" --> US["UsageStatsRepository\ngetRecentApps / getMostUsedApps"]
     ALI -- "usage access not granted" --> EMPTY["flowOf(emptyList())"]
 
     AF --> DK{{"flatMapLatest → dock"}}
-    DK --> GDK["ObservePlacedItemsUseCase.items(facet.placementTarget(DOCK))\n(the facet's own list if overrideDock, else the launcher-wide one)"]
+    DK --> GDK["ObservePlacedItemsUseCase.items(facet.placementTarget(DOCK))\n(the facet's own list)"]
 
     AF --> CAL{{"flatMapLatest → observeCalendarEvents"}}
     CAL --> CR["CalendarRepository.getUpcomingEvents(ids, includeAllDay)\n(gated by CalendarPermissionRepository)"]
@@ -190,7 +189,7 @@ Notes:
   `activeAppListVerticalAlignment`, `activeAppListLayout`, `activeAppListColumnAlignment`,
   `activeAppListGridColumns`, `activeAppListGridDisplayMode`, `activeDockDisplayMode`) aren't
   separate nodes in this graph — they're derived directly from `S`/`F` (already flowing into `OUT`)
-  via each field's own `resolveSentinel`, not through `ObserveHomeScreenStateUseCase` at all. See
+  by `resolveFacetStyle` (the facet's own values), not through `ObserveHomeScreenStateUseCase` at all. See
   [13-flow-facets-theme-notifications-onboarding.md](13-flow-facets-theme-notifications-onboarding.md)'s
   `LOOK` subgraph for the full list and each field's Settings row.
 

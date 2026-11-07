@@ -27,6 +27,7 @@ import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Layers
 import androidx.compose.material.icons.outlined.AutoMode
 import androidx.compose.material.icons.outlined.Dock
+import com.facetlauncher.app.ui.facets.appearanceSummaryLabel
 import androidx.compose.material.icons.outlined.Folder
 import androidx.compose.material.icons.outlined.FormatListBulleted
 import androidx.compose.material.icons.outlined.Home
@@ -95,6 +96,7 @@ fun SettingsScreen(
     onNavigateToAppearance: () -> Unit,
     onNavigateToDockSettings: () -> Unit,
     onNavigateToHomeAppsListSettings: () -> Unit,
+    onNavigateToDockAppsAppearance: () -> Unit,
     onNavigateToFolders: () -> Unit,
     onNavigateToGestures: () -> Unit,
     onNavigateToWeatherSettings: () -> Unit,
@@ -116,6 +118,7 @@ fun SettingsScreen(
         onNavigateToAppearance = onNavigateToAppearance,
         onNavigateToDockSettings = onNavigateToDockSettings,
         onNavigateToHomeAppsListSettings = onNavigateToHomeAppsListSettings,
+        onNavigateToDockAppsAppearance = onNavigateToDockAppsAppearance,
         onNavigateToFolders = onNavigateToFolders,
         onNavigateToGestures = onNavigateToGestures,
         onNavigateToWeatherSettings = onNavigateToWeatherSettings,
@@ -139,6 +142,7 @@ private fun SettingsContent(
     onNavigateToAppearance: () -> Unit,
     onNavigateToDockSettings: () -> Unit,
     onNavigateToHomeAppsListSettings: () -> Unit,
+    onNavigateToDockAppsAppearance: () -> Unit,
     onNavigateToFolders: () -> Unit,
     onNavigateToGestures: () -> Unit,
     onNavigateToWeatherSettings: () -> Unit,
@@ -181,7 +185,7 @@ private fun SettingsContent(
                 item { AppearanceCard(onNavigateToAppearance) }
 
                 item { SettingsSectionHeader(stringResource(R.string.settings_section_home_apps)) }
-                item { HomeAppsCard(uiState, onNavigateToDockSettings, onNavigateToHomeAppsListSettings, onNavigateToFolders) }
+                item { HomeAppsCard(uiState, onNavigateToDockSettings, onNavigateToHomeAppsListSettings, onNavigateToDockAppsAppearance, onNavigateToFolders) }
 
                 item { SettingsSectionHeader(stringResource(R.string.settings_section_system)) }
                 item {
@@ -260,11 +264,12 @@ private fun HomeAppsCard(
     uiState: SettingsUiState,
     onNavigateToDockSettings: () -> Unit,
     onNavigateToHomeAppsListSettings: () -> Unit,
+    onNavigateToDockAppsAppearance: () -> Unit,
     onNavigateToFolders: () -> Unit,
 ) {
     SettingsCard(fullBleedRows = true) {
         ClickableRow(
-            title = stringResource(R.string.settings_dock_title),
+            title = stringResource(R.string.settings_default_dock_title),
             subtitle = dockSummary(uiState.dockItems),
             onClick = onNavigateToDockSettings,
             testTag = "dock_settings_row",
@@ -272,11 +277,23 @@ private fun HomeAppsCard(
         )
         CardDivider(startInset = SettingsIconBadgeInset)
         ClickableRow(
-            title = stringResource(R.string.settings_home_apps_list_title),
+            title = stringResource(R.string.home_apps_list_default_header_title),
             subtitle = appsListSummary(uiState.settings.listContentMode, uiState.defaultFavorites.size, uiState.settings.appsToShowCount),
             onClick = onNavigateToHomeAppsListSettings,
             testTag = "home_apps_list_settings_row",
             leadingIcon = iconBadge(Icons.Outlined.FormatListBulleted, SettingsSectionHue.HOME_APPS),
+        )
+        CardDivider(startInset = SettingsIconBadgeInset)
+        ClickableRow(
+            title = stringResource(R.string.appearance_default_dock_apps_title),
+            subtitle = stringResource(
+                R.string.dot_join_2,
+                uiState.settings.dockDisplayMode.appearanceSummaryLabel(),
+                uiState.settings.appRowPresentation.appearanceSummaryLabel(),
+            ),
+            onClick = onNavigateToDockAppsAppearance,
+            testTag = "dock_apps_appearance_row",
+            leadingIcon = iconBadge(Icons.Outlined.Dock, SettingsSectionHue.HOME_APPS),
         )
         CardDivider(startInset = SettingsIconBadgeInset)
         ClickableRow(
@@ -469,6 +486,7 @@ private fun SettingsScreenPreview() {
             onNavigateToAppearance = {},
             onNavigateToDockSettings = {},
             onNavigateToHomeAppsListSettings = {},
+            onNavigateToDockAppsAppearance = {},
             onNavigateToFolders = {},
             onNavigateToGestures = {},
             onNavigateToWeatherSettings = {},

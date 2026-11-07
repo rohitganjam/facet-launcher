@@ -46,20 +46,6 @@ class FacetDaoTest {
     }
 
     @Test
-    fun `toggling overrideApps flag round-trips`() = runTest {
-        // Given a facet inheriting global apps
-        val dao = createDao()
-        val id = dao.insert(FacetEntity(name = "Facet 1", position = 0, overrideApps = false))
-
-        // When it's switched to override
-        dao.update(FacetEntity(id = id, name = "Facet 1", position = 0, overrideApps = true))
-
-        // Then it reflects the new flag
-        val result = dao.observeAll().first().single()
-        assertEquals(true, result.overrideApps)
-    }
-
-    @Test
     fun `every ListContentMode value round-trips`() = runTest {
         val dao = createDao()
         val id = dao.insert(FacetEntity(name = "Facet 1", position = 0))

@@ -9,10 +9,8 @@ import javax.inject.Inject
 import kotlinx.coroutines.flow.first
 
 /**
- * Which concrete list the active facet reads [list] from: its own when it overrides that list
- * (`overrideDock` / `overridingFavorites`), otherwise the launcher-wide default. Mirrors
- * [ObserveQuickAddStateUseCase]'s own resolution, so a long-press "Add to…" row always writes where
- * the row said it would.
+ * Which concrete list the active facet reads [list] from: its own (the launcher-wide list only when there is no
+ * active facet). A long-press "Add to…" row always writes where the row said it would.
  */
 class ResolveActivePlacementTargetUseCase @Inject constructor(
     private val settingsRepository: SettingsRepository,

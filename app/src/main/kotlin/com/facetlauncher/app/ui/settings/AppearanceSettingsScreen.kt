@@ -60,14 +60,12 @@ import com.facetlauncher.app.ui.theme.SurfaceContainer
 
 /**
  * Settings → Appearance (`3c`) — a live preview of Home, then a section per area, each a short list of rows that open their own screen:
- * Dock & home ("Dock & Apps appearance" → [DockAppsAppearanceScreen]),
- * Notifications (global only → the Notifications page) and Look & Feel (global only: "General settings" → [ThemesAndColorsScreen], "Fonts" → [FontsScreen], "Icons" → [IconsScreen]).
+ * App Drawer, Notifications (global only → the Notifications page) and Look & Feel (global only: "General settings" → [ThemesAndColorsScreen], "Fonts" → [FontsScreen], "Icons" → [IconsScreen]).
  */
 @Composable
 fun AppearanceSettingsScreen(
     onBack: () -> Unit,
     onNavigateToNotificationSettings: () -> Unit,
-    onNavigateToDockAppsAppearance: () -> Unit,
     onNavigateToAppDrawerSettings: () -> Unit,
     onNavigateToThemesAndColors: () -> Unit,
     onNavigateToFonts: () -> Unit,
@@ -97,7 +95,6 @@ fun AppearanceSettingsScreen(
         homeWallpaper = homeWallpaper,
         onBack = onBack,
         onNavigateToNotificationSettings = onNavigateToNotificationSettings,
-        onNavigateToDockAppsAppearance = onNavigateToDockAppsAppearance,
         onNavigateToAppDrawerSettings = onNavigateToAppDrawerSettings,
         onNavigateToThemesAndColors = onNavigateToThemesAndColors,
         onNavigateToFonts = onNavigateToFonts,
@@ -113,7 +110,6 @@ private fun AppearanceSettingsContent(
     homeWallpaper: HomeWallpaper,
     onBack: () -> Unit,
     onNavigateToNotificationSettings: () -> Unit,
-    onNavigateToDockAppsAppearance: () -> Unit,
     onNavigateToAppDrawerSettings: () -> Unit,
     onNavigateToThemesAndColors: () -> Unit,
     onNavigateToFonts: () -> Unit,
@@ -140,7 +136,7 @@ private fun AppearanceSettingsContent(
                         modifier = Modifier.padding(bottom = 20.dp).testTag("appearance_preview_card"),
                     )
                 }
-                dockAndHomeSection(settings, uiState, onNavigateToDockAppsAppearance, onNavigateToAppDrawerSettings)
+                appDrawerSection(settings, onNavigateToAppDrawerSettings)
                 notificationsSection(settings, uiState.notificationAccessGranted, onNavigateToNotificationSettings)
                 generalSection(settings, onNavigateToThemesAndColors, onNavigateToFonts, onNavigateToIcons)
             }
@@ -181,28 +177,13 @@ private fun notificationsSummary(settings: LauncherSettings, accessGranted: Bool
 }
 
 
-/** Rows into [DockAppsAppearanceScreen] and [AppDrawerSettingsScreen]; the first summarises the dock and Home list as the facet settings row does ("Dock icons · Home icon & text"). */
-private fun LazyListScope.dockAndHomeSection(
+/** The row into [AppDrawerSettingsScreen]. The dock and Home list's look lives under Apps and folders now. */
+private fun LazyListScope.appDrawerSection(
     settings: LauncherSettings,
-    uiState: AppearanceSettingsUiState,
-    onNavigateToDockAppsAppearance: () -> Unit,
     onNavigateToAppDrawerSettings: () -> Unit,
 ) {
-    item { SettingsSectionHeader(stringResource(R.string.appearance_section_dock_home)) }
     item {
         SettingsCard(fullBleedRows = true) {
-            ClickableRow(
-                title = stringResource(R.string.appearance_dock_apps_title),
-                subtitle = stringResource(
-                    R.string.dot_join_2,
-                    uiState.dockDisplayMode.appearanceSummaryLabel(),
-                    uiState.appRowPresentation.appearanceSummaryLabel(),
-                ),
-                onClick = onNavigateToDockAppsAppearance,
-                testTag = "appearance_dock_apps_row",
-                leadingIcon = iconBadge(Icons.Outlined.Dock, SettingsSectionHue.APPEARANCE),
-            )
-            CardDivider(startInset = SettingsIconBadgeInset)
             ClickableRow(
                 title = stringResource(R.string.settings_app_drawer_title),
                 subtitle = appDrawerSummary(settings.drawerPresentation, settings.searchContactsEnabled, settings.searchSettingsEnabled),
@@ -292,7 +273,6 @@ private fun AppearanceSettingsScreenPreview() {
             homeWallpaper = HomeWallpaper.Unavailable,
             onBack = {},
             onNavigateToNotificationSettings = {},
-            onNavigateToDockAppsAppearance = {},
             onNavigateToAppDrawerSettings = {},
             onNavigateToThemesAndColors = {},
             onNavigateToFonts = {},
@@ -315,7 +295,6 @@ private fun AppearanceSettingsScreenFacetScopedPreview() {
             homeWallpaper = HomeWallpaper.Unavailable,
             onBack = {},
             onNavigateToNotificationSettings = {},
-            onNavigateToDockAppsAppearance = {},
             onNavigateToAppDrawerSettings = {},
             onNavigateToThemesAndColors = {},
             onNavigateToFonts = {},

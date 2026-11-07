@@ -57,6 +57,8 @@ import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
 import org.robolectric.RobolectricTestRunner
 import com.facetlauncher.app.data.model.PlacementTarget
+import com.facetlauncher.app.domain.ApplyFacetDefaultsUseCase
+import com.facetlauncher.app.domain.FacetDefaultsScope
 import com.facetlauncher.app.domain.ObservePlacedItemsUseCase
 import com.facetlauncher.app.data.model.PlacementList
 
@@ -94,6 +96,7 @@ class AppearanceSettingsViewModelTest {
         calendarPermissionRepository: CalendarPermissionRepository = mock(CalendarPermissionRepository::class.java),
         wallpaperRepository: WallpaperRepository = fakeWallpaperRepository(),
         notificationAccessRepository: NotificationAccessRepository = mock(NotificationAccessRepository::class.java),
+        applyFacetDefaults: ApplyFacetDefaultsUseCase = mock(ApplyFacetDefaultsUseCase::class.java),
     ): AppearanceSettingsViewModel {
         // Favorites/dock/calendar-grant are plain value params, stubbed only here, rather than
         // letting a test build and pre-stub its own mock before passing it in — Mockito's
@@ -118,6 +121,7 @@ class AppearanceSettingsViewModelTest {
             calendarPermissionRepository,
             wallpaperRepository,
             notificationAccessRepository,
+            applyFacetDefaults,
         )
     }
 
@@ -279,12 +283,10 @@ class AppearanceSettingsViewModelTest {
     }
 
     @Test
-    fun `look fields resolve independently of overrideDock and overrideApps via their own LAUNCHER_DEFAULT sentinel`() = runTest {
-        // A facet not overriding dock/apps content at all, but with explicit look values already
-        // chosen from this screen — it still resolves to them (see chat history: these fields no
-        // longer gate on overrideDock/overrideApps, unlike Dock's/Home-Apps-List's own content).
+    fun `look fields are the facet's own values`() = runTest {
+        // A facet with explicit look values already chosen from this screen resolves to them
         val facet = Facet(
-            id = 9L, name = "Work", position = 0, overrideDock = false, overrideApps = false,
+            id = 9L, name = "Work", position = 0,
             dockDisplayMode = DockDisplayMode.TEXT, appRowPosition = AppRowPosition.RIGHT,
             appRowPresentation = AppRowPresentation.TEXT_ONLY, appListVerticalAlignment = AppListVerticalAlignment.TOP,
         )
@@ -300,13 +302,35 @@ class AppearanceSettingsViewModelTest {
     }
 
     @Test
-    fun `a facet with LAUNCHER_DEFAULT look fields inherits the global values`() = runTest {
-        val facet = Facet(id = 4L, name = "Work", position = 0)
+    fun `a facet keeps its own look when the launcher's defaults differ`() = runTest {
+        val facet = Facet(id = 4L, name = "Work", position = 0, dockDisplayMode = DockDisplayMode.ICONS)
         val viewModel = createViewModel(facetId = 4L, facets = listOf(facet), settings = LauncherSettings(dockDisplayMode = DockDisplayMode.TEXT))
         backgroundScope.launch { viewModel.uiState.collect {} }
         testDispatcher.scheduler.advanceUntilIdle()
 
-        assertEquals(DockDisplayMode.TEXT, viewModel.uiState.value.dockDisplayMode)
+        assertEquals(DockDisplayMode.ICONS, viewModel.uiState.value.dockDisplayMode)
+    }
+
+    @Test
+    fun `reset to default applies the look defaults to the facet`() = runTest {
+        val applyDefaults = mock(ApplyFacetDefaultsUseCase::class.java)
+        val viewModel = createViewModel(facetId = 9L, facets = listOf(Facet(id = 9L, name = "Work", position = 0)), applyFacetDefaults = applyDefaults)
+
+        viewModel.resetLookToDefault()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        verify(applyDefaults).invoke(9L, FacetDefaultsScope.LOOK)
+    }
+
+    @Test
+    fun `reset to default does nothing at launcher scope`() = runTest {
+        val applyDefaults = mock(ApplyFacetDefaultsUseCase::class.java)
+        val viewModel = createViewModel(applyFacetDefaults = applyDefaults)
+
+        viewModel.resetLookToDefault()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        org.mockito.Mockito.verifyNoInteractions(applyDefaults)
     }
 
     private fun app(n: Int) = PlacedItem.SingleApp(AppInfo(packageName = "com.example.$n", activityName = ".Main", label = "App $n", icon = null))
@@ -323,26 +347,8 @@ class AppearanceSettingsViewModelTest {
     }
 
     @Test
-    fun `facet scope not overriding consumes the resolved default, not its own stale rows`() = runTest {
-        val facet = Facet(id = 6L, name = "Work", position = 0, overrideApps = false, overrideDock = false)
-        val viewModel = createViewModel(
-            facetId = 6L,
-            facets = listOf(facet),
-            facetFavorites = listOf(app(9)),
-            globalFavorites = listOf(app(1)),
-            facetDockItems = listOf(app(8)),
-            globalDockItems = listOf(app(2)),
-        )
-        backgroundScope.launch { viewModel.uiState.collect {} }
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        assertEquals(listOf(app(1)), viewModel.uiState.value.effectiveFavorites)
-        assertEquals(listOf(app(2)), viewModel.uiState.value.effectiveDockItems)
-    }
-
-    @Test
-    fun `facet scope overriding consumes that facet's own favorites and dock`() = runTest {
-        val facet = Facet(id = 6L, name = "Work", position = 0, overrideApps = true, overrideDock = true)
+    fun `facet scope consumes that facet's own favorites and dock`() = runTest {
+        val facet = Facet(id = 6L, name = "Work", position = 0)
         val viewModel = createViewModel(
             facetId = 6L,
             facets = listOf(facet),

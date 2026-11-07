@@ -7,9 +7,9 @@ import org.junit.Test
 class AppListGridColumnsTest {
 
     @Test
-    fun `every concrete option has its column count in ascending order`() {
-        // Given the options a user can pick (all but the facet-only launcher default)
-        val options = AppListGridColumns.entries - AppListGridColumns.LAUNCHER_DEFAULT
+    fun `every option has its column count in ascending order`() {
+        // Given the options a user can pick
+        val options = AppListGridColumns.entries
 
         // Then they run 3, 4, 5, 6 columns
         assertEquals(listOf(3, 4, 5, 6), options.map { it.columns })
@@ -21,12 +21,12 @@ class AppListGridColumnsTest {
         // Given three columns exported by name, as the backup stores it
         val stored = AppListGridColumns.THREE.name
 
-        // Then importing it gives three columns back, not the launcher default
-        assertEquals(AppListGridColumns.THREE, stored.toEnumOrDefault(AppListGridColumns.LAUNCHER_DEFAULT))
+        // Then importing it gives three columns back, not the default
+        assertEquals(AppListGridColumns.THREE, stored.toEnumOrDefault(AppListGridColumns.FOUR))
     }
 
     @Test
     fun `an unrecognized stored name falls back to the default`() {
-        assertEquals(AppListGridColumns.LAUNCHER_DEFAULT, "SEVEN".toEnumOrDefault(AppListGridColumns.LAUNCHER_DEFAULT))
+        assertEquals(AppListGridColumns.FOUR, "SEVEN".toEnumOrDefault(AppListGridColumns.FOUR))
     }
 }

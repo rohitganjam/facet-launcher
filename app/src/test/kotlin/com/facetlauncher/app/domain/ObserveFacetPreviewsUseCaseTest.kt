@@ -65,43 +65,43 @@ class ObserveFacetPreviewsUseCaseTest {
     }
 
     @Test
-    fun `resolves each facet's own effective favorites independently`() = runTest {
-        // Given two facets, one overriding its own favorites, one inheriting the default list
+    fun `each facet previews its own favorites`() = runTest {
+        // Given two facets with different favorites, and a launcher-wide default that neither uses
         val fixture = Fixture()
         `when`(fixture.observePlacedItems.itemsForFacets(PlacementList.FAVORITES, listOf(1L, 2L)))
             .thenReturn(flowOf(mapOf(1L to listOf(PlacedItem.SingleApp(appInfo('a'))), 2L to emptyList())))
         `when`(fixture.observePlacedItems.items(PlacementTarget.GlobalFavorites)).thenReturn(flowOf(listOf(PlacedItem.SingleApp(appInfo('d')))))
         fixture.facetsFlow.value = listOf(
-            Facet(id = 1L, name = "P1", position = 0, overridingFavorites = true),
-            Facet(id = 2L, name = "P2", position = 1, overridingFavorites = false),
+            Facet(id = 1L, name = "P1", position = 0),
+            Facet(id = 2L, name = "P2", position = 1),
         )
 
         // When observing previews for every facet
         val result = fixture.useCase().first()
 
-        // Then each resolves to its own effective list — facet 1's own override, facet 2's default
+        // Then each shows its own list, an empty one staying empty
         assertEquals(listOf(PlacedItem.SingleApp(appInfo('a'))), result.getValue(1L).favorites)
-        assertEquals(listOf(PlacedItem.SingleApp(appInfo('d'))), result.getValue(2L).favorites)
+        assertEquals(emptyList<PlacedItem>(), result.getValue(2L).favorites)
     }
 
     @Test
-    fun `resolves each facet's own effective dock independently`() = runTest {
-        // Given two facets, one overriding its dock, one inheriting the launcher-wide default
+    fun `each facet previews its own dock`() = runTest {
+        // Given two facets with different docks, and a launcher-wide default that neither uses
         val fixture = Fixture()
         `when`(fixture.observePlacedItems.itemsForFacets(PlacementList.DOCK, listOf(1L, 2L)))
             .thenReturn(flowOf(mapOf(1L to listOf(PlacedItem.SingleApp(appInfo('a'))), 2L to emptyList())))
         `when`(fixture.observePlacedItems.items(PlacementTarget.GlobalDock)).thenReturn(flowOf(listOf(PlacedItem.SingleApp(appInfo('d')))))
         fixture.facetsFlow.value = listOf(
-            Facet(id = 1L, name = "P1", position = 0, overrideDock = true),
-            Facet(id = 2L, name = "P2", position = 1, overrideDock = false),
+            Facet(id = 1L, name = "P1", position = 0),
+            Facet(id = 2L, name = "P2", position = 1),
         )
 
         // When observing previews for every facet
         val result = fixture.useCase().first()
 
-        // Then each resolves to its own effective dock — facet 1's own list, facet 2's default
+        // Then each shows its own dock, an empty one staying empty
         assertEquals(listOf(PlacedItem.SingleApp(appInfo('a'))), result.getValue(1L).dockApps)
-        assertEquals(listOf(PlacedItem.SingleApp(appInfo('d'))), result.getValue(2L).dockApps)
+        assertEquals(emptyList<PlacedItem>(), result.getValue(2L).dockApps)
     }
 
     @Test
@@ -110,7 +110,7 @@ class ObserveFacetPreviewsUseCaseTest {
         val fixture = Fixture()
         `when`(fixture.usageAccessRepository.isGranted()).thenReturn(false)
         fixture.facetsFlow.value = listOf(
-            Facet(id = 1L, name = "P1", position = 0, overrideApps = true, listContentMode = ListContentMode.RECENTS),
+            Facet(id = 1L, name = "P1", position = 0, listContentMode = ListContentMode.RECENTS),
         )
 
         // When observing previews

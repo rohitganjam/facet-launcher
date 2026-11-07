@@ -3,7 +3,9 @@ package com.facetlauncher.app.data
 import com.facetlauncher.app.data.model.WidgetWeatherLocation
 import com.facetlauncher.app.data.model.WeatherCity
 import com.facetlauncher.app.data.model.DEFAULT_CLOCK_SCALE
+import com.facetlauncher.app.data.model.DockDisplayMode
 import com.facetlauncher.app.data.model.LandscapeOverrides
+import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.data.model.landscape
 import com.facetlauncher.app.data.local.FacetDao
 import com.facetlauncher.app.data.local.FacetEntity
@@ -165,24 +167,37 @@ class FacetRepositoryTest {
     }
 
     @Test
-    fun `updateOverridingApps sets content fields and flag together`() = runTest {
-        // position/presentation are no longer part of this bundle — they're look fields, edited
-        // from Settings -> Appearance independently now (see chat history)
-        val dao = FakeFacetDao()
-        val repository = FacetRepository(dao, FakeClockStackItemDao())
+    fun `applyAppsContentDefaults copies the launcher content mode and clamped count`() = runTest {
+        val repository = FacetRepository(FakeFacetDao(), FakeClockStackItemDao())
         val facet = repository.addFacet()
-        repository.updateOverridingApps(
-            facetId = facet.id,
-            overriding = true,
-            mode = ListContentMode.MOST_USED,
-            count = 6,
-            overridingFavorites = true
-        )
+
+        repository.applyAppsContentDefaults(facet.id, LauncherSettings(listContentMode = ListContentMode.MOST_USED, appsToShowCount = 99))
+
         val stored = repository.observeFacets().first().single()
-        assertEquals(true, stored.overrideApps)
         assertEquals(ListContentMode.MOST_USED, stored.listContentMode)
-        assertEquals(6, stored.appsToShowCount)
-        assertEquals(true, stored.overridingFavorites)
+        assertEquals(12, stored.appsToShowCount)
+    }
+
+    @Test
+    fun `applyLookDefaults copies the launcher look and landscape twins and keeps the clock twins`() = runTest {
+        val repository = FacetRepository(FakeFacetDao(), FakeClockStackItemDao())
+        val facet = repository.addFacet()
+        repository.updateLandscape(facet.id) { it.copy(clockAlignment = ClockAlignment.RIGHT) }
+
+        repository.applyLookDefaults(
+            facet.id,
+            LauncherSettings(
+                dockDisplayMode = DockDisplayMode.TEXT,
+                appRowPosition = AppRowPosition.RIGHT,
+                landscape = LandscapeOverrides(appRowPosition = AppRowPosition.CENTER),
+            ),
+        )
+
+        val stored = repository.observeFacets().first().single()
+        assertEquals(DockDisplayMode.TEXT, stored.dockDisplayMode)
+        assertEquals(AppRowPosition.RIGHT, stored.appRowPosition)
+        assertEquals(AppRowPosition.CENTER, stored.landscape.appRowPosition)
+        assertEquals(ClockAlignment.RIGHT, stored.landscape.clockAlignment)
     }
 
     @Test
@@ -263,19 +278,19 @@ class FacetRepositoryTest {
     }
 
     @Test
-    fun `setAppListShrinkToFit stores the facet's own value and can go back to the launcher's`() = runTest {
-        // Given a new facet, inheriting
+    fun `setAppListShrinkToFit stores the facet's own value`() = runTest {
+        // Given a new facet, shrinking off
         val repository = FacetRepository(FakeFacetDao(), FakeClockStackItemDao())
         val facet = repository.addFacet()
-        assertEquals(com.facetlauncher.app.data.model.AppListShrinkToFit.LAUNCHER_DEFAULT, facet.appListShrinkToFit)
+        assertEquals(com.facetlauncher.app.data.model.AppListShrinkToFit.OFF, facet.appListShrinkToFit)
 
-        // When it turns shrinking on, then back to the launcher's
+        // When it turns shrinking on, then off again
         repository.setAppListShrinkToFit(facet.id, com.facetlauncher.app.data.model.AppListShrinkToFit.ON)
         assertEquals(com.facetlauncher.app.data.model.AppListShrinkToFit.ON, repository.observeFacets().first().single().appListShrinkToFit)
-        repository.setAppListShrinkToFit(facet.id, com.facetlauncher.app.data.model.AppListShrinkToFit.LAUNCHER_DEFAULT)
+        repository.setAppListShrinkToFit(facet.id, com.facetlauncher.app.data.model.AppListShrinkToFit.OFF)
 
-        // Then it inherits again
-        assertEquals(com.facetlauncher.app.data.model.AppListShrinkToFit.LAUNCHER_DEFAULT, repository.observeFacets().first().single().appListShrinkToFit)
+        // Then it is off
+        assertEquals(com.facetlauncher.app.data.model.AppListShrinkToFit.OFF, repository.observeFacets().first().single().appListShrinkToFit)
     }
 
     @Test

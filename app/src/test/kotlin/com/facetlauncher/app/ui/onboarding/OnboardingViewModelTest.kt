@@ -28,6 +28,11 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import com.facetlauncher.app.data.model.PlacementTarget
 import com.facetlauncher.app.data.PlacementRepository
+import com.facetlauncher.app.data.FacetRepository
+import kotlinx.coroutines.flow.flowOf
+import com.facetlauncher.app.data.model.Facet
+import com.facetlauncher.app.domain.ApplyFacetDefaultsUseCase
+import com.facetlauncher.app.domain.FacetDefaultsScope
 import com.facetlauncher.app.domain.ObservePlacedItemsUseCase
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -50,6 +55,7 @@ class OnboardingViewModelTest {
         val placementRepository: PlacementRepository,
         val settingsRepository: SettingsRepository,
         val viewModel: OnboardingViewModel,
+        val applyFacetDefaults: ApplyFacetDefaultsUseCase,
     )
 
     private suspend fun fixture(
@@ -65,13 +71,18 @@ class OnboardingViewModelTest {
         `when`(observePlacedItems.apps(PlacementTarget.GlobalDock)).thenReturn(dockFlow)
         val settingsRepository = mock(SettingsRepository::class.java)
         `when`(settingsRepository.settings).thenReturn(MutableStateFlow(settings))
+        val facetRepository = mock(FacetRepository::class.java)
+        `when`(facetRepository.observeFacets()).thenReturn(flowOf(listOf(Facet(id = 5L, name = "Facet 1", position = 0), Facet(id = 6L, name = "Facet 2", position = 1))))
+        val applyFacetDefaults = mock(ApplyFacetDefaultsUseCase::class.java)
         val viewModel = OnboardingViewModel(
             placementRepository,
             observePlacedItems,
             settingsRepository,
+            facetRepository,
+            applyFacetDefaults,
         )
         testDispatcher.scheduler.advanceUntilIdle()
-        return Fixture(favoritesFlow, dockFlow, placementRepository, settingsRepository, viewModel)
+        return Fixture(favoritesFlow, dockFlow, placementRepository, settingsRepository, viewModel, applyFacetDefaults)
     }
 
     @Test
@@ -87,6 +98,25 @@ class OnboardingViewModelTest {
         // Then the ui state reflects both live lists
         assertEquals(listOf(messages), f.viewModel.uiState.value.favoriteApps)
         assertEquals(listOf(browser), f.viewModel.uiState.value.dockApps)
+    }
+
+    @Test
+    fun `finish copies the onboarding dock and apps list onto every facet, then leaves`() = runTest {
+        // Given the choices made during onboarding sit in the launcher-wide defaults
+        val f = fixture()
+        var left = false
+
+        // When onboarding finishes
+        f.viewModel.finish { left = true }
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Then each facet gets the dock and apps list defaults, and onboarding is left afterwards
+        verify(f.applyFacetDefaults).invoke(5L, FacetDefaultsScope.DOCK)
+        verify(f.applyFacetDefaults).invoke(5L, FacetDefaultsScope.APPS_LIST)
+        verify(f.applyFacetDefaults).invoke(6L, FacetDefaultsScope.DOCK)
+        verify(f.applyFacetDefaults).invoke(6L, FacetDefaultsScope.APPS_LIST)
+        verify(f.applyFacetDefaults, org.mockito.Mockito.never()).invoke(5L, FacetDefaultsScope.LOOK)
+        assertEquals(true, left)
     }
 
     @Test

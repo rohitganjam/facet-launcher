@@ -206,11 +206,6 @@
     <string name="app_picker_tab_apps">Apps</string>
     <string name="app_picker_tab_folders">Mappen</string>
 
-    <string name="inherit_override_follows_default">Volgt de standaard van de hele launcher</string>
-    <string name="inherit_override_inherit_default">Standaard overnemen</string>
-    <string name="inherit_override_override_for_facet">Overschrijven voor deze facet</string>
-    <string name="inherit_override_changes_dont_affect_others">Wijzigingen hier hebben geen invloed op andere facets</string>
-    <string name="inherit_override_edit_defaults">Standaarden bewerken</string>
 
     <string name="gesture_hint_switch_facets">Van facet wisselen</string>
     <string name="gesture_hint_arrow_left">←</string>
@@ -261,6 +256,18 @@
     <string name="settings_all_day_events_visible">Evenementen van een hele dag zichtbaar</string>
     <string name="settings_all_day_events_hidden">Evenementen van een hele dag verborgen</string>
     <string name="settings_dock_title">Dock</string>
+    <string name="settings_default_dock_title">Standaarddock</string>
+    <string name="home_apps_list_default_header_title">Standaard appslijst</string>
+    <string name="appearance_default_dock_apps_title">Standaarduiterlijk van dock en apps</string>
+    <string name="defaults_screen_note">Wordt gebruikt wanneer je een facet maakt of terugzet.</string>
+    <string name="reset_to_default_title">Terugzetten naar standaard</string>
+    <string name="reset_to_default_confirm">Terugzetten</string>
+    <string name="reset_dock_subtitle">Vervang deze dock door de standaarddock</string>
+    <string name="reset_dock_confirm_message">Hiermee wordt de dock van deze facet vervangen door de standaarddock. De apps die je hier hebt geplaatst gaan verloren.</string>
+    <string name="reset_apps_subtitle">Vervang deze lijst door de standaardlijst</string>
+    <string name="reset_apps_confirm_message">Hiermee worden de favorieten, de lijstinhoud en het aantal apps van deze facet vervangen door de standaardwaarden. De favorieten die je hier hebt gekozen gaan verloren.</string>
+    <string name="reset_look_subtitle">Vervang het uiterlijk van dock en lijst door de standaard</string>
+    <string name="reset_look_confirm_message">Hiermee worden de dockstijl, de lijstindeling en de uitlijning van deze facet vervangen door de standaardwaarden.</string>
     <plurals name="settings_dock_apps_count">
         <item quantity="one">%d dock-app</item>
         <item quantity="other">%d dock-apps</item>
@@ -349,36 +356,28 @@
     <string name="app_row_position_left">Links</string>
     <string name="app_row_position_center">Midden</string>
     <string name="app_row_position_right">Rechts</string>
-    <string name="app_row_position_launcher_default">Standaardpositie van de launcher</string>
     <string name="app_row_presentation_icon_only">Alleen pictogram</string>
     <string name="app_row_presentation_icon_and_text">Pictogram en tekst</string>
     <string name="app_row_presentation_text_only">Alleen tekst</string>
-    <string name="app_row_presentation_launcher_default">Standaardstijl van de launcher</string>
     <string name="app_list_vertical_alignment_top">Boven</string>
     <string name="app_list_vertical_alignment_bottom">Onder</string>
-    <string name="app_list_vertical_alignment_launcher_default">Standaardpositie van de launcher</string>
     <string name="list_content_mode_favorites">Favorieten</string>
     <string name="list_content_mode_recents">Recent</string>
     <string name="list_content_mode_most_used">Meest gebruikt</string>
     <string name="dock_display_mode_icons">Pictogrammen</string>
     <string name="dock_display_mode_text">Tekst</string>
-    <string name="dock_display_mode_launcher_default">Standaardstijl van de launcher</string>
     <string name="app_list_layout_single_column">Eén kolom</string>
     <string name="app_list_layout_two_column">Twee kolommen</string>
     <string name="app_list_layout_grid">Raster</string>
-    <string name="app_list_layout_launcher_default">Standaardindeling van de launcher</string>
     <string name="app_list_column_alignment_both_left">Beide links</string>
     <string name="app_list_column_alignment_both_right">Beide rechts</string>
     <string name="app_list_column_alignment_mirrored">Links en rechts</string>
-    <string name="app_list_column_alignment_launcher_default">Standaarduitlijning van de launcher</string>
     <string name="app_list_grid_columns_three">3 kolommen</string>
     <string name="app_list_grid_columns_four">4 kolommen</string>
     <string name="app_list_grid_columns_five">5 kolommen</string>
     <string name="app_list_grid_columns_six">6 kolommen</string>
-    <string name="app_list_grid_columns_launcher_default">Standaardkolommen van de launcher</string>
     <string name="app_list_grid_display_mode_icons">Pictogrammen</string>
     <string name="app_list_grid_display_mode_text">Tekst</string>
-    <string name="app_list_grid_display_mode_launcher_default">Standaardstijl van de launcher</string>
 
     <string name="home_apps_list_header_title">Appslijst op startscherm</string>
     <string name="home_apps_list_position">Uitlijning van startschermapps</string>
@@ -394,7 +393,6 @@
     <string name="home_apps_list_grid_columns">Rasterkolommen</string>
     <string name="home_apps_list_grid_display">Rasterweergave</string>
     <string name="home_apps_list_shrink_to_fit">Lijst laten krimpen tot passend</string>
-    <string name="app_list_shrink_to_fit_launcher_default">Standaardstijl van de launcher</string>
     <string name="app_list_shrink_to_fit_off">Uit</string>
     <string name="app_list_shrink_to_fit_on">Aan</string>
     <string name="app_list_grid_display_mode_icons_and_text">Pictogrammen en tekst</string>
@@ -444,7 +442,6 @@
     <string name="system_bar_icons_dark">Donker</string>
 
     <string name="appearance_header_title">Aanpassing</string>
-    <string name="appearance_section_dock_home">Dock en startscherm</string>
     <string name="appearance_dock_apps_title">Uiterlijk van dock en apps</string>
     <string name="appearance_general_title">Kleuren en thema\'s</string>
     <string name="appearance_general_subtitle">Thema\'s, accent, statusbalk</string>

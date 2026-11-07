@@ -1,7 +1,9 @@
 package com.facetlauncher.app.ui.settings
 
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertTextContains
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
@@ -38,7 +40,6 @@ class AppearanceSettingsScreenTest {
     private fun setContent(
         onBack: () -> Unit = {},
         onNavigateToNotificationSettings: () -> Unit = {},
-        onNavigateToDockAppsAppearance: () -> Unit = {},
         onNavigateToAppDrawerSettings: () -> Unit = {},
         onNavigateToThemesAndColors: () -> Unit = {},
         onNavigateToFonts: () -> Unit = {},
@@ -53,7 +54,6 @@ class AppearanceSettingsScreenTest {
         AppearanceSettingsScreen(
             onBack = onBack,
             onNavigateToNotificationSettings = onNavigateToNotificationSettings,
-            onNavigateToDockAppsAppearance = onNavigateToDockAppsAppearance,
             onNavigateToAppDrawerSettings = onNavigateToAppDrawerSettings,
             onNavigateToThemesAndColors = onNavigateToThemesAndColors,
             onNavigateToFonts = onNavigateToFonts,
@@ -141,7 +141,7 @@ class AppearanceSettingsScreenTest {
 
     @Test
     fun globalModeShowsThreeSeparateSectionsInOrderAndNoClockSection() {
-        // Dock & Home / Notifications / General are each their own card, in that order, and a clock has
+        // App Drawer / Notifications / General are each their own card, in that order, and a clock has
         // no launcher-wide settings, so there is no Clock & calendar section. Each header is asserted
         // right as it scrolls into view — not via cross-scroll bounds comparison, which breaks once an
         // earlier item scrolls far enough to be disposed from the LazyColumn's composed range.
@@ -149,8 +149,8 @@ class AppearanceSettingsScreenTest {
 
         composeRule.onNodeWithTag("clock_style_gallery_row").assertDoesNotExist()
         composeRule.onNodeWithTag("appearance_calendar_settings_row").assertDoesNotExist()
-        composeRule.onNodeWithTag("appearance_settings_screen").performScrollToNode(hasTestTag("appearance_dock_apps_row"))
-        composeRule.onNodeWithText("Dock & home").assertIsDisplayed()
+        composeRule.onNodeWithTag("appearance_settings_screen").performScrollToNode(hasTestTag("app_drawer_settings_row"))
+        composeRule.onNodeWithTag("app_drawer_settings_row").assertIsDisplayed()
         composeRule.onNodeWithTag("appearance_settings_screen").performScrollToNode(hasTestTag("notification_settings_row"))
         composeRule.onNodeWithTag("notification_settings_row").assertIsDisplayed()
         composeRule.onNodeWithTag("appearance_settings_screen").performScrollToNode(hasTestTag("general_icons_row"))
@@ -257,19 +257,12 @@ class AppearanceSettingsScreenTest {
     }
 
     @Test
-    fun dockAppsRowSummarisesDockAndHomeAndNavigates() {
-        // Given the global screen — dock icons and the Home list as icon + text by default
-        var navigated = false
-        setContent(onNavigateToDockAppsAppearance = { navigated = true })
-        composeRule.onNodeWithTag("appearance_settings_screen").performScrollToNode(hasTestTag("appearance_dock_apps_row"))
-        composeRule.onNodeWithTag("appearance_dock_apps_row").assertTextContains("Dock & Apps appearance", substring = true)
-        composeRule.onNodeWithTag("appearance_dock_apps_row").assertTextContains("Dock icons · Home icon & text", substring = true)
+    fun dockAndAppsAppearanceIsNoLongerOnThisScreen() {
+        // The dock and Home list's look moved under Settings > Apps and folders
+        setContent()
 
-        // When tapping it
-        composeRule.onNodeWithTag("appearance_dock_apps_row").performClick()
-
-        // Then its callback fires
-        assertEquals(true, navigated)
+        composeRule.onAllNodesWithTag("appearance_dock_apps_row").assertCountEquals(0)
+        composeRule.onNodeWithTag("app_drawer_settings_row").assertExists()
     }
 
     @Test

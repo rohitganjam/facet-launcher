@@ -8,6 +8,8 @@ import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.WallpaperRepository
 import com.facetlauncher.app.data.model.Facet
+import com.facetlauncher.app.domain.ApplyFacetDefaultsUseCase
+import com.facetlauncher.app.domain.FacetDefaultsScope
 import com.facetlauncher.app.domain.ResolvedFacetStyle
 import com.facetlauncher.app.domain.ObservePlacedItemsUseCase
 import com.facetlauncher.app.domain.resolveFacetStyle
@@ -49,19 +51,16 @@ import com.facetlauncher.app.data.model.PlacementList
 private const val PREVIEW_APP_COUNT = 3
 
 /**
- * `global*`/`facet*` fields are the raw stored values; the effective, screen-bound properties
- * below resolve facet-or-global the same way `HomeUiState`/`FacetCarouselViewModel` do at
- * runtime — this facet's own value while [isOverriding], the global default otherwise — matching
- * [com.facetlauncher.app.ui.settings.CalendarSettingsUiState]'s shape.
+ * `global*`/`facet*` fields are the raw stored values; the screen-bound properties below are this scope's own:
+ * the facet's, or the launcher-wide defaults a new facet is seeded from.
  */
 data class HomeAppsListUiState(
     val facet: Facet? = null,
     val settings: LauncherSettings = LauncherSettings(),
-    /** The launcher-wide default Favorites list — shown (read-only) while inheriting, and copied into the facet's own list the moment it starts overriding with an empty list. */
+    /** The launcher-wide default Favorites list, which seeds new facets. */
     val globalFavorites: ImmutableList<PlacedItem> = persistentListOf(),
-    /** This facet's own favorites — only meaningful/edited while [isOverriding]. */
     val facetFavorites: ImmutableList<PlacedItem> = persistentListOf(),
-    /** What the preview renders in a non-Favorites mode — a recognizable app sample, independent of facet/override. */
+    /** What the preview renders in a non-Favorites mode — a recognizable app sample. */
     val previewSourceApps: ImmutableList<PlacedItem> = persistentListOf(),
     val homeWallpaper: HomeWallpaper = HomeWallpaper.Unavailable,
     /** Home's app label color/weight — global only, no per-facet override; drives the preview's label rendering. */
@@ -69,20 +68,19 @@ data class HomeAppsListUiState(
     val homeAppsFontWeight: FontWeightOption = FontWeightOption.REGULAR,
 ) {
     val isFacetScoped: Boolean get() = facet != null
-    val isOverriding: Boolean get() = facet?.overrideApps ?: false
     private val style: ResolvedFacetStyle by lazy(LazyThreadSafetyMode.NONE) { resolveFacetStyle(facet, settings) }
-    /** Look, not content: resolved independently of [isOverriding] through each field's own `LAUNCHER_DEFAULT` sentinel. The preview needs them here. */
+    /** The preview needs the look here. */
     val appRowPosition: AppRowPosition get() = style.appList.rowPosition
     val appRowPresentation: AppRowPresentation get() = style.appList.rowPresentation
     val listContentMode: ListContentMode get() = style.appList.contentMode
-    val appsToShowCount: Int get() = if (isOverriding) facet?.appsToShowCount ?: settings.appsToShowCount else settings.appsToShowCount
+    val appsToShowCount: Int get() = facet?.appsToShowCount ?: settings.appsToShowCount
     val appListVerticalAlignment: AppListVerticalAlignment get() = style.appList.verticalAlignment
     val appListLayout: AppListLayout get() = style.appList.layout
     val appListColumnAlignment: AppListColumnAlignment get() = style.appList.columnAlignment
     val appListGridColumns: AppListGridColumns get() = style.appList.gridColumns
     val appListGridDisplayMode: AppListGridDisplayMode get() = style.appList.gridDisplayMode
-    /** This scope's effective favorites — the facet's own while overriding, the launcher-wide default otherwise. Apps and folders interleaved, same as Home's own list. */
-    val favorites: ImmutableList<PlacedItem> get() = if (isOverriding) facetFavorites else globalFavorites
+    /** This scope's favorites, apps and folders interleaved, same as Home's own list. */
+    val favorites: ImmutableList<PlacedItem> get() = if (isFacetScoped) facetFavorites else globalFavorites
     val favoritesLabel: String get() = "${favorites.size} of ${AppListLimits.MAX_FAVORITES}"
     /** What the preview renders — [favorites] in Favorites mode, a recognizable app sample otherwise. */
     val previewApps: ImmutableList<PlacedItem> get() = if (listContentMode == ListContentMode.FAVORITES) favorites else previewSourceApps
@@ -92,9 +90,8 @@ data class HomeAppsListUiState(
  * Settings → Home & Apps → Home Apps List, and (with a `facetId`) a facet's own Apps-list
  * screen — reused the same way [com.facetlauncher.app.ui.home.clock.ClockStyleGalleryViewModel]
  * is reused for the global and per-facet clock gallery. No `facetId` (or
- * [NO_ACTIVE_FACET_ID]) edits the launcher-wide default; a real id edits that facet's own
- * row and favorites, always. The Inherit/Override switch (moved in from
- * `FacetSettingsScreen` — see chat history) lives on this screen itself now.
+ * [NO_ACTIVE_FACET_ID]) edits the launcher-wide default, which only seeds new facets; a real id edits that
+ * facet's own content mode, count and favorites.
  */
 @HiltViewModel
 class HomeAppsListSettingsViewModel @Inject constructor(
@@ -107,6 +104,7 @@ class HomeAppsListSettingsViewModel @Inject constructor(
     private val defaultAppRepository: DefaultAppRepository,
     getInstalledApps: GetInstalledAppsUseCase,
     private val selectPreviewApps: SelectPreviewAppsUseCase,
+    private val applyFacetDefaults: ApplyFacetDefaultsUseCase,
 ) : ViewModel() {
 
     private val facetId: Long? = savedStateHandle.get<Long>("facetId")?.takeIf { it != NO_ACTIVE_FACET_ID }
@@ -162,31 +160,9 @@ class HomeAppsListSettingsViewModel @Inject constructor(
         }
     }
 
-    /**
-     * The Apps card's single Inherit/Override switch — governs list content mode, apps-to-show,
-     * and favorites as one unit now (position/presentation/vertical alignment moved to Settings →
-     * Appearance, resolved independently via their own `LAUNCHER_DEFAULT` sentinel — see chat
-     * history). Moved in from `FacetSettingsViewModel` so it sits on the same screen as the
-     * controls it gates. Switching to Override seeds mode/count with the current *effective*
-     * values (`uiState.value`'s own properties, which still resolve to the global default at the
-     * moment this runs) — including copying the default favorites list in if the facet's own is
-     * empty, so the card doesn't suddenly go blank. Switching back to Inherit just clears the flag.
-     */
-    fun setOverriding(overriding: Boolean) {
-        val pid = facetId ?: return
-        val state = uiState.value
-        viewModelScope.launch {
-            val facet = facetRepository.getById(pid) ?: return@launch
-            if (overriding && state.facetFavorites.isEmpty()) {
-                placementRepository.replaceItems(PlacementTarget(PlacementList.FAVORITES, pid), state.globalFavorites)
-            }
-            facetRepository.updateOverridingApps(
-                facetId = facet.id,
-                overriding = overriding,
-                mode = state.listContentMode,
-                count = state.appsToShowCount,
-                overridingFavorites = overriding,
-            )
-        }
+    /** "Reset to default": replaces this facet's Favorites, content mode and count with the launcher-wide ones. */
+    fun resetToDefault() {
+        val id = facetId ?: return
+        viewModelScope.launch { applyFacetDefaults(id, FacetDefaultsScope.APPS_LIST) }
     }
 }

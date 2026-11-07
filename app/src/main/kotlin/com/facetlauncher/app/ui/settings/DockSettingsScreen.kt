@@ -38,7 +38,6 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -54,7 +53,8 @@ import com.facetlauncher.app.ui.components.AppIconSize
 import com.facetlauncher.app.ui.components.BackButton
 import com.facetlauncher.app.ui.components.CardDivider
 import com.facetlauncher.app.ui.components.HomeSurfacePreview
-import com.facetlauncher.app.ui.components.InheritOverrideCard
+import com.facetlauncher.app.ui.components.DefaultsNote
+import com.facetlauncher.app.ui.components.ResetToDefaultCard
 import com.facetlauncher.app.ui.components.LabeledDropdownRow
 import com.facetlauncher.app.ui.components.ReorderRowDefaults
 import com.facetlauncher.app.ui.components.LocalSettingsRowInset
@@ -72,13 +72,12 @@ import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
 
-/** Settings → Home & Apps → Dock — also a facet's own Dock screen when `viewModel` is facet-scoped, with its own Inherit/Override switch at the top in that case. */
+/** Settings → Home & Apps → Dock (the default dock a new facet starts with) — also a facet's own Dock screen when `viewModel` is facet-scoped, with a Reset to default action. */
 @Composable
 fun DockSettingsScreen(
     onBack: () -> Unit,
     onAddDockApp: () -> Unit,
     modifier: Modifier = Modifier,
-    onEditDefaults: (() -> Unit)? = null,
     viewModel: DockSettingsViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -87,9 +86,8 @@ fun DockSettingsScreen(
         onBack = onBack,
         onAddDockApp = onAddDockApp,
         onReorderDockItems = viewModel::reorderDockItems,
-        onOverridingChange = viewModel::setOverriding,
+        onResetToDefault = viewModel::resetToDefault,
         modifier = modifier,
-        onEditDefaults = onEditDefaults,
     )
 }
 
@@ -99,15 +97,12 @@ private fun DockSettingsContent(
     onBack: () -> Unit,
     onAddDockApp: () -> Unit,
     onReorderDockItems: (List<PlacedItem>) -> Unit,
-    onOverridingChange: (Boolean) -> Unit,
+    onResetToDefault: () -> Unit,
     modifier: Modifier = Modifier,
-    onEditDefaults: (() -> Unit)? = null,
 ) {
-    val controlsEnabled = !uiState.isFacetScoped || uiState.isOverriding
-
     StickyHeaderLayout(
         modifier = modifier,
-        header = { DockSettingsHeader(onBack = onBack) },
+        header = { DockSettingsHeader(isFacetScoped = uiState.isFacetScoped, onBack = onBack) },
         content = { headerHeight ->
             LazyColumn(
                 modifier = Modifier
@@ -118,7 +113,6 @@ private fun DockSettingsContent(
                     .padding(horizontal = 24.dp),
                 contentPadding = PaddingValues(top = headerHeight, bottom = 24.dp),
             ) {
-                if (uiState.isFacetScoped) inheritOverrideItems(uiState, onOverridingChange, onEditDefaults)
                 item {
                     HomeSurfacePreview(
                         appList = persistentListOf(),
@@ -130,34 +124,28 @@ private fun DockSettingsContent(
                         modifier = Modifier.padding(bottom = 20.dp).testTag("dock_settings_preview_card"),
                     )
                 }
-                dockAppsItem(uiState, controlsEnabled, onAddDockApp, onReorderDockItems)
+                dockAppsItem(uiState, onAddDockApp, onReorderDockItems)
+                if (uiState.isFacetScoped) {
+                    item { Spacer(modifier = Modifier.height(16.dp)) }
+                    item {
+                        ResetToDefaultCard(
+                            subtitle = stringResource(R.string.reset_dock_subtitle),
+                            confirmMessage = stringResource(R.string.reset_dock_confirm_message),
+                            onReset = onResetToDefault,
+                            testTagPrefix = "dock_settings",
+                        )
+                    }
+                } else {
+                    item { DefaultsNote(modifier = Modifier.padding(top = 12.dp)) }
+                }
             }
         },
     )
 }
 
-/** A facet's Inherit/Override card, summarising the launcher-wide dock it inherits, and the gap under it. */
-private fun LazyListScope.inheritOverrideItems(uiState: DockSettingsUiState, onOverridingChange: (Boolean) -> Unit, onEditDefaults: (() -> Unit)?) {
-    item {
-        InheritOverrideCard(
-            overriding = uiState.isOverriding,
-            onOverridingChange = onOverridingChange,
-            testTagPrefix = "dock_settings",
-            onEditDefaults = onEditDefaults,
-            inheritSubtitle = stringResource(
-                R.string.dot_join_2,
-                stringResource(uiState.settings.dockDisplayMode.displayNameRes),
-                pluralStringResource(R.plurals.format_count_apps, uiState.globalDockItems.size, uiState.globalDockItems.size),
-            ),
-        )
-    }
-    item { Spacer(modifier = Modifier.height(16.dp)) }
-}
-
 /** The "Select apps" row and, once there are dock apps, the reorderable row under it. */
 private fun LazyListScope.dockAppsItem(
     uiState: DockSettingsUiState,
-    controlsEnabled: Boolean,
     onAddDockApp: () -> Unit,
     onReorderDockItems: (List<PlacedItem>) -> Unit,
 ) {
@@ -167,14 +155,13 @@ private fun LazyListScope.dockAppsItem(
                 title = stringResource(R.string.dock_select_apps),
                 subtitle = stringResource(R.string.format_count_of_max, uiState.dockItems.size, AppListLimits.MAX_DOCK_APPS),
                 onClick = onAddDockApp,
-                enabled = controlsEnabled,
                 testTag = "add_dock_app_row",
             )
             if (uiState.dockItems.isNotEmpty()) {
                 CardDivider()
                 DockAppsRow(
                     dockItems = uiState.dockItems,
-                    onReorder = if (controlsEnabled) onReorderDockItems else { {} },
+                    onReorder = onReorderDockItems,
                 )
             }
         }
@@ -182,7 +169,7 @@ private fun LazyListScope.dockAppsItem(
 }
 
 @Composable
-private fun DockSettingsHeader(onBack: () -> Unit, modifier: Modifier = Modifier) {
+private fun DockSettingsHeader(isFacetScoped: Boolean, onBack: () -> Unit, modifier: Modifier = Modifier) {
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -194,19 +181,22 @@ private fun DockSettingsHeader(onBack: () -> Unit, modifier: Modifier = Modifier
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         BackButton(onClick = onBack)
-        Text(text = stringResource(R.string.settings_dock_title), style = MaterialTheme.typography.headlineSmall, color = Ink)
+        Text(
+            text = stringResource(if (isFacetScoped) R.string.settings_dock_title else R.string.settings_default_dock_title),
+            style = MaterialTheme.typography.headlineSmall,
+            color = Ink,
+        )
     }
 }
 
 @Composable
-private fun DockClickableRow(title: String, subtitle: String?, onClick: () -> Unit, testTag: String, modifier: Modifier = Modifier, enabled: Boolean = true) {
+private fun DockClickableRow(title: String, subtitle: String?, onClick: () -> Unit, testTag: String, modifier: Modifier = Modifier) {
     Row(
         modifier = modifier
             .testTag(testTag)
             .fillMaxWidth()
-            .clickable(enabled = enabled, onClick = onClick)
-            .padding(horizontal = LocalSettingsRowInset.current, vertical = 13.dp)
-            .alpha(if (enabled) 1f else 0.4f),
+            .clickable(onClick = onClick)
+            .padding(horizontal = LocalSettingsRowInset.current, vertical = 13.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -307,7 +297,7 @@ private fun DockSettingsScreenPreview() {
             onBack = {},
             onAddDockApp = {},
             onReorderDockItems = {},
-            onOverridingChange = {},
+            onResetToDefault = {},
         )
     }
 }

@@ -262,7 +262,7 @@ class SettingsRepository @Inject constructor(
             appListGridDisplayMode = preferences[Keys.APP_LIST_GRID_DISPLAY_MODE]?.let { runCatching { AppListGridDisplayMode.valueOf(it) }.getOrNull() }
                 ?: defaults.appListGridDisplayMode,
             appListShrinkToFit = preferences[Keys.APP_LIST_SHRINK_TO_FIT]?.let { runCatching { AppListShrinkToFit.valueOf(it) }.getOrNull() }
-                ?.takeIf { it != AppListShrinkToFit.LAUNCHER_DEFAULT } ?: defaults.appListShrinkToFit,
+                ?: defaults.appListShrinkToFit,
             onboardingCompleted = preferences[Keys.ONBOARDING_COMPLETED] ?: defaults.onboardingCompleted,
             defaultsSeeded = preferences[Keys.DEFAULTS_SEEDED] ?: defaults.defaultsSeeded,
             coachMarksSeen = preferences[Keys.COACH_MARKS_SEEN] ?: defaults.coachMarksSeen,

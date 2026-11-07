@@ -3,8 +3,10 @@ package com.facetlauncher.app.ui.settings
 import android.content.res.Configuration
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBars
@@ -32,7 +34,9 @@ import com.facetlauncher.app.data.model.AppRowPresentation
 import com.facetlauncher.app.data.model.DockDisplayMode
 import com.facetlauncher.app.data.model.HomeWallpaper
 import com.facetlauncher.app.ui.components.CardDivider
+import com.facetlauncher.app.ui.components.DefaultsNote
 import com.facetlauncher.app.ui.components.LabeledDropdownRow
+import com.facetlauncher.app.ui.components.ResetToDefaultCard
 import com.facetlauncher.app.ui.components.SettingsCard
 import com.facetlauncher.app.ui.components.SettingsSectionHeader
 import com.facetlauncher.app.ui.components.SettingsToggleRow
@@ -42,10 +46,9 @@ import com.facetlauncher.app.ui.theme.SurfaceContainer
 import kotlin.enums.EnumEntries
 
 /**
- * Settings → Appearance → Dock & Apps appearance — how the Dock and the Home apps list look and sit (dock style, list layout,
- * position, presentation, vertical alignment). Moved off the main Appearance screen, which now links here. Serves both scopes:
- * with a `facetId` it edits that facet's own look, each field `LAUNCHER_DEFAULT`-sentinel overridable, with no separate
- * Inherit/Override switch. Shares [AppearanceSettingsViewModel] with [AppearanceSettingsScreen].
+ * Dock & Apps appearance — how the Dock and the Home apps list look and sit (dock style, list layout,
+ * position, presentation, vertical alignment). Serves both scopes: with a `facetId` it edits that facet's own look and offers
+ * Reset to default; without one it edits the defaults a new facet starts with. Shares [AppearanceSettingsViewModel] with [AppearanceSettingsScreen].
  */
 @Composable
 fun DockAppsAppearanceScreen(
@@ -72,6 +75,7 @@ fun DockAppsAppearanceScreen(
         onAppListGridColumnsChange = viewModel::setAppListGridColumns,
         onAppListGridDisplayModeChange = viewModel::setAppListGridDisplayMode,
         onAppListShrinkToFitChange = viewModel::setAppListShrinkToFit,
+        onResetToDefault = viewModel::resetLookToDefault,
         modifier = modifier,
     )
 }
@@ -93,12 +97,13 @@ private fun DockAppsAppearanceContent(
     onAppListColumnAlignmentChange: (AppListColumnAlignment) -> Unit,
     onAppListGridColumnsChange: (AppListGridColumns) -> Unit,
     onAppListGridDisplayModeChange: (AppListGridDisplayMode) -> Unit,
+    onResetToDefault: () -> Unit,
     modifier: Modifier = Modifier,
     onAppListShrinkToFitChange: (AppListShrinkToFit) -> Unit = {},
 ) {
     StickyHeaderLayout(
         modifier = modifier,
-        header = { AppearanceSettingsHeader(title = stringResource(R.string.appearance_dock_apps_title), onBack = onBack) },
+        header = { AppearanceSettingsHeader(title = dockAppsTitle(uiState.isFacetScoped), onBack = onBack) },
         content = { headerHeight ->
             LazyColumn(
                 modifier = Modifier
@@ -119,8 +124,6 @@ private fun DockAppsAppearanceContent(
                 // Launcher-wide, so only on the global screen. Off hides the landscape alignment below.
                 if (!uiState.isFacetScoped) allowLandscapeItem(uiState.allowLandscape, onAllowLandscapeChange)
                 item {
-                    // Always shown at both scopes: LAUNCHER_DEFAULT itself (filtered from the option list in
-                    // global mode) is what lets a facet revert to inheriting, so no Inherit/Override switch.
                     SharedLookCard(
                         uiState = uiState,
                         onDockDisplayModeChange = onDockDisplayModeChange,
@@ -149,9 +152,31 @@ private fun DockAppsAppearanceContent(
                         onLandscapeAppListVerticalAlignmentChange,
                     )
                 }
+                resetOrDefaultsNoteItems(uiState.isFacetScoped, onResetToDefault)
             }
         },
     )
+}
+
+@Composable
+private fun dockAppsTitle(isFacetScoped: Boolean): String =
+    stringResource(if (isFacetScoped) R.string.appearance_dock_apps_title else R.string.appearance_default_dock_apps_title)
+
+/** A facet's Reset to default row, or at launcher scope the note that these values only seed new facets. */
+private fun LazyListScope.resetOrDefaultsNoteItems(isFacetScoped: Boolean, onResetToDefault: () -> Unit) {
+    if (isFacetScoped) {
+        item { Spacer(modifier = Modifier.height(16.dp)) }
+        item {
+            ResetToDefaultCard(
+                subtitle = stringResource(R.string.reset_look_subtitle),
+                confirmMessage = stringResource(R.string.reset_look_confirm_message),
+                onReset = onResetToDefault,
+                testTagPrefix = "dock_apps_appearance",
+            )
+        }
+    } else {
+        item { DefaultsNote(modifier = Modifier.padding(top = 12.dp)) }
+    }
 }
 
 private fun LazyListScope.allowLandscapeItem(allowLandscape: Boolean, onAllowLandscapeChange: (Boolean) -> Unit) {
@@ -198,13 +223,10 @@ private fun SharedLookCard(
     onAppListShrinkToFitChange: (AppListShrinkToFit) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    // LAUNCHER_DEFAULT only makes sense where there's a global value above to inherit from; offering it
-    // in global mode would be circular (see ClockFontOption's own precedent).
-    val isFacetScoped = uiState.isFacetScoped
     SettingsCard(modifier = modifier) {
         LabeledDropdownRow(
             title = stringResource(R.string.dock_display_style),
-            options = if (isFacetScoped) DockDisplayMode.entries else DockDisplayMode.entries - DockDisplayMode.LAUNCHER_DEFAULT,
+            options = DockDisplayMode.entries,
             selected = uiState.dockDisplayMode,
             label = { stringResource(it.displayNameRes) },
             onSelect = onDockDisplayModeChange,
@@ -213,7 +235,7 @@ private fun SharedLookCard(
         CardDivider()
         LabeledDropdownRow(
             title = stringResource(R.string.home_apps_list_layout),
-            options = if (isFacetScoped) AppListLayout.entries else AppListLayout.entries - AppListLayout.LAUNCHER_DEFAULT,
+            options = AppListLayout.entries,
             selected = uiState.appListLayout,
             label = { stringResource(it.displayNameRes) },
             onSelect = onAppListLayoutChange,
@@ -224,7 +246,7 @@ private fun SharedLookCard(
             CardDivider()
             LabeledDropdownRow(
                 title = stringResource(R.string.home_apps_list_grid_columns),
-                options = if (isFacetScoped) AppListGridColumns.entries else AppListGridColumns.entries - AppListGridColumns.LAUNCHER_DEFAULT,
+                options = AppListGridColumns.entries,
                 selected = uiState.appListGridColumns,
                 label = { stringResource(it.displayNameRes) },
                 onSelect = onAppListGridColumnsChange,
@@ -233,7 +255,7 @@ private fun SharedLookCard(
             CardDivider()
             LabeledDropdownRow(
                 title = stringResource(R.string.home_apps_list_grid_display),
-                options = if (isFacetScoped) AppListGridDisplayMode.entries else AppListGridDisplayMode.entries - AppListGridDisplayMode.LAUNCHER_DEFAULT,
+                options = AppListGridDisplayMode.entries,
                 selected = uiState.appListGridDisplayMode,
                 label = { stringResource(it.displayNameRes) },
                 onSelect = onAppListGridDisplayModeChange,
@@ -243,7 +265,7 @@ private fun SharedLookCard(
             CardDivider()
             LabeledDropdownRow(
                 title = stringResource(R.string.home_apps_list_presentation),
-                options = if (isFacetScoped) AppRowPresentation.entries else AppRowPresentation.entries - AppRowPresentation.LAUNCHER_DEFAULT,
+                options = AppRowPresentation.entries,
                 selected = uiState.appRowPresentation,
                 label = { stringResource(it.displayNameRes) },
                 onSelect = onAppRowPresentationChange,
@@ -260,7 +282,7 @@ private fun SharedLookCard(
 private fun ShrinkToFitRow(uiState: AppearanceSettingsUiState, onChange: (AppListShrinkToFit) -> Unit) {
     LabeledDropdownRow(
         title = stringResource(R.string.home_apps_list_shrink_to_fit),
-        options = if (uiState.isFacetScoped) AppListShrinkToFit.entries else AppListShrinkToFit.entries - AppListShrinkToFit.LAUNCHER_DEFAULT,
+        options = AppListShrinkToFit.entries,
         selected = uiState.appListShrinkToFit,
         label = { stringResource(it.displayNameRes) },
         onSelect = onChange,
@@ -289,10 +311,8 @@ private fun AlignmentCard(
                 AlignmentRow(
                     title = stringResource(R.string.home_apps_list_column_alignment),
                     entries = AppListColumnAlignment.entries,
-                    sentinel = AppListColumnAlignment.LAUNCHER_DEFAULT,
                     selected = if (landscape) own.appListColumnAlignment else uiState.appListColumnAlignment,
                     landscape = landscape,
-                    facetScoped = uiState.isFacetScoped,
                     nameRes = { it.displayNameRes },
                     onSelect = onColumnAlignmentChange,
                     testTag = "${tags}app_list_column_alignment_row",
@@ -300,14 +320,12 @@ private fun AlignmentCard(
                 CardDivider()
             }
             AppListLayout.GRID -> Unit
-            AppListLayout.SINGLE_COLUMN, AppListLayout.LAUNCHER_DEFAULT -> {
+            AppListLayout.SINGLE_COLUMN -> {
                 AlignmentRow(
                     title = stringResource(R.string.home_apps_list_position),
                     entries = AppRowPosition.entries,
-                    sentinel = AppRowPosition.LAUNCHER_DEFAULT,
                     selected = if (landscape) own.appRowPosition else uiState.appRowPosition,
                     landscape = landscape,
-                    facetScoped = uiState.isFacetScoped,
                     nameRes = { it.displayNameRes },
                     onSelect = onRowPositionChange,
                     testTag = "${tags}app_row_position_row",
@@ -318,10 +336,8 @@ private fun AlignmentCard(
         AlignmentRow(
             title = stringResource(R.string.home_apps_list_list_position),
             entries = AppListVerticalAlignment.entries,
-            sentinel = AppListVerticalAlignment.LAUNCHER_DEFAULT,
             selected = if (landscape) own.appListVerticalAlignment else uiState.appListVerticalAlignment,
             landscape = landscape,
-            facetScoped = uiState.isFacetScoped,
             nameRes = { it.displayNameRes },
             onSelect = onVerticalAlignmentChange,
             testTag = "${tags}app_list_vertical_alignment_row",
@@ -329,25 +345,19 @@ private fun AlignmentCard(
     }
 }
 
-/** One dropdown of an alignment enum. `LAUNCHER_DEFAULT` is offered only to a facet (it inherits); landscape offers "Same as portrait" instead. */
+/** One dropdown of an alignment enum; landscape adds a "Same as portrait" choice, stored as `null`. */
 @Composable
 private fun <T : Enum<T>> AlignmentRow(
     title: String,
     entries: EnumEntries<T>,
-    sentinel: T,
     selected: T?,
     landscape: Boolean,
-    facetScoped: Boolean,
     nameRes: (T) -> Int,
     onSelect: (T?) -> Unit,
     testTag: String,
 ) {
     val samePortrait = stringResource(R.string.home_apps_list_same_as_portrait)
-    val options: List<T?> = when {
-        landscape -> listOf(null) + (entries - sentinel)
-        facetScoped -> entries
-        else -> entries - sentinel
-    }
+    val options: List<T?> = if (landscape) listOf(null) + entries else entries
     LabeledDropdownRow(
         title = title,
         options = options,
@@ -380,6 +390,7 @@ private fun DockAppsAppearanceScreenPreview() {
             onAppListColumnAlignmentChange = {},
             onAppListGridColumnsChange = {},
             onAppListGridDisplayModeChange = {},
+            onResetToDefault = {},
         )
     }
 }

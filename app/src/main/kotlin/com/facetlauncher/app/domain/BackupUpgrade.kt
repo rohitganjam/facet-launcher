@@ -11,6 +11,7 @@ import com.facetlauncher.app.data.model.ClockDateStyle
 import com.facetlauncher.app.data.model.ClockFontOption
 import com.facetlauncher.app.data.model.ClockTemplateId
 import com.facetlauncher.app.data.model.ClockWidgetConfig
+import com.facetlauncher.app.data.model.LEGACY_LAUNCHER_DEFAULT
 import com.facetlauncher.app.data.model.NativeWidgetConfig
 import com.facetlauncher.app.data.model.WeatherIconStyle
 import com.facetlauncher.app.data.model.decodeWeatherLocation
@@ -23,17 +24,61 @@ private const val FIRST_JSON_CONFIG_VERSION = 4
 /** Backup version whose facets carry the clock's own settings; older ones kept them on the facet and the launcher. */
 private const val FIRST_CLOCK_CONFIG_VERSION = 5
 
-/** [this] in the current shape, so the import below this point only ever sees one: older backups get their widget and clock settings rewritten. */
+/** [this] in the current shape, so the import below this point only ever sees one: older backups get their widget, clock and Home settings rewritten. */
 fun BackupBundle.upgradedToCurrent(): BackupBundle {
-    if (backupVersion >= FIRST_CLOCK_CONFIG_VERSION) return this
-    return copy(
+    if (backupVersion >= CURRENT_BACKUP_VERSION) return this
+    val withClocks = if (backupVersion < FIRST_CLOCK_CONFIG_VERSION) {
+        copy(
+            facets = facets.map { it.withUpgradedConfigs(settings, upgradeWidgetConfigs = backupVersion < FIRST_JSON_CONFIG_VERSION) },
+            widgetPlacements = if (backupVersion < FIRST_JSON_CONFIG_VERSION) {
+                widgetPlacements.map { it.copy(nativeWidgetConfig = upgradeLegacyNativeWidgetConfig(it.nativeWidgetConfig)) }
+            } else {
+                widgetPlacements
+            },
+        )
+    } else {
+        this
+    }
+    return withClocks.copy(
         backupVersion = CURRENT_BACKUP_VERSION,
-        facets = facets.map { it.withUpgradedConfigs(settings, upgradeWidgetConfigs = backupVersion < FIRST_JSON_CONFIG_VERSION) },
-        widgetPlacements = if (backupVersion < FIRST_JSON_CONFIG_VERSION) {
-            widgetPlacements.map { it.copy(nativeWidgetConfig = upgradeLegacyNativeWidgetConfig(it.nativeWidgetConfig)) }
-        } else {
-            widgetPlacements
-        },
+        facets = withClocks.facets.map { it.withOwnedHome(withClocks) },
+    )
+}
+
+/**
+ * What the facet showed in a backup from before it owned its Home: the launcher's dock, favorites, content mode and look wherever it
+ * did not override them. A landscape value the facet left unset followed the launcher's own landscape value only while its portrait one was inherited.
+ */
+private fun BackupFacet.withOwnedHome(bundle: BackupBundle): BackupFacet {
+    val s = bundle.settings
+    fun resolved(value: String, launcherValue: String) = if (value == LEGACY_LAUNCHER_DEFAULT) launcherValue else value
+    val ownDock = overrideDock == true
+    val ownFavorites = overridingFavorites == true
+    val ownContent = overrideApps == true
+    return copy(
+        dockApps = if (ownDock) dockApps else bundle.dockApps,
+        dockFolderPlacements = if (ownDock) dockFolderPlacements else bundle.dockFolderPlacements,
+        favorites = if (ownFavorites) favorites else bundle.defaultFavoriteApps,
+        favoriteFolderPlacements = if (ownFavorites) favoriteFolderPlacements else bundle.defaultFavoriteFolderPlacements,
+        listContentMode = if (ownContent) listContentMode else s.listContentMode,
+        appsToShowCount = if (ownContent) appsToShowCount else s.appsToShowCount,
+        dockDisplayMode = resolved(dockDisplayMode, s.dockDisplayMode),
+        appRowPosition = resolved(appRowPosition, s.appRowPosition),
+        appRowPresentation = resolved(appRowPresentation, s.appRowPresentation),
+        appListVerticalAlignment = resolved(appListVerticalAlignment, s.appListVerticalAlignment),
+        appListLayout = resolved(appListLayout, s.appListLayout),
+        appListColumnAlignment = resolved(appListColumnAlignment, s.appListColumnAlignment),
+        appListGridColumns = resolved(appListGridColumns, s.appListGridColumns),
+        appListGridDisplayMode = resolved(appListGridDisplayMode, s.appListGridDisplayMode),
+        appListShrinkToFit = resolved(appListShrinkToFit, s.appListShrinkToFit),
+        landscapeAppRowPosition = landscapeAppRowPosition ?: s.landscapeAppRowPosition.takeIf { appRowPosition == LEGACY_LAUNCHER_DEFAULT },
+        landscapeAppListVerticalAlignment = landscapeAppListVerticalAlignment
+            ?: s.landscapeAppListVerticalAlignment.takeIf { appListVerticalAlignment == LEGACY_LAUNCHER_DEFAULT },
+        landscapeAppListColumnAlignment = landscapeAppListColumnAlignment
+            ?: s.landscapeAppListColumnAlignment.takeIf { appListColumnAlignment == LEGACY_LAUNCHER_DEFAULT },
+        overrideApps = null,
+        overridingFavorites = null,
+        overrideDock = null,
     )
 }
 

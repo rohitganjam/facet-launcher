@@ -11,6 +11,8 @@ import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.WallpaperRepository
 import com.facetlauncher.app.data.model.Facet
 import com.facetlauncher.app.data.model.landscape
+import com.facetlauncher.app.domain.ApplyFacetDefaultsUseCase
+import com.facetlauncher.app.domain.FacetDefaultsScope
 import com.facetlauncher.app.domain.ResolvedFacetStyle
 import com.facetlauncher.app.domain.ObservePlacedItemsUseCase
 import com.facetlauncher.app.domain.effectiveClockConfig
@@ -56,13 +58,9 @@ import com.facetlauncher.app.data.model.PlacementTarget
 import com.facetlauncher.app.data.model.PlacementList
 
 /**
- * `global*` are the raw stored global values; the effective, screen-bound `dockDisplayMode`/
- * `appRowPosition`/`appRowPresentation`/`appListVerticalAlignment` resolve facet-or-global via
- * their own `LAUNCHER_DEFAULT` sentinel (see [com.facetlauncher.app.data.model.resolveSentinel]) —
- * independent of `overrideDock`/`overrideApps`. `facetFavorites`/`globalFavorites` and
- * `facetDockItems`/`globalDockItems` are the raw stored lists; [effectiveFavorites]/
- * [effectiveDockItems] resolve them the same `overrideApps`/`overrideDock`-gated way
- * `HomeAppsListSettingsViewModel`/`DockSettingsViewModel` do — the preview card shows this
+ * At facet scope the screen-bound values are the facet's own; at launcher scope they are the launcher-wide defaults
+ * a new facet is seeded from. `facetFavorites`/`globalFavorites` and `facetDockItems`/`globalDockItems` are the raw
+ * stored lists; [effectiveFavorites]/[effectiveDockItems] pick this scope's — the preview card shows this
  * scope's real, actual content, not a sample.
  */
 data class AppearanceSettingsUiState(
@@ -95,10 +93,10 @@ data class AppearanceSettingsUiState(
     val appListGridColumns: AppListGridColumns get() = style.appList.gridColumns
     val appListGridDisplayMode: AppListGridDisplayMode get() = style.appList.gridDisplayMode
     val appListShrinkToFit: AppListShrinkToFit get() = style.appList.shrinkToFit
-    /** Mirrors `HomeAppsListSettingsViewModel.HomeAppsListUiState.favorites`'s own resolution exactly — same `overrideApps` flag. */
-    val effectiveFavorites: List<PlacedItem> get() = if (facet?.overrideApps == true) facetFavorites else globalFavorites
-    /** Mirrors `DockSettingsViewModel.DockSettingsUiState.dockItems`'s own resolution — same `overrideDock` flag. */
-    val effectiveDockItems: List<PlacedItem> get() = if (facet?.overrideDock == true) facetDockItems else globalDockItems
+    /** This scope's own Favorites: the facet's, or the launcher-wide default's at launcher scope. */
+    val effectiveFavorites: List<PlacedItem> get() = if (facet != null) facetFavorites else globalFavorites
+    /** This scope's own dock: the facet's, or the launcher-wide default's at launcher scope. */
+    val effectiveDockItems: List<PlacedItem> get() = if (facet != null) facetDockItems else globalDockItems
 
     /** The calendar row's summary: this facet's clock's own calendar choices. */
     val effectiveShowAllDayEvents: Boolean get() = style.clock.calendar.showAllDay
@@ -127,6 +125,7 @@ class AppearanceSettingsViewModel @Inject constructor(
     private val calendarPermissionRepository: CalendarPermissionRepository,
     private val wallpaperRepository: WallpaperRepository,
     private val notificationAccessRepository: NotificationAccessRepository,
+    private val applyFacetDefaults: ApplyFacetDefaultsUseCase,
 ) : ViewModel() {
 
     private val facetId: Long? = savedStateHandle.get<Long>("facetId")?.takeIf { it != NO_ACTIVE_FACET_ID }
@@ -252,13 +251,13 @@ class AppearanceSettingsViewModel @Inject constructor(
         viewModelScope.launch { settingsRepository.setHomeAppsFontWeight(weight) }
     }
 
-    /**
-     * Facet-or-global write for this screen's four "look" fields — no Inherit/Override switch to
-     * flip first, unlike Clock/Calendar/Apps/Dock: picking `LAUNCHER_DEFAULT` from the dropdown
-     * itself is what reverts a facet to inheriting (see [com.facetlauncher.app.data.model.resolveSentinel],
-     * and [com.facetlauncher.app.data.model.ClockFontOption]'s own precedent for this sentinel
-     * model). No-op at global scope, where `LAUNCHER_DEFAULT` is filtered out of the option list.
-     */
+    /** "Reset to default": replaces this facet's dock and apps look with the launcher-wide one. */
+    fun resetLookToDefault() {
+        val id = facetId ?: return
+        viewModelScope.launch { applyFacetDefaults(id, FacetDefaultsScope.LOOK) }
+    }
+
+    /** Facet-or-global write: a facet's own value, or the launcher-wide default a new facet is seeded from. */
     fun setDockDisplayMode(mode: DockDisplayMode) {
         viewModelScope.launch {
             facetId?.let { pid -> facetRepository.getById(pid)?.let { facetRepository.setDockDisplayMode(it.id, mode) } }

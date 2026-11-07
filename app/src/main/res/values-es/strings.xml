@@ -195,12 +195,6 @@
     <string name="app_picker_tab_apps">Apps</string>
     <string name="app_picker_tab_folders">Carpetas</string>
 
-    <!-- InheritOverrideCard -->
-    <string name="inherit_override_follows_default">Sigue el valor predeterminado del launcher</string>
-    <string name="inherit_override_inherit_default">Heredar predeterminado</string>
-    <string name="inherit_override_override_for_facet">Anular para esta faceta</string>
-    <string name="inherit_override_changes_dont_affect_others">Los cambios aquí no afectan a otras facetas</string>
-    <string name="inherit_override_edit_defaults">Editar valores predeterminados</string>
 
     <!-- GestureHintOverlay -->
     <string name="gesture_hint_switch_facets">Cambiar de faceta</string>
@@ -258,6 +252,18 @@
     <string name="settings_all_day_events_visible">Eventos de todo el día visibles</string>
     <string name="settings_all_day_events_hidden">Eventos de todo el día ocultos</string>
     <string name="settings_dock_title">Dock</string>
+    <string name="settings_default_dock_title">Dock predeterminado</string>
+    <string name="home_apps_list_default_header_title">Lista de apps predeterminada</string>
+    <string name="appearance_default_dock_apps_title">Apariencia predeterminada del dock y las apps</string>
+    <string name="defaults_screen_note">Se usa al crear una faceta o restablecer una.</string>
+    <string name="reset_to_default_title">Restablecer valores predeterminados</string>
+    <string name="reset_to_default_confirm">Restablecer</string>
+    <string name="reset_dock_subtitle">Sustituye este dock por el predeterminado</string>
+    <string name="reset_dock_confirm_message">Esto sustituye el dock de esta faceta por el dock predeterminado. Las apps que colocaste aquí se perderán.</string>
+    <string name="reset_apps_subtitle">Sustituye esta lista por la predeterminada</string>
+    <string name="reset_apps_confirm_message">Esto sustituye los favoritos, el contenido de la lista y el número de apps de esta faceta por los valores predeterminados. Los favoritos que elegiste aquí se perderán.</string>
+    <string name="reset_look_subtitle">Sustituye el aspecto del dock y de la lista por el predeterminado</string>
+    <string name="reset_look_confirm_message">Esto sustituye el estilo del dock, el diseño de la lista y la alineación de esta faceta por los valores predeterminados.</string>
     <plurals name="settings_dock_apps_count">
         <item quantity="one">%d app del Dock</item>
         <item quantity="other">%d apps del Dock</item>
@@ -386,7 +392,6 @@
     <string name="home_apps_list_grid_columns">Columnas de la cuadrícula</string>
     <string name="home_apps_list_grid_display">Visualización de la cuadrícula</string>
     <string name="home_apps_list_shrink_to_fit">Ajustar lista a la pantalla</string>
-    <string name="app_list_shrink_to_fit_launcher_default">Estilo predeterminado del launcher</string>
     <string name="app_list_shrink_to_fit_off">Desactivado</string>
     <string name="app_list_shrink_to_fit_on">Activado</string>
     <string name="app_list_grid_display_mode_icons_and_text">Iconos y texto</string>
@@ -933,15 +938,6 @@
     <string name="icons_screen_shape_and_size">Forma y tamaño</string>
     <string name="icons_screen_force_shape">Forzar forma de iconos</string>
     <string name="icons_screen_force_shape_description">Recorta también los iconos del paquete con la forma de arriba</string>
-    <string name="app_row_position_launcher_default">Posición predeterminada del launcher</string>
-    <string name="app_row_presentation_launcher_default">Estilo predeterminado del launcher</string>
-    <string name="app_list_vertical_alignment_launcher_default">Posición predeterminada del launcher</string>
-    <string name="dock_display_mode_launcher_default">Estilo predeterminado del launcher</string>
-    <string name="app_list_layout_launcher_default">Diseño predeterminado del launcher</string>
-    <string name="app_list_column_alignment_launcher_default">Alineación predeterminada del launcher</string>
-    <string name="app_list_grid_columns_launcher_default">Columnas predeterminadas del launcher</string>
-    <string name="app_list_grid_display_mode_launcher_default">Estilo predeterminado del launcher</string>
-    <string name="appearance_section_dock_home">Dock e inicio</string>
     <string name="appearance_dock_apps_title">Apariencia del dock y las apps</string>
     <string name="appearance_general_title">Colores y temas</string>
     <string name="appearance_general_subtitle">Temas, acento, barra de estado</string>

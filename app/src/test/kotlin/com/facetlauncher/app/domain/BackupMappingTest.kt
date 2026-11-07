@@ -128,7 +128,7 @@ class BackupMappingTest {
         // Then the new fields take their defaults
         assertEquals(ClockAlignment.LEFT, restored.clockAlignment)
         assertNull(restored.clockZoneHeightDp)
-        assertEquals(AppListVerticalAlignment.LAUNCHER_DEFAULT, restored.appListVerticalAlignment)
+        assertEquals(AppListVerticalAlignment.BOTTOM, restored.appListVerticalAlignment)
         assertNull(restored.landscapeClockAlignment)
     }
 

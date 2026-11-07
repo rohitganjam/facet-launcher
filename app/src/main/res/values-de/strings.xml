@@ -195,12 +195,6 @@
     <string name="app_picker_tab_apps">Apps</string>
     <string name="app_picker_tab_folders">Ordner</string>
 
-    <!-- InheritOverrideCard -->
-    <string name="inherit_override_follows_default">Folgt der launcherweiten Standardeinstellung</string>
-    <string name="inherit_override_inherit_default">Standard übernehmen</string>
-    <string name="inherit_override_override_for_facet">Für diese Facette überschreiben</string>
-    <string name="inherit_override_changes_dont_affect_others">Änderungen hier wirken sich nicht auf andere Facetten aus</string>
-    <string name="inherit_override_edit_defaults">Standard bearbeiten</string>
 
     <!-- GestureHintOverlay -->
     <string name="gesture_hint_switch_facets">Facetten wechseln</string>
@@ -258,6 +252,18 @@
     <string name="settings_all_day_events_visible">Ganztägige Termine sichtbar</string>
     <string name="settings_all_day_events_hidden">Ganztägige Termine ausgeblendet</string>
     <string name="settings_dock_title">Dock</string>
+    <string name="settings_default_dock_title">Standard-Dock</string>
+    <string name="home_apps_list_default_header_title">Standard-App-Liste</string>
+    <string name="appearance_default_dock_apps_title">Standard-Dock- &amp; App-Darstellung</string>
+    <string name="defaults_screen_note">Wird verwendet, wenn du eine Facette erstellst oder zurücksetzt.</string>
+    <string name="reset_to_default_title">Auf Standard zurücksetzen</string>
+    <string name="reset_to_default_confirm">Zurücksetzen</string>
+    <string name="reset_dock_subtitle">Dieses Dock durch das Standard-Dock ersetzen</string>
+    <string name="reset_dock_confirm_message">Dadurch wird das Dock dieser Facette durch das Standard-Dock ersetzt. Die hier platzierten Apps gehen verloren.</string>
+    <string name="reset_apps_subtitle">Diese Liste durch die Standardliste ersetzen</string>
+    <string name="reset_apps_confirm_message">Dadurch werden Favoriten, Listeninhalt und App-Anzahl dieser Facette durch die Standardwerte ersetzt. Die hier gewählten Favoriten gehen verloren.</string>
+    <string name="reset_look_subtitle">Dock- und Listendarstellung durch den Standard ersetzen</string>
+    <string name="reset_look_confirm_message">Dadurch werden Dock-Stil, Listenlayout und Ausrichtung dieser Facette durch die Standardwerte ersetzt.</string>
     <plurals name="settings_dock_apps_count">
         <item quantity="one">%d Dock-App</item>
         <item quantity="other">%d Dock-Apps</item>
@@ -386,7 +392,6 @@
     <string name="home_apps_list_grid_columns">Rasterspalten</string>
     <string name="home_apps_list_grid_display">Rasteranzeige</string>
     <string name="home_apps_list_shrink_to_fit">Liste an Bildschirm anpassen</string>
-    <string name="app_list_shrink_to_fit_launcher_default">Standardstil des Launchers</string>
     <string name="app_list_shrink_to_fit_off">Aus</string>
     <string name="app_list_shrink_to_fit_on">An</string>
     <string name="app_list_grid_display_mode_icons_and_text">Symbole und Text</string>
@@ -933,15 +938,6 @@
     <string name="icons_screen_shape_and_size">Form und Größe</string>
     <string name="icons_screen_force_shape">Icon-Form erzwingen</string>
     <string name="icons_screen_force_shape_description">Schneidet auch die Icons des Packs in die obige Form</string>
-    <string name="app_row_position_launcher_default">Standardposition des Launchers</string>
-    <string name="app_row_presentation_launcher_default">Standardstil des Launchers</string>
-    <string name="app_list_vertical_alignment_launcher_default">Standardposition des Launchers</string>
-    <string name="dock_display_mode_launcher_default">Standardstil des Launchers</string>
-    <string name="app_list_layout_launcher_default">Standardlayout des Launchers</string>
-    <string name="app_list_column_alignment_launcher_default">Standardausrichtung des Launchers</string>
-    <string name="app_list_grid_columns_launcher_default">Standardspalten des Launchers</string>
-    <string name="app_list_grid_display_mode_launcher_default">Standardstil des Launchers</string>
-    <string name="appearance_section_dock_home">Dock &amp; Startseite</string>
     <string name="appearance_dock_apps_title">Dock- &amp; App-Darstellung</string>
     <string name="appearance_general_title">Farben und Designs</string>
     <string name="appearance_general_subtitle">Designs, Akzent, Statusleiste</string>

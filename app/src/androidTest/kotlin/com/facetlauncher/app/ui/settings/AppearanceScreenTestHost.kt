@@ -115,6 +115,7 @@ internal class AppearanceScreenTestHost(private val composeRule: ComposeContentT
                     FakeCalendarPermissionRepository(context, granted = calendarGranted),
                     wallpaperRepository,
                     FakeNotificationAccessRepository(context, granted = notificationAccessGranted),
+                    com.facetlauncher.app.domain.ApplyFacetDefaultsUseCase(facetRepository, placementRepository, settingsRepository),
                 ).also { screenViewModel = it }
             }
             // The assertions assume the portrait Home layout, whatever the device's window is.

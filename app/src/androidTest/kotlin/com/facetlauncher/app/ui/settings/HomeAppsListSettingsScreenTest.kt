@@ -27,6 +27,8 @@ import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.WallpaperRepository
 import com.facetlauncher.app.data.local.FacetDatabase
+import androidx.compose.ui.test.assertCountEquals
+import com.facetlauncher.app.domain.ApplyFacetDefaultsUseCase
 import com.facetlauncher.app.domain.GetInstalledAppsUseCase
 import com.facetlauncher.app.domain.SelectPreviewAppsUseCase
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
@@ -85,6 +87,7 @@ class HomeAppsListSettingsScreenTest {
                     DefaultAppRepository(context),
                     GetInstalledAppsUseCase(appRepository),
                     SelectPreviewAppsUseCase(),
+                    ApplyFacetDefaultsUseCase(facetRepository, placementRepository, settingsRepository),
                 )
             }
             FacetLauncherTheme {
@@ -97,7 +100,7 @@ class HomeAppsListSettingsScreenTest {
     @Test
     fun headerAndPreviewRender() {
         setContent()
-        composeRule.onNodeWithText("Home Apps List").assertIsDisplayed()
+        composeRule.onNodeWithText("Default apps list").assertIsDisplayed()
         composeRule.onNodeWithTag("back_button").assertIsDisplayed()
         composeRule.onNodeWithTag("home_apps_list_preview_card").assertExists()
     }
@@ -147,9 +150,6 @@ class HomeAppsListSettingsScreenTest {
 
     @Test
     fun aFolderFavoritedOnAFacet_isCountedAndShownInPreviewAndReorderList() {
-        // This facet must actually be overriding for its own favorites to be the ones shown/edited
-        // here — otherwise the screen correctly shows the (empty) launcher-wide default instead
-        // (see chat history: editing while inheriting used to silently write without taking effect).
         var folderId = 0L
         setContent(
             facetScoped = true,
@@ -157,7 +157,6 @@ class HomeAppsListSettingsScreenTest {
                 val id = requireNotNull(facetId)
                 folderId = folderRepository.createFolder("Games")
                 placementRepository.placeFolder(PlacementTarget(PlacementList.FAVORITES, id), folderId, position = 0)
-                facetRepository.getById(id)?.let { facetRepository.setOverrideApps(it.id, true) }
             },
         )
 
@@ -170,30 +169,19 @@ class HomeAppsListSettingsScreenTest {
     }
 
     @Test
-    fun facetScopedScreenWritesTheListContentModeToThatFacetsRowOnceOverriding() {
-        // Position/presentation/vertical alignment moved to Settings -> Appearance (see chat
-        // history) — list content mode is still this screen's own content, gated by overrideApps.
+    fun facetScopedScreenWritesTheListContentModeToThatFacetsRow() {
         lateinit var facetRepo: FacetRepository
         setContent(facetScoped = true, onFacetRepo = { repo, _ -> facetRepo = repo })
 
         // The facet-scoped state resolves asynchronously (Room query behind the ViewModel's
-        // StateFlow combine) — wait for the switch to actually render rather than assuming
-        // setContent()'s own waitForIdle() already caught it (see chat history: this raced on a
-        // real device even though it passed reliably enough locally to miss in review).
+        // StateFlow combine) — wait for the reset row to actually render rather than assuming
+        // setContent()'s own waitForIdle() already caught it.
         composeRule.waitUntil(timeoutMillis = 3_000) {
-            composeRule.onAllNodesWithTag("home_apps_list_override_row").fetchSemanticsNodes().isNotEmpty()
+            composeRule.onAllNodesWithTag("home_apps_list_reset_row").fetchSemanticsNodes().isNotEmpty()
         }
 
-        // Given this facet starts out inheriting — the content-mode control is disabled
-        composeRule.onNodeWithTag("default_list_content_row").assertIsNotEnabled()
-
-        // When switching to Override
-        composeRule.onNodeWithTag("home_apps_list_override_row").performClick()
-        composeRule.waitUntil(timeoutMillis = 3_000) {
-            runBlocking { facetRepo.observeFacets().first().any { it.overrideApps } }
-        }
-
-        // Then the control becomes live and writes to this facet's own row
+        // The content-mode control is live, with no Inherit/Override switch, and writes to this facet's own row
+        composeRule.onNodeWithTag("default_list_content_row").assertIsEnabled()
         composeRule.onNodeWithTag("default_list_content_row").performClick()
         composeRule.waitForIdle()
         composeRule.onNodeWithTag("default_list_content_row_option_RECENTS").performClick()
@@ -204,29 +192,64 @@ class HomeAppsListSettingsScreenTest {
     }
 
     @Test
-    fun facetScopedModeShowsInheritOverrideSwitch() {
+    fun facetScopedModeHasNoInheritOverrideSwitchAndOffersResetToDefault() {
         // Given a facet-scoped entry point
         setContent(facetScoped = true)
 
-        // The facet-scoped state resolves asynchronously — wait for the switch to actually render
-        // rather than assuming setContent()'s own waitForIdle() already caught it (see chat history)
+        // The facet-scoped state resolves asynchronously — wait for the reset row to render
         composeRule.waitUntil(timeoutMillis = 3_000) {
-            composeRule.onAllNodesWithTag("home_apps_list_override_row").fetchSemanticsNodes().isNotEmpty()
+            composeRule.onAllNodesWithTag("home_apps_list_reset_row").fetchSemanticsNodes().isNotEmpty()
         }
 
-        // Then the inherit/override switch is present, defaulting to Inherit (controls disabled) —
-        // position/presentation/vertical alignment moved to Appearance (see chat history), so this
-        // now gates the content-mode control that's still left on this screen.
-        composeRule.onNodeWithTag("home_apps_list_inherit_row").assertExists()
-        composeRule.onNodeWithTag("home_apps_list_override_row").assertExists()
-        composeRule.onNodeWithTag("default_list_content_row").assertIsNotEnabled()
+        // Then there is no Inherit/Override switch, the controls are live, and the title is the facet's
+        composeRule.onAllNodesWithTag("home_apps_list_inherit_row").assertCountEquals(0)
+        composeRule.onAllNodesWithTag("home_apps_list_override_row").assertCountEquals(0)
+        composeRule.onNodeWithTag("default_list_content_row").assertIsEnabled()
+        composeRule.onNodeWithText("Home Apps List").assertIsDisplayed()
+    }
 
-        // When switching to Override
-        composeRule.onNodeWithTag("home_apps_list_override_row").performClick()
-
-        // Then the controls become live
+    @Test
+    fun resetToDefaultCopiesTheDefaultFavoritesAndContentModeIntoTheFacet() {
+        // Given a facet whose list content mode differs from the launcher's, and a default favorite
+        lateinit var facetRepo: FacetRepository
+        lateinit var placements: PlacementRepository
+        var facetId = 0L
+        setContent(
+            facetScoped = true,
+            onFacetRepo = { repo, id -> facetRepo = repo; facetId = requireNotNull(id) },
+            seed = { _, placementRepository, facetRepository, id ->
+                placements = placementRepository
+                facetRepository.setListContentMode(requireNotNull(id), com.facetlauncher.app.data.model.ListContentMode.MOST_USED)
+                placementRepository.addApp(PlacementTarget.GlobalFavorites, appInfoForTest(), position = 0)
+            },
+        )
         composeRule.waitUntil(timeoutMillis = 3_000) {
-            runCatching { composeRule.onNodeWithTag("default_list_content_row").assertIsEnabled() }.isSuccess
+            composeRule.onAllNodesWithTag("home_apps_list_reset_row").fetchSemanticsNodes().isNotEmpty()
+        }
+
+        // When resetting and confirming
+        composeRule.onNodeWithTag("home_apps_list_settings_screen").performScrollToNode(hasTestTag("home_apps_list_reset_row"))
+        composeRule.onNodeWithTag("home_apps_list_reset_row").performClick()
+        composeRule.onNodeWithTag("confirm_dialog_confirm").performClick()
+
+        // Then the facet follows the default: Favorites mode, and its list is a copy of the default one
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            runBlocking {
+                facetRepo.getById(facetId)?.listContentMode == com.facetlauncher.app.data.model.ListContentMode.FAVORITES &&
+                    placements.getRawApps(PlacementTarget(PlacementList.FAVORITES, facetId)).size == 1
+            }
         }
     }
+
+    @Test
+    fun launcherScopeIsTitledAsTheDefaultAndOffersNoReset() {
+        setContent()
+
+        composeRule.onNodeWithText("Default apps list").assertIsDisplayed()
+        composeRule.onAllNodesWithTag("home_apps_list_reset_row").assertCountEquals(0)
+    }
+
+    private fun appInfoForTest() = com.facetlauncher.app.data.model.AppInfo(
+        packageName = "com.example.fav", activityName = ".Main", label = "Fav", icon = null,
+    )
 }

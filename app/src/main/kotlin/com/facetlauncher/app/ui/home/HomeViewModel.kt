@@ -197,13 +197,13 @@ class HomeViewModel @Inject constructor(
      */
     fun quickAddStateForApp(app: AppInfo): QuickAddState {
         val state = _uiState.value
-        return quickAddState.forApp(app, state.dockApps, state.favoriteItems, state.dockOverrideFacetName, state.favoritesOverrideFacetName)
+        return quickAddState.forApp(app, state.dockApps, state.favoriteItems, state.activeFacet?.name, state.activeFacet?.name)
     }
 
     /** Folder-tile counterpart of [quickAddStateForApp]. */
     fun quickAddStateForFolder(folder: Folder): QuickAddState {
         val state = _uiState.value
-        return quickAddState.forFolder(folder, state.dockApps, state.favoriteItems, state.dockOverrideFacetName, state.favoritesOverrideFacetName)
+        return quickAddState.forFolder(folder, state.dockApps, state.favoriteItems, state.activeFacet?.name, state.activeFacet?.name)
     }
 
     private companion object {

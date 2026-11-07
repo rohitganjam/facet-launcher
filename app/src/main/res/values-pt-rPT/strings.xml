@@ -17,8 +17,6 @@
     <string name="app_picker_all_apps">TODAS AS APPS</string>
     <string name="app_menu_notifications_access_needed">As notificações precisam de acesso através das definições do sistema.</string>
     <string name="app_picker_no_folders_yet">Ainda não há pastas. Mantenha premida uma app e escolha \"Adicionar à pasta\" para criar uma.</string>
-    <string name="inherit_override_inherit_default">Herdar predefinição</string>
-    <string name="inherit_override_edit_defaults">Editar predefinições</string>
     <string name="gesture_hint_all_your_apps">Todas as suas apps</string>
     <string name="gesture_hint_clock_hold">Mantenha premido um widget para o redimensionar ou mover</string>
     <string name="gesture_hint_got_it">Percebi</string>
@@ -58,15 +56,6 @@
     <string name="recently_installed_position_show_last">Mostrar recentes no fim</string>
     <string name="recently_installed_position_do_not_show">Não mostrar</string>
     <string name="app_list_layout_grid">Grelha</string>
-    <string name="app_row_position_launcher_default">Posição predefinida do launcher</string>
-    <string name="app_row_presentation_launcher_default">Estilo predefinido do launcher</string>
-    <string name="app_list_vertical_alignment_launcher_default">Posição predefinida do launcher</string>
-    <string name="dock_display_mode_launcher_default">Estilo predefinido do launcher</string>
-    <string name="app_list_layout_launcher_default">Esquema predefinido do launcher</string>
-    <string name="app_list_column_alignment_launcher_default">Alinhamento predefinido do launcher</string>
-    <string name="app_list_grid_columns_launcher_default">Colunas predefinidas do launcher</string>
-    <string name="app_list_grid_display_mode_launcher_default">Estilo predefinido do launcher</string>
-    <string name="app_list_shrink_to_fit_launcher_default">Estilo predefinido do launcher</string>
 
     <string name="home_apps_list_header_title">Lista de apps do ecrã inicial</string>
     <string name="appearance_allow_landscape_subtitle">Usa um esquema em paisagem quando o ecrã é suficientemente largo. Desativado mantém o início em retrato.</string>

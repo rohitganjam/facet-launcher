@@ -31,6 +31,9 @@ import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import com.facetlauncher.app.data.PlacementRepository
+import com.facetlauncher.app.data.getTestableApps
+import com.facetlauncher.app.domain.ApplyFacetDefaultsUseCase
+import androidx.compose.ui.test.assertCountEquals
 import com.facetlauncher.app.domain.ObservePlacedItemsUseCase
 import com.facetlauncher.app.data.model.PlacementTarget
 import com.facetlauncher.app.data.model.PlacementList
@@ -71,6 +74,7 @@ class DockSettingsScreenTest {
                     placementRepository,
                     observePlacedItems,
                     WallpaperRepository(WallpaperManager.getInstance(context)),
+                    ApplyFacetDefaultsUseCase(facetRepository, placementRepository, settingsRepository),
                 )
             }
             FacetLauncherTheme {
@@ -84,7 +88,7 @@ class DockSettingsScreenTest {
     fun headerAndPreviewRender() {
         setContent()
         composeRule.onNodeWithTag("back_button").assertIsDisplayed()
-        composeRule.onNodeWithText("Dock").assertIsDisplayed()
+        composeRule.onNodeWithText("Default dock").assertIsDisplayed()
         composeRule.onNodeWithTag("dock_settings_preview_card").assertExists()
     }
 
@@ -132,16 +136,12 @@ class DockSettingsScreenTest {
 
     @Test
     fun aFolderInAFacetsOwnDock_rendersAsAFolderTileInThePreview() {
-        // This facet must actually be overriding for its own dock to be the one shown — otherwise
-        // the screen correctly shows the (empty) launcher-wide default instead (see chat history:
-        // editing while inheriting used to silently write without taking effect).
         var folderId = 0L
         setContent(
             facetId = 42L,
-            seed = { _, placementRepository, folderRepository, facetRepository ->
+            seed = { _, placementRepository, folderRepository, _ ->
                 folderId = folderRepository.createFolder("Games")
                 placementRepository.placeFolder(PlacementTarget(PlacementList.DOCK, 42L), folderId, position = 0)
-                facetRepository.getById(42L)?.let { facetRepository.updateOverridingDock(it.id, true) }
             },
         )
 
@@ -152,29 +152,64 @@ class DockSettingsScreenTest {
     }
 
     @Test
-    fun facetScopedModeShowsInheritOverrideSwitch() {
+    fun facetScopedModeEditsThatFacetsDockAndOffersResetToDefault() {
         // Given a facet-scoped entry point
         setContent(facetId = 1L)
 
-        // The facet-scoped state resolves asynchronously — wait for the switch to actually render
-        // rather than assuming setContent()'s own waitForIdle() already caught it (see chat history)
+        // The facet-scoped state resolves asynchronously — wait for the reset row to render
         composeRule.waitUntil(timeoutMillis = 3_000) {
-            composeRule.onAllNodesWithTag("dock_settings_override_row").fetchSemanticsNodes().isNotEmpty()
+            composeRule.onAllNodesWithTag("dock_settings_reset_row").fetchSemanticsNodes().isNotEmpty()
         }
 
-        // Then the inherit/override switch is present, defaulting to Inherit (controls disabled) —
-        // dockDisplayMode's own row moved to Appearance (see chat history), so this now gates the
-        // one control still left on this screen: the dock app list picker row.
-        composeRule.onNodeWithTag("dock_settings_inherit_row").assertExists()
-        composeRule.onNodeWithTag("dock_settings_override_row").assertExists()
-        composeRule.onNodeWithTag("add_dock_app_row").assertIsNotEnabled()
+        // Then the dock list is live with no Inherit/Override switch, and the reset row is there
+        composeRule.onNodeWithTag("add_dock_app_row").assertIsEnabled()
+        composeRule.onAllNodesWithTag("dock_settings_inherit_row").assertCountEquals(0)
+        composeRule.onAllNodesWithTag("dock_settings_override_row").assertCountEquals(0)
+        composeRule.onNodeWithText("Dock").assertIsDisplayed()
+    }
 
-        // When switching to Override
-        composeRule.onNodeWithTag("dock_settings_override_row").performClick()
-
-        // Then the controls become live
+    @Test
+    fun resetToDefaultAsksForConfirmationAndCopiesTheDefaultDockIntoTheFacet() {
+        // Given a facet with its own dock and a different launcher-wide default dock
+        var facetPlacements: PlacementRepository? = null
+        setContent(
+            facetId = 42L,
+            seed = { appRepository, placementRepository, _, _ ->
+                facetPlacements = placementRepository
+                val apps = appRepository.getTestableApps()
+                placementRepository.addApp(PlacementTarget(PlacementList.DOCK, 42L), apps[0], position = 0)
+                placementRepository.addApp(PlacementTarget.GlobalDock, apps[1], position = 0)
+            },
+        )
         composeRule.waitUntil(timeoutMillis = 3_000) {
-            runCatching { composeRule.onNodeWithTag("add_dock_app_row").assertIsEnabled() }.isSuccess
+            composeRule.onAllNodesWithTag("dock_settings_reset_row").fetchSemanticsNodes().isNotEmpty()
         }
+
+        // When tapping Reset to default, then cancelling
+        composeRule.onNodeWithTag("dock_settings_reset_row").performClick()
+        composeRule.onNodeWithTag("confirm_dialog").assertIsDisplayed()
+        composeRule.onNodeWithTag("confirm_dialog_cancel").performClick()
+
+        // Then nothing changed
+        val owned = { runBlocking { facetPlacements!!.getRawApps(PlacementTarget(PlacementList.DOCK, 42L)).map { it.packageName } } }
+        val before = owned()
+
+        // When tapping it again and confirming
+        composeRule.onNodeWithTag("dock_settings_reset_row").performClick()
+        composeRule.onNodeWithTag("confirm_dialog_confirm").performClick()
+
+        // Then the facet's dock is a copy of the default dock
+        val defaultDock = runBlocking { facetPlacements!!.getRawApps(PlacementTarget.GlobalDock).map { it.packageName } }
+        composeRule.waitUntil(timeoutMillis = 5_000) { owned() == defaultDock }
+        assertEquals(1, before.size)
+    }
+
+    @Test
+    fun launcherScopeIsTitledAsTheDefaultAndOffersNoReset() {
+        setContent()
+
+        composeRule.onNodeWithText("Default dock").assertIsDisplayed()
+        composeRule.onNodeWithTag("defaults_screen_note").assertExists()
+        composeRule.onAllNodesWithTag("dock_settings_reset_row").assertCountEquals(0)
     }
 }

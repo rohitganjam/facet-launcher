@@ -26,19 +26,16 @@ import com.facetlauncher.app.data.model.PlacementList
 /** A single facet's effective preview content — everything the carousel's own preview card needs beyond the clock. */
 data class FacetPreviewData(
     val favorites: List<PlacedItem> = emptyList(),
-    /** This facet's effective dock — its own list when it overrides the dock, the launcher-wide default otherwise. */
+    /** This facet's own dock. */
     val dockApps: List<PlacedItem> = emptyList(),
     /** Today's events for this facet's effective calendar settings — empty when ungranted or none selected, same as [HomeScreenState.calendarEvents]. */
     val calendarEvents: List<CalendarEvent> = emptyList(),
 )
 
 /**
- * Each facet's *effective* preview content, keyed by facet id — a facet overriding its own
- * content mode (Favorites/Recents/Most Used) or favorites shows those; one still inheriting
- * shows the launcher-wide default list instead; calendar events come from the facet's clock's
- * own calendar choices, as [ObserveHomeScreenStateUseCase.observeCalendarEvents] reads them. The dock follows the same shape — a facet overriding
- * its own dock (`overrideDock`) shows that list, one still inheriting shows the launcher-wide
- * default. Spans [FacetRepository],
+ * Each facet's preview content, keyed by facet id — its own content mode (Favorites/Recents/Most Used)
+ * and favorites, its own dock, and calendar events from the facet's clock's own calendar choices, as
+ * [ObserveHomeScreenStateUseCase.observeCalendarEvents] reads them. Spans [FacetRepository],
  * [SettingsRepository], [ObservePlacedItemsUseCase],
  * [UsageStatsRepository], [UsageAccessRepository], [CalendarPermissionRepository] and
  * [CalendarRepository], so it's a use case rather than something either the ViewModel or a
@@ -65,31 +62,14 @@ class ObserveFacetPreviewsUseCase @Inject constructor(
         val ownFavoritesByFacet = facetIds.flatMapLatest { observePlacedItems.itemsForFacets(PlacementList.FAVORITES, it) }
         val ownDockByFacet = facetIds.flatMapLatest { observePlacedItems.itemsForFacets(PlacementList.DOCK, it) }
 
-        return combine(
-            facets,
-            settings,
-            ownFavoritesByFacet,
-            observePlacedItems.items(PlacementTarget.GlobalFavorites),
-            ownDockByFacet,
-            observePlacedItems.items(PlacementTarget.GlobalDock),
-        ) { facetList, launcherSettings, ownFavorites, defaultFavorites, ownDock, defaultDock ->
-            Inputs(facetList, launcherSettings, ownFavorites, defaultFavorites, ownDock, defaultDock)
+        return combine(facets, settings, ownFavoritesByFacet, ownDockByFacet) { facetList, launcherSettings, ownFavorites, ownDock ->
+            Inputs(facetList, launcherSettings, ownFavorites, ownDock)
         }.flatMapLatest { inputs ->
             val flows = inputs.facets.map { facet ->
-                val effectiveDock: List<PlacedItem> = if (facet.overrideDock) {
-                    inputs.ownDock[facet.id].orEmpty()
-                } else {
-                    inputs.defaultDock
-                }
                 combine(
-                    observeAppListItems(
-                        facet,
-                        inputs.settings,
-                        inputs.ownFavorites[facet.id].orEmpty(),
-                        inputs.defaultFavorites,
-                    ),
+                    observeAppListItems(facet, inputs.ownFavorites[facet.id].orEmpty()),
                     observeCalendarEvents(facet, inputs.settings),
-                ) { apps, events -> facet.id to FacetPreviewData(apps, effectiveDock, events) }
+                ) { apps, events -> facet.id to FacetPreviewData(apps, inputs.ownDock[facet.id].orEmpty(), events) }
             }
 
             combine(flows) { it.toMap() }
@@ -100,22 +80,14 @@ class ObserveFacetPreviewsUseCase @Inject constructor(
         val facets: List<Facet>,
         val settings: LauncherSettings,
         val ownFavorites: Map<Long, List<PlacedItem>>,
-        val defaultFavorites: List<PlacedItem>,
         val ownDock: Map<Long, List<PlacedItem>>,
-        val defaultDock: List<PlacedItem>,
     )
 
-    private fun observeAppListItems(
-        facet: Facet,
-        settings: LauncherSettings,
-        facetFavorites: List<PlacedItem>,
-        defaultFavorites: List<PlacedItem>,
-    ): Flow<List<PlacedItem>> {
-        val mode = if (facet.overrideApps) facet.listContentMode else settings.listContentMode
-        val appsToShowCount = if (facet.overrideApps) facet.appsToShowCount else settings.appsToShowCount
+    private fun observeAppListItems(facet: Facet, facetFavorites: List<PlacedItem>): Flow<List<PlacedItem>> {
+        val mode = facet.listContentMode
+        val appsToShowCount = facet.appsToShowCount
         return when {
-            mode == ListContentMode.FAVORITES && facet.overridingFavorites -> flow { emit(facetFavorites) }
-            mode == ListContentMode.FAVORITES -> flow { emit(defaultFavorites) }
+            mode == ListContentMode.FAVORITES -> flow { emit(facetFavorites) }
             !usageAccessRepository.isGranted() -> flow { emit(emptyList()) }
             mode == ListContentMode.RECENTS -> flow { emit(usageStatsRepository.getRecentApps(appsToShowCount).map { PlacedItem.SingleApp(it) }) }
             else -> flow { emit(usageStatsRepository.getMostUsedApps(appsToShowCount).map { PlacedItem.SingleApp(it) }) }

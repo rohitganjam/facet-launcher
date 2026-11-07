@@ -13,7 +13,6 @@ internal fun FacetEntity.toFacet(clockStack: List<ClockStackItem> = emptyList())
     clockStack = clockStack,
     landscapeClockAlignment = landscapeClockAlignment,
     landscapeClockZoneHeightDp = landscapeClockZoneHeightDp,
-    overrideApps = overrideApps,
     appRowPosition = appRowPosition,
     landscapeAppRowPosition = landscapeAppRowPosition,
     landscapeAppListVerticalAlignment = landscapeAppListVerticalAlignment,
@@ -27,8 +26,6 @@ internal fun FacetEntity.toFacet(clockStack: List<ClockStackItem> = emptyList())
     appListGridColumns = appListGridColumns,
     appListGridDisplayMode = appListGridDisplayMode,
     appListShrinkToFit = appListShrinkToFit,
-    overridingFavorites = overridingFavorites,
-    overrideDock = overrideDock,
     dockDisplayMode = dockDisplayMode,
 )
 
@@ -41,7 +38,6 @@ internal fun Facet.toEntity(): FacetEntity = FacetEntity(
     clockZoneHeightDp = clockZoneHeightDp,
     landscapeClockAlignment = landscapeClockAlignment,
     landscapeClockZoneHeightDp = landscapeClockZoneHeightDp,
-    overrideApps = overrideApps,
     appRowPosition = appRowPosition,
     landscapeAppRowPosition = landscapeAppRowPosition,
     landscapeAppListVerticalAlignment = landscapeAppListVerticalAlignment,
@@ -55,7 +51,5 @@ internal fun Facet.toEntity(): FacetEntity = FacetEntity(
     appListGridColumns = appListGridColumns,
     appListGridDisplayMode = appListGridDisplayMode,
     appListShrinkToFit = appListShrinkToFit,
-    overridingFavorites = overridingFavorites,
-    overrideDock = overrideDock,
     dockDisplayMode = dockDisplayMode,
 )

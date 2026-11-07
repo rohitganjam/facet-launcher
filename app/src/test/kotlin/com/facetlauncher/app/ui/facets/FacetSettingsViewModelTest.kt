@@ -92,41 +92,23 @@ class FacetSettingsViewModelTest {
     }
 
     @Test
-    fun `app row position resolves via its own sentinel, independent of overrideApps`() {
-        val notOverridingButExplicit = FacetSettingsUiState(
-            facet = Facet(id = 1L, name = "Work", position = 0, overrideApps = false, appRowPosition = AppRowPosition.RIGHT),
-            settings = LauncherSettings(appRowPosition = AppRowPosition.LEFT),
-        )
-        val overridingButDefaultSentinel = FacetSettingsUiState(
-            facet = Facet(id = 1L, name = "Work", position = 0, overrideApps = true, appRowPosition = AppRowPosition.LAUNCHER_DEFAULT),
-            settings = LauncherSettings(appRowPosition = AppRowPosition.LEFT),
-        )
-
-        // A facet's own explicit position wins even without overrideApps — it's a look field,
-        // not gated by the apps-list content override.
-        assertEquals(AppRowPosition.RIGHT, notOverridingButExplicit.appRowPosition)
-        // The LAUNCHER_DEFAULT sentinel falls back to the global value even with overrideApps set.
-        assertEquals(AppRowPosition.LEFT, overridingButDefaultSentinel.appRowPosition)
-    }
-
-    @Test
-    fun `app row presentation resolves via its own sentinel, independent of overrideApps`() {
+    fun `app row position and presentation are the facet's own, not the launcher's`() {
         val state = FacetSettingsUiState(
-            facet = Facet(id = 1L, name = "Work", position = 0, overrideApps = false, appRowPresentation = AppRowPresentation.TEXT_ONLY),
-            settings = LauncherSettings(appRowPresentation = AppRowPresentation.ICON_AND_TEXT),
+            facet = Facet(id = 1L, name = "Work", position = 0, appRowPosition = AppRowPosition.RIGHT, appRowPresentation = AppRowPresentation.TEXT_ONLY),
+            settings = LauncherSettings(appRowPosition = AppRowPosition.LEFT, appRowPresentation = AppRowPresentation.ICON_AND_TEXT),
         )
 
+        assertEquals(AppRowPosition.RIGHT, state.appRowPosition)
         assertEquals(AppRowPresentation.TEXT_ONLY, state.appRowPresentation)
     }
 
     @Test
-    fun `app list layout, column alignment, grid columns and grid display resolve via their own sentinel, independent of overrideApps`() {
-        val notOverridingButExplicit = FacetSettingsUiState(
+    fun `app list layout, column alignment, grid columns and grid display are the facet's own`() {
+        val state = FacetSettingsUiState(
             facet = Facet(
                 id = 1L,
                 name = "Work",
                 position = 0,
-                overrideApps = false,
                 appListLayout = AppListLayout.GRID,
                 appListColumnAlignment = AppListColumnAlignment.BOTH_RIGHT,
                 appListGridColumns = AppListGridColumns.SIX,
@@ -134,48 +116,17 @@ class FacetSettingsViewModelTest {
             ),
             settings = LauncherSettings(appListLayout = AppListLayout.SINGLE_COLUMN, appListColumnAlignment = AppListColumnAlignment.BOTH_LEFT, appListGridColumns = AppListGridColumns.FOUR, appListGridDisplayMode = AppListGridDisplayMode.ICONS),
         )
-        val overridingButDefaultSentinel = FacetSettingsUiState(
-            facet = Facet(
-                id = 1L,
-                name = "Work",
-                position = 0,
-                overrideApps = true,
-                appListLayout = AppListLayout.LAUNCHER_DEFAULT,
-                appListColumnAlignment = AppListColumnAlignment.LAUNCHER_DEFAULT,
-                appListGridColumns = AppListGridColumns.LAUNCHER_DEFAULT,
-                appListGridDisplayMode = AppListGridDisplayMode.LAUNCHER_DEFAULT,
-            ),
-            settings = LauncherSettings(appListLayout = AppListLayout.SINGLE_COLUMN, appListColumnAlignment = AppListColumnAlignment.BOTH_LEFT, appListGridColumns = AppListGridColumns.FOUR, appListGridDisplayMode = AppListGridDisplayMode.ICONS),
-        )
 
-        // A facet's own explicit values win even without overrideApps — look fields, not gated by
-        // the apps-list content override.
-        assertEquals(AppListLayout.GRID, notOverridingButExplicit.appListLayout)
-        assertEquals(AppListColumnAlignment.BOTH_RIGHT, notOverridingButExplicit.appListColumnAlignment)
-        assertEquals(AppListGridColumns.SIX, notOverridingButExplicit.appListGridColumns)
-        assertEquals(AppListGridDisplayMode.TEXT, notOverridingButExplicit.appListGridDisplayMode)
-        // The LAUNCHER_DEFAULT sentinel falls back to the global value even with overrideApps set.
-        assertEquals(AppListLayout.SINGLE_COLUMN, overridingButDefaultSentinel.appListLayout)
-        assertEquals(AppListColumnAlignment.BOTH_LEFT, overridingButDefaultSentinel.appListColumnAlignment)
-        assertEquals(AppListGridColumns.FOUR, overridingButDefaultSentinel.appListGridColumns)
-        assertEquals(AppListGridDisplayMode.ICONS, overridingButDefaultSentinel.appListGridDisplayMode)
+        assertEquals(AppListLayout.GRID, state.appListLayout)
+        assertEquals(AppListColumnAlignment.BOTH_RIGHT, state.appListColumnAlignment)
+        assertEquals(AppListGridColumns.SIX, state.appListGridColumns)
+        assertEquals(AppListGridDisplayMode.TEXT, state.appListGridDisplayMode)
     }
 
     @Test
-    fun `list content mode and apps-to-show count fall back to global defaults when not overriding apps`() {
+    fun `list content mode and apps-to-show count are the facet's own, not the launcher's`() {
         val state = FacetSettingsUiState(
-            facet = Facet(id = 1L, name = "Work", position = 0, overrideApps = false, listContentMode = ListContentMode.RECENTS, appsToShowCount = 8),
-            settings = LauncherSettings(listContentMode = ListContentMode.FAVORITES, appsToShowCount = 5),
-        )
-
-        assertEquals(ListContentMode.FAVORITES, state.listContentMode)
-        assertEquals(5, state.appsToShowCount)
-    }
-
-    @Test
-    fun `list content mode and apps-to-show count use this facet's own values when overriding apps`() {
-        val state = FacetSettingsUiState(
-            facet = Facet(id = 1L, name = "Work", position = 0, overrideApps = true, listContentMode = ListContentMode.RECENTS, appsToShowCount = 8),
+            facet = Facet(id = 1L, name = "Work", position = 0, listContentMode = ListContentMode.RECENTS, appsToShowCount = 8),
             settings = LauncherSettings(listContentMode = ListContentMode.FAVORITES, appsToShowCount = 5),
         )
 
@@ -184,61 +135,29 @@ class FacetSettingsViewModelTest {
     }
 
     @Test
-    fun `effective favorites and their label reflect the global default while not overriding favorites`() {
-        val defaultFavorites = (1..2).map { PlacedItem.SingleApp(appInfo(it)) }
+    fun `the favorites label counts this facet's own list`() {
         val state = FacetSettingsUiState(
-            facet = Facet(id = 1L, name = "Work", position = 0, overridingFavorites = false),
+            facet = Facet(id = 1L, name = "Work", position = 0),
             favorites = (1..4).map { PlacedItem.SingleApp(appInfo(it)) },
-            defaultFavorites = defaultFavorites,
         )
 
-        assertEquals(defaultFavorites, state.effectiveFavorites)
-        assertEquals("2 of ${AppListLimits.MAX_FAVORITES}", state.favoritesLabel)
-    }
-
-    @Test
-    fun `effective favorites and their label reflect this facet's own list while overriding favorites`() {
-        val ownFavorites = (1..4).map { PlacedItem.SingleApp(appInfo(it)) }
-        val state = FacetSettingsUiState(
-            facet = Facet(id = 1L, name = "Work", position = 0, overridingFavorites = true),
-            favorites = ownFavorites,
-            defaultFavorites = (1..2).map { PlacedItem.SingleApp(appInfo(it)) },
-        )
-
-        assertEquals(ownFavorites, state.effectiveFavorites)
         assertEquals("4 of ${AppListLimits.MAX_FAVORITES}", state.favoritesLabel)
     }
 
     @Test
-    fun `effective dock apps and their label reflect the global default while not overriding the dock`() {
-        val defaultDockApps = (1..3).map { PlacedItem.SingleApp(appInfo(it)) }
+    fun `the dock label counts this facet's own dock`() {
         val state = FacetSettingsUiState(
-            facet = Facet(id = 1L, name = "Work", position = 0, overrideDock = false),
+            facet = Facet(id = 1L, name = "Work", position = 0),
             dockApps = (1..1).map { PlacedItem.SingleApp(appInfo(it)) },
-            defaultDockApps = defaultDockApps,
         )
 
-        assertEquals(defaultDockApps, state.effectiveDockApps)
-        assertEquals("3 of ${AppListLimits.MAX_DOCK_APPS}", state.dockLabel)
-    }
-
-    @Test
-    fun `effective dock apps and their label reflect this facet's own list while overriding the dock`() {
-        val ownDockApps = (1..1).map { PlacedItem.SingleApp(appInfo(it)) }
-        val state = FacetSettingsUiState(
-            facet = Facet(id = 1L, name = "Work", position = 0, overrideDock = true),
-            dockApps = ownDockApps,
-            defaultDockApps = (1..3).map { PlacedItem.SingleApp(appInfo(it)) },
-        )
-
-        assertEquals(ownDockApps, state.effectiveDockApps)
         assertEquals("1 of ${AppListLimits.MAX_DOCK_APPS}", state.dockLabel)
     }
 
     @Test
-    fun `dock display mode resolves via its own sentinel, independent of overrideDock`() {
+    fun `dock display mode is the facet's own, not the launcher's`() {
         val state = FacetSettingsUiState(
-            facet = Facet(id = 1L, name = "Work", position = 0, overrideDock = false, dockDisplayMode = DockDisplayMode.TEXT),
+            facet = Facet(id = 1L, name = "Work", position = 0, dockDisplayMode = DockDisplayMode.TEXT),
             settings = LauncherSettings(dockDisplayMode = DockDisplayMode.ICONS),
         )
 
@@ -266,9 +185,7 @@ class FacetSettingsViewModelTest {
         observePlacedItems: ObservePlacedItemsUseCase = mock(ObservePlacedItemsUseCase::class.java).also {
             listOf(
                 PlacementTarget(PlacementList.FAVORITES, facetId),
-                PlacementTarget.GlobalFavorites,
                 PlacementTarget(PlacementList.DOCK, facetId),
-                PlacementTarget.GlobalDock,
             ).forEach { target -> `when`(it.items(target)).thenReturn(flowOf(emptyList())) }
         },
         automationStateRepository: AutomationStateRepository = mock(AutomationStateRepository::class.java),

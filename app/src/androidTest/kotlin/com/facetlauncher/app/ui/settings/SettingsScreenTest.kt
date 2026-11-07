@@ -53,6 +53,7 @@ class SettingsScreenTest {
         onNavigateToAppearance: () -> Unit = {},
         onNavigateToDockSettings: () -> Unit = {},
         onNavigateToHomeAppsListSettings: () -> Unit = {},
+        onNavigateToDockAppsAppearance: () -> Unit = {},
         onNavigateToFolders: () -> Unit = {},
         onNavigateToGestures: () -> Unit = {},
         onNavigateToWeatherSettings: () -> Unit = {},
@@ -93,6 +94,7 @@ class SettingsScreenTest {
                     onNavigateToAppearance = onNavigateToAppearance,
                     onNavigateToDockSettings = onNavigateToDockSettings,
                     onNavigateToHomeAppsListSettings = onNavigateToHomeAppsListSettings,
+                    onNavigateToDockAppsAppearance = onNavigateToDockAppsAppearance,
                     onNavigateToFolders = onNavigateToFolders,
                     onNavigateToGestures = onNavigateToGestures,
                     onNavigateToWeatherSettings = onNavigateToWeatherSettings,
@@ -191,6 +193,23 @@ class SettingsScreenTest {
 
         // When tapping it
         composeRule.onNodeWithTag("dock_settings_row").performClick()
+
+        // Then its callback fires
+        assertEquals(true, navigated)
+    }
+
+    @Test
+    fun dockAppsAppearanceRowIsUnderAppsAndFoldersSummarisesTheDefaultsAndNavigates() {
+        // Given the settings screen, scrolled to the default look row under Apps and folders —
+        // dock icons and the Home list as icon + text by default
+        var navigated = false
+        setContent(onNavigateToDockAppsAppearance = { navigated = true })
+        composeRule.onNodeWithTag("settings_screen").performScrollToNode(hasTestTag("dock_apps_appearance_row"))
+        composeRule.onNodeWithTag("dock_apps_appearance_row").assertTextContains("Default dock & apps appearance", substring = true)
+        composeRule.onNodeWithTag("dock_apps_appearance_row").assertTextContains("Dock icons · Home icon & text", substring = true)
+
+        // When tapping it
+        composeRule.onNodeWithTag("dock_apps_appearance_row").performClick()
 
         // Then its callback fires
         assertEquals(true, navigated)
