@@ -230,7 +230,7 @@
     <!-- SettingsScreen -->
     <string name="settings_header_title">Einstellungen</string>
     <string name="settings_section_facets">Facetten</string>
-    <string name="settings_section_appearance">Design</string>
+    <string name="settings_section_appearance">Anpassung</string>
     <string name="settings_section_home_apps">Apps und Ordner</string>
     <string name="settings_section_system">System</string>
     <string name="settings_section_about">Über</string>
@@ -240,8 +240,8 @@
     <string name="settings_active_facet_subtitle">Einstellungen speziell für %1$s, deine aktuelle Facette</string>
     <string name="settings_change_wallpaper_title">Hintergrundbild ändern</string>
     <string name="settings_change_wallpaper_subtitle">Ändere das Hintergrundbild deines Systems</string>
-    <string name="settings_appearance_title">Anpassung</string>
-    <string name="settings_appearance_subtitle">Startbildschirm, Benachrichtigungen, Designs anpassen</string>
+    <string name="settings_appearance_title">Darstellung des Launchers</string>
+    <string name="settings_appearance_subtitle">Designs, Schriften und Icons</string>
     <string name="settings_clock_calendar_title">Uhrstil</string>
     <string name="settings_time_format_24h">24-Stunden-Format</string>
     <string name="settings_time_format_12h">12-Stunden-Format</string>
@@ -444,7 +444,7 @@
     <string name="system_bar_icons_dark">Dunkel</string>
 
     <!-- AppearanceSettingsScreen -->
-    <string name="appearance_header_title">Anpassung</string>
+    <string name="appearance_header_title">Darstellung des Launchers</string>
     <string name="appearance_launcher_theme">Launcher-Design</string>
     <string name="appearance_system_bar_icons">Farben der Systemleisten</string>
     <string name="appearance_system_bar_icons_subtitle">Symbolfarbe für Status- und Navigationsleiste</string>

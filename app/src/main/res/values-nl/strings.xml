@@ -234,7 +234,7 @@
 
     <string name="settings_header_title">Instellingen</string>
     <string name="settings_section_facets">Facets</string>
-    <string name="settings_section_appearance">Uiterlijk</string>
+    <string name="settings_section_appearance">Aanpassing</string>
     <string name="settings_section_home_apps">Apps en mappen</string>
     <string name="settings_section_system">Systeem</string>
     <string name="settings_section_about">Over</string>
@@ -244,8 +244,8 @@
     <string name="settings_active_facet_subtitle">Instellingen speciaal voor %1$s, je huidige facet</string>
     <string name="settings_change_wallpaper_title">Achtergrond wijzigen</string>
     <string name="settings_change_wallpaper_subtitle">Wijzig je systeemachtergrond</string>
-    <string name="settings_appearance_title">Aanpassing</string>
-    <string name="settings_appearance_subtitle">Startscherm, meldingen en thema\'s aanpassen</string>
+    <string name="settings_appearance_title">Uiterlijk van de launcher</string>
+    <string name="settings_appearance_subtitle">Thema\'s, lettertypen en iconen</string>
     <string name="settings_clock_calendar_title">Klokstijl</string>
     <string name="settings_time_format_24h">24-uurs tijd</string>
     <string name="settings_time_format_12h">12-uurs tijd</string>
@@ -442,7 +442,7 @@
     <string name="system_bar_icons_light">Licht</string>
     <string name="system_bar_icons_dark">Donker</string>
 
-    <string name="appearance_header_title">Aanpassing</string>
+    <string name="appearance_header_title">Uiterlijk van de launcher</string>
     <string name="appearance_dock_apps_title">Uiterlijk van dock en apps</string>
     <string name="appearance_general_title">Kleuren en thema\'s</string>
     <string name="appearance_general_subtitle">Thema\'s, accent, statusbalk</string>

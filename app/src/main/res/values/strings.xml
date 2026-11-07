@@ -270,7 +270,7 @@
     <!-- SettingsScreen -->
     <string name="settings_header_title">Settings</string>
     <string name="settings_section_facets">Facets</string>
-    <string name="settings_section_appearance">Appearance</string>
+    <string name="settings_section_appearance">Customization</string>
     <string name="settings_section_home_apps">Apps and folders</string>
     <string name="settings_section_system">System</string>
     <string name="settings_section_about">About</string>
@@ -280,8 +280,8 @@
     <string name="settings_active_facet_subtitle">Settings specific to %1$s, your current facet</string>
     <string name="settings_change_wallpaper_title">Change wallpaper</string>
     <string name="settings_change_wallpaper_subtitle">Change your system wallpaper</string>
-    <string name="settings_appearance_title">Customization</string>
-    <string name="settings_appearance_subtitle">Customize home, notifications, themes</string>
+    <string name="settings_appearance_title">Launcher appearance</string>
+    <string name="settings_appearance_subtitle">Themes, fonts and icons</string>
     <string name="settings_clock_calendar_title">Clock Style</string>
     <string name="settings_time_format_24h">24-hour time</string>
     <string name="settings_time_format_12h">12-hour time</string>
@@ -495,7 +495,7 @@
     <string name="system_bar_icons_dark">Dark</string>
 
     <!-- AppearanceSettingsScreen -->
-    <string name="appearance_header_title">Customization</string>
+    <string name="appearance_header_title">Launcher appearance</string>
     <string name="appearance_dock_apps_title">Dock &amp; Apps appearance</string>
     <string name="appearance_general_title">Colors and Themes</string>
     <string name="appearance_general_subtitle">Themes, accent, status bar</string>

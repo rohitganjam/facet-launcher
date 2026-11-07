@@ -172,14 +172,15 @@ class SettingsScreenTest {
 
     @Test
     fun appearanceRowIsClickableAndShowsAGenericSubtitle() {
-        // Given the settings screen, scrolled to the "Customization" row — the theme/accent/
+        // Given the settings screen, scrolled to the "Launcher appearance" row — the theme/accent/
         // icons/font block lives on its own screen, reached through this single summary row
         // instead of inline controls. The subtitle is a static, generic description rather than
         // the live theme/font values (see chat history — the dynamic subtitle wasn't wanted here).
         var navigated = false
         setContent(onNavigateToAppearance = { navigated = true })
         composeRule.onNodeWithTag("settings_screen").performScrollToNode(hasTestTag("appearance_row"))
-        composeRule.onNodeWithTag("appearance_row").assertTextContains("Customize home, notifications, themes", substring = true)
+        composeRule.onNodeWithTag("appearance_row").assertTextContains("Launcher appearance", substring = true)
+        composeRule.onNodeWithTag("appearance_row").assertTextContains("Themes, fonts and icons", substring = true)
 
         // When tapping it
         composeRule.onNodeWithTag("appearance_row").performClick()
@@ -252,12 +253,12 @@ class SettingsScreenTest {
     }
 
     @Test
-    fun appDrawerAndNotificationRowsSitInTheAppearanceCardAfterCustomization() {
+    fun appDrawerAndNotificationRowsSitInTheCustomizationCardAfterLauncherAppearance() {
         // Given the settings screen
         setContent()
         composeRule.onNodeWithTag("settings_screen").performScrollToNode(hasTestTag("notification_settings_row"))
 
-        // Then the App Drawer and Notifications rows are here, below Customization
+        // Then the App Drawer and Notifications rows are here, below Launcher appearance
         val top = { tag: String -> composeRule.onNodeWithTag(tag).fetchSemanticsNode().boundsInRoot.top }
         assertEquals(true, top("appearance_row") < top("app_drawer_settings_row"))
         assertEquals(true, top("app_drawer_settings_row") < top("notification_settings_row"))

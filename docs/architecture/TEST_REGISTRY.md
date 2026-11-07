@@ -5056,7 +5056,7 @@ How to read: one section per tier, one table per package (mirrors `app/src/main`
 - dockRowIsClickableAndReflectsDockAppCount
 - dockAppsAppearanceRowIsUnderAppsAndFoldersDescribesWhatItDoesAndNavigates
 - homeAppsListRowIsClickableAndReflectsListContentCount
-- appDrawerAndNotificationRowsSitInTheAppearanceCardAfterCustomization
+- appDrawerAndNotificationRowsSitInTheCustomizationCardAfterLauncherAppearance
 - appDrawerRowSummarisesTheDrawerAndNavigates
 - notificationRowReflectsEnabledStateAndNavigates
 - notificationSubtextShowsCountBadgesAndMediaPlayerOn

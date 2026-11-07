@@ -65,7 +65,7 @@ class AppearanceSettingsScreenTest {
         composeRule.onNodeWithTag("appearance_settings_screen").performScrollToNode(hasTestTag("general_icons_row"))
 
         // Then the pinned header (title + back button) is still on screen, not scrolled away
-        composeRule.onNodeWithText("Customization").assertIsDisplayed()
+        composeRule.onNodeWithText("Launcher appearance").assertIsDisplayed()
         composeRule.onNodeWithTag("back_button").assertIsDisplayed()
     }
 
