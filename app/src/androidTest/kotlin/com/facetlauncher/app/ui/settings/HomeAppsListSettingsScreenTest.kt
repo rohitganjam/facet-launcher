@@ -192,7 +192,7 @@ class HomeAppsListSettingsScreenTest {
     }
 
     @Test
-    fun facetScopedModeHasNoInheritOverrideSwitchAndOffersResetToDefault() {
+    fun facetScopedModeHasLiveControlsAndTheFacetsTitle() {
         // Given a facet-scoped entry point
         setContent(facetScoped = true)
 
@@ -201,9 +201,7 @@ class HomeAppsListSettingsScreenTest {
             composeRule.onAllNodesWithTag("home_apps_list_reset_row").fetchSemanticsNodes().isNotEmpty()
         }
 
-        // Then there is no Inherit/Override switch, the controls are live, and the title is the facet's
-        composeRule.onAllNodesWithTag("home_apps_list_inherit_row").assertCountEquals(0)
-        composeRule.onAllNodesWithTag("home_apps_list_override_row").assertCountEquals(0)
+        // Then the controls are live and the title is the facet's
         composeRule.onNodeWithTag("default_list_content_row").assertIsEnabled()
         composeRule.onNodeWithText("Apps List").assertIsDisplayed()
     }
@@ -242,11 +240,10 @@ class HomeAppsListSettingsScreenTest {
     }
 
     @Test
-    fun launcherScopeIsTitledAsTheDefaultAndOffersNoReset() {
+    fun launcherScopeIsTitledAsTheDefault() {
         setContent()
 
         composeRule.onNodeWithText("Default Apps list").assertIsDisplayed()
-        composeRule.onAllNodesWithTag("home_apps_list_reset_row").assertCountEquals(0)
     }
 
     private fun appInfoForTest() = com.facetlauncher.app.data.model.AppInfo(

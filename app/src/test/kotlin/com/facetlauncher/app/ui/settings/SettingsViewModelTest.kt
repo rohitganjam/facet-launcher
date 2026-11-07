@@ -61,6 +61,8 @@ class SettingsViewModelTest {
         isPro: Boolean = true,
         facetCount: Int = 0,
         enabledRuleCount: Int = automationRuleCount,
+        notificationAccessRepository: com.facetlauncher.app.data.NotificationAccessRepository =
+            mock(com.facetlauncher.app.data.NotificationAccessRepository::class.java).also { `when`(it.isGranted()).thenReturn(false) },
     ): SettingsViewModel {
         val settingsRepository = mock(SettingsRepository::class.java)
         `when`(settingsRepository.settings).thenReturn(flowOf(settings))
@@ -84,7 +86,26 @@ class SettingsViewModelTest {
         )
         val facetRepository = mock(com.facetlauncher.app.data.FacetRepository::class.java)
         `when`(facetRepository.observeFacets()).thenReturn(flowOf((1..facetCount).map { com.facetlauncher.app.data.model.Facet(id = it.toLong(), name = "F$it", position = it) }))
-        return SettingsViewModel(useCase, defaultLauncherRepository, workProfileRepository, automationRuleRepository, FakeEntitlementRepository(isPro), facetRepository)
+        return SettingsViewModel(useCase, defaultLauncherRepository, workProfileRepository, automationRuleRepository, FakeEntitlementRepository(isPro), facetRepository, notificationAccessRepository)
+    }
+
+    @Test
+    fun `uiState carries whether notification access is granted and refreshes it`() = runTest {
+        // Given access that is not granted at first
+        val access = mock(com.facetlauncher.app.data.NotificationAccessRepository::class.java)
+        `when`(access.isGranted()).thenReturn(false)
+        val viewModel = createViewModel(notificationAccessRepository = access)
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        testDispatcher.scheduler.advanceUntilIdle()
+        assertEquals(false, viewModel.uiState.value.notificationAccessGranted)
+
+        // When it is granted elsewhere and the screen resumes
+        `when`(access.isGranted()).thenReturn(true)
+        viewModel.refreshNotificationAccess()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Then the state follows
+        assertEquals(true, viewModel.uiState.value.notificationAccessGranted)
     }
 
     @Test

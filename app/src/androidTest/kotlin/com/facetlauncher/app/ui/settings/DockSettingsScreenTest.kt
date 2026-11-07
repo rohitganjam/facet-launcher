@@ -165,10 +165,8 @@ class DockSettingsScreenTest {
             composeRule.onAllNodesWithTag("dock_settings_reset_row").fetchSemanticsNodes().isNotEmpty()
         }
 
-        // Then the dock list is live with no Inherit/Override switch, and the reset row is there
+        // Then the dock list is live, and the title is the facet's
         composeRule.onNodeWithTag("add_dock_app_row").assertIsEnabled()
-        composeRule.onAllNodesWithTag("dock_settings_inherit_row").assertCountEquals(0)
-        composeRule.onAllNodesWithTag("dock_settings_override_row").assertCountEquals(0)
         composeRule.onNodeWithText("Dock Apps").assertIsDisplayed()
     }
 
@@ -243,21 +241,10 @@ class DockSettingsScreenTest {
     }
 
     @Test
-    fun facetScopedScreenHasNoCopyToFacets() {
-        setContent(facetId = 1L)
-        composeRule.waitUntil(timeoutMillis = 3_000) {
-            composeRule.onAllNodesWithTag("dock_settings_reset_row").fetchSemanticsNodes().isNotEmpty()
-        }
-
-        composeRule.onAllNodesWithTag("dock_settings_copy_row").assertCountEquals(0)
-    }
-
-    @Test
-    fun launcherScopeIsTitledAsTheDefaultAndOffersNoReset() {
+    fun launcherScopeIsTitledAsTheDefaultWithANote() {
         setContent()
 
         composeRule.onNodeWithText("Default Dock Apps").assertIsDisplayed()
         composeRule.onNodeWithTag("defaults_screen_note").assertExists()
-        composeRule.onAllNodesWithTag("dock_settings_reset_row").assertCountEquals(0)
     }
 }

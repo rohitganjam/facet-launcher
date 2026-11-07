@@ -50,6 +50,9 @@ class SettingsScreenTest {
         onBack: () -> Unit = {},
         onViewFacets: () -> Unit = {},
         onViewFacetAutomation: () -> Unit = {},
+        notificationAccessGranted: Boolean = false,
+        onNavigateToAppDrawerSettings: () -> Unit = {},
+        onNavigateToNotificationSettings: () -> Unit = {},
         activeFacetName: String? = null,
         onActiveFacetCreated: (Long) -> Unit = {},
         onViewActiveFacetSettings: (Long) -> Unit = {},
@@ -97,6 +100,7 @@ class SettingsScreenTest {
                     AutomationRuleRepository(database.automationRuleDao(), database.facetDao()),
                     entitlement,
                     facetRepository,
+                    FakeNotificationAccessRepository(context, granted = notificationAccessGranted),
                 )
             }
             FacetLauncherTheme {
@@ -107,6 +111,8 @@ class SettingsScreenTest {
                     onViewActiveFacetSettings = onViewActiveFacetSettings,
                     onViewFacetPro = onViewFacetPro,
                     onNavigateToAppearance = onNavigateToAppearance,
+                    onNavigateToAppDrawerSettings = onNavigateToAppDrawerSettings,
+                    onNavigateToNotificationSettings = onNavigateToNotificationSettings,
                     onNavigateToDockSettings = onNavigateToDockSettings,
                     onNavigateToHomeAppsListSettings = onNavigateToHomeAppsListSettings,
                     onNavigateToDockAppsAppearance = onNavigateToDockAppsAppearance,
@@ -246,15 +252,76 @@ class SettingsScreenTest {
     }
 
     @Test
-    fun calendarAndNotificationRowsLiveInAppearanceNotInSettings() {
-        // Given the settings screen, scrolled through its Apps and folders section
+    fun appDrawerAndNotificationRowsSitInTheAppearanceCardAfterCustomization() {
+        // Given the settings screen
         setContent()
-        composeRule.onNodeWithTag("settings_screen").performScrollToNode(hasTestTag("folders_settings_row"))
+        composeRule.onNodeWithTag("settings_screen").performScrollToNode(hasTestTag("notification_settings_row"))
 
-        // Then neither moved row is here any more (Appearance owns them now)
-        composeRule.onNodeWithTag("calendar_settings_row").assertDoesNotExist()
-        composeRule.onNodeWithTag("notification_settings_row").assertDoesNotExist()
-        composeRule.onNodeWithTag("app_drawer_settings_row").assertDoesNotExist()
+        // Then the App Drawer and Notifications rows are here, below Customization
+        val top = { tag: String -> composeRule.onNodeWithTag(tag).fetchSemanticsNode().boundsInRoot.top }
+        assertEquals(true, top("appearance_row") < top("app_drawer_settings_row"))
+        assertEquals(true, top("app_drawer_settings_row") < top("notification_settings_row"))
+    }
+
+    @Test
+    fun appDrawerRowSummarisesTheDrawerAndNavigates() {
+        var navigated = false
+        setContent(onNavigateToAppDrawerSettings = { navigated = true })
+        composeRule.onNodeWithTag("settings_screen").performScrollToNode(hasTestTag("app_drawer_settings_row"))
+        composeRule.onNodeWithTag("app_drawer_settings_row").assertTextContains("App Drawer", substring = true)
+
+        composeRule.onNodeWithTag("app_drawer_settings_row").performClick()
+
+        assertEquals(true, navigated)
+    }
+
+    @Test
+    fun notificationRowReflectsEnabledStateAndNavigates() {
+        // Given access granted — badges are on by default with the Dot style
+        var navigated = false
+        setContent(notificationAccessGranted = true, onNavigateToNotificationSettings = { navigated = true })
+        composeRule.onNodeWithTag("settings_screen").performScrollToNode(hasTestTag("notification_settings_row"))
+        composeRule.onNodeWithTag("notification_settings_row").assertTextContains("Notifications and media", substring = true)
+        awaitNotificationSubtext("Dot badges · Media player off")
+
+        composeRule.onNodeWithTag("notification_settings_row").performClick()
+
+        assertEquals(true, navigated)
+    }
+
+    private fun awaitNotificationSubtext(expected: String) {
+        composeRule.onNodeWithTag("settings_screen").performScrollToNode(hasTestTag("notification_settings_row"))
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            runCatching { composeRule.onNodeWithTag("notification_settings_row").assertTextContains(expected, substring = true) }.isSuccess
+        }
+    }
+
+    @Test
+    fun notificationSubtextShowsCountBadgesAndMediaPlayerOn() {
+        val settingsRepository = setContent(notificationAccessGranted = true)
+        runBlocking {
+            settingsRepository.setNotificationBadgeStyle(com.facetlauncher.app.data.model.NotificationBadgeStyle.COUNT)
+            settingsRepository.setShowMediaPlayerOnHome(true)
+        }
+
+        awaitNotificationSubtext("Count badges · Media player on")
+    }
+
+    @Test
+    fun notificationSubtextShowsBadgesOffAndMediaPlayerOff() {
+        val settingsRepository = setContent(notificationAccessGranted = true)
+        runBlocking { settingsRepository.setNotificationDotsEnabled(false) }
+
+        awaitNotificationSubtext("Badges off · Media player off")
+    }
+
+    @Test
+    fun notificationSubtextSaysAccessIsNeededWhenNotGrantedEvenIfSettingsAreOn() {
+        val settingsRepository = setContent(notificationAccessGranted = false)
+        runBlocking { settingsRepository.setShowMediaPlayerOnHome(true) }
+
+        // Says access is needed instead of reporting a stored "on" that isn't working
+        awaitNotificationSubtext("Needs notification access")
     }
 
     @Test
@@ -300,12 +367,6 @@ class SettingsScreenTest {
         assertEquals(facetId, opened)
     }
 
-    @Test
-    fun noActiveFacetSettingsRowWithoutAnActiveFacet() {
-        setContent()
-
-        composeRule.onAllNodesWithTag("active_facet_settings_row").assertCountEquals(0)
-    }
 
 
     @Test

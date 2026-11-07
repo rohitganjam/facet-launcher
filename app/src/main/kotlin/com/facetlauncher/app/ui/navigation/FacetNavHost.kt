@@ -225,6 +225,8 @@ fun FacetNavHost(
                 onViewActiveFacetSettings = { facetId -> navController.navigate(FacetDestinations.facetSettings(facetId)) },
                 onViewFacetPro = { navController.navigate(FacetDestinations.facetPro(ProReason.ABOUT)) },
                 onNavigateToAppearance = { navController.navigate(FacetDestinations.APPEARANCE_SETTINGS) },
+                onNavigateToAppDrawerSettings = { navController.navigate(FacetDestinations.APP_DRAWER_SETTINGS) },
+                onNavigateToNotificationSettings = { navController.navigate(FacetDestinations.NOTIFICATION_SETTINGS) },
                 onNavigateToDockSettings = { navController.navigate(FacetDestinations.dockSettings()) },
                 onNavigateToHomeAppsListSettings = { navController.navigate(FacetDestinations.homeAppsListSettings()) },
                 onNavigateToDockAppsAppearance = { navController.navigate(FacetDestinations.dockAppsAppearance()) },
@@ -258,8 +260,6 @@ fun FacetNavHost(
         settingsComposable(FacetDestinations.APPEARANCE_SETTINGS) {
             AppearanceSettingsScreen(
                 onBack = { navController.popBackStackSafely() },
-                onNavigateToNotificationSettings = { navController.navigate(FacetDestinations.NOTIFICATION_SETTINGS) },
-                onNavigateToAppDrawerSettings = { navController.navigate(FacetDestinations.APP_DRAWER_SETTINGS) },
                 onNavigateToThemesAndColors = { navController.navigate(FacetDestinations.THEMES_AND_COLORS) },
                 onNavigateToFonts = { navController.navigate(FacetDestinations.FONTS) },
                 onNavigateToIcons = { navController.navigate(FacetDestinations.ICONS) },
