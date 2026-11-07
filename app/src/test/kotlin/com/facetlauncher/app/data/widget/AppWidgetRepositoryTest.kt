@@ -459,4 +459,25 @@ class AppWidgetRepositoryTest {
         // Then the system's own bind-permission dialog is told which profile this is
         assertEquals(workHandle, intent.getParcelableExtra<UserHandle>(AppWidgetManager.EXTRA_APPWIDGET_PROVIDER_PROFILE))
     }
+
+    @Test
+    fun `a Work Profile widget is configured through the same host call, by widget id alone`() {
+        // Given a widget bound to a Work Profile provider whose configure activity lives in the work user
+        val workHandle = mock(UserHandle::class.java)
+        val host = mock(LauncherAppWidgetHost::class.java)
+        val activity = mock(Activity::class.java)
+        val repository = AppWidgetRepository(context, mock(AppWidgetManager::class.java), host, personalOnlyUserManager(), fakeAppRepository())
+        val provider = AppWidgetProviderInfo().apply { configure = ComponentName("com.work.widgets", ".ConfigureActivity") }
+        repository.createBindIntent(appWidgetId = 9, provider = provider.configure, userHandle = workHandle)
+
+        // When building the configure intent and starting it
+        val intent = repository.createConfigureIntent(appWidgetId = 9, provider = provider)
+        val started = repository.startConfigureActivity(activity, appWidgetId = 9, requestCode = 1)
+
+        // Then the intent only names the trampoline (never the work activity), and the host, which routes across profiles, starts it
+        assertEquals(ComponentName(context, WidgetConfigureActivity::class.java), intent?.component)
+        assertNull(intent?.getParcelableExtra<UserHandle>(AppWidgetManager.EXTRA_APPWIDGET_PROVIDER_PROFILE))
+        assertTrue(started)
+        verify(host).startAppWidgetConfigureActivityForResult(activity, 9, 0, 1, null)
+    }
 }

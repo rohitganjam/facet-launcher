@@ -2,7 +2,6 @@ package com.facetlauncher.app.ui.hub.picker
 
 import android.content.Intent
 import com.facetlauncher.app.data.model.NativeWidgetRef
-import android.content.Intent
 import com.facetlauncher.app.data.model.AppProfile
 import com.facetlauncher.app.data.model.WidgetProviderOption
 import kotlinx.collections.immutable.ImmutableList

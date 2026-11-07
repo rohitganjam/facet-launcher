@@ -1,7 +1,6 @@
 package com.facetlauncher.app.ui.settings.backup
 
 import android.content.Intent
-import android.content.Intent
 import com.facetlauncher.app.data.model.BackupWidgetPlacement
 
 /**
