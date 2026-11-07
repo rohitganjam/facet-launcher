@@ -4,7 +4,19 @@ import androidx.room.migration.AutoMigrationSpec
 import androidx.room.testing.MigrationTestHelper
 import androidx.sqlite.db.framework.FrameworkSQLiteOpenHelperFactory
 import androidx.test.platform.app.InstrumentationRegistry
+import com.facetlauncher.app.data.model.AppListColumnAlignment
+import com.facetlauncher.app.data.model.AppListGridColumns
+import com.facetlauncher.app.data.model.AppListGridDisplayMode
+import com.facetlauncher.app.data.model.AppListLayout
+import com.facetlauncher.app.data.model.AppListShrinkToFit
+import com.facetlauncher.app.data.model.AppListVerticalAlignment
+import com.facetlauncher.app.data.model.AppRowPosition
+import com.facetlauncher.app.data.model.AppRowPresentation
 import com.facetlauncher.app.data.model.ClockCalendarConfig
+import com.facetlauncher.app.data.model.DockDisplayMode
+import com.facetlauncher.app.data.model.LandscapeOverrides
+import com.facetlauncher.app.data.model.LauncherSettings
+import com.facetlauncher.app.data.model.ListContentMode
 import com.facetlauncher.app.data.model.ClockTemplateId
 import com.facetlauncher.app.data.model.ClockWidgetConfig
 import com.facetlauncher.app.data.model.NativeWidgetConfig
@@ -1175,6 +1187,159 @@ class FacetDatabaseMigrationTest {
         assertEquals(false, own.use24HourTime)
         assertEquals(setOf("3", "4"), own.calendar.calendarIds)
         assertEquals(launcherClock, clockOf(dbV44, 2))
+    }
+
+    private val launcherSettings = LauncherSettings(
+        dockDisplayMode = DockDisplayMode.TEXT,
+        appRowPosition = AppRowPosition.RIGHT,
+        appRowPresentation = AppRowPresentation.TEXT_ONLY,
+        listContentMode = ListContentMode.RECENTS,
+        appsToShowCount = 9,
+        appListVerticalAlignment = AppListVerticalAlignment.TOP,
+        appListLayout = AppListLayout.TWO_COLUMN,
+        appListColumnAlignment = AppListColumnAlignment.MIRRORED,
+        appListGridColumns = AppListGridColumns.SIX,
+        appListGridDisplayMode = AppListGridDisplayMode.TEXT,
+        appListShrinkToFit = AppListShrinkToFit.ON,
+        landscape = LandscapeOverrides(appRowPosition = AppRowPosition.CENTER),
+    )
+
+    /** A facet row at v44: every inherit sentinel and flag off unless [values] says otherwise. */
+    private fun insertFacetV44(db: androidx.sqlite.db.SupportSQLiteDatabase, id: Long, values: Map<String, Any?> = emptyMap()) {
+        val row = linkedMapOf<String, Any?>(
+            "id" to id, "name" to "Facet $id", "position" to id, "clockPlacementOwn" to 0, "clockAlignment" to "LEFT",
+            "overrideApps" to 0, "appRowPosition" to "LAUNCHER_DEFAULT", "appRowPresentation" to "LAUNCHER_DEFAULT",
+            "listContentMode" to "FAVORITES", "appsToShowCount" to 6, "appListVerticalAlignment" to "LAUNCHER_DEFAULT",
+            "appListLayout" to "LAUNCHER_DEFAULT", "appListColumnAlignment" to "LAUNCHER_DEFAULT",
+            "appListGridColumns" to "LAUNCHER_DEFAULT", "appListGridDisplayMode" to "LAUNCHER_DEFAULT",
+            "appListShrinkToFit" to "LAUNCHER_DEFAULT", "overridingFavorites" to 0, "overrideDock" to 0,
+            "dockDisplayMode" to "LAUNCHER_DEFAULT",
+        ).apply { putAll(values) }
+        db.execSQL(
+            "INSERT INTO facets (${row.keys.joinToString()}) VALUES (${row.keys.joinToString { "?" }})",
+            row.values.toTypedArray(),
+        )
+    }
+
+    private fun insertApp(db: androidx.sqlite.db.SupportSQLiteDatabase, list: String, ownerKey: Long, pkg: String, position: Int) {
+        db.execSQL(
+            "INSERT INTO app_placements (list, facetId, ownerKey, packageName, activityName, position, profile, userId) VALUES (?, ?, ?, ?, '.Main', ?, 'PERSONAL', 0)",
+            arrayOf<Any?>(list, ownerKey.takeIf { it != 0L }, ownerKey, pkg, position),
+        )
+    }
+
+    private fun packagesOf(db: androidx.sqlite.db.SupportSQLiteDatabase, list: String, ownerKey: Long): List<String> =
+        db.query("SELECT packageName FROM app_placements WHERE list = '$list' AND ownerKey = $ownerKey ORDER BY position").use {
+            buildList { while (it.moveToNext()) add(it.getString(0)) }
+        }
+
+    private fun foldersOf(db: androidx.sqlite.db.SupportSQLiteDatabase, list: String, ownerKey: Long): List<Long> =
+        db.query("SELECT folderId FROM folder_placements WHERE list = '$list' AND ownerKey = $ownerKey ORDER BY position").use {
+            buildList { while (it.moveToNext()) add(it.getLong(0)) }
+        }
+
+    private fun facetString(db: androidx.sqlite.db.SupportSQLiteDatabase, column: String, id: Long): String? =
+        db.query("SELECT $column FROM facets WHERE id = $id").use { it.moveToFirst(); it.getString(0) }
+
+    @Test
+    fun migration44To45GivesInheritingFacetsTheLauncherDockFavoritesAndLook() {
+        // Given a v44 database: a launcher dock and favorites, an inheriting facet with a stale own dock row, and an overriding facet
+        val db44 = helper.createDatabase(TEST_DB, 44)
+        db44.execSQL("INSERT INTO folders (id, name) VALUES (10, 'Social')")
+        insertFacetV44(db44, 1)
+        insertFacetV44(
+            db44, 2,
+            mapOf(
+                "overrideDock" to 1, "overridingFavorites" to 1, "overrideApps" to 1, "listContentMode" to "MOST_USED", "appsToShowCount" to 4,
+                "dockDisplayMode" to "ICONS", "appRowPosition" to "LEFT", "appRowPresentation" to "ICON_ONLY", "appListVerticalAlignment" to "BOTTOM",
+                "appListLayout" to "GRID", "appListColumnAlignment" to "BOTH_LEFT", "appListGridColumns" to "THREE",
+                "appListGridDisplayMode" to "ICONS", "appListShrinkToFit" to "OFF",
+            ),
+        )
+        insertFacetV44(db44, 3, mapOf("landscapeAppRowPosition" to "LEFT"))
+        insertApp(db44, "DOCK", 0, "com.example.a", 0)
+        insertApp(db44, "DOCK", 0, "com.example.b", 1)
+        db44.execSQL("INSERT INTO folder_placements (list, facetId, ownerKey, folderId, position) VALUES ('DOCK', NULL, 0, 10, 2)")
+        insertApp(db44, "FAVORITES", 0, "com.example.f", 0)
+        insertApp(db44, "DOCK", 1, "com.example.stale", 0)
+        insertApp(db44, "DOCK", 2, "com.example.own", 0)
+        insertApp(db44, "FAVORITES", 2, "com.example.ownfav", 0)
+        db44.close()
+
+        // When migrating to v45 with the launcher-wide settings
+        val db45 = helper.runMigrationsAndValidate(TEST_DB, 45, true, Migrations.migration44To45 { launcherSettings })
+
+        // Then the inheriting facet owns a copy of the launcher's lists, its stale row gone
+        assertEquals(listOf("com.example.a", "com.example.b"), packagesOf(db45, "DOCK", 1))
+        assertEquals(listOf(10L), foldersOf(db45, "DOCK", 1))
+        assertEquals(listOf("com.example.f"), packagesOf(db45, "FAVORITES", 1))
+        // And the launcher's own lists are untouched
+        assertEquals(listOf("com.example.a", "com.example.b"), packagesOf(db45, "DOCK", 0))
+        // And its content mode, count and every look field now hold the launcher's values
+        assertEquals("RECENTS", facetString(db45, "listContentMode", 1))
+        assertEquals("9", facetString(db45, "appsToShowCount", 1))
+        assertEquals("TEXT", facetString(db45, "dockDisplayMode", 1))
+        assertEquals("RIGHT", facetString(db45, "appRowPosition", 1))
+        assertEquals("TEXT_ONLY", facetString(db45, "appRowPresentation", 1))
+        assertEquals("TOP", facetString(db45, "appListVerticalAlignment", 1))
+        assertEquals("TWO_COLUMN", facetString(db45, "appListLayout", 1))
+        assertEquals("MIRRORED", facetString(db45, "appListColumnAlignment", 1))
+        assertEquals("SIX", facetString(db45, "appListGridColumns", 1))
+        assertEquals("TEXT", facetString(db45, "appListGridDisplayMode", 1))
+        assertEquals("ON", facetString(db45, "appListShrinkToFit", 1))
+        // And a landscape twin follows the launcher's landscape value only where the launcher has one
+        assertEquals("CENTER", facetString(db45, "landscapeAppRowPosition", 1))
+        assertNull(facetString(db45, "landscapeAppListVerticalAlignment", 1))
+    }
+
+    @Test
+    fun migration44To45LeavesAnOverridingFacetAndAnExplicitLandscapeValueAlone() {
+        // Given an overriding facet, and an inheriting one whose landscape twin is already set
+        val db44 = helper.createDatabase(TEST_DB, 44)
+        insertFacetV44(
+            db44, 2,
+            mapOf(
+                "overrideDock" to 1, "overridingFavorites" to 1, "overrideApps" to 1, "listContentMode" to "MOST_USED", "appsToShowCount" to 4,
+                "dockDisplayMode" to "ICONS", "appRowPosition" to "LEFT", "appRowPresentation" to "ICON_ONLY", "appListVerticalAlignment" to "BOTTOM",
+                "appListLayout" to "GRID", "appListColumnAlignment" to "BOTH_LEFT", "appListGridColumns" to "THREE",
+                "appListGridDisplayMode" to "ICONS", "appListShrinkToFit" to "OFF",
+            ),
+        )
+        insertFacetV44(db44, 3, mapOf("landscapeAppRowPosition" to "LEFT"))
+        insertApp(db44, "DOCK", 0, "com.example.a", 0)
+        insertApp(db44, "DOCK", 2, "com.example.own", 0)
+        insertApp(db44, "FAVORITES", 2, "com.example.ownfav", 0)
+        db44.close()
+
+        // When migrating to v45
+        val db45 = helper.runMigrationsAndValidate(TEST_DB, 45, true, Migrations.migration44To45 { launcherSettings })
+
+        // Then the overriding facet keeps its own lists and values
+        assertEquals(listOf("com.example.own"), packagesOf(db45, "DOCK", 2))
+        assertEquals(listOf("com.example.ownfav"), packagesOf(db45, "FAVORITES", 2))
+        assertEquals("MOST_USED", facetString(db45, "listContentMode", 2))
+        assertEquals("4", facetString(db45, "appsToShowCount", 2))
+        assertEquals("LEFT", facetString(db45, "appRowPosition", 2))
+        assertEquals("GRID", facetString(db45, "appListLayout", 2))
+        assertNull(facetString(db45, "landscapeAppRowPosition", 2))
+        // And an explicit landscape value survives while the portrait value resolves
+        assertEquals("LEFT", facetString(db45, "landscapeAppRowPosition", 3))
+        assertEquals("RIGHT", facetString(db45, "appRowPosition", 3))
+    }
+
+    @Test
+    fun migration44To45HandlesAnEmptyLauncherDock() {
+        // Given an inheriting facet with a stale own dock row and no launcher dock
+        val db44 = helper.createDatabase(TEST_DB, 44)
+        insertFacetV44(db44, 1)
+        insertApp(db44, "DOCK", 1, "com.example.stale", 0)
+        db44.close()
+
+        // When migrating to v45
+        val db45 = helper.runMigrationsAndValidate(TEST_DB, 45, true, Migrations.migration44To45 { launcherSettings })
+
+        // Then the facet's dock is empty, as the launcher's is
+        assertEquals(emptyList<String>(), packagesOf(db45, "DOCK", 1))
     }
 
     /** A v27 facet row — the v25 shape plus the two calendar-display columns, which a freshly created database has no defaults for. */

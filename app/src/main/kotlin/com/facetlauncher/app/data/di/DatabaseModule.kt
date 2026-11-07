@@ -15,7 +15,9 @@ import com.facetlauncher.app.data.local.WidgetPlacementDao
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import com.facetlauncher.app.data.local.legacyLauncherClock
+import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.model.ClockWidgetConfig
+import com.facetlauncher.app.data.model.LauncherSettings
 import dagger.Lazy
 import dagger.Module
 import dagger.Provides
@@ -39,6 +41,12 @@ object DatabaseModule {
             .addMigrations(
                 Migrations.migration42To43 {
                     runCatching { runBlocking { settingsDataStore.get().data.first().legacyLauncherClock() } }.getOrDefault(ClockWidgetConfig())
+                },
+            )
+            // Read only when 44→45 runs; a facet that inherited the launcher's dock or look is given today's values.
+            .addMigrations(
+                Migrations.migration44To45 {
+                    runCatching { runBlocking { SettingsRepository(settingsDataStore.get()).settings.first() } }.getOrDefault(LauncherSettings())
                 },
             )
             // Real installs now hold real user data (facets, dock/favorite layout, widget

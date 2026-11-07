@@ -3,6 +3,7 @@ package com.facetlauncher.app.data.local
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.facetlauncher.app.data.model.ClockWidgetConfig
+import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.data.model.upgradeLegacyNativeWidgetConfig
 
 /**
@@ -712,6 +713,14 @@ object Migrations {
      */
     fun migration42To43(launcherClock: () -> ClockWidgetConfig): Migration = object : Migration(42, 43) {
         override fun migrate(db: SupportSQLiteDatabase) = materializeClockConfigs(db, launcherClock())
+    }
+
+    /**
+     * 44→45 changes no schema: it writes the launcher's dock, favorites, content mode and look into every facet that inherited them
+     * ([materializeFacetDefaults]), so dropping the override flags afterwards loses nothing. [launcher] is read from the settings DataStore.
+     */
+    fun migration44To45(launcher: () -> LauncherSettings): Migration = object : Migration(44, 45) {
+        override fun migrate(db: SupportSQLiteDatabase) = materializeFacetDefaults(db, launcher())
     }
 
     val ALL: Array<Migration> = arrayOf(
