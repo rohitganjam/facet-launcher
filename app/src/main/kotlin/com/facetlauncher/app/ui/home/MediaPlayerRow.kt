@@ -173,7 +173,7 @@ private fun MediaText(
     Column(modifier = modifier.clickable(onClick = onOpen)) {
         Text(
             text = state.title,
-            style = MaterialTheme.typography.titleSmall.copy(shadow = shadow, fontWeight = fontWeight),
+            style = MaterialTheme.typography.bodyLarge.copy(shadow = shadow, fontWeight = fontWeight),
             color = color,
             maxLines = 1,
             softWrap = false,
@@ -182,7 +182,7 @@ private fun MediaText(
         state.artist?.let {
             Text(
                 text = it,
-                style = MaterialTheme.typography.bodySmall.copy(shadow = shadow),
+                style = MaterialTheme.typography.bodyMedium.copy(shadow = shadow),
                 color = color.copy(alpha = 0.7f),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
