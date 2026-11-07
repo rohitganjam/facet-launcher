@@ -239,7 +239,7 @@
     <string name="settings_section_system">Systeem</string>
     <string name="settings_section_about">Over</string>
     <string name="settings_facets_title">Facetten beheren</string>
-    <string name="settings_facets_subtitle">Facetten toevoegen, hernoemen, ordenen en verwijderen</string>
+    <string name="settings_facets_subtitle">Facetten toevoegen, bewerken, ordenen en verwijderen</string>
     <string name="settings_active_facet_title">Instellingen van %1$s</string>
     <string name="settings_active_facet_subtitle">Instellingen speciaal voor %1$s, je huidige facet</string>
     <string name="settings_change_wallpaper_title">Achtergrond wijzigen</string>

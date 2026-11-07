@@ -235,7 +235,7 @@
     <string name="settings_section_system">Sistema</string>
     <string name="settings_section_about">Acerca de</string>
     <string name="settings_facets_title">Gestionar facetas</string>
-    <string name="settings_facets_subtitle">Añade, renombra, reordena y elimina facetas</string>
+    <string name="settings_facets_subtitle">Añade, edita, reordena y elimina facetas</string>
     <string name="settings_active_facet_title">Ajustes de %1$s</string>
     <string name="settings_active_facet_subtitle">Ajustes específicos de %1$s, tu faceta actual</string>
     <string name="settings_change_wallpaper_title">Cambiar fondo de pantalla</string>

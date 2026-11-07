@@ -275,7 +275,7 @@
     <string name="settings_section_system">System</string>
     <string name="settings_section_about">About</string>
     <string name="settings_facets_title">Manage Facets</string>
-    <string name="settings_facets_subtitle">Add, rename, reorder and delete facets</string>
+    <string name="settings_facets_subtitle">Add, edit, reorder and delete facets</string>
     <string name="settings_active_facet_title">%1$s Settings</string>
     <string name="settings_active_facet_subtitle">Settings specific to %1$s, your current facet</string>
     <string name="settings_change_wallpaper_title">Change wallpaper</string>

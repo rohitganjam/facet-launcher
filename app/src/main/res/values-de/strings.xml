@@ -235,7 +235,7 @@
     <string name="settings_section_system">System</string>
     <string name="settings_section_about">Über</string>
     <string name="settings_facets_title">Facetten verwalten</string>
-    <string name="settings_facets_subtitle">Facetten hinzufügen, umbenennen, sortieren und löschen</string>
+    <string name="settings_facets_subtitle">Facetten hinzufügen, bearbeiten, sortieren und löschen</string>
     <string name="settings_active_facet_title">%1$s-Einstellungen</string>
     <string name="settings_active_facet_subtitle">Einstellungen speziell für %1$s, deine aktuelle Facette</string>
     <string name="settings_change_wallpaper_title">Hintergrundbild ändern</string>

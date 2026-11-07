@@ -275,7 +275,7 @@ class SettingsScreenTest {
         setContent()
 
         composeRule.onNodeWithTag("view_facets_row").assertTextContains("Manage Facets", substring = true)
-        composeRule.onNodeWithTag("view_facets_row").assertTextContains("Add, rename, reorder and delete facets", substring = true)
+        composeRule.onNodeWithTag("view_facets_row").assertTextContains("Add, edit, reorder and delete facets", substring = true)
     }
 
     @Test
