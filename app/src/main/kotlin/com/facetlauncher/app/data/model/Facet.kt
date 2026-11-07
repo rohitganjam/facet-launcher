@@ -1,6 +1,6 @@
 package com.facetlauncher.app.data.model
 
-/** The clock scale a facet starts with, and that "Reset clock position" returns to. */
+/** The scale a clock without a saved box draws at; the saved size is the box on its page. */
 const val DEFAULT_CLOCK_SCALE = 0.8f
 
 /**
@@ -13,25 +13,8 @@ data class Facet(
     val name: String,
     val position: Int,
 
-    // Clock + Calendar design block — one override flag for the whole visual unit.
-    val overrideClock: Boolean = false,
-    val clockTemplateId: ClockTemplateId = ClockTemplateId.LIGHT_STACK,
-    val clockFontOption: ClockFontOption = ClockFontOption.LAUNCHER_DEFAULT,
-    val clockColorOption: ClockColorOption = ClockColorOption.THEME,
-    val clockAccentColorOption: ClockColorOption = ClockColorOption.ACCENT_PRIMARY,
-    val use24HourTime: Boolean = false,
-    val clockShowMeridiem: Boolean = false,
-    val clockDateStyle: ClockDateStyle = ClockDateStyle.FULL,
-    /** The clock accessories this facet shows while it overrides the clock block; see `LauncherSettings.showNextAlarm`. */
-    val clockShowAlarm: Boolean = true,
-    val clockShowBattery: Boolean = true,
-    val clockShowWeather: Boolean = false,
-    /** The weather picture style this facet uses while it overrides the clock block; see `LauncherSettings.weatherIconStyle`. */
-    val clockWeatherIconStyle: WeatherIconStyle = WeatherIconStyle.COLORED,
-    /** Where this facet's clock shows the weather for while it overrides the clock block; `null` follows Weather settings. */
-    val clockWeatherLocation: WidgetWeatherLocation? = null,
     /**
-     * Whether the placement fields below ([clockAlignment], [clockZoneHeightDp], [clockScale] and their landscape twins)
+     * Whether the placement fields below ([clockAlignment], [clockZoneHeightDp] and their landscape twins)
      * are this facet's own. `false` until the user first adjusts it on Home: the facet then shows the launcher's built-in
      * fallback placement. Placement is never inherited by choice, so the clock override does not touch it.
      */
@@ -39,17 +22,15 @@ data class Facet(
     val clockAlignment: ClockAlignment = ClockAlignment.LEFT,
     /** `null` until the facet drags the clock's grab handle for the first time. */
     val clockZoneHeightDp: Float? = null,
-    val clockScale: Float = DEFAULT_CLOCK_SCALE,
     /**
      * What the clock slot shows, in swipe order: the native clock and hosted widgets, each with its own size and
      * alignment. Empty draws nothing there. Held in its own table and loaded by `FacetRepository`; a facet built by
      * hand (a preview, a test) starts with the native clock, as a new facet does.
      */
     val clockStack: List<ClockStackItem> = listOf(nativeClockPage()),
-    /** Landscape's own clock alignment, zone height and scale; `null` uses the portrait value. */
+    /** Landscape's own clock alignment and zone height; `null` uses the portrait value. */
     val landscapeClockAlignment: ClockAlignment? = null,
     val landscapeClockZoneHeightDp: Float? = null,
-    val landscapeClockScale: Float? = null,
 
     // Apps section
     val overrideApps: Boolean = false,
@@ -75,13 +56,6 @@ data class Facet(
     val overrideDock: Boolean = false,
     val dockDisplayMode: DockDisplayMode = DockDisplayMode.LAUNCHER_DEFAULT,
 
-    // Calendar selection section
-    val overrideCalendar: Boolean = false,
-    val showAllDayEvents: Boolean = true,
-    val showCalendarIndicator: Boolean = true,
-    val calendarItemsToShow: Int = CalendarDisplayOptions.MAX_ITEMS,
-    /** `null` means every calendar is implicitly selected. */
-    val selectedCalendarIds: Set<String>? = null,
 )
 
 /**
@@ -119,7 +93,6 @@ val Facet.landscape: LandscapeOverrides
     get() = LandscapeOverrides(
         clockAlignment = landscapeClockAlignment,
         clockZoneHeightDp = landscapeClockZoneHeightDp,
-        clockScale = landscapeClockScale,
         appRowPosition = landscapeAppRowPosition,
         appListVerticalAlignment = landscapeAppListVerticalAlignment,
         appListColumnAlignment = landscapeAppListColumnAlignment,
@@ -129,19 +102,10 @@ val Facet.landscape: LandscapeOverrides
 fun Facet.withLandscape(overrides: LandscapeOverrides): Facet = copy(
     landscapeClockAlignment = overrides.clockAlignment,
     landscapeClockZoneHeightDp = overrides.clockZoneHeightDp,
-    landscapeClockScale = overrides.clockScale,
     landscapeAppRowPosition = overrides.appRowPosition,
     landscapeAppListVerticalAlignment = overrides.appListVerticalAlignment,
     landscapeAppListColumnAlignment = overrides.appListColumnAlignment,
 )
-
-/** The calendar display options in force for `this` facet (or the launcher-wide ones when it's `null` or not overriding the calendar). */
-fun Facet?.effectiveCalendarDisplay(settings: LauncherSettings): CalendarDisplayOptions =
-    if (this?.overrideCalendar == true) {
-        CalendarDisplayOptions(showCalendarIndicator, calendarItemsToShow)
-    } else {
-        CalendarDisplayOptions(settings.showCalendarIndicator, settings.calendarItemsToShow)
-    }
 
 /** Where [list] lives for `this` facet: its own rows when it overrides that list, else the launcher-wide default (also the answer when there is no active facet). */
 fun Facet?.placementTarget(list: PlacementList): PlacementTarget = when {

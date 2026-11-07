@@ -38,6 +38,8 @@ fun ClockWidgetPickerScreen(
     viewModel: ClockWidgetPickerViewModel = hiltViewModel(),
     /** Called, before [onDone], with a placed widget that has settings to choose first. */
     onConfigureNewWidget: (NativeWidgetRef) -> Unit = {},
+    /** Whether the facet has no clock now, so the picker can offer it. */
+    clockAvailable: Boolean = false,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val configureNewWidget by rememberUpdatedState(onConfigureNewWidget)
@@ -89,5 +91,7 @@ fun ClockWidgetPickerScreen(
         modifier = modifier,
         nativeWidgets = ALL_NATIVE_WIDGETS,
         onNativeWidgetSelect = { type -> viewModel.onNativeWidgetSelect(type, target) },
+        showClockOption = clockAvailable,
+        onClockSelect = { viewModel.onClockSelect(target) },
     )
 }

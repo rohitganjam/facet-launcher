@@ -158,6 +158,9 @@ internal fun HubWidgetPickerContent(
     /** The widgets Facet draws itself, offered first. */
     nativeWidgets: ImmutableList<NativeWidgetType> = persistentListOf(),
     onNativeWidgetSelect: (NativeWidgetType) -> Unit = {},
+    /** The Home pickers offer the clock too, while the facet has none. */
+    showClockOption: Boolean = false,
+    onClockSelect: () -> Unit = {},
 ) {
     BoxWithConstraints(
         modifier = modifier
@@ -201,7 +204,7 @@ internal fun HubWidgetPickerContent(
                     }
                     // The widgets Facet draws itself belong to the personal side.
                     if (uiState.query.isBlank() && uiState.tab == WidgetPickerTab.PERSONAL) {
-                        item { NativeWidgetPickerSection(types = nativeWidgets, onSelect = onNativeWidgetSelect) }
+                        item { NativeWidgetPickerSection(types = nativeWidgets, tileWidth = tileWidth, onSelect = onNativeWidgetSelect, showClock = showClockOption, onClockSelect = onClockSelect) }
                     }
                     items(uiState.groups, key = { it.appLabel }) { group ->
                         WidgetProviderGroupRow(group = group, tileWidth = tileWidth, onProviderSelect = onProviderSelect)
@@ -242,21 +245,11 @@ private fun NoWidgetsFound() {
 }
 
 private val WIDGET_PICKER_HORIZONTAL_PADDING = 24.dp
-private val WIDGET_TILE_TARGET_WIDTH = 96.dp
-private val WIDGET_TILE_SPACING = 8.dp
+internal val WIDGET_TILE_SPACING = 12.dp
+internal val WIDGET_TILE_HEIGHT = 120.dp
 
-/**
- * Tile width sized to fill [availableWidth] with as many whole [WIDGET_TILE_TARGET_WIDTH]-ish
- * tiles as fit, rather than a fixed dp value — so the grid uses the screen's actual width
- * instead of assuming a phone-sized column count.
- */
-@Composable
-private fun widgetTileWidth(availableWidth: Dp): Dp {
-    val columns = ((availableWidth.value + WIDGET_TILE_SPACING.value) / (WIDGET_TILE_TARGET_WIDTH.value + WIDGET_TILE_SPACING.value))
-        .toInt()
-        .coerceAtLeast(1)
-    return ((availableWidth.value - WIDGET_TILE_SPACING.value * (columns - 1)) / columns).dp
-}
+/** Two tiles per row, so each preview is large enough to read. */
+internal fun widgetTileWidth(availableWidth: Dp): Dp = (availableWidth - WIDGET_TILE_SPACING) / 2
 
 @Composable
 private fun HubWidgetPickerHeader(remaining: Int?, onBack: () -> Unit, modifier: Modifier = Modifier, title: String? = null) {
@@ -328,7 +321,7 @@ private fun WidgetProviderOptionTile(option: WidgetProviderOption, tileWidth: Dp
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(66.dp)
+                .height(WIDGET_TILE_HEIGHT)
                 .clip(RoundedCornerShape(12.dp))
                 .border(1.dp, Hairline, RoundedCornerShape(12.dp)),
         ) {

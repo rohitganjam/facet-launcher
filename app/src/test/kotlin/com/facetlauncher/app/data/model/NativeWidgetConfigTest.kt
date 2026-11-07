@@ -58,12 +58,39 @@ class NativeWidgetConfigTest {
     }
 
     @Test
-    fun `a damaged city line follows the launcher`() {
-        // Given a city line missing its coordinates
-        val decoded = decodeNativeWidgetConfig("wx\tcity\tOslo")
+    fun `a city stored without its coordinates follows the launcher`() {
+        // Given stored JSON naming a city but missing its coordinates
+        val decoded = decodeNativeWidgetConfig("""{"weather":{"city":"Oslo"}}""")
 
         // Then no location is read
         assertNull(decoded.weatherLocation)
+    }
+
+    @Test
+    fun `a value that is not JSON follows the launcher`() {
+        // Given text that does not parse, including the old tab-separated form
+        // Then nothing is read, and the widget follows the launcher
+        assertTrue(decodeNativeWidgetConfig("not json").followsLauncher)
+        assertTrue(decodeNativeWidgetConfig("wx\tcurrent").followsLauncher)
+        assertTrue(decodeNativeWidgetConfig("").followsLauncher)
+    }
+
+    @Test
+    fun `fields a newer version added are ignored`() {
+        // Given stored JSON with a key this version does not know
+        val decoded = decodeNativeWidgetConfig("""{"showAllDayEvents":true,"somethingNew":1}""")
+
+        // Then the fields it knows are still read
+        assertEquals(true, decoded.showAllDayEvents)
+    }
+
+    @Test
+    fun `the stored form is JSON with the chosen calendars sorted and fields that follow the launcher left out`() {
+        // Given a widget with two calendars chosen and nothing else
+        val encoded = NativeWidgetConfig(calendarIds = setOf("7", "3")).encode()
+
+        // Then only that field is stored, in a stable order
+        assertEquals("""{"calendarIds":["3","7"]}""", encoded)
     }
 
     @Test
@@ -97,7 +124,7 @@ class NativeWidgetConfigTest {
     fun `a damaged stored weather location follows Weather settings`() {
         // Given a stored value that does not hold a whole location
         // Then it decodes to nothing rather than a half-built place
-        assertNull(decodeWeatherLocation("wx\tcity\tOslo"))
+        assertNull(decodeWeatherLocation("""{"weather":{"city":"Oslo"}}"""))
         assertNull(decodeWeatherLocation("not a location"))
     }
 }

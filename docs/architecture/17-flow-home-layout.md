@@ -92,15 +92,17 @@ The live drag value is clamped too, so the handle follows the finger as soon as 
 
 ## 3. Portrait-only logic that landscape must not run
 
+The clock is sized as a box in dp, stored on its clock page (`clock_stack_items.widthDp`/`heightDp` and the landscape twins, aspect-locked). `rememberHomeFrame` turns the saved width into the draw scale once the clock is measured (`withBoxScale`: width over the natural width, so a new template keeps the box's width) and turns the resize handles' scale commit into a box (`withBoxCommit` to `HomeClockActions.onBoxSizeCommit`, saved by `HomeViewModel.onClockBoxSizeCommit`). A clock page never resized has no box and draws at the default scale (`DEFAULT_CLOCK_SCALE`, 0.8) until its first resize; there is no stored scale anywhere (the facet and launcher scale columns and keys are gone), and "Reset clock position" clears the page's box. The geometry maths below still works in a derived scale.
+
 The scale re-clamp (`ClockScaleReclampEffect`, using `ClockFit.maxScale`) is portrait geometry, and in
-landscape it would persist a wrong `clockScale`, so it is skipped. It also waits until the height handle has room to move (`isClockGeometryMeasured`: ceiling above floor, read from the latest frame): until the content height reaches the geometry the handle sits at its floor and the fit reads as the minimum scale. If the geometry never settles it saves nothing. The compact-spacing check reserves
+landscape it would save a wrong box, so it is skipped. It also waits until the height handle has room to move (`isClockGeometryMeasured`: ceiling above floor, read from the latest frame): until the content height reaches the geometry the handle sits at its floor and the fit reads as the minimum scale. If the geometry never settles it saves nothing. The compact-spacing check reserves
 nothing above the list in landscape (`HomeMediaLayout.listTopTargetPx` is 0).
 
 With two or more clock pages the portrait list also moves down by `CLOCK_PAGE_DOTS_ROW_HEIGHT` (20dp): the page dots (`ClockPageDots`) take that row under the divider, or under the media row when it shows (`HomeMediaLayout.dotsTopPx`). They fade in during a swipe and for 2.5 s after any page change, and not on first composition. Landscape overlays the same dots at the bottom centre of the clock pane (`HomeLandscapeLayout`'s `clockPaneOverlay`, no layout space). In clock adjust mode both are held visible (`forceShown`). An empty clock stack draws nothing in the clock slot, which keeps its place so the divider and list do not move.
 
 ## 4. Landscape adjust mode
 
-Long-pressing the clock opens the same menu, now with "Adjust clock size & position". The controls:
+Long-pressing a widget (the clock, the events under it, a Facet widget or a hosted one) opens that widget's sheet, whose "Adjust widget size & position" row enters adjust mode ([12](12-flow-drawer-search-and-app-actions.md) §4); the free-space Home sheet has no such row. The controls:
 
 - **Divider handle.** `ClockZoneHandle(dragOrientation = Horizontal)`: a full-height rail in the gap
   between the panes, dragged left and right. The pane width is saved in landscape's own
@@ -113,8 +115,8 @@ Long-pressing the clock opens the same menu, now with "Adjust clock size & posit
 - **Scale handles.** On the clock's corners away from the anchor (bottom corners for a top-aligned clock,
   top corners otherwise). The clock scales from its left edge around top, middle or bottom
   (`ClockBlock(clockScaleOriginY)`); `landscapeScaleAtTouch` turns a touch into a scale and
-  `landscapeMaxClockScale` limits it to the pane. Dragging one saves landscape's own scale
-  (`landscapeClockScale`, falling back to portrait's until set).
+  `landscapeMaxClockScale` limits it to the pane. Dragging one saves landscape's own box
+  (`clock_stack_items.landscapeWidthDp`/`landscapeHeightDp`, falling back to portrait's until set).
 - **Narrow pane.** As with portrait's height handle, pulling the divider left shrinks the clock in real
   time. It stops at the smallest clock scale plus the margins (the live drag value is clamped too, so the
   handle never loses the finger), and on release the shrunk scale is saved so it doesn't snap back.
@@ -156,10 +158,10 @@ facet-preview cards, and gesture thresholds for a short window.
 
 ## 5. Who owns the placement
 
-A facet's clock placement (alignment, scale, divider, landscape twins) is always set from this screen, never from
+A facet's clock placement (alignment, divider height, landscape twins; the size is the clock page's dp box) is always set from this screen, never from
 Settings, and never inherited by choice. `CommitClockPlacementUseCase` saves each adjust-mode commit to the active
 facet: on the first one it copies the placement the facet is showing (the launcher's fallback) into the facet in both
 orientations and sets `facets.clockPlacementOwn`, so changing one value does not move the others. A widget page keeps
 its own alignment on its stack item (`ClockWidgetFacetController.commitPageAlignment`); the clock page uses the
-facet's. "Reset clock position" on the facet's clock style screen clears the flag. `overrideClock` only governs the
-clock's style, calendar and accessories.
+facet's. "Reset clock position" on the facet's clock style screen clears the flag. The clock's style, calendar and accessories live in its own
+`ClockWidgetConfig`, not on the facet.

@@ -1,5 +1,6 @@
 package com.facetlauncher.app.domain
 
+import com.facetlauncher.app.data.model.BackupFacet
 import com.facetlauncher.app.data.model.NativeWidgetType
 import com.facetlauncher.app.data.WidgetPlacementRepository
 import com.facetlauncher.app.data.ClockStackRepository
@@ -93,8 +94,9 @@ class ImportBackupUseCase @Inject constructor(
     private val widgetPlacementRepository: WidgetPlacementRepository,
 ) {
     suspend operator fun invoke(uri: Uri): ImportBackupResult {
-        val bundle = backupRepository.readBackup(uri) ?: return ImportBackupResult.InvalidFile
-        if (bundle.backupVersion > CURRENT_BACKUP_VERSION) return ImportBackupResult.UnsupportedVersion(bundle.backupVersion)
+        val read = backupRepository.readBackup(uri) ?: return ImportBackupResult.InvalidFile
+        if (read.backupVersion > CURRENT_BACKUP_VERSION) return ImportBackupResult.UnsupportedVersion(read.backupVersion)
+        val bundle = read.upgradedToCurrent()
 
         applySettings(bundle.settings)
 
@@ -108,26 +110,7 @@ class ImportBackupUseCase @Inject constructor(
         facetRepository.deleteAllFacets()
         var activeFacetId: Long? = null
         bundle.facets.forEachIndexed { index, backupFacet ->
-            val newId = facetRepository.restoreFacet(backupFacet.toFacet())
-            clockStackRepository.restoreNativeWidgets(newId, backupFacet.nativeStackPages.mapNotNull { it.toStackItem() })
-            val favoritesTarget = PlacementTarget(PlacementList.FAVORITES, newId)
-            val dockTarget = PlacementTarget(PlacementList.DOCK, newId)
-            backupFacet.favorites.forEach { entry ->
-                placementRepository.restoreApp(entry.toAppPlacementEntity(PlacementList.FAVORITES, newId))
-            }
-            backupFacet.dockApps.forEach { entry ->
-                placementRepository.restoreApp(entry.toAppPlacementEntity(PlacementList.DOCK, newId))
-            }
-            backupFacet.dockFolderPlacements.forEach { placement ->
-                newFolderIdByIndex[placement.folderIndex]?.let { folderId ->
-                    placementRepository.restoreFolderPlacement(dockTarget, folderId, placement.position)
-                }
-            }
-            backupFacet.favoriteFolderPlacements.forEach { placement ->
-                newFolderIdByIndex[placement.folderIndex]?.let { folderId ->
-                    placementRepository.restoreFolderPlacement(favoritesTarget, folderId, placement.position)
-                }
-            }
+            val newId = restoreFacet(backupFacet, newFolderIdByIndex)
             if (index == bundle.settings.activeFacetIndex) activeFacetId = newId
         }
         activeFacetId?.let { settingsRepository.setActiveFacetId(it) }
@@ -164,6 +147,35 @@ class ImportBackupUseCase @Inject constructor(
         )
     }
 
+    /** Restores one facet: its row, clock and widget pages, favorites and dock; returns the new row id. */
+    private suspend fun restoreFacet(backupFacet: BackupFacet, newFolderIdByIndex: Map<Int, Long>): Long {
+        val newId = facetRepository.restoreFacet(backupFacet.toFacet())
+        clockStackRepository.restoreClock(
+            newId, backupFacet.clockConfig, backupFacet.clockWidthDp, backupFacet.clockHeightDp,
+            backupFacet.clockLandscapeWidthDp, backupFacet.clockLandscapeHeightDp,
+        )
+        clockStackRepository.restoreNativeWidgets(newId, backupFacet.nativeStackPages.mapNotNull { it.toStackItem() })
+        val favoritesTarget = PlacementTarget(PlacementList.FAVORITES, newId)
+        val dockTarget = PlacementTarget(PlacementList.DOCK, newId)
+        backupFacet.favorites.forEach { entry ->
+            placementRepository.restoreApp(entry.toAppPlacementEntity(PlacementList.FAVORITES, newId))
+        }
+        backupFacet.dockApps.forEach { entry ->
+            placementRepository.restoreApp(entry.toAppPlacementEntity(PlacementList.DOCK, newId))
+        }
+        backupFacet.dockFolderPlacements.forEach { placement ->
+            newFolderIdByIndex[placement.folderIndex]?.let { folderId ->
+                placementRepository.restoreFolderPlacement(dockTarget, folderId, placement.position)
+            }
+        }
+        backupFacet.favoriteFolderPlacements.forEach { placement ->
+            newFolderIdByIndex[placement.folderIndex]?.let { folderId ->
+                placementRepository.restoreFolderPlacement(favoritesTarget, folderId, placement.position)
+            }
+        }
+        return newId
+    }
+
     /** A widget Facet draws itself has no binding to redo, so it goes straight back on the Hub; returns the hosted ones, which wait in the re-add queue. */
     private suspend fun restoreNativeHubWidgets(placements: List<BackupWidgetPlacement>): List<BackupWidgetPlacement> {
         widgetPlacementRepository.deleteAllNative()
@@ -195,8 +207,6 @@ class ImportBackupUseCase @Inject constructor(
             setSearchBarPosition(settings.searchBarPosition.toEnumOrDefault(SearchBarPosition.TOP))
             setDrawerFolderDisplayMode(settings.drawerFolderDisplayMode.toEnumOrDefault(DrawerFolderDisplayMode.DO_NOT_SHOW))
             setShowAllDayEvents(settings.showAllDayEvents)
-            setShowCalendarIndicator(settings.showCalendarIndicator)
-            setCalendarItemsToShow(settings.calendarItemsToShow)
             setSearchContactsEnabled(settings.searchContactsEnabled)
             setThemeMode(settings.themeMode.toEnumOrDefault(ThemeMode.SYSTEM))
             setSystemBarIconStyle(settings.systemBarIconStyle.toEnumOrDefault(SystemBarIconStyle.MATCH_THEME))
@@ -225,10 +235,6 @@ class ImportBackupUseCase @Inject constructor(
             setAppListShrinkToFit(settings.appListShrinkToFit.toEnumOrDefault(AppListShrinkToFit.OFF))
             setListContentMode(settings.listContentMode.toEnumOrDefault(ListContentMode.FAVORITES))
             setAppsToShowCount(settings.appsToShowCount)
-            setClockTemplateId(settings.clockTemplateId.toEnumOrDefault(ClockTemplateId.LIGHT_STACK))
-            setClockFontOption(settings.clockFontOption.toEnumOrDefault(ClockFontOption.LAUNCHER_DEFAULT))
-            setClockColorOption(settings.clockColorOption.toEnumOrDefault(ClockColorOption.THEME))
-            setClockShowMeridiem(settings.clockShowMeridiem)
             setHomeAppsFontWeight(settings.homeAppsFontWeight.toEnumOrDefault(FontWeightOption.REGULAR))
         }
     }
@@ -236,8 +242,6 @@ class ImportBackupUseCase @Inject constructor(
     /** The clock accessory switches and the weather options; the chosen city comes back only when all four of its fields are present. */
     private suspend fun applyAccessoriesAndWeather(settings: BackupSettings) {
         with(settingsRepository) {
-            setShowNextAlarm(settings.showNextAlarm)
-            setShowBatteryPercentage(settings.showBatteryPercentage)
             setShowWeather(settings.showWeather)
             setTemperatureUnit(settings.temperatureUnit.toEnumOrDefault(TemperatureUnit.AUTO))
             setWindSpeedUnit(settings.windSpeedUnit.toEnumOrDefault(WindSpeedUnit.AUTO))
@@ -253,18 +257,14 @@ class ImportBackupUseCase @Inject constructor(
     /** The clock's look and placement, and the whole landscape group, which a full restore replaces. */
     private suspend fun applyClockPlacement(settings: BackupSettings) {
         with(settingsRepository) {
-            setClockAccentColorOption(settings.clockAccentColorOption.toEnumOrDefault(ClockColorOption.ACCENT_PRIMARY))
-            setClockDateStyle(settings.clockDateStyle.toEnumOrDefault(ClockDateStyle.FULL))
             applyAccessoriesAndWeather(settings)
             setClockAlignment(settings.clockAlignment.toEnumOrDefault(ClockAlignment.LEFT))
-            setClockScale(settings.clockScale)
             // A null height means the divider was never dragged; a restore must clear a height set since.
             if (settings.clockZoneHeightDp != null) setClockZoneHeight(settings.clockZoneHeightDp) else resetClockZoneHeight()
             updateLandscape {
                 it.copy(
                     clockAlignment = settings.landscapeClockAlignment?.toEnumOrNull(),
                     clockZoneHeightDp = settings.landscapeClockZoneHeightDp,
-                    clockScale = settings.landscapeClockScale,
                     appRowPosition = settings.landscapeAppRowPosition?.toEnumOrNull(),
                     appListVerticalAlignment = settings.landscapeAppListVerticalAlignment?.toEnumOrNull(),
                     appListColumnAlignment = settings.landscapeAppListColumnAlignment?.toEnumOrNull(),

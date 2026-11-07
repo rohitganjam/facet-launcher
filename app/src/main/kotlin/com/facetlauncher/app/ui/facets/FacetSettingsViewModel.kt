@@ -52,8 +52,6 @@ data class FacetSettingsUiState(
     /** Gates the header's "Apply facet" button — see [FacetSettingsHeader]'s own doc. */
     val isActive: Boolean get() = facet?.id == activeFacetId
 
-    /** The Clock card's single inherit/override switch — governs template, font, color, 24h, and meridiem. */
-    val isOverridingClock: Boolean get() = facet?.overrideClock ?: false
     private val style: ResolvedFacetStyle by lazy(LazyThreadSafetyMode.NONE) { resolveFacetStyle(facet, settings) }
     val clockTemplateId: ClockTemplateId get() = style.clock.templateId
     val clockFontOption: ClockFontOption get() = style.clock.fontOption

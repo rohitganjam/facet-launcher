@@ -1,5 +1,6 @@
 package com.facetlauncher.app.domain
 
+import com.facetlauncher.app.data.model.NativeWidgetConfig
 import com.facetlauncher.app.data.model.decodeNativeWidgetConfig
 import com.facetlauncher.app.data.model.encode
 import com.facetlauncher.app.data.model.NativeWidgetType
@@ -71,29 +72,16 @@ fun Facet.toBackupFacet(
     dockApps: List<BackupAppEntry>,
     dockFolderPlacements: List<BackupFolderPlacement> = emptyList(),
     favoriteFolderPlacements: List<BackupFolderPlacement> = emptyList(),
-): BackupFacet = BackupFacet(
+): BackupFacet {
+    val clockPage = clockStack.firstOrNull { it.kind == ClockStackItemKind.CLOCK }
+    return BackupFacet(
     name = name,
     position = position,
-    overrideClock = overrideClock,
-    clockTemplateId = clockTemplateId.name,
-    clockFontOption = clockFontOption.name,
-    clockColorOption = clockColorOption.name,
-    use24HourTime = use24HourTime,
-    clockShowMeridiem = clockShowMeridiem,
-    clockAccentColorOption = clockAccentColorOption.name,
-    clockDateStyle = clockDateStyle.name,
-    clockShowAlarm = clockShowAlarm,
-    clockShowBattery = clockShowBattery,
-    clockShowWeather = clockShowWeather,
-    clockWeatherIconStyle = clockWeatherIconStyle.name,
-    clockWeatherLocation = encodeWeatherLocation(clockWeatherLocation),
     clockPlacementOwn = clockPlacementOwn,
     clockAlignment = clockAlignment.name,
     clockZoneHeightDp = clockZoneHeightDp,
-    clockScale = clockScale,
     landscapeClockAlignment = landscapeClockAlignment?.name,
     landscapeClockZoneHeightDp = landscapeClockZoneHeightDp,
-    landscapeClockScale = landscapeClockScale,
     landscapeAppListVerticalAlignment = landscapeAppListVerticalAlignment?.name,
     appListVerticalAlignment = appListVerticalAlignment.name,
     overrideApps = overrideApps,
@@ -112,16 +100,17 @@ fun Facet.toBackupFacet(
     overrideDock = overrideDock,
     dockDisplayMode = dockDisplayMode.name,
     dockApps = dockApps,
-    overrideCalendar = overrideCalendar,
-    showAllDayEvents = showAllDayEvents,
-    showCalendarIndicator = showCalendarIndicator,
-    calendarItemsToShow = calendarItemsToShow,
-    selectedCalendarIds = selectedCalendarIds?.toList(),
     favorites = favorites,
     dockFolderPlacements = dockFolderPlacements,
     favoriteFolderPlacements = favoriteFolderPlacements,
     nativeStackPages = clockStack.mapNotNull { it.toBackupNativePage() },
+    clockConfig = clockPage?.let { decodeNativeWidgetConfig(it.nativeWidgetConfig).clock }?.let { NativeWidgetConfig(clock = it.copy(calendar = it.calendar.copy(calendarIds = null))).encode() },
+    clockWidthDp = clockPage?.widthDp,
+    clockHeightDp = clockPage?.heightDp,
+    clockLandscapeWidthDp = clockPage?.landscapeWidthDp,
+    clockLandscapeHeightDp = clockPage?.landscapeHeightDp,
 )
+}
 
 private fun ClockStackItem.toBackupNativePage() = nativeWidgetType?.let {
     BackupNativeStackPage(
@@ -144,26 +133,11 @@ fun BackupFacet.toFacet(): Facet = Facet(
     id = 0,
     name = name,
     position = position,
-    overrideClock = overrideClock,
-    clockTemplateId = clockTemplateId.toEnumOrDefault(ClockTemplateId.LIGHT_STACK),
-    clockFontOption = clockFontOption.toEnumOrDefault(ClockFontOption.LAUNCHER_DEFAULT),
-    clockColorOption = clockColorOption.toEnumOrDefault(ClockColorOption.THEME),
-    use24HourTime = use24HourTime,
-    clockShowMeridiem = clockShowMeridiem,
-    clockAccentColorOption = clockAccentColorOption.toEnumOrDefault(ClockColorOption.ACCENT_PRIMARY),
-    clockDateStyle = clockDateStyle.toEnumOrDefault(ClockDateStyle.FULL),
-    clockShowAlarm = clockShowAlarm,
-    clockShowBattery = clockShowBattery,
-    clockShowWeather = clockShowWeather,
-    clockWeatherIconStyle = clockWeatherIconStyle.toEnumOrDefault(WeatherIconStyle.COLORED),
-    clockWeatherLocation = decodeWeatherLocation(clockWeatherLocation),
     clockPlacementOwn = clockPlacementOwn ?: overrideClock,
     clockAlignment = clockAlignment.toEnumOrDefault(ClockAlignment.LEFT),
     clockZoneHeightDp = clockZoneHeightDp,
-    clockScale = clockScale,
     landscapeClockAlignment = landscapeClockAlignment?.toEnumOrNull(),
     landscapeClockZoneHeightDp = landscapeClockZoneHeightDp,
-    landscapeClockScale = landscapeClockScale,
     landscapeAppListVerticalAlignment = landscapeAppListVerticalAlignment?.toEnumOrNull(),
     appListVerticalAlignment = appListVerticalAlignment.toEnumOrDefault(AppListVerticalAlignment.LAUNCHER_DEFAULT),
     overrideApps = overrideApps,
@@ -184,11 +158,6 @@ fun BackupFacet.toFacet(): Facet = Facet(
     overridingFavorites = overridingFavorites,
     overrideDock = overrideDock,
     dockDisplayMode = dockDisplayMode.toEnumOrDefault(DockDisplayMode.LAUNCHER_DEFAULT),
-    overrideCalendar = overrideCalendar,
-    showAllDayEvents = showAllDayEvents,
-    showCalendarIndicator = showCalendarIndicator,
-    calendarItemsToShow = calendarItemsToShow.coerceIn(CalendarDisplayOptions.MIN_ITEMS, CalendarDisplayOptions.MAX_ITEMS),
-    selectedCalendarIds = selectedCalendarIds?.toSet(),
 )
 
 /** The restored folder's own row id is always `0` (autogenerated fresh on insert) — see `FolderRepository.restoreFolder`. Its members likewise get fresh ids; [com.facetlauncher.app.data.local.FolderAppEntity.folderId] is filled in by the repository once the new folder id is known. */

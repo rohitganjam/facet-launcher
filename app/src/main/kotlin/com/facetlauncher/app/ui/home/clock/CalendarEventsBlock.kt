@@ -5,7 +5,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -70,7 +69,8 @@ import kotlinx.collections.immutable.persistentMapOf
  * Owns its own live "now" (via [rememberTickingNow]) so it's fully self-contained — it doesn't
  * need a clock composable anywhere on screen to know which events have ended.
  *
- * [alignment] is entirely independent of [com.facetlauncher.app.ui.home.ClockBlock]'s own clock
+ * The block is as wide as its widest row, not the whole width: the caller places it (under the clock, on the same side), and free space beside
+ * it stays free for the Home gestures. [alignment] is entirely independent of [com.facetlauncher.app.ui.home.ClockBlock]'s own clock
  * alignment — the clock and this strip are positioned separately (see chat history). `RIGHT`
  * both packs each row against the block's trailing edge and reverses that row's own item order
  * (event name, then time, then the calendar-color indicator, mirroring [AppRowPosition]'s own
@@ -102,7 +102,7 @@ fun CalendarEventsBlock(
     if (visibleEvents.isEmpty()) return
 
     Column(
-        modifier = modifier.testTag("clock_event_rows").padding(top = 10.dp).fillMaxWidth(),
+        modifier = modifier.testTag("clock_event_rows").padding(top = 10.dp),
         verticalArrangement = Arrangement.spacedBy(9.dp),
         horizontalAlignment = alignment.resolve(),
     ) {

@@ -35,7 +35,6 @@ import com.facetlauncher.app.ui.settings.LicenseTextScreen
 import com.facetlauncher.app.ui.settings.LicensesScreen
 import com.facetlauncher.app.ui.settings.AppDrawerSettingsScreen
 import com.facetlauncher.app.ui.settings.AppearanceSettingsScreen
-import com.facetlauncher.app.ui.settings.CalendarSettingsScreen
 import com.facetlauncher.app.ui.settings.DockAppsAppearanceScreen
 import com.facetlauncher.app.ui.settings.DockSettingsScreen
 import com.facetlauncher.app.ui.settings.FontsScreen
@@ -68,12 +67,11 @@ object FacetDestinations {
     const val SETTINGS = "settings"
     const val DOCK_PICKER = "dockPicker?facetId={facetId}"
     const val FACET_MANAGE = "facetManage"
-    const val CLOCK_STACK = "clockStack"
+    const val CLOCK_STACK = "clockStack?facetId={facetId}"
     const val FACET_AUTOMATION = "facetAutomation"
     const val FACET_PRO = "facetPro/{reason}"
     const val FACET_SETTINGS = "facetSettings/{facetId}"
     const val FAVORITES_PICKER = "favoritesPicker?facetId={facetId}"
-    const val CALENDAR_SETTINGS = "calendarSettings?facetId={facetId}"
     const val USAGE_ACCESS_EXPLANATION = "usageAccessExplanation"
     const val PERMISSIONS = "permissions"
     const val GESTURES = "gestures"
@@ -86,10 +84,9 @@ object FacetDestinations {
     const val CLOCK_ACCESSORIES = "clockAccessories?facetId={facetId}"
     const val UNITS_AND_LOCATION = "unitsAndLocation"
     const val WEATHER_LOCATION = "weatherLocation"
-    const val CLOCK_STYLE_GALLERY = "clockStyleGallery"
     const val FACET_CLOCK_STYLE_GALLERY = "facetClockStyleGallery/{facetId}"
     const val BACKUP_RESTORE = "backupRestore"
-    const val APPEARANCE_SETTINGS = "appearanceSettings?facetId={facetId}"
+    const val APPEARANCE_SETTINGS = "appearanceSettings"
     const val DOCK_APPS_APPEARANCE = "dockAppsAppearance?facetId={facetId}"
     const val THEMES_AND_COLORS = "themesAndColors"
     const val FONTS = "fonts"
@@ -128,19 +125,15 @@ object FacetDestinations {
     fun dockSettings(facetId: Long? = null) =
         if (facetId != null && facetId != NO_ACTIVE_FACET_ID) "dockSettings?facetId=$facetId" else "dockSettings"
 
-    /** Omitting [facetId] (or passing [NO_ACTIVE_FACET_ID]) opens the global (non-facet-scoped) Appearance screen. */
-    fun appearanceSettings(facetId: Long? = null) =
-        if (facetId != null && facetId != NO_ACTIVE_FACET_ID) "appearanceSettings?facetId=$facetId" else "appearanceSettings"
-
     /** Omitting [facetId] (or passing [NO_ACTIVE_FACET_ID]) opens the launcher-wide Dock & Apps appearance. */
     fun dockAppsAppearance(facetId: Long? = null) =
         if (facetId != null && facetId != NO_ACTIVE_FACET_ID) "dockAppsAppearance?facetId=$facetId" else "dockAppsAppearance"
 
-    /** Omitting [facetId] (or passing [NO_ACTIVE_FACET_ID]) opens the global (non-facet-scoped) entry point. */
-    fun calendarSettings(facetId: Long? = null) =
-        if (facetId != null && facetId != NO_ACTIVE_FACET_ID) "calendarSettings?facetId=$facetId" else "calendarSettings"
-
     /** Omitting [facetId] (or passing [NO_ACTIVE_FACET_ID]) opens the launcher-wide Clock accessories. */
+    /** The widget stack of [facetId]; omitting it (or passing [NO_ACTIVE_FACET_ID]) opens the active facet's. */
+    fun clockStack(facetId: Long? = null) =
+        if (facetId != null && facetId != NO_ACTIVE_FACET_ID) "clockStack?facetId=$facetId" else "clockStack"
+
     fun clockAccessories(facetId: Long? = null) =
         if (facetId != null && facetId != NO_ACTIVE_FACET_ID) "clockAccessories?facetId=$facetId" else "clockAccessories"
 }
@@ -216,8 +209,8 @@ fun FacetNavHost(
                 onNavigateToClockAccessories = { facetId -> navController.navigate(FacetDestinations.clockAccessories(facetId)) },
                 onNavigateToPermissions = { navController.navigate(FacetDestinations.PERMISSIONS) },
                 onNavigateToWhatsNew = { navController.navigate(FacetDestinations.WHATS_NEW) },
-                onNavigateToAppearance = { facetId -> navController.navigate(FacetDestinations.appearanceSettings(facetId)) },
-                onNavigateToClockStack = { navController.navigate(FacetDestinations.CLOCK_STACK) },
+                onNavigateToClockStyle = { facetId -> navController.navigate(FacetDestinations.facetClockStyleGallery(facetId)) },
+                onNavigateToClockStack = { navController.navigate(FacetDestinations.clockStack()) },
                 launcherViewModel = launcherViewModel,
             )
         }
@@ -230,7 +223,7 @@ fun FacetNavHost(
                 onViewFacets = { navController.navigate(FacetDestinations.FACET_MANAGE) },
                 onViewFacetAutomation = { navController.navigate(FacetDestinations.FACET_AUTOMATION) },
                 onViewFacetPro = { navController.navigate(FacetDestinations.facetPro(ProReason.ABOUT)) },
-                onNavigateToAppearance = { navController.navigate(FacetDestinations.appearanceSettings()) },
+                onNavigateToAppearance = { navController.navigate(FacetDestinations.APPEARANCE_SETTINGS) },
                 onNavigateToDockSettings = { navController.navigate(FacetDestinations.dockSettings()) },
                 onNavigateToHomeAppsListSettings = { navController.navigate(FacetDestinations.homeAppsListSettings()) },
                 onNavigateToFolders = { navController.navigate(FacetDestinations.FOLDERS_SETTINGS) },
@@ -260,20 +253,11 @@ fun FacetNavHost(
         settingsComposable(FacetDestinations.WHATS_NEW) {
             WhatsNewScreen(onBack = { navController.popBackStackSafely() })
         }
-        settingsComposable(
-            FacetDestinations.APPEARANCE_SETTINGS,
-            arguments = listOf(navArgument("facetId") { type = NavType.LongType; defaultValue = NO_ACTIVE_FACET_ID }),
-        ) { backStackEntry ->
-            val facetId = backStackEntry.arguments?.getLong("facetId") ?: NO_ACTIVE_FACET_ID
+        settingsComposable(FacetDestinations.APPEARANCE_SETTINGS) {
             AppearanceSettingsScreen(
                 onBack = { navController.popBackStackSafely() },
-                onNavigateToClockStyleGallery = {
-                    val dest = if (facetId != NO_ACTIVE_FACET_ID) FacetDestinations.facetClockStyleGallery(facetId) else FacetDestinations.CLOCK_STYLE_GALLERY
-                    navController.navigate(dest)
-                },
-                onNavigateToCalendarSettings = { navController.navigate(FacetDestinations.calendarSettings(facetId)) },
                 onNavigateToNotificationSettings = { navController.navigate(FacetDestinations.NOTIFICATION_SETTINGS) },
-                onNavigateToDockAppsAppearance = { navController.navigate(FacetDestinations.dockAppsAppearance(facetId)) },
+                onNavigateToDockAppsAppearance = { navController.navigate(FacetDestinations.dockAppsAppearance()) },
                 onNavigateToAppDrawerSettings = { navController.navigate(FacetDestinations.APP_DRAWER_SETTINGS) },
                 onNavigateToThemesAndColors = { navController.navigate(FacetDestinations.THEMES_AND_COLORS) },
                 onNavigateToFonts = { navController.navigate(FacetDestinations.FONTS) },
@@ -288,10 +272,6 @@ fun FacetNavHost(
             ClockAccessoriesScreen(
                 navigation = ClockAccessoriesNavigation(
                     onBack = { navController.popBackStackSafely() },
-                    onOpenClockStyle = {
-                        val dest = if (facetId != NO_ACTIVE_FACET_ID) FacetDestinations.facetClockStyleGallery(facetId) else FacetDestinations.CLOCK_STYLE_GALLERY
-                        navController.navigate(dest)
-                    },
                     onOpenWeatherSettings = { navController.navigate(FacetDestinations.UNITS_AND_LOCATION) },
                 ),
             )
@@ -351,12 +331,6 @@ fun FacetNavHost(
         settingsComposable(FacetDestinations.APP_DRAWER_SETTINGS) {
             AppDrawerSettingsScreen(onBack = { navController.popBackStackSafely() })
         }
-        settingsComposable(FacetDestinations.CLOCK_STYLE_GALLERY) {
-            ClockStyleGalleryRoute(
-                onBack = { navController.popBackStackSafely() },
-                onOpenClockAccessories = { navController.navigate(FacetDestinations.clockAccessories()) },
-            )
-        }
         settingsComposable(
             FacetDestinations.FACET_CLOCK_STYLE_GALLERY,
             arguments = listOf(navArgument("facetId") { type = NavType.LongType }),
@@ -365,7 +339,6 @@ fun FacetNavHost(
             ClockStyleGalleryRoute(
                 onBack = { navController.popBackStackSafely() },
                 onOpenClockAccessories = { navController.navigate(FacetDestinations.clockAccessories(facetId)) },
-                onEditDefaults = { navController.navigate(FacetDestinations.CLOCK_STYLE_GALLERY) },
             )
         }
         settingsComposable(FacetDestinations.PERMISSIONS) {
@@ -453,12 +426,15 @@ fun FacetNavHost(
                 onAddFacet = { navController.navigate(FacetDestinations.FACET_MANAGE) },
             )
         }
-        settingsComposable(FacetDestinations.CLOCK_STACK) {
+        settingsComposable(
+            FacetDestinations.CLOCK_STACK,
+            arguments = listOf(navArgument("facetId") { type = NavType.LongType; defaultValue = NO_ACTIVE_FACET_ID }),
+        ) {
             // The widget stack: reorder, configure, remove and add the clock and widgets on Home.
             ClockStackScreen(
                 onBack = { navController.popBackStackSafely() },
                 onOpenFacetPro = { reason -> navController.navigate(FacetDestinations.facetPro(reason)) },
-                onOpenAppearance = { facetId -> navController.navigate(FacetDestinations.appearanceSettings(facetId)) },
+                onOpenClockStyle = { facetId -> navController.navigate(FacetDestinations.facetClockStyleGallery(facetId)) },
             )
         }
         settingsComposable(FacetDestinations.FACET_MANAGE) {
@@ -479,9 +455,8 @@ fun FacetNavHost(
                 onBack = { navController.popBackStackSafely() },
                 onNavigateToAppsList = { facetId -> navController.navigate(FacetDestinations.homeAppsListSettings(facetId)) },
                 onNavigateToDockSettings = { facetId -> navController.navigate(FacetDestinations.dockSettings(facetId)) },
-                onNavigateToAppearance = { facetId ->
-                    navController.navigate(FacetDestinations.appearanceSettings(facetId))
-                },
+                onNavigateToDockAppsAppearance = { facetId -> navController.navigate(FacetDestinations.dockAppsAppearance(facetId)) },
+                onNavigateToWidgets = { facetId -> navController.navigate(FacetDestinations.clockStack(facetId)) },
                 onFacetApply = { navController.popBackStack(FacetDestinations.HOME, inclusive = false) },
             )
         }
@@ -492,16 +467,6 @@ fun FacetNavHost(
             FavoritesPickerScreen(
                 onDone = { navController.popBackStackSafely() },
                 onNavigateToUsageAccessExplanation = { navController.navigate(FacetDestinations.USAGE_ACCESS_EXPLANATION) },
-            )
-        }
-        settingsComposable(
-            FacetDestinations.CALENDAR_SETTINGS,
-            arguments = listOf(navArgument("facetId") { type = NavType.LongType; defaultValue = NO_ACTIVE_FACET_ID }),
-        ) { backStackEntry ->
-            val facetId = backStackEntry.arguments?.getLong("facetId")?.takeIf { it != NO_ACTIVE_FACET_ID }
-            CalendarSettingsScreen(
-                onBack = { navController.popBackStackSafely() },
-                onEditDefaults = facetId?.let { { navController.navigate(FacetDestinations.calendarSettings()) } },
             )
         }
     }

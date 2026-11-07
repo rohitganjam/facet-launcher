@@ -227,6 +227,37 @@ class ClockWidgetPickerViewModelTest {
     }
 
     @Test
+    fun `the clock replaces a page or joins the stack and closes the picker`() = runTest {
+        // Given a page the clock can replace and a stack with room for it
+        `when`(replaceClockStackItem.withClock(5L)).thenReturn(true)
+        `when`(addClockStackItem.addClock(9L)).thenReturn(AddClockStackItemResult.ADDED)
+        val viewModel = viewModel()
+        val events = collect(viewModel)
+
+        // When the clock is chosen for each target
+        viewModel.onClockSelect(ClockWidgetPickerTarget.Replace(5L))
+        viewModel.onClockSelect(ClockWidgetPickerTarget.Add(9L))
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Then each closes the picker, with nothing bound
+        assertEquals(listOf(HubAddWidgetEvent.WidgetAdded, HubAddWidgetEvent.WidgetAdded), events)
+        verify(appWidgetRepository, never()).allocateAppWidgetId()
+    }
+
+    @Test
+    fun `a clock that cannot be added reports a failure`() = runTest {
+        // Given the clock is already on the stack
+        `when`(addClockStackItem.addClock(9L)).thenReturn(AddClockStackItemResult.CLOCK_ALREADY_IN_STACK)
+        val viewModel = viewModel()
+        val events = collect(viewModel)
+
+        viewModel.onClockSelect(ClockWidgetPickerTarget.Add(9L))
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(listOf(HubAddWidgetEvent.AddFailed(AddFailureReason.SETUP_CANCELLED)), events)
+    }
+
+    @Test
     fun `a Facet widget replaces the page without binding anything`() = runTest {
         `when`(replaceClockStackItem.withNativeWidget(5L, NativeWidgetType.WEATHER)).thenReturn(true)
         val viewModel = viewModel()

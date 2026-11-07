@@ -34,7 +34,7 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import com.facetlauncher.app.data.model.landscape
 import com.facetlauncher.app.data.model.ClockAlignment
-import com.facetlauncher.app.ui.home.ClockAdjustMode
+import com.facetlauncher.app.ui.home.HomeMenuMode
 import com.facetlauncher.app.ui.home.HomeClockState
 import com.facetlauncher.app.ui.home.HomeClockWidgetState
 import com.facetlauncher.app.ui.home.HomeScreenActions
@@ -68,7 +68,7 @@ internal class ClockAdjustEnv(
 /** The handles for the current mode: the height handle or the divider, and the resize handles for the native clock or the hosted widget. */
 @Composable
 internal fun ClockAdjustOverlays(env: ClockAdjustEnv, landscape: Boolean) {
-    if (env.clock.adjustMode != ClockAdjustMode.ADJUST) return
+    if (env.clock.adjustMode != HomeMenuMode.ADJUST) return
     val box = env.box
     val hasWidget = env.widget != null
     if (landscape) LandscapeDividerHandle(env) else PortraitHeightHandle(env)
@@ -186,7 +186,7 @@ internal fun BoxScope.ClockAdjustPills(env: ClockAdjustEnv, adjusting: Boolean, 
     val adjustMode = env.clock.adjustMode
     val draggingHandle = env.clock.draggingHandle
     val toolbarActive by produceState(initialValue = false, adjustMode, draggingHandle) {
-        value = if (adjustMode == ClockAdjustMode.ADJUST && !draggingHandle) {
+        value = if (adjustMode == HomeMenuMode.ADJUST && !draggingHandle) {
             delay(CLOCK_ADJUST_TOOLBAR_REAPPEAR_DELAY_MS)
             true
         } else {

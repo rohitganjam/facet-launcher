@@ -6,6 +6,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -175,8 +176,8 @@ private fun MediaText(
             style = MaterialTheme.typography.titleSmall.copy(shadow = shadow, fontWeight = fontWeight),
             color = color,
             maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.testTag(homeTag("home_media_title")),
+            softWrap = false,
+            modifier = Modifier.testTag(homeTag("home_media_title")).basicMarquee(iterations = Int.MAX_VALUE),
         )
         state.artist?.let {
             Text(

@@ -17,7 +17,7 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
-import org.junit.Ignore
+import org.junit.Assume.assumeTrue
 import org.junit.Rule
 import org.junit.Test
 
@@ -92,10 +92,10 @@ class GesturesScreenTest {
         assertTrue(runBlocking { settingsRepository.settings.first().homeOpensSearch })
     }
 
-    // Disabled with the double-tap to lock UI until the Play AccessibilityService declaration is approved.
-    @Ignore("double-tap to lock disabled")
+    // Skipped (an assumption, since the runner reports @Ignore as a failure) until the Play AccessibilityService declaration is approved.
     @Test
     fun turningOnDoubleTapToLockWithAccessibilityEnabledStaysOnWithoutOpeningTheExplanation() {
+        assumeTrue("double-tap to lock disabled", false)
         // Given accessibility access is already enabled
         var explanationOpened = false
         val settingsRepository = setContent(accessGranted = true, onNavigateToAccessibilityAccessExplanation = { explanationOpened = true })
@@ -110,10 +110,10 @@ class GesturesScreenTest {
         assertFalse(explanationOpened)
     }
 
-    // Disabled with the double-tap to lock UI until the Play AccessibilityService declaration is approved.
-    @Ignore("double-tap to lock disabled")
+    // Skipped (an assumption, since the runner reports @Ignore as a failure) until the Play AccessibilityService declaration is approved.
     @Test
     fun turningOnDoubleTapToLockWithoutAccessibilityOpensTheExplanationAndStaysOff() {
+        assumeTrue("double-tap to lock disabled", false)
         // Given accessibility access has not been enabled
         var explanationOpened = false
         val settingsRepository = setContent(accessGranted = false, onNavigateToAccessibilityAccessExplanation = { explanationOpened = true })

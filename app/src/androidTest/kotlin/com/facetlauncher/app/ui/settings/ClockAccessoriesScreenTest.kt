@@ -1,25 +1,29 @@
 package com.facetlauncher.app.ui.settings
 
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsEnabled
-import androidx.compose.ui.test.assertIsNotEnabled
-import androidx.compose.ui.test.junit4.createComposeRule
-import androidx.compose.ui.test.hasTestTag
-import org.junit.Assert.assertTrue
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.hasAnyAncestor
-import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import com.facetlauncher.app.data.model.ClockStackItem
+import com.facetlauncher.app.data.model.ClockStackItemKind
+import com.facetlauncher.app.data.model.ClockWidgetConfig
 import com.facetlauncher.app.data.model.Facet
 import com.facetlauncher.app.data.model.LauncherSettings
+import com.facetlauncher.app.data.model.NativeWidgetConfig
 import com.facetlauncher.app.data.model.TemperatureUnit
+import com.facetlauncher.app.data.model.WeatherCity
 import com.facetlauncher.app.data.model.WeatherIconStyle
 import com.facetlauncher.app.data.model.WidgetWeatherLocation
-import com.facetlauncher.app.data.model.WeatherCity
+import com.facetlauncher.app.data.model.encode
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 
@@ -28,9 +32,11 @@ class ClockAccessoriesScreenTest {
     @get:Rule
     val composeRule = createComposeRule()
 
+    private val oslo = WeatherCity("Oslo", 59.91, 10.75, "Europe/Oslo")
+
     private fun setContent(
         uiState: ClockAccessoriesUiState,
-        navigation: ClockAccessoriesNavigation = ClockAccessoriesNavigation(onBack = {}, onOpenClockStyle = {}),
+        navigation: ClockAccessoriesNavigation = ClockAccessoriesNavigation(onBack = {}),
         actions: ClockAccessoriesActions = ClockAccessoriesActions(),
     ) {
         composeRule.setContent {
@@ -39,10 +45,19 @@ class ClockAccessoriesScreenTest {
         composeRule.waitForIdle()
     }
 
+    /** The accessories state for a facet whose clock holds [clock]. */
+    private fun stateFor(clock: ClockWidgetConfig, settings: LauncherSettings = LauncherSettings()) = ClockAccessoriesUiState(
+        facet = Facet(
+            id = 1L, name = "Work", position = 1,
+            clockStack = listOf(ClockStackItem(id = 3, facetId = 1, position = 0, kind = ClockStackItemKind.CLOCK, nativeWidgetConfig = NativeWidgetConfig(clock = clock).encode())),
+        ),
+        settings = settings,
+    )
+
     @Test
     fun theHeaderIsPinnedOutsideTheScrollingContent() {
         // Given the screen
-        setContent(ClockAccessoriesUiState())
+        setContent(stateFor(ClockWidgetConfig()))
 
         // Then the back button is not inside the scrolling content, so it stays pinned while that scrolls
         composeRule.onAllNodes(hasTestTag("back_button") and hasAnyAncestor(hasTestTag("clock_accessories_screen"))).assertCountEquals(0)
@@ -50,9 +65,9 @@ class ClockAccessoriesScreenTest {
     }
 
     @Test
-    fun iconsAreHiddenWhileWeatherIsOffEverywhere() {
-        // Given weather off for the default and every facet
-        setContent(ClockAccessoriesUiState(weatherEnabledAnywhere = false))
+    fun iconsAreHiddenWhileTheClockShowsNoWeather() {
+        // Given a clock with weather off
+        setContent(stateFor(ClockWidgetConfig(showWeather = false)))
 
         // Then the switches show but the Icons card does not
         composeRule.onNodeWithTag("accessory_weather_toggle").assertIsEnabled()
@@ -60,9 +75,9 @@ class ClockAccessoriesScreenTest {
     }
 
     @Test
-    fun iconsShowOnceWeatherIsOnSomewhere() {
-        // Given weather on for the launcher default
-        setContent(ClockAccessoriesUiState(settings = LauncherSettings(showWeather = true), weatherEnabledAnywhere = true))
+    fun iconsShowOnceTheClockShowsWeather() {
+        // Given a clock with weather on
+        setContent(stateFor(ClockWidgetConfig(showWeather = true)))
 
         // Then the Icons card is there, and units and location are not on this screen: they live in Weather settings
         composeRule.onNodeWithTag("icon_style_row").assertExists()
@@ -72,58 +87,19 @@ class ClockAccessoriesScreenTest {
 
     @Test
     fun theIconsCardPreviewShowsColouredIconsByDefault() {
-        // Given weather on with the default icon style
-        setContent(ClockAccessoriesUiState(settings = LauncherSettings(showWeather = true), weatherEnabledAnywhere = true))
+        setContent(stateFor(ClockWidgetConfig(showWeather = true)))
 
-        // Then the preview row shows the coloured set
         composeRule.onNodeWithTag("weather_icons_preview_COLORED").assertExists()
         composeRule.onNodeWithTag("weather_icons_preview_MONOCHROME").assertDoesNotExist()
     }
 
     @Test
-    fun theIconsCardPreviewShowsMonochromeIconsWhenMonochromeIsSelected() {
-        // Given weather on with monochrome icons chosen
-        setContent(
-            ClockAccessoriesUiState(
-                settings = LauncherSettings(showWeather = true, weatherIconStyle = WeatherIconStyle.MONOCHROME),
-                weatherEnabledAnywhere = true,
-            ),
-        )
+    fun theIconsCardPreviewShowsTheClocksOwnMonochromeIcons() {
+        // Given a clock with its own monochrome icons, and a launcher that says coloured
+        setContent(stateFor(ClockWidgetConfig(showWeather = true, weatherIconStyle = WeatherIconStyle.MONOCHROME), LauncherSettings(weatherIconStyle = WeatherIconStyle.COLORED)))
 
-        // Then the preview row shows the monochrome set, not the coloured one
-        composeRule.onNodeWithTag("weather_icons_preview_MONOCHROME").assertExists()
-        composeRule.onNodeWithTag("weather_icons_preview_COLORED").assertDoesNotExist()
-    }
-
-    @Test
-    fun aFacetThatOverridesTheClockEditsItsOwnIconStyle() {
-        // Given a facet that overrides the clock with weather on and its own monochrome icons
-        val facet = Facet(
-            id = 1L, name = "Work", position = 1, overrideClock = true, clockShowWeather = true,
-            clockWeatherIconStyle = WeatherIconStyle.MONOCHROME,
-        )
-        setContent(
-            ClockAccessoriesUiState(facet = facet, settings = LauncherSettings(showWeather = true), weatherEnabledAnywhere = true),
-        )
-
-        // Then its own icon style shows and can be edited
+        // Then the clock's style shows, and it can be edited
         composeRule.onNodeWithTag("icon_style_row").assertIsEnabled()
-        composeRule.onNodeWithTag("weather_icons_preview_MONOCHROME").assertExists()
-    }
-
-    @Test
-    fun aFacetThatInheritsShowsTheLaunchersIconStyle() {
-        // Given a facet that inherits the clock, with the launcher on monochrome icons
-        val facet = Facet(id = 1L, name = "Work", position = 1, overrideClock = false, clockWeatherIconStyle = WeatherIconStyle.COLORED)
-        setContent(
-            ClockAccessoriesUiState(
-                facet = facet,
-                settings = LauncherSettings(showWeather = true, weatherIconStyle = WeatherIconStyle.MONOCHROME),
-                weatherEnabledAnywhere = true,
-            ),
-        )
-
-        // Then the launcher's style shows, not the facet's own
         composeRule.onNodeWithTag("weather_icons_preview_MONOCHROME").assertExists()
         composeRule.onNodeWithTag("weather_icons_preview_COLORED").assertDoesNotExist()
     }
@@ -131,7 +107,7 @@ class ClockAccessoriesScreenTest {
     @Test
     fun thePreviewShowsTheWeatherSampleOnlyWhileWeatherIsOn() {
         // Given weather on, in Celsius
-        setContent(ClockAccessoriesUiState(settings = LauncherSettings(showWeather = true, temperatureUnit = TemperatureUnit.CELSIUS), weatherEnabledAnywhere = true))
+        setContent(stateFor(ClockWidgetConfig(showWeather = true), LauncherSettings(temperatureUnit = TemperatureUnit.CELSIUS)))
 
         // Then the preview clock carries the weather sample
         composeRule.onNodeWithTag("clock_accessories_preview").assertExists()
@@ -140,19 +116,15 @@ class ClockAccessoriesScreenTest {
 
     @Test
     fun thePreviewSampleUsesTheChosenTemperatureUnit() {
-        // Given weather on, in Fahrenheit
-        setContent(ClockAccessoriesUiState(settings = LauncherSettings(showWeather = true, temperatureUnit = TemperatureUnit.FAHRENHEIT), weatherEnabledAnywhere = true))
+        setContent(stateFor(ClockWidgetConfig(showWeather = true), LauncherSettings(temperatureUnit = TemperatureUnit.FAHRENHEIT)))
 
-        // Then the sample reads in Fahrenheit, with its letter
         composeRule.onNodeWithContentDescription("70°F, Partly cloudy").assertExists()
     }
 
     @Test
     fun thePreviewDropsTheWeatherSampleWhenWeatherIsOff() {
-        // Given weather off
-        setContent(ClockAccessoriesUiState())
+        setContent(stateFor(ClockWidgetConfig(showWeather = false)))
 
-        // Then the preview clock has none
         composeRule.onNodeWithTag("clock_accessories_preview").assertExists()
         composeRule.onNodeWithContentDescription("21°C, Partly cloudy").assertDoesNotExist()
     }
@@ -161,7 +133,7 @@ class ClockAccessoriesScreenTest {
     fun weatherSwitchReportsTheNewValue() {
         // Given weather off
         var shown: Boolean? = null
-        setContent(ClockAccessoriesUiState(), actions = ClockAccessoriesActions(onShowWeather = { shown = it }))
+        setContent(stateFor(ClockWidgetConfig(showWeather = false)), actions = ClockAccessoriesActions(onShowWeather = { shown = it }))
 
         // When flipping the switch
         composeRule.onNodeWithTag("accessory_weather_toggle").performClick()
@@ -171,23 +143,23 @@ class ClockAccessoriesScreenTest {
     }
 
     @Test
-    fun aFacetThatInheritsCannotEditItsSwitches() {
-        // Given a facet that does not override the clock
-        setContent(ClockAccessoriesUiState(facet = Facet(id = 1L, name = "Work", position = 1), weatherEnabledAnywhere = true))
+    fun theSwitchesAreLiveAndNothingSaysToInheritTheLauncher() {
+        // Given a clock
+        setContent(stateFor(ClockWidgetConfig()))
 
-        // Then its switches are disabled
-        composeRule.onNodeWithTag("accessory_weather_toggle").assertIsNotEnabled()
+        // Then the switches are live, with no note about inheriting
+        composeRule.onNodeWithTag("accessory_alarm_toggle").assertIsEnabled()
+        composeRule.onNodeWithTag("accessory_battery_toggle").assertIsEnabled()
+        composeRule.onNodeWithTag("accessory_weather_toggle").assertIsEnabled()
+        composeRule.onNodeWithTag("clock_accessories_open_clock_style").assertDoesNotExist()
     }
 
-    private val oslo = WeatherCity("Oslo", 59.91, 10.75, "Europe/Oslo")
-
     @Test
-    fun aFacetOverridingTheClockPicksItsOwnWeatherLocationLikeAWidgetDoes() {
-        // Given a facet overriding the clock with weather on, and a city saved in Weather settings
+    fun aClockPicksItsOwnWeatherLocationLikeAWidgetDoes() {
+        // Given a clock with weather on, and a city saved in Weather settings
         var chosen: WidgetWeatherLocation? = WidgetWeatherLocation.Current
-        val facet = Facet(id = 1L, name = "Work", position = 1, overrideClock = true, clockShowWeather = true)
         setContent(
-            ClockAccessoriesUiState(facet = facet, settings = LauncherSettings(showWeather = true, savedWeatherCities = listOf(oslo)), weatherEnabledAnywhere = true),
+            stateFor(ClockWidgetConfig(showWeather = true), LauncherSettings(savedWeatherCities = listOf(oslo))),
             actions = ClockAccessoriesActions(onWeatherLocation = { chosen = it }),
         )
 
@@ -202,33 +174,12 @@ class ClockAccessoriesScreenTest {
     }
 
     @Test
-    fun theLocationCardIsNotOnTheLauncherDefaultScreen() {
-        // Given the default screen with weather on
-        setContent(ClockAccessoriesUiState(settings = LauncherSettings(showWeather = true), weatherEnabledAnywhere = true))
-
-        // Then there is no location card: the launcher-wide location is in Weather settings
-        composeRule.onNodeWithTag("accessory_location_follow").assertDoesNotExist()
-    }
-
-    @Test
-    fun aFacetThatInheritsTheClockShowsTheLocationDimmedAndCannotChangeIt() {
-        // Given a facet that inherits the clock, with weather shown
-        val facet = Facet(id = 1L, name = "Work", position = 1, overrideClock = false)
-        setContent(ClockAccessoriesUiState(facet = facet, settings = LauncherSettings(showWeather = true), weatherEnabledAnywhere = true))
-
-        // Then the choices are there but cannot be changed here
-        composeRule.onNodeWithTag("accessory_location_follow").performScrollTo().assertIsNotEnabled()
-        composeRule.onNodeWithTag("accessory_location_current").assertIsNotEnabled()
-    }
-
-
-    @Test
     fun theLinkToWeatherSettingsComesAfterTheIconsCardAndOpensWeatherSettings() {
-        // Given weather on for the launcher default
+        // Given a clock with weather on
         var opened = false
         setContent(
-            ClockAccessoriesUiState(settings = LauncherSettings(showWeather = true), weatherEnabledAnywhere = true),
-            navigation = ClockAccessoriesNavigation(onBack = {}, onOpenClockStyle = {}, onOpenWeatherSettings = { opened = true }),
+            stateFor(ClockWidgetConfig(showWeather = true)),
+            navigation = ClockAccessoriesNavigation(onBack = {}, onOpenWeatherSettings = { opened = true }),
         )
 
         // Then the Icons card follows the switch, and the link to Weather settings comes after the Icons card
@@ -245,20 +196,18 @@ class ClockAccessoriesScreenTest {
 
     @Test
     fun theWeatherOptionsAreGoneWhileWeatherIsOff() {
-        // Given weather off
-        setContent(ClockAccessoriesUiState(settings = LauncherSettings(showWeather = false)))
+        setContent(stateFor(ClockWidgetConfig(showWeather = false)))
 
-        // Then there is no link to Weather settings
         composeRule.onNodeWithTag("accessory_weather_settings_row").assertDoesNotExist()
+        composeRule.onNodeWithTag("accessory_location_follow").assertDoesNotExist()
     }
 
     @Test
-    fun aFacetsLocationPickerComesAfterTheIconsCard() {
-        // Given a facet overriding the clock with weather on
-        val facet = Facet(id = 1L, name = "Work", position = 1, overrideClock = true, clockShowWeather = true)
-        setContent(ClockAccessoriesUiState(facet = facet, settings = LauncherSettings(showWeather = true), weatherEnabledAnywhere = true))
+    fun theLocationPickerComesAfterTheIconsCard() {
+        // Given a clock with weather on
+        setContent(stateFor(ClockWidgetConfig(showWeather = true)))
 
-        // Then the Icons card is under the switch, and its location picker is below the Icons card
+        // Then the Icons card is under the switch, and the location picker is below the Icons card
         val toggle = composeRule.onNodeWithTag("accessory_weather_toggle").getUnclippedBoundsInRoot()
         val icons = composeRule.onNodeWithTag("icon_style_row").getUnclippedBoundsInRoot()
         val picker = composeRule.onNodeWithTag("accessory_location_follow").getUnclippedBoundsInRoot()

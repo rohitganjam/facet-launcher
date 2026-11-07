@@ -14,7 +14,7 @@ import com.facetlauncher.app.domain.ClockAccessoryState
 import com.facetlauncher.app.data.model.ClockAlignment
 import com.facetlauncher.app.data.model.ClockStackItemKind
 import com.facetlauncher.app.data.model.NativeWidgetType
-import com.facetlauncher.app.domain.ResolvedClockStyle
+import com.facetlauncher.app.data.model.ClockWidgetConfig
 import com.facetlauncher.app.ui.home.weather.ResolvedWeatherUnits
 import com.facetlauncher.app.ui.home.weather.WeatherUiState
 import com.facetlauncher.app.ui.nativewidget.NativeWidgetState
@@ -44,6 +44,8 @@ data class HomeScreenContent(
     val clockAccessories: ClockAccessoryState? = null,
     val mediaPlayer: MediaPlayerState? = null,
     val weather: WeatherState? = null,
+    /** A weather refresh is running, so a Weather widget with no forecast yet shows a loader rather than its empty or permission text. */
+    val weatherRefreshing: Boolean = false,
 )
 
 /** Where a hosted clock widget gets its size when its facet never resized it, and its smallest size. Both are `null` for an unknown provider. */
@@ -56,10 +58,9 @@ data class HomeWidgetSizing(
 
 /** The parts of Home's state that only the live screen has: the adjust mode and which facet owns the clock position. */
 data class HomeLiveState(
-    val adjustMode: ClockAdjustMode = ClockAdjustMode.NONE,
+    val adjustMode: HomeMenuMode = HomeMenuMode.NONE,
     val draggingHandle: Boolean = false,
     val placementFacetId: Long? = null,
-    val styleOwnerFacetName: String? = null,
     /** The clock stack page showing; `null`, or one no longer in the stack, shows the first. */
     val visibleClockItemId: Long? = null,
     /** Without Pro only the first clock page shows. */
@@ -113,7 +114,8 @@ fun ResolvedFacetStyle.toHomeScreenState(
         launcherFontOption = settings.launcherFontOption,
         placement = clockPlacement.of(landscape).withPageAlignment(shownClockPages(live).let { it.getOrNull(it.visibleIndex(live.visibleClockItemId)) }, landscape),
         placementFacetId = live.placementFacetId,
-        styleOwnerFacetName = live.styleOwnerFacetName,
+        boxWidthDp = shownClockPages(live).let { it.getOrNull(it.visibleIndex(live.visibleClockItemId)) }
+            ?.takeIf { it.kind == ClockStackItemKind.CLOCK }?.sizeDp?.of(landscape)?.first,
         adjustMode = live.adjustMode,
         draggingHandle = live.draggingHandle,
     ),
@@ -140,7 +142,7 @@ fun ResolvedFacetStyle.toHomeScreenState(
         weather = content.weather?.takeIf { clock.showWeather && !it.isOutdated }?.toHomeWeather(settings, clock.weatherIconStyle),
     ),
     media = HomeMediaState(player = content.mediaPlayer, showSkipButtons = settings.showMediaSkipButtons),
-).withNativeWidgets(settings, content.weather, clock)
+).withNativeWidgets(settings, content.weather, content.weatherRefreshing, clock)
 
 private fun WeatherState.toHomeWeather(settings: LauncherSettings, iconStyle: WeatherIconStyle) = HomeWeatherState(
     symbolCode = now.symbolCode,
@@ -206,10 +208,11 @@ private fun ResolvedClockItem.toNativeWidgetState(type: NativeWidgetType, landsc
 }
 
 /** What the widgets Facet draws itself read: the full weather with its units, and the calendar and media Home already holds. */
-private fun HomeScreenState.withNativeWidgets(settings: LauncherSettings, weather: WeatherState?, clockStyle: ResolvedClockStyle): HomeScreenState {
+private fun HomeScreenState.withNativeWidgets(settings: LauncherSettings, weather: WeatherState?, weatherRefreshing: Boolean, clockStyle: ClockWidgetConfig): HomeScreenState {
     val locale = Locale.getDefault()
     val ui = WeatherUiState(
         weather = weather,
+        isRefreshing = weatherRefreshing,
         units = ResolvedWeatherUnits(
             temperature = WeatherUnits.resolve(settings.temperatureUnit, locale),
             wind = WeatherUnits.resolve(settings.windSpeedUnit, locale),

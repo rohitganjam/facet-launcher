@@ -6,6 +6,9 @@ import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.UsageAccessRepository
 import com.facetlauncher.app.data.UsageStatsRepository
+import com.facetlauncher.app.data.clockItemWith
+import com.facetlauncher.app.data.model.ClockCalendarConfig
+import com.facetlauncher.app.data.model.ClockWidgetConfig
 import com.facetlauncher.app.data.model.Facet
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.CalendarEvent
@@ -144,10 +147,10 @@ class ObserveFacetPreviewsUseCaseTest {
         `when`(fixture.calendarRepository.getUpcomingEvents(null, false)).thenReturn(listOf(overriddenEvent))
         `when`(fixture.calendarRepository.getUpcomingEvents(null, true)).thenReturn(listOf(overriddenEvent, inheritedEvent))
         fixture.facetsFlow.value = listOf(
-            // Overrides all-day events off — queried with includeAllDay=false.
-            Facet(id = 1L, name = "P1", position = 0, overrideCalendar = true, showAllDayEvents = false),
-            // Inherits the global default (true) — queried with includeAllDay=true.
-            Facet(id = 2L, name = "P2", position = 1, overrideCalendar = false),
+            // A clock with all-day events off — queried with includeAllDay=false.
+            Facet(id = 1L, name = "P1", position = 0, clockStack = listOf(clockItemWith(ClockWidgetConfig(calendar = ClockCalendarConfig(showAllDay = false)), facetId = 1L))),
+            // A clock with the defaults (all-day on) — queried with includeAllDay=true.
+            Facet(id = 2L, name = "P2", position = 1),
         )
 
         // When observing previews
@@ -159,21 +162,20 @@ class ObserveFacetPreviewsUseCaseTest {
     }
 
     @Test
-    fun `calendar events reflect a facet's own selected calendar ids when overriding`() = runTest {
-        // Given calendar access granted, and a facet overriding with its own calendar selection
+    fun `calendar events reflect the clock's own selected calendar ids`() = runTest {
+        // Given calendar access granted, and a clock with its own calendar selection
         val fixture = Fixture()
         `when`(fixture.calendarPermissionRepository.isGranted()).thenReturn(true)
         val event = CalendarEvent(id = 1L, calendarId = "9", title = "Standup", startTimeMillis = 1_000L, endTimeMillis = 2_000L, isAllDay = false)
         `when`(fixture.calendarRepository.getUpcomingEvents(setOf("9"), true)).thenReturn(listOf(event))
-        fixture.settingsFlow.value = LauncherSettings(selectedCalendarIds = setOf("1", "2"))
-        fixture.facetsFlow.value = listOf(
-            Facet(id = 1L, name = "P1", position = 0, overrideCalendar = true, selectedCalendarIds = setOf("9")),
+                fixture.facetsFlow.value = listOf(
+            Facet(id = 1L, name = "P1", position = 0, clockStack = listOf(clockItemWith(ClockWidgetConfig(calendar = ClockCalendarConfig(calendarIds = setOf("9"))), facetId = 1L))),
         )
 
         // When observing previews
         val result = fixture.useCase().first()
 
-        // Then the facet's own selected calendar ids are used, not the global setting
+        // Then the facet's own selected calendar ids are used, not every calendar
         assertEquals(listOf(event), result.getValue(1L).calendarEvents)
     }
 }

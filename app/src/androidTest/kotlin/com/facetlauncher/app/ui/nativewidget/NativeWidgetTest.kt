@@ -4,7 +4,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertCountEquals
@@ -311,4 +313,49 @@ class NativeWidgetTest {
         assertEquals(1, opened)
         assertEquals(0, longPresses)
     }
+
+    @Test
+    fun aNowPlayingTitleTooLongForTheWidgetScrolls() {
+        // Given a narrow Now playing widget with the clock paused
+        composeRule.mainClock.autoAdvance = false
+        val longTitle = "A very long track title that cannot possibly fit in the space it is given on the home screen"
+        val title = longTitle
+        composeRule.setContent {
+            FacetLauncherTheme {
+                NativeWidget(
+                    NativeWidgetType.NOW_PLAYING, DpSize(220.dp, 72.dp),
+                    sampleState.copy(media = previewMediaState(title = title, artist = "Artist")), NativeWidgetActions(),
+                )
+            }
+        }
+        composeRule.mainClock.advanceTimeByFrame()
+
+        // When the marquee's start delay and some scrolling pass
+        val before = composeRule.onNodeWithText(longTitle).captureToImage().toPixels()
+        composeRule.mainClock.advanceTimeBy(4_000)
+        val after = composeRule.onNodeWithText(longTitle).captureToImage().toPixels()
+
+        // Then the long title has moved
+        assertTrue("the long title should scroll", !before.contentEquals(after))
+    }
+
+    @Test
+    fun aNowPlayingTitleThatFitsTheWidgetStaysPut() {
+        // Given a widget wide enough for the title, with the clock paused
+        composeRule.mainClock.autoAdvance = false
+        composeRule.setContent {
+            FacetLauncherTheme { NativeWidget(NativeWidgetType.NOW_PLAYING, DpSize(300.dp, 72.dp), sampleState, NativeWidgetActions()) }
+        }
+        composeRule.mainClock.advanceTimeByFrame()
+
+        // When time passes
+        val before = composeRule.onNodeWithText("Track").captureToImage().toPixels()
+        composeRule.mainClock.advanceTimeBy(4_000)
+        val after = composeRule.onNodeWithText("Track").captureToImage().toPixels()
+
+        // Then it has not moved
+        assertTrue("a short title should stay put", before.contentEquals(after))
+    }
+
+    private fun ImageBitmap.toPixels() = IntArray(width * height).also { readPixels(it) }
 }

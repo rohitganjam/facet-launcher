@@ -1,5 +1,6 @@
 package com.facetlauncher.app.ui.home.stack
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import com.facetlauncher.app.data.ClockStackRepository
@@ -62,10 +63,12 @@ class ClockStackViewModelTest {
         Dispatchers.resetMain()
     }
 
-    private fun viewModel(): ClockStackViewModel {
+    /** [routeFacetId] is the facet named in the route, `null` for the active one. */
+    private fun viewModel(routeFacetId: Long? = null, activeFacetId: Long = facetId): ClockStackViewModel {
         val settings = mock(SettingsRepository::class.java)
-        `when`(settings.settings).thenReturn(flowOf(LauncherSettings(activeFacetId = facetId)))
+        `when`(settings.settings).thenReturn(flowOf(LauncherSettings(activeFacetId = activeFacetId)))
         return ClockStackViewModel(
+            SavedStateHandle(routeFacetId?.let { mapOf("facetId" to it) } ?: emptyMap()),
             settings, repository, appWidgetRepository,
             RemoveClockStackItemUseCase(repository, appWidgetRepository),
             AddClockStackItemUseCase(repository, entitlement),
@@ -193,5 +196,20 @@ class ClockStackViewModelTest {
         val state = viewModel.uiState.first { !it.isPro }
         assertEquals(2, state.rows.size)
         assertTrue(state.addNeedsPro)
+    }
+
+    @Test
+    fun `the stack shown is the facet named in the route, not the active one`() = runTest {
+        // Given a facet whose stack holds its clock, and another facet active
+        val other = facetId + 100
+        val viewModel = viewModel(routeFacetId = facetId, activeFacetId = other)
+
+        // Then the route's facet is the one listed
+        assertEquals(facetId, viewModel.current().facetId)
+    }
+
+    @Test
+    fun `with no facet in the route the active facet's stack is shown`() = runTest {
+        assertEquals(facetId, viewModel(routeFacetId = null, activeFacetId = facetId).current().facetId)
     }
 }

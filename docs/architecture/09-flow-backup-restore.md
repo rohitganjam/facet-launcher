@@ -22,7 +22,7 @@ sequenceDiagram
     end
     UC->>R: placementRepository.getRawApps / getRawFolderPlacements (GlobalDock, GlobalFavorites), widgetPlacementRepository.observeAll().first()
     UC->>UC: BackupMapping — entities to Backup* DTOs, folder/facet refs become list indices
-    UC->>BR: writeBackup(uri, BackupBundle(backupVersion = 3, exportedAtEpochMillis, ...))
+    UC->>BR: writeBackup(uri, BackupBundle(backupVersion = 4, exportedAtEpochMillis, ...))
     BR->>BR: contentResolver.openFileDescriptor(uri, "wt") truncated to 0, then Json.encodeToString  (Dispatchers.IO)
     UC-->>VM: bundle
     VM-->>S: uiState.message = "Exported N facets …"
@@ -116,7 +116,7 @@ leaks a host allocation.
 
 ## 4. Versioning contract
 
-`CURRENT_BACKUP_VERSION = 3`. Rules, as implemented: new fields get `@Serializable` defaults so
+`CURRENT_BACKUP_VERSION = 5` (5: a facet carries its clock's own settings and box (`BackupFacet.clockConfig`, calendar ids left out, and `clockWidthDp`/`clockHeightDp` and the landscape pair), where 4 and older kept them on the facet and the launcher, which `upgradedToCurrent` folds into the clock's config on import; 4: a widget's setting and a facet's clock weather location are JSON, where 3 and older wrote tab-separated lines; `ImportBackupUseCase` runs an older bundle through `BackupBundle.upgradedToCurrent` (`BackupUpgrade.kt`) first, so the rest of the import only sees the current form). Rules, as implemented: new fields get `@Serializable` defaults so
 older files still parse (`folders` and the four `*FolderPlacements` lists default to empty); a
 file whose `backupVersion` is *greater* than the current constant is refused with
 `UnsupportedVersion`; the constant only bumps for a non-additive/breaking change — a purely

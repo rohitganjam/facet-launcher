@@ -68,6 +68,15 @@ class ClockStackRepository @Inject constructor(
 
     suspend fun setConfig(itemId: Long, config: NativeWidgetConfig) = dao.updateConfig(itemId, config.encode())
 
+    /** Gives the facet's clock page the settings and box a backup carried; a facet with no clock page, or a backup without them, is left as it is. */
+    suspend fun restoreClock(facetId: Long, encodedConfig: String?, widthDp: Int?, heightDp: Int?, landscapeWidthDp: Int?, landscapeHeightDp: Int?) =
+        database.withTransaction {
+            val clock = dao.getAll(facetId).firstOrNull { it.kind == ClockStackItemKind.CLOCK } ?: return@withTransaction
+            if (encodedConfig != null) dao.updateConfig(clock.id, encodedConfig)
+            if (widthDp != null && heightDp != null) dao.setSize(clock.id, widthDp, heightDp)
+            if (landscapeWidthDp != null && landscapeHeightDp != null) dao.setLandscapeSize(clock.id, landscapeWidthDp, landscapeHeightDp)
+        }
+
     /** Swaps the item for a widget Facet draws itself in place. `null` when the item does not exist, else what to release. */
     suspend fun replaceWithNativeWidget(itemId: Long, type: NativeWidgetType): ReplacedItem? = database.withTransaction {
         val item = dao.getById(itemId) ?: return@withTransaction null

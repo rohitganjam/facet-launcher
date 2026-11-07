@@ -47,6 +47,13 @@ interface ClockStackItemDao {
     @Query("UPDATE clock_stack_items SET widthDp = :widthDp, heightDp = :heightDp WHERE id = :id")
     suspend fun setSize(id: Long, widthDp: Int, heightDp: Int)
 
+    /** Forgets the saved size of this facet's clock page(s) in both orientations, so the clock draws at its default size again; widget pages keep theirs. */
+    @Query(
+        "UPDATE clock_stack_items SET widthDp = NULL, heightDp = NULL, landscapeWidthDp = NULL, landscapeHeightDp = NULL " +
+            "WHERE facetId = :facetId AND kind = 'CLOCK'",
+    )
+    suspend fun clearClockBoxes(facetId: Long)
+
     @Query("UPDATE clock_stack_items SET landscapeWidthDp = :widthDp, landscapeHeightDp = :heightDp WHERE id = :id")
     suspend fun setLandscapeSize(id: Long, widthDp: Int, heightDp: Int)
 

@@ -33,7 +33,7 @@ import com.facetlauncher.app.data.model.landscape
 import com.facetlauncher.app.data.model.AppListVerticalAlignment
 import com.facetlauncher.app.data.model.ClockAlignment
 import com.facetlauncher.app.data.model.DockDisplayMode
-import com.facetlauncher.app.ui.home.ClockAdjustMode
+import com.facetlauncher.app.ui.home.HomeMenuMode
 import com.facetlauncher.app.ui.theme.launcherSystemBarInsets
 import kotlin.math.roundToInt
 
@@ -98,7 +98,7 @@ private fun BoxScope.PortraitClockZone(frame: HomeFrame) {
     )
     // Not composed in clock adjust mode (the handles own that space); mediaRowHeightPx is kept, so the list doesn't move.
     val player = media.shownPlayer
-    if (player != null && media.fraction > 0f && frame.state.clock.adjustMode == ClockAdjustMode.NONE) {
+    if (player != null && media.fraction > 0f && frame.state.clock.adjustMode == HomeMenuMode.NONE) {
         HomeMediaSlot(
             frame,
             player,
@@ -116,7 +116,7 @@ private fun BoxScope.PortraitClockZone(frame: HomeFrame) {
             pageCount = frame.state.clockStack.pageCount,
             pageIndex = frame.state.clockStack.pageIndex,
             dragging = frame.actions.clock.pageDragging(),
-            forceShown = frame.state.clock.adjustMode == ClockAdjustMode.ADJUST,
+            forceShown = frame.state.clock.adjustMode == HomeMenuMode.ADJUST,
             modifier = Modifier
                 .align(Alignment.TopCenter)
                 .offset { IntOffset(0, (media.dotsTopPx + dotsInsetPx).roundToInt()) },
@@ -177,7 +177,7 @@ internal fun HomeLandscapeContent(frame: HomeFrame) {
                     pageCount = stack.pageCount,
                     pageIndex = stack.pageIndex,
                     dragging = frame.actions.clock.pageDragging(),
-                    forceShown = frame.state.clock.adjustMode == ClockAdjustMode.ADJUST,
+                    forceShown = frame.state.clock.adjustMode == HomeMenuMode.ADJUST,
                     modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = HOME_LANDSCAPE_CLOCK_DOTS_BOTTOM),
                 )
             }

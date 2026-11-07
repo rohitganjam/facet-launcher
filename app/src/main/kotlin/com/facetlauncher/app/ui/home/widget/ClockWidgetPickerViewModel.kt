@@ -113,6 +113,17 @@ class ClockWidgetPickerViewModel @Inject constructor(
         }
     }
 
+    /** The clock Facet draws, back on the stack as [target] says. */
+    fun onClockSelect(target: ClockWidgetPickerTarget) {
+        viewModelScope.launch {
+            val added = when (target) {
+                is ClockWidgetPickerTarget.Replace -> replaceClockStackItem.withClock(target.itemId)
+                is ClockWidgetPickerTarget.Add -> addClockStackItem.addClock(target.facetId) == AddClockStackItemResult.ADDED
+            }
+            _events.emit(if (added) HubAddWidgetEvent.WidgetAdded else HubAddWidgetEvent.AddFailed(AddFailureReason.SETUP_CANCELLED))
+        }
+    }
+
     /** The composable's bind-permission launcher result. */
     fun onBindResult(granted: Boolean) {
         val appWidgetId = pendingAppWidgetId ?: return

@@ -32,9 +32,8 @@ class CommitClockPlacementUseCaseTest {
     /** The launcher's fallback: right-aligned, scale 1.2, divider at 300, and a landscape of its own. */
     private val launcher = LauncherSettings(
         clockAlignment = ClockAlignment.RIGHT,
-        clockScale = 1.2f,
         clockZoneHeightDp = 300f,
-        landscape = LandscapeOverrides(clockAlignment = ClockAlignment.CENTER, clockScale = 1.5f, clockZoneHeightDp = 410f),
+        landscape = LandscapeOverrides(clockAlignment = ClockAlignment.CENTER, clockZoneHeightDp = 410f),
     )
 
     @Before
@@ -68,7 +67,6 @@ class CommitClockPlacementUseCaseTest {
         assertEquals(true, stored.clockPlacementOwn)
         assertEquals(220f, stored.clockZoneHeightDp)
         assertEquals(ClockAlignment.RIGHT, stored.clockAlignment)
-        assertEquals(1.2f, stored.clockScale, 0.001f)
     }
 
     @Test
@@ -79,7 +77,6 @@ class CommitClockPlacementUseCaseTest {
         // Then landscape still shows what it showed: the launcher's landscape values, now the facet's own
         val stored = facetRepository.getById(facetId)!!
         assertEquals(ClockAlignment.CENTER, stored.landscape.clockAlignment)
-        assertEquals(1.5f, stored.landscape.clockScale!!, 0.001f)
         assertEquals(410f, stored.landscape.clockZoneHeightDp)
     }
 
@@ -90,15 +87,13 @@ class CommitClockPlacementUseCaseTest {
 
         // Then landscape has the new scale and portrait keeps the launcher's values
         val stored = facetRepository.getById(facetId)!!
-        assertEquals(0.6f, stored.landscape.clockScale!!, 0.001f)
-        assertEquals(1.2f, stored.clockScale, 0.001f)
         assertEquals(ClockAlignment.RIGHT, stored.clockAlignment)
     }
 
     @Test
     fun `a landscape value equal to portrait stays unset, so it follows portrait`() = runTest {
         // Given a launcher whose landscape alignment and divider are the same as portrait's
-        val same = LauncherSettings(clockAlignment = ClockAlignment.CENTER, clockScale = 1f, clockZoneHeightDp = null)
+        val same = LauncherSettings(clockAlignment = ClockAlignment.CENTER, clockZoneHeightDp = null)
 
         // When only the portrait scale is changed
         useCase(same)(facetId, landscape = false) { it.copy(scale = 0.9f) }
@@ -107,7 +102,6 @@ class CommitClockPlacementUseCaseTest {
         val stored = facetRepository.getById(facetId)!!
         assertNull(stored.landscape.clockAlignment)
         assertNull(stored.landscape.clockZoneHeightDp)
-        assertEquals(1f, stored.landscape.clockScale!!, 0.001f)
     }
 
     @Test
@@ -121,7 +115,6 @@ class CommitClockPlacementUseCaseTest {
         // Then alignment and scale are still the facet's own
         val stored = facetRepository.getById(facetId)!!
         assertEquals(ClockAlignment.LEFT, stored.clockAlignment)
-        assertEquals(0.7f, stored.clockScale, 0.001f)
         assertEquals(150f, stored.clockZoneHeightDp)
     }
 

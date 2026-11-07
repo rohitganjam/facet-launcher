@@ -99,13 +99,12 @@ internal fun NativeWidgetConfigContent(
     }
 }
 
-/** The launcher's Calendar settings, per widget: all-day events on or off, and which calendars. Each starts from the launcher's current value. */
+/** An Agenda's own calendar settings: all-day events on or off, and which calendars. A new Agenda shows every calendar, calendars added later included. */
 @Composable
 private fun AgendaConfig(config: NativeWidgetConfig, state: NativeWidgetConfigUiState, onConfigChange: (NativeWidgetConfig) -> Unit) {
-    val showAllDay = config.showAllDayEvents ?: state.launcherShowAllDay
-    // With nothing chosen, an Agenda starts from the launcher's calendars (the same rule the settings and the query use).
-    val source = config.calendarIds ?: state.launcherCalendarIds
-    val chosen = state.calendars.filter { source.selectsCalendar(it.id) }.map { it.id }.toSet()
+    val showAllDay = config.showAllDayEvents ?: true
+    // With nothing chosen an Agenda shows every calendar (the same rule the query uses).
+    val chosen = state.calendars.filter { config.calendarIds.selectsCalendar(it.id) }.map { it.id }.toSet()
     fun change(allDay: Boolean = showAllDay, ids: Set<String> = chosen) = onConfigChange(config.copy(showAllDayEvents = allDay, calendarIds = ids))
     Column {
         Row(

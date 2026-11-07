@@ -1,5 +1,6 @@
 package com.facetlauncher.app.ui.launcher
 
+import com.facetlauncher.app.ui.home.widget.ClockWidgetPickerTarget
 import androidx.compose.runtime.getValue
 import android.content.Intent
 import androidx.compose.animation.AnimatedVisibility
@@ -123,25 +124,25 @@ internal fun HomeFacetCarouselOverlay(facet: SwipeAxisState, containerWidthPx: F
     }
 }
 
-/** The clock widget picker, over everything else: reached from the clock adjust sheet on Home, not from the Hub. */
+/** The clock widget picker, over everything else: reached from the Home sheet, not from the Hub. */
 @Composable
-internal fun HomeClockWidgetPickerOverlay(overlays: HomeOverlayState, onReset: () -> Unit, content: @Composable (itemId: Long) -> Unit) {
+internal fun HomeClockWidgetPickerOverlay(overlays: HomeOverlayState, onReset: () -> Unit, content: @Composable (target: ClockWidgetPickerTarget) -> Unit) {
     val currentOnReset by rememberUpdatedState(onReset)
     // Clear its search and target page whenever its panel closes.
     LaunchedEffect(overlays.showClockWidgetPicker) {
         if (!overlays.showClockWidgetPicker) {
             currentOnReset()
-            overlays.clockWidgetPickerItemId = null
+            overlays.clockWidgetPickerTarget = null
         }
     }
-    overlays.clockWidgetPickerItemId?.let { itemId ->
+    overlays.clockWidgetPickerTarget?.let { target ->
         AnimatedVisibility(
             visible = overlays.showClockWidgetPicker,
             enter = slideInHorizontally(initialOffsetX = { it }, animationSpec = tween(FACET_TRANSITION_DURATION_MS, easing = FacetTransitionEasing)),
             exit = slideOutHorizontally(targetOffsetX = { it }, animationSpec = tween(FACET_TRANSITION_DURATION_MS, easing = FacetTransitionEasing)),
             modifier = Modifier.testTag("clock_widget_picker_overlay"),
         ) {
-            content(itemId)
+            content(target)
         }
     }
 }

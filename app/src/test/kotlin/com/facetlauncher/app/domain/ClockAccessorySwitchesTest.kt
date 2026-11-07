@@ -1,7 +1,7 @@
 package com.facetlauncher.app.domain
 
-import com.facetlauncher.app.data.local.toEntity
-import com.facetlauncher.app.data.local.toFacet
+import com.facetlauncher.app.data.clockItemWith
+import com.facetlauncher.app.data.model.ClockWidgetConfig
 import com.facetlauncher.app.data.model.Facet
 import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.data.model.WeatherIconStyle
@@ -12,67 +12,38 @@ import org.junit.Test
 
 class ClockAccessorySwitchesTest {
 
-    private val launcher = LauncherSettings(showNextAlarm = true, showBatteryPercentage = false, showWeather = true)
+    private val launcher = LauncherSettings()
 
-    private fun facet(overrideClock: Boolean) =
-        Facet(id = 1, name = "Work", position = 0, overrideClock = overrideClock, clockShowAlarm = false, clockShowBattery = true, clockShowWeather = false)
+    private fun facetWith(config: ClockWidgetConfig) = Facet(id = 1, name = "Work", position = 0, clockStack = listOf(clockItemWith(config)))
 
     @Test
-    fun `with no facet the launcher's switches apply`() {
+    fun `with no facet the clock shows alarm and battery and not weather`() {
         val clock = resolveFacetStyle(null, launcher).clock
 
         assertTrue(clock.showAlarm)
-        assertFalse(clock.showBattery)
-        assertTrue(clock.showWeather)
-    }
-
-    @Test
-    fun `a facet that does not override the clock inherits the launcher's switches`() {
-        val clock = resolveFacetStyle(facet(overrideClock = false), launcher).clock
-
-        assertTrue(clock.showAlarm)
-        assertFalse(clock.showBattery)
-        assertTrue(clock.showWeather)
-    }
-
-    @Test
-    fun `a facet that overrides the clock uses its own switches`() {
-        val clock = resolveFacetStyle(facet(overrideClock = true), launcher).clock
-
-        assertFalse(clock.showAlarm)
         assertTrue(clock.showBattery)
         assertFalse(clock.showWeather)
     }
 
     @Test
-    fun `a new facet shows alarm and battery and not weather`() {
-        val facet = Facet(name = "New", position = 0)
+    fun `a clock uses its own switches`() {
+        val clock = resolveFacetStyle(facetWith(ClockWidgetConfig(showAlarm = false, showBattery = false, showWeather = true)), launcher).clock
 
-        assertTrue(facet.clockShowAlarm)
-        assertTrue(facet.clockShowBattery)
-        assertFalse(facet.clockShowWeather)
+        assertFalse(clock.showAlarm)
+        assertFalse(clock.showBattery)
+        assertTrue(clock.showWeather)
     }
 
     @Test
-    fun `the switches survive the trip to and from a database row`() {
-        val facet = facet(overrideClock = true)
+    fun `a clock uses its own weather icon style`() {
+        val monochrome = facetWith(ClockWidgetConfig(weatherIconStyle = WeatherIconStyle.MONOCHROME))
 
-        assertEquals(facet, facet.toEntity().toFacet(facet.clockStack))
+        assertEquals(WeatherIconStyle.MONOCHROME, resolveFacetStyle(monochrome, launcher).clock.weatherIconStyle)
+        assertEquals(WeatherIconStyle.COLORED, resolveFacetStyle(null, launcher).clock.weatherIconStyle)
     }
 
     @Test
-    fun `a facet that overrides the clock uses its own weather icon style and one that does not inherits the launcher's`() {
-        val monochromeFacet = facet(overrideClock = true).copy(clockWeatherIconStyle = WeatherIconStyle.MONOCHROME)
-        val launcherColoured = launcher.copy(weatherIconStyle = WeatherIconStyle.COLORED)
-
-        assertEquals(WeatherIconStyle.MONOCHROME, resolveFacetStyle(monochromeFacet, launcherColoured).clock.weatherIconStyle)
-        assertEquals(WeatherIconStyle.COLORED, resolveFacetStyle(monochromeFacet.copy(overrideClock = false), launcherColoured).clock.weatherIconStyle)
-        assertEquals(WeatherIconStyle.COLORED, resolveFacetStyle(null, launcherColoured).clock.weatherIconStyle)
-    }
-
-    @Test
-    fun `weather icons are coloured by default for the launcher and for a new facet`() {
-        assertEquals(WeatherIconStyle.COLORED, LauncherSettings().weatherIconStyle)
-        assertEquals(WeatherIconStyle.COLORED, Facet(name = "New", position = 0).clockWeatherIconStyle)
+    fun `weather icons are coloured by default for a new clock`() {
+        assertEquals(WeatherIconStyle.COLORED, ClockWidgetConfig().weatherIconStyle)
     }
 }

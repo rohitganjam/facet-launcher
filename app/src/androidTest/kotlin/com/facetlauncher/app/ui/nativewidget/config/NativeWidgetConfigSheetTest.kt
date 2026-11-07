@@ -28,7 +28,6 @@ class NativeWidgetConfigSheetTest {
     private val oslo = WeatherCity("Oslo", 59.91, 10.75, "Europe/Oslo")
     private val state = NativeWidgetConfigUiState(
         calendars = persistentListOf(CalendarInfo("1", "Personal", "me@example.com"), CalendarInfo("2", "Work", "me@work.com"), CalendarInfo("work:1", "", "", isWork = true)),
-        launcherShowAllDay = true,
         savedCities = persistentListOf(oslo),
     )
 

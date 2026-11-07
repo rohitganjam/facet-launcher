@@ -6,6 +6,8 @@ import com.facetlauncher.app.data.nativeItem
 import com.facetlauncher.app.data.model.NativeWidgetType
 import com.facetlauncher.app.data.widgetItem
 import com.facetlauncher.app.data.clockItem
+import com.facetlauncher.app.data.clockItemWith
+import com.facetlauncher.app.data.model.ClockWidgetConfig
 import androidx.compose.ui.unit.dp
 import com.facetlauncher.app.data.model.AppListGridColumns
 import com.facetlauncher.app.data.model.AppListGridDisplayMode
@@ -32,12 +34,11 @@ class HomeScreenStateBuilderTest {
     private val settings = LauncherSettings(
         activeFacetId = 1L,
         clockAlignment = ClockAlignment.RIGHT,
-        clockScale = 1.2f,
         clockZoneHeightDp = 300f,
         appRowPosition = AppRowPosition.CENTER,
         appListVerticalAlignment = AppListVerticalAlignment.TOP,
         showMediaSkipButtons = false,
-        landscape = LandscapeOverrides(clockScale = 2.0f, appRowPosition = AppRowPosition.RIGHT),
+        landscape = LandscapeOverrides(appRowPosition = AppRowPosition.RIGHT),
     )
 
     private val content = HomeScreenContent(listItems = emptyList(), dockItems = emptyList(), calendarEvents = emptyList())
@@ -51,9 +52,9 @@ class HomeScreenStateBuilderTest {
         val facets = listOf(
             null,
             Facet(id = 1L, name = "Inherits", position = 0),
-            Facet(id = 1L, name = "Overrides", position = 0, overrideClock = true, clockAlignment = ClockAlignment.LEFT, clockScale = 0.5f, clockZoneHeightDp = 120f),
-            Facet(id = 1L, name = "Never dragged", position = 0, overrideClock = true, clockZoneHeightDp = null),
-            Facet(id = 1L, name = "Own landscape", position = 0, landscapeAppRowPosition = AppRowPosition.LEFT, landscapeClockScale = 0.9f),
+            Facet(id = 1L, name = "Overrides", position = 0, clockPlacementOwn = true, clockAlignment = ClockAlignment.LEFT, clockZoneHeightDp = 120f),
+            Facet(id = 1L, name = "Never dragged", position = 0, clockPlacementOwn = true, clockZoneHeightDp = null),
+            Facet(id = 1L, name = "Own landscape", position = 0, landscapeAppRowPosition = AppRowPosition.LEFT),
         )
 
         for (facet in facets) {
@@ -103,7 +104,7 @@ class HomeScreenStateBuilderTest {
 
     @Test
     fun `the clock look and list look come from the resolved style`() {
-        val facet = Facet(id = 1L, name = "Own", position = 0, overrideClock = true, use24HourTime = true, dockDisplayMode = com.facetlauncher.app.data.model.DockDisplayMode.TEXT)
+        val facet = Facet(id = 1L, name = "Own", position = 0, clockStack = listOf(clockItemWith(ClockWidgetConfig(use24HourTime = true))), dockDisplayMode = com.facetlauncher.app.data.model.DockDisplayMode.TEXT)
 
         val state = build(facet, landscape = false)
         val home = HomeUiState(settings = settings, facets = listOf(facet))
@@ -172,6 +173,30 @@ class HomeScreenStateBuilderTest {
         assertEquals(ClockAlignment.LEFT, alignmentOf(10L, landscape = false))
         assertEquals(ClockAlignment.CENTER, alignmentOf(11L, landscape = false))
         assertEquals(ClockAlignment.RIGHT, alignmentOf(11L, landscape = true))
+    }
+
+    @Test
+    fun `the clock page shows its saved box width for each orientation and a widget page has none`() {
+        // Given a clock page with a box in both orientations, then a widget page
+        val clock = clockItem(id = 10L, position = 0).copy(widthDp = 200, heightDp = 80, landscapeWidthDp = 320, landscapeHeightDp = 130)
+        val facet = Facet(id = 1L, name = "A", position = 0, clockStack = listOf(clock, widgetItem(41, id = 11L, position = 1)))
+        val style = resolveFacetStyle(facet, settings)
+
+        // When building each page, in each orientation
+        fun boxOf(pageId: Long, landscape: Boolean) =
+            style.toHomeScreenState(landscape, settings, content, live = HomeLiveState(visibleClockItemId = pageId)).clock.boxWidthDp
+
+        // Then the clock page carries its width and the widget page none (it sizes itself)
+        assertEquals(200, boxOf(10L, landscape = false))
+        assertEquals(320, boxOf(10L, landscape = true))
+        assertNull(boxOf(11L, landscape = false))
+    }
+
+    @Test
+    fun `a clock page that was never resized has no box`() {
+        val facet = Facet(id = 1L, name = "A", position = 0, clockStack = listOf(clockItem(position = 0)))
+
+        assertNull(build(facet, landscape = false).clock.boxWidthDp)
     }
 
     @Test
@@ -283,9 +308,8 @@ class HomeScreenStateBuilderTest {
     fun `the live-only parts default to a quiet Home`() {
         val state = build(null, landscape = false)
 
-        assertEquals(ClockAdjustMode.NONE, state.clock.adjustMode)
+        assertEquals(HomeMenuMode.NONE, state.clock.adjustMode)
         assertNull(state.clock.placementFacetId)
-        assertNull(state.clock.styleOwnerFacetName)
         assertNull(state.media.player)
         assertEquals(false, state.media.showSkipButtons)
     }
@@ -362,5 +386,19 @@ class HomeScreenStateBuilderTest {
         assertEquals(withWeather.weather, state.nativeWidgets.weather.weather)
         assertEquals(state.calendar, state.nativeWidgets.calendar)
         assertEquals(state.media, state.nativeWidgets.media)
+    }
+
+    @Test
+    fun `a running weather refresh reaches the widgets Facet draws itself`() {
+        // Given content with no forecast yet and a refresh running, then the same with none running
+        val refreshing = content.copy(weatherRefreshing = true)
+
+        // When Home's state is built
+        val running = resolveFacetStyle(null, settings).toHomeScreenState(false, settings, refreshing)
+        val idle = resolveFacetStyle(null, settings).toHomeScreenState(false, settings, content)
+
+        // Then the widgets' weather says it is refreshing only while it is
+        assertEquals(true, running.nativeWidgets.weather.isRefreshing)
+        assertEquals(false, idle.nativeWidgets.weather.isRefreshing)
     }
 }

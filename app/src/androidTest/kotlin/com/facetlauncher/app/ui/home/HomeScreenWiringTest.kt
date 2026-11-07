@@ -1,5 +1,7 @@
 package com.facetlauncher.app.ui.home
 
+import kotlinx.collections.immutable.persistentListOf
+import com.facetlauncher.app.data.model.CalendarEvent
 import android.appwidget.AppWidgetHostView
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -64,9 +66,9 @@ class HomeScreenWiringTest {
     )
 
     /** Hoists the adjust mode as `HomeDrawerRoute` does, so a long-press on the clock really opens its menu. */
-    private fun setHome(state: HomeScreenState, actions: HomeScreenActions) {
+    private fun setHome(state: HomeScreenState, actions: HomeScreenActions, initialMode: HomeMenuMode = HomeMenuMode.NONE) {
         composeRule.setContent {
-            var adjustMode by remember { mutableStateOf(ClockAdjustMode.NONE) }
+            var adjustMode by remember { mutableStateOf(initialMode) }
             FacetLauncherTheme {
                 HomeScreen(
                     state = state.copy(clock = state.clock.copy(adjustMode = adjustMode)),
@@ -225,38 +227,151 @@ class HomeScreenWiringTest {
     // ---- clock
 
     @Test
-    fun theClockMenuRowsReachTheClockActions() {
-        // Given a native clock and counters on the menu's actions
+    fun theHomeSheetRowsReachTheClockActionsWhenOpenedFromFreeSpace() {
+        // Given a page showing and counters on the sheet's actions
         val calls = mutableListOf<String>()
         val actions = HomeScreenActions(
             item = HomeItemActions(onAppClick = {}),
             clock = HomeClockActions(
-                onClockSettingsClick = { calls += "clock-settings" },
-                onReplaceWithWidgetClick = { calls += "replace-with-widget" },
-                onReplaceWithClockClick = { calls += "replace-with-clock" },
+                onReplaceWidgetClick = { calls += "replace" },
+                onRemoveWidgetClick = { calls += "remove" },
                 onNavigateToSettings = { calls += "settings" },
                 onNavigateToFacetSettings = { calls += "facet-settings" },
             ),
         )
         setHome(appState(PlacedItem.SingleApp(mail)), actions)
 
-        // When the clock is long-pressed and each row tapped (a tap closes the sheet, so it is reopened each time)
+        // When the widget is long-pressed for replace and remove, and free space for the settings rows (a tap closes the sheet, so it is reopened each time)
+        fun openFromFreeSpace() {
+            composeRule.onNodeWithTag("home_screen_root").performTouchInput { longClick(Offset(width * 0.75f, 4f)) }
+            composeRule.waitForIdle()
+        }
         longPress("home_clock_block")
-        composeRule.onNodeWithTag("clock_adjust_replace_with_clock").assertDoesNotExist()
-        composeRule.onNodeWithTag("clock_adjust_clock_settings").performClick()
+        composeRule.onNodeWithTag("widget_sheet_replace").performClick()
         longPress("home_clock_block")
-        composeRule.onNodeWithTag("clock_adjust_replace_with_widget").performClick()
-        longPress("home_clock_block")
-        composeRule.onNodeWithTag("clock_adjust_facet_settings").performClick()
-        longPress("home_clock_block")
-        composeRule.onNodeWithTag("clock_adjust_launcher_settings").performClick()
+        composeRule.onNodeWithTag("widget_sheet_remove").performClick()
+        openFromFreeSpace()
+        composeRule.onNodeWithTag("home_sheet_facet_settings").performClick()
+        openFromFreeSpace()
+        composeRule.onNodeWithTag("home_sheet_launcher_settings").performClick()
 
-        // Then each reached its own callback, and a native clock page has no "replace with clock" row
-        assertEquals(listOf("clock-settings", "replace-with-widget", "facet-settings", "settings"), calls)
+        // Then each reached its own callback
+        assertEquals(listOf("replace", "remove", "facet-settings", "settings"), calls)
     }
 
     @Test
-    fun aHostedWidgetsMenuOffersReplacingItWithTheClockAndTheWidgetIsHosted() {
+    fun longPressingTheClockOpensTheWidgetSheetNotTheHomeSheet() {
+        // Given the native clock showing, and counters on the clock sheet's actions
+        val calls = mutableListOf<String>()
+        val actions = HomeScreenActions(
+            item = HomeItemActions(onAppClick = {}),
+            clock = HomeClockActions(onClockStylesClick = { calls += "styles" }),
+        )
+        setHome(appState(PlacedItem.SingleApp(mail)), actions)
+
+        // When the clock is long-pressed
+        longPress("home_clock_block")
+
+        // Then the widget sheet shows, not the Home sheet
+        composeRule.onNodeWithTag("widget_sheet").assertExists()
+        composeRule.onNodeWithTag("home_menu_sheet").assertDoesNotExist()
+
+        // And the styles row reaches its action, while the calendar row swaps this sheet for the calendar settings one
+        composeRule.onNodeWithTag("clock_style_sheet_styles").performClick()
+        longPress("home_clock_block")
+        composeRule.onNodeWithTag("clock_style_sheet_calendar").performClick()
+        composeRule.onNodeWithTag("widget_sheet").assertDoesNotExist()
+        assertEquals(listOf("styles"), calls)
+    }
+
+    @Test
+    fun longPressingTheCalendarUnderTheClockOpensTheWidgetSheetAndATapStillOpensTheEvent() {
+        // Given an event under the clock, and counters on the event tap
+        val now = System.currentTimeMillis()
+        val event = CalendarEvent(id = 7L, calendarId = "1", title = "Planning", startTimeMillis = now + 3_600_000, endTimeMillis = now + 7_200_000, isAllDay = false)
+        val opened = mutableListOf<Long>()
+        val state = appState(PlacedItem.SingleApp(mail)).copy(calendar = HomeCalendarState(events = persistentListOf(event)))
+        setHome(state, HomeScreenActions(item = HomeItemActions(onAppClick = {}), clock = HomeClockActions(onEventClick = { opened += it.id })))
+
+        // When the event is tapped, then long-pressed
+        composeRule.onNodeWithTag("clock_event_row_7").performClick()
+        longPress("clock_event_row_7")
+
+        // Then the tap opened the event, and the long-press opened the clock's own sheet without opening it again
+        assertEquals(listOf(7L), opened)
+        composeRule.onNodeWithTag("widget_sheet").assertExists()
+        composeRule.onNodeWithTag("home_menu_sheet").assertDoesNotExist()
+    }
+
+    @Test
+    fun longPressingAFacetWidgetOpensTheWidgetSheetNotTheHomeSheet() {
+        // Given a Facet Agenda widget on the page
+        val widget = HomeClockWidgetState(
+            itemId = 1L, appWidgetId = -1, widthDp = 260.dp, heightDp = 160.dp, minWidthDp = 60.dp, minHeightDp = 60.dp,
+            nativeType = com.facetlauncher.app.data.model.NativeWidgetType.AGENDA,
+        )
+        setHome(appState(PlacedItem.SingleApp(mail)).copy(widget = widget), HomeScreenActions(item = HomeItemActions(onAppClick = {})))
+
+        // When the widget is long-pressed
+        longPress("native_widget_AGENDA")
+
+        // Then its own sheet shows, not the Home sheet
+        composeRule.onNodeWithTag("widget_sheet").assertExists()
+        composeRule.onNodeWithTag("home_menu_sheet").assertDoesNotExist()
+    }
+
+    @Test
+    fun longPressingFreeSpaceOpensTheHomeSheetNotTheWidgetSheet() {
+        // Given the native clock showing
+        setHome(appState(PlacedItem.SingleApp(mail)), HomeScreenActions(item = HomeItemActions(onAppClick = {})))
+
+        // When free space is long-pressed
+        composeRule.onNodeWithTag("home_screen_root").performTouchInput { longClick(Offset(width * 0.75f, 4f)) }
+        composeRule.waitForIdle()
+
+        // Then the Home sheet shows, not the clock's
+        composeRule.onNodeWithTag("home_menu_sheet").assertExists()
+        composeRule.onNodeWithTag("widget_sheet").assertDoesNotExist()
+    }
+
+    @Test
+    fun withNothingAtTheTopTheMediaRowStartsThereInsteadOfUnderTheClock() {
+        // Given a track playing with the clock at the top
+        val withClock = appState(PlacedItem.SingleApp(mail)).copy(media = HomeMediaState(player = track))
+        var state by mutableStateOf(withClock)
+        composeRule.setContent {
+            FacetLauncherTheme { HomeScreen(state = state, actions = HomeScreenActions(item = HomeItemActions(onAppClick = {})), layoutMode = HomeLayoutMode.PORTRAIT) }
+        }
+        composeRule.waitForIdle()
+        val underClockTop = composeRule.onNodeWithTag("home_media_player").getUnclippedBoundsInRoot().top
+
+        // When nothing is at the top any more
+        composeRule.runOnIdle { state = withClock.copy(clockStack = HomeClockStackState(pageCount = 0, pageIndex = 0, hasClock = false)) }
+        composeRule.waitForIdle()
+
+        // Then the media row has moved up to the top of Home
+        val emptyTop = composeRule.onNodeWithTag("home_media_player").getUnclippedBoundsInRoot().top
+        assertTrue("media row moved up: $emptyTop < $underClockTop", emptyTop < underClockTop)
+    }
+
+    @Test
+    fun anEmptyTopOffersAddWidgetOnTheHomeSheet() {
+        // Given a stack with no page and a counter on the add action
+        var added = 0
+        val state = appState(PlacedItem.SingleApp(mail)).copy(clockStack = HomeClockStackState(pageCount = 0, pageIndex = 0, hasClock = false))
+        setHome(state, HomeScreenActions(item = HomeItemActions(onAppClick = {}), clock = HomeClockActions(onAddWidgetClick = { added++ })))
+
+        // When free space is long-pressed and Add widget tapped
+        composeRule.onNodeWithTag("home_screen_root").performTouchInput { longClick(Offset(width * 0.75f, 4f)) }
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("home_sheet_add_widget").performClick()
+
+        // Then the add action fired
+        assertEquals(1, added)
+    }
+
+    @Test
+    fun aHostedWidgetsMenuOffersReplacingItAndTheWidgetIsHosted() {
         // Given a hosted clock widget
         var switched = 0
         var hostedId: Int? = null
@@ -268,7 +383,7 @@ class HomeScreenWiringTest {
         )
         val actions = HomeScreenActions(
             item = HomeItemActions(onAppClick = {}),
-            clock = HomeClockActions(onReplaceWithClockClick = { switched++ }),
+            clock = HomeClockActions(onReplaceWidgetClick = { switched++ }),
             widget = HomeClockWidgetActions(
                 createHostView = { context, id ->
                     hostedId = id
@@ -278,18 +393,16 @@ class HomeScreenWiringTest {
             ),
             onAppListBoundsChange = { listBounds = it },
         )
-        setHome(state, actions)
+        // The widget host swallows its own touches, so the widget sheet starts open instead of being opened by a long-press.
+        setHome(state, actions, initialMode = HomeMenuMode.WIDGET_MENU)
 
         // Then the widget was hosted by its id, and Home reported where the widget and the list are
         assertEquals(42, hostedId)
         assertNotNull(widgetBounds)
         assertNotNull(listBounds)
 
-        // When the menu's "Replace with clock" row is tapped
-        // The widget host swallows its own touches, so the menu is opened from empty space as in the landscape tests.
-        composeRule.onNodeWithTag("home_screen_root").performTouchInput { longClick(Offset(width * 0.75f, 4f)) }
-        composeRule.waitForIdle()
-        composeRule.onNodeWithTag("clock_adjust_replace_with_clock").performClick()
+        // When the widget sheet's "Replace widget" row is tapped
+        composeRule.onNodeWithTag("widget_sheet_replace").performClick()
 
         // Then that action fired
         assertEquals(1, switched)
@@ -445,18 +558,6 @@ class HomeScreenWiringTest {
         assertEquals(1, removed)
     }
 
-    @Test
-    fun theFacetThatOwnsTheClockStyleIsNamedOnTheClockSettingsRow() {
-        // Given a clock style owned by a facet called Work
-        val state = appState(PlacedItem.SingleApp(mail)).copy(clock = HomeClockState(placementFacetId = 3L, styleOwnerFacetName = "Work"))
-        setHome(state, HomeScreenActions(item = HomeItemActions(onAppClick = {})))
-
-        // When the clock menu opens
-        longPress("home_clock_block")
-
-        // Then the edit-styles row carries that name
-        composeRule.onNodeWithText("Work", substring = true).assertExists()
-    }
 
     @Test
     fun theBatteryReadingReachesTheClockAccessories() {

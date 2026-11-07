@@ -83,30 +83,32 @@ class ObserveNativeWidgetOverridesUseCaseTest {
     }
 
     @Test
-    fun `an agenda widget with its own calendars reads only those`() = runTest {
-        // Given an agenda widget set to calendar 5 and another that follows the launcher
+    fun `an agenda widget with its own calendars reads only those, and a new one reads every calendar`() = runTest {
+        // Given an agenda widget set to calendar 5 and a new one with nothing chosen
         val event = CalendarEvent(1, "5", "Standup", 0, 1, false)
+        val everything = CalendarEvent(2, "9", "Lunch", 0, 1, false)
         given(native(-1, NativeWidgetType.AGENDA, NativeWidgetConfig(calendarIds = setOf("5"))), native(-2, NativeWidgetType.AGENDA, NativeWidgetConfig()))
         `when`(calendarPermission.isGranted()).thenReturn(true)
         `when`(calendars.getUpcomingEvents(setOf("5"), true)).thenReturn(listOf(event))
+        `when`(calendars.getUpcomingEvents(null, true)).thenReturn(listOf(event, everything))
 
         // When observing
         val overrides = useCase()().first()
 
-        // Then only the first has an override, with its own events
+        // Then the first reads its own calendar, and the new one every calendar
         assertEquals(listOf(event), overrides[NativeWidgetRef.Hub(-1)]?.events)
-        assertNull(overrides[NativeWidgetRef.Hub(-2)])
+        assertEquals(listOf(event, everything), overrides[NativeWidgetRef.Hub(-2)]?.events)
     }
 
     @Test
-    fun `an agenda with only its own all-day choice keeps the launcher's calendars`() = runTest {
-        // Given the launcher shows calendar 2 with all-day events, and an agenda that hides all-day events
+    fun `an agenda with only its own all-day choice still reads every calendar`() = runTest {
+        // Given an agenda that hides all-day events and picks no calendars
         val event = CalendarEvent(1, "2", "Standup", 0, 1, false)
-        given(native(-1, NativeWidgetType.AGENDA, NativeWidgetConfig(showAllDayEvents = false)), launcher = LauncherSettings(selectedCalendarIds = setOf("2"), showAllDayEvents = true))
+        given(native(-1, NativeWidgetType.AGENDA, NativeWidgetConfig(showAllDayEvents = false)))
         `when`(calendarPermission.isGranted()).thenReturn(true)
-        `when`(calendars.getUpcomingEvents(setOf("2"), false)).thenReturn(listOf(event))
+        `when`(calendars.getUpcomingEvents(null, false)).thenReturn(listOf(event))
 
-        // Then it reads the launcher's calendars with its own all-day choice
+        // Then it reads every calendar with its own all-day choice
         assertEquals(listOf(event), useCase()().first()[NativeWidgetRef.Hub(-1)]?.events)
     }
 

@@ -11,12 +11,14 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -35,6 +37,7 @@ import com.facetlauncher.app.ui.home.weather.WeatherUiState
 import com.facetlauncher.app.ui.home.weather.conditionName
 import com.facetlauncher.app.ui.home.weather.temperatureText
 import com.facetlauncher.app.ui.home.weather.weatherIconKind
+import com.facetlauncher.app.ui.theme.Accent
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import com.facetlauncher.app.ui.theme.Ink
 import com.facetlauncher.app.ui.theme.Muted
@@ -50,7 +53,10 @@ private val DAY_ROW_HEIGHT = 30.dp
 internal fun WeatherNativeWidget(tier: WidgetTier, size: DpSize, ui: WeatherUiState, onOpen: () -> Unit, locationMissing: Boolean, onAllowLocation: () -> Unit, modifier: Modifier = Modifier) {
     val weather = ui.weather
     Box(modifier = modifier.fillMaxSize().clickable(onClick = onOpen), contentAlignment = Alignment.Center) {
-        if (weather == null && locationMissing) {
+        if (weather == null && ui.isRefreshing) {
+            // A refresh from nothing is running, so the permission or empty text would only be stale until it ends.
+            CircularProgressIndicator(modifier = Modifier.size(24.dp).testTag("weather_loading"), strokeWidth = 2.dp, color = Accent)
+        } else if (weather == null && locationMissing) {
             AccessPrompt(stringResource(R.string.native_widget_location_off), onAllowLocation, "weather_location_prompt")
         } else if (weather == null) {
             Text(stringResource(R.string.weather_empty), style = MaterialTheme.typography.bodyMedium, color = Muted, maxLines = 2, overflow = TextOverflow.Ellipsis)

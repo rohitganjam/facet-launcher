@@ -11,6 +11,7 @@ import com.facetlauncher.app.data.model.AppRowPosition
 import com.facetlauncher.app.data.model.AppRowPresentation
 import com.facetlauncher.app.data.model.CalendarDisplayOptions
 import com.facetlauncher.app.data.model.ClockAlignment
+import com.facetlauncher.app.data.model.ClockWidgetConfig
 import com.facetlauncher.app.data.model.ClockColorOption
 import com.facetlauncher.app.data.model.ClockDateStyle
 import com.facetlauncher.app.data.model.ClockFontOption
@@ -21,11 +22,11 @@ import com.facetlauncher.app.data.model.clockStackLimit
 import com.facetlauncher.app.data.model.nativeClockPage
 import com.facetlauncher.app.data.model.ClockTemplateId
 import com.facetlauncher.app.data.model.DockDisplayMode
+import com.facetlauncher.app.data.model.DEFAULT_CLOCK_SCALE
 import com.facetlauncher.app.data.model.Facet
 import com.facetlauncher.app.data.model.LandscapeOverrides
 import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.data.model.ListContentMode
-import com.facetlauncher.app.data.model.effectiveCalendarDisplay
 import com.facetlauncher.app.data.model.landscape
 import com.facetlauncher.app.data.model.resolveLandscape
 import com.facetlauncher.app.data.model.WeatherIconStyle
@@ -34,24 +35,6 @@ import com.facetlauncher.app.data.model.resolveOverride
 import com.facetlauncher.app.data.model.resolveSentinel
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
-
-/** The clock's style in force: the facet's own while it overrides the clock, the launcher's otherwise. Placement is separate, see [ResolvedFacetStyle.clockPlacement]. */
-@Immutable
-data class ResolvedClockStyle(
-    val templateId: ClockTemplateId,
-    val fontOption: ClockFontOption,
-    val colorOption: ClockColorOption,
-    val accentColorOption: ClockColorOption,
-    val use24HourTime: Boolean,
-    val showMeridiem: Boolean,
-    val dateStyle: ClockDateStyle,
-    val showAlarm: Boolean,
-    val showBattery: Boolean,
-    val showWeather: Boolean,
-    val weatherIconStyle: WeatherIconStyle,
-    /** Where this facet's clock shows the weather for; `null` follows Weather settings. */
-    val weatherLocation: WidgetWeatherLocation? = null,
-)
 
 /** The apps list in force. The look fields inherit per field via their `LAUNCHER_DEFAULT` sentinel; [contentMode] follows `overrideApps`. */
 @Immutable
@@ -93,7 +76,8 @@ data class ResolvedClockItem(
  */
 @Immutable
 data class ResolvedFacetStyle(
-    val clock: ResolvedClockStyle,
+    /** The clock's settings in force, its calendar included. */
+    val clock: ClockWidgetConfig,
     val appList: ResolvedAppListStyle,
     val dockDisplayMode: DockDisplayMode,
     val calendarDisplay: CalendarDisplayOptions,
@@ -107,29 +91,14 @@ data class ResolvedFacetStyle(
 
 /** [facet] is `null` when there is none, which yields the launcher-wide values. */
 fun resolveFacetStyle(facet: Facet?, settings: LauncherSettings): ResolvedFacetStyle = ResolvedFacetStyle(
-    clock = resolveClockStyle(facet, settings),
+    clock = effectiveClockConfig(facet, settings),
     appList = resolveAppListStyle(facet, settings),
     dockDisplayMode = facet.resolveSentinel({ it.dockDisplayMode }, DockDisplayMode.LAUNCHER_DEFAULT, settings.dockDisplayMode),
-    calendarDisplay = facet.effectiveCalendarDisplay(settings),
+    calendarDisplay = effectiveClockConfig(facet, settings).calendar.let { CalendarDisplayOptions(it.showIndicator, it.itemsToShow) },
     clockPlacement = resolveClockPlacement(facet, settings),
     listAlignment = resolveListAlignment(facet, settings),
     // No facet (a launcher-wide preview) draws the launcher clock alone.
     clockStack = (facet?.clockStack ?: listOf(nativeClockPage())).map { it.resolve() }.toImmutableList(),
-)
-
-private fun resolveClockStyle(facet: Facet?, settings: LauncherSettings) = ResolvedClockStyle(
-    templateId = facet.resolveOverride({ it.overrideClock }, { it.clockTemplateId }, settings.clockTemplateId),
-    fontOption = facet.resolveOverride({ it.overrideClock }, { it.clockFontOption }, settings.clockFontOption),
-    colorOption = facet.resolveOverride({ it.overrideClock }, { it.clockColorOption }, settings.clockColorOption),
-    accentColorOption = facet.resolveOverride({ it.overrideClock }, { it.clockAccentColorOption }, settings.clockAccentColorOption),
-    use24HourTime = facet.resolveOverride({ it.overrideClock }, { it.use24HourTime }, settings.use24HourTime),
-    showMeridiem = facet.resolveOverride({ it.overrideClock }, { it.clockShowMeridiem }, settings.clockShowMeridiem),
-    dateStyle = facet.resolveOverride({ it.overrideClock }, { it.clockDateStyle }, settings.clockDateStyle),
-    showAlarm = facet.resolveOverride({ it.overrideClock }, { it.clockShowAlarm }, settings.showNextAlarm),
-    showBattery = facet.resolveOverride({ it.overrideClock }, { it.clockShowBattery }, settings.showBatteryPercentage),
-    showWeather = facet.resolveOverride({ it.overrideClock }, { it.clockShowWeather }, settings.showWeather),
-    weatherIconStyle = facet.resolveOverride({ it.overrideClock }, { it.clockWeatherIconStyle }, settings.weatherIconStyle),
-    weatherLocation = facet.resolveOverride({ it.overrideClock }, { it.clockWeatherLocation }, null),
 )
 
 private fun resolveAppListStyle(facet: Facet?, settings: LauncherSettings) = ResolvedAppListStyle(
@@ -160,10 +129,9 @@ private fun resolveClockPlacement(facet: Facet?, settings: LauncherSettings): Or
     }
     val alignment = prop({ it.clockAlignment }, { it.clockAlignment }, settings.clockAlignment, global.clockAlignment)
     val zoneHeight = prop({ it.clockZoneHeightDp }, { it.clockZoneHeightDp }, settings.clockZoneHeightDp, global.clockZoneHeightDp)
-    val scale = prop({ it.clockScale }, { it.clockScale }, settings.clockScale, global.clockScale)
     return Oriented(
-        ClockPlacement(alignment.portrait, zoneHeight.portrait, scale.portrait),
-        ClockPlacement(alignment.landscape, zoneHeight.landscape, scale.landscape),
+        ClockPlacement(alignment.portrait, zoneHeight.portrait, DEFAULT_CLOCK_SCALE),
+        ClockPlacement(alignment.landscape, zoneHeight.landscape, DEFAULT_CLOCK_SCALE),
     )
 }
 

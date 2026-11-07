@@ -64,10 +64,13 @@ A Weather or Agenda widget can be set to its own calendars or location instead o
 the Hub (`widget_placements.nativeWidgetConfig`) or as a Home clock page (`clock_stack_items.nativeWidgetConfig`). Both go through one
 path, keyed by `NativeWidgetRef` (`Hub(appWidgetId)` or `Home(itemId)`):
 
-- `NativeWidgetConfig` (one tab-separated line per field) stores it: Agenda's chosen calendar ids and all-day choice (the sheet shows the
-  launcher's Calendar options, starting from the launcher's current values, with no follow switch), Weather's current location or a saved
-  city. A `null` field follows the launcher; Now Playing has none. `SetNativeWidgetConfigUseCase` writes either store and
+- `NativeWidgetConfig` (JSON, a field left out while it follows the launcher; a value that does not parse follows the launcher) stores it: Agenda's chosen calendar ids and all-day choice (an Agenda never follows the launcher: `null` ids mean every calendar,
+  calendars added later included, and `null` all-day means shown, so a new Agenda starts on every calendar), Weather's current location or a saved
+  city (`null` follows the launcher's Weather settings); Now Playing has none. `SetNativeWidgetConfigUseCase` writes either store and
   `ObserveNativeWidgetSettingsUseCase` reads it back.
+  The config also has a `clock` section (`ClockWidgetConfig`: look, accessories, weather location, and the calendar under it) for the clock widget that is being
+  stack (see `docs/proposals/clock-as-facet-widget.md`): Home, the previews and the clock settings screens read and write it through `resolveFacetStyle` and
+  `UpdateClockConfigUseCase` ([13](13-flow-facets-theme-notifications-onboarding.md) §1b). It is not a `NativeWidgetType`: that enum is the card widgets.
 - `ObserveNativeWidgetOverridesUseCase` turns every widget with a setting (Hub placements and the active facet's Home pages) into a
   `NativeWidgetOverride` (its events, or its `WeatherState`) through `NativeWidgetOverrideResolver`, re-derived every five minutes.
   `NativeWidgetAccessViewModel` exposes the map; `HomeDrawerRoute` puts it in `NativeWidgetState.overrides`, and `NativeWidget` reads
@@ -81,9 +84,11 @@ path, keyed by `NativeWidgetRef` (`Hub(appWidgetId)` or `Home(itemId)`):
 - Forecasts are shared by place: `WidgetWeatherRepository` holds one in-memory forecast per place behind the same `WeatherRefreshPolicy`
   gate, so widgets on one city make one request, and a place equal to the launcher-wide one reads the launcher's own stored forecast and
   makes none. "Current location" while the launcher already follows the position is the launcher's forecast too.
-- A **medium or large Agenda** (`isConfigurable`) has a 3-dot button at its top right; a **Weather** widget opens its own weather sheet when
-  tapped (`NativeWidgetActions.onOpenWeather(ref)`, which shows that widget's forecast), with a 3-dot button to the right of the rain
-  summary. Both call `onConfigure(ref)`, and `HomeDrawerRoute` opens `NativeWidgetConfigSheet(ref)` (`HomeOverlayState.configureRef`).
+- A widget's settings are opened from its long-press menu, not a button on it. On Home the widget sheet has "Agenda settings" or "Weather
+  settings" (`HomeClockActions.onConfigureNativeWidget`); on the Hub the context menu has Configure widget (`hub_grid_configure_widget`).
+  Now playing has none. Both call `onConfigure(ref)`, and `HomeDrawerRoute` opens `NativeWidgetConfigSheet(ref)` (`HomeOverlayState.configureRef`).
+  A **Weather** widget also opens its own weather sheet when tapped (`NativeWidgetActions.onOpenWeather(ref)`, which shows that widget's
+  forecast), with a 3-dot button to the right of the rain summary that calls the same `onConfigure(ref)`.
 - On adding a Weather or Agenda widget (one that has settings at its default size), from the Hub picker or to a Home page, the picker emits
   `HubAddWidgetEvent.NativeWidgetAdded(ref)` (`Hub(id)` or `Home(itemId)`, the latter from `AddClockStackItemUseCase`'s `AddedPage`) and the
   route, or the widget stack screen when the add started there, opens the sheet for it.
@@ -103,10 +108,13 @@ on resume, since neither has a grant-change callback) and `HomeDrawerRoute` puts
 Hub; Allow runs the runtime request (`READ_CALENDAR`, `ACCESS_COARSE_LOCATION`). A Hub widget set to its own location asks for location only when
 its own setting is the current position (`NativeWidgetOverride.locationMissing`). If Android no longer shows the dialog, the button does nothing
 visible; the Permissions screen in Settings still works.
+While a launcher-wide weather refresh runs and a Weather widget has no forecast yet, it shows a loader (`weather_loading`) instead of the prompt or its empty
+text: `HomeScreenContent.weatherRefreshing` carries `WeatherViewModel`'s `isRefreshing` into `NativeWidgetState.weather`. A widget set to a place of its own
+still shows its empty text while that place loads.
 
 ## 4. Adding, replacing, removing
 
-- **Pickers.** Both `HubWidgetPickerContent` screens list a "Facet widgets" section (`NativeWidgetPickerSection`, each type
+- **Pickers.** Both `HubWidgetPickerContent` screens list a "Facet widgets" section (`NativeWidgetPickerSection`: one header with a count, then a bordered tile per type like an installed widget's, its sample scaled to fit and its name below, two tiles per row as in the app groups). The Home picker (`ClockWidgetPickerScreen`) also offers the **Clock** first in that section while the facet has none (`clockAvailable`, from `HomeDrawerRoute`), through `ClockWidgetPickerViewModel.onClockSelect` (replace the page with the clock, or append it); the Hub picker never does.
   drawn at its default size with sample data) above the installed apps' widgets.
 - **Hub.** `HubWidgetPickerViewModel.onNativeWidgetSelect` places it at `defaultSpan` through `PlaceWidgetUseCase` with
   `nextNativeId()`; there is no bind or configure step. The 20-widget cap still applies.

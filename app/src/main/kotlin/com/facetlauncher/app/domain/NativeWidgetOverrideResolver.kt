@@ -48,15 +48,15 @@ class NativeWidgetOverrideResolver @Inject constructor(
         widgets.mapNotNull { setting -> overrideFor(setting.type, decodeNativeWidgetConfig(setting.encodedConfig), settings)?.let { setting.key to it } }.toMap()
 
     private suspend fun overrideFor(type: NativeWidgetType?, config: NativeWidgetConfig, settings: LauncherSettings): NativeWidgetOverride? = when (type) {
-        NativeWidgetType.AGENDA -> NativeWidgetOverride(events = agendaEvents(config, settings)).takeUnless { config.calendarIds == null && config.showAllDayEvents == null }
+        NativeWidgetType.AGENDA -> NativeWidgetOverride(events = agendaEvents(config))
         NativeWidgetType.WEATHER -> weatherFor(config.weatherLocation, settings)
         else -> null
     }
 
-    /** The events an Agenda shows: its own calendars and all-day choice, each falling back to the launcher's. */
-    private suspend fun agendaEvents(config: NativeWidgetConfig, settings: LauncherSettings): List<CalendarEvent> =
+    /** The events an Agenda shows: its own calendars (every calendar until it picks) and all-day choice (shown until it hides them). */
+    private suspend fun agendaEvents(config: NativeWidgetConfig): List<CalendarEvent> =
         if (calendarPermissionRepository.isGranted()) {
-            calendarRepository.getUpcomingEvents(config.calendarIds ?: settings.selectedCalendarIds, config.showAllDayEvents ?: settings.showAllDayEvents)
+            calendarRepository.getUpcomingEvents(config.calendarIds, config.showAllDayEvents ?: true)
         } else {
             emptyList()
         }
