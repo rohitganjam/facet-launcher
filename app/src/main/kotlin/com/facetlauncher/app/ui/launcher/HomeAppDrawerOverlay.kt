@@ -54,6 +54,7 @@ import com.facetlauncher.app.ui.drawer.DrawerListUseCases
 import com.facetlauncher.app.ui.drawer.DrawerSearchBarConfig
 import com.facetlauncher.app.ui.drawer.DrawerSearchSources
 import com.facetlauncher.app.ui.drawer.DrawerViewModel
+import com.facetlauncher.app.ui.drawer.UsageSuggestions
 import com.facetlauncher.app.ui.drawer.PrivateSpaceScreen
 import com.facetlauncher.app.ui.drawer.PrivateSpaceViewModel
 import com.facetlauncher.app.ui.home.HomeItemActions
@@ -91,6 +92,7 @@ internal data class HomeDrawerActions(
     val onRequestConnections: suspend (ContactInfo) -> List<ContactConnection>,
     val onDismissContactsPermissionPrompt: () -> Unit,
     val onEnableContactSearch: () -> Unit,
+    val onRequestUsageSuggestions: suspend () -> UsageSuggestions,
 )
 
 /** The drawer's own state from its view model. The lists Home already holds (apps, work profiles, folders) are added by the caller with `copy`. */
@@ -117,6 +119,7 @@ internal fun homeDrawerActions(viewModel: DrawerViewModel) = HomeDrawerActions(
     onRequestConnections = viewModel::getConnections,
     onDismissContactsPermissionPrompt = viewModel::dismissContactsPermissionPrompt,
     onEnableContactSearch = viewModel::enableContactSearch,
+    onRequestUsageSuggestions = viewModel::loadUsageSuggestions,
 )
 
 /**
@@ -133,6 +136,7 @@ internal fun HomeAppDrawerOverlay(
     isDrawerOpen: Boolean,
     overlays: HomeOverlayState,
     onNavigateToSettings: () -> Unit,
+    onNavigateToUsageAccessExplanation: () -> Unit = {},
     searchFocusRequest: Int = 0,
 ) {
     val listState = rememberLazyListState()
@@ -173,6 +177,7 @@ internal fun HomeAppDrawerOverlay(
         onQueryChange = { query = it; actions.onQueryChange(it) },
         onOpenPrivateSpace = { overlays.showPrivateSpace = true },
         onNavigateToSettings = onNavigateToSettings,
+        onNavigateToUsageAccessExplanation = onNavigateToUsageAccessExplanation,
         isDrawerOpen = isDrawerOpen,
         searchFocusRequest = searchFocusRequest,
         modifier = Modifier
@@ -207,6 +212,7 @@ private fun HomeDrawerScreen(
     onQueryChange: (String) -> Unit,
     onOpenPrivateSpace: () -> Unit,
     onNavigateToSettings: () -> Unit,
+    onNavigateToUsageAccessExplanation: () -> Unit,
     isDrawerOpen: Boolean,
     searchFocusRequest: Int,
     modifier: Modifier = Modifier,
@@ -244,6 +250,8 @@ private fun HomeDrawerScreen(
             onContactsSettingPromptClick = actions.onEnableContactSearch,
             settingsEntries = state.settingsEntries,
             onSettingsEntryClick = { entry -> runCatching { context.startActivity(Intent(entry.action)) } },
+            onRequestUsageSuggestions = actions.onRequestUsageSuggestions,
+            onUsageAccessClick = onNavigateToUsageAccessExplanation,
         ),
         appMenuNotifications = state.appMenuNotifications,
         folderCandidates = state.folders,

@@ -512,6 +512,7 @@ fun HomeDrawerRoute(
             isDrawerOpen = isDrawerOpen,
             overlays = overlays,
             onNavigateToSettings = onNavigateToSettings,
+            onNavigateToUsageAccessExplanation = onNavigateToUsageAccessExplanation,
             searchFocusRequest = searchFocusRequest,
         )
         HomePrivateSpaceOverlay(

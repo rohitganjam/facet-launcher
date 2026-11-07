@@ -188,7 +188,7 @@ internal fun HomeAppGridTile(
         if (displayMode == AppListGridDisplayMode.TEXT) {
             Text(
                 text = app.label,
-                style = MaterialTheme.typography.labelSmall.copy(shadow = homeAppLabelShadow(style.labelColor), fontWeight = style.labelFontWeight),
+                style = MaterialTheme.typography.labelLarge.copy(shadow = homeAppLabelShadow(style.labelColor), fontWeight = style.labelFontWeight),
                 color = style.labelColor,
                 textAlign = TextAlign.Center,
                 maxLines = 2,
@@ -219,7 +219,7 @@ internal fun HomeAppGridTile(
 internal fun HomeTileLabel(text: String, style: HomeItemStyle, modifier: Modifier = Modifier) {
     Text(
         text = text,
-        style = MaterialTheme.typography.labelSmall.copy(shadow = homeAppLabelShadow(style.labelColor), fontWeight = style.labelFontWeight),
+        style = MaterialTheme.typography.labelLarge.copy(shadow = homeAppLabelShadow(style.labelColor), fontWeight = style.labelFontWeight),
         color = style.labelColor,
         textAlign = TextAlign.Center,
         maxLines = 1,
@@ -250,7 +250,7 @@ internal fun HomeFolderGridTile(
         if (displayMode == AppListGridDisplayMode.TEXT) {
             Text(
                 text = folder.name,
-                style = MaterialTheme.typography.labelSmall.copy(shadow = homeAppLabelShadow(style.labelColor), fontWeight = style.labelFontWeight),
+                style = MaterialTheme.typography.labelLarge.copy(shadow = homeAppLabelShadow(style.labelColor), fontWeight = style.labelFontWeight),
                 color = style.labelColor,
                 textAlign = TextAlign.Center,
                 maxLines = 2,

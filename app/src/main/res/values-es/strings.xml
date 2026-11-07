@@ -764,6 +764,10 @@
     <string name="drawer_search_section_apps">APPS</string>
     <string name="drawer_search_section_contacts">CONTACTOS</string>
     <string name="drawer_search_section_settings">AJUSTES</string>
+    <string name="drawer_search_section_recent_changes">INSTALADAS O ACTUALIZADAS RECIENTEMENTE</string>
+    <string name="drawer_search_section_frequent">USADAS CON FRECUENCIA</string>
+    <string name="drawer_search_section_last_used">USADAS RECIENTEMENTE</string>
+    <string name="drawer_search_usage_access_needed">Las apps más y últimas usadas necesitan acceso de uso desde los ajustes del sistema.</string>
     <string name="drawer_contacts_access_needed">La búsqueda de contactos necesita acceso desde los ajustes del sistema.</string>
     <string name="drawer_contacts_search_off">La búsqueda de contactos está desactivada en los ajustes del cajón de apps.</string>
     <string name="drawer_search_no_matches">No se encontraron resultados para «%1$s»</string>

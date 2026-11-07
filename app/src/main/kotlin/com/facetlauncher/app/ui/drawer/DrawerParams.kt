@@ -72,6 +72,14 @@ data class DrawerSearchBarConfig(
     val focusRequest: Int = 0,
 )
 
+/** The apps the search sheet suggests from Usage Access: most used and last used, and whether that access is granted. */
+@Immutable
+data class UsageSuggestions(
+    val frequent: List<AppInfo> = emptyList(),
+    val lastUsed: List<AppInfo> = emptyList(),
+    val accessGranted: Boolean = true,
+)
+
 /** The contacts and system Settings sections of the search results, and the prompts that ask for what they need. */
 @Immutable
 data class DrawerSearchSources(
@@ -86,4 +94,7 @@ data class DrawerSearchSources(
     /** Search's system Settings section (Settings → App Drawer → "Search settings") — see `DrawerViewModel.settingsResults`. */
     val settingsEntries: ImmutableList<SettingsSearchEntry> = persistentListOf(),
     val onSettingsEntryClick: (SettingsSearchEntry) -> Unit = {},
+    /** The search sheet's frequently used and last used apps, asked for each time it opens. */
+    val onRequestUsageSuggestions: suspend () -> UsageSuggestions = { UsageSuggestions() },
+    val onUsageAccessClick: () -> Unit = {},
 )

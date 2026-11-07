@@ -4564,3 +4564,8 @@ Widgets the app draws itself, on the Hub grid and on Home's widget stack, behavi
 - [x] The clock's weather sheet has a 3-dot like a widget's, opening the active facet's Clock accessories; on that screen the Location card (facet scope) and a new *Weather settings* link (both scopes) come after the weather switch and the Icons card, and go away with the weather. Seen on the emulator (3-dot, order, link). Tests: `WeatherSheetTest` (new), `ClockAccessoriesScreenTest` (3 new), compiled and run below.
 - [x] The Location card on Clock accessories has more room inside (20dp sides, 16dp top and bottom, was 16 and 8); the widget settings sheet is unchanged.
 - [x] The weather location choices are spaced further apart (10dp above and below each row, was 4dp) in both the Clock accessories card and the Weather widget settings sheet, which share one picker; the card keeps 20dp side and 12dp top and bottom padding.
+
+## Search sheet
+
+- [x] Tapping the drawer's search bar (or Home press with "Home button opens search") opens a search sheet from the bar's edge. Empty query: grids of recently installed or updated, frequently used and last used apps (usage sections need Usage Access, else one prompt strip). Typing: today's results, always a grid at the drawer's grid density (Compact when the drawer is a list). Back, scrim and Home close it back to the drawer. Tests: `RecentlyChangedAppsUseCaseTest`, `DrawerViewModelTest` (usage suggestions), `AppDrawerScreenTest`, `KeyboardDismissalTest`, `HomeDrawerRouteTest`.
+- [ ] Native review of the four new `drawer_search_*` strings in de, es, es-419, fr, nl, pt, pt-PT (machine-translated).

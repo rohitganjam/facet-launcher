@@ -69,6 +69,10 @@
     <string name="drawer_search_launcher_settings">Configuración del launcher</string>
     <string name="drawer_search_system_settings">Configuración del sistema</string>
     <string name="drawer_search_section_settings">CONFIGURACIÓN</string>
+    <string name="drawer_search_section_recent_changes">INSTALADAS O ACTUALIZADAS RECIENTEMENTE</string>
+    <string name="drawer_search_section_frequent">USADAS CON FRECUENCIA</string>
+    <string name="drawer_search_section_last_used">ÚLTIMAS USADAS</string>
+    <string name="drawer_search_usage_access_needed">Las apps más y últimas usadas necesitan acceso de uso desde la configuración del sistema.</string>
     <string name="drawer_contacts_access_needed">La búsqueda de contactos necesita acceso desde la configuración del sistema.</string>
     <string name="drawer_contacts_search_off">La búsqueda de contactos está desactivada en la configuración del cajón de apps.</string>
     <string name="facet_carousel_launcher_settings">Configuración del launcher</string>

@@ -119,7 +119,7 @@ either, just the row's own position in its flat `LazyColumn`. The row there
 
 Grid presentation only. `COMPACT`/`REGULAR`/`SPACIOUS` pick a target cell width and row pitch
 (`ui/drawer/DrawerGridLayout.kt`); the column and row counts are computed from the viewport, so one
-setting fits a phone, a foldable and a tablet (a typical phone gets 5/4/4 columns and 6/5/4 rows).
+setting fits a phone, a foldable and a tablet (a typical phone gets 6/5/4 columns and 7/6/5 rows).
 `DrawerGridContent` derives both counts from its own constraints and divides the height into equal
 rows; search results use the same column count, laid out as equal-weight cells so tiles sit on the
 same grid. The setting persists under the old `drawer_grid_size` key; the retired `FIVE_BY_SIX`-style
@@ -143,13 +143,21 @@ the List item size.
 apps (null icons, so the tile placeholder; labels from `R.array.drawer_preview_app_labels`) and one sample folder, in a
 card over the system wallpaper. The drawer is laid out at the real screen width and 400dp of height, then scaled down to the
 card's width (about 350dp tall on a phone), so its columns and rows are the ones a phone gets (`DrawerGridLayout`'s
-two-row minimum lets a short viewport show Compact 3, Regular 2, Spacious 2 rows). The wallpaper is
+two-row minimum lets a short viewport show Compact 3, Regular 3, Spacious 3 rows). The wallpaper is
 `AppDrawerSettingsViewModel.homeWallpaper`, so the opacity slider shows. It is fed the
 current `LauncherSettings`, so presentation, grid density, list size, icons, labels, folders in drawer, recently installed,
 search bar position and opacity all show as they change. `drawerPreviewSample` builds the sample (two apps installed an hour
 ago for the "Recently installed" row). Taps do nothing (an overlay takes them, and its vertical drags scroll the drawer's own list or grid state, passing what they can't consume on to the settings
 list), `consumeWindowInsets(systemBars)` stops the drawer padding for the status bar, and
 `clearAndSetSemantics` keeps the sample apps out of the accessibility tree.
+
+## 2a. The search sheet
+
+The drawer's search bar (`DrawerSearchBar`) is a button: tapping it, or a Home press on bare Home with "Home button opens search" on (`DrawerSearchBarConfig.focusRequest`), opens `DrawerSearchSheet` (`ui/drawer/DrawerSearchSheet.kt`) inside `AppDrawerScreen`'s root `Box`. The sheet slides in from the bar's edge (bottom for `SearchBarPosition.BOTTOM`, else top; `FacetTransitionEasing`) over a 40% scrim, with its own focused field at that edge, a back arrow and a clear button. While it is open the browse list is hidden from semantics (`clearAndSetSemantics`).
+
+- **Start view (empty query):** `SearchSuggestions`, grid sections capped at two rows each: *Recently installed or updated* (`RecentlyChangedAppsUseCase`, first install or last update within 72h, over the drawer's `apps`), *Frequently used* and *Last used* (`DrawerViewModel.loadUsageSuggestions()` → `UsageStatsRepository.getMostUsedApps` / `getRecentApps`, asked for each time the sheet opens, filtered to apps the drawer lists by `AppInfo.listKey`). Without Usage Access the two usage sections give way to one strip (`onUsageAccessClick` → the Usage Access explanation route).
+- **Typing:** `DrawerSearchResults` unchanged (apps, contacts, settings) but always a grid: `DrawerAppearance.forSearchSheet()` uses the drawer's grid density when the drawer is a grid, else Regular.
+- **Closing:** Back, the back arrow, the scrim and the Home button close the sheet and clear the query, leaving the drawer open (`BackHandler`, `DismissOnHomePress`). While open it calls `BlockHomeSwipesWhileShown()` so a drag on it never pulls the drawer shut. The drawer closing also closes it.
 
 ## 2. Search pipeline
 

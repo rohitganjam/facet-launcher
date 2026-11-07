@@ -249,6 +249,10 @@
     <string name="drawer_search_system_settings">Definições do sistema</string>
     <string name="drawer_search_section_contacts">CONTACTOS</string>
     <string name="drawer_search_section_settings">DEFINIÇÕES</string>
+    <string name="drawer_search_section_recent_changes">INSTALADAS OU ATUALIZADAS RECENTEMENTE</string>
+    <string name="drawer_search_section_frequent">UTILIZADAS COM FREQUÊNCIA</string>
+    <string name="drawer_search_section_last_used">ÚLTIMAS UTILIZADAS</string>
+    <string name="drawer_search_usage_access_needed">As aplicações mais e últimas utilizadas precisam de acesso de utilização nas definições do sistema.</string>
     <string name="drawer_contacts_access_needed">A pesquisa de contactos precisa de acesso através das definições do sistema.</string>
     <string name="drawer_contacts_search_off">A pesquisa de contactos está desativada nas definições da Gaveta de apps.</string>
     <string name="drawer_search_clear">Limpar pesquisa</string>

@@ -2,6 +2,7 @@ package com.facetlauncher.app.ui.drawer
 
 import com.facetlauncher.app.domain.GroupAppsByLetterUseCase
 import com.facetlauncher.app.domain.RankBySearchRelevanceUseCase
+import com.facetlauncher.app.domain.RecentlyChangedAppsUseCase
 import com.facetlauncher.app.domain.RecentlyInstalledAppsUseCase
 import javax.inject.Inject
 
@@ -10,4 +11,5 @@ class DrawerListUseCases @Inject constructor(
     val rank: RankBySearchRelevanceUseCase,
     val group: GroupAppsByLetterUseCase,
     val recentlyInstalled: RecentlyInstalledAppsUseCase,
+    val recentlyChanged: RecentlyChangedAppsUseCase,
 )

@@ -9,13 +9,13 @@ import org.junit.Test
 class DrawerGridLayoutTest {
 
     @Test
-    fun `phone width gives five compact columns and four for the looser densities`() {
+    fun `phone width gives six five and four columns`() {
         // Given the grid width measured on a 393dp wide phone (after the rail and start padding)
         val width = 297.dp
 
-        // Then the old 5 and 4 column presets are kept
-        assertEquals(5, drawerGridColumns(width, DrawerGridDensity.COMPACT))
-        assertEquals(4, drawerGridColumns(width, DrawerGridDensity.REGULAR))
+        // Then each density gets its own column count
+        assertEquals(6, drawerGridColumns(width, DrawerGridDensity.COMPACT))
+        assertEquals(5, drawerGridColumns(width, DrawerGridDensity.REGULAR))
         assertEquals(4, drawerGridColumns(width, DrawerGridDensity.SPACIOUS))
     }
 
@@ -44,13 +44,13 @@ class DrawerGridLayoutTest {
     }
 
     @Test
-    fun `typical phone height gives six five and four rows`() {
+    fun `typical phone height gives seven six and five rows`() {
         // Given the grid height measured on a 393dp wide phone
         val height = 601.dp
 
-        assertEquals(6, drawerGridRows(height, DrawerGridDensity.COMPACT))
-        assertEquals(5, drawerGridRows(height, DrawerGridDensity.REGULAR))
-        assertEquals(4, drawerGridRows(height, DrawerGridDensity.SPACIOUS))
+        assertEquals(7, drawerGridRows(height, DrawerGridDensity.COMPACT))
+        assertEquals(6, drawerGridRows(height, DrawerGridDensity.REGULAR))
+        assertEquals(5, drawerGridRows(height, DrawerGridDensity.SPACIOUS))
     }
 
     @Test
@@ -59,9 +59,9 @@ class DrawerGridLayoutTest {
         val width = 745.dp
         val height = 540.dp
 
-        assertEquals(12 to 5, drawerGridColumns(width, DrawerGridDensity.COMPACT) to drawerGridRows(height, DrawerGridDensity.COMPACT))
-        assertEquals(10 to 4, drawerGridColumns(width, DrawerGridDensity.REGULAR) to drawerGridRows(height, DrawerGridDensity.REGULAR))
-        assertEquals(9 to 3, drawerGridColumns(width, DrawerGridDensity.SPACIOUS) to drawerGridRows(height, DrawerGridDensity.SPACIOUS))
+        assertEquals(15 to 6, drawerGridColumns(width, DrawerGridDensity.COMPACT) to drawerGridRows(height, DrawerGridDensity.COMPACT))
+        assertEquals(12 to 5, drawerGridColumns(width, DrawerGridDensity.REGULAR) to drawerGridRows(height, DrawerGridDensity.REGULAR))
+        assertEquals(9 to 5, drawerGridColumns(width, DrawerGridDensity.SPACIOUS) to drawerGridRows(height, DrawerGridDensity.SPACIOUS))
     }
 
     @Test
@@ -73,9 +73,9 @@ class DrawerGridLayoutTest {
     @Test
     fun `a short card shows more rows at compact than at regular`() {
         // Given the grid area of the settings preview card
-        val height = 320.dp
+        val height = 340.dp
 
-        assertEquals(3, drawerGridRows(height, DrawerGridDensity.COMPACT))
-        assertEquals(2, drawerGridRows(height, DrawerGridDensity.REGULAR))
+        assertEquals(4, drawerGridRows(height, DrawerGridDensity.COMPACT))
+        assertEquals(3, drawerGridRows(height, DrawerGridDensity.REGULAR))
     }
 }

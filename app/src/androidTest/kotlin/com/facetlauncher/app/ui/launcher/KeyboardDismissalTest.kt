@@ -1,5 +1,6 @@
 package com.facetlauncher.app.ui.launcher
 
+import com.facetlauncher.app.ui.drawer.openSearchSheet
 import com.facetlauncher.app.data.AppVersion
 import com.facetlauncher.app.data.ReleaseNotesRepository
 import com.facetlauncher.app.domain.GroupAppsByLetterUseCase
@@ -84,6 +85,7 @@ import com.facetlauncher.app.domain.ObserveHubStateUseCase
 import com.facetlauncher.app.domain.ObserveQuickAddStateUseCase
 import com.facetlauncher.app.domain.PlaceWidgetUseCase
 import com.facetlauncher.app.domain.RankBySearchRelevanceUseCase
+import com.facetlauncher.app.domain.RecentlyChangedAppsUseCase
 import com.facetlauncher.app.domain.RecentlyInstalledAppsUseCase
 import com.facetlauncher.app.domain.RepairOrphanedProfileRowsUseCase
 import com.facetlauncher.app.domain.ResolveWidgetDropUseCase
@@ -258,7 +260,9 @@ class KeyboardDismissalTest {
                     NotificationActionController(),
                     NotificationOpener(context),
                     ObserveAppNotificationsUseCase(settingsRepository, notificationBadgeRepository, notificationAccessRepository),
-                    DrawerListUseCases(RankBySearchRelevanceUseCase(), GroupAppsByLetterUseCase(), RecentlyInstalledAppsUseCase()),
+                    UsageStatsRepository(context.getSystemService(UsageStatsManager::class.java), appRepository),
+                    UsageAccessRepository(context.getSystemService(AppOpsManager::class.java), context),
+                    DrawerListUseCases(RankBySearchRelevanceUseCase(), GroupAppsByLetterUseCase(), RecentlyInstalledAppsUseCase(), RecentlyChangedAppsUseCase()),
                 )
             }
             val privateSpaceViewModel = remember {
@@ -411,7 +415,7 @@ class KeyboardDismissalTest {
         // DataStore, not fakes) make that a genuine, if normally tiny, async gap, so every test
         // needs to wait it out before interacting rather than assuming instant content.
         composeRule.waitUntil(timeoutMillis = 5_000) {
-            composeRule.onAllNodesWithTag("drawer_search_field").fetchSemanticsNodes().isNotEmpty()
+            composeRule.onAllNodesWithTag("drawer_search_bar").fetchSemanticsNodes().isNotEmpty()
         }
     }
 
@@ -426,6 +430,7 @@ class KeyboardDismissalTest {
         setContent()
         composeRule.onRoot().performTouchInput { swipeUp() }
         settleAnimation()
+        composeRule.openSearchSheet()
         composeRule.onNodeWithTag("drawer_search_field").performClick()
         composeRule.onNodeWithTag("drawer_search_field").assertIsFocused()
 
@@ -435,8 +440,8 @@ class KeyboardDismissalTest {
         }
         settleAnimation()
 
-        // Then focus is cleared
-        composeRule.onNodeWithTag("drawer_search_field").assertIsNotFocused()
+        // Then the sheet, and with it the focus, is gone
+        composeRule.onNodeWithTag("drawer_search_field").assertDoesNotExist()
     }
 
     @Test
@@ -445,6 +450,7 @@ class KeyboardDismissalTest {
         setContent()
         composeRule.onRoot().performTouchInput { swipeUp() }
         settleAnimation()
+        composeRule.openSearchSheet()
         composeRule.onNodeWithTag("drawer_search_field").performTextInput("test")
         composeRule.onNodeWithTag("drawer_search_field").assertIsFocused()
 
@@ -459,24 +465,26 @@ class KeyboardDismissalTest {
         Espresso.pressBack()
         settleAnimation()
 
-        // Then focus is cleared
-        composeRule.onNodeWithTag("drawer_search_field").assertIsNotFocused()
+        // Then the sheet closes and the drawer is still open
+        composeRule.onNodeWithTag("drawer_search_field").assertDoesNotExist()
+        composeRule.onNodeWithTag("drawer_search_bar").assertExists()
     }
 
     @Test
-    fun swipingDrawerDownClearsFocusAndKeyboard() {
-        // Given drawer is open and search field has focus
+    fun swipingDrawerDownAfterClosingSheetClearsFocusAndKeyboard() {
+        // Given the search sheet was opened and closed again
         setContent()
         composeRule.onRoot().performTouchInput { swipeUp() }
         settleAnimation()
-        composeRule.onNodeWithTag("drawer_search_field").performClick()
-        composeRule.onNodeWithTag("drawer_search_field").assertIsFocused()
+        composeRule.openSearchSheet()
+        composeRule.onNodeWithTag("drawer_search_sheet_back").performClick()
+        settleAnimation()
 
-        // When swiping drawer down
+        // When swiping the drawer down
         composeRule.onNodeWithTag("drawer_list").performTouchInput { swipeDown() }
         settleAnimation()
 
-        // Then focus is cleared
-        composeRule.onNodeWithTag("drawer_search_field").assertIsNotFocused()
+        // Then no search field is left holding focus
+        composeRule.onNodeWithTag("drawer_search_field").assertDoesNotExist()
     }
 }

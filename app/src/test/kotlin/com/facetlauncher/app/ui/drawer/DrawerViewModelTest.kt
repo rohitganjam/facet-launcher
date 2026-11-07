@@ -1,5 +1,6 @@
 package com.facetlauncher.app.ui.drawer
 
+import com.facetlauncher.app.domain.RecentlyChangedAppsUseCase
 import com.facetlauncher.app.domain.RecentlyInstalledAppsUseCase
 import com.facetlauncher.app.domain.GroupAppsByLetterUseCase
 import com.facetlauncher.app.ui.drawer.DrawerListUseCases
@@ -19,6 +20,8 @@ import com.facetlauncher.app.data.PrivateSpaceState
 import com.facetlauncher.app.data.SecureFolderRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.SystemSettingsRepository
+import com.facetlauncher.app.data.UsageAccessRepository
+import com.facetlauncher.app.data.UsageStatsRepository
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.data.model.NotificationInfo
@@ -42,6 +45,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.verify
+import org.mockito.Mockito.verifyNoInteractions
 import org.mockito.Mockito.`when`
 import com.facetlauncher.app.domain.AddToActiveListUseCase
 import com.facetlauncher.app.data.model.Folder
@@ -88,6 +92,8 @@ class DrawerViewModelTest {
         notificationActionController: NotificationActionController = NotificationActionController(),
         notificationOpener: NotificationOpener = mock(NotificationOpener::class.java),
         observeAppNotifications: ObserveAppNotificationsUseCase = mock(ObserveAppNotificationsUseCase::class.java),
+        usageStatsRepository: UsageStatsRepository = mock(UsageStatsRepository::class.java),
+        usageAccessRepository: UsageAccessRepository = mock(UsageAccessRepository::class.java),
         addToActiveList: AddToActiveListUseCase = mock(AddToActiveListUseCase::class.java),
         removeFromActiveList: RemoveFromActiveListUseCase = mock(RemoveFromActiveListUseCase::class.java),
     ): DrawerViewModel {
@@ -123,12 +129,45 @@ class DrawerViewModelTest {
             notificationActionController = notificationActionController,
             notificationOpener = notificationOpener,
             observeAppNotificationsUseCase = observeAppNotifications,
-            listUseCases = DrawerListUseCases(RankBySearchRelevanceUseCase(), GroupAppsByLetterUseCase(), RecentlyInstalledAppsUseCase()),
+            usageStatsRepository = usageStatsRepository,
+            usageAccessRepository = usageAccessRepository,
+            listUseCases = DrawerListUseCases(RankBySearchRelevanceUseCase(), GroupAppsByLetterUseCase(), RecentlyInstalledAppsUseCase(), RecentlyChangedAppsUseCase()),
         )
     }
 
     private val chatApp = AppInfo(packageName = "com.example.chat", activityName = ".Main", label = "Chat", icon = null, userHandle = mock(UserHandle::class.java))
     private val message = NotificationInfo(packageName = "com.example.chat", silent = false, key = "k1", title = "Priya", text = "Hi", contentIntent = mock(PendingIntent::class.java))
+
+    @Test
+    fun `usage suggestions are empty and flag missing access when usage access is not granted`() = runTest {
+        // Given usage access is not granted
+        val usageAccess = mock(UsageAccessRepository::class.java)
+        `when`(usageAccess.isGranted()).thenReturn(false)
+        val usageStats = mock(UsageStatsRepository::class.java)
+
+        // When the sheet asks for suggestions
+        val suggestions = drawerViewModel(usageStatsRepository = usageStats, usageAccessRepository = usageAccess).loadUsageSuggestions()
+
+        // Then nothing is queried and the access flag is false
+        assertEquals(UsageSuggestions(accessGranted = false), suggestions)
+        verifyNoInteractions(usageStats)
+    }
+
+    @Test
+    fun `usage suggestions carry most used and last used apps when access is granted`() = runTest {
+        // Given usage access and ranked apps
+        val usageAccess = mock(UsageAccessRepository::class.java)
+        `when`(usageAccess.isGranted()).thenReturn(true)
+        val usageStats = mock(UsageStatsRepository::class.java)
+        `when`(usageStats.getMostUsedApps(12)).thenReturn(listOf(chatApp))
+        `when`(usageStats.getRecentApps(12)).thenReturn(emptyList())
+
+        // When the sheet asks for suggestions
+        val suggestions = drawerViewModel(usageStatsRepository = usageStats, usageAccessRepository = usageAccess).loadUsageSuggestions()
+
+        // Then they are passed through
+        assertEquals(UsageSuggestions(frequent = listOf(chatApp), lastUsed = emptyList(), accessGranted = true), suggestions)
+    }
 
     @Test
     fun `observeAppNotifications asks the use case for this app's package and profile`() = runTest {

@@ -39,9 +39,10 @@ internal class DrawerBrowseModel(
 )
 
 /**
- * Browse mode is scoped to the selected tab; search spans every profile regardless of which tab is active — the tab is a
+ * Browse mode is scoped to the selected tab and ignores [query], so the list behind the search sheet keeps its content and scroll
+ * position while typing; [DrawerBrowseModel.searchResultApps] spans every profile regardless of which tab is active — the tab is a
  * browsing filter, not a search filter (the point of switching tabs is narrowing what you scroll through, not what you can find).
- * Search-mode never shows folders, so a folder never has to be search-ranked.
+ * Search never shows folders, so a folder never has to be search-ranked.
  */
 @Composable
 internal fun rememberDrawerBrowseModel(
@@ -54,7 +55,6 @@ internal fun rememberDrawerBrowseModel(
     recentlyInstalledPosition: RecentlyInstalledPosition,
     listUseCases: DrawerListUseCases,
 ): DrawerBrowseModel {
-    val isSearching = query.isNotBlank()
     val tabs = remember(workProfiles) { drawerTabsFor(workProfiles) }
     var selectedTab by remember { mutableStateOf<DrawerTab>(DrawerTab.Personal) }
     // A Work Profile can vanish (unenrolled) while its tab is selected — fall back to Personal
@@ -62,17 +62,18 @@ internal fun rememberDrawerBrowseModel(
     LaunchedEffect(tabs) {
         if (selectedTab !in tabs) selectedTab = DrawerTab.Personal
     }
-    val tabScopedApps = remember(apps, isSearching, selectedTab, workProfiles) {
-        appsForTab(apps, filterByTab = !isSearching && workProfiles.isNotEmpty(), tab = selectedTab)
+    val tabScopedApps = remember(apps, selectedTab, workProfiles) {
+        appsForTab(apps, filterByTab = workProfiles.isNotEmpty(), tab = selectedTab)
     }
     val rankBySearchRelevance = listUseCases.rank
-    val filteredApps = remember(tabScopedApps, query) { rankBySearchRelevance(tabScopedApps, query) { it.label } }
+    val browseApps = remember(tabScopedApps) { rankBySearchRelevance(tabScopedApps, "") { it.label } }
+    val searchResults = remember(apps, query) { rankBySearchRelevance(apps, query) { it.label } }
     val sortedFolders = remember(folderCandidates) { folderCandidates.orEmpty().sortedBy { it.name } }
     val pinnedFolders = remember(sortedFolders, folderDisplayMode) { pinnedFoldersFor(sortedFolders, folderDisplayMode) }
     // Scoped to tabScopedApps, not the raw apps param — unlike pinnedFolders, deliberately NOT tab-filtered.
     val recentlyInstalledUseCase = listUseCases.recentlyInstalled
-    val recentlyInstalledApps = remember(tabScopedApps, isSearching, recentlyInstalledPosition) {
-        if (recentlyInstalledPosition != RecentlyInstalledPosition.DO_NOT_SHOW && !isSearching) {
+    val recentlyInstalledApps = remember(tabScopedApps, recentlyInstalledPosition) {
+        if (recentlyInstalledPosition != RecentlyInstalledPosition.DO_NOT_SHOW) {
             recentlyInstalledUseCase(tabScopedApps).toImmutableList()
         } else {
             persistentListOf()
@@ -80,14 +81,14 @@ internal fun rememberDrawerBrowseModel(
     }
     val recentlyInstalledOffset = recentlyInstalledLeadingSlots(presentation, recentlyInstalledPosition, recentlyInstalledApps.isNotEmpty())
     val groupUseCase = listUseCases.group
-    val groupedItems = remember(filteredApps, sortedFolders, folderDisplayMode) {
-        groupDrawerItems(filteredApps, sortedFolders, folderDisplayMode, groupUseCase)
+    val groupedItems = remember(browseApps, sortedFolders, folderDisplayMode) {
+        groupDrawerItems(browseApps, sortedFolders, folderDisplayMode, groupUseCase)
     }
     return DrawerBrowseModel(
         tabs = tabs,
         selectedTab = selectedTab,
         onSelectTab = { selectedTab = it },
-        searchResultApps = remember(filteredApps) { filteredApps.take(MAX_APP_SEARCH_RESULTS).toImmutableList() },
+        searchResultApps = remember(searchResults) { searchResults.take(MAX_APP_SEARCH_RESULTS).toImmutableList() },
         groupedItems = groupedItems,
         pinnedFolders = pinnedFolders,
         recentlyInstalledApps = recentlyInstalledApps,

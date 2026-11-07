@@ -1,5 +1,6 @@
 package com.facetlauncher.app.ui.launcher
 
+import com.facetlauncher.app.ui.drawer.openSearchSheet
 import com.facetlauncher.app.data.AppVersion
 import com.facetlauncher.app.data.ReleaseNotesRepository
 import com.facetlauncher.app.domain.GroupAppsByLetterUseCase
@@ -110,6 +111,7 @@ import com.facetlauncher.app.domain.ObserveHubStateUseCase
 import com.facetlauncher.app.domain.ObserveQuickAddStateUseCase
 import com.facetlauncher.app.domain.PlaceWidgetUseCase
 import com.facetlauncher.app.domain.RankBySearchRelevanceUseCase
+import com.facetlauncher.app.domain.RecentlyChangedAppsUseCase
 import com.facetlauncher.app.domain.RecentlyInstalledAppsUseCase
 import com.facetlauncher.app.domain.RepairOrphanedProfileRowsUseCase
 import com.facetlauncher.app.domain.ResolveWidgetDropUseCase
@@ -369,7 +371,9 @@ class HomeDrawerRouteTest {
                     NotificationActionController(),
                     NotificationOpener(context),
                     ObserveAppNotificationsUseCase(settingsRepository, notificationBadgeRepository, notificationAccessRepository),
-                    DrawerListUseCases(RankBySearchRelevanceUseCase(), GroupAppsByLetterUseCase(), RecentlyInstalledAppsUseCase()),
+                    UsageStatsRepository(context.getSystemService(UsageStatsManager::class.java), appRepository),
+                    UsageAccessRepository(context.getSystemService(AppOpsManager::class.java), context),
+                    DrawerListUseCases(RankBySearchRelevanceUseCase(), GroupAppsByLetterUseCase(), RecentlyInstalledAppsUseCase(), RecentlyChangedAppsUseCase()),
                 )
             }
             val privateSpaceViewModel = remember {
@@ -514,7 +518,7 @@ class HomeDrawerRouteTest {
         // DataStore, not fakes) make that a genuine, if normally tiny, async gap, so every test
         // needs to wait it out before interacting rather than assuming instant content.
         composeRule.waitUntil(timeoutMillis = 5_000) {
-            composeRule.onAllNodesWithTag("drawer_search_field").fetchSemanticsNodes().isNotEmpty()
+            composeRule.onAllNodesWithTag("drawer_search_bar").fetchSemanticsNodes().isNotEmpty()
         }
         // drawer_search_field only tells you DrawerViewModel is up — Home's own favorites list
         // depends on a separate chain through the now-shared facetRepository/settingsRepository:
@@ -688,8 +692,8 @@ class HomeDrawerRouteTest {
         composeRule.runOnUiThread { launcherViewModel.onHomePressed(whileResumed = true) }
         settleAnimation()
 
-        // Then the drawer opens with the search field focused
-        composeRule.onNodeWithTag("alphabet_rail").assertIsDisplayed()
+        // Then the drawer opens with the search sheet up and its field focused
+        composeRule.onNodeWithTag("drawer_search_sheet").assertIsDisplayed()
         composeRule.onNodeWithTag("drawer_search_field").assertIsFocused()
     }
 
@@ -1615,11 +1619,14 @@ class HomeDrawerRouteTest {
         settleAnimation()
         
         val query = "TestQuery"
+        composeRule.openSearchSheet()
         composeRule.onNodeWithTag("drawer_search_field").performTextInput(query)
         composeRule.onNodeWithTag("drawer_search_results").performTouchInput { swipeUp() }
         
-        // When the drawer is closed (using swipe down since pressBack is flaky in this env)
-        composeRule.onNodeWithTag("drawer_search_results").performTouchInput { swipeDown() }
+        // When the sheet is closed and then the drawer (using swipe down since pressBack is flaky in this env)
+        composeRule.onNodeWithTag("drawer_search_sheet_back").performClick()
+        settleAnimation()
+        composeRule.onNodeWithTag("drawer_list").performTouchInput { swipeDown() }
         settleAnimation()
         
         // Then it resets state when opened again
@@ -1640,10 +1647,11 @@ class HomeDrawerRouteTest {
         
         // Search for "A" so "A App" is visible and clickable
         val query = "A"
+        composeRule.openSearchSheet()
         composeRule.onNodeWithTag("drawer_search_field").performTextInput(query)
         
         // When an app is clicked
-        composeRule.onNodeWithTag("drawer_app_row_com.example.A").performClick()
+        composeRule.onNodeWithTag("drawer_grid_tile_com.example.A").performClick()
         settleAnimation()
         
         // Then the drawer is closed
@@ -1658,7 +1666,7 @@ class HomeDrawerRouteTest {
         // (but it might have the placeholder "Search apps", so we check for exact text match of the query)
         // Using assertDoesNotExist on the query string itself is risky if it's "A", 
         // so we check the field's semantics.
-        composeRule.onNodeWithTag("drawer_search_field").assert(hasText(""))
+        composeRule.onNodeWithTag("drawer_search_field").assertDoesNotExist()
         composeRule.onNodeWithTag("header_A").assertIsDisplayed()
     }
 

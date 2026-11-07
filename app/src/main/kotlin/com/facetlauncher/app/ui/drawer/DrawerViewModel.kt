@@ -15,6 +15,8 @@ import com.facetlauncher.app.data.PrivateSpaceRepository
 import com.facetlauncher.app.data.PrivateSpaceState
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.SystemSettingsRepository
+import com.facetlauncher.app.data.UsageAccessRepository
+import com.facetlauncher.app.data.UsageStatsRepository
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.ContactConnection
 import com.facetlauncher.app.data.model.ContactInfo
@@ -76,6 +78,8 @@ class DrawerViewModel @Inject constructor(
     private val notificationActionController: NotificationActionController,
     private val notificationOpener: NotificationOpener,
     private val observeAppNotificationsUseCase: ObserveAppNotificationsUseCase,
+    private val usageStatsRepository: UsageStatsRepository,
+    private val usageAccessRepository: UsageAccessRepository,
     val listUseCases: DrawerListUseCases,
 ) : ViewModel() {
 
@@ -278,4 +282,16 @@ class DrawerViewModel @Inject constructor(
 
     /** Phase 9's connections sheet — fetched fresh per contact, only when their sheet actually opens (fetched on open like the app menu's notifications). */
     suspend fun getConnections(contact: ContactInfo): List<ContactConnection> = contactRepository.getConnections(contact.id)
+
+    /** The search sheet's usage sections, loaded when it opens; empty with [UsageSuggestions.accessGranted] false until Usage Access is granted. */
+    suspend fun loadUsageSuggestions(): UsageSuggestions {
+        if (!usageAccessRepository.isGranted()) return UsageSuggestions(accessGranted = false)
+        return UsageSuggestions(
+            frequent = usageStatsRepository.getMostUsedApps(USAGE_SUGGESTIONS_LIMIT),
+            lastUsed = usageStatsRepository.getRecentApps(USAGE_SUGGESTIONS_LIMIT),
+        )
+    }
 }
+
+/** Enough for a few rows of any grid density; the sheet trims to its own column count. */
+private const val USAGE_SUGGESTIONS_LIMIT = 12

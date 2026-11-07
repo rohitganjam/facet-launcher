@@ -10,16 +10,19 @@ private const val MIN_ROWS = 2
 
 /** Ideal cell width per density; the real width stretches to fill the available space. */
 private fun DrawerGridDensity.targetCellWidth(): Dp = when (this) {
-    DrawerGridDensity.COMPACT -> 64.dp
-    DrawerGridDensity.REGULAR -> 72.dp
+    DrawerGridDensity.COMPACT -> 50.dp
+    DrawerGridDensity.REGULAR -> 60.dp
     DrawerGridDensity.SPACIOUS -> 80.dp
 }
 
+/** The widest a tile's one-line label runs: the cell less a 4dp gap to its neighbour. */
+internal fun DrawerGridDensity.labelWidth(): Dp = targetCellWidth() - 4.dp
+
 /** Ideal row pitch (tile plus vertical gap) per density. */
 private fun DrawerGridDensity.targetRowPitch(): Dp = when (this) {
-    DrawerGridDensity.COMPACT -> 108.dp
-    DrawerGridDensity.REGULAR -> 130.dp
-    DrawerGridDensity.SPACIOUS -> 162.dp
+    DrawerGridDensity.COMPACT -> 92.dp
+    DrawerGridDensity.REGULAR -> 108.dp
+    DrawerGridDensity.SPACIOUS -> 120.dp
 }
 
 /** Columns that fit [availableWidth] at [density]'s ideal cell width, never fewer than [MIN_COLUMNS]. */

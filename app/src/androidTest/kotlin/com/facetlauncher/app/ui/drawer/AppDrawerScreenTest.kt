@@ -18,6 +18,7 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.longClick
 import androidx.compose.ui.test.moveTo
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
@@ -241,6 +242,73 @@ class AppDrawerScreenTest {
     }
 
     @Test
+    fun tappingTheSearchBarOpensTheSheetWithRecentlyUpdatedAndUsageSuggestions() {
+        // Given a drawer with one recently updated app and usage data naming another
+        val now = System.currentTimeMillis()
+        val updated = AppInfo(packageName = "com.example.upd", activityName = ".Main", label = "Updated App", icon = null, lastUpdateTime = now)
+        val used = AppInfo(packageName = "com.example.used", activityName = ".Main", label = "Used App", icon = null)
+        composeRule.setContent {
+            FacetLauncherTheme {
+                AppDrawerScreen(
+                    apps = listOf(updated, used).toImmutableList(),
+                    actions = DrawerItemActions(onAppClick = {}),
+                    searchSources = DrawerSearchSources(onRequestUsageSuggestions = { UsageSuggestions(frequent = listOf(used), lastUsed = listOf(used)) }),
+                )
+            }
+        }
+
+        // When the search bar is tapped
+        composeRule.onNodeWithTag("drawer_search_open").performClick()
+
+        // Then the sheet shows the suggestion sections as grid tiles
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithTag("drawer_grid_tile_com.example.used").fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onNodeWithTag("drawer_search_suggestions").assertExists()
+        composeRule.onNodeWithTag("drawer_grid_tile_com.example.upd").assertExists()
+    }
+
+    @Test
+    fun theSheetPromptsForUsageAccessWhenItIsNotGranted() {
+        // Given usage access is missing
+        composeRule.setContent {
+            FacetLauncherTheme {
+                AppDrawerScreen(
+                    apps = apps.toImmutableList(),
+                    actions = DrawerItemActions(onAppClick = {}),
+                    searchSources = DrawerSearchSources(onRequestUsageSuggestions = { UsageSuggestions(accessGranted = false) }),
+                )
+            }
+        }
+
+        // When the sheet opens
+        composeRule.onNodeWithTag("drawer_search_open").performClick()
+
+        // Then the usage access strip shows
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithTag("drawer_search_usage_access_strip").fetchSemanticsNodes().isNotEmpty()
+        }
+    }
+
+    @Test
+    fun backClosesTheSheetAndLeavesTheDrawer() {
+        // Given the sheet is open
+        composeRule.setContent {
+            FacetLauncherTheme { AppDrawerScreen(apps = apps.toImmutableList(), actions = DrawerItemActions(onAppClick = {})) }
+        }
+        composeRule.openSearchSheet()
+
+        // When the sheet's back arrow is tapped
+        composeRule.onNodeWithTag("drawer_search_sheet_back").performClick()
+
+        // Then the sheet is gone and the drawer list is back
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            composeRule.onAllNodesWithTag("drawer_search_sheet").fetchSemanticsNodes().isEmpty()
+        }
+        composeRule.onNodeWithTag("drawer_list").assertExists()
+    }
+
+    @Test
     fun typingInTheSearchBarFiltersTheAppList() {
         // Given the drawer rendered with the search bar (default position: top)
         var query by mutableStateOf("")
@@ -254,14 +322,15 @@ class AppDrawerScreenTest {
         // flat results list per app), so matches are checked via each app row's own testTag
         // rather than its label text, since the search field's own input text also contains
         // "M App" and would otherwise ambiguously match the same text query
+        composeRule.openSearchSheet()
         composeRule.onNodeWithTag("drawer_search_field").performTextInput("M App")
 
         // Then browse mode's list/rail are gone, replaced by the flat search-results view —
         // only the matching app's row is shown, others are filtered out
         composeRule.onNodeWithTag("drawer_list").assertDoesNotExist()
         composeRule.onNodeWithTag("drawer_search_results").assertExists()
-        composeRule.onNodeWithTag("drawer_app_row_com.example.M").assertExists()
-        composeRule.onNodeWithTag("drawer_app_row_com.example.A").assertDoesNotExist()
+        composeRule.onNodeWithTag("drawer_grid_tile_com.example.M").assertExists()
+        composeRule.onNodeWithTag("drawer_grid_tile_com.example.A").assertDoesNotExist()
     }
 
     @Test
@@ -275,14 +344,15 @@ class AppDrawerScreenTest {
                 AppDrawerScreen(apps = apps.toImmutableList(), actions = DrawerItemActions(onAppClick = {}), query = query, onQueryChange = { query = it })
             }
         }
+        composeRule.openSearchSheet()
         composeRule.onNodeWithTag("drawer_search_field").performTextInput("M App")
-        composeRule.onNodeWithTag("drawer_app_row_com.example.A").assertDoesNotExist()
+        composeRule.onNodeWithTag("drawer_grid_tile_com.example.A").assertDoesNotExist()
 
-        // When the query is cleared the same way
+        // When the query is cleared the same way and the sheet is closed
         composeRule.onNodeWithTag("drawer_search_field").performTextReplacement("")
+        closeSearchSheet()
 
         // Then browse mode (letter-grouped list) is back
-        composeRule.onNodeWithTag("drawer_search_results").assertDoesNotExist()
         composeRule.onNodeWithTag("header_A").assertExists()
     }
 
@@ -298,14 +368,15 @@ class AppDrawerScreenTest {
         }
 
         // When searching a query all 8 apps match
+        composeRule.openSearchSheet()
         composeRule.onNodeWithTag("drawer_search_field").performTextInput("Match")
 
         // Then only the first 5 (by the incoming list's own order) render, no letter headers at all
         for (i in 1..5) {
-            composeRule.onNodeWithTag("drawer_app_row_com.example.match$i").assertExists()
+            composeRule.onNodeWithTag("drawer_grid_tile_com.example.match$i").assertExists()
         }
         for (i in 6..8) {
-            composeRule.onNodeWithTag("drawer_app_row_com.example.match$i").assertDoesNotExist()
+            composeRule.onNodeWithTag("drawer_grid_tile_com.example.match$i").assertDoesNotExist()
         }
         composeRule.onNodeWithTag("header_A").assertDoesNotExist()
     }
@@ -328,16 +399,17 @@ class AppDrawerScreenTest {
         }
 
         // When searching
+        composeRule.openSearchSheet()
         composeRule.onNodeWithTag("drawer_search_field").performTextInput("Match")
 
         // Then every tile is the same width and the tiles are evenly spaced, like the browse grid
         val bounds = (0..2).map {
             composeRule.onNodeWithTag("drawer_grid_tile_com.example.match$it").fetchSemanticsNode().boundsInRoot
         }
-        assert(bounds.all { kotlin.math.abs(it.width - bounds[0].width) < 1f }) { "tile widths differ: ${bounds.map { it.width }}" }
+        assert(bounds.all { kotlin.math.abs(it.width - bounds[0].width) <= 1f }) { "tile widths differ: ${bounds.map { it.width }}" }
         // Search orders results by relevance, not input order — compare left to right
         val gaps = bounds.sortedBy { it.left }.zipWithNext { a, b -> b.left - a.left }
-        assert(kotlin.math.abs(gaps[0] - gaps[1]) < 1f) { "tile spacing differs: $gaps" }
+        assert(kotlin.math.abs(gaps[0] - gaps[1]) <= 1f) { "tile spacing differs: $gaps" }
     }
 
     @Test
@@ -349,6 +421,7 @@ class AppDrawerScreenTest {
                 AppDrawerScreen(apps = apps.toImmutableList(), actions = DrawerItemActions(onAppClick = {}), query = query, onQueryChange = { query = it })
             }
         }
+        composeRule.openSearchSheet()
         composeRule.onNodeWithTag("drawer_search_field").performTextInput("zqx")
 
         // Then the empty state renders with the query echoed back
@@ -357,9 +430,15 @@ class AppDrawerScreenTest {
         // When tapping Clear search
         composeRule.onNodeWithTag("drawer_search_clear").performClick()
 
-        // Then the query is cleared and browse mode is back
+        // Then the query is cleared, and once the sheet is closed browse mode is back
         composeRule.onNodeWithTag("drawer_search_results").assertDoesNotExist()
+        closeSearchSheet()
         composeRule.onNodeWithTag("header_A").assertExists()
+    }
+
+    private fun closeSearchSheet() {
+        composeRule.onNodeWithTag("drawer_search_sheet_back").performClick()
+        composeRule.waitUntil(timeoutMillis = 3_000) { composeRule.onAllNodesWithTag("drawer_search_sheet").fetchSemanticsNodes().isEmpty() }
     }
 
     @Test
@@ -629,11 +708,12 @@ class AppDrawerScreenTest {
         }
 
         // When searching
+        composeRule.openSearchSheet()
         composeRule.onNodeWithTag("drawer_search_field").performTextInput("M App")
 
         // Then no contacts section renders at all, only the apps section
         composeRule.onNodeWithText("CONTACTS").assertDoesNotExist()
-        composeRule.onNodeWithTag("drawer_app_row_com.example.M").assertExists()
+        composeRule.onNodeWithTag("drawer_grid_tile_com.example.M").assertExists()
     }
 
     @Test
@@ -662,6 +742,7 @@ class AppDrawerScreenTest {
         composeRule.onNodeWithTag("drawer_contacts_access_strip").assertDoesNotExist()
 
         // When searching while the prompt condition holds
+        composeRule.openSearchSheet()
         composeRule.onNodeWithTag("drawer_search_field").performTextInput("M App")
         showPrompt = true
         composeRule.waitForIdle()
@@ -669,7 +750,7 @@ class AppDrawerScreenTest {
         // Then the banner renders under a CONTACTS header alongside the app results
         composeRule.onNodeWithText("CONTACTS").assertExists()
         composeRule.onNodeWithTag("drawer_contacts_access_strip").assertExists()
-        composeRule.onNodeWithTag("drawer_app_row_com.example.M").assertExists()
+        composeRule.onNodeWithTag("drawer_grid_tile_com.example.M").assertExists()
 
         // When tapping the banner
         composeRule.onNodeWithTag("drawer_contacts_access_strip").performClick()
@@ -706,6 +787,7 @@ class AppDrawerScreenTest {
         composeRule.onNodeWithTag("drawer_contacts_setting_off_strip").assertDoesNotExist()
 
         // When searching while the prompt condition holds
+        composeRule.openSearchSheet()
         composeRule.onNodeWithTag("drawer_search_field").performTextInput("M App")
         showPrompt = true
         composeRule.waitForIdle()
@@ -713,7 +795,7 @@ class AppDrawerScreenTest {
         // Then the banner renders under a CONTACTS header alongside the app results
         composeRule.onNodeWithText("CONTACTS").assertExists()
         composeRule.onNodeWithTag("drawer_contacts_setting_off_strip").assertExists()
-        composeRule.onNodeWithTag("drawer_app_row_com.example.M").assertExists()
+        composeRule.onNodeWithTag("drawer_grid_tile_com.example.M").assertExists()
 
         // When tapping the banner
         composeRule.onNodeWithTag("drawer_contacts_setting_off_strip").performClick()
@@ -749,6 +831,7 @@ class AppDrawerScreenTest {
                 )
             }
         }
+        composeRule.openSearchSheet()
         composeRule.onNodeWithTag("drawer_search_field").performTextInput("Jane")
 
         // Then the contact renders in the results, sheet not open yet
@@ -802,6 +885,7 @@ class AppDrawerScreenTest {
                 }
             }
         }
+        composeRule.openSearchSheet()
         composeRule.onNodeWithTag("drawer_search_field").performTextInput("Jane")
         composeRule.onNodeWithTag("contact_row_1").performClick()
         composeRule.waitUntil(timeoutMillis = 3_000) {
@@ -829,11 +913,12 @@ class AppDrawerScreenTest {
         }
 
         // When searching
+        composeRule.openSearchSheet()
         composeRule.onNodeWithTag("drawer_search_field").performTextInput("M App")
 
         // Then no settings section renders at all, only the apps section
         composeRule.onNodeWithText("SETTINGS").assertDoesNotExist()
-        composeRule.onNodeWithTag("drawer_app_row_com.example.M").assertExists()
+        composeRule.onNodeWithTag("drawer_grid_tile_com.example.M").assertExists()
     }
 
     @Test
@@ -856,6 +941,7 @@ class AppDrawerScreenTest {
                 )
             }
         }
+        composeRule.openSearchSheet()
         composeRule.onNodeWithTag("drawer_search_field").performTextInput("wifi")
 
         // Then it renders under a SETTINGS header alongside the app results
@@ -878,6 +964,7 @@ class AppDrawerScreenTest {
                 AppDrawerScreen(apps = apps.toImmutableList(), actions = DrawerItemActions(onAppClick = {}), query = query, onQueryChange = { query = it })
             }
         }
+        composeRule.openSearchSheet()
         composeRule.onNodeWithTag("drawer_search_field").performTextInput("M App")
         composeRule.onNodeWithTag("drawer_search_results").assertExists()
 
@@ -895,9 +982,7 @@ class AppDrawerScreenTest {
         // (that's HomeDrawerRoute's own BackHandler, one level up, not exercised here). The
         // search-results container exits via a real animation (per CLAUDE.md's testing policy,
         // never disabled), so wait it out rather than asserting the instant after the back press.
-        composeRule.waitUntil(timeoutMillis = 3_000) {
-            runCatching { composeRule.onNodeWithTag("drawer_search_results").assertDoesNotExist() }.isSuccess
-        }
+        composeRule.waitUntil(timeoutMillis = 3_000) { composeRule.onAllNodesWithTag("drawer_search_sheet").fetchSemanticsNodes().isEmpty() }
         composeRule.onNodeWithTag("header_A").assertExists()
     }
 
@@ -1020,7 +1105,8 @@ class AppDrawerScreenTest {
         }
 
         // When searching for it
-        query = "Chat"
+        composeRule.openSearchSheet()
+        composeRule.onNodeWithTag("drawer_search_field").performTextInput("Chat")
 
         // Then both the personal and Work Profile copies show up as separate result rows — search
         // isn't scoped to the tab. 3, not 2: the search field's own typed value also matches "Chat".

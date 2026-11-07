@@ -851,6 +851,10 @@
     <string name="drawer_search_section_apps">APPS</string>
     <string name="drawer_search_section_contacts">CONTACTS</string>
     <string name="drawer_search_section_settings">SETTINGS</string>
+    <string name="drawer_search_section_recent_changes">RECENTLY INSTALLED OR UPDATED</string>
+    <string name="drawer_search_section_frequent">FREQUENTLY USED</string>
+    <string name="drawer_search_section_last_used">LAST USED</string>
+    <string name="drawer_search_usage_access_needed">Frequently and last used apps need usage access from system settings.</string>
     <string name="drawer_contacts_access_needed">Contact search needs access from system settings.</string>
     <string name="drawer_contacts_search_off">Contact search is off in App Drawer settings.</string>
     <string name="drawer_search_no_matches">No matches found for “%1$s”</string>

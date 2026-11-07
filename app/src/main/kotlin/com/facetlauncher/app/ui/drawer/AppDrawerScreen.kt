@@ -94,6 +94,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -122,6 +123,7 @@ import com.facetlauncher.app.data.model.SearchBarPosition
 import com.facetlauncher.app.data.model.SettingsSearchEntry
 import com.facetlauncher.app.domain.GroupAppsByLetterUseCase
 import com.facetlauncher.app.domain.RankBySearchRelevanceUseCase
+import com.facetlauncher.app.domain.RecentlyChangedAppsUseCase
 import com.facetlauncher.app.domain.RecentlyInstalledAppsUseCase
 import com.facetlauncher.app.domain.GroupedItems
 import com.facetlauncher.app.domain.QuickAddState
@@ -218,9 +220,8 @@ fun AppDrawerScreen(
     /** True while the drawer itself is open/opening (caller's own `isDrawerOpen`). Used only to reset the connections sheet once the drawer is fully closed — see the `LaunchedEffect` below. */
     isDrawerOpen: Boolean = true,
     /** Injected into `DrawerViewModel`; the default serves previews and tests, which have none. */
-    listUseCases: DrawerListUseCases = DrawerListUseCases(RankBySearchRelevanceUseCase(), GroupAppsByLetterUseCase(), RecentlyInstalledAppsUseCase()),
+    listUseCases: DrawerListUseCases = DrawerListUseCases(RankBySearchRelevanceUseCase(), GroupAppsByLetterUseCase(), RecentlyInstalledAppsUseCase(), RecentlyChangedAppsUseCase()),
 ) {
-    val isSearching = query.isNotBlank()
     val browse = rememberDrawerBrowseModel(
         apps = apps,
         workProfiles = workProfiles,
@@ -234,13 +235,8 @@ fun AppDrawerScreen(
     val focusManager = LocalFocusManager.current
     val connectionsSheet = rememberConnectionsSheet(searchSources.onRequestConnections, isDrawerOpen)
 
-    // First back-press while searching clears the query and stays in the drawer (browse mode,
-    // unfiltered); only a second, empty-query back-press falls through to the caller's own
-    // drawer-close BackHandler.
-    BackHandler(enabled = isSearching) {
-        focusManager.clearFocus()
-        onQueryChange("")
-    }
+    // The search sheet owns Back while open: it closes and returns to the drawer, which keeps its own BackHandler.
+    val search = rememberSearchSheet(searchBar.focusRequest, isDrawerOpen, onQueryChange)
 
     // Outer Box so the connections sheet can overlay the entire screen.
     Box(modifier = modifier.fillMaxSize()) {
@@ -252,11 +248,11 @@ fun AppDrawerScreen(
                 .background(SurfaceContainer.copy(alpha = appearance.opacity))
                 .windowInsetsPadding(launcherSystemBarInsets()),
         ) {
-            if (searchBar.position == SearchBarPosition.TOP) DrawerSearchBar(query, onQueryChange, searchBar)
+            if (searchBar.position == SearchBarPosition.TOP) DrawerSearchBar(searchBar, search.show)
 
             // Browse-mode only — hidden entirely on a device with no Work Profile, so this is a genuine
             // no-op for the common case.
-            if (workProfiles.isNotEmpty() && !isSearching) {
+            if (workProfiles.isNotEmpty()) {
                 DrawerProfileTabRow(
                     tabs = browse.tabs,
                     selected = browse.selectedTab,
@@ -265,35 +261,52 @@ fun AppDrawerScreen(
                 )
             }
 
-            Box(modifier = Modifier.weight(1f)) {
-                if (isSearching) {
-                    DrawerSearchResults(
-                        query = query,
-                        apps = browse.searchResultApps,
-                        listState = searchListState,
-                        appearance = appearance,
-                        actions = actions,
-                        sources = searchSources,
-                        onClearSearch = { onQueryChange("") },
-                        appMenuNotifications = appMenuNotifications,
-                        folderCandidates = folderCandidates,
-                        // Closing the keyboard here (not just clearing text-field focus): the user was very
-                        // likely still typing when they tapped a contact, and it looked stuck behind the sheet.
-                        onContactClick = { focusManager.clearFocus(); connectionsSheet.open(it) },
-                        modifier = Modifier.fillMaxSize().testTag("drawer_search_results"),
-                    )
-                } else {
-                    DrawerBrowseBody(browse, listState, gridState, appearance, actions, appMenuNotifications, folderCandidates)
-                }
+            // The sheet is modal: hide the list from accessibility (and tests) while it is open.
+            Box(modifier = Modifier.weight(1f).then(if (search.isOpen) Modifier.clearAndSetSemantics {} else Modifier)) {
+                DrawerBrowseBody(browse, listState, gridState, appearance, actions, appMenuNotifications, folderCandidates)
             }
 
             if (searchBar.position == SearchBarPosition.BOTTOM) {
-                DrawerSearchBar(query, onQueryChange, searchBar, Modifier.imePadding())
+                DrawerSearchBar(searchBar, search.show)
             }
         }
 
+        DrawerSearchSheet(
+            visible = search.isOpen,
+            onClose = search.close,
+            query = query,
+            onQueryChange = onQueryChange,
+            barPosition = searchBar.position,
+            apps = apps,
+            searchResultApps = browse.searchResultApps,
+            searchListState = searchListState,
+            appearance = appearance,
+            actions = actions,
+            sources = searchSources,
+            appMenuNotifications = appMenuNotifications,
+            folderCandidates = folderCandidates,
+            listUseCases = listUseCases,
+            // Closing the keyboard here (not just clearing text-field focus): the user was very likely still typing.
+            onContactClick = { focusManager.clearFocus(); connectionsSheet.open(it) },
+        )
+
         ContactConnectionsOverlay(connectionsSheet.contact, connectionsSheet.connections, connectionsSheet.dismiss)
     }
+}
+
+/** Whether the search sheet is open and how to open or close it; closing also clears the query. */
+@Stable
+private class SearchSheetState(val isOpen: Boolean, val show: () -> Unit, val close: () -> Unit)
+
+@Composable
+private fun rememberSearchSheet(focusRequest: Int, isDrawerOpen: Boolean, onQueryChange: (String) -> Unit): SearchSheetState {
+    var open by remember { mutableStateOf(false) }
+    val clearQuery by rememberUpdatedState(onQueryChange)
+    val close = { open = false; clearQuery("") }
+    LaunchedEffect(focusRequest) { if (focusRequest > 0) open = true }
+    // The screen stays composed while the drawer is closed, so reset the sheet then.
+    LaunchedEffect(isDrawerOpen) { if (!isDrawerOpen) close() }
+    return SearchSheetState(open, { open = true }, close)
 }
 
 /** The connections sheet's state: the contact it is open for and that contact's ways to reach them. */
@@ -503,26 +516,16 @@ private fun DrawerProfileTabRow(tabs: ImmutableList<DrawerTab>, selected: Drawer
 }
 
 /**
- * Rounded-rectangle search bar (`1j`) — text-filters the drawer's app list. The 3-dot overflow
- * menu is a second entry point into Launcher Settings, alongside the long-press sheet. When
- * rendered at the bottom of the drawer (Settings' "Search bar position"), the caller applies
- * [Modifier.imePadding] so it rides above the on-screen keyboard instead of being covered by
- * it — `LauncherActivity` declares `windowSoftInputMode="adjustNothing"`, so nothing happens
- * for free here; this is Compose's own keyboard-avoidance primitive, not a third-party one.
+ * Rounded-rectangle search bar (`1j`). It is a button: tapping it opens the search sheet, where typing happens. The 3-dot overflow
+ * menu is a second entry point into Launcher Settings, alongside the long-press sheet.
  */
 @Composable
 private fun DrawerSearchBar(
-    query: String,
-    onQueryChange: (String) -> Unit,
     config: DrawerSearchBarConfig,
+    onOpen: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
-    val focusRequester = remember { FocusRequester() }
-    LaunchedEffect(config.focusRequest) {
-        if (config.focusRequest > 0) focusRequester.requestFocus()
-    }
-
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -534,25 +537,18 @@ private fun DrawerSearchBar(
             .testTag("drawer_search_bar"),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Icon(
-            imageVector = Icons.Default.Search,
-            contentDescription = null,
-            tint = Muted,
-            modifier = Modifier.padding(start = 14.dp),
-        )
-        TextField(
-            value = query,
-            onValueChange = onQueryChange,
-            placeholder = { Text(stringResource(R.string.app_picker_search_apps)) },
-            singleLine = true,
-            colors = TextFieldDefaults.colors(
-                unfocusedContainerColor = Surface,
-                focusedContainerColor = Surface,
-                unfocusedIndicatorColor = Accent.copy(alpha = 0f),
-                focusedIndicatorColor = Accent.copy(alpha = 0f),
-            ),
-            modifier = Modifier.weight(1f).focusRequester(focusRequester).testTag("drawer_search_field"),
-        )
+        Row(
+            modifier = Modifier.weight(1f).clickable(onClick = onOpen).padding(vertical = 14.dp).testTag("drawer_search_open"),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(
+                imageVector = Icons.Default.Search,
+                contentDescription = null,
+                tint = Muted,
+                modifier = Modifier.padding(start = 14.dp, end = 16.dp),
+            )
+            Text(text = stringResource(R.string.app_picker_search_apps), style = MaterialTheme.typography.bodyLarge, color = Muted)
+        }
         Box {
             IconButton(onClick = { menuExpanded = true }, modifier = Modifier.testTag("drawer_search_overflow")) {
                 Icon(imageVector = Icons.Default.MoreVert, contentDescription = stringResource(R.string.drawer_search_more_options), tint = Muted)
@@ -625,7 +621,7 @@ private fun DrawerSearchOverflowMenu(
  * list-form regardless of [presentation] (grid doesn't apply to them), but also honor [itemSize].
  */
 @Composable
-private fun DrawerSearchResults(
+internal fun DrawerSearchResults(
     query: String,
     apps: ImmutableList<AppInfo>,
     listState: LazyListState,
@@ -692,7 +688,7 @@ private fun LazyListScope.appsSection(
 
 /** A small label above one section of the search results. */
 @Composable
-private fun SearchSectionHeader(@StringRes textRes: Int) {
+internal fun SearchSectionHeader(@StringRes textRes: Int) {
     Text(
         text = stringResource(textRes),
         style = MaterialTheme.typography.labelSmall,
@@ -724,18 +720,19 @@ private fun LazyListScope.contactsSection(
  * No fixed row height: the browse grid's "fill N screen rows" doesn't apply here.
  */
 @Composable
-private fun SearchAppsGrid(
+internal fun SearchAppsGrid(
     apps: ImmutableList<AppInfo>,
     appearance: DrawerAppearance,
     actions: DrawerItemActions,
     appMenuNotifications: AppMenuNotifications,
     folderCandidates: ImmutableList<Folder>?,
+    maxRows: Int = Int.MAX_VALUE,
 ) {
     BoxWithConstraints {
         val columns = drawerGridColumns(maxWidth, appearance.gridDensity)
         Column {
-            apps.chunked(columns).forEach { rowApps ->
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(bottom = 20.dp)) {
+            apps.chunked(columns).take(maxRows).forEach { rowApps ->
+                Row(horizontalArrangement = Arrangement.spacedBy(GRID_HORIZONTAL_SPACING), modifier = Modifier.padding(bottom = 20.dp)) {
                     rowApps.forEach { app ->
                         Box(modifier = Modifier.weight(1f)) {
                             DrawerGridTile(
@@ -813,7 +810,7 @@ private fun ContactsSettingOffStrip(onClick: () -> Unit, modifier: Modifier = Mo
     }
 }
 
-private fun Modifier.drawerDashedBorder(color: Color, cornerRadius: androidx.compose.ui.unit.Dp, strokeWidth: androidx.compose.ui.unit.Dp = 1.dp): Modifier = drawBehind {
+internal fun Modifier.drawerDashedBorder(color: Color, cornerRadius: androidx.compose.ui.unit.Dp, strokeWidth: androidx.compose.ui.unit.Dp = 1.dp): Modifier = drawBehind {
     drawRoundRect(
         color = color,
         style = Stroke(width = strokeWidth.toPx(), pathEffect = PathEffect.dashPathEffect(floatArrayOf(8f, 6f), 0f)),
@@ -1338,6 +1335,7 @@ private fun DrawerAppRow(
 private val GRID_CONTENT_TOP_PADDING = 4.dp
 private val GRID_CONTENT_BOTTOM_PADDING = 16.dp
 private val GRID_VERTICAL_SPACING = 20.dp
+private val GRID_HORIZONTAL_SPACING = 4.dp
 private val GRID_START_PADDING = 48.dp
 
 /**
@@ -1383,7 +1381,7 @@ private fun DrawerGridContent(
             // its right edge already stops exactly at the rail's touch zone.
             contentPadding = PaddingValues(start = GRID_START_PADDING, top = GRID_CONTENT_TOP_PADDING, bottom = GRID_CONTENT_BOTTOM_PADDING),
             verticalArrangement = Arrangement.spacedBy(GRID_VERTICAL_SPACING),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(GRID_HORIZONTAL_SPACING),
         ) {
             if (folderDisplayMode == DrawerFolderDisplayMode.SHOW_FIRST) {
                 drawerFolderTiles(pinnedFolders, columns, rowHeight, appearance, actions, appMenuNotifications)
@@ -1471,12 +1469,12 @@ private fun DrawerGridTile(
             Spacer(modifier = Modifier.height(7.dp))
             Text(
                 text = app.label,
-                style = MaterialTheme.typography.labelSmall.copy(fontWeight = labelFontWeight),
+                style = MaterialTheme.typography.labelLarge.copy(fontWeight = labelFontWeight),
                 color = DrawerAppTextColor,
                 textAlign = TextAlign.Center,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.widthIn(max = AppIconSize.scaled(AppIconSize.GRID_LABEL_WIDTH)),
+                modifier = Modifier.widthIn(max = AppIconSize.scaled(appearance.gridDensity.labelWidth())),
             )
         }
         AppContextMenu(
@@ -1526,12 +1524,12 @@ private fun DrawerFolderTile(
             Spacer(modifier = Modifier.height(7.dp))
             Text(
                 text = folder.name,
-                style = MaterialTheme.typography.labelSmall.copy(fontWeight = labelFontWeight),
+                style = MaterialTheme.typography.labelLarge.copy(fontWeight = labelFontWeight),
                 color = DrawerAppTextColor,
                 textAlign = TextAlign.Center,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.widthIn(max = AppIconSize.scaled(AppIconSize.GRID_LABEL_WIDTH)),
+                modifier = Modifier.widthIn(max = AppIconSize.scaled(appearance.gridDensity.labelWidth())),
             )
         }
         if (sheetOpen) {

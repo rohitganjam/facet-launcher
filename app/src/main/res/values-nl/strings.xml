@@ -755,6 +755,10 @@
     <string name="drawer_search_section_apps">APPS</string>
     <string name="drawer_search_section_contacts">CONTACTEN</string>
     <string name="drawer_search_section_settings">INSTELLINGEN</string>
+    <string name="drawer_search_section_recent_changes">RECENT GEÏNSTALLEERD OF BIJGEWERKT</string>
+    <string name="drawer_search_section_frequent">VAAK GEBRUIKT</string>
+    <string name="drawer_search_section_last_used">LAATST GEBRUIKT</string>
+    <string name="drawer_search_usage_access_needed">Vaak en laatst gebruikte apps hebben toegang tot gebruiksgegevens nodig in de systeeminstellingen.</string>
     <string name="drawer_contacts_access_needed">Voor het zoeken naar contacten is toegang nodig via de systeeminstellingen.</string>
     <string name="drawer_contacts_search_off">Zoeken naar contacten staat uit in de instellingen van de app-lade.</string>
     <string name="drawer_search_no_matches">Geen resultaten voor “%1$s”</string>
