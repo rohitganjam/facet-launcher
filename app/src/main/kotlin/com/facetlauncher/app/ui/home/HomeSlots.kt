@@ -56,6 +56,7 @@ import com.facetlauncher.app.ui.components.dashedBorder
 import com.facetlauncher.app.ui.home.HomeMenuMode
 import com.facetlauncher.app.ui.home.DockIcon
 import com.facetlauncher.app.ui.home.MediaPlayerRow
+import com.facetlauncher.app.ui.home.clock.LocalAccessoryLongPress
 import com.facetlauncher.app.ui.home.clock.LocalBatteryClick
 import com.facetlauncher.app.ui.home.weather.rememberClockWeatherAccessory
 import com.facetlauncher.app.ui.theme.Accent
@@ -181,6 +182,15 @@ private class ClockPageSpec(val role: PageRole, val alignment: ClockAlignment, v
 
 @Composable
 private fun ClockPage(frame: HomeFrame, page: ClockPageSpec, scaleOriginY: Float, scaledFootprint: Boolean) {
+    val onAdjust = frame.actions.clock.onAdjustModeChange
+    val longPress: () -> Unit = if (page.role == PageRole.VISIBLE) ({ onAdjust(HomeMenuMode.WIDGET_MENU) }) else ({})
+    CompositionLocalProvider(LocalAccessoryLongPress provides longPress) {
+        ClockPageContent(frame, page, scaleOriginY, scaledFootprint)
+    }
+}
+
+@Composable
+private fun ClockPageContent(frame: HomeFrame, page: ClockPageSpec, scaleOriginY: Float, scaledFootprint: Boolean) {
     val state = frame.state
     val clock = state.clock
     val widget = page.widget
@@ -361,7 +371,7 @@ private fun HomeAppListBody(frame: HomeFrame) {
             columns = gridColumns(frame),
             displayMode = list.gridDisplayMode,
         )
-        AppListLayout.SINGLE_COLUMN, AppListLayout.LAUNCHER_DEFAULT -> HomeAppListColumn(
+        AppListLayout.SINGLE_COLUMN -> HomeAppListColumn(
             content = frame.listContent,
             actions = frame.actions.item,
             position = position,
@@ -373,7 +383,7 @@ private fun HomeAppListBody(frame: HomeFrame) {
             horizontalAlignment = when (position) {
                 AppRowPosition.RIGHT -> Alignment.End
                 AppRowPosition.CENTER -> Alignment.CenterHorizontally
-                AppRowPosition.LEFT, AppRowPosition.LAUNCHER_DEFAULT -> Alignment.Start
+                AppRowPosition.LEFT -> Alignment.Start
             },
         )
     }

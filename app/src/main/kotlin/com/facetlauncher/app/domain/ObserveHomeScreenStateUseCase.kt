@@ -98,9 +98,7 @@ class ObserveHomeScreenStateUseCase @Inject constructor(
             facets.find { it.id == settings.activeFacetId }
         }
 
-        val appListItems = combine(activeFacet, settingsRepository.settings, refreshTrigger) { facet, settings, _ ->
-            facet to settings
-        }.flatMapLatest { (facet, settings) -> observeAppListItems(facet, settings) }
+        val appListItems = combine(activeFacet, refreshTrigger) { facet, _ -> facet }.flatMapLatest { facet -> observeAppListItems(facet) }
 
         val dockApps = activeFacet.flatMapLatest { facet ->
             observePlacedItems.items(facet.placementTarget(PlacementList.DOCK))
@@ -160,10 +158,10 @@ class ObserveHomeScreenStateUseCase @Inject constructor(
         }
     }
 
-    private fun observeAppListItems(facet: Facet?, settings: LauncherSettings): Flow<List<PlacedItem>> {
+    private fun observeAppListItems(facet: Facet?): Flow<List<PlacedItem>> {
         if (facet == null) return flowOf(emptyList())
-        val mode = if (facet.overrideApps) facet.listContentMode else settings.listContentMode
-        val appsToShowCount = if (facet.overrideApps) facet.appsToShowCount else settings.appsToShowCount
+        val mode = facet.listContentMode
+        val appsToShowCount = facet.appsToShowCount
         return when {
             mode == ListContentMode.FAVORITES -> observePlacedItems.items(facet.placementTarget(PlacementList.FAVORITES))
             !usageAccessRepository.isGranted() -> flowOf(emptyList())

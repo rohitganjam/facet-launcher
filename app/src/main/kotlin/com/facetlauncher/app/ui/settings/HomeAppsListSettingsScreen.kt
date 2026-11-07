@@ -37,11 +37,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -59,7 +57,9 @@ import com.facetlauncher.app.ui.components.AppIconSize
 import com.facetlauncher.app.ui.components.BackButton
 import com.facetlauncher.app.ui.components.CardDivider
 import com.facetlauncher.app.ui.components.HomeSurfacePreview
-import com.facetlauncher.app.ui.components.InheritOverrideCard
+import com.facetlauncher.app.ui.components.CopyToFacetsCard
+import com.facetlauncher.app.ui.components.DefaultsNote
+import com.facetlauncher.app.ui.components.ResetToDefaultCard
 import com.facetlauncher.app.ui.components.LabeledDropdownRow
 import com.facetlauncher.app.ui.components.ReorderRowDefaults
 import com.facetlauncher.app.ui.components.LocalSettingsRowInset
@@ -78,13 +78,12 @@ import com.facetlauncher.app.ui.theme.resolve
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 
-/** Settings → Home & Apps → Home Apps List — also a facet's own Apps-list screen when `viewModel` is facet-scoped, with its own Inherit/Override switch at the top in that case. */
+/** Settings → Home & Apps → Home Apps List (the defaults a new facet starts with) — also a facet's own Apps-list screen when `viewModel` is facet-scoped, with a Reset to default action. */
 @Composable
 fun HomeAppsListSettingsScreen(
     onBack: () -> Unit,
     onEditFavorites: () -> Unit,
     modifier: Modifier = Modifier,
-    onEditDefaults: (() -> Unit)? = null,
     viewModel: HomeAppsListSettingsViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -95,9 +94,9 @@ fun HomeAppsListSettingsScreen(
         onListContentModeChange = viewModel::setListContentMode,
         onAppsToShowCountChange = viewModel::setAppsToShowCount,
         onReorderFavorites = viewModel::reorderFavorites,
-        onOverridingChange = viewModel::setOverriding,
+        onResetToDefault = viewModel::resetToDefault,
+        onCopyToFacets = viewModel::copyToFacets,
         modifier = modifier,
-        onEditDefaults = onEditDefaults,
     )
 }
 
@@ -109,15 +108,13 @@ private fun HomeAppsListSettingsContent(
     onListContentModeChange: (ListContentMode) -> Unit,
     onAppsToShowCountChange: (Int) -> Unit,
     onReorderFavorites: (List<PlacedItem>) -> Unit,
-    onOverridingChange: (Boolean) -> Unit,
+    onResetToDefault: () -> Unit,
+    onCopyToFacets: (Set<Long>) -> Unit,
     modifier: Modifier = Modifier,
-    onEditDefaults: (() -> Unit)? = null,
 ) {
-    val controlsEnabled = !uiState.isFacetScoped || uiState.isOverriding
-
     StickyHeaderLayout(
         modifier = modifier,
-        header = { HomeAppsListSettingsHeader(onBack = onBack) },
+        header = { HomeAppsListSettingsHeader(isFacetScoped = uiState.isFacetScoped, onBack = onBack) },
         content = { headerHeight ->
             LazyColumn(
                 modifier = Modifier
@@ -128,7 +125,6 @@ private fun HomeAppsListSettingsContent(
                     .padding(horizontal = 24.dp),
                 contentPadding = PaddingValues(top = headerHeight, bottom = 24.dp),
             ) {
-                if (uiState.isFacetScoped) inheritOverrideItems(uiState, onOverridingChange, onEditDefaults)
                 item {
                     HomeSurfacePreview(
                         appList = uiState.previewApps,
@@ -145,38 +141,39 @@ private fun HomeAppsListSettingsContent(
                         modifier = Modifier.padding(bottom = 20.dp).testTag("home_apps_list_preview_card"),
                     )
                 }
-                listContentItem(uiState, controlsEnabled, onListContentModeChange, onAppsToShowCountChange, onEditFavorites, onReorderFavorites)
+                listContentItem(uiState, onListContentModeChange, onAppsToShowCountChange, onEditFavorites, onReorderFavorites)
+                if (uiState.isFacetScoped) {
+                    item { Spacer(modifier = Modifier.height(16.dp)) }
+                    item {
+                        ResetToDefaultCard(
+                            subtitle = stringResource(R.string.reset_apps_subtitle),
+                            confirmMessage = stringResource(R.string.reset_apps_confirm_message),
+                            onReset = onResetToDefault,
+                            testTagPrefix = "home_apps_list",
+                        )
+                    }
+                } else {
+                    item { Spacer(modifier = Modifier.height(16.dp)) }
+                    item {
+                        CopyToFacetsCard(
+                            facets = uiState.facets,
+                            activeFacetId = uiState.settings.activeFacetId,
+                            subtitle = stringResource(R.string.copy_apps_subtitle),
+                            sheetMessage = stringResource(R.string.copy_apps_sheet_message),
+                            onCopy = onCopyToFacets,
+                            testTagPrefix = "home_apps_list",
+                        )
+                    }
+                    item { DefaultsNote(modifier = Modifier.padding(top = 12.dp)) }
+                }
             }
         },
     )
 }
 
-/** A facet's Inherit/Override card, summarising the launcher-wide list it inherits, and the gap under it. */
-private fun LazyListScope.inheritOverrideItems(uiState: HomeAppsListUiState, onOverridingChange: (Boolean) -> Unit, onEditDefaults: (() -> Unit)?) {
-    item {
-        InheritOverrideCard(
-            overriding = uiState.isOverriding,
-            onOverridingChange = onOverridingChange,
-            testTagPrefix = "home_apps_list",
-            onEditDefaults = onEditDefaults,
-            inheritSubtitle = if (uiState.settings.listContentMode != ListContentMode.FAVORITES) {
-                stringResource(
-                    R.string.dot_join_2,
-                    stringResource(uiState.settings.listContentMode.displayNameRes),
-                    pluralStringResource(R.plurals.format_count_apps, uiState.settings.appsToShowCount, uiState.settings.appsToShowCount),
-                )
-            } else {
-                stringResource(uiState.settings.listContentMode.displayNameRes)
-            },
-        )
-    }
-    item { Spacer(modifier = Modifier.height(16.dp)) }
-}
-
 /** What the list shows, how many apps, and (for favorites) which apps and their order. */
 private fun LazyListScope.listContentItem(
     uiState: HomeAppsListUiState,
-    controlsEnabled: Boolean,
     onListContentModeChange: (ListContentMode) -> Unit,
     onAppsToShowCountChange: (Int) -> Unit,
     onEditFavorites: () -> Unit,
@@ -190,7 +187,6 @@ private fun LazyListScope.listContentItem(
                 selected = uiState.listContentMode,
                 label = { stringResource(it.displayNameRes) },
                 onSelect = onListContentModeChange,
-                enabled = controlsEnabled,
                 testTag = "default_list_content_row",
             )
             if (uiState.listContentMode != ListContentMode.FAVORITES) {
@@ -201,7 +197,6 @@ private fun LazyListScope.listContentItem(
                     selected = uiState.appsToShowCount,
                     label = { it.toString() },
                     onSelect = onAppsToShowCountChange,
-                    enabled = controlsEnabled,
                     testTag = "default_apps_to_show_row",
                 )
             }
@@ -210,14 +205,13 @@ private fun LazyListScope.listContentItem(
                 title = stringResource(if (uiState.isFacetScoped) R.string.home_apps_list_favorites_facet else R.string.home_apps_list_favorites_default),
                 subtitle = uiState.favoritesLabel,
                 onClick = onEditFavorites,
-                enabled = controlsEnabled,
                 testTag = "default_favorites_row",
             )
             if (uiState.favorites.isNotEmpty()) {
                 CardDivider()
                 DefaultFavoritesReorderList(
                     favorites = uiState.favorites,
-                    onReorder = if (controlsEnabled) onReorderFavorites else { {} },
+                    onReorder = onReorderFavorites,
                 )
             }
         }
@@ -225,7 +219,7 @@ private fun LazyListScope.listContentItem(
 }
 
 @Composable
-private fun HomeAppsListSettingsHeader(onBack: () -> Unit, modifier: Modifier = Modifier) {
+private fun HomeAppsListSettingsHeader(isFacetScoped: Boolean, onBack: () -> Unit, modifier: Modifier = Modifier) {
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -237,19 +231,22 @@ private fun HomeAppsListSettingsHeader(onBack: () -> Unit, modifier: Modifier = 
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         BackButton(onClick = onBack)
-        Text(text = stringResource(R.string.home_apps_list_header_title), style = MaterialTheme.typography.headlineSmall, color = Ink)
+        Text(
+            text = stringResource(if (isFacetScoped) R.string.facet_settings_apps_list_settings_title else R.string.home_apps_list_default_header_title),
+            style = MaterialTheme.typography.headlineSmall,
+            color = Ink,
+        )
     }
 }
 
 @Composable
-private fun HomeAppsListClickableRow(title: String, subtitle: String?, onClick: () -> Unit, testTag: String, modifier: Modifier = Modifier, enabled: Boolean = true) {
+private fun HomeAppsListClickableRow(title: String, subtitle: String?, onClick: () -> Unit, testTag: String, modifier: Modifier = Modifier) {
     Row(
         modifier = modifier
             .testTag(testTag)
             .fillMaxWidth()
-            .clickable(enabled = enabled, onClick = onClick)
-            .padding(horizontal = LocalSettingsRowInset.current, vertical = 13.dp)
-            .alpha(if (enabled) 1f else 0.4f),
+            .clickable(onClick = onClick)
+            .padding(horizontal = LocalSettingsRowInset.current, vertical = 13.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -362,7 +359,8 @@ private fun HomeAppsListSettingsScreenPreview() {
             onListContentModeChange = {},
             onAppsToShowCountChange = {},
             onReorderFavorites = {},
-            onOverridingChange = {},
+            onResetToDefault = {},
+            onCopyToFacets = {},
         )
     }
 }

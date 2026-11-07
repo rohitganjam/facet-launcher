@@ -93,6 +93,7 @@ import com.facetlauncher.app.data.widget.LauncherAppWidgetHost
 import com.facetlauncher.app.domain.ObservePlacedItemsUseCase
 import com.facetlauncher.app.domain.ActivateFacetByIdUseCase
 import com.facetlauncher.app.domain.AddFacetUseCase
+import com.facetlauncher.app.domain.ApplyFacetDefaultsUseCase
 import com.facetlauncher.app.domain.CleanUpUninstalledAppsUseCase
 import com.facetlauncher.app.domain.CompactWidgetsUseCase
 import com.facetlauncher.app.domain.FlowPackWidgetsUseCase
@@ -323,7 +324,7 @@ class HomeDrawerRouteTest {
             launcherViewModel = remember {
                 LauncherViewModel(
                     GetInstalledAppsUseCase(appRepository),
-                    EnsureActiveFacetUseCase(facetRepository, settingsRepository, SelectableFacetsUseCase(facetRepository, EntitlementRepository())),
+                    EnsureActiveFacetUseCase(facetRepository, settingsRepository, SelectableFacetsUseCase(facetRepository, EntitlementRepository()), mock(ApplyFacetDefaultsUseCase::class.java)),
                     CleanUpUninstalledAppsUseCase(
                         appRepository, placementRepository,
                         FolderRepository(database.folderDao(), appRepository),
@@ -471,7 +472,7 @@ class HomeDrawerRouteTest {
                         CalendarRepository(context.contentResolver),
                     ),
                     testAutomation(context, database, facetRepository, settingsRepository).activate,
-                    AddFacetUseCase(facetRepository, EntitlementRepository()),
+                    AddFacetUseCase(facetRepository, EntitlementRepository(), mock(ApplyFacetDefaultsUseCase::class.java)),
                     EntitlementRepository(),
                 )
             }

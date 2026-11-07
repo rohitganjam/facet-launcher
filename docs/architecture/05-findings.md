@@ -102,7 +102,8 @@ use case.
   *no* destructive fallback on upgrade is exactly the right posture for an app holding user layout.
 - **Profile identity via `userId` in every unique index**, with a one-time repair pass for legacy
   rows, is the correct model for Work Profile / Private Space and was clearly retrofitted carefully.
-- **`resolveOverride` on `Facet`** keeps the "facet overrides global" rule in one expression
-  instead of scattered `if (facet.overrideX)` checks.
+- **A facet owns its Home** (dock, favorites, content mode, look): the launcher-wide values only seed a facet
+  at creation or on Reset to default (`ApplyFacetDefaultsUseCase`), so there is no override flag and no
+  inheritance to resolve.
 - **Startup orchestration in one ViewModel** (`LauncherViewModel.init`) makes the app-lifetime
   side effects discoverable in a single place.

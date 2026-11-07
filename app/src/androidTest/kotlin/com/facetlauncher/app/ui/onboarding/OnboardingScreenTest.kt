@@ -36,6 +36,8 @@ import com.facetlauncher.app.data.UsageStatsRepository
 import com.facetlauncher.app.data.WallpaperRepository
 import com.facetlauncher.app.data.local.FacetDatabase
 import com.facetlauncher.app.data.model.AppInfo
+import com.facetlauncher.app.data.FacetRepository
+import com.facetlauncher.app.domain.ApplyFacetDefaultsUseCase
 import com.facetlauncher.app.domain.GetInstalledAppsUseCase
 import com.facetlauncher.app.domain.SelectPreviewAppsUseCase
 import com.facetlauncher.app.domain.SortAppsForPickerUseCase
@@ -101,11 +103,14 @@ class OnboardingScreenTest {
                 val getInstalledApps = GetInstalledAppsUseCase(appRepository)
                 val sortAppsForPicker = SortAppsForPickerUseCase(UsageStatsRepository(context.getSystemService(UsageStatsManager::class.java), appRepository))
                 val usageAccessRepository = UsageAccessRepository(context.getSystemService(AppOpsManager::class.java), context)
+                val facetRepository = FacetRepository(database.facetDao(), database.clockStackItemDao())
                 OnboardingViewModels(
                     OnboardingViewModel(
                         placementRepository,
                         observePlacedItems,
                         settingsRepository,
+                        facetRepository,
+                        ApplyFacetDefaultsUseCase(facetRepository, placementRepository, settingsRepository),
                     ),
                     // Onboarding embeds these full-screen pickers as-is (same as Settings); this
                     // non-Hilt test host builds them by hand, same pattern as DockAppPickerScreenTest/
@@ -180,7 +185,8 @@ class OnboardingScreenTest {
         // home screen" prompt itself now lives on the real Home screen instead of a further step here
         // (see SetDefaultLauncherSheet's own doc), so reaching it just finishes onboarding directly.
         composeRule.onNodeWithTag("onboarding_next").performClick()
-        composeRule.waitForIdle()
+        // Finishing first copies the choices onto the facets, which is asynchronous
+        composeRule.waitUntil(timeoutMillis = 3_000) { finished }
 
         assertTrue(finished)
     }
@@ -279,7 +285,7 @@ class OnboardingScreenTest {
         goToNotifications()
 
         composeRule.onNodeWithTag("onboarding_screen").performTouchInput { swipeLeft() }
-        composeRule.waitForIdle()
+        composeRule.waitUntil(timeoutMillis = 3_000) { finished }
 
         assertTrue(finished)
     }

@@ -115,32 +115,40 @@ class ResolvedFacetStyleTest {
     }
 
     @Test
-    fun `shrink list to fit is the facet's own when set, else the launcher's`() {
+    fun `shrink list to fit is the facet's own, and the launcher's only with no facet`() {
         // Given the launcher shrinking its list
         val shrinking = settings.copy(appListShrinkToFit = com.facetlauncher.app.data.model.AppListShrinkToFit.ON)
 
-        // When a facet inherits it, and another turns it off
-        val inherits = resolveFacetStyle(facet(), shrinking)
-        val own = resolveFacetStyle(facet { it.copy(appListShrinkToFit = com.facetlauncher.app.data.model.AppListShrinkToFit.OFF) }, shrinking)
+        // When a facet leaves shrinking off, and another turns it on
+        val off = resolveFacetStyle(facet(), shrinking)
+        val on = resolveFacetStyle(facet { it.copy(appListShrinkToFit = com.facetlauncher.app.data.model.AppListShrinkToFit.ON) }, shrinking)
 
-        // Then each resolves to the right value, and no facet resolves to the launcher's
-        assertEquals(com.facetlauncher.app.data.model.AppListShrinkToFit.ON, inherits.appList.shrinkToFit)
-        assertEquals(com.facetlauncher.app.data.model.AppListShrinkToFit.OFF, own.appList.shrinkToFit)
+        // Then each resolves to its own value, and only no facet resolves to the launcher's
+        assertEquals(com.facetlauncher.app.data.model.AppListShrinkToFit.OFF, off.appList.shrinkToFit)
+        assertEquals(com.facetlauncher.app.data.model.AppListShrinkToFit.ON, on.appList.shrinkToFit)
         assertEquals(com.facetlauncher.app.data.model.AppListShrinkToFit.ON, resolveFacetStyle(null, shrinking).appList.shrinkToFit)
     }
 
     @Test
-    fun `list alignment resolves each field through its sentinel, then landscape over it`() {
+    fun `list alignment is the facet's own portrait value, with landscape its own twin else portrait`() {
         val withLandscape = settings.copy(landscape = LandscapeOverrides(appRowPosition = AppRowPosition.RIGHT))
-        val inherits = resolveFacetStyle(facet { it.copy(appRowPosition = AppRowPosition.LAUNCHER_DEFAULT) }, withLandscape)
-        val explicit = resolveFacetStyle(facet { it.copy(appRowPosition = AppRowPosition.LEFT) }, withLandscape)
+        val samePortrait = resolveFacetStyle(facet { it.copy(appRowPosition = AppRowPosition.LEFT) }, withLandscape)
         val ownLandscape = resolveFacetStyle(facet { it.copy(landscapeAppRowPosition = AppRowPosition.CENTER) }, withLandscape)
 
-        assertEquals(AppRowPosition.CENTER, inherits.listAlignment.portrait.rowPosition)
-        assertEquals(AppRowPosition.RIGHT, inherits.listAlignment.landscape.rowPosition)
-        // A facet's explicit portrait value beats the launcher's landscape one
-        assertEquals(AppRowPosition.LEFT, explicit.listAlignment.landscape.rowPosition)
+        // Never the launcher's value, landscape included
+        assertEquals(AppRowPosition.LEFT, samePortrait.listAlignment.portrait.rowPosition)
+        assertEquals(AppRowPosition.LEFT, samePortrait.listAlignment.landscape.rowPosition)
         assertEquals(AppRowPosition.CENTER, ownLandscape.listAlignment.landscape.rowPosition)
+    }
+
+    @Test
+    fun `list alignment with no facet is the launcher's, landscape twin over portrait`() {
+        val withLandscape = settings.copy(landscape = LandscapeOverrides(appRowPosition = AppRowPosition.RIGHT))
+
+        val style = resolveFacetStyle(null, withLandscape)
+
+        assertEquals(AppRowPosition.CENTER, style.listAlignment.portrait.rowPosition)
+        assertEquals(AppRowPosition.RIGHT, style.listAlignment.landscape.rowPosition)
     }
 
     @Test
@@ -195,40 +203,25 @@ class ResolvedFacetStyleTest {
     }
 
     @Test
-    fun `list content mode follows overrideApps but look fields ignore it`() {
-        val inheriting = resolveFacetStyle(
-            facet { it.copy(overrideApps = false, listContentMode = ListContentMode.RECENTS, appRowPosition = AppRowPosition.LEFT) },
-            settings,
-        )
-        val overriding = resolveFacetStyle(
-            facet { it.copy(overrideApps = true, listContentMode = ListContentMode.RECENTS) },
-            settings,
-        )
-
-        // Look fields use their own sentinel, independent of overrideApps
-        assertEquals(ListContentMode.FAVORITES, inheriting.appList.contentMode)
-        assertEquals(AppRowPosition.LEFT, inheriting.appList.rowPosition)
-        assertEquals(ListContentMode.RECENTS, overriding.appList.contentMode)
-    }
-
-    @Test
-    fun `a look field at its LAUNCHER_DEFAULT sentinel inherits the launcher's value`() {
+    fun `the app list is the facet's own content mode and look, never the launcher's`() {
         val style = resolveFacetStyle(
-            facet { it.copy(appRowPosition = AppRowPosition.LAUNCHER_DEFAULT, appListLayout = AppListLayout.TWO_COLUMN) },
+            facet { it.copy(listContentMode = ListContentMode.RECENTS, appRowPosition = AppRowPosition.LEFT, appListLayout = AppListLayout.TWO_COLUMN) },
             settings,
         )
 
-        assertEquals(AppRowPosition.CENTER, style.appList.rowPosition)
+        // The launcher's settings say Favorites, Center and Grid
+        assertEquals(ListContentMode.RECENTS, style.appList.contentMode)
+        assertEquals(AppRowPosition.LEFT, style.appList.rowPosition)
         assertEquals(AppListLayout.TWO_COLUMN, style.appList.layout)
     }
 
     @Test
-    fun `dock display mode uses the facet's value unless it is the sentinel`() {
+    fun `dock display mode is the facet's own, and the launcher's only with no facet`() {
         val own = resolveFacetStyle(facet { it.copy(dockDisplayMode = DockDisplayMode.TEXT) }, settings)
-        val inherited = resolveFacetStyle(facet { it.copy(dockDisplayMode = DockDisplayMode.LAUNCHER_DEFAULT) }, settings)
+        val noFacet = resolveFacetStyle(null, settings)
 
         assertEquals(DockDisplayMode.TEXT, own.dockDisplayMode)
-        assertEquals(DockDisplayMode.ICONS, inherited.dockDisplayMode)
+        assertEquals(DockDisplayMode.ICONS, noFacet.dockDisplayMode)
     }
 
     @Test

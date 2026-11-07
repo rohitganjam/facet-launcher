@@ -1,6 +1,7 @@
 package com.facetlauncher.app.ui.home.clock
 
 import androidx.compose.foundation.clickable
+import com.facetlauncher.app.ui.nativewidget.longPressFallback
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.size
@@ -50,6 +51,10 @@ fun AlarmAccessoryContent(
 @Suppress("CompositionLocalAllowlist") // Read by every template's accessory row; threading it as a parameter would touch all of them.
 internal val LocalBatteryClick = compositionLocalOf<() -> Unit> { {} }
 
+/** What a long press on a tappable accessory does (opens the widget sheet); the accessories' own tap would otherwise swallow it. */
+@Suppress("CompositionLocalAllowlist") // Same reason as LocalBatteryClick.
+internal val LocalAccessoryLongPress = compositionLocalOf<() -> Unit> { {} }
+
 /** An accessory's icon and its text side by side: the icon first, or after the text when [iconAtEnd] (a right-aligned layout). */
 @Composable
 internal fun IconAndText(icon: @Composable () -> Unit, text: @Composable () -> Unit, iconAtEnd: Boolean, modifier: Modifier = Modifier) {
@@ -84,7 +89,7 @@ fun BatteryAccessoryContent(
 ) {
     if (percent == null) return
     IconAndText(
-        modifier = modifier.clickable(role = Role.Button, onClick = LocalBatteryClick.current),
+        modifier = modifier.longPressFallback(LocalAccessoryLongPress.current).clickable(role = Role.Button, onClick = LocalBatteryClick.current),
         iconAtEnd = iconAtEnd,
         icon = { BatteryIcon(tint = mutedColor, state = batteryIconState(percent, isCharging), modifier = Modifier.size(BatteryIconSize).homeIconShadow(mutedColor)) },
         text = { Text(text = stringResource(R.string.percent_format, percent), style = TextStyle(fontFamily = family, fontWeight = fontWeight, fontSize = fontSize, shadow = homeTextShadow(mutedColor)), color = mutedColor) },

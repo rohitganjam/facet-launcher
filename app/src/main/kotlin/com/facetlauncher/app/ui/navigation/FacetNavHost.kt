@@ -125,7 +125,7 @@ object FacetDestinations {
     fun dockSettings(facetId: Long? = null) =
         if (facetId != null && facetId != NO_ACTIVE_FACET_ID) "dockSettings?facetId=$facetId" else "dockSettings"
 
-    /** Omitting [facetId] (or passing [NO_ACTIVE_FACET_ID]) opens the launcher-wide Dock & Apps appearance. */
+    /** Omitting [facetId] (or passing [NO_ACTIVE_FACET_ID]) opens the launcher-wide Dock & Apps layout. */
     fun dockAppsAppearance(facetId: Long? = null) =
         if (facetId != null && facetId != NO_ACTIVE_FACET_ID) "dockAppsAppearance?facetId=$facetId" else "dockAppsAppearance"
 
@@ -222,10 +222,14 @@ fun FacetNavHost(
                 onBack = { navController.popBackStackSafely() },
                 onViewFacets = { navController.navigate(FacetDestinations.FACET_MANAGE) },
                 onViewFacetAutomation = { navController.navigate(FacetDestinations.FACET_AUTOMATION) },
+                onViewActiveFacetSettings = { facetId -> navController.navigate(FacetDestinations.facetSettings(facetId)) },
                 onViewFacetPro = { navController.navigate(FacetDestinations.facetPro(ProReason.ABOUT)) },
                 onNavigateToAppearance = { navController.navigate(FacetDestinations.APPEARANCE_SETTINGS) },
+                onNavigateToAppDrawerSettings = { navController.navigate(FacetDestinations.APP_DRAWER_SETTINGS) },
+                onNavigateToNotificationSettings = { navController.navigate(FacetDestinations.NOTIFICATION_SETTINGS) },
                 onNavigateToDockSettings = { navController.navigate(FacetDestinations.dockSettings()) },
                 onNavigateToHomeAppsListSettings = { navController.navigate(FacetDestinations.homeAppsListSettings()) },
+                onNavigateToDockAppsAppearance = { navController.navigate(FacetDestinations.dockAppsAppearance()) },
                 onNavigateToFolders = { navController.navigate(FacetDestinations.FOLDERS_SETTINGS) },
                 onNavigateToGestures = { navController.navigate(FacetDestinations.GESTURES) },
                 onNavigateToWeatherSettings = { navController.navigate(FacetDestinations.UNITS_AND_LOCATION) },
@@ -256,9 +260,6 @@ fun FacetNavHost(
         settingsComposable(FacetDestinations.APPEARANCE_SETTINGS) {
             AppearanceSettingsScreen(
                 onBack = { navController.popBackStackSafely() },
-                onNavigateToNotificationSettings = { navController.navigate(FacetDestinations.NOTIFICATION_SETTINGS) },
-                onNavigateToDockAppsAppearance = { navController.navigate(FacetDestinations.dockAppsAppearance()) },
-                onNavigateToAppDrawerSettings = { navController.navigate(FacetDestinations.APP_DRAWER_SETTINGS) },
                 onNavigateToThemesAndColors = { navController.navigate(FacetDestinations.THEMES_AND_COLORS) },
                 onNavigateToFonts = { navController.navigate(FacetDestinations.FONTS) },
                 onNavigateToIcons = { navController.navigate(FacetDestinations.ICONS) },
@@ -314,7 +315,6 @@ fun FacetNavHost(
             DockSettingsScreen(
                 onBack = { navController.popBackStackSafely() },
                 onAddDockApp = { navController.navigate(FacetDestinations.dockPicker(facetId)) },
-                onEditDefaults = facetId?.let { { navController.navigate(FacetDestinations.dockSettings()) } },
             )
         }
         settingsComposable(
@@ -325,7 +325,6 @@ fun FacetNavHost(
             HomeAppsListSettingsScreen(
                 onBack = { navController.popBackStackSafely() },
                 onEditFavorites = { navController.navigate(FacetDestinations.favoritesPicker(facetId)) },
-                onEditDefaults = facetId?.let { { navController.navigate(FacetDestinations.homeAppsListSettings()) } },
             )
         }
         settingsComposable(FacetDestinations.APP_DRAWER_SETTINGS) {

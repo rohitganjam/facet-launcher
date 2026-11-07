@@ -1,6 +1,7 @@
 package com.facetlauncher.app.domain
 
 import com.facetlauncher.app.data.minimalBackupSettings
+import com.facetlauncher.app.data.model.BackupAppEntry
 import com.facetlauncher.app.data.model.BackupBundle
 import com.facetlauncher.app.data.model.BackupFacet
 import com.facetlauncher.app.data.model.BackupNativeStackPage
@@ -29,6 +30,75 @@ class BackupUpgradeTest {
         backupVersion = version, exportedAtEpochMillis = 0L, settings = minimalBackupSettings(), facets = listOf(facet),
         dockApps = emptyList(), defaultFavoriteApps = emptyList(), widgetPlacements = listOf(placement),
     )
+
+    private fun app(name: String) = BackupAppEntry(packageName = "com.example.$name", activityName = ".Main", position = 0)
+
+    /** A version 5 bundle: the launcher has a dock, favorites and a look, and [facet] is the one facet. */
+    private fun v5Bundle(facet: BackupFacet) = BackupBundle(
+        backupVersion = 5, exportedAtEpochMillis = 0L,
+        settings = minimalBackupSettings().copy(
+            dockDisplayMode = "TEXT", appRowPosition = "RIGHT", appRowPresentation = "TEXT_ONLY", listContentMode = "RECENTS", appsToShowCount = 9,
+            landscapeAppRowPosition = "CENTER",
+        ),
+        facets = listOf(facet), dockApps = listOf(app("dock")), defaultFavoriteApps = listOf(app("fav")), widgetPlacements = emptyList(),
+    )
+
+    private fun inheritingFacet() = Facet(name = "Home", position = 0)
+        .toBackupFacet(favorites = listOf(app("stale-fav")), dockApps = listOf(app("stale-dock")))
+        .copy(
+            overrideApps = false, overridingFavorites = false, overrideDock = false,
+            appRowPosition = "LAUNCHER_DEFAULT", appRowPresentation = "LAUNCHER_DEFAULT", appListVerticalAlignment = "LAUNCHER_DEFAULT",
+            appListLayout = "LAUNCHER_DEFAULT", appListColumnAlignment = "LAUNCHER_DEFAULT", appListGridColumns = "LAUNCHER_DEFAULT",
+            appListGridDisplayMode = "LAUNCHER_DEFAULT", appListShrinkToFit = "LAUNCHER_DEFAULT", dockDisplayMode = "LAUNCHER_DEFAULT",
+        )
+
+    @Test
+    fun `a version 5 facet that inherited its Home gets the launcher's lists, content and look`() {
+        // When a facet that overrode nothing is upgraded
+        val facet = v5Bundle(inheritingFacet()).upgradedToCurrent().facets.single()
+
+        // Then it holds the launcher's dock and favorites in place of its stale rows
+        assertEquals(listOf(app("dock")), facet.dockApps)
+        assertEquals(listOf(app("fav")), facet.favorites)
+        // And the launcher's content mode, count and look, with no inherit marker left
+        assertEquals("RECENTS", facet.listContentMode)
+        assertEquals(9, facet.appsToShowCount)
+        assertEquals("TEXT", facet.dockDisplayMode)
+        assertEquals("RIGHT", facet.appRowPosition)
+        assertEquals("TEXT_ONLY", facet.appRowPresentation)
+        assertEquals(minimalBackupSettings().appListLayout, facet.appListLayout)
+        assertEquals(null, facet.overrideDock)
+        assertEquals(null, facet.overridingFavorites)
+        assertEquals(null, facet.overrideApps)
+    }
+
+    @Test
+    fun `a version 5 facet that overrode its dock, favorites and content keeps its own`() {
+        // Given a facet that overrode all three, with its own look
+        val own = Facet(name = "Work", position = 0, listContentMode = com.facetlauncher.app.data.model.ListContentMode.MOST_USED, appsToShowCount = 4)
+            .toBackupFacet(favorites = listOf(app("own-fav")), dockApps = listOf(app("own-dock")))
+            .copy(overrideApps = true, overridingFavorites = true, overrideDock = true)
+
+        // When upgraded
+        val facet = v5Bundle(own).upgradedToCurrent().facets.single()
+
+        // Then its own values survive
+        assertEquals(listOf(app("own-dock")), facet.dockApps)
+        assertEquals(listOf(app("own-fav")), facet.favorites)
+        assertEquals("MOST_USED", facet.listContentMode)
+        assertEquals(4, facet.appsToShowCount)
+    }
+
+    @Test
+    fun `a version 5 landscape value follows the launcher's only while the portrait value was inherited`() {
+        // Given one facet whose portrait row position was inherited, and one with its own portrait value and no landscape one
+        val inherited = v5Bundle(inheritingFacet()).upgradedToCurrent().facets.single()
+        val explicit = v5Bundle(inheritingFacet().copy(appRowPosition = "LEFT")).upgradedToCurrent().facets.single()
+
+        // Then the inheriting one takes the launcher's landscape value and the explicit one stays on its portrait one
+        assertEquals("CENTER", inherited.landscapeAppRowPosition)
+        assertEquals(null, explicit.landscapeAppRowPosition)
+    }
 
     @Test
     fun `a version 3 backup has its widget settings rewritten as JSON`() {

@@ -131,6 +131,8 @@ fun OnboardingScreen(
     var step by rememberSaveable { mutableStateOf(OnboardingStep.INTRO) }
     var subScreen by rememberSaveable { mutableStateOf<OnboardingSubScreen?>(null) }
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    // Copies the choices made here onto the facets before leaving, see OnboardingViewModel.finish.
+    val finish = { viewModel.finish(onFinish) }
 
     BackHandler(enabled = subScreen != null) { subScreen = null }
     BackHandler(enabled = subScreen == null && step != OnboardingStep.INTRO) {
@@ -182,7 +184,7 @@ fun OnboardingScreen(
                             },
                             onDragEnd = {
                                 when {
-                                    totalDrag <= -swipeCommitPx -> if (step == OnboardingStep.NOTIFICATIONS) onFinish() else step = nextStep(step)
+                                    totalDrag <= -swipeCommitPx -> if (step == OnboardingStep.NOTIFICATIONS) finish() else step = nextStep(step)
                                     totalDrag >= swipeCommitPx -> step = previousStep(step)
                                 }
                             },
@@ -235,13 +237,13 @@ fun OnboardingScreen(
                 OnboardingStep.NOTIFICATIONS -> if (notificationSettingsViewModel != null) {
                     OnboardingNotificationsPage(
                         onBack = { step = previousStep(step) },
-                        onNext = onFinish,
+                        onNext = finish,
                         viewModel = notificationSettingsViewModel,
                     )
                 } else {
                     OnboardingNotificationsPage(
                         onBack = { step = previousStep(step) },
-                        onNext = onFinish,
+                        onNext = finish,
                     )
                 }
                 OnboardingStep.FACETS -> OnboardingFacetsPage(
@@ -291,7 +293,7 @@ fun OnboardingScreen(
         if (subScreen == null) {
             TextActionButton(
                 text = stringResource(R.string.onboarding_skip),
-                onClick = onFinish,
+                onClick = finish,
                 color = Muted,
                 modifier = Modifier
                     .align(Alignment.TopEnd)

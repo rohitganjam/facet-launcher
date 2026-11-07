@@ -17,15 +17,16 @@
     <string name="app_picker_all_apps">TODAS AS APPS</string>
     <string name="app_menu_notifications_access_needed">As notificações precisam de acesso através das definições do sistema.</string>
     <string name="app_picker_no_folders_yet">Ainda não há pastas. Mantenha premida uma app e escolha \"Adicionar à pasta\" para criar uma.</string>
-    <string name="inherit_override_inherit_default">Herdar predefinição</string>
-    <string name="inherit_override_edit_defaults">Editar predefinições</string>
     <string name="gesture_hint_all_your_apps">Todas as suas apps</string>
     <string name="gesture_hint_clock_hold">Mantenha premido um widget para o redimensionar ou mover</string>
     <string name="gesture_hint_got_it">Percebi</string>
     <string name="home_surface_preview_nothing_yet">Ainda não há nada para mostrar</string>
 
     <string name="settings_header_title">Definições</string>
-    <string name="settings_facets_subtitle">Crie e gira definições específicas de cada faceta</string>
+    <string name="settings_facets_title">Gerir facetas</string>
+    <string name="settings_facets_subtitle">Adicione, edite, reordene e elimine facetas</string>
+    <string name="settings_active_facet_title">Definições de %1$s</string>
+    <string name="settings_active_facet_subtitle">Definições específicas de %1$s, a sua faceta atual</string>
     <string name="settings_change_wallpaper_title">Alterar imagem de fundo</string>
     <string name="settings_change_wallpaper_subtitle">Altere a imagem de fundo do sistema</string>
     <string name="settings_calendars_title">Calendários a mostrar</string>
@@ -58,17 +59,7 @@
     <string name="recently_installed_position_show_last">Mostrar recentes no fim</string>
     <string name="recently_installed_position_do_not_show">Não mostrar</string>
     <string name="app_list_layout_grid">Grelha</string>
-    <string name="app_row_position_launcher_default">Posição predefinida do launcher</string>
-    <string name="app_row_presentation_launcher_default">Estilo predefinido do launcher</string>
-    <string name="app_list_vertical_alignment_launcher_default">Posição predefinida do launcher</string>
-    <string name="dock_display_mode_launcher_default">Estilo predefinido do launcher</string>
-    <string name="app_list_layout_launcher_default">Esquema predefinido do launcher</string>
-    <string name="app_list_column_alignment_launcher_default">Alinhamento predefinido do launcher</string>
-    <string name="app_list_grid_columns_launcher_default">Colunas predefinidas do launcher</string>
-    <string name="app_list_grid_display_mode_launcher_default">Estilo predefinido do launcher</string>
-    <string name="app_list_shrink_to_fit_launcher_default">Estilo predefinido do launcher</string>
 
-    <string name="home_apps_list_header_title">Lista de apps do ecrã inicial</string>
     <string name="appearance_allow_landscape_subtitle">Usa um esquema em paisagem quando o ecrã é suficientemente largo. Desativado mantém o início em retrato.</string>
     <string name="home_apps_list_grid_columns">Colunas da grelha</string>
     <string name="home_apps_list_grid_display">Apresentação da grelha</string>
@@ -270,14 +261,14 @@
     <string name="preview_media_title">A reproduzir</string>
     <string name="manage_facets_delete_message">Esta ação não pode ser anulada. Os favoritos dela também serão removidos.</string>
     <string name="manage_facets_header_title">Gerir facetas</string>
-    <string name="facet_settings_dock_settings_title">Definições do dock</string>
+    <string name="facet_settings_dock_settings_title">Apps do dock</string>
     <string name="home_usage_access_needed">\"Mais usados\" precisa de acesso à utilização através das definições do sistema.</string>
 
     <string name="clock_adjust_align_bottom">Alinhar em baixo</string>
     <string name="hub_widget_picker_search">Pesquisar widgets</string>
     <string name="hub_orphaned_app_uninstalled">A app foi desinstalada</string>
     <string name="hub_at_capacity_manage">Gerir</string>
-    <string name="facet_settings_apps_list_settings_title">Definições da lista de apps</string>
+    <string name="facet_settings_apps_list_settings_title">Lista de apps</string>
     <string name="icon_pack_fallback_keep_default">Ícones predefinidos</string>
 
     <string name="weather_accessory_description">%1$s, %2$s. Abre os detalhes do tempo</string>
@@ -328,4 +319,25 @@
     <string name="native_widget_agenda_empty">Sem eventos próximos</string>
     <string name="native_widget_media_empty">Nada em reprodução</string>
     <string name="native_widget_picker_section">Widgets do Facet</string>
+
+    <string name="settings_default_dock_title">Apps do dock predefinidas</string>
+    <string name="home_apps_list_default_header_title">Lista de apps predefinida</string>
+    <string name="settings_default_look_subtitle">Aspeto predefinido do dock e das apps do ecrã inicial em novas facetas</string>
+    <string name="defaults_screen_note">Usado quando cria uma faceta ou repõe uma.</string>
+    <string name="reset_to_default_title">Repor predefinição</string>
+    <string name="reset_to_default_confirm">Repor</string>
+    <string name="reset_dock_subtitle">Substituir este dock pelo dock predefinido</string>
+    <string name="reset_dock_confirm_message">Isto substitui o dock desta faceta pelo dock predefinido. As apps que colocou aqui serão perdidas.</string>
+    <string name="reset_apps_subtitle">Substituir esta lista pela predefinida</string>
+    <string name="reset_apps_confirm_message">Isto substitui os favoritos, o conteúdo da lista e o número de apps desta faceta pelos valores predefinidos. Os favoritos que escolheu aqui serão perdidos.</string>
+    <string name="reset_look_subtitle">Substituir o aspeto do dock e da lista pelo predefinido</string>
+    <string name="reset_look_confirm_message">Isto substitui o estilo do dock, o esquema da lista e o alinhamento desta faceta pelos valores predefinidos.</string>
+    <string name="copy_dock_sheet_message">Substitui o dock de cada faceta selecionada pelo dock predefinido.</string>
+    <string name="copy_apps_sheet_message">Substitui os favoritos, o conteúdo da lista e o número de apps de cada faceta selecionada pelos valores predefinidos.</string>
+    <string name="copy_look_subtitle">Substitui o aspeto do dock e das apps das facetas escolhidas por este</string>
+    <string name="copy_look_sheet_message">Substitui o estilo do dock, o esquema da lista e o alinhamento de cada faceta selecionada pelos valores predefinidos.</string>
+    <string name="settings_appearance_title">Aspeto do launcher</string>
+    <string name="settings_appearance_subtitle">Temas, tipos de letra e ícones</string>
+    <string name="appearance_header_title">Aspeto do launcher</string>
+    <string name="appearance_dock_apps_title">Esquema do dock e das apps</string>
 </resources>

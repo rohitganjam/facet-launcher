@@ -16,7 +16,10 @@ import androidx.room.TypeConverters
     ],
     version = FacetDatabase.VERSION,
     exportSchema = true,
-    autoMigrations = [AutoMigration(from = 43, to = 44, spec = DropFacetClockColumns::class)],
+    autoMigrations = [
+        AutoMigration(from = 43, to = 44, spec = DropFacetClockColumns::class),
+        AutoMigration(from = 45, to = 46, spec = DropFacetOverrideFlags::class),
+    ],
 )
 @TypeConverters(Converters::class)
 // One abstract accessor per DAO, so the count grows with every table.
@@ -34,7 +37,7 @@ abstract class FacetDatabase : RoomDatabase() {
     companion object {
         // A named constant, not a magic number scattered across DatabaseModule/Migrations/tests —
         // see Migrations.kt for what bumping this requires from here on.
-        const val VERSION = 44
+        const val VERSION = 46
     }
 }
 
@@ -71,3 +74,14 @@ abstract class FacetDatabase : RoomDatabase() {
     DeleteColumn(tableName = "facets", columnName = "landscapeClockScale"),
 )
 class DropFacetClockColumns : AutoMigrationSpec
+
+/**
+ * 45→46: a facet owns its dock, favorites and look outright, so the flags that chose between its own and the launcher's go. The 44→45 step
+ * ([materializeFacetDefaults]) has already copied the launcher's values into every facet that inherited them.
+ */
+@DeleteColumn.Entries(
+    DeleteColumn(tableName = "facets", columnName = "overrideApps"),
+    DeleteColumn(tableName = "facets", columnName = "overridingFavorites"),
+    DeleteColumn(tableName = "facets", columnName = "overrideDock"),
+)
+class DropFacetOverrideFlags : AutoMigrationSpec

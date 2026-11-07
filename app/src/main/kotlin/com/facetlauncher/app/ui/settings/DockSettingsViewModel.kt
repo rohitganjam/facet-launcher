@@ -8,6 +8,8 @@ import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.WallpaperRepository
 import com.facetlauncher.app.data.model.Facet
 import com.facetlauncher.app.data.model.LauncherSettings
+import com.facetlauncher.app.domain.ApplyFacetDefaultsUseCase
+import com.facetlauncher.app.domain.FacetDefaultsScope
 import com.facetlauncher.app.domain.resolveFacetStyle
 import com.facetlauncher.app.domain.ObservePlacedItemsUseCase
 import com.facetlauncher.app.data.model.ClockColorOption
@@ -34,16 +36,15 @@ import com.facetlauncher.app.data.model.PlacementTarget
 import com.facetlauncher.app.data.model.PlacementList
 
 /**
- * `global*`/`facet*` fields are the raw stored values; the effective, screen-bound properties
- * below resolve facet-or-global the same way `HomeUiState`/`FacetCarouselViewModel` do at
- * runtime — this facet's own value while [isOverriding], the global default otherwise — matching
- * [com.facetlauncher.app.ui.settings.CalendarSettingsUiState]'s shape.
+ * `global*`/`facet*` fields are the raw stored values; [dockItems] is this scope's own: the facet's, or the
+ * launcher-wide default a new facet is seeded from.
  */
 data class DockSettingsUiState(
     val facet: Facet? = null,
+    /** Every facet, for the default screen's "Copy to facets". */
+    val facets: ImmutableList<Facet> = persistentListOf(),
     val settings: LauncherSettings = LauncherSettings(),
     val globalDockItems: ImmutableList<PlacedItem> = persistentListOf(),
-    /** This facet's own dock — only meaningful/edited while [isOverriding]. */
     val facetDockItems: ImmutableList<PlacedItem> = persistentListOf(),
     /** Home's app label color/weight — global only, no per-facet override; used only to render the preview exactly as Home would. */
     val appLabelColorOption: ClockColorOption = ClockColorOption.THEME,
@@ -51,20 +52,16 @@ data class DockSettingsUiState(
     val homeWallpaper: HomeWallpaper = HomeWallpaper.Unavailable,
 ) {
     val isFacetScoped: Boolean get() = facet != null
-    val isOverriding: Boolean get() = facet?.overrideDock ?: false
-    /** Look, not content: resolved independently of [isOverriding] through its own `LAUNCHER_DEFAULT` sentinel. The preview needs it here. */
+    /** The preview needs the dock's display mode here. */
     val dockDisplayMode: DockDisplayMode get() = resolveFacetStyle(facet, settings).dockDisplayMode
-    /** This scope's effective dock — the facet's own while overriding, the launcher-wide default otherwise. */
-    val dockItems: ImmutableList<PlacedItem> get() = if (isOverriding) facetDockItems else globalDockItems
+    val dockItems: ImmutableList<PlacedItem> get() = if (isFacetScoped) facetDockItems else globalDockItems
 }
 
 /**
  * Settings → Dock, and (with a `facetId`) a facet's own Dock screen — reused the same way
  * [com.facetlauncher.app.ui.home.clock.ClockStyleGalleryViewModel] is reused for the global and
  * per-facet clock gallery. No `facetId` (or [NO_ACTIVE_FACET_ID]) edits the launcher-wide
- * default dock; a real id edits that facet's own list in [PlacementRepository] and
- * `dockDisplayMode`, always. The Inherit/Override switch (moved in from
- * `FacetSettingsScreen` — see chat history) lives on this screen itself now.
+ * default dock, which only seeds new facets; a real id edits that facet's own list in [PlacementRepository].
  */
 @HiltViewModel
 class DockSettingsViewModel @Inject constructor(
@@ -74,6 +71,7 @@ class DockSettingsViewModel @Inject constructor(
     private val placementRepository: PlacementRepository,
     private val observePlacedItems: ObservePlacedItemsUseCase,
     private val wallpaperRepository: WallpaperRepository,
+    private val applyFacetDefaults: ApplyFacetDefaultsUseCase,
 ) : ViewModel() {
 
     private val facetId: Long? = savedStateHandle.get<Long>("facetId")?.takeIf { it != NO_ACTIVE_FACET_ID }
@@ -92,6 +90,7 @@ class DockSettingsViewModel @Inject constructor(
         val (facetDockItems, globalDockItems) = dockItems
         DockSettingsUiState(
             facet = facets.find { it.id == facetId },
+            facets = facets.toImmutableList(),
             settings = settings,
             globalDockItems = globalDockItems.toImmutableList(),
             facetDockItems = facetDockItems.toImmutableList(),
@@ -111,23 +110,14 @@ class DockSettingsViewModel @Inject constructor(
         }
     }
 
-    /**
-     * The Dock card's single Inherit/Override switch — governs only the dock's own app list now
-     * (Icons/Text display style moved to Settings → Appearance, resolved independently via its own
-     * `LAUNCHER_DEFAULT` sentinel — see chat history). Moved in from `FacetSettingsViewModel` so it
-     * sits on the same screen as the controls it gates. Switching to Override copies the default
-     * dock list in when the facet's own is empty, so the card doesn't suddenly go blank — mirrors
-     * [com.facetlauncher.app.ui.settings.HomeAppsListSettingsViewModel.setOverriding].
-     */
-    fun setOverriding(overriding: Boolean) {
-        val pid = facetId ?: return
-        val state = uiState.value
-        viewModelScope.launch {
-            val facet = facetRepository.getById(pid) ?: return@launch
-            if (overriding && state.facetDockItems.isEmpty()) {
-                placementRepository.replaceItems(PlacementTarget(PlacementList.DOCK, pid), state.globalDockItems)
-            }
-            facetRepository.updateOverridingDock(facet.id, overriding)
-        }
+    /** "Copy to facets": replaces the dock of each chosen facet with a copy of the launcher-wide one. */
+    fun copyToFacets(facetIds: Set<Long>) {
+        viewModelScope.launch { facetIds.forEach { applyFacetDefaults(it, FacetDefaultsScope.DOCK) } }
+    }
+
+    /** "Reset to default": replaces this facet's dock with a copy of the launcher-wide one. */
+    fun resetToDefault() {
+        val id = facetId ?: return
+        viewModelScope.launch { applyFacetDefaults(id, FacetDefaultsScope.DOCK) }
     }
 }

@@ -133,7 +133,7 @@ fun HomeSurfacePreview(
                         badgeStyle = notificationBadgeStyle,
                         badgeCountFor = badgeCountFor,
                     )
-                    AppListLayout.SINGLE_COLUMN, AppListLayout.LAUNCHER_DEFAULT -> items.forEach { item ->
+                    AppListLayout.SINGLE_COLUMN -> items.forEach { item ->
                         HomeSurfacePreviewRow(
                             item = item,
                             position = appRowPosition,

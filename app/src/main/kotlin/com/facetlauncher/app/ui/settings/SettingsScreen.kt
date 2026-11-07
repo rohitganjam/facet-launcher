@@ -33,6 +33,7 @@ import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Palette
 import androidx.compose.material.icons.outlined.SettingsBackupRestore
 import androidx.compose.material.icons.outlined.Shield
+import androidx.compose.material.icons.outlined.Tune
 import androidx.compose.material.icons.outlined.TouchApp
 import androidx.compose.material.icons.outlined.Wallpaper
 import androidx.compose.material.icons.outlined.WbSunny
@@ -57,7 +58,16 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.facetlauncher.app.R
+import androidx.compose.material.icons.outlined.Apps
+import androidx.compose.material.icons.outlined.Notifications
+import androidx.compose.runtime.DisposableEffect
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import com.facetlauncher.app.data.model.AppInfo
+import com.facetlauncher.app.data.model.DrawerPresentation
+import com.facetlauncher.app.data.model.LauncherSettings
+import com.facetlauncher.app.data.model.NotificationBadgeStyle
 import com.facetlauncher.app.data.model.ListContentMode
 import com.facetlauncher.app.data.model.PlacedItem
 import com.facetlauncher.app.ui.components.BackButton
@@ -91,10 +101,14 @@ fun SettingsScreen(
     onBack: () -> Unit,
     onViewFacets: () -> Unit,
     onViewFacetAutomation: () -> Unit,
+    onViewActiveFacetSettings: (Long) -> Unit,
     onViewFacetPro: () -> Unit,
     onNavigateToAppearance: () -> Unit,
+    onNavigateToAppDrawerSettings: () -> Unit,
+    onNavigateToNotificationSettings: () -> Unit,
     onNavigateToDockSettings: () -> Unit,
     onNavigateToHomeAppsListSettings: () -> Unit,
+    onNavigateToDockAppsAppearance: () -> Unit,
     onNavigateToFolders: () -> Unit,
     onNavigateToGestures: () -> Unit,
     onNavigateToWeatherSettings: () -> Unit,
@@ -106,16 +120,27 @@ fun SettingsScreen(
     viewModel: SettingsViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    // Notification access has no grant-change callback: re-check on resume, so coming back from the Notifications page updates the row.
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event -> if (event == Lifecycle.Event.ON_RESUME) viewModel.refreshNotificationAccess() }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
 
     SettingsContent(
         uiState = uiState,
         onBack = onBack,
         onViewFacets = onViewFacets,
         onViewFacetAutomation = onViewFacetAutomation,
+        onViewActiveFacetSettings = onViewActiveFacetSettings,
         onViewFacetPro = onViewFacetPro,
         onNavigateToAppearance = onNavigateToAppearance,
+        onNavigateToAppDrawerSettings = onNavigateToAppDrawerSettings,
+        onNavigateToNotificationSettings = onNavigateToNotificationSettings,
         onNavigateToDockSettings = onNavigateToDockSettings,
         onNavigateToHomeAppsListSettings = onNavigateToHomeAppsListSettings,
+        onNavigateToDockAppsAppearance = onNavigateToDockAppsAppearance,
         onNavigateToFolders = onNavigateToFolders,
         onNavigateToGestures = onNavigateToGestures,
         onNavigateToWeatherSettings = onNavigateToWeatherSettings,
@@ -135,10 +160,14 @@ private fun SettingsContent(
     onBack: () -> Unit,
     onViewFacets: () -> Unit,
     onViewFacetAutomation: () -> Unit,
+    onViewActiveFacetSettings: (Long) -> Unit,
     onViewFacetPro: () -> Unit,
     onNavigateToAppearance: () -> Unit,
+    onNavigateToAppDrawerSettings: () -> Unit,
+    onNavigateToNotificationSettings: () -> Unit,
     onNavigateToDockSettings: () -> Unit,
     onNavigateToHomeAppsListSettings: () -> Unit,
+    onNavigateToDockAppsAppearance: () -> Unit,
     onNavigateToFolders: () -> Unit,
     onNavigateToGestures: () -> Unit,
     onNavigateToWeatherSettings: () -> Unit,
@@ -175,13 +204,13 @@ private fun SettingsContent(
             ) {
                 item { ProSettingsCard(isPro = uiState.isPro, facetCount = uiState.facetCount, triggersRunning = uiState.triggersRunning, onClick = onViewFacetPro) }
                 item { SettingsSectionHeader(stringResource(R.string.settings_section_facets)) }
-                item { FacetsCard(uiState.automationRuleCount, onViewFacets, onViewFacetAutomation) }
+                item { FacetsCard(uiState, onViewActiveFacetSettings, onViewFacets, onViewFacetAutomation) }
 
                 item { SettingsSectionHeader(stringResource(R.string.settings_section_appearance)) }
-                item { AppearanceCard(onNavigateToAppearance) }
+                item { AppearanceCard(uiState, onNavigateToAppearance, onNavigateToAppDrawerSettings, onNavigateToNotificationSettings) }
 
                 item { SettingsSectionHeader(stringResource(R.string.settings_section_home_apps)) }
-                item { HomeAppsCard(uiState, onNavigateToDockSettings, onNavigateToHomeAppsListSettings, onNavigateToFolders) }
+                item { HomeAppsCard(uiState, onNavigateToDockSettings, onNavigateToHomeAppsListSettings, onNavigateToDockAppsAppearance, onNavigateToFolders) }
 
                 item { SettingsSectionHeader(stringResource(R.string.settings_section_system)) }
                 item {
@@ -209,8 +238,21 @@ private fun SettingsContent(
 }
 
 @Composable
-private fun FacetsCard(automationRuleCount: Int, onViewFacets: () -> Unit, onViewFacetAutomation: () -> Unit) {
+private fun FacetsCard(uiState: SettingsUiState, onViewActiveFacetSettings: (Long) -> Unit, onViewFacets: () -> Unit, onViewFacetAutomation: () -> Unit) {
+    val automationRuleCount = uiState.automationRuleCount
     SettingsCard(fullBleedRows = true) {
+        val activeId = uiState.activeFacetId
+        val activeName = uiState.activeFacetName
+        if (activeId != null && activeName != null) {
+            ClickableRow(
+                title = stringResource(R.string.settings_active_facet_title, activeName),
+                subtitle = stringResource(R.string.settings_active_facet_subtitle, activeName),
+                onClick = { onViewActiveFacetSettings(activeId) },
+                testTag = "active_facet_settings_row",
+                leadingIcon = iconBadge(Icons.Outlined.Tune, SettingsSectionHue.FACETS),
+            )
+            CardDivider(startInset = SettingsIconBadgeInset)
+        }
         ClickableRow(
             title = stringResource(R.string.settings_facets_title),
             subtitle = stringResource(R.string.settings_facets_subtitle),
@@ -234,7 +276,12 @@ private fun FacetsCard(automationRuleCount: Int, onViewFacets: () -> Unit, onVie
 }
 
 @Composable
-private fun AppearanceCard(onNavigateToAppearance: () -> Unit) {
+private fun AppearanceCard(
+    uiState: SettingsUiState,
+    onNavigateToAppearance: () -> Unit,
+    onNavigateToAppDrawerSettings: () -> Unit,
+    onNavigateToNotificationSettings: () -> Unit,
+) {
     val context = LocalContext.current
     SettingsCard(fullBleedRows = true) {
         ClickableRow(
@@ -252,7 +299,53 @@ private fun AppearanceCard(onNavigateToAppearance: () -> Unit) {
             testTag = "appearance_row",
             leadingIcon = iconBadge(Icons.Outlined.Palette, SettingsSectionHue.APPEARANCE),
         )
+        CardDivider(startInset = SettingsIconBadgeInset)
+        ClickableRow(
+            title = stringResource(R.string.settings_app_drawer_title),
+            subtitle = appDrawerSummary(uiState.settings.drawerPresentation, uiState.settings.searchContactsEnabled, uiState.settings.searchSettingsEnabled),
+            onClick = onNavigateToAppDrawerSettings,
+            testTag = "app_drawer_settings_row",
+            leadingIcon = iconBadge(Icons.Outlined.Apps, SettingsSectionHue.APPEARANCE),
+        )
+        CardDivider(startInset = SettingsIconBadgeInset)
+        ClickableRow(
+            title = stringResource(R.string.settings_notifications_media_row_title),
+            subtitle = notificationsSummary(uiState.settings, uiState.notificationAccessGranted),
+            onClick = onNavigateToNotificationSettings,
+            testTag = "notification_settings_row",
+            leadingIcon = iconBadge(Icons.Outlined.Notifications, SettingsSectionHue.APPEARANCE),
+        )
     }
+}
+
+/** The App Drawer row's subtext: "Show as list · Contact search off · Settings search off", and so on. */
+@Composable
+private fun appDrawerSummary(presentation: DrawerPresentation, searchContactsEnabled: Boolean, searchSettingsEnabled: Boolean): String {
+    val layout = stringResource(presentation.displayNameRes)
+    val contactSearch = stringResource(if (searchContactsEnabled) R.string.settings_search_on else R.string.settings_search_off)
+    val settingsSearch = stringResource(if (searchSettingsEnabled) R.string.settings_search_on else R.string.settings_search_off)
+    return stringResource(
+        R.string.dot_join_3,
+        stringResource(R.string.settings_show_as, layout),
+        stringResource(R.string.settings_contact_search, contactSearch),
+        stringResource(R.string.settings_settings_search, settingsSearch),
+    )
+}
+
+/**
+ * The Notifications row's subtext, following that page: "Dot badges · Media player on", and so on. Both switches there
+ * read off without notification access, so this says so instead of reporting a stored "on" that isn't working.
+ */
+@Composable
+private fun notificationsSummary(settings: LauncherSettings, accessGranted: Boolean): String {
+    if (!accessGranted) return stringResource(R.string.settings_notifications_needs_access)
+    val badges = when {
+        !settings.notificationDotsEnabled -> R.string.settings_notifications_summary_badges_off
+        settings.notificationBadgeStyle == NotificationBadgeStyle.COUNT -> R.string.settings_notifications_summary_badges_count
+        else -> R.string.settings_notifications_summary_badges_dot
+    }
+    val media = if (settings.showMediaPlayerOnHome) R.string.settings_notifications_summary_media_on else R.string.settings_notifications_summary_media_off
+    return stringResource(R.string.dot_join_2, stringResource(badges), stringResource(media))
 }
 
 @Composable
@@ -260,11 +353,12 @@ private fun HomeAppsCard(
     uiState: SettingsUiState,
     onNavigateToDockSettings: () -> Unit,
     onNavigateToHomeAppsListSettings: () -> Unit,
+    onNavigateToDockAppsAppearance: () -> Unit,
     onNavigateToFolders: () -> Unit,
 ) {
     SettingsCard(fullBleedRows = true) {
         ClickableRow(
-            title = stringResource(R.string.settings_dock_title),
+            title = stringResource(R.string.settings_default_dock_title),
             subtitle = dockSummary(uiState.dockItems),
             onClick = onNavigateToDockSettings,
             testTag = "dock_settings_row",
@@ -272,11 +366,19 @@ private fun HomeAppsCard(
         )
         CardDivider(startInset = SettingsIconBadgeInset)
         ClickableRow(
-            title = stringResource(R.string.settings_home_apps_list_title),
+            title = stringResource(R.string.home_apps_list_default_header_title),
             subtitle = appsListSummary(uiState.settings.listContentMode, uiState.defaultFavorites.size, uiState.settings.appsToShowCount),
             onClick = onNavigateToHomeAppsListSettings,
             testTag = "home_apps_list_settings_row",
             leadingIcon = iconBadge(Icons.Outlined.FormatListBulleted, SettingsSectionHue.HOME_APPS),
+        )
+        CardDivider(startInset = SettingsIconBadgeInset)
+        ClickableRow(
+            title = stringResource(R.string.appearance_dock_apps_title),
+            subtitle = stringResource(R.string.settings_default_look_subtitle),
+            onClick = onNavigateToDockAppsAppearance,
+            testTag = "dock_apps_appearance_row",
+            leadingIcon = iconBadge(Icons.Outlined.Dock, SettingsSectionHue.HOME_APPS),
         )
         CardDivider(startInset = SettingsIconBadgeInset)
         ClickableRow(
@@ -466,9 +568,13 @@ private fun SettingsScreenPreview() {
             onBack = {},
             onViewFacets = {},
             onViewFacetAutomation = {},
+            onViewActiveFacetSettings = {},
             onNavigateToAppearance = {},
+            onNavigateToAppDrawerSettings = {},
+            onNavigateToNotificationSettings = {},
             onNavigateToDockSettings = {},
             onNavigateToHomeAppsListSettings = {},
+            onNavigateToDockAppsAppearance = {},
             onNavigateToFolders = {},
             onNavigateToGestures = {},
             onNavigateToWeatherSettings = {},

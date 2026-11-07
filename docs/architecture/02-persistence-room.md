@@ -4,22 +4,23 @@
 
 | Store | Location | What it holds | Written by | Survives |
 |---|---|---|---|---|
-| Room `FacetDatabase` | `facet.db` (schema **v44**, `exportSchema = true` → `app/schemas/…/1.json … 44.json`) | Facets + every *placement*: favorites, dock, folders, folder membership, widget grid positions, plus the facet automation rules (`automation_rules`) the weather cache (`weather_hours`, `weather_meta`) and each facet's clock stack (`clock_stack_items`) | 7 repositories (§2): `FacetRepository`, `PlacementRepository`, `FolderRepository`, `WidgetPlacementRepository`, `AutomationRuleRepository`, `WeatherRepository` (through `RoomWeatherStore`), `ClockStackRepository` | Reinstall-over-upgrade (migrations); **not** downgrade (dropped) |
+| Room `FacetDatabase` | `facet.db` (schema **v46**, `exportSchema = true` → `app/schemas/…/1.json … 46.json`) | Facets + every *placement*: favorites, dock, folders, folder membership, widget grid positions, plus the facet automation rules (`automation_rules`) the weather cache (`weather_hours`, `weather_meta`) and each facet's clock stack (`clock_stack_items`) | 7 repositories (§2): `FacetRepository`, `PlacementRepository`, `FolderRepository`, `WidgetPlacementRepository`, `AutomationRuleRepository`, `WeatherRepository` (through `RoomWeatherStore`), `ClockStackRepository` | Reinstall-over-upgrade (migrations); **not** downgrade (dropped) |
 | `DataStore<Preferences>` | `facet_settings` (`datastore/facet_settings.preferences_pb`) | **All launcher-wide settings and defaults** — clock/app-list/dock design defaults (the calendar events strip has no design defaults of its own — see below), theme, drawer, search, permission-prompt flags, onboarding/seed/coach-mark flags, active facet id, the clock accessory switches, weather units and location, the icon pack and size — 86 keys (§5) | `SettingsRepository` only | Any upgrade (missing keys fall back to `LauncherSettings()` defaults) |
 | `DataStore<Preferences>` | `facet_entitlement` (`datastore/facet_entitlement.preferences_pb`) | The cached Pro state (`pro_purchased`; excluded from Android backups and device transfer by `res/xml/data_extraction_rules.xml`), so Pro works offline and at cold start; debug builds also keep `debug_entitlement_mode` here | `PlayEntitlementRepository`, only from an explicit Google Play answer | Same as `facet_settings`; **not** in the backup file, so a restore can never grant Pro |
 | `DataStore<Preferences>` | `facet_automation` (`datastore/facet_automation.preferences_pb`) | Facet-automation bookkeeping: the baseline facet, the ordered active rule ids, the suppressed rule ids (§5.7) | `AutomationStateRepository` (via `ActivateFacetByIdUseCase`) | Same as `facet_settings`; **not** in the backup file |
 | System `AppWidgetService` | Android framework, keyed by `HUB_APP_WIDGET_HOST_ID = 1024` | Which `appWidgetId`s are bound to which providers for this host | `LauncherAppWidgetHost` via `AppWidgetRepository` (allocate/bind/delete) | App data clear **does not** clear it → orphan detection in `ObserveHubStateUseCase` |
-| Backup file | User-picked SAF `Uri` (`CreateDocument`/`OpenDocument`), JSON via `kotlinx-serialization` | `BackupBundle` v5: settings + facets + placements + folders + widget placements (raw rows, unhydrated) | `BackupRepository` (`ExportBackupUseCase` / `ImportBackupUseCase`) | Whatever the user does with the file — Facet keeps no copy |
+| Backup file | User-picked SAF `Uri` (`CreateDocument`/`OpenDocument`), JSON via `kotlinx-serialization` | `BackupBundle` v6: settings + facets + placements + folders + widget placements (raw rows, unhydrated) | `BackupRepository` (`ExportBackupUseCase` / `ImportBackupUseCase`) | Whatever the user does with the file — Facet keeps no copy |
 | In-memory only | `NotificationBadgeRepository.badgeCounts` (`MutableStateFlow`) | Per-package non-silent notification counts | `FacetNotificationListenerService` | Process lifetime only |
 
 Nothing else is persisted: no `SharedPreferences`, no files in `filesDir`/`cacheDir`, no network.
 
-**Global defaults vs per-facet overrides.** The clock, app-list and dock *defaults* the
-user sets in Settings are DataStore keys (`clock_alignment`,
-`list_content_mode`, `dock_display_mode`, …). The `facets` table carries the same fields again
-as *overrides*, each block gated by a flag (`overrideApps`, `overrideDock`, `overridingFavorites`; a clock's style, accessories and
-calendar are not facet overrides, they live on its page, see [13](13-flow-facets-theme-notifications-onboarding.md)); `Facet.resolveOverride(...)` picks the facet
-value when its flag is set and the DataStore value otherwise. The ER diagram in §1 is Room only —
+**Launcher defaults seed a facet; a facet owns its values.** The app-list and dock *defaults* the
+user sets in Settings are DataStore keys (`list_content_mode`, `dock_display_mode`, …) plus the launcher-wide
+Dock and Favorites rows (`ownerKey = 0`). The `facets` table carries the same fields again, and a facet
+*owns* them: there is no override flag and no inheritance. `ApplyFacetDefaultsUseCase` copies the defaults into a
+facet once, when it is created, and again when the user chooses *Reset to default* on one of its screens; later
+edits to the defaults never reach an existing facet. A clock's style, accessories and calendar live on its
+page, see [13](13-flow-facets-theme-notifications-onboarding.md). The ER diagram in §1 is Room only —
 the defaults are in §5. The calendar events strip is the one exception to this pattern — it has no
 design fields of its own anywhere (Room or DataStore); it reads the global-only
 `home_apps_font_weight`/`app_label_color_option` (§5.4 "Home app list") and `launcher_font_option`
@@ -41,7 +42,6 @@ erDiagram
         boolean clockPlacementOwn "false until first adjusted on Home: then alignment, zone height, scale and their landscape twins are the facet's own"
         string clockAlignment "own placement, used while clockPlacementOwn"
         float clockZoneHeightDp "nullable"
-        boolean overrideApps
         string appRowPosition
         string appRowPresentation
         string listContentMode
@@ -52,8 +52,6 @@ erDiagram
         string appListGridColumns "grid only"
         string appListGridDisplayMode "grid only"
         string appListShrinkToFit "list only"
-        boolean overridingFavorites
-        boolean overrideDock
         string dockDisplayMode
     }
 
@@ -162,9 +160,9 @@ erDiagram
 
 - **One table per kind, two lists, two scopes.** `app_placements` and `folder_placements` hold every
   Dock and Favorites entry. `list` (`PlacementList.DOCK | FAVORITES`) picks the list; a null `facetId`
-  is the *global default* list and a facet id is that facet's *per-facet override*. Which one is live
-  for a facet is decided by its `overrideDock` / `overridingFavorites` flags via
-  `Facet.placementTarget(list)`; `AddToActiveListUseCase` / `RemoveFromActiveListUseCase` ask
+  is the *launcher-wide default* list (the seed a new facet is copied from) and a facet id is that facet's own
+  list, always the live one for that facet via `Facet.placementTarget(list)`;
+  `AddToActiveListUseCase` / `RemoveFromActiveListUseCase` ask
   `ResolveActivePlacementTargetUseCase` for the right `PlacementTarget(list, facetId)` and write it
   through `PlacementRepository`, the one repository over both tables.
 - **`ownerKey` exists because SQLite treats NULLs as distinct in a unique index.** It stores `facetId`,
@@ -287,7 +285,7 @@ Exceptions to the common shape, all deliberate:
 (`data/model/Facet.kt`) with `FacetMapping.kt`, so ViewModels, use cases and composables never see the
 entity: `observeFacets()` and `getById()` return `Facet`, and `restoreFacet()` takes one. `Facet` has the
 same fields as the row except `selectedCalendarIds`, which is a real `Set<String>?` where the row keeps a
-comma-joined `selectedCalendarIdsCsv`. The override helpers (`resolveOverride`, `resolveSentinel`,
+comma-joined `selectedCalendarIdsCsv`. The helpers (`resolveLandscape`,
 `landscape`, `placementTarget`, …) are extensions on `Facet`.
 
 Every facet write takes a facet id (`setClockPlacement(facetId, …)`). The repository re-reads the row and
@@ -354,6 +352,8 @@ Room.databaseBuilder(context, FacetDatabase::class.java, "facet.db")
 | 41→42 | No schema change. A widget's setting (`widget_placements.nativeWidgetConfig`, `clock_stack_items.nativeWidgetConfig`) and a facet's clock weather location (`facets.clockWeatherLocation`) are rewritten from the tab-separated lines to JSON (`NativeWidgetConfig.encode`), through `upgradeLegacyNativeWidgetConfig` (`LegacyNativeWidgetConfig.kt`), which only this migration and the importer of an older backup read. `FacetDatabaseMigrationTest.migration41To42…` seeds old-form values and reads them back |
 | 42→43 | No schema change. `Migrations.migration42To43` (`materializeClockConfigs`, `ClockConfigMigration.kt`) gives every `clock_stack_items` CLOCK row without a clock config the settings it showed: the facet's own `facets` clock and calendar columns while it overrides the clock or the calendar, the launcher-wide values otherwise. The launcher-wide values come from the settings DataStore, which a migration cannot reach, so `DatabaseModule` passes a reader (`Preferences.legacyLauncherClock`, the one place the retired keys are still read) that runs only when this step does. A page that already has a config is left alone. `FacetDatabaseMigrationTest.migration42To43GivesEachClockPage…`, `…LeavesAClockPageThatAlreadyHasSettingsAlone`, `LegacyLauncherClockTest`. |
 | 43→44 | **Auto-migration** (`@AutoMigration(from = 43, to = 44, spec = DropFacetClockColumns)`): `facets` loses `overrideClock`, `clockTemplateId`, `clockFontOption`, `clockColorOption`, `clockAccentColorOption`, `use24HourTime`, `clockShowMeridiem`, `clockDateStyle`, `clockShowAlarm`, `clockShowBattery`, `clockShowWeather`, `clockWeatherIconStyle`, `clockWeatherLocation`, `overrideCalendar`, `showAllDayEvents`, `showCalendarIndicator`, `calendarItemsToShow`, `selectedCalendarIdsCsv`, the five retired hosted-clock columns and `clockScale` / `landscapeClockScale`. The clock settings are not lost: 42→43 has already copied them onto each clock page, and the two steps run in one upgrade, so a jump from any older version is safe. The scale is: a clock's size is the box on its page (`clock_stack_items.widthDp`/`heightDp`), which cannot be worked out in a migration (it needs the drawn size of the clock's template and font), so a clock that was never resized goes back to the default size (`DEFAULT_CLOCK_SCALE`, 0.8). The launcher-wide `clock_scale` / `landscape_clock_scale` DataStore keys are no longer read or written. Room rebuilds the table because SQLite on minSdk 30 cannot drop a column. `FacetDatabaseMigrationTest.migration43To44DropsTheFacetClockColumnsAndKeepsEverythingElse`. |
+| 44→45 | No schema change. `Migrations.migration44To45` (`materializeFacetDefaults`, `FacetDefaultsMigration.kt`) writes today's launcher-wide values into every facet that inherited them, so the flags can go without anything changing on screen. For each facet with `overrideDock = 0` / `overridingFavorites = 0` it deletes the facet's stale own Dock / Favorites rows and copies the launcher-wide `app_placements` and `folder_placements` rows under its id; with `overrideApps = 0` it sets `listContentMode` and `appsToShowCount` from the settings; every `LAUNCHER_DEFAULT` look column becomes the launcher's value. A null landscape twin on a facet whose portrait value was inherited takes the launcher's landscape value, if it has one, since that is what it showed. A facet that overrode a list or the content is untouched. The launcher-wide values come from the settings DataStore, which a migration cannot reach, so `DatabaseModule` passes a reader (`SettingsRepository(...).settings.first()`) that runs only when this step does. `FacetDatabaseMigrationTest.migration44To45GivesInheritingFacets…`, `…LeavesAnOverridingFacetAndAnExplicitLandscapeValueAlone`, `…HandlesAnEmptyLauncherDock`. |
+| 45→46 | **Auto-migration** (`@AutoMigration(from = 45, to = 46, spec = DropFacetOverrideFlags)`): `facets` loses `overrideApps`, `overridingFavorites` and `overrideDock`. Nothing is lost: 44→45 has already copied the launcher's values into every facet that inherited them. `FacetDatabaseMigrationTest.migration45To46DropsTheOverrideFlagsAndKeepsTheFacetsOwnValues`. |
 
 The landscape twins are handled as one `LandscapeOverrides` group (clock alignment, divider, scale, widget size, row position, vertical and column alignment; every field nullable). Settings hold it as `LauncherSettings.landscape`, read from the six `landscape_*` keys and written only through `updateLandscape`. A facet keeps the flat columns above (so the schema is unchanged) and exposes the group as `FacetEntity.landscape` / `withLandscape(...)`, written through `FacetRepository.updateLandscape`. `resolveLandscape` is the one resolution rule (see [17](17-flow-home-layout.md) §1.0).
 
@@ -364,12 +364,11 @@ The second store. One `DataStore<Preferences>`, provided by `DataStoreModule`
 read and written **only** by `SettingsRepository`. It is a flat key–value file: no schema version,
 no migrations — evolution is "add a key with a default", and removed keys are simply ignored.
 
-### 5.1 Key diagram — every key, and what it overrides in `facets`
+### 5.1 Key diagram — every key, and which seed a facet
 
 The diagram uses ER notation so it reads alongside §1. `facet_settings` is one logical record
-(there is exactly one); each dotted "overridden by" edge means the `facets` column of the same
-name replaces the global value whenever the named gate flag on that facet is `true`
-(`Facet.resolveOverride`).
+(there is exactly one). The app-list and dock keys are *defaults*: `ApplyFacetDefaultsUseCase` copies them into
+the `facets` column of the same name when a facet is created or reset, and the facet owns the copy from then on.
 
 ```mermaid
 erDiagram
@@ -438,13 +437,9 @@ erDiagram
 
     facets {
         long id PK
-        boolean overrideApps "gate: listContentMode, appsToShowCount (content only now)"
-        boolean overridingFavorites "gate: this facet's Favorites vs the global default list"
-        boolean overrideDock "gate: this facet's Dock vs the global default list (content only now)"
     }
 
     facet_settings ||--o{ facets : "active_facet_id selects one"
-    facet_settings }|..|| facets : "list content mode/count overridden when overrideApps"
 ```
 
 Keys with **no** facet counterpart (always global): `home_apps_font_weight`,
@@ -452,17 +447,12 @@ Keys with **no** facet counterpart (always global): `home_apps_font_weight`,
 reads directly — see §0), `calendar_colors`, everything under Theme, Drawer, Search,
 Notifications, Permission bookkeeping, and First-run.
 
-**`appRowPosition`/`appRowPresentation`/`appListVerticalAlignment`/`dockDisplayMode`/`appListLayout`/
-`appListColumnAlignment`/`appListGridColumns`/`appListGridDisplayMode`/`appListShrinkToFit` are a third
-resolution shape**, distinct from both the boolean-gated fields above and the always-global list —
-edited from Settings → Appearance now (moved out of Dock's/Home Apps List's own screens, see chat
-history), each resolved via its own `LAUNCHER_DEFAULT` sentinel value (mirroring
-`ClockFontOption`'s existing one) rather than a shared override flag:
-`facetValue == LAUNCHER_DEFAULT ? globalValue : facetValue`
-([`resolveSentinel`](../../app/src/main/kotlin/com/facetlauncher/app/data/model/Facet.kt)),
-independently of `overrideApps`/`overrideDock`. `LAUNCHER_DEFAULT` is filtered out of the option
-list at global scope (nothing to inherit from there) and is each `FacetEntity` column's own
-default value for a newly-created facet.
+**The Home look keys follow the same rule.** `appRowPosition`/`appRowPresentation`/`appListVerticalAlignment`/
+`dockDisplayMode`/`appListLayout`/`appListColumnAlignment`/`appListGridColumns`/`appListGridDisplayMode`/
+`appListShrinkToFit` and the three landscape twins are edited on *Dock & Apps layout* (Settings → Apps and
+folders, and each facet's own copy of the screen). The launcher-wide values only seed a new or reset facet
+(`ApplyFacetDefaultsUseCase`, scope `LOOK`); a facet's value is always its own, with no `LAUNCHER_DEFAULT`
+marker. A facet's landscape twin is its own too, `null` meaning "same as portrait".
 
 ### 5.2 Read path
 
@@ -619,7 +609,7 @@ its position (see chat history: calendar/appearance styling consolidation).
 | `selected_calendar_ids` | Set<String> | `selectedCalendarIds` | `null` (= all calendars) | nullable — absent key means "every calendar" |
 | `calendar_colors` | Set<String> encoded `"<calendarId>:<colorName>"` | `calendarColors: Map<String,String>` | `{}` | Assigned by `AssignCalendarColorsUseCase`; split at the last `:` on read (a Work Profile id is `work:<n>`), entries without one are dropped; not facet-overridable |
 
-#### Home app list (global; overridden when `facets.overrideApps` / `overridingFavorites`)
+#### Home app list (launcher defaults: they seed a new or reset facet)
 
 | Key | Type | Field | Default | Notes |
 |---|---|---|---|---|
@@ -639,7 +629,7 @@ its position (see chat history: calendar/appearance styling consolidation).
 | `home_apps_font_weight` | String (`FontWeightOption`) | `homeAppsFontWeight` | `REGULAR` | not facet-overridable; also styles the calendar events strip |
 | `app_label_color_option` | String (`ClockColorOption`) | `appLabelColorOption` | `THEME` | not facet-overridable; also styles the calendar events strip |
 
-#### Dock (global; overridden when `facets.overrideDock`)
+#### Dock (launcher default: seeds a new or reset facet)
 
 | Key | Type | Field | Default |
 |---|---|---|---|

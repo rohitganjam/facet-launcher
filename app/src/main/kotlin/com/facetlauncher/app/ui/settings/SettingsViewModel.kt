@@ -7,6 +7,7 @@ import com.facetlauncher.app.data.AutomationRuleRepository
 import com.facetlauncher.app.data.DefaultLauncherRepository
 import com.facetlauncher.app.data.EntitlementRepository
 import com.facetlauncher.app.data.FacetRepository
+import com.facetlauncher.app.data.NotificationAccessRepository
 import com.facetlauncher.app.data.WorkProfileRepository
 import com.facetlauncher.app.domain.ObserveSettingsScreenStateUseCase
 import com.facetlauncher.app.domain.combine
@@ -33,29 +34,35 @@ class SettingsViewModel @Inject constructor(
     automationRuleRepository: AutomationRuleRepository,
     entitlementRepository: EntitlementRepository,
     facetRepository: FacetRepository,
+    private val notificationAccessRepository: NotificationAccessRepository,
 ) : ViewModel() {
 
     private val isDefaultLauncher = MutableStateFlow(false)
+    private val isNotificationAccessGranted = MutableStateFlow(notificationAccessRepository.isGranted())
 
     val uiState: StateFlow<SettingsUiState> = combine(
         observeSettingsScreenState(),
-        isDefaultLauncher,
+        kotlinx.coroutines.flow.combine(isDefaultLauncher, isNotificationAccessGranted, ::Pair),
         workProfileRepository.observeWorkProfiles(),
         automationRuleRepository.observeRules(),
         entitlementRepository.isPro,
         facetRepository.observeFacets(),
-    ) { screenState, isDefaultLauncher, workProfiles, automationRules, isPro, facets ->
+    ) { screenState, (isDefaultLauncher, notificationAccessGranted), workProfiles, automationRules, isPro, facets ->
+        val activeFacet = facets.find { it.id == screenState.settings.activeFacetId }
         SettingsUiState(
             settings = screenState.settings,
             dockItems = screenState.dockItems.toImmutableList(),
             defaultFavorites = screenState.defaultFavorites,
             folderCount = screenState.folderCount,
             isDefaultLauncher = isDefaultLauncher,
+            notificationAccessGranted = notificationAccessGranted,
             isLoading = false,
             workProfiles = workProfiles,
             automationRuleCount = automationRules.size,
             isPro = isPro,
             facetCount = facets.size,
+            activeFacetId = activeFacet?.id,
+            activeFacetName = activeFacet?.name,
             triggersRunning = automationRules.count { it.enabled },
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SettingsUiState())
@@ -64,6 +71,11 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             isDefaultLauncher.value = defaultLauncherRepository.isDefaultLauncher()
         }
+    }
+
+    /** Notification access has no grant-change callback: the screen calls this on resume, so returning from the Notifications page updates its row. */
+    fun refreshNotificationAccess() {
+        isNotificationAccessGranted.value = notificationAccessRepository.isGranted()
     }
 
     /** The "Set as default launcher" row's target — an in-place role request when available, a Settings screen otherwise. See [DefaultLauncherRepository.requestDefaultLauncherIntent]. */

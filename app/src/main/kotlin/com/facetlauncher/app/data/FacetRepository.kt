@@ -25,6 +25,7 @@ import com.facetlauncher.app.data.model.ClockTemplateId
 import com.facetlauncher.app.data.model.DockDisplayMode
 import com.facetlauncher.app.data.model.Facet
 import com.facetlauncher.app.data.model.LandscapeOverrides
+import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.data.model.ListContentMode
 import com.facetlauncher.app.data.model.WeatherIconStyle
 import com.facetlauncher.app.data.model.WidgetWeatherLocation
@@ -70,9 +71,8 @@ class FacetRepository @Inject constructor(
     }
 
     /**
-     * A new facet has no per-facet settings to copy yet — it inherits the launcher-wide
-     * default Favorites list (see [PlacementRepository]) until it overrides them, and
-     * this just picks the next `Facet N` name and position.
+     * Picks the next `Facet N` name and position. The row itself carries no seed values: callers follow with
+     * [com.facetlauncher.app.domain.ApplyFacetDefaultsUseCase.applyAll] (backup restore does not).
      */
     suspend fun addFacet(): Facet {
         val existing = facetDao.observeAll().first()
@@ -119,9 +119,37 @@ class FacetRepository @Inject constructor(
         clockStackItemDao.clearClockBoxes(facetId)
     }
 
-    /** Reverts this facet to inheriting the global default or switches to overriding. */
-    suspend fun setOverrideApps(facetId: Long, overriding: Boolean) {
-        update(facetId) { it.copy(overrideApps = overriding) }
+    /** Copies the launcher-wide apps-list content settings into this facet (creation or "Reset to default"). */
+    suspend fun applyAppsContentDefaults(facetId: Long, settings: LauncherSettings) {
+        update(facetId) {
+            it.copy(
+                listContentMode = settings.listContentMode,
+                appsToShowCount = settings.appsToShowCount.coerceIn(AppListLimits.MIN_APPS_TO_SHOW, AppListLimits.MAX_APPS_TO_SHOW),
+            )
+        }
+    }
+
+    /** Copies the launcher-wide dock and app-list look, landscape twins included, into this facet (creation or "Reset to default"). */
+    suspend fun applyLookDefaults(facetId: Long, settings: LauncherSettings) {
+        update(facetId) {
+            it.copy(
+                dockDisplayMode = settings.dockDisplayMode,
+                appRowPosition = settings.appRowPosition,
+                appRowPresentation = settings.appRowPresentation,
+                appListVerticalAlignment = settings.appListVerticalAlignment,
+                appListLayout = settings.appListLayout,
+                appListColumnAlignment = settings.appListColumnAlignment,
+                appListGridColumns = settings.appListGridColumns,
+                appListGridDisplayMode = settings.appListGridDisplayMode,
+                appListShrinkToFit = settings.appListShrinkToFit,
+            ).withLandscape(
+                it.landscape.copy(
+                    appRowPosition = settings.landscape.appRowPosition,
+                    appListVerticalAlignment = settings.landscape.appListVerticalAlignment,
+                    appListColumnAlignment = settings.landscape.appListColumnAlignment,
+                ),
+            )
+        }
     }
 
     suspend fun setAppRowPosition(facetId: Long, position: AppRowPosition) {
@@ -165,49 +193,8 @@ class FacetRepository @Inject constructor(
         update(facetId) { it.copy(appListShrinkToFit = shrinkToFit) }
     }
 
-    suspend fun setOverridingFavorites(facetId: Long, overriding: Boolean) {
-        update(facetId) { it.copy(overridingFavorites = overriding) }
-    }
-
-    /**
-     * Seeds the facet's app *content* settings from effective values and toggles the override
-     * flag. Atomic upsert to avoid clobbering. `appRowPosition`/`appRowPresentation`/
-     * `appListVerticalAlignment`/`appListLayout`/`appListColumnAlignment`/`appListGridColumns`/
-     * `appListGridDisplayMode` are no longer part of this bundle — they're "look" fields, edited
-     * from Settings → Appearance independently now, resolved via their own `LAUNCHER_DEFAULT`
-     * sentinel regardless of [overriding] (see [setAppRowPosition]/[setAppRowPresentation]/
-     * [setAppListVerticalAlignment] and [com.facetlauncher.app.data.local.resolveSentinel]).
-     */
-    suspend fun updateOverridingApps(
-        facetId: Long,
-        overriding: Boolean,
-        mode: ListContentMode,
-        count: Int,
-        overridingFavorites: Boolean,
-    ) {
-        update(facetId) {
-            it.copy(
-                overrideApps = overriding,
-                listContentMode = mode,
-                appsToShowCount = count.coerceIn(AppListLimits.MIN_APPS_TO_SHOW, AppListLimits.MAX_APPS_TO_SHOW),
-                overridingFavorites = overridingFavorites,
-            )
-        }
-    }
-
     suspend fun setDockDisplayMode(facetId: Long, mode: DockDisplayMode) {
         update(facetId) { it.copy(dockDisplayMode = mode) }
-    }
-
-    /**
-     * The Dock card's single Inherit/Override switch — governs only the dock's own app list (this
-     * facet's own [com.facetlauncher.app.data.local.FacetDockAppEntity] rows) now; its Icons/Text
-     * display style is edited from Settings → Appearance independently, resolved via its own
-     * `LAUNCHER_DEFAULT` sentinel regardless of [overriding] (see [setDockDisplayMode] and
-     * [com.facetlauncher.app.data.local.resolveSentinel]).
-     */
-    suspend fun updateOverridingDock(facetId: Long, overriding: Boolean) {
-        update(facetId) { it.copy(overrideDock = overriding) }
     }
 
     suspend fun deleteFacet(facetId: Long) {

@@ -16,9 +16,14 @@ data class SettingsUiState(
     /** Drives the Facet Pro card: the upsell for a free user, the live summary for a Pro user. */
     val isPro: Boolean = false,
     val facetCount: Int = 0,
+    /** The active facet, for the "<name> Settings" row; `null` (no row) until one resolves. */
+    val activeFacetId: Long? = null,
+    val activeFacetName: String? = null,
     /** Automation rules that are switched on. */
     val triggersRunning: Int = 0,
     val isDefaultLauncher: Boolean = false,
+    /** Whether notification-listener access is really granted: the Notifications row says so instead of summarising switches that do nothing. */
+    val notificationAccessGranted: Boolean = false,
     val isLoading: Boolean = true,
     /** Every genuine Work Profile on this device — one settings row per entry; empty hides the section entirely. See [WorkProfileInfo]'s own doc. */
     val workProfiles: List<WorkProfileInfo> = emptyList(),

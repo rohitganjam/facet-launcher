@@ -4,7 +4,9 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.longClick
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.text.font.FontFamily
 import com.facetlauncher.app.ui.theme.Accent
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
@@ -99,5 +101,33 @@ class ClockAccessoryRowTest {
 
         // Then the click is called once
         assertEquals(1, clicks)
+    }
+
+    @Test
+    fun `long pressing the battery item calls the accessory long press and not the battery click`() {
+        // Given a battery reading with counting tap and long-press handlers
+        var clicks = 0
+        var longPresses = 0
+        composeRule.setContent {
+            FacetLauncherTheme {
+                CompositionLocalProvider(LocalBatteryClick provides { clicks++ }, LocalAccessoryLongPress provides { longPresses++ }) {
+                    ClockAccessoryRow(
+                        nextAlarmText = null,
+                        batteryPercent = 64,
+                        isCharging = false,
+                        family = FontFamily.Default,
+                        mutedColor = Muted,
+                        accentColor = Accent,
+                    )
+                }
+            }
+        }
+
+        // When long pressing the battery percentage
+        composeRule.onNodeWithText("64%").performTouchInput { longClick() }
+
+        // Then only the long press fires
+        assertEquals(1, longPresses)
+        assertEquals(0, clicks)
     }
 }

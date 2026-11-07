@@ -117,14 +117,6 @@ data class HomeUiState(
     /** The visible page's saved widget size for [mode]: landscape's own where saved, else the portrait one; `null` before any resize. */
     fun clockWidgetSizeDp(mode: HomeLayoutMode): Pair<Int, Int>? = visibleClockItem?.sizeDp?.of(mode == HomeLayoutMode.LANDSCAPE)
 
-    /** Names the facet overriding the Dock right now, for [com.facetlauncher.app.ui.components.QuickPlacementBadge] — `null` for the launcher-wide default, mirroring [com.facetlauncher.app.domain.QuickPlacementAction.facetName]'s own convention. */
-    val dockOverrideFacetName: String?
-        get() = activeFacet?.takeIf { it.overrideDock }?.name
-
-    /** Mirrors [dockOverrideFacetName] for Favorites — uses `overridingFavorites`, this app's own (differently-named) override flag for that list. */
-    val favoritesOverrideFacetName: String?
-        get() = activeFacet?.takeIf { it.overridingFavorites }?.name
-
     val activeAppListVerticalAlignment: AppListVerticalAlignment get() = style.appList.verticalAlignment
     val activeAppListLayout: AppListLayout get() = style.appList.layout
 
@@ -137,7 +129,6 @@ data class HomeUiState(
     /** Only meaningful while [activeAppListLayout] is [AppListLayout.GRID]. */
     val activeAppListGridDisplayMode: AppListGridDisplayMode get() = style.appList.gridDisplayMode
 
-    /** A look field, resolved independently of `overrideDock` (that flag gates only [dockApps], already resolved per-facet in [com.facetlauncher.app.domain.ObserveHomeScreenStateUseCase]). */
     val activeDockDisplayMode: DockDisplayMode get() = style.dockDisplayMode
 
     /**

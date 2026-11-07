@@ -41,6 +41,7 @@ import com.facetlauncher.app.data.widget.AppWidgetRepository
 import com.facetlauncher.app.data.widget.LauncherAppWidgetHost
 import com.facetlauncher.app.domain.ActivateFacetByIdUseCase
 import com.facetlauncher.app.domain.AddFacetUseCase
+import com.facetlauncher.app.domain.ApplyFacetDefaultsUseCase
 import com.facetlauncher.app.domain.DeleteFacetUseCase
 import com.facetlauncher.app.domain.ObserveFacetPreviewsUseCase
 import com.facetlauncher.app.ui.FakeEntitlementRepository
@@ -54,6 +55,7 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
+import org.mockito.Mockito.mock
 import com.facetlauncher.app.data.PlacementRepository
 import com.facetlauncher.app.domain.ObservePlacedItemsUseCase
 import com.facetlauncher.app.data.model.PlacementTarget
@@ -136,7 +138,7 @@ class FacetCarouselScreenTest {
                         calendarRepository,
                     ),
                     testAutomation(context, database, facetRepository, settingsRepository, entitlement).activate,
-                    AddFacetUseCase(facetRepository, entitlement),
+                    AddFacetUseCase(facetRepository, entitlement, mock(ApplyFacetDefaultsUseCase::class.java)),
                     entitlement,
                 )
             }
@@ -485,9 +487,6 @@ class FacetCarouselScreenTest {
                 val only = facetRepository.addFacet()
                 facetId = only.id
                 settings.setActiveFacetId(only.id)
-                // Overriding its own favorites, rather than the launcher-wide default list, since
-                // this test seeds a favorite specifically for this facet.
-                facetRepository.setOverridingFavorites(only.id, true)
             },
             seedApps = { appRepository, placementRepository ->
                 val installed = appRepository.getTestableApps()
@@ -496,7 +495,7 @@ class FacetCarouselScreenTest {
                 favoriteLabel = favoriteApp.label
                 dockLabel = dockApp.label
                 placementRepository.addApp(PlacementTarget(PlacementList.FAVORITES, facetId = facetId), app = favoriteApp, position = 0)
-                placementRepository.addApp(PlacementTarget.GlobalDock, dockApp, position = 0)
+                placementRepository.addApp(PlacementTarget(PlacementList.DOCK, facetId = facetId), dockApp, position = 0)
             },
         )
 
@@ -523,9 +522,7 @@ class FacetCarouselScreenTest {
                 // fully replaces the stored row, so chaining off the same stale snapshot would
                 // silently discard the previous setter's own write (see FacetRepositoryTest's
                 // own setAppListLayout/etc. test for the same lesson).
-                facetRepository.setOverridingFavorites(created.id, true)
-                val afterOverride = facetRepository.observeFacets().first().single()
-                facetRepository.setAppListLayout(afterOverride.id, AppListLayout.GRID)
+                facetRepository.setAppListLayout(created.id, AppListLayout.GRID)
                 val afterLayout = facetRepository.observeFacets().first().single()
                 facetRepository.setAppListGridColumns(afterLayout.id, AppListGridColumns.FOUR)
             },
@@ -567,9 +564,7 @@ class FacetCarouselScreenTest {
                 facetId = created.id
                 settings.setActiveFacetId(created.id)
                 // Re-fetch between setters — see the sibling grid-layout test's own comment.
-                facetRepository.setOverridingFavorites(created.id, true)
-                val afterOverride = facetRepository.observeFacets().first().single()
-                facetRepository.setAppListLayout(afterOverride.id, AppListLayout.GRID)
+                facetRepository.setAppListLayout(created.id, AppListLayout.GRID)
                 val afterLayout = facetRepository.observeFacets().first().single()
                 facetRepository.setAppListGridDisplayMode(afterLayout.id, AppListGridDisplayMode.TEXT)
             },
@@ -621,7 +616,6 @@ class FacetCarouselScreenTest {
                 val only = facetRepository.addFacet()
                 facetId = only.id
                 settings.setActiveFacetId(only.id)
-                facetRepository.setOverridingFavorites(only.id, true)
             },
             seedApps = { appRepository, placementRepository ->
                 val favoriteApp = appRepository.getTestableApps()[0]
@@ -655,7 +649,7 @@ class FacetCarouselScreenTest {
             seedApps = { appRepository, placementRepository ->
                 val dockApp = appRepository.getTestableApps()[0]
                 dockLabel = dockApp.label
-                placementRepository.addApp(PlacementTarget.GlobalDock, dockApp, position = 0)
+                placementRepository.addApp(PlacementTarget(PlacementList.DOCK, facetId = facetId), dockApp, position = 0)
             },
         )
 
@@ -679,7 +673,6 @@ class FacetCarouselScreenTest {
                 val only = facetRepository.addFacet()
                 facetId = only.id
                 settings.setActiveFacetId(only.id)
-                facetRepository.setOverridingFavorites(only.id, true)
             },
             seedApps = { appRepository, placementRepository ->
                 val favoriteApp = appRepository.getTestableApps()[0]
@@ -699,16 +692,18 @@ class FacetCarouselScreenTest {
     fun longPressingADockIconInsideTheCardDoesNotOpenTheAppContextMenu() {
         // Given one facet and a (facet-independent, shared) dock app — same
         // read-only-preview reasoning as the favorite row above.
+        var facetId = 0L
         var dockLabel = ""
         setContent(
             seed = { facetRepository, settings ->
                 val only = facetRepository.addFacet()
+                facetId = only.id
                 settings.setActiveFacetId(only.id)
             },
             seedApps = { appRepository, placementRepository ->
                 val dockApp = appRepository.getTestableApps()[0]
                 dockLabel = dockApp.label
-                placementRepository.addApp(PlacementTarget.GlobalDock, dockApp, position = 0)
+                placementRepository.addApp(PlacementTarget(PlacementList.DOCK, facetId = facetId), dockApp, position = 0)
             },
         )
 

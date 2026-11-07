@@ -229,12 +229,6 @@
     <string name="app_picker_tab_apps">Apps</string>
     <string name="app_picker_tab_folders">Folders</string>
 
-    <!-- InheritOverrideCard -->
-    <string name="inherit_override_follows_default">Follows the launcher-wide default</string>
-    <string name="inherit_override_inherit_default">Inherit default</string>
-    <string name="inherit_override_override_for_facet">Override for this facet</string>
-    <string name="inherit_override_changes_dont_affect_others">Changes here don\'t affect other facets</string>
-    <string name="inherit_override_edit_defaults">Edit defaults</string>
 
     <!-- GestureHintOverlay -->
     <string name="gesture_hint_switch_facets">Switch facets</string>
@@ -276,16 +270,18 @@
     <!-- SettingsScreen -->
     <string name="settings_header_title">Settings</string>
     <string name="settings_section_facets">Facets</string>
-    <string name="settings_section_appearance">Appearance</string>
+    <string name="settings_section_appearance">Customization</string>
     <string name="settings_section_home_apps">Apps and folders</string>
     <string name="settings_section_system">System</string>
     <string name="settings_section_about">About</string>
-    <string name="settings_facets_title">Facets</string>
-    <string name="settings_facets_subtitle">Create and manage facet-specific settings</string>
+    <string name="settings_facets_title">Manage Facets</string>
+    <string name="settings_facets_subtitle">Add, edit, reorder and delete facets</string>
+    <string name="settings_active_facet_title">%1$s Settings</string>
+    <string name="settings_active_facet_subtitle">Settings specific to %1$s, your current facet</string>
     <string name="settings_change_wallpaper_title">Change wallpaper</string>
     <string name="settings_change_wallpaper_subtitle">Change your system wallpaper</string>
-    <string name="settings_appearance_title">Customization</string>
-    <string name="settings_appearance_subtitle">Customize home, notifications, themes</string>
+    <string name="settings_appearance_title">Launcher appearance</string>
+    <string name="settings_appearance_subtitle">Themes, fonts and icons</string>
     <string name="settings_clock_calendar_title">Clock Style</string>
     <string name="settings_time_format_24h">24-hour time</string>
     <string name="settings_time_format_12h">12-hour time</string>
@@ -298,6 +294,18 @@
     <string name="settings_all_day_events_visible">All-day events visible</string>
     <string name="settings_all_day_events_hidden">All-day events hidden</string>
     <string name="settings_dock_title">Dock</string>
+    <string name="settings_default_dock_title">Default Dock Apps</string>
+    <string name="home_apps_list_default_header_title">Default Apps list</string>
+    <string name="settings_default_look_subtitle">Default Dock and Home apps look in new facets</string>
+    <string name="defaults_screen_note">Used when you create a facet or reset one.</string>
+    <string name="reset_to_default_title">Reset to default</string>
+    <string name="reset_to_default_confirm">Reset</string>
+    <string name="reset_dock_subtitle">Replace this dock with the default dock</string>
+    <string name="reset_dock_confirm_message">This replaces the dock of this facet with the default dock. The apps you placed here will be lost.</string>
+    <string name="reset_apps_subtitle">Replace this list with the default</string>
+    <string name="reset_apps_confirm_message">This replaces this facet\'s favorites, list content and app count with the defaults. The favorites you chose here will be lost.</string>
+    <string name="reset_look_subtitle">Replace the dock and list look with the default</string>
+    <string name="reset_look_confirm_message">This replaces this facet\'s dock style, list layout and alignment with the defaults.</string>
     <plurals name="settings_dock_apps_count">
         <item quantity="one">%d Dock App</item>
         <item quantity="other">%d Dock Apps</item>
@@ -399,39 +407,30 @@
     <string name="app_row_position_left">Left</string>
     <string name="app_row_position_center">Center</string>
     <string name="app_row_position_right">Right</string>
-    <string name="app_row_position_launcher_default">Default launcher position</string>
     <string name="app_row_presentation_icon_only">Icon Only</string>
     <string name="app_row_presentation_icon_and_text">Icon &amp; Text</string>
     <string name="app_row_presentation_text_only">Text Only</string>
-    <string name="app_row_presentation_launcher_default">Default launcher style</string>
     <string name="app_list_vertical_alignment_top">Top</string>
     <string name="app_list_vertical_alignment_bottom">Bottom</string>
-    <string name="app_list_vertical_alignment_launcher_default">Default launcher position</string>
     <string name="list_content_mode_favorites">Favorites</string>
     <string name="list_content_mode_recents">Recents</string>
     <string name="list_content_mode_most_used">Most used</string>
     <string name="dock_display_mode_icons">Icons</string>
     <string name="dock_display_mode_text">Text</string>
-    <string name="dock_display_mode_launcher_default">Default launcher style</string>
     <string name="app_list_layout_single_column">Single column</string>
     <string name="app_list_layout_two_column">Two columns</string>
     <string name="app_list_layout_grid">Grid</string>
-    <string name="app_list_layout_launcher_default">Default launcher layout</string>
     <string name="app_list_column_alignment_both_left">Both left</string>
     <string name="app_list_column_alignment_both_right">Both right</string>
     <string name="app_list_column_alignment_mirrored">Left &amp; right</string>
-    <string name="app_list_column_alignment_launcher_default">Default launcher alignment</string>
     <string name="app_list_grid_columns_three">3 columns</string>
     <string name="app_list_grid_columns_four">4 columns</string>
     <string name="app_list_grid_columns_five">5 columns</string>
     <string name="app_list_grid_columns_six">6 columns</string>
-    <string name="app_list_grid_columns_launcher_default">Default launcher columns</string>
     <string name="app_list_grid_display_mode_icons">Icons</string>
     <string name="app_list_grid_display_mode_text">Text</string>
-    <string name="app_list_grid_display_mode_launcher_default">Default launcher style</string>
 
     <!-- HomeAppsListSettingsScreen -->
-    <string name="home_apps_list_header_title">Home Apps List</string>
     <string name="home_apps_list_position">Home Apps Alignment</string>
     <string name="home_apps_list_list_position">Home Apps list position</string>
     <string name="appearance_allow_landscape_title">Allow landscape mode</string>
@@ -445,7 +444,6 @@
     <string name="home_apps_list_grid_columns">Grid columns</string>
     <string name="home_apps_list_grid_display">Grid display</string>
     <string name="home_apps_list_shrink_to_fit">Shrink list to fit</string>
-    <string name="app_list_shrink_to_fit_launcher_default">Default launcher style</string>
     <string name="app_list_shrink_to_fit_off">Off</string>
     <string name="app_list_shrink_to_fit_on">On</string>
     <string name="app_list_grid_display_mode_icons_and_text">Icons and text</string>
@@ -497,9 +495,8 @@
     <string name="system_bar_icons_dark">Dark</string>
 
     <!-- AppearanceSettingsScreen -->
-    <string name="appearance_header_title">Customization</string>
-    <string name="appearance_section_dock_home">Dock &amp; home</string>
-    <string name="appearance_dock_apps_title">Dock &amp; Apps appearance</string>
+    <string name="appearance_header_title">Launcher appearance</string>
+    <string name="appearance_dock_apps_title">Dock &amp; Apps layout</string>
     <string name="appearance_general_title">Colors and Themes</string>
     <string name="appearance_general_subtitle">Themes, accent, status bar</string>
     <string name="appearance_section_look_feel">Look &amp; Feel</string>
@@ -914,7 +911,7 @@
         <item quantity="one">%1$d app</item>
         <item quantity="other">%1$d apps</item>
     </plurals>
-    <string name="facet_settings_dock_settings_title">Dock settings</string>
+    <string name="facet_settings_dock_settings_title">Dock Apps</string>
     <string name="facet_settings_section_home">Home</string>
     <string name="facet_settings_widgets_title">Widgets</string>
     <string name="facet_settings_widgets_subtitle">What sits at the top of this facet\'s Home</string>
@@ -1034,7 +1031,7 @@
     <string name="hub_at_capacity_manage">Manage</string>
 
     <!-- FacetSettingsScreen leftover -->
-    <string name="facet_settings_apps_list_settings_title">Apps list settings</string>
+    <string name="facet_settings_apps_list_settings_title">Apps List</string>
 
     <!-- ClockAccessoryRow ("$percent%" reuses percent_format) -->
     <string name="clock_accessory_separator_dot">·</string>
@@ -1231,4 +1228,16 @@
     <string name="native_widget_allow">Allow</string>
     <string name="calendar_work_calendar">Work calendar</string>
     <string name="calendar_work_calendar_n">Work calendar %1$d</string>
+    <string name="copy_to_facets_title">Copy to facets</string>
+    <string name="copy_to_facets_current">Current</string>
+    <plurals name="copy_to_facets_confirm">
+        <item quantity="one">Copy to %d facet</item>
+        <item quantity="other">Copy to %d facets</item>
+    </plurals>
+    <string name="copy_dock_subtitle">Replace the dock of the facets you choose with this one</string>
+    <string name="copy_dock_sheet_message">Replaces the dock of each facet you select with the default dock.</string>
+    <string name="copy_apps_subtitle">Replace the apps list of the facets you choose with this one</string>
+    <string name="copy_apps_sheet_message">Replaces the favorites, list content and app count of each selected facet with the defaults.</string>
+    <string name="copy_look_subtitle">Replace the dock and apps look of the facets you choose with this one</string>
+    <string name="copy_look_sheet_message">Replaces the dock style, list layout and alignment of each selected facet with the defaults.</string>
 </resources>

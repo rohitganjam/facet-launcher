@@ -7,8 +7,12 @@ import kotlinx.serialization.Serializable
  * Bumped whenever [BackupBundle]'s shape changes — [com.facetlauncher.app.domain.ImportBackupUseCase] rejects anything newer than it understands.
  * 4: a widget's setting and a facet's clock weather location are JSON, where version 3 and older wrote tab-separated lines.
  * 5: a facet's clock carries its own settings and box ([BackupFacet.clockConfig]); the facet-level clock and calendar fields of version 4 and older are read once on import (`upgradedToCurrent`) and no longer written.
+ * 6: a facet always owns its dock, favorites, content mode and look; the override flags and the inherit marker of version 5 and older are read once on import (`upgradedToCurrent`) and no longer written.
  */
-const val CURRENT_BACKUP_VERSION = 5
+const val CURRENT_BACKUP_VERSION = 6
+
+/** The marker a facet's look fields held while they inherited the launcher's value; only version 5 and older backups carry it. */
+const val LEGACY_LAUNCHER_DEFAULT = "LAUNCHER_DEFAULT"
 
 /**
  * The full exported/imported settings snapshot for F14 Backup & Restore (PRD: "not limited to
@@ -206,26 +210,29 @@ data class BackupFacet(
     val landscapeClockAlignment: String? = null,
     val landscapeClockZoneHeightDp: Float? = null,
     val landscapeAppListVerticalAlignment: String? = null,
-    val appListVerticalAlignment: String = AppListVerticalAlignment.LAUNCHER_DEFAULT.name,
-    val overrideApps: Boolean,
+    /** Defaulted to the legacy inherit marker, which `upgradedToCurrent` resolves for a backup from before version 6; a current backup always writes a real value. */
+    val appListVerticalAlignment: String = LEGACY_LAUNCHER_DEFAULT,
+    /** Legacy (version 5 and older): `false` meant the facet used the launcher's content mode and count. `null` in a current backup. */
+    val overrideApps: Boolean? = null,
     val appRowPosition: String,
     val appRowPresentation: String,
-    /** Defaulted — tolerant-reader discipline, see this file's own doc comment (a backup from before Home app-list layouts existed still deserializes cleanly, inheriting the launcher-wide layout). */
-    val appListLayout: String = AppListLayout.LAUNCHER_DEFAULT.name,
-    val appListColumnAlignment: String = AppListColumnAlignment.LAUNCHER_DEFAULT.name,
+    /** Defaulted — tolerant-reader discipline, see this file's own doc comment (a backup from before Home app-list layouts existed still deserializes cleanly, taking the launcher-wide layout on import). */
+    val appListLayout: String = LEGACY_LAUNCHER_DEFAULT,
+    val appListColumnAlignment: String = LEGACY_LAUNCHER_DEFAULT,
     /** Optional and additive, like [BackupSettings.landscapeAppRowPosition]. */
     val landscapeAppRowPosition: String? = null,
     val landscapeAppListColumnAlignment: String? = null,
-    val appListGridColumns: String = AppListGridColumns.LAUNCHER_DEFAULT.name,
-    val appListGridDisplayMode: String = AppListGridDisplayMode.LAUNCHER_DEFAULT.name,
-    val appListShrinkToFit: String = AppListShrinkToFit.LAUNCHER_DEFAULT.name,
+    val appListGridColumns: String = LEGACY_LAUNCHER_DEFAULT,
+    val appListGridDisplayMode: String = LEGACY_LAUNCHER_DEFAULT,
+    val appListShrinkToFit: String = LEGACY_LAUNCHER_DEFAULT,
     val listContentMode: String,
     val appsToShowCount: Int,
-    val overridingFavorites: Boolean,
-    /** Defaulted — tolerant-reader discipline, see this file's own doc comment (a v1 backup from before per-facet dock existed still deserializes cleanly, inheriting the launcher-wide dock). */
-    val overrideDock: Boolean = false,
+    /** Legacy (version 5 and older): `false` meant the facet used the launcher's Favorites list. `null` in a current backup. */
+    val overridingFavorites: Boolean? = null,
+    /** Legacy (version 5 and older): `false` meant the facet used the launcher's dock. `null` in a current backup. */
+    val overrideDock: Boolean? = null,
     val dockDisplayMode: String = DockDisplayMode.ICONS.name,
-    /** This facet's own dock — only meaningful when [overrideDock], but exported unconditionally for simplicity; restoring is harmless either way since the launcher-wide dock governs whenever it isn't. */
+    /** This facet's own dock. A backup from before version 6 holds it only when the facet overrode the dock; `upgradedToCurrent` fills it from the launcher's otherwise. */
     val dockApps: List<BackupAppEntry> = emptyList(),
     val overrideCalendar: Boolean = false,
     val showAllDayEvents: Boolean = true,
@@ -239,11 +246,11 @@ data class BackupFacet(
      * [CURRENT_BACKUP_VERSION]'s own tolerant-reader discipline.
      */
     val selectedCalendarIds: List<String>? = null,
-    /** This facet's own favorites — only meaningful when [overridingFavorites], but exported unconditionally for simplicity; restoring is harmless either way since the global default list governs whenever it isn't. */
+    /** This facet's own favorites. A backup from before version 6 holds them only when the facet overrode them; `upgradedToCurrent` fills them from the launcher's otherwise. */
     val favorites: List<BackupAppEntry>,
-    /** A folder placed in this facet's own Dock — only meaningful when [overrideDock], mirrors [dockApps] on the folder side. Defaulted — tolerant-reader discipline. */
+    /** A folder placed in this facet's own Dock, mirrors [dockApps] on the folder side. Defaulted — tolerant-reader discipline. */
     val dockFolderPlacements: List<BackupFolderPlacement> = emptyList(),
-    /** A folder placed in this facet's own Favorites list — only meaningful when [overridingFavorites], mirrors [favorites] on the folder side. Defaulted — tolerant-reader discipline. */
+    /** A folder placed in this facet's own Favorites list, mirrors [favorites] on the folder side. Defaulted — tolerant-reader discipline. */
     val favoriteFolderPlacements: List<BackupFolderPlacement> = emptyList(),
     /** The widgets Facet draws itself on this facet's clock stack; defaulted so older backups restore to just the launcher clock. */
     val nativeStackPages: List<BackupNativeStackPage> = emptyList(),

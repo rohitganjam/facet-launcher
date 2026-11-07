@@ -5,7 +5,9 @@ import android.os.UserManager
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.test.assert
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertHasClickAction
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.hasAnyDescendant
@@ -48,11 +50,18 @@ class SettingsScreenTest {
         onBack: () -> Unit = {},
         onViewFacets: () -> Unit = {},
         onViewFacetAutomation: () -> Unit = {},
+        notificationAccessGranted: Boolean = false,
+        onNavigateToAppDrawerSettings: () -> Unit = {},
+        onNavigateToNotificationSettings: () -> Unit = {},
+        activeFacetName: String? = null,
+        onActiveFacetCreated: (Long) -> Unit = {},
+        onViewActiveFacetSettings: (Long) -> Unit = {},
         onViewFacetPro: () -> Unit = {},
         entitlement: EntitlementRepository = EntitlementRepository(),
         onNavigateToAppearance: () -> Unit = {},
         onNavigateToDockSettings: () -> Unit = {},
         onNavigateToHomeAppsListSettings: () -> Unit = {},
+        onNavigateToDockAppsAppearance: () -> Unit = {},
         onNavigateToFolders: () -> Unit = {},
         onNavigateToGestures: () -> Unit = {},
         onNavigateToWeatherSettings: () -> Unit = {},
@@ -75,13 +84,23 @@ class SettingsScreenTest {
                 val folderRepository = FolderRepository(database.folderDao(), appRepository)
                 val placementRepository = PlacementRepository(database.appPlacementDao(), database.folderPlacementDao())
                 val observePlacedItems = ObservePlacedItemsUseCase(placementRepository, folderRepository, appRepository)
+                val facetRepository = FacetRepository(database.facetDao(), database.clockStackItemDao())
+                if (activeFacetName != null) {
+                    runBlocking {
+                        val facet = facetRepository.addFacet()
+                        facetRepository.renameFacet(facet.id, activeFacetName)
+                        settingsRepository.setActiveFacetId(facet.id)
+                        onActiveFacetCreated(facet.id)
+                    }
+                }
                 SettingsViewModel(
                     ObserveSettingsScreenStateUseCase(settingsRepository, observePlacedItems, folderRepository),
                     DefaultLauncherRepository(context),
                     WorkProfileRepository(context.getSystemService(UserManager::class.java), appRepository, context),
                     AutomationRuleRepository(database.automationRuleDao(), database.facetDao()),
                     entitlement,
-                    FacetRepository(database.facetDao(), database.clockStackItemDao()),
+                    facetRepository,
+                    FakeNotificationAccessRepository(context, granted = notificationAccessGranted),
                 )
             }
             FacetLauncherTheme {
@@ -89,10 +108,14 @@ class SettingsScreenTest {
                     onBack = onBack,
                     onViewFacets = onViewFacets,
                     onViewFacetAutomation = onViewFacetAutomation,
+                    onViewActiveFacetSettings = onViewActiveFacetSettings,
                     onViewFacetPro = onViewFacetPro,
                     onNavigateToAppearance = onNavigateToAppearance,
+                    onNavigateToAppDrawerSettings = onNavigateToAppDrawerSettings,
+                    onNavigateToNotificationSettings = onNavigateToNotificationSettings,
                     onNavigateToDockSettings = onNavigateToDockSettings,
                     onNavigateToHomeAppsListSettings = onNavigateToHomeAppsListSettings,
+                    onNavigateToDockAppsAppearance = onNavigateToDockAppsAppearance,
                     onNavigateToFolders = onNavigateToFolders,
                     onNavigateToGestures = onNavigateToGestures,
                     onNavigateToWeatherSettings = onNavigateToWeatherSettings,
@@ -149,14 +172,15 @@ class SettingsScreenTest {
 
     @Test
     fun appearanceRowIsClickableAndShowsAGenericSubtitle() {
-        // Given the settings screen, scrolled to the "Customization" row — the theme/accent/
+        // Given the settings screen, scrolled to the "Launcher appearance" row — the theme/accent/
         // icons/font block lives on its own screen, reached through this single summary row
         // instead of inline controls. The subtitle is a static, generic description rather than
         // the live theme/font values (see chat history — the dynamic subtitle wasn't wanted here).
         var navigated = false
         setContent(onNavigateToAppearance = { navigated = true })
         composeRule.onNodeWithTag("settings_screen").performScrollToNode(hasTestTag("appearance_row"))
-        composeRule.onNodeWithTag("appearance_row").assertTextContains("Customize home, notifications, themes", substring = true)
+        composeRule.onNodeWithTag("appearance_row").assertTextContains("Launcher appearance", substring = true)
+        composeRule.onNodeWithTag("appearance_row").assertTextContains("Themes, fonts and icons", substring = true)
 
         // When tapping it
         composeRule.onNodeWithTag("appearance_row").performClick()
@@ -197,6 +221,22 @@ class SettingsScreenTest {
     }
 
     @Test
+    fun dockAppsAppearanceRowIsUnderAppsAndFoldersDescribesWhatItDoesAndNavigates() {
+        // Given the settings screen, scrolled to the dock and apps appearance row under Apps and folders
+        var navigated = false
+        setContent(onNavigateToDockAppsAppearance = { navigated = true })
+        composeRule.onNodeWithTag("settings_screen").performScrollToNode(hasTestTag("dock_apps_appearance_row"))
+        composeRule.onNodeWithTag("dock_apps_appearance_row").assertTextContains("Dock & Apps layout", substring = true)
+        composeRule.onNodeWithTag("dock_apps_appearance_row").assertTextContains("Default Dock and Home apps look in new facets", substring = true)
+
+        // When tapping it
+        composeRule.onNodeWithTag("dock_apps_appearance_row").performClick()
+
+        // Then its callback fires
+        assertEquals(true, navigated)
+    }
+
+    @Test
     fun homeAppsListRowIsClickableAndReflectsListContentCount() {
         // Given the settings screen, scrolled to the "Home Apps List" row under HOME & APPS.
         // Defaults: Favorites content mode with 0 default favorites.
@@ -213,15 +253,76 @@ class SettingsScreenTest {
     }
 
     @Test
-    fun calendarAndNotificationRowsLiveInAppearanceNotInSettings() {
-        // Given the settings screen, scrolled through its Apps and folders section
+    fun appDrawerAndNotificationRowsSitInTheCustomizationCardAfterLauncherAppearance() {
+        // Given the settings screen
         setContent()
-        composeRule.onNodeWithTag("settings_screen").performScrollToNode(hasTestTag("folders_settings_row"))
+        composeRule.onNodeWithTag("settings_screen").performScrollToNode(hasTestTag("notification_settings_row"))
 
-        // Then neither moved row is here any more (Appearance owns them now)
-        composeRule.onNodeWithTag("calendar_settings_row").assertDoesNotExist()
-        composeRule.onNodeWithTag("notification_settings_row").assertDoesNotExist()
-        composeRule.onNodeWithTag("app_drawer_settings_row").assertDoesNotExist()
+        // Then the App Drawer and Notifications rows are here, below Launcher appearance
+        val top = { tag: String -> composeRule.onNodeWithTag(tag).fetchSemanticsNode().boundsInRoot.top }
+        assertEquals(true, top("appearance_row") < top("app_drawer_settings_row"))
+        assertEquals(true, top("app_drawer_settings_row") < top("notification_settings_row"))
+    }
+
+    @Test
+    fun appDrawerRowSummarisesTheDrawerAndNavigates() {
+        var navigated = false
+        setContent(onNavigateToAppDrawerSettings = { navigated = true })
+        composeRule.onNodeWithTag("settings_screen").performScrollToNode(hasTestTag("app_drawer_settings_row"))
+        composeRule.onNodeWithTag("app_drawer_settings_row").assertTextContains("App Drawer", substring = true)
+
+        composeRule.onNodeWithTag("app_drawer_settings_row").performClick()
+
+        assertEquals(true, navigated)
+    }
+
+    @Test
+    fun notificationRowReflectsEnabledStateAndNavigates() {
+        // Given access granted — badges are on by default with the Dot style
+        var navigated = false
+        setContent(notificationAccessGranted = true, onNavigateToNotificationSettings = { navigated = true })
+        composeRule.onNodeWithTag("settings_screen").performScrollToNode(hasTestTag("notification_settings_row"))
+        composeRule.onNodeWithTag("notification_settings_row").assertTextContains("Notifications and media", substring = true)
+        awaitNotificationSubtext("Dot badges · Media player off")
+
+        composeRule.onNodeWithTag("notification_settings_row").performClick()
+
+        assertEquals(true, navigated)
+    }
+
+    private fun awaitNotificationSubtext(expected: String) {
+        composeRule.onNodeWithTag("settings_screen").performScrollToNode(hasTestTag("notification_settings_row"))
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            runCatching { composeRule.onNodeWithTag("notification_settings_row").assertTextContains(expected, substring = true) }.isSuccess
+        }
+    }
+
+    @Test
+    fun notificationSubtextShowsCountBadgesAndMediaPlayerOn() {
+        val settingsRepository = setContent(notificationAccessGranted = true)
+        runBlocking {
+            settingsRepository.setNotificationBadgeStyle(com.facetlauncher.app.data.model.NotificationBadgeStyle.COUNT)
+            settingsRepository.setShowMediaPlayerOnHome(true)
+        }
+
+        awaitNotificationSubtext("Count badges · Media player on")
+    }
+
+    @Test
+    fun notificationSubtextShowsBadgesOffAndMediaPlayerOff() {
+        val settingsRepository = setContent(notificationAccessGranted = true)
+        runBlocking { settingsRepository.setNotificationDotsEnabled(false) }
+
+        awaitNotificationSubtext("Badges off · Media player off")
+    }
+
+    @Test
+    fun notificationSubtextSaysAccessIsNeededWhenNotGrantedEvenIfSettingsAreOn() {
+        val settingsRepository = setContent(notificationAccessGranted = false)
+        runBlocking { settingsRepository.setShowMediaPlayerOnHome(true) }
+
+        // Says access is needed instead of reporting a stored "on" that isn't working
+        awaitNotificationSubtext("Needs notification access")
     }
 
     @Test
@@ -236,6 +337,37 @@ class SettingsScreenTest {
         // Then its callback fires
         assertEquals(true, viewFacetsClicked)
     }
+
+    @Test
+    fun manageFacetsRowSaysWhatItDoes() {
+        setContent()
+
+        composeRule.onNodeWithTag("view_facets_row").assertTextContains("Manage Facets", substring = true)
+        composeRule.onNodeWithTag("view_facets_row").assertTextContains("Add, edit, reorder and delete facets", substring = true)
+    }
+
+    @Test
+    fun activeFacetSettingsRowIsFirstNamesTheFacetAndOpensItsSettings() {
+        // Given an active facet named Work
+        var facetId = 0L
+        var opened: Long? = null
+        setContent(activeFacetName = "Work", onActiveFacetCreated = { facetId = it }, onViewActiveFacetSettings = { opened = it })
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            composeRule.onAllNodesWithTag("active_facet_settings_row").fetchSemanticsNodes().isNotEmpty()
+        }
+
+        // Then the row names the facet and says the settings are for it, and sits above Manage Facets
+        composeRule.onNodeWithTag("active_facet_settings_row").assertTextContains("Work Settings", substring = true)
+        composeRule.onNodeWithTag("active_facet_settings_row").assertTextContains("Settings specific to Work, your current facet", substring = true)
+        val rowTop = composeRule.onNodeWithTag("active_facet_settings_row").fetchSemanticsNode().boundsInRoot.top
+        val manageTop = composeRule.onNodeWithTag("view_facets_row").fetchSemanticsNode().boundsInRoot.top
+        assertEquals(true, rowTop < manageTop)
+
+        // When tapping it, it opens that facet's settings
+        composeRule.onNodeWithTag("active_facet_settings_row").performClick()
+        assertEquals(facetId, opened)
+    }
+
 
 
     @Test

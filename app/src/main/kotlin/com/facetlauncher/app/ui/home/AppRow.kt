@@ -125,7 +125,7 @@ private fun AppRowContent(
                     }
                 },
             )
-            AppRowPosition.LEFT, AppRowPosition.LAUNCHER_DEFAULT -> {
+            AppRowPosition.LEFT -> {
                 icon()
                 label()
                 badge()

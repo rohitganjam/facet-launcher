@@ -73,7 +73,7 @@ class HomeUiStateTest {
     fun `usage access prompt is hidden for favorites mode regardless of grant state`() {
         val state = HomeUiState(
             settings = LauncherSettings(activeFacetId = 1L),
-            facets = listOf(Facet(id = 1L, name = "P1", position = 0, overrideApps = true, listContentMode = ListContentMode.FAVORITES)),
+            facets = listOf(Facet(id = 1L, name = "P1", position = 0, listContentMode = ListContentMode.FAVORITES)),
             usageAccessGranted = false,
         )
 
@@ -84,7 +84,7 @@ class HomeUiStateTest {
     fun `usage access prompt shows for recents mode when access isn't granted`() {
         val state = HomeUiState(
             settings = LauncherSettings(activeFacetId = 1L),
-            facets = listOf(Facet(id = 1L, name = "P1", position = 0, overrideApps = true, listContentMode = ListContentMode.RECENTS)),
+            facets = listOf(Facet(id = 1L, name = "P1", position = 0, listContentMode = ListContentMode.RECENTS)),
             usageAccessGranted = false,
         )
 
@@ -95,7 +95,7 @@ class HomeUiStateTest {
     fun `usage access prompt is hidden for most used mode once access is granted`() {
         val state = HomeUiState(
             settings = LauncherSettings(activeFacetId = 1L),
-            facets = listOf(Facet(id = 1L, name = "P1", position = 0, overrideApps = true, listContentMode = ListContentMode.MOST_USED)),
+            facets = listOf(Facet(id = 1L, name = "P1", position = 0, listContentMode = ListContentMode.MOST_USED)),
             usageAccessGranted = true,
         )
 
@@ -106,7 +106,7 @@ class HomeUiStateTest {
     fun `usage access prompt stays hidden once dismissed even though access still isn't granted`() {
         val state = HomeUiState(
             settings = LauncherSettings(activeFacetId = 1L),
-            facets = listOf(Facet(id = 1L, name = "P1", position = 0, overrideApps = true, listContentMode = ListContentMode.RECENTS)),
+            facets = listOf(Facet(id = 1L, name = "P1", position = 0, listContentMode = ListContentMode.RECENTS)),
             usageAccessGranted = false,
             usageAccessPromptDismissed = true,
         )
@@ -115,50 +115,27 @@ class HomeUiStateTest {
     }
 
     @Test
-    fun `active app row position falls back to the global default when the active facet has no override`() {
-        val state = HomeUiState(
-            settings = LauncherSettings(appRowPosition = AppRowPosition.RIGHT, activeFacetId = 1L),
-            facets = listOf(Facet(id = 1L, name = "Facet 1", position = 0, overrideApps = false)),
-        )
-
-        assertEquals(AppRowPosition.RIGHT, state.activeAppRowPosition)
-    }
-
-    @Test
-    fun `active app row position uses the active facet's override when set`() {
+    fun `active app row position is the active facet's own, not the launcher's`() {
         val state = HomeUiState(
             settings = LauncherSettings(appRowPosition = AppRowPosition.LEFT, activeFacetId = 1L),
-            facets = listOf(
-                Facet(id = 1L, name = "Facet 1", position = 0, overrideApps = true, appRowPosition = AppRowPosition.RIGHT),
-            ),
+            facets = listOf(Facet(id = 1L, name = "Facet 1", position = 0, appRowPosition = AppRowPosition.RIGHT)),
         )
 
         assertEquals(AppRowPosition.RIGHT, state.activeAppRowPosition)
     }
 
     @Test
-    fun `active app row presentation falls back to the global default when the active facet has no override`() {
-        val state = HomeUiState(
-            settings = LauncherSettings(appRowPresentation = AppRowPresentation.TEXT_ONLY, activeFacetId = 1L),
-            facets = listOf(Facet(id = 1L, name = "Facet 1", position = 0, overrideApps = false)),
-        )
+    fun `active app row position is the launcher's when there is no active facet`() {
+        val state = HomeUiState(settings = LauncherSettings(appRowPosition = AppRowPosition.RIGHT, activeFacetId = 1L))
 
-        assertEquals(AppRowPresentation.TEXT_ONLY, state.activeAppRowPresentation)
+        assertEquals(AppRowPosition.RIGHT, state.activeAppRowPosition)
     }
 
     @Test
-    fun `active app row presentation uses the active facet's override when set`() {
+    fun `active app row presentation is the active facet's own, not the launcher's`() {
         val state = HomeUiState(
             settings = LauncherSettings(appRowPresentation = AppRowPresentation.ICON_AND_TEXT, activeFacetId = 1L),
-            facets = listOf(
-                Facet(
-                    id = 1L,
-                    name = "Facet 1",
-                    position = 0,
-                    overrideApps = true,
-                    appRowPresentation = AppRowPresentation.ICON_ONLY,
-                ),
-            ),
+            facets = listOf(Facet(id = 1L, name = "Facet 1", position = 0, appRowPresentation = AppRowPresentation.ICON_ONLY)),
         )
 
         assertEquals(AppRowPresentation.ICON_ONLY, state.activeAppRowPresentation)
@@ -231,46 +208,6 @@ class HomeUiStateTest {
                 isDefaultLauncher = false,
             ).showSetDefaultPrompt,
         )
-    }
-
-    @Test
-    fun `dock override facet name is null when the active facet isn't overriding the dock`() {
-        val state = HomeUiState(
-            settings = LauncherSettings(activeFacetId = 1L),
-            facets = listOf(Facet(id = 1L, name = "Work", position = 0, overrideDock = false)),
-        )
-
-        assertEquals(null, state.dockOverrideFacetName)
-    }
-
-    @Test
-    fun `dock override facet name is the active facet's own name when it overrides the dock`() {
-        val state = HomeUiState(
-            settings = LauncherSettings(activeFacetId = 1L),
-            facets = listOf(Facet(id = 1L, name = "Work", position = 0, overrideDock = true)),
-        )
-
-        assertEquals("Work", state.dockOverrideFacetName)
-    }
-
-    @Test
-    fun `favorites override facet name is null when the active facet isn't overriding favorites`() {
-        val state = HomeUiState(
-            settings = LauncherSettings(activeFacetId = 1L),
-            facets = listOf(Facet(id = 1L, name = "Work", position = 0, overridingFavorites = false)),
-        )
-
-        assertEquals(null, state.favoritesOverrideFacetName)
-    }
-
-    @Test
-    fun `favorites override facet name is the active facet's own name when it overrides favorites`() {
-        val state = HomeUiState(
-            settings = LauncherSettings(activeFacetId = 1L),
-            facets = listOf(Facet(id = 1L, name = "Work", position = 0, overridingFavorites = true)),
-        )
-
-        assertEquals("Work", state.favoritesOverrideFacetName)
     }
 
     private val portrait = HomeLayoutMode.PORTRAIT
@@ -395,14 +332,14 @@ class HomeUiStateTest {
     }
 
     @Test
-    fun `a facet that inherits its portrait list alignment uses the launcher's landscape value in landscape`() {
-        val facet = Facet(id = 1L, name = "Facet 1", position = 0, appRowPosition = AppRowPosition.LAUNCHER_DEFAULT)
+    fun `a facet without its own landscape list alignment follows its portrait one in landscape`() {
+        val facet = Facet(id = 1L, name = "Facet 1", position = 0, appRowPosition = AppRowPosition.RIGHT)
         val state = HomeUiState(
             settings = LauncherSettings(activeFacetId = 1L, landscape = LandscapeOverrides(appRowPosition = AppRowPosition.CENTER)),
             facets = listOf(facet),
         )
 
-        assertEquals(AppRowPosition.CENTER, state.listAlignment(landscape).rowPosition)
+        assertEquals(AppRowPosition.RIGHT, state.listAlignment(landscape).rowPosition)
     }
 
     @Test

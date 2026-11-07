@@ -31,12 +31,10 @@ import com.facetlauncher.app.data.model.landscape
 import com.facetlauncher.app.data.model.resolveLandscape
 import com.facetlauncher.app.data.model.WeatherIconStyle
 import com.facetlauncher.app.data.model.WidgetWeatherLocation
-import com.facetlauncher.app.data.model.resolveOverride
-import com.facetlauncher.app.data.model.resolveSentinel
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
 
-/** The apps list in force. The look fields inherit per field via their `LAUNCHER_DEFAULT` sentinel; [contentMode] follows `overrideApps`. */
+/** The apps list in force: the facet's own values. */
 @Immutable
 data class ResolvedAppListStyle(
     val contentMode: ListContentMode,
@@ -71,7 +69,7 @@ data class ResolvedClockItem(
 )
 
 /**
- * Everything a facet can override, resolved against the launcher-wide settings: the one place Home,
+ * Everything a facet owns, with the launcher-wide settings only filling in the clock placement fallback: the one place Home,
  * the facet carousel and every settings preview read it from.
  */
 @Immutable
@@ -93,7 +91,7 @@ data class ResolvedFacetStyle(
 fun resolveFacetStyle(facet: Facet?, settings: LauncherSettings): ResolvedFacetStyle = ResolvedFacetStyle(
     clock = effectiveClockConfig(facet, settings),
     appList = resolveAppListStyle(facet, settings),
-    dockDisplayMode = facet.resolveSentinel({ it.dockDisplayMode }, DockDisplayMode.LAUNCHER_DEFAULT, settings.dockDisplayMode),
+    dockDisplayMode = facet?.dockDisplayMode ?: settings.dockDisplayMode,
     calendarDisplay = effectiveClockConfig(facet, settings).calendar.let { CalendarDisplayOptions(it.showIndicator, it.itemsToShow) },
     clockPlacement = resolveClockPlacement(facet, settings),
     listAlignment = resolveListAlignment(facet, settings),
@@ -101,23 +99,32 @@ fun resolveFacetStyle(facet: Facet?, settings: LauncherSettings): ResolvedFacetS
     clockStack = (facet?.clockStack ?: listOf(nativeClockPage())).map { it.resolve() }.toImmutableList(),
 )
 
-private fun resolveAppListStyle(facet: Facet?, settings: LauncherSettings) = ResolvedAppListStyle(
-    contentMode = facet.resolveOverride({ it.overrideApps }, { it.listContentMode }, settings.listContentMode),
-    rowPosition = facet.resolveSentinel({ it.appRowPosition }, AppRowPosition.LAUNCHER_DEFAULT, settings.appRowPosition),
-    rowPresentation = facet.resolveSentinel({ it.appRowPresentation }, AppRowPresentation.LAUNCHER_DEFAULT, settings.appRowPresentation),
-    verticalAlignment = facet.resolveSentinel(
-        { it.appListVerticalAlignment }, AppListVerticalAlignment.LAUNCHER_DEFAULT, settings.appListVerticalAlignment,
-    ),
-    layout = facet.resolveSentinel({ it.appListLayout }, AppListLayout.LAUNCHER_DEFAULT, settings.appListLayout),
-    columnAlignment = facet.resolveSentinel(
-        { it.appListColumnAlignment }, AppListColumnAlignment.LAUNCHER_DEFAULT, settings.appListColumnAlignment,
-    ),
-    gridColumns = facet.resolveSentinel({ it.appListGridColumns }, AppListGridColumns.LAUNCHER_DEFAULT, settings.appListGridColumns),
-    gridDisplayMode = facet.resolveSentinel(
-        { it.appListGridDisplayMode }, AppListGridDisplayMode.LAUNCHER_DEFAULT, settings.appListGridDisplayMode,
-    ),
-    shrinkToFit = facet.resolveSentinel({ it.appListShrinkToFit }, AppListShrinkToFit.LAUNCHER_DEFAULT, settings.appListShrinkToFit),
-)
+/** A facet's own values; with no facet the launcher-wide ones, which are what a new facet is seeded from. */
+private fun resolveAppListStyle(facet: Facet?, settings: LauncherSettings) = if (facet != null) {
+    ResolvedAppListStyle(
+        contentMode = facet.listContentMode,
+        rowPosition = facet.appRowPosition,
+        rowPresentation = facet.appRowPresentation,
+        verticalAlignment = facet.appListVerticalAlignment,
+        layout = facet.appListLayout,
+        columnAlignment = facet.appListColumnAlignment,
+        gridColumns = facet.appListGridColumns,
+        gridDisplayMode = facet.appListGridDisplayMode,
+        shrinkToFit = facet.appListShrinkToFit,
+    )
+} else {
+    ResolvedAppListStyle(
+        contentMode = settings.listContentMode,
+        rowPosition = settings.appRowPosition,
+        rowPresentation = settings.appRowPresentation,
+        verticalAlignment = settings.appListVerticalAlignment,
+        layout = settings.appListLayout,
+        columnAlignment = settings.appListColumnAlignment,
+        gridColumns = settings.appListGridColumns,
+        gridDisplayMode = settings.appListGridDisplayMode,
+        shrinkToFit = settings.appListShrinkToFit,
+    )
+}
 
 /** Portrait follows the facet while it overrides the clock; landscape follows [resolveLandscape] over that. */
 private fun resolveClockPlacement(facet: Facet?, settings: LauncherSettings): Oriented<ClockPlacement> {
@@ -135,34 +142,21 @@ private fun resolveClockPlacement(facet: Facet?, settings: LauncherSettings): Or
     )
 }
 
-/** Each field goes through its own `LAUNCHER_DEFAULT` sentinel, then [resolveLandscape] for landscape. */
+/** Portrait is the facet's own value (the launcher-wide one with no facet); landscape is its own twin, else portrait. */
 private fun resolveListAlignment(facet: Facet?, settings: LauncherSettings): Oriented<ListAlignment> {
-    val global = settings.landscape
-    fun <T : Any> prop(
-        portrait: (Facet) -> T,
-        landscape: (LandscapeOverrides) -> T?,
-        sentinel: T,
-        globalPortrait: T,
-        globalLandscape: T?,
-    ): Oriented<T> {
-        val facetValue = facet?.let(portrait)?.takeIf { it != sentinel }
-        val own = facetValue ?: globalPortrait
-        return Oriented(own, resolveLandscape(facet?.landscape?.let(landscape), own, facetValue != null, globalLandscape, globalPortrait))
+    val portrait = if (facet != null) {
+        ListAlignment(facet.appRowPosition, facet.appListVerticalAlignment, facet.appListColumnAlignment)
+    } else {
+        ListAlignment(settings.appRowPosition, settings.appListVerticalAlignment, settings.appListColumnAlignment)
     }
-    val row = prop(
-        { it.appRowPosition }, { it.appRowPosition }, AppRowPosition.LAUNCHER_DEFAULT, settings.appRowPosition, global.appRowPosition,
-    )
-    val vertical = prop(
-        { it.appListVerticalAlignment }, { it.appListVerticalAlignment }, AppListVerticalAlignment.LAUNCHER_DEFAULT,
-        settings.appListVerticalAlignment, global.appListVerticalAlignment,
-    )
-    val column = prop(
-        { it.appListColumnAlignment }, { it.appListColumnAlignment }, AppListColumnAlignment.LAUNCHER_DEFAULT,
-        settings.appListColumnAlignment, global.appListColumnAlignment,
-    )
+    val twins = facet?.landscape ?: settings.landscape
     return Oriented(
-        ListAlignment(row.portrait, vertical.portrait, column.portrait),
-        ListAlignment(row.landscape, vertical.landscape, column.landscape),
+        portrait,
+        ListAlignment(
+            rowPosition = twins.appRowPosition ?: portrait.rowPosition,
+            verticalAlignment = twins.appListVerticalAlignment ?: portrait.verticalAlignment,
+            columnAlignment = twins.appListColumnAlignment ?: portrait.columnAlignment,
+        ),
     )
 }
 

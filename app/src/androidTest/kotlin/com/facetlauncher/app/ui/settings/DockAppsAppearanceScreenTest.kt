@@ -262,8 +262,7 @@ class DockAppsAppearanceScreenTest {
 
     @Test
     fun globalModeDoesNotOfferTheLauncherDefaultOption() {
-        // LAUNCHER_DEFAULT is facet-only — offering "use the launcher default" at global scope is
-        // circular, since this screen IS the launcher default (see chat history)
+        // There is no "use the launcher default" choice any more: a facet owns its value (Reset to default copies it)
         setContent()
         composeRule.onNodeWithTag("dock_apps_appearance_screen").performScrollToNode(hasTestTag("appearance_dock_display_style_row"))
 
@@ -337,8 +336,8 @@ class DockAppsAppearanceScreenTest {
     }
 
     @Test
-    fun facetScopedDockDisplayStyleRowOffersLauncherDefaultAndWritesToThatFacet() {
-        // Given a facet-scoped entry point, Icons inherited by default — waited for facet-scoped
+    fun facetScopedDockDisplayStyleRowWritesToThatFacet() {
+        // Given a facet-scoped entry point, Icons by default — waited for facet-scoped
         // settle first (see facetScopedModeKeepsClockRowAndPreviewButHidesEveryGlobalOnlyField's own comment)
         // so the dropdown's option list isn't read mid-transition from the global option set.
         val facetId = 1L
@@ -347,8 +346,7 @@ class DockAppsAppearanceScreenTest {
         composeRule.onNodeWithTag("dock_apps_appearance_screen").performScrollToNode(hasTestTag("appearance_dock_display_style_row"))
         composeRule.onNodeWithTag("appearance_dock_display_style_row").assertTextContains("Icons")
 
-        // When picking "Text" — no separate Inherit/Override switch to flip first; picking a real
-        // value here is itself what starts this facet overriding (see chat history)
+        // When picking "Text"
         composeRule.onNodeWithTag("appearance_dock_display_style_row").performClick()
         composeRule.waitForIdle()
         composeRule.onNodeWithTag("appearance_dock_display_style_row_option_TEXT").performClick()
@@ -366,7 +364,7 @@ class DockAppsAppearanceScreenTest {
         setContent(onBack = { backPressed = true })
 
         // Then its own title shows, with the live preview card above the controls
-        composeRule.onNodeWithText("Dock & Apps appearance").assertIsDisplayed()
+        composeRule.onNodeWithText("Dock & Apps layout").assertIsDisplayed()
         composeRule.onNodeWithTag("appearance_preview_card").assertExists()
 
         // When tapping back

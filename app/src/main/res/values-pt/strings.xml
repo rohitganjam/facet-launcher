@@ -195,12 +195,6 @@
     <string name="app_picker_tab_apps">Apps</string>
     <string name="app_picker_tab_folders">Pastas</string>
 
-    <!-- InheritOverrideCard -->
-    <string name="inherit_override_follows_default">Segue o padrão do launcher</string>
-    <string name="inherit_override_inherit_default">Herdar padrão</string>
-    <string name="inherit_override_override_for_facet">Substituir para esta faceta</string>
-    <string name="inherit_override_changes_dont_affect_others">Mudanças aqui não afetam outras facetas</string>
-    <string name="inherit_override_edit_defaults">Editar padrões</string>
 
     <!-- GestureHintOverlay -->
     <string name="gesture_hint_switch_facets">Trocar de faceta</string>
@@ -236,16 +230,18 @@
     <!-- SettingsScreen -->
     <string name="settings_header_title">Configurações</string>
     <string name="settings_section_facets">Facetas</string>
-    <string name="settings_section_appearance">Aparência</string>
+    <string name="settings_section_appearance">Personalização</string>
     <string name="settings_section_home_apps">Apps e pastas</string>
     <string name="settings_section_system">Sistema</string>
     <string name="settings_section_about">Sobre</string>
-    <string name="settings_facets_title">Facetas</string>
-    <string name="settings_facets_subtitle">Crie e gerencie configurações específicas de cada faceta</string>
+    <string name="settings_facets_title">Gerenciar facetas</string>
+    <string name="settings_facets_subtitle">Adicione, edite, reordene e exclua facetas</string>
+    <string name="settings_active_facet_title">Configurações de %1$s</string>
+    <string name="settings_active_facet_subtitle">Configurações específicas de %1$s, sua faceta atual</string>
     <string name="settings_change_wallpaper_title">Mudar papel de parede</string>
     <string name="settings_change_wallpaper_subtitle">Altere o papel de parede do sistema</string>
-    <string name="settings_appearance_title">Personalização</string>
-    <string name="settings_appearance_subtitle">Personalize início, notificações, temas</string>
+    <string name="settings_appearance_title">Aparência do launcher</string>
+    <string name="settings_appearance_subtitle">Temas, fontes e ícones</string>
     <string name="settings_clock_calendar_title">Estilo do relógio</string>
     <string name="settings_time_format_24h">Formato de 24 horas</string>
     <string name="settings_time_format_12h">Formato de 12 horas</string>
@@ -258,6 +254,18 @@
     <string name="settings_all_day_events_visible">Eventos de dia inteiro visíveis</string>
     <string name="settings_all_day_events_hidden">Eventos de dia inteiro ocultos</string>
     <string name="settings_dock_title">Dock</string>
+    <string name="settings_default_dock_title">Apps do dock padrão</string>
+    <string name="home_apps_list_default_header_title">Lista de apps padrão</string>
+    <string name="settings_default_look_subtitle">Aparência padrão do dock e dos apps da tela inicial em novas facetas</string>
+    <string name="defaults_screen_note">Usado quando você cria uma faceta ou redefine uma.</string>
+    <string name="reset_to_default_title">Redefinir para o padrão</string>
+    <string name="reset_to_default_confirm">Redefinir</string>
+    <string name="reset_dock_subtitle">Substituir este dock pelo dock padrão</string>
+    <string name="reset_dock_confirm_message">Isto substitui o dock desta faceta pelo dock padrão. Os apps que você colocou aqui serão perdidos.</string>
+    <string name="reset_apps_subtitle">Substituir esta lista pela padrão</string>
+    <string name="reset_apps_confirm_message">Isto substitui os favoritos, o conteúdo da lista e a quantidade de apps desta faceta pelos valores padrão. Os favoritos que você escolheu aqui serão perdidos.</string>
+    <string name="reset_look_subtitle">Substituir a aparência do dock e da lista pela padrão</string>
+    <string name="reset_look_confirm_message">Isto substitui o estilo do dock, o layout da lista e o alinhamento desta faceta pelos valores padrão.</string>
     <plurals name="settings_dock_apps_count">
         <item quantity="one">%d app no Dock</item>
         <item quantity="other">%d apps no Dock</item>
@@ -372,7 +380,6 @@
     <string name="app_list_grid_display_mode_text">Texto</string>
 
     <!-- HomeAppsListSettingsScreen -->
-    <string name="home_apps_list_header_title">Lista de apps da tela inicial</string>
     <string name="home_apps_list_position">Posição</string>
     <string name="home_apps_list_list_position">Posição da lista</string>
     <string name="appearance_allow_landscape_title">Permitir modo paisagem</string>
@@ -386,7 +393,6 @@
     <string name="home_apps_list_grid_columns">Colunas da grade</string>
     <string name="home_apps_list_grid_display">Exibição da grade</string>
     <string name="home_apps_list_shrink_to_fit">Ajustar lista à tela</string>
-    <string name="app_list_shrink_to_fit_launcher_default">Estilo padrão do launcher</string>
     <string name="app_list_shrink_to_fit_off">Desativado</string>
     <string name="app_list_shrink_to_fit_on">Ativado</string>
     <string name="app_list_grid_display_mode_icons_and_text">Ícones e texto</string>
@@ -438,7 +444,7 @@
     <string name="system_bar_icons_dark">Escuro</string>
 
     <!-- AppearanceSettingsScreen -->
-    <string name="appearance_header_title">Personalização</string>
+    <string name="appearance_header_title">Aparência do launcher</string>
     <string name="appearance_launcher_theme">Tema do launcher</string>
     <string name="appearance_system_bar_icons">Cores das barras do sistema</string>
     <string name="appearance_system_bar_icons_subtitle">Cor dos ícones das barras de status e de navegação</string>
@@ -823,7 +829,7 @@
         <item quantity="one">%1$d app</item>
         <item quantity="other">%1$d apps</item>
     </plurals>
-    <string name="facet_settings_dock_settings_title">Configurações do dock</string>
+    <string name="facet_settings_dock_settings_title">Apps do dock</string>
     <string name="facet_settings_rename_explanation">Renomeie esta faceta.</string>
 
     <!-- HomeScreen -->
@@ -896,7 +902,7 @@
     <string name="hub_at_capacity_manage">Gerenciar</string>
 
     <!-- FacetSettingsScreen leftover -->
-    <string name="facet_settings_apps_list_settings_title">Configurações da lista de apps</string>
+    <string name="facet_settings_apps_list_settings_title">Lista de apps</string>
 
     <!-- ClockAccessoryRow -->
     <string name="clock_accessory_separator_dot">·</string>
@@ -933,16 +939,7 @@
     <string name="icons_screen_shape_and_size">Forma e tamanho</string>
     <string name="icons_screen_force_shape">Forçar forma dos ícones</string>
     <string name="icons_screen_force_shape_description">Recorta também os ícones do pacote na forma acima</string>
-    <string name="app_row_position_launcher_default">Posição padrão do launcher</string>
-    <string name="app_row_presentation_launcher_default">Estilo padrão do launcher</string>
-    <string name="app_list_vertical_alignment_launcher_default">Posição padrão do launcher</string>
-    <string name="dock_display_mode_launcher_default">Estilo padrão do launcher</string>
-    <string name="app_list_layout_launcher_default">Layout padrão do launcher</string>
-    <string name="app_list_column_alignment_launcher_default">Alinhamento padrão do launcher</string>
-    <string name="app_list_grid_columns_launcher_default">Colunas padrão do launcher</string>
-    <string name="app_list_grid_display_mode_launcher_default">Estilo padrão do launcher</string>
-    <string name="appearance_section_dock_home">Dock e início</string>
-    <string name="appearance_dock_apps_title">Aparência do dock e dos apps</string>
+    <string name="appearance_dock_apps_title">Layout do dock e dos apps</string>
     <string name="appearance_general_title">Cores e temas</string>
     <string name="appearance_general_subtitle">Temas, destaque, barra de status</string>
     <string name="appearance_section_look_feel">Aparência e comportamento</string>
@@ -1142,4 +1139,16 @@
     <string name="native_widget_allow">Permitir</string>
     <string name="calendar_work_calendar">Calendário de trabalho</string>
     <string name="calendar_work_calendar_n">Calendário de trabalho %1$d</string>
+    <string name="copy_to_facets_title">Copiar para facetas</string>
+    <string name="copy_to_facets_current">Atual</string>
+    <plurals name="copy_to_facets_confirm">
+        <item quantity="one">Copiar para %d faceta</item>
+        <item quantity="other">Copiar para %d facetas</item>
+    </plurals>
+    <string name="copy_dock_subtitle">Substitui o dock das facetas escolhidas por este</string>
+    <string name="copy_dock_sheet_message">Substitui o dock de cada faceta selecionada pelo dock padrão.</string>
+    <string name="copy_apps_subtitle">Substitui a lista de apps das facetas escolhidas por esta</string>
+    <string name="copy_apps_sheet_message">Substitui os favoritos, o conteúdo da lista e a quantidade de apps de cada faceta selecionada pelos valores padrão.</string>
+    <string name="copy_look_subtitle">Substitui a aparência do dock e dos apps das facetas escolhidas por esta</string>
+    <string name="copy_look_sheet_message">Substitui o estilo do dock, o layout da lista e o alinhamento de cada faceta selecionada pelos valores padrão.</string>
 </resources>

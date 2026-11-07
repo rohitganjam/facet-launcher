@@ -122,10 +122,10 @@ private fun FacetSettingsContent(
                 }
 
                 item { SettingsSectionHeader(stringResource(R.string.facet_settings_section_home)) }
-                item { HomeCard(uiState, onWidgetsClick, onDockAppsAppearanceClick) }
+                item { HomeCard(onWidgetsClick) }
 
                 item { SettingsSectionHeader(stringResource(R.string.settings_section_home_apps)) }
-                item { HomeAppsCard(uiState, onAppsListClick, onDockClick) }
+                item { HomeAppsCard(uiState, onAppsListClick, onDockClick, onDockAppsAppearanceClick) }
             }
         },
     )
@@ -141,9 +141,9 @@ private fun FacetSettingsContent(
     }
 }
 
-/** What is at the top of this facet's Home (its widgets), and how its apps list and dock look. */
+/** What is at the top of this facet's Home: its widgets. */
 @Composable
-private fun HomeCard(uiState: FacetSettingsUiState, onWidgetsClick: () -> Unit, onDockAppsAppearanceClick: () -> Unit) {
+private fun HomeCard(onWidgetsClick: () -> Unit) {
     SettingsCard(fullBleedRows = true) {
         FacetSettingsRow(
             title = stringResource(R.string.facet_settings_widgets_title),
@@ -152,23 +152,11 @@ private fun HomeCard(uiState: FacetSettingsUiState, onWidgetsClick: () -> Unit, 
             testTag = "facet_widgets_row",
             leadingIcon = { SettingsIconBadge(Icons.Outlined.Widgets, SettingsSectionHue.APPEARANCE) },
         )
-        CardDivider(startInset = SettingsIconBadgeInset)
-        FacetSettingsRow(
-            title = stringResource(R.string.appearance_dock_apps_title),
-            subtitle = stringResource(
-                R.string.dot_join_2,
-                uiState.dockDisplayMode.appearanceSummaryLabel(),
-                uiState.appRowPresentation.appearanceSummaryLabel(),
-            ),
-            onClick = onDockAppsAppearanceClick,
-            testTag = "facet_appearance_row",
-            leadingIcon = { SettingsIconBadge(Icons.Outlined.Dock, SettingsSectionHue.APPEARANCE) },
-        )
     }
 }
 
 @Composable
-private fun HomeAppsCard(uiState: FacetSettingsUiState, onAppsListClick: () -> Unit, onDockClick: () -> Unit) {
+private fun HomeAppsCard(uiState: FacetSettingsUiState, onAppsListClick: () -> Unit, onDockClick: () -> Unit, onDockAppsAppearanceClick: () -> Unit) {
     SettingsCard(fullBleedRows = true) {
         FacetSettingsRow(
             title = stringResource(R.string.facet_settings_apps_list_settings_title),
@@ -183,10 +171,22 @@ private fun HomeAppsCard(uiState: FacetSettingsUiState, onAppsListClick: () -> U
             subtitle = stringResource(
                 R.string.dot_join_2,
                 uiState.dockDisplayMode.displayLabel(),
-                pluralStringResource(R.plurals.format_count_apps, uiState.effectiveDockApps.size, uiState.effectiveDockApps.size),
+                pluralStringResource(R.plurals.format_count_apps, uiState.dockApps.size, uiState.dockApps.size),
             ),
             onClick = onDockClick,
             testTag = "facet_dock_settings_row",
+            leadingIcon = { SettingsIconBadge(Icons.Outlined.Dock, SettingsSectionHue.HOME_APPS) },
+        )
+        CardDivider(startInset = SettingsIconBadgeInset)
+        FacetSettingsRow(
+            title = stringResource(R.string.appearance_dock_apps_title),
+            subtitle = stringResource(
+                R.string.dot_join_2,
+                uiState.dockDisplayMode.appearanceSummaryLabel(),
+                uiState.appRowPresentation.appearanceSummaryLabel(),
+            ),
+            onClick = onDockAppsAppearanceClick,
+            testTag = "facet_appearance_row",
             leadingIcon = { SettingsIconBadge(Icons.Outlined.Dock, SettingsSectionHue.HOME_APPS) },
         )
     }

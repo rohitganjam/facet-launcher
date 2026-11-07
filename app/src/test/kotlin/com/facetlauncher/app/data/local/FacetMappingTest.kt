@@ -44,16 +44,13 @@ class FacetMappingTest {
             clockZoneHeightDp = 210f,
             landscapeClockAlignment = ClockAlignment.CENTER,
             landscapeClockZoneHeightDp = 300f,
-            overrideApps = true,
             appRowPosition = AppRowPosition.CENTER,
             landscapeAppRowPosition = AppRowPosition.RIGHT,
-            landscapeAppListVerticalAlignment = AppListVerticalAlignment.LAUNCHER_DEFAULT,
-            landscapeAppListColumnAlignment = AppListColumnAlignment.LAUNCHER_DEFAULT,
+            landscapeAppListVerticalAlignment = AppListVerticalAlignment.TOP,
+            landscapeAppListColumnAlignment = AppListColumnAlignment.MIRRORED,
             listContentMode = ListContentMode.MOST_USED,
             appsToShowCount = 5,
             appListLayout = AppListLayout.GRID,
-            overridingFavorites = true,
-            overrideDock = true,
             dockDisplayMode = DockDisplayMode.TEXT,
         )
 

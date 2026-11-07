@@ -177,16 +177,17 @@ class LauncherViewModel @Inject constructor(
             .onEach { completed -> _uiState.update { it.copy(onboardingCompleted = completed) } }
             .launchIn(viewModelScope)
         // Not one-shot: the active facet must stay a usable one when facets or the entitlement change.
-        viewModelScope.launch { ensureActiveFacet.keepUsable() }
+        // The dock seed goes first: the first facet copies the launcher-wide dock when it is created.
+        viewModelScope.launch {
+            seedDefaultDock()
+            ensureActiveFacet.keepUsable()
+        }
         // Runs for the app's whole lifetime, deleting Favorites/Dock rows on a genuine uninstall
         // rather than just filtering them from view — see CleanUpUninstalledAppsUseCase.
         viewModelScope.launch { cleanUpUninstalledApps() }
         // A single one-time pass, not a live collector (unlike the launches above/below it) — see
         // RepairOrphanedProfileRowsUseCase's own doc.
         viewModelScope.launch { repairOrphanedProfileRows() }
-        // Not gated on the onboarding UI being shown or completed — a fresh install's dock is
-        // seeded even if onboarding is killed/skipped partway through, see SeedDefaultDockUseCase.
-        viewModelScope.launch { seedDefaultDock() }
         // Runs for the app's whole lifetime, republishing the full dynamic-shortcut set on every
         // facet add/rename/reorder/delete — see SyncFacetShortcutsUseCase.
         viewModelScope.launch { syncFacetShortcuts() }
