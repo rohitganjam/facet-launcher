@@ -1,6 +1,7 @@
 package com.facetlauncher.app.ui.home.clock
 
 import androidx.compose.foundation.clickable
+import com.facetlauncher.app.ui.nativewidget.longPressFallback
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.size
@@ -69,6 +70,7 @@ fun WeatherAccessoryContent(
     val weather = LocalClockWeather.current ?: return
     IconAndText(
         modifier = modifier
+            .longPressFallback(LocalAccessoryLongPress.current)
             .clickable(role = Role.Button, onClick = weather.onClick)
             .semantics(mergeDescendants = true) {
                 role = Role.Button
