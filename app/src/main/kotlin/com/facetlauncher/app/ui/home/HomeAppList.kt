@@ -194,7 +194,7 @@ internal fun HomeAppGrid(
     anchoredAtBottom: Boolean,
     availableHeight: Dp,
     modifier: Modifier = Modifier,
-    onMove: ((items: List<PlacedItem>, cells: Map<String, GridCell>) -> Unit)? = null,
+    onMove: ((cells: Map<String, GridCell>) -> Unit)? = null,
 ) {
     val cellHeight = gridCellHeight(displayMode)
     val width = columns.coerceAtLeast(1)
@@ -217,8 +217,7 @@ internal fun HomeAppGrid(
         if (fromKey != null) {
             val next = HomeGridPlacement.drop(placed, fromKey, cellAtIndex(to, width)).mapKeys { it.key.toString() }
             moved = next
-            val order = HomeGridPlacement.readingOrder(next).mapNotNull { itemByKey[it] }
-            currentOnMove?.invoke(order, next)
+            currentOnMove?.invoke(next)
         }
     }
     val gridState = rememberLazyGridState()

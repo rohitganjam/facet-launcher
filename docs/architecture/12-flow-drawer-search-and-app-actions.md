@@ -247,7 +247,7 @@ cell is *picked up* (tick, scaled `PICK_UP_SCALE` = 1.12, no sheet yet). Releasi
 drags the cell (`detectPickUpDragGesture` in `PickUpDragGesture.kt` keeps the touch at `PointerEventPass.Initial`, so
 Home's swipes and the list's scroll never see it), the neighbours slide into the vacated slots, and the finished order is
 saved once on drop (`ReorderActiveListUseCase` for Home's list and Dock, `FolderRepository.reorderFolderApps` for a
-folder). Outside a host (previews, the Recents and Most used modes, a one-item list) it falls back to
+folder; on Home's grid it moves or swaps cells, [17 §2c](17-flow-home-layout.md)). Outside a host (previews, the Recents and Most used modes, a one-item list) it falls back to
 `longPressReleaseClickable`. The tick is also wired into the Widget Hub's grab gesture (`WidgetGrabGesture.kt`). The
 slot centres come from `onGloballyPositioned`; `ReorderGeometry` (target slot, neighbour shift, move) is pure and
 covered by `PickUpReorderTest`; `PickUpReorderGestureTest` drives the gesture.

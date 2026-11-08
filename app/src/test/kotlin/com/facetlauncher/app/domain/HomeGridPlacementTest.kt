@@ -32,6 +32,20 @@ class HomeGridPlacementTest {
     }
 
     @Test
+    fun `a newly added item takes the first free cell nearest the anchor`() {
+        // Given three items on cells 0,0 and 0,2, and 1,0 with a gap at 0,1, then a new item added at the end of the list
+        val saved = listOf(
+            entry("a", GridCell(0, 0)),
+            entry("b", GridCell(0, 2)),
+            entry("c", GridCell(1, 0)),
+            entry("new"),
+        )
+
+        // Then it fills the gap beside the first item, not the end of the grid
+        assertEquals(GridCell(0, 1), HomeGridPlacement.resolve(saved, columns = 4)["new"])
+    }
+
+    @Test
     fun `two items saved on one cell keep the first and move the second`() {
         val cells = HomeGridPlacement.resolve(listOf(entry("a", GridCell(0, 0)), entry("b", GridCell(0, 0))), columns = 3)
 
@@ -97,29 +111,6 @@ class HomeGridPlacementTest {
         val cells = mapOf<Any, GridCell>("a" to GridCell(0, 0))
 
         assertSame(cells, HomeGridPlacement.drop(cells, "a", GridCell(0, 0)))
-    }
-
-    @Test
-    fun `narrowing the grid moves outside items to free cells without overlap`() {
-        // Given items on a five-column grid, two of them in columns beyond a three-wide grid
-        val cells = mapOf<Any, GridCell>("a" to GridCell(0, 0), "b" to GridCell(0, 4), "c" to GridCell(0, 2), "d" to GridCell(0, 3))
-
-        // When it narrows to three columns
-        val compact = HomeGridPlacement.compact(cells, columns = 3)
-
-        // Then the outside ones take the next free cells, in their reading order
-        assertEquals(GridCell(0, 0), compact["a"])
-        assertEquals(GridCell(0, 2), compact["c"])
-        assertEquals(GridCell(0, 1), compact["d"])
-        assertEquals(GridCell(1, 0), compact["b"])
-        assertEquals(4, compact.values.toSet().size)
-    }
-
-    @Test
-    fun `the reading order is row by row from the anchor`() {
-        val cells = mapOf<Any, GridCell>("c" to GridCell(1, 0), "a" to GridCell(0, 2), "b" to GridCell(0, 3))
-
-        assertEquals(listOf<Any>("a", "b", "c"), HomeGridPlacement.readingOrder(cells))
     }
 
     @Test

@@ -574,6 +574,7 @@ internal fun quickPlacementLabel(action: QuickPlacementAction, listName: String)
     val templateRes = when (action) {
         is QuickPlacementAction.Add -> R.string.quick_placement_add_to
         is QuickPlacementAction.Remove -> R.string.quick_placement_remove_from
+        is QuickPlacementAction.Full -> R.string.quick_placement_full
     }
     return stringResource(templateRes, listName)
 }

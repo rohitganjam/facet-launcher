@@ -167,6 +167,7 @@
     <string name="folder_no_apps_yet">Aún no hay apps en esta carpeta</string>
     <string name="quick_placement_add_to">Añadir a %1$s</string>
     <string name="quick_placement_remove_from">Quitar de %1$s</string>
+    <string name="quick_placement_full">%1$s: límite alcanzado</string>
     <string name="quick_placement_favorites">Favoritos</string>
     <string name="quick_placement_dock">Dock</string>
     <plurals name="folder_app_count">

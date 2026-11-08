@@ -380,7 +380,7 @@ private fun HomeAppListBody(frame: HomeFrame, maxHeight: Dp) {
             landscape = frame.isLandscape,
             onMove = frame.actions.item.onMoveGridItems
                 ?.takeIf { list.reorderable }
-                ?.let { move -> { items: List<PlacedItem>, cells: Map<String, GridCell> -> move(frame.isLandscape, items, cells) } },
+                ?.let { move -> { cells: Map<String, GridCell> -> move(frame.isLandscape, cells) } },
             anchoredAtBottom = list.alignment.verticalAlignment == AppListVerticalAlignment.BOTTOM,
             availableHeight = maxHeight,
         )

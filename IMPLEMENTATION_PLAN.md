@@ -4654,7 +4654,7 @@ Rows are a minimum, not a cap: the grid has at least the facet's rows, grows whe
 - [x] Home reads the cells: `HomeListState.gridCells`, drawn by `HomeAppGrid` (fixed-height cells, anchor mirroring, empty cells as spacers); `HomeAppGridTest`, `HomeScreenStateBuilderTest`.
 - [x] (drawn, no drag yet) Grid layout: fixed-height cells, grid height from occupied cells and the minimum, top and bottom anchor mirror the arrangement, empty cells and gaps as free space. Tests for geometry, hit areas and the scroll extent.
 - [x] Grid drag (grid only): pick-up from phase 1, edge auto-scroll, drop on empty moves, drop on occupied swaps, extra empty row and faint slot guides while dragging; `GridDragTest`, `HomeAppGridTest`. Auto-scroll for the single-column list is not done.
-- [ ] Add to the first free cell nearest the anchor; refuse when at the Favorites cap with a message; compact on shrink; raise rows at list to grid switch; remember both orderings.
+- [x] Add to the first free cell nearest the anchor (`HomeGridPlacement.resolve`); a full list or Dock shows a disabled-in-effect row "Favorites: limit reached" (`QuickPlacementAction.Full`) in the app and folder menus; a narrower grid re-places items that no longer fit without losing their cell; the list and the grid keep separate orders (a grid drag no longer rewrites `position`); rows are derived so a list to grid switch needs no row change.
 - [ ] Docs: `02`, `08`, `09 §4`, `10` if grid constants change, `13`; regenerate `TEST_REGISTRY.md`.
 
 ### Later

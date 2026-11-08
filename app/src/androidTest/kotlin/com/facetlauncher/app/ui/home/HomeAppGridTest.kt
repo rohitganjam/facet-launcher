@@ -35,7 +35,7 @@ class HomeAppGridTest {
     private fun setGrid(
         anchoredAtBottom: Boolean,
         saved: Map<String, GridCell> = emptyMap(),
-        onMove: ((List<PlacedItem>, Map<String, GridCell>) -> Unit)? = null,
+        onMove: ((Map<String, GridCell>) -> Unit)? = null,
     ) {
         composeRule.setContent {
             FacetLauncherTheme {
@@ -115,7 +115,7 @@ class HomeAppGridTest {
     fun droppingAnItemOnAnEmptyCellMovesIt() {
         // Given the three items on the first row of a draggable grid
         var movedCells: Map<String, GridCell>? = null
-        setGrid(anchoredAtBottom = false, onMove = { _, cells -> movedCells = cells })
+        setGrid(anchoredAtBottom = false, onMove = { cells -> movedCells = cells })
 
         // When the first is held and dragged to the empty fourth column
         drag(apps[0], dx = columnSpacing() * 3)
@@ -129,24 +129,22 @@ class HomeAppGridTest {
     @Test
     fun droppingAnItemOnAnotherSwapsThem() {
         var movedCells: Map<String, GridCell>? = null
-        var order: List<PlacedItem>? = null
-        setGrid(anchoredAtBottom = false, onMove = { items, cells -> order = items; movedCells = cells })
+        setGrid(anchoredAtBottom = false, onMove = { cells -> movedCells = cells })
 
         // When the first is dropped on the second
         drag(apps[0], dx = columnSpacing())
 
-        // Then they swap, and the order follows the grid
+        // Then they swap
         composeRule.waitUntil(timeoutMillis = 3_000) { movedCells != null }
         assertEquals(GridCell(0, 1), movedCells!![items[0].gridKey()])
         assertEquals(GridCell(0, 0), movedCells!![items[1].gridKey()])
-        assertEquals(listOf(items[1], items[0], items[2]), order)
     }
 
     @Test
     fun aBottomAnchoredGridDragsUpToTheRowAboveIt() {
         // Given a bottom-anchored grid, whose first row is the bottom one
         var movedCells: Map<String, GridCell>? = null
-        setGrid(anchoredAtBottom = true, onMove = { _, cells -> movedCells = cells })
+        setGrid(anchoredAtBottom = true, onMove = { cells -> movedCells = cells })
         val rowHeight = with(composeRule.density) { 64.dp.toPx() }
 
         // When the first item is dragged one row up

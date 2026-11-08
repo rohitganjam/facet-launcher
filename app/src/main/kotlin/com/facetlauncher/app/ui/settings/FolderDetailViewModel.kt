@@ -57,6 +57,7 @@ class FolderDetailViewModel @Inject constructor(
             when (action) {
                 is QuickPlacementAction.Add -> addToActiveList(list, PlacedItem.FolderItem(folder))
                 is QuickPlacementAction.Remove -> removeFromActiveList(list, PlacedItem.FolderItem(folder))
+                is QuickPlacementAction.Full -> Unit
             }
         }
     }

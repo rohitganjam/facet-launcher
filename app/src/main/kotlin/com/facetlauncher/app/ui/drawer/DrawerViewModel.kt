@@ -251,6 +251,7 @@ class DrawerViewModel @Inject constructor(
             when (action) {
                 is QuickPlacementAction.Add -> addToActiveList(list, item)
                 is QuickPlacementAction.Remove -> removeFromActiveList(list, item)
+                is QuickPlacementAction.Full -> Unit
             }
         }
     }
@@ -287,8 +288,8 @@ class DrawerViewModel @Inject constructor(
     }
 
     /** A drag on Home's grid: saves where each Favorite now sits. */
-    fun onMoveGridItems(landscape: Boolean, orderedItems: List<PlacedItem>, cells: Map<String, GridCell>) {
-        viewModelScope.launch { reorderActiveList.saveGridCells(landscape, orderedItems, cells) }
+    fun onMoveGridItems(landscape: Boolean, cells: Map<String, GridCell>) {
+        viewModelScope.launch { reorderActiveList.saveGridCells(landscape, cells) }
     }
 
     /** A drag-to-reorder inside an open folder. */

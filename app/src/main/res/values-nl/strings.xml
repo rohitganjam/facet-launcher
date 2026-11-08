@@ -180,6 +180,7 @@
     <string name="folder_no_apps_yet">Nog geen apps in deze map</string>
     <string name="quick_placement_add_to">Toevoegen aan %1$s</string>
     <string name="quick_placement_remove_from">Verwijderen uit %1$s</string>
+    <string name="quick_placement_full">%1$s: limiet bereikt</string>
     <string name="quick_placement_favorites">Favorieten</string>
     <string name="quick_placement_dock">Dock</string>
     <plurals name="folder_app_count">

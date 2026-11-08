@@ -48,8 +48,8 @@ data class HomeItemActions(
     val onRenameFolder: (Long, String) -> Unit = { _, _ -> },
     /** Saves a drag-to-reorder of Home's apps list or Dock; null (a preview) leaves the cells un-draggable. */
     val onReorderList: ((PlacementList, List<PlacedItem>) -> Unit)? = null,
-    /** Saves a drag on Home's grid: whether it is landscape, the items in reading order, and each one's cell; null leaves the grid un-draggable. */
-    val onMoveGridItems: ((landscape: Boolean, items: List<PlacedItem>, cells: Map<String, GridCell>) -> Unit)? = null,
+    /** Saves a drag on Home's grid: whether it is landscape and each item's cell; null leaves the grid un-draggable. */
+    val onMoveGridItems: ((landscape: Boolean, cells: Map<String, GridCell>) -> Unit)? = null,
     /** Saves a drag-to-reorder inside an open folder; null leaves its rows un-draggable. */
     val onReorderFolderApps: ((folderId: Long, List<AppInfo>) -> Unit)? = null,
 )

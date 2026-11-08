@@ -115,7 +115,7 @@ class FolderTileContextMenuTest {
 
         composeRule.waitForIdle()
         composeRule.onNodeWithText("Add to Favorites").assertExists()
-        composeRule.onNodeWithText("Global").assertExists()
+        composeRule.onNodeWithText("Global").assertDoesNotExist()
         composeRule.onNodeWithTag("folder_tile_context_menu_add_to_favorites").performClick()
 
         assert(actedFolder == folder)
@@ -124,12 +124,12 @@ class FolderTileContextMenuTest {
     }
 
     @Test
-    fun addToFavoritesRowShowsTheFacetNameBadgeWhenTheActiveFacetOverridesItsOwn() {
+    fun addToFavoritesRowNamesNoFacetEvenWhenTheActiveFacetOverridesItsOwn() {
         setContent(onRequestQuickAddState = { QuickAddState(favoritesAction = QuickPlacementAction.Add(facetName = "Work")) })
 
         composeRule.waitForIdle()
         composeRule.onNodeWithText("Add to Favorites").assertExists()
-        composeRule.onNodeWithText("Work").assertExists()
+        composeRule.onNodeWithText("Work").assertDoesNotExist()
     }
 
     @Test
@@ -170,7 +170,7 @@ class FolderTileContextMenuTest {
 
         composeRule.waitForIdle()
         composeRule.onNodeWithText("Add to Dock").assertExists()
-        composeRule.onNodeWithText("Global").assertExists()
+        composeRule.onNodeWithText("Global").assertDoesNotExist()
         composeRule.onNodeWithTag("folder_tile_context_menu_add_to_dock").performClick()
 
         assert(actedFolder == folder)
@@ -179,12 +179,12 @@ class FolderTileContextMenuTest {
     }
 
     @Test
-    fun addToDockRowShowsTheFacetNameBadgeWhenTheActiveFacetOverridesItsOwn() {
+    fun addToDockRowNamesNoFacetEvenWhenTheActiveFacetOverridesItsOwn() {
         setContent(onRequestQuickAddState = { QuickAddState(dockAction = QuickPlacementAction.Add(facetName = "Work")) })
 
         composeRule.waitForIdle()
         composeRule.onNodeWithText("Add to Dock").assertExists()
-        composeRule.onNodeWithText("Work").assertExists()
+        composeRule.onNodeWithText("Work").assertDoesNotExist()
     }
 
     @Test
@@ -235,7 +235,7 @@ class FolderTileContextMenuTest {
         )
 
         composeRule.waitForIdle()
-        composeRule.onNodeWithContentDescription("Remove from Favorites, Global").assertExists()
-        composeRule.onNodeWithContentDescription("Remove from Dock, Work").assertExists()
+        composeRule.onNodeWithContentDescription("Remove from Favorites").assertExists()
+        composeRule.onNodeWithContentDescription("Remove from Dock").assertExists()
     }
 }

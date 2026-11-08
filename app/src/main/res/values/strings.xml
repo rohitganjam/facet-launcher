@@ -200,6 +200,7 @@
     <!-- Shared by AppContextMenu/FolderTileContextMenu's quickPlacementLabel() — %1$s is quick_placement_favorites/quick_placement_dock below. -->
     <string name="quick_placement_add_to">Add to %1$s</string>
     <string name="quick_placement_remove_from">Remove from %1$s</string>
+    <string name="quick_placement_full">%1$s: limit reached</string>
     <string name="quick_placement_favorites">Favorites</string>
     <string name="quick_placement_dock">Dock</string>
     <plurals name="folder_app_count">

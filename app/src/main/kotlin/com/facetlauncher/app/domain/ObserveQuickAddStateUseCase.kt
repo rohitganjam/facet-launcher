@@ -18,12 +18,15 @@ sealed interface QuickPlacementAction {
     val facetName: String?
     data class Add(override val facetName: String?) : QuickPlacementAction
     data class Remove(override val facetName: String?) : QuickPlacementAction
+
+    /** The list is at its cap and does not hold the item: the row says so and does nothing. */
+    data class Full(override val facetName: String?) : QuickPlacementAction
 }
 
 /**
  * Backs the Favorites/Dock rows in [com.facetlauncher.app.ui.components.AppContextMenu] and
  * [com.facetlauncher.app.ui.components.FolderTileContextMenu]. A `null` field hides its row
- * entirely (the item isn't already a member AND the list is at its cap); a non-null
+ * entirely (only for an item that cannot be placed at all); a non-null
  * [QuickPlacementAction] shows the row as either Add or Remove, naming either the launcher-wide
  * default list or the active facet's own (see [QuickPlacementAction]'s own doc).
  */
@@ -86,7 +89,7 @@ class ObserveQuickAddStateUseCase @Inject constructor() {
         return when {
             items.any(isMember) -> QuickPlacementAction.Remove(facetName)
             items.size < maxItems -> QuickPlacementAction.Add(facetName)
-            else -> null
+            else -> QuickPlacementAction.Full(facetName)
         }
     }
 }

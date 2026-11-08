@@ -78,7 +78,7 @@ class ObserveFolderPlacementUseCaseTest {
     }
 
     @Test
-    fun `a full Dock offers nothing for a folder not in it`() = runTest {
+    fun `a full Dock offers a full row for a folder not in it`() = runTest {
         // Given the Dock already at its cap with other folders
         val home = Facet(id = 1L, name = "Home", position = 0)
         val others = (1..AppListLimits.MAX_DOCK_APPS).map { PlacedItem.FolderItem(Folder(id = 100L + it, name = "F$it", apps = emptyList())) }
@@ -87,8 +87,8 @@ class ObserveFolderPlacementUseCaseTest {
         // When the state is read
         val state = useCase(folderId = 5L).first()
 
-        // Then the Dock row is hidden
-        assertNull(state.quickAdd.dockAction)
+        // Then the Dock row says it is full
+        assertEquals(QuickPlacementAction.Full(facetName = "Home"), state.quickAdd.dockAction)
     }
 
     @Test

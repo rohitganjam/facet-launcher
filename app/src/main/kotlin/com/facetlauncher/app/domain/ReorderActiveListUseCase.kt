@@ -14,8 +14,8 @@ class ReorderActiveListUseCase @Inject constructor(
         placementRepository.reorderItems(resolveTarget(list), orderedItems)
     }
 
-    /** A drag on Home's grid: saves the Favorites' new cells for [landscape] or portrait, and their order to match. */
-    suspend fun saveGridCells(landscape: Boolean, orderedItems: List<PlacedItem>, cells: Map<String, GridCell>) {
-        placementRepository.saveGridCells(resolveTarget(PlacementList.FAVORITES), landscape, orderedItems, cells)
+    /** A drag on Home's grid: saves the Favorites' new cells for [landscape] or portrait; the list order is not changed. */
+    suspend fun saveGridCells(landscape: Boolean, cells: Map<String, GridCell>) {
+        placementRepository.saveGridCells(resolveTarget(PlacementList.FAVORITES), landscape, cells)
     }
 }
