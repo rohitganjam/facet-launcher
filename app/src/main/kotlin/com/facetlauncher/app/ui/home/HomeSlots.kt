@@ -48,6 +48,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.facetlauncher.app.R
 import com.facetlauncher.app.data.model.AppListLayout
+import com.facetlauncher.app.data.model.AppListVerticalAlignment
 import com.facetlauncher.app.data.model.AppRowPosition
 import com.facetlauncher.app.data.model.PlacedItem
 import com.facetlauncher.app.data.model.PlacementList
@@ -347,14 +348,14 @@ internal fun HomeAppListRegion(frame: HomeFrame, maxHeight: Dp, modifier: Modifi
             if (frame.state.list.showUsageAccessPrompt) {
                 UsageAccessStrip(onClick = frame.actions.onUsageAccessPromptClick)
             } else {
-                HomeAppListBody(frame)
+                HomeAppListBody(frame, maxHeight)
             }
         }
     }
 }
 
 @Composable
-private fun HomeAppListBody(frame: HomeFrame) {
+private fun HomeAppListBody(frame: HomeFrame, maxHeight: Dp) {
     val list = frame.state.list
     val compact = frame.layout.useCompactAppSpacing
     val rowPadding = if (compact) HOME_APP_ROW_COMPACT_VERTICAL_PADDING else HOME_APP_ROW_REGULAR_VERTICAL_PADDING
@@ -374,6 +375,10 @@ private fun HomeAppListBody(frame: HomeFrame) {
             actions = frame.actions.item,
             columns = gridColumns(frame),
             displayMode = list.gridDisplayMode,
+            savedCells = list.gridCells,
+            landscape = frame.isLandscape,
+            anchoredAtBottom = list.alignment.verticalAlignment == AppListVerticalAlignment.BOTTOM,
+            availableHeight = maxHeight,
         )
         AppListLayout.SINGLE_COLUMN -> HomeAppListColumn(
             content = frame.listContent,

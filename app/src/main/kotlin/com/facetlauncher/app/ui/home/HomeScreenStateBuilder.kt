@@ -23,6 +23,7 @@ import com.facetlauncher.app.data.model.isWidget
 import com.facetlauncher.app.domain.defaultSizeDp
 import com.facetlauncher.app.domain.minSizeDp
 import com.facetlauncher.app.domain.ClockPlacement
+import com.facetlauncher.app.domain.SavedGridCells
 import com.facetlauncher.app.domain.ResolvedClockItem
 import com.facetlauncher.app.domain.ResolvedFacetStyle
 import com.facetlauncher.app.domain.limitedTo
@@ -36,6 +37,8 @@ import kotlinx.collections.immutable.toImmutableMap
 /** What a Home screen shows besides the facet's look. */
 data class HomeScreenContent(
     val listItems: List<PlacedItem>,
+    /** Where the Favorites sit on the grid layout, once moved there. */
+    val listCells: SavedGridCells = SavedGridCells(),
     val dockItems: List<PlacedItem>,
     val calendarEvents: List<CalendarEvent>,
     val badgeCounts: Map<String, Int> = emptyMap(),
@@ -102,6 +105,7 @@ fun ResolvedFacetStyle.toHomeScreenState(
         gridDisplayMode = appList.gridDisplayMode,
         showUsageAccessPrompt = content.showUsageAccessPrompt,
         reorderable = appList.contentMode == ListContentMode.FAVORITES,
+        gridCells = if (appList.contentMode == ListContentMode.FAVORITES) content.listCells else SavedGridCells(),
         shrinkToFit = appList.shrinkToFit == AppListShrinkToFit.ON,
     ),
     dock = HomeDockState(items = content.dockItems, displayMode = dockDisplayMode),

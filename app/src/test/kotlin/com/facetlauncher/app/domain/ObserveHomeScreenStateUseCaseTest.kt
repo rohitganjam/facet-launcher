@@ -45,9 +45,11 @@ class ObserveHomeScreenStateUseCaseTest {
         val observePlacedItems = mock(ObservePlacedItemsUseCase::class.java).also {
             `when`(it.items(PlacementTarget.GlobalDock)).thenReturn(flowOf(emptyList()))
             `when`(it.items(PlacementTarget.GlobalFavorites)).thenReturn(flowOf(emptyList()))
+            `when`(it.gridCells(PlacementTarget.GlobalFavorites)).thenReturn(flowOf(SavedGridCells()))
             listOf(1L, 2L).forEach { facetId ->
                 `when`(it.items(PlacementTarget(PlacementList.DOCK, facetId))).thenReturn(flowOf(emptyList()))
                 `when`(it.items(PlacementTarget(PlacementList.FAVORITES, facetId))).thenReturn(flowOf(emptyList()))
+                `when`(it.gridCells(PlacementTarget(PlacementList.FAVORITES, facetId))).thenReturn(flowOf(SavedGridCells()))
             }
         }
         val facetsFlow = MutableStateFlow<List<Facet>>(emptyList())

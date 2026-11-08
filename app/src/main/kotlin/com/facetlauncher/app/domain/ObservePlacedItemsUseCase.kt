@@ -26,6 +26,12 @@ class ObservePlacedItemsUseCase @Inject constructor(
     private val appRepository: AppRepository,
 ) {
 
+    /** The Home grid cells saved for the target, both orientations. */
+    fun gridCells(target: PlacementTarget): Flow<SavedGridCells> =
+        combine(placementRepository.observeGridCells(target, landscape = false), placementRepository.observeGridCells(target, landscape = true)) { portrait, landscape ->
+            SavedGridCells(portrait, landscape)
+        }
+
     /** The target's apps only, in position order. */
     fun apps(target: PlacementTarget): Flow<List<AppInfo>> =
         combine(placementRepository.observeAppEntities(target), appRepository.observeInstalledApps()) { entities, installed ->

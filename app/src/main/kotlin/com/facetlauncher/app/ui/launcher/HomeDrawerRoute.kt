@@ -359,6 +359,7 @@ fun HomeDrawerRoute(
         settings = homeUiState.settings,
         content = HomeScreenContent(
             listItems = homeUiState.appListItems,
+            listCells = homeUiState.favoriteCells,
             dockItems = homeUiState.dockApps,
             calendarEvents = homeUiState.calendarEvents,
             badgeCounts = homeUiState.badgeCounts,

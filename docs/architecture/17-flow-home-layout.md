@@ -82,6 +82,10 @@ A folder sheet follows where it was opened: from Home's grid layout it is a grid
 (`HomeItemLook.drawerPresentation`/`folderGridColumns`/`folderGridDisplayMode`, set by `toHomeScreenState`), from the
 drawer's grid a grid with the drawer's column count and labels, anywhere else a list of Regular rows.
 
+## 2c. The grid layout
+
+`HomeAppGrid` draws `AppListLayout.GRID` as fixed-height cells (one height per display mode), `columns` wide. Each item sits on its saved cell for the current orientation (`HomeListState.gridCells`, from `PlacementRepository.observeGridCells`, [08](08-flow-placements.md)) or, until moved, on the first free cell reading row by row (`domain/HomeGridPlacement.resolve`). Cells count from the anchor edge: with a top alignment row 0 is the top row, with `AppListVerticalAlignment.BOTTOM` it is the bottom row and the grid grows upward, left to right either way. The grid has as many rows as fit in the list region at the cell height, or more when an item sits lower, and scrolls. Empty cells are plain spacers, so a long-press there is free space. Only Favorites carry saved cells (Recents and Most used have no order to move). `HomeGridPlacementTest`, `HomeAppGridTest`.
+
 ## 2a. Portrait's height handle limit
 
 The handle's upper limit (`clockHandleFloorPx`) is not the clock's full-size footprint but the clock at

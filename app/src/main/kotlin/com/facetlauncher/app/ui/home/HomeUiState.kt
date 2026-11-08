@@ -1,6 +1,7 @@
 package com.facetlauncher.app.ui.home
 
 import com.facetlauncher.app.data.model.NativeWidgetType
+import com.facetlauncher.app.domain.SavedGridCells
 import com.facetlauncher.app.domain.ListAlignment
 import com.facetlauncher.app.domain.ClockPlacement
 import com.facetlauncher.app.data.model.Facet
@@ -43,6 +44,8 @@ data class HomeUiState(
     val appListItems: List<PlacedItem> = emptyList(),
     /** The active facet's real Favorites contents, resolved unconditionally — see [com.facetlauncher.app.domain.HomeScreenState.favoriteItems]'s own doc for why this is separate from [appListItems]. */
     val favoriteItems: List<PlacedItem> = emptyList(),
+    /** The saved grid cells of [favoriteItems], per orientation. */
+    val favoriteCells: SavedGridCells = SavedGridCells(),
     val facets: List<Facet> = emptyList(),
     val usageAccessGranted: Boolean = false,
     val calendarEvents: List<CalendarEvent> = emptyList(),

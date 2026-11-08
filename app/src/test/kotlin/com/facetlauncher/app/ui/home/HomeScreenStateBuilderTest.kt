@@ -1,5 +1,8 @@
 package com.facetlauncher.app.ui.home
 
+import com.facetlauncher.app.data.model.ListContentMode
+import com.facetlauncher.app.domain.GridCell
+import com.facetlauncher.app.domain.SavedGridCells
 import com.facetlauncher.app.domain.minSizeDp
 import com.facetlauncher.app.domain.defaultSizeDp
 import com.facetlauncher.app.data.nativeItem
@@ -68,6 +71,19 @@ class HomeScreenStateBuilderTest {
                 assertEquals(home.listAlignment(mode), state.list.alignment)
             }
         }
+    }
+
+    @Test
+    fun `saved grid cells reach Home only for a Favorites list`() {
+        // Given saved cells and a facet in Favorites mode, and one showing Recents
+        val cells = SavedGridCells(portrait = mapOf("a" to GridCell(1, 2)))
+        val withCells = content.copy(listCells = cells)
+        val favorites = Facet(id = 1L, name = "Favorites", position = 0, listContentMode = ListContentMode.FAVORITES)
+        val recents = Facet(id = 1L, name = "Recents", position = 0, listContentMode = ListContentMode.RECENTS)
+
+        // Then Favorites keeps them, and Recents has none (it has no order of its own to move)
+        assertEquals(cells, resolveFacetStyle(favorites, settings).toHomeScreenState(false, settings, withCells).list.gridCells)
+        assertEquals(SavedGridCells(), resolveFacetStyle(recents, settings).toHomeScreenState(false, settings, withCells).list.gridCells)
     }
 
     @Test

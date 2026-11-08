@@ -5,6 +5,11 @@ import com.facetlauncher.app.data.model.AppListVerticalAlignment
 /** A Home grid cell, counted from the anchor edge: row 0 is the row next to the anchor (the top, or the bottom when anchored there). */
 data class GridCell(val row: Int, val column: Int)
 
+/** The saved cells of one list, for each orientation, by [com.facetlauncher.app.data.model.gridKey]. */
+data class SavedGridCells(val portrait: Map<String, GridCell> = emptyMap(), val landscape: Map<String, GridCell> = emptyMap()) {
+    fun of(landscape: Boolean): Map<String, GridCell> = if (landscape) this.landscape else portrait
+}
+
 /** An item to place: [key] identifies it, [saved] is the cell it was last moved to (null until then), and the list order breaks ties. */
 data class GridEntry<K>(val key: K, val saved: GridCell?)
 

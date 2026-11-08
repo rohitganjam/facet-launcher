@@ -5,6 +5,13 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import com.facetlauncher.app.domain.HomeGridPlacement
+import com.facetlauncher.app.domain.GridEntry
+import com.facetlauncher.app.domain.GridCell
+import com.facetlauncher.app.domain.SavedGridCells
+import com.facetlauncher.app.data.model.gridKey
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -153,8 +160,9 @@ internal fun HomeAppListColumn(
 }
 
 /**
- * [AppListLayout.GRID]: a plain [LazyVerticalGrid] sharing the reserved region the other layouts use, so each tile
- * takes its own intrinsic height. A tile shows an icon or a label, never both, as [DockIcon] does for the dock.
+ * [AppListLayout.GRID]: fixed-height cells in [columns] columns, so every item has a cell and an empty cell or a gap is free
+ * space. Items sit on their [savedCells] or, until moved, fill the grid row by row from the anchor edge ([anchoredAtBottom]
+ * puts row 0 at the bottom). The grid has as many rows as fit in [availableHeight], or more if an item sits lower, and scrolls.
  */
 @Composable
 internal fun HomeAppGrid(
@@ -162,22 +170,52 @@ internal fun HomeAppGrid(
     actions: HomeItemActions,
     columns: Int,
     displayMode: AppListGridDisplayMode,
+    savedCells: SavedGridCells,
+    landscape: Boolean,
+    anchoredAtBottom: Boolean,
+    availableHeight: Dp,
     modifier: Modifier = Modifier,
 ) {
+    val cellHeight = gridCellHeight(displayMode)
+    val width = columns.coerceAtLeast(1)
+    val placed = remember(content.items, savedCells, landscape, width) {
+        val cells = savedCells.of(landscape)
+        HomeGridPlacement.resolve(content.items.map { GridEntry(it.gridKey(), cells[it.gridKey()]) }, width)
+    }
+    val itemByKey = remember(content.items) { content.items.associateBy { it.gridKey() } }
+    val keyAtCell = remember(placed) { placed.entries.associate { it.value to it.key } }
+    val rows = HomeGridPlacement.rowCount(placed.values, minimumRows = (availableHeight / cellHeight).toInt().coerceAtLeast(1))
     LazyVerticalGrid(
-        columns = GridCells.Fixed(columns),
+        columns = GridCells.Fixed(width),
         modifier = modifier.fillMaxWidth().testTag(homeTag("home_app_grid")),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
         horizontalArrangement = Arrangement.spacedBy(2.dp),
     ) {
-        items(content.items, key = { it.stableKey() }) { item ->
-            when (item) {
-                is PlacedItem.SingleApp -> HomeAppGridTile(item.app, displayMode, actions, content.style)
-                is PlacedItem.FolderItem -> HomeFolderGridTile(item.folder, displayMode, actions, content.style)
+        items(rows * width, key = { index -> keyAtCell[cellAt(index, width, rows, anchoredAtBottom)] ?: "empty_$index" }) { index ->
+            val tileModifier = Modifier.height(cellHeight)
+            when (val item = keyAtCell[cellAt(index, width, rows, anchoredAtBottom)]?.let(itemByKey::get)) {
+                is PlacedItem.SingleApp -> HomeAppGridTile(item.app, displayMode, actions, content.style, tileModifier)
+                is PlacedItem.FolderItem -> HomeFolderGridTile(item.folder, displayMode, actions, content.style, tileModifier)
+                null -> Spacer(tileModifier)
             }
         }
     }
 }
+
+/** The grid cell shown at [index] (reading left to right, top to bottom on screen). */
+private fun cellAt(index: Int, columns: Int, rows: Int, anchoredAtBottom: Boolean) =
+    GridCell(HomeGridPlacement.anchorRow(index / columns, rows, anchoredAtBottom), index % columns)
+
+/** A cell is one fixed height for its display mode: the icon, and its name under it where shown. */
+@Composable
+private fun gridCellHeight(displayMode: AppListGridDisplayMode): Dp = when (displayMode) {
+    AppListGridDisplayMode.ICONS -> AppIconSize.scaled() + GRID_CELL_ICON_PADDING
+    AppListGridDisplayMode.ICONS_AND_TEXT -> AppIconSize.scaled() + GRID_CELL_ICON_PADDING + GRID_CELL_LABEL_HEIGHT
+    AppListGridDisplayMode.TEXT -> GRID_CELL_TEXT_HEIGHT
+}
+
+private val GRID_CELL_ICON_PADDING = 16.dp
+private val GRID_CELL_LABEL_HEIGHT = 28.dp
+private val GRID_CELL_TEXT_HEIGHT = 56.dp
 
 /** One [HomeAppGrid] tile. */
 @Composable
