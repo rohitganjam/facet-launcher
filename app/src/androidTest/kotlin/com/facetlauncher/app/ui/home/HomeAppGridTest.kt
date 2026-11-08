@@ -1,6 +1,11 @@
 package com.facetlauncher.app.ui.home
 
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.test.up
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.moveBy
+import androidx.compose.ui.test.down
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
@@ -27,7 +32,11 @@ class HomeAppGridTest {
     private val items = apps.map { PlacedItem.SingleApp(it) }
     private val height = 400.dp
 
-    private fun setGrid(anchoredAtBottom: Boolean, saved: Map<String, GridCell> = emptyMap()) {
+    private fun setGrid(
+        anchoredAtBottom: Boolean,
+        saved: Map<String, GridCell> = emptyMap(),
+        onMove: ((List<PlacedItem>, Map<String, GridCell>) -> Unit)? = null,
+    ) {
         composeRule.setContent {
             FacetLauncherTheme {
                 HomeAppGrid(
@@ -39,6 +48,7 @@ class HomeAppGridTest {
                     landscape = false,
                     anchoredAtBottom = anchoredAtBottom,
                     availableHeight = height,
+                    onMove = onMove,
                 )
             }
         }
@@ -86,5 +96,64 @@ class HomeAppGridTest {
         setGrid(anchoredAtBottom = true, saved = saved)
 
         assertTrue(top(apps[2]) < top(apps[0]))
+    }
+
+    private fun drag(app: AppInfo, dx: Float, dy: Float = 0f) {
+        composeRule.onNodeWithTag("home_app_icon_${app.packageName}", useUnmergedTree = true).performTouchInput {
+            down(center)
+            advanceEventTime(700)
+            moveBy(Offset(dx / 2, dy / 2))
+            moveBy(Offset(dx / 2, dy / 2))
+            up()
+        }
+        composeRule.waitForIdle()
+    }
+
+    private fun columnSpacing(): Float = with(composeRule.density) { (left(apps[1]) - left(apps[0])).toPx() }
+
+    @Test
+    fun droppingAnItemOnAnEmptyCellMovesIt() {
+        // Given the three items on the first row of a draggable grid
+        var movedCells: Map<String, GridCell>? = null
+        setGrid(anchoredAtBottom = false, onMove = { _, cells -> movedCells = cells })
+
+        // When the first is held and dragged to the empty fourth column
+        drag(apps[0], dx = columnSpacing() * 3)
+
+        // Then it takes that cell and the others stay
+        composeRule.waitUntil(timeoutMillis = 3_000) { movedCells != null }
+        assertEquals(GridCell(0, 3), movedCells!![items[0].gridKey()])
+        assertEquals(GridCell(0, 1), movedCells!![items[1].gridKey()])
+    }
+
+    @Test
+    fun droppingAnItemOnAnotherSwapsThem() {
+        var movedCells: Map<String, GridCell>? = null
+        var order: List<PlacedItem>? = null
+        setGrid(anchoredAtBottom = false, onMove = { items, cells -> order = items; movedCells = cells })
+
+        // When the first is dropped on the second
+        drag(apps[0], dx = columnSpacing())
+
+        // Then they swap, and the order follows the grid
+        composeRule.waitUntil(timeoutMillis = 3_000) { movedCells != null }
+        assertEquals(GridCell(0, 1), movedCells!![items[0].gridKey()])
+        assertEquals(GridCell(0, 0), movedCells!![items[1].gridKey()])
+        assertEquals(listOf(items[1], items[0], items[2]), order)
+    }
+
+    @Test
+    fun aBottomAnchoredGridDragsUpToTheRowAboveIt() {
+        // Given a bottom-anchored grid, whose first row is the bottom one
+        var movedCells: Map<String, GridCell>? = null
+        setGrid(anchoredAtBottom = true, onMove = { _, cells -> movedCells = cells })
+        val rowHeight = with(composeRule.density) { 64.dp.toPx() }
+
+        // When the first item is dragged one row up
+        drag(apps[0], dx = 0f, dy = -rowHeight)
+
+        // Then it lands on the second row from the anchor
+        composeRule.waitUntil(timeoutMillis = 3_000) { movedCells != null }
+        assertEquals(1, movedCells!![items[0].gridKey()]!!.row)
     }
 }

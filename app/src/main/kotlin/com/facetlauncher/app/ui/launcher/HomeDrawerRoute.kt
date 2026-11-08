@@ -342,6 +342,7 @@ fun HomeDrawerRoute(
         onRemoveFromFolder = drawerViewModel::removeFromFolder,
         onRenameFolder = drawerViewModel::renameFolder,
         onReorderList = drawerViewModel::onReorderList,
+        onMoveGridItems = drawerViewModel::onMoveGridItems,
         onReorderFolderApps = drawerViewModel::onReorderFolderApps,
     )
     val drawerState = rememberHomeDrawerState(drawerViewModel, appMenuNotifications)

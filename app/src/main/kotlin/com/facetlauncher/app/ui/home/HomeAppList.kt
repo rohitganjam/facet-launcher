@@ -5,6 +5,23 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import kotlinx.coroutines.delay
+import com.facetlauncher.app.ui.components.longPressReorderClickable
+import com.facetlauncher.app.ui.components.gridItemLayer
+import com.facetlauncher.app.ui.components.gridCellBounds
+import com.facetlauncher.app.ui.components.LocalGridDrag
+import com.facetlauncher.app.ui.components.GridDragState
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
+import androidx.compose.foundation.lazy.grid.LazyGridState
+import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.scrollBy
 import com.facetlauncher.app.domain.HomeGridPlacement
 import com.facetlauncher.app.domain.GridEntry
 import com.facetlauncher.app.domain.GridCell
@@ -162,7 +179,9 @@ internal fun HomeAppListColumn(
 /**
  * [AppListLayout.GRID]: fixed-height cells in [columns] columns, so every item has a cell and an empty cell or a gap is free
  * space. Items sit on their [savedCells] or, until moved, fill the grid row by row from the anchor edge ([anchoredAtBottom]
- * puts row 0 at the bottom). The grid has as many rows as fit in [availableHeight], or more if an item sits lower, and scrolls.
+ * lays the grid out from the bottom, so row 0 is the bottom row). The grid has as many rows as fit in [availableHeight], or
+ * more if an item sits lower, and scrolls. With [onMove], a long-press picks an item up: dropping on an empty cell moves it,
+ * on another item swaps the two, and an empty row shows past the last occupied one while dragging.
  */
 @Composable
 internal fun HomeAppGrid(
@@ -175,35 +194,96 @@ internal fun HomeAppGrid(
     anchoredAtBottom: Boolean,
     availableHeight: Dp,
     modifier: Modifier = Modifier,
+    onMove: ((items: List<PlacedItem>, cells: Map<String, GridCell>) -> Unit)? = null,
 ) {
     val cellHeight = gridCellHeight(displayMode)
     val width = columns.coerceAtLeast(1)
-    val placed = remember(content.items, savedCells, landscape, width) {
-        val cells = savedCells.of(landscape)
-        HomeGridPlacement.resolve(content.items.map { GridEntry(it.gridKey(), cells[it.gridKey()]) }, width)
+    // A finished drag shows at once; the saved cells replace it when they arrive.
+    var moved by remember(content.items, savedCells, landscape, width) { mutableStateOf<Map<String, GridCell>?>(null) }
+    val placed = remember(content.items, savedCells, landscape, width, moved) {
+        val saved = savedCells.of(landscape)
+        HomeGridPlacement.resolve(content.items.map { GridEntry(it.gridKey(), moved?.get(it.gridKey()) ?: saved[it.gridKey()]) }, width)
     }
     val itemByKey = remember(content.items) { content.items.associateBy { it.gridKey() } }
     val keyAtCell = remember(placed) { placed.entries.associate { it.value to it.key } }
-    val rows = HomeGridPlacement.rowCount(placed.values, minimumRows = (availableHeight / cellHeight).toInt().coerceAtLeast(1))
-    LazyVerticalGrid(
-        columns = GridCells.Fixed(width),
-        modifier = modifier.fillMaxWidth().testTag(homeTag("home_app_grid")),
-        horizontalArrangement = Arrangement.spacedBy(2.dp),
-    ) {
-        items(rows * width, key = { index -> keyAtCell[cellAt(index, width, rows, anchoredAtBottom)] ?: "empty_$index" }) { index ->
-            val tileModifier = Modifier.height(cellHeight)
-            when (val item = keyAtCell[cellAt(index, width, rows, anchoredAtBottom)]?.let(itemByKey::get)) {
-                is PlacedItem.SingleApp -> HomeAppGridTile(item.app, displayMode, actions, content.style, tileModifier)
-                is PlacedItem.FolderItem -> HomeFolderGridTile(item.folder, displayMode, actions, content.style, tileModifier)
-                null -> Spacer(tileModifier)
+    val drag = remember { GridDragState() }
+    val enabled = onMove != null && content.items.isNotEmpty()
+    val fitRows = (availableHeight / cellHeight).toInt().coerceAtLeast(1)
+    val rows = if (enabled && drag.liftedKey != null) HomeGridPlacement.rowCountWhileDragging(placed.values, fitRows) else HomeGridPlacement.rowCount(placed.values, fitRows)
+    val currentOnMove by rememberUpdatedState(onMove)
+    drag.indexOfKey = { key -> placed[key]?.let { it.row * width + it.column } }
+    drag.onDrop = { from, to ->
+        val fromKey = keyAtCell[cellAtIndex(from, width)]
+        if (fromKey != null) {
+            val next = HomeGridPlacement.drop(placed, fromKey, cellAtIndex(to, width)).mapKeys { it.key.toString() }
+            moved = next
+            val order = HomeGridPlacement.readingOrder(next).mapNotNull { itemByKey[it] }
+            currentOnMove?.invoke(order, next)
+        }
+    }
+    val gridState = rememberLazyGridState()
+    var viewport by remember { mutableStateOf(Rect.Zero) }
+    GridEdgeAutoScroll(drag, gridState, viewport, reversed = anchoredAtBottom)
+    CompositionLocalProvider(LocalGridDrag provides drag.takeIf { enabled }) {
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(width),
+            state = gridState,
+            reverseLayout = anchoredAtBottom,
+            modifier = modifier.fillMaxWidth().onGloballyPositioned { viewport = it.boundsInRoot() }.testTag(homeTag("home_app_grid")),
+            horizontalArrangement = Arrangement.spacedBy(2.dp),
+        ) {
+            items(rows * width, key = { index -> keyAtCell[cellAtIndex(index, width)] ?: "empty_$index" }) { index ->
+                val cell = cellAtIndex(index, width)
+                val item = keyAtCell[cell]?.let(itemByKey::get)
+                val tileModifier = Modifier.height(cellHeight).gridCellBounds(index)
+                when (item) {
+                    is PlacedItem.SingleApp -> HomeAppGridTile(item.app, displayMode, actions, content.style, tileModifier.gridItemLayer(item.gridKey()), item.gridKey())
+                    is PlacedItem.FolderItem -> HomeFolderGridTile(item.folder, displayMode, actions, content.style, tileModifier.gridItemLayer(item.gridKey()), item.gridKey())
+                    null -> GridEmptyCell(guide = drag.liftedKey != null, isTarget = drag.targetIndex == index, modifier = tileModifier)
+                }
             }
         }
     }
 }
 
-/** The grid cell shown at [index] (reading left to right, top to bottom on screen). */
-private fun cellAt(index: Int, columns: Int, rows: Int, anchoredAtBottom: Boolean) =
-    GridCell(HomeGridPlacement.anchorRow(index / columns, rows, anchoredAtBottom), index % columns)
+/** Free space on the grid; while an item is held it shows a faint guide, a stronger one under the cell it would drop into. */
+@Composable
+private fun GridEmptyCell(guide: Boolean, isTarget: Boolean, modifier: Modifier = Modifier) {
+    val alpha = if (isTarget) GRID_TARGET_ALPHA else if (guide) GRID_GUIDE_ALPHA else 0f
+    Spacer(modifier.padding(GRID_GUIDE_INSET).background(Color.White.copy(alpha = alpha), MaterialTheme.shapes.medium))
+}
+
+/** Scrolls the grid while the held item is near its top or bottom edge, and tells [drag] how far, so the item stays under the finger. */
+@Composable
+private fun GridEdgeAutoScroll(drag: GridDragState, state: LazyGridState, viewport: Rect, reversed: Boolean) {
+    val edge = with(LocalDensity.current) { GRID_AUTO_SCROLL_EDGE.toPx() }
+    val step = with(LocalDensity.current) { GRID_AUTO_SCROLL_STEP.toPx() }
+    LaunchedEffect(drag.dragging, viewport, reversed) {
+        while (drag.dragging && !viewport.isEmpty) {
+            val y = drag.pointer.y
+            // Positive: the content moves up (the finger is near the bottom); negative: it moves down.
+            val visual = when {
+                y > viewport.bottom - edge -> step
+                y < viewport.top + edge -> -step
+                else -> 0f
+            }
+            if (visual != 0f) {
+                val consumed = state.scrollBy(if (reversed) -visual else visual)
+                drag.addScroll(if (reversed) -consumed else consumed)
+            }
+            delay(GRID_AUTO_SCROLL_FRAME_MS)
+        }
+    }
+}
+
+private fun cellAtIndex(index: Int, columns: Int) = GridCell(index / columns, index % columns)
+
+private val GRID_AUTO_SCROLL_EDGE = 56.dp
+private val GRID_AUTO_SCROLL_STEP = 10.dp
+private const val GRID_AUTO_SCROLL_FRAME_MS = 16L
+private const val GRID_GUIDE_ALPHA = 0.06f
+private const val GRID_TARGET_ALPHA = 0.18f
+private val GRID_GUIDE_INSET = 4.dp
 
 /** A cell is one fixed height for its display mode: the icon, and its name under it where shown. */
 @Composable
@@ -225,12 +305,13 @@ internal fun HomeAppGridTile(
     actions: HomeItemActions,
     style: HomeItemStyle,
     modifier: Modifier = Modifier,
+    dragKey: Any = app.listKey,
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .longPressReleaseClickable(onClick = { actions.onAppClick(app) }, onLongPress = { menuExpanded = true })
+            .longPressReorderClickable(dragKey, onClick = { actions.onAppClick(app) }, onLongPress = { menuExpanded = true })
             .padding(vertical = 8.dp),
         contentAlignment = Alignment.Center,
     ) {
@@ -293,13 +374,14 @@ internal fun HomeFolderGridTile(
     actions: HomeItemActions,
     style: HomeItemStyle,
     modifier: Modifier = Modifier,
+    dragKey: Any = "folder_${folder.id}",
 ) {
     var sheetOpen by remember { mutableStateOf(false) }
     var menuExpanded by remember { mutableStateOf(false) }
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .longPressReleaseClickable(onClick = { sheetOpen = true }, onLongPress = { menuExpanded = true })
+            .longPressReorderClickable(dragKey, onClick = { sheetOpen = true }, onLongPress = { menuExpanded = true })
             .testTag(homeTag("home_folder_grid_tile_${folder.id}"))
             .padding(vertical = 8.dp),
         contentAlignment = Alignment.Center,

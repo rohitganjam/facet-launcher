@@ -48,6 +48,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.facetlauncher.app.R
 import com.facetlauncher.app.data.model.AppListLayout
+import com.facetlauncher.app.domain.GridCell
 import com.facetlauncher.app.data.model.AppListVerticalAlignment
 import com.facetlauncher.app.data.model.AppRowPosition
 import com.facetlauncher.app.data.model.PlacedItem
@@ -377,6 +378,9 @@ private fun HomeAppListBody(frame: HomeFrame, maxHeight: Dp) {
             displayMode = list.gridDisplayMode,
             savedCells = list.gridCells,
             landscape = frame.isLandscape,
+            onMove = frame.actions.item.onMoveGridItems
+                ?.takeIf { list.reorderable }
+                ?.let { move -> { items: List<PlacedItem>, cells: Map<String, GridCell> -> move(frame.isLandscape, items, cells) } },
             anchoredAtBottom = list.alignment.verticalAlignment == AppListVerticalAlignment.BOTTOM,
             availableHeight = maxHeight,
         )

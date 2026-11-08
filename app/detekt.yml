@@ -26,6 +26,7 @@ Compose:
       - LocalHomePressedEvent
       - LocalHomeSwipeGate
       - LocalPickUpReorder
+      - LocalGridDrag
       - LocalSystemBarsState
       - LocalLightStatusBarIcons
       - LocalHideStatusBar

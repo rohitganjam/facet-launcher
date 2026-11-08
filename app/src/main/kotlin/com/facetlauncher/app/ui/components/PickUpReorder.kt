@@ -67,8 +67,16 @@ internal object ReorderGeometry {
  * The picked-up/dragged state for one reorderable run of cells (Home's list, or the Dock). [keys] is the
  * cells' current order; [onMove] saves a finished drag.
  */
+/** What a long-press cell talks to while it is picked up and dragged: Home's list or Dock ([PickUpReorderState]) or its grid ([GridDragState]). */
+interface PickUpDragHost {
+    fun pickUp(key: Any)
+    fun startDrag()
+    fun dragTo(travel: Offset)
+    fun release()
+}
+
 @Stable
-class PickUpReorderState internal constructor(internal val axis: Orientation) {
+class PickUpReorderState internal constructor(internal val axis: Orientation) : PickUpDragHost {
     private val centerByKey: SnapshotStateMap<Any, Float> = mutableStateMapOf()
     internal var keys: List<Any> = emptyList()
     internal var onMove: (from: Int, to: Int) -> Unit = { _, _ -> }
@@ -98,22 +106,22 @@ class PickUpReorderState internal constructor(internal val axis: Orientation) {
         return ReorderGeometry.neighbourShift(centers, keys.indexOf(key), fromIndex, targetIndex)
     }
 
-    internal fun pickUp(key: Any) {
+    override fun pickUp(key: Any) {
         liftedKey = key
         dragging = false
         offset = 0f
     }
 
-    internal fun startDrag() {
+    override fun startDrag() {
         if (liftedKey != null) dragging = true
     }
 
-    internal fun dragTo(travel: Offset) {
+    override fun dragTo(travel: Offset) {
         offset = if (axis == Orientation.Vertical) travel.y else travel.x
     }
 
     /** Ends the touch; a drag that moved the cell to another slot is reported to [onMove] first. */
-    internal fun release() {
+    override fun release() {
         val from = fromIndex
         val to = targetIndex
         val moved = dragging && from >= 0 && to != from
@@ -186,7 +194,7 @@ fun Modifier.reorderItemLayer(key: Any): Modifier {
  */
 @Composable
 fun Modifier.longPressReorderClickable(key: Any, onClick: () -> Unit, onLongPress: () -> Unit): Modifier {
-    val state = LocalPickUpReorder.current ?: return longPressReleaseClickable(onClick, onLongPress)
+    val state: PickUpDragHost = LocalPickUpReorder.current ?: LocalGridDrag.current ?: return longPressReleaseClickable(onClick, onLongPress)
     val interactionSource = remember { MutableInteractionSource() }
     val haptics = LocalHapticFeedback.current
     val scope = rememberCoroutineScope()

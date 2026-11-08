@@ -67,7 +67,7 @@ object HomeGridPlacement {
     fun anchorRow(screenRow: Int, rowCount: Int, anchoredAtBottom: Boolean): Int = screenRow(screenRow, rowCount, anchoredAtBottom)
 
     /** Dropping [moved] on [target]: an empty cell takes it, an occupied one swaps places. Returns the new cells, or the same map if nothing changes. */
-    fun drop(cells: Map<Any, GridCell>, moved: Any, target: GridCell): Map<Any, GridCell> {
+    fun <K : Any> drop(cells: Map<K, GridCell>, moved: K, target: GridCell): Map<K, GridCell> {
         val from = cells[moved] ?: return cells
         if (from == target || target.row < 0 || target.column < 0) return cells
         val occupant = cells.entries.firstOrNull { it.value == target }?.key
@@ -81,11 +81,11 @@ object HomeGridPlacement {
      * Drops the cells that no longer fit when the grid narrows to [columns]: each item outside moves to the first free cell,
      * in its old reading order, so nothing is lost and nothing overlaps.
      */
-    fun compact(cells: Map<Any, GridCell>, columns: Int): Map<Any, GridCell> {
+    fun <K : Any> compact(cells: Map<K, GridCell>, columns: Int): Map<K, GridCell> {
         val width = columns.coerceAtLeast(1)
         val ordered = cells.entries.sortedWith(compareBy({ it.value.row }, { it.value.column }))
         val taken = ordered.map { it.value }.filter { it.column < width }.toMutableSet()
-        val result = LinkedHashMap<Any, GridCell>()
+        val result = LinkedHashMap<K, GridCell>()
         for ((key, cell) in ordered) {
             result[key] = if (cell.column < width) cell else firstFree(taken, width).also { taken += it }
         }
@@ -93,6 +93,6 @@ object HomeGridPlacement {
     }
 
     /** The list order a set of cells reads as, row by row from the anchor: what `position` is rewritten to. */
-    fun readingOrder(cells: Map<Any, GridCell>): List<Any> =
+    fun <K : Any> readingOrder(cells: Map<K, GridCell>): List<K> =
         cells.entries.sortedWith(compareBy({ it.value.row }, { it.value.column })).map { it.key }
 }

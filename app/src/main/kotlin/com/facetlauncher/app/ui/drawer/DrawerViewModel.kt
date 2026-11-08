@@ -30,6 +30,7 @@ import com.facetlauncher.app.domain.AppNotificationsState
 import com.facetlauncher.app.domain.AddToActiveListUseCase
 import com.facetlauncher.app.domain.ObserveAppNotificationsUseCase
 import com.facetlauncher.app.domain.RemoveFromActiveListUseCase
+import com.facetlauncher.app.domain.GridCell
 import com.facetlauncher.app.domain.ReorderActiveListUseCase
 import com.facetlauncher.app.domain.QuickPlacementAction
 import com.facetlauncher.app.domain.RankBySearchRelevanceUseCase
@@ -61,6 +62,8 @@ private const val MAX_CONTACT_RESULTS = 5
 private const val MAX_SETTINGS_RESULTS = 5
 
 /** Read-only settings needed to render the Drawer (icon visibility, opacity, left-edge rail toggle), plus F6's contacts search. */
+// It also fronts every long-press action on Home and the Drawer, one thin function each.
+@Suppress("TooManyFunctions")
 @HiltViewModel
 class DrawerViewModel @Inject constructor(
     private val appRepository: AppRepository,
@@ -281,6 +284,11 @@ class DrawerViewModel @Inject constructor(
     /** A drag-to-reorder on Home's apps list or Dock: saves the active facet's list in the new order. */
     fun onReorderList(list: PlacementList, orderedItems: List<PlacedItem>) {
         viewModelScope.launch { reorderActiveList(list, orderedItems) }
+    }
+
+    /** A drag on Home's grid: saves where each Favorite now sits. */
+    fun onMoveGridItems(landscape: Boolean, orderedItems: List<PlacedItem>, cells: Map<String, GridCell>) {
+        viewModelScope.launch { reorderActiveList.saveGridCells(landscape, orderedItems, cells) }
     }
 
     /** A drag-to-reorder inside an open folder. */
