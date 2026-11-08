@@ -175,7 +175,7 @@ class FacetRepositoryTest {
 
         val stored = repository.observeFacets().first().single()
         assertEquals(ListContentMode.MOST_USED, stored.listContentMode)
-        assertEquals(12, stored.appsToShowCount)
+        assertEquals(20, stored.appsToShowCount)
     }
 
     @Test
@@ -294,7 +294,7 @@ class FacetRepositoryTest {
     }
 
     @Test
-    fun `setAppsToShowCount coerces into the 3 to 12 range`() = runTest {
+    fun `setAppsToShowCount coerces into the 3 to 20 range`() = runTest {
         val dao = FakeFacetDao()
         val repository = FacetRepository(dao, FakeClockStackItemDao())
         val facet = repository.addFacet()
@@ -303,7 +303,7 @@ class FacetRepositoryTest {
         repository.setAppsToShowCount(facet.id, 1)
         assertEquals(3, repository.observeFacets().first().single().appsToShowCount)
         repository.setAppsToShowCount(facet.id, 99)
-        assertEquals(12, repository.observeFacets().first().single().appsToShowCount)
+        assertEquals(20, repository.observeFacets().first().single().appsToShowCount)
     }
 
 

@@ -244,6 +244,12 @@ data class LauncherSettings(
     val homeOpensSearch: Boolean = false,
     /** Opt-in: a double-tap on empty Home locks the screen. Also needs the accessibility service. */
     val doubleTapToLock: Boolean = false,
+    /** Each Home swipe can be turned off; left opens the facet carousel, right the Hub, down pulls the notification shade. Up (the Drawer) is always on. */
+    val swipeLeftEnabled: Boolean = true,
+    val swipeRightEnabled: Boolean = true,
+    val swipeDownEnabled: Boolean = true,
+    /** Mirrors the Hub and the facet carousel: the Hub then slides in from the right (swipe left), the carousel from the left (swipe right). */
+    val swapSwipeSides: Boolean = false,
     /** F13 — Dot (README's spec default) vs a capped numeric count, chosen from the dedicated Notification settings screen. */
     val notificationBadgeStyle: NotificationBadgeStyle = NotificationBadgeStyle.DOT,
     /** Opt-in: the media player row under Home's clock. Also needs notification access (a media session is read through the listener grant). */

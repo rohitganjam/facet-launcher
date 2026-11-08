@@ -220,6 +220,12 @@ fun HomeDrawerRoute(
             isInClockZone = { position -> clockZoneBoundsInHomeRoot?.contains(position) == true || clockPaneBoundsInHomeRoot?.contains(position) == true },
         )
     }
+    LaunchedEffect(launcherUiState.swipeLeftEnabled, launcherUiState.swipeRightEnabled, launcherUiState.swipeDownEnabled, launcherUiState.swapSwipeSides) {
+        swipe.swipeLeftEnabled = launcherUiState.swipeLeftEnabled
+        swipe.swipeRightEnabled = launcherUiState.swipeRightEnabled
+        swipe.swipeDownEnabled = launcherUiState.swipeDownEnabled
+        swipe.swapSides = launcherUiState.swapSwipeSides
+    }
     // What's behind the system bars: wallpaper, except while an opaque picker or the always-dark Private Space covers it.
     SystemBarsBackdropEffect(
         when {
@@ -335,6 +341,8 @@ fun HomeDrawerRoute(
         onAddToFolder = drawerViewModel::addToFolder,
         onRemoveFromFolder = drawerViewModel::removeFromFolder,
         onRenameFolder = drawerViewModel::renameFolder,
+        onReorderList = drawerViewModel::onReorderList,
+        onReorderFolderApps = drawerViewModel::onReorderFolderApps,
     )
     val drawerState = rememberHomeDrawerState(drawerViewModel, appMenuNotifications)
         .copy(apps = apps, workProfiles = launcherUiState.workProfiles, folders = folders)
@@ -465,6 +473,7 @@ fun HomeDrawerRoute(
                     if (homeMenuMode != HomeMenuMode.NONE) return@pointerInput
 
                     detectHomeSwipeGestures(
+                        isBlocked = { homeSwipeGate?.isBlocked == true },
                         shouldClaim = { position ->
                             clockWidgetBoundsInHomeRoot?.contains(position) != true &&
                                 appListBoundsInHomeRoot?.contains(position) != true &&
@@ -484,6 +493,7 @@ fun HomeDrawerRoute(
 
         HomeHubOverlay(
             hub = swipe.hub,
+            mirrored = launcherUiState.swapSwipeSides,
             containerWidthPx = containerWidthPx,
             isHubOpen = isHubOpen,
             clockWidgetNeedsListening = clockWidgetNeedsListening,
@@ -534,14 +544,16 @@ fun HomeDrawerRoute(
         HomeWidgetPickerOverlay(overlays, onReset = widgetPickerViewModel::reset) {
             HubWidgetPickerScreen(onDone = { overlays.showWidgetPicker = false }, viewModel = widgetPickerViewModel, onConfigureNewWidget = { overlays.configureRef = it })
         }
-        HomeFacetCarouselOverlay(swipe.facet, containerWidthPx, isOpen = isFacetOpen) {
+        HomeFacetCarouselOverlay(swipe.facet, containerWidthPx, isOpen = isFacetOpen, mirrored = launcherUiState.swapSwipeSides) {
             FacetCarouselScreen(
+                isOpen = isFacetOpen,
                 onFacetApply = { coroutineScope.launch { swipe.facet.close() } },
                 onEditFacet = onNavigateToFacetSettings,
                 onReorderFacets = onNavigateToManageFacets,
                 onNavigateToSettings = onNavigateToSettings,
                 onOpenFacetPro = onNavigateToFacetPro,
-                onDismissDrag = { deltaPx -> swipe.facet.dragBy(-deltaPx) },
+                dismissToLeft = launcherUiState.swapSwipeSides,
+                onDismissDrag = { deltaPx -> swipe.facet.dragBy(if (launcherUiState.swapSwipeSides) deltaPx else -deltaPx) },
                 onDismissDragEnd = { swipe.facet.settle() },
                 modifier = Modifier.fillMaxSize(),
                 viewModel = facetViewModel,

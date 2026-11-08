@@ -847,6 +847,8 @@
     <string name="clock_adjust_align_middle">Midden uitlijnen</string>
     <string name="clock_adjust_align_bottom">Onder uitlijnen</string>
     <string name="home_sheet_facet_settings_subtitle">Facetspecifieke widgets, appslijst en dock</string>
+    <string name="home_sheet_switch_facet">Facet wisselen</string>
+    <string name="home_sheet_switch_facet_subtitle">Blader door je facetten en pas er één toe</string>
     <string name="widget_sheet_replace">Eigen widget vervangen</string>
     <string name="widget_sheet_replace_subtitle">Kies een andere widget voor deze pagina</string>
     <string name="widget_sheet_remove">Widget verwijderen</string>
@@ -1038,12 +1040,15 @@
     <string name="settings_gestures_subtitle">Veegbewegingen, tikken en de Home-knop</string>
     <string name="gestures_section_built_in">Ingebouwd</string>
     <string name="gestures_section_optional">Optioneel</string>
+    <string name="gestures_section_swipes">Veegbewegingen</string>
     <string name="gesture_swipe_up_title">Omhoog vegen</string>
     <string name="gesture_swipe_up_subtitle">De app-lade openen</string>
     <string name="gesture_swipe_right_title">Naar rechts vegen</string>
     <string name="gesture_swipe_right_subtitle">De Hub openen</string>
     <string name="gesture_swipe_left_title">Naar links vegen</string>
     <string name="gesture_swipe_left_subtitle">Van facet wisselen</string>
+    <string name="gesture_swap_sides_title">Links en rechts omwisselen</string>
+    <string name="gesture_swap_sides_subtitle">Open de Hub van rechts en facetten van links</string>
     <string name="gesture_swipe_down_title">Omlaag vegen</string>
     <string name="gesture_swipe_down_subtitle">Het meldingenpaneel openen</string>
     <string name="gesture_long_press_title">Lang drukken op lege ruimte</string>

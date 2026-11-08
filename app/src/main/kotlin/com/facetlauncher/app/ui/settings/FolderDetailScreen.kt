@@ -45,6 +45,20 @@ import androidx.compose.ui.zIndex
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.facetlauncher.app.R
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.outlined.Dock
+import androidx.compose.material.icons.outlined.StarBorder
+import androidx.compose.ui.graphics.vector.ImageVector
+import com.facetlauncher.app.data.model.PlacementList
+import com.facetlauncher.app.domain.FolderPlacementState
+import com.facetlauncher.app.domain.QuickPlacementAction
+import com.facetlauncher.app.ui.components.ConfirmDialog
+import com.facetlauncher.app.ui.components.FacetScopeBadge
+import com.facetlauncher.app.ui.components.ThemedDropdownMenu
+import com.facetlauncher.app.ui.components.ThemedDropdownMenuItem
+import com.facetlauncher.app.ui.components.quickPlacementLabel
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.Folder
 import com.facetlauncher.app.ui.components.AppIcon
@@ -98,6 +112,11 @@ fun FolderDetailScreen(
         onRename = viewModel::renameFolder,
         onReorder = viewModel::reorderApps,
         onRemoveApp = viewModel::removeApp,
+        onApplyPlacement = viewModel::applyPlacement,
+        onDelete = {
+            viewModel.deleteFolder()
+            onBack()
+        },
         modifier = modifier,
     )
 }
@@ -111,6 +130,8 @@ internal fun FolderDetailContent(
     onReorder: (List<AppInfo>) -> Unit,
     onRemoveApp: (AppInfo) -> Unit,
     modifier: Modifier = Modifier,
+    onApplyPlacement: (PlacementList, QuickPlacementAction) -> Unit = { _, _ -> },
+    onDelete: () -> Unit = {},
 ) {
     val folder = uiState.folder
     StickyHeaderLayout(
@@ -118,8 +139,11 @@ internal fun FolderDetailContent(
         header = {
             FolderDetailHeader(
                 name = folder?.name.orEmpty(),
+                placement = uiState.placement,
                 onBack = onBack,
                 onRename = onRename,
+                onApplyPlacement = onApplyPlacement,
+                onDelete = onDelete,
             )
         },
         content = { headerHeight ->
@@ -165,13 +189,44 @@ internal fun FolderDetailContent(
 }
 
 @Composable
+private fun FolderDetailMenuButton(
+    placement: FolderPlacementState,
+    onRename: () -> Unit,
+    onApplyPlacement: (PlacementList, QuickPlacementAction) -> Unit,
+    onDelete: () -> Unit,
+) {
+    var menuExpanded by remember { mutableStateOf(false) }
+    Box {
+        IconButton(onClick = { menuExpanded = true }, modifier = Modifier.testTag("folder_detail_menu")) {
+            Icon(
+                imageVector = Icons.Filled.MoreVert,
+                contentDescription = stringResource(R.string.drawer_search_more_options),
+                tint = Ink,
+            )
+        }
+        FolderDetailMenu(
+            expanded = menuExpanded,
+            placement = placement,
+            onDismiss = { menuExpanded = false },
+            onRename = onRename,
+            onApplyPlacement = onApplyPlacement,
+            onDelete = onDelete,
+        )
+    }
+}
+
+@Composable
 private fun FolderDetailHeader(
     name: String,
+    placement: FolderPlacementState,
     onBack: () -> Unit,
     onRename: (String) -> Unit,
+    onApplyPlacement: (PlacementList, QuickPlacementAction) -> Unit,
+    onDelete: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var showRenameDialog by remember { mutableStateOf(false) }
+    var showDeleteDialog by remember { mutableStateOf(false) }
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -191,11 +246,24 @@ private fun FolderDetailHeader(
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.weight(1f),
         )
-        TextActionButton(
-            text = stringResource(R.string.action_rename),
-            onClick = { showRenameDialog = true },
-            leadingIcon = Icons.Outlined.DriveFileRenameOutline,
-            modifier = Modifier.testTag("folder_detail_rename"),
+        FolderDetailMenuButton(
+            placement = placement,
+            onRename = { showRenameDialog = true },
+            onApplyPlacement = onApplyPlacement,
+            onDelete = { showDeleteDialog = true },
+        )
+    }
+
+    if (showDeleteDialog) {
+        ConfirmDialog(
+            title = stringResource(R.string.folders_settings_delete_folder),
+            message = stringResource(R.string.folders_settings_delete_message, name),
+            confirmLabel = stringResource(R.string.action_delete),
+            onConfirm = {
+                showDeleteDialog = false
+                onDelete()
+            },
+            onDismiss = { showDeleteDialog = false },
         )
     }
 
@@ -285,6 +353,74 @@ private fun FolderAppsReorderList(
             }
         }
     }
+}
+
+/** The header's 3-dot menu: Rename, the Favorites and Dock actions for the active facet (named by a badge when there are several), and Delete. */
+@Composable
+private fun FolderDetailMenu(
+    expanded: Boolean,
+    placement: FolderPlacementState,
+    onDismiss: () -> Unit,
+    onRename: () -> Unit,
+    onApplyPlacement: (PlacementList, QuickPlacementAction) -> Unit,
+    onDelete: () -> Unit,
+) {
+    ThemedDropdownMenu(expanded = expanded, onDismissRequest = onDismiss) {
+        ThemedDropdownMenuItem(
+            label = stringResource(R.string.action_rename),
+            onClick = {
+                onDismiss()
+                onRename()
+            },
+            leadingIcon = { Icon(Icons.Outlined.DriveFileRenameOutline, contentDescription = null, tint = Muted) },
+            modifier = Modifier.testTag("folder_detail_rename"),
+        )
+        placement.quickAdd.favoritesAction?.let { action ->
+            PlacementMenuItem(
+                label = quickPlacementLabel(action, stringResource(R.string.quick_placement_favorites)),
+                icon = Icons.Outlined.StarBorder,
+                facetName = placement.facetName.takeIf { placement.showFacetBadge },
+                tag = "folder_detail_favorites",
+                onClick = {
+                    onDismiss()
+                    onApplyPlacement(PlacementList.FAVORITES, action)
+                },
+            )
+        }
+        placement.quickAdd.dockAction?.let { action ->
+            PlacementMenuItem(
+                label = quickPlacementLabel(action, stringResource(R.string.quick_placement_dock)),
+                icon = Icons.Outlined.Dock,
+                facetName = placement.facetName.takeIf { placement.showFacetBadge },
+                tag = "folder_detail_dock",
+                onClick = {
+                    onDismiss()
+                    onApplyPlacement(PlacementList.DOCK, action)
+                },
+            )
+        }
+        ThemedDropdownMenuItem(
+            label = stringResource(R.string.action_delete),
+            onClick = {
+                onDismiss()
+                onDelete()
+            },
+            destructive = true,
+            leadingIcon = { Icon(Icons.Outlined.DeleteOutline, contentDescription = null, tint = ErrorColor) },
+            modifier = Modifier.testTag("folder_detail_delete"),
+        )
+    }
+}
+
+@Composable
+private fun PlacementMenuItem(label: String, icon: ImageVector, facetName: String?, tag: String, onClick: () -> Unit) {
+    ThemedDropdownMenuItem(
+        label = label,
+        onClick = onClick,
+        leadingIcon = { Icon(icon, contentDescription = null, tint = Muted) },
+        trailingIcon = facetName?.let { { FacetScopeBadge(facetName = it, modifier = Modifier.widthIn(max = 120.dp)) } },
+        modifier = Modifier.testTag(tag),
+    )
 }
 
 @Preview(showBackground = true, widthDp = 390, heightDp = 844)

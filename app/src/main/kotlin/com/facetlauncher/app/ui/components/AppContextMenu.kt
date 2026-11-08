@@ -431,7 +431,7 @@ private fun quickPlacementTile(
     tag = tag,
     icon = icon,
     label = label,
-    scope = PlacementScope(action.facetName),
+    scope = null,
     isRemove = action is QuickPlacementAction.Remove,
     onClick = onClick,
 )

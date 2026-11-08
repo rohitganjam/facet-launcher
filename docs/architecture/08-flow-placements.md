@@ -43,10 +43,13 @@ Reordering rewrites `position = index` for every item in the list (an `upsert` p
 | Home app list settings (`HomeAppsListSettingsScreen`) | `HomeAppsListSettingsViewModel` → | `PlacementRepository.reorderItems(PlacementTarget(FAVORITES, facetId), items)` | same |
 | Folder contents (`FolderDetailScreen`) | `FolderDetailViewModel` → | `FolderRepository.reorderFolderApps(folderId, apps)` | same |
 | Onboarding (`OnboardingHomeSetupPage`) | `OnboardingViewModel.reorderDockApps / reorderFavorites` | `PlacementRepository.reorderItems` on the launcher-wide targets only; `OnboardingViewModel.finish` then copies them onto the existing facets (`ApplyFacetDefaultsUseCase`, scopes `DOCK` and `APPS_LIST`) | same |
+| Home's single-column list and Dock (`PickUpReorderHost`, [12 §3](12-flow-drawer-search-and-app-actions.md)) | `DrawerViewModel.onReorderList` → `ReorderActiveListUseCase` | `PlacementRepository.reorderItems(resolveTarget(list), items)` (the active facet's own list) | same; list only in Favorites mode |
+| An open folder on Home (`FolderContentsSheet`) | `DrawerViewModel.onReorderFolderApps` | `FolderRepository.reorderFolderApps(folderId, apps)` | same |
 | Manage facets (`ManageFacetsScreen`) | `ManageFacetsViewModel.reorderFacets` | `FacetRepository.reorderFacets` | `update` per facet with new `position` |
 
-Home itself has no drag-reorder of dock or app list — Home's drag gestures are the clock
-handles (zone height / scale); reordering is always done from a settings screen.
+Home reorders its single-column list (Favorites mode only) and the Dock in place: a long-press picks the cell up and a
+drag moves it, saved once on drop (the first two rows above). Reordering from a settings screen still works. The grid
+layouts are not draggable yet.
 
 Because `position` is rewritten for the whole list, gaps and duplicates can't accumulate; the
 cost is N upserts per drag end (Room runs each as its own statement).

@@ -30,6 +30,7 @@ import com.facetlauncher.app.domain.AppNotificationsState
 import com.facetlauncher.app.domain.AddToActiveListUseCase
 import com.facetlauncher.app.domain.ObserveAppNotificationsUseCase
 import com.facetlauncher.app.domain.RemoveFromActiveListUseCase
+import com.facetlauncher.app.domain.ReorderActiveListUseCase
 import com.facetlauncher.app.domain.QuickPlacementAction
 import com.facetlauncher.app.domain.RankBySearchRelevanceUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -72,6 +73,7 @@ class DrawerViewModel @Inject constructor(
     private val rankBySearchRelevance: RankBySearchRelevanceUseCase,
     private val addToActiveList: AddToActiveListUseCase,
     private val removeFromActiveList: RemoveFromActiveListUseCase,
+    private val reorderActiveList: ReorderActiveListUseCase,
     private val folderRepository: FolderRepository,
     private val secureFolderRepository: SecureFolderRepository,
     private val privateSpaceRepository: PrivateSpaceRepository,
@@ -274,6 +276,16 @@ class DrawerViewModel @Inject constructor(
 
     fun removeFromFolder(folderId: Long, app: AppInfo) {
         viewModelScope.launch { folderRepository.removeAppFromFolder(folderId, app) }
+    }
+
+    /** A drag-to-reorder on Home's apps list or Dock: saves the active facet's list in the new order. */
+    fun onReorderList(list: PlacementList, orderedItems: List<PlacedItem>) {
+        viewModelScope.launch { reorderActiveList(list, orderedItems) }
+    }
+
+    /** A drag-to-reorder inside an open folder. */
+    fun onReorderFolderApps(folderId: Long, orderedApps: List<AppInfo>) {
+        viewModelScope.launch { folderRepository.reorderFolderApps(folderId, orderedApps) }
     }
 
     fun renameFolder(folderId: Long, name: String) {

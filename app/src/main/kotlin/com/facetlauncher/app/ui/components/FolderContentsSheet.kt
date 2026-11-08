@@ -7,6 +7,7 @@ import androidx.compose.animation.core.rememberTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -36,6 +37,7 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -133,6 +135,8 @@ fun FolderContentsSheet(
     onAppInfo: (AppInfo) -> Unit = {},
     /** True for the "Recently installed" virtual folder (List-only) — each contained app's icon gets a small recency badge, since these apps aren't grouped by any visual similarity the way a real folder's contents are. */
     showRecencyBadge: Boolean = false,
+    /** Non-null in the list: a long-press picks a row up to drag it, and the finished order is saved here. */
+    onReorderApps: ((List<AppInfo>) -> Unit)? = null,
 ) {
     var showRenameDialog by remember { mutableStateOf(false) }
     val sheetState = rememberSheetSlideState(onDismiss = onDismissRequest)
@@ -245,6 +249,7 @@ fun FolderContentsSheet(
                                 onAppInfo = onAppInfo,
                                 onRemoveFromFolder = { app -> onRemoveFromFolder(folder.id, app) },
                                 showRecencyBadge = showRecencyBadge,
+                                onReorderApps = onReorderApps,
                             )
                         }
                     }
@@ -341,20 +346,29 @@ private fun FolderContentsList(
     modifier: Modifier = Modifier,
     onAppInfo: (AppInfo) -> Unit = {},
     showRecencyBadge: Boolean = false,
+    onReorderApps: ((List<AppInfo>) -> Unit)? = null,
 ) {
-    Column(modifier = modifier.verticalScroll(rememberScrollState())) {
-        folder.apps.forEachIndexed { index, app ->
-            if (index > 0) CardDivider(modifier = Modifier.padding(horizontal = 24.dp))
-            FolderContentsAppRow(
-                app = app,
-                onClick = { onAppClick(app) },
-                appMenuNotifications = appMenuNotifications,
-                onAppInfo = onAppInfo,
-                onRemoveFromFolder = { onRemoveFromFolder(app) },
-                showRecencyBadge = showRecencyBadge,
-            )
+    PickUpReorderHost(
+        items = folder.apps,
+        key = { it.listKey },
+        axis = Orientation.Vertical,
+        enabled = onReorderApps != null,
+        onReorder = { onReorderApps?.invoke(it) },
+    ) { shown ->
+        Column(modifier = modifier.verticalScroll(rememberScrollState())) {
+            shown.forEachIndexed { index, app ->
+                if (index > 0) CardDivider(modifier = Modifier.padding(horizontal = 24.dp))
+                key(app.listKey) { FolderContentsAppRow(
+                    app = app,
+                    onClick = { onAppClick(app) },
+                    appMenuNotifications = appMenuNotifications,
+                    onAppInfo = onAppInfo,
+                    onRemoveFromFolder = { onRemoveFromFolder(app) },
+                    showRecencyBadge = showRecencyBadge,
+                ) }
+            }
+            Box(modifier = Modifier.padding(bottom = 24.dp))
         }
-        Box(modifier = Modifier.padding(bottom = 24.dp))
     }
 }
 
@@ -370,12 +384,12 @@ private fun FolderContentsAppRow(
     showRecencyBadge: Boolean = false,
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
-    Box(modifier = modifier) {
+    Box(modifier = modifier.reorderItemLayer(app.listKey)) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .testTag("folder_contents_app_${app.packageName}")
-                .longPressReleaseClickable(onClick = onClick, onLongPress = { menuExpanded = true })
+                .longPressReorderClickable(app.listKey, onClick = onClick, onLongPress = { menuExpanded = true })
                 // A folder's list is always Regular rows, whatever the drawer's List item size.
                 .padding(horizontal = 24.dp, vertical = DrawerListItemSize.REGULAR.verticalPaddingDp.dp),
             verticalAlignment = Alignment.CenterVertically,

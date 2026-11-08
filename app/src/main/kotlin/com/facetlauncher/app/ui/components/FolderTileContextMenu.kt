@@ -85,7 +85,7 @@ fun FolderTileContextMenu(
                     tag = "folder_tile_context_menu_add_to_favorites",
                     icon = Icons.Outlined.StarBorder,
                     label = quickPlacementLabel(action, favoritesName),
-                    scope = PlacementScope(action.facetName),
+                    scope = null,
                     isRemove = action is QuickPlacementAction.Remove,
                     onClick = {
                         onDismissRequest()
@@ -100,7 +100,7 @@ fun FolderTileContextMenu(
                     tag = "folder_tile_context_menu_add_to_dock",
                     icon = Icons.Outlined.Dock,
                     label = quickPlacementLabel(action, dockName),
-                    scope = PlacementScope(action.facetName),
+                    scope = null,
                     isRemove = action is QuickPlacementAction.Remove,
                     onClick = {
                         onDismissRequest()

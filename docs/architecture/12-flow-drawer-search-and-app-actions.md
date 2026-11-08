@@ -236,19 +236,21 @@ Folder tiles get the mirror menu (`FolderTileContextMenu`): the same header (fol
 count, Rename as an icon button) over Favorites/Dock tiles. A folder has no notifications, no Uninstall
 and no Delete there — a folder is only deleted from Settings → Folders.
 
-**Long-press timing:** the menu opens at the long-press threshold itself, not on release. Every
-long-press row/tile across Home, Dock, and Drawer (`AppRow`, `SingleAppDockIcon`,
-`FolderDockIcon`, `FolderRow`, `DrawerAppRow`, `DrawerFolderRow`, `DrawerGridTile`,
-`DrawerFolderTile`) uses `Modifier.longPressReleaseClickable`
-(`ui/components/LongPressReleaseGesture.kt`) in place of `combinedClickable` — a
-`HapticFeedbackType.LongPress` tick and `menuExpanded = true` fire together the instant the
-threshold (the platform default, `ViewConfiguration.getLongPressTimeout()` — 500ms) is met. The
-tick is also wired into the Widget Hub's own long-press grab gesture, `WidgetGrabGesture.kt`, so
-it's consistent across every long-press surface in the app. A prior version of this gating opened
-the menu only on release, as deliberate prep for a future long-press-drag (reorder/merge-to-folder)
-feature on these same rows; that feature never landed, and immediate-open-on-threshold is simpler,
-so the release gating was removed. If that drag feature is picked up later, this timing will need
-revisiting.
+**Long-press timing and pick-up:** a plain row/tile (Drawer rows and tiles, rows in a non-reorderable folder or
+list) uses `Modifier.longPressReleaseClickable` (`ui/components/LongPressReleaseGesture.kt`): a
+`HapticFeedbackType.LongPress` tick and `menuExpanded = true` fire together at the platform long-press threshold
+(`ViewConfiguration.getLongPressTimeout()`, 500ms). A cell that can be reordered (`AppRow`, `FolderRow`,
+`SingleAppDockIcon`, `FolderDockIcon`, and the rows of an open folder on Home) uses
+`Modifier.longPressReorderClickable` (`ui/components/PickUpReorder.kt`) inside a `PickUpReorderHost`: at the threshold the
+cell is *picked up* (tick, scaled `PICK_UP_SCALE` = 1.12, no sheet yet). Releasing without moving past
+`PICK_UP_DRAG_SLOP` (14dp) then opens the same sheet, so the sheet now opens on lift for these cells; moving past it
+drags the cell (`detectPickUpDragGesture` in `PickUpDragGesture.kt` keeps the touch at `PointerEventPass.Initial`, so
+Home's swipes and the list's scroll never see it), the neighbours slide into the vacated slots, and the finished order is
+saved once on drop (`ReorderActiveListUseCase` for Home's list and Dock, `FolderRepository.reorderFolderApps` for a
+folder). Outside a host (previews, the Recents and Most used modes, a one-item list) it falls back to
+`longPressReleaseClickable`. The tick is also wired into the Widget Hub's grab gesture (`WidgetGrabGesture.kt`). The
+slot centres come from `onGloballyPositioned`; `ReorderGeometry` (target slot, neighbour shift, move) is pure and
+covered by `PickUpReorderTest`; `PickUpReorderGestureTest` drives the gesture.
 
 ## 4. Gestures & routing (why the drawer isn't a nav destination)
 
@@ -264,6 +266,14 @@ scroll). `swipeSettleTarget` is the pure open/closed decision. `HomeSwipeControl
 | up | Drawer | drag down on the drawer's list, only once scrolled to the top |
 | right | Hub | drag left on the Hub |
 | left | Facet carousel | drag right on the carousel (empty space or first card) |
+
+Settings → Gestures can turn the left, right and down swipes off (`swipeLeftEnabled`, `swipeRightEnabled`,
+`swipeDownEnabled`, by finger direction; up always opens the Drawer) and swap the sides (`swapSwipeSides`). Swapped, a
+left swipe opens the Hub and a right swipe the carousel; `HomeHubOverlay` and `HomeFacetCarouselOverlay` mirror where
+they slide in from and which drag closes them, and the carousel then dismisses on a leftward drag from its last page
+(`dismissToLeft`). `LauncherViewModel` feeds the four flags to `HomeSwipeController`. The carousel can also be opened
+from the Home sheet's *Switch facet* row (`HomeClockActions.onOpenFacetCarousel`), and it returns to the active facet
+whenever it is closed.
 
 In landscape the whole clock pane is treated like the app list for this: it scrolls its own content, so a
 vertical drag that starts there is not Home's (swiping up opens the Drawer from the apps side only), while a
@@ -342,7 +352,8 @@ lock lambda that the connected `FacetAccessibilityService` attaches (`performGlo
 biometric unlock working); with no service connected it is a no-op. The service requests no events and reads no screen content, and
 is enabled from system Accessibility settings after `AccessibilityAccessExplanationScreen`, checked by
 `AccessibilityAccessRepository.isGranted()`. Settings → Gestures (`GesturesScreen` / `GesturesViewModel`) lists every Home gesture
-(the four swipes and the empty-space long-press as read-only rows) with switches for the two opt-in ones; the lock switch reads
+(the four swipes and the empty-space long-press as read-only rows) with a *Swipes* card (a switch per left, right and down, and
+*Swap left and right*) and switches for the two opt-in ones; the lock switch reads
 on only while the service is enabled, and turning it on without access routes through the explanation screen. The Permissions
 screen has a matching Accessibility access row. `HomeViewModelTest`, `LockScreenControllerTest`, `GesturesViewModelTest`,
 `GesturesScreenTest`, `HomeScreenTest` and `HomeDrawerRouteTest` cover it.

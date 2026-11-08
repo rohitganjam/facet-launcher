@@ -28,7 +28,7 @@ import com.facetlauncher.app.ui.theme.FACET_TRANSITION_DURATION_MS
 import com.facetlauncher.app.ui.theme.FacetTransitionEasing
 
 /**
- * The Hub, to Home's left: off-screen at progress 0, flush with the screen at 1, drawn over Home
+ * The Hub, to Home's left (right when mirrored): off-screen at progress 0, flush with the screen at 1, drawn over Home
  * (as the drawer is). It has a fainter default opacity than the drawer by design, and its own
  * horizontal drag closes it. Also keeps the shared `AppWidgetHost` listening while the Hub is open
  * or a clock widget is on Home: the platform does not count start/stop calls, so whichever surface
@@ -39,6 +39,7 @@ import com.facetlauncher.app.ui.theme.FacetTransitionEasing
 internal fun HomeHubOverlay(
     hub: SwipeAxisState,
     containerWidthPx: Float,
+    mirrored: Boolean,
     isHubOpen: Boolean,
     clockWidgetNeedsListening: Boolean,
     overlays: HomeOverlayState,
@@ -61,13 +62,13 @@ internal fun HomeHubOverlay(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .offset { IntOffset(((hub.progress.value - 1f) * containerWidthPx).toInt(), 0) }
+            .offset { IntOffset(((hub.progress.value - 1f) * containerWidthPx * (if (mirrored) -1f else 1f)).toInt(), 0) }
             .pointerInput(Unit) {
                 detectHorizontalDragGestures(
                     onDragEnd = { hub.settle() },
                     onDragCancel = { hub.settle() },
                 ) { change, dragAmount ->
-                    hub.dragBy(dragAmount)
+                    hub.dragBy(if (mirrored) -dragAmount else dragAmount)
                     change.consume()
                 }
             },
@@ -95,7 +96,7 @@ internal fun HomeWidgetPickerOverlay(overlays: HomeOverlayState, onReset: () -> 
 }
 
 /**
- * Switch Facets, to Home's right, drawn last so it is frontmost over the Hub, drawer and pickers.
+ * Switch Facets, to Home's right (left when mirrored), drawn last so it is frontmost over the Hub, drawer and pickers.
  * Its own surface handles empty-space swipes back to Home; the carousel forwards the first page's
  * drag through its `onDismissDrag`, since its pager would otherwise swallow it as a dead overscroll.
  *
@@ -104,18 +105,18 @@ internal fun HomeWidgetPickerOverlay(overlays: HomeOverlayState, onReset: () -> 
  * card's copy.
  */
 @Composable
-internal fun HomeFacetCarouselOverlay(facet: SwipeAxisState, containerWidthPx: Float, isOpen: Boolean, content: @Composable () -> Unit) {
+internal fun HomeFacetCarouselOverlay(facet: SwipeAxisState, containerWidthPx: Float, isOpen: Boolean, mirrored: Boolean, content: @Composable () -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .offset { IntOffset(((1f - facet.progress.value) * containerWidthPx).toInt(), 0) }
+            .offset { IntOffset(((1f - facet.progress.value) * containerWidthPx * (if (mirrored) -1f else 1f)).toInt(), 0) }
             .then(if (isOpen) Modifier else Modifier.clearAndSetSemantics {})
             .pointerInput(Unit) {
                 detectHorizontalDragGestures(
                     onDragEnd = { facet.settle() },
                     onDragCancel = { facet.settle() },
                 ) { change, dragAmount ->
-                    facet.dragBy(-dragAmount)
+                    facet.dragBy(if (mirrored) dragAmount else -dragAmount)
                     change.consume()
                 }
             },

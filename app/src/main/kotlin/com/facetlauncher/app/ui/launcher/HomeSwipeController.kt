@@ -36,6 +36,14 @@ internal class HomeSwipeController(
     val facet = SwipeAxisState(containerWidthPx, coroutineScope)
     private val shadeDistancePx = { containerHeightPx() * SWIPE_DOWN_SHADE_FRACTION }
 
+    /** Settings → Gestures: a direction turned off opens nothing. Up (the Drawer) is always on. */
+    var swipeLeftEnabled = true
+    var swipeRightEnabled = true
+    var swipeDownEnabled = true
+
+    /** Settings → Gestures: the Hub opens on a left swipe and the carousel on a right one, instead of the other way round. */
+    var swapSides = false
+
     private val velocityTracker = VelocityTracker()
     private var dragAxis: Axis? = null
     private var dragStartedClosed = false
@@ -85,10 +93,18 @@ internal class HomeSwipeController(
     /** The clock pager first, if the drag began in the clock zone and has a page that way; else Hub (right) or the carousel (left), whichever the drag engaged first. */
     private fun dragHorizontally(dx: Float) {
         if (pagerOwnsDrag == null && dx != 0f) pagerOwnsDrag = dragStartedInClockZone && clockPager.canMove(dx)
+        if (pagerOwnsDrag == true) clockPager.dragBy(dx) else dragHubOrFacet(dx)
+    }
+
+    private fun dragHubOrFacet(dx: Float) {
+        // Positive opens the Hub, negative the carousel; the enabled flags stay by finger direction.
+        val hubDx = if (swapSides) -dx else dx
+        val enabled = if (dx > 0f) swipeRightEnabled else swipeLeftEnabled
+        val startsHub = !facet.dragActive && hubDx > 0f && enabled
+        val startsFacet = !hub.dragActive && hubDx < 0f && enabled
         when {
-            pagerOwnsDrag == true -> clockPager.dragBy(dx)
-            hub.dragActive || (!facet.dragActive && dx > 0f) -> hub.dragBy(dx)
-            facet.dragActive || (!hub.dragActive && dx < 0f) -> facet.dragBy(-dx)
+            hub.dragActive || startsHub -> hub.dragBy(hubDx)
+            facet.dragActive || startsFacet -> facet.dragBy(-hubDx)
         }
     }
 
@@ -97,14 +113,15 @@ internal class HomeSwipeController(
         when (dragAxis) {
             Axis.VERTICAL -> {
                 drawer.settle(velocity = -velocity)
-                if (dragStartedClosed && (rawDragDistance >= shadeDistancePx() || velocity >= VELOCITY_THRESHOLD_PX)) {
-                    expandNotificationShade()
-                }
+                if (shouldExpandShade(velocity)) expandNotificationShade()
             }
             Axis.HORIZONTAL -> if (pagerOwnsDrag == true) clockPager.settle(velocity) else settleHorizontal()
             null -> Unit
         }
     }
+
+    private fun shouldExpandShade(velocity: Float) =
+        swipeDownEnabled && dragStartedClosed && (rawDragDistance >= shadeDistancePx() || velocity >= VELOCITY_THRESHOLD_PX)
 
     fun cancel() {
         when (dragAxis) {

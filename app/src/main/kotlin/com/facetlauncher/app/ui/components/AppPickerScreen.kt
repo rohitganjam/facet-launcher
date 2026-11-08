@@ -161,7 +161,14 @@ fun AppPickerScreen(
                                     .togetherWith(slideOutHorizontally(animationSpec = tween(TAB_TRANSITION_DURATION_MS)) { it })
                             }
                         },
-                        modifier = Modifier.weight(1f).fillMaxWidth(),
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxWidth()
+                            .swipeBetweenTabs(
+                                keys = AppPickerTab.entries.map { it.name },
+                                selected = selectedTab.name,
+                                onSelect = { selectedTab = AppPickerTab.valueOf(it) },
+                            ),
                         label = "app_picker_tab_content",
                     ) { tab ->
                         if (tab == AppPickerTab.APPS) {

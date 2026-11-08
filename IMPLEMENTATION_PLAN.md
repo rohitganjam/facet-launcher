@@ -4611,4 +4611,52 @@ A facet's dock, favorites, content mode and look are its own, as the clock alrea
 
 ## Widget configure screens (Work Profile and unexported)
 
-- [ ] A widget's configure activity opens again when it is added (Widgets screen, Widget stack add/replace, backup restore) and from the Widget stack's Configure. It used to be skipped for every widget: `getIntentSenderForConfigureActivity` is a hidden API that Android blocks for apps, so the reflection always returned `null`. Now `WidgetConfigureActivity` (an invisible trampoline) calls the public `AppWidgetHost.startAppWidgetConfigureActivityForResult`, which also reaches a Work Profile provider and an unexported activity. Tests: `AppWidgetRepositoryTest`, and the picker, stack and restore ViewModel tests. Tick once `./gradlew test` is green and it is checked on a phone with a Work Profile (written without an Android SDK, so not built yet).
+- [x] A widget's configure activity opens again when it is added (Widgets screen, Widget stack add/replace, backup restore) and from the Widget stack's Configure. It used to be skipped for every widget: `getIntentSenderForConfigureActivity` is a hidden API that Android blocks for apps, so the reflection always returned `null`. Now `WidgetConfigureActivity` (an invisible trampoline) calls the public `AppWidgetHost.startAppWidgetConfigureActivityForResult`, which also reaches a Work Profile provider and an unexported activity. Tests: `AppWidgetRepositoryTest`, and the picker, stack and restore ViewModel tests. Built, tested, and checked on a phone with a Work Profile.
+
+## Edit Home in place (direct request, draft)
+Home's apps list, Dock and folders become editable on Home itself: long-press picks a cell up and drags it, with the sheet on release if the finger did not move. Design only, nothing built. Phase 1 needs no schema change; phase 2 (the grid) does.
+
+### Decisions
+- **Long-press.** Before 500ms movement cancels it and the touch is a Home swipe. At 500ms: haptic and lift, no sheet. Release without moving opens the context bottom sheet (so the sheet now opens on lift, not at the threshold). Moving past slop (about 12 to 16dp) starts the drag and suppresses Home swipes. Release saves the order once; a drop outside the list, or Home or Back mid-drag, snaps the cell back.
+- **Pickup look.** The whole cell scales about 1.05 to 1.08x from its anchor edge, with a minor shadow on icon and label. No fill, outline, corner shape or dimming. Neighbors slide aside by the cell's height (width in the Dock). With animation scales at 0 the shadow and haptic still show the state.
+- **Hit areas.** A long-press on an occupied cell is the app or folder (pickup, then drag or sheet). An empty cell, or the gap between cells, is free space and opens the Home sheet. Same rule for the Dock.
+- **Scope.** Reorder within the single-column list, within the Dock, and inside an open folder. No cross-container drag (Home to Dock), no drag-onto-app folder creation. Drag is off when the list is in an automatic content mode (Recents, Most used).
+- **Adding.** No new add flows: apps keep the context sheet, folders move through the folder menu below.
+- **Folder menu.** On the Settings folder screen (`FolderDetailScreen`) the header's Rename becomes a 3-dot menu: Rename, Add to / Remove from Dock, Add to / Remove from Favorites, Delete folder (confirm). It shows `FacetScopeBadge` (hidden with one facet) so the user knows which facet's Dock or Favorites they are changing. The badge exists only there: it is removed from the app quick-add sheet and not added to Home or Drawer menus, where the user already knows the facet. A long-press on a folder on Home already opens its own menu.
+- **Home sheet.** Gains Switch facet, which opens the carousel at the current facet (the carousel must start there regardless).
+- **Single-column row width.** `SINGLE_COLUMN_ROW_WIDTH_FRACTION` 0.8 to 0.7 (`ui/home/HomeSlots.kt`). The free strip is on the side opposite the row position (both sides when centered).
+- **Limits.** Favorites cap 12 to 20 (`AppListLimits.MAX_FAVORITES`), both layouts, default and per facet. Dock stays 5. Apps to show (Recents, Most used) 3..12 to 3..20 (`MAX_APPS_TO_SHOW`).
+- **Swipeable profile tabs.** One shared component in the Drawer (list and grid), the app and folder pickers and the widget picker (its tabs are profiles). Swipes starting in the system back-gesture edge zone, or on the list drawer's A to Z rail, do not change tabs. No tabs, no pager with one profile.
+- **Configurable swipes.** Up stays the Drawer. Left, right and down can each be disabled, and left and right can swap. Down keeps the notification shade by default (alternatives: None, later Search). Disabling left is safe because of Switch facet.
+- **Grid (phase 2).** Per facet and per orientation: fixed columns × rows, fixed regular cell height, the area scrolls like the list. Free placement: any cell, new items take the first free slot nearest the anchor. Slots are counted from the anchor edge (top or bottom alignment), so flipping alignment mirrors the arrangement and a row-count change leaves items where they are. Drop on empty cell moves, drop on occupied cell swaps; no reflow. List order and grid slots are kept side by side so switching layouts never rewrites the other. Shrinking below the items compacts the overflow into free slots silently. Adding to a full grid is refused with a message. At rest the grid scrolls only to its last occupied row, counted from the anchor, so trailing empty rows are not reachable; during a drag the whole grid is reachable (to drop into an empty row) and the extent shrinks back on drop. Switching a list with more favorites than slots raises the rows once, to the smallest that fits. Automatic modes fill row by row from the anchor, drag off. Note the list does not mirror: `Alignment.BottomStart` only positions the block, items stay top to bottom.
+
+### Phase 1 (no schema change)
+- [x] Spike: after the 500ms pickup, does a drag keep receiving the same touch, and does Home suppress its swipes once it starts? (`ui/components/LongPressReleaseGesture.kt`, `HomeSwipeController`.) Sheet-on-release is the fallback if not.
+- [x] `LongPressReleaseGesture`: pickup at the threshold, sheet on release without movement, drag callbacks past slop. Unit test the state machine (cancel by early move, lift, drag, cancel by Home or Back).
+- [x] Reorder on Home's list, the Dock and folders on `DragReorderState`, saved once on drop (`PlacementRepository` reorder, existing routing in `08`). Pickup look. Disabled in automatic content modes. Tests: `DragReorderStateTest`, `AppPlacementDaoTest`/`FolderPlacementDaoTest` order cases, `HomeScreenTest` drag, a `HomeDrawerRouteTest` case that a drag does not open the Drawer, Hub or carousel.
+- [ ] TalkBack: Move up / Move down as accessibility actions on reorderable cells (not in the sheet).
+- [x] Row width 0.7 and its tests (`HomeSlots` geometry, `HomeScreenTest` hit area).
+- [x] Remove `FacetScopeBadge` from `PlacementActions` (the app quick-add sheet) and its tests; `FolderDetailScreen` header 3-dot menu with `FacetScopeBadge`; move the folder through `PlacementRepository`. Tests: `FolderDetailScreen` menu actions, Dock full state, badge hidden with one facet.
+- [x] Home sheet: Switch facet opens the carousel at the current facet; fix the carousel's start index. Tests: `HomeViewModelTest`, carousel start-index test.
+- [x] Limits: favorites 20 and Apps to show 3..20; update the "x of N" labels, `AppListLimits` tests, picker caps.
+- [x] Shared swipeable profile tabs component, used in the Drawer (both layouts), app picker, folder picker and widget picker; edge and rail exclusion. Tests: pager swipe in each, rail and edge cases, single-profile no-op, Drawer swipe-down-at-top still closes.
+- [x] Configurable swipes phase 1: disable and swap left and right, down None. Settings → Gestures rows become dropdowns; `GesturesViewModelTest`, `GesturesScreenTest`, `HomeSwipeControllerTest` cases.
+- [x] Docs: `12 §3, §4`, `13`, `03 §2`, `08`, `07`, README stack/limits; regenerate `TEST_REGISTRY.md`.
+
+Phase 1 as built, where it differs from the plan: the gesture is `PickUpDragGesture.kt` and `PickUpReorder.kt` (a new `PickUpReorderHost`, not `DragReorderState`); the pick-up look is scale 1.12 only (no shadow); Settings → Gestures has on/off switches for left, right and down plus *Swap left and right* (not dropdowns, no "None/Search" choice for down); Hub and carousel mirror when swapped, and the carousel then dismisses leftward from its last page. Open: TalkBack Move up / Move down actions are not done; Home-level drag tests in `HomeDrawerRouteTest` are written but could not be run here (that class fails on the emulators even on a clean checkout).
+
+### Phase 2 (schema change)
+- [ ] Room migration: each placement gets a portrait slot and a landscape slot (anchor-relative row, column), seeded from the current order row by row; landscape seeded from the portrait order. `FacetDatabaseMigrationTest` case, `AppPlacementDaoTest`, `FolderPlacementDaoTest`; `02` migration table.
+- [ ] Facet grid size per orientation (columns, rows); the settings screens and `ApplyFacetDefaultsUseCase` copy it. Backup: new `BackupBundle` fields and version bump, `BackupUpgradeTest`, `BackupCoverageTest`; re-check F11 in `05`.
+- [ ] Grid layout: fixed-height cells, scroll limited to the last occupied row (full grid while dragging), top and bottom anchor, empty cells and gaps as free space. Tests for geometry, hit areas and the scroll extent.
+- [ ] Grid drag: auto-scroll at the edges (also for the list), drop on empty moves, drop on occupied swaps, faint slot guide on empty cells while dragging (to confirm).
+- [ ] Add to the first free slot; refuse when full with a message; compact on shrink; raise rows at list to grid switch; remember both orderings.
+- [ ] Docs: `02`, `08`, `09 §4`, `10` if grid constants change, `13`; regenerate `TEST_REGISTRY.md`.
+
+### Later
+- [ ] Discrete swipe actions (open search, launch an app) for down, left and right.
+
+### Open
+- [x] Apps to show goes up to 20.
+- [x] Faint slot guides on empty grid cells, only while a drag is active.
+- [x] Facet-scope badge: dropped from the app quick-add sheet; kept only on the Settings folder screen's menu.

@@ -2,6 +2,7 @@ package com.facetlauncher.app.ui.home
 
 import androidx.compose.ui.unit.dp
 import com.facetlauncher.app.data.model.AppListLayout
+import com.facetlauncher.app.data.model.ListContentMode
 import com.facetlauncher.app.data.model.AppListShrinkToFit
 import com.facetlauncher.app.data.model.DrawerPresentation
 import com.facetlauncher.app.data.model.CalendarEvent
@@ -100,6 +101,7 @@ fun ResolvedFacetStyle.toHomeScreenState(
         gridColumns = appList.gridColumns,
         gridDisplayMode = appList.gridDisplayMode,
         showUsageAccessPrompt = content.showUsageAccessPrompt,
+        reorderable = appList.contentMode == ListContentMode.FAVORITES,
         shrinkToFit = appList.shrinkToFit == AppListShrinkToFit.ON,
     ),
     dock = HomeDockState(items = content.dockItems, displayMode = dockDisplayMode),

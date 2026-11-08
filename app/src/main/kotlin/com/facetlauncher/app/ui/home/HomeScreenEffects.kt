@@ -158,6 +158,10 @@ internal fun HomeMenuSheet(stack: HomeClockStackState, actions: HomeClockActions
         containerColor = SurfaceContainer,
     ) {
         HomeMenuSheetContent(
+            onSwitchFacetClick = {
+                close()
+                actions.onOpenFacetCarousel()
+            },
             onFacetSettingsClick = {
                 close()
                 actions.onNavigateToFacetSettings()

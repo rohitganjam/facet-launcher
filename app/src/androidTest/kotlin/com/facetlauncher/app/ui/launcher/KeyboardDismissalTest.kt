@@ -121,6 +121,7 @@ import com.facetlauncher.app.data.PlacementRepository
 import com.facetlauncher.app.domain.ObservePlacedItemsUseCase
 import com.facetlauncher.app.domain.AddToActiveListUseCase
 import com.facetlauncher.app.domain.RemoveFromActiveListUseCase
+import com.facetlauncher.app.domain.ReorderActiveListUseCase
 import com.facetlauncher.app.domain.ResolveActivePlacementTargetUseCase
 import org.mockito.Mockito.`when`
 import org.mockito.Mockito.mock
@@ -255,6 +256,7 @@ class KeyboardDismissalTest {
                     RankBySearchRelevanceUseCase(),
                     AddToActiveListUseCase(ResolveActivePlacementTargetUseCase(settingsRepository, facetRepository), placementRepository, observePlacedItems),
                     RemoveFromActiveListUseCase(ResolveActivePlacementTargetUseCase(settingsRepository, facetRepository), placementRepository),
+                    ReorderActiveListUseCase(ResolveActivePlacementTargetUseCase(settingsRepository, facetRepository), placementRepository),
                     FolderRepository(database.folderDao(), appRepository),
                     SecureFolderRepository(context),
                     PrivateSpaceRepository(context.getSystemService(UserManager::class.java), appRepository, context),

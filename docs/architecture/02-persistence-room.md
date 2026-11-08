@@ -422,6 +422,10 @@ erDiagram
         boolean notification_dots_enabled "default true"
         boolean home_opens_search "default false"
         boolean double_tap_to_lock "default false"
+        boolean swipe_left_enabled "default true"
+        boolean swipe_right_enabled "default true"
+        boolean swipe_down_enabled "default true"
+        boolean swap_swipe_sides "default false"
         string notification_badge_style "NotificationBadgeStyle, default DOT"
         boolean show_media_player_on_home "default false"
         boolean show_media_skip_buttons "default true"
@@ -550,6 +554,10 @@ DataStore serialises writes and is main-safe; callers `viewModelScope.launch { }
 | `setNotificationDotsEnabled(Boolean)` | `notification_dots_enabled` | set | `NotificationSettingsViewModel`, `NotificationAccessExplanationViewModel` |
 | `setHomeOpensSearch(Boolean)` | `home_opens_search` | set | `GesturesViewModel` |
 | `setDoubleTapToLock(Boolean)` | `double_tap_to_lock` | set | `GesturesViewModel` |
+| `setSwipeLeftEnabled(Boolean)` | `swipe_left_enabled` | set | `GesturesViewModel` |
+| `setSwipeRightEnabled(Boolean)` | `swipe_right_enabled` | set | `GesturesViewModel` |
+| `setSwipeDownEnabled(Boolean)` | `swipe_down_enabled` | set | `GesturesViewModel` |
+| `setSwapSwipeSides(Boolean)` | `swap_swipe_sides` | set | `GesturesViewModel` |
 | `setNotificationBadgeStyle(NotificationBadgeStyle)` | `notification_badge_style` | set | `NotificationSettingsViewModel` |
 | `setShowMediaPlayerOnHome(Boolean)` | `show_media_player_on_home` | set | `NotificationSettingsViewModel` |
 | `setShowMediaSkipButtons(Boolean)` | `show_media_skip_buttons` | set | `NotificationSettingsViewModel` |
@@ -689,6 +697,10 @@ accessibility grant, and the pair is small enough to set again after a restore.
 |---|---|---|---|
 | `home_opens_search` | Boolean | `homeOpensSearch` | `false` — a Home press on bare Home opens the Drawer with search focused. In `BackupSettings` (defaulted, no version bump) |
 | `double_tap_to_lock` | Boolean | `doubleTapToLock` | `false` — the switch only reads on while the accessibility service is also enabled. In `BackupSettings` (defaulted, no version bump) |
+| `swipe_left_enabled` | Boolean | `swipeLeftEnabled` | `true`. In `BackupSettings` (defaulted, no version bump) |
+| `swipe_right_enabled` | Boolean | `swipeRightEnabled` | `true`. In `BackupSettings` (defaulted, no version bump) |
+| `swipe_down_enabled` | Boolean | `swipeDownEnabled` | `true`. In `BackupSettings` (defaulted, no version bump) |
+| `swap_swipe_sides` | Boolean | `swapSwipeSides` | `false`. In `BackupSettings` (defaulted, no version bump) |
 
 #### Notifications
 

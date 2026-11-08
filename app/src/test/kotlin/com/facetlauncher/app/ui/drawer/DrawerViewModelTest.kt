@@ -51,6 +51,7 @@ import com.facetlauncher.app.domain.AddToActiveListUseCase
 import com.facetlauncher.app.data.model.Folder
 import com.facetlauncher.app.domain.QuickPlacementAction
 import com.facetlauncher.app.domain.RemoveFromActiveListUseCase
+import com.facetlauncher.app.domain.ReorderActiveListUseCase
 import com.facetlauncher.app.data.model.PlacementList
 import com.facetlauncher.app.data.model.PlacedItem
 
@@ -96,6 +97,7 @@ class DrawerViewModelTest {
         usageAccessRepository: UsageAccessRepository = mock(UsageAccessRepository::class.java),
         addToActiveList: AddToActiveListUseCase = mock(AddToActiveListUseCase::class.java),
         removeFromActiveList: RemoveFromActiveListUseCase = mock(RemoveFromActiveListUseCase::class.java),
+        reorderActiveList: ReorderActiveListUseCase = mock(ReorderActiveListUseCase::class.java),
     ): DrawerViewModel {
         val contactPermissionRepository = mock(ContactPermissionRepository::class.java)
         `when`(contactPermissionRepository.isGranted()).thenReturn(contactsPermissionGranted)
@@ -123,6 +125,7 @@ class DrawerViewModelTest {
             rankBySearchRelevance = RankBySearchRelevanceUseCase(),
             addToActiveList = addToActiveList,
             removeFromActiveList = removeFromActiveList,
+            reorderActiveList = reorderActiveList,
             folderRepository = folderRepository,
             secureFolderRepository = secureFolderRepository,
             privateSpaceRepository = privateSpaceRepository,
@@ -478,6 +481,23 @@ class DrawerViewModelTest {
         verify(addToActiveList).invoke(PlacementList.DOCK, PlacedItem.SingleApp(chatApp))
         verify(addToActiveList).invoke(PlacementList.FAVORITES, PlacedItem.FolderItem(folder))
         verify(addToActiveList).invoke(PlacementList.DOCK, PlacedItem.FolderItem(folder))
+    }
+
+    @Test
+    fun `a Home drag reorder reaches ReorderActiveListUseCase with its list and order`() = runTest {
+        // Given a drawer with a mocked reorder use case, an app and a folder
+        val reorderActiveList = mock(ReorderActiveListUseCase::class.java)
+        val viewModel = drawerViewModel(reorderActiveList = reorderActiveList)
+        val ordered = listOf(PlacedItem.FolderItem(Folder(id = 3L, name = "Games", apps = emptyList())), PlacedItem.SingleApp(chatApp))
+
+        // When the Dock and the Favorites list are reordered
+        viewModel.onReorderList(PlacementList.DOCK, ordered)
+        viewModel.onReorderList(PlacementList.FAVORITES, ordered.reversed())
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Then each reaches the use case with its own list and order
+        verify(reorderActiveList).invoke(PlacementList.DOCK, ordered)
+        verify(reorderActiveList).invoke(PlacementList.FAVORITES, ordered.reversed())
     }
 
     @Test

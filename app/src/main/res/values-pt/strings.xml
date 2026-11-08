@@ -862,6 +862,8 @@
     <string name="clock_adjust_align_middle">Alinhar ao meio</string>
     <string name="clock_adjust_align_bottom">Alinhar embaixo</string>
     <string name="home_sheet_facet_settings_subtitle">Widgets, lista de apps e dock específicos da faceta</string>
+    <string name="home_sheet_switch_facet">Mudar de faceta</string>
+    <string name="home_sheet_switch_facet_subtitle">Explore as facetas e aplique uma</string>
 
     <!-- HubWidgetPickerScreen -->
     <string name="hub_widget_picker_full">Cheio — remova um widget primeiro</string>
@@ -1098,12 +1100,15 @@
     <string name="settings_gestures_subtitle">Deslizes, toques e o botão Início</string>
     <string name="gestures_section_built_in">Integrados</string>
     <string name="gestures_section_optional">Opcionais</string>
+    <string name="gestures_section_swipes">Deslizes</string>
     <string name="gesture_swipe_up_title">Deslizar para cima</string>
     <string name="gesture_swipe_up_subtitle">Abrir a gaveta de apps</string>
     <string name="gesture_swipe_right_title">Deslizar para a direita</string>
     <string name="gesture_swipe_right_subtitle">Abrir o Hub</string>
     <string name="gesture_swipe_left_title">Deslizar para a esquerda</string>
     <string name="gesture_swipe_left_subtitle">Trocar de faceta</string>
+    <string name="gesture_swap_sides_title">Trocar esquerda e direita</string>
+    <string name="gesture_swap_sides_subtitle">Abrir o Hub pela direita e as facetas pela esquerda</string>
     <string name="gesture_swipe_down_title">Deslizar para baixo</string>
     <string name="gesture_swipe_down_subtitle">Abrir a central de notificações</string>
     <string name="gesture_long_press_title">Manter pressionado um espaço vazio</string>

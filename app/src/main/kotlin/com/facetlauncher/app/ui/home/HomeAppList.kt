@@ -1,5 +1,6 @@
 package com.facetlauncher.app.ui.home
 
+import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -46,6 +47,7 @@ import com.facetlauncher.app.data.model.toColumnPositions
 import com.facetlauncher.app.ui.components.AppIcon
 import com.facetlauncher.app.ui.components.AppIconSize
 import com.facetlauncher.app.ui.components.dashedBorder
+import com.facetlauncher.app.ui.components.PickUpReorderHost
 import com.facetlauncher.app.ui.components.longPressReleaseClickable
 import com.facetlauncher.app.ui.home.AppRow
 import com.facetlauncher.app.ui.home.FolderRow
@@ -111,9 +113,17 @@ internal fun HomeAppListColumn(
     modifier: Modifier = Modifier,
     rowWidthFraction: Float = 1f,
     horizontalAlignment: Alignment.Horizontal = Alignment.Start,
+    onReorder: ((List<PlacedItem>) -> Unit)? = null,
 ) {
     Column(modifier = modifier, horizontalAlignment = horizontalAlignment) {
-        content.items.forEach { item ->
+        PickUpReorderHost(
+            items = content.items,
+            key = { it.stableKey() },
+            axis = Orientation.Vertical,
+            enabled = onReorder != null,
+            onReorder = { onReorder?.invoke(it) },
+        ) { shown ->
+        shown.forEach { item -> key(item.stableKey()) {
             val rowModifier = Modifier.fillMaxWidth(rowWidthFraction)
             when (item) {
                 is PlacedItem.SingleApp -> AppRow(
@@ -137,6 +147,7 @@ internal fun HomeAppListColumn(
                     iconSize = iconSize,
                 )
             }
+        } }
         }
     }
 }

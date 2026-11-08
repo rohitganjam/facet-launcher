@@ -67,6 +67,7 @@ import com.facetlauncher.app.ui.components.StickyHeaderLayout
 import com.facetlauncher.app.ui.components.OtherScopeBadge
 import com.facetlauncher.app.ui.components.ProfileTab
 import com.facetlauncher.app.ui.components.ProfileTabRow
+import com.facetlauncher.app.ui.components.swipeBetweenTabs
 import com.facetlauncher.app.data.model.NativeWidgetType
 import com.facetlauncher.app.ui.nativewidget.NativeWidgetPickerSection
 import com.facetlauncher.app.ui.theme.ErrorColor
@@ -176,6 +177,11 @@ internal fun HubWidgetPickerContent(
                     modifier = Modifier
                         .fillMaxSize()
                         .windowInsetsPadding(WindowInsets.systemBars)
+                        .swipeBetweenTabs(
+                            keys = uiState.tabs.map { it.name },
+                            selected = uiState.tab.name,
+                            onSelect = { onTabChange(WidgetPickerTab.valueOf(it)) },
+                        )
                         .padding(horizontal = WIDGET_PICKER_HORIZONTAL_PADDING),
                     contentPadding = PaddingValues(top = headerHeight),
                 ) {

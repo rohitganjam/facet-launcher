@@ -862,6 +862,8 @@
     <string name="clock_adjust_align_middle">Mittig ausrichten</string>
     <string name="clock_adjust_align_bottom">Unten ausrichten</string>
     <string name="home_sheet_facet_settings_subtitle">Facettenspezifische Widgets, App-Liste und Dock</string>
+    <string name="home_sheet_switch_facet">Facette wechseln</string>
+    <string name="home_sheet_switch_facet_subtitle">Facetten durchsehen und eine anwenden</string>
 
     <!-- HubWidgetPickerScreen -->
     <string name="hub_widget_picker_full">Voll — entferne zuerst ein Widget</string>
@@ -1098,12 +1100,15 @@
     <string name="settings_gestures_subtitle">Wischen, Tippen und die Home-Taste</string>
     <string name="gestures_section_built_in">Integriert</string>
     <string name="gestures_section_optional">Optional</string>
+    <string name="gestures_section_swipes">Wischgesten</string>
     <string name="gesture_swipe_up_title">Nach oben wischen</string>
     <string name="gesture_swipe_up_subtitle">App-Übersicht öffnen</string>
     <string name="gesture_swipe_right_title">Nach rechts wischen</string>
     <string name="gesture_swipe_right_subtitle">Hub öffnen</string>
     <string name="gesture_swipe_left_title">Nach links wischen</string>
     <string name="gesture_swipe_left_subtitle">Facetten wechseln</string>
+    <string name="gesture_swap_sides_title">Links und rechts tauschen</string>
+    <string name="gesture_swap_sides_subtitle">Hub von rechts und Facetten von links öffnen</string>
     <string name="gesture_swipe_down_title">Nach unten wischen</string>
     <string name="gesture_swipe_down_subtitle">Benachrichtigungsleiste öffnen</string>
     <string name="gesture_long_press_title">Leere Fläche lange drücken</string>

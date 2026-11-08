@@ -119,4 +119,36 @@ class GesturesViewModelTest {
         verify(settingsRepository).setHomeOpensSearch(true)
         verify(settingsRepository).setDoubleTapToLock(true)
     }
+
+    @Test
+    fun `the swipe switches read from settings and write back through the repository`() = runTest {
+        // Given swipe left stored off
+        settings.value = LauncherSettings(swipeLeftEnabled = false)
+        val repository = mock(SettingsRepository::class.java)
+        val viewModel = createViewModel(accessGranted = false, settingsRepository = repository)
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Then only that switch reads off
+        val state = viewModel.uiState.value
+        assertFalse(state.swipeLeftEnabled)
+        assertTrue(state.swipeRightEnabled)
+        assertTrue(state.swipeDownEnabled)
+
+        // When the switches are changed
+        viewModel.setSwipeLeftEnabled(true)
+        viewModel.setSwipeRightEnabled(false)
+        viewModel.setSwipeDownEnabled(false)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Then each reaches the repository
+        verify(repository).setSwipeLeftEnabled(true)
+        verify(repository).setSwipeRightEnabled(false)
+        verify(repository).setSwipeDownEnabled(false)
+
+        // And the swap switch does too
+        viewModel.setSwapSwipeSides(true)
+        testDispatcher.scheduler.advanceUntilIdle()
+        verify(repository).setSwapSwipeSides(true)
+    }
 }

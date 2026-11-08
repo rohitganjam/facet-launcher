@@ -2,6 +2,7 @@ package com.facetlauncher.app.ui.home
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -48,6 +49,9 @@ import androidx.compose.ui.unit.dp
 import com.facetlauncher.app.R
 import com.facetlauncher.app.data.model.AppListLayout
 import com.facetlauncher.app.data.model.AppRowPosition
+import com.facetlauncher.app.data.model.PlacedItem
+import com.facetlauncher.app.data.model.PlacementList
+import com.facetlauncher.app.ui.components.PickUpReorderHost
 import com.facetlauncher.app.data.model.ClockAlignment
 import com.facetlauncher.app.data.model.DockDisplayMode
 import com.facetlauncher.app.data.model.MediaPlayerState
@@ -380,6 +384,9 @@ private fun HomeAppListBody(frame: HomeFrame) {
             iconSize = rowIconSize,
             modifier = Modifier.fillMaxWidth(),
             rowWidthFraction = SINGLE_COLUMN_ROW_WIDTH_FRACTION,
+            onReorder = frame.actions.item.onReorderList
+                ?.takeIf { list.reorderable }
+                ?.let { reorder -> { ordered: List<PlacedItem> -> reorder(PlacementList.FAVORITES, ordered) } },
             horizontalAlignment = when (position) {
                 AppRowPosition.RIGHT -> Alignment.End
                 AppRowPosition.CENTER -> Alignment.CenterHorizontally
@@ -397,8 +404,17 @@ private fun gridColumns(frame: HomeFrame): Int {
 
 @Composable
 internal fun HomeDockItems(frame: HomeFrame, displayMode: DockDisplayMode) {
-    frame.state.dock.items.forEach { item ->
-        DockIcon(item = item, displayMode = displayMode, actions = frame.actions.item, style = frame.itemStyle)
+    val onReorder = frame.actions.item.onReorderList
+    PickUpReorderHost(
+        items = frame.state.dock.items,
+        key = { it.stableKey() },
+        axis = if (frame.isLandscape && !frame.dockAtBottom) Orientation.Vertical else Orientation.Horizontal,
+        enabled = onReorder != null,
+        onReorder = { ordered -> onReorder?.invoke(PlacementList.DOCK, ordered) },
+    ) { shown ->
+        shown.forEach { item ->
+            key(item.stableKey()) { DockIcon(item = item, displayMode = displayMode, actions = frame.actions.item, style = frame.itemStyle) }
+        }
     }
 }
 
@@ -426,7 +442,7 @@ private fun UsageAccessStrip(onClick: () -> Unit, modifier: Modifier = Modifier)
 }
 
 /** Single-column rows are only this fraction of the list's width (tap target + ripple), anchored by the row position. */
-private const val SINGLE_COLUMN_ROW_WIDTH_FRACTION = 0.8f
+private const val SINGLE_COLUMN_ROW_WIDTH_FRACTION = 0.7f
 
 private fun nativeWidgetActions(actions: HomeScreenActions) = NativeWidgetActions(
     onOpenWeather = actions.clock.onOpenNativeWeather,

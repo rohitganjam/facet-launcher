@@ -32,10 +32,12 @@ import androidx.compose.ui.unit.dp
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.AppRowPosition
 import com.facetlauncher.app.data.model.AppRowPresentation
+import com.facetlauncher.app.data.model.PlacedItem
 import com.facetlauncher.app.ui.components.AppIcon
 import com.facetlauncher.app.ui.components.AppIconSize
 import com.facetlauncher.app.ui.components.NotificationBadge
-import com.facetlauncher.app.ui.components.longPressReleaseClickable
+import com.facetlauncher.app.ui.components.longPressReorderClickable
+import com.facetlauncher.app.ui.components.reorderItemLayer
 import com.facetlauncher.app.ui.home.AppRow
 import com.facetlauncher.app.ui.theme.homeAppLabelShadow
 
@@ -61,12 +63,13 @@ internal fun AppRow(
     onClick: () -> Unit = { actions.onAppClick(app) },
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
+    val itemKey = remember(app) { PlacedItem.SingleApp(app).stableKey() }
     val clickModifier = if (enableLongPressMenu) {
-        Modifier.longPressReleaseClickable(onClick = onClick, onLongPress = { menuExpanded = true })
+        Modifier.longPressReorderClickable(itemKey, onClick = onClick, onLongPress = { menuExpanded = true })
     } else {
         Modifier.clickable(onClick = onClick)
     }
-    Box(modifier = modifier) {
+    Box(modifier = modifier.reorderItemLayer(itemKey)) {
         AppRowContent(
             app = app,
             style = style,

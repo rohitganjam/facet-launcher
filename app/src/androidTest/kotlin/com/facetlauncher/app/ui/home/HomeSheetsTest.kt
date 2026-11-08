@@ -23,6 +23,7 @@ class HomeSheetsTest {
         composeRule.setContent {
             FacetLauncherTheme {
                 HomeMenuSheetContent(
+                    onSwitchFacetClick = { calls += "switch-facet" },
                     onFacetSettingsClick = { calls += "facet-settings" },
                     onLauncherSettingsClick = { calls += "launcher-settings" },
                     onAddWidgetClick = { calls += "add" },
@@ -53,12 +54,13 @@ class HomeSheetsTest {
     }
 
     @Test
-    fun theHomeSheetHoldsOnlyTheFacetAndLauncherSettingsWhileAWidgetIsShowing() {
+    fun theHomeSheetHoldsOnlySwitchFacetAndTheSettingsWhileAWidgetIsShowing() {
         // Given the Home sheet over a stack with a widget
         val calls = mutableListOf<String>()
         setHomeSheet(calls = calls)
 
-        // Then it has just the two settings rows, none of the widget's
+        // Then it has Switch facet and the two settings rows, none of the widget's
+        composeRule.onNodeWithTag("home_sheet_switch_facet").assertIsDisplayed()
         composeRule.onNodeWithTag("home_sheet_facet_settings").assertIsDisplayed()
         composeRule.onNodeWithTag("home_sheet_launcher_settings").assertIsDisplayed()
         listOf("widget_sheet_adjust", "widget_sheet_replace", "widget_sheet_remove", "widget_sheet_stack", "home_sheet_add_widget").forEach {
@@ -66,9 +68,10 @@ class HomeSheetsTest {
         }
 
         // And each row fires its own action
+        composeRule.onNodeWithTag("home_sheet_switch_facet").performClick()
         composeRule.onNodeWithTag("home_sheet_facet_settings").performClick()
         composeRule.onNodeWithTag("home_sheet_launcher_settings").performClick()
-        assertEquals(listOf("facet-settings", "launcher-settings"), calls)
+        assertEquals(listOf("switch-facet", "facet-settings", "launcher-settings"), calls)
     }
 
     @Test

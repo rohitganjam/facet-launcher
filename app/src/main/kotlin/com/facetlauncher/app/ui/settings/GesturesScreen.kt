@@ -64,12 +64,60 @@ fun GesturesScreen(
         uiState = uiState,
         onBack = onBack,
         onHomeOpensSearchChange = viewModel::setHomeOpensSearch,
+        onSwipeLeftEnabledChange = viewModel::setSwipeLeftEnabled,
+        onSwipeRightEnabledChange = viewModel::setSwipeRightEnabled,
+        onSwipeDownEnabledChange = viewModel::setSwipeDownEnabled,
+        onSwapSwipeSidesChange = viewModel::setSwapSwipeSides,
         onDoubleTapToLockChange = { checked ->
             viewModel.setDoubleTapToLock(checked)
             if (checked && !uiState.isAccessibilityGranted) onNavigateToAccessibilityAccessExplanation()
         },
         modifier = modifier,
     )
+}
+
+@Composable
+private fun SwipeSwitchesCard(
+    uiState: GesturesUiState,
+    onLeftChange: (Boolean) -> Unit,
+    onRightChange: (Boolean) -> Unit,
+    onDownChange: (Boolean) -> Unit,
+    onSwapChange: (Boolean) -> Unit,
+) {
+    val swapped = uiState.swapSwipeSides
+    SettingsCard {
+        SettingsToggleRow(
+            title = stringResource(R.string.gesture_swipe_left_title),
+            subtitle = stringResource(if (swapped) R.string.gesture_swipe_right_subtitle else R.string.gesture_swipe_left_subtitle),
+            checked = uiState.swipeLeftEnabled,
+            onCheckedChange = onLeftChange,
+            testTag = "gesture_swipe_left_toggle",
+        )
+        CardDivider()
+        SettingsToggleRow(
+            title = stringResource(R.string.gesture_swipe_right_title),
+            subtitle = stringResource(if (swapped) R.string.gesture_swipe_left_subtitle else R.string.gesture_swipe_right_subtitle),
+            checked = uiState.swipeRightEnabled,
+            onCheckedChange = onRightChange,
+            testTag = "gesture_swipe_right_toggle",
+        )
+        CardDivider()
+        SettingsToggleRow(
+            title = stringResource(R.string.gesture_swipe_down_title),
+            subtitle = stringResource(R.string.gesture_swipe_down_subtitle),
+            checked = uiState.swipeDownEnabled,
+            onCheckedChange = onDownChange,
+            testTag = "gesture_swipe_down_toggle",
+        )
+        CardDivider()
+        SettingsToggleRow(
+            title = stringResource(R.string.gesture_swap_sides_title),
+            subtitle = stringResource(R.string.gesture_swap_sides_subtitle),
+            checked = swapped,
+            onCheckedChange = onSwapChange,
+            testTag = "gesture_swap_sides_toggle",
+        )
+    }
 }
 
 // onDoubleTapToLockChange is unused while the double-tap to lock switch is commented out.
@@ -81,6 +129,10 @@ private fun GesturesContent(
     onHomeOpensSearchChange: (Boolean) -> Unit,
     onDoubleTapToLockChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
+    onSwipeLeftEnabledChange: (Boolean) -> Unit = {},
+    onSwipeRightEnabledChange: (Boolean) -> Unit = {},
+    onSwipeDownEnabledChange: (Boolean) -> Unit = {},
+    onSwapSwipeSidesChange: (Boolean) -> Unit = {},
 ) {
     StickyHeaderScrollColumn(
         title = stringResource(R.string.settings_gestures_title),
@@ -92,14 +144,23 @@ private fun GesturesContent(
         SettingsCard {
             GestureInfoRow(Icons.Outlined.ArrowUpward, R.string.gesture_swipe_up_title, R.string.gesture_swipe_up_subtitle, "gesture_swipe_up")
             CardDivider()
-            GestureInfoRow(Icons.Outlined.East,R.string.gesture_swipe_right_title, R.string.gesture_swipe_right_subtitle, "gesture_swipe_right")
+            GestureInfoRow(Icons.Outlined.East, R.string.gesture_swipe_right_title, if (uiState.swapSwipeSides) R.string.gesture_swipe_left_subtitle else R.string.gesture_swipe_right_subtitle, "gesture_swipe_right")
             CardDivider()
-            GestureInfoRow(Icons.Outlined.West,R.string.gesture_swipe_left_title, R.string.gesture_swipe_left_subtitle, "gesture_swipe_left")
+            GestureInfoRow(Icons.Outlined.West, R.string.gesture_swipe_left_title, if (uiState.swapSwipeSides) R.string.gesture_swipe_right_subtitle else R.string.gesture_swipe_left_subtitle, "gesture_swipe_left")
             CardDivider()
             GestureInfoRow(Icons.Outlined.ArrowDownward, R.string.gesture_swipe_down_title, R.string.gesture_swipe_down_subtitle, "gesture_swipe_down")
             CardDivider()
             GestureInfoRow(Icons.Outlined.TouchApp, R.string.gesture_long_press_title, R.string.gesture_long_press_subtitle, "gesture_long_press")
         }
+
+        SettingsSectionHeader(stringResource(R.string.gestures_section_swipes))
+        SwipeSwitchesCard(
+            uiState = uiState,
+            onLeftChange = onSwipeLeftEnabledChange,
+            onRightChange = onSwipeRightEnabledChange,
+            onDownChange = onSwipeDownEnabledChange,
+            onSwapChange = onSwapSwipeSidesChange,
+        )
 
         SettingsSectionHeader(stringResource(R.string.gestures_section_optional))
         SettingsCard {

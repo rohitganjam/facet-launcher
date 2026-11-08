@@ -140,6 +140,7 @@ import com.facetlauncher.app.ui.components.FolderTileContextMenu
 import com.facetlauncher.app.ui.components.NotificationBadge
 import com.facetlauncher.app.ui.components.ProfileTab
 import com.facetlauncher.app.ui.components.ProfileTabRow
+import com.facetlauncher.app.ui.components.swipeBetweenTabs
 import com.facetlauncher.app.ui.components.RecencyIcon
 import com.facetlauncher.app.ui.components.ThemedDropdownMenu
 import com.facetlauncher.app.ui.components.ThemedDropdownMenuItem
@@ -262,7 +263,7 @@ fun AppDrawerScreen(
             }
 
             // The sheet is modal: hide the list from accessibility (and tests) while it is open.
-            Box(modifier = Modifier.weight(1f).then(if (search.isOpen) Modifier.clearAndSetSemantics {} else Modifier)) {
+            Box(Modifier.weight(1f).then(if (search.isOpen) Modifier.clearAndSetSemantics {} else Modifier).swipeDrawerTabs(browse, enabled = workProfiles.isNotEmpty() && !search.isOpen)) {
                 DrawerBrowseBody(browse, listState, gridState, appearance, actions, appMenuNotifications, folderCandidates)
             }
 
@@ -497,14 +498,27 @@ private fun BoxScope.ContactConnectionsOverlay(contact: ContactInfo?, connection
     }
 }
 
+/** A tab's stable id, for its test tag and for a swipe to find the next one. */
+private fun DrawerTab.key() = when (this) {
+    DrawerTab.Personal -> "personal"
+    is DrawerTab.Work -> "work_${handle.hashCode()}"
+}
+
+/** Keeps a tab swipe off the letter rail. */
+private val DRAWER_TAB_SWIPE_END_EXCLUSION = 48.dp
+
+private fun Modifier.swipeDrawerTabs(browse: DrawerBrowseModel, enabled: Boolean): Modifier = swipeBetweenTabs(
+    keys = browse.tabs.map { it.key() },
+    selected = browse.selectedTab.key(),
+    onSelect = { key -> browse.tabs.firstOrNull { it.key() == key }?.let(browse.onSelectTab) },
+    endExclusion = DRAWER_TAB_SWIPE_END_EXCLUSION,
+    enabled = enabled,
+)
+
 /** Personal/Work switcher shown above the app list only when a Work Profile exists: the shared [ProfileTabRow]. */
 @Composable
 private fun DrawerProfileTabRow(tabs: ImmutableList<DrawerTab>, selected: DrawerTab, onSelect: (DrawerTab) -> Unit, modifier: Modifier = Modifier) {
     val personalLabel = stringResource(R.string.drawer_tab_personal)
-    fun DrawerTab.key() = when (this) {
-        DrawerTab.Personal -> "personal"
-        is DrawerTab.Work -> "work_${handle.hashCode()}"
-    }
     val items = remember(tabs, personalLabel) { tabs.map { ProfileTab(it.key(), if (it is DrawerTab.Work) it.label else personalLabel) }.toImmutableList() }
     ProfileTabRow(
         tabs = items,
