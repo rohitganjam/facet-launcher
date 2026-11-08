@@ -42,4 +42,9 @@ data class AppPlacementEntity(
     val profile: AppProfile = AppProfile.PERSONAL,
     /** The real `UserHandle.hashCode()` this app came from (`getIdentifier()` itself is hidden API, not in the public SDK — see [Migrations.MIGRATION_19_20]) — the actual identity key; [profile] is display-only. */
     val userId: Int = -1,
+    /** Home grid cell, counted from the anchor edge; null until the item is first moved (its place then follows [position]). */
+    val portraitRow: Int? = null,
+    val portraitColumn: Int? = null,
+    val landscapeRow: Int? = null,
+    val landscapeColumn: Int? = null,
 )

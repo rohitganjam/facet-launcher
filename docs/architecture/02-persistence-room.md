@@ -4,7 +4,7 @@
 
 | Store | Location | What it holds | Written by | Survives |
 |---|---|---|---|---|
-| Room `FacetDatabase` | `facet.db` (schema **v46**, `exportSchema = true` → `app/schemas/…/1.json … 46.json`) | Facets + every *placement*: favorites, dock, folders, folder membership, widget grid positions, plus the facet automation rules (`automation_rules`) the weather cache (`weather_hours`, `weather_meta`) and each facet's clock stack (`clock_stack_items`) | 7 repositories (§2): `FacetRepository`, `PlacementRepository`, `FolderRepository`, `WidgetPlacementRepository`, `AutomationRuleRepository`, `WeatherRepository` (through `RoomWeatherStore`), `ClockStackRepository` | Reinstall-over-upgrade (migrations); **not** downgrade (dropped) |
+| Room `FacetDatabase` | `facet.db` (schema **v47**, `exportSchema = true` → `app/schemas/…/1.json … 47.json`) | Facets + every *placement*: favorites, dock, folders, folder membership, widget grid positions, plus the facet automation rules (`automation_rules`) the weather cache (`weather_hours`, `weather_meta`) and each facet's clock stack (`clock_stack_items`) | 7 repositories (§2): `FacetRepository`, `PlacementRepository`, `FolderRepository`, `WidgetPlacementRepository`, `AutomationRuleRepository`, `WeatherRepository` (through `RoomWeatherStore`), `ClockStackRepository` | Reinstall-over-upgrade (migrations); **not** downgrade (dropped) |
 | `DataStore<Preferences>` | `facet_settings` (`datastore/facet_settings.preferences_pb`) | **All launcher-wide settings and defaults** — clock/app-list/dock design defaults (the calendar events strip has no design defaults of its own — see below), theme, drawer, search, permission-prompt flags, onboarding/seed/coach-mark flags, active facet id, the clock accessory switches, weather units and location, the icon pack and size — 86 keys (§5) | `SettingsRepository` only | Any upgrade (missing keys fall back to `LauncherSettings()` defaults) |
 | `DataStore<Preferences>` | `facet_entitlement` (`datastore/facet_entitlement.preferences_pb`) | The cached Pro state (`pro_purchased`; excluded from Android backups and device transfer by `res/xml/data_extraction_rules.xml`), so Pro works offline and at cold start; debug builds also keep `debug_entitlement_mode` here | `PlayEntitlementRepository`, only from an explicit Google Play answer | Same as `facet_settings`; **not** in the backup file, so a restore can never grant Pro |
 | `DataStore<Preferences>` | `facet_automation` (`datastore/facet_automation.preferences_pb`) | Facet-automation bookkeeping: the baseline facet, the ordered active rule ids, the suppressed rule ids (§5.7) | `AutomationStateRepository` (via `ActivateFacetByIdUseCase`) | Same as `facet_settings`; **not** in the backup file |
@@ -65,6 +65,10 @@ erDiagram
         int position
         string profile
         int userId
+        int portraitRow "nullable Home grid cell from the anchor edge, null until moved"
+        int portraitColumn
+        int landscapeRow
+        int landscapeColumn
     }
 
     folders {
@@ -89,6 +93,10 @@ erDiagram
         long ownerKey "facetId or 0, unique key column"
         long folderId FK "CASCADE"
         int position
+        int portraitRow "nullable Home grid cell from the anchor edge, null until moved"
+        int portraitColumn
+        int landscapeRow
+        int landscapeColumn
     }
 
     widget_placements {
@@ -354,6 +362,7 @@ Room.databaseBuilder(context, FacetDatabase::class.java, "facet.db")
 | 43→44 | **Auto-migration** (`@AutoMigration(from = 43, to = 44, spec = DropFacetClockColumns)`): `facets` loses `overrideClock`, `clockTemplateId`, `clockFontOption`, `clockColorOption`, `clockAccentColorOption`, `use24HourTime`, `clockShowMeridiem`, `clockDateStyle`, `clockShowAlarm`, `clockShowBattery`, `clockShowWeather`, `clockWeatherIconStyle`, `clockWeatherLocation`, `overrideCalendar`, `showAllDayEvents`, `showCalendarIndicator`, `calendarItemsToShow`, `selectedCalendarIdsCsv`, the five retired hosted-clock columns and `clockScale` / `landscapeClockScale`. The clock settings are not lost: 42→43 has already copied them onto each clock page, and the two steps run in one upgrade, so a jump from any older version is safe. The scale is: a clock's size is the box on its page (`clock_stack_items.widthDp`/`heightDp`), which cannot be worked out in a migration (it needs the drawn size of the clock's template and font), so a clock that was never resized goes back to the default size (`DEFAULT_CLOCK_SCALE`, 0.8). The launcher-wide `clock_scale` / `landscape_clock_scale` DataStore keys are no longer read or written. Room rebuilds the table because SQLite on minSdk 30 cannot drop a column. `FacetDatabaseMigrationTest.migration43To44DropsTheFacetClockColumnsAndKeepsEverythingElse`. |
 | 44→45 | No schema change. `Migrations.migration44To45` (`materializeFacetDefaults`, `FacetDefaultsMigration.kt`) writes today's launcher-wide values into every facet that inherited them, so the flags can go without anything changing on screen. For each facet with `overrideDock = 0` / `overridingFavorites = 0` it deletes the facet's stale own Dock / Favorites rows and copies the launcher-wide `app_placements` and `folder_placements` rows under its id; with `overrideApps = 0` it sets `listContentMode` and `appsToShowCount` from the settings; every `LAUNCHER_DEFAULT` look column becomes the launcher's value. A null landscape twin on a facet whose portrait value was inherited takes the launcher's landscape value, if it has one, since that is what it showed. A facet that overrode a list or the content is untouched. The launcher-wide values come from the settings DataStore, which a migration cannot reach, so `DatabaseModule` passes a reader (`SettingsRepository(...).settings.first()`) that runs only when this step does. `FacetDatabaseMigrationTest.migration44To45GivesInheritingFacets…`, `…LeavesAnOverridingFacetAndAnExplicitLandscapeValueAlone`, `…HandlesAnEmptyLauncherDock`. |
 | 45→46 | **Auto-migration** (`@AutoMigration(from = 45, to = 46, spec = DropFacetOverrideFlags)`): `facets` loses `overrideApps`, `overridingFavorites` and `overrideDock`. Nothing is lost: 44→45 has already copied the launcher's values into every facet that inherited them. `FacetDatabaseMigrationTest.migration45To46DropsTheOverrideFlagsAndKeepsTheFacetsOwnValues`. |
+| 46→47 | **Auto-migration** (`@AutoMigration(from = 46, to = 47)`): `app_placements` and `folder_placements` each gain four nullable columns, `portraitRow`, `portraitColumn`, `landscapeRow` and `landscapeColumn` (a Home grid cell counted from the anchor edge). All null until an item is first moved on a grid, when its place still follows `position`. Nothing reads them yet. `FacetDatabaseMigrationTest.migration46To47AddsEmptyHomeCellsAndKeepsEveryPlacement`. |
 
 The landscape twins are handled as one `LandscapeOverrides` group (clock alignment, divider, scale, widget size, row position, vertical and column alignment; every field nullable). Settings hold it as `LauncherSettings.landscape`, read from the six `landscape_*` keys and written only through `updateLandscape`. A facet keeps the flat columns above (so the schema is unchanged) and exposes the group as `FacetEntity.landscape` / `withLandscape(...)`, written through `FacetRepository.updateLandscape`. `resolveLandscape` is the one resolution rule (see [17](17-flow-home-layout.md) §1.0).
 

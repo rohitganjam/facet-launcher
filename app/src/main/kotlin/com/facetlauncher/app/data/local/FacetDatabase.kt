@@ -19,6 +19,7 @@ import androidx.room.TypeConverters
     autoMigrations = [
         AutoMigration(from = 43, to = 44, spec = DropFacetClockColumns::class),
         AutoMigration(from = 45, to = 46, spec = DropFacetOverrideFlags::class),
+        AutoMigration(from = 46, to = 47),
     ],
 )
 @TypeConverters(Converters::class)
@@ -37,7 +38,7 @@ abstract class FacetDatabase : RoomDatabase() {
     companion object {
         // A named constant, not a magic number scattered across DatabaseModule/Migrations/tests —
         // see Migrations.kt for what bumping this requires from here on.
-        const val VERSION = 46
+        const val VERSION = 47
     }
 }
 

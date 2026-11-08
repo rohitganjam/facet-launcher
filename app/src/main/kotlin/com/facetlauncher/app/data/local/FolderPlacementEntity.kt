@@ -32,4 +32,9 @@ data class FolderPlacementEntity(
     val ownerKey: Long = facetId ?: GLOBAL_OWNER_KEY,
     val folderId: Long,
     val position: Int,
+    /** Home grid cell, counted from the anchor edge; null until the item is first moved (its place then follows [position]). */
+    val portraitRow: Int? = null,
+    val portraitColumn: Int? = null,
+    val landscapeRow: Int? = null,
+    val landscapeColumn: Int? = null,
 )
