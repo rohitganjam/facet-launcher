@@ -17,6 +17,7 @@ import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
 import com.facetlauncher.app.domain.FacetDefaultsScope
 import com.facetlauncher.app.domain.ResolvedFacetStyle
+import com.facetlauncher.app.domain.ObserveActiveFacetItemsUseCase
 import com.facetlauncher.app.domain.ObservePlacedItemsUseCase
 import com.facetlauncher.app.domain.effectiveClockConfig
 import com.facetlauncher.app.domain.resolveFacetStyle
@@ -62,19 +63,16 @@ import com.facetlauncher.app.data.model.PlacementList
 
 /**
  * At facet scope the screen-bound values are the facet's own; at launcher scope they are the launcher-wide defaults
- * a new facet is seeded from. `facetFavorites`/`globalFavorites` and `facetDockItems`/`globalDockItems` are the raw
- * stored lists; [effectiveFavorites]/[effectiveDockItems] pick this scope's — the preview card shows this
- * scope's real, actual content, not a sample.
+ * a new facet is seeded from. [favorites] and [dockItems] are the real lists the preview card shows: the facet's, or
+ * the active facet's at launcher scope — not a sample.
  */
 data class AppearanceSettingsUiState(
     val settings: LauncherSettings = LauncherSettings(),
     val facet: Facet? = null,
     /** Every facet, for the default screen's "Copy to facets". */
     val facets: ImmutableList<Facet> = persistentListOf(),
-    val facetFavorites: List<PlacedItem> = emptyList(),
-    val globalFavorites: List<PlacedItem> = emptyList(),
-    val facetDockItems: List<PlacedItem> = emptyList(),
-    val globalDockItems: List<PlacedItem> = emptyList(),
+    val favorites: List<PlacedItem> = emptyList(),
+    val dockItems: List<PlacedItem> = emptyList(),
     /** Today's real events for the effective calendar selection, empty when calendar permission isn't granted — never a sample fallback (matches `ObserveHomeScreenStateUseCase`'s own gating). */
     val calendarEvents: List<CalendarEvent> = emptyList(),
     /** Whether notification-listener access is really granted — the Notifications row says so instead of reading "on" for a switch that isn't actually working. */
@@ -98,10 +96,6 @@ data class AppearanceSettingsUiState(
     val appListGridColumns: AppListGridColumns get() = style.appList.gridColumns
     val appListGridDisplayMode: AppListGridDisplayMode get() = style.appList.gridDisplayMode
     val appListShrinkToFit: AppListShrinkToFit get() = style.appList.shrinkToFit
-    /** This scope's own Favorites: the facet's, or the launcher-wide default's at launcher scope. */
-    val effectiveFavorites: List<PlacedItem> get() = if (facet != null) facetFavorites else globalFavorites
-    /** This scope's own dock: the facet's, or the launcher-wide default's at launcher scope. */
-    val effectiveDockItems: List<PlacedItem> get() = if (facet != null) facetDockItems else globalDockItems
 
     /** The calendar row's summary: this facet's clock's own calendar choices. */
     val effectiveShowAllDayEvents: Boolean get() = style.clock.calendar.showAllDay
@@ -126,6 +120,7 @@ class AppearanceSettingsViewModel @Inject constructor(
     private val settingsRepository: SettingsRepository,
     private val facetRepository: FacetRepository,
     private val observePlacedItems: ObservePlacedItemsUseCase,
+    private val observeActiveFacetItems: ObserveActiveFacetItemsUseCase,
     private val calendarRepository: CalendarRepository,
     private val calendarPermissionRepository: CalendarPermissionRepository,
     private val wallpaperRepository: WallpaperRepository,
@@ -135,10 +130,8 @@ class AppearanceSettingsViewModel @Inject constructor(
 
     private val facetId: Long? = savedStateHandle.get<Long>("facetId")?.takeIf { it != NO_ACTIVE_FACET_ID }
 
-    private val facetFavoritesFlow: Flow<List<PlacedItem>> = facetId?.let { observePlacedItems.items(PlacementTarget(PlacementList.FAVORITES, it)) } ?: flowOf(emptyList())
-    private val globalFavoritesFlow: Flow<List<PlacedItem>> = observePlacedItems.items(PlacementTarget.GlobalFavorites)
-    private val facetDockItemsFlow: Flow<List<PlacedItem>> = facetId?.let { observePlacedItems.items(PlacementTarget(PlacementList.DOCK, it)) } ?: flowOf(emptyList())
-    private val globalDockItemsFlow: Flow<List<PlacedItem>> = observePlacedItems.items(PlacementTarget.GlobalDock)
+    private fun list(list: PlacementList): Flow<List<PlacedItem>> =
+        facetId?.let { observePlacedItems.items(PlacementTarget(list, it)) } ?: observeActiveFacetItems(list)
 
     private val isNotificationAccessGranted = MutableStateFlow(notificationAccessRepository.isGranted())
     private val isCalendarAccessGranted = MutableStateFlow(calendarPermissionRepository.isGranted())
@@ -146,21 +139,17 @@ class AppearanceSettingsViewModel @Inject constructor(
     val uiState: StateFlow<AppearanceSettingsUiState> = combine(
         settingsRepository.settings,
         facetRepository.observeFacets(),
-        combine(facetFavoritesFlow, globalFavoritesFlow, ::Pair),
-        combine(facetDockItemsFlow, globalDockItemsFlow, ::Pair),
+        list(PlacementList.FAVORITES),
+        list(PlacementList.DOCK),
         combine(isNotificationAccessGranted, isCalendarAccessGranted, ::Pair),
     ) { settings, facets, favorites, dockItems, (notificationAccessGranted, calendarAccessGranted) ->
         val facet = facets.find { it.id == facetId }
-        val (facetFavorites, globalFavorites) = favorites
-        val (facetDockItems, globalDockItems) = dockItems
         AppearanceSettingsUiState(
             settings = settings,
             facet = facet,
             facets = facets.toImmutableList(),
-            facetFavorites = facetFavorites,
-            globalFavorites = globalFavorites,
-            facetDockItems = facetDockItems,
-            globalDockItems = globalDockItems,
+            favorites = favorites,
+            dockItems = dockItems,
             calendarEvents = observeCalendarEvents(facet, settings),
             notificationAccessGranted = notificationAccessGranted,
             calendarAccessGranted = calendarAccessGranted,

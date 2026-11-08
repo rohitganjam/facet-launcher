@@ -6,7 +6,7 @@ import com.facetlauncher.app.data.iconpack.IconPackRepository
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.IconPackInfo
 import com.facetlauncher.app.data.model.PlacedItem
-import com.facetlauncher.app.data.model.PlacementTarget
+import com.facetlauncher.app.data.model.PlacementList
 import javax.inject.Inject
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -29,7 +29,7 @@ data class IconPickerState(
  * read here except the applied one, for its coverage, so opening the screen costs only a package query.
  */
 class ObserveIconPickerUseCase @Inject constructor(
-    private val observePlacedItems: ObservePlacedItemsUseCase,
+    private val observeActiveFacetItems: ObserveActiveFacetItemsUseCase,
     private val getInstalledApps: GetInstalledAppsUseCase,
     private val appRepository: AppRepository,
     private val iconPackRepository: IconPackRepository,
@@ -38,8 +38,8 @@ class ObserveIconPickerUseCase @Inject constructor(
 ) {
     @OptIn(ExperimentalCoroutinesApi::class)
     operator fun invoke(): Flow<IconPickerState> = combine(
-        observePlacedItems.items(PlacementTarget.GlobalFavorites),
-        observePlacedItems.items(PlacementTarget.GlobalDock),
+        observeActiveFacetItems(PlacementList.FAVORITES),
+        observeActiveFacetItems(PlacementList.DOCK),
         getInstalledApps.observe(),
         iconPackRepository.selection,
     ) { favorites, dock, installed, selection -> Triple((favorites + dock).singleApps(), installed, selection?.packageName) }

@@ -5,6 +5,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.facetlauncher.app.R
+import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.facetlauncher.app.data.model.AppSortOption
 import com.facetlauncher.app.ui.components.AppPickerScreen
@@ -35,7 +37,7 @@ fun FavoritesPickerScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val usageAccessGranted by viewModel.usageAccessGranted.collectAsStateWithLifecycle()
     AppPickerScreen(
-        title = if (uiState.isFacetScoped) "Favorites" else "Default favorites",
+        title = stringResource(R.string.home_apps_list_favorites_facet),
         query = uiState.query,
         selectedResults = uiState.selectedResults,
         otherResults = uiState.otherResults,

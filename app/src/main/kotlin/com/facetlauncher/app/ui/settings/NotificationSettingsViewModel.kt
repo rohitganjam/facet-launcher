@@ -11,9 +11,9 @@ import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.data.model.ListContentMode
 import com.facetlauncher.app.data.model.NotificationBadgeStyle
 import com.facetlauncher.app.data.model.PlacedItem
-import com.facetlauncher.app.data.model.PlacementTarget
+import com.facetlauncher.app.data.model.PlacementList
 import com.facetlauncher.app.domain.GetInstalledAppsUseCase
-import com.facetlauncher.app.domain.ObservePlacedItemsUseCase
+import com.facetlauncher.app.domain.ObserveActiveFacetItemsUseCase
 import com.facetlauncher.app.domain.SelectPreviewAppsUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -51,7 +51,7 @@ private const val DOCK_SAMPLE_COUNT = 4
 class NotificationSettingsViewModel @Inject constructor(
     private val settingsRepository: SettingsRepository,
     private val notificationAccessRepository: NotificationAccessRepository,
-    observePlacedItems: ObservePlacedItemsUseCase,
+    observeActiveFacetItems: ObserveActiveFacetItemsUseCase,
     private val wallpaperRepository: WallpaperRepository,
     private val defaultAppRepository: DefaultAppRepository,
     getInstalledApps: GetInstalledAppsUseCase,
@@ -63,8 +63,8 @@ class NotificationSettingsViewModel @Inject constructor(
     private val preferredPreviewPackages = MutableStateFlow<List<String>>(emptyList())
 
     private val previewInputs = combine(
-        observePlacedItems.items(PlacementTarget.GlobalFavorites),
-        observePlacedItems.items(PlacementTarget.GlobalDock),
+        observeActiveFacetItems(PlacementList.FAVORITES),
+        observeActiveFacetItems(PlacementList.DOCK),
         getInstalledApps.observe(),
         preferredPreviewPackages,
     ) { favorites, dock, installed, preferred ->

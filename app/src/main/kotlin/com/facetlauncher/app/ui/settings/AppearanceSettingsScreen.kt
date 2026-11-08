@@ -197,7 +197,7 @@ private fun AppearanceSettingsScreenPreview() {
     FacetLauncherTheme {
         AppearanceSettingsContent(
             settings = LauncherSettings(),
-            uiState = AppearanceSettingsUiState(globalFavorites = DesignTimeFavorites, globalDockItems = DesignTimeDockItems),
+            uiState = AppearanceSettingsUiState(favorites = DesignTimeFavorites, dockItems = DesignTimeDockItems),
             homeWallpaper = HomeWallpaper.Unavailable,
             onBack = {},
             onNavigateToThemesAndColors = {},
@@ -215,8 +215,8 @@ private fun AppearanceSettingsScreenFacetScopedPreview() {
             settings = LauncherSettings(),
             uiState = AppearanceSettingsUiState(
                 facet = com.facetlauncher.app.data.model.Facet(id = 1L, name = "Work", position = 0),
-                globalFavorites = DesignTimeFavorites,
-                globalDockItems = DesignTimeDockItems,
+                favorites = DesignTimeFavorites,
+                dockItems = DesignTimeDockItems,
             ),
             homeWallpaper = HomeWallpaper.Unavailable,
             onBack = {},

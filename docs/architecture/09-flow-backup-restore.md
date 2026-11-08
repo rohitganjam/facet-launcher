@@ -20,7 +20,7 @@ sequenceDiagram
     loop each facet
         UC->>R: placementRepository.getRawApps(Favorites/Dock of facet), getRawFolderPlacements(...)
     end
-    UC->>R: placementRepository.getRawApps / getRawFolderPlacements (GlobalDock, GlobalFavorites), widgetPlacementRepository.observeAll().first()
+    UC->>R: widgetPlacementRepository.observeAll().first()
     UC->>UC: BackupMapping — entities to Backup* DTOs, folder/facet refs become list indices
     UC->>BR: writeBackup(uri, BackupBundle(backupVersion = 4, exportedAtEpochMillis, ...))
     BR->>BR: contentResolver.openFileDescriptor(uri, "wt") truncated to 0, then Json.encodeToString  (Dispatchers.IO)
@@ -55,16 +55,14 @@ sequenceDiagram
         UC->>R: restoreFacet(entity.copy(id = 0)) → newId
         UC->>R: placementRepository.restoreApp / restoreFolderPlacement (AppPlacementEntity / PlacementTarget with list + newId, folderIndex→newId)
     end
-    UC->>R: placementRepository.deleteAll(GlobalDock), restoreApp × n, restoreFolderPlacement × n
-    UC->>R: placementRepository.deleteAll(GlobalFavorites), restore × n
     UC->>R: repairOrphanedProfileRows()  (resolves every restored userId = -1)
     UC->>R: settingsRepository.setActiveFacetId(newIds[activeFacetIndex])
-    UC-->>VM: ImportBackupResult.Success(counts, pendingWidgetPlacements = bundle.widgetPlacements)
+    UC-->>VM: ImportBackupResult.Success(facetCount, pendingWidgetPlacements = bundle.widgetPlacements)
     VM-->>S: uiState.pendingWidgets = [...]   (widget re-bind UI, §3)
 ```
 
 - **Not transactional.** The use case's own doc says so: a failure mid-way leaves a partially
-  restored database. The order (folders → facets → global dock → global favorites) is chosen so
+  restored database. The order (folders → facets, each with its own dock and favorites) is chosen so
   every FK target exists before its referrers.
 - **`userId` on restored rows is repaired at the end of the import.** `BackupAppEntry` carries
   `profile` only, so `BackupMapping.toAppPlacementEntity(list, facetId)` builds rows with the entity
@@ -75,10 +73,10 @@ sequenceDiagram
   immediately. `ImportBackupUseCaseTest` verifies the repair runs.
 - **Placement tables after the F6 consolidation.** All restored app rows go to `app_placements` and
   folder rows to `folder_placements`, distinguished by `list` (`DOCK`/`FAVORITES`) and `facetId`
-  (null for the launcher-wide lists). `deleteAllFolders` clears every folder placement through the
-  folder FK cascade, `deleteAllFacets` clears every per-facet row through the facet FK cascade, and
-  the global lists are wiped explicitly by `PlacementRepository.deleteAll(PlacementTarget.GlobalDock)` /
-  `deleteAll(PlacementTarget.GlobalFavorites)` (`deleteAllForOwner(list, GLOBAL_OWNER_KEY)`).
+  (every row belongs to a facet). `deleteAllFolders` clears every folder placement through the
+  folder FK cascade and `deleteAllFacets` clears every per-facet row through the facet FK cascade, so nothing else is wiped.
+  Exports no longer write the launcher-wide lists (`BackupBundle.dockApps`, `defaultFavoriteApps` and the two folder-placement lists are
+  legacy: read from older files by `upgradedToCurrent`, never written, never restored by themselves).
 - Result type: `ImportBackupResult.Success | InvalidFile | UnsupportedVersion(version)`.
 
 Widgets Facet draws itself are not in the queue: `ImportBackupUseCase` restores them directly ([20](20-flow-native-widgets.md) §5), and `pendingWidgetPlacements` holds only hosted ones.

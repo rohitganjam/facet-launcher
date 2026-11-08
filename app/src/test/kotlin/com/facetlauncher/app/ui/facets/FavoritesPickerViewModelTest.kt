@@ -77,7 +77,6 @@ class FavoritesPickerViewModelTest {
         val observePlacedItems = mock(ObservePlacedItemsUseCase::class.java)
         `when`(observePlacedItems.items(PlacementTarget(PlacementList.FAVORITES, facetId)))
             .thenReturn(flowOf(favorites.map { PlacedItem.SingleApp(it) }))
-        `when`(observePlacedItems.items(PlacementTarget.GlobalFavorites)).thenReturn(flowOf(emptyList()))
 
         val folderRepository = mock(FolderRepository::class.java)
         `when`(folderRepository.observeFolders()).thenReturn(flowOf(emptyList()))

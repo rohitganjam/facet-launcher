@@ -255,30 +255,17 @@
     <string name="settings_all_day_events_visible">Événements toute la journée visibles</string>
     <string name="settings_all_day_events_hidden">Événements toute la journée masqués</string>
     <string name="settings_dock_title">Dock</string>
-    <string name="settings_default_dock_title">Apps du dock par défaut</string>
     <string name="home_apps_list_default_header_title">Liste d\'apps par défaut</string>
     <string name="defaults_screen_note">Utilisé quand vous créez une facette ou en réinitialisez une.</string>
     <string name="reset_to_default_title">Rétablir les valeurs par défaut</string>
     <string name="reset_to_default_confirm">Rétablir</string>
-    <string name="reset_dock_subtitle">Remplacer ce dock par le dock par défaut</string>
-    <string name="reset_dock_confirm_message">Cela remplace le dock de cette facette par le dock par défaut. Les apps que vous y avez placées seront perdues.</string>
+    <string name="reset_dock_subtitle">Remplacer ce dock par les apps par défaut de l\'appareil</string>
+    <string name="reset_dock_confirm_message">Cela remplace le dock de cette facette par les apps par défaut de l\'appareil. Les apps que vous y avez placées seront perdues.</string>
     <string name="reset_apps_subtitle">Remplacer cette liste par celle par défaut</string>
-    <string name="reset_apps_confirm_message">Cela remplace les favoris, le contenu de la liste et le nombre d\'apps de cette facette par les valeurs par défaut. Les favoris choisis ici seront perdus.</string>
+    <string name="reset_apps_confirm_message">Cela remplace le contenu de la liste, le nombre d\'apps et l\'apparence de la liste de cette facette par les valeurs par défaut. Les favoris sont conservés.</string>
     <string name="reset_look_subtitle">Remplacer l\'apparence de la liste par celle par défaut</string>
     <string name="reset_look_confirm_message">Cela remplace la disposition de la liste et l\'alignement de cette facette par les valeurs par défaut.</string>
-    <plurals name="settings_dock_apps_count">
-        <item quantity="one">%d app dans le Dock</item>
-        <item quantity="other">%d apps dans le Dock</item>
-    </plurals>
-    <plurals name="settings_dock_folders_count">
-        <item quantity="one">%d dossier</item>
-        <item quantity="other">%d dossiers</item>
-    </plurals>
     <string name="settings_home_apps_list_title">Liste d\'apps de l\'accueil</string>
-    <plurals name="settings_favorites_count">
-        <item quantity="one">%1$d favori</item>
-        <item quantity="other">%1$d favoris</item>
-    </plurals>
     <plurals name="settings_recents_count">
         <item quantity="one">%1$d récente</item>
         <item quantity="other">%1$d récentes</item>
@@ -401,7 +388,6 @@
     <string name="home_apps_list_content_default">Contenu par défaut de la liste d\'apps</string>
     <string name="home_apps_list_apps_to_show">Apps à afficher</string>
     <string name="home_apps_list_favorites_facet">Favoris</string>
-    <string name="home_apps_list_favorites_default">Favoris par défaut</string>
     <string name="drag_to_reorder_content_description">Faites glisser pour réorganiser</string>
 
     <!-- AppDrawerSettingsScreen -->
@@ -1150,8 +1136,6 @@
         <item quantity="one">Copier vers %d facette</item>
         <item quantity="other">Copier vers %d facettes</item>
     </plurals>
-    <string name="copy_dock_subtitle">Remplace le dock des facettes choisies par celui-ci</string>
-    <string name="copy_dock_sheet_message">Remplace le dock de chaque facette sélectionnée par le dock par défaut.</string>
     <string name="copy_apps_subtitle">Remplace la liste d\'apps des facettes choisies par celle-ci</string>
     <string name="copy_apps_sheet_message">Remplace les favoris, le contenu de la liste et le nombre d\'apps de chaque facette sélectionnée par les valeurs par défaut.</string>
     <string name="copy_look_subtitle">Remplace l\'apparence des apps des facettes choisies par celle-ci</string>

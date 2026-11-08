@@ -51,8 +51,6 @@ class SettingsViewModel @Inject constructor(
         val activeFacet = facets.find { it.id == screenState.settings.activeFacetId }
         SettingsUiState(
             settings = screenState.settings,
-            dockItems = screenState.dockItems.toImmutableList(),
-            defaultFavorites = screenState.defaultFavorites,
             folderCount = screenState.folderCount,
             isDefaultLauncher = isDefaultLauncher,
             notificationAccessGranted = notificationAccessGranted,

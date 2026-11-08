@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 
 /**
@@ -37,8 +38,8 @@ class ObserveFolderPlacementUseCase @Inject constructor(
             facets.find { it.id == activeId } to facets.size
         }.flatMapLatest { (facet, facetCount) ->
             combine(
-                observePlacedItems.items(facet.placementTarget(PlacementList.DOCK)),
-                observePlacedItems.items(facet.placementTarget(PlacementList.FAVORITES)),
+                facet?.let { observePlacedItems.items(it.placementTarget(PlacementList.DOCK)) } ?: flowOf(emptyList()),
+                facet?.let { observePlacedItems.items(it.placementTarget(PlacementList.FAVORITES)) } ?: flowOf(emptyList()),
             ) { dock, favorites ->
                 FolderPlacementState(
                     quickAdd = quickAddState.forFolder(Folder(folderId, "", emptyList()), dock, favorites, facet?.name, facet?.name),

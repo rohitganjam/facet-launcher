@@ -15,10 +15,11 @@
 Nothing else is persisted: no `SharedPreferences`, no files in `filesDir`/`cacheDir`, no network.
 
 **Launcher defaults seed a facet; a facet owns its values.** The app-list and dock *defaults* the
-user sets in Settings are DataStore keys (`list_content_mode`, `dock_display_mode`, …) plus the launcher-wide
-Dock and Favorites rows (`ownerKey = 0`). The `facets` table carries the same fields again, and a facet
-*owns* them: there is no override flag and no inheritance. `ApplyFacetDefaultsUseCase` copies the defaults into a
-facet once, when it is created, and again when the user chooses *Reset to default* on one of its screens; later
+user sets in Settings are DataStore keys (`list_content_mode`, `dock_display_mode`, …). There is no launcher-wide
+Dock or Favorites list: each facet's own rows are all there are, and a new facet gets the device's default apps in its Dock and an
+empty Favorites list. The `facets` table carries the same fields as the DataStore keys, and a facet
+*owns* them: there is no override flag and no inheritance. `ApplyFacetDefaultsUseCase` gives a facet its starting point
+once, when it is created, and again when the user chooses *Reset to default* on one of its screens; later
 edits to the defaults never reach an existing facet. A clock's style, accessories and calendar live on its
 page, see [13](13-flow-facets-theme-notifications-onboarding.md). The ER diagram in §1 is Room only —
 the defaults are in §5. The calendar events strip is the one exception to this pattern — it has no
@@ -173,9 +174,9 @@ erDiagram
   `AddToActiveListUseCase` / `RemoveFromActiveListUseCase` ask
   `ResolveActivePlacementTargetUseCase` for the right `PlacementTarget(list, facetId)` and write it
   through `PlacementRepository`, the one repository over both tables.
-- **`ownerKey` exists because SQLite treats NULLs as distinct in a unique index.** It stores `facetId`,
-  or `GLOBAL_OWNER_KEY` (`0`) for the global lists, so the unique keys below also hold for global rows.
-  The entity derives it from `facetId` at construction; never set it independently.
+- **`ownerKey` exists because SQLite treats NULLs as distinct in a unique index.** It stores `facetId`, so the unique keys below
+  hold. (`facetId` is still nullable and `GLOBAL_OWNER_KEY` (`0`) still names an owner-less row, but 47→48 deleted every such row and
+  nothing writes one: `PlacementTarget.facetId` is non-null.) The entity derives `ownerKey` from `facetId` at construction; never set it independently.
 - **Apps and folders share a position axis.** `PlacedItem` (`SingleApp` | `FolderItem`) is the
   in-memory union; app rows and folder-placement rows in the same scope are merged and sorted by
   `position` at read time (no cross-table constraint enforces uniqueness of `position`).
@@ -281,7 +282,7 @@ Exceptions to the common shape, all deliberate:
 2. The use case resolves the active facet's `PlacementTarget` (`settings.first()` + `facetRepository.getById(...)`), then
    calls `placementRepository.addApp(target, app, position)` → `appPlacementDao.upsert(AppPlacementEntity(list = DOCK, ...))`.
 3. Room commits and invalidates the `app_placements` table tracker.
-4. Every live `appPlacementDao.observe(DOCK, GLOBAL_OWNER_KEY)` collector re-queries and emits the new `List<AppPlacementEntity>`.
+4. Every live `appPlacementDao.observe(DOCK, facetId)` collector re-queries and emits the new `List<AppPlacementEntity>`.
 5. `ObservePlacedItemsUseCase.items(target)` is a `combine(placementRepository.observeAppEntities(target), placementRepository.observeFolderPlacements(target), folderRepository.observeFolders(), appRepository.observeInstalledApps())` (the first two are `PlacementRepository`'s raw `appPlacementDao.observe` / `folderPlacementDao.observe` flows); the new entity list is joined against the *latest cached* installed-app list (no `LauncherApps` re-query happens on a Room write) and sorted into `List<PlacedItem>`.
 6. `ObserveHomeScreenStateUseCase` combines that with settings/facets/calendar/badges → `HomeScreenState`.
 7. `HomeViewModel` maps it into `HomeUiState` and sets `_uiState.value`.
@@ -363,6 +364,7 @@ Room.databaseBuilder(context, FacetDatabase::class.java, "facet.db")
 | 44→45 | No schema change. `Migrations.migration44To45` (`materializeFacetDefaults`, `FacetDefaultsMigration.kt`) writes today's launcher-wide values into every facet that inherited them, so the flags can go without anything changing on screen. For each facet with `overrideDock = 0` / `overridingFavorites = 0` it deletes the facet's stale own Dock / Favorites rows and copies the launcher-wide `app_placements` and `folder_placements` rows under its id; with `overrideApps = 0` it sets `listContentMode` and `appsToShowCount` from the settings; every `LAUNCHER_DEFAULT` look column becomes the launcher's value. A null landscape twin on a facet whose portrait value was inherited takes the launcher's landscape value, if it has one, since that is what it showed. A facet that overrode a list or the content is untouched. The launcher-wide values come from the settings DataStore, which a migration cannot reach, so `DatabaseModule` passes a reader (`SettingsRepository(...).settings.first()`) that runs only when this step does. `FacetDatabaseMigrationTest.migration44To45GivesInheritingFacets…`, `…LeavesAnOverridingFacetAndAnExplicitLandscapeValueAlone`, `…HandlesAnEmptyLauncherDock`. |
 | 45→46 | **Auto-migration** (`@AutoMigration(from = 45, to = 46, spec = DropFacetOverrideFlags)`): `facets` loses `overrideApps`, `overridingFavorites` and `overrideDock`. Nothing is lost: 44→45 has already copied the launcher's values into every facet that inherited them. `FacetDatabaseMigrationTest.migration45To46DropsTheOverrideFlagsAndKeepsTheFacetsOwnValues`. |
 | 46→47 | **Auto-migration** (`@AutoMigration(from = 46, to = 47)`): `app_placements` and `folder_placements` each gain four nullable columns, `portraitRow`, `portraitColumn`, `landscapeRow` and `landscapeColumn` (a Home grid cell counted from the anchor edge). All null until an item is first moved on a grid, when its place still follows `position`. Nothing reads them yet. `FacetDatabaseMigrationTest.migration46To47AddsEmptyHomeCellsAndKeepsEveryPlacement`. |
+| 47→48 | **Manual, no schema change** (`Migrations.MIGRATION_47_48`): deletes every `app_placements` and `folder_placements` row with a null `facetId`, the launcher-wide Dock and Favorites that no longer exist (a facet has held its own copy since 44→45). The columns stay nullable. `FacetDatabaseMigrationTest.migration47To48DeletesTheLauncherWideListsAndKeepsFacetLists`. |
 
 The landscape twins are handled as one `LandscapeOverrides` group (clock alignment, divider, scale, widget size, row position, vertical and column alignment; every field nullable). Settings hold it as `LauncherSettings.landscape`, read from the six `landscape_*` keys and written only through `updateLandscape`. A facet keeps the flat columns above (so the schema is unchanged) and exposes the group as `FacetEntity.landscape` / `withLandscape(...)`, written through `FacetRepository.updateLandscape`. `resolveLandscape` is the one resolution rule (see [17](17-flow-home-layout.md) §1.0).
 

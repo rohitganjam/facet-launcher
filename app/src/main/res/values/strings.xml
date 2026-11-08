@@ -295,30 +295,17 @@
     <string name="settings_all_day_events_visible">All-day events visible</string>
     <string name="settings_all_day_events_hidden">All-day events hidden</string>
     <string name="settings_dock_title">Dock</string>
-    <string name="settings_default_dock_title">Default Dock Apps</string>
     <string name="home_apps_list_default_header_title">Default Apps list</string>
     <string name="defaults_screen_note">Used when you create a facet or reset one.</string>
     <string name="reset_to_default_title">Reset to default</string>
     <string name="reset_to_default_confirm">Reset</string>
-    <string name="reset_dock_subtitle">Replace this dock with the default dock</string>
-    <string name="reset_dock_confirm_message">This replaces the dock of this facet with the default dock. The apps you placed here will be lost.</string>
+    <string name="reset_dock_subtitle">Replace this dock with your device\'s default apps</string>
+    <string name="reset_dock_confirm_message">This replaces the dock of this facet with your device\'s default apps. The apps you placed here will be lost.</string>
     <string name="reset_apps_subtitle">Replace this list with the default</string>
-    <string name="reset_apps_confirm_message">This replaces this facet\'s favorites, list content and app count with the defaults. The favorites you chose here will be lost.</string>
+    <string name="reset_apps_confirm_message">This replaces this facet\'s list content, app count and list look with the defaults. Your favorites are kept.</string>
     <string name="reset_look_subtitle">Replace the apps list look with the default</string>
     <string name="reset_look_confirm_message">This replaces this facet\'s list layout and alignment with the defaults.</string>
-    <plurals name="settings_dock_apps_count">
-        <item quantity="one">%d Dock App</item>
-        <item quantity="other">%d Dock Apps</item>
-    </plurals>
-    <plurals name="settings_dock_folders_count">
-        <item quantity="one">%d Folder</item>
-        <item quantity="other">%d Folders</item>
-    </plurals>
     <string name="settings_home_apps_list_title">Home Apps List</string>
-    <plurals name="settings_favorites_count">
-        <item quantity="one">%1$d Favorite</item>
-        <item quantity="other">%1$d Favorites</item>
-    </plurals>
     <plurals name="settings_recents_count">
         <item quantity="one">%1$d Recent</item>
         <item quantity="other">%1$d Recents</item>
@@ -452,7 +439,6 @@
     <string name="home_apps_list_content_default">Default App list content</string>
     <string name="home_apps_list_apps_to_show">Apps to show</string>
     <string name="home_apps_list_favorites_facet">Favorites</string>
-    <string name="home_apps_list_favorites_default">Default favorites</string>
     <string name="drag_to_reorder_content_description">Drag to reorder</string>
 
     <!-- AppDrawerSettingsScreen -->
@@ -1239,8 +1225,6 @@
         <item quantity="one">Copy to %d facet</item>
         <item quantity="other">Copy to %d facets</item>
     </plurals>
-    <string name="copy_dock_subtitle">Replace the dock of the facets you choose with this one</string>
-    <string name="copy_dock_sheet_message">Replaces the dock of each facet you select with the default dock.</string>
     <string name="copy_apps_subtitle">Replace the apps list of the facets you choose with this one</string>
     <string name="copy_apps_sheet_message">Replaces the favorites, list content and app count of each selected facet with the defaults.</string>
     <string name="copy_look_subtitle">Replace the apps look of the facets you choose with this one</string>

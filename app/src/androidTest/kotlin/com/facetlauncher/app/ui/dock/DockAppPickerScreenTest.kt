@@ -51,7 +51,7 @@ class DockAppPickerScreenTest {
      */
     private fun setContent(
         onDone: () -> Unit = {},
-        facetId: Long? = null,
+        facetId: Long? = 7L,
         seed: (AppRepository, PlacementRepository, FolderRepository) -> Unit = { _, _, _ -> },
     ) {
         composeRule.setContent {
@@ -133,7 +133,7 @@ class DockAppPickerScreenTest {
         // Given two real apps already in the dock, so both "IN DOCK" and "ALL APPS" render
         setContent { appRepository, placementRepository, _ ->
             val installed = runBlocking { appRepository.getTestableApps() }
-            installed.take(2).forEachIndexed { index, app -> runBlocking { placementRepository.addApp(PlacementTarget.GlobalDock, app, index) } }
+            installed.take(2).forEachIndexed { index, app -> runBlocking { placementRepository.addApp(PlacementTarget(PlacementList.DOCK, 7L), app, index) } }
         }
         composeRule.waitUntil(timeoutMillis = 3_000) {
             runCatching { composeRule.onNodeWithText("ALL APPS").assertExists() }.isSuccess
@@ -143,7 +143,7 @@ class DockAppPickerScreenTest {
         composeRule.onNodeWithText("ALL APPS").performScrollTo()
 
         // Then the pinned header (title + Done) is still on screen, not scrolled away
-        composeRule.onNodeWithText("Default dock").assertIsDisplayed()
+        composeRule.onNodeWithText("Dock").assertIsDisplayed()
         composeRule.onNodeWithTag("dock_picker_done").assertIsDisplayed()
     }
 
@@ -154,7 +154,7 @@ class DockAppPickerScreenTest {
         setContent { appRepository, placementRepository, _ ->
             val installed = runBlocking { appRepository.getTestableApps() }
             dockApps = installed.take(2)
-            dockApps.forEachIndexed { index, app -> runBlocking { placementRepository.addApp(PlacementTarget.GlobalDock, app, index) } }
+            dockApps.forEachIndexed { index, app -> runBlocking { placementRepository.addApp(PlacementTarget(PlacementList.DOCK, 7L), app, index) } }
         }
 
         // Then both section headers render, with the in-dock apps' rows present under "IN DOCK"
@@ -174,7 +174,7 @@ class DockAppPickerScreenTest {
         setContent { appRepository, placementRepository, _ ->
             val app = runBlocking { appRepository.getTestableApps() }.first()
             onlyDockApp = app
-            runBlocking { placementRepository.addApp(PlacementTarget.GlobalDock, app, 0) }
+            runBlocking { placementRepository.addApp(PlacementTarget(PlacementList.DOCK, 7L), app, 0) }
         }
         val app = requireNotNull(onlyDockApp)
         val rowTag = "dock_picker_row_${app.packageName}"
@@ -199,26 +199,22 @@ class DockAppPickerScreenTest {
 
     @Test
     fun facetScopedPickerTitlesItselfDockAndWritesToThatFacetsOwnDock() {
-        // Given the picker opened for facet 7 (not the launcher-wide default) with one app
-        // already in facet 7's own dock and NOT in the shared default dock
+        // Given the picker opened for facet 7 with one app already in facet 7's own dock
         var seededApp: AppInfo? = null
         setContent(facetId = 7L) { appRepository, placementRepository, _ ->
             val app = runBlocking { appRepository.getTestableApps() }.first()
             seededApp = app
             runBlocking { placementRepository.addApp(PlacementTarget(PlacementList.DOCK, 7L), app, 0) }
-            // deliberately leave the shared default dock empty
         }
         val app = requireNotNull(seededApp)
         val rowTag = "dock_picker_row_${app.packageName}"
 
-        // Then the header reads "Dock" (this facet's own), not the global "Default dock"
+        // Then the header reads "Dock"
         composeRule.waitUntil(timeoutMillis = 3_000) {
             composeRule.onAllNodesWithText("Dock").fetchSemanticsNodes().isNotEmpty()
         }
-        composeRule.onNodeWithText("Default dock").assertDoesNotExist()
 
-        // And the seeded app shows as already checked — proof the picker is reading facet 7's
-        // own dock, not the (empty) shared one
+        // And the seeded app shows as already checked — proof the picker is reading facet 7's own dock
         composeRule.waitUntil(timeoutMillis = 3_000) {
             runCatching { composeRule.onNodeWithTag(rowTag).assertIsOn() }.isSuccess
         }
@@ -255,7 +251,7 @@ class DockAppPickerScreenTest {
         setContent { _, placementRepository, folderRepository ->
             folderId = runBlocking {
                 val id = folderRepository.createFolder("Games")
-                placementRepository.placeFolder(PlacementTarget.GlobalDock, id, position = 0)
+                placementRepository.placeFolder(PlacementTarget(PlacementList.DOCK, 7L), id, position = 0)
                 id
             }
         }
@@ -332,7 +328,7 @@ class DockAppPickerScreenTest {
                 val usageStatsRepository = UsageStatsRepository(context.getSystemService(UsageStatsManager::class.java), appRepository)
                 val usageAccessRepository = UsageAccessRepository(context.getSystemService(AppOpsManager::class.java), context)
                 DockAppPickerViewModel(
-                    SavedStateHandle(),
+                    SavedStateHandle(mapOf("facetId" to 7L)),
                     GetInstalledAppsUseCase(appRepository),
                     placementRepository,
                     observePlacedItems,

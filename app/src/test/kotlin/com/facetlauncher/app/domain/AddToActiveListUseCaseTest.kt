@@ -36,7 +36,7 @@ class AddToActiveListUseCaseTest {
 
     @Test
     fun `an app is appended to the resolved list at the next position`() = runTest {
-        listOf(PlacementTarget.GlobalDock, PlacementTarget(PlacementList.DOCK, 1L), PlacementTarget.GlobalFavorites, PlacementTarget(PlacementList.FAVORITES, 1L)).forEach { target ->
+        listOf(PlacementTarget(PlacementList.DOCK, 1L), PlacementTarget(PlacementList.FAVORITES, 1L), PlacementTarget(PlacementList.DOCK, 2L), PlacementTarget(PlacementList.FAVORITES, 2L)).forEach { target ->
             // Given the resolved list already holds 3 items
             val fixture = Fixture(target, existingItems = 3)
 
@@ -50,7 +50,7 @@ class AddToActiveListUseCaseTest {
 
     @Test
     fun `a folder is placed in the resolved list at the next position`() = runTest {
-        listOf(PlacementTarget.GlobalDock, PlacementTarget(PlacementList.DOCK, 1L), PlacementTarget.GlobalFavorites, PlacementTarget(PlacementList.FAVORITES, 1L)).forEach { target ->
+        listOf(PlacementTarget(PlacementList.DOCK, 1L), PlacementTarget(PlacementList.FAVORITES, 1L), PlacementTarget(PlacementList.DOCK, 2L), PlacementTarget(PlacementList.FAVORITES, 2L)).forEach { target ->
             // Given the resolved list is empty
             val fixture = Fixture(target, existingItems = 0)
 
@@ -63,14 +63,28 @@ class AddToActiveListUseCaseTest {
     }
 
     @Test
+    fun `nothing is written when there is no active facet`() = runTest {
+        // Given no active facet to resolve a list for
+        val resolveTarget = mock(ResolveActivePlacementTargetUseCase::class.java)
+        `when`(resolveTarget(PlacementList.DOCK)).thenReturn(null)
+        val placementRepository = mock(PlacementRepository::class.java)
+
+        // When adding an app
+        AddToActiveListUseCase(resolveTarget, placementRepository, mock(ObservePlacedItemsUseCase::class.java))(PlacementList.DOCK, PlacedItem.SingleApp(app))
+
+        // Then nothing is written
+        org.mockito.Mockito.verifyNoInteractions(placementRepository)
+    }
+
+    @Test
     fun `the position counts folders as well as apps`() = runTest {
         // Given a list holding only folders, which an app-only count would read as empty
-        val fixture = Fixture(PlacementTarget.GlobalDock, existingItems = 2)
+        val fixture = Fixture(PlacementTarget(PlacementList.DOCK, 1L), existingItems = 2)
 
         // When adding an app
         fixture.useCase(PlacementList.DOCK, PlacedItem.SingleApp(app))
 
         // Then it lands after both folders
-        verify(fixture.placementRepository).addApp(PlacementTarget.GlobalDock, app, 2)
+        verify(fixture.placementRepository).addApp(PlacementTarget(PlacementList.DOCK, 1L), app, 2)
     }
 }

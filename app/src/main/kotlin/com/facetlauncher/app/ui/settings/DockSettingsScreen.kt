@@ -73,7 +73,7 @@ import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
 
-/** Settings → Home & Apps → Dock (the default dock a new facet starts with) — also a facet's own Dock screen when `viewModel` is facet-scoped, with a Reset to default action. */
+/** A facet's own Dock screen: its apps, display style, and a Reset to default action. */
 @Composable
 fun DockSettingsScreen(
     onBack: () -> Unit,
@@ -89,7 +89,6 @@ fun DockSettingsScreen(
         onDockDisplayModeChange = viewModel::setDockDisplayMode,
         onReorderDockItems = viewModel::reorderDockItems,
         onResetToDefault = viewModel::resetToDefault,
-        onCopyToFacets = viewModel::copyToFacets,
         modifier = modifier,
     )
 }
@@ -102,12 +101,11 @@ private fun DockSettingsContent(
     onDockDisplayModeChange: (DockDisplayMode) -> Unit,
     onReorderDockItems: (List<PlacedItem>) -> Unit,
     onResetToDefault: () -> Unit,
-    onCopyToFacets: (Set<Long>) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     StickyHeaderLayout(
         modifier = modifier,
-        header = { DockSettingsHeader(isFacetScoped = uiState.isFacetScoped, onBack = onBack) },
+        header = { DockSettingsHeader(onBack = onBack) },
         content = { headerHeight ->
             LazyColumn(
                 modifier = Modifier
@@ -142,41 +140,21 @@ private fun DockSettingsContent(
                     }
                 }
                 dockAppsItem(uiState, onAddDockApp, onReorderDockItems)
-                dockResetOrCopyItems(uiState, onResetToDefault, onCopyToFacets)
+                dockResetItems(onResetToDefault)
             }
         },
     )
 }
 
-/** Facet scope offers "Reset to default"; launcher scope offers "Copy to facets". */
-private fun LazyListScope.dockResetOrCopyItems(
-    uiState: DockSettingsUiState,
-    onResetToDefault: () -> Unit,
-    onCopyToFacets: (Set<Long>) -> Unit,
-) {
-    if (uiState.isFacetScoped) {
-        item { Spacer(modifier = Modifier.height(16.dp)) }
-        item {
-            ResetToDefaultCard(
-                subtitle = stringResource(R.string.reset_dock_subtitle),
-                confirmMessage = stringResource(R.string.reset_dock_confirm_message),
-                onReset = onResetToDefault,
-                testTagPrefix = "dock_settings",
-            )
-        }
-    } else {
-        item { Spacer(modifier = Modifier.height(16.dp)) }
-        item {
-            CopyToFacetsCard(
-                facets = uiState.facets,
-                activeFacetId = uiState.settings.activeFacetId,
-                subtitle = stringResource(R.string.copy_dock_subtitle),
-                sheetMessage = stringResource(R.string.copy_dock_sheet_message),
-                onCopy = onCopyToFacets,
-                testTagPrefix = "dock_settings",
-            )
-        }
-        item { DefaultsNote(modifier = Modifier.padding(top = 12.dp)) }
+private fun LazyListScope.dockResetItems(onResetToDefault: () -> Unit) {
+    item { Spacer(modifier = Modifier.height(16.dp)) }
+    item {
+        ResetToDefaultCard(
+            subtitle = stringResource(R.string.reset_dock_subtitle),
+            confirmMessage = stringResource(R.string.reset_dock_confirm_message),
+            onReset = onResetToDefault,
+            testTagPrefix = "dock_settings",
+        )
     }
 }
 
@@ -206,7 +184,7 @@ private fun LazyListScope.dockAppsItem(
 }
 
 @Composable
-private fun DockSettingsHeader(isFacetScoped: Boolean, onBack: () -> Unit, modifier: Modifier = Modifier) {
+private fun DockSettingsHeader(onBack: () -> Unit, modifier: Modifier = Modifier) {
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -219,7 +197,7 @@ private fun DockSettingsHeader(isFacetScoped: Boolean, onBack: () -> Unit, modif
     ) {
         BackButton(onClick = onBack)
         Text(
-            text = stringResource(if (isFacetScoped) R.string.facet_settings_dock_settings_title else R.string.settings_default_dock_title),
+            text = stringResource(R.string.facet_settings_dock_settings_title),
             style = MaterialTheme.typography.headlineSmall,
             color = Ink,
         )
@@ -327,7 +305,7 @@ private fun DockSettingsScreenPreview() {
     FacetLauncherTheme {
         DockSettingsContent(
             uiState = DockSettingsUiState(
-                globalDockItems = (1..4).map {
+                dockItems = (1..4).map {
                     PlacedItem.SingleApp(AppInfo(packageName = "com.example.$it", activityName = ".Main", label = "App $it", icon = null))
                 }.toImmutableList(),
             ),
@@ -336,7 +314,6 @@ private fun DockSettingsScreenPreview() {
             onDockDisplayModeChange = {},
             onReorderDockItems = {},
             onResetToDefault = {},
-            onCopyToFacets = {},
         )
     }
 }

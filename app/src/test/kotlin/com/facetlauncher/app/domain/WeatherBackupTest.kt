@@ -79,7 +79,7 @@ class WeatherBackupTest {
         )
         `when`(facetRepository.observeFacets()).thenReturn(flowOf(listOf(facet)))
         `when`(widgetPlacementRepository.observeAll()).thenReturn(flowOf(emptyList()))
-        for (target in listOf(PlacementTarget(PlacementList.FAVORITES, 7), PlacementTarget(PlacementList.DOCK, 7), PlacementTarget.GlobalDock, PlacementTarget.GlobalFavorites)) {
+        for (target in listOf(PlacementTarget(PlacementList.FAVORITES, 7), PlacementTarget(PlacementList.DOCK, 7))) {
             `when`(placementRepository.getRawApps(target)).thenReturn(emptyList())
             `when`(placementRepository.getRawFolderPlacements(target)).thenReturn(emptyList())
         }

@@ -84,5 +84,5 @@ fun Facet.withLandscape(overrides: LandscapeOverrides): Facet = copy(
     landscapeAppListColumnAlignment = overrides.appListColumnAlignment,
 )
 
-/** Where [list] lives for `this` facet: its own rows (the launcher-wide list when there is no active facet). */
-fun Facet?.placementTarget(list: PlacementList): PlacementTarget = PlacementTarget(list, this?.id)
+/** Where [list] lives for `this` facet: its own rows. */
+fun Facet.placementTarget(list: PlacementList): PlacementTarget = PlacementTarget(list, id)

@@ -153,6 +153,7 @@ import org.mockito.Mockito.`when`
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.verifyNoInteractions
 import com.facetlauncher.app.data.PlacementRepository
+import com.facetlauncher.app.data.model.PlacementList
 import com.facetlauncher.app.data.model.PlacementTarget
 import com.facetlauncher.app.domain.AddToActiveListUseCase
 import com.facetlauncher.app.domain.RemoveFromActiveListUseCase
@@ -268,7 +269,12 @@ class HomeDrawerRouteTest {
                 PlacementRepository(database.appPlacementDao(), database.folderPlacementDao()).also { repo ->
                     // Never seeded otherwise — the app list combines DB rows against installed apps, so with
                     // zero rows it stays permanently empty regardless of how fast/slow the installed-apps side is.
-                    runBlocking { apps.take(favoriteCount).forEachIndexed { index, app -> repo.addApp(PlacementTarget.GlobalFavorites, app, position = index) } }
+                    // The favorites belong to the active facet, so it is created and activated here (EnsureActiveFacetUseCase then finds it usable).
+                    runBlocking {
+                        val facet = facetRepository.addFacet()
+                        settingsRepository.setActiveFacetId(facet.id)
+                        apps.take(favoriteCount).forEachIndexed { index, app -> repo.addApp(PlacementTarget(PlacementList.FAVORITES, facet.id), app, position = index) }
+                    }
                 }
             }
             val observePlacedItems = remember { ObservePlacedItemsUseCase(placementRepository, FolderRepository(database.folderDao(), appRepository), appRepository) }
@@ -1112,12 +1118,10 @@ class HomeDrawerRouteTest {
 
         // When holding that row past the long-press threshold, then dragging left well past the swipe distance
         // (regression: this used to also open the facet carousel)
-        composeRule.mainClock.autoAdvance = false
-        composeRule.onRoot().performTouchInput { down(iconCenter) }
-        composeRule.mainClock.advanceTimeBy(600)
-        composeRule.mainClock.autoAdvance = true
-        composeRule.waitForIdle()
-        composeRule.onNodeWithTag("home_screen_root").performTouchInput {
+        composeRule.onRoot().performTouchInput {
+            down(iconCenter)
+            advanceEventTime(700)
+            moveTo(iconCenter - Offset(rootWidth * 0.3f, 0f))
             moveTo(iconCenter - Offset(rootWidth * 0.6f, 0f))
             up()
         }

@@ -19,7 +19,7 @@ class RemoveFromActiveListUseCaseTest {
 
     private val app = AppInfo(packageName = "com.example.mail", activityName = ".Main", label = "Mail", icon = null)
     private val folder = Folder(id = 7L, name = "Games", apps = emptyList())
-    private val targets = listOf(PlacementTarget.GlobalDock, PlacementTarget(PlacementList.DOCK, 1L), PlacementTarget.GlobalFavorites, PlacementTarget(PlacementList.FAVORITES, 1L))
+    private val targets = listOf(PlacementTarget(PlacementList.DOCK, 1L), PlacementTarget(PlacementList.FAVORITES, 1L), PlacementTarget(PlacementList.DOCK, 2L), PlacementTarget(PlacementList.FAVORITES, 2L))
 
     private fun fixture(target: PlacementTarget): Pair<RemoveFromActiveListUseCase, PlacementRepository> {
         val resolveTarget = mock(ResolveActivePlacementTargetUseCase::class.java)

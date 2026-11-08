@@ -59,6 +59,7 @@ import org.robolectric.RobolectricTestRunner
 import com.facetlauncher.app.data.model.PlacementTarget
 import com.facetlauncher.app.domain.ApplyFacetDefaultsUseCase
 import com.facetlauncher.app.domain.FacetDefaultsScope
+import com.facetlauncher.app.domain.ObserveActiveFacetItemsUseCase
 import com.facetlauncher.app.domain.ObservePlacedItemsUseCase
 import com.facetlauncher.app.data.model.PlacementList
 
@@ -86,12 +87,13 @@ class AppearanceSettingsViewModelTest {
         settings: LauncherSettings = LauncherSettings(),
         calendarGranted: Boolean = false,
         facetFavorites: List<PlacedItem> = emptyList(),
-        globalFavorites: List<PlacedItem> = emptyList(),
+        activeFacetFavorites: List<PlacedItem> = emptyList(),
         facetDockItems: List<PlacedItem> = emptyList(),
-        globalDockItems: List<PlacedItem> = emptyList(),
+        activeFacetDockItems: List<PlacedItem> = emptyList(),
         settingsRepository: SettingsRepository = mock(SettingsRepository::class.java),
         facetRepository: FacetRepository = mock(FacetRepository::class.java),
         observePlacedItems: ObservePlacedItemsUseCase = mock(ObservePlacedItemsUseCase::class.java),
+        observeActiveFacetItems: ObserveActiveFacetItemsUseCase = mock(ObserveActiveFacetItemsUseCase::class.java),
         calendarRepository: CalendarRepository = mock(CalendarRepository::class.java),
         calendarPermissionRepository: CalendarPermissionRepository = mock(CalendarPermissionRepository::class.java),
         wallpaperRepository: WallpaperRepository = fakeWallpaperRepository(),
@@ -109,14 +111,15 @@ class AppearanceSettingsViewModelTest {
             `when`(observePlacedItems.items(PlacementTarget(PlacementList.FAVORITES, it))).thenReturn(flowOf(facetFavorites))
             `when`(observePlacedItems.items(PlacementTarget(PlacementList.DOCK, it))).thenReturn(flowOf(facetDockItems))
         }
-        `when`(observePlacedItems.items(PlacementTarget.GlobalFavorites)).thenReturn(flowOf(globalFavorites))
-        `when`(observePlacedItems.items(PlacementTarget.GlobalDock)).thenReturn(flowOf(globalDockItems))
+        `when`(observeActiveFacetItems(PlacementList.FAVORITES)).thenReturn(flowOf(activeFacetFavorites))
+        `when`(observeActiveFacetItems(PlacementList.DOCK)).thenReturn(flowOf(activeFacetDockItems))
         `when`(calendarPermissionRepository.isGranted()).thenReturn(calendarGranted)
         return AppearanceSettingsViewModel(
             SavedStateHandle(facetId?.let { mapOf("facetId" to it) } ?: emptyMap()),
             settingsRepository,
             facetRepository,
             observePlacedItems,
+            observeActiveFacetItems,
             calendarRepository,
             calendarPermissionRepository,
             wallpaperRepository,
@@ -275,14 +278,14 @@ class AppearanceSettingsViewModelTest {
     }
 
     @Test
-    fun `global scope consumes the launcher-wide default favorites and dock, not mock data`() = runTest {
-        val viewModel = createViewModel(globalFavorites = listOf(app(1), app(2)), globalDockItems = listOf(app(3)))
+    fun `launcher scope consumes the active facet's favorites and dock, not mock data`() = runTest {
+        val viewModel = createViewModel(activeFacetFavorites = listOf(app(1), app(2)), activeFacetDockItems = listOf(app(3)))
         backgroundScope.launch { viewModel.uiState.collect {} }
         testDispatcher.scheduler.advanceUntilIdle()
 
         assertEquals(false, viewModel.uiState.value.isFacetScoped)
-        assertEquals(listOf(app(1), app(2)), viewModel.uiState.value.effectiveFavorites)
-        assertEquals(listOf(app(3)), viewModel.uiState.value.effectiveDockItems)
+        assertEquals(listOf(app(1), app(2)), viewModel.uiState.value.favorites)
+        assertEquals(listOf(app(3)), viewModel.uiState.value.dockItems)
     }
 
     @Test
@@ -292,15 +295,15 @@ class AppearanceSettingsViewModelTest {
             facetId = 6L,
             facets = listOf(facet),
             facetFavorites = listOf(app(9)),
-            globalFavorites = listOf(app(1)),
+            activeFacetFavorites = listOf(app(1)),
             facetDockItems = listOf(app(8)),
-            globalDockItems = listOf(app(2)),
+            activeFacetDockItems = listOf(app(2)),
         )
         backgroundScope.launch { viewModel.uiState.collect {} }
         testDispatcher.scheduler.advanceUntilIdle()
 
-        assertEquals(listOf(app(9)), viewModel.uiState.value.effectiveFavorites)
-        assertEquals(listOf(app(8)), viewModel.uiState.value.effectiveDockItems)
+        assertEquals(listOf(app(9)), viewModel.uiState.value.favorites)
+        assertEquals(listOf(app(8)), viewModel.uiState.value.dockItems)
     }
 
     @Test

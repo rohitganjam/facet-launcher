@@ -101,6 +101,13 @@ class HomeAppsListSettingsScreenTest {
         composeRule.waitForIdle()
     }
 
+    /** The facet-scoped state resolves asynchronously (a Room query behind the ViewModel's StateFlow), and shows as the facet's title. */
+    private fun awaitFacetTitle() {
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            composeRule.onAllNodesWithText("Apps List").fetchSemanticsNodes().isNotEmpty()
+        }
+    }
+
     @Test
     fun headerAndPreviewRender() {
         setContent()
@@ -125,31 +132,11 @@ class HomeAppsListSettingsScreenTest {
     @Test
     fun favoritesRowIsClickable() {
         var navigated = false
-        setContent(onEditFavorites = { navigated = true })
+        setContent(facetScoped = true, onEditFavorites = { navigated = true })
+        awaitFacetTitle()
         composeRule.onNodeWithTag("home_apps_list_settings_screen").performScrollToNode(hasTestTag("default_favorites_row"))
         composeRule.onNodeWithTag("default_favorites_row").performClick()
         assertEquals(true, navigated)
-    }
-
-    @Test
-    fun aFolderFavoritedGlobally_isCountedAndShownInPreviewAndReorderList() {
-        var folderId = 0L
-        setContent(
-            seed = { folderRepository, placementRepository, _, _ ->
-                folderId = folderRepository.createFolder("Games")
-                placementRepository.placeFolder(PlacementTarget.GlobalFavorites, folderId, position = 0)
-            },
-        )
-
-        composeRule.onNodeWithTag("home_apps_list_settings_screen").performScrollToNode(hasTestTag("default_favorites_row"))
-        // The real installed-apps query backing the preview/uiState resolves asynchronously —
-        // wait for it rather than assuming setContent's own waitForIdle already caught it.
-        composeRule.waitUntil(timeoutMillis = 5_000) {
-            runCatching { composeRule.onNodeWithTag("default_favorites_row").assertTextContains("1 of ${com.facetlauncher.app.data.model.AppListLimits.MAX_FAVORITES}") }.isSuccess
-        }
-        composeRule.onNodeWithTag("default_favorite_reorder_row_folder_$folderId").assertExists()
-        // Renders as a real folder row in the preview, not a flattened list of the folder's apps.
-        composeRule.onNodeWithTag("home_surface_preview_folder_row_$folderId").assertExists()
     }
 
     @Test
@@ -180,9 +167,7 @@ class HomeAppsListSettingsScreenTest {
         // The facet-scoped state resolves asynchronously (Room query behind the ViewModel's
         // StateFlow combine) — wait for the reset row to actually render rather than assuming
         // setContent()'s own waitForIdle() already caught it.
-        composeRule.waitUntil(timeoutMillis = 3_000) {
-            composeRule.onAllNodesWithTag("home_apps_list_reset_row").fetchSemanticsNodes().isNotEmpty()
-        }
+        awaitFacetTitle()
 
         // The content-mode control is live, with no Inherit/Override switch, and writes to this facet's own row
         composeRule.onNodeWithTag("default_list_content_row").assertIsEnabled()
@@ -201,9 +186,7 @@ class HomeAppsListSettingsScreenTest {
         setContent(facetScoped = true)
 
         // The facet-scoped state resolves asynchronously — wait for the reset row to render
-        composeRule.waitUntil(timeoutMillis = 3_000) {
-            composeRule.onAllNodesWithTag("home_apps_list_reset_row").fetchSemanticsNodes().isNotEmpty()
-        }
+        awaitFacetTitle()
 
         // Then the controls are live and the title is the facet's
         composeRule.onNodeWithTag("default_list_content_row").assertIsEnabled()
@@ -211,8 +194,8 @@ class HomeAppsListSettingsScreenTest {
     }
 
     @Test
-    fun resetToDefaultCopiesTheDefaultFavoritesAndContentModeIntoTheFacet() {
-        // Given a facet whose list content mode differs from the launcher's, and a default favorite
+    fun resetToDefaultRestoresTheContentModeAndKeepsTheFacetsFavorites() {
+        // Given a facet whose list content mode differs from the launcher's, and one favorite of its own
         lateinit var facetRepo: FacetRepository
         lateinit var placements: PlacementRepository
         var facetId = 0L
@@ -222,7 +205,7 @@ class HomeAppsListSettingsScreenTest {
             seed = { _, placementRepository, facetRepository, id ->
                 placements = placementRepository
                 facetRepository.setListContentMode(requireNotNull(id), com.facetlauncher.app.data.model.ListContentMode.MOST_USED)
-                placementRepository.addApp(PlacementTarget.GlobalFavorites, appInfoForTest(), position = 0)
+                placementRepository.addApp(PlacementTarget(PlacementList.FAVORITES, requireNotNull(id)), appInfoForTest(), position = 0)
             },
         )
         // The reset row is further down the lazy list now, so wait for the facet's title instead
@@ -235,7 +218,7 @@ class HomeAppsListSettingsScreenTest {
         composeRule.onNodeWithTag("home_apps_list_reset_row").performClick()
         composeRule.onNodeWithTag("confirm_dialog_confirm").performClick()
 
-        // Then the facet follows the default: Favorites mode, and its list is a copy of the default one
+        // Then the facet follows the default content mode, and its own favorite is kept
         composeRule.waitUntil(timeoutMillis = 5_000) {
             runBlocking {
                 facetRepo.getById(facetId)?.listContentMode == com.facetlauncher.app.data.model.ListContentMode.FAVORITES &&
@@ -396,9 +379,7 @@ class HomeAppsListSettingsScreenTest {
     fun aFacetScopedScreenHasNoAllowLandscapeSwitch() {
         // Given a facet-scoped screen
         setContent(facetScoped = true)
-        composeRule.waitUntil(timeoutMillis = 3_000) {
-            composeRule.onAllNodesWithTag("home_apps_list_reset_row").fetchSemanticsNodes().isNotEmpty()
-        }
+        awaitFacetTitle()
 
         // Then the launcher-wide switch isn't there
         composeRule.onNodeWithTag("appearance_allow_landscape_row").assertDoesNotExist()

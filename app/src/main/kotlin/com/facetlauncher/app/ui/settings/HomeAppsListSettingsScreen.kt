@@ -226,19 +226,21 @@ private fun LazyListScope.listContentItem(
                     testTag = "default_apps_to_show_row",
                 )
             }
-            CardDivider()
-            HomeAppsListClickableRow(
-                title = stringResource(if (uiState.isFacetScoped) R.string.home_apps_list_favorites_facet else R.string.home_apps_list_favorites_default),
-                subtitle = uiState.favoritesLabel,
-                onClick = onEditFavorites,
-                testTag = "default_favorites_row",
-            )
-            if (uiState.favorites.isNotEmpty()) {
+            if (uiState.isFacetScoped) {
                 CardDivider()
-                DefaultFavoritesReorderList(
-                    favorites = uiState.favorites,
-                    onReorder = onReorderFavorites,
+                HomeAppsListClickableRow(
+                    title = stringResource(R.string.home_apps_list_favorites_facet),
+                    subtitle = uiState.favoritesLabel,
+                    onClick = onEditFavorites,
+                    testTag = "default_favorites_row",
                 )
+                if (uiState.favorites.isNotEmpty()) {
+                    CardDivider()
+                    DefaultFavoritesReorderList(
+                        favorites = uiState.favorites,
+                        onReorder = onReorderFavorites,
+                    )
+                }
             }
         }
     }

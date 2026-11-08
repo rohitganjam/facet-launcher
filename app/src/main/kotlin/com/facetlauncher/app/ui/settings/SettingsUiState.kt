@@ -8,8 +8,6 @@ import kotlinx.collections.immutable.persistentListOf
 
 data class SettingsUiState(
     val settings: LauncherSettings = LauncherSettings(),
-    val dockItems: ImmutableList<PlacedItem> = persistentListOf(),
-    val defaultFavorites: List<PlacedItem> = emptyList(),
     val folderCount: Int = 0,
     /** How many facet automation rules exist; drives the entry row's subtitle. */
     val automationRuleCount: Int = 0,

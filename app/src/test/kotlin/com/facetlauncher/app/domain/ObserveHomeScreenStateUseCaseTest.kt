@@ -43,9 +43,6 @@ class ObserveHomeScreenStateUseCaseTest {
         val settingsFlow = MutableStateFlow(LauncherSettings(activeFacetId = 1L))
         val settingsRepository = mock(SettingsRepository::class.java).also { `when`(it.settings).thenReturn(settingsFlow) }
         val observePlacedItems = mock(ObservePlacedItemsUseCase::class.java).also {
-            `when`(it.items(PlacementTarget.GlobalDock)).thenReturn(flowOf(emptyList()))
-            `when`(it.items(PlacementTarget.GlobalFavorites)).thenReturn(flowOf(emptyList()))
-            `when`(it.gridCells(PlacementTarget.GlobalFavorites)).thenReturn(flowOf(SavedGridCells()))
             listOf(1L, 2L).forEach { facetId ->
                 `when`(it.items(PlacementTarget(PlacementList.DOCK, facetId))).thenReturn(flowOf(emptyList()))
                 `when`(it.items(PlacementTarget(PlacementList.FAVORITES, facetId))).thenReturn(flowOf(emptyList()))
@@ -95,21 +92,6 @@ class ObserveHomeScreenStateUseCaseTest {
 
         // Then it exposes facet 1's own favorites
         assertEquals(listOf(PlacedItem.SingleApp(appInfo('a'))), result.appListItems)
-    }
-
-    @Test
-    fun `never falls back to the launcher-wide default favorites`() = runTest {
-        // Given a launcher-wide default list, and a facet whose own favorites are empty
-        val fixture = Fixture()
-        `when`(fixture.observePlacedItems.items(PlacementTarget.GlobalFavorites)).thenReturn(flowOf(listOf(PlacedItem.SingleApp(appInfo('d')))))
-        `when`(fixture.observePlacedItems.items(PlacementTarget(PlacementList.FAVORITES, 1L))).thenReturn(flowOf(emptyList()))
-        fixture.facetsFlow.value = listOf(Facet(id = 1L, name = "P1", position = 0))
-
-        // When observing home screen state
-        val result = fixture.useCase().first()
-
-        // Then the list is the facet's own, empty one
-        assertEquals(emptyList<PlacedItem>(), result.appListItems)
     }
 
     @Test
@@ -214,21 +196,6 @@ class ObserveHomeScreenStateUseCaseTest {
 
         // Then the dock is the facet's own list, not the launcher-wide default
         assertEquals(listOf(PlacedItem.SingleApp(appInfo('p'))), result.dockApps)
-    }
-
-    @Test
-    fun `never falls back to the launcher-wide dock`() = runTest {
-        // Given a non-empty default dock, and a facet whose own dock is empty
-        val fixture = Fixture()
-        `when`(fixture.observePlacedItems.items(PlacementTarget.GlobalDock)).thenReturn(flowOf(listOf(PlacedItem.SingleApp(appInfo('g')))))
-        `when`(fixture.observePlacedItems.items(PlacementTarget(PlacementList.DOCK, 1L))).thenReturn(flowOf(emptyList()))
-        fixture.facetsFlow.value = listOf(Facet(id = 1L, name = "P1", position = 0))
-
-        // When observing home screen state
-        val result = fixture.useCase().first()
-
-        // Then the dock is the facet's own, empty one
-        assertEquals(emptyList<PlacedItem>(), result.dockApps)
     }
 
     @Test

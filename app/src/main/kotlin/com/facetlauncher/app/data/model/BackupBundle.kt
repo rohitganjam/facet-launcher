@@ -54,8 +54,10 @@ data class BackupBundle(
     /** `@SerialName` keeps the JSON key `"profiles"` so backups exported before the Facet rename still import. */
     @SerialName("profiles")
     val facets: List<BackupFacet>,
-    val dockApps: List<BackupAppEntry>,
-    val defaultFavoriteApps: List<BackupAppEntry>,
+    /** Legacy: the launcher-wide Dock of older backups, read only so a facet without its own Dock inherits it ([BackupUpgrade]). Never written. */
+    val dockApps: List<BackupAppEntry> = emptyList(),
+    /** Legacy: the launcher-wide Favorites of older backups, read like [dockApps]. Never written. */
+    val defaultFavoriteApps: List<BackupAppEntry> = emptyList(),
     val widgetPlacements: List<BackupWidgetPlacement>,
     /**
      * The whole folder library (F-Folders) — every folder, regardless of where (if anywhere) it's
@@ -66,9 +68,9 @@ data class BackupBundle(
      * deserializes cleanly, with no folders to restore).
      */
     val folders: List<BackupFolder> = emptyList(),
-    /** A folder placed in the launcher-wide default Dock — mirrors [dockApps] on the folder side. */
+    /** Legacy: a folder placed in the launcher-wide Dock of older backups — mirrors [dockApps] on the folder side. Never written. */
     val dockFolderPlacements: List<BackupFolderPlacement> = emptyList(),
-    /** A folder placed in the launcher-wide default Favorites list — mirrors [defaultFavoriteApps] on the folder side. */
+    /** Legacy: a folder placed in the launcher-wide Favorites of older backups — mirrors [defaultFavoriteApps]. Never written. */
     val defaultFavoriteFolderPlacements: List<BackupFolderPlacement> = emptyList(),
 )
 

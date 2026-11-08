@@ -59,8 +59,6 @@ import com.facetlauncher.app.data.model.PlacementTarget
 sealed interface ImportBackupResult {
     data class Success(
         val facetCount: Int,
-        val dockAppCount: Int,
-        val defaultFavoriteCount: Int,
         /** Never auto-restored — see [com.facetlauncher.app.data.model.BackupWidgetPlacement]'s own doc comment. Empty when the backup had none. */
         val pendingWidgetPlacements: List<BackupWidgetPlacement>,
     ) : ImportBackupResult
@@ -115,24 +113,6 @@ class ImportBackupUseCase @Inject constructor(
         }
         activeFacetId?.let { settingsRepository.setActiveFacetId(it) }
 
-        placementRepository.deleteAll(PlacementTarget.GlobalDock)
-        bundle.dockApps.forEach { placementRepository.restoreApp(it.toAppPlacementEntity(PlacementList.DOCK)) }
-        bundle.dockFolderPlacements.forEach { placement ->
-            newFolderIdByIndex[placement.folderIndex]?.let { folderId ->
-                placementRepository.restoreFolderPlacement(PlacementTarget.GlobalDock, folderId, placement.position)
-                placement.gridCells?.let { placementRepository.restoreFolderCells(PlacementTarget.GlobalDock, folderId, it) }
-            }
-        }
-
-        placementRepository.deleteAll(PlacementTarget.GlobalFavorites)
-        bundle.defaultFavoriteApps.forEach { placementRepository.restoreApp(it.toAppPlacementEntity(PlacementList.FAVORITES)) }
-        bundle.defaultFavoriteFolderPlacements.forEach { placement ->
-            newFolderIdByIndex[placement.folderIndex]?.let { folderId ->
-                placementRepository.restoreFolderPlacement(PlacementTarget.GlobalFavorites, folderId, placement.position)
-                placement.gridCells?.let { placementRepository.restoreFolderCells(PlacementTarget.GlobalFavorites, folderId, it) }
-            }
-        }
-
         val hostedPlacements = restoreNativeHubWidgets(bundle.widgetPlacements)
 
         // BackupAppEntry has no portable userId (see BackupBundle's own doc comment), so every
@@ -143,8 +123,6 @@ class ImportBackupUseCase @Inject constructor(
 
         return ImportBackupResult.Success(
             facetCount = bundle.facets.size,
-            dockAppCount = bundle.dockApps.size,
-            defaultFavoriteCount = bundle.defaultFavoriteApps.size,
             pendingWidgetPlacements = hostedPlacements,
         )
     }

@@ -4681,21 +4681,21 @@ A facet already owns its Dock and Favorites (migration 44→45), and the clock h
 - [x] `EnsureActiveFacetUseCase` / `LauncherViewModel.init`: drop the launcher-wide seed and its ordering note (the first facet seeds itself); `LauncherSettings.defaultsSeeded` goes. `LauncherViewModelTest`, `EnsureActiveFacetUseCaseTest`.
 
 ### Phase B: remove the shared lists from the screens
-Phase A is built on branch `facet-owned-dock-favorites` but must not ship alone: onboarding and the pickers it opens still read and write the launcher-wide lists, so until the first Onboarding item below lands, onboarding's dock page is empty and its finish step would reseed the Dock over the user's choices. That item is done, so Phase A and it ship together.
+Phase A is built on the same branch, and ships with these items.
 - [x] Onboarding: `OnboardingViewModel` reads and writes the first facet's lists, and the pickers it opens follow (`useFacet`); the finish-time copy onto facets is gone (finishing applies only the content mode and count). `OnboardingViewModelTest`, `OnboardingScreenTest`, picker VM tests.
-- [ ] Settings: remove the launcher-wide list sections and pickers: `DockSettingsViewModel/Screen`, `HomeAppsListSettingsViewModel/Screen`, `AppearanceSettingsViewModel`, `NotificationSettingsViewModel`, `DockAppPickerViewModel`, `FavoritesPickerViewModel` (their `facetId == null` paths), `ObserveSettingsScreenStateUseCase`, `ObserveIconPickerUseCase`, `FacetSettingsViewModel` (anything reading "launcher default" lists). Remove the Favorites "Reset to default" row and its confirmation strings in all six locales, and re-check the Dock row's wording.
-- [ ] `PlacementTarget.GlobalDock/GlobalFavorites` and `ResolveActivePlacementTargetUseCase`'s fallback to them: remove once nothing reads them; `PlacementRepository` tests that loop over `allTargets` keep only facet targets.
+- [x] Settings: the *Default Dock* row, screen and launcher-scope route are gone (`DockSettingsViewModel/Screen` are a facet's own screen, `facetId` required, no Copy to facets). The *Default Apps list* screen stays for the list content and look a new facet starts with and the Allow landscape switch, without a Favorites section; its Reset and Copy to facets apply the content mode, count and look (`FacetDefaultsScope.APPS_LIST` stays for the content mode and count only: it no longer touches Favorites, so there is no Favorites reset). Previews at launcher scope (`AppearanceSettingsViewModel`, `NotificationSettingsViewModel`, `ObserveIconPickerUseCase`) show the active facet's lists through `ObserveActiveFacetItemsUseCase`; `ObserveSettingsScreenStateUseCase` no longer reads lists. The Dock picker and Favorites picker are facet-only. The Dock's reset strings now say it restores the device's default apps (all seven locales; the new wording is hand-translated and wants a native-speaker check).
+- [x] `PlacementTarget.GlobalDock/GlobalFavorites` and `isGlobal` are gone (`PlacementTarget.facetId` is non-null); `ResolveActivePlacementTargetUseCase` returns `null` with no active facet and the add/remove/reorder use cases then do nothing; `PlacementRepository.copyList` is gone.
 
 ### Phase C: data and backup
-- [ ] Room: a cleanup migration (46/47→next) deleting `app_placements` and `folder_placements` rows with a null `facetId`, then no null owner remains; keep the column nullable (no schema change) or tighten it in the same step. `FacetDatabaseMigrationTest` case; `02` migration table.
-- [ ] `ExportBackupUseCase`: stop writing the shared lists. `ImportBackupUseCase`: stop restoring them; `BackupUpgrade` keeps the legacy fields for facets that inherited them. `BackupCoverageTest`, `BackupUpgradeTest`, `ImportBackupUseCaseTest`, `ExportBackupUseCaseTest`; re-check F11 in `05`.
+- [x] Room 47→48 (`Migrations.MIGRATION_47_48`, no schema change): deletes the rows with a null `facetId` in both placement tables; the columns stay nullable. `FacetDatabaseMigrationTest.migration47To48DeletesTheLauncherWideListsAndKeepsFacetLists`; `02` migration table.
+- [x] `ExportBackupUseCase` no longer writes the shared lists and `ImportBackupUseCase` no longer restores them (`ImportBackupResult.Success` lost its two counts); `BackupBundle`'s four legacy list fields default to empty and `BackupUpgrade` still reads them for facets that inherited them. No `CURRENT_BACKUP_VERSION` bump. `ExportBackupUseCaseTest`, `ImportBackupUseCaseTest`, `BackupCoverageTest`, `BackupUpgradeTest` unchanged and green.
 
 ### Phase D: docs and checks
-- [ ] Docs: `02` (shared-list wording, key and migration tables), `08` (override routing, seeding), `09 §4`, `13` (onboarding), `07` (use-case registry, counts), README stack. Regenerate `TEST_REGISTRY.md`.
-- [ ] Manual: fresh install shows the device defaults in the first facet's Dock and an empty list; a second facet gets the same Dock; the Dock's Reset to default restores it and Favorites has no reset; an upgrade from the current release keeps every facet's own lists.
+- [x] Docs: `02`, `03`, `07`, `08`, `09`, `13` and the registry/test counts.
+- [ ] Manual: fresh install shows the device defaults in the first facet's Dock and an empty list; a second facet gets the same Dock; the Dock's Reset to default restores it and Favorites has no reset; an upgrade from the current release keeps every facet's own lists (the shared rows are deleted by 47→48).
 
 ### Open
-- [ ] Look defaults (row position, layout, grid, dock display): keep launcher-wide, or move them to per-facet only like the clock?
+- [ ] Look defaults (row position, layout, grid, dock display): the *Default Apps list* screen keeps the list look and content defaults; the dock display style default has no screen now (a new facet starts from the built-in one). Decide whether to drop the rest too.
 
 
 ## Dock & Apps layout merged into the Dock and Apps list screens

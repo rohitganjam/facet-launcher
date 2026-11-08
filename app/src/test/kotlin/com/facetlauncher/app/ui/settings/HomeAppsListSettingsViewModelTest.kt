@@ -84,7 +84,6 @@ class HomeAppsListSettingsViewModelTest {
         `when`(settingsRepository.settings).thenReturn(flowOf(settings))
         `when`(facetRepository.observeFacets()).thenReturn(MutableStateFlow(facets))
         facetId?.let { `when`(observePlacedItems.items(PlacementTarget(PlacementList.FAVORITES, it))).thenReturn(flowOf(favorites)) }
-        `when`(observePlacedItems.items(PlacementTarget.GlobalFavorites)).thenReturn(flowOf(favorites))
         `when`(getInstalledApps.observe()).thenReturn(flowOf(emptyList()))
         `when`(defaultAppRepository.getDefaultAppPackages()).thenReturn(emptyList())
         return HomeAppsListSettingsViewModel(
@@ -104,7 +103,7 @@ class HomeAppsListSettingsViewModelTest {
     @Test
     fun `favorites flow through to uiState`() = runTest {
         val twoFavorites = (1..2).map(::appInfo).map { PlacedItem.SingleApp(it) }
-        val viewModel = createViewModel(favorites = twoFavorites)
+        val viewModel = createViewModel(facetId = 5L, facets = listOf(Facet(id = 5L, name = "Work", position = 0)), favorites = twoFavorites)
         backgroundScope.launch { viewModel.uiState.collect {} }
         testDispatcher.scheduler.advanceUntilIdle()
 
@@ -115,7 +114,7 @@ class HomeAppsListSettingsViewModelTest {
     fun `a favorited folder is counted and shows up in uiState, not just apps`() = runTest {
         val folder = com.facetlauncher.app.data.model.Folder(id = 1L, name = "Games", apps = emptyList())
         val favorites = listOf(PlacedItem.SingleApp(appInfo(1)), PlacedItem.FolderItem(folder))
-        val viewModel = createViewModel(favorites = favorites)
+        val viewModel = createViewModel(facetId = 5L, facets = listOf(Facet(id = 5L, name = "Work", position = 0)), favorites = favorites)
         backgroundScope.launch { viewModel.uiState.collect {} }
         testDispatcher.scheduler.advanceUntilIdle()
 
@@ -198,16 +197,14 @@ class HomeAppsListSettingsViewModelTest {
     }
 
     @Test
-    fun `global reorderFavorites hits the default list, folders included`() = runTest {
+    fun `launcher scope has no favorites list to reorder`() = runTest {
         val placementRepository = mock(PlacementRepository::class.java)
         val viewModel = createViewModel(placementRepository = placementRepository)
-        val folder = com.facetlauncher.app.data.model.Folder(id = 1L, name = "Games", apps = emptyList())
-        val reordered = listOf(PlacedItem.FolderItem(folder), PlacedItem.SingleApp(appInfo(1)))
 
-        viewModel.reorderFavorites(reordered)
+        viewModel.reorderFavorites(listOf(PlacedItem.SingleApp(appInfo(1))))
         testDispatcher.scheduler.advanceUntilIdle()
 
-        verify(placementRepository).reorderItems(PlacementTarget.GlobalFavorites, reordered)
+        org.mockito.Mockito.verifyNoInteractions(placementRepository)
     }
 
     @Test

@@ -121,7 +121,7 @@ class BackupRestoreViewModelTest {
     @Test
     fun `a successful import with a pending widget whose provider is installed marks it re-addable`() = runTest {
         val uri = mock(Uri::class.java)
-        `when`(importBackup(uri)).thenReturn(ImportBackupResult.Success(facetCount = 1, dockAppCount = 0, defaultFavoriteCount = 0, pendingWidgetPlacements = listOf(placement)))
+        `when`(importBackup(uri)).thenReturn(ImportBackupResult.Success(facetCount = 1, pendingWidgetPlacements = listOf(placement)))
         `when`(appWidgetRepository.getWidgetProviderOptions()).thenReturn(
             listOf(WidgetProviderOption(provider = provider, appLabel = "Widgets Inc", widgetLabel = "Big Widget", columns = 2, rows = 1)),
         )
@@ -139,7 +139,7 @@ class BackupRestoreViewModelTest {
     @Test
     fun `a pending widget whose provider isn't installed is marked unavailable, not re-addable`() = runTest {
         val uri = mock(Uri::class.java)
-        `when`(importBackup(uri)).thenReturn(ImportBackupResult.Success(facetCount = 1, dockAppCount = 0, defaultFavoriteCount = 0, pendingWidgetPlacements = listOf(placement)))
+        `when`(importBackup(uri)).thenReturn(ImportBackupResult.Success(facetCount = 1, pendingWidgetPlacements = listOf(placement)))
         `when`(appWidgetRepository.getWidgetProviderOptions()).thenReturn(emptyList())
 
         viewModel.onImportFileChosen(uri)
@@ -150,7 +150,7 @@ class BackupRestoreViewModelTest {
 
     private fun givenOnePendingWidget() = runTest {
         val uri = mock(Uri::class.java)
-        `when`(importBackup(uri)).thenReturn(ImportBackupResult.Success(1, 0, 0, listOf(placement)))
+        `when`(importBackup(uri)).thenReturn(ImportBackupResult.Success(1, listOf(placement)))
         `when`(appWidgetRepository.getWidgetProviderOptions()).thenReturn(
             listOf(WidgetProviderOption(provider = provider, appLabel = "Widgets Inc", widgetLabel = "Big Widget", columns = 2, rows = 1)),
         )
@@ -214,7 +214,7 @@ class BackupRestoreViewModelTest {
     @Test
     fun `re-adding a widget whose provider is not installed is a no-op`() = runTest {
         val uri = mock(Uri::class.java)
-        `when`(importBackup(uri)).thenReturn(ImportBackupResult.Success(1, 0, 0, listOf(placement)))
+        `when`(importBackup(uri)).thenReturn(ImportBackupResult.Success(1, listOf(placement)))
         `when`(appWidgetRepository.getWidgetProviderOptions()).thenReturn(emptyList())
         viewModel.onImportFileChosen(uri)
         testDispatcher.scheduler.advanceUntilIdle()

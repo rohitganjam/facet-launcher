@@ -57,13 +57,8 @@ class ExportBackupUseCase @Inject constructor(
             exportedAtEpochMillis = System.currentTimeMillis(),
             settings = settings.toBackupSettings(activeFacetIndex),
             facets = backupFacets,
-            dockApps = placementRepository.getRawApps(PlacementTarget.GlobalDock).map { it.toBackupEntry() },
-            defaultFavoriteApps = placementRepository.getRawApps(PlacementTarget.GlobalFavorites).map { it.toBackupEntry() },
             widgetPlacements = widgetPlacementRepository.observeAll().first().map { it.toBackupPlacement() },
             folders = backupFolders,
-            dockFolderPlacements = placementRepository.getRawFolderPlacements(PlacementTarget.GlobalDock).mapNotNull { it.toBackupPlacement(folderIndexById) },
-            defaultFavoriteFolderPlacements = placementRepository.getRawFolderPlacements(PlacementTarget.GlobalFavorites)
-                .mapNotNull { it.toBackupPlacement(folderIndexById) },
         )
         backupRepository.writeBackup(uri, bundle)
         return bundle

@@ -6,9 +6,10 @@ Four smaller flows that don't fit the earlier docs but are load-bearing for how 
 
 A *facet* is a named Home configuration (`facets` row). Exactly one is active
 (`active_facet_id` in DataStore). A facet **owns** its dock, favorites, list content and look. The launcher-wide
-values (Settings → Apps and folders: *Default Dock Apps*, *Default Apps list*; a facet's own screens are *Dock Apps* and *Apps List*) are only a
-seed: `ApplyFacetDefaultsUseCase` copies them into a facet when it is created and again when the user taps *Reset to default* on
-one of its screens. Editing a facet never touches the defaults, and editing the defaults never touches an existing facet, unless the user asks: each launcher-level default screen has a *Copy to facets* row that opens a bottom sheet (`CopyToFacetsSheet`, every facet checked to start, the current one marked) and, on confirm, applies that screen's scope to the facets left checked.
+values (Settings → Apps and folders: *Default Apps list*, the list content and look a new facet starts with; a facet's own screens are *Dock Apps* and *Apps List*) are only a
+seed: `ApplyFacetDefaultsUseCase` applies them to a facet when it is created and again when the user taps *Reset to default* on
+one of its screens (the Dock instead re-seeds from the device's default apps). There is no launcher-wide Dock or Favorites list, and no *Default Dock* screen.
+Editing a facet never touches the defaults, and editing the defaults never touches an existing facet, unless the user asks: the *Default Apps list* screen has a *Copy to facets* row that opens a bottom sheet (`CopyToFacetsSheet`, every facet checked to start, the current one marked) and, on confirm, applies the list content mode, count and look to the facets left checked.
 
 ```mermaid
 flowchart TB
@@ -104,9 +105,8 @@ flowchart TB
   not on `ClockStyleGalleryScreen` — that screen dropped its own calendar-preview block entirely
   (see chat history). The preview's `favorites`/`dockItems`/`calendarEvents` are this scope's real,
   live content, not sampled installed apps or fixed sample events: `AppearanceSettingsViewModel`
-  observes `ObservePlacedItemsUseCase` for the facet's own and the launcher-wide Favorites and Dock, picked by scope via `effectiveFavorites`/`effectiveDockItems`
-  (`if (facet != null) facetFavorites else globalFavorites`, same for dock) —
-  identical to `HomeAppsListSettingsViewModel`/`DockSettingsViewModel`'s own choice. Calendar
+  observes the facet's own Favorites and Dock through `ObservePlacedItemsUseCase`, or at launcher scope the active facet's through
+  `ObserveActiveFacetItemsUseCase` (`favorites`/`dockItems`). Calendar
   events come from `CalendarRepository.getUpcomingEvents`, gated by `CalendarPermissionRepository
   .isGranted()` (empty when ungranted, never a sample fallback), with facet-or-global
   `showAllDay`/`calendarIds` of the clock's calendar settings resolved the same way `ObserveHomeScreenStateUseCase`

@@ -66,7 +66,10 @@ class NotificationSettingsScreenTest {
                 NotificationSettingsViewModel(
                     settingsRepository,
                     FakeNotificationAccessRepository(context, granted = accessGranted),
-                    ObservePlacedItemsUseCase(PlacementRepository(database.appPlacementDao(), database.folderPlacementDao()), folderRepository, appRepository),
+                    com.facetlauncher.app.domain.ObserveActiveFacetItemsUseCase(
+                        settingsRepository,
+                        ObservePlacedItemsUseCase(PlacementRepository(database.appPlacementDao(), database.folderPlacementDao()), folderRepository, appRepository),
+                    ),
                     WallpaperRepository(WallpaperManager.getInstance(context)),
                     DefaultAppRepository(context),
                     GetInstalledAppsUseCase(appRepository),

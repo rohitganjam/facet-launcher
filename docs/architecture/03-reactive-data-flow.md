@@ -87,12 +87,12 @@ Key properties of this flow:
 
 ## 2. Hydrating Room placements against the live list
 
-`ObservePlacedItemsUseCase` joins the Room rows of any Dock or Favorites list (the raw entity flows `PlacementRepository` exposes) with the live app list in memory. `items(PlacementTarget.GlobalDock)` is representative:
+`ObservePlacedItemsUseCase` joins the Room rows of any Dock or Favorites list (the raw entity flows `PlacementRepository` exposes) with the live app list in memory. `items(PlacementTarget(DOCK, facetId))` is representative:
 
 ```mermaid
 flowchart TB
-    DAO1["AppPlacementDao.observe(DOCK, GLOBAL_OWNER_KEY)\nFlow of List AppPlacementEntity"] --> C
-    DAO2["FolderPlacementDao.observe(DOCK, GLOBAL_OWNER_KEY)\nFlow of List FolderPlacementEntity"] --> C
+    DAO1["AppPlacementDao.observe(DOCK, facetId)\nFlow of List AppPlacementEntity"] --> C
+    DAO2["FolderPlacementDao.observe(DOCK, facetId)\nFlow of List FolderPlacementEntity"] --> C
     FR["FolderRepository.observeFolders()\n= combine(FolderDao.observeAllWithApps(), AppRepository.observeInstalledApps())"] --> C
     AR["AppRepository.observeInstalledApps()\nFlow of List AppInfo"] --> C
     C{{"combine(a, b, c, d)"}} --> IDX["installedByComponent =\ninstalled.associateBy { Triple(pkg, activity, userHandle.hashCode()) }"]

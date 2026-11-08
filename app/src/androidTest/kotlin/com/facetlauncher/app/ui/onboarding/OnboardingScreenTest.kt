@@ -130,7 +130,7 @@ class OnboardingScreenTest {
                     NotificationSettingsViewModel(
                         settingsRepository,
                         FakeNotificationAccessRepository(context, granted = false),
-                        observePlacedItems,
+                        com.facetlauncher.app.domain.ObserveActiveFacetItemsUseCase(settingsRepository, observePlacedItems),
                         WallpaperRepository(WallpaperManager.getInstance(context)),
                         DefaultAppRepository(context),
                         getInstalledApps,

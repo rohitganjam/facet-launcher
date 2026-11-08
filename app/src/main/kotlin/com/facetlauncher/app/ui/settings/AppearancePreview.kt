@@ -40,8 +40,8 @@ internal fun AppearancePreviewCard(
             style = uiState.style,
             settings = uiState.settings,
             content = HomeScreenContent(
-                listItems = uiState.effectiveFavorites,
-                dockItems = uiState.effectiveDockItems,
+                listItems = uiState.favorites,
+                dockItems = uiState.dockItems,
                 calendarEvents = uiState.calendarEvents,
             ),
             homeWallpaper = homeWallpaper,

@@ -1367,6 +1367,24 @@ class FacetDatabaseMigrationTest {
     }
 
     @Test
+    fun migration47To48DeletesTheLauncherWideListsAndKeepsFacetLists() {
+        // Given a v47 database with a launcher-wide dock and favorites, and a facet's own dock
+        val db47 = helper.createDatabase(TEST_DB, 47)
+        insertApp(db47, "DOCK", 0, "com.example.global_dock", 0)
+        insertApp(db47, "FAVORITES", 0, "com.example.global_favorite", 0)
+        insertApp(db47, "DOCK", 7, "com.example.own_dock", 0)
+        db47.close()
+
+        // When migrating to v48 (Room also validates the result against the exported v48 schema)
+        val db48 = helper.runMigrationsAndValidate(TEST_DB, 48, true, Migrations.MIGRATION_47_48)
+
+        // Then the launcher-wide rows are gone and the facet's own row is kept
+        assertEquals(emptyList<String>(), packagesOf(db48, "DOCK", 0))
+        assertEquals(emptyList<String>(), packagesOf(db48, "FAVORITES", 0))
+        assertEquals(listOf("com.example.own_dock"), packagesOf(db48, "DOCK", 7))
+    }
+
+    @Test
     fun migration44To45HandlesAnEmptyLauncherDock() {
         // Given an inheriting facet with a stale own dock row and no launcher dock
         val db44 = helper.createDatabase(TEST_DB, 44)

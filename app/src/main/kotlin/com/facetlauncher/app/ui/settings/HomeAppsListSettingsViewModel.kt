@@ -62,9 +62,8 @@ data class HomeAppsListUiState(
     /** Every facet, for the default screen's "Copy to facets". */
     val facets: ImmutableList<Facet> = persistentListOf(),
     val settings: LauncherSettings = LauncherSettings(),
-    /** The launcher-wide default Favorites list, which seeds new facets. */
-    val globalFavorites: ImmutableList<PlacedItem> = persistentListOf(),
-    val facetFavorites: ImmutableList<PlacedItem> = persistentListOf(),
+    /** The facet's own Favorites; empty at launcher scope, which has no list. */
+    val favorites: ImmutableList<PlacedItem> = persistentListOf(),
     /** What the preview renders in a non-Favorites mode — a recognizable app sample. */
     val previewSourceApps: ImmutableList<PlacedItem> = persistentListOf(),
     val homeWallpaper: HomeWallpaper = HomeWallpaper.Unavailable,
@@ -89,19 +88,16 @@ data class HomeAppsListUiState(
     val allowLandscape: Boolean get() = settings.allowLandscape
     /** What the Landscape rows show: this scope's own landscape values, `null` meaning "same as portrait". */
     val landscape: LandscapeOverrides get() = facet?.landscape ?: settings.landscape
-    /** This scope's favorites, apps and folders interleaved, same as Home's own list. */
-    val favorites: ImmutableList<PlacedItem> get() = if (isFacetScoped) facetFavorites else globalFavorites
     val favoritesLabel: String get() = "${favorites.size} of ${AppListLimits.MAX_FAVORITES}"
-    /** What the preview renders — [favorites] in Favorites mode, a recognizable app sample otherwise. */
-    val previewApps: ImmutableList<PlacedItem> get() = if (listContentMode == ListContentMode.FAVORITES) favorites else previewSourceApps
+    /** What the preview renders — a facet's [favorites] in Favorites mode, a recognizable app sample otherwise (and at launcher scope). */
+    val previewApps: ImmutableList<PlacedItem> get() = if (isFacetScoped && listContentMode == ListContentMode.FAVORITES) favorites else previewSourceApps
 }
 
 /**
- * Settings → Home & Apps → Home Apps List, and (with a `facetId`) a facet's own Apps-list
- * screen — reused the same way [com.facetlauncher.app.ui.home.clock.ClockStyleGalleryViewModel]
- * is reused for the global and per-facet clock gallery. No `facetId` (or
- * [NO_ACTIVE_FACET_ID]) edits the launcher-wide default, which only seeds new facets; a real id edits that
- * facet's own content mode, count and favorites.
+ * Settings → Home & Apps → Default Apps list, and (with a `facetId`) a facet's own Apps-list
+ * screen. No `facetId` (or [NO_ACTIVE_FACET_ID]) edits the launcher-wide list content and look a
+ * new facet starts with (there is no launcher-wide Favorites list); a real id edits that
+ * facet's own content mode, count, look and favorites.
  */
 @HiltViewModel
 class HomeAppsListSettingsViewModel @Inject constructor(
@@ -122,23 +118,20 @@ class HomeAppsListSettingsViewModel @Inject constructor(
     private val homeWallpaper = MutableStateFlow<HomeWallpaper>(HomeWallpaper.Unavailable)
     private val preferredPreviewPackages = MutableStateFlow<List<String>>(emptyList())
 
-    private val facetFavoritesFlow: Flow<List<PlacedItem>> = facetId?.let { observePlacedItems.items(PlacementTarget(PlacementList.FAVORITES, it)) } ?: flowOf(emptyList())
-    private val globalFavoritesFlow: Flow<List<PlacedItem>> = observePlacedItems.items(PlacementTarget.GlobalFavorites)
+    private val favoritesFlow: Flow<List<PlacedItem>> = facetId?.let { observePlacedItems.items(PlacementTarget(PlacementList.FAVORITES, it)) } ?: flowOf(emptyList())
 
     val uiState: StateFlow<HomeAppsListUiState> = combine(
         settingsRepository.settings,
         facetRepository.observeFacets(),
-        combine(facetFavoritesFlow, globalFavoritesFlow, ::Pair),
+        favoritesFlow,
         combine(homeWallpaper, getInstalledApps.observe(), preferredPreviewPackages, ::Triple),
-    ) { settings, facets, favs, previewInputs ->
-        val (facetFavorites, globalFavorites) = favs
+    ) { settings, facets, favorites, previewInputs ->
         val (wallpaper, installed, preferred) = previewInputs
         HomeAppsListUiState(
             facet = facets.find { it.id == facetId },
             facets = facets.toImmutableList(),
             settings = settings,
-            globalFavorites = globalFavorites.toImmutableList(),
-            facetFavorites = facetFavorites.toImmutableList(),
+            favorites = favorites.toImmutableList(),
             previewSourceApps = selectPreviewApps(installed, preferred, PREVIEW_APP_COUNT).map { PlacedItem.SingleApp(it) }.toImmutableList(),
             homeWallpaper = wallpaper,
             appLabelColorOption = settings.appLabelColorOption,
@@ -166,12 +159,11 @@ class HomeAppsListSettingsViewModel @Inject constructor(
     }
 
     fun reorderFavorites(orderedItems: List<PlacedItem>) {
-        viewModelScope.launch {
-            placementRepository.reorderItems(PlacementTarget(PlacementList.FAVORITES, facetId), orderedItems)
-        }
+        val id = facetId ?: return
+        viewModelScope.launch { placementRepository.reorderItems(PlacementTarget(PlacementList.FAVORITES, id), orderedItems) }
     }
 
-    /** "Copy to facets": replaces the Favorites, content mode, count and list look of each chosen facet with the launcher-wide ones. */
+    /** "Copy to facets": replaces the content mode, count and list look of each chosen facet with the launcher-wide ones. Favorites are not touched. */
     fun copyToFacets(facetIds: Set<Long>) {
         viewModelScope.launch {
             facetIds.forEach {
@@ -181,7 +173,7 @@ class HomeAppsListSettingsViewModel @Inject constructor(
         }
     }
 
-    /** "Reset to default": replaces this facet's Favorites, content mode, count and list look with the launcher-wide ones. */
+    /** "Reset to default": replaces this facet's content mode, count and list look with the launcher-wide ones. Its Favorites are not touched. */
     fun resetToDefault() {
         val id = facetId ?: return
         viewModelScope.launch {

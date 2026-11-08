@@ -16,14 +16,6 @@ class FacetTest {
     }
 
     @Test
-    fun `placementTarget is the launcher-wide list when there is no facet`() {
-        val facet: Facet? = null
-
-        assertEquals(PlacementTarget.GlobalDock, facet.placementTarget(PlacementList.DOCK))
-        assertEquals(PlacementTarget.GlobalFavorites, facet.placementTarget(PlacementList.FAVORITES))
-    }
-
-    @Test
     fun `a new facet starts from the launcher's built-in look`() {
         val facet = Facet(name = "Plain", position = 0)
 

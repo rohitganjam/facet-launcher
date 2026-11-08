@@ -167,8 +167,8 @@ internal fun IconsContent(
     modifier: Modifier = Modifier,
     onIconScaleChange: (Int) -> Unit = {},
 ) {
-    val homeSamples = remember(uiState.effectiveFavorites, uiState.effectiveDockItems) {
-        (uiState.effectiveFavorites + uiState.effectiveDockItems).sampleApps()
+    val homeSamples = remember(uiState.favorites, uiState.dockItems) {
+        (uiState.favorites + uiState.dockItems).sampleApps()
     }
     val builtInSamples = picker.builtInSamples.ifEmpty { homeSamples }.toImmutableList()
     StickyHeaderLayout(
@@ -559,7 +559,7 @@ private fun IconsScreenPreview() {
     FacetLauncherTheme {
         IconsContent(
             settings = LauncherSettings(),
-            uiState = AppearanceSettingsUiState(globalFavorites = DesignTimeFavorites, globalDockItems = DesignTimeDockItems),
+            uiState = AppearanceSettingsUiState(favorites = DesignTimeFavorites, dockItems = DesignTimeDockItems),
             picker = IconPickerState(isLoading = false),
             homeWallpaper = HomeWallpaper.Unavailable,
             onBack = {},
@@ -583,7 +583,7 @@ private fun IconsScreenPackPreview() {
     FacetLauncherTheme {
         IconsContent(
             settings = LauncherSettings(iconPackPackage = "pack.Arcticons"),
-            uiState = AppearanceSettingsUiState(globalFavorites = DesignTimeFavorites, globalDockItems = DesignTimeDockItems),
+            uiState = AppearanceSettingsUiState(favorites = DesignTimeFavorites, dockItems = DesignTimeDockItems),
             picker = IconPickerState(packs = packs, totalApps = 168, isLoading = false),
             homeWallpaper = HomeWallpaper.Unavailable,
             onBack = {},

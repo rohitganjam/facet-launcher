@@ -59,7 +59,6 @@ class SettingsScreenTest {
         onViewFacetPro: () -> Unit = {},
         entitlement: EntitlementRepository = EntitlementRepository(),
         onNavigateToAppearance: () -> Unit = {},
-        onNavigateToDockSettings: () -> Unit = {},
         onNavigateToHomeAppsListSettings: () -> Unit = {},
         onNavigateToFolders: () -> Unit = {},
         onNavigateToGestures: () -> Unit = {},
@@ -93,7 +92,7 @@ class SettingsScreenTest {
                     }
                 }
                 SettingsViewModel(
-                    ObserveSettingsScreenStateUseCase(settingsRepository, observePlacedItems, folderRepository),
+                    ObserveSettingsScreenStateUseCase(settingsRepository, folderRepository),
                     DefaultLauncherRepository(context),
                     WorkProfileRepository(context.getSystemService(UserManager::class.java), appRepository, context),
                     AutomationRuleRepository(database.automationRuleDao(), database.facetDao()),
@@ -112,7 +111,6 @@ class SettingsScreenTest {
                     onNavigateToAppearance = onNavigateToAppearance,
                     onNavigateToAppDrawerSettings = onNavigateToAppDrawerSettings,
                     onNavigateToNotificationSettings = onNavigateToNotificationSettings,
-                    onNavigateToDockSettings = onNavigateToDockSettings,
                     onNavigateToHomeAppsListSettings = onNavigateToHomeAppsListSettings,
                     onNavigateToFolders = onNavigateToFolders,
                     onNavigateToGestures = onNavigateToGestures,
@@ -203,29 +201,22 @@ class SettingsScreenTest {
     }
 
     @Test
-    fun dockRowIsClickableAndReflectsDockAppCount() {
-        // Given the settings screen, scrolled to the "Dock" row under HOME & APPS — Dock and Home
-        // Apps List used to be one combined row/screen; they're now separate (see chat history).
-        var navigated = false
-        setContent(onNavigateToDockSettings = { navigated = true })
-        composeRule.onNodeWithTag("settings_screen").performScrollToNode(hasTestTag("dock_settings_row"))
-        composeRule.onNodeWithTag("dock_settings_row").assertTextContains("0 Dock Apps", substring = true)
+    fun thereIsNoLauncherWideDockRow() {
+        // Given the settings screen, scrolled to the Home & Apps card: a facet owns its Dock, so there is no default Dock row
+        setContent()
+        composeRule.onNodeWithTag("settings_screen").performScrollToNode(hasTestTag("home_apps_list_settings_row"))
 
-        // When tapping it
-        composeRule.onNodeWithTag("dock_settings_row").performClick()
-
-        // Then its callback fires
-        assertEquals(true, navigated)
+        composeRule.onAllNodesWithTag("dock_settings_row").assertCountEquals(0)
     }
 
     @Test
     fun homeAppsListRowIsClickableAndReflectsListContentCount() {
         // Given the settings screen, scrolled to the "Home Apps List" row under HOME & APPS.
-        // Defaults: Favorites content mode with 0 default favorites.
+        // Defaults: Favorites content mode.
         var navigated = false
         setContent(onNavigateToHomeAppsListSettings = { navigated = true })
         composeRule.onNodeWithTag("settings_screen").performScrollToNode(hasTestTag("home_apps_list_settings_row"))
-        composeRule.onNodeWithTag("home_apps_list_settings_row").assertTextContains("0 Favorites", substring = true)
+        composeRule.onNodeWithTag("home_apps_list_settings_row").assertTextContains("Favorites", substring = true)
 
         // When tapping it
         composeRule.onNodeWithTag("home_apps_list_settings_row").performClick()
