@@ -103,6 +103,32 @@ class HomeAppGridTest {
         assertTrue(top(apps[2]) < top(apps[0]))
     }
 
+    @Test
+    fun gridRowsAreSpacedLikeRegularListRows() {
+        // Given an item one row below the first
+        val saved = mapOf(items[2].gridKey() to GridCell(1, 0))
+        var iconSize = 0.dp
+        composeRule.setContent {
+            FacetLauncherTheme {
+                iconSize = com.facetlauncher.app.ui.components.AppIconSize.scaled()
+                HomeAppGrid(
+                    content = HomeAppListContent(items, HomeItemStyle(labelColor = Color.White)),
+                    actions = HomeItemActions(onAppClick = {}),
+                    columns = 4,
+                    displayMode = AppListGridDisplayMode.ICONS,
+                    savedCells = SavedGridCells(portrait = saved),
+                    landscape = false,
+                    anchoredAtBottom = false,
+                    availableHeight = height,
+                )
+            }
+        }
+
+        // Then the rows are an icon plus a regular row's padding above and below apart
+        val pitch = top(apps[2]) - top(apps[0])
+        assertEquals((iconSize + HOME_APP_ROW_REGULAR_VERTICAL_PADDING * 2).value, pitch.value, 0.5f)
+    }
+
     private fun drag(app: AppInfo, dx: Float, dy: Float = 0f) {
         composeRule.onNodeWithTag("home_app_icon_${app.packageName}", useUnmergedTree = true).performTouchInput {
             down(center)

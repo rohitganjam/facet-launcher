@@ -321,7 +321,8 @@ private fun gridCellHeight(displayMode: AppListGridDisplayMode): Dp = when (disp
     AppListGridDisplayMode.TEXT -> GRID_CELL_TEXT_HEIGHT
 }
 
-private val GRID_CELL_ICON_PADDING = 16.dp
+// The same space above and below an icon as a regular list row has.
+private val GRID_CELL_ICON_PADDING = HOME_APP_ROW_REGULAR_VERTICAL_PADDING * 2
 private val GRID_CELL_LABEL_HEIGHT = 28.dp
 private val GRID_CELL_TEXT_HEIGHT = 56.dp
 
