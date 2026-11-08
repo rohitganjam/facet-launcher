@@ -208,10 +208,9 @@ sequenceDiagram
     App->>App: Hilt builds SingletonComponent (lazy — services/DB on first inject)
     Act->>LVM: by viewModels()
     LVM->>Repos: combine(GetInstalledAppsUseCase.observe(), settings, observeWorkProfiles())
-    LVM->>UC: EnsureActiveFacetUseCase.keepUsable()   (creates a facet if none, fixes activeFacetId, keeps it valid)
+    LVM->>UC: EnsureActiveFacetUseCase.keepUsable()   (creates a facet if none and seeds its Dock with the device defaults, fixes activeFacetId, keeps it valid)
     LVM->>UC: CleanUpUninstalledAppsUseCase()   (collects for process lifetime)
     LVM->>UC: RepairOrphanedProfileRowsUseCase()   (one pass: userId = -1 rows)
-    LVM->>UC: SeedDefaultDockUseCase()   (fresh install only)
     LVM->>UC: SyncFacetShortcutsUseCase()   (collects for process lifetime, publishes dynamic shortcuts, see 14)
     LVM->>UC: RunFacetAutomationUseCase(homePressedEvent)   (collects for process lifetime, see 15)
     Act->>Act: setContent — uiState.isLoading → empty Box

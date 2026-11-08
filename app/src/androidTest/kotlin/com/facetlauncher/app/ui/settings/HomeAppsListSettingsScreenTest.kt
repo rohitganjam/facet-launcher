@@ -91,7 +91,7 @@ class HomeAppsListSettingsScreenTest {
                     DefaultAppRepository(context),
                     GetInstalledAppsUseCase(appRepository),
                     SelectPreviewAppsUseCase(),
-                    ApplyFacetDefaultsUseCase(facetRepository, placementRepository, settingsRepository),
+                    ApplyFacetDefaultsUseCase(facetRepository, com.facetlauncher.app.domain.SeedFacetDefaultsUseCase(com.facetlauncher.app.data.DefaultAppRepository(context), placementRepository, com.facetlauncher.app.domain.GetInstalledAppsUseCase(appRepository)), settingsRepository),
                 )
             }
             FacetLauncherTheme {

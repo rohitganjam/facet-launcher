@@ -42,7 +42,7 @@ const val LEGACY_LAUNCHER_DEFAULT = "LAUNCHER_DEFAULT"
  *   permission-request history, not a user preference — restoring `true` onto a device that was
  *   never actually asked would wrongly skip straight to the "go to App Info" fallback instead of
  *   firing the real system permission dialog.
- * - `onboardingCompleted`/`defaultsSeeded`/`coachMarksSeen`: this install's own first-run
+ * - `onboardingCompleted`/`coachMarksSeen`: this install's own first-run
  *   progress, not a user preference — restoring `true`/a populated set onto a fresh install would
  *   skip the first-run flow and its dock-seeding/coach-mark introductions entirely.
  */

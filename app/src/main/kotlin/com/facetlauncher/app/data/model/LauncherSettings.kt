@@ -411,8 +411,6 @@ data class LauncherSettings(
     val landscape: LandscapeOverrides = LandscapeOverrides(),
     /** Whether the first-run onboarding flow has been completed (or skipped past its final step). Gates [LauncherActivity][com.facetlauncher.app.LauncherActivity]'s onboarding branch. Install-local — excluded from the backup bundle. */
     val onboardingCompleted: Boolean = false,
-    /** One-shot guard for [SeedDefaultDockUseCase][com.facetlauncher.app.domain.SeedDefaultDockUseCase] — set once the dock's default apps have been seeded, so a re-run (or a later manual empty-dock) never re-seeds. Install-local — excluded from the backup bundle. */
-    val defaultsSeeded: Boolean = false,
     /** Ids of dismissed post-onboarding coach marks (e.g. `"HOME_GESTURES"`) — additive, never cleared. Install-local — excluded from the backup bundle. */
     val coachMarksSeen: Set<String> = emptySet(),
 ) {

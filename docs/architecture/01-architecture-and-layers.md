@@ -166,7 +166,6 @@ fine) rather than via Hilt test modules — see [06-testing.md](06-testing.md).
 - runs `EnsureActiveFacetUseCase.keepUsable()` (creates a facet if none exists and keeps `activeFacetId` valid);
 - keeps `CleanUpUninstalledAppsUseCase` collecting for the process lifetime (deletes placement rows on real uninstall broadcasts);
 - runs `RepairOrphanedProfileRowsUseCase` once (backfills `userId = -1` rows left by pre-profile schemas);
-- runs `SeedDefaultDockUseCase` on fresh installs;
 - keeps `SyncFacetShortcutsUseCase` and `RunFacetAutomationUseCase` collecting for the process lifetime (dynamic shortcuts; automation rules);
 - clears `isLoading` after a 3 s timeout so a slow first app scan can't leave the screen blank.
 

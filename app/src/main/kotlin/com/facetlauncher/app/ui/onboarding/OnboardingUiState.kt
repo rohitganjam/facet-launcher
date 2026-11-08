@@ -10,14 +10,16 @@ import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 
 /**
- * Home-setup step (`ONBOARDING_FLOW.md` step 2) state — the launcher-wide default Dock and
- * Favorites/Recents/Most-used content mode. Always the global/default repositories — onboarding
- * has no concept of a `facetId`. Adding/removing apps happens on the full-screen pickers
+ * Home-setup step (`ONBOARDING_FLOW.md` step 2) state — the Dock and Favorites of the first facet
+ * ([facetId], made at launch with the device's default Dock) and the Favorites/Recents/Most-used
+ * content mode. Adding/removing apps happens on the full-screen pickers
  * ([com.facetlauncher.app.ui.dock.DockAppPickerScreen], [com.facetlauncher.app.ui.facets.FavoritesPickerScreen])
  * reused as-is from Settings; this state only carries what's needed to render the live dock/
  * favorites rows and drive their in-place drag-reorder.
  */
 data class OnboardingUiState(
+    /** The facet whose lists are being set up: the active one, null until it exists. */
+    val facetId: Long? = null,
     /** Dock apps in their current order (the seeded defaults, until edited). */
     val dockApps: ImmutableList<AppInfo> = persistentListOf(),
     /** Favorited apps, in their favorites order. */

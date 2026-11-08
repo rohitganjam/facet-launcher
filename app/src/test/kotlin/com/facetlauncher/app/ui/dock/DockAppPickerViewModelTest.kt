@@ -66,6 +66,7 @@ class DockAppPickerViewModelTest {
         installed: List<AppInfo>,
         dockApps: List<AppInfo>,
         usageAccessGranted: Boolean = false,
+        facetDockApps: List<AppInfo> = emptyList(),
     ): DockAppPickerViewModel {
         val appRepository = mock(AppRepository::class.java)
         `when`(appRepository.getInstalledApps()).thenReturn(installed)
@@ -74,6 +75,8 @@ class DockAppPickerViewModelTest {
         val placementRepository = mock(PlacementRepository::class.java)
         val observePlacedItems = mock(ObservePlacedItemsUseCase::class.java)
         `when`(observePlacedItems.items(PlacementTarget.GlobalDock)).thenReturn(flowOf(dockApps.map { PlacedItem.SingleApp(it) }))
+        `when`(observePlacedItems.items(PlacementTarget(com.facetlauncher.app.data.model.PlacementList.DOCK, 5L)))
+            .thenReturn(flowOf(facetDockApps.map { PlacedItem.SingleApp(it) }))
 
         val folderRepository = mock(FolderRepository::class.java)
         `when`(folderRepository.observeFolders()).thenReturn(flowOf(emptyList()))
@@ -111,6 +114,23 @@ class DockAppPickerViewModelTest {
 
         assertEquals(SortDirection.DESCENDING, viewModel.uiState.value.sortDirection)
         assertEquals(listOf(b, a), viewModel.uiState.value.selectedResults)
+    }
+
+    @Test
+    fun `useFacet points a picker without a route at that facet's own dock`() = runTest {
+        // Given a picker opened without a facet route (as onboarding does), with a facet dock holding one app
+        val a = appInfo('a')
+        val b = appInfo('b')
+        val viewModel = createViewModel(installed = listOf(a, b), dockApps = emptyList(), facetDockApps = listOf(b))
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // When it is pointed at the facet
+        viewModel.useFacet(5L)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Then the facet's dock is what is selected
+        assertEquals(listOf(b), viewModel.uiState.value.selectedResults)
     }
 
     @Test

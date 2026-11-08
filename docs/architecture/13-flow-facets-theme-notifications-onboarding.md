@@ -125,11 +125,11 @@ flowchart TB
 - **Switching is one DataStore write.** Everything downstream is reactive:
   `ObserveHomeScreenStateUseCase` recomputes `activeFacet` from `combine(settings, facets)` and
   `flatMapLatest` tears down the previous facet's Room subscriptions.
-- **Creating or resetting copies the default, it does not link to it.** `ApplyFacetDefaultsUseCase` copies the launcher-wide rows
-  (`PlacementRepository.copyList`, apps and folder placements) and values into the facet, so its list (its `app_placements` /
-  `folder_placements` rows for that `list` and `facetId`) is an independent copy from that moment. The default dock is seeded
-  (`SeedDefaultDockUseCase`) before the first facet is created, and onboarding's choices, made on the launcher-wide lists, are copied onto the
-  existing facets when it finishes (`OnboardingViewModel.finish`).
+- **Creating or resetting seeds, it does not link.** `ApplyFacetDefaultsUseCase` gives a new facet a Dock of the device's default apps
+  (`SeedFacetDefaultsUseCase`, from `DefaultAppRepository`) and empty Favorites, and copies the launcher settings' look and Favorites
+  content mode and count into it, so its lists (its `app_placements` / `folder_placements` rows for that `list` and `facetId`) are its own
+  from that moment. The Dock's "Reset to default" re-seeds from the device defaults. Onboarding edits the first facet's own lists
+  directly (`OnboardingViewModel`, and the pickers through `useFacet`); finishing applies only the content mode and count.
 - **One resolver for everything a facet owns:** `domain/ResolvedFacetStyle.kt`'s
   `resolveFacetStyle(facet, settings)` returns the clock block, apps-list look, dock display mode,
   calendar display, the clock and list placement in each orientation (`clockPlacement`, `listAlignment`,
@@ -448,7 +448,7 @@ flowchart LR
     FIN --> HOME["FacetNavHost (HOME)"]
     HOME --> PROMPT["HomeScreen: 'Set as default' prompt\n(coach mark HOME_SET_DEFAULT_PROMPT, until dismissed\nor DefaultLauncherRepository.isDefaultLauncher())"]
     HOME --> GEST["Gesture hint overlay\n(coach mark HOME_GESTURES)"]
-    SEED["SeedDefaultDockUseCase (runs in parallel from LauncherViewModel.init,\nnot gated on onboarding)"] --> SETUP
+    SEED["SeedFacetDefaultsUseCase (seeds the first facet's Dock when it is created\nat launch, not gated on onboarding)"] --> SETUP
 ```
 
 - The gate is `LauncherUiState.onboardingCompleted: Boolean?`, fed by its own settings collector (not the apps/work-profile
@@ -462,8 +462,9 @@ flowchart LR
   stack here); the VM re-checks the grant on resume, and the switches show on only while access is held. Skipping asks for nothing.
 - Onboarding is outside the nav graph (a top-level `when` branch in `LauncherActivity`), so Back
   can never pop into it and it never appears on the back stack.
-- The dock the user sees on the setup page is already seeded — `SeedDefaultDockUseCase` runs at
-  first launch regardless of onboarding, keyed on `defaults_seeded`.
+- The dock the user sees on the setup page is already seeded — the first facet is created at launch with the
+  device's default apps in its Dock (`SeedFacetDefaultsUseCase`), regardless of onboarding. The setup page and the
+  pickers it opens edit that facet's lists (`OnboardingUiState.facetId`).
 - "Set as default launcher" is a system action (`DefaultLauncherRepository.requestDefaultLauncherIntent()`
   → `RoleManager` request); Facet only prompts when it is confirmed *not* to hold the role. `HomeUiState.isDefaultLauncher`
   is tri-state (`null` until the async `RoleManager` check resolves): an already-default device never shows the sheet —

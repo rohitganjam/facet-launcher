@@ -5,12 +5,6 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.Preferences
 import com.facetlauncher.app.data.FacetRepository
-import com.facetlauncher.app.data.FakeAppPlacementDao
-import com.facetlauncher.app.data.FakeFolderPlacementDao
-import com.facetlauncher.app.data.PlacementRepository
-import com.facetlauncher.app.data.local.AppPlacementEntity
-import com.facetlauncher.app.data.model.PlacementList
-import com.facetlauncher.app.data.model.PlacementTarget
 import com.facetlauncher.app.data.FakeEntitlementRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.local.FacetDao
@@ -24,6 +18,8 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
+import org.mockito.Mockito.mock
+import org.mockito.Mockito.verify
 import org.junit.rules.TemporaryFolder
 
 /** In-memory fake — mirrors [com.facetlauncher.app.data.FacetRepositoryTest]'s. */
@@ -70,12 +66,12 @@ class EnsureActiveFacetUseCaseTest {
         facetRepository: FacetRepository,
         settingsRepository: SettingsRepository,
         entitlement: FakeEntitlementRepository = FakeEntitlementRepository(),
-        placementRepository: PlacementRepository = PlacementRepository(FakeAppPlacementDao(), FakeFolderPlacementDao()),
+        seedFacetDefaults: SeedFacetDefaultsUseCase = mock(SeedFacetDefaultsUseCase::class.java),
     ) = EnsureActiveFacetUseCase(
         facetRepository,
         settingsRepository,
         SelectableFacetsUseCase(facetRepository, entitlement),
-        ApplyFacetDefaultsUseCase(facetRepository, placementRepository, settingsRepository),
+        ApplyFacetDefaultsUseCase(facetRepository, seedFacetDefaults, settingsRepository),
     )
 
     @Test
@@ -94,20 +90,18 @@ class EnsureActiveFacetUseCaseTest {
     }
 
     @Test
-    fun `the first facet starts with a copy of the launcher dock`() = runTest {
-        // Given a launcher-wide dock with one app, and no facets
+    fun `the first facet's dock is seeded with the device default apps`() = runTest {
+        // Given no facets
         val facetRepository = FacetRepository(FakeFacetDao(), FakeClockStackItemDao())
         val settingsRepository = createSettingsRepository()
-        val placementRepository = PlacementRepository(FakeAppPlacementDao(), FakeFolderPlacementDao())
-        placementRepository.restoreApp(AppPlacementEntity(list = PlacementList.DOCK, packageName = "com.example.a", activityName = ".Main", position = 0))
+        val seedFacetDefaults = mock(SeedFacetDefaultsUseCase::class.java)
 
         // When the first facet is created
-        ensureActive(facetRepository, settingsRepository, placementRepository = placementRepository)()
+        ensureActive(facetRepository, settingsRepository, seedFacetDefaults = seedFacetDefaults)()
 
-        // Then the facet owns its own dock row for that app
+        // Then its own dock is seeded
         val facetId = facetRepository.observeFacets().first().single().id
-        val rows = placementRepository.getRawApps(PlacementTarget(PlacementList.DOCK, facetId))
-        assertEquals(listOf("com.example.a"), rows.map { it.packageName })
+        verify(seedFacetDefaults).invoke(facetId, true)
     }
 
     @Test

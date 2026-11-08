@@ -270,6 +270,7 @@ fun OnboardingScreen(
                     onDone = { subScreen = null },
                     showFoldersTab = false,
                     onNavigateToUsageAccessExplanation = onNavigateToUsageAccessExplanation,
+                    facetId = uiState.facetId,
                     viewModel = dockPickerViewModel,
                 )
             } else {
@@ -277,6 +278,7 @@ fun OnboardingScreen(
                     onDone = { subScreen = null },
                     showFoldersTab = false,
                     onNavigateToUsageAccessExplanation = onNavigateToUsageAccessExplanation,
+                    facetId = uiState.facetId,
                 )
             }
             OnboardingSubScreen.FAVORITES_PICKER -> if (favoritesPickerViewModel != null) {
@@ -284,6 +286,7 @@ fun OnboardingScreen(
                     onDone = { subScreen = null },
                     showFoldersTab = false,
                     onNavigateToUsageAccessExplanation = onNavigateToUsageAccessExplanation,
+                    facetId = uiState.facetId,
                     viewModel = favoritesPickerViewModel,
                 )
             } else {
@@ -291,6 +294,7 @@ fun OnboardingScreen(
                     onDone = { subScreen = null },
                     showFoldersTab = false,
                     onNavigateToUsageAccessExplanation = onNavigateToUsageAccessExplanation,
+                    facetId = uiState.facetId,
                 )
             }
             null -> {}

@@ -1,12 +1,8 @@
 package com.facetlauncher.app.domain
 
 import com.facetlauncher.app.data.FacetRepository
-import com.facetlauncher.app.data.FakeAppPlacementDao
 import com.facetlauncher.app.data.FakeClockStackItemDao
-import com.facetlauncher.app.data.FakeFolderPlacementDao
-import com.facetlauncher.app.data.PlacementRepository
 import com.facetlauncher.app.data.SettingsRepository
-import com.facetlauncher.app.data.local.AppPlacementEntity
 import com.facetlauncher.app.data.local.FacetDao
 import com.facetlauncher.app.data.local.FacetEntity
 import com.facetlauncher.app.data.model.AppListColumnAlignment
@@ -19,8 +15,6 @@ import com.facetlauncher.app.data.model.DockDisplayMode
 import com.facetlauncher.app.data.model.LandscapeOverrides
 import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.data.model.ListContentMode
-import com.facetlauncher.app.data.model.PlacementList
-import com.facetlauncher.app.data.model.PlacementTarget
 import com.facetlauncher.app.data.model.landscape
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -29,6 +23,8 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
 import org.mockito.Mockito.mock
+import org.mockito.Mockito.verify
+import org.mockito.Mockito.verifyNoInteractions
 import org.mockito.Mockito.`when`
 
 private class InMemoryFacetDao : FacetDao {
@@ -53,7 +49,7 @@ private class InMemoryFacetDao : FacetDao {
 class ApplyFacetDefaultsUseCaseTest {
 
     private val facetRepository = FacetRepository(InMemoryFacetDao(), FakeClockStackItemDao())
-    private val placementRepository = PlacementRepository(FakeAppPlacementDao(), FakeFolderPlacementDao())
+    private val seedFacetDefaults = mock(SeedFacetDefaultsUseCase::class.java)
 
     private val launcherSettings = LauncherSettings(
         dockDisplayMode = DockDisplayMode.TEXT,
@@ -70,71 +66,32 @@ class ApplyFacetDefaultsUseCaseTest {
     private fun useCase(settings: LauncherSettings = launcherSettings): ApplyFacetDefaultsUseCase {
         val settingsRepository = mock(SettingsRepository::class.java)
         `when`(settingsRepository.settings).thenReturn(MutableStateFlow(settings))
-        return ApplyFacetDefaultsUseCase(facetRepository, placementRepository, settingsRepository)
+        return ApplyFacetDefaultsUseCase(facetRepository, seedFacetDefaults, settingsRepository)
     }
 
-    private fun app(letter: Char) = "com.example.$letter"
-
-    // Rows are written directly: an AppInfo would need Robolectric for its UserHandle.
-    private suspend fun PlacementRepository.addApp(target: PlacementTarget, packageName: String, position: Int) =
-        restoreApp(AppPlacementEntity(list = target.list, facetId = target.facetId, packageName = packageName, activityName = ".Main", position = position))
-
-    private suspend fun packages(list: PlacementList, facetId: Long?) =
-        placementRepository.getRawApps(PlacementTarget(list, facetId)).map { it.packageName }
-
     @Test
-    fun `dock scope copies the launcher dock into the facet and nothing else`() = runTest {
-        // Given a launcher dock and favorites, and a facet with its own stale dock
+    fun `dock scope reseeds the facet dock from the device defaults and copies the display style`() = runTest {
+        // Given a facet
         val facet = facetRepository.addFacet()
-        placementRepository.addApp(PlacementTarget.GlobalDock, app('a'), 0)
-        placementRepository.addApp(PlacementTarget.GlobalDock, app('b'), 1)
-        placementRepository.addApp(PlacementTarget.GlobalFavorites, app('f'), 0)
-        placementRepository.addApp(PlacementTarget(PlacementList.DOCK, facet.id), app('z'), 0)
 
         // When the dock scope is applied
         useCase()(facet.id, FacetDefaultsScope.DOCK)
 
-        // Then the facet's dock and its display style are the launcher's, and favorites are untouched
-        assertEquals(listOf("com.example.a", "com.example.b"), packages(PlacementList.DOCK, facet.id))
-        assertEquals(emptyList<String>(), packages(PlacementList.FAVORITES, facet.id))
+        // Then the dock is seeded afresh, and the dock display style is the launcher's
+        verify(seedFacetDefaults).invoke(facet.id, true)
         assertEquals(DockDisplayMode.TEXT, facetRepository.getById(facet.id)!!.dockDisplayMode)
     }
 
     @Test
-    fun `an empty launcher dock empties the facet dock`() = runTest {
+    fun `apps list scope copies content mode and count and seeds nothing`() = runTest {
         val facet = facetRepository.addFacet()
-        placementRepository.addApp(PlacementTarget(PlacementList.DOCK, facet.id), app('z'), 0)
-
-        useCase()(facet.id, FacetDefaultsScope.DOCK)
-
-        assertEquals(emptyList<String>(), packages(PlacementList.DOCK, facet.id))
-    }
-
-    @Test
-    fun `a copied list is independent of the launcher list afterwards`() = runTest {
-        val facet = facetRepository.addFacet()
-        placementRepository.addApp(PlacementTarget.GlobalDock, app('a'), 0)
-        useCase()(facet.id, FacetDefaultsScope.DOCK)
-
-        placementRepository.addApp(PlacementTarget.GlobalDock, app('b'), 1)
-
-        assertEquals(listOf("com.example.a"), packages(PlacementList.DOCK, facet.id))
-        assertEquals(listOf("com.example.a", "com.example.b"), packages(PlacementList.DOCK, null))
-    }
-
-    @Test
-    fun `apps list scope copies favorites with content mode and count`() = runTest {
-        val facet = facetRepository.addFacet()
-        placementRepository.addApp(PlacementTarget.GlobalFavorites, app('f'), 0)
-        placementRepository.addApp(PlacementTarget.GlobalDock, app('d'), 0)
 
         useCase()(facet.id, FacetDefaultsScope.APPS_LIST)
 
         val stored = facetRepository.getById(facet.id)!!
-        assertEquals(listOf("com.example.f"), packages(PlacementList.FAVORITES, facet.id))
-        assertEquals(emptyList<String>(), packages(PlacementList.DOCK, facet.id))
         assertEquals(ListContentMode.RECENTS, stored.listContentMode)
         assertEquals(9, stored.appsToShowCount)
+        verifyNoInteractions(seedFacetDefaults)
     }
 
     @Test
@@ -160,16 +117,13 @@ class ApplyFacetDefaultsUseCaseTest {
     }
 
     @Test
-    fun `applyAll seeds every scope`() = runTest {
+    fun `applyAll seeds the dock and applies every setting`() = runTest {
         val facet = facetRepository.addFacet()
-        placementRepository.addApp(PlacementTarget.GlobalDock, app('d'), 0)
-        placementRepository.addApp(PlacementTarget.GlobalFavorites, app('f'), 0)
 
         useCase().applyAll(facet.id)
 
         val stored = facetRepository.getById(facet.id)!!
-        assertEquals(listOf("com.example.d"), packages(PlacementList.DOCK, facet.id))
-        assertEquals(listOf("com.example.f"), packages(PlacementList.FAVORITES, facet.id))
+        verify(seedFacetDefaults).invoke(facet.id, true)
         assertEquals(9, stored.appsToShowCount)
         assertEquals(DockDisplayMode.TEXT, stored.dockDisplayMode)
     }

@@ -1,6 +1,7 @@
 package com.facetlauncher.app.ui.dock
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -25,8 +26,11 @@ fun DockAppPickerScreen(
     // via the Drawer/Search's own "Add to folder" long-press flow, which isn't reachable from
     // onboarding), so the tab would only ever show an empty, dead-end Folders page.
     showFoldersTab: Boolean = true,
+    // The facet to edit when this isn't opened through a facet's route (onboarding edits the first facet's lists).
+    facetId: Long? = null,
     viewModel: DockAppPickerViewModel = hiltViewModel(),
 ) {
+    LaunchedEffect(facetId) { facetId?.let(viewModel::useFacet) }
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val usageAccessGranted by viewModel.usageAccessGranted.collectAsStateWithLifecycle()
     AppPickerScreen(

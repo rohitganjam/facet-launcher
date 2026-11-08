@@ -12,7 +12,6 @@ import com.facetlauncher.app.domain.CleanUpUninstalledAppsUseCase
 import com.facetlauncher.app.domain.EnsureActiveFacetUseCase
 import com.facetlauncher.app.domain.GetInstalledAppsUseCase
 import com.facetlauncher.app.domain.RepairOrphanedProfileRowsUseCase
-import com.facetlauncher.app.domain.SeedDefaultDockUseCase
 import com.facetlauncher.app.domain.SyncFacetShortcutsUseCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -66,7 +65,6 @@ class LauncherViewModelTest {
         val ensureActiveFacet = mock(EnsureActiveFacetUseCase::class.java)
         val cleanUpUninstalledApps = mock(CleanUpUninstalledAppsUseCase::class.java)
         val repairOrphanedProfileRows = mock(RepairOrphanedProfileRowsUseCase::class.java)
-        val seedDefaultDock = mock(SeedDefaultDockUseCase::class.java)
         val syncFacetShortcuts = mock(SyncFacetShortcutsUseCase::class.java)
         val activateFacetById = mock(ActivateFacetByIdUseCase::class.java)
         val settingsRepository = mock(SettingsRepository::class.java)
@@ -76,7 +74,6 @@ class LauncherViewModelTest {
             ensureActiveFacet,
             cleanUpUninstalledApps,
             repairOrphanedProfileRows,
-            seedDefaultDock,
             syncFacetShortcuts,
             activateFacetById,
             mock(RunFacetAutomationUseCase::class.java),
@@ -105,7 +102,6 @@ class LauncherViewModelTest {
         val ensureActiveFacet = mock(EnsureActiveFacetUseCase::class.java)
         val cleanUpUninstalledApps = mock(CleanUpUninstalledAppsUseCase::class.java)
         val repairOrphanedProfileRows = mock(RepairOrphanedProfileRowsUseCase::class.java)
-        val seedDefaultDock = mock(SeedDefaultDockUseCase::class.java)
         val syncFacetShortcuts = mock(SyncFacetShortcutsUseCase::class.java)
         val activateFacetById = mock(ActivateFacetByIdUseCase::class.java)
         val settingsRepository = mock(SettingsRepository::class.java)
@@ -115,7 +111,6 @@ class LauncherViewModelTest {
             ensureActiveFacet,
             cleanUpUninstalledApps,
             repairOrphanedProfileRows,
-            seedDefaultDock,
             syncFacetShortcuts,
             activateFacetById,
             mock(RunFacetAutomationUseCase::class.java),
@@ -151,7 +146,6 @@ class LauncherViewModelTest {
             mock(EnsureActiveFacetUseCase::class.java),
             mock(CleanUpUninstalledAppsUseCase::class.java),
             mock(RepairOrphanedProfileRowsUseCase::class.java),
-            mock(SeedDefaultDockUseCase::class.java),
             mock(SyncFacetShortcutsUseCase::class.java),
             mock(ActivateFacetByIdUseCase::class.java),
             mock(RunFacetAutomationUseCase::class.java),
@@ -179,7 +173,6 @@ class LauncherViewModelTest {
         val ensureActiveFacet = mock(EnsureActiveFacetUseCase::class.java)
         val cleanUpUninstalledApps = mock(CleanUpUninstalledAppsUseCase::class.java)
         val repairOrphanedProfileRows = mock(RepairOrphanedProfileRowsUseCase::class.java)
-        val seedDefaultDock = mock(SeedDefaultDockUseCase::class.java)
         val syncFacetShortcuts = mock(SyncFacetShortcutsUseCase::class.java)
         val activateFacetById = mock(ActivateFacetByIdUseCase::class.java)
         val settingsRepository = mock(SettingsRepository::class.java)
@@ -189,7 +182,6 @@ class LauncherViewModelTest {
             ensureActiveFacet,
             cleanUpUninstalledApps,
             repairOrphanedProfileRows,
-            seedDefaultDock,
             syncFacetShortcuts,
             activateFacetById,
             mock(RunFacetAutomationUseCase::class.java),
@@ -217,7 +209,6 @@ class LauncherViewModelTest {
         val ensureActiveFacet = mock(EnsureActiveFacetUseCase::class.java)
         val cleanUpUninstalledApps = mock(CleanUpUninstalledAppsUseCase::class.java)
         val repairOrphanedProfileRows = mock(RepairOrphanedProfileRowsUseCase::class.java)
-        val seedDefaultDock = mock(SeedDefaultDockUseCase::class.java)
         val syncFacetShortcuts = mock(SyncFacetShortcutsUseCase::class.java)
         val activateFacetById = mock(ActivateFacetByIdUseCase::class.java)
         val settingsRepository = mock(SettingsRepository::class.java)
@@ -228,7 +219,6 @@ class LauncherViewModelTest {
             ensureActiveFacet,
             cleanUpUninstalledApps,
             repairOrphanedProfileRows,
-            seedDefaultDock,
             syncFacetShortcuts,
             activateFacetById,
             mock(RunFacetAutomationUseCase::class.java),
@@ -249,7 +239,6 @@ class LauncherViewModelTest {
         val ensureActiveFacet = mock(EnsureActiveFacetUseCase::class.java)
         val cleanUpUninstalledApps = mock(CleanUpUninstalledAppsUseCase::class.java)
         val repairOrphanedProfileRows = mock(RepairOrphanedProfileRowsUseCase::class.java)
-        val seedDefaultDock = mock(SeedDefaultDockUseCase::class.java)
         val syncFacetShortcuts = mock(SyncFacetShortcutsUseCase::class.java)
         val activateFacetById = mock(ActivateFacetByIdUseCase::class.java)
         val settingsRepository = mock(SettingsRepository::class.java)
@@ -261,7 +250,6 @@ class LauncherViewModelTest {
             ensureActiveFacet,
             cleanUpUninstalledApps,
             repairOrphanedProfileRows,
-            seedDefaultDock,
             syncFacetShortcuts,
             activateFacetById,
             mock(RunFacetAutomationUseCase::class.java),
@@ -282,7 +270,6 @@ class LauncherViewModelTest {
         val ensureActiveFacet = mock(EnsureActiveFacetUseCase::class.java)
         val cleanUpUninstalledApps = mock(CleanUpUninstalledAppsUseCase::class.java)
         val repairOrphanedProfileRows = mock(RepairOrphanedProfileRowsUseCase::class.java)
-        val seedDefaultDock = mock(SeedDefaultDockUseCase::class.java)
         val syncFacetShortcuts = mock(SyncFacetShortcutsUseCase::class.java)
         val activateFacetById = mock(ActivateFacetByIdUseCase::class.java)
         val settingsRepository = mock(SettingsRepository::class.java)
@@ -294,7 +281,6 @@ class LauncherViewModelTest {
             ensureActiveFacet,
             cleanUpUninstalledApps,
             repairOrphanedProfileRows,
-            seedDefaultDock,
             syncFacetShortcuts,
             activateFacetById,
             mock(RunFacetAutomationUseCase::class.java),
@@ -315,7 +301,6 @@ class LauncherViewModelTest {
         val ensureActiveFacet = mock(EnsureActiveFacetUseCase::class.java)
         val cleanUpUninstalledApps = mock(CleanUpUninstalledAppsUseCase::class.java)
         val repairOrphanedProfileRows = mock(RepairOrphanedProfileRowsUseCase::class.java)
-        val seedDefaultDock = mock(SeedDefaultDockUseCase::class.java)
         val syncFacetShortcuts = mock(SyncFacetShortcutsUseCase::class.java)
         val activateFacetById = mock(ActivateFacetByIdUseCase::class.java)
         val settingsRepository = mock(SettingsRepository::class.java)
@@ -325,7 +310,6 @@ class LauncherViewModelTest {
             ensureActiveFacet,
             cleanUpUninstalledApps,
             repairOrphanedProfileRows,
-            seedDefaultDock,
             syncFacetShortcuts,
             activateFacetById,
             mock(RunFacetAutomationUseCase::class.java),
@@ -349,7 +333,6 @@ class LauncherViewModelTest {
         val ensureActiveFacet = mock(EnsureActiveFacetUseCase::class.java)
         val cleanUpUninstalledApps = mock(CleanUpUninstalledAppsUseCase::class.java)
         val repairOrphanedProfileRows = mock(RepairOrphanedProfileRowsUseCase::class.java)
-        val seedDefaultDock = mock(SeedDefaultDockUseCase::class.java)
         val syncFacetShortcuts = mock(SyncFacetShortcutsUseCase::class.java)
         val activateFacetById = mock(ActivateFacetByIdUseCase::class.java)
         val settingsRepository = mock(SettingsRepository::class.java)
@@ -359,7 +342,6 @@ class LauncherViewModelTest {
             ensureActiveFacet,
             cleanUpUninstalledApps,
             repairOrphanedProfileRows,
-            seedDefaultDock,
             syncFacetShortcuts,
             activateFacetById,
             mock(RunFacetAutomationUseCase::class.java),
@@ -386,7 +368,6 @@ class LauncherViewModelTest {
             mock(EnsureActiveFacetUseCase::class.java),
             mock(CleanUpUninstalledAppsUseCase::class.java),
             mock(RepairOrphanedProfileRowsUseCase::class.java),
-            mock(SeedDefaultDockUseCase::class.java),
             mock(SyncFacetShortcutsUseCase::class.java),
             mock(ActivateFacetByIdUseCase::class.java),
             mock(RunFacetAutomationUseCase::class.java),
@@ -409,7 +390,6 @@ class LauncherViewModelTest {
             mock(EnsureActiveFacetUseCase::class.java),
             mock(CleanUpUninstalledAppsUseCase::class.java),
             mock(RepairOrphanedProfileRowsUseCase::class.java),
-            mock(SeedDefaultDockUseCase::class.java),
             mock(SyncFacetShortcutsUseCase::class.java),
             mock(ActivateFacetByIdUseCase::class.java),
             mock(RunFacetAutomationUseCase::class.java),

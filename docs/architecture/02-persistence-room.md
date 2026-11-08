@@ -444,7 +444,6 @@ erDiagram
         boolean bluetooth_permission_requested "default false"
         boolean location_permission_requested "default false"
         boolean onboarding_completed "default false"
-        boolean defaults_seeded "default false"
         stringset coach_marks_seen "CoachMarkIds, default empty"
     }
 
@@ -576,7 +575,6 @@ DataStore serialises writes and is main-safe; callers `viewModelScope.launch { }
 | `setBluetoothPermissionRequested(Boolean)` | `bluetooth_permission_requested` | set | `PermissionsViewModel`, `RuleEditorViewModel` |
 | `setLocationPermissionRequested(Boolean)` | `location_permission_requested` | set | `PermissionsViewModel`, `RuleEditorViewModel` |
 | `setOnboardingCompleted(Boolean)` | `onboarding_completed` | set | `LauncherViewModel.completeOnboarding()` |
-| `setDefaultsSeeded(Boolean)` | `defaults_seeded` | set | `SeedDefaultDockUseCase` |
 | `markCoachMarkSeen(String)` | `coach_marks_seen` | set (union with existing) | `HomeViewModel` |
 
 `ImportBackupUseCase.applySettings()` restores settings by calling these same setters one at a time (42 calls, plus `setActiveFacetId` after facets are re-inserted) —
@@ -735,7 +733,6 @@ accessibility grant, and the pair is small enough to set again after a restore.
 | Key | Type | Field | Default | Notes |
 |---|---|---|---|---|
 | `onboarding_completed` | Boolean | `onboardingCompleted` | `false` | Gates `LauncherActivity`'s onboarding branch |
-| `defaults_seeded` | Boolean | `defaultsSeeded` | `false` | Set by `SeedDefaultDockUseCase` so the dock is seeded exactly once |
 | `coach_marks_seen` | Set<String> | `coachMarksSeen` | `{}` | Ids from `ui/components/CoachMarkIds.kt`: `HOME_GESTURES`, `HOME_SET_DEFAULT_PROMPT`; written via `markCoachMarkSeen(id)` |
 
 ### 5.5 What is deliberately *not* in DataStore
@@ -777,7 +774,7 @@ older (fields added since carry defaults). Contents: `settings: BackupSettings` 
 the ones below, with `activeFacetIndex` instead of `active_facet_id` and the `landscape_*` keys as flat
 `landscape*` fields. **Not backed up** (all deliberate): `active_facet_id` (a row id), `selected_calendar_ids`
 and `calendar_colors` (keyed by this device's calendar row ids), `allow_landscape` and `hide_status_bar` (per-device choices),
-all four `*_permission_requested` flags and `onboarding_completed`, `defaults_seeded`, `coach_marks_seen`
+all four `*_permission_requested` flags and `onboarding_completed`, `coach_marks_seen`
 (this install's own history). `BackupFacet` carries every `Facet` field except the id and the hosted
 clock stack (`Facet.clockStack`, the rows of `clock_stack_items`): an `AppWidgetHost` id is not
 portable, so the widgets are re-added by hand. `BackupCoverageTest` fails when a `Facet` or `LauncherSettings`

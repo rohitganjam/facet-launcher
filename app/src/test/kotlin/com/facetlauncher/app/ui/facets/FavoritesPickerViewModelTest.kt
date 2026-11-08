@@ -100,6 +100,22 @@ class FavoritesPickerViewModelTest {
     }
 
     @Test
+    fun `useFacet does not override the facet a route opened the picker for`() = runTest {
+        // Given a picker opened for facet 5 with one favorite
+        val a = appInfo('a')
+        val viewModel = createViewModel(facetId = 5L, installed = listOf(a), favorites = listOf(a))
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // When it is asked to use another facet
+        viewModel.useFacet(9L)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Then it keeps showing facet 5's favorites
+        assertEquals(listOf(a), viewModel.uiState.value.selectedResults)
+    }
+
+    @Test
     fun `onSortOptionChange reorders otherResults but never selectedResults`() = runTest {
         val a = appInfo('a')
         val b = appInfo('b')

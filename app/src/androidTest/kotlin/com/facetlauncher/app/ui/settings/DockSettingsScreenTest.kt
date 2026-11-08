@@ -81,7 +81,7 @@ class DockSettingsScreenTest {
                     placementRepository,
                     observePlacedItems,
                     WallpaperRepository(WallpaperManager.getInstance(context)),
-                    ApplyFacetDefaultsUseCase(facetRepository, placementRepository, settingsRepository),
+                    ApplyFacetDefaultsUseCase(facetRepository, com.facetlauncher.app.domain.SeedFacetDefaultsUseCase(com.facetlauncher.app.data.DefaultAppRepository(context), placementRepository, com.facetlauncher.app.domain.GetInstalledAppsUseCase(appRepository)), settingsRepository),
                 )
             }
             FacetLauncherTheme {

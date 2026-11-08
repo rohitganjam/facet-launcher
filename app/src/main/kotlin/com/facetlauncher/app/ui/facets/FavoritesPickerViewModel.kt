@@ -23,7 +23,9 @@ import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.collections.immutable.toImmutableSet
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -75,7 +77,9 @@ class FavoritesPickerViewModel @Inject constructor(
     private val usageAccessRepository: UsageAccessRepository,
 ) : ViewModel() {
 
-    private val facetId: Long? = savedStateHandle.get<Long>("facetId")?.takeIf { it != NO_ACTIVE_FACET_ID }
+    private val argFacetId: Long? = savedStateHandle.get<Long>("facetId")?.takeIf { it != NO_ACTIVE_FACET_ID }
+    private val chosenFacetId = MutableStateFlow(argFacetId)
+    private val facetId: Long? get() = chosenFacetId.value
     private val query = MutableStateFlow("")
     private val installedApps = MutableStateFlow<List<AppInfo>>(emptyList())
     private val sortOption = MutableStateFlow(AppSortOption.ALPHABETICAL)
@@ -88,9 +92,19 @@ class FavoritesPickerViewModel @Inject constructor(
     private val maxFavorites: Int
         get() = if (facetId != null) AppListLimits.MAX_FAVORITES else AppListLimits.MAX_FAVORITES
 
-    private val target = PlacementTarget(PlacementList.FAVORITES, facetId)
+    private val target get() = PlacementTarget(PlacementList.FAVORITES, facetId)
 
-    private fun observeItems(): Flow<List<PlacedItem>> = observePlacedItems.items(target)
+    /** For a screen not reached through a facet's route (onboarding): edit this facet's Favorites. A route's own facet wins. */
+    fun useFacet(id: Long) {
+        if (argFacetId == null && chosenFacetId.value != id) {
+            loadOrder.value = null
+            chosenFacetId.value = id
+        }
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private fun observeItems(): Flow<List<PlacedItem>> =
+        chosenFacetId.flatMapLatest { observePlacedItems.items(PlacementTarget(PlacementList.FAVORITES, it)) }
 
     /** Latched from the favorites' live order the first time it's observed; never updated after — see [FavoritesPickerUiState.selectedResults]. */
     private val loadOrder = MutableStateFlow<List<String>?>(null)

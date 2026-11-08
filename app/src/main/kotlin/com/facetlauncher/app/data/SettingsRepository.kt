@@ -146,7 +146,6 @@ private object Keys {
     val APP_LIST_GRID_DISPLAY_MODE = stringPreferencesKey("app_list_grid_display_mode")
     val APP_LIST_SHRINK_TO_FIT = stringPreferencesKey("app_list_shrink_to_fit")
     val ONBOARDING_COMPLETED = booleanPreferencesKey("onboarding_completed")
-    val DEFAULTS_SEEDED = booleanPreferencesKey("defaults_seeded")
     val COACH_MARKS_SEEN = stringSetPreferencesKey("coach_marks_seen")
 }
 
@@ -272,7 +271,6 @@ class SettingsRepository @Inject constructor(
             appListShrinkToFit = preferences[Keys.APP_LIST_SHRINK_TO_FIT]?.let { runCatching { AppListShrinkToFit.valueOf(it) }.getOrNull() }
                 ?: defaults.appListShrinkToFit,
             onboardingCompleted = preferences[Keys.ONBOARDING_COMPLETED] ?: defaults.onboardingCompleted,
-            defaultsSeeded = preferences[Keys.DEFAULTS_SEEDED] ?: defaults.defaultsSeeded,
             coachMarksSeen = preferences[Keys.COACH_MARKS_SEEN] ?: defaults.coachMarksSeen,
         )
     }
@@ -630,10 +628,6 @@ class SettingsRepository @Inject constructor(
             it[Keys.ONBOARDING_COMPLETED] = completed
             if (completed) it[Keys.COACH_MARKS_SEEN] = (it[Keys.COACH_MARKS_SEEN] ?: emptySet()) + whatsNewSeenId(BuildConfig.VERSION_NAME)
         }
-    }
-
-    suspend fun setDefaultsSeeded(seeded: Boolean) {
-        dataStore.edit { it[Keys.DEFAULTS_SEEDED] = seeded }
     }
 
     /** Takes [id] back out of the dismissed-coach-marks set, so that prompt can show again. Used by the debug build's Settings tools. */

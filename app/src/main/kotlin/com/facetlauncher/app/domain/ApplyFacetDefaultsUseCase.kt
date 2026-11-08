@@ -1,19 +1,16 @@
 package com.facetlauncher.app.domain
 
 import com.facetlauncher.app.data.FacetRepository
-import com.facetlauncher.app.data.PlacementRepository
 import com.facetlauncher.app.data.SettingsRepository
-import com.facetlauncher.app.data.model.PlacementList
-import com.facetlauncher.app.data.model.PlacementTarget
 import javax.inject.Inject
 import kotlinx.coroutines.flow.first
 
 /** The parts of a facet's Home that a launcher-wide default can seed. */
 enum class FacetDefaultsScope {
-    /** The facet's Dock list and display style. */
+    /** The facet's Dock (the device's default apps) and display style. */
     DOCK,
 
-    /** The facet's Favorites list, content mode and count. */
+    /** The facet's Favorites content mode and count. */
     APPS_LIST,
 
     /** The app list's look, landscape twins included. */
@@ -21,22 +18,22 @@ enum class FacetDefaultsScope {
 }
 
 /**
- * Copies the launcher-wide defaults into a facet: once when it is created, and again on "Reset to
- * default". A facet owns what it was given, so later edits to the defaults never reach it.
+ * Gives a facet its starting point: once when it is created, and again on "Reset to default". The Dock gets
+ * the device's default apps (Favorites start empty); the look and Favorites settings are copied from the
+ * launcher settings. A facet owns what it was given, so later edits to the defaults never reach it.
  */
 class ApplyFacetDefaultsUseCase @Inject constructor(
     private val facetRepository: FacetRepository,
-    private val placementRepository: PlacementRepository,
+    private val seedFacetDefaults: SeedFacetDefaultsUseCase,
     private val settingsRepository: SettingsRepository,
 ) {
     suspend operator fun invoke(facetId: Long, scope: FacetDefaultsScope) {
         when (scope) {
             FacetDefaultsScope.DOCK -> {
-                copyList(PlacementList.DOCK, facetId)
+                seedFacetDefaults(facetId, replace = true)
                 facetRepository.applyDockDefaults(facetId, settingsRepository.settings.first())
             }
             FacetDefaultsScope.APPS_LIST -> {
-                copyList(PlacementList.FAVORITES, facetId)
                 facetRepository.applyAppsContentDefaults(facetId, settingsRepository.settings.first())
             }
             FacetDefaultsScope.LOOK -> facetRepository.applyLookDefaults(facetId, settingsRepository.settings.first())
@@ -46,9 +43,5 @@ class ApplyFacetDefaultsUseCase @Inject constructor(
     /** Every scope: what a brand-new facet starts from. */
     suspend fun applyAll(facetId: Long) {
         FacetDefaultsScope.entries.forEach { invoke(facetId, it) }
-    }
-
-    private suspend fun copyList(list: PlacementList, facetId: Long) {
-        placementRepository.copyList(PlacementTarget(list), PlacementTarget(list, facetId))
     }
 }

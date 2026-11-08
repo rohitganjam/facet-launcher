@@ -91,7 +91,6 @@ import com.facetlauncher.app.domain.RecentlyInstalledAppsUseCase
 import com.facetlauncher.app.domain.RepairOrphanedProfileRowsUseCase
 import com.facetlauncher.app.domain.ResolveWidgetDropUseCase
 import com.facetlauncher.app.domain.ResolveWidgetResizeUseCase
-import com.facetlauncher.app.domain.SeedDefaultDockUseCase
 import com.facetlauncher.app.domain.SelectableFacetsUseCase
 import com.facetlauncher.app.domain.AddClockStackItemUseCase
 import com.facetlauncher.app.domain.CommitClockPlacementUseCase
@@ -223,7 +222,6 @@ class KeyboardDismissalTest {
                         appRepository, placementRepository,
                         FolderRepository(database.folderDao(), appRepository),
                     ),
-                    SeedDefaultDockUseCase(settingsRepository, DefaultAppRepository(context), placementRepository, GetInstalledAppsUseCase(appRepository)),
                     SyncFacetShortcutsUseCase(SelectableFacetsUseCase(facetRepository, EntitlementRepository()), FacetShortcutRepository(context)),
                     testAutomation(context, database, facetRepository, settingsRepository).activate,
                     testAutomation(context, database, facetRepository, settingsRepository).run,

@@ -22,7 +22,6 @@ import com.facetlauncher.app.domain.EnsureActiveFacetUseCase
 import com.facetlauncher.app.domain.GetInstalledAppsUseCase
 import com.facetlauncher.app.domain.RepairOrphanedProfileRowsUseCase
 import com.facetlauncher.app.domain.RunFacetAutomationUseCase
-import com.facetlauncher.app.domain.SeedDefaultDockUseCase
 import com.facetlauncher.app.domain.SyncFacetShortcutsUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -103,7 +102,6 @@ class LauncherViewModel @Inject constructor(
     private val ensureActiveFacet: EnsureActiveFacetUseCase,
     private val cleanUpUninstalledApps: CleanUpUninstalledAppsUseCase,
     private val repairOrphanedProfileRows: RepairOrphanedProfileRowsUseCase,
-    private val seedDefaultDock: SeedDefaultDockUseCase,
     private val syncFacetShortcuts: SyncFacetShortcutsUseCase,
     private val activateFacetById: ActivateFacetByIdUseCase,
     private val runFacetAutomation: RunFacetAutomationUseCase,
@@ -185,11 +183,7 @@ class LauncherViewModel @Inject constructor(
             .onEach { completed -> _uiState.update { it.copy(onboardingCompleted = completed) } }
             .launchIn(viewModelScope)
         // Not one-shot: the active facet must stay a usable one when facets or the entitlement change.
-        // The dock seed goes first: the first facet copies the launcher-wide dock when it is created.
-        viewModelScope.launch {
-            seedDefaultDock()
-            ensureActiveFacet.keepUsable()
-        }
+        viewModelScope.launch { ensureActiveFacet.keepUsable() }
         // Runs for the app's whole lifetime, deleting Favorites/Dock rows on a genuine uninstall
         // rather than just filtering them from view — see CleanUpUninstalledAppsUseCase.
         viewModelScope.launch { cleanUpUninstalledApps() }

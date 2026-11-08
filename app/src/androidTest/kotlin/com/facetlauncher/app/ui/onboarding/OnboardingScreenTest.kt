@@ -57,6 +57,7 @@ import org.junit.Test
 import com.facetlauncher.app.data.model.AppListLimits
 import com.facetlauncher.app.data.PlacementRepository
 import com.facetlauncher.app.domain.ObservePlacedItemsUseCase
+import com.facetlauncher.app.data.model.PlacementList
 import com.facetlauncher.app.data.model.PlacementTarget
 
 private class OnboardingViewModels(
@@ -81,6 +82,10 @@ class OnboardingScreenTest {
         Intents.release()
     }
 
+    // A fresh in-memory database numbers its first facet 1.
+    private val firstFacetDock = PlacementTarget(PlacementList.DOCK, 1L)
+    private val firstFacetFavorites = PlacementTarget(PlacementList.FAVORITES, 1L)
+
     /** [seed] runs against real (throwaway, in-memory/temp-file) repositories before the screen renders. */
     private fun setContent(
         onFinish: () -> Unit = {},
@@ -99,24 +104,27 @@ class OnboardingScreenTest {
                         produceFile = { File(context.cacheDir, "onboarding-test-${System.nanoTime()}.preferences_pb") },
                     ),
                 )
-                runBlocking { seed(appRepository, placementRepository) }
+                val facetRepository = FacetRepository(database.facetDao(), database.clockStackItemDao())
+                // The first facet exists, and is active, before onboarding shows; its lists are the ones set up here.
+                runBlocking {
+                    settingsRepository.setActiveFacetId(facetRepository.addFacet().id)
+                    seed(appRepository, placementRepository)
+                }
                 val getInstalledApps = GetInstalledAppsUseCase(appRepository)
                 val sortAppsForPicker = SortAppsForPickerUseCase(UsageStatsRepository(context.getSystemService(UsageStatsManager::class.java), appRepository))
                 val usageAccessRepository = UsageAccessRepository(context.getSystemService(AppOpsManager::class.java), context)
-                val facetRepository = FacetRepository(database.facetDao(), database.clockStackItemDao())
                 OnboardingViewModels(
                     OnboardingViewModel(
                         placementRepository,
                         observePlacedItems,
                         settingsRepository,
-                        facetRepository,
-                        ApplyFacetDefaultsUseCase(facetRepository, placementRepository, settingsRepository),
+                        ApplyFacetDefaultsUseCase(facetRepository, com.facetlauncher.app.domain.SeedFacetDefaultsUseCase(com.facetlauncher.app.data.DefaultAppRepository(context), placementRepository, com.facetlauncher.app.domain.GetInstalledAppsUseCase(appRepository)), settingsRepository),
                         appRepository,
                     ),
                     // Onboarding embeds these full-screen pickers as-is (same as Settings); this
                     // non-Hilt test host builds them by hand, same pattern as DockAppPickerScreenTest/
-                    // FavoritesPickerScreenTest — an empty SavedStateHandle means the launcher-wide
-                    // default dock/favorites, matching onboarding's own scope.
+                    // FavoritesPickerScreenTest — an empty SavedStateHandle means no facet route, so
+                    // OnboardingScreen points them at the first facet.
                     DockAppPickerViewModel(SavedStateHandle(), getInstalledApps, placementRepository, observePlacedItems, folderRepository, sortAppsForPicker, usageAccessRepository),
                     FavoritesPickerViewModel(SavedStateHandle(), getInstalledApps, placementRepository, observePlacedItems, folderRepository, sortAppsForPicker, usageAccessRepository),
                     NotificationSettingsViewModel(
@@ -344,7 +352,7 @@ class OnboardingScreenTest {
         setContent { appRepository, placementRepository ->
             val app = runBlocking { appRepository.getTestableApps() }.first()
             seededApp = app
-            placementRepository.addApp(PlacementTarget.GlobalDock, app, 0)
+            placementRepository.addApp(firstFacetDock, app, 0)
         }
         requireNotNull(seededApp)
 
@@ -365,7 +373,7 @@ class OnboardingScreenTest {
         setContent { appRepository, placementRepository ->
             val app = runBlocking { appRepository.getTestableApps() }.first()
             seededApp = app
-            placementRepository.addApp(PlacementTarget.GlobalDock, app, 0)
+            placementRepository.addApp(firstFacetDock, app, 0)
         }
         requireNotNull(seededApp)
 
@@ -393,7 +401,7 @@ class OnboardingScreenTest {
         setContent { appRepository, placementRepository ->
             val app = runBlocking { appRepository.getTestableApps() }.first()
             seededApp = app
-            placementRepository.addApp(PlacementTarget.GlobalFavorites, app, 0)
+            placementRepository.addApp(firstFacetFavorites, app, 0)
         }
         requireNotNull(seededApp)
 
