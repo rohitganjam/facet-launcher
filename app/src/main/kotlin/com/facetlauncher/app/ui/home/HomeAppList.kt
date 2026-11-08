@@ -13,7 +13,9 @@ import com.facetlauncher.app.ui.components.gridCellBounds
 import com.facetlauncher.app.ui.components.LocalGridDrag
 import com.facetlauncher.app.ui.components.GridDragState
 import com.facetlauncher.app.ui.components.LiftableCell
+import com.facetlauncher.app.data.model.DrawerGridDensity
 import com.facetlauncher.app.ui.components.HeldAutoScroll
+import com.facetlauncher.app.ui.drawer.targetRowPitch
 import com.facetlauncher.app.ui.components.ReorderGeometry
 import androidx.compose.ui.zIndex
 import com.facetlauncher.app.ui.components.edgeScrollDelta
@@ -225,7 +227,7 @@ internal fun HomeAppGrid(
     modifier: Modifier = Modifier,
     onMove: ((cells: Map<String, GridCell>) -> Unit)? = null,
 ) {
-    val cellHeight = gridCellHeight(displayMode)
+    val cellHeight = gridCellHeight()
     val width = columns.coerceAtLeast(1)
     // A finished drag shows at once; the saved cells replace it when they arrive.
     var moved by remember(content.items, savedCells, landscape, width) { mutableStateOf<Map<String, GridCell>?>(null) }
@@ -313,18 +315,8 @@ private const val GRID_GUIDE_ALPHA = 0.06f
 private const val GRID_TARGET_ALPHA = 0.18f
 private val GRID_GUIDE_INSET = 4.dp
 
-/** A cell is one fixed height for its display mode: the icon, and its name under it where shown. */
-@Composable
-private fun gridCellHeight(displayMode: AppListGridDisplayMode): Dp = when (displayMode) {
-    AppListGridDisplayMode.ICONS -> AppIconSize.scaled() + GRID_CELL_ICON_PADDING
-    AppListGridDisplayMode.ICONS_AND_TEXT -> AppIconSize.scaled() + GRID_CELL_ICON_PADDING + GRID_CELL_LABEL_HEIGHT
-    AppListGridDisplayMode.TEXT -> GRID_CELL_TEXT_HEIGHT
-}
-
-// The same space above and below an icon as a regular list row has.
-private val GRID_CELL_ICON_PADDING = HOME_APP_ROW_REGULAR_VERTICAL_PADDING * 2
-private val GRID_CELL_LABEL_HEIGHT = 28.dp
-private val GRID_CELL_TEXT_HEIGHT = 56.dp
+/** A cell is as tall as a row of the App Drawer's grid at its regular density, whatever the display mode. */
+private fun gridCellHeight(): Dp = DrawerGridDensity.REGULAR.targetRowPitch()
 
 /** One [HomeAppGrid] tile. */
 @Composable

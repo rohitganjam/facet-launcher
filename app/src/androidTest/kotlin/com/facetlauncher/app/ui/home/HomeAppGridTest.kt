@@ -15,6 +15,8 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.facetlauncher.app.data.model.AppInfo
+import com.facetlauncher.app.data.model.DrawerGridDensity
+import com.facetlauncher.app.ui.drawer.targetRowPitch
 import com.facetlauncher.app.data.model.AppListGridDisplayMode
 import com.facetlauncher.app.data.model.AppRowPresentation
 import com.facetlauncher.app.data.model.AppListColumnAlignment
@@ -104,29 +106,13 @@ class HomeAppGridTest {
     }
 
     @Test
-    fun gridRowsAreSpacedLikeRegularListRows() {
+    fun gridRowsAreSpacedLikeTheDrawerGridAtRegularDensity() {
         // Given an item one row below the first
-        val saved = mapOf(items[2].gridKey() to GridCell(1, 0))
-        var iconSize = 0.dp
-        composeRule.setContent {
-            FacetLauncherTheme {
-                iconSize = com.facetlauncher.app.ui.components.AppIconSize.scaled()
-                HomeAppGrid(
-                    content = HomeAppListContent(items, HomeItemStyle(labelColor = Color.White)),
-                    actions = HomeItemActions(onAppClick = {}),
-                    columns = 4,
-                    displayMode = AppListGridDisplayMode.ICONS,
-                    savedCells = SavedGridCells(portrait = saved),
-                    landscape = false,
-                    anchoredAtBottom = false,
-                    availableHeight = height,
-                )
-            }
-        }
+        setGrid(anchoredAtBottom = false, saved = mapOf(items[2].gridKey() to GridCell(1, 0)))
 
-        // Then the rows are an icon plus a regular row's padding above and below apart
+        // Then the rows are as far apart as the App Drawer's regular grid rows
         val pitch = top(apps[2]) - top(apps[0])
-        assertEquals((iconSize + HOME_APP_ROW_REGULAR_VERTICAL_PADDING * 2).value, pitch.value, 0.5f)
+        assertEquals(DrawerGridDensity.REGULAR.targetRowPitch().value, pitch.value, 0.5f)
     }
 
     private fun drag(app: AppInfo, dx: Float, dy: Float = 0f) {
