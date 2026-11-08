@@ -179,6 +179,18 @@ class FacetRepositoryTest {
     }
 
     @Test
+    fun `applyDockDefaults copies only the dock display style`() = runTest {
+        val repository = FacetRepository(FakeFacetDao(), FakeClockStackItemDao())
+        val facet = repository.addFacet()
+
+        repository.applyDockDefaults(facet.id, LauncherSettings(dockDisplayMode = DockDisplayMode.TEXT, appRowPosition = AppRowPosition.RIGHT))
+
+        val stored = repository.observeFacets().first().single()
+        assertEquals(DockDisplayMode.TEXT, stored.dockDisplayMode)
+        assertEquals(LauncherSettings().appRowPosition, stored.appRowPosition)
+    }
+
+    @Test
     fun `applyLookDefaults copies the launcher look and landscape twins and keeps the clock twins`() = runTest {
         val repository = FacetRepository(FakeFacetDao(), FakeClockStackItemDao())
         val facet = repository.addFacet()
@@ -187,14 +199,13 @@ class FacetRepositoryTest {
         repository.applyLookDefaults(
             facet.id,
             LauncherSettings(
-                dockDisplayMode = DockDisplayMode.TEXT,
                 appRowPosition = AppRowPosition.RIGHT,
                 landscape = LandscapeOverrides(appRowPosition = AppRowPosition.CENTER),
             ),
         )
 
         val stored = repository.observeFacets().first().single()
-        assertEquals(DockDisplayMode.TEXT, stored.dockDisplayMode)
+        assertEquals(DockDisplayMode.ICONS, stored.dockDisplayMode)
         assertEquals(AppRowPosition.RIGHT, stored.appRowPosition)
         assertEquals(AppRowPosition.CENTER, stored.landscape.appRowPosition)
         assertEquals(ClockAlignment.RIGHT, stored.landscape.clockAlignment)

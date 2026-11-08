@@ -142,7 +142,7 @@ internal fun OnboardingNotificationsContent(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            OnboardingDots(step = 3, totalSteps = ONBOARDING_STEP_COUNT)
+            OnboardingDots(step = 4, totalSteps = ONBOARDING_STEP_COUNT)
             Row(horizontalArrangement = Arrangement.spacedBy(20.dp)) {
                 TextActionButton(
                     text = stringResource(R.string.action_back),

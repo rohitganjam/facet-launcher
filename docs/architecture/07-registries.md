@@ -141,7 +141,7 @@ pack (`IconPackRepository`, which reads that choice from `SettingsRepository`).
 | `RecentlyChangedAppsUseCase` | pure (installed or updated within 72h, newest change first) | — | `AppDrawerScreen` search sheet (via `DrawerListUseCases`) |
 | `RemoveFromActiveListUseCase` | write: removes an app or folder from a list for the active facet | `ResolveActivePlacementTargetUseCase`, `PlacementRepository` | `DrawerViewModel` |
 | `ResolveActivePlacementTargetUseCase` | read: which concrete list the active facet reads `DOCK` or `FAVORITES` from (its own; the launcher-wide one only with no active facet) | `SettingsRepository`, `FacetRepository` | `AddToActiveListUseCase`, `RemoveFromActiveListUseCase` |
-| `ApplyFacetDefaultsUseCase` | write: copies the launcher-wide dock, favorites (with content mode and count) or Home look into a facet, per `FacetDefaultsScope` (`DOCK`, `APPS_LIST`, `LOOK`); `applyAll` seeds a new facet | `FacetRepository`, `PlacementRepository`, `SettingsRepository` | `AddFacetUseCase`, `EnsureActiveFacetUseCase`, `DockSettingsViewModel`, `HomeAppsListSettingsViewModel`, `AppearanceSettingsViewModel`, `OnboardingViewModel` |
+| `ApplyFacetDefaultsUseCase` | write: copies the launcher-wide dock (list and display style), favorites (with content mode and count) or Home list look into a facet, per `FacetDefaultsScope` (`DOCK`, `APPS_LIST`, `LOOK`); `applyAll` seeds a new facet | `FacetRepository`, `PlacementRepository`, `SettingsRepository` | `AddFacetUseCase`, `EnsureActiveFacetUseCase`, `DockSettingsViewModel`, `HomeAppsListSettingsViewModel`, `AppearanceSettingsViewModel`, `OnboardingViewModel` |
 | `RefreshWeatherUseCase` | write: one refresh of the weather for the current location (read, with a 5 km hysteresis, then named) or the chosen city, through the repository's gate; returns `WeatherRefreshResult` | `SettingsRepository`, `LocationRepository`, `WeatherRepository`, `ResolvePlaceUseCase` | `WeatherViewModel` (Home resume and the sheet's button) |
 | `TurnOffWeatherUseCase` | write: weather off for the launcher default and every facet that shows it | `SettingsRepository`, `FacetRepository` | `WeatherLocationViewModel` (the leave-without-a-city dialog) |
 | `ResolvePlaceUseCase` | read: name a position (`Geocoder`, else the nearest listed city as an offline "Near X") and find its timezone | `PlaceGeocoder`, `CityRepository` | `RefreshWeatherUseCase` |
@@ -194,7 +194,7 @@ Non-use-case files in `domain/`: `FlowCombine.kt` (6/7-ary `combine`), `HubGridC
 | `OnboardingViewModel` | `OnboardingScreen` | — |
 | `SettingsViewModel` | `SettingsScreen` | — |
 | `FacetProViewModel` | `FacetProScreen` (Settings → Facet Pro, and every Pro limit): Buy, Restore, the Play price and messages | `reason` (`ProReason`) |
-| `AppearanceSettingsViewModel` | `AppearanceSettingsScreen`, `DockAppsAppearanceScreen` (both `facetId?`), `ThemesAndColorsScreen`, `FontsScreen`, `IconsScreen` (global) — one instance per back-stack entry | `facetId?` |
+| `AppearanceSettingsViewModel` | `AppearanceSettingsScreen`, `ThemesAndColorsScreen`, `FontsScreen`, `IconsScreen` (global) — one instance per back-stack entry | `facetId?` |
 | `IconsViewModel` | `IconsScreen`'s built-in style and icon pack cards (alongside `AppearanceSettingsViewModel`, which keeps the preview and shape) | — |
 | `AppDrawerSettingsViewModel` | `AppDrawerSettingsScreen` (settings, plus the wallpaper behind its preview) | — |
 | `DockSettingsViewModel` | `DockSettingsScreen` | `facetId?` |

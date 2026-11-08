@@ -257,7 +257,6 @@
     <string name="settings_dock_title">Dock</string>
     <string name="settings_default_dock_title">Standard-Dock-Apps</string>
     <string name="home_apps_list_default_header_title">Standard-App-Liste</string>
-    <string name="settings_default_look_subtitle">Standarddarstellung von Dock und Startbildschirm-Apps in neuen Facetten</string>
     <string name="defaults_screen_note">Wird verwendet, wenn du eine Facette erstellst oder zurücksetzt.</string>
     <string name="reset_to_default_title">Auf Standard zurücksetzen</string>
     <string name="reset_to_default_confirm">Zurücksetzen</string>
@@ -265,8 +264,8 @@
     <string name="reset_dock_confirm_message">Dadurch wird das Dock dieser Facette durch das Standard-Dock ersetzt. Die hier platzierten Apps gehen verloren.</string>
     <string name="reset_apps_subtitle">Diese Liste durch die Standardliste ersetzen</string>
     <string name="reset_apps_confirm_message">Dadurch werden Favoriten, Listeninhalt und App-Anzahl dieser Facette durch die Standardwerte ersetzt. Die hier gewählten Favoriten gehen verloren.</string>
-    <string name="reset_look_subtitle">Dock- und Listendarstellung durch den Standard ersetzen</string>
-    <string name="reset_look_confirm_message">Dadurch werden Dock-Stil, Listenlayout und Ausrichtung dieser Facette durch die Standardwerte ersetzt.</string>
+    <string name="reset_look_subtitle">Listendarstellung durch den Standard ersetzen</string>
+    <string name="reset_look_confirm_message">Dadurch werden Listenlayout und Ausrichtung dieser Facette durch die Standardwerte ersetzt.</string>
     <plurals name="settings_dock_apps_count">
         <item quantity="one">%d Dock-App</item>
         <item quantity="other">%d Dock-Apps</item>
@@ -729,6 +728,8 @@
     <!-- OnboardingHomeSetupPage -->
     <string name="onboarding_home_setup_headline">Richte deinen Startbildschirm ein</string>
     <string name="onboarding_home_setup_subhead">Wähle die Apps, die du auf dem Startbildschirm haben möchtest. Du kannst das später jederzeit ändern.</string>
+    <string name="onboarding_drawer_setup_headline">Richte deinen App-Drawer ein</string>
+    <string name="onboarding_drawer_setup_subhead">Wähle, wie deine Apps angezeigt werden und wie die Suche funktioniert. Du kannst das später jederzeit ändern.</string>
     <string name="onboarding_notifications_headline">Badges und Wiedergabe</string>
     <string name="onboarding_notifications_subhead">Punkte auf Apps mit neuen Mitteilungen und was gerade auf dem Startbildschirm läuft. Du kannst das später ändern.</string>
     <string name="onboarding_notifications_access_note">Beides braucht Zugriff auf Mitteilungen, eine Spezialberechtigung, die du in den Systemeinstellungen aktivierst. Facet liest nur, welche Apps aktive Mitteilungen haben, sowie Titel, Interpret und Cover der laufenden Wiedergabe. Der Text von Mitteilungen wird nie gelesen, und nichts verlässt dein Gerät.</string>
@@ -738,7 +739,6 @@
     <string name="onboarding_clear_dock_title">Dock leeren?</string>
     <string name="onboarding_clear_dock_message">Entfernt alle Apps aus dem Standard-Dock. Du kannst jederzeit wieder Apps hinzufügen.</string>
     <string name="onboarding_manage_dock_apps">Dock-Apps verwalten</string>
-    <string name="onboarding_app_drawer_section_header">APP-DRAWER</string>
     <string name="onboarding_home_apps_section_header">START-APPS</string>
     <string name="onboarding_show_label">Anzeigen</string>
     <string name="onboarding_list_content_favorites">Favoriten</string>
@@ -942,7 +942,6 @@
     <string name="icons_screen_shape_and_size">Form und Größe</string>
     <string name="icons_screen_force_shape">Icon-Form erzwingen</string>
     <string name="icons_screen_force_shape_description">Schneidet auch die Icons des Packs in die obige Form</string>
-    <string name="appearance_dock_apps_title">Dock- &amp; App-Layout</string>
     <string name="appearance_general_title">Farben und Designs</string>
     <string name="appearance_general_subtitle">Designs, Akzent, Statusleiste</string>
     <string name="appearance_section_look_feel">Optik und Bedienung</string>
@@ -1155,6 +1154,6 @@
     <string name="copy_dock_sheet_message">Ersetzt das Dock jeder ausgewählten Facette durch das Standard-Dock.</string>
     <string name="copy_apps_subtitle">Ersetzt die App-Liste der gewählten Facetten durch diese</string>
     <string name="copy_apps_sheet_message">Ersetzt Favoriten, Listeninhalt und App-Anzahl jeder ausgewählten Facette durch die Standardwerte.</string>
-    <string name="copy_look_subtitle">Ersetzt Dock- und App-Darstellung der gewählten Facetten durch diese</string>
-    <string name="copy_look_sheet_message">Ersetzt Dock-Stil, Listenlayout und Ausrichtung jeder ausgewählten Facette durch die Standardwerte.</string>
+    <string name="copy_look_subtitle">Ersetzt App-Darstellung der gewählten Facetten durch diese</string>
+    <string name="copy_look_sheet_message">Ersetzt Listenlayout und Ausrichtung jeder ausgewählten Facette durch die Standardwerte.</string>
 </resources>

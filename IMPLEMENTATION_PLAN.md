@@ -4696,3 +4696,10 @@ A facet already owns its Dock and Favorites (migration 44→45), and the clock h
 ### Open
 - [ ] Look defaults (row position, layout, grid, dock display): keep launcher-wide, or move them to per-facet only like the clock?
 
+
+## Dock & Apps layout merged into the Dock and Apps list screens
+
+- [x] "Show Dock apps as" moved to `DockSettingsScreen` (`DockSettingsViewModel.setDockDisplayMode`); the `DOCK` defaults scope now also copies `dockDisplayMode` (`FacetRepository.applyDockDefaults`), and `LOOK` covers only the list look.
+- [x] The list look (layout, presentation, grid, shrink to fit, portrait and landscape alignment, Allow landscape mode) moved to `HomeAppsListSettingsScreen` (`AppListLookItems.kt`, setters on `HomeAppsListSettingsViewModel`); its Reset to default and Copy to facets run `APPS_LIST` then `LOOK`.
+- [x] `DockAppsAppearanceScreen`, its `dockAppsAppearance` route, both nav rows and the two row strings are gone.
+- [x] Tests: setters, reset and copy in `HomeAppsListSettingsViewModelTest`, `DockSettingsViewModelTest`, `ApplyFacetDefaultsUseCaseTest`, `FacetRepositoryTest`; row tests moved to `HomeAppsListSettingsScreenTest` and `DockSettingsScreenTest` (instrumented, compiled, not yet run). The old `AppearancePreviewCard` preview checks (grid columns, vertical alignment) were dropped with the page.

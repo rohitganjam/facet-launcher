@@ -150,8 +150,15 @@ class OnboardingScreenTest {
         composeRule.onNodeWithTag("onboarding_home_setup_page").assertExists()
     }
 
-    private fun goToNotifications() {
+    private fun goToDrawerSetup() {
         goToHomeSetup()
+        composeRule.onNodeWithTag("onboarding_next").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("onboarding_drawer_setup_page").assertExists()
+    }
+
+    private fun goToNotifications() {
+        goToDrawerSetup()
         composeRule.onNodeWithTag("onboarding_next").performClick()
         composeRule.waitForIdle()
         composeRule.onNodeWithTag("onboarding_notifications_page").assertExists()
@@ -176,6 +183,10 @@ class OnboardingScreenTest {
         composeRule.onNodeWithTag("onboarding_next").performClick()
         composeRule.waitForIdle()
         composeRule.onNodeWithTag("onboarding_home_setup_page").assertExists()
+
+        composeRule.onNodeWithTag("onboarding_next").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("onboarding_drawer_setup_page").assertExists()
 
         composeRule.onNodeWithTag("onboarding_next").performClick()
         composeRule.waitForIdle()
@@ -224,9 +235,20 @@ class OnboardingScreenTest {
     }
 
     @Test
-    fun `Back on the notifications step returns to home setup`() {
+    fun `Back on the notifications step returns to drawer setup`() {
         setContent()
         goToNotifications()
+
+        composeRule.onNodeWithTag("onboarding_back").performClick()
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithTag("onboarding_drawer_setup_page").assertExists()
+    }
+
+    @Test
+    fun `Back on the drawer setup step returns to home setup`() {
+        setContent()
+        goToDrawerSetup()
 
         composeRule.onNodeWithTag("onboarding_back").performClick()
         composeRule.waitForIdle()
@@ -393,19 +415,21 @@ class OnboardingScreenTest {
     }
 
     @Test
-    fun `home setup offers the search bar position and both search toggles`() {
+    fun `drawer setup shows the preview and offers search bar position and both search toggles and folders in drawer`() {
         setContent()
-        goToHomeSetup()
+        goToDrawerSetup()
 
+        composeRule.onNodeWithTag("app_drawer_preview").assertExists()
         composeRule.onNodeWithTag("onboarding_search_bar_position_row").performScrollTo().assertExists()
         composeRule.onNodeWithTag("onboarding_search_contacts_toggle").performScrollTo().assertIsOff()
         composeRule.onNodeWithTag("onboarding_search_settings_toggle").performScrollTo().assertIsOff()
+        composeRule.onNodeWithTag("onboarding_drawer_folder_display_mode_row").performScrollTo().assertExists()
     }
 
     @Test
-    fun `turning on Search settings in home setup switches it on`() {
+    fun `turning on Search settings in drawer setup switches it on`() {
         setContent()
-        goToHomeSetup()
+        goToDrawerSetup()
 
         composeRule.onNodeWithTag("onboarding_search_settings_toggle").performScrollTo().performClick()
 

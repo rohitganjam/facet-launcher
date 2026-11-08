@@ -461,11 +461,11 @@ reads directly — see §0), `calendar_colors`, everything under Theme, Drawer, 
 Notifications, Permission bookkeeping, and First-run.
 
 **The Home look keys follow the same rule.** `appRowPosition`/`appRowPresentation`/`appListVerticalAlignment`/
-`dockDisplayMode`/`appListLayout`/`appListColumnAlignment`/`appListGridColumns`/`appListGridDisplayMode`/
-`appListShrinkToFit` and the three landscape twins are edited on *Dock & Apps layout* (Settings → Apps and
-folders, and each facet's own copy of the screen). The launcher-wide values only seed a new or reset facet
-(`ApplyFacetDefaultsUseCase`, scope `LOOK`); a facet's value is always its own, with no `LAUNCHER_DEFAULT`
-marker. A facet's landscape twin is its own too, `null` meaning "same as portrait".
+`appListLayout`/`appListColumnAlignment`/`appListGridColumns`/`appListGridDisplayMode`/
+`appListShrinkToFit` and the three landscape twins are edited on the Apps list screen (Settings → Default Apps list,
+and each facet's own copy of the screen). The launcher-wide values only seed a new or reset facet
+(`ApplyFacetDefaultsUseCase`, scope `LOOK`, run with `APPS_LIST` by the Apps list screen's reset and copy); a facet's value is always its own, with no `LAUNCHER_DEFAULT`
+marker. `dockDisplayMode` is the same kind of default but is edited on the Dock screen and copied with the dock (scope `DOCK`). A facet's landscape twin is its own too, `null` meaning "same as portrait".
 
 ### 5.2 Read path
 
@@ -512,29 +512,29 @@ DataStore serialises writes and is main-safe; callers `viewModelScope.launch { }
 | `chooseWeatherCity(WeatherCity): Boolean` | `weather_saved_cities`, the four city keys, `weather_location_mode` | add the city to the saved list unless already there (refused, returning false, past 10), make it the chosen city and switch to city mode | `WeatherLocationViewModel` |
 | `removeWeatherCity(WeatherCity)` | `weather_saved_cities`, the four city keys | drop it from the list; clear the four keys when it was the chosen one | `WeatherLocationViewModel` |
 | `setSavedWeatherCities(List<WeatherCity>)` | `weather_saved_cities` | replace the list (restore), at most 10 | `ImportBackupUseCase` |
-| `setAllowLandscape(Boolean)` | `allow_landscape` | set | `AppearanceSettingsViewModel` |
+| `setAllowLandscape(Boolean)` | `allow_landscape` | set | `HomeAppsListSettingsViewModel` |
 | `setHideStatusBar(Boolean)` | `hide_status_bar` | set | `AppearanceSettingsViewModel` |
 | `setClockAlignment(ClockAlignment)` | `clock_alignment` | set | `ClockStyleGalleryViewModel`, `HomeViewModel` (clock adjust toolbar) |
 | `setShowWeather(Boolean)` | `show_weather` | set | `TurnOffWeatherUseCase`, weather settings |
 | `setClockZoneHeight(Float)` | `clock_zone_height_dp` | set | `HomeViewModel` (zone drag handle) |
 | `resetClockZoneHeight()` | `clock_zone_height_dp` and `landscape_clock_zone_height_dp` | **remove** | `ClockStyleGalleryViewModel` |
-| `updateLandscape((LandscapeOverrides) -> LandscapeOverrides)` | all six `landscape_*` keys | set each field, or **remove** it when `null` | `HomeViewModel` (landscape adjust commits), `AppearanceSettingsViewModel` (Landscape alignment rows), `ClockStyleGalleryViewModel` (Reset position), `ImportBackupUseCase` |
+| `updateLandscape((LandscapeOverrides) -> LandscapeOverrides)` | all six `landscape_*` keys | set each field, or **remove** it when `null` | `HomeViewModel` (landscape adjust commits), `HomeAppsListSettingsViewModel` (Landscape alignment rows), `ClockStyleGalleryViewModel` (Reset position), `ImportBackupUseCase` |
 | `setShowAllDayEvents(Boolean)` | `show_all_day_events` | set | `CalendarSettingsViewModel` |
 | `setSelectedCalendarIds(Set<String>)` | `selected_calendar_ids` | set | `CalendarSettingsViewModel` |
 | `setCalendarColors(Map<String,String>)` | `calendar_colors` | set (encoded `id:color`) | `EnsureCalendarColorsUseCase` (app-wide, on every calendar change), `CalendarSettingsViewModel` after `AssignCalendarColorsUseCase` |
 | `setListContentMode(ListContentMode)` | `list_content_mode` | set | `HomeAppsListSettingsViewModel`, `OnboardingViewModel` |
 | `setAppsToShowCount(Int)` | `apps_to_show_count` | set | `HomeAppsListSettingsViewModel`, `OnboardingViewModel` |
-| `setAppRowPosition(AppRowPosition)` | `app_row_position` | set | `AppearanceSettingsViewModel` |
-| `setAppRowPresentation(AppRowPresentation)` | `app_row_presentation` | set | `AppearanceSettingsViewModel` |
-| `setAppListVerticalAlignment(AppListVerticalAlignment)` | `app_list_vertical_alignment` | set | `AppearanceSettingsViewModel` |
-| `setAppListLayout(AppListLayout)` | `app_list_layout` | set | `AppearanceSettingsViewModel`, `ImportBackupUseCase` |
-| `setAppListColumnAlignment(AppListColumnAlignment)` | `app_list_column_alignment` | set | `AppearanceSettingsViewModel`, `ImportBackupUseCase` |
-| `setAppListGridColumns(AppListGridColumns)` | `app_list_grid_columns` | set | `AppearanceSettingsViewModel`, `ImportBackupUseCase` |
-| `setAppListGridDisplayMode(AppListGridDisplayMode)` | `app_list_grid_display_mode` | set | `AppearanceSettingsViewModel`, `ImportBackupUseCase` |
-| `setAppListShrinkToFit(AppListShrinkToFit)` | `app_list_shrink_to_fit` | set | `AppearanceSettingsViewModel`, `ImportBackupUseCase` |
+| `setAppRowPosition(AppRowPosition)` | `app_row_position` | set | `HomeAppsListSettingsViewModel` |
+| `setAppRowPresentation(AppRowPresentation)` | `app_row_presentation` | set | `HomeAppsListSettingsViewModel` |
+| `setAppListVerticalAlignment(AppListVerticalAlignment)` | `app_list_vertical_alignment` | set | `HomeAppsListSettingsViewModel` |
+| `setAppListLayout(AppListLayout)` | `app_list_layout` | set | `HomeAppsListSettingsViewModel`, `ImportBackupUseCase` |
+| `setAppListColumnAlignment(AppListColumnAlignment)` | `app_list_column_alignment` | set | `HomeAppsListSettingsViewModel`, `ImportBackupUseCase` |
+| `setAppListGridColumns(AppListGridColumns)` | `app_list_grid_columns` | set | `HomeAppsListSettingsViewModel`, `ImportBackupUseCase` |
+| `setAppListGridDisplayMode(AppListGridDisplayMode)` | `app_list_grid_display_mode` | set | `HomeAppsListSettingsViewModel`, `ImportBackupUseCase` |
+| `setAppListShrinkToFit(AppListShrinkToFit)` | `app_list_shrink_to_fit` | set | `HomeAppsListSettingsViewModel`, `ImportBackupUseCase` |
 | `setHomeAppsFontWeight(FontWeightOption)` | `home_apps_font_weight` | set | `AppearanceSettingsViewModel` |
 | `setAppLabelColorOption(ClockColorOption)` | `app_label_color_option` | set | `AppearanceSettingsViewModel` |
-| `setDockDisplayMode(DockDisplayMode)` | `dock_display_mode` | set | `AppearanceSettingsViewModel` |
+| `setDockDisplayMode(DockDisplayMode)` | `dock_display_mode` | set | `DockSettingsViewModel` |
 | `setActiveFacetId(Long)` | `active_facet_id` | set | `FacetCarouselViewModel`, `ManageFacetsViewModel`, `EnsureActiveFacetUseCase`, `ActivateFacetByIdUseCase`, `ImportBackupUseCase` |
 | `setThemeMode(ThemeMode)` | `theme_mode` | set | `AppearanceSettingsViewModel` |
 | `setSystemBarIconStyle(SystemBarIconStyle)` | `system_bar_icon_style` | set | `AppearanceSettingsViewModel`, `ImportBackupUseCase` |

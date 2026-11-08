@@ -120,7 +120,7 @@ class SettingsRepositoryTest {
         assertFalse(settings.use24HourTime)
         assertEquals(DockDisplayMode.ICONS, settings.dockDisplayMode)
         assertEquals(DrawerPresentation.LIST, settings.drawerPresentation)
-        assertEquals(DrawerGridDensity.COMPACT, settings.drawerGridDensity)
+        assertEquals(DrawerGridDensity.REGULAR, settings.drawerGridDensity)
         assertEquals(DrawerListItemSize.REGULAR, settings.drawerListItemSize)
         assertEquals(IconRenderMode.SYSTEM_DEFAULT, settings.iconRenderMode)
         assertEquals(IconShape.SQUIRCLE, settings.iconShape)

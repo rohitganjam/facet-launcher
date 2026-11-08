@@ -39,9 +39,7 @@ import androidx.compose.ui.zIndex
 import com.facetlauncher.app.R
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.AppListLimits
-import com.facetlauncher.app.data.model.DrawerPresentation
 import com.facetlauncher.app.data.model.ListContentMode
-import com.facetlauncher.app.data.model.SearchBarPosition
 import com.facetlauncher.app.ui.components.AppIcon
 import com.facetlauncher.app.ui.components.AppIconSize
 import com.facetlauncher.app.ui.components.CardDivider
@@ -50,7 +48,6 @@ import com.facetlauncher.app.ui.components.LabeledDropdownRow
 import com.facetlauncher.app.ui.components.LocalSettingsRowInset
 import com.facetlauncher.app.ui.components.ReorderRowDefaults
 import com.facetlauncher.app.ui.components.SettingsCard
-import com.facetlauncher.app.ui.components.SettingsToggleRow
 import com.facetlauncher.app.ui.components.TextActionButton
 import com.facetlauncher.app.ui.components.rememberDragReorderState
 import com.facetlauncher.app.ui.theme.Faint
@@ -62,7 +59,7 @@ import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
 
 /**
- * Onboarding step 3 (`4g`, extended) — the launcher-wide default HOME APPS content mode and DOCK.
+ * Onboarding step 3 (`4g`, extended) — the launcher-wide default HOME APPS content mode and DOCK; the app drawer is the next step ([OnboardingDrawerSetupPage]).
  * Both sections mirror their Settings counterparts (`DockSettingsScreen`, `HomeAppsListSettingsScreen`):
  * a live row that supports drag-to-reorder in place, plus a clickable row that opens the same
  * full-screen picker Settings uses ([com.facetlauncher.app.ui.dock.DockAppPickerScreen],
@@ -76,11 +73,6 @@ fun OnboardingHomeSetupPage(
     onOpenDockPicker: () -> Unit,
     onListContentModeChange: (ListContentMode) -> Unit,
     onAppsToShowCountChange: (Int) -> Unit,
-    drawerPresentation: DrawerPresentation,
-    onDrawerPresentationChange: (DrawerPresentation) -> Unit,
-    onSearchBarPositionChange: (SearchBarPosition) -> Unit,
-    onSearchContactsToggle: (Boolean) -> Unit,
-    onSearchSettingsToggle: (Boolean) -> Unit,
     onOpenFavoritesPicker: () -> Unit,
     onReorderFavorites: (List<AppInfo>) -> Unit,
     onClearFavorites: () -> Unit,
@@ -113,15 +105,6 @@ fun OnboardingHomeSetupPage(
                     onReorder = onReorderDockApps,
                     onManageClick = onOpenDockPicker,
                     onClearDockApps = onClearDockApps,
-                )
-                Spacer(modifier = Modifier.height(40.dp))
-                AppDrawerSection(
-                    uiState = uiState,
-                    presentation = drawerPresentation,
-                    onPresentationChange = onDrawerPresentationChange,
-                    onSearchBarPositionChange = onSearchBarPositionChange,
-                    onSearchContactsToggle = onSearchContactsToggle,
-                    onSearchSettingsToggle = onSearchSettingsToggle,
                 )
             }
             item { Spacer(modifier = Modifier.height(96.dp)) }
@@ -228,58 +211,6 @@ private fun DockClickableRow(countLabel: String, onClick: () -> Unit, modifier: 
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(text = countLabel, style = MaterialTheme.typography.bodyMedium, color = Muted)
             Icon(imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = Muted)
-        }
-    }
-}
-
-/** Mirrors the top of `AppDrawerSettingsScreen`: "Show apps as" plus the search bar position and search toggles. */
-@Composable
-private fun AppDrawerSection(
-    uiState: OnboardingUiState,
-    presentation: DrawerPresentation,
-    onPresentationChange: (DrawerPresentation) -> Unit,
-    onSearchBarPositionChange: (SearchBarPosition) -> Unit,
-    onSearchContactsToggle: (Boolean) -> Unit,
-    onSearchSettingsToggle: (Boolean) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Column(modifier = modifier.fillMaxWidth()) {
-        Text(text = stringResource(R.string.onboarding_app_drawer_section_header), style = MaterialTheme.typography.labelSmall, color = Muted)
-        Spacer(modifier = Modifier.height(8.dp))
-        SettingsCard {
-            LabeledDropdownRow(
-                title = stringResource(R.string.app_drawer_show_apps_as),
-                options = DrawerPresentation.entries,
-                selected = presentation,
-                label = { stringResource(it.displayNameRes) },
-                onSelect = onPresentationChange,
-                testTag = "onboarding_drawer_presentation_row",
-            )
-            CardDivider()
-            LabeledDropdownRow(
-                title = stringResource(R.string.app_drawer_search_bar_position),
-                options = SearchBarPosition.entries,
-                selected = uiState.searchBarPosition,
-                label = { stringResource(it.displayNameRes) },
-                onSelect = onSearchBarPositionChange,
-                testTag = "onboarding_search_bar_position_row",
-            )
-            CardDivider()
-            SettingsToggleRow(
-                title = stringResource(R.string.app_drawer_search_contacts_title),
-                subtitle = stringResource(R.string.app_drawer_search_contacts_subtitle),
-                checked = uiState.searchContactsEnabled,
-                onCheckedChange = onSearchContactsToggle,
-                testTag = "onboarding_search_contacts_toggle",
-            )
-            CardDivider()
-            SettingsToggleRow(
-                title = stringResource(R.string.app_drawer_search_settings_title),
-                subtitle = stringResource(R.string.app_drawer_search_settings_subtitle),
-                checked = uiState.searchSettingsEnabled,
-                onCheckedChange = onSearchSettingsToggle,
-                testTag = "onboarding_search_settings_toggle",
-            )
         }
     }
 }
@@ -503,11 +434,6 @@ private fun OnboardingHomeSetupPagePreview() {
             onOpenDockPicker = {},
             onListContentModeChange = {},
             onAppsToShowCountChange = {},
-            drawerPresentation = DrawerPresentation.LIST,
-            onDrawerPresentationChange = {},
-            onSearchBarPositionChange = {},
-            onSearchContactsToggle = {},
-            onSearchSettingsToggle = {},
             onOpenFavoritesPicker = {},
             onReorderFavorites = {},
             onClearFavorites = {},

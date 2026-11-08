@@ -8,6 +8,7 @@ import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.domain.ApplyFacetDefaultsUseCase
 import com.facetlauncher.app.domain.FacetDefaultsScope
 import com.facetlauncher.app.data.model.AppInfo
+import com.facetlauncher.app.data.model.DrawerFolderDisplayMode
 import com.facetlauncher.app.data.model.DrawerPresentation
 import com.facetlauncher.app.data.model.ListContentMode
 import com.facetlauncher.app.data.model.PlacedItem
@@ -58,6 +59,7 @@ class OnboardingViewModel @Inject constructor(
             searchBarPosition = settings.searchBarPosition,
             searchContactsEnabled = settings.searchContactsEnabled,
             searchSettingsEnabled = settings.searchSettingsEnabled,
+            drawerFolderDisplayMode = settings.drawerFolderDisplayMode,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), OnboardingUiState())
 
@@ -83,6 +85,10 @@ class OnboardingViewModel @Inject constructor(
 
     fun setSearchSettingsEnabled(enabled: Boolean) {
         viewModelScope.launch { settingsRepository.setSearchSettingsEnabled(enabled) }
+    }
+
+    fun setDrawerFolderDisplayMode(mode: DrawerFolderDisplayMode) {
+        viewModelScope.launch { settingsRepository.setDrawerFolderDisplayMode(mode) }
     }
 
     fun reorderDockApps(orderedApps: List<AppInfo>) {

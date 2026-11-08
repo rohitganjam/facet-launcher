@@ -108,7 +108,6 @@ fun SettingsScreen(
     onNavigateToNotificationSettings: () -> Unit,
     onNavigateToDockSettings: () -> Unit,
     onNavigateToHomeAppsListSettings: () -> Unit,
-    onNavigateToDockAppsAppearance: () -> Unit,
     onNavigateToFolders: () -> Unit,
     onNavigateToGestures: () -> Unit,
     onNavigateToWeatherSettings: () -> Unit,
@@ -140,7 +139,6 @@ fun SettingsScreen(
         onNavigateToNotificationSettings = onNavigateToNotificationSettings,
         onNavigateToDockSettings = onNavigateToDockSettings,
         onNavigateToHomeAppsListSettings = onNavigateToHomeAppsListSettings,
-        onNavigateToDockAppsAppearance = onNavigateToDockAppsAppearance,
         onNavigateToFolders = onNavigateToFolders,
         onNavigateToGestures = onNavigateToGestures,
         onNavigateToWeatherSettings = onNavigateToWeatherSettings,
@@ -167,7 +165,6 @@ private fun SettingsContent(
     onNavigateToNotificationSettings: () -> Unit,
     onNavigateToDockSettings: () -> Unit,
     onNavigateToHomeAppsListSettings: () -> Unit,
-    onNavigateToDockAppsAppearance: () -> Unit,
     onNavigateToFolders: () -> Unit,
     onNavigateToGestures: () -> Unit,
     onNavigateToWeatherSettings: () -> Unit,
@@ -210,7 +207,7 @@ private fun SettingsContent(
                 item { AppearanceCard(uiState, onNavigateToAppearance, onNavigateToAppDrawerSettings, onNavigateToNotificationSettings) }
 
                 item { SettingsSectionHeader(stringResource(R.string.settings_section_home_apps)) }
-                item { HomeAppsCard(uiState, onNavigateToDockSettings, onNavigateToHomeAppsListSettings, onNavigateToDockAppsAppearance, onNavigateToFolders) }
+                item { HomeAppsCard(uiState, onNavigateToDockSettings, onNavigateToHomeAppsListSettings, onNavigateToFolders) }
 
                 item { SettingsSectionHeader(stringResource(R.string.settings_section_system)) }
                 item {
@@ -353,7 +350,6 @@ private fun HomeAppsCard(
     uiState: SettingsUiState,
     onNavigateToDockSettings: () -> Unit,
     onNavigateToHomeAppsListSettings: () -> Unit,
-    onNavigateToDockAppsAppearance: () -> Unit,
     onNavigateToFolders: () -> Unit,
 ) {
     SettingsCard(fullBleedRows = true) {
@@ -371,14 +367,6 @@ private fun HomeAppsCard(
             onClick = onNavigateToHomeAppsListSettings,
             testTag = "home_apps_list_settings_row",
             leadingIcon = iconBadge(Icons.Outlined.FormatListBulleted, SettingsSectionHue.HOME_APPS),
-        )
-        CardDivider(startInset = SettingsIconBadgeInset)
-        ClickableRow(
-            title = stringResource(R.string.appearance_dock_apps_title),
-            subtitle = stringResource(R.string.settings_default_look_subtitle),
-            onClick = onNavigateToDockAppsAppearance,
-            testTag = "dock_apps_appearance_row",
-            leadingIcon = iconBadge(Icons.Outlined.Dock, SettingsSectionHue.HOME_APPS),
         )
         CardDivider(startInset = SettingsIconBadgeInset)
         ClickableRow(
@@ -574,7 +562,6 @@ private fun SettingsScreenPreview() {
             onNavigateToNotificationSettings = {},
             onNavigateToDockSettings = {},
             onNavigateToHomeAppsListSettings = {},
-            onNavigateToDockAppsAppearance = {},
             onNavigateToFolders = {},
             onNavigateToGestures = {},
             onNavigateToWeatherSettings = {},

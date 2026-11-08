@@ -110,6 +110,14 @@ class DockSettingsViewModel @Inject constructor(
         }
     }
 
+    /** Facet-or-global write: a facet's own value, or the launcher-wide default a new facet is seeded from. */
+    fun setDockDisplayMode(mode: DockDisplayMode) {
+        viewModelScope.launch {
+            facetId?.let { id -> facetRepository.getById(id)?.let { facetRepository.setDockDisplayMode(it.id, mode) } }
+                ?: settingsRepository.setDockDisplayMode(mode)
+        }
+    }
+
     /** "Copy to facets": replaces the dock of each chosen facet with a copy of the launcher-wide one. */
     fun copyToFacets(facetIds: Set<Long>) {
         viewModelScope.launch { facetIds.forEach { applyFacetDefaults(it, FacetDefaultsScope.DOCK) } }

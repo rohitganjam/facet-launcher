@@ -94,10 +94,10 @@ class ApplyFacetDefaultsUseCaseTest {
         // When the dock scope is applied
         useCase()(facet.id, FacetDefaultsScope.DOCK)
 
-        // Then the facet's dock is a copy of the launcher dock, and favorites and look are untouched
+        // Then the facet's dock and its display style are the launcher's, and favorites are untouched
         assertEquals(listOf("com.example.a", "com.example.b"), packages(PlacementList.DOCK, facet.id))
         assertEquals(emptyList<String>(), packages(PlacementList.FAVORITES, facet.id))
-        assertEquals(DockDisplayMode.ICONS, facetRepository.getById(facet.id)!!.dockDisplayMode)
+        assertEquals(DockDisplayMode.TEXT, facetRepository.getById(facet.id)!!.dockDisplayMode)
     }
 
     @Test
@@ -138,7 +138,7 @@ class ApplyFacetDefaultsUseCaseTest {
     }
 
     @Test
-    fun `look scope copies the dock mode, list look and landscape twins but leaves the clock twins`() = runTest {
+    fun `look scope copies the list look and landscape twins but leaves the clock twins`() = runTest {
         // Given a facet whose clock has its own landscape alignment
         val facet = facetRepository.addFacet()
         facetRepository.updateLandscape(facet.id) { it.copy(clockAlignment = ClockAlignment.RIGHT, appRowPosition = AppRowPosition.LEFT) }
@@ -148,7 +148,7 @@ class ApplyFacetDefaultsUseCaseTest {
 
         // Then the look matches the launcher's, a null launcher twin stays null, and the clock twin is kept
         val stored = facetRepository.getById(facet.id)!!
-        assertEquals(DockDisplayMode.TEXT, stored.dockDisplayMode)
+        assertEquals(DockDisplayMode.ICONS, stored.dockDisplayMode)
         assertEquals(AppRowPosition.RIGHT, stored.appRowPosition)
         assertEquals(AppRowPresentation.TEXT_ONLY, stored.appRowPresentation)
         assertEquals(AppListVerticalAlignment.TOP, stored.appListVerticalAlignment)

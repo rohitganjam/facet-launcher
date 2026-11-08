@@ -94,6 +94,20 @@ fun HomeAppsListSettingsScreen(
         onListContentModeChange = viewModel::setListContentMode,
         onAppsToShowCountChange = viewModel::setAppsToShowCount,
         onReorderFavorites = viewModel::reorderFavorites,
+        lookActions = AppListLookActions(
+            onAllowLandscapeChange = viewModel::setAllowLandscape,
+            onLayoutChange = viewModel::setAppListLayout,
+            onPresentationChange = viewModel::setAppRowPresentation,
+            onGridColumnsChange = viewModel::setAppListGridColumns,
+            onGridDisplayModeChange = viewModel::setAppListGridDisplayMode,
+            onShrinkToFitChange = viewModel::setAppListShrinkToFit,
+            onRowPositionChange = viewModel::setAppRowPosition,
+            onColumnAlignmentChange = viewModel::setAppListColumnAlignment,
+            onVerticalAlignmentChange = viewModel::setAppListVerticalAlignment,
+            onLandscapeRowPositionChange = viewModel::setLandscapeAppRowPosition,
+            onLandscapeColumnAlignmentChange = viewModel::setLandscapeAppListColumnAlignment,
+            onLandscapeVerticalAlignmentChange = viewModel::setLandscapeAppListVerticalAlignment,
+        ),
         onResetToDefault = viewModel::resetToDefault,
         onCopyToFacets = viewModel::copyToFacets,
         modifier = modifier,
@@ -108,6 +122,7 @@ private fun HomeAppsListSettingsContent(
     onListContentModeChange: (ListContentMode) -> Unit,
     onAppsToShowCountChange: (Int) -> Unit,
     onReorderFavorites: (List<PlacedItem>) -> Unit,
+    lookActions: AppListLookActions,
     onResetToDefault: () -> Unit,
     onCopyToFacets: (Set<Long>) -> Unit,
     modifier: Modifier = Modifier,
@@ -142,33 +157,44 @@ private fun HomeAppsListSettingsContent(
                     )
                 }
                 listContentItem(uiState, onListContentModeChange, onAppsToShowCountChange, onEditFavorites, onReorderFavorites)
-                if (uiState.isFacetScoped) {
-                    item { Spacer(modifier = Modifier.height(16.dp)) }
-                    item {
-                        ResetToDefaultCard(
-                            subtitle = stringResource(R.string.reset_apps_subtitle),
-                            confirmMessage = stringResource(R.string.reset_apps_confirm_message),
-                            onReset = onResetToDefault,
-                            testTagPrefix = "home_apps_list",
-                        )
-                    }
-                } else {
-                    item { Spacer(modifier = Modifier.height(16.dp)) }
-                    item {
-                        CopyToFacetsCard(
-                            facets = uiState.facets,
-                            activeFacetId = uiState.settings.activeFacetId,
-                            subtitle = stringResource(R.string.copy_apps_subtitle),
-                            sheetMessage = stringResource(R.string.copy_apps_sheet_message),
-                            onCopy = onCopyToFacets,
-                            testTagPrefix = "home_apps_list",
-                        )
-                    }
-                    item { DefaultsNote(modifier = Modifier.padding(top = 12.dp)) }
-                }
+                item { Spacer(modifier = Modifier.height(16.dp)) }
+                appListLookItems(uiState, lookActions)
+                appsResetOrCopyItems(uiState, onResetToDefault, onCopyToFacets)
             }
         },
     )
+}
+
+/** Facet scope offers "Reset to default"; launcher scope offers "Copy to facets". */
+private fun LazyListScope.appsResetOrCopyItems(
+    uiState: HomeAppsListUiState,
+    onResetToDefault: () -> Unit,
+    onCopyToFacets: (Set<Long>) -> Unit,
+) {
+    if (uiState.isFacetScoped) {
+        item { Spacer(modifier = Modifier.height(16.dp)) }
+        item {
+            ResetToDefaultCard(
+                subtitle = stringResource(R.string.reset_apps_subtitle),
+                confirmMessage = stringResource(R.string.reset_apps_confirm_message),
+                onReset = onResetToDefault,
+                testTagPrefix = "home_apps_list",
+            )
+        }
+    } else {
+        item { Spacer(modifier = Modifier.height(16.dp)) }
+        item {
+            CopyToFacetsCard(
+                facets = uiState.facets,
+                activeFacetId = uiState.settings.activeFacetId,
+                subtitle = stringResource(R.string.copy_apps_subtitle),
+                sheetMessage = stringResource(R.string.copy_apps_sheet_message),
+                onCopy = onCopyToFacets,
+                testTagPrefix = "home_apps_list",
+            )
+        }
+        item { DefaultsNote(modifier = Modifier.padding(top = 12.dp)) }
+    }
 }
 
 /** What the list shows, how many apps, and (for favorites) which apps and their order. */
@@ -359,6 +385,7 @@ private fun HomeAppsListSettingsScreenPreview() {
             onListContentModeChange = {},
             onAppsToShowCountChange = {},
             onReorderFavorites = {},
+            lookActions = AppListLookActions.None,
             onResetToDefault = {},
             onCopyToFacets = {},
         )

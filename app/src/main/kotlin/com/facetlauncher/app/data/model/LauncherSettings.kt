@@ -236,7 +236,7 @@ data class LauncherSettings(
     val use24HourTime: Boolean = false,
     val dockDisplayMode: DockDisplayMode = DockDisplayMode.ICONS,
     val drawerPresentation: DrawerPresentation = DrawerPresentation.LIST,
-    val drawerGridDensity: DrawerGridDensity = DrawerGridDensity.COMPACT,
+    val drawerGridDensity: DrawerGridDensity = DrawerGridDensity.REGULAR,
     val drawerListItemSize: DrawerListItemSize = DrawerListItemSize.REGULAR,
     val drawerOpacity: Float = 0.6f,
     val notificationDotsEnabled: Boolean = true,

@@ -6,6 +6,7 @@ import android.os.UserManager
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.createComposeRule
@@ -47,6 +48,8 @@ class DockSettingsScreenTest {
     @get:Rule
     val composeRule = createComposeRule()
 
+    private lateinit var settingsRepository: SettingsRepository
+
     private fun setContent(
         onBack: () -> Unit = {},
         onAddDockApp: () -> Unit = {},
@@ -56,7 +59,7 @@ class DockSettingsScreenTest {
         composeRule.setContent {
             val context = LocalContext.current
             val viewModel = remember {
-                val settingsRepository = SettingsRepository(
+                settingsRepository = SettingsRepository(
                     PreferenceDataStoreFactory.create(
                         produceFile = { File(context.cacheDir, "dock-settings-test-${System.nanoTime()}.preferences_pb") },
                     ),
@@ -104,10 +107,53 @@ class DockSettingsScreenTest {
         assertEquals(true, backInvoked)
     }
 
-    // Dock display style's own dropdown row moved to Settings -> Appearance (see chat history —
-    // "look" fields, edited independently of this screen's content now); coverage moved to
-    // AppearanceSettingsScreenTest's dockDisplayStyleRowChangesTheGlobalSetting/
-    // facetScopedDockDisplayStyleRowOffersLauncherDefaultAndWritesToThatFacet.
+    @Test
+    fun dockDisplayStyleRowChangesTheGlobalSetting() {
+        // Given the default dock, Icons selected by default
+        setContent()
+        composeRule.onNodeWithTag("dock_settings_screen").performScrollToNode(hasTestTag("dock_display_style_row"))
+        composeRule.onNodeWithTag("dock_display_style_row").assertTextContains("Icons")
+
+        // When picking "Text"
+        composeRule.onNodeWithTag("dock_display_style_row").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("dock_display_style_row_option_TEXT").performClick()
+
+        // Then it's persisted to the launcher-wide settings
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            runBlocking { settingsRepository.settings.first().dockDisplayMode == com.facetlauncher.app.data.model.DockDisplayMode.TEXT }
+        }
+    }
+
+    @Test
+    fun dockDisplayStyleRowOffersIconsAndTextButNoLauncherDefaultChoice() {
+        setContent()
+        composeRule.onNodeWithTag("dock_settings_screen").performScrollToNode(hasTestTag("dock_display_style_row"))
+
+        composeRule.onNodeWithTag("dock_display_style_row").performClick()
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithTag("dock_display_style_row_option_ICONS_AND_TEXT").assertExists()
+        composeRule.onAllNodesWithTag("dock_display_style_row_option_LAUNCHER_DEFAULT").assertCountEquals(0)
+    }
+
+    @Test
+    fun facetScopedDockDisplayStyleRowWritesToThatFacetNotTheDefault() {
+        // Given a facet's own dock screen
+        setContent(facetId = 1L)
+        composeRule.onNodeWithTag("dock_settings_screen").performScrollToNode(hasTestTag("dock_display_style_row"))
+
+        // When picking "Text"
+        composeRule.onNodeWithTag("dock_display_style_row").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("dock_display_style_row_option_TEXT").performClick()
+
+        // Then the facet shows Text and the launcher-wide default is untouched
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            runCatching { composeRule.onNodeWithTag("dock_display_style_row").assertTextContains("Text") }.isSuccess
+        }
+        assertEquals(com.facetlauncher.app.data.model.DockDisplayMode.ICONS, runBlocking { settingsRepository.settings.first().dockDisplayMode })
+    }
 
     @Test
     fun selectDockAppsRowIsClickable() {

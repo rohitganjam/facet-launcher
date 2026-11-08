@@ -257,7 +257,6 @@
     <string name="settings_dock_title">Dock</string>
     <string name="settings_default_dock_title">Apps do dock padrão</string>
     <string name="home_apps_list_default_header_title">Lista de apps padrão</string>
-    <string name="settings_default_look_subtitle">Aparência padrão do dock e dos apps da tela inicial em novas facetas</string>
     <string name="defaults_screen_note">Usado quando você cria uma faceta ou redefine uma.</string>
     <string name="reset_to_default_title">Redefinir para o padrão</string>
     <string name="reset_to_default_confirm">Redefinir</string>
@@ -265,8 +264,8 @@
     <string name="reset_dock_confirm_message">Isto substitui o dock desta faceta pelo dock padrão. Os apps que você colocou aqui serão perdidos.</string>
     <string name="reset_apps_subtitle">Substituir esta lista pela padrão</string>
     <string name="reset_apps_confirm_message">Isto substitui os favoritos, o conteúdo da lista e a quantidade de apps desta faceta pelos valores padrão. Os favoritos que você escolheu aqui serão perdidos.</string>
-    <string name="reset_look_subtitle">Substituir a aparência do dock e da lista pela padrão</string>
-    <string name="reset_look_confirm_message">Isto substitui o estilo do dock, o layout da lista e o alinhamento desta faceta pelos valores padrão.</string>
+    <string name="reset_look_subtitle">Substituir a aparência da lista pela padrão</string>
+    <string name="reset_look_confirm_message">Isto substitui o layout da lista e o alinhamento desta faceta pelos valores padrão.</string>
     <plurals name="settings_dock_apps_count">
         <item quantity="one">%d app no Dock</item>
         <item quantity="other">%d apps no Dock</item>
@@ -729,6 +728,8 @@
     <!-- OnboardingHomeSetupPage -->
     <string name="onboarding_home_setup_headline">Configure sua tela inicial</string>
     <string name="onboarding_home_setup_subhead">Escolha os apps que você quer na tela inicial. Você pode mudar tudo isso depois.</string>
+    <string name="onboarding_drawer_setup_headline">Configure sua gaveta de apps</string>
+    <string name="onboarding_drawer_setup_subhead">Escolha como seus apps são listados e como a busca funciona. Você pode mudar tudo isso depois.</string>
     <string name="onboarding_notifications_headline">Indicadores e reprodução atual</string>
     <string name="onboarding_notifications_subhead">Pontos nos apps com algo pendente e o que está tocando na tela inicial. Você pode mudar isso depois.</string>
     <string name="onboarding_notifications_access_note">Os dois recursos precisam de acesso às notificações, uma permissão especial que você ativa nas configurações do sistema. O Facet lê apenas quais apps têm notificações ativas e o título, o artista e a capa do que está tocando. Ele nunca lê o texto das notificações, e nada sai do seu dispositivo.</string>
@@ -738,7 +739,6 @@
     <string name="onboarding_clear_dock_title">Limpar o dock?</string>
     <string name="onboarding_clear_dock_message">Remove todos os apps do dock padrão. Você pode adicionar apps de volta quando quiser.</string>
     <string name="onboarding_manage_dock_apps">Gerenciar apps do dock</string>
-    <string name="onboarding_app_drawer_section_header">GAVETA DE APPS</string>
     <string name="onboarding_home_apps_section_header">APPS DA TELA INICIAL</string>
     <string name="onboarding_show_label">Exibir</string>
     <string name="onboarding_list_content_favorites">Favoritos</string>
@@ -942,7 +942,6 @@
     <string name="icons_screen_shape_and_size">Forma e tamanho</string>
     <string name="icons_screen_force_shape">Forçar forma dos ícones</string>
     <string name="icons_screen_force_shape_description">Recorta também os ícones do pacote na forma acima</string>
-    <string name="appearance_dock_apps_title">Layout do dock e dos apps</string>
     <string name="appearance_general_title">Cores e temas</string>
     <string name="appearance_general_subtitle">Temas, destaque, barra de status</string>
     <string name="appearance_section_look_feel">Aparência e comportamento</string>
@@ -1155,6 +1154,6 @@
     <string name="copy_dock_sheet_message">Substitui o dock de cada faceta selecionada pelo dock padrão.</string>
     <string name="copy_apps_subtitle">Substitui a lista de apps das facetas escolhidas por esta</string>
     <string name="copy_apps_sheet_message">Substitui os favoritos, o conteúdo da lista e a quantidade de apps de cada faceta selecionada pelos valores padrão.</string>
-    <string name="copy_look_subtitle">Substitui a aparência do dock e dos apps das facetas escolhidas por esta</string>
-    <string name="copy_look_sheet_message">Substitui o estilo do dock, o layout da lista e o alinhamento de cada faceta selecionada pelos valores padrão.</string>
+    <string name="copy_look_subtitle">Substitui a aparência dos apps das facetas escolhidas por esta</string>
+    <string name="copy_look_sheet_message">Substitui o layout da lista e o alinhamento de cada faceta selecionada pelos valores padrão.</string>
 </resources>
