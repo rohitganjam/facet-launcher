@@ -120,6 +120,7 @@ class ImportBackupUseCase @Inject constructor(
         bundle.dockFolderPlacements.forEach { placement ->
             newFolderIdByIndex[placement.folderIndex]?.let { folderId ->
                 placementRepository.restoreFolderPlacement(PlacementTarget.GlobalDock, folderId, placement.position)
+                placement.gridCells?.let { placementRepository.restoreFolderCells(PlacementTarget.GlobalDock, folderId, it) }
             }
         }
 
@@ -128,6 +129,7 @@ class ImportBackupUseCase @Inject constructor(
         bundle.defaultFavoriteFolderPlacements.forEach { placement ->
             newFolderIdByIndex[placement.folderIndex]?.let { folderId ->
                 placementRepository.restoreFolderPlacement(PlacementTarget.GlobalFavorites, folderId, placement.position)
+                placement.gridCells?.let { placementRepository.restoreFolderCells(PlacementTarget.GlobalFavorites, folderId, it) }
             }
         }
 
@@ -166,11 +168,13 @@ class ImportBackupUseCase @Inject constructor(
         backupFacet.dockFolderPlacements.forEach { placement ->
             newFolderIdByIndex[placement.folderIndex]?.let { folderId ->
                 placementRepository.restoreFolderPlacement(dockTarget, folderId, placement.position)
+                placement.gridCells?.let { placementRepository.restoreFolderCells(dockTarget, folderId, it) }
             }
         }
         backupFacet.favoriteFolderPlacements.forEach { placement ->
             newFolderIdByIndex[placement.folderIndex]?.let { folderId ->
                 placementRepository.restoreFolderPlacement(favoritesTarget, folderId, placement.position)
+                placement.gridCells?.let { placementRepository.restoreFolderCells(favoritesTarget, folderId, it) }
             }
         }
         return newId

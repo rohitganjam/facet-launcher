@@ -275,6 +275,17 @@ data class BackupAppEntry(
     val position: Int,
     /** Raw `AppProfile.name` — defaulted so a backup exported before Work Profile support still imports cleanly (as `PERSONAL`, the only profile that existed then). */
     val profile: String = "PERSONAL",
+    /** Where a Favorites app sits on Home's grid, per orientation; absent until it was moved there. Additive, no version bump. */
+    val gridCells: BackupGridCells? = null,
+)
+
+/** Home grid cells (row and column from the anchor edge) for each orientation; either pair may be absent. */
+@Serializable
+data class BackupGridCells(
+    val portraitRow: Int? = null,
+    val portraitColumn: Int? = null,
+    val landscapeRow: Int? = null,
+    val landscapeColumn: Int? = null,
 )
 
 /** One folder's identity + membership — a global, independent entity (F-Folders); see [BackupBundle.folders]' own doc for how it's referenced by index from every placement list. */
@@ -289,6 +300,7 @@ data class BackupFolder(
 data class BackupFolderPlacement(
     val folderIndex: Int,
     val position: Int,
+    val gridCells: BackupGridCells? = null,
 )
 
 /**

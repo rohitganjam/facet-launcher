@@ -23,6 +23,7 @@ import com.facetlauncher.app.data.model.AppProfile
 import com.facetlauncher.app.data.model.AppRowPosition
 import com.facetlauncher.app.data.model.AppRowPresentation
 import com.facetlauncher.app.data.model.BackupAppEntry
+import com.facetlauncher.app.data.model.BackupGridCells
 import com.facetlauncher.app.data.model.BackupFacet
 import com.facetlauncher.app.data.model.BackupFolder
 import com.facetlauncher.app.data.model.BackupFolderPlacement
@@ -42,11 +43,20 @@ import com.facetlauncher.app.data.model.encodeWeatherLocation
 
 /** F14 Backup & Restore — entity <-> DTO mapping shared by [ExportBackupUseCase]/[ImportBackupUseCase]. Every enum round-trips through its raw name with a fallback to the field's own default, matching `Converters.kt`'s established pattern. */
 
-fun AppPlacementEntity.toBackupEntry(): BackupAppEntry = BackupAppEntry(packageName, activityName, position, profile.name)
+fun AppPlacementEntity.toBackupEntry(): BackupAppEntry =
+    BackupAppEntry(packageName, activityName, position, profile.name, backupCells(portraitRow, portraitColumn, landscapeRow, landscapeColumn))
+
+/** Null when the item has never been moved on a grid, so an old-style backup stays small. */
+private fun backupCells(portraitRow: Int?, portraitColumn: Int?, landscapeRow: Int?, landscapeColumn: Int?): BackupGridCells? =
+    if (listOf(portraitRow, portraitColumn, landscapeRow, landscapeColumn).all { it == null }) null
+    else BackupGridCells(portraitRow, portraitColumn, landscapeRow, landscapeColumn)
 
 /** [facetId] null restores into the launcher-wide default list of [list]. */
 fun BackupAppEntry.toAppPlacementEntity(list: PlacementList, facetId: Long? = null): AppPlacementEntity =
-    AppPlacementEntity(list = list, facetId = facetId, packageName = packageName, activityName = activityName, position = position, profile = profile.toEnumOrDefault(AppProfile.PERSONAL))
+    AppPlacementEntity(list = list, facetId = facetId, packageName = packageName, activityName = activityName, position = position, profile = profile.toEnumOrDefault(AppProfile.PERSONAL),
+        portraitRow = gridCells?.portraitRow, portraitColumn = gridCells?.portraitColumn,
+        landscapeRow = gridCells?.landscapeRow, landscapeColumn = gridCells?.landscapeColumn,
+    )
 
 fun WidgetPlacementEntity.toBackupPlacement(): BackupWidgetPlacement =
     BackupWidgetPlacement(providerPackageName, providerClassName, row, col, colSpan, rowSpan, profile.name, landscapeOrder, nativeWidgetType?.name,
@@ -65,7 +75,9 @@ fun FolderWithApps.toBackupFolder(): BackupFolder = BackupFolder(
 
 /** [folderIndexById] maps each folder's live row id to its position in [com.facetlauncher.app.data.model.BackupBundle.folders] — `null` only if the folder vanished between reads (a race, not a normal case), in which case the placement is simply dropped rather than exported with a dangling index. */
 fun FolderPlacementEntity.toBackupPlacement(folderIndexById: Map<Long, Int>): BackupFolderPlacement? =
-    folderIndexById[folderId]?.let { BackupFolderPlacement(folderIndex = it, position = position) }
+    folderIndexById[folderId]?.let {
+        BackupFolderPlacement(folderIndex = it, position = position, gridCells = backupCells(portraitRow, portraitColumn, landscapeRow, landscapeColumn))
+    }
 
 fun Facet.toBackupFacet(
     favorites: List<BackupAppEntry>,

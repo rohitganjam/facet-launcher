@@ -1,6 +1,13 @@
 package com.facetlauncher.app.ui.components
 
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.ScrollState
+import androidx.compose.foundation.gestures.scrollBy
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.delay
 import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.indication
@@ -85,8 +92,19 @@ class PickUpReorderState internal constructor(internal val axis: Orientation) : 
         private set
     var dragging by mutableStateOf(false)
         private set
-    var offset by mutableFloatStateOf(0f)
-        private set
+    private var travelAxis by mutableFloatStateOf(0f)
+    private var scroll by mutableFloatStateOf(0f)
+    private var origin = 0f
+
+    /** Where the lifted cell is drawn along the axis, relative to its layout position: the finger's travel plus any scroll under it. */
+    val offset: Float get() = travelAxis + scroll
+
+    /** The finger along the axis, in root coordinates. */
+    val pointer: Float get() = origin + travelAxis
+
+    internal fun addScroll(delta: Float) {
+        scroll += delta
+    }
 
     internal fun recordCenter(key: Any, center: Float) {
         if (centerByKey[key] != center) centerByKey[key] = center
@@ -109,7 +127,9 @@ class PickUpReorderState internal constructor(internal val axis: Orientation) : 
     override fun pickUp(key: Any) {
         liftedKey = key
         dragging = false
-        offset = 0f
+        travelAxis = 0f
+        scroll = 0f
+        origin = centerByKey[key] ?: 0f
     }
 
     override fun startDrag() {
@@ -117,7 +137,7 @@ class PickUpReorderState internal constructor(internal val axis: Orientation) : 
     }
 
     override fun dragTo(travel: Offset) {
-        offset = if (axis == Orientation.Vertical) travel.y else travel.x
+        travelAxis = if (axis == Orientation.Vertical) travel.y else travel.x
     }
 
     /** Ends the touch; a drag that moved the cell to another slot is reported to [onMove] first. */
@@ -127,12 +147,26 @@ class PickUpReorderState internal constructor(internal val axis: Orientation) : 
         val moved = dragging && from >= 0 && to != from
         liftedKey = null
         dragging = false
-        offset = 0f
+        travelAxis = 0f
+        scroll = 0f
         if (moved) onMove(from, to)
     }
 }
 
 internal val LocalPickUpReorder = compositionLocalOf<PickUpReorderState?> { null }
+
+/** How far to scroll a frame while a held cell's finger is at [pointer]: positive moves the content up (finger near [end]), negative down, 0 away from the edges. */
+internal fun edgeScrollDelta(pointer: Float, start: Float, end: Float, edge: Float, step: Float): Float = when {
+    pointer > end - edge -> step
+    pointer < start + edge -> -step
+    else -> 0f
+}
+
+/** The scrollable a held list row can auto-scroll: Home's app list region. [viewport] is its on-screen bounds. */
+@Stable
+class ListAutoScroll(val scrollState: ScrollState, val viewport: () -> Rect)
+
+val LocalListAutoScroll = compositionLocalOf<ListAutoScroll?> { null }
 
 /**
  * Makes the cells emitted by [content] reorderable by a long-press and drag. It adds no layout of its own, so the
@@ -156,6 +190,7 @@ fun <T : Any> PickUpReorderHost(
     val currentOnReorder = rememberUpdatedState(onReorder)
     val state = remember(axis) { PickUpReorderState(axis) }
     state.keys = shown.map(key)
+    ListEdgeAutoScroll(state)
     state.onMove = { from, to ->
         val reordered = ReorderGeometry.move(shown, from, to)
         local = reordered
@@ -246,3 +281,25 @@ fun Modifier.longPressReorderClickable(key: Any, onClick: () -> Unit, onLongPres
             onLongClick { currentOnLongPress.value(); true }
         }
 }
+
+/** Scrolls the surrounding list while a held row's finger is near its top or bottom edge, so the row can be carried past the visible part. */
+@Composable
+private fun ListEdgeAutoScroll(state: PickUpReorderState) {
+    val target = LocalListAutoScroll.current
+    if (target == null || state.axis != Orientation.Vertical) return
+    val density = LocalDensity.current
+    val edge = with(density) { LIST_AUTO_SCROLL_EDGE.toPx() }
+    val step = with(density) { LIST_AUTO_SCROLL_STEP.toPx() }
+    LaunchedEffect(state.dragging, target) {
+        while (state.dragging) {
+            val viewport = target.viewport()
+            val delta = edgeScrollDelta(state.pointer, viewport.top, viewport.bottom, edge, step)
+            if (delta != 0f && !viewport.isEmpty) state.addScroll(target.scrollState.scrollBy(delta))
+            delay(LIST_AUTO_SCROLL_FRAME_MS)
+        }
+    }
+}
+
+private val LIST_AUTO_SCROLL_EDGE = 56.dp
+private val LIST_AUTO_SCROLL_STEP = 10.dp
+private const val LIST_AUTO_SCROLL_FRAME_MS = 16L

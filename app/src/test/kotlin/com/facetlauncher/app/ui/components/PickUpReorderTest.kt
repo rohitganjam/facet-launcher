@@ -161,4 +161,28 @@ class PickUpReorderTest {
 
         assertEquals(0 to 1, moved)
     }
+
+    @Test
+    fun `the list scrolls only while the finger is near an edge`() {
+        // A viewport from 100 to 500, with a 50px edge and a 10px step
+        assertEquals(10f, edgeScrollDelta(pointer = 480f, start = 100f, end = 500f, edge = 50f, step = 10f), 0f)
+        assertEquals(-10f, edgeScrollDelta(pointer = 120f, start = 100f, end = 500f, edge = 50f, step = 10f), 0f)
+        assertEquals(0f, edgeScrollDelta(pointer = 300f, start = 100f, end = 500f, edge = 50f, step = 10f), 0f)
+    }
+
+    @Test
+    fun `scrolling under a held row moves it with the scroll and keeps the finger where it is`() {
+        val state = state("a", "b", "c")
+
+        // Given the first row lifted and dragged 30px, then the list scrolled 40px under it
+        state.pickUp("a")
+        state.startDrag()
+        state.dragTo(Offset(0f, 30f))
+        state.addScroll(40f)
+
+        // Then the row is drawn 70px from where it lays out, the finger is 30px from where it started, and it ends in the right slot
+        assertEquals(70f, state.offset, 0f)
+        assertEquals(80f, state.pointer, 0f)
+        assertEquals(1, state.targetIndex)
+    }
 }

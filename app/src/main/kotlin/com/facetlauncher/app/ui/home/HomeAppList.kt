@@ -11,6 +11,7 @@ import com.facetlauncher.app.ui.components.gridItemLayer
 import com.facetlauncher.app.ui.components.gridCellBounds
 import com.facetlauncher.app.ui.components.LocalGridDrag
 import com.facetlauncher.app.ui.components.GridDragState
+import com.facetlauncher.app.ui.components.edgeScrollDelta
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.boundsInRoot
@@ -260,12 +261,7 @@ private fun GridEdgeAutoScroll(drag: GridDragState, state: LazyGridState, viewpo
     LaunchedEffect(drag.dragging, viewport, reversed) {
         while (drag.dragging && !viewport.isEmpty) {
             val y = drag.pointer.y
-            // Positive: the content moves up (the finger is near the bottom); negative: it moves down.
-            val visual = when {
-                y > viewport.bottom - edge -> step
-                y < viewport.top + edge -> -step
-                else -> 0f
-            }
+            val visual = edgeScrollDelta(y, viewport.top, viewport.bottom, edge, step)
             if (visual != 0f) {
                 val consumed = state.scrollBy(if (reversed) -visual else visual)
                 drag.addScroll(if (reversed) -consumed else consumed)

@@ -9,6 +9,7 @@ import com.facetlauncher.app.data.local.gridKey
 import com.facetlauncher.app.data.local.keepingCellsOf
 import com.facetlauncher.app.data.local.withCell
 import com.facetlauncher.app.data.model.AppInfo
+import com.facetlauncher.app.data.model.BackupGridCells
 import com.facetlauncher.app.data.model.PlacedItem
 import com.facetlauncher.app.data.model.PlacementList
 import com.facetlauncher.app.data.model.PlacementTarget
@@ -164,6 +165,18 @@ class PlacementRepository @Inject constructor(
     /** F14 Backup & Restore import — places a restored folder (by its already-remapped [folderId]) into the target. */
     suspend fun restoreFolderPlacement(target: PlacementTarget, folderId: Long, position: Int) {
         placeFolder(target, folderId, position)
+    }
+
+    /** F14 Backup & Restore import — puts a restored folder placement back on its saved grid cells. */
+    suspend fun restoreFolderCells(target: PlacementTarget, folderId: Long, cells: BackupGridCells) {
+        folderPlacementDao.observe(target.list, target.ownerKey).first().filter { it.folderId == folderId }.forEach {
+            folderPlacementDao.upsert(
+                it.copy(
+                    portraitRow = cells.portraitRow, portraitColumn = cells.portraitColumn,
+                    landscapeRow = cells.landscapeRow, landscapeColumn = cells.landscapeColumn,
+                ),
+            )
+        }
     }
 
     /** Rows still at the migration's `-1` `userId` sentinel, in every list — see `RepairOrphanedProfileRowsUseCase`. */

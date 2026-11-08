@@ -18,6 +18,12 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateOf
+import com.facetlauncher.app.ui.components.LocalListAutoScroll
+import com.facetlauncher.app.ui.components.ListAutoScroll
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.geometry.Rect
 import com.facetlauncher.app.ui.nativewidget.NativeWidgetActions
 import com.facetlauncher.app.data.model.NativeWidgetRef
 import com.facetlauncher.app.ui.nativewidget.NativeWidgetPage
@@ -327,6 +333,9 @@ internal fun HomeMediaSlot(frame: HomeFrame, player: MediaPlayerState, modifier:
 @Composable
 internal fun HomeAppListRegion(frame: HomeFrame, maxHeight: Dp, modifier: Modifier = Modifier) {
     val layout = frame.layout
+    val scrollState = rememberScrollState()
+    var viewport by remember { mutableStateOf(Rect.Zero) }
+    val autoScroll = remember(scrollState) { ListAutoScroll(scrollState) { viewport } }
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -334,8 +343,9 @@ internal fun HomeAppListRegion(frame: HomeFrame, maxHeight: Dp, modifier: Modifi
             .onGloballyPositioned {
                 layout.appListSize = it.size
                 layout.appListOriginInRoot = it.positionInRoot()
+                viewport = it.boundsInRoot()
             }
-            .let { if (frame.state.list.layout == AppListLayout.GRID) it else it.verticalScroll(rememberScrollState()) }
+            .let { if (frame.state.list.layout == AppListLayout.GRID) it else it.verticalScroll(scrollState) }
             .testTag(homeTag("home_app_list_scroll_region")),
     ) {
         // A scrollable Column measures its content at its natural height regardless of the clamp above, so this
@@ -349,7 +359,7 @@ internal fun HomeAppListRegion(frame: HomeFrame, maxHeight: Dp, modifier: Modifi
             if (frame.state.list.showUsageAccessPrompt) {
                 UsageAccessStrip(onClick = frame.actions.onUsageAccessPromptClick)
             } else {
-                HomeAppListBody(frame, maxHeight)
+                CompositionLocalProvider(LocalListAutoScroll provides autoScroll) { HomeAppListBody(frame, maxHeight) }
             }
         }
     }
