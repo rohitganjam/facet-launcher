@@ -1,5 +1,6 @@
 package com.facetlauncher.app.ui.settings
 
+import com.facetlauncher.app.data.AppRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.WallpaperRepository
 import com.facetlauncher.app.data.model.HomeWallpaper
@@ -17,14 +18,20 @@ import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import com.facetlauncher.app.data.model.AppInfo
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
 
+@RunWith(RobolectricTestRunner::class)
 @OptIn(ExperimentalCoroutinesApi::class)
 class AppDrawerSettingsViewModelTest {
 
@@ -45,9 +52,24 @@ class AppDrawerSettingsViewModelTest {
     private fun createViewModel(
         settingsRepository: SettingsRepository = mock(SettingsRepository::class.java),
         wallpaper: HomeWallpaper = HomeWallpaper.Unavailable,
+        installedApps: List<AppInfo> = emptyList(),
     ): AppDrawerSettingsViewModel {
         `when`(settingsRepository.settings).thenReturn(flowOf(LauncherSettings()))
-        return AppDrawerSettingsViewModel(settingsRepository, fakeWallpaperRepository(wallpaper))
+        val appRepository = mock(AppRepository::class.java)
+        `when`(appRepository.observeInstalledApps()).thenReturn(flowOf(installedApps))
+        return AppDrawerSettingsViewModel(settingsRepository, fakeWallpaperRepository(wallpaper), appRepository)
+    }
+
+    @Test
+    fun `installed apps for the preview come from the app repository`() = runTest {
+        val apps = listOf(AppInfo("com.example.a", ".Main", "A", icon = null))
+        val viewModel = createViewModel(installedApps = apps)
+        val collector = launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.installedApps.collect {} }
+
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(apps, viewModel.installedApps.value.toList())
+        collector.cancel()
     }
 
     @Test

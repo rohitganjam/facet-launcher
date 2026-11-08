@@ -45,12 +45,12 @@ class ObserveQuickAddStateUseCaseTest {
     }
 
     @Test
-    fun `forApp hides Favorites row once the list is already at the cap and app isn't a member`() {
+    fun `forApp shows a full Favorites row once the list is at the cap and the app isn't a member`() {
         val fullFavorites = (1..AppListLimits.MAX_FAVORITES).map { PlacedItem.SingleApp(appInfo('a' + it)) }
 
         val result = useCase.forApp(app, dockItems = emptyList(), favoriteItems = fullFavorites, dockFacetName = null, favoritesFacetName = null)
 
-        assertEquals(null, result.favoritesAction)
+        assertEquals(QuickPlacementAction.Full(facetName = null), result.favoritesAction)
     }
 
     @Test
@@ -71,12 +71,12 @@ class ObserveQuickAddStateUseCaseTest {
     }
 
     @Test
-    fun `forApp hides Dock row once the dock is already at the cap and app isn't a member`() {
+    fun `forApp shows a full Dock row once the dock is at the cap and the app isn't a member`() {
         val fullDock = (1..5).map { PlacedItem.SingleApp(appInfo('a' + it)) }
 
         val result = useCase.forApp(app, dockItems = fullDock, favoriteItems = emptyList(), dockFacetName = null, favoritesFacetName = null)
 
-        assertEquals(null, result.dockAction)
+        assertEquals(QuickPlacementAction.Full(facetName = null), result.dockAction)
     }
 
     @Test

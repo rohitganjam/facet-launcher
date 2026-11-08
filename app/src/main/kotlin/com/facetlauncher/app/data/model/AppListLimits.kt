@@ -9,7 +9,7 @@ package com.facetlauncher.app.data.model
  */
 object AppListLimits {
     /** Cap shared by both the launcher-wide default favorites list and each facet's own. */
-    const val MAX_FAVORITES = 12
+    const val MAX_FAVORITES = 20
 
     /** The dock can be emptied out entirely (Home then omits the dock row) and holds at most [MAX_DOCK_APPS] items, apps and folders together. */
     const val MIN_DOCK_APPS = 0
@@ -17,7 +17,7 @@ object AppListLimits {
 
     /** [ListContentMode.RECENTS]/[ListContentMode.MOST_USED]'s "Apps to show" range and default. */
     const val MIN_APPS_TO_SHOW = 3
-    const val MAX_APPS_TO_SHOW = 12
+    const val MAX_APPS_TO_SHOW = 20
     const val DEFAULT_APPS_TO_SHOW = 6
     val APPS_TO_SHOW_OPTIONS = (MIN_APPS_TO_SHOW..MAX_APPS_TO_SHOW).toList()
 }

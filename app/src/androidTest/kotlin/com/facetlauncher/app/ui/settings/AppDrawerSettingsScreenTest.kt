@@ -1,8 +1,13 @@
 package com.facetlauncher.app.ui.settings
 
 import android.app.WallpaperManager
+import android.content.pm.LauncherApps
+import android.os.UserManager
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.semantics.getOrNull
+import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.createComposeRule
@@ -15,6 +20,7 @@ import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeUp
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
+import com.facetlauncher.app.data.AppRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.WallpaperRepository
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
@@ -37,7 +43,11 @@ class AppDrawerSettingsScreenTest {
                         produceFile = { File(context.cacheDir, "app-drawer-settings-test-${System.nanoTime()}.preferences_pb") },
                     ),
                 )
-                AppDrawerSettingsViewModel(settingsRepository, WallpaperRepository(WallpaperManager.getInstance(context)))
+                AppDrawerSettingsViewModel(
+                    settingsRepository,
+                    WallpaperRepository(WallpaperManager.getInstance(context)),
+                    AppRepository(context.getSystemService(LauncherApps::class.java), context.getSystemService(UserManager::class.java), context),
+                )
             }
             FacetLauncherTheme {
                 AppDrawerSettingsScreen(onBack = onBack, viewModel = viewModel)
@@ -45,13 +55,21 @@ class AppDrawerSettingsScreenTest {
         }
     }
 
+    /** Any row or tile in the preview, whatever app it holds (the preview shows the device's own apps once they load). */
+    private fun previewItem(prefix: String) = SemanticsMatcher("test tag starts with $prefix") { node ->
+        node.config.getOrNull(SemanticsProperties.TestTag)?.startsWith(prefix) == true
+    }
+
+    private fun previewItemCount(prefix: String) =
+        composeRule.onAllNodes(previewItem(prefix), useUnmergedTree = true).fetchSemanticsNodes().size
+
     @Test
     fun previewShowsListRowsThenGridTilesWhenPresentationChangesToGrid() {
         // Given the screen with the default List presentation
         setContent()
         composeRule.onNodeWithTag("app_drawer_preview").assertIsDisplayed()
-        composeRule.onNodeWithTag("drawer_app_row_preview.sample.0", useUnmergedTree = true).assertExists()
-        composeRule.onNodeWithTag("drawer_grid_tile_preview.sample.0", useUnmergedTree = true).assertDoesNotExist()
+        composeRule.waitUntil(timeoutMillis = 3_000) { previewItemCount("drawer_app_row_") > 0 }
+        assertEquals(0, previewItemCount("drawer_grid_tile_"))
 
         // When switching Presentation to Grid (Popup root-registration note — see below)
         composeRule.onNodeWithTag("drawer_presentation_row").performClick()
@@ -59,24 +77,24 @@ class AppDrawerSettingsScreenTest {
         composeRule.onNodeWithTag("drawer_presentation_row_option_GRID").performClick()
 
         // Then the preview swaps its rows for tiles
-        composeRule.waitUntil(timeoutMillis = 3_000) {
-            composeRule.onAllNodesWithTag("drawer_grid_tile_preview.sample.0", useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
-        }
-        composeRule.onNodeWithTag("drawer_app_row_preview.sample.0", useUnmergedTree = true).assertDoesNotExist()
+        composeRule.waitUntil(timeoutMillis = 3_000) { previewItemCount("drawer_grid_tile_") > 0 }
+        assertEquals(0, previewItemCount("drawer_app_row_"))
     }
 
     @Test
-    fun draggingThePreviewScrollsTheSampleApps() {
-        // Given the preview, whose last sample app (Weather) is below the card's visible area
+    fun draggingThePreviewScrollsItsApps() {
+        // Given the preview with its first row at some position
         setContent()
-        composeRule.onNodeWithTag("drawer_app_row_preview.sample.7", useUnmergedTree = true).assertDoesNotExist()
+        composeRule.waitUntil(timeoutMillis = 3_000) { previewItemCount("drawer_app_row_") > 0 }
+        val firstRow = composeRule.onAllNodes(previewItem("drawer_app_row_"), useUnmergedTree = true)[0]
+        val topBefore = firstRow.fetchSemanticsNode().boundsInRoot.top
 
         // When swiping up on the preview
         composeRule.onNodeWithTag("app_drawer_preview").performTouchInput { swipeUp() }
 
-        // Then the list inside it scrolled and the last app is now there
+        // Then the list inside it scrolled, so the first row moved up
         composeRule.waitUntil(timeoutMillis = 3_000) {
-            composeRule.onAllNodesWithTag("drawer_app_row_preview.sample.7", useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
+            composeRule.onAllNodes(previewItem("drawer_app_row_"), useUnmergedTree = true)[0].fetchSemanticsNode().boundsInRoot.top < topBefore
         }
     }
 

@@ -196,6 +196,18 @@ class AppContextMenuTest {
     }
 
     @Test
+    fun aFullFavoritesListShowsARowSayingSo() {
+        // Given Favorites at its cap and the app not in it
+        setContent(onRequestQuickAddState = { QuickAddState(favoritesAction = QuickPlacementAction.Full(facetName = null)) })
+
+        composeRule.waitForIdle()
+
+        // Then the row reads that the limit is reached instead of offering to add
+        composeRule.onNodeWithText("Favorites: limit reached").assertExists()
+        composeRule.onNodeWithText("Add to Favorites").assertDoesNotExist()
+    }
+
+    @Test
     fun addToFavoritesRowReadsAddToFavoritesAndFiresOnFavoritesActionForTheLauncherWideDefault() {
         var addedApp: AppInfo? = null
         var addedAction: QuickPlacementAction? = null
@@ -208,7 +220,7 @@ class AppContextMenuTest {
 
         composeRule.waitForIdle()
         composeRule.onNodeWithText("Add to Favorites").assertExists()
-        composeRule.onNodeWithText("Global").assertExists()
+        composeRule.onNodeWithText("Global").assertDoesNotExist()
         composeRule.onNodeWithTag("app_context_menu_add_to_favorites").performClick()
 
         assert(addedApp == app)
@@ -217,12 +229,12 @@ class AppContextMenuTest {
     }
 
     @Test
-    fun addToFavoritesRowShowsTheFacetNameBadgeWhenTheActiveFacetOverridesItsOwn() {
+    fun addToFavoritesRowNamesNoFacetEvenWhenTheActiveFacetOverridesItsOwn() {
         setContent(onRequestQuickAddState = { QuickAddState(favoritesAction = QuickPlacementAction.Add(facetName = "Work")) })
 
         composeRule.waitForIdle()
         composeRule.onNodeWithText("Add to Favorites").assertExists()
-        composeRule.onNodeWithText("Work").assertExists()
+        composeRule.onNodeWithText("Work").assertDoesNotExist()
     }
 
     @Test
@@ -238,7 +250,7 @@ class AppContextMenuTest {
 
         composeRule.waitForIdle()
         composeRule.onNodeWithText("Remove from Favorites").assertExists()
-        composeRule.onNodeWithText("Global").assertExists()
+        composeRule.onNodeWithText("Global").assertDoesNotExist()
         composeRule.onNodeWithTag("app_context_menu_add_to_favorites").performClick()
 
         assert(removedApp == app)
@@ -247,12 +259,12 @@ class AppContextMenuTest {
     }
 
     @Test
-    fun removeFromFavoritesRowShowsTheFacetNameBadgeWhenTheActiveFacetOverridesItsOwn() {
+    fun removeFromFavoritesRowNamesNoFacetEvenWhenTheActiveFacetOverridesItsOwn() {
         setContent(onRequestQuickAddState = { QuickAddState(favoritesAction = QuickPlacementAction.Remove(facetName = "Work")) })
 
         composeRule.waitForIdle()
         composeRule.onNodeWithText("Remove from Favorites").assertExists()
-        composeRule.onNodeWithText("Work").assertExists()
+        composeRule.onNodeWithText("Work").assertDoesNotExist()
     }
 
     @Test
@@ -276,7 +288,7 @@ class AppContextMenuTest {
 
         composeRule.waitForIdle()
         composeRule.onNodeWithText("Add to Dock").assertExists()
-        composeRule.onNodeWithText("Global").assertExists()
+        composeRule.onNodeWithText("Global").assertDoesNotExist()
         composeRule.onNodeWithTag("app_context_menu_add_to_dock").performClick()
 
         assert(addedApp == app)
@@ -285,12 +297,12 @@ class AppContextMenuTest {
     }
 
     @Test
-    fun addToDockRowShowsTheFacetNameBadgeWhenTheActiveFacetOverridesItsOwn() {
+    fun addToDockRowNamesNoFacetEvenWhenTheActiveFacetOverridesItsOwn() {
         setContent(onRequestQuickAddState = { QuickAddState(dockAction = QuickPlacementAction.Add(facetName = "Work")) })
 
         composeRule.waitForIdle()
         composeRule.onNodeWithText("Add to Dock").assertExists()
-        composeRule.onNodeWithText("Work").assertExists()
+        composeRule.onNodeWithText("Work").assertDoesNotExist()
     }
 
     @Test
@@ -306,7 +318,7 @@ class AppContextMenuTest {
 
         composeRule.waitForIdle()
         composeRule.onNodeWithText("Remove from Dock").assertExists()
-        composeRule.onNodeWithText("Global").assertExists()
+        composeRule.onNodeWithText("Global").assertDoesNotExist()
         composeRule.onNodeWithTag("app_context_menu_add_to_dock").performClick()
 
         assert(removedApp == app)
@@ -315,12 +327,12 @@ class AppContextMenuTest {
     }
 
     @Test
-    fun removeFromDockRowShowsTheFacetNameBadgeWhenTheActiveFacetOverridesItsOwn() {
+    fun removeFromDockRowNamesNoFacetEvenWhenTheActiveFacetOverridesItsOwn() {
         setContent(onRequestQuickAddState = { QuickAddState(dockAction = QuickPlacementAction.Remove(facetName = "Work")) })
 
         composeRule.waitForIdle()
         composeRule.onNodeWithText("Remove from Dock").assertExists()
-        composeRule.onNodeWithText("Work").assertExists()
+        composeRule.onNodeWithText("Work").assertDoesNotExist()
     }
 
     @Test
@@ -517,7 +529,7 @@ class AppContextMenuTest {
     }
 
     @Test
-    fun aPlacementTileDescribesItsActionAndListToScreenReaders() {
+    fun aPlacementTileDescribesItsActionToScreenReaders() {
         setContent(
             onRequestQuickAddState = {
                 QuickAddState(
@@ -528,8 +540,8 @@ class AppContextMenuTest {
         )
 
         composeRule.waitForIdle()
-        composeRule.onNodeWithContentDescription("Add to Favorites, Global").assertExists()
-        composeRule.onNodeWithContentDescription("Remove from Dock, Work").assertExists()
+        composeRule.onNodeWithContentDescription("Add to Favorites").assertExists()
+        composeRule.onNodeWithContentDescription("Remove from Dock").assertExists()
     }
 
     @Test

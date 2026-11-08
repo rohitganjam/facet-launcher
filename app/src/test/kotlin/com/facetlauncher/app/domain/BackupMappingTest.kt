@@ -23,6 +23,12 @@ import com.facetlauncher.app.data.model.ClockAlignment
 import com.facetlauncher.app.data.model.ClockColorOption
 import com.facetlauncher.app.data.model.ClockDateStyle
 import com.facetlauncher.app.data.model.WeatherIconStyle
+import com.facetlauncher.app.data.local.AppPlacementEntity
+import com.facetlauncher.app.data.local.FolderPlacementEntity
+import com.facetlauncher.app.data.model.BackupAppEntry
+import com.facetlauncher.app.data.model.BackupGridCells
+import com.facetlauncher.app.data.model.PlacementList
+import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
@@ -158,5 +164,33 @@ class BackupMappingTest {
 
         // Then the item follows the same setting
         assertEquals(WidgetWeatherLocation.Current, decodeNativeWidgetConfig(item?.nativeWidgetConfig).weatherLocation)
+    }
+
+    @Test
+    fun `an app placement's grid cells survive a backup round trip`() {
+        // Given an app moved on the grid in portrait only
+        val entity = AppPlacementEntity(
+            list = PlacementList.FAVORITES, packageName = "a", activityName = ".A", position = 2, userId = 0,
+            portraitRow = 1, portraitColumn = 3,
+        )
+
+        // When it goes into a backup and back
+        val entry = entity.toBackupEntry()
+        val restored = entry.toAppPlacementEntity(PlacementList.FAVORITES)
+
+        // Then the cells are kept, and a never-moved app carries none
+        assertEquals(BackupGridCells(portraitRow = 1, portraitColumn = 3), entry.gridCells)
+        assertEquals(1, restored.portraitRow)
+        assertEquals(3, restored.portraitColumn)
+        assertNull(restored.landscapeRow)
+        assertNull(entity.copy(portraitRow = null, portraitColumn = null).toBackupEntry().gridCells)
+    }
+
+    @Test
+    fun `a folder placement's grid cells are exported and a backup without cells still reads`() {
+        val placement = FolderPlacementEntity(list = PlacementList.FAVORITES, folderId = 7L, position = 0, landscapeRow = 2, landscapeColumn = 0)
+
+        assertEquals(BackupGridCells(landscapeRow = 2, landscapeColumn = 0), placement.toBackupPlacement(mapOf(7L to 0))?.gridCells)
+        assertNull(Json.decodeFromString<BackupAppEntry>("""{"packageName":"a","activityName":".A","position":0}""").gridCells)
     }
 }

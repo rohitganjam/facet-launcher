@@ -32,10 +32,12 @@ import androidx.compose.ui.unit.dp
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.AppRowPosition
 import com.facetlauncher.app.data.model.AppRowPresentation
+import com.facetlauncher.app.data.model.PlacedItem
 import com.facetlauncher.app.ui.components.AppIcon
 import com.facetlauncher.app.ui.components.AppIconSize
 import com.facetlauncher.app.ui.components.NotificationBadge
-import com.facetlauncher.app.ui.components.longPressReleaseClickable
+import com.facetlauncher.app.ui.components.longPressReorderClickable
+import com.facetlauncher.app.ui.components.LiftableCell
 import com.facetlauncher.app.ui.home.AppRow
 import com.facetlauncher.app.ui.theme.homeAppLabelShadow
 
@@ -61,12 +63,29 @@ internal fun AppRow(
     onClick: () -> Unit = { actions.onAppClick(app) },
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
+    val itemKey = remember(app) { PlacedItem.SingleApp(app).stableKey() }
     val clickModifier = if (enableLongPressMenu) {
-        Modifier.longPressReleaseClickable(onClick = onClick, onLongPress = { menuExpanded = true })
+        Modifier.longPressReorderClickable(itemKey, onClick = onClick, onLongPress = { menuExpanded = true })
     } else {
         Modifier.clickable(onClick = onClick)
     }
-    Box(modifier = modifier) {
+    // The large shape (16dp) clips the ripple to a rounded rect instead of a full-bleed rectangle.
+    val rowShape = MaterialTheme.shapes.large
+    LiftableCell(
+        key = itemKey,
+        modifier = modifier,
+        copy = {
+            AppRowContent(
+                app = app,
+                style = style,
+                position = position,
+                presentation = presentation,
+                iconSize = iconSize,
+                testTagPrefix = testTagPrefix,
+                modifier = Modifier.fillMaxWidth().clip(rowShape).padding(horizontal = 8.dp, vertical = verticalPadding),
+            )
+        },
+    ) {
         AppRowContent(
             app = app,
             style = style,
@@ -74,10 +93,9 @@ internal fun AppRow(
             presentation = presentation,
             iconSize = iconSize,
             testTagPrefix = testTagPrefix,
-            // The large shape (16dp) clips the ripple to a rounded rect instead of a full-bleed rectangle.
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(MaterialTheme.shapes.large)
+                .clip(rowShape)
                 .then(clickModifier)
                 .padding(horizontal = 8.dp, vertical = verticalPadding),
         )

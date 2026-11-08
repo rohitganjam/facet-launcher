@@ -25,6 +25,9 @@ Compose:
       - LocalClockWidgetHost
       - LocalHomePressedEvent
       - LocalHomeSwipeGate
+      - LocalPickUpReorder
+      - LocalGridDrag
+      - LocalListAutoScroll
       - LocalSystemBarsState
       - LocalLightStatusBarIcons
       - LocalHideStatusBar

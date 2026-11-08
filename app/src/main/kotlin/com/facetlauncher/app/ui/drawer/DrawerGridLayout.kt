@@ -16,7 +16,7 @@ private fun DrawerGridDensity.targetCellWidth(): Dp = when (this) {
 }
 
 /** Ideal row pitch (tile plus vertical gap) per density. */
-private fun DrawerGridDensity.targetRowPitch(): Dp = when (this) {
+internal fun DrawerGridDensity.targetRowPitch(): Dp = when (this) {
     DrawerGridDensity.COMPACT -> 92.dp
     DrawerGridDensity.REGULAR -> 108.dp
     DrawerGridDensity.SPACIOUS -> 120.dp

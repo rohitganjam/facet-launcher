@@ -7,7 +7,10 @@ import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
@@ -66,12 +69,12 @@ class GesturesScreenTest {
         // Then each built-in swipe and the long-press is listed with what it does
         composeRule.onNodeWithText("Swipe up").assertExists()
         composeRule.onNodeWithText("Open the app drawer").assertExists()
-        composeRule.onNodeWithText("Swipe right").assertExists()
-        composeRule.onNodeWithText("Open the Hub").assertExists()
-        composeRule.onNodeWithText("Swipe left").assertExists()
-        composeRule.onNodeWithText("Switch facets").assertExists()
-        composeRule.onNodeWithText("Swipe down").assertExists()
-        composeRule.onNodeWithText("Open the notification shade").assertExists()
+        composeRule.onAllNodesWithText("Swipe right").onFirst().assertExists()
+        composeRule.onAllNodesWithText("Open the Hub").onFirst().assertExists()
+        composeRule.onAllNodesWithText("Swipe left").onFirst().assertExists()
+        composeRule.onAllNodesWithText("Switch facets").onFirst().assertExists()
+        composeRule.onAllNodesWithText("Swipe down").onFirst().assertExists()
+        composeRule.onAllNodesWithText("Open the notification shade").onFirst().assertExists()
         composeRule.onNodeWithText("Long-press empty space").assertExists()
 
         // And the optional gesture has a switch, off by default (double-tap to lock is disabled for now)
@@ -84,12 +87,25 @@ class GesturesScreenTest {
         val settingsRepository = setContent()
 
         // When turning on "Home button opens search"
-        composeRule.onNodeWithTag("gesture_home_opens_search_toggle").performClick()
+        composeRule.onNodeWithTag("gesture_home_opens_search_toggle").performScrollTo().performClick()
         awaitStored(settingsRepository) { it.homeOpensSearch }
 
         // Then the switch is on and the setting is stored
         composeRule.onNodeWithTag("gesture_home_opens_search_toggle").assertIsOn()
         assertTrue(runBlocking { settingsRepository.settings.first().homeOpensSearch })
+    }
+
+    @Test
+    fun turningOnSwapLeftAndRightPersistsIt() {
+        // Given the gestures screen
+        val settingsRepository = setContent()
+
+        // When turning on "Swap left and right"
+        composeRule.onNodeWithTag("gesture_swap_sides_toggle").performScrollTo().performClick()
+        awaitStored(settingsRepository) { it.swapSwipeSides }
+
+        // Then the switch is on and the setting is stored
+        composeRule.onNodeWithTag("gesture_swap_sides_toggle").assertIsOn()
     }
 
     // Skipped (an assumption, since the runner reports @Ignore as a failure) until the Play AccessibilityService declaration is approved.

@@ -30,6 +30,8 @@ import com.facetlauncher.app.domain.AppNotificationsState
 import com.facetlauncher.app.domain.AddToActiveListUseCase
 import com.facetlauncher.app.domain.ObserveAppNotificationsUseCase
 import com.facetlauncher.app.domain.RemoveFromActiveListUseCase
+import com.facetlauncher.app.domain.GridCell
+import com.facetlauncher.app.domain.ReorderActiveListUseCase
 import com.facetlauncher.app.domain.QuickPlacementAction
 import com.facetlauncher.app.domain.RankBySearchRelevanceUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -60,6 +62,8 @@ private const val MAX_CONTACT_RESULTS = 5
 private const val MAX_SETTINGS_RESULTS = 5
 
 /** Read-only settings needed to render the Drawer (icon visibility, opacity, left-edge rail toggle), plus F6's contacts search. */
+// It also fronts every long-press action on Home and the Drawer, one thin function each.
+@Suppress("TooManyFunctions")
 @HiltViewModel
 class DrawerViewModel @Inject constructor(
     private val appRepository: AppRepository,
@@ -72,6 +76,7 @@ class DrawerViewModel @Inject constructor(
     private val rankBySearchRelevance: RankBySearchRelevanceUseCase,
     private val addToActiveList: AddToActiveListUseCase,
     private val removeFromActiveList: RemoveFromActiveListUseCase,
+    private val reorderActiveList: ReorderActiveListUseCase,
     private val folderRepository: FolderRepository,
     private val secureFolderRepository: SecureFolderRepository,
     private val privateSpaceRepository: PrivateSpaceRepository,
@@ -246,6 +251,7 @@ class DrawerViewModel @Inject constructor(
             when (action) {
                 is QuickPlacementAction.Add -> addToActiveList(list, item)
                 is QuickPlacementAction.Remove -> removeFromActiveList(list, item)
+                is QuickPlacementAction.Full -> Unit
             }
         }
     }
@@ -274,6 +280,21 @@ class DrawerViewModel @Inject constructor(
 
     fun removeFromFolder(folderId: Long, app: AppInfo) {
         viewModelScope.launch { folderRepository.removeAppFromFolder(folderId, app) }
+    }
+
+    /** A drag-to-reorder on Home's apps list or Dock: saves the active facet's list in the new order. */
+    fun onReorderList(list: PlacementList, orderedItems: List<PlacedItem>) {
+        viewModelScope.launch { reorderActiveList(list, orderedItems) }
+    }
+
+    /** A drag on Home's grid: saves where each Favorite now sits. */
+    fun onMoveGridItems(landscape: Boolean, cells: Map<String, GridCell>) {
+        viewModelScope.launch { reorderActiveList.saveGridCells(landscape, cells) }
+    }
+
+    /** A drag-to-reorder inside an open folder. */
+    fun onReorderFolderApps(folderId: Long, orderedApps: List<AppInfo>) {
+        viewModelScope.launch { folderRepository.reorderFolderApps(folderId, orderedApps) }
     }
 
     fun renameFolder(folderId: Long, name: String) {

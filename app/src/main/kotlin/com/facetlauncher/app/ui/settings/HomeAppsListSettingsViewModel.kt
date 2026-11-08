@@ -18,6 +18,9 @@ import com.facetlauncher.app.data.model.AppListGridColumns
 import com.facetlauncher.app.data.model.AppListGridDisplayMode
 import com.facetlauncher.app.data.model.AppListLayout
 import com.facetlauncher.app.data.model.AppListLimits
+import com.facetlauncher.app.data.model.AppListShrinkToFit
+import com.facetlauncher.app.data.model.LandscapeOverrides
+import com.facetlauncher.app.data.model.landscape
 import com.facetlauncher.app.data.model.AppListVerticalAlignment
 import com.facetlauncher.app.data.model.AppRowPosition
 import com.facetlauncher.app.data.model.AppRowPresentation
@@ -81,6 +84,11 @@ data class HomeAppsListUiState(
     val appListColumnAlignment: AppListColumnAlignment get() = style.appList.columnAlignment
     val appListGridColumns: AppListGridColumns get() = style.appList.gridColumns
     val appListGridDisplayMode: AppListGridDisplayMode get() = style.appList.gridDisplayMode
+    val appListShrinkToFit: AppListShrinkToFit get() = style.appList.shrinkToFit
+    /** Launcher-wide: off keeps Home in portrait, and the landscape settings are hidden. */
+    val allowLandscape: Boolean get() = settings.allowLandscape
+    /** What the Landscape rows show: this scope's own landscape values, `null` meaning "same as portrait". */
+    val landscape: LandscapeOverrides get() = facet?.landscape ?: settings.landscape
     /** This scope's favorites, apps and folders interleaved, same as Home's own list. */
     val favorites: ImmutableList<PlacedItem> get() = if (isFacetScoped) facetFavorites else globalFavorites
     val favoritesLabel: String get() = "${favorites.size} of ${AppListLimits.MAX_FAVORITES}"
@@ -163,14 +171,65 @@ class HomeAppsListSettingsViewModel @Inject constructor(
         }
     }
 
-    /** "Copy to facets": replaces the Favorites, content mode and count of each chosen facet with the launcher-wide ones. */
+    /** "Copy to facets": replaces the Favorites, content mode, count and list look of each chosen facet with the launcher-wide ones. */
     fun copyToFacets(facetIds: Set<Long>) {
-        viewModelScope.launch { facetIds.forEach { applyFacetDefaults(it, FacetDefaultsScope.APPS_LIST) } }
+        viewModelScope.launch {
+            facetIds.forEach {
+                applyFacetDefaults(it, FacetDefaultsScope.APPS_LIST)
+                applyFacetDefaults(it, FacetDefaultsScope.LOOK)
+            }
+        }
     }
 
-    /** "Reset to default": replaces this facet's Favorites, content mode and count with the launcher-wide ones. */
+    /** "Reset to default": replaces this facet's Favorites, content mode, count and list look with the launcher-wide ones. */
     fun resetToDefault() {
         val id = facetId ?: return
-        viewModelScope.launch { applyFacetDefaults(id, FacetDefaultsScope.APPS_LIST) }
+        viewModelScope.launch {
+            applyFacetDefaults(id, FacetDefaultsScope.APPS_LIST)
+            applyFacetDefaults(id, FacetDefaultsScope.LOOK)
+        }
     }
+
+    /** Facet-or-global write: a facet's own value, or the launcher-wide default a new facet is seeded from. */
+    private fun writeLook(onFacet: suspend (Long) -> Unit, onGlobal: suspend () -> Unit) {
+        viewModelScope.launch {
+            facetId?.let { pid -> facetRepository.getById(pid)?.let { onFacet(it.id) } } ?: onGlobal()
+        }
+    }
+
+    fun setAppRowPosition(position: AppRowPosition) = writeLook({ facetRepository.setAppRowPosition(it, position) }, { settingsRepository.setAppRowPosition(position) })
+
+    fun setAppRowPresentation(presentation: AppRowPresentation) =
+        writeLook({ facetRepository.setAppRowPresentation(it, presentation) }, { settingsRepository.setAppRowPresentation(presentation) })
+
+    fun setAppListVerticalAlignment(alignment: AppListVerticalAlignment) =
+        writeLook({ facetRepository.setAppListVerticalAlignment(it, alignment) }, { settingsRepository.setAppListVerticalAlignment(alignment) })
+
+    fun setAppListLayout(layout: AppListLayout) = writeLook({ facetRepository.setAppListLayout(it, layout) }, { settingsRepository.setAppListLayout(layout) })
+
+    fun setAppListColumnAlignment(alignment: AppListColumnAlignment) =
+        writeLook({ facetRepository.setAppListColumnAlignment(it, alignment) }, { settingsRepository.setAppListColumnAlignment(alignment) })
+
+    fun setAppListGridColumns(columns: AppListGridColumns) =
+        writeLook({ facetRepository.setAppListGridColumns(it, columns) }, { settingsRepository.setAppListGridColumns(columns) })
+
+    fun setAppListGridDisplayMode(mode: AppListGridDisplayMode) =
+        writeLook({ facetRepository.setAppListGridDisplayMode(it, mode) }, { settingsRepository.setAppListGridDisplayMode(mode) })
+
+    fun setAppListShrinkToFit(shrink: AppListShrinkToFit) =
+        writeLook({ facetRepository.setAppListShrinkToFit(it, shrink) }, { settingsRepository.setAppListShrinkToFit(shrink) })
+
+    fun setAllowLandscape(allow: Boolean) {
+        viewModelScope.launch { settingsRepository.setAllowLandscape(allow) }
+    }
+
+    fun setLandscapeAppRowPosition(position: AppRowPosition?) = updateLandscape { it.copy(appRowPosition = position) }
+
+    fun setLandscapeAppListVerticalAlignment(alignment: AppListVerticalAlignment?) = updateLandscape { it.copy(appListVerticalAlignment = alignment) }
+
+    fun setLandscapeAppListColumnAlignment(alignment: AppListColumnAlignment?) = updateLandscape { it.copy(appListColumnAlignment = alignment) }
+
+    /** This scope's landscape values: the facet's own when facet-scoped, the launcher-wide ones otherwise. */
+    private fun updateLandscape(transform: (LandscapeOverrides) -> LandscapeOverrides) =
+        writeLook({ facetRepository.updateLandscape(it, transform) }, { settingsRepository.updateLandscape(transform) })
 }

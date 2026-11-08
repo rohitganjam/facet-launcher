@@ -1,6 +1,7 @@
 package com.facetlauncher.app.ui.home
 
 import com.facetlauncher.app.data.model.WeatherIconStyle
+import com.facetlauncher.app.domain.SavedGridCells
 import com.facetlauncher.app.domain.ListAlignment
 import com.facetlauncher.app.domain.ClockPlacement
 import android.appwidget.AppWidgetHostView
@@ -156,6 +157,10 @@ data class HomeListState(
     val gridColumns: AppListGridColumns = AppListGridColumns.FOUR,
     val gridDisplayMode: AppListGridDisplayMode = AppListGridDisplayMode.ICONS,
     val showUsageAccessPrompt: Boolean = false,
+    /** True for a manual (Favorites) list; Recents and Most used have no order of their own to change. */
+    val reorderable: Boolean = false,
+    /** Where the grid layout draws each item, once it has been moved there; the rest follow the list order. */
+    val gridCells: SavedGridCells = SavedGridCells(),
     /** "Shrink list to fit": drop to Compact rows when Regular ones wouldn't fit; off, the list scrolls instead. */
     val shrinkToFit: Boolean = false,
 )
@@ -201,6 +206,8 @@ data class HomeClockActions(
     val onClockStylesClick: () -> Unit = {},
     val onNavigateToSettings: () -> Unit = {},
     val onNavigateToFacetSettings: () -> Unit = {},
+    /** Opens the facet carousel, as a swipe left does. */
+    val onOpenFacetCarousel: () -> Unit = {},
     /** The Home sheet's rows for the page showing: swap it through the widget picker, take it off the stack, or add the first one. */
     val onReplaceWidgetClick: () -> Unit = {},
     val onRemoveWidgetClick: () -> Unit = {},

@@ -1,12 +1,7 @@
 package com.facetlauncher.app.ui.components
 
 import android.content.res.Configuration
-import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -72,8 +67,6 @@ import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.collections.immutable.toImmutableList
 
-/** Shared by the panel's slide and the tab indicator's own slide so both move in lockstep. */
-private const val TAB_TRANSITION_DURATION_MS = 220
 
 private enum class AppPickerTab { APPS, FOLDERS }
 
@@ -146,25 +139,13 @@ fun AppPickerScreen(
                         tagPrefix = tagPrefix,
                         modifier = Modifier.padding(bottom = 12.dp),
                     )
-                    AnimatedContent(
-                        targetState = selectedTab,
-                        transitionSpec = {
-                            // Slide only, no fade — a fade stacked on top of the slide meant two
-                            // full lists sat semi-transparent over each other mid-transition,
-                            // which read as visual noise/jank rather than a clean motion. Pure
-                            // slide (plus a snappier duration) reads much smoother.
-                            if (targetState == AppPickerTab.FOLDERS) {
-                                slideInHorizontally(animationSpec = tween(TAB_TRANSITION_DURATION_MS)) { it }
-                                    .togetherWith(slideOutHorizontally(animationSpec = tween(TAB_TRANSITION_DURATION_MS)) { -it })
-                            } else {
-                                slideInHorizontally(animationSpec = tween(TAB_TRANSITION_DURATION_MS)) { -it }
-                                    .togetherWith(slideOutHorizontally(animationSpec = tween(TAB_TRANSITION_DURATION_MS)) { it })
-                            }
-                        },
+                    SwipeTabs(
+                        keys = AppPickerTab.entries.map { it.name },
+                        selected = selectedTab.name,
+                        onSelect = { selectedTab = AppPickerTab.valueOf(it) },
                         modifier = Modifier.weight(1f).fillMaxWidth(),
-                        label = "app_picker_tab_content",
-                    ) { tab ->
-                        if (tab == AppPickerTab.APPS) {
+                    ) { key ->
+                        if (key == AppPickerTab.APPS.name) {
                             AppPickerAppsList(
                                 query = query,
                                 selectedResults = selectedResults,

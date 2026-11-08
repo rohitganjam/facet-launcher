@@ -33,7 +33,11 @@ fun pickerState(options: List<WidgetProviderOption>, query: String, tab: WidgetP
     val inTab = if (tabs.isEmpty()) options else options.filter { it.pickerTab() == shownTab }
     // Search only by app name, not widget name, per user request.
     val matching = if (query.isBlank()) inTab else inTab.filter { it.appLabel.contains(query, ignoreCase = true) }
-    return HubWidgetPickerUiState(query = query, groups = matching.toSortedGroups(), remaining = remaining, tabs = tabs, tab = shownTab)
+    // Each tab's own list, so a swipe can show the next one beside the current.
+    val byTab = tabs.associateWith { other ->
+        options.filter { it.pickerTab() == other && (query.isBlank() || it.appLabel.contains(query, ignoreCase = true)) }.toSortedGroups()
+    }
+    return HubWidgetPickerUiState(query = query, groups = matching.toSortedGroups(), remaining = remaining, tabs = tabs, tab = shownTab, groupsByTab = byTab)
 }
 
 data class HubWidgetPickerUiState(
@@ -42,6 +46,8 @@ data class HubWidgetPickerUiState(
     /** Personal and Work, when a Work Profile has widgets to offer; empty (no tab row) otherwise. */
     val tabs: ImmutableList<WidgetPickerTab> = persistentListOf(),
     val tab: WidgetPickerTab = WidgetPickerTab.PERSONAL,
+    /** The groups of each tab in [tabs]; empty when there are no tabs. */
+    val groupsByTab: Map<WidgetPickerTab, List<WidgetProviderGroup>> = emptyMap(),
     /** `null` hides the header's "N left" counter entirely — used by PRD F15's clock widget picker, which has no capacity concept (a facet has exactly 0 or 1 clock widget, not up to [com.facetlauncher.app.domain.HUB_MAX_WIDGETS]). */
     val remaining: Int? = 0,
 )

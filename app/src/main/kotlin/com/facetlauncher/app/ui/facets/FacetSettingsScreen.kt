@@ -53,7 +53,6 @@ fun FacetSettingsScreen(
     onBack: () -> Unit,
     onNavigateToAppsList: (facetId: Long) -> Unit,
     onNavigateToDockSettings: (facetId: Long) -> Unit,
-    onNavigateToDockAppsAppearance: (facetId: Long) -> Unit,
     onNavigateToWidgets: (facetId: Long) -> Unit,
     onFacetApply: () -> Unit,
     modifier: Modifier = Modifier,
@@ -66,7 +65,6 @@ fun FacetSettingsScreen(
         onBack = onBack,
         onAppsListClick = { onNavigateToAppsList(viewModel.facetId) },
         onDockClick = { onNavigateToDockSettings(viewModel.facetId) },
-        onDockAppsAppearanceClick = { onNavigateToDockAppsAppearance(viewModel.facetId) },
         onWidgetsClick = { onNavigateToWidgets(viewModel.facetId) },
         onRename = viewModel::renameFacet,
         onApplyFacet = { viewModel.applyFacet(); onFacetApply() },
@@ -80,7 +78,6 @@ private fun FacetSettingsContent(
     onBack: () -> Unit,
     onAppsListClick: () -> Unit,
     onDockClick: () -> Unit,
-    onDockAppsAppearanceClick: () -> Unit,
     onWidgetsClick: () -> Unit,
     onRename: (String) -> Unit,
     onApplyFacet: () -> Unit,
@@ -125,7 +122,7 @@ private fun FacetSettingsContent(
                 item { HomeCard(onWidgetsClick) }
 
                 item { SettingsSectionHeader(stringResource(R.string.settings_section_home_apps)) }
-                item { HomeAppsCard(uiState, onAppsListClick, onDockClick, onDockAppsAppearanceClick) }
+                item { HomeAppsCard(uiState, onAppsListClick, onDockClick) }
             }
         },
     )
@@ -156,7 +153,7 @@ private fun HomeCard(onWidgetsClick: () -> Unit) {
 }
 
 @Composable
-private fun HomeAppsCard(uiState: FacetSettingsUiState, onAppsListClick: () -> Unit, onDockClick: () -> Unit, onDockAppsAppearanceClick: () -> Unit) {
+private fun HomeAppsCard(uiState: FacetSettingsUiState, onAppsListClick: () -> Unit, onDockClick: () -> Unit) {
     SettingsCard(fullBleedRows = true) {
         FacetSettingsRow(
             title = stringResource(R.string.facet_settings_apps_list_settings_title),
@@ -175,18 +172,6 @@ private fun HomeAppsCard(uiState: FacetSettingsUiState, onAppsListClick: () -> U
             ),
             onClick = onDockClick,
             testTag = "facet_dock_settings_row",
-            leadingIcon = { SettingsIconBadge(Icons.Outlined.Dock, SettingsSectionHue.HOME_APPS) },
-        )
-        CardDivider(startInset = SettingsIconBadgeInset)
-        FacetSettingsRow(
-            title = stringResource(R.string.appearance_dock_apps_title),
-            subtitle = stringResource(
-                R.string.dot_join_2,
-                uiState.dockDisplayMode.appearanceSummaryLabel(),
-                uiState.appRowPresentation.appearanceSummaryLabel(),
-            ),
-            onClick = onDockAppsAppearanceClick,
-            testTag = "facet_appearance_row",
             leadingIcon = { SettingsIconBadge(Icons.Outlined.Dock, SettingsSectionHue.HOME_APPS) },
         )
     }
@@ -212,7 +197,6 @@ private fun FacetSettingsScreenPreview() {
             onBack = {},
             onAppsListClick = {},
             onDockClick = {},
-            onDockAppsAppearanceClick = {},
             onWidgetsClick = {},
             onRename = {},
             onApplyFacet = {},

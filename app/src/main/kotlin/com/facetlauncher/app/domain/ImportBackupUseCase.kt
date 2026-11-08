@@ -120,6 +120,7 @@ class ImportBackupUseCase @Inject constructor(
         bundle.dockFolderPlacements.forEach { placement ->
             newFolderIdByIndex[placement.folderIndex]?.let { folderId ->
                 placementRepository.restoreFolderPlacement(PlacementTarget.GlobalDock, folderId, placement.position)
+                placement.gridCells?.let { placementRepository.restoreFolderCells(PlacementTarget.GlobalDock, folderId, it) }
             }
         }
 
@@ -128,6 +129,7 @@ class ImportBackupUseCase @Inject constructor(
         bundle.defaultFavoriteFolderPlacements.forEach { placement ->
             newFolderIdByIndex[placement.folderIndex]?.let { folderId ->
                 placementRepository.restoreFolderPlacement(PlacementTarget.GlobalFavorites, folderId, placement.position)
+                placement.gridCells?.let { placementRepository.restoreFolderCells(PlacementTarget.GlobalFavorites, folderId, it) }
             }
         }
 
@@ -166,11 +168,13 @@ class ImportBackupUseCase @Inject constructor(
         backupFacet.dockFolderPlacements.forEach { placement ->
             newFolderIdByIndex[placement.folderIndex]?.let { folderId ->
                 placementRepository.restoreFolderPlacement(dockTarget, folderId, placement.position)
+                placement.gridCells?.let { placementRepository.restoreFolderCells(dockTarget, folderId, it) }
             }
         }
         backupFacet.favoriteFolderPlacements.forEach { placement ->
             newFolderIdByIndex[placement.folderIndex]?.let { folderId ->
                 placementRepository.restoreFolderPlacement(favoritesTarget, folderId, placement.position)
+                placement.gridCells?.let { placementRepository.restoreFolderCells(favoritesTarget, folderId, it) }
             }
         }
         return newId
@@ -202,6 +206,10 @@ class ImportBackupUseCase @Inject constructor(
             setShowNotificationsInAppMenu(settings.showNotificationsInAppMenu)
             setHomeOpensSearch(settings.homeOpensSearch)
             setDoubleTapToLock(settings.doubleTapToLock)
+            setSwipeLeftEnabled(settings.swipeLeftEnabled)
+            setSwipeRightEnabled(settings.swipeRightEnabled)
+            setSwipeDownEnabled(settings.swipeDownEnabled)
+            setSwapSwipeSides(settings.swapSwipeSides)
             setShowDrawerIcons(settings.showDrawerIcons)
             setShowDrawerLabels(settings.showDrawerLabels)
             setSearchBarPosition(settings.searchBarPosition.toEnumOrDefault(SearchBarPosition.TOP))

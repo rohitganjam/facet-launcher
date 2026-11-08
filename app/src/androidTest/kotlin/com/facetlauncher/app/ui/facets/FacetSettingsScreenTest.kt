@@ -55,7 +55,6 @@ class FacetSettingsScreenTest {
     private fun setContent(
         onNavigateToAppsList: (Long) -> Unit = {},
         onNavigateToDockSettings: (Long) -> Unit = {},
-        onNavigateToDockAppsAppearance: (Long) -> Unit = {},
         onNavigateToWidgets: (Long) -> Unit = {},
         onFacetApply: () -> Unit = {},
     ): FacetRepository {
@@ -86,7 +85,6 @@ class FacetSettingsScreenTest {
                     onBack = {},
                     onNavigateToAppsList = onNavigateToAppsList,
                     onNavigateToDockSettings = onNavigateToDockSettings,
-                    onNavigateToDockAppsAppearance = onNavigateToDockAppsAppearance,
                     onNavigateToWidgets = onNavigateToWidgets,
                     onFacetApply = onFacetApply,
                     viewModel = viewModel,
@@ -183,20 +181,6 @@ class FacetSettingsScreenTest {
     }
 
     @Test
-    fun theDockAndAppsAppearanceRowOpensItDirectlyAndSummarisesTheEffectiveLook() {
-        var navigated: Long? = null
-        setContent(onNavigateToDockAppsAppearance = { navigated = it })
-        awaitFacetLoaded()
-
-        // This row opens the dock and apps look straight away (no Appearance hub in between), and previews the dock display style
-        // and the app row presentation, inheriting the global defaults here: "Dock icons · Home icon & text".
-        scrollToRow("facet_appearance_row")
-        composeRule.onNodeWithTag("facet_appearance_row").assertTextContains("Dock icons · Home icon & text", substring = true)
-        composeRule.onNodeWithTag("facet_appearance_row").performClick()
-        assertEquals(true, navigated != null)
-    }
-
-    @Test
     fun theWidgetsRowOpensThisFacetsWidgetStack() {
         var navigated: Long? = null
         setContent(onNavigateToWidgets = { navigated = it })
@@ -209,14 +193,14 @@ class FacetSettingsScreenTest {
     }
 
     @Test
-    fun theHomeSectionHoldsWidgetsAndTheDockAndAppsLookAndThereIsNoAppearanceHub() {
+    fun theHomeSectionHoldsWidgetsAndThereIsNoLookRowOrAppearanceHub() {
         setContent()
         awaitFacetLoaded()
 
         scrollToRow("facet_widgets_row")
         composeRule.onNodeWithText("Home").assertExists()
         composeRule.onNodeWithTag("facet_widgets_row").assertExists()
-        composeRule.onNodeWithTag("facet_appearance_row").assertExists()
+        composeRule.onNodeWithTag("facet_appearance_row").assertDoesNotExist()
         composeRule.onNodeWithText("Appearance").assertDoesNotExist()
     }
 

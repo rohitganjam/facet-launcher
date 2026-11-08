@@ -61,7 +61,6 @@ class SettingsScreenTest {
         onNavigateToAppearance: () -> Unit = {},
         onNavigateToDockSettings: () -> Unit = {},
         onNavigateToHomeAppsListSettings: () -> Unit = {},
-        onNavigateToDockAppsAppearance: () -> Unit = {},
         onNavigateToFolders: () -> Unit = {},
         onNavigateToGestures: () -> Unit = {},
         onNavigateToWeatherSettings: () -> Unit = {},
@@ -115,7 +114,6 @@ class SettingsScreenTest {
                     onNavigateToNotificationSettings = onNavigateToNotificationSettings,
                     onNavigateToDockSettings = onNavigateToDockSettings,
                     onNavigateToHomeAppsListSettings = onNavigateToHomeAppsListSettings,
-                    onNavigateToDockAppsAppearance = onNavigateToDockAppsAppearance,
                     onNavigateToFolders = onNavigateToFolders,
                     onNavigateToGestures = onNavigateToGestures,
                     onNavigateToWeatherSettings = onNavigateToWeatherSettings,
@@ -215,22 +213,6 @@ class SettingsScreenTest {
 
         // When tapping it
         composeRule.onNodeWithTag("dock_settings_row").performClick()
-
-        // Then its callback fires
-        assertEquals(true, navigated)
-    }
-
-    @Test
-    fun dockAppsAppearanceRowIsUnderAppsAndFoldersDescribesWhatItDoesAndNavigates() {
-        // Given the settings screen, scrolled to the dock and apps appearance row under Apps and folders
-        var navigated = false
-        setContent(onNavigateToDockAppsAppearance = { navigated = true })
-        composeRule.onNodeWithTag("settings_screen").performScrollToNode(hasTestTag("dock_apps_appearance_row"))
-        composeRule.onNodeWithTag("dock_apps_appearance_row").assertTextContains("Dock & Apps layout", substring = true)
-        composeRule.onNodeWithTag("dock_apps_appearance_row").assertTextContains("Default Dock and Home apps look in new facets", substring = true)
-
-        // When tapping it
-        composeRule.onNodeWithTag("dock_apps_appearance_row").performClick()
 
         // Then its callback fires
         assertEquals(true, navigated)

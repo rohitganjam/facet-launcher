@@ -120,7 +120,7 @@ class SettingsRepositoryTest {
         assertFalse(settings.use24HourTime)
         assertEquals(DockDisplayMode.ICONS, settings.dockDisplayMode)
         assertEquals(DrawerPresentation.LIST, settings.drawerPresentation)
-        assertEquals(DrawerGridDensity.COMPACT, settings.drawerGridDensity)
+        assertEquals(DrawerGridDensity.REGULAR, settings.drawerGridDensity)
         assertEquals(DrawerListItemSize.REGULAR, settings.drawerListItemSize)
         assertEquals(IconRenderMode.SYSTEM_DEFAULT, settings.iconRenderMode)
         assertEquals(IconShape.SQUIRCLE, settings.iconShape)
@@ -376,9 +376,9 @@ class SettingsRepositoryTest {
         repository.setAppsToShowCount(1)
         assertEquals(3, repository.settings.first().appsToShowCount)
 
-        // When set above the ceiling, it's coerced down to 12
+        // When set above the ceiling, it's coerced down to 20
         repository.setAppsToShowCount(99)
-        assertEquals(12, repository.settings.first().appsToShowCount)
+        assertEquals(20, repository.settings.first().appsToShowCount)
     }
 
     @Test
@@ -624,5 +624,37 @@ class SettingsRepositoryTest {
         val landscape = repository.settings.first().landscape
         assertEquals(null, landscape.clockZoneHeightDp)
         assertEquals(ClockAlignment.CENTER, landscape.clockAlignment)
+    }
+
+    @Test
+    fun `every Home swipe is on by default and each switch persists independently`() = runTest {
+        // Given a fresh repository
+        val repository = createRepository()
+        val fresh = repository.settings.first()
+        assertTrue(fresh.swipeLeftEnabled && fresh.swipeRightEnabled && fresh.swipeDownEnabled)
+
+        // When only swipe left is turned off
+        repository.setSwipeLeftEnabled(false)
+
+        // Then right and down stay on
+        val afterLeft = repository.settings.first()
+        assertFalse(afterLeft.swipeLeftEnabled)
+        assertTrue(afterLeft.swipeRightEnabled && afterLeft.swipeDownEnabled)
+
+        // And turning off the others leaves each of them off
+        repository.setSwipeRightEnabled(false)
+        repository.setSwipeDownEnabled(false)
+        val afterAll = repository.settings.first()
+        assertFalse(afterAll.swipeLeftEnabled || afterAll.swipeRightEnabled || afterAll.swipeDownEnabled)
+    }
+
+    @Test
+    fun `swapping the swipe sides is off by default and persists`() = runTest {
+        val repository = createRepository()
+        assertFalse(repository.settings.first().swapSwipeSides)
+
+        repository.setSwapSwipeSides(true)
+
+        assertTrue(repository.settings.first().swapSwipeSides)
     }
 }

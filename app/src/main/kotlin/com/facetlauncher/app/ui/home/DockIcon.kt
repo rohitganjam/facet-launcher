@@ -29,7 +29,8 @@ import com.facetlauncher.app.data.model.PlacedItem
 import com.facetlauncher.app.ui.components.AppIcon
 import com.facetlauncher.app.ui.components.AppIconSize
 import com.facetlauncher.app.ui.components.NotificationBadge
-import com.facetlauncher.app.ui.components.longPressReleaseClickable
+import com.facetlauncher.app.ui.components.longPressReorderClickable
+import com.facetlauncher.app.ui.components.reorderItemLayer
 import com.facetlauncher.app.ui.home.DockIcon
 import com.facetlauncher.app.ui.home.FolderTileGlyph
 import com.facetlauncher.app.ui.theme.homeAppLabelShadow
@@ -68,13 +69,14 @@ private fun SingleAppDockIcon(
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
     val onClick = { actions.onAppClick(app) }
+    val itemKey = remember(app) { PlacedItem.SingleApp(app).stableKey() }
     val clickModifier = if (enableLongPressMenu) {
-        Modifier.longPressReleaseClickable(onClick = onClick, onLongPress = { menuExpanded = true })
+        Modifier.longPressReorderClickable(itemKey, onClick = onClick, onLongPress = { menuExpanded = true })
     } else {
         Modifier.clickable(onClick = onClick)
     }
     val badgeCount = style.badgeCounts[app.packageName]
-    Box(modifier = modifier) {
+    Box(modifier = modifier.reorderItemLayer(itemKey)) {
         // A straight boolean, not a `when` over DockDisplayMode: callers pass a resolved value, so
         // LAUNCHER_DEFAULT never arrives and renders as icons like ICONS.
         if (displayMode == DockDisplayMode.TEXT) {
@@ -113,12 +115,13 @@ private fun FolderDockIcon(
 ) {
     var sheetOpen by remember { mutableStateOf(false) }
     var menuExpanded by remember { mutableStateOf(false) }
+    val itemKey = remember(folder.id) { PlacedItem.FolderItem(folder).stableKey() }
     val clickModifier = if (enableLongPressMenu) {
-        Modifier.longPressReleaseClickable(onClick = { sheetOpen = true }, onLongPress = { menuExpanded = true })
+        Modifier.longPressReorderClickable(itemKey, onClick = { sheetOpen = true }, onLongPress = { menuExpanded = true })
     } else {
         Modifier.clickable(onClick = {})
     }
-    Box(modifier = modifier) {
+    Box(modifier = modifier.reorderItemLayer(itemKey)) {
         if (displayMode == DockDisplayMode.TEXT) {
             Row(
                 modifier = clickModifier.testTag(homeTag("dock_folder_tile_${folder.id}")).padding(vertical = 14.dp, horizontal = 4.dp),

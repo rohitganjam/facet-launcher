@@ -39,6 +39,8 @@ data class HomeScreenState(
      *  Favorites row resolve instantly from already-live state instead of a fresh repository
      *  read on every long-press, regardless of which mode Home is currently showing. */
     val favoriteItems: List<PlacedItem>,
+    /** Where the active facet's Favorites sit on the grid layout, once moved there. */
+    val favoriteCells: SavedGridCells = SavedGridCells(),
     val facets: List<Facet>,
     /** Only meaningful when the active facet's `listContentMode` isn't `FAVORITES`. */
     val usageAccessGranted: Boolean,
@@ -110,7 +112,10 @@ class ObserveHomeScreenStateUseCase @Inject constructor(
         val favoriteItems = activeFacet.flatMapLatest { facet ->
             observePlacedItems.items(facet.placementTarget(PlacementList.FAVORITES))
         }
-        val dockAndFavoriteItems = combine(dockApps, favoriteItems) { dock, favorites -> dock to favorites }
+        val favoriteCells = activeFacet.flatMapLatest { facet ->
+            observePlacedItems.gridCells(facet.placementTarget(PlacementList.FAVORITES))
+        }
+        val dockAndFavoriteItems = combine(dockApps, favoriteItems, favoriteCells) { dock, favorites, cells -> Triple(dock, favorites, cells) }
 
         val eventsAndDisplay = observeCalendarEventsAndDisplay(activeFacet)
 
@@ -141,12 +146,13 @@ class ObserveHomeScreenStateUseCase @Inject constructor(
             eventsAndDisplay,
             badgeCountsAndAccessories,
             mediaPlayer,
-        ) { settings, (dockApps, favoriteItems), items, facets, (events, display), (badges, accessories), media ->
+        ) { settings, (dockApps, favoriteItems, favoriteCells), items, facets, (events, display), (badges, accessories), media ->
             HomeScreenState(
                 settings = settings,
                 dockApps = dockApps,
                 appListItems = items,
                 favoriteItems = favoriteItems,
+                favoriteCells = favoriteCells,
                 facets = facets,
                 usageAccessGranted = usageAccessRepository.isGranted(),
                 calendarEvents = events,

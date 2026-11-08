@@ -40,10 +40,12 @@ import androidx.compose.ui.unit.dp
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.AppRowPosition
 import com.facetlauncher.app.data.model.AppRowPresentation
+import com.facetlauncher.app.data.model.PlacedItem
 import com.facetlauncher.app.data.model.Folder
 import com.facetlauncher.app.ui.components.AppIcon
 import com.facetlauncher.app.ui.components.AppIconSize
-import com.facetlauncher.app.ui.components.longPressReleaseClickable
+import com.facetlauncher.app.ui.components.longPressReorderClickable
+import com.facetlauncher.app.ui.components.LiftableCell
 import com.facetlauncher.app.ui.home.FolderRow
 import com.facetlauncher.app.ui.home.FolderTileGlyph
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
@@ -148,26 +150,43 @@ internal fun FolderRow(
 ) {
     var sheetOpen by remember { mutableStateOf(false) }
     var menuExpanded by remember { mutableStateOf(false) }
+    val itemKey = remember(folder.id) { PlacedItem.FolderItem(folder).stableKey() }
     val clickModifier = if (enableLongPressMenu) {
-        Modifier.longPressReleaseClickable(onClick = { sheetOpen = true }, onLongPress = { menuExpanded = true })
+        Modifier.longPressReorderClickable(itemKey, onClick = { sheetOpen = true }, onLongPress = { menuExpanded = true })
     } else {
         Modifier.clickable(onClick = onClick)
     }
-    FolderRowContent(
-        folder = folder,
-        style = style,
-        position = position,
-        presentation = presentation,
-        iconSize = iconSize,
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(MaterialTheme.shapes.large)
-            .then(clickModifier)
-            .testTag(homeTag("${testTagPrefix}folder_row_${folder.id}"))
-            .padding(horizontal = 8.dp, vertical = verticalPadding),
-    )
-    if (enableLongPressMenu && sheetOpen) FolderItemSheet(folder, { sheetOpen = false }, actions, style)
-    if (enableLongPressMenu) FolderItemMenu(folder, menuExpanded, { menuExpanded = false }, actions)
+    val rowShape = MaterialTheme.shapes.large
+    LiftableCell(
+        key = itemKey,
+        modifier = modifier,
+        copy = {
+            FolderRowContent(
+                folder = folder,
+                style = style,
+                position = position,
+                presentation = presentation,
+                iconSize = iconSize,
+                modifier = Modifier.fillMaxWidth().clip(rowShape).padding(horizontal = 8.dp, vertical = verticalPadding),
+            )
+        },
+    ) {
+        FolderRowContent(
+            folder = folder,
+            style = style,
+            position = position,
+            presentation = presentation,
+            iconSize = iconSize,
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(rowShape)
+                .then(clickModifier)
+                .testTag(homeTag("${testTagPrefix}folder_row_${folder.id}"))
+                .padding(horizontal = 8.dp, vertical = verticalPadding),
+        )
+        if (enableLongPressMenu && sheetOpen) FolderItemSheet(folder, { sheetOpen = false }, actions, style)
+        if (enableLongPressMenu) FolderItemMenu(folder, menuExpanded, { menuExpanded = false }, actions)
+    }
 }
 
 /** A [FolderRow]'s glyph and name, packed by [position] as [AppRow] packs its own content. */

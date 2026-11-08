@@ -129,11 +129,15 @@ class FacetRepository @Inject constructor(
         }
     }
 
-    /** Copies the launcher-wide dock and app-list look, landscape twins included, into this facet (creation or "Reset to default"). */
+    /** Copies the launcher-wide dock display style into this facet (creation or "Reset to default"). */
+    suspend fun applyDockDefaults(facetId: Long, settings: LauncherSettings) {
+        update(facetId) { it.copy(dockDisplayMode = settings.dockDisplayMode) }
+    }
+
+    /** Copies the launcher-wide app-list look, landscape twins included, into this facet (creation or "Reset to default"). */
     suspend fun applyLookDefaults(facetId: Long, settings: LauncherSettings) {
         update(facetId) {
             it.copy(
-                dockDisplayMode = settings.dockDisplayMode,
                 appRowPosition = settings.appRowPosition,
                 appRowPresentation = settings.appRowPresentation,
                 appListVerticalAlignment = settings.appListVerticalAlignment,

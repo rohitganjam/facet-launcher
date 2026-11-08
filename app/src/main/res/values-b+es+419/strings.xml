@@ -136,12 +136,12 @@
     <string name="reset_dock_confirm_message">Esto reemplaza el dock de esta faceta por el dock predeterminado. Las apps que colocaste aquí se perderán.</string>
     <string name="reset_apps_subtitle">Reemplaza esta lista por la predeterminada</string>
     <string name="reset_apps_confirm_message">Esto reemplaza los favoritos, el contenido de la lista y el número de apps de esta faceta por los valores predeterminados. Los favoritos que elegiste aquí se perderán.</string>
-    <string name="reset_look_subtitle">Reemplaza el aspecto del dock y de la lista por el predeterminado</string>
-    <string name="reset_look_confirm_message">Esto reemplaza el estilo del dock, el diseño de la lista y la alineación de esta faceta por los valores predeterminados.</string>
+    <string name="reset_look_subtitle">Reemplaza el aspecto de la lista por el predeterminado</string>
+    <string name="reset_look_confirm_message">Esto reemplaza el diseño de la lista y la alineación de esta faceta por los valores predeterminados.</string>
     <string name="copy_dock_subtitle">Reemplaza el dock de las facetas que elijas por este</string>
     <string name="copy_dock_sheet_message">Reemplaza el dock de cada faceta seleccionada por el dock predeterminado.</string>
     <string name="copy_apps_subtitle">Reemplaza la lista de apps de las facetas que elijas por esta</string>
     <string name="copy_apps_sheet_message">Reemplaza los favoritos, el contenido de la lista y el número de apps de cada faceta seleccionada por los valores predeterminados.</string>
-    <string name="copy_look_subtitle">Reemplaza el aspecto del dock y de las apps de las facetas que elijas por este</string>
-    <string name="copy_look_sheet_message">Reemplaza el estilo del dock, el diseño de la lista y la alineación de cada faceta seleccionada por los valores predeterminados.</string>
+    <string name="copy_look_subtitle">Reemplaza el aspecto de las apps de las facetas que elijas por este</string>
+    <string name="copy_look_sheet_message">Reemplaza el diseño de la lista y la alineación de cada faceta seleccionada por los valores predeterminados.</string>
 </resources>

@@ -10,13 +10,13 @@ import kotlinx.coroutines.flow.first
 
 /** The parts of a facet's Home that a launcher-wide default can seed. */
 enum class FacetDefaultsScope {
-    /** The facet's Dock list. */
+    /** The facet's Dock list and display style. */
     DOCK,
 
     /** The facet's Favorites list, content mode and count. */
     APPS_LIST,
 
-    /** Dock display mode and the app list's look, landscape twins included. */
+    /** The app list's look, landscape twins included. */
     LOOK,
 }
 
@@ -31,7 +31,10 @@ class ApplyFacetDefaultsUseCase @Inject constructor(
 ) {
     suspend operator fun invoke(facetId: Long, scope: FacetDefaultsScope) {
         when (scope) {
-            FacetDefaultsScope.DOCK -> copyList(PlacementList.DOCK, facetId)
+            FacetDefaultsScope.DOCK -> {
+                copyList(PlacementList.DOCK, facetId)
+                facetRepository.applyDockDefaults(facetId, settingsRepository.settings.first())
+            }
             FacetDefaultsScope.APPS_LIST -> {
                 copyList(PlacementList.FAVORITES, facetId)
                 facetRepository.applyAppsContentDefaults(facetId, settingsRepository.settings.first())

@@ -218,8 +218,10 @@
     <string name="onboarding_intro_diagram_apps_label">As suas apps</string>
     <string name="onboarding_intro_gesture_drawer">Deslize para cima a qualquer momento para ver todas as suas apps.</string>
     <string name="onboarding_intro_gesture_widgets">Deslize para a direita para ver os seus widgets.</string>
-    <string name="onboarding_home_setup_headline">Configure o seu ecrã inicial</string>
+    <string name="onboarding_home_setup_headline">Configure a sua primeira faceta</string>
     <string name="onboarding_home_setup_subhead">Escolha as apps que quer no ecrã inicial. Pode alterar tudo isto mais tarde.</string>
+    <string name="onboarding_drawer_setup_headline">Configure a sua gaveta de apps</string>
+    <string name="onboarding_drawer_setup_subhead">Escolha como as suas apps são listadas e como a pesquisa funciona. Pode alterar tudo isto mais tarde.</string>
     <string name="onboarding_notifications_headline">Indicadores e reprodução atual</string>
     <string name="onboarding_notifications_subhead">Pontos nas apps com algo pendente e o que está a tocar no ecrã principal. Pode alterar isto mais tarde.</string>
     <string name="onboarding_notifications_access_note">Ambas as funcionalidades precisam de acesso às notificações, uma autorização especial que ativa nas definições do sistema. O Facet lê apenas que apps têm notificações ativas e o título, o artista e a capa do que está a tocar. Nunca lê o texto das notificações e nada sai do seu dispositivo.</string>
@@ -322,7 +324,6 @@
 
     <string name="settings_default_dock_title">Apps do dock predefinidas</string>
     <string name="home_apps_list_default_header_title">Lista de apps predefinida</string>
-    <string name="settings_default_look_subtitle">Aspeto predefinido do dock e das apps do ecrã inicial em novas facetas</string>
     <string name="defaults_screen_note">Usado quando cria uma faceta ou repõe uma.</string>
     <string name="reset_to_default_title">Repor predefinição</string>
     <string name="reset_to_default_confirm">Repor</string>
@@ -330,14 +331,13 @@
     <string name="reset_dock_confirm_message">Isto substitui o dock desta faceta pelo dock predefinido. As apps que colocou aqui serão perdidas.</string>
     <string name="reset_apps_subtitle">Substituir esta lista pela predefinida</string>
     <string name="reset_apps_confirm_message">Isto substitui os favoritos, o conteúdo da lista e o número de apps desta faceta pelos valores predefinidos. Os favoritos que escolheu aqui serão perdidos.</string>
-    <string name="reset_look_subtitle">Substituir o aspeto do dock e da lista pelo predefinido</string>
-    <string name="reset_look_confirm_message">Isto substitui o estilo do dock, o esquema da lista e o alinhamento desta faceta pelos valores predefinidos.</string>
+    <string name="reset_look_subtitle">Substituir o aspeto da lista pelo predefinido</string>
+    <string name="reset_look_confirm_message">Isto substitui o esquema da lista e o alinhamento desta faceta pelos valores predefinidos.</string>
     <string name="copy_dock_sheet_message">Substitui o dock de cada faceta selecionada pelo dock predefinido.</string>
     <string name="copy_apps_sheet_message">Substitui os favoritos, o conteúdo da lista e o número de apps de cada faceta selecionada pelos valores predefinidos.</string>
-    <string name="copy_look_subtitle">Substitui o aspeto do dock e das apps das facetas escolhidas por este</string>
-    <string name="copy_look_sheet_message">Substitui o estilo do dock, o esquema da lista e o alinhamento de cada faceta selecionada pelos valores predefinidos.</string>
+    <string name="copy_look_subtitle">Substitui o aspeto das apps das facetas escolhidas por este</string>
+    <string name="copy_look_sheet_message">Substitui o esquema da lista e o alinhamento de cada faceta selecionada pelos valores predefinidos.</string>
     <string name="settings_appearance_title">Aspeto do launcher</string>
     <string name="settings_appearance_subtitle">Temas, tipos de letra e ícones</string>
     <string name="appearance_header_title">Aspeto do launcher</string>
-    <string name="appearance_dock_apps_title">Esquema do dock e das apps</string>
 </resources>

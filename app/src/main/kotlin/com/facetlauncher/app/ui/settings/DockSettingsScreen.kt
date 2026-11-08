@@ -86,6 +86,7 @@ fun DockSettingsScreen(
         uiState = uiState,
         onBack = onBack,
         onAddDockApp = onAddDockApp,
+        onDockDisplayModeChange = viewModel::setDockDisplayMode,
         onReorderDockItems = viewModel::reorderDockItems,
         onResetToDefault = viewModel::resetToDefault,
         onCopyToFacets = viewModel::copyToFacets,
@@ -98,6 +99,7 @@ private fun DockSettingsContent(
     uiState: DockSettingsUiState,
     onBack: () -> Unit,
     onAddDockApp: () -> Unit,
+    onDockDisplayModeChange: (DockDisplayMode) -> Unit,
     onReorderDockItems: (List<PlacedItem>) -> Unit,
     onResetToDefault: () -> Unit,
     onCopyToFacets: (Set<Long>) -> Unit,
@@ -127,34 +129,55 @@ private fun DockSettingsContent(
                         modifier = Modifier.padding(bottom = 20.dp).testTag("dock_settings_preview_card"),
                     )
                 }
-                dockAppsItem(uiState, onAddDockApp, onReorderDockItems)
-                if (uiState.isFacetScoped) {
-                    item { Spacer(modifier = Modifier.height(16.dp)) }
-                    item {
-                        ResetToDefaultCard(
-                            subtitle = stringResource(R.string.reset_dock_subtitle),
-                            confirmMessage = stringResource(R.string.reset_dock_confirm_message),
-                            onReset = onResetToDefault,
-                            testTagPrefix = "dock_settings",
+                item {
+                    SettingsCard(modifier = Modifier.padding(bottom = 16.dp)) {
+                        LabeledDropdownRow(
+                            title = stringResource(R.string.dock_display_style),
+                            options = DockDisplayMode.entries,
+                            selected = uiState.dockDisplayMode,
+                            label = { stringResource(it.displayNameRes) },
+                            onSelect = onDockDisplayModeChange,
+                            testTag = "dock_display_style_row",
                         )
                     }
-                } else {
-                    item { Spacer(modifier = Modifier.height(16.dp)) }
-                    item {
-                        CopyToFacetsCard(
-                            facets = uiState.facets,
-                            activeFacetId = uiState.settings.activeFacetId,
-                            subtitle = stringResource(R.string.copy_dock_subtitle),
-                            sheetMessage = stringResource(R.string.copy_dock_sheet_message),
-                            onCopy = onCopyToFacets,
-                            testTagPrefix = "dock_settings",
-                        )
-                    }
-                    item { DefaultsNote(modifier = Modifier.padding(top = 12.dp)) }
                 }
+                dockAppsItem(uiState, onAddDockApp, onReorderDockItems)
+                dockResetOrCopyItems(uiState, onResetToDefault, onCopyToFacets)
             }
         },
     )
+}
+
+/** Facet scope offers "Reset to default"; launcher scope offers "Copy to facets". */
+private fun LazyListScope.dockResetOrCopyItems(
+    uiState: DockSettingsUiState,
+    onResetToDefault: () -> Unit,
+    onCopyToFacets: (Set<Long>) -> Unit,
+) {
+    if (uiState.isFacetScoped) {
+        item { Spacer(modifier = Modifier.height(16.dp)) }
+        item {
+            ResetToDefaultCard(
+                subtitle = stringResource(R.string.reset_dock_subtitle),
+                confirmMessage = stringResource(R.string.reset_dock_confirm_message),
+                onReset = onResetToDefault,
+                testTagPrefix = "dock_settings",
+            )
+        }
+    } else {
+        item { Spacer(modifier = Modifier.height(16.dp)) }
+        item {
+            CopyToFacetsCard(
+                facets = uiState.facets,
+                activeFacetId = uiState.settings.activeFacetId,
+                subtitle = stringResource(R.string.copy_dock_subtitle),
+                sheetMessage = stringResource(R.string.copy_dock_sheet_message),
+                onCopy = onCopyToFacets,
+                testTagPrefix = "dock_settings",
+            )
+        }
+        item { DefaultsNote(modifier = Modifier.padding(top = 12.dp)) }
+    }
 }
 
 /** The "Select apps" row and, once there are dock apps, the reorderable row under it. */
@@ -310,6 +333,7 @@ private fun DockSettingsScreenPreview() {
             ),
             onBack = {},
             onAddDockApp = {},
+            onDockDisplayModeChange = {},
             onReorderDockItems = {},
             onResetToDefault = {},
             onCopyToFacets = {},

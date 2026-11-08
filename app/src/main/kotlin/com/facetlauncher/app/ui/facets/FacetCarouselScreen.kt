@@ -35,6 +35,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -156,6 +157,10 @@ fun FacetCarouselScreen(
     onDismissDrag: (deltaPx: Float) -> Unit,
     onDismissDragEnd: () -> Unit,
     modifier: Modifier = Modifier,
+    /** False while the overlay is off screen: the pager is then put back on the active facet, ready for the next open. */
+    isOpen: Boolean = true,
+    /** Mirrored sides: the carousel came in from the left, so the dismiss drag is leftward from the last page. */
+    dismissToLeft: Boolean = false,
     viewModel: FacetCarouselViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -171,6 +176,8 @@ fun FacetCarouselScreen(
         onDismissDrag = onDismissDrag,
         onDismissDragEnd = onDismissDragEnd,
         modifier = modifier,
+        isOpen = isOpen,
+        dismissToLeft = dismissToLeft,
     )
 }
 
@@ -187,6 +194,8 @@ private fun FacetCarouselContent(
     onDismissDrag: (deltaPx: Float) -> Unit,
     onDismissDragEnd: () -> Unit,
     modifier: Modifier = Modifier,
+    isOpen: Boolean = true,
+    dismissToLeft: Boolean = false,
 ) {
     val facets = uiState.facets
     if (facets.isEmpty()) {
@@ -204,6 +213,10 @@ private fun FacetCarouselContent(
     val pageCount = facets.size + if (uiState.showAddFacet) 1 else 0
     val initialPage = facets.indexOfFirst { it.id == uiState.activeFacetId }.coerceAtLeast(0)
     val pagerState = rememberPagerState(initialPage = initialPage) { pageCount }
+    // The overlay stays composed while closed, so put it back on the active facet whenever it is off screen.
+    LaunchedEffect(isOpen, initialPage, pageCount) {
+        if (!isOpen && pagerState.currentPage != initialPage && initialPage < pageCount) pagerState.scrollToPage(initialPage)
+    }
     var deletingFacet by remember { mutableStateOf<Facet?>(null) }
 
     val config = LocalConfiguration.current
@@ -216,17 +229,18 @@ private fun FacetCarouselContent(
     // duration, even once it reaches page 0, so flinging back through the first page doesn't turn
     // into a close. Empty-space drags never reach here at all — the pager is the only scrollable
     // in this screen, so nothing else dispatches into this connection.
-    val dismissOnSwipeBack = remember(pagerState) {
+    val dismissOnSwipeBack = remember(pagerState, dismissToLeft) {
         object : NestedScrollConnection {
             var gestureMovedPager = false
             var didDismissDrag = false
 
             override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
                 if (source != NestedScrollSource.Drag) return Offset.Zero
-                val settledOnFirstPage = pagerState.currentPage == 0 &&
+                val settledOnEdge = pagerState.currentPage == (if (dismissToLeft) pagerState.pageCount - 1 else 0) &&
                     abs(pagerState.currentPageOffsetFraction) < 0.0001f
-                if (!settledOnFirstPage) gestureMovedPager = true
-                return if (available.x > 0f && settledOnFirstPage && !gestureMovedPager) {
+                if (!settledOnEdge) gestureMovedPager = true
+                val towardDismiss = if (dismissToLeft) available.x < 0f else available.x > 0f
+                return if (towardDismiss && settledOnEdge && !gestureMovedPager) {
                     didDismissDrag = true
                     currentOnDismissDrag(available.x)
                     Offset(available.x, 0f)

@@ -420,4 +420,82 @@ class HomeSwipeControllerTest {
 
         assertEquals(0, pageIndex)
     }
+
+    @Test
+    fun `a swipe left with swipe left off opens nothing but swipe right still opens the hub`() {
+        val swipe = controller().also { it.swipeLeftEnabled = false }
+
+        swipe.start()
+        swipe.drag(dx = -300f, dy = 10f)
+        assertEquals(0f, swipe.facet.progress.value, 0f)
+        assertEquals(0f, swipe.hub.progress.value, 0f)
+
+        val other = controller().also { it.swipeLeftEnabled = false }
+        other.start()
+        other.drag(dx = 300f, dy = 10f)
+        assertEquals(0.3f, other.hub.progress.value, 0.0001f)
+    }
+
+    @Test
+    fun `with the sides swapped a swipe left opens the hub and a swipe right opens the carousel`() {
+        // Given swapped sides
+        val left = controller().also { it.swapSides = true }
+
+        // When swiping left
+        left.start()
+        left.drag(dx = -300f, dy = 10f)
+
+        // Then the hub follows the finger and the carousel stays shut
+        assertEquals(0.3f, left.hub.progress.value, 0.0001f)
+        assertEquals(0f, left.facet.progress.value, 0f)
+
+        // And swiping right opens the carousel instead
+        val right = controller().also { it.swapSides = true }
+        right.start()
+        right.drag(dx = 300f, dy = 10f)
+        assertEquals(0.3f, right.facet.progress.value, 0.0001f)
+        assertEquals(0f, right.hub.progress.value, 0f)
+    }
+
+    @Test
+    fun `with the sides swapped the on-off switches still follow the finger direction`() {
+        // Given swipe left off, which now would have opened the hub
+        val swipe = controller().also { it.swapSides = true; it.swipeLeftEnabled = false }
+
+        swipe.start()
+        swipe.drag(dx = -300f, dy = 10f)
+
+        assertEquals(0f, swipe.hub.progress.value, 0f)
+        assertEquals(0f, swipe.facet.progress.value, 0f)
+    }
+
+    @Test
+    fun `a swipe right with swipe right off opens nothing but swipe left still opens the carousel`() {
+        val swipe = controller().also { it.swipeRightEnabled = false }
+
+        swipe.start()
+        swipe.drag(dx = 300f, dy = 10f)
+        assertEquals(0f, swipe.hub.progress.value, 0f)
+        assertEquals(0f, swipe.facet.progress.value, 0f)
+
+        val other = controller().also { it.swipeRightEnabled = false }
+        other.start()
+        other.drag(dx = -300f, dy = 10f)
+        assertEquals(0.3f, other.facet.progress.value, 0.0001f)
+    }
+
+    @Test
+    fun `a long swipe down opens the shade unless swipe down is off`() {
+        val on = controller()
+        on.start()
+        on.drag(dx = 0f, dy = 500f)
+        on.settle(velocity = 0f)
+
+        val off = controller().also { it.swipeDownEnabled = false }
+        off.start()
+        off.drag(dx = 0f, dy = 500f)
+        off.settle(velocity = 0f)
+
+        assertEquals(1, shadeExpanded)
+    }
 }

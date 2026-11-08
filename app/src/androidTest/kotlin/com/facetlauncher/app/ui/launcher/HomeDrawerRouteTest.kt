@@ -157,6 +157,7 @@ import com.facetlauncher.app.data.PlacementRepository
 import com.facetlauncher.app.data.model.PlacementTarget
 import com.facetlauncher.app.domain.AddToActiveListUseCase
 import com.facetlauncher.app.domain.RemoveFromActiveListUseCase
+import com.facetlauncher.app.domain.ReorderActiveListUseCase
 import com.facetlauncher.app.domain.ResolveActivePlacementTargetUseCase
 
 /**
@@ -366,6 +367,7 @@ class HomeDrawerRouteTest {
                     RankBySearchRelevanceUseCase(),
                     AddToActiveListUseCase(ResolveActivePlacementTargetUseCase(settingsRepository, facetRepository), placementRepository, observePlacedItems),
                     RemoveFromActiveListUseCase(ResolveActivePlacementTargetUseCase(settingsRepository, facetRepository), placementRepository),
+                    ReorderActiveListUseCase(ResolveActivePlacementTargetUseCase(settingsRepository, facetRepository), placementRepository),
                     FolderRepository(database.folderDao(), appRepository),
                     SecureFolderRepository(context),
                     privateSpaceRepository,
@@ -1101,7 +1103,7 @@ class HomeDrawerRouteTest {
     }
 
     @Test
-    fun draggingLeftAfterALongPressOpensTheContextSheetWithoutOpeningTheCarousel() {
+    fun holdingARowAndDraggingLeftPicksItUpWithoutOpeningTheSheetOrTheCarousel() {
         // Given Home with a favorite app row
         setContent()
         val iconCenter = composeRule.onNodeWithTag("home_app_icon_com.example.A", useUnmergedTree = true)
@@ -1110,25 +1112,62 @@ class HomeDrawerRouteTest {
             .center
         val rootWidth = composeRule.onRoot().fetchSemanticsNode().boundsInRoot.width
 
-        // When holding that row past the long-press threshold (its context sheet opens), then — finger
-        // still down — dragging left well past the swipe distance (regression: this used to also open
-        // the facet carousel behind the sheet)
+        // When holding that row past the long-press threshold, then dragging left well past the swipe distance
+        // (regression: this used to also open the facet carousel)
         composeRule.mainClock.autoAdvance = false
         composeRule.onRoot().performTouchInput { down(iconCenter) }
         composeRule.mainClock.advanceTimeBy(600)
         composeRule.mainClock.autoAdvance = true
         composeRule.waitForIdle()
-        // The sheet is its own window (a second root), so continue the gesture through Home's own root.
         composeRule.onNodeWithTag("home_screen_root").performTouchInput {
             moveTo(iconCenter - Offset(rootWidth * 0.6f, 0f))
             up()
         }
         settleAnimation()
 
-        // Then the sheet is still showing and neither the carousel nor the Hub opened
-        composeRule.onNodeWithTag("app_context_menu").assertExists()
+        // Then it was a drag: no sheet, and neither the carousel nor the Hub opened
+        composeRule.onNodeWithTag("app_context_menu").assertDoesNotExist()
         composeRule.onNodeWithTag("facet_carousel_screen").assertIsNotDisplayed()
         composeRule.onNodeWithTag("hub_screen").assertIsNotDisplayed()
+    }
+
+    @Test
+    fun holdingARowAndReleasingInPlaceOpensTheSheetOnRelease() {
+        setContent()
+        composeRule.onNodeWithTag("home_app_icon_com.example.A", useUnmergedTree = true).performTouchInput { longClick() }
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithTag("app_context_menu").assertExists()
+    }
+
+    @Test
+    fun holdingARowAndDraggingItPastTheNextOneReordersWithoutOpeningAnyPanel() {
+        // Given Home with three favorites in order A, B, C
+        setContent(favoriteCount = 3)
+        fun top(letter: String) = composeRule.onNodeWithTag("home_app_icon_com.example.$letter", useUnmergedTree = true)
+            .fetchSemanticsNode().boundsInRoot.top
+        val start = composeRule.onNodeWithTag("home_app_icon_com.example.A", useUnmergedTree = true).fetchSemanticsNode().boundsInRoot.center
+        val rowHeight = top("B") - top("A")
+
+        // When A is held and dragged down past B
+        composeRule.mainClock.autoAdvance = false
+        composeRule.onRoot().performTouchInput { down(start) }
+        composeRule.mainClock.advanceTimeBy(600)
+        composeRule.mainClock.autoAdvance = true
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("home_screen_root").performTouchInput {
+            moveTo(start + Offset(0f, rowHeight * 0.6f))
+            moveTo(start + Offset(0f, rowHeight * 1.4f))
+            up()
+        }
+        settleAnimation()
+
+        // Then B is above A, the drawer, Hub and carousel stayed shut, and no sheet opened
+        composeRule.waitUntil(timeoutMillis = 5_000) { top("B") < top("A") }
+        composeRule.onNodeWithTag("app_context_menu").assertDoesNotExist()
+        composeRule.onNodeWithTag("alphabet_rail").assertIsNotDisplayed()
+        composeRule.onNodeWithTag("hub_screen").assertIsNotDisplayed()
+        composeRule.onNodeWithTag("facet_carousel_screen").assertIsNotDisplayed()
     }
 
     /** Home with notification access granted and [count] notifications for the first favorite app, its long-press sheet open. */

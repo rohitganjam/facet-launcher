@@ -94,8 +94,6 @@ class DockSettingsViewModelTest {
 
     @Test
     fun `global-scoped reorder writes to the launcher-wide dock list`() = runTest {
-        // dockDisplayMode's own setter moved to AppearanceSettingsViewModel (see chat history —
-        // display style is a look field, edited from Settings -> Appearance now); covered there.
         val settingsRepository = mock(SettingsRepository::class.java)
         val placementRepository = mock(PlacementRepository::class.java)
         val viewModel = createViewModel(settingsRepository = settingsRepository, placementRepository = placementRepository)
@@ -105,6 +103,32 @@ class DockSettingsViewModelTest {
         testDispatcher.scheduler.advanceUntilIdle()
 
         verify(placementRepository).reorderItems(PlacementTarget.GlobalDock, reordered)
+    }
+
+    @Test
+    fun `global-scoped display style writes to SettingsRepository`() = runTest {
+        val settingsRepository = mock(SettingsRepository::class.java)
+        val viewModel = createViewModel(settingsRepository = settingsRepository)
+
+        viewModel.setDockDisplayMode(DockDisplayMode.TEXT)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        verify(settingsRepository).setDockDisplayMode(DockDisplayMode.TEXT)
+    }
+
+    @Test
+    fun `facet-scoped display style writes to that facet, not SettingsRepository`() = runTest {
+        val settingsRepository = mock(SettingsRepository::class.java)
+        val facetRepository = mock(FacetRepository::class.java)
+        val facet = Facet(id = 7L, name = "Work", position = 0)
+        `when`(facetRepository.getById(7L)).thenReturn(facet)
+        val viewModel = createViewModel(facetId = 7L, facets = listOf(facet), settingsRepository = settingsRepository, facetRepository = facetRepository)
+
+        viewModel.setDockDisplayMode(DockDisplayMode.TEXT)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        verify(facetRepository).setDockDisplayMode(facet.id, DockDisplayMode.TEXT)
+        verify(settingsRepository, org.mockito.Mockito.never()).setDockDisplayMode(DockDisplayMode.TEXT)
     }
 
     @Test
@@ -126,8 +150,6 @@ class DockSettingsViewModelTest {
 
     @Test
     fun `dockDisplayMode is the facet's own value`() = runTest {
-        // A facet with an explicit dockDisplayMode (set from Dock & Apps layout) shows it here —
-        // the preview needs it, even though this screen does not edit it.
         val facet = Facet(id = 3L, name = "Work", position = 0, dockDisplayMode = DockDisplayMode.TEXT)
         val viewModel = createViewModel(facetId = 3L, facets = listOf(facet))
         backgroundScope.launch { viewModel.uiState.collect {} }

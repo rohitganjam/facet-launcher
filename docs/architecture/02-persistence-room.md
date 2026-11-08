@@ -4,7 +4,7 @@
 
 | Store | Location | What it holds | Written by | Survives |
 |---|---|---|---|---|
-| Room `FacetDatabase` | `facet.db` (schema **v46**, `exportSchema = true` → `app/schemas/…/1.json … 46.json`) | Facets + every *placement*: favorites, dock, folders, folder membership, widget grid positions, plus the facet automation rules (`automation_rules`) the weather cache (`weather_hours`, `weather_meta`) and each facet's clock stack (`clock_stack_items`) | 7 repositories (§2): `FacetRepository`, `PlacementRepository`, `FolderRepository`, `WidgetPlacementRepository`, `AutomationRuleRepository`, `WeatherRepository` (through `RoomWeatherStore`), `ClockStackRepository` | Reinstall-over-upgrade (migrations); **not** downgrade (dropped) |
+| Room `FacetDatabase` | `facet.db` (schema **v47**, `exportSchema = true` → `app/schemas/…/1.json … 47.json`) | Facets + every *placement*: favorites, dock, folders, folder membership, widget grid positions, plus the facet automation rules (`automation_rules`) the weather cache (`weather_hours`, `weather_meta`) and each facet's clock stack (`clock_stack_items`) | 7 repositories (§2): `FacetRepository`, `PlacementRepository`, `FolderRepository`, `WidgetPlacementRepository`, `AutomationRuleRepository`, `WeatherRepository` (through `RoomWeatherStore`), `ClockStackRepository` | Reinstall-over-upgrade (migrations); **not** downgrade (dropped) |
 | `DataStore<Preferences>` | `facet_settings` (`datastore/facet_settings.preferences_pb`) | **All launcher-wide settings and defaults** — clock/app-list/dock design defaults (the calendar events strip has no design defaults of its own — see below), theme, drawer, search, permission-prompt flags, onboarding/seed/coach-mark flags, active facet id, the clock accessory switches, weather units and location, the icon pack and size — 86 keys (§5) | `SettingsRepository` only | Any upgrade (missing keys fall back to `LauncherSettings()` defaults) |
 | `DataStore<Preferences>` | `facet_entitlement` (`datastore/facet_entitlement.preferences_pb`) | The cached Pro state (`pro_purchased`; excluded from Android backups and device transfer by `res/xml/data_extraction_rules.xml`), so Pro works offline and at cold start; debug builds also keep `debug_entitlement_mode` here | `PlayEntitlementRepository`, only from an explicit Google Play answer | Same as `facet_settings`; **not** in the backup file, so a restore can never grant Pro |
 | `DataStore<Preferences>` | `facet_automation` (`datastore/facet_automation.preferences_pb`) | Facet-automation bookkeeping: the baseline facet, the ordered active rule ids, the suppressed rule ids (§5.7) | `AutomationStateRepository` (via `ActivateFacetByIdUseCase`) | Same as `facet_settings`; **not** in the backup file |
@@ -65,6 +65,10 @@ erDiagram
         int position
         string profile
         int userId
+        int portraitRow "nullable Home grid cell from the anchor edge, null until moved"
+        int portraitColumn
+        int landscapeRow
+        int landscapeColumn
     }
 
     folders {
@@ -89,6 +93,10 @@ erDiagram
         long ownerKey "facetId or 0, unique key column"
         long folderId FK "CASCADE"
         int position
+        int portraitRow "nullable Home grid cell from the anchor edge, null until moved"
+        int portraitColumn
+        int landscapeRow
+        int landscapeColumn
     }
 
     widget_placements {
@@ -354,6 +362,7 @@ Room.databaseBuilder(context, FacetDatabase::class.java, "facet.db")
 | 43→44 | **Auto-migration** (`@AutoMigration(from = 43, to = 44, spec = DropFacetClockColumns)`): `facets` loses `overrideClock`, `clockTemplateId`, `clockFontOption`, `clockColorOption`, `clockAccentColorOption`, `use24HourTime`, `clockShowMeridiem`, `clockDateStyle`, `clockShowAlarm`, `clockShowBattery`, `clockShowWeather`, `clockWeatherIconStyle`, `clockWeatherLocation`, `overrideCalendar`, `showAllDayEvents`, `showCalendarIndicator`, `calendarItemsToShow`, `selectedCalendarIdsCsv`, the five retired hosted-clock columns and `clockScale` / `landscapeClockScale`. The clock settings are not lost: 42→43 has already copied them onto each clock page, and the two steps run in one upgrade, so a jump from any older version is safe. The scale is: a clock's size is the box on its page (`clock_stack_items.widthDp`/`heightDp`), which cannot be worked out in a migration (it needs the drawn size of the clock's template and font), so a clock that was never resized goes back to the default size (`DEFAULT_CLOCK_SCALE`, 0.8). The launcher-wide `clock_scale` / `landscape_clock_scale` DataStore keys are no longer read or written. Room rebuilds the table because SQLite on minSdk 30 cannot drop a column. `FacetDatabaseMigrationTest.migration43To44DropsTheFacetClockColumnsAndKeepsEverythingElse`. |
 | 44→45 | No schema change. `Migrations.migration44To45` (`materializeFacetDefaults`, `FacetDefaultsMigration.kt`) writes today's launcher-wide values into every facet that inherited them, so the flags can go without anything changing on screen. For each facet with `overrideDock = 0` / `overridingFavorites = 0` it deletes the facet's stale own Dock / Favorites rows and copies the launcher-wide `app_placements` and `folder_placements` rows under its id; with `overrideApps = 0` it sets `listContentMode` and `appsToShowCount` from the settings; every `LAUNCHER_DEFAULT` look column becomes the launcher's value. A null landscape twin on a facet whose portrait value was inherited takes the launcher's landscape value, if it has one, since that is what it showed. A facet that overrode a list or the content is untouched. The launcher-wide values come from the settings DataStore, which a migration cannot reach, so `DatabaseModule` passes a reader (`SettingsRepository(...).settings.first()`) that runs only when this step does. `FacetDatabaseMigrationTest.migration44To45GivesInheritingFacets…`, `…LeavesAnOverridingFacetAndAnExplicitLandscapeValueAlone`, `…HandlesAnEmptyLauncherDock`. |
 | 45→46 | **Auto-migration** (`@AutoMigration(from = 45, to = 46, spec = DropFacetOverrideFlags)`): `facets` loses `overrideApps`, `overridingFavorites` and `overrideDock`. Nothing is lost: 44→45 has already copied the launcher's values into every facet that inherited them. `FacetDatabaseMigrationTest.migration45To46DropsTheOverrideFlagsAndKeepsTheFacetsOwnValues`. |
+| 46→47 | **Auto-migration** (`@AutoMigration(from = 46, to = 47)`): `app_placements` and `folder_placements` each gain four nullable columns, `portraitRow`, `portraitColumn`, `landscapeRow` and `landscapeColumn` (a Home grid cell counted from the anchor edge). All null until an item is first moved on a grid, when its place still follows `position`. Nothing reads them yet. `FacetDatabaseMigrationTest.migration46To47AddsEmptyHomeCellsAndKeepsEveryPlacement`. |
 
 The landscape twins are handled as one `LandscapeOverrides` group (clock alignment, divider, scale, widget size, row position, vertical and column alignment; every field nullable). Settings hold it as `LauncherSettings.landscape`, read from the six `landscape_*` keys and written only through `updateLandscape`. A facet keeps the flat columns above (so the schema is unchanged) and exposes the group as `FacetEntity.landscape` / `withLandscape(...)`, written through `FacetRepository.updateLandscape`. `resolveLandscape` is the one resolution rule (see [17](17-flow-home-layout.md) §1.0).
 
@@ -422,6 +431,10 @@ erDiagram
         boolean notification_dots_enabled "default true"
         boolean home_opens_search "default false"
         boolean double_tap_to_lock "default false"
+        boolean swipe_left_enabled "default true"
+        boolean swipe_right_enabled "default true"
+        boolean swipe_down_enabled "default true"
+        boolean swap_swipe_sides "default false"
         string notification_badge_style "NotificationBadgeStyle, default DOT"
         boolean show_media_player_on_home "default false"
         boolean show_media_skip_buttons "default true"
@@ -448,11 +461,11 @@ reads directly — see §0), `calendar_colors`, everything under Theme, Drawer, 
 Notifications, Permission bookkeeping, and First-run.
 
 **The Home look keys follow the same rule.** `appRowPosition`/`appRowPresentation`/`appListVerticalAlignment`/
-`dockDisplayMode`/`appListLayout`/`appListColumnAlignment`/`appListGridColumns`/`appListGridDisplayMode`/
-`appListShrinkToFit` and the three landscape twins are edited on *Dock & Apps layout* (Settings → Apps and
-folders, and each facet's own copy of the screen). The launcher-wide values only seed a new or reset facet
-(`ApplyFacetDefaultsUseCase`, scope `LOOK`); a facet's value is always its own, with no `LAUNCHER_DEFAULT`
-marker. A facet's landscape twin is its own too, `null` meaning "same as portrait".
+`appListLayout`/`appListColumnAlignment`/`appListGridColumns`/`appListGridDisplayMode`/
+`appListShrinkToFit` and the three landscape twins are edited on the Apps list screen (Settings → Default Apps list,
+and each facet's own copy of the screen). The launcher-wide values only seed a new or reset facet
+(`ApplyFacetDefaultsUseCase`, scope `LOOK`, run with `APPS_LIST` by the Apps list screen's reset and copy); a facet's value is always its own, with no `LAUNCHER_DEFAULT`
+marker. `dockDisplayMode` is the same kind of default but is edited on the Dock screen and copied with the dock (scope `DOCK`). A facet's landscape twin is its own too, `null` meaning "same as portrait".
 
 ### 5.2 Read path
 
@@ -499,29 +512,29 @@ DataStore serialises writes and is main-safe; callers `viewModelScope.launch { }
 | `chooseWeatherCity(WeatherCity): Boolean` | `weather_saved_cities`, the four city keys, `weather_location_mode` | add the city to the saved list unless already there (refused, returning false, past 10), make it the chosen city and switch to city mode | `WeatherLocationViewModel` |
 | `removeWeatherCity(WeatherCity)` | `weather_saved_cities`, the four city keys | drop it from the list; clear the four keys when it was the chosen one | `WeatherLocationViewModel` |
 | `setSavedWeatherCities(List<WeatherCity>)` | `weather_saved_cities` | replace the list (restore), at most 10 | `ImportBackupUseCase` |
-| `setAllowLandscape(Boolean)` | `allow_landscape` | set | `AppearanceSettingsViewModel` |
+| `setAllowLandscape(Boolean)` | `allow_landscape` | set | `HomeAppsListSettingsViewModel` |
 | `setHideStatusBar(Boolean)` | `hide_status_bar` | set | `AppearanceSettingsViewModel` |
 | `setClockAlignment(ClockAlignment)` | `clock_alignment` | set | `ClockStyleGalleryViewModel`, `HomeViewModel` (clock adjust toolbar) |
 | `setShowWeather(Boolean)` | `show_weather` | set | `TurnOffWeatherUseCase`, weather settings |
 | `setClockZoneHeight(Float)` | `clock_zone_height_dp` | set | `HomeViewModel` (zone drag handle) |
 | `resetClockZoneHeight()` | `clock_zone_height_dp` and `landscape_clock_zone_height_dp` | **remove** | `ClockStyleGalleryViewModel` |
-| `updateLandscape((LandscapeOverrides) -> LandscapeOverrides)` | all six `landscape_*` keys | set each field, or **remove** it when `null` | `HomeViewModel` (landscape adjust commits), `AppearanceSettingsViewModel` (Landscape alignment rows), `ClockStyleGalleryViewModel` (Reset position), `ImportBackupUseCase` |
+| `updateLandscape((LandscapeOverrides) -> LandscapeOverrides)` | all six `landscape_*` keys | set each field, or **remove** it when `null` | `HomeViewModel` (landscape adjust commits), `HomeAppsListSettingsViewModel` (Landscape alignment rows), `ClockStyleGalleryViewModel` (Reset position), `ImportBackupUseCase` |
 | `setShowAllDayEvents(Boolean)` | `show_all_day_events` | set | `CalendarSettingsViewModel` |
 | `setSelectedCalendarIds(Set<String>)` | `selected_calendar_ids` | set | `CalendarSettingsViewModel` |
 | `setCalendarColors(Map<String,String>)` | `calendar_colors` | set (encoded `id:color`) | `EnsureCalendarColorsUseCase` (app-wide, on every calendar change), `CalendarSettingsViewModel` after `AssignCalendarColorsUseCase` |
 | `setListContentMode(ListContentMode)` | `list_content_mode` | set | `HomeAppsListSettingsViewModel`, `OnboardingViewModel` |
 | `setAppsToShowCount(Int)` | `apps_to_show_count` | set | `HomeAppsListSettingsViewModel`, `OnboardingViewModel` |
-| `setAppRowPosition(AppRowPosition)` | `app_row_position` | set | `AppearanceSettingsViewModel` |
-| `setAppRowPresentation(AppRowPresentation)` | `app_row_presentation` | set | `AppearanceSettingsViewModel` |
-| `setAppListVerticalAlignment(AppListVerticalAlignment)` | `app_list_vertical_alignment` | set | `AppearanceSettingsViewModel` |
-| `setAppListLayout(AppListLayout)` | `app_list_layout` | set | `AppearanceSettingsViewModel`, `ImportBackupUseCase` |
-| `setAppListColumnAlignment(AppListColumnAlignment)` | `app_list_column_alignment` | set | `AppearanceSettingsViewModel`, `ImportBackupUseCase` |
-| `setAppListGridColumns(AppListGridColumns)` | `app_list_grid_columns` | set | `AppearanceSettingsViewModel`, `ImportBackupUseCase` |
-| `setAppListGridDisplayMode(AppListGridDisplayMode)` | `app_list_grid_display_mode` | set | `AppearanceSettingsViewModel`, `ImportBackupUseCase` |
-| `setAppListShrinkToFit(AppListShrinkToFit)` | `app_list_shrink_to_fit` | set | `AppearanceSettingsViewModel`, `ImportBackupUseCase` |
+| `setAppRowPosition(AppRowPosition)` | `app_row_position` | set | `HomeAppsListSettingsViewModel` |
+| `setAppRowPresentation(AppRowPresentation)` | `app_row_presentation` | set | `HomeAppsListSettingsViewModel` |
+| `setAppListVerticalAlignment(AppListVerticalAlignment)` | `app_list_vertical_alignment` | set | `HomeAppsListSettingsViewModel` |
+| `setAppListLayout(AppListLayout)` | `app_list_layout` | set | `HomeAppsListSettingsViewModel`, `ImportBackupUseCase` |
+| `setAppListColumnAlignment(AppListColumnAlignment)` | `app_list_column_alignment` | set | `HomeAppsListSettingsViewModel`, `ImportBackupUseCase` |
+| `setAppListGridColumns(AppListGridColumns)` | `app_list_grid_columns` | set | `HomeAppsListSettingsViewModel`, `ImportBackupUseCase` |
+| `setAppListGridDisplayMode(AppListGridDisplayMode)` | `app_list_grid_display_mode` | set | `HomeAppsListSettingsViewModel`, `ImportBackupUseCase` |
+| `setAppListShrinkToFit(AppListShrinkToFit)` | `app_list_shrink_to_fit` | set | `HomeAppsListSettingsViewModel`, `ImportBackupUseCase` |
 | `setHomeAppsFontWeight(FontWeightOption)` | `home_apps_font_weight` | set | `AppearanceSettingsViewModel` |
 | `setAppLabelColorOption(ClockColorOption)` | `app_label_color_option` | set | `AppearanceSettingsViewModel` |
-| `setDockDisplayMode(DockDisplayMode)` | `dock_display_mode` | set | `AppearanceSettingsViewModel` |
+| `setDockDisplayMode(DockDisplayMode)` | `dock_display_mode` | set | `DockSettingsViewModel` |
 | `setActiveFacetId(Long)` | `active_facet_id` | set | `FacetCarouselViewModel`, `ManageFacetsViewModel`, `EnsureActiveFacetUseCase`, `ActivateFacetByIdUseCase`, `ImportBackupUseCase` |
 | `setThemeMode(ThemeMode)` | `theme_mode` | set | `AppearanceSettingsViewModel` |
 | `setSystemBarIconStyle(SystemBarIconStyle)` | `system_bar_icon_style` | set | `AppearanceSettingsViewModel`, `ImportBackupUseCase` |
@@ -550,6 +563,10 @@ DataStore serialises writes and is main-safe; callers `viewModelScope.launch { }
 | `setNotificationDotsEnabled(Boolean)` | `notification_dots_enabled` | set | `NotificationSettingsViewModel`, `NotificationAccessExplanationViewModel` |
 | `setHomeOpensSearch(Boolean)` | `home_opens_search` | set | `GesturesViewModel` |
 | `setDoubleTapToLock(Boolean)` | `double_tap_to_lock` | set | `GesturesViewModel` |
+| `setSwipeLeftEnabled(Boolean)` | `swipe_left_enabled` | set | `GesturesViewModel` |
+| `setSwipeRightEnabled(Boolean)` | `swipe_right_enabled` | set | `GesturesViewModel` |
+| `setSwipeDownEnabled(Boolean)` | `swipe_down_enabled` | set | `GesturesViewModel` |
+| `setSwapSwipeSides(Boolean)` | `swap_swipe_sides` | set | `GesturesViewModel` |
 | `setNotificationBadgeStyle(NotificationBadgeStyle)` | `notification_badge_style` | set | `NotificationSettingsViewModel` |
 | `setShowMediaPlayerOnHome(Boolean)` | `show_media_player_on_home` | set | `NotificationSettingsViewModel` |
 | `setShowMediaSkipButtons(Boolean)` | `show_media_skip_buttons` | set | `NotificationSettingsViewModel` |
@@ -689,6 +706,10 @@ accessibility grant, and the pair is small enough to set again after a restore.
 |---|---|---|---|
 | `home_opens_search` | Boolean | `homeOpensSearch` | `false` — a Home press on bare Home opens the Drawer with search focused. In `BackupSettings` (defaulted, no version bump) |
 | `double_tap_to_lock` | Boolean | `doubleTapToLock` | `false` — the switch only reads on while the accessibility service is also enabled. In `BackupSettings` (defaulted, no version bump) |
+| `swipe_left_enabled` | Boolean | `swipeLeftEnabled` | `true`. In `BackupSettings` (defaulted, no version bump) |
+| `swipe_right_enabled` | Boolean | `swipeRightEnabled` | `true`. In `BackupSettings` (defaulted, no version bump) |
+| `swipe_down_enabled` | Boolean | `swipeDownEnabled` | `true`. In `BackupSettings` (defaulted, no version bump) |
+| `swap_swipe_sides` | Boolean | `swapSwipeSides` | `false`. In `BackupSettings` (defaulted, no version bump) |
 
 #### Notifications
 

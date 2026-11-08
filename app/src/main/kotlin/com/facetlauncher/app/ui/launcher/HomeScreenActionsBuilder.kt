@@ -96,6 +96,7 @@ private fun homeClockActions(
         onClockStylesClick = { state.activeFacet?.let { navigation.toClockStyle(it.id) } },
         onNavigateToSettings = navigation.toSettings,
         onNavigateToFacetSettings = { state.activeFacet?.let { navigation.toFacetSettings(it.id) } },
+        onOpenFacetCarousel = { inputs.coroutineScope.launch { swipe.facet.open() } },
         onWidgetStackClick = navigation.toClockStack,
         onReplaceWidgetClick = { state.visibleClockItem?.let { hooks.openClockWidgetPicker(it.id) } },
         onRemoveWidgetClick = {

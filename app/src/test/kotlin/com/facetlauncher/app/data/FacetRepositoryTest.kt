@@ -175,7 +175,19 @@ class FacetRepositoryTest {
 
         val stored = repository.observeFacets().first().single()
         assertEquals(ListContentMode.MOST_USED, stored.listContentMode)
-        assertEquals(12, stored.appsToShowCount)
+        assertEquals(20, stored.appsToShowCount)
+    }
+
+    @Test
+    fun `applyDockDefaults copies only the dock display style`() = runTest {
+        val repository = FacetRepository(FakeFacetDao(), FakeClockStackItemDao())
+        val facet = repository.addFacet()
+
+        repository.applyDockDefaults(facet.id, LauncherSettings(dockDisplayMode = DockDisplayMode.TEXT, appRowPosition = AppRowPosition.RIGHT))
+
+        val stored = repository.observeFacets().first().single()
+        assertEquals(DockDisplayMode.TEXT, stored.dockDisplayMode)
+        assertEquals(LauncherSettings().appRowPosition, stored.appRowPosition)
     }
 
     @Test
@@ -187,14 +199,13 @@ class FacetRepositoryTest {
         repository.applyLookDefaults(
             facet.id,
             LauncherSettings(
-                dockDisplayMode = DockDisplayMode.TEXT,
                 appRowPosition = AppRowPosition.RIGHT,
                 landscape = LandscapeOverrides(appRowPosition = AppRowPosition.CENTER),
             ),
         )
 
         val stored = repository.observeFacets().first().single()
-        assertEquals(DockDisplayMode.TEXT, stored.dockDisplayMode)
+        assertEquals(DockDisplayMode.ICONS, stored.dockDisplayMode)
         assertEquals(AppRowPosition.RIGHT, stored.appRowPosition)
         assertEquals(AppRowPosition.CENTER, stored.landscape.appRowPosition)
         assertEquals(ClockAlignment.RIGHT, stored.landscape.clockAlignment)
@@ -294,7 +305,7 @@ class FacetRepositoryTest {
     }
 
     @Test
-    fun `setAppsToShowCount coerces into the 3 to 12 range`() = runTest {
+    fun `setAppsToShowCount coerces into the 3 to 20 range`() = runTest {
         val dao = FakeFacetDao()
         val repository = FacetRepository(dao, FakeClockStackItemDao())
         val facet = repository.addFacet()
@@ -303,7 +314,7 @@ class FacetRepositoryTest {
         repository.setAppsToShowCount(facet.id, 1)
         assertEquals(3, repository.observeFacets().first().single().appsToShowCount)
         repository.setAppsToShowCount(facet.id, 99)
-        assertEquals(12, repository.observeFacets().first().single().appsToShowCount)
+        assertEquals(20, repository.observeFacets().first().single().appsToShowCount)
     }
 
 

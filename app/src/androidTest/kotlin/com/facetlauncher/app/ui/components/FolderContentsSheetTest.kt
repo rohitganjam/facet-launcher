@@ -139,4 +139,38 @@ class FolderContentsSheetTest {
         // Then the app's name is shown under its icon
         composeRule.onNodeWithText(app.label).assertExists()
     }
+
+    @Test
+    fun holdingARowAndDraggingItPastTheNextOneReordersTheFolderWithoutOpeningTheMenu() {
+        // Given a two-app folder that can be reordered
+        val second = AppInfo(packageName = "com.example.app2", activityName = ".Main", label = "App 2", icon = null)
+        var saved: List<AppInfo>? = null
+        composeRule.setContent {
+            FacetLauncherTheme {
+                FolderContentsSheet(
+                    folder = Folder(id = 1L, name = "Folder", apps = listOf(app, second)),
+                    onDismissRequest = {},
+                    onAppClick = {},
+                    presentation = DrawerPresentation.LIST,
+                    onRemoveFromFolder = { _, _ -> },
+                    onReorderApps = { saved = it },
+                )
+            }
+        }
+
+        // When the first row is held, then dragged down past the second
+        composeRule.onNodeWithTag("folder_contents_app_${app.packageName}", useUnmergedTree = true).performTouchInput {
+            down(center)
+            advanceEventTime(700)
+            moveBy(androidx.compose.ui.geometry.Offset(0f, height * 0.8f))
+            moveBy(androidx.compose.ui.geometry.Offset(0f, height * 0.8f))
+            up()
+        }
+        composeRule.waitForIdle()
+
+        // Then the new order is saved and the context menu stays shut
+        composeRule.waitUntil(timeoutMillis = 3_000) { saved != null }
+        org.junit.Assert.assertEquals(listOf(second.packageName, app.packageName), saved!!.map { it.packageName })
+        composeRule.onNodeWithTag("app_context_menu").assertDoesNotExist()
+    }
 }

@@ -2,6 +2,7 @@ package com.facetlauncher.app.ui.onboarding
 
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.AppListLimits
+import com.facetlauncher.app.data.model.DrawerFolderDisplayMode
 import com.facetlauncher.app.data.model.DrawerPresentation
 import com.facetlauncher.app.data.model.ListContentMode
 import com.facetlauncher.app.data.model.SearchBarPosition
@@ -30,4 +31,7 @@ data class OnboardingUiState(
     val searchBarPosition: SearchBarPosition = SearchBarPosition.TOP,
     val searchContactsEnabled: Boolean = false,
     val searchSettingsEnabled: Boolean = false,
+    val drawerFolderDisplayMode: DrawerFolderDisplayMode = DrawerFolderDisplayMode.DO_NOT_SHOW,
+    /** The user's installed apps, for the drawer step's live preview. */
+    val installedApps: ImmutableList<AppInfo> = persistentListOf(),
 )

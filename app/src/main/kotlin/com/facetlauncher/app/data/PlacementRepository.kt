@@ -4,10 +4,17 @@ import com.facetlauncher.app.data.local.AppPlacementDao
 import com.facetlauncher.app.data.local.AppPlacementEntity
 import com.facetlauncher.app.data.local.FolderPlacementDao
 import com.facetlauncher.app.data.local.FolderPlacementEntity
+import com.facetlauncher.app.data.local.cell
+import com.facetlauncher.app.data.local.gridKey
+import com.facetlauncher.app.data.local.keepingCellsOf
+import com.facetlauncher.app.data.local.withCell
 import com.facetlauncher.app.data.model.AppInfo
+import com.facetlauncher.app.data.model.BackupGridCells
 import com.facetlauncher.app.data.model.PlacedItem
 import com.facetlauncher.app.data.model.PlacementList
 import com.facetlauncher.app.data.model.PlacementTarget
+import com.facetlauncher.app.data.model.gridKey
+import com.facetlauncher.app.domain.GridCell
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.flow.Flow
@@ -94,12 +101,44 @@ class PlacementRepository @Inject constructor(
         folders.forEach { folderPlacementDao.upsert(it.copy(id = 0, list = to.list, facetId = to.facetId, ownerKey = to.ownerKey)) }
     }
 
-    /** Rewrites `position` across apps and folder placements to match [orderedItems]'s order. */
+    /** Rewrites `position` across apps and folder placements to match [orderedItems]'s order; their saved grid cells are kept. */
     suspend fun reorderItems(target: PlacementTarget, orderedItems: List<PlacedItem>) {
+        writeOrder(target, orderedItems)
+    }
+
+    /** The Home grid cells saved for [landscape] or portrait, by [gridKey]; an item never moved on the grid is absent. */
+    fun observeGridCells(target: PlacementTarget, landscape: Boolean): Flow<Map<String, GridCell>> =
+        combine(appPlacementDao.observe(target.list, target.ownerKey), folderPlacementDao.observe(target.list, target.ownerKey)) { apps, folders ->
+            buildMap {
+                apps.forEach { entity -> entity.cell(landscape)?.let { put(entity.gridKey(), it) } }
+                folders.forEach { entity -> entity.cell(landscape)?.let { put(entity.gridKey(), it) } }
+            }
+        }
+
+    /**
+     * Saves a grid move: each [cells] entry for the given orientation. The list order (`position`) and the other orientation's
+     * cells are left alone, so the list and the grid each keep their own arrangement.
+     */
+    suspend fun saveGridCells(target: PlacementTarget, landscape: Boolean, cells: Map<String, GridCell>) {
+        appPlacementDao.observe(target.list, target.ownerKey).first().forEach { entity ->
+            cells[entity.gridKey()]?.let { appPlacementDao.upsert(entity.withCell(landscape, it)) }
+        }
+        folderPlacementDao.observe(target.list, target.ownerKey).first().forEach { entity ->
+            cells[entity.gridKey()]?.let { folderPlacementDao.upsert(entity.withCell(landscape, it)) }
+        }
+    }
+
+    private suspend fun writeOrder(target: PlacementTarget, orderedItems: List<PlacedItem>) {
+        val existingApps = appPlacementDao.observe(target.list, target.ownerKey).first().associateBy { it.gridKey() }
+        val existingFolders = folderPlacementDao.observe(target.list, target.ownerKey).first().associateBy { it.gridKey() }
         orderedItems.forEachIndexed { index, item ->
+            val key = item.gridKey()
             when (item) {
-                is PlacedItem.SingleApp -> appPlacementDao.upsert(item.app.toEntity(target, index))
-                is PlacedItem.FolderItem -> placeFolder(target, item.folder.id, index)
+                is PlacedItem.SingleApp -> appPlacementDao.upsert(item.app.toEntity(target, index).keepingCellsOf(existingApps[key]))
+                is PlacedItem.FolderItem -> folderPlacementDao.upsert(
+                    FolderPlacementEntity(list = target.list, facetId = target.facetId, folderId = item.folder.id, position = index)
+                        .keepingCellsOf(existingFolders[key]),
+                )
             }
         }
     }
@@ -126,6 +165,18 @@ class PlacementRepository @Inject constructor(
     /** F14 Backup & Restore import — places a restored folder (by its already-remapped [folderId]) into the target. */
     suspend fun restoreFolderPlacement(target: PlacementTarget, folderId: Long, position: Int) {
         placeFolder(target, folderId, position)
+    }
+
+    /** F14 Backup & Restore import — puts a restored folder placement back on its saved grid cells. */
+    suspend fun restoreFolderCells(target: PlacementTarget, folderId: Long, cells: BackupGridCells) {
+        folderPlacementDao.observe(target.list, target.ownerKey).first().filter { it.folderId == folderId }.forEach {
+            folderPlacementDao.upsert(
+                it.copy(
+                    portraitRow = cells.portraitRow, portraitColumn = cells.portraitColumn,
+                    landscapeRow = cells.landscapeRow, landscapeColumn = cells.landscapeColumn,
+                ),
+            )
+        }
     }
 
     /** Rows still at the migration's `-1` `userId` sentinel, in every list — see `RepairOrphanedProfileRowsUseCase`. */

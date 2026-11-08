@@ -66,11 +66,12 @@ enum class OnboardingStep {
     INTRO,
     FACETS,
     HOME_SETUP,
+    DRAWER_SETUP,
     NOTIFICATIONS,
 }
 
 /** Steps shown in each page's [OnboardingDots]. */
-internal const val ONBOARDING_STEP_COUNT = 4
+internal const val ONBOARDING_STEP_COUNT = 5
 
 /** Full-screen pickers opened from the home-setup step — reused as-is from Settings/Facets, not part of [OnboardingStep]'s own linear flow. */
 private enum class OnboardingSubScreen {
@@ -83,7 +84,8 @@ private fun previousStep(step: OnboardingStep): OnboardingStep = when (step) {
     OnboardingStep.INTRO -> OnboardingStep.INTRO
     OnboardingStep.FACETS -> OnboardingStep.INTRO
     OnboardingStep.HOME_SETUP -> OnboardingStep.FACETS
-    OnboardingStep.NOTIFICATIONS -> OnboardingStep.HOME_SETUP
+    OnboardingStep.DRAWER_SETUP -> OnboardingStep.HOME_SETUP
+    OnboardingStep.NOTIFICATIONS -> OnboardingStep.DRAWER_SETUP
 }
 
 /**
@@ -95,7 +97,8 @@ private fun previousStep(step: OnboardingStep): OnboardingStep = when (step) {
 private fun nextStep(step: OnboardingStep): OnboardingStep = when (step) {
     OnboardingStep.INTRO -> OnboardingStep.FACETS
     OnboardingStep.FACETS -> OnboardingStep.HOME_SETUP
-    OnboardingStep.HOME_SETUP -> OnboardingStep.NOTIFICATIONS
+    OnboardingStep.HOME_SETUP -> OnboardingStep.DRAWER_SETUP
+    OnboardingStep.DRAWER_SETUP -> OnboardingStep.NOTIFICATIONS
     OnboardingStep.NOTIFICATIONS -> OnboardingStep.NOTIFICATIONS
 }
 
@@ -220,17 +223,22 @@ fun OnboardingScreen(
                     onOpenDockPicker = { subScreen = OnboardingSubScreen.DOCK_PICKER },
                     onListContentModeChange = viewModel::setListContentMode,
                     onAppsToShowCountChange = viewModel::setAppsToShowCount,
-                    drawerPresentation = uiState.drawerPresentation,
+                    onOpenFavoritesPicker = { subScreen = OnboardingSubScreen.FAVORITES_PICKER },
+                    onReorderFavorites = viewModel::reorderFavorites,
+                    onClearFavorites = viewModel::clearFavorites,
+                    onClearDockApps = viewModel::clearDockApps,
+                    onBack = { step = previousStep(step) },
+                    onNext = { step = nextStep(step) },
+                )
+                OnboardingStep.DRAWER_SETUP -> OnboardingDrawerSetupPage(
+                    uiState = uiState,
                     onDrawerPresentationChange = viewModel::setDrawerPresentation,
                     onSearchBarPositionChange = viewModel::setSearchBarPosition,
                     onSearchContactsToggle = { enabled ->
                         if (enabled) requestContactsPermission.launch(Manifest.permission.READ_CONTACTS) else viewModel.setSearchContactsEnabled(false)
                     },
                     onSearchSettingsToggle = viewModel::setSearchSettingsEnabled,
-                    onOpenFavoritesPicker = { subScreen = OnboardingSubScreen.FAVORITES_PICKER },
-                    onReorderFavorites = viewModel::reorderFavorites,
-                    onClearFavorites = viewModel::clearFavorites,
-                    onClearDockApps = viewModel::clearDockApps,
+                    onDrawerFolderDisplayModeChange = viewModel::setDrawerFolderDisplayMode,
                     onBack = { step = previousStep(step) },
                     onNext = { step = nextStep(step) },
                 )

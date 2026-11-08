@@ -76,6 +76,10 @@ private object Keys {
     val NOTIFICATION_DOTS_ENABLED = booleanPreferencesKey("notification_dots_enabled")
     val HOME_OPENS_SEARCH = booleanPreferencesKey("home_opens_search")
     val DOUBLE_TAP_TO_LOCK = booleanPreferencesKey("double_tap_to_lock")
+    val SWIPE_LEFT_ENABLED = booleanPreferencesKey("swipe_left_enabled")
+    val SWIPE_RIGHT_ENABLED = booleanPreferencesKey("swipe_right_enabled")
+    val SWIPE_DOWN_ENABLED = booleanPreferencesKey("swipe_down_enabled")
+    val SWAP_SWIPE_SIDES = booleanPreferencesKey("swap_swipe_sides")
     val NOTIFICATION_BADGE_STYLE = stringPreferencesKey("notification_badge_style")
     val SHOW_MEDIA_PLAYER_ON_HOME = booleanPreferencesKey("show_media_player_on_home")
     val SHOW_MEDIA_SKIP_BUTTONS = booleanPreferencesKey("show_media_skip_buttons")
@@ -167,6 +171,10 @@ class SettingsRepository @Inject constructor(
             notificationDotsEnabled = preferences[Keys.NOTIFICATION_DOTS_ENABLED] ?: defaults.notificationDotsEnabled,
             homeOpensSearch = preferences[Keys.HOME_OPENS_SEARCH] ?: defaults.homeOpensSearch,
             doubleTapToLock = preferences[Keys.DOUBLE_TAP_TO_LOCK] ?: defaults.doubleTapToLock,
+            swipeLeftEnabled = preferences[Keys.SWIPE_LEFT_ENABLED] ?: defaults.swipeLeftEnabled,
+            swipeRightEnabled = preferences[Keys.SWIPE_RIGHT_ENABLED] ?: defaults.swipeRightEnabled,
+            swipeDownEnabled = preferences[Keys.SWIPE_DOWN_ENABLED] ?: defaults.swipeDownEnabled,
+            swapSwipeSides = preferences[Keys.SWAP_SWIPE_SIDES] ?: defaults.swapSwipeSides,
             notificationBadgeStyle = preferences[Keys.NOTIFICATION_BADGE_STYLE]?.let {
                 runCatching { NotificationBadgeStyle.valueOf(it) }.getOrNull()
             } ?: defaults.notificationBadgeStyle,
@@ -303,6 +311,22 @@ class SettingsRepository @Inject constructor(
 
     suspend fun setNotificationDotsEnabled(enabled: Boolean) {
         dataStore.edit { it[Keys.NOTIFICATION_DOTS_ENABLED] = enabled }
+    }
+
+    suspend fun setSwipeLeftEnabled(enabled: Boolean) {
+        dataStore.edit { it[Keys.SWIPE_LEFT_ENABLED] = enabled }
+    }
+
+    suspend fun setSwipeRightEnabled(enabled: Boolean) {
+        dataStore.edit { it[Keys.SWIPE_RIGHT_ENABLED] = enabled }
+    }
+
+    suspend fun setSwipeDownEnabled(enabled: Boolean) {
+        dataStore.edit { it[Keys.SWIPE_DOWN_ENABLED] = enabled }
+    }
+
+    suspend fun setSwapSwipeSides(enabled: Boolean) {
+        dataStore.edit { it[Keys.SWAP_SWIPE_SIDES] = enabled }
     }
 
     suspend fun setHomeOpensSearch(enabled: Boolean) {

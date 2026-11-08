@@ -37,6 +37,9 @@ import com.facetlauncher.app.ui.home.HomeMenuMode
 import com.facetlauncher.app.ui.theme.launcherSystemBarInsets
 import kotlin.math.roundToInt
 
+/** The screen's own side margin in portrait; the grid layout spans past it so its columns can line up with the dock. */
+internal val HOME_SIDE_MARGIN = 24.dp
+
 /** Portrait Home: the clock, media row and app list stacked over the dock row. */
 @Composable
 internal fun HomePortraitContent(frame: HomeFrame) {
@@ -55,7 +58,7 @@ internal fun HomePortraitContent(frame: HomeFrame) {
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth()
-                .padding(horizontal = 24.dp)
+                .padding(horizontal = HOME_SIDE_MARGIN)
                 .onSizeChanged { frame.layout.contentHeightPx = it.height.toFloat() },
         ) {
             PortraitClockZone(frame)

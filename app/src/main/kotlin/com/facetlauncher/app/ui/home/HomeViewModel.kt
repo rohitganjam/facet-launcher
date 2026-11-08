@@ -84,6 +84,7 @@ class HomeViewModel @Inject constructor(
                 dockApps = screenState.dockApps,
                 appListItems = screenState.appListItems,
                 favoriteItems = screenState.favoriteItems,
+                favoriteCells = screenState.favoriteCells,
                 facets = screenState.facets,
                 usageAccessGranted = screenState.usageAccessGranted,
                 calendarEvents = screenState.calendarEvents,

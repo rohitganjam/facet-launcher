@@ -167,6 +167,7 @@
     <string name="folder_no_apps_yet">Aún no hay apps en esta carpeta</string>
     <string name="quick_placement_add_to">Añadir a %1$s</string>
     <string name="quick_placement_remove_from">Quitar de %1$s</string>
+    <string name="quick_placement_full">%1$s: límite alcanzado</string>
     <string name="quick_placement_favorites">Favoritos</string>
     <string name="quick_placement_dock">Dock</string>
     <plurals name="folder_app_count">
@@ -256,7 +257,6 @@
     <string name="settings_dock_title">Dock</string>
     <string name="settings_default_dock_title">Apps del dock predeterminadas</string>
     <string name="home_apps_list_default_header_title">Lista de apps predeterminada</string>
-    <string name="settings_default_look_subtitle">Aspecto predeterminado del dock y las apps de inicio en las facetas nuevas</string>
     <string name="defaults_screen_note">Se usa al crear una faceta o restablecer una.</string>
     <string name="reset_to_default_title">Restablecer valores predeterminados</string>
     <string name="reset_to_default_confirm">Restablecer</string>
@@ -264,8 +264,8 @@
     <string name="reset_dock_confirm_message">Esto sustituye el dock de esta faceta por el dock predeterminado. Las apps que colocaste aquí se perderán.</string>
     <string name="reset_apps_subtitle">Sustituye esta lista por la predeterminada</string>
     <string name="reset_apps_confirm_message">Esto sustituye los favoritos, el contenido de la lista y el número de apps de esta faceta por los valores predeterminados. Los favoritos que elegiste aquí se perderán.</string>
-    <string name="reset_look_subtitle">Sustituye el aspecto del dock y de la lista por el predeterminado</string>
-    <string name="reset_look_confirm_message">Esto sustituye el estilo del dock, el diseño de la lista y la alineación de esta faceta por los valores predeterminados.</string>
+    <string name="reset_look_subtitle">Sustituye el aspecto de la lista por el predeterminado</string>
+    <string name="reset_look_confirm_message">Esto sustituye el diseño de la lista y la alineación de esta faceta por los valores predeterminados.</string>
     <plurals name="settings_dock_apps_count">
         <item quantity="one">%d app del Dock</item>
         <item quantity="other">%d apps del Dock</item>
@@ -726,8 +726,10 @@
     <string name="onboarding_intro_gesture_facets">Desliza a la izquierda para cambiar de faceta.</string>
 
     <!-- OnboardingHomeSetupPage -->
-    <string name="onboarding_home_setup_headline">Configura tu pantalla de inicio</string>
+    <string name="onboarding_home_setup_headline">Configura tu primera faceta</string>
     <string name="onboarding_home_setup_subhead">Elige las apps que quieres en Inicio. Puedes cambiar todo esto más tarde.</string>
+    <string name="onboarding_drawer_setup_headline">Configura tu cajón de apps</string>
+    <string name="onboarding_drawer_setup_subhead">Elige cómo se muestran tus apps y cómo funciona la búsqueda. Puedes cambiar todo esto más tarde.</string>
     <string name="onboarding_notifications_headline">Insignias y reproducción actual</string>
     <string name="onboarding_notifications_subhead">Puntos en las apps con algo pendiente y lo que se está reproduciendo en Inicio. Puedes cambiarlo más tarde.</string>
     <string name="onboarding_notifications_access_note">Ambas funciones necesitan acceso a las notificaciones, un permiso especial que activas en los ajustes del sistema. Facet solo lee qué apps tienen notificaciones activas y el título, el artista y la carátula de lo que se reproduce. Nunca lee el texto de las notificaciones y nada sale de tu dispositivo.</string>
@@ -737,7 +739,6 @@
     <string name="onboarding_clear_dock_title">¿Vaciar el dock?</string>
     <string name="onboarding_clear_dock_message">Quita todas las apps del dock predeterminado. Puedes volver a añadirlas en cualquier momento.</string>
     <string name="onboarding_manage_dock_apps">Gestionar apps del dock</string>
-    <string name="onboarding_app_drawer_section_header">CAJÓN DE APPS</string>
     <string name="onboarding_home_apps_section_header">APPS DE INICIO</string>
     <string name="onboarding_show_label">Mostrar</string>
     <string name="onboarding_list_content_favorites">Favoritos</string>
@@ -862,6 +863,8 @@
     <string name="clock_adjust_align_middle">Alinear en el centro</string>
     <string name="clock_adjust_align_bottom">Alinear abajo</string>
     <string name="home_sheet_facet_settings_subtitle">Widgets, lista de apps y dock específicos de la faceta</string>
+    <string name="home_sheet_switch_facet">Cambiar de faceta</string>
+    <string name="home_sheet_switch_facet_subtitle">Explora tus facetas y aplica una</string>
 
     <!-- HubWidgetPickerScreen -->
     <string name="hub_widget_picker_full">Lleno — quita un widget primero</string>
@@ -939,7 +942,6 @@
     <string name="icons_screen_shape_and_size">Forma y tamaño</string>
     <string name="icons_screen_force_shape">Forzar forma de iconos</string>
     <string name="icons_screen_force_shape_description">Recorta también los iconos del paquete con la forma de arriba</string>
-    <string name="appearance_dock_apps_title">Diseño del dock y las apps</string>
     <string name="appearance_general_title">Colores y temas</string>
     <string name="appearance_general_subtitle">Temas, acento, barra de estado</string>
     <string name="appearance_section_look_feel">Aspecto y funcionamiento</string>
@@ -1098,12 +1100,15 @@
     <string name="settings_gestures_subtitle">Deslizamientos, toques y el botón de inicio</string>
     <string name="gestures_section_built_in">Integrados</string>
     <string name="gestures_section_optional">Opcionales</string>
+    <string name="gestures_section_swipes">Deslizamientos</string>
     <string name="gesture_swipe_up_title">Deslizar hacia arriba</string>
     <string name="gesture_swipe_up_subtitle">Abrir el cajón de apps</string>
     <string name="gesture_swipe_right_title">Deslizar a la derecha</string>
     <string name="gesture_swipe_right_subtitle">Abrir el Hub</string>
     <string name="gesture_swipe_left_title">Deslizar a la izquierda</string>
     <string name="gesture_swipe_left_subtitle">Cambiar de faceta</string>
+    <string name="gesture_swap_sides_title">Intercambiar izquierda y derecha</string>
+    <string name="gesture_swap_sides_subtitle">Abrir el Hub desde la derecha y las facetas desde la izquierda</string>
     <string name="gesture_swipe_down_title">Deslizar hacia abajo</string>
     <string name="gesture_swipe_down_subtitle">Abrir el panel de notificaciones</string>
     <string name="gesture_long_press_title">Mantener pulsado un espacio vacío</string>
@@ -1149,6 +1154,6 @@
     <string name="copy_dock_sheet_message">Sustituye el dock de cada faceta seleccionada por el dock predeterminado.</string>
     <string name="copy_apps_subtitle">Sustituye la lista de apps de las facetas que elijas por esta</string>
     <string name="copy_apps_sheet_message">Sustituye los favoritos, el contenido de la lista y el número de apps de cada faceta seleccionada por los valores predeterminados.</string>
-    <string name="copy_look_subtitle">Sustituye el aspecto del dock y de las apps de las facetas que elijas por este</string>
-    <string name="copy_look_sheet_message">Sustituye el estilo del dock, el diseño de la lista y la alineación de cada faceta seleccionada por los valores predeterminados.</string>
+    <string name="copy_look_subtitle">Sustituye el aspecto de las apps de las facetas que elijas por este</string>
+    <string name="copy_look_sheet_message">Sustituye el diseño de la lista y la alineación de cada faceta seleccionada por los valores predeterminados.</string>
 </resources>

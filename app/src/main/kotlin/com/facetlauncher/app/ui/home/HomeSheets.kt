@@ -16,6 +16,7 @@ import androidx.compose.material.icons.outlined.Layers
 import androidx.compose.material.icons.outlined.OpenInFull
 import androidx.compose.material.icons.outlined.Palette
 import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material.icons.outlined.SwapHoriz
 import androidx.compose.material.icons.outlined.Tune
 import androidx.compose.material.icons.outlined.Widgets
 import androidx.compose.runtime.Composable
@@ -44,6 +45,7 @@ import com.facetlauncher.app.ui.theme.SurfaceContainer
  */
 @Composable
 fun HomeMenuSheetContent(
+    onSwitchFacetClick: () -> Unit,
     onFacetSettingsClick: () -> Unit,
     onLauncherSettingsClick: () -> Unit,
     onAddWidgetClick: () -> Unit,
@@ -75,7 +77,7 @@ fun HomeMenuSheetContent(
                 WidgetStackRow(stackSummary, onWidgetStackClick)
             }
         }
-        SettingsRows(onFacetSettingsClick, onLauncherSettingsClick)
+        SettingsRows(onSwitchFacetClick, onFacetSettingsClick, onLauncherSettingsClick)
     }
 }
 
@@ -202,7 +204,7 @@ private fun AdjustRow(
 @Composable
 private fun HomeMenuSheetPreview() {
     FacetLauncherTheme {
-        HomeMenuSheetContent({}, {}, {}, {}, stackSummary = "Clock", modifier = Modifier.background(SurfaceContainer))
+        HomeMenuSheetContent({}, {}, {}, {}, {}, stackSummary = "Clock", modifier = Modifier.background(SurfaceContainer))
     }
 }
 
@@ -210,7 +212,7 @@ private fun HomeMenuSheetPreview() {
 @Composable
 private fun HomeMenuSheetEmptyPreview() {
     FacetLauncherTheme {
-        HomeMenuSheetContent({}, {}, {}, {}, stackSummary = "Empty", stackEmpty = true, modifier = Modifier.background(SurfaceContainer))
+        HomeMenuSheetContent({}, {}, {}, {}, {}, stackSummary = "Empty", stackEmpty = true, modifier = Modifier.background(SurfaceContainer))
     }
 }
 
@@ -231,8 +233,17 @@ private fun AgendaWidgetSheetPreview() {
 }
 
 @Composable
-private fun SettingsRows(onFacetSettingsClick: () -> Unit, onLauncherSettingsClick: () -> Unit) {
+private fun SettingsRows(onSwitchFacetClick: () -> Unit, onFacetSettingsClick: () -> Unit, onLauncherSettingsClick: () -> Unit) {
     SettingsCard(fullBleedRows = true) {
+        AdjustRow(
+            icon = Icons.Outlined.SwapHoriz,
+            hue = SettingsSectionHue.FACETS,
+            label = stringResource(R.string.home_sheet_switch_facet),
+            subtitle = stringResource(R.string.home_sheet_switch_facet_subtitle),
+            onClick = onSwitchFacetClick,
+            testTag = "home_sheet_switch_facet",
+        )
+        CardDivider(startInset = SettingsIconBadgeInset)
         AdjustRow(
             icon = Icons.Outlined.Settings,
             hue = SettingsSectionHue.FACETS,

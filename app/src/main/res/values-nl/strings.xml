@@ -180,6 +180,7 @@
     <string name="folder_no_apps_yet">Nog geen apps in deze map</string>
     <string name="quick_placement_add_to">Toevoegen aan %1$s</string>
     <string name="quick_placement_remove_from">Verwijderen uit %1$s</string>
+    <string name="quick_placement_full">%1$s: limiet bereikt</string>
     <string name="quick_placement_favorites">Favorieten</string>
     <string name="quick_placement_dock">Dock</string>
     <plurals name="folder_app_count">
@@ -260,7 +261,6 @@
     <string name="settings_dock_title">Dock</string>
     <string name="settings_default_dock_title">Standaard dock-apps</string>
     <string name="home_apps_list_default_header_title">Standaard appslijst</string>
-    <string name="settings_default_look_subtitle">Standaarduiterlijk van de dock en de apps op het startscherm in nieuwe facetten</string>
     <string name="defaults_screen_note">Wordt gebruikt wanneer je een facet maakt of terugzet.</string>
     <string name="reset_to_default_title">Terugzetten naar standaard</string>
     <string name="reset_to_default_confirm">Terugzetten</string>
@@ -268,8 +268,8 @@
     <string name="reset_dock_confirm_message">Hiermee wordt de dock van deze facet vervangen door de standaarddock. De apps die je hier hebt geplaatst gaan verloren.</string>
     <string name="reset_apps_subtitle">Vervang deze lijst door de standaardlijst</string>
     <string name="reset_apps_confirm_message">Hiermee worden de favorieten, de lijstinhoud en het aantal apps van deze facet vervangen door de standaardwaarden. De favorieten die je hier hebt gekozen gaan verloren.</string>
-    <string name="reset_look_subtitle">Vervang het uiterlijk van dock en lijst door de standaard</string>
-    <string name="reset_look_confirm_message">Hiermee worden de dockstijl, de lijstindeling en de uitlijning van deze facet vervangen door de standaardwaarden.</string>
+    <string name="reset_look_subtitle">Vervang het uiterlijk van de lijst door de standaard</string>
+    <string name="reset_look_confirm_message">Hiermee worden de lijstindeling en de uitlijning van deze facet vervangen door de standaardwaarden.</string>
     <plurals name="settings_dock_apps_count">
         <item quantity="one">%d dock-app</item>
         <item quantity="other">%d dock-apps</item>
@@ -443,7 +443,6 @@
     <string name="system_bar_icons_dark">Donker</string>
 
     <string name="appearance_header_title">Uiterlijk van de launcher</string>
-    <string name="appearance_dock_apps_title">Indeling van dock en apps</string>
     <string name="appearance_general_title">Kleuren en thema\'s</string>
     <string name="appearance_general_subtitle">Thema\'s, accent, statusbalk</string>
     <string name="appearance_section_look_feel">Uiterlijk en gevoel</string>
@@ -712,8 +711,10 @@
     <string name="onboarding_intro_gesture_widgets">Veeg naar rechts voor je widgets.</string>
     <string name="onboarding_intro_gesture_facets">Veeg naar links om van facet te wisselen.</string>
 
-    <string name="onboarding_home_setup_headline">Stel je startscherm in</string>
+    <string name="onboarding_home_setup_headline">Stel je eerste facet in</string>
     <string name="onboarding_home_setup_subhead">Kies de apps die je op Home wilt. Je kunt dit later allemaal wijzigen.</string>
+    <string name="onboarding_drawer_setup_headline">Stel je app-lade in</string>
+    <string name="onboarding_drawer_setup_subhead">Kies hoe je apps worden getoond en hoe zoeken werkt. Je kunt dit later allemaal wijzigen.</string>
     <string name="onboarding_notifications_headline">Badges en nu afspelen</string>
     <string name="onboarding_notifications_subhead">Stippen op apps waar iets op je wacht, en wat er nu speelt op je startscherm. Je kunt dit later wijzigen.</string>
     <string name="onboarding_notifications_access_note">Beide hebben toegang tot meldingen nodig, een speciale toestemming die je inschakelt in de systeeminstellingen. Facet leest alleen welke apps actieve meldingen hebben en de titel, artiest en hoes van wat er speelt. De tekst van meldingen wordt nooit gelezen en er verlaat niets je apparaat.</string>
@@ -723,7 +724,6 @@
     <string name="onboarding_clear_dock_title">De dock leegmaken?</string>
     <string name="onboarding_clear_dock_message">Verwijdert elke app uit de standaarddock. Je kunt apps altijd weer toevoegen.</string>
     <string name="onboarding_manage_dock_apps">Dock-apps beheren</string>
-    <string name="onboarding_app_drawer_section_header">APP-LADE</string>
     <string name="onboarding_home_apps_section_header">STARTSCHERMAPPS</string>
     <string name="onboarding_show_label">Tonen</string>
     <string name="onboarding_list_content_favorites">Favorieten</string>
@@ -847,6 +847,8 @@
     <string name="clock_adjust_align_middle">Midden uitlijnen</string>
     <string name="clock_adjust_align_bottom">Onder uitlijnen</string>
     <string name="home_sheet_facet_settings_subtitle">Facetspecifieke widgets, appslijst en dock</string>
+    <string name="home_sheet_switch_facet">Facet wisselen</string>
+    <string name="home_sheet_switch_facet_subtitle">Blader door je facetten en pas er één toe</string>
     <string name="widget_sheet_replace">Eigen widget vervangen</string>
     <string name="widget_sheet_replace_subtitle">Kies een andere widget voor deze pagina</string>
     <string name="widget_sheet_remove">Widget verwijderen</string>
@@ -1038,12 +1040,15 @@
     <string name="settings_gestures_subtitle">Veegbewegingen, tikken en de Home-knop</string>
     <string name="gestures_section_built_in">Ingebouwd</string>
     <string name="gestures_section_optional">Optioneel</string>
+    <string name="gestures_section_swipes">Veegbewegingen</string>
     <string name="gesture_swipe_up_title">Omhoog vegen</string>
     <string name="gesture_swipe_up_subtitle">De app-lade openen</string>
     <string name="gesture_swipe_right_title">Naar rechts vegen</string>
     <string name="gesture_swipe_right_subtitle">De Hub openen</string>
     <string name="gesture_swipe_left_title">Naar links vegen</string>
     <string name="gesture_swipe_left_subtitle">Van facet wisselen</string>
+    <string name="gesture_swap_sides_title">Links en rechts omwisselen</string>
+    <string name="gesture_swap_sides_subtitle">Open de Hub van rechts en facetten van links</string>
     <string name="gesture_swipe_down_title">Omlaag vegen</string>
     <string name="gesture_swipe_down_subtitle">Het meldingenpaneel openen</string>
     <string name="gesture_long_press_title">Lang drukken op lege ruimte</string>
@@ -1091,6 +1096,6 @@
     <string name="copy_dock_sheet_message">Vervangt de dock van elke geselecteerde facet door de standaarddock.</string>
     <string name="copy_apps_subtitle">Vervangt de appslijst van de gekozen facetten door deze</string>
     <string name="copy_apps_sheet_message">Vervangt de favorieten, de lijstinhoud en het aantal apps van elke geselecteerde facet door de standaardwaarden.</string>
-    <string name="copy_look_subtitle">Vervangt het uiterlijk van dock en apps van de gekozen facetten door dit</string>
-    <string name="copy_look_sheet_message">Vervangt de dockstijl, de lijstindeling en de uitlijning van elke geselecteerde facet door de standaardwaarden.</string>
+    <string name="copy_look_subtitle">Vervangt het uiterlijk van apps van de gekozen facetten door dit</string>
+    <string name="copy_look_sheet_message">Vervangt de lijstindeling en de uitlijning van elke geselecteerde facet door de standaardwaarden.</string>
 </resources>

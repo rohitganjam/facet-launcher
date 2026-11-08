@@ -246,43 +246,6 @@ class AppearanceSettingsViewModelTest {
     }
 
     @Test
-    fun `global-scoped look setters write to SettingsRepository`() = runTest {
-        val settingsRepository = mock(SettingsRepository::class.java)
-        val viewModel = createViewModel(settingsRepository = settingsRepository)
-
-        viewModel.setDockDisplayMode(DockDisplayMode.TEXT)
-        viewModel.setAppRowPosition(AppRowPosition.RIGHT)
-        viewModel.setAppRowPresentation(AppRowPresentation.TEXT_ONLY)
-        viewModel.setAppListVerticalAlignment(AppListVerticalAlignment.TOP)
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        verify(settingsRepository).setDockDisplayMode(DockDisplayMode.TEXT)
-        verify(settingsRepository).setAppRowPosition(AppRowPosition.RIGHT)
-        verify(settingsRepository).setAppRowPresentation(AppRowPresentation.TEXT_ONLY)
-        verify(settingsRepository).setAppListVerticalAlignment(AppListVerticalAlignment.TOP)
-    }
-
-    @Test
-    fun `facet-scoped look setters write to that facet's row, not SettingsRepository`() = runTest {
-        val settingsRepository = mock(SettingsRepository::class.java)
-        val facetRepository = mock(FacetRepository::class.java)
-        val facet = Facet(id = 7L, name = "Work", position = 0)
-        `when`(facetRepository.getById(7L)).thenReturn(facet)
-        val viewModel = createViewModel(
-            facetId = 7L,
-            facets = listOf(facet),
-            settingsRepository = settingsRepository,
-            facetRepository = facetRepository,
-        )
-
-        viewModel.setDockDisplayMode(DockDisplayMode.TEXT)
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        verify(facetRepository).setDockDisplayMode(facet.id, DockDisplayMode.TEXT)
-        verify(settingsRepository, org.mockito.Mockito.never()).setDockDisplayMode(DockDisplayMode.TEXT)
-    }
-
-    @Test
     fun `look fields are the facet's own values`() = runTest {
         // A facet with explicit look values already chosen from this screen resolves to them
         val facet = Facet(
@@ -310,46 +273,6 @@ class AppearanceSettingsViewModelTest {
 
         assertEquals(DockDisplayMode.ICONS, viewModel.uiState.value.dockDisplayMode)
     }
-
-    @Test
-    fun `copy to facets applies the look defaults to exactly the chosen facets`() = runTest {
-        val applyDefaults = mock(ApplyFacetDefaultsUseCase::class.java)
-        val facets = listOf(Facet(id = 1L, name = "A", position = 0), Facet(id = 2L, name = "B", position = 1))
-        val viewModel = createViewModel(facets = facets, applyFacetDefaults = applyDefaults)
-        backgroundScope.launch { viewModel.uiState.collect {} }
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        viewModel.copyLookToFacets(setOf(1L, 2L))
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        assertEquals(listOf(1L, 2L), viewModel.uiState.value.facets.map { it.id })
-        verify(applyDefaults).invoke(1L, FacetDefaultsScope.LOOK)
-        verify(applyDefaults).invoke(2L, FacetDefaultsScope.LOOK)
-    }
-
-    @Test
-    fun `reset to default applies the look defaults to the facet`() = runTest {
-        val applyDefaults = mock(ApplyFacetDefaultsUseCase::class.java)
-        val viewModel = createViewModel(facetId = 9L, facets = listOf(Facet(id = 9L, name = "Work", position = 0)), applyFacetDefaults = applyDefaults)
-
-        viewModel.resetLookToDefault()
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        verify(applyDefaults).invoke(9L, FacetDefaultsScope.LOOK)
-    }
-
-    @Test
-    fun `reset to default does nothing at launcher scope`() = runTest {
-        val applyDefaults = mock(ApplyFacetDefaultsUseCase::class.java)
-        val viewModel = createViewModel(applyFacetDefaults = applyDefaults)
-
-        viewModel.resetLookToDefault()
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        org.mockito.Mockito.verifyNoInteractions(applyDefaults)
-    }
-
-    private fun app(n: Int) = PlacedItem.SingleApp(AppInfo(packageName = "com.example.$n", activityName = ".Main", label = "App $n", icon = null))
 
     @Test
     fun `global scope consumes the launcher-wide default favorites and dock, not mock data`() = runTest {
@@ -509,85 +432,5 @@ class AppearanceSettingsViewModelTest {
         verify(settingsRepository).setHideStatusBar(true)
     }
 
-    @Test
-    fun `setAllowLandscape writes to SettingsRepository and the state reflects the setting`() = runTest {
-        val settingsRepository = mock(SettingsRepository::class.java)
-        val viewModel = createViewModel(settingsRepository = settingsRepository, settings = LauncherSettings(allowLandscape = false))
-        backgroundScope.launch { viewModel.uiState.collect {} }
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        viewModel.setAllowLandscape(true)
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        verify(settingsRepository).setAllowLandscape(true)
-        assertEquals(false, viewModel.uiState.value.allowLandscape)
-    }
-
-    @Test
-    fun `global-scoped landscape alignment setters write the landscape group of SettingsRepository`() = runTest {
-        val settingsRepository = mock(SettingsRepository::class.java)
-        val viewModel = createViewModel(settingsRepository = settingsRepository)
-
-        viewModel.setLandscapeAppRowPosition(AppRowPosition.CENTER)
-        viewModel.setLandscapeAppListVerticalAlignment(AppListVerticalAlignment.TOP)
-        viewModel.setLandscapeAppListColumnAlignment(AppListColumnAlignment.MIRRORED)
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        val captor = LandscapeTransformCaptor()
-        verify(settingsRepository, org.mockito.Mockito.times(3)).updateLandscape(captor.capture())
-        assertEquals(
-            LandscapeOverrides(
-                appRowPosition = AppRowPosition.CENTER,
-                appListVerticalAlignment = AppListVerticalAlignment.TOP,
-                appListColumnAlignment = AppListColumnAlignment.MIRRORED,
-            ),
-            captor.applied(),
-        )
-    }
-
-    @Test
-    fun `a null landscape choice clears the field, back to same as portrait`() = runTest {
-        val settingsRepository = mock(SettingsRepository::class.java)
-        val viewModel = createViewModel(settingsRepository = settingsRepository)
-
-        viewModel.setLandscapeAppRowPosition(null)
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        val captor = LandscapeTransformCaptor()
-        verify(settingsRepository).updateLandscape(captor.capture())
-        assertEquals(LandscapeOverrides(), captor.last(LandscapeOverrides(appRowPosition = AppRowPosition.RIGHT)))
-    }
-
-    @Test
-    fun `facet-scoped landscape alignment setters write that facet's landscape group`() = runTest {
-        val settingsRepository = mock(SettingsRepository::class.java)
-        val facetRepository = mock(FacetRepository::class.java)
-        val facet = Facet(id = 7L, name = "Work", position = 0)
-        `when`(facetRepository.getById(7L)).thenReturn(facet)
-        val viewModel = createViewModel(facetId = 7L, facets = listOf(facet), settingsRepository = settingsRepository, facetRepository = facetRepository)
-
-        viewModel.setLandscapeAppRowPosition(AppRowPosition.RIGHT)
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        val captor = LandscapeTransformCaptor()
-        verify(facetRepository).updateLandscape(eqOf(facet.id), captor.capture())
-        assertEquals(AppRowPosition.RIGHT, captor.last(LandscapeOverrides()).appRowPosition)
-        verify(settingsRepository, org.mockito.Mockito.never()).updateLandscape(LandscapeTransformCaptor().capture())
-    }
-
-    @Test
-    fun `the landscape rows show this scope's own landscape values, null meaning same as portrait`() = runTest {
-        val facet = Facet(id = 9L, name = "Work", position = 0, landscapeAppRowPosition = AppRowPosition.CENTER)
-        val viewModel = createViewModel(
-            facetId = 9L,
-            facets = listOf(facet),
-            settings = LauncherSettings(landscape = LandscapeOverrides(appListVerticalAlignment = AppListVerticalAlignment.TOP)),
-        )
-        backgroundScope.launch { viewModel.uiState.collect {} }
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        // Then a facet shows its own landscape values, not the launcher's
-        assertEquals(AppRowPosition.CENTER, viewModel.uiState.value.landscape.appRowPosition)
-        assertEquals(null, viewModel.uiState.value.landscape.appListVerticalAlignment)
-    }
+    private fun app(n: Int) = PlacedItem.SingleApp(AppInfo(packageName = "com.example.$n", activityName = ".Main", label = "App $n", icon = null))
 }

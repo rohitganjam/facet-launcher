@@ -200,6 +200,7 @@
     <!-- Shared by AppContextMenu/FolderTileContextMenu's quickPlacementLabel() — %1$s is quick_placement_favorites/quick_placement_dock below. -->
     <string name="quick_placement_add_to">Add to %1$s</string>
     <string name="quick_placement_remove_from">Remove from %1$s</string>
+    <string name="quick_placement_full">%1$s: limit reached</string>
     <string name="quick_placement_favorites">Favorites</string>
     <string name="quick_placement_dock">Dock</string>
     <plurals name="folder_app_count">
@@ -296,7 +297,6 @@
     <string name="settings_dock_title">Dock</string>
     <string name="settings_default_dock_title">Default Dock Apps</string>
     <string name="home_apps_list_default_header_title">Default Apps list</string>
-    <string name="settings_default_look_subtitle">Default Dock and Home apps look in new facets</string>
     <string name="defaults_screen_note">Used when you create a facet or reset one.</string>
     <string name="reset_to_default_title">Reset to default</string>
     <string name="reset_to_default_confirm">Reset</string>
@@ -304,8 +304,8 @@
     <string name="reset_dock_confirm_message">This replaces the dock of this facet with the default dock. The apps you placed here will be lost.</string>
     <string name="reset_apps_subtitle">Replace this list with the default</string>
     <string name="reset_apps_confirm_message">This replaces this facet\'s favorites, list content and app count with the defaults. The favorites you chose here will be lost.</string>
-    <string name="reset_look_subtitle">Replace the dock and list look with the default</string>
-    <string name="reset_look_confirm_message">This replaces this facet\'s dock style, list layout and alignment with the defaults.</string>
+    <string name="reset_look_subtitle">Replace the apps list look with the default</string>
+    <string name="reset_look_confirm_message">This replaces this facet\'s list layout and alignment with the defaults.</string>
     <plurals name="settings_dock_apps_count">
         <item quantity="one">%d Dock App</item>
         <item quantity="other">%d Dock Apps</item>
@@ -496,7 +496,6 @@
 
     <!-- AppearanceSettingsScreen -->
     <string name="appearance_header_title">Launcher appearance</string>
-    <string name="appearance_dock_apps_title">Dock &amp; Apps layout</string>
     <string name="appearance_general_title">Colors and Themes</string>
     <string name="appearance_general_subtitle">Themes, accent, status bar</string>
     <string name="appearance_section_look_feel">Look &amp; Feel</string>
@@ -796,8 +795,10 @@
          reuses home_apps_list_apps_to_show; "Drag to reorder" reuses
          drag_to_reorder_content_description; the Favorites row title reuses
          onboarding_list_content_favorites below — same word) -->
-    <string name="onboarding_home_setup_headline">Set up your home screen</string>
+    <string name="onboarding_home_setup_headline">Set up your first facet</string>
     <string name="onboarding_home_setup_subhead">Pick the apps you want on Home. You can change all of this later.</string>
+    <string name="onboarding_drawer_setup_headline">Set up your app drawer</string>
+    <string name="onboarding_drawer_setup_subhead">Choose how your apps are listed and how search works. You can change all of this later.</string>
     <!-- OnboardingNotificationsPage (the controls reuse the Notifications settings rows) -->
     <string name="onboarding_notifications_headline">Badges and now playing</string>
     <string name="onboarding_notifications_subhead">Dots on apps with something waiting, and what\'s playing on Home. You can change this later.</string>
@@ -808,7 +809,6 @@
     <string name="onboarding_clear_dock_title">Clear the dock?</string>
     <string name="onboarding_clear_dock_message">Removes every app from the default dock. You can add apps back anytime.</string>
     <string name="onboarding_manage_dock_apps">Manage dock apps</string>
-    <string name="onboarding_app_drawer_section_header">APP DRAWER</string>
     <string name="onboarding_home_apps_section_header">HOME APPS</string>
     <string name="onboarding_show_label">Show</string>
     <!-- Deliberately different wording from ListContentMode.displayNameRes (Settings' own
@@ -957,6 +957,8 @@
     <string name="clock_adjust_align_middle">Align middle</string>
     <string name="clock_adjust_align_bottom">Align bottom</string>
     <string name="home_sheet_facet_settings_subtitle">Facet-specific widgets, apps list and dock</string>
+    <string name="home_sheet_switch_facet">Switch facet</string>
+    <string name="home_sheet_switch_facet_subtitle">Browse your facets and apply one</string>
     <!-- PRD F15 — replaces this facet's native clock with a hosted third-party AppWidget -->
     <string name="widget_sheet_replace">Replace widget</string>
     <string name="widget_sheet_replace_subtitle">Choose a different widget for this page</string>
@@ -1183,12 +1185,15 @@
     <string name="settings_gestures_subtitle">Swipes, taps and the Home button</string>
     <string name="gestures_section_built_in">Built in</string>
     <string name="gestures_section_optional">Optional</string>
+    <string name="gestures_section_swipes">Swipes</string>
     <string name="gesture_swipe_up_title">Swipe up</string>
     <string name="gesture_swipe_up_subtitle">Open the app drawer</string>
     <string name="gesture_swipe_right_title">Swipe right</string>
     <string name="gesture_swipe_right_subtitle">Open the Hub</string>
     <string name="gesture_swipe_left_title">Swipe left</string>
     <string name="gesture_swipe_left_subtitle">Switch facets</string>
+    <string name="gesture_swap_sides_title">Swap left and right</string>
+    <string name="gesture_swap_sides_subtitle">Open the Hub from the right and facets from the left</string>
     <string name="gesture_swipe_down_title">Swipe down</string>
     <string name="gesture_swipe_down_subtitle">Open the notification shade</string>
     <string name="gesture_long_press_title">Long-press empty space</string>
@@ -1238,6 +1243,6 @@
     <string name="copy_dock_sheet_message">Replaces the dock of each facet you select with the default dock.</string>
     <string name="copy_apps_subtitle">Replace the apps list of the facets you choose with this one</string>
     <string name="copy_apps_sheet_message">Replaces the favorites, list content and app count of each selected facet with the defaults.</string>
-    <string name="copy_look_subtitle">Replace the dock and apps look of the facets you choose with this one</string>
-    <string name="copy_look_sheet_message">Replaces the dock style, list layout and alignment of each selected facet with the defaults.</string>
+    <string name="copy_look_subtitle">Replace the apps look of the facets you choose with this one</string>
+    <string name="copy_look_sheet_message">Replaces the list layout and alignment of each selected facet with the defaults.</string>
 </resources>

@@ -110,6 +110,13 @@ internal fun swipeSettleTarget(dragStartProgress: Float, currentProgress: Float,
     }
 }
 
+/** A down where only horizontal drags are claimed, and that the caller does not claim even then, is not watched at all. */
+private fun ignoresTouch(horizontalOnly: Boolean, claimsHorizontal: Boolean) = horizontalOnly && !claimsHorizontal
+
+/** A vertical drag that began where only horizontal ones are claimed belongs to the descendant's own scroll. */
+private fun leavesToDescendant(horizontalOnly: Boolean, travel: Offset) =
+    horizontalOnly && abs(travel.y) > VERTICAL_DOMINANCE * abs(travel.x)
+
 /** Which direction a not-yet-locked drag on Home resolved to, once it clears touch slop. */
 internal enum class Axis { VERTICAL, HORIZONTAL }
 
@@ -136,6 +143,8 @@ internal suspend fun PointerInputScope.detectHomeSwipeGestures(
     shouldClaim: (Offset) -> Boolean = { true },
     /** For a down position [shouldClaim] rejected: still watch it, but claim only a horizontally-dominant drag — a vertical one is left to the descendant's own scroll. */
     claimHorizontalOnly: (Offset) -> Boolean = { false },
+    /** True once something below has taken the touch (a held cell being picked up): this detector then stands down for the gesture. */
+    isBlocked: () -> Boolean = { false },
     /** Called when the drag locks, with where the finger first came down. */
     onDragStart: (down: Offset) -> Unit,
     onDragEnd: () -> Unit,
@@ -146,7 +155,7 @@ internal suspend fun PointerInputScope.detectHomeSwipeGestures(
     awaitEachGesture {
         val down = awaitFirstDown(requireUnconsumed = false)
         val horizontalOnly = !shouldClaim(down.position)
-        if (horizontalOnly && !claimHorizontalOnly(down.position)) return@awaitEachGesture
+        if (ignoresTouch(horizontalOnly, claimHorizontalOnly(down.position))) return@awaitEachGesture
         var accumulated = Offset.Zero
         var dragging = false
         var completedCleanly = true
@@ -161,11 +170,12 @@ internal suspend fun PointerInputScope.detectHomeSwipeGestures(
                     finished = true
                 }
                 change.changedToUpIgnoreConsumed() -> finished = true
+                !dragging && isBlocked() -> finished = true
                 !dragging -> {
                     accumulated += change.positionChange()
                     if (accumulated.getDistance() > slop) {
                         // A vertical drag that began where only horizontal ones are claimed is left alone.
-                        abandoned = horizontalOnly && abs(accumulated.y) > VERTICAL_DOMINANCE * abs(accumulated.x)
+                        abandoned = leavesToDescendant(horizontalOnly, accumulated)
                         finished = abandoned
                         if (!abandoned) {
                             dragging = true

@@ -54,6 +54,7 @@ private const val RECENT_SAMPLE_COUNT = 2
 private const val FOLDER_SAMPLE_APP_COUNT = 2
 private const val HOUR_MILLIS = 60 * 60 * 1000L
 private const val SAMPLE_FOLDER_ID = 1L
+private const val PREVIEW_INSTALLED_APP_COUNT = 24
 
 /** Sample apps and a folder for [AppDrawerSettingsPreview]; icons are null, so the drawer draws its tile placeholder. */
 internal data class DrawerPreviewSample(val apps: ImmutableList<AppInfo>, val folders: ImmutableList<Folder>)
@@ -72,16 +73,29 @@ internal fun drawerPreviewSample(appLabels: List<String>, folderName: String, no
     return DrawerPreviewSample(apps, persistentListOf(Folder(SAMPLE_FOLDER_ID, folderName, apps.takeLast(FOLDER_SAMPLE_APP_COUNT))))
 }
 
+/** The user's own apps (their real icons) for the preview, plus a sample folder built from the last few of them. */
+internal fun installedDrawerPreviewSample(installedApps: ImmutableList<AppInfo>, folderName: String): DrawerPreviewSample {
+    val apps = installedApps.sortedBy { it.label.lowercase() }.take(PREVIEW_INSTALLED_APP_COUNT).toImmutableList()
+    return DrawerPreviewSample(apps, persistentListOf(Folder(SAMPLE_FOLDER_ID, folderName, apps.takeLast(FOLDER_SAMPLE_APP_COUNT))))
+}
+
 /**
- * The real [AppDrawerScreen] on sample apps over the wallpaper, set up from [settings], so presentation, sizes, icons, labels,
+ * The real [AppDrawerScreen] on the user's [installedApps] (sample apps until they load) over the wallpaper, set up from [settings], so presentation, sizes, icons, labels,
  * folders, recently installed, search bar position and opacity all show their effect as they change. Taps do nothing; a vertical
  * drag scrolls the sample apps, and what it can't scroll passes on to the settings list.
  */
 @Composable
-internal fun AppDrawerSettingsPreview(settings: LauncherSettings, wallpaper: HomeWallpaper, modifier: Modifier = Modifier) {
+internal fun AppDrawerSettingsPreview(
+    settings: LauncherSettings,
+    wallpaper: HomeWallpaper,
+    modifier: Modifier = Modifier,
+    installedApps: ImmutableList<AppInfo> = persistentListOf(),
+) {
     val labels = stringArrayResource(R.array.drawer_preview_app_labels).toList()
     val folderName = stringResource(R.string.drawer_preview_folder_name)
-    val sample = remember(labels, folderName) { drawerPreviewSample(labels, folderName, System.currentTimeMillis()) }
+    val sample = remember(labels, folderName, installedApps) {
+        if (installedApps.isEmpty()) drawerPreviewSample(labels, folderName, System.currentTimeMillis()) else installedDrawerPreviewSample(installedApps, folderName)
+    }
     val listState = rememberLazyListState()
     val gridState = rememberLazyGridState()
     val shape = MaterialTheme.shapes.extraLarge

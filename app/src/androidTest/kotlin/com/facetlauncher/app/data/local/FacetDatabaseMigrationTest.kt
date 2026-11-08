@@ -1348,6 +1348,25 @@ class FacetDatabaseMigrationTest {
     }
 
     @Test
+    fun migration46To47AddsEmptyHomeCellsAndKeepsEveryPlacement() {
+        // Given a v46 database with a launcher-wide app placement
+        val db46 = helper.createDatabase(TEST_DB, 46)
+        insertApp(db46, "FAVORITES", 0, "com.example.a", 0)
+        db46.close()
+
+        // When migrating to v47 (Room also validates the result against the exported v47 schema)
+        val db47 = helper.runMigrationsAndValidate(TEST_DB, 47, true)
+
+        // Then the placement is kept and its four cell columns are null
+        assertEquals(listOf("com.example.a"), packagesOf(db47, "FAVORITES", 0))
+        db47.query("SELECT portraitRow, portraitColumn, landscapeRow, landscapeColumn FROM app_placements").use {
+            assertTrue(it.moveToFirst())
+            for (column in 0..3) assertTrue(it.isNull(column))
+        }
+        db47.query("SELECT portraitRow, landscapeColumn FROM folder_placements").close()
+    }
+
+    @Test
     fun migration44To45HandlesAnEmptyLauncherDock() {
         // Given an inheriting facet with a stale own dock row and no launcher dock
         val db44 = helper.createDatabase(TEST_DB, 44)

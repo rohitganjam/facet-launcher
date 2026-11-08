@@ -4611,4 +4611,95 @@ A facet's dock, favorites, content mode and look are its own, as the clock alrea
 
 ## Widget configure screens (Work Profile and unexported)
 
-- [ ] A widget's configure activity opens again when it is added (Widgets screen, Widget stack add/replace, backup restore) and from the Widget stack's Configure. It used to be skipped for every widget: `getIntentSenderForConfigureActivity` is a hidden API that Android blocks for apps, so the reflection always returned `null`. Now `WidgetConfigureActivity` (an invisible trampoline) calls the public `AppWidgetHost.startAppWidgetConfigureActivityForResult`, which also reaches a Work Profile provider and an unexported activity. Tests: `AppWidgetRepositoryTest`, and the picker, stack and restore ViewModel tests. Tick once `./gradlew test` is green and it is checked on a phone with a Work Profile (written without an Android SDK, so not built yet).
+- [x] A widget's configure activity opens again when it is added (Widgets screen, Widget stack add/replace, backup restore) and from the Widget stack's Configure. It used to be skipped for every widget: `getIntentSenderForConfigureActivity` is a hidden API that Android blocks for apps, so the reflection always returned `null`. Now `WidgetConfigureActivity` (an invisible trampoline) calls the public `AppWidgetHost.startAppWidgetConfigureActivityForResult`, which also reaches a Work Profile provider and an unexported activity. Tests: `AppWidgetRepositoryTest`, and the picker, stack and restore ViewModel tests. Built, tested, and checked on a phone with a Work Profile.
+
+## Edit Home in place (direct request, draft)
+Home's apps list, Dock and folders become editable on Home itself: long-press picks a cell up and drags it, with the sheet on release if the finger did not move. Design only, nothing built. Phase 1 needs no schema change; phase 2 (the grid) does.
+
+### Decisions
+- **Long-press.** Before 500ms movement cancels it and the touch is a Home swipe. At 500ms: haptic and lift, no sheet. Release without moving opens the context bottom sheet (so the sheet now opens on lift, not at the threshold). Moving past slop (about 12 to 16dp) starts the drag and suppresses Home swipes. Release saves the order once; a drop outside the list, or Home or Back mid-drag, snaps the cell back.
+- **Pickup look.** The whole cell scales about 1.05 to 1.08x from its anchor edge, with a minor shadow on icon and label. No fill, outline, corner shape or dimming. Neighbors slide aside by the cell's height (width in the Dock). With animation scales at 0 the shadow and haptic still show the state.
+- **Hit areas.** A long-press on an occupied cell is the app or folder (pickup, then drag or sheet). An empty cell, or the gap between cells, is free space and opens the Home sheet. Same rule for the Dock.
+- **Scope.** Reorder within the single-column list, within the Dock, and inside an open folder. No cross-container drag (Home to Dock), no drag-onto-app folder creation. Drag is off when the list is in an automatic content mode (Recents, Most used).
+- **Adding.** No new add flows: apps keep the context sheet, folders move through the folder menu below.
+- **Folder menu.** On the Settings folder screen (`FolderDetailScreen`) the header's Rename becomes a 3-dot menu: Rename, Add to / Remove from Dock, Add to / Remove from Favorites, Delete folder (confirm). It shows `FacetScopeBadge` (hidden with one facet) so the user knows which facet's Dock or Favorites they are changing. The badge exists only there: it is removed from the app quick-add sheet and not added to Home or Drawer menus, where the user already knows the facet. A long-press on a folder on Home already opens its own menu.
+- **Home sheet.** Gains Switch facet, which opens the carousel at the current facet (the carousel must start there regardless).
+- **Single-column row width.** `SINGLE_COLUMN_ROW_WIDTH_FRACTION` 0.8 to 0.7 (`ui/home/HomeSlots.kt`). The free strip is on the side opposite the row position (both sides when centered).
+- **Limits.** Favorites cap 12 to 20 (`AppListLimits.MAX_FAVORITES`), both layouts, default and per facet. Dock stays 5. Apps to show (Recents, Most used) 3..12 to 3..20 (`MAX_APPS_TO_SHOW`).
+- **Swipeable profile tabs.** One shared component in the Drawer (list and grid), the app and folder pickers and the widget picker (its tabs are profiles). Swipes starting in the system back-gesture edge zone, or on the list drawer's A to Z rail, do not change tabs. No tabs, no pager with one profile.
+- **Configurable swipes.** Up stays the Drawer. Left, right and down can each be disabled, and left and right can swap. Down keeps the notification shade by default (alternatives: None, later Search). Disabling left is safe because of Switch facet.
+- **Grid (phase 2).** Per facet and per orientation: fixed columns × rows, fixed regular cell height, the area scrolls like the list. Free placement: any cell, new items take the first free slot nearest the anchor. Slots are counted from the anchor edge (top or bottom alignment), so flipping alignment mirrors the arrangement and a row-count change leaves items where they are. Drop on empty cell moves, drop on occupied cell swaps; no reflow. List order and grid slots are kept side by side so switching layouts never rewrites the other. Shrinking below the items compacts the overflow into free slots silently. Adding to a full grid is refused with a message. At rest the grid scrolls only to its last occupied row, counted from the anchor, so trailing empty rows are not reachable; during a drag the whole grid is reachable (to drop into an empty row) and the extent shrinks back on drop. Switching a list with more favorites than slots raises the rows once, to the smallest that fits. Automatic modes fill row by row from the anchor, drag off. Note the list does not mirror: `Alignment.BottomStart` only positions the block, items stay top to bottom.
+
+### Phase 1 (no schema change)
+- [x] Spike: after the 500ms pickup, does a drag keep receiving the same touch, and does Home suppress its swipes once it starts? (`ui/components/LongPressReleaseGesture.kt`, `HomeSwipeController`.) Sheet-on-release is the fallback if not.
+- [x] `LongPressReleaseGesture`: pickup at the threshold, sheet on release without movement, drag callbacks past slop. Unit test the state machine (cancel by early move, lift, drag, cancel by Home or Back).
+- [x] Reorder on Home's list, the Dock and folders on `DragReorderState`, saved once on drop (`PlacementRepository` reorder, existing routing in `08`). Pickup look. Disabled in automatic content modes. Tests: `DragReorderStateTest`, `AppPlacementDaoTest`/`FolderPlacementDaoTest` order cases, `HomeScreenTest` drag, a `HomeDrawerRouteTest` case that a drag does not open the Drawer, Hub or carousel.
+- [ ] TalkBack: Move up / Move down as accessibility actions on reorderable cells (not in the sheet).
+- [x] Row width 0.7 and its tests (`HomeSlots` geometry, `HomeScreenTest` hit area).
+- [x] Remove `FacetScopeBadge` from `PlacementActions` (the app quick-add sheet) and its tests; `FolderDetailScreen` header 3-dot menu with `FacetScopeBadge`; move the folder through `PlacementRepository`. Tests: `FolderDetailScreen` menu actions, Dock full state, badge hidden with one facet.
+- [x] Home sheet: Switch facet opens the carousel at the current facet; fix the carousel's start index. Tests: `HomeViewModelTest`, carousel start-index test.
+- [x] Limits: favorites 20 and Apps to show 3..20; update the "x of N" labels, `AppListLimits` tests, picker caps.
+- [x] Shared swipeable profile tabs component, used in the Drawer (both layouts), app picker, folder picker and widget picker; edge and rail exclusion. Tests: pager swipe in each, rail and edge cases, single-profile no-op, Drawer swipe-down-at-top still closes.
+- [x] Configurable swipes phase 1: disable and swap left and right, down None. Settings → Gestures rows become dropdowns; `GesturesViewModelTest`, `GesturesScreenTest`, `HomeSwipeControllerTest` cases.
+- [x] Docs: `12 §3, §4`, `13`, `03 §2`, `08`, `07`, README stack/limits; regenerate `TEST_REGISTRY.md`.
+
+Phase 1 as built, where it differs from the plan: the gesture is `PickUpDragGesture.kt` and `PickUpReorder.kt` (a new `PickUpReorderHost`, not `DragReorderState`); the pick-up look is scale 1.12 only (no shadow); Settings → Gestures has on/off switches for left, right and down plus *Swap left and right* (not dropdowns, no "None/Search" choice for down); Hub and carousel mirror when swapped, and the carousel then dismisses leftward from its last page. Open: TalkBack Move up / Move down actions are not done; Home-level drag tests in `HomeDrawerRouteTest` are written but could not be run here (that class fails on the emulators even on a clean checkout).
+
+### Phase 2 (schema change)
+Rows are a minimum, not a cap: the grid has at least the facet's rows, grows when items sit lower, and scrolls only as far as the last occupied row or the minimum, whichever is lower down. Landscape's default row count is however many fixed-height cells fit on the device. While dragging, one empty row shows below the last occupied one so an item can go lower; trailing empty rows go when the drag ends. The only hard limit is the Favorites cap (`MAX_FAVORITES`). Folders take one cell; the Dock stays one row of 5.
+- [x] Room migration (v47, nullable cells, `FacetDatabaseMigrationTest`; `02` updated): each placement gets a portrait cell and a landscape cell (row and column from the anchor edge), null until first moved, derived row by row from `position` while null; landscape follows the portrait order until moved. `FacetDatabaseMigrationTest` case, `AppPlacementDaoTest`, `FolderPlacementDaoTest`; `02` migration table.
+- [x] Dropped for now: no rows setting. The grid has as many rows as fit the screen at the fixed cell height, or the last occupied row if that is more (so no settings, `ApplyFacetDefaultsUseCase` or backup change). Add a minimum-rows setting later only if wanted.
+- [x] Pure placement logic in `domain/HomeGridPlacement` (resolve cells from saved cells and list order, first free cell, row count, anchor mirroring, drop and swap, compact on narrowing, reading order) with `HomeGridPlacementTest`.
+- [x] Cells in the repository: `observeGridCells(target, landscape)` and `saveGridCells(...)` (rewrites `position` and the orientation's cells, keeps the other orientation); `reorderItems` keeps saved cells. Keys are `PlacedItem.gridKey()`. Backup carries the cells (`BackupGridCells`, additive, no version bump; `BackupMappingTest`).
+- [x] Home reads the cells: `HomeListState.gridCells`, drawn by `HomeAppGrid` (fixed-height cells, anchor mirroring, empty cells as spacers); `HomeAppGridTest`, `HomeScreenStateBuilderTest`.
+- [x] (drawn, no drag yet) Grid layout: fixed-height cells, grid height from occupied cells and the minimum, top and bottom anchor mirror the arrangement, empty cells and gaps as free space. Tests for geometry, hit areas and the scroll extent.
+- [x] Grid drag (grid only): pick-up from phase 1, edge auto-scroll, drop on empty moves, drop on occupied swaps, extra empty row and faint slot guides while dragging; `GridDragTest`, `HomeAppGridTest`. The single-column list auto-scrolls too (`ListAutoScroll`). The two-column list drags across both columns, with the cells sliding aside and edge auto-scroll (`HomeAppGridTest`, `GridDragTest`). A held row or tile is drawn in a popup so it never clips (`LiftableCell`); the Dock icons and the rows inside an open folder are not.
+- [x] Add to the first free cell nearest the anchor (`HomeGridPlacement.resolve`); a full list or Dock shows a disabled-in-effect row "Favorites: limit reached" (`QuickPlacementAction.Full`) in the app and folder menus; a narrower grid re-places items that no longer fit without losing their cell; the list and the grid keep separate orders (a grid drag no longer rewrites `position`); rows are derived so a list to grid switch needs no row change.
+- [x] Docs: `02`, `08`, `09 §4`, `12`, `17` updated (`10` and `13` unchanged: no grid constants moved); `TEST_REGISTRY.md` regenerated.
+
+### Later
+- [ ] Discrete swipe actions (open search, launch an app) for down, left and right.
+
+### Open
+- [x] Apps to show goes up to 20.
+- [x] Faint slot guides on empty grid cells, only while a drag is active.
+- [x] Facet-scope badge: dropped from the app quick-add sheet; kept only on the Settings folder screen's menu.
+
+## Facet-owned Dock and Favorites: drop the launcher-wide default lists (draft)
+A facet already owns its Dock and Favorites (migration 44→45), and the clock has only facet-level settings. The launcher-wide Dock and Favorites lists (`PlacementTarget.GlobalDock`, `GlobalFavorites`) are now only a template that new and reset facets copy from (`ApplyFacetDefaultsUseCase.copyList`), plus a first-launch seed (`SeedDefaultDockUseCase`) and what onboarding edits. Decided: remove them; a new or reset facet gets the device's default apps in its Dock and an empty Favorites list. Design only, nothing built.
+
+### Decisions
+- **New facet.** Dock = the device defaults (browser, messaging, camera, mail, phone, whichever resolve and are installed, at most `MAX_DOCK_APPS`), from `DefaultAppRepository.getDefaultAppPackages()` as the seed does today. Favorites = empty.
+- **Reset to default** stays for the Dock only: it re-seeds the Dock from the device defaults. There is no default Favorites list, so the Favorites (Apps list) reset goes: the row, `FacetDefaultsScope.APPS_LIST` and its use-case branch. A new facet's Favorites content mode and count still come from the launcher settings when it is created.
+- **Onboarding** edits the first facet's own Dock and Favorites; no shared list, and no copy onto existing facets at the end.
+- **Look defaults stay for now.** `LauncherSettings`' dock and app-list look (row position, layout, grid, display mode, content mode) still seed a new facet; this plan removes the lists only. Revisit the look separately.
+- **Backups.** `dockApps`, `defaultFavoriteApps` and their folder placements stay readable so old backups import, but are not exported and are ignored on import (no `CURRENT_BACKUP_VERSION` bump needed: the fields stay, defaulted, as legacy). A facet's own lists are unchanged.
+
+### Phase A: seed per facet
+- [ ] `SeedFacetDefaultsUseCase` (new, replaces `SeedDefaultDockUseCase`): puts the device default apps into a facet's Dock, only when the Dock is empty. Unit test with fake `DefaultAppRepository`: resolves and installed only, capped at five, order stable, empty when none resolve.
+- [ ] `ApplyFacetDefaultsUseCase`: the DOCK scope calls it instead of `copyList(DOCK)`; the APPS_LIST scope and the Favorites list copy are removed (a new facet's Favorites start empty, with the content mode and count applied once at creation); LOOK is unchanged. Update `ApplyFacetDefaultsUseCaseTest`, `AddFacetUseCaseTest`.
+- [ ] `EnsureActiveFacetUseCase` / `LauncherViewModel.init`: drop the launcher-wide seed and its ordering note (the first facet seeds itself); `LauncherSettings.defaultsSeeded` goes. `LauncherViewModelTest`, `EnsureActiveFacetUseCaseTest`.
+
+### Phase B: remove the shared lists from the screens
+- [ ] Onboarding: `OnboardingViewModel` and `OnboardingHomeSetupPage` read and write the first facet's lists; remove the finish-time copy onto facets. `OnboardingViewModelTest`, `OnboardingScreenTest`.
+- [ ] Settings: remove the launcher-wide list sections and pickers: `DockSettingsViewModel/Screen`, `HomeAppsListSettingsViewModel/Screen`, `AppearanceSettingsViewModel`, `NotificationSettingsViewModel`, `DockAppPickerViewModel`, `FavoritesPickerViewModel` (their `facetId == null` paths), `ObserveSettingsScreenStateUseCase`, `ObserveIconPickerUseCase`, `FacetSettingsViewModel` (anything reading "launcher default" lists). Remove the Favorites "Reset to default" row and its confirmation strings in all six locales, and re-check the Dock row's wording.
+- [ ] `PlacementTarget.GlobalDock/GlobalFavorites` and `ResolveActivePlacementTargetUseCase`'s fallback to them: remove once nothing reads them; `PlacementRepository` tests that loop over `allTargets` keep only facet targets.
+
+### Phase C: data and backup
+- [ ] Room: a cleanup migration (46/47→next) deleting `app_placements` and `folder_placements` rows with a null `facetId`, then no null owner remains; keep the column nullable (no schema change) or tighten it in the same step. `FacetDatabaseMigrationTest` case; `02` migration table.
+- [ ] `ExportBackupUseCase`: stop writing the shared lists. `ImportBackupUseCase`: stop restoring them; `BackupUpgrade` keeps the legacy fields for facets that inherited them. `BackupCoverageTest`, `BackupUpgradeTest`, `ImportBackupUseCaseTest`, `ExportBackupUseCaseTest`; re-check F11 in `05`.
+
+### Phase D: docs and checks
+- [ ] Docs: `02` (shared-list wording, key and migration tables), `08` (override routing, seeding), `09 §4`, `13` (onboarding), `07` (use-case registry, counts), README stack. Regenerate `TEST_REGISTRY.md`.
+- [ ] Manual: fresh install shows the device defaults in the first facet's Dock and an empty list; a second facet gets the same Dock; the Dock's Reset to default restores it and Favorites has no reset; an upgrade from the current release keeps every facet's own lists.
+
+### Open
+- [ ] Look defaults (row position, layout, grid, dock display): keep launcher-wide, or move them to per-facet only like the clock?
+
+
+## Dock & Apps layout merged into the Dock and Apps list screens
+
+- [x] "Show Dock apps as" moved to `DockSettingsScreen` (`DockSettingsViewModel.setDockDisplayMode`); the `DOCK` defaults scope now also copies `dockDisplayMode` (`FacetRepository.applyDockDefaults`), and `LOOK` covers only the list look.
+- [x] The list look (layout, presentation, grid, shrink to fit, portrait and landscape alignment, Allow landscape mode) moved to `HomeAppsListSettingsScreen` (`AppListLookItems.kt`, setters on `HomeAppsListSettingsViewModel`); its Reset to default and Copy to facets run `APPS_LIST` then `LOOK`.
+- [x] `DockAppsAppearanceScreen`, its `dockAppsAppearance` route, both nav rows and the two row strings are gone.
+- [x] Tests: setters, reset and copy in `HomeAppsListSettingsViewModelTest`, `DockSettingsViewModelTest`, `ApplyFacetDefaultsUseCaseTest`, `FacetRepositoryTest`; row tests moved to `HomeAppsListSettingsScreenTest` and `DockSettingsScreenTest` (instrumented, compiled, not yet run). The old `AppearancePreviewCard` preview checks (grid columns, vertical alignment) were dropped with the page.

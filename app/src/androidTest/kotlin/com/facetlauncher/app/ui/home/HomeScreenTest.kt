@@ -1496,6 +1496,8 @@ class HomeScreenTest {
                     appListLayout = AppListLayout.GRID,
                     appListGridColumns = AppListGridColumns.FOUR,
                     appListGridDisplayMode = AppListGridDisplayMode.ICONS,
+                    // A top anchor: the grid grows downward, so a wrapped item is below the first row.
+                    appListVerticalAlignment = AppListVerticalAlignment.TOP,
                 )
             }
         }
@@ -1524,6 +1526,8 @@ class HomeScreenTest {
                     appListLayout = AppListLayout.GRID,
                     appListGridColumns = AppListGridColumns.THREE,
                     appListGridDisplayMode = AppListGridDisplayMode.ICONS,
+                    // A top anchor: the grid grows downward, so a wrapped item is below the first row.
+                    appListVerticalAlignment = AppListVerticalAlignment.TOP,
                 )
             }
         }

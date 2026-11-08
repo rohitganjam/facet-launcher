@@ -149,7 +149,7 @@ uses (`DockAppPickerScreen`, `FavoritesPickerScreen`) for actually adding/removi
 
 | | |
 |---|---|
-| **Title** | `500 24sp` Ink — *"Set up your home screen"* |
+| **Title** | `500 24sp` Ink — *"Set up your first facet"* |
 | **Subtitle** | `400 13sp/1.5` Muted — *"Pick the apps you want on Home. You can change all of this later."* |
 | **DOCK section** | header `600 10sp/.14em` Faint — *"DOCK"* + `{n} of 5`. A row of icon tiles (the seeded defaults) that **drag-to-reorder** in place (`DragReorderState`, horizontal). No inline `+` — a **"Manage dock apps"** link below the row opens `DockAppPickerScreen` full-screen (own search + checkbox list, uncheck to remove) as its own step within `OnboardingScreen`, then returns here. `400 11.5sp` Muted hint — *"The default dock — each profile can customize its own later. Drag to reorder."* |
 | **HOME APPS section** | header *"HOME APPS"*. A **"Show"** dropdown (`LabeledDropdownRow`) picks `ListContentMode` — **Favorites** / **Recently used** / **Most used** — the same choice `HomeAppsListSettingsScreen` exposes in Settings. Only in **Favorites** mode does a **"Favorites"** row appear (`{n} of 8`, opens `FavoritesPickerScreen` full-screen the same way the dock does); once favorites are picked they render as a **drag-to-reorder list** below (vertical `DragReorderState`, same pattern as Settings' `DefaultFavoritesReorderList`). Recents/Most-used modes show no editable list here — there's nothing to pick, Home derives them live from usage stats. |

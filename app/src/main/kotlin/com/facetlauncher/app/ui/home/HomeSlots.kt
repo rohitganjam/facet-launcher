@@ -2,6 +2,7 @@ package com.facetlauncher.app.ui.home
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,6 +18,13 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateOf
+import com.facetlauncher.app.ui.components.LocalListAutoScroll
+import com.facetlauncher.app.ui.components.ListAutoScroll
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.layout
+import androidx.compose.ui.geometry.Rect
 import com.facetlauncher.app.ui.nativewidget.NativeWidgetActions
 import com.facetlauncher.app.data.model.NativeWidgetRef
 import com.facetlauncher.app.ui.nativewidget.NativeWidgetPage
@@ -47,7 +55,12 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.facetlauncher.app.R
 import com.facetlauncher.app.data.model.AppListLayout
+import com.facetlauncher.app.domain.GridCell
+import com.facetlauncher.app.data.model.AppListVerticalAlignment
 import com.facetlauncher.app.data.model.AppRowPosition
+import com.facetlauncher.app.data.model.PlacedItem
+import com.facetlauncher.app.data.model.PlacementList
+import com.facetlauncher.app.ui.components.PickUpReorderHost
 import com.facetlauncher.app.data.model.ClockAlignment
 import com.facetlauncher.app.data.model.DockDisplayMode
 import com.facetlauncher.app.data.model.MediaPlayerState
@@ -321,6 +334,9 @@ internal fun HomeMediaSlot(frame: HomeFrame, player: MediaPlayerState, modifier:
 @Composable
 internal fun HomeAppListRegion(frame: HomeFrame, maxHeight: Dp, modifier: Modifier = Modifier) {
     val layout = frame.layout
+    val scrollState = rememberScrollState()
+    var viewport by remember { mutableStateOf(Rect.Zero) }
+    val autoScroll = remember(scrollState) { ListAutoScroll(scrollState) { viewport } }
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -328,8 +344,9 @@ internal fun HomeAppListRegion(frame: HomeFrame, maxHeight: Dp, modifier: Modifi
             .onGloballyPositioned {
                 layout.appListSize = it.size
                 layout.appListOriginInRoot = it.positionInRoot()
+                viewport = it.boundsInRoot()
             }
-            .let { if (frame.state.list.layout == AppListLayout.GRID) it else it.verticalScroll(rememberScrollState()) }
+            .let { if (frame.state.list.layout == AppListLayout.GRID) it.fullWidthInPortrait(frame.isLandscape) else it.verticalScroll(scrollState) }
             .testTag(homeTag("home_app_list_scroll_region")),
     ) {
         // A scrollable Column measures its content at its natural height regardless of the clamp above, so this
@@ -343,14 +360,14 @@ internal fun HomeAppListRegion(frame: HomeFrame, maxHeight: Dp, modifier: Modifi
             if (frame.state.list.showUsageAccessPrompt) {
                 UsageAccessStrip(onClick = frame.actions.onUsageAccessPromptClick)
             } else {
-                HomeAppListBody(frame)
+                CompositionLocalProvider(LocalListAutoScroll provides autoScroll) { HomeAppListBody(frame, maxHeight) }
             }
         }
     }
 }
 
 @Composable
-private fun HomeAppListBody(frame: HomeFrame) {
+private fun HomeAppListBody(frame: HomeFrame, maxHeight: Dp) {
     val list = frame.state.list
     val compact = frame.layout.useCompactAppSpacing
     val rowPadding = if (compact) HOME_APP_ROW_COMPACT_VERTICAL_PADDING else HOME_APP_ROW_REGULAR_VERTICAL_PADDING
@@ -364,12 +381,22 @@ private fun HomeAppListBody(frame: HomeFrame) {
             appRowPresentation = list.rowPresentation,
             verticalPadding = rowPadding,
             iconSize = rowIconSize,
+            onReorder = frame.actions.item.onReorderList
+                ?.takeIf { list.reorderable }
+                ?.let { reorder -> { ordered: List<PlacedItem> -> reorder(PlacementList.FAVORITES, ordered) } },
         )
         AppListLayout.GRID -> HomeAppGrid(
             content = frame.listContent,
             actions = frame.actions.item,
             columns = gridColumns(frame),
             displayMode = list.gridDisplayMode,
+            savedCells = list.gridCells,
+            landscape = frame.isLandscape,
+            onMove = frame.actions.item.onMoveGridItems
+                ?.takeIf { list.reorderable }
+                ?.let { move -> { cells: Map<String, GridCell> -> move(frame.isLandscape, cells) } },
+            anchoredAtBottom = list.alignment.verticalAlignment == AppListVerticalAlignment.BOTTOM,
+            availableHeight = maxHeight,
         )
         AppListLayout.SINGLE_COLUMN -> HomeAppListColumn(
             content = frame.listContent,
@@ -380,6 +407,9 @@ private fun HomeAppListBody(frame: HomeFrame) {
             iconSize = rowIconSize,
             modifier = Modifier.fillMaxWidth(),
             rowWidthFraction = SINGLE_COLUMN_ROW_WIDTH_FRACTION,
+            onReorder = frame.actions.item.onReorderList
+                ?.takeIf { list.reorderable }
+                ?.let { reorder -> { ordered: List<PlacedItem> -> reorder(PlacementList.FAVORITES, ordered) } },
             horizontalAlignment = when (position) {
                 AppRowPosition.RIGHT -> Alignment.End
                 AppRowPosition.CENTER -> Alignment.CenterHorizontally
@@ -397,8 +427,17 @@ private fun gridColumns(frame: HomeFrame): Int {
 
 @Composable
 internal fun HomeDockItems(frame: HomeFrame, displayMode: DockDisplayMode) {
-    frame.state.dock.items.forEach { item ->
-        DockIcon(item = item, displayMode = displayMode, actions = frame.actions.item, style = frame.itemStyle)
+    val onReorder = frame.actions.item.onReorderList
+    PickUpReorderHost(
+        items = frame.state.dock.items,
+        key = { it.stableKey() },
+        axis = if (frame.isLandscape && !frame.dockAtBottom) Orientation.Vertical else Orientation.Horizontal,
+        enabled = onReorder != null,
+        onReorder = { ordered -> onReorder?.invoke(PlacementList.DOCK, ordered) },
+    ) { shown ->
+        shown.forEach { item ->
+            key(item.stableKey()) { DockIcon(item = item, displayMode = displayMode, actions = frame.actions.item, style = frame.itemStyle) }
+        }
     }
 }
 
@@ -426,7 +465,7 @@ private fun UsageAccessStrip(onClick: () -> Unit, modifier: Modifier = Modifier)
 }
 
 /** Single-column rows are only this fraction of the list's width (tap target + ripple), anchored by the row position. */
-private const val SINGLE_COLUMN_ROW_WIDTH_FRACTION = 0.8f
+private const val SINGLE_COLUMN_ROW_WIDTH_FRACTION = 0.7f
 
 private fun nativeWidgetActions(actions: HomeScreenActions) = NativeWidgetActions(
     onOpenWeather = actions.clock.onOpenNativeWeather,
@@ -436,3 +475,11 @@ private fun nativeWidgetActions(actions: HomeScreenActions) = NativeWidgetAction
     onRequestCalendarAccess = actions.clock.onRequestCalendarAccess,
     onRequestLocationAccess = actions.clock.onRequestLocationAccess,
 )
+
+/** Drops Home's side margin for the grid in portrait: it spans the screen like the dock, so the two line up. */
+private fun Modifier.fullWidthInPortrait(isLandscape: Boolean): Modifier = if (isLandscape) this else layout { measurable, constraints ->
+    val extra = HOME_SIDE_MARGIN.roundToPx() * 2
+    val width = if (constraints.hasBoundedWidth) constraints.maxWidth + extra else constraints.maxWidth
+    val placeable = measurable.measure(constraints.copy(minWidth = width, maxWidth = width))
+    layout(constraints.maxWidth, placeable.height) { placeable.place(-extra / 2, 0) }
+}
