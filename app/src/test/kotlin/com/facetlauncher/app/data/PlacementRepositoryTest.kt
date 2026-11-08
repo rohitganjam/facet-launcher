@@ -14,6 +14,8 @@ import com.facetlauncher.app.data.model.Folder
 import com.facetlauncher.app.data.model.PlacedItem
 import com.facetlauncher.app.data.model.PlacementList
 import com.facetlauncher.app.data.model.PlacementTarget
+import com.facetlauncher.app.data.model.gridKey
+import com.facetlauncher.app.domain.GridCell
 import com.facetlauncher.app.domain.ObservePlacedItemsUseCase
 import java.util.IdentityHashMap
 import kotlinx.coroutines.channels.Channel
@@ -312,6 +314,66 @@ class PlacementRepositoryTest {
 
             // Then the new order is reflected, and the folder's membership survived the reposition
             assertEquals(listOf(folder, app), repo.observeItems(target).first())
+        }
+    }
+
+    @Test
+    fun `saving grid cells stores them for one orientation, rewrites the order and leaves the other orientation alone`() = runTest {
+        allTargets.forEach { target ->
+            // Given two apps, the first with a landscape cell already saved
+            val a = appInfo('a')
+            val b = appInfo('b')
+            val repo = repository(installed(a, b))
+            repo.addApp(target, a, position = 0)
+            repo.addApp(target, b, position = 1)
+            val itemA = PlacedItem.SingleApp(a)
+            val itemB = PlacedItem.SingleApp(b)
+            repo.saveGridCells(target, landscape = true, orderedItems = listOf(itemA, itemB), cells = mapOf(itemA.gridKey() to GridCell(0, 0), itemB.gridKey() to GridCell(0, 1)))
+
+            // When portrait cells are saved with b first
+            repo.saveGridCells(target, landscape = false, orderedItems = listOf(itemB, itemA), cells = mapOf(itemB.gridKey() to GridCell(0, 0), itemA.gridKey() to GridCell(2, 3)))
+
+            // Then the order follows the save, portrait has the new cells, and landscape is untouched
+            assertEquals(listOf(itemB, itemA), repo.observeItems(target).first())
+            assertEquals(mapOf(itemB.gridKey() to GridCell(0, 0), itemA.gridKey() to GridCell(2, 3)), repo.observeGridCells(target, landscape = false).first())
+            assertEquals(mapOf(itemA.gridKey() to GridCell(0, 0), itemB.gridKey() to GridCell(0, 1)), repo.observeGridCells(target, landscape = true).first())
+        }
+    }
+
+    @Test
+    fun `a plain reorder keeps the saved grid cells`() = runTest {
+        allTargets.forEach { target ->
+            // Given an app with a saved portrait cell
+            val a = appInfo('a')
+            val repo = repository(installed(a))
+            repo.addApp(target, a, position = 0)
+            val item = PlacedItem.SingleApp(a)
+            repo.saveGridCells(target, landscape = false, orderedItems = listOf(item), cells = mapOf(item.gridKey() to GridCell(1, 2)))
+
+            // When the list is reordered from a settings screen
+            repo.reorderItems(target, listOf(item))
+
+            // Then its cell is still there
+            assertEquals(mapOf(item.gridKey() to GridCell(1, 2)), repo.observeGridCells(target, landscape = false).first())
+        }
+    }
+
+    @Test
+    fun `a folder placement keeps its grid cell too`() = runTest {
+        allTargets.forEach { target ->
+            // Given a placed folder saved on a cell
+            val folderDao = FakeFolderDao()
+            val folderId = folderDao.insertFolder(FolderEntity(name = "Games"))
+            val repo = repository(installed(), folderDao = folderDao)
+            repo.placeFolder(target, folderId, position = 0)
+            val folder = PlacedItem.FolderItem(Folder(folderId, "Games", emptyList()))
+            repo.saveGridCells(target, landscape = false, orderedItems = listOf(folder), cells = mapOf(folder.gridKey() to GridCell(0, 3)))
+
+            // When the list is reordered
+            repo.reorderItems(target, listOf(folder))
+
+            // Then the folder keeps its cell
+            assertEquals(mapOf(folder.gridKey() to GridCell(0, 3)), repo.observeGridCells(target, landscape = false).first())
         }
     }
 

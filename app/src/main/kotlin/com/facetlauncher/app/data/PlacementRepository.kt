@@ -4,10 +4,16 @@ import com.facetlauncher.app.data.local.AppPlacementDao
 import com.facetlauncher.app.data.local.AppPlacementEntity
 import com.facetlauncher.app.data.local.FolderPlacementDao
 import com.facetlauncher.app.data.local.FolderPlacementEntity
+import com.facetlauncher.app.data.local.cell
+import com.facetlauncher.app.data.local.gridKey
+import com.facetlauncher.app.data.local.keepingCellsOf
+import com.facetlauncher.app.data.local.withCell
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.PlacedItem
 import com.facetlauncher.app.data.model.PlacementList
 import com.facetlauncher.app.data.model.PlacementTarget
+import com.facetlauncher.app.data.model.gridKey
+import com.facetlauncher.app.domain.GridCell
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.flow.Flow
@@ -94,12 +100,43 @@ class PlacementRepository @Inject constructor(
         folders.forEach { folderPlacementDao.upsert(it.copy(id = 0, list = to.list, facetId = to.facetId, ownerKey = to.ownerKey)) }
     }
 
-    /** Rewrites `position` across apps and folder placements to match [orderedItems]'s order. */
+    /** Rewrites `position` across apps and folder placements to match [orderedItems]'s order; their saved grid cells are kept. */
     suspend fun reorderItems(target: PlacementTarget, orderedItems: List<PlacedItem>) {
+        writeOrder(target, orderedItems, cells = null, landscape = false)
+    }
+
+    /** The Home grid cells saved for [landscape] or portrait, by [gridKey]; an item never moved on the grid is absent. */
+    fun observeGridCells(target: PlacementTarget, landscape: Boolean): Flow<Map<String, GridCell>> =
+        combine(appPlacementDao.observe(target.list, target.ownerKey), folderPlacementDao.observe(target.list, target.ownerKey)) { apps, folders ->
+            buildMap {
+                apps.forEach { entity -> entity.cell(landscape)?.let { put(entity.gridKey(), it) } }
+                folders.forEach { entity -> entity.cell(landscape)?.let { put(entity.gridKey(), it) } }
+            }
+        }
+
+    /**
+     * Saves a grid move: [orderedItems] in their new reading order (rewriting `position`) and each one's [cells] entry for the
+     * given orientation. The other orientation's cells are left alone.
+     */
+    suspend fun saveGridCells(target: PlacementTarget, landscape: Boolean, orderedItems: List<PlacedItem>, cells: Map<String, GridCell>) {
+        writeOrder(target, orderedItems, cells, landscape)
+    }
+
+    private suspend fun writeOrder(target: PlacementTarget, orderedItems: List<PlacedItem>, cells: Map<String, GridCell>?, landscape: Boolean) {
+        val existingApps = appPlacementDao.observe(target.list, target.ownerKey).first().associateBy { it.gridKey() }
+        val existingFolders = folderPlacementDao.observe(target.list, target.ownerKey).first().associateBy { it.gridKey() }
         orderedItems.forEachIndexed { index, item ->
+            val key = item.gridKey()
             when (item) {
-                is PlacedItem.SingleApp -> appPlacementDao.upsert(item.app.toEntity(target, index))
-                is PlacedItem.FolderItem -> placeFolder(target, item.folder.id, index)
+                is PlacedItem.SingleApp -> {
+                    val entity = item.app.toEntity(target, index).keepingCellsOf(existingApps[key])
+                    appPlacementDao.upsert(if (cells == null) entity else entity.withCell(landscape, cells[key]))
+                }
+                is PlacedItem.FolderItem -> {
+                    val entity = FolderPlacementEntity(list = target.list, facetId = target.facetId, folderId = item.folder.id, position = index)
+                        .keepingCellsOf(existingFolders[key])
+                    folderPlacementDao.upsert(if (cells == null) entity else entity.withCell(landscape, cells[key]))
+                }
             }
         }
     }

@@ -51,6 +51,8 @@ Home reorders its single-column list (Favorites mode only) and the Dock in place
 drag moves it, saved once on drop (the first two rows above). Reordering from a settings screen still works. The grid
 layouts are not draggable yet.
 
+`app_placements` and `folder_placements` also hold an optional Home grid cell per orientation (`portraitRow/Column`, `landscapeRow/Column`, from the anchor edge, [02](02-persistence-room.md)). `PlacementRepository.saveGridCells` writes one orientation's cells together with a `position` rewritten from the grid's reading order; `reorderItems` keeps the saved cells, and `observeGridCells` reads them back keyed by `PlacedItem.gridKey()`. Where a cell is null, `HomeGridPlacement.resolve` derives it from the list order. Backups do not carry cells yet.
+
 Because `position` is rewritten for the whole list, gaps and duplicates can't accumulate; the
 cost is N upserts per drag end (Room runs each as its own statement).
 
