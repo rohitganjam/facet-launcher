@@ -32,4 +32,6 @@ data class OnboardingUiState(
     val searchContactsEnabled: Boolean = false,
     val searchSettingsEnabled: Boolean = false,
     val drawerFolderDisplayMode: DrawerFolderDisplayMode = DrawerFolderDisplayMode.DO_NOT_SHOW,
+    /** The user's installed apps, for the drawer step's live preview. */
+    val installedApps: ImmutableList<AppInfo> = persistentListOf(),
 )

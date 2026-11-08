@@ -726,7 +726,7 @@
     <string name="onboarding_intro_gesture_facets">Wische nach links, um die Facette zu wechseln.</string>
 
     <!-- OnboardingHomeSetupPage -->
-    <string name="onboarding_home_setup_headline">Richte deinen Startbildschirm ein</string>
+    <string name="onboarding_home_setup_headline">Richte deine erste Facette ein</string>
     <string name="onboarding_home_setup_subhead">Wähle die Apps, die du auf dem Startbildschirm haben möchtest. Du kannst das später jederzeit ändern.</string>
     <string name="onboarding_drawer_setup_headline">Richte deinen App-Drawer ein</string>
     <string name="onboarding_drawer_setup_subhead">Wähle, wie deine Apps angezeigt werden und wie die Suche funktioniert. Du kannst das später jederzeit ändern.</string>

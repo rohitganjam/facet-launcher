@@ -3,6 +3,7 @@ package com.facetlauncher.app.ui.onboarding
 import com.facetlauncher.app.domain.ObservePlacedItemsUseCase
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.facetlauncher.app.data.AppRepository
 import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.domain.ApplyFacetDefaultsUseCase
@@ -43,13 +44,15 @@ class OnboardingViewModel @Inject constructor(
     private val settingsRepository: SettingsRepository,
     private val facetRepository: FacetRepository,
     private val applyFacetDefaults: ApplyFacetDefaultsUseCase,
+    appRepository: AppRepository,
 ) : ViewModel() {
 
     val uiState: StateFlow<OnboardingUiState> = combine(
         observePlacedItems.apps(PlacementTarget.GlobalFavorites),
         observePlacedItems.apps(PlacementTarget.GlobalDock),
         settingsRepository.settings,
-    ) { favorites, dockApps, settings ->
+        appRepository.observeInstalledApps(),
+    ) { favorites, dockApps, settings, installedApps ->
         OnboardingUiState(
             dockApps = dockApps.toImmutableList(),
             favoriteApps = favorites.toImmutableList(),
@@ -60,6 +63,7 @@ class OnboardingViewModel @Inject constructor(
             searchContactsEnabled = settings.searchContactsEnabled,
             searchSettingsEnabled = settings.searchSettingsEnabled,
             drawerFolderDisplayMode = settings.drawerFolderDisplayMode,
+            installedApps = installedApps.toImmutableList(),
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), OnboardingUiState())
 

@@ -111,6 +111,7 @@ class OnboardingScreenTest {
                         settingsRepository,
                         facetRepository,
                         ApplyFacetDefaultsUseCase(facetRepository, placementRepository, settingsRepository),
+                        appRepository,
                     ),
                     // Onboarding embeds these full-screen pickers as-is (same as Settings); this
                     // non-Hilt test host builds them by hand, same pattern as DockAppPickerScreenTest/

@@ -711,7 +711,7 @@
     <string name="onboarding_intro_gesture_widgets">Veeg naar rechts voor je widgets.</string>
     <string name="onboarding_intro_gesture_facets">Veeg naar links om van facet te wisselen.</string>
 
-    <string name="onboarding_home_setup_headline">Stel je startscherm in</string>
+    <string name="onboarding_home_setup_headline">Stel je eerste facet in</string>
     <string name="onboarding_home_setup_subhead">Kies de apps die je op Home wilt. Je kunt dit later allemaal wijzigen.</string>
     <string name="onboarding_drawer_setup_headline">Stel je app-lade in</string>
     <string name="onboarding_drawer_setup_subhead">Kies hoe je apps worden getoond en hoe zoeken werkt. Je kunt dit later allemaal wijzigen.</string>

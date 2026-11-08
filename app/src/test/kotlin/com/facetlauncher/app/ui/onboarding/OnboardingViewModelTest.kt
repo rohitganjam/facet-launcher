@@ -17,6 +17,7 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Before
@@ -28,6 +29,7 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import com.facetlauncher.app.data.model.PlacementTarget
 import com.facetlauncher.app.data.PlacementRepository
+import com.facetlauncher.app.data.AppRepository
 import com.facetlauncher.app.data.FacetRepository
 import kotlinx.coroutines.flow.flowOf
 import com.facetlauncher.app.data.model.Facet
@@ -62,6 +64,7 @@ class OnboardingViewModelTest {
         favorites: List<AppInfo> = emptyList(),
         dockApps: List<AppInfo> = emptyList(),
         settings: LauncherSettings = LauncherSettings(),
+        installedApps: List<AppInfo> = emptyList(),
     ): Fixture {
         val favoritesFlow = MutableStateFlow(favorites)
         val dockFlow = MutableStateFlow(dockApps)
@@ -74,12 +77,15 @@ class OnboardingViewModelTest {
         val facetRepository = mock(FacetRepository::class.java)
         `when`(facetRepository.observeFacets()).thenReturn(flowOf(listOf(Facet(id = 5L, name = "Facet 1", position = 0), Facet(id = 6L, name = "Facet 2", position = 1))))
         val applyFacetDefaults = mock(ApplyFacetDefaultsUseCase::class.java)
+        val appRepository = mock(AppRepository::class.java)
+        `when`(appRepository.observeInstalledApps()).thenReturn(flowOf(installedApps))
         val viewModel = OnboardingViewModel(
             placementRepository,
             observePlacedItems,
             settingsRepository,
             facetRepository,
             applyFacetDefaults,
+            appRepository,
         )
         testDispatcher.scheduler.advanceUntilIdle()
         return Fixture(favoritesFlow, dockFlow, placementRepository, settingsRepository, viewModel, applyFacetDefaults)
@@ -117,6 +123,18 @@ class OnboardingViewModelTest {
         verify(f.applyFacetDefaults).invoke(6L, FacetDefaultsScope.APPS_LIST)
         verify(f.applyFacetDefaults, org.mockito.Mockito.never()).invoke(5L, FacetDefaultsScope.LOOK)
         assertEquals(true, left)
+    }
+
+    @Test
+    fun `uiState carries the installed apps for the drawer preview`() = runTest {
+        val apps = listOf(appInfo("a"), appInfo("b"))
+        val f = fixture(installedApps = apps)
+        val collector = launch(UnconfinedTestDispatcher(testScheduler)) { f.viewModel.uiState.collect {} }
+
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(apps, f.viewModel.uiState.value.installedApps.toList())
+        collector.cancel()
     }
 
     @Test

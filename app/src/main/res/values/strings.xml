@@ -795,7 +795,7 @@
          reuses home_apps_list_apps_to_show; "Drag to reorder" reuses
          drag_to_reorder_content_description; the Favorites row title reuses
          onboarding_list_content_favorites below — same word) -->
-    <string name="onboarding_home_setup_headline">Set up your home screen</string>
+    <string name="onboarding_home_setup_headline">Set up your first facet</string>
     <string name="onboarding_home_setup_subhead">Pick the apps you want on Home. You can change all of this later.</string>
     <string name="onboarding_drawer_setup_headline">Set up your app drawer</string>
     <string name="onboarding_drawer_setup_subhead">Choose how your apps are listed and how search works. You can change all of this later.</string>

@@ -218,7 +218,7 @@
     <string name="onboarding_intro_diagram_apps_label">As suas apps</string>
     <string name="onboarding_intro_gesture_drawer">Deslize para cima a qualquer momento para ver todas as suas apps.</string>
     <string name="onboarding_intro_gesture_widgets">Deslize para a direita para ver os seus widgets.</string>
-    <string name="onboarding_home_setup_headline">Configure o seu ecrã inicial</string>
+    <string name="onboarding_home_setup_headline">Configure a sua primeira faceta</string>
     <string name="onboarding_home_setup_subhead">Escolha as apps que quer no ecrã inicial. Pode alterar tudo isto mais tarde.</string>
     <string name="onboarding_drawer_setup_headline">Configure a sua gaveta de apps</string>
     <string name="onboarding_drawer_setup_subhead">Escolha como as suas apps são listadas e como a pesquisa funciona. Pode alterar tudo isto mais tarde.</string>

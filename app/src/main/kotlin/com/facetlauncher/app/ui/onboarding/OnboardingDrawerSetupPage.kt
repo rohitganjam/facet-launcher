@@ -69,7 +69,7 @@ fun OnboardingDrawerSetupPage(
         LazyColumn(modifier = Modifier.weight(1f).fillMaxWidth().padding(horizontal = 24.dp)) {
             item {
                 Spacer(modifier = Modifier.height(24.dp))
-                AppDrawerSettingsPreview(settings = previewSettings, wallpaper = HomeWallpaper.Unavailable)
+                AppDrawerSettingsPreview(settings = previewSettings, wallpaper = HomeWallpaper.Unavailable, installedApps = uiState.installedApps)
                 Spacer(modifier = Modifier.height(16.dp))
                 DrawerSetupOptionsCard(
                     uiState = uiState,

@@ -1,5 +1,7 @@
 package com.facetlauncher.app.ui.settings
 
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.ImmutableList
 import android.Manifest
 import android.content.res.Configuration
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -35,6 +37,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.facetlauncher.app.R
+import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.DrawerFolderDisplayMode
 import com.facetlauncher.app.data.model.DrawerGridDensity
 import com.facetlauncher.app.data.model.DrawerListItemSize
@@ -66,6 +69,7 @@ fun AppDrawerSettingsScreen(
 ) {
     val settings by viewModel.settings.collectAsState()
     val homeWallpaper by viewModel.homeWallpaper.collectAsState()
+    val installedApps by viewModel.installedApps.collectAsState()
 
     val requestContactsPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
         viewModel.setSearchContactsEnabled(granted)
@@ -74,6 +78,7 @@ fun AppDrawerSettingsScreen(
     AppDrawerSettingsContent(
         settings = settings,
         homeWallpaper = homeWallpaper,
+        installedApps = installedApps,
         onBack = onBack,
         onDrawerPresentationChange = viewModel::setDrawerPresentation,
         onDrawerGridDensityChange = viewModel::setDrawerGridDensity,
@@ -99,6 +104,7 @@ fun AppDrawerSettingsScreen(
 private fun AppDrawerSettingsContent(
     settings: LauncherSettings,
     homeWallpaper: HomeWallpaper,
+    installedApps: ImmutableList<AppInfo>,
     onBack: () -> Unit,
     onDrawerPresentationChange: (DrawerPresentation) -> Unit,
     onDrawerGridDensityChange: (DrawerGridDensity) -> Unit,
@@ -127,7 +133,7 @@ private fun AppDrawerSettingsContent(
                 contentPadding = PaddingValues(top = headerHeight, bottom = 24.dp),
             ) {
                 item {
-                    AppDrawerSettingsPreview(settings = settings, wallpaper = homeWallpaper, modifier = Modifier.padding(bottom = 16.dp))
+                    AppDrawerSettingsPreview(settings = settings, wallpaper = homeWallpaper, installedApps = installedApps, modifier = Modifier.padding(bottom = 16.dp))
                 }
                 item {
                     AppDrawerSettingsCard(
@@ -350,6 +356,7 @@ private fun AppDrawerSettingsScreenPreview() {
         AppDrawerSettingsContent(
             settings = LauncherSettings(),
             homeWallpaper = HomeWallpaper.Unavailable,
+            installedApps = persistentListOf(),
             onBack = {},
             onDrawerPresentationChange = {},
             onDrawerGridDensityChange = {},
