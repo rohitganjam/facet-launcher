@@ -54,14 +54,17 @@ internal fun rememberDrawerBrowseModel(
     folderDisplayMode: DrawerFolderDisplayMode,
     recentlyInstalledPosition: RecentlyInstalledPosition,
     listUseCases: DrawerListUseCases,
+    /** A tab to draw instead of the selected one, for the neighbouring tab that shows while swiping; it never changes the selection. */
+    fixedTab: DrawerTab? = null,
 ): DrawerBrowseModel {
     val tabs = remember(workProfiles) { drawerTabsFor(workProfiles) }
-    var selectedTab by remember { mutableStateOf<DrawerTab>(DrawerTab.Personal) }
+    var pickedTab by remember { mutableStateOf<DrawerTab>(DrawerTab.Personal) }
     // A Work Profile can vanish (unenrolled) while its tab is selected — fall back to Personal
     // rather than keep filtering by a handle that no longer resolves to anything.
     LaunchedEffect(tabs) {
-        if (selectedTab !in tabs) selectedTab = DrawerTab.Personal
+        if (pickedTab !in tabs) pickedTab = DrawerTab.Personal
     }
+    val selectedTab = fixedTab ?: pickedTab
     val tabScopedApps = remember(apps, selectedTab, workProfiles) {
         appsForTab(apps, filterByTab = workProfiles.isNotEmpty(), tab = selectedTab)
     }
@@ -87,7 +90,7 @@ internal fun rememberDrawerBrowseModel(
     return DrawerBrowseModel(
         tabs = tabs,
         selectedTab = selectedTab,
-        onSelectTab = { selectedTab = it },
+        onSelectTab = { pickedTab = it },
         searchResultApps = remember(searchResults) { searchResults.take(MAX_APP_SEARCH_RESULTS).toImmutableList() },
         groupedItems = groupedItems,
         pinnedFolders = pinnedFolders,

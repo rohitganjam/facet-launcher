@@ -5,12 +5,17 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.BoxWithConstraints
 import kotlinx.coroutines.delay
 import com.facetlauncher.app.ui.components.longPressReorderClickable
-import com.facetlauncher.app.ui.components.gridItemLayer
 import com.facetlauncher.app.ui.components.gridCellBounds
 import com.facetlauncher.app.ui.components.LocalGridDrag
 import com.facetlauncher.app.ui.components.GridDragState
+import com.facetlauncher.app.ui.components.LiftableCell
+import com.facetlauncher.app.ui.components.HeldAutoScroll
+import com.facetlauncher.app.ui.components.ReorderGeometry
+import androidx.compose.ui.zIndex
 import com.facetlauncher.app.ui.components.edgeScrollDelta
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -103,22 +108,43 @@ internal fun HomeAppTwoColumnList(
     verticalPadding: Dp,
     iconSize: Dp,
     modifier: Modifier = Modifier,
+    onReorder: ((List<PlacedItem>) -> Unit)? = null,
 ) {
-    val columns = remember(content) {
-        listOf(0, 1).map { parity -> HomeAppListContent(content.items.filterIndexed { index, _ -> index % 2 == parity }, content.style) }
+    // A finished drag shows at once; the saved order replaces it when it arrives.
+    var local by remember(content.items) { mutableStateOf<List<PlacedItem>?>(null) }
+    val items = local ?: content.items
+    val columns = remember(items, content.style) {
+        listOf(0, 1).map { parity -> HomeAppListContent(items.filterIndexed { index, _ -> index % 2 == parity }, content.style) }
     }
     val (leftPosition, rightPosition) = columnAlignment.toColumnPositions()
-    Row(modifier = modifier.fillMaxWidth()) {
-        columns.zip(listOf(leftPosition, rightPosition)).forEach { (column, position) ->
-            HomeAppListColumn(
-                content = column,
-                actions = actions,
-                position = position,
-                appRowPresentation = appRowPresentation,
-                verticalPadding = verticalPadding,
-                iconSize = iconSize,
-                modifier = Modifier.weight(1f),
-            )
+    val drag = remember { GridDragState() }
+    val currentOnReorder by rememberUpdatedState(onReorder)
+    val enabled = onReorder != null && items.size > 1
+    drag.insertMode = true
+    HeldAutoScroll(dragging = drag.dragging, pointer = { drag.pointer.y }, onScroll = drag::addScroll)
+    // The list reads row by row (0 and 1 on the first row), so a cell's index is its place in the order.
+    drag.indexOfKey = { key -> items.indexOfFirst { it.stableKey() == key }.takeIf { it >= 0 } }
+    drag.onDrop = { from, to ->
+        val reordered = ReorderGeometry.move(items, from, to)
+        local = reordered
+        currentOnReorder?.invoke(reordered)
+    }
+    CompositionLocalProvider(LocalGridDrag provides drag.takeIf { enabled }) {
+        Row(modifier = modifier.fillMaxWidth()) {
+            columns.zip(listOf(leftPosition, rightPosition)).forEach { (column, position) ->
+                // The column holding the lifted row is drawn over the other, so the row is not hidden when it crosses.
+                val holdsLifted = drag.liftedKey != null && column.items.any { it.stableKey() == drag.liftedKey }
+                HomeAppListColumn(
+                    content = column,
+                    actions = actions,
+                    position = position,
+                    appRowPresentation = appRowPresentation,
+                    verticalPadding = verticalPadding,
+                    iconSize = iconSize,
+                    modifier = Modifier.weight(1f).zIndex(if (holdsLifted) 1f else 0f),
+                    cellIndexOf = if (enabled) { item -> items.indexOf(item) } else null,
+                )
+            }
         }
     }
 }
@@ -139,6 +165,8 @@ internal fun HomeAppListColumn(
     rowWidthFraction: Float = 1f,
     horizontalAlignment: Alignment.Horizontal = Alignment.Start,
     onReorder: ((List<PlacedItem>) -> Unit)? = null,
+    /** Two-column list only: a row's place in the whole list, so a drag can tell which cell it is over. */
+    cellIndexOf: ((PlacedItem) -> Int)? = null,
 ) {
     Column(modifier = modifier, horizontalAlignment = horizontalAlignment) {
         PickUpReorderHost(
@@ -149,7 +177,7 @@ internal fun HomeAppListColumn(
             onReorder = { onReorder?.invoke(it) },
         ) { shown ->
         shown.forEach { item -> key(item.stableKey()) {
-            val rowModifier = Modifier.fillMaxWidth(rowWidthFraction)
+            val rowModifier = Modifier.fillMaxWidth(rowWidthFraction).then(if (cellIndexOf != null) Modifier.gridCellBounds(cellIndexOf(item)) else Modifier)
             when (item) {
                 is PlacedItem.SingleApp -> AppRow(
                     app = item.app,
@@ -224,22 +252,27 @@ internal fun HomeAppGrid(
     val gridState = rememberLazyGridState()
     var viewport by remember { mutableStateOf(Rect.Zero) }
     GridEdgeAutoScroll(drag, gridState, viewport, reversed = anchoredAtBottom)
+    // Laid out as the Dock is: the same icon width with the gaps spread evenly, so a grid with as many columns as the Dock has icons lines up with it.
+    val iconWidth = AppIconSize.scaled()
     CompositionLocalProvider(LocalGridDrag provides drag.takeIf { enabled }) {
-        LazyVerticalGrid(
-            columns = GridCells.Fixed(width),
-            state = gridState,
-            reverseLayout = anchoredAtBottom,
-            modifier = modifier.fillMaxWidth().onGloballyPositioned { viewport = it.boundsInRoot() }.testTag(homeTag("home_app_grid")),
-            horizontalArrangement = Arrangement.spacedBy(2.dp),
-        ) {
-            items(rows * width, key = { index -> keyAtCell[cellAtIndex(index, width)] ?: "empty_$index" }) { index ->
-                val cell = cellAtIndex(index, width)
-                val item = keyAtCell[cell]?.let(itemByKey::get)
-                val tileModifier = Modifier.height(cellHeight).gridCellBounds(index)
-                when (item) {
-                    is PlacedItem.SingleApp -> HomeAppGridTile(item.app, displayMode, actions, content.style, tileModifier.gridItemLayer(item.gridKey()), item.gridKey())
-                    is PlacedItem.FolderItem -> HomeFolderGridTile(item.folder, displayMode, actions, content.style, tileModifier.gridItemLayer(item.gridKey()), item.gridKey())
-                    null -> GridEmptyCell(guide = drag.liftedKey != null, isTarget = drag.targetIndex == index, modifier = tileModifier)
+        BoxWithConstraints(modifier = modifier.fillMaxWidth()) {
+            val gap = ((maxWidth - iconWidth * width) / (width + 1)).coerceAtLeast(0.dp)
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(width),
+                state = gridState,
+                reverseLayout = anchoredAtBottom,
+                contentPadding = PaddingValues(horizontal = gap / 2),
+                modifier = Modifier.fillMaxWidth().onGloballyPositioned { viewport = it.boundsInRoot() }.testTag(homeTag("home_app_grid")),
+            ) {
+                items(rows * width, key = { index -> keyAtCell[cellAtIndex(index, width)] ?: "empty_$index" }) { index ->
+                    val cell = cellAtIndex(index, width)
+                    val item = keyAtCell[cell]?.let(itemByKey::get)
+                    val tileModifier = Modifier.height(cellHeight).gridCellBounds(index)
+                    when (item) {
+                        is PlacedItem.SingleApp -> HomeAppGridTile(item.app, displayMode, actions, content.style, tileModifier, item.gridKey())
+                        is PlacedItem.FolderItem -> HomeFolderGridTile(item.folder, displayMode, actions, content.style, tileModifier, item.gridKey())
+                        null -> GridEmptyCell(guide = drag.liftedKey != null, isTarget = drag.targetIndex == index, modifier = tileModifier)
+                    }
                 }
             }
         }
@@ -303,39 +336,51 @@ internal fun HomeAppGridTile(
     dragKey: Any = app.listKey,
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
-    Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .longPressReorderClickable(dragKey, onClick = { actions.onAppClick(app) }, onLongPress = { menuExpanded = true })
-            .padding(vertical = 8.dp),
-        contentAlignment = Alignment.Center,
+    LiftableCell(
+        key = dragKey,
+        modifier = modifier,
+        copy = { Box(Modifier.fillMaxWidth().padding(vertical = 8.dp), contentAlignment = Alignment.Center) { AppGridTileBody(app, displayMode, style) } },
     ) {
-        if (displayMode == AppListGridDisplayMode.TEXT) {
-            Text(
-                text = app.label,
-                style = MaterialTheme.typography.labelLarge.copy(shadow = homeAppLabelShadow(style.labelColor), fontWeight = style.labelFontWeight),
-                color = style.labelColor,
-                textAlign = TextAlign.Center,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.testTag(homeTag("home_app_label_${app.packageName}")),
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .longPressReorderClickable(dragKey, onClick = { actions.onAppClick(app) }, onLongPress = { menuExpanded = true })
+                .padding(vertical = 8.dp),
+            contentAlignment = Alignment.Center,
+        ) {
+            AppGridTileBody(app, displayMode, style)
+            AppItemMenu(app, menuExpanded, { menuExpanded = false }, actions, style)
+        }
+    }
+}
+
+/** What a grid tile shows for an app: the name, or the icon with its name under it. */
+@Composable
+private fun AppGridTileBody(app: AppInfo, displayMode: AppListGridDisplayMode, style: HomeItemStyle) {
+    if (displayMode == AppListGridDisplayMode.TEXT) {
+        Text(
+            text = app.label,
+            style = MaterialTheme.typography.labelLarge.copy(shadow = homeAppLabelShadow(style.labelColor), fontWeight = style.labelFontWeight),
+            color = style.labelColor,
+            textAlign = TextAlign.Center,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.testTag(homeTag("home_app_label_${app.packageName}")),
+        )
+    } else {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            AppIcon(
+                app = app,
+                size = AppIconSize.scaled(),
+                contentDescription = app.label,
+                notificationCount = style.badgeCounts[app.packageName],
+                badgeStyle = style.badgeStyle,
+                modifier = Modifier.testTag(homeTag("home_app_icon_${app.packageName}")),
             )
-        } else {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                AppIcon(
-                    app = app,
-                    size = AppIconSize.scaled(),
-                    contentDescription = app.label,
-                    notificationCount = style.badgeCounts[app.packageName],
-                    badgeStyle = style.badgeStyle,
-                    modifier = Modifier.testTag(homeTag("home_app_icon_${app.packageName}")),
-                )
-                if (displayMode == AppListGridDisplayMode.ICONS_AND_TEXT) {
-                    HomeTileLabel(app.label, style, Modifier.testTag(homeTag("home_app_label_${app.packageName}")), Dp.Unspecified)
-                }
+            if (displayMode == AppListGridDisplayMode.ICONS_AND_TEXT) {
+                HomeTileLabel(app.label, style, Modifier.testTag(homeTag("home_app_label_${app.packageName}")), Dp.Unspecified)
             }
         }
-        AppItemMenu(app, menuExpanded, { menuExpanded = false }, actions, style)
     }
 }
 
@@ -373,30 +418,42 @@ internal fun HomeFolderGridTile(
 ) {
     var sheetOpen by remember { mutableStateOf(false) }
     var menuExpanded by remember { mutableStateOf(false) }
-    Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .longPressReorderClickable(dragKey, onClick = { sheetOpen = true }, onLongPress = { menuExpanded = true })
-            .testTag(homeTag("home_folder_grid_tile_${folder.id}"))
-            .padding(vertical = 8.dp),
-        contentAlignment = Alignment.Center,
+    LiftableCell(
+        key = dragKey,
+        modifier = modifier,
+        copy = { Box(Modifier.fillMaxWidth().padding(vertical = 8.dp), contentAlignment = Alignment.Center) { FolderGridTileBody(folder, displayMode, style) } },
     ) {
-        if (displayMode == AppListGridDisplayMode.TEXT) {
-            Text(
-                text = folder.name,
-                style = MaterialTheme.typography.labelLarge.copy(shadow = homeAppLabelShadow(style.labelColor), fontWeight = style.labelFontWeight),
-                color = style.labelColor,
-                textAlign = TextAlign.Center,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-            )
-        } else {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                FolderTileGlyph(folder = folder, size = AppIconSize.scaled())
-                if (displayMode == AppListGridDisplayMode.ICONS_AND_TEXT) HomeTileLabel(folder.name, style, maxWidth = Dp.Unspecified)
-            }
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .longPressReorderClickable(dragKey, onClick = { sheetOpen = true }, onLongPress = { menuExpanded = true })
+                .testTag(homeTag("home_folder_grid_tile_${folder.id}"))
+                .padding(vertical = 8.dp),
+            contentAlignment = Alignment.Center,
+        ) {
+            FolderGridTileBody(folder, displayMode, style)
+            if (sheetOpen) FolderItemSheet(folder, { sheetOpen = false }, actions, style)
+            FolderItemMenu(folder, menuExpanded, { menuExpanded = false }, actions)
         }
-        if (sheetOpen) FolderItemSheet(folder, { sheetOpen = false }, actions, style)
-        FolderItemMenu(folder, menuExpanded, { menuExpanded = false }, actions)
+    }
+}
+
+/** What a grid tile shows for a folder: its name, or its glyph with the name under it. */
+@Composable
+private fun FolderGridTileBody(folder: Folder, displayMode: AppListGridDisplayMode, style: HomeItemStyle) {
+    if (displayMode == AppListGridDisplayMode.TEXT) {
+        Text(
+            text = folder.name,
+            style = MaterialTheme.typography.labelLarge.copy(shadow = homeAppLabelShadow(style.labelColor), fontWeight = style.labelFontWeight),
+            color = style.labelColor,
+            textAlign = TextAlign.Center,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+        )
+    } else {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            FolderTileGlyph(folder = folder, size = AppIconSize.scaled())
+            if (displayMode == AppListGridDisplayMode.ICONS_AND_TEXT) HomeTileLabel(folder.name, style, maxWidth = Dp.Unspecified)
+        }
     }
 }

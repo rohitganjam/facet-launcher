@@ -23,6 +23,7 @@ import androidx.compose.runtime.mutableStateOf
 import com.facetlauncher.app.ui.components.LocalListAutoScroll
 import com.facetlauncher.app.ui.components.ListAutoScroll
 import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.geometry.Rect
 import com.facetlauncher.app.ui.nativewidget.NativeWidgetActions
 import com.facetlauncher.app.data.model.NativeWidgetRef
@@ -345,7 +346,7 @@ internal fun HomeAppListRegion(frame: HomeFrame, maxHeight: Dp, modifier: Modifi
                 layout.appListOriginInRoot = it.positionInRoot()
                 viewport = it.boundsInRoot()
             }
-            .let { if (frame.state.list.layout == AppListLayout.GRID) it else it.verticalScroll(scrollState) }
+            .let { if (frame.state.list.layout == AppListLayout.GRID) it.fullWidthInPortrait(frame.isLandscape) else it.verticalScroll(scrollState) }
             .testTag(homeTag("home_app_list_scroll_region")),
     ) {
         // A scrollable Column measures its content at its natural height regardless of the clamp above, so this
@@ -380,6 +381,9 @@ private fun HomeAppListBody(frame: HomeFrame, maxHeight: Dp) {
             appRowPresentation = list.rowPresentation,
             verticalPadding = rowPadding,
             iconSize = rowIconSize,
+            onReorder = frame.actions.item.onReorderList
+                ?.takeIf { list.reorderable }
+                ?.let { reorder -> { ordered: List<PlacedItem> -> reorder(PlacementList.FAVORITES, ordered) } },
         )
         AppListLayout.GRID -> HomeAppGrid(
             content = frame.listContent,
@@ -471,3 +475,11 @@ private fun nativeWidgetActions(actions: HomeScreenActions) = NativeWidgetAction
     onRequestCalendarAccess = actions.clock.onRequestCalendarAccess,
     onRequestLocationAccess = actions.clock.onRequestLocationAccess,
 )
+
+/** Drops Home's side margin for the grid in portrait: it spans the screen like the dock, so the two line up. */
+private fun Modifier.fullWidthInPortrait(isLandscape: Boolean): Modifier = if (isLandscape) this else layout { measurable, constraints ->
+    val extra = HOME_SIDE_MARGIN.roundToPx() * 2
+    val width = if (constraints.hasBoundedWidth) constraints.maxWidth + extra else constraints.maxWidth
+    val placeable = measurable.measure(constraints.copy(minWidth = width, maxWidth = width))
+    layout(constraints.maxWidth, placeable.height) { placeable.place(-extra / 2, 0) }
+}

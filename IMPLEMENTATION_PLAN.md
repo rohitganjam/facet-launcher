@@ -4653,7 +4653,7 @@ Rows are a minimum, not a cap: the grid has at least the facet's rows, grows whe
 - [x] Cells in the repository: `observeGridCells(target, landscape)` and `saveGridCells(...)` (rewrites `position` and the orientation's cells, keeps the other orientation); `reorderItems` keeps saved cells. Keys are `PlacedItem.gridKey()`. Backup carries the cells (`BackupGridCells`, additive, no version bump; `BackupMappingTest`).
 - [x] Home reads the cells: `HomeListState.gridCells`, drawn by `HomeAppGrid` (fixed-height cells, anchor mirroring, empty cells as spacers); `HomeAppGridTest`, `HomeScreenStateBuilderTest`.
 - [x] (drawn, no drag yet) Grid layout: fixed-height cells, grid height from occupied cells and the minimum, top and bottom anchor mirror the arrangement, empty cells and gaps as free space. Tests for geometry, hit areas and the scroll extent.
-- [x] Grid drag (grid only): pick-up from phase 1, edge auto-scroll, drop on empty moves, drop on occupied swaps, extra empty row and faint slot guides while dragging; `GridDragTest`, `HomeAppGridTest`. The single-column list auto-scrolls too (`ListAutoScroll`).
+- [x] Grid drag (grid only): pick-up from phase 1, edge auto-scroll, drop on empty moves, drop on occupied swaps, extra empty row and faint slot guides while dragging; `GridDragTest`, `HomeAppGridTest`. The single-column list auto-scrolls too (`ListAutoScroll`). The two-column list drags across both columns, with the cells sliding aside and edge auto-scroll (`HomeAppGridTest`, `GridDragTest`). A held row or tile is drawn in a popup so it never clips (`LiftableCell`); the Dock icons and the rows inside an open folder are not.
 - [x] Add to the first free cell nearest the anchor (`HomeGridPlacement.resolve`); a full list or Dock shows a disabled-in-effect row "Favorites: limit reached" (`QuickPlacementAction.Full`) in the app and folder menus; a narrower grid re-places items that no longer fit without losing their cell; the list and the grid keep separate orders (a grid drag no longer rewrites `position`); rows are derived so a list to grid switch needs no row change.
 - [x] Docs: `02`, `08`, `09 §4`, `12`, `17` updated (`10` and `13` unchanged: no grid constants moved); `TEST_REGISTRY.md` regenerated.
 
@@ -4664,3 +4664,35 @@ Rows are a minimum, not a cap: the grid has at least the facet's rows, grows whe
 - [x] Apps to show goes up to 20.
 - [x] Faint slot guides on empty grid cells, only while a drag is active.
 - [x] Facet-scope badge: dropped from the app quick-add sheet; kept only on the Settings folder screen's menu.
+
+## Facet-owned Dock and Favorites: drop the launcher-wide default lists (draft)
+A facet already owns its Dock and Favorites (migration 44→45), and the clock has only facet-level settings. The launcher-wide Dock and Favorites lists (`PlacementTarget.GlobalDock`, `GlobalFavorites`) are now only a template that new and reset facets copy from (`ApplyFacetDefaultsUseCase.copyList`), plus a first-launch seed (`SeedDefaultDockUseCase`) and what onboarding edits. Decided: remove them; a new or reset facet gets the device's default apps in its Dock and an empty Favorites list. Design only, nothing built.
+
+### Decisions
+- **New facet.** Dock = the device defaults (browser, messaging, camera, mail, phone, whichever resolve and are installed, at most `MAX_DOCK_APPS`), from `DefaultAppRepository.getDefaultAppPackages()` as the seed does today. Favorites = empty.
+- **Reset to default** stays for the Dock only: it re-seeds the Dock from the device defaults. There is no default Favorites list, so the Favorites (Apps list) reset goes: the row, `FacetDefaultsScope.APPS_LIST` and its use-case branch. A new facet's Favorites content mode and count still come from the launcher settings when it is created.
+- **Onboarding** edits the first facet's own Dock and Favorites; no shared list, and no copy onto existing facets at the end.
+- **Look defaults stay for now.** `LauncherSettings`' dock and app-list look (row position, layout, grid, display mode, content mode) still seed a new facet; this plan removes the lists only. Revisit the look separately.
+- **Backups.** `dockApps`, `defaultFavoriteApps` and their folder placements stay readable so old backups import, but are not exported and are ignored on import (no `CURRENT_BACKUP_VERSION` bump needed: the fields stay, defaulted, as legacy). A facet's own lists are unchanged.
+
+### Phase A: seed per facet
+- [ ] `SeedFacetDefaultsUseCase` (new, replaces `SeedDefaultDockUseCase`): puts the device default apps into a facet's Dock, only when the Dock is empty. Unit test with fake `DefaultAppRepository`: resolves and installed only, capped at five, order stable, empty when none resolve.
+- [ ] `ApplyFacetDefaultsUseCase`: the DOCK scope calls it instead of `copyList(DOCK)`; the APPS_LIST scope and the Favorites list copy are removed (a new facet's Favorites start empty, with the content mode and count applied once at creation); LOOK is unchanged. Update `ApplyFacetDefaultsUseCaseTest`, `AddFacetUseCaseTest`.
+- [ ] `EnsureActiveFacetUseCase` / `LauncherViewModel.init`: drop the launcher-wide seed and its ordering note (the first facet seeds itself); `LauncherSettings.defaultsSeeded` goes. `LauncherViewModelTest`, `EnsureActiveFacetUseCaseTest`.
+
+### Phase B: remove the shared lists from the screens
+- [ ] Onboarding: `OnboardingViewModel` and `OnboardingHomeSetupPage` read and write the first facet's lists; remove the finish-time copy onto facets. `OnboardingViewModelTest`, `OnboardingScreenTest`.
+- [ ] Settings: remove the launcher-wide list sections and pickers: `DockSettingsViewModel/Screen`, `HomeAppsListSettingsViewModel/Screen`, `AppearanceSettingsViewModel`, `NotificationSettingsViewModel`, `DockAppPickerViewModel`, `FavoritesPickerViewModel` (their `facetId == null` paths), `ObserveSettingsScreenStateUseCase`, `ObserveIconPickerUseCase`, `FacetSettingsViewModel` (anything reading "launcher default" lists). Remove the Favorites "Reset to default" row and its confirmation strings in all six locales, and re-check the Dock row's wording.
+- [ ] `PlacementTarget.GlobalDock/GlobalFavorites` and `ResolveActivePlacementTargetUseCase`'s fallback to them: remove once nothing reads them; `PlacementRepository` tests that loop over `allTargets` keep only facet targets.
+
+### Phase C: data and backup
+- [ ] Room: a cleanup migration (46/47→next) deleting `app_placements` and `folder_placements` rows with a null `facetId`, then no null owner remains; keep the column nullable (no schema change) or tighten it in the same step. `FacetDatabaseMigrationTest` case; `02` migration table.
+- [ ] `ExportBackupUseCase`: stop writing the shared lists. `ImportBackupUseCase`: stop restoring them; `BackupUpgrade` keeps the legacy fields for facets that inherited them. `BackupCoverageTest`, `BackupUpgradeTest`, `ImportBackupUseCaseTest`, `ExportBackupUseCaseTest`; re-check F11 in `05`.
+
+### Phase D: docs and checks
+- [ ] Docs: `02` (shared-list wording, key and migration tables), `08` (override routing, seeding), `09 §4`, `13` (onboarding), `07` (use-case registry, counts), README stack. Regenerate `TEST_REGISTRY.md`.
+- [ ] Manual: fresh install shows the device defaults in the first facet's Dock and an empty list; a second facet gets the same Dock; the Dock's Reset to default restores it and Favorites has no reset; an upgrade from the current release keeps every facet's own lists.
+
+### Open
+- [ ] Look defaults (row position, layout, grid, dock display): keep launcher-wide, or move them to per-facet only like the clock?
+

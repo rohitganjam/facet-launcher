@@ -1,6 +1,9 @@
 package com.facetlauncher.app.ui.home
 
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.ui.test.up
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.moveBy
@@ -13,6 +16,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.AppListGridDisplayMode
+import com.facetlauncher.app.data.model.AppRowPresentation
+import com.facetlauncher.app.data.model.AppListColumnAlignment
 import com.facetlauncher.app.data.model.PlacedItem
 import com.facetlauncher.app.data.model.gridKey
 import com.facetlauncher.app.domain.GridCell
@@ -153,5 +158,85 @@ class HomeAppGridTest {
         // Then it lands on the second row from the anchor
         composeRule.waitUntil(timeoutMillis = 3_000) { movedCells != null }
         assertEquals(1, movedCells!![items[0].gridKey()]!!.row)
+    }
+
+    @Test
+    fun threeColumnsLineUpWithADockOfThreeIcons() = checkLinesUpWithDock(3)
+
+    @Test
+    fun fourColumnsLineUpWithADockOfFourIcons() = checkLinesUpWithDock(4)
+
+    @Test
+    fun fiveColumnsLineUpWithADockOfFiveIcons() = checkLinesUpWithDock(5)
+
+    private fun checkLinesUpWithDock(columns: Int) {
+        run {
+            // Given a grid of N icons over a row laid out like the Dock (space evenly) with N icons of the same size
+            val shown = items.take(3) + (3 until columns).map { PlacedItem.SingleApp(AppInfo(packageName = "com.example.extra$it", activityName = ".Main", label = "Extra $it", icon = null)) }
+            val gridApps = shown.take(columns)
+            composeRule.setContent {
+                FacetLauncherTheme {
+                    androidx.compose.foundation.layout.Column(androidx.compose.ui.Modifier.fillMaxWidth()) {
+                        HomeAppGrid(
+                            content = HomeAppListContent(gridApps, HomeItemStyle(labelColor = Color.White)),
+                            actions = HomeItemActions(onAppClick = {}),
+                            columns = columns,
+                            displayMode = AppListGridDisplayMode.ICONS,
+                            savedCells = SavedGridCells(),
+                            landscape = false,
+                            anchoredAtBottom = false,
+                            availableHeight = 120.dp,
+                        )
+                        androidx.compose.foundation.layout.Row(androidx.compose.ui.Modifier.fillMaxWidth(), horizontalArrangement = androidx.compose.foundation.layout.Arrangement.SpaceEvenly) {
+                            repeat(columns) { androidx.compose.foundation.layout.Box(androidx.compose.ui.Modifier.size(com.facetlauncher.app.ui.components.AppIconSize.scaled()).testTag("ref_$it")) }
+                        }
+                    }
+                }
+            }
+
+            // Then each grid icon's centre is where the matching dock icon's centre is
+            gridApps.forEachIndexed { index, item ->
+                val gridCentre = composeRule.onNodeWithTag("home_app_icon_${(item as PlacedItem.SingleApp).app.packageName}", useUnmergedTree = true).getUnclippedBoundsInRoot().let { (it.left + it.right) / 2 }
+                val refCentre = composeRule.onNodeWithTag("ref_$index", useUnmergedTree = true).getUnclippedBoundsInRoot().let { (it.left + it.right) / 2 }
+                assertEquals("$columns columns, icon $index", refCentre.value, gridCentre.value, 1f)
+            }
+        }
+    }
+
+    @Test
+    fun draggingARowInTheTwoColumnListToAnotherCellReordersTheList() {
+        // Given a two-column list of four apps: a b on the first row, c d on the second
+        val four = ('a'..'d').map { PlacedItem.SingleApp(AppInfo(packageName = "com.example.$it", activityName = ".Main", label = "App $it", icon = null)) }
+        var reordered: List<PlacedItem>? = null
+        composeRule.setContent {
+            FacetLauncherTheme {
+                HomeAppTwoColumnList(
+                    content = HomeAppListContent(four, HomeItemStyle(labelColor = Color.White)),
+                    actions = HomeItemActions(onAppClick = {}),
+                    columnAlignment = AppListColumnAlignment.BOTH_LEFT,
+                    appRowPresentation = AppRowPresentation.ICON_AND_TEXT,
+                    verticalPadding = 8.dp,
+                    iconSize = 48.dp,
+                    onReorder = { reordered = it },
+                )
+            }
+        }
+        fun bounds(letter: Char) = composeRule.onNodeWithTag("home_app_icon_com.example.$letter", useUnmergedTree = true).getUnclippedBoundsInRoot()
+        val dx = with(composeRule.density) { (bounds('d').left - bounds('a').left).toPx() }
+        val dy = with(composeRule.density) { (bounds('d').top - bounds('a').top).toPx() }
+
+        // When the first row's app is held and dragged onto the last cell
+        composeRule.onNodeWithTag("home_app_icon_com.example.a", useUnmergedTree = true).performTouchInput {
+            down(center)
+            advanceEventTime(700)
+            moveBy(Offset(dx / 2, dy / 2))
+            moveBy(Offset(dx / 2, dy / 2))
+            up()
+        }
+        composeRule.waitForIdle()
+
+        // Then it takes that place in the order and the rest move up
+        composeRule.waitUntil(timeoutMillis = 3_000) { reordered != null }
+        assertEquals(listOf("b", "c", "d", "a").map { "com.example.$it" }, reordered!!.map { (it as PlacedItem.SingleApp).app.packageName })
     }
 }

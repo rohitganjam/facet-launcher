@@ -68,6 +68,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
@@ -140,7 +141,7 @@ import com.facetlauncher.app.ui.components.FolderTileContextMenu
 import com.facetlauncher.app.ui.components.NotificationBadge
 import com.facetlauncher.app.ui.components.ProfileTab
 import com.facetlauncher.app.ui.components.ProfileTabRow
-import com.facetlauncher.app.ui.components.swipeBetweenTabs
+import com.facetlauncher.app.ui.components.SwipeTabs
 import com.facetlauncher.app.ui.components.RecencyIcon
 import com.facetlauncher.app.ui.components.ThemedDropdownMenu
 import com.facetlauncher.app.ui.components.ThemedDropdownMenuItem
@@ -263,9 +264,11 @@ fun AppDrawerScreen(
             }
 
             // The sheet is modal: hide the list from accessibility (and tests) while it is open.
-            Box(Modifier.weight(1f).then(if (search.isOpen) Modifier.clearAndSetSemantics {} else Modifier).swipeDrawerTabs(browse, enabled = workProfiles.isNotEmpty() && !search.isOpen)) {
-                DrawerBrowseBody(browse, listState, gridState, appearance, actions, appMenuNotifications, folderCandidates)
-            }
+            DrawerTabsPager(
+                browse, DrawerBrowseInputs(apps, workProfiles, folderCandidates, appearance, actions, appMenuNotifications, listUseCases), listState, gridState,
+                enabled = workProfiles.isNotEmpty() && !search.isOpen,
+                modifier = Modifier.weight(1f).then(if (search.isOpen) Modifier.clearAndSetSemantics {} else Modifier),
+            )
 
             if (searchBar.position == SearchBarPosition.BOTTOM) {
                 DrawerSearchBar(searchBar, search.show)
@@ -507,13 +510,63 @@ private fun DrawerTab.key() = when (this) {
 /** Keeps a tab swipe off the letter rail. */
 private val DRAWER_TAB_SWIPE_END_EXCLUSION = 48.dp
 
-private fun Modifier.swipeDrawerTabs(browse: DrawerBrowseModel, enabled: Boolean): Modifier = swipeBetweenTabs(
-    keys = browse.tabs.map { it.key() },
-    selected = browse.selectedTab.key(),
-    onSelect = { key -> browse.tabs.firstOrNull { it.key() == key }?.let(browse.onSelectTab) },
-    endExclusion = DRAWER_TAB_SWIPE_END_EXCLUSION,
-    enabled = enabled,
+/** What a browse body needs besides its model, bundled so the neighbouring tab can build its own. */
+@Immutable
+private class DrawerBrowseInputs(
+    val apps: ImmutableList<AppInfo>,
+    val workProfiles: ImmutableList<WorkProfileInfo>,
+    val folderCandidates: ImmutableList<Folder>?,
+    val appearance: DrawerAppearance,
+    val actions: DrawerItemActions,
+    val appMenuNotifications: AppMenuNotifications,
+    val listUseCases: DrawerListUseCases,
 )
+
+/** The browse list with profile tabs: a swipe slides to the next tab, whose list is already there beside it. */
+@Composable
+private fun DrawerTabsPager(
+    browse: DrawerBrowseModel,
+    inputs: DrawerBrowseInputs,
+    listState: LazyListState,
+    gridState: LazyGridState,
+    enabled: Boolean,
+    modifier: Modifier = Modifier,
+) {
+    SwipeTabs(
+        keys = browse.tabs.map { it.key() },
+        selected = browse.selectedTab.key(),
+        onSelect = { key -> browse.tabs.firstOrNull { it.key() == key }?.let(browse.onSelectTab) },
+        modifier = modifier,
+        enabled = enabled,
+        endExclusion = DRAWER_TAB_SWIPE_END_EXCLUSION,
+    ) { key ->
+        val tab = browse.tabs.firstOrNull { it.key() == key } ?: browse.selectedTab
+        if (tab == browse.selectedTab) {
+            Box(Modifier.fillMaxSize()) { DrawerBrowseBody(browse, listState, gridState, inputs.appearance, inputs.actions, inputs.appMenuNotifications, inputs.folderCandidates) }
+        } else {
+            NeighbourDrawerBody(tab, inputs)
+        }
+    }
+}
+
+/** A tab's list as it would show if selected, drawn beside the current one while swiping; it has its own scroll position. */
+@Composable
+private fun NeighbourDrawerBody(tab: DrawerTab, inputs: DrawerBrowseInputs) {
+    val model = rememberDrawerBrowseModel(
+        apps = inputs.apps,
+        workProfiles = inputs.workProfiles,
+        query = "",
+        folderCandidates = inputs.folderCandidates,
+        presentation = inputs.appearance.presentation,
+        folderDisplayMode = inputs.appearance.folderDisplayMode,
+        recentlyInstalledPosition = inputs.appearance.recentlyInstalledPosition,
+        listUseCases = inputs.listUseCases,
+        fixedTab = tab,
+    )
+    Box(Modifier.fillMaxSize()) {
+        DrawerBrowseBody(model, rememberLazyListState(), rememberLazyGridState(), inputs.appearance, inputs.actions, inputs.appMenuNotifications, inputs.folderCandidates)
+    }
+}
 
 /** Personal/Work switcher shown above the app list only when a Work Profile exists: the shared [ProfileTabRow]. */
 @Composable

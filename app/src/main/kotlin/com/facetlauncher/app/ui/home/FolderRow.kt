@@ -45,7 +45,7 @@ import com.facetlauncher.app.data.model.Folder
 import com.facetlauncher.app.ui.components.AppIcon
 import com.facetlauncher.app.ui.components.AppIconSize
 import com.facetlauncher.app.ui.components.longPressReorderClickable
-import com.facetlauncher.app.ui.components.reorderItemLayer
+import com.facetlauncher.app.ui.components.LiftableCell
 import com.facetlauncher.app.ui.home.FolderRow
 import com.facetlauncher.app.ui.home.FolderTileGlyph
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
@@ -156,22 +156,37 @@ internal fun FolderRow(
     } else {
         Modifier.clickable(onClick = onClick)
     }
-    FolderRowContent(
-        folder = folder,
-        style = style,
-        position = position,
-        presentation = presentation,
-        iconSize = iconSize,
-        modifier = modifier
-            .reorderItemLayer(itemKey)
-            .fillMaxWidth()
-            .clip(MaterialTheme.shapes.large)
-            .then(clickModifier)
-            .testTag(homeTag("${testTagPrefix}folder_row_${folder.id}"))
-            .padding(horizontal = 8.dp, vertical = verticalPadding),
-    )
-    if (enableLongPressMenu && sheetOpen) FolderItemSheet(folder, { sheetOpen = false }, actions, style)
-    if (enableLongPressMenu) FolderItemMenu(folder, menuExpanded, { menuExpanded = false }, actions)
+    val rowShape = MaterialTheme.shapes.large
+    LiftableCell(
+        key = itemKey,
+        modifier = modifier,
+        copy = {
+            FolderRowContent(
+                folder = folder,
+                style = style,
+                position = position,
+                presentation = presentation,
+                iconSize = iconSize,
+                modifier = Modifier.fillMaxWidth().clip(rowShape).padding(horizontal = 8.dp, vertical = verticalPadding),
+            )
+        },
+    ) {
+        FolderRowContent(
+            folder = folder,
+            style = style,
+            position = position,
+            presentation = presentation,
+            iconSize = iconSize,
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(rowShape)
+                .then(clickModifier)
+                .testTag(homeTag("${testTagPrefix}folder_row_${folder.id}"))
+                .padding(horizontal = 8.dp, vertical = verticalPadding),
+        )
+        if (enableLongPressMenu && sheetOpen) FolderItemSheet(folder, { sheetOpen = false }, actions, style)
+        if (enableLongPressMenu) FolderItemMenu(folder, menuExpanded, { menuExpanded = false }, actions)
+    }
 }
 
 /** A [FolderRow]'s glyph and name, packed by [position] as [AppRow] packs its own content. */

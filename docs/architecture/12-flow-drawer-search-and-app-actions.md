@@ -252,6 +252,8 @@ folder; on Home's grid it moves or swaps cells, [17 §2c](17-flow-home-layout.md
 slot centres come from `onGloballyPositioned`; `ReorderGeometry` (target slot, neighbour shift, move) is pure and
 covered by `PickUpReorderTest`; `PickUpReorderGestureTest` drives the gesture.
 
+**Swiping between tabs:** `SwipeTabs` (`ui/components/SwipeBetweenTabs.kt`) lets a horizontal drag over a tabbed area move to the next or previous tab: the Drawer's profile tabs (list and grid), the app and folder pickers and the widget picker. The content follows the finger and the neighbouring tab's content shows beside it (the Drawer builds that tab's own list for it, the widget picker carries each tab's groups); on release past 64dp the two finish sliding and the tab switches, and a shorter drag, or one past the first or last tab (which follows at a third of the travel), springs back. Choosing a tab from the tab row slides the content in the same way. It ignores a touch in the 24dp edge zone (the back gesture; 48dp at the end in the Drawer, for the letter rail) and any drag a child takes first. `SwipeBetweenTabsTest` (unit, `adjacentTab`, and instrumented, the slide).
+
 ## 4. Gestures & routing (why the drawer isn't a nav destination)
 
 `HomeDrawerRoute` owns every follow-finger drag that starts on Home, on one axis at a time

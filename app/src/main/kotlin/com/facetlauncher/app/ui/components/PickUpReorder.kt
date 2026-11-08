@@ -76,6 +76,11 @@ internal object ReorderGeometry {
  */
 /** What a long-press cell talks to while it is picked up and dragged: Home's list or Dock ([PickUpReorderState]) or its grid ([GridDragState]). */
 interface PickUpDragHost {
+    val liftedKey: Any?
+    val dragging: Boolean
+
+    /** How far the held cell is drawn from where it lays out. */
+    val dragOffset: Offset
     fun pickUp(key: Any)
     fun startDrag()
     fun dragTo(travel: Offset)
@@ -88,9 +93,9 @@ class PickUpReorderState internal constructor(internal val axis: Orientation) : 
     internal var keys: List<Any> = emptyList()
     internal var onMove: (from: Int, to: Int) -> Unit = { _, _ -> }
 
-    var liftedKey by mutableStateOf<Any?>(null)
+    override var liftedKey by mutableStateOf<Any?>(null)
         private set
-    var dragging by mutableStateOf(false)
+    override var dragging by mutableStateOf(false)
         private set
     private var travelAxis by mutableFloatStateOf(0f)
     private var scroll by mutableFloatStateOf(0f)
@@ -98,6 +103,8 @@ class PickUpReorderState internal constructor(internal val axis: Orientation) : 
 
     /** Where the lifted cell is drawn along the axis, relative to its layout position: the finger's travel plus any scroll under it. */
     val offset: Float get() = travelAxis + scroll
+
+    override val dragOffset: Offset get() = if (axis == Orientation.Vertical) Offset(0f, offset) else Offset(offset, 0f)
 
     /** The finger along the axis, in root coordinates. */
     val pointer: Float get() = origin + travelAxis
@@ -285,16 +292,24 @@ fun Modifier.longPressReorderClickable(key: Any, onClick: () -> Unit, onLongPres
 /** Scrolls the surrounding list while a held row's finger is near its top or bottom edge, so the row can be carried past the visible part. */
 @Composable
 private fun ListEdgeAutoScroll(state: PickUpReorderState) {
-    val target = LocalListAutoScroll.current
-    if (target == null || state.axis != Orientation.Vertical) return
+    if (state.axis != Orientation.Vertical) return
+    HeldAutoScroll(dragging = state.dragging, pointer = { state.pointer }, onScroll = state::addScroll)
+}
+
+/** [ListEdgeAutoScroll] for any held cell: [pointer] is the finger's vertical position, [onScroll] gets how far the list moved under it. */
+@Composable
+internal fun HeldAutoScroll(dragging: Boolean, pointer: () -> Float, onScroll: (Float) -> Unit) {
+    val target = LocalListAutoScroll.current ?: return
     val density = LocalDensity.current
     val edge = with(density) { LIST_AUTO_SCROLL_EDGE.toPx() }
     val step = with(density) { LIST_AUTO_SCROLL_STEP.toPx() }
-    LaunchedEffect(state.dragging, target) {
-        while (state.dragging) {
+    val currentOnScroll by rememberUpdatedState(onScroll)
+    val currentPointer by rememberUpdatedState(pointer)
+    LaunchedEffect(dragging, target) {
+        while (dragging) {
             val viewport = target.viewport()
-            val delta = edgeScrollDelta(state.pointer, viewport.top, viewport.bottom, edge, step)
-            if (delta != 0f && !viewport.isEmpty) state.addScroll(target.scrollState.scrollBy(delta))
+            val delta = edgeScrollDelta(currentPointer(), viewport.top, viewport.bottom, edge, step)
+            if (delta != 0f && !viewport.isEmpty) currentOnScroll(target.scrollState.scrollBy(delta))
             delay(LIST_AUTO_SCROLL_FRAME_MS)
         }
     }

@@ -38,6 +38,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -67,7 +68,7 @@ import com.facetlauncher.app.ui.components.StickyHeaderLayout
 import com.facetlauncher.app.ui.components.OtherScopeBadge
 import com.facetlauncher.app.ui.components.ProfileTab
 import com.facetlauncher.app.ui.components.ProfileTabRow
-import com.facetlauncher.app.ui.components.swipeBetweenTabs
+import com.facetlauncher.app.ui.components.SwipeTabs
 import com.facetlauncher.app.data.model.NativeWidgetType
 import com.facetlauncher.app.ui.nativewidget.NativeWidgetPickerSection
 import com.facetlauncher.app.ui.theme.ErrorColor
@@ -173,51 +174,87 @@ internal fun HubWidgetPickerContent(
             modifier = Modifier.fillMaxSize(),
             header = { HubWidgetPickerHeader(remaining = uiState.remaining, onBack = onBack, title = title) },
             content = { headerHeight ->
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .windowInsetsPadding(WindowInsets.systemBars)
-                        .swipeBetweenTabs(
-                            keys = uiState.tabs.map { it.name },
-                            selected = uiState.tab.name,
-                            onSelect = { onTabChange(WidgetPickerTab.valueOf(it)) },
-                        )
-                        .padding(horizontal = WIDGET_PICKER_HORIZONTAL_PADDING),
-                    contentPadding = PaddingValues(top = headerHeight),
-                ) {
-                    if (uiState.tabs.isNotEmpty()) {
-                        item { WidgetPickerTabRow(uiState = uiState, onTabChange = onTabChange) }
-                    }
-                    item {
-                        OutlinedTextField(
-                            value = uiState.query,
-                            onValueChange = onQueryChange,
-                            placeholder = { Text(stringResource(R.string.hub_widget_picker_search)) },
-                            modifier = Modifier.fillMaxWidth().testTag("hub_widget_picker_search").padding(bottom = 12.dp),
-                            singleLine = true,
-                        )
-                    }
-                    item {
-                        AnimatedVisibility(visible = failureMessage != null, enter = fadeIn(), exit = fadeOut()) {
-                            Text(
-                                text = failureMessage.orEmpty(),
-                                style = MaterialTheme.typography.labelMedium,
-                                color = ErrorColor,
-                                modifier = Modifier.fillMaxWidth().testTag("hub_widget_picker_error").padding(bottom = 12.dp),
-                            )
-                        }
-                    }
-                    // The widgets Facet draws itself belong to the personal side.
-                    if (uiState.query.isBlank() && uiState.tab == WidgetPickerTab.PERSONAL) {
-                        item { NativeWidgetPickerSection(types = nativeWidgets, tileWidth = tileWidth, onSelect = onNativeWidgetSelect, showClock = showClockOption, onClockSelect = onClockSelect) }
-                    }
-                    items(uiState.groups, key = { it.appLabel }) { group ->
-                        WidgetProviderGroupRow(group = group, tileWidth = tileWidth, onProviderSelect = onProviderSelect)
-                    }
-                    if (uiState.groups.isEmpty()) item { NoWidgetsFound() }
+                SwipeTabs(
+                    keys = uiState.tabs.map { it.name },
+                    selected = uiState.tab.name,
+                    onSelect = { onTabChange(WidgetPickerTab.valueOf(it)) },
+                    modifier = Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.systemBars),
+                ) { key ->
+                    val tab = WidgetPickerTab.valueOf(key)
+                    WidgetPickerList(
+                        uiState = uiState,
+                        tab = tab,
+                        headerHeight = headerHeight,
+                        tileWidth = tileWidth,
+                        failureMessage = failureMessage,
+                        native = NativeWidgetOffer(nativeWidgets, showClockOption, onNativeWidgetSelect, onClockSelect),
+                        onTabChange = onTabChange,
+                        onQueryChange = onQueryChange,
+                        onProviderSelect = onProviderSelect,
+                    )
                 }
             },
         )
+    }
+}
+
+/** The widgets Facet draws itself, offered first on the personal tab. */
+@Immutable
+private class NativeWidgetOffer(
+    val types: ImmutableList<NativeWidgetType>,
+    val showClock: Boolean,
+    val onSelect: (NativeWidgetType) -> Unit,
+    val onClockSelect: () -> Unit,
+)
+
+/** One tab's list: the tab row, search, any failure, the native widgets (personal tab) and the provider groups. */
+@Composable
+private fun WidgetPickerList(
+    uiState: HubWidgetPickerUiState,
+    tab: WidgetPickerTab,
+    headerHeight: Dp,
+    tileWidth: Dp,
+    failureMessage: String?,
+    native: NativeWidgetOffer,
+    onTabChange: (WidgetPickerTab) -> Unit,
+    onQueryChange: (String) -> Unit,
+    onProviderSelect: (WidgetProviderOption) -> Unit,
+) {
+    val groups = if (tab == uiState.tab) uiState.groups else uiState.groupsByTab[tab].orEmpty()
+    LazyColumn(
+        modifier = Modifier.fillMaxSize().padding(horizontal = WIDGET_PICKER_HORIZONTAL_PADDING),
+        contentPadding = PaddingValues(top = headerHeight),
+    ) {
+        if (uiState.tabs.isNotEmpty()) {
+            item { WidgetPickerTabRow(uiState = uiState, onTabChange = onTabChange) }
+        }
+        item {
+            OutlinedTextField(
+                value = uiState.query,
+                onValueChange = onQueryChange,
+                placeholder = { Text(stringResource(R.string.hub_widget_picker_search)) },
+                modifier = Modifier.fillMaxWidth().testTag("hub_widget_picker_search").padding(bottom = 12.dp),
+                singleLine = true,
+            )
+        }
+        item {
+            AnimatedVisibility(visible = failureMessage != null, enter = fadeIn(), exit = fadeOut()) {
+                Text(
+                    text = failureMessage.orEmpty(),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = ErrorColor,
+                    modifier = Modifier.fillMaxWidth().testTag("hub_widget_picker_error").padding(bottom = 12.dp),
+                )
+            }
+        }
+        // The widgets Facet draws itself belong to the personal side.
+        if (uiState.query.isBlank() && tab == WidgetPickerTab.PERSONAL) {
+            item { NativeWidgetPickerSection(types = native.types, tileWidth = tileWidth, onSelect = native.onSelect, showClock = native.showClock, onClockSelect = native.onClockSelect) }
+        }
+        items(groups, key = { it.appLabel }) { group ->
+            WidgetProviderGroupRow(group = group, tileWidth = tileWidth, onProviderSelect = onProviderSelect)
+        }
+        if (groups.isEmpty()) item { NoWidgetsFound() }
     }
 }
 

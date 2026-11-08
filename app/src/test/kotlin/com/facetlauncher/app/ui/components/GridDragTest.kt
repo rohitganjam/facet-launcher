@@ -78,4 +78,29 @@ class GridDragTest {
         assertEquals(Offset(0f, 70f), state.offset)
         assertEquals(Offset(50f, 80f), state.pointer)
     }
+
+    @Test
+    fun `in a list read row by row the cells between the held one and its target slide along`() {
+        // Given the first item of a 2x2 list held and dragged over the last cell
+        val state = state().apply { insertMode = true }
+        state.pickUp("a")
+        state.startDrag()
+        state.dragTo(Offset(100f, 100f))
+
+        // Then b, c and d each slide back one place, into the cell before their own
+        assertEquals(Offset(-100f, 0f), state.shiftFor("b"))
+        assertEquals(Offset(100f, -100f), state.shiftFor("c"))
+        assertEquals(Offset(-100f, 0f), state.shiftFor("d"))
+        assertEquals(Offset.Zero, state.shiftFor("a"))
+    }
+
+    @Test
+    fun `in a grid nothing slides, since a drop swaps`() {
+        val state = state()
+        state.pickUp("a")
+        state.startDrag()
+        state.dragTo(Offset(100f, 100f))
+
+        assertEquals(Offset.Zero, state.shiftFor("d"))
+    }
 }
