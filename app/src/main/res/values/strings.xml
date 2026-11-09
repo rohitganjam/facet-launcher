@@ -301,8 +301,6 @@
     <string name="reset_to_default_confirm">Reset</string>
     <string name="reset_dock_subtitle">Replace this dock with your device\'s default apps</string>
     <string name="reset_dock_confirm_message">This replaces the dock of this facet with your device\'s default apps. The apps you placed here will be lost.</string>
-    <string name="reset_apps_subtitle">Replace this list with the default</string>
-    <string name="reset_apps_confirm_message">This replaces this facet\'s list content, app count and list look with the defaults. Your favorites are kept.</string>
     <string name="reset_look_subtitle">Replace the apps list look with the default</string>
     <string name="reset_look_confirm_message">This replaces this facet\'s list layout and alignment with the defaults.</string>
     <string name="settings_home_apps_list_title">Home Apps List</string>

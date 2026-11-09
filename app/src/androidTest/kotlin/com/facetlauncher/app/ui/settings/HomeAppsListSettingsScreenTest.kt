@@ -194,40 +194,6 @@ class HomeAppsListSettingsScreenTest {
     }
 
     @Test
-    fun resetToDefaultRestoresTheContentModeAndKeepsTheFacetsFavorites() {
-        // Given a facet whose list content mode differs from the launcher's, and one favorite of its own
-        lateinit var facetRepo: FacetRepository
-        lateinit var placements: PlacementRepository
-        var facetId = 0L
-        setContent(
-            facetScoped = true,
-            onFacetRepo = { repo, id -> facetRepo = repo; facetId = requireNotNull(id) },
-            seed = { _, placementRepository, facetRepository, id ->
-                placements = placementRepository
-                facetRepository.setListContentMode(requireNotNull(id), com.facetlauncher.app.data.model.ListContentMode.MOST_USED)
-                placementRepository.addApp(PlacementTarget(PlacementList.FAVORITES, requireNotNull(id)), appInfoForTest(), position = 0)
-            },
-        )
-        // The reset row is further down the lazy list now, so wait for the facet's title instead
-        composeRule.waitUntil(timeoutMillis = 3_000) {
-            composeRule.onAllNodesWithText("Apps List").fetchSemanticsNodes().isNotEmpty()
-        }
-
-        // When resetting and confirming
-        composeRule.onNodeWithTag("home_apps_list_settings_screen").performScrollToNode(hasTestTag("home_apps_list_reset_row"))
-        composeRule.onNodeWithTag("home_apps_list_reset_row").performClick()
-        composeRule.onNodeWithTag("confirm_dialog_confirm").performClick()
-
-        // Then the facet follows the default content mode, and its own favorite is kept
-        composeRule.waitUntil(timeoutMillis = 5_000) {
-            runBlocking {
-                facetRepo.getById(facetId)?.listContentMode == com.facetlauncher.app.data.model.ListContentMode.FAVORITES &&
-                    placements.getRawApps(PlacementTarget(PlacementList.FAVORITES, facetId)).size == 1
-            }
-        }
-    }
-
-    @Test
     fun launcherScopeIsTitledAsTheDefault() {
         setContent()
 

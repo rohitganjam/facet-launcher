@@ -1110,19 +1110,20 @@ class HomeDrawerRouteTest {
     fun holdingARowAndDraggingLeftPicksItUpWithoutOpeningTheSheetOrTheCarousel() {
         // Given Home with a favorite app row
         setContent()
-        val iconCenter = composeRule.onNodeWithTag("home_app_icon_com.example.A", useUnmergedTree = true)
+        val rowY = composeRule.onNodeWithTag("home_app_icon_com.example.A", useUnmergedTree = true)
             .fetchSemanticsNode()
             .boundsInRoot
-            .center
+            .center.y
         val rootWidth = composeRule.onRoot().fetchSemanticsNode().boundsInRoot.width
 
-        // When holding that row past the long-press threshold, then dragging left well past the swipe distance
-        // (regression: this used to also open the facet carousel)
+        // When holding the row's right side past the long-press threshold, then dragging left well past the swipe
+        // distance and staying on screen (regression: this used to also open the facet carousel)
+        val start = Offset(rootWidth * 0.9f, rowY)
         composeRule.onRoot().performTouchInput {
-            down(iconCenter)
+            down(start)
             advanceEventTime(700)
-            moveTo(iconCenter - Offset(rootWidth * 0.3f, 0f))
-            moveTo(iconCenter - Offset(rootWidth * 0.6f, 0f))
+            moveTo(start - Offset(rootWidth * 0.3f, 0f))
+            moveTo(start - Offset(rootWidth * 0.8f, 0f))
             up()
         }
         settleAnimation()

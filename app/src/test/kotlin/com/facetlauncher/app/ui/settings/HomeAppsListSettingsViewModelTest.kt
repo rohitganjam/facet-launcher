@@ -174,29 +174,6 @@ class HomeAppsListSettingsViewModelTest {
     }
 
     @Test
-    fun `reset to default applies the apps list defaults to the facet`() = runTest {
-        val applyDefaults = mock(ApplyFacetDefaultsUseCase::class.java)
-        val viewModel = createViewModel(facetId = 7L, facets = listOf(Facet(id = 7L, name = "Work", position = 0)), applyFacetDefaults = applyDefaults)
-
-        viewModel.resetToDefault()
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        verify(applyDefaults).invoke(7L, FacetDefaultsScope.APPS_LIST)
-        verify(applyDefaults).invoke(7L, FacetDefaultsScope.LOOK)
-    }
-
-    @Test
-    fun `reset to default does nothing at launcher scope`() = runTest {
-        val applyDefaults = mock(ApplyFacetDefaultsUseCase::class.java)
-        val viewModel = createViewModel(applyFacetDefaults = applyDefaults)
-
-        viewModel.resetToDefault()
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        org.mockito.Mockito.verifyNoInteractions(applyDefaults)
-    }
-
-    @Test
     fun `launcher scope has no favorites list to reorder`() = runTest {
         val placementRepository = mock(PlacementRepository::class.java)
         val viewModel = createViewModel(placementRepository = placementRepository)

@@ -261,8 +261,6 @@
     <string name="reset_to_default_confirm">Zurücksetzen</string>
     <string name="reset_dock_subtitle">Dieses Dock durch die Standard-Apps des Geräts ersetzen</string>
     <string name="reset_dock_confirm_message">Dadurch wird das Dock dieser Facette durch die Standard-Apps des Geräts ersetzt. Die hier platzierten Apps gehen verloren.</string>
-    <string name="reset_apps_subtitle">Diese Liste durch die Standardliste ersetzen</string>
-    <string name="reset_apps_confirm_message">Dadurch werden Listeninhalt, App-Anzahl und Listendarstellung dieser Facette durch die Standardwerte ersetzt. Die Favoriten bleiben erhalten.</string>
     <string name="reset_look_subtitle">Listendarstellung durch den Standard ersetzen</string>
     <string name="reset_look_confirm_message">Dadurch werden Listenlayout und Ausrichtung dieser Facette durch die Standardwerte ersetzt.</string>
     <string name="settings_home_apps_list_title">Startbildschirm-App-Liste</string>

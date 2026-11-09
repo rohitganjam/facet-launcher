@@ -261,8 +261,6 @@
     <string name="reset_to_default_confirm">Redefinir</string>
     <string name="reset_dock_subtitle">Substituir este dock pelos apps padrão do dispositivo</string>
     <string name="reset_dock_confirm_message">Isto substitui o dock desta faceta pelos apps padrão do dispositivo. Os apps que você colocou aqui serão perdidos.</string>
-    <string name="reset_apps_subtitle">Substituir esta lista pela padrão</string>
-    <string name="reset_apps_confirm_message">Isto substitui o conteúdo da lista, a quantidade de apps e a aparência da lista desta faceta pelos valores padrão. Os favoritos são mantidos.</string>
     <string name="reset_look_subtitle">Substituir a aparência da lista pela padrão</string>
     <string name="reset_look_confirm_message">Isto substitui o layout da lista e o alinhamento desta faceta pelos valores padrão.</string>
     <string name="settings_home_apps_list_title">Lista de apps da tela inicial</string>

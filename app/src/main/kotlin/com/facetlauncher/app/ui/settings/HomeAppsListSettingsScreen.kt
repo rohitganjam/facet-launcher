@@ -59,7 +59,6 @@ import com.facetlauncher.app.ui.components.CardDivider
 import com.facetlauncher.app.ui.components.HomeSurfacePreview
 import com.facetlauncher.app.ui.components.CopyToFacetsCard
 import com.facetlauncher.app.ui.components.DefaultsNote
-import com.facetlauncher.app.ui.components.ResetToDefaultCard
 import com.facetlauncher.app.ui.components.LabeledDropdownRow
 import com.facetlauncher.app.ui.components.ReorderRowDefaults
 import com.facetlauncher.app.ui.components.LocalSettingsRowInset
@@ -108,7 +107,6 @@ fun HomeAppsListSettingsScreen(
             onLandscapeColumnAlignmentChange = viewModel::setLandscapeAppListColumnAlignment,
             onLandscapeVerticalAlignmentChange = viewModel::setLandscapeAppListVerticalAlignment,
         ),
-        onResetToDefault = viewModel::resetToDefault,
         onCopyToFacets = viewModel::copyToFacets,
         modifier = modifier,
     )
@@ -123,7 +121,6 @@ private fun HomeAppsListSettingsContent(
     onAppsToShowCountChange: (Int) -> Unit,
     onReorderFavorites: (List<PlacedItem>) -> Unit,
     lookActions: AppListLookActions,
-    onResetToDefault: () -> Unit,
     onCopyToFacets: (Set<Long>) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -156,32 +153,22 @@ private fun HomeAppsListSettingsContent(
                         modifier = Modifier.padding(bottom = 20.dp).testTag("home_apps_list_preview_card"),
                     )
                 }
-                listContentItem(uiState, onListContentModeChange, onAppsToShowCountChange, onEditFavorites, onReorderFavorites)
+                appListLandscapeItem(uiState, lookActions)
+                listContentItem(uiState, lookActions, onListContentModeChange, onAppsToShowCountChange, onEditFavorites, onReorderFavorites)
                 item { Spacer(modifier = Modifier.height(16.dp)) }
-                appListLookItems(uiState, lookActions)
-                appsResetOrCopyItems(uiState, onResetToDefault, onCopyToFacets)
+                appListAlignmentItems(uiState, lookActions)
+                appsCopyItems(uiState, onCopyToFacets)
             }
         },
     )
 }
 
-/** Facet scope offers "Reset to default"; launcher scope offers "Copy to facets". */
-private fun LazyListScope.appsResetOrCopyItems(
+/** Launcher scope offers "Copy to facets"; a facet's own screen has nothing to reset to. */
+private fun LazyListScope.appsCopyItems(
     uiState: HomeAppsListUiState,
-    onResetToDefault: () -> Unit,
     onCopyToFacets: (Set<Long>) -> Unit,
 ) {
-    if (uiState.isFacetScoped) {
-        item { Spacer(modifier = Modifier.height(16.dp)) }
-        item {
-            ResetToDefaultCard(
-                subtitle = stringResource(R.string.reset_apps_subtitle),
-                confirmMessage = stringResource(R.string.reset_apps_confirm_message),
-                onReset = onResetToDefault,
-                testTagPrefix = "home_apps_list",
-            )
-        }
-    } else {
+    if (!uiState.isFacetScoped) {
         item { Spacer(modifier = Modifier.height(16.dp)) }
         item {
             CopyToFacetsCard(
@@ -197,9 +184,10 @@ private fun LazyListScope.appsResetOrCopyItems(
     }
 }
 
-/** What the list shows, how many apps, and (for favorites) which apps and their order. */
+/** How the list is laid out, what it shows, how many apps, and (for favorites) which apps and their order. */
 private fun LazyListScope.listContentItem(
     uiState: HomeAppsListUiState,
+    lookActions: AppListLookActions,
     onListContentModeChange: (ListContentMode) -> Unit,
     onAppsToShowCountChange: (Int) -> Unit,
     onEditFavorites: () -> Unit,
@@ -207,6 +195,8 @@ private fun LazyListScope.listContentItem(
 ) {
     item {
         SettingsCard(fullBleedRows = true) {
+            AppListLayoutRows(uiState, lookActions)
+            CardDivider()
             LabeledDropdownRow(
                 title = stringResource(if (uiState.isFacetScoped) R.string.home_apps_list_content_facet else R.string.home_apps_list_content_default),
                 options = ListContentMode.entries,
@@ -388,7 +378,6 @@ private fun HomeAppsListSettingsScreenPreview() {
             onAppsToShowCountChange = {},
             onReorderFavorites = {},
             lookActions = AppListLookActions.None,
-            onResetToDefault = {},
             onCopyToFacets = {},
         )
     }

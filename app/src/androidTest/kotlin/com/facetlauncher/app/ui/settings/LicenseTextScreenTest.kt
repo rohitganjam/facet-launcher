@@ -1,5 +1,6 @@
 package com.facetlauncher.app.ui.settings
 
+import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.junit4.createComposeRule
@@ -21,7 +22,8 @@ class LicenseTextScreenTest {
 
     private fun setContent(licenseId: String, onBack: () -> Unit = {}) {
         composeRule.setContent {
-            val viewModel = LicenseTextViewModel(SavedStateHandle(mapOf("licenseId" to licenseId)), LicenseRepository(LocalContext.current))
+            val context = LocalContext.current
+            val viewModel = remember { LicenseTextViewModel(SavedStateHandle(mapOf("licenseId" to licenseId)), LicenseRepository(context)) }
             FacetLauncherTheme {
                 LicenseTextScreen(onBack = onBack, viewModel = viewModel)
             }

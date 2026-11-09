@@ -265,8 +265,6 @@
     <string name="reset_to_default_confirm">Terugzetten</string>
     <string name="reset_dock_subtitle">Vervang deze dock door de standaardapps van het apparaat</string>
     <string name="reset_dock_confirm_message">Hiermee wordt de dock van deze facet vervangen door de standaardapps van het apparaat. De apps die je hier hebt geplaatst gaan verloren.</string>
-    <string name="reset_apps_subtitle">Vervang deze lijst door de standaardlijst</string>
-    <string name="reset_apps_confirm_message">Hiermee worden de lijstinhoud, het aantal apps en de lijstweergave van deze facet vervangen door de standaardwaarden. De favorieten blijven behouden.</string>
     <string name="reset_look_subtitle">Vervang het uiterlijk van de lijst door de standaard</string>
     <string name="reset_look_confirm_message">Hiermee worden de lijstindeling en de uitlijning van deze facet vervangen door de standaardwaarden.</string>
     <string name="settings_home_apps_list_title">Appslijst op startscherm</string>

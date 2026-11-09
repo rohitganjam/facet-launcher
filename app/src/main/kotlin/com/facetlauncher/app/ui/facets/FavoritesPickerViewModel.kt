@@ -87,9 +87,6 @@ class FavoritesPickerViewModel @Inject constructor(
     /** `PACKAGE_USAGE_STATS` has no grant-change callback — re-checked via [refreshUsageAccessGranted] on this screen's resume. */
     val usageAccessGranted: StateFlow<Boolean> = _usageAccessGranted.asStateFlow()
 
-    private val maxFavorites: Int
-        get() = if (facetId != null) AppListLimits.MAX_FAVORITES else AppListLimits.MAX_FAVORITES
-
     private val target: PlacementTarget? get() = facetId?.let { PlacementTarget(PlacementList.FAVORITES, it) }
 
     /** For a screen not reached through a facet's route (onboarding): edit this facet's Favorites. A route's own facet wins. */
@@ -140,7 +137,7 @@ class FavoritesPickerViewModel @Inject constructor(
             favoriteComponents = liveOrder.toImmutableSet(),
             folders = folders.toImmutableList(),
             placedFolderIds = placedFolderIds.toImmutableSet(),
-            canAddMore = itemCount < maxFavorites,
+            canAddMore = itemCount < AppListLimits.MAX_FAVORITES,
             sortOption = sortOption,
             sortDirection = sortDirection,
         )

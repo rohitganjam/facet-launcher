@@ -261,8 +261,6 @@
     <string name="reset_to_default_confirm">Rétablir</string>
     <string name="reset_dock_subtitle">Remplacer ce dock par les apps par défaut de l\'appareil</string>
     <string name="reset_dock_confirm_message">Cela remplace le dock de cette facette par les apps par défaut de l\'appareil. Les apps que vous y avez placées seront perdues.</string>
-    <string name="reset_apps_subtitle">Remplacer cette liste par celle par défaut</string>
-    <string name="reset_apps_confirm_message">Cela remplace le contenu de la liste, le nombre d\'apps et l\'apparence de la liste de cette facette par les valeurs par défaut. Les favoris sont conservés.</string>
     <string name="reset_look_subtitle">Remplacer l\'apparence de la liste par celle par défaut</string>
     <string name="reset_look_confirm_message">Cela remplace la disposition de la liste et l\'alignement de cette facette par les valeurs par défaut.</string>
     <string name="settings_home_apps_list_title">Liste d\'apps de l\'accueil</string>

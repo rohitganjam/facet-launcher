@@ -1,5 +1,6 @@
 package com.facetlauncher.app.ui.nativewidget.config
 
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -34,7 +35,7 @@ class NativeWidgetConfigSheetTest {
     private fun show(type: NativeWidgetType, initial: NativeWidgetConfig, onChange: (NativeWidgetConfig) -> Unit) {
         composeRule.setContent {
             FacetLauncherTheme {
-                var config by mutableStateOf(initial)
+                var config by remember { mutableStateOf(initial) }
                 NativeWidgetConfigContent(type = type, config = config, state = state, onDismiss = {}, onConfigChange = { config = it; onChange(it) })
             }
         }

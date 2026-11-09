@@ -173,15 +173,6 @@ class HomeAppsListSettingsViewModel @Inject constructor(
         }
     }
 
-    /** "Reset to default": replaces this facet's content mode, count and list look with the launcher-wide ones. Its Favorites are not touched. */
-    fun resetToDefault() {
-        val id = facetId ?: return
-        viewModelScope.launch {
-            applyFacetDefaults(id, FacetDefaultsScope.APPS_LIST)
-            applyFacetDefaults(id, FacetDefaultsScope.LOOK)
-        }
-    }
-
     /** Facet-or-global write: a facet's own value, or the launcher-wide default a new facet is seeded from. */
     private fun writeLook(onFacet: suspend (Long) -> Unit, onGlobal: suspend () -> Unit) {
         viewModelScope.launch {

@@ -1,5 +1,6 @@
 package com.facetlauncher.app.ui.settings
 
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.runtime.Composable
@@ -22,13 +23,13 @@ import com.facetlauncher.app.ui.components.SettingsSectionHeader
 import com.facetlauncher.app.ui.components.SettingsToggleRow
 import kotlin.enums.EnumEntries
 
-/**
- * How the Home apps list looks and sits: an "Allow landscape mode" switch (launcher-wide, so only at launcher scope; off hides
- * the landscape card), the layout card, then portrait and landscape alignment.
- */
-internal fun LazyListScope.appListLookItems(uiState: HomeAppsListUiState, actions: AppListLookActions) {
+/** An "Allow landscape mode" switch: launcher-wide, so only at launcher scope; off hides the landscape alignment card. */
+internal fun LazyListScope.appListLandscapeItem(uiState: HomeAppsListUiState, actions: AppListLookActions) {
     if (!uiState.isFacetScoped) allowLandscapeItem(uiState.allowLandscape, actions.onAllowLandscapeChange)
-    item { LayoutCard(uiState, actions, modifier = Modifier.padding(bottom = 16.dp)) }
+}
+
+/** Where the Home apps list sits: portrait and landscape alignment. */
+internal fun LazyListScope.appListAlignmentItems(uiState: HomeAppsListUiState, actions: AppListLookActions) {
     item { SettingsSectionHeader(stringResource(R.string.appearance_alignment_portrait_title)) }
     item {
         AlignmentCard(
@@ -67,59 +68,57 @@ private fun LazyListScope.allowLandscapeItem(allowLandscape: Boolean, onAllowLan
     }
 }
 
-/** The look shared by both orientations: list layout, and the presentation or grid rows that layout has. */
+/** The look shared by both orientations: list layout, and the presentation or grid rows that layout has. Rows only, for a card's content. */
 @Composable
-private fun LayoutCard(uiState: HomeAppsListUiState, actions: AppListLookActions, modifier: Modifier = Modifier) {
-    SettingsCard(modifier = modifier) {
+internal fun ColumnScope.AppListLayoutRows(uiState: HomeAppsListUiState, actions: AppListLookActions) {
+    LabeledDropdownRow(
+        title = stringResource(R.string.home_apps_list_layout),
+        options = AppListLayout.entries,
+        selected = uiState.appListLayout,
+        label = { stringResource(it.displayNameRes) },
+        onSelect = actions.onLayoutChange,
+        testTag = "appearance_app_list_layout_row",
+    )
+    // Grid has no per-item alignment, so its own display mode replaces the icon/text presentation row.
+    if (uiState.appListLayout == AppListLayout.GRID) {
+        CardDivider()
         LabeledDropdownRow(
-            title = stringResource(R.string.home_apps_list_layout),
-            options = AppListLayout.entries,
-            selected = uiState.appListLayout,
+            title = stringResource(R.string.home_apps_list_grid_columns),
+            options = AppListGridColumns.entries,
+            selected = uiState.appListGridColumns,
             label = { stringResource(it.displayNameRes) },
-            onSelect = actions.onLayoutChange,
-            testTag = "appearance_app_list_layout_row",
+            onSelect = actions.onGridColumnsChange,
+            testTag = "appearance_app_list_grid_columns_row",
         )
-        // Grid has no per-item alignment, so its own display mode replaces the icon/text presentation row.
-        if (uiState.appListLayout == AppListLayout.GRID) {
-            CardDivider()
-            LabeledDropdownRow(
-                title = stringResource(R.string.home_apps_list_grid_columns),
-                options = AppListGridColumns.entries,
-                selected = uiState.appListGridColumns,
-                label = { stringResource(it.displayNameRes) },
-                onSelect = actions.onGridColumnsChange,
-                testTag = "appearance_app_list_grid_columns_row",
-            )
-            CardDivider()
-            LabeledDropdownRow(
-                title = stringResource(R.string.home_apps_list_grid_display),
-                options = AppListGridDisplayMode.entries,
-                selected = uiState.appListGridDisplayMode,
-                label = { stringResource(it.displayNameRes) },
-                onSelect = actions.onGridDisplayModeChange,
-                testTag = "appearance_app_list_grid_display_mode_row",
-            )
-        } else {
-            CardDivider()
-            LabeledDropdownRow(
-                title = stringResource(R.string.home_apps_list_presentation),
-                options = AppRowPresentation.entries,
-                selected = uiState.appRowPresentation,
-                label = { stringResource(it.displayNameRes) },
-                onSelect = actions.onPresentationChange,
-                testTag = "appearance_app_row_presentation_row",
-            )
-            CardDivider()
-            // "Shrink list to fit": Compact rows when Regular ones wouldn't fit, else the list scrolls.
-            LabeledDropdownRow(
-                title = stringResource(R.string.home_apps_list_shrink_to_fit),
-                options = AppListShrinkToFit.entries,
-                selected = uiState.appListShrinkToFit,
-                label = { stringResource(it.displayNameRes) },
-                onSelect = actions.onShrinkToFitChange,
-                testTag = "appearance_app_list_shrink_to_fit_row",
-            )
-        }
+        CardDivider()
+        LabeledDropdownRow(
+            title = stringResource(R.string.home_apps_list_grid_display),
+            options = AppListGridDisplayMode.entries,
+            selected = uiState.appListGridDisplayMode,
+            label = { stringResource(it.displayNameRes) },
+            onSelect = actions.onGridDisplayModeChange,
+            testTag = "appearance_app_list_grid_display_mode_row",
+        )
+    } else {
+        CardDivider()
+        LabeledDropdownRow(
+            title = stringResource(R.string.home_apps_list_presentation),
+            options = AppRowPresentation.entries,
+            selected = uiState.appRowPresentation,
+            label = { stringResource(it.displayNameRes) },
+            onSelect = actions.onPresentationChange,
+            testTag = "appearance_app_row_presentation_row",
+        )
+        CardDivider()
+        // "Shrink list to fit": Compact rows when Regular ones wouldn't fit, else the list scrolls.
+        LabeledDropdownRow(
+            title = stringResource(R.string.home_apps_list_shrink_to_fit),
+            options = AppListShrinkToFit.entries,
+            selected = uiState.appListShrinkToFit,
+            label = { stringResource(it.displayNameRes) },
+            onSelect = actions.onShrinkToFitChange,
+            testTag = "appearance_app_list_shrink_to_fit_row",
+        )
     }
 }
 
