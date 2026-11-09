@@ -1,10 +1,8 @@
 package com.facetlauncher.app.ui.settings
 
 import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.facetlauncher.app.R
@@ -27,13 +25,15 @@ import kotlin.enums.EnumEntries
 internal fun LazyListScope.appListAlignmentItems(uiState: HomeAppsListUiState, actions: AppListLookActions) {
     item { SettingsSectionHeader(stringResource(R.string.appearance_alignment_portrait_title)) }
     item {
-        AlignmentCard(
-            uiState = uiState,
-            landscape = false,
-            onRowPositionChange = { it?.let(actions.onRowPositionChange) },
-            onColumnAlignmentChange = { it?.let(actions.onColumnAlignmentChange) },
-            onVerticalAlignmentChange = { it?.let(actions.onVerticalAlignmentChange) },
-        )
+        SettingsCard {
+            AlignmentRows(
+                uiState = uiState,
+                landscape = false,
+                onRowPositionChange = { it?.let(actions.onRowPositionChange) },
+                onColumnAlignmentChange = { it?.let(actions.onColumnAlignmentChange) },
+                onVerticalAlignmentChange = { it?.let(actions.onVerticalAlignmentChange) },
+            )
+        }
     }
     item { SettingsSectionHeader(stringResource(R.string.appearance_alignment_landscape_title)) }
     item {
@@ -45,17 +45,16 @@ internal fun LazyListScope.appListAlignmentItems(uiState: HomeAppsListUiState, a
                 onCheckedChange = actions.onAllowLandscapeChange,
                 testTag = "appearance_allow_landscape_row",
             )
-        }
-    }
-    if (uiState.allowLandscape) {
-        item {
-            AlignmentCard(
-                uiState = uiState,
-                landscape = true,
-                onRowPositionChange = actions.onLandscapeRowPositionChange,
-                onColumnAlignmentChange = actions.onLandscapeColumnAlignmentChange,
-                onVerticalAlignmentChange = actions.onLandscapeVerticalAlignmentChange,
-            )
+            if (uiState.allowLandscape) {
+                CardDivider()
+                AlignmentRows(
+                    uiState = uiState,
+                    landscape = true,
+                    onRowPositionChange = actions.onLandscapeRowPositionChange,
+                    onColumnAlignmentChange = actions.onLandscapeColumnAlignmentChange,
+                    onVerticalAlignmentChange = actions.onLandscapeVerticalAlignmentChange,
+                )
+            }
         }
     }
 }
@@ -119,54 +118,51 @@ internal fun ColumnScope.AppListLayoutRows(uiState: HomeAppsListUiState, actions
  * position. Landscape's rows add a "Same as portrait" choice, stored as `null`.
  */
 @Composable
-private fun AlignmentCard(
+private fun ColumnScope.AlignmentRows(
     uiState: HomeAppsListUiState,
     landscape: Boolean,
     onRowPositionChange: (AppRowPosition?) -> Unit,
     onColumnAlignmentChange: (AppListColumnAlignment?) -> Unit,
     onVerticalAlignmentChange: (AppListVerticalAlignment?) -> Unit,
-    modifier: Modifier = Modifier,
 ) {
     val tags = if (landscape) "appearance_landscape_" else "appearance_"
     val own = uiState.landscape
-    SettingsCard(modifier = modifier) {
-        when (uiState.appListLayout) {
-            AppListLayout.TWO_COLUMN -> {
-                AlignmentRow(
-                    title = stringResource(R.string.home_apps_list_column_alignment),
-                    entries = AppListColumnAlignment.entries,
-                    selected = if (landscape) own.appListColumnAlignment else uiState.appListColumnAlignment,
-                    landscape = landscape,
-                    nameRes = { it.displayNameRes },
-                    onSelect = onColumnAlignmentChange,
-                    testTag = "${tags}app_list_column_alignment_row",
-                )
-                CardDivider()
-            }
-            AppListLayout.GRID -> Unit
-            AppListLayout.SINGLE_COLUMN -> {
-                AlignmentRow(
-                    title = stringResource(R.string.home_apps_list_position),
-                    entries = AppRowPosition.entries,
-                    selected = if (landscape) own.appRowPosition else uiState.appRowPosition,
-                    landscape = landscape,
-                    nameRes = { it.displayNameRes },
-                    onSelect = onRowPositionChange,
-                    testTag = "${tags}app_row_position_row",
-                )
-                CardDivider()
-            }
+    when (uiState.appListLayout) {
+        AppListLayout.TWO_COLUMN -> {
+            AlignmentRow(
+                title = stringResource(R.string.home_apps_list_column_alignment),
+                entries = AppListColumnAlignment.entries,
+                selected = if (landscape) own.appListColumnAlignment else uiState.appListColumnAlignment,
+                landscape = landscape,
+                nameRes = { it.displayNameRes },
+                onSelect = onColumnAlignmentChange,
+                testTag = "${tags}app_list_column_alignment_row",
+            )
+            CardDivider()
         }
-        AlignmentRow(
-            title = stringResource(R.string.home_apps_list_list_position),
-            entries = AppListVerticalAlignment.entries,
-            selected = if (landscape) own.appListVerticalAlignment else uiState.appListVerticalAlignment,
-            landscape = landscape,
-            nameRes = { it.displayNameRes },
-            onSelect = onVerticalAlignmentChange,
-            testTag = "${tags}app_list_vertical_alignment_row",
-        )
+        AppListLayout.GRID -> Unit
+        AppListLayout.SINGLE_COLUMN -> {
+            AlignmentRow(
+                title = stringResource(R.string.home_apps_list_position),
+                entries = AppRowPosition.entries,
+                selected = if (landscape) own.appRowPosition else uiState.appRowPosition,
+                landscape = landscape,
+                nameRes = { it.displayNameRes },
+                onSelect = onRowPositionChange,
+                testTag = "${tags}app_row_position_row",
+            )
+            CardDivider()
+        }
     }
+    AlignmentRow(
+        title = stringResource(R.string.home_apps_list_list_position),
+        entries = AppListVerticalAlignment.entries,
+        selected = if (landscape) own.appListVerticalAlignment else uiState.appListVerticalAlignment,
+        landscape = landscape,
+        nameRes = { it.displayNameRes },
+        onSelect = onVerticalAlignmentChange,
+        testTag = "${tags}app_list_vertical_alignment_row",
+    )
 }
 
 /** One dropdown of an alignment enum; landscape adds a "Same as portrait" choice, stored as `null`. */

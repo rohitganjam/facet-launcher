@@ -365,7 +365,7 @@
     <string name="app_list_grid_display_mode_icons">Pictogrammen</string>
     <string name="app_list_grid_display_mode_text">Tekst</string>
 
-    <string name="home_apps_list_position">Uitlijning van startschermapps</string>
+    <string name="home_apps_list_position">Uitlijning van de appslijst</string>
     <string name="home_apps_list_list_position">Positie van de appslijst</string>
     <string name="appearance_allow_landscape_title">Liggende modus toestaan</string>
     <string name="appearance_allow_landscape_subtitle">Gebruik een liggende indeling als het scherm breed genoeg is. Uit houdt Home staand.</string>

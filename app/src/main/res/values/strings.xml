@@ -415,8 +415,8 @@
     <string name="app_list_grid_display_mode_text">Text</string>
 
     <!-- HomeAppsListSettingsScreen -->
-    <string name="home_apps_list_position">Home Apps Alignment</string>
-    <string name="home_apps_list_list_position">Home Apps list position</string>
+    <string name="home_apps_list_position">Apps list alignment</string>
+    <string name="home_apps_list_list_position">Apps list position</string>
     <string name="appearance_allow_landscape_title">Allow landscape mode</string>
     <string name="appearance_allow_landscape_subtitle">Use a landscape layout when the screen is wide enough. Off keeps Home in portrait.</string>
     <string name="appearance_alignment_portrait_title">Portrait alignment</string>

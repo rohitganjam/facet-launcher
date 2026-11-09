@@ -241,7 +241,7 @@ class HomeAppsListSettingsScreenTest {
         setFacetContent()
 
         // The Clock card sits above these rows, so each is scrolled into view before it's checked.
-        listOf("Home Apps Alignment", "Show Home apps as", "Home Apps list position").forEach { title ->
+        listOf("Apps list alignment", "Show Home apps as", "Apps list position").forEach { title ->
             composeRule.onNodeWithTag("home_apps_list_settings_screen").performScrollToNode(hasText(title))
             // The Portrait and Landscape alignment cards share these two titles; the first is the Portrait one.
             composeRule.onAllNodesWithText(title)[0].assertIsDisplayed()
