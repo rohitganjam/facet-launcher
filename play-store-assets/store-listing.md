@@ -11,18 +11,17 @@ Launcher, Lawnchair, Niagara, etc. are all listed).
 
 (72 chars)
 
-## Full description (max 4000 characters — this draft is 3,984)
+## Full description (max 4000 characters — this draft is 3,994)
 
 ```
 Your phone isn't used the same way all day, so why should your home screen be?
 
-Facet Launcher is a fast, minimal home screen built around facets: separate setups for work, home and focus that you switch in a single tap, or let your phone switch for you. One phone, a home screen that always fits the moment.
+Facet Launcher is a fast, minimal home screen built around facets: separate setups for work, home and focus that you switch in one tap, or let your phone switch for you.
 
 FACETS: YOUR PHONE, ON SWITCH
-Create up to ten independent facets, like Work, Personal and Focus. Swipe left on the home screen to preview every facet live, then tap to switch instantly.
-- Give each facet its own favorite apps, dock, clock style, calendar and app list layout, or put a widget where the clock goes
-- New facets inherit your shared defaults, so you only change what's different
-- Every facet is also an app shortcut ("Switch to Work"), so automation apps can switch it too
+Create up to ten facets, like Work, Personal and Focus. Swipe left on the home screen to preview them live, then tap to switch.
+- Give each facet its own favorites, dock, clock style, calendar, app list layout and landscape setting
+- Every facet is also an app shortcut ("Switch to Work"), so automation apps like Tasker can switch it too
 
 FACET AUTOMATION: IT SWITCHES FOR YOU
 Walk into the office and your Work facet is waiting. Plug in headphones and Focus kicks in. Each rule picks a facet and one trigger:
@@ -32,9 +31,11 @@ Pick a facet yourself and your choice always wins.
 
 A HOME SCREEN THAT GETS OUT OF THE WAY
 - Just a clock, the date and the apps you actually use
-- Show Favorites, Recents or Most Used apps, as a single column, two columns or a grid, with icons, text or both
-- A dock of up to five apps, shared or set per facet
-- Group apps into folders on the dock and in your favorites
+- Swap the clock for a Facet widget (Weather, Agenda or Now Playing) or any Android widget, and resize it in place
+- Show up to 20 Favorites, Recents or Most Used apps, as one column, two columns or a grid, with icons, text or both
+- Press and hold to drag apps, folders and dock icons: drop on an empty spot to move, on another to swap
+- A dock of up to five apps for each facet, with folders on the dock and in favorites
+- Choose what swiping left, right, up and down does
 - Notification badges as a dot or a count
 - An optional media player row with album art, playback controls and a progress bar
 - Built for landscape, foldables and tablets, with the clock, apps and dock side by side
@@ -42,33 +43,33 @@ A HOME SCREEN THAT GETS OUT OF THE WAY
 CLOCKS WITH CHARACTER
 - More than 30 clock styles, from clean typography to bold shapes, each with its own font, color and date format
 - Drag to move and resize your clock right on the home screen
-- Weather beside your alarm and battery, with a 24-hour forecast and the days ahead one tap away. Use your location or search a city, and save up to ten
-- Upcoming calendar events sit under the clock, with an optional color bar for each calendar
-- Widget stacks: swipe between the clock and your widgets in the same spot
+- Weather beside your alarm and battery, with a 24-hour forecast and the days ahead one tap away. Use your location or save up to ten cities
+- Upcoming calendar events under the clock, with an optional color bar per calendar
+- Widget stacks: swipe between the clock, Facet widgets and other widgets in the same spot
 
 AN APP DRAWER THAT KEEPS UP
 - A letter-indexed list, or a grid in several sizes
-- Fast search across your apps, and optionally your contacts and system settings, with call, message or email straight from the results
+- Fast search across apps, and optionally contacts and system settings, with call, message or email from the results
 - Separate tabs for your Work Profile and Private Space apps
-- Long-press any app for app info, uninstall, shortcuts and its ongoing notifications
+- Long-press an app for info, uninstall, shortcuts and its ongoing notifications
 
 WIDGET HUB
-Give your widgets a home of their own, one swipe from your home screen, so they never crowd your apps. Add up to 20, drag them into place and resize them freely.
+Give widgets a home of their own, one swipe from your home screen, so they never crowd your apps. Add up to 20, drag them into place and resize freely.
 
 MAKE IT YOURS
-- Light, dark or system theme, with an accent color from your wallpaper or one you choose
+- Light, dark or system theme, with an accent from your wallpaper or your pick
 - Your pick of launcher font and weight
 - Icon shapes (squircle, rounded square, circle, square) and styles: full color or a monochrome look tinted to your accent
 - Icon packs: apply any pack you've installed (Nova, ADW, Apex and more) to every app
 
 BACKUP AND RESTORE
-Export your facets and settings to a file and restore them on any device.
+Export your facets, settings and home layout to a file and restore them on any device.
 
 FACET PRO
 Facet Launcher is free. An optional Pro upgrade adds more automation rules, Wi-Fi, Bluetooth, headphone and battery triggers, and widget stacks of up to five pages.
 
 PRIVATE BY DESIGN
-Facet Launcher uses the internet only for the optional weather feature, which is off until you turn it on. No accounts, no analytics, no ads: everything else stays on your device. Optional features ask for permission only when you turn them on, and the rest of the launcher works normally if you say no.
+The internet is used only for the optional weather feature, which is off until you turn it on. No accounts, no analytics, no ads: everything else stays on your device. Optional features ask for permission only when you turn them on, and the launcher works normally if you say no.
 
 REQUIREMENTS
 Android 11 or later. Available in English, German, Spanish, French and Portuguese. Set Facet Launcher as your default home app in Settings to get the full experience.
