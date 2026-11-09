@@ -24,7 +24,7 @@ data class WeatherForecast(val updatedAt: Instant?, val hours: List<WeatherHour>
 /** Where a forecast is for: coordinates rounded to [COORDINATE_DECIMALS], so one place never differs by float noise. */
 data class WeatherPlace(val latitude: Double, val longitude: Double, val altitudeM: Int? = null) {
     companion object {
-        const val COORDINATE_DECIMALS = 2
+        const val COORDINATE_DECIMALS = 3
 
         fun rounded(latitude: Double, longitude: Double, altitudeM: Int? = null): WeatherPlace {
             val scale = Math.pow(10.0, COORDINATE_DECIMALS.toDouble())

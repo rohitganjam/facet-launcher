@@ -42,7 +42,7 @@ class AndroidPlaceGeocoder @Inject constructor(
 ) : PlaceGeocoder {
 
     override suspend fun reverse(latitude: Double, longitude: Double, locale: Locale): GeocodedPlace? =
-        lookup(locale) { geocoder, deliver ->
+        lookup(locale, withNeighbourhood = true) { geocoder, deliver ->
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 geocoder.getFromLocation(latitude, longitude, 1, listener(deliver))
             } else {
@@ -61,14 +61,18 @@ class AndroidPlaceGeocoder @Inject constructor(
             }
         }
 
-    private suspend fun lookup(locale: Locale, ask: (Geocoder, (List<Address>) -> Unit) -> Unit): List<GeocodedPlace> =
+    private suspend fun lookup(
+        locale: Locale,
+        withNeighbourhood: Boolean = false,
+        ask: (Geocoder, (List<Address>) -> Unit) -> Unit,
+    ): List<GeocodedPlace> =
         if (!Geocoder.isPresent()) {
             emptyList()
         } else {
             withContext(ioDispatcher) {
                 try {
                     suspendCancellableCoroutine { continuation ->
-                        ask(Geocoder(context, locale)) { addresses -> if (continuation.isActive) continuation.resume(addresses.mapNotNull(::toPlace)) }
+                        ask(Geocoder(context, locale)) { addresses -> if (continuation.isActive) continuation.resume(addresses.mapNotNull { it.toGeocodedPlace(withNeighbourhood) }) }
                     }
                 } catch (_: IOException) {
                     emptyList()
@@ -81,15 +85,18 @@ class AndroidPlaceGeocoder @Inject constructor(
         override fun onGeocode(addresses: MutableList<Address>) = deliver(addresses)
         override fun onError(errorMessage: String?) = deliver(emptyList())
     }
+}
 
-    private fun toPlace(address: Address): GeocodedPlace? {
-        val name = address.locality ?: address.subAdminArea ?: address.adminArea
-        return if (name.isNullOrBlank() || !address.hasLatitude() || !address.hasLongitude()) null else GeocodedPlace(
-            name = name,
-            admin = address.adminArea,
-            countryCode = address.countryCode,
-            latitude = address.latitude,
-            longitude = address.longitude,
-        )
-    }
+// A reverse lookup names the neighbourhood too ("Indiranagar, Bengaluru"); the city picker's search keeps the plain city name.
+internal fun Address.toGeocodedPlace(withNeighbourhood: Boolean): GeocodedPlace? {
+    val city = locality ?: subAdminArea ?: adminArea
+    val neighbourhood = subLocality?.takeIf { withNeighbourhood && it.isNotBlank() && !it.equals(city, ignoreCase = true) }
+    val name = if (neighbourhood != null && city != null) "$neighbourhood, $city" else neighbourhood ?: city
+    return if (name.isNullOrBlank() || !hasLatitude() || !hasLongitude()) null else GeocodedPlace(
+        name = name,
+        admin = adminArea,
+        countryCode = countryCode,
+        latitude = latitude,
+        longitude = longitude,
+    )
 }
