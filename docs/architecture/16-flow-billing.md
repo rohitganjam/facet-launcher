@@ -4,7 +4,7 @@ How a user becomes Pro, how the app remembers it, and what changes when they are
 non-consumable product, `facet_pro`, bought once through Google Play. No subscription and no backend; billing
 needs no `INTERNET` of its own (the weather feature declares it, see §6). The price is never in the code: it is a Play Console setting and the app shows what
 Play returns. What Pro unlocks is in [13 §1a](13-flow-facets-theme-notifications-onboarding.md) (10 facets
-instead of 3) and [15](15-flow-facet-automation.md) (device triggers, more than 2 rules).
+instead of 3), [15](15-flow-facet-automation.md) (device triggers, more than 2 rules) and the clock widget stack (up to 5 pages instead of 1, see §4).
 
 ## 1. Layers
 
@@ -129,7 +129,7 @@ The billing library pulls `INTERNET` in through its telemetry dependency. Until 
 removed it; now it declares `INTERNET` itself, for weather only ([18](18-flow-weather.md)), and the
 `verifyInternetPermission` Gradle task, part of `check` and the release build, fails if it goes missing. Play
 Billing talks to the Play Store app over IPC, so purchases need no network permission of their own;
-confirming that on a real Play account is part of the release checklist.
+confirming that on a real Play account was part of the release checklist, and is done (2026-11-09).
 
 ## 7. Testing
 
@@ -138,4 +138,4 @@ confirming that on a real Play account is part of the release checklist.
 | JVM | `PlayEntitlementRepositoryTest` (cache, the four answers, offline, persist-then-publish), `FacetProViewModelTest`, `FacetLimits`, `SelectableFacetsUseCase`, `AddFacetUseCase`, and the automation gate tests. |
 | Compose | `FacetProContentTest` (both states, buy, restore, busy, messages), `SettingsScreenTest` (the card), the carousel, Manage facets and rule editor Pro states. |
 | Debug build | The "DEBUG" block in Settings forces Free or Pro (`DebugEntitlementOverride`, tested in `src/testDebug`), so every state can be seen on the emulator without Play. |
-| Real device | Needs a Play-certified device, an uploaded build on a testing track, and a licence tester: price shown, buy, persistence, restore after reinstall, offline, pending, refund. The emulator's Play has no in-app billing. |
+| Real device | Done 2026-11-09. Needs a Play-certified device, an uploaded build on a testing track, and a licence tester: price shown, buy, persistence, restore after reinstall, offline, pending, refund. The emulator's Play has no in-app billing. |

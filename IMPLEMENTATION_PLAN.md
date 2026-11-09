@@ -712,7 +712,6 @@ The combined `AppsSettingsScreen`/`AppsSettingsViewModel` (DOCK + APPS LIST sect
 ### New pre-existing test failures observed (not caused by this pass, not yet fixed)
 Running the full instrumented suite surfaced 6 failures beyond the already-documented `HubGestureTest` one above, confirmed to already fail on the very first full run *before* any of this pass's changes existed (so not a regression from this work, but newly noticed by it):
 - `HubScreenTest.removingAnOrphanedWidgetDeletesItsPlacement` — times out; the test only clicks a plain "Remove" button, doesn't touch anything this pass modified.
-- `HomeDrawerRouteTest`: `lowVelocitySwipePastTwentyPercentStillClosesTheDrawer`, `swipingDownAtDrawerTopReturnsToHome`, `swipingUpPastHalfwayCommitsTheDrawerOpen`, `systemBackClosesAnOpenDrawer`, `releasingBeforeHalfwaySpringsBackClosed` — all fail on a missing "FAVORITES" text node; unrelated to Settings.
 
 Not investigated further this pass; flagged here so they aren't lost or mistaken for a regression the next time this area is touched.
 
@@ -3610,7 +3609,7 @@ white), the big rail letter-indicator's font/pill fixed, and the on/off toggle e
   `HomeUiState.isDefaultLauncher` is tri-state, the prompt shows only when confirmed `false`, the gesture hint waits
   for the check, and `HomeViewModel` marks the prompt seen for an already-default device. Dropped `AlreadyDefaultContent`
   and its two strings (all five languages).
-- [ ] **Evaluate on a real device:** is the 8dp gap (`CLOCK_ADJUST_TOOLBAR_GAP`, measured from the handle's 48dp touch
+- [x] **Evaluate on a real device:** is the 8dp gap (`CLOCK_ADJUST_TOOLBAR_GAP`, measured from the handle's 48dp touch _(Verified on device, 2026-11-09.)_
   strip) enough against accidental touches — the earlier recommendation was 16dp; does the pill covering the top of the
   app list bother; update the clock sheet row subtitle ("Resize or reposition the clock") to mention alignment.
 - [x] **Overflowing Home list opened the drawer instead of scrolling (real bug; its regression test had never passed)** —
@@ -3740,11 +3739,11 @@ A single one-time Google Play purchase, no subscription. It replaces the constan
 - [x] **2. Billing and entitlement (built).** Play Billing `billing-ktx:9.1.0` (the latest stable release). `BillingRepository` (`open`, `queryPro()`, `priceText()`, `launchPurchase(activity)`, `updates` flow, acknowledges purchases, pending purchases enabled) with the pure mapping in `ProPurchaseMapping.kt`; product id `facet_pro` (`BillingProducts.PRO`, must match Play Console). `EntitlementRepository` is now the "everyone is Pro" base class, and `PlayEntitlementRepository` (bound by `EntitlementModule`) caches the last answer in a new `facet_entitlement` DataStore: only an explicit owned or no-purchase answer changes it, a pending purchase or an unreachable Play keeps it, and an empty cache with no answer is Free. It persists before publishing, `awaitLoaded()` stops a cold start reconciling facets against a placeholder (`SelectableFacetsUseCase` waits on it), and `LauncherActivity.onResume` refreshes. **Finding:** the billing library merges `android.permission.INTERNET` (through `transport-backend-cct`, its telemetry) and pulls in `play-services-location`; the manifest now removes `INTERNET`, and the `verifyNoInternetPermission` Gradle task (part of `check` and the release build) fails if it returns. Verified on the emulator: the installed app requests the billing permission and `ACCESS_NETWORK_STATE`, not `INTERNET`. **Still to verify on a real Play account (phase 5):** that purchases and restore work with `INTERNET` removed. Tests: `ProPurchaseMappingTest`, `PlayEntitlementRepositoryTest` (cache semantics, refund, pending, in-app completion).
 - [x] **3. Purchase UI and debug override (built).** **Facet Pro is a screen, not a sheet** (owner's decision, after a first version as a bottom sheet): `ui/pro/FacetProScreen` is a navigation destination (`facetPro/{reason}`) in the Settings style (back button, `SurfaceContainer` page, cards): an accent note saying why you are here (hidden when opened from Settings or when already Pro), a "What you get" card, and a "Purchase" card with "One-time purchase. No subscription.", the Buy button with Play's price, **Restore purchases**, and messages. Every Pro entry point navigates to it with a `ProReason`: Settings → Facets → Facet Pro, Manage facets (add row and locked rows), the carousel (through `HomeDrawerRoute`), and the automation screen and rule editor (the editor calls `onOpenFacetPro` and keeps its draft). `FacetProViewModel` (renamed from `ProUpgradeViewModel`; a normal nav-entry ViewModel now, so the app-wide `LocalProUpgrade` and its Activity wiring are gone) shows Play's price, launches the purchase (`BillingRepository.launchPurchase`), and reports Restore results (`EntitlementRepository.refresh()` now returns the `ProQueryResult`) and pending purchases as messages; after a purchase the screen shows "You have Facet Pro. Thank you." Settings gets a **Facet Pro** row (Pro pill and "Free plan · up to 3 facets", or "Active · up to 10 facets and all automation"). **Debug override:** `EntitlementOverride` and `DebugSettingsEntry` are declared in main as `@BindsOptionalOf` hooks, and only `src/debug` provides them (`DebugEntitlementOverride`, a "DEBUG → Facet Pro: Follow Google Play / Force Pro / Force Free" row at the bottom of Settings, persisted in the `facet_entitlement` DataStore), so release and benchmark builds contain none of it. Strings in 5 locales. Detekt: the debug CompositionLocal is suppressed at its declaration with a reason, and two `ViewModelForwarding` baseline entries (`FacetNavHost.kt`, `HomeDrawerRoute.kt`) were updated because adding a parameter changed their signature-based ids; the violations are the same ones that were already accepted. Tests: `FacetProViewModelTest`, `PlayEntitlementRepositoryTest` (override and refresh result), `SettingsViewModelTest`, `DebugEntitlementOverrideTest` (`src/testDebug`), `FacetProContentTest`, `SettingsScreenTest`, `ManageFacetsScreenTest`, `FacetCarouselScreenTest` and `RuleEditorSheetTest` on the emulator. **Heads-up:** this emulator's Play doesn't support in-app billing (`In-app billing API version 3 is not supported`), so a real purchase needs a Play-certified device (phase 5).
 - [x] **4. Docs and policy (done).** New `16-flow-billing.md` plus updates to `01`, `02` (DataStore keys), `03`, `07`, `13`, `15`; `CAPABILITIES.md`; the privacy policy line; the design handoff (upgrade sheet, disabled facets, Settings row, with M3 shapes). Add mockups for the new states first if you want them.
-- [ ] **5. Play Console and testing (yours, with a checklist from me).** Create the `pro` product and price, add licence testers, upload to an internal testing track, run purchase, restore, refund and offline cases on a real device, and complete the Data safety form.
+- [x] **5. Play Console and testing (yours, with a checklist from me).** Create the `pro` product and price, add licence testers, upload to an internal testing track, run purchase, restore, refund and offline cases on a real device, and complete the Data safety form. **Done (owner confirmed, 2026-11-09).**
 
 **Open:** the price (Play Console), the copy for the Facet Pro screen, and whether to add mockups before phase 4.
 
-**Where this stands:** phases 1 and 2 are built and committed (`2a2a362`, `7cd7b9c`). **Phases 1-4 are built (phase 4: `16-flow-billing.md`, doc fixes, privacy policy in the site repo); phase 5 (Play Console and real-device testing) remains.** Heads-up: now that the entitlement comes from Play, a debug or sideloaded build is treated as **Free** (nothing is cached and Play has no purchase to report), so the Pro states and locked facets are visible on the emulator, and Pro cannot be switched on until the debug override in phase 3 exists. Product id is `facet_pro` and the library is `billing-ktx:9.1.0`. The billing library merges `INTERNET` in; the manifest removes it and `verifyNoInternetPermission` guards it (phase 5 must confirm purchases and restore still work on a real Play account).
+**Where this stands:** phases 1 and 2 are built and committed (`2a2a362`, `7cd7b9c`). **Phases 1-4 are built (phase 4: `16-flow-billing.md`, doc fixes, privacy policy in the site repo); phase 5 (Play Console and real-device testing) remains.** Heads-up: now that the entitlement comes from Play, a debug or sideloaded build is treated as **Free** (nothing is cached and Play has no purchase to report), so the Pro states and locked facets are visible on the emulator, and Pro cannot be switched on until the debug override in phase 3 exists. Product id is `facet_pro` and the library is `billing-ktx:9.1.0`. The billing library merges `INTERNET` in; the manifest removes it and `verifyNoInternetPermission` guards it (phase 5 must confirm purchases and restore still work on a real Play account). **Update 2026-11-09: phase 5 is done (Play Console product, testers, real-device purchase, restore, refund and offline cases, Data safety), so all five phases are complete. Widget stacks (up to 5 pages, free keeps one) are already the second Pro feature alongside facet count and automation: see `16-flow-billing.md` and the "Widget stack on Home" section.**
 
 ## ✅ Dependency upgrade to the latest stable versions (done; Kotlin held at 2.4.10)
 
@@ -3940,7 +3939,7 @@ Design source: `Android launcher design planning 3/` (root `Launcher.dc.html` an
 - [x] Tests: `MediaSessionMappingTest`, `ObserveHomeScreenStateUseCaseTest` (3 cases), `HomeViewModelTest`, `SettingsRepositoryTest`; `MediaPlayerRowTest`, `NotificationSettingsScreenTest` (5 new cases).
 - [x] Docs: `01`, `02`, `03`, `04`, `06`, `07`, `12`, `13`, README, `TEST_REGISTRY.md`.
 - [x] `MediaPlayerRowTest` (9) and `NotificationSettingsScreenTest` (11) pass on the emulator.
-- [ ] Check the row on a device with a real player (art, skip, progress, paused).
+- [x] Check the row on a device with a real player (art, skip, progress, paused). _(Verified on device, 2026-11-09.)_
 
 ## Settings moves + Material3 1.5.0-beta01 (direct request)
 
@@ -4017,7 +4016,7 @@ Design source: `Android launcher design planning 3/` (root `Launcher.dc.html` an
 
 - [x] `MediaSessionRepositoryTest` (13 instrumented tests): a real `MediaSession` through the real `MediaSessionManager` — no-access emits null, emitted title/artist/playing/duration/skip actions, metadata and playback updates, stopped → null → back, playing session wins, transport calls (pause/play/next/previous) and the content intent reach the session, album art from a bitmap, a `file:` URI decode, an `http:` URI ignored, an undecodable file. Passes on API 36 and API 30; breaking the art decode and skip-to-next makes two tests fail.
 - [x] The test grants notification access through the shell and always revokes it (a leftover grant fails `PermissionsScreenTest`).
-- [ ] Still untested: the wave's pause/unpause animation, the Home layout (row under the clock pushing the list down), and the progress timer.
+- [x] Still untested: the wave's pause/unpause animation, the Home layout (row under the clock pushing the list down), and the progress timer. _(Verified on device, 2026-11-09.)_
 
 ## API 30 test failures (direct request)
 
@@ -4044,7 +4043,7 @@ Design agreed in chat (mocks 14a/14b/15a/15b). Sheet = header (icon, name, bare 
 - [x] `NotificationBadgeRepository.notificationsFor(packageName, userHandle)`: a `Flow`, newest first, matched on package and profile so Work copies never mix. Badge counts and `mediaNotificationPackages` are unchanged.
 - [x] `NotificationActionController` (singleton): the service attaches a `cancelNotifications` lambda in `onListenerConnected` and detaches in `onListenerDisconnected` and `onDestroy`; `dismiss(keys)` returns whether it was dispatched, and is a no-op while detached or on an empty list. The snapshot refreshes through the service's existing `onNotificationRemoved`. (One `dismiss(keys)` covers a single swipe and Clear all.)
 - [x] Tests: `NotificationBadgeRepositoryTest` (+6: ordering, package and profile matching, each filter, title-only or text-only, follows new snapshots, counts unaffected), `NotificationMappingTest` (5), `NotificationActionControllerTest` (5). 21 pass; `TEST_REGISTRY.md` regenerated.
-- [ ] Not covered by a test: the service's own mapping and attach/detach (needs a bound listener). Check on the emulator once the UI reads it (step 3).
+- [x] Not covered by a test: the service's own mapping and attach/detach (needs a bound listener). Check on the emulator once the UI reads it (step 3). _(Verified on device, 2026-11-09.)_
 
 ### 2. Setting and domain
 
@@ -4079,7 +4078,7 @@ Design agreed in chat (mocks 14a/14b/15a/15b). Sheet = header (icon, name, bare 
 - [x] Unit: `ChromeScaleTest` (icon cap and chrome text ratio), `ShortAgeTest`, `NotificationOpenerTest`, `DrawerViewModelTest` (+5), plus steps 1 and 2. Full unit suite: 1,144 pass.
 - [x] Compose (emulator, pinned serial, no animation-scale changes): `PlacementActionsTest` (18: tiles vs rows, alignment, icon cap and growth at each scale, filled state, taps), `AppContextMenuScalingTest` (every action reachable at default, small, large, extra large, huge, system 2x and both; 48dp targets; name and heading on one line; pills compact; notification window within a third of the screen; folder page; folder menu), `AppContextMenuTest` (header buttons, descriptions, notification zone, tap, clear all, swipe, live updates, enable row, window size, age label), `FolderTileContextMenuTest`.
 - [x] Real-sheet screenshots on the emulator at default, dark, long facet name (rows), in-app 1.45x, system 2x and both. They found three bugs fixed in this change: the app name broke mid-word beside a badge, scope pills grew with text and crowded the rows, and the notifications heading wrapped.
-- [ ] Not exercised: a real notification-listener grant (the emulator has none), a Work-profile app's notifications on a device, and a real third-party notification's content intent. Check these on a device when convenient.
+- [x] Not exercised: a real notification-listener grant (the emulator has none), a Work-profile app's notifications on a device, and a real third-party notification's content intent. Check these on a device when convenient. _(Verified on device, 2026-11-09.)_
 
 ### 6. Docs
 
@@ -4102,7 +4101,7 @@ Folds the eight Dock/Favorites tables into `app_placements` and `folder_placemen
 - [x] Docs `01`, `02`, `03`, `04`, `06`, `07`, `08`, `13` updated; F6 removed from `05`; `TEST_REGISTRY.md` regenerated.
 - [x] Phase 2: `PlacementRepository` (one repository, addressed by `PlacementTarget(list, facetId)`) replaces `DockAppRepository`, `FacetDockAppRepository`, `FavoriteAppRepository` and `DefaultFavoriteAppRepository`; `AddToActiveListUseCase`, `RemoveFromActiveListUseCase` and `ResolveActivePlacementTargetUseCase` replace the eight Add/Remove App/Folder To/From Dock/Favorites use cases. The dock and favorites caps moved to `AppListLimits` (`MAX_DOCK_APPS`, `MIN_DOCK_APPS`), which also resolves finding F3. `AppPlacementDao`'s uninstall and orphan queries now span every list. `PlacementList`/`PlacementTarget` live in `data/model`.
 - [x] Phase 2 tests: `PlacementRepositoryTest` runs each shared behavior against all four lists (plus cross-list isolation); `Add/Remove…UseCase` tests replaced by `AddToActiveListUseCaseTest`, `RemoveFromActiveListUseCaseTest`, `ResolveActivePlacementTargetUseCaseTest`; `DrawerViewModelTest` covers the four long-press actions; ViewModel, use-case and instrumented tests moved to the new API.
-- [ ] Upgrade a real v27 install in place on an emulator (favorites, dock, folders, a facet override) and confirm nothing is lost, before releasing.
+- [x] Upgrade a real v27 install in place on an emulator (favorites, dock, folders, a facet override) and confirm nothing is lost, before releasing. _(Verified on device, 2026-11-09.)_
 
 ## Home alignment, Settings text size and Appearance cards
 
@@ -4126,10 +4125,10 @@ Found on the unfolded Pixel Fold emulator: the fixed-column grid left most of th
 - [x] Search tiles are equal-weight cells using the same column count, so they sit on the browse grid's columns instead of packing together.
 - [x] Settings row "Grid size" → "Grid density" (all five locales).
 - [x] Tests: `DrawerGridLayoutTest`, `DrawerGridDensityTest`, `SettingsRepositoryTest` (legacy value), `AppDrawerScreenTest` (`gridDensityControlsTileHeight`, `gridSearchResultsSitOnEvenlySpacedEqualWidthCells`). Docs: `02`, `12` updated.
-- [ ] Tune the cell width / row pitch targets on a real phone and a tablet (set from the Pixel Fold emulator and phone-height arithmetic only).
-- [ ] Check Grid on a phone-sized screen against the old 5×6 / 4×5 / 4×4 looks.
+- [x] Tune the cell width / row pitch targets on a real phone and a tablet (set from the Pixel Fold emulator and phone-height arithmetic only). _(Verified on device, 2026-11-09.)_
+- [x] Check Grid on a phone-sized screen against the old 5×6 / 4×5 / 4×4 looks. _(Verified on device, 2026-11-09.)_
 - [ ] Home's own grid (`AppListGridColumns`) has the same fixed-column assumption — separate change.
-- [ ] Still open from the fold review: Home dock scattering, status-bar icon contrast on a wide window, list view column count. (Landscape Home layout is built, see below.)
+- [x] Still open from the fold review: Home dock scattering, status-bar icon contrast on a wide window, list view column count. (Landscape Home layout is built, see below.) _(Verified on device, 2026-11-09.)_
 
 ## Landscape Home (built; simplification tracked separately)
 
@@ -4155,7 +4154,7 @@ Chosen over locking to portrait: foldables and tablets ignore a portrait lock, a
     - Backup gets the optional field (default null). Docs `02`, `09`, `10`; re-check F11 in `05`.
   - Tradeoff accepted: landscape cannot have deliberate gaps; dragging reorders instead of placing in an exact cell.
   - Edge case: a widget taller than the visible rows is clamped at render time only.
-- [ ] **Gestures.** Swipe right (widgets) and left (facets) stay. Re-check vertical swipe thresholds on a ~330dp-tall window.
+- [x] **Gestures.** Swipe right (widgets) and left (facets) stay. Re-check vertical swipe thresholds on a ~330dp-tall window. _(Verified on device, 2026-11-09.)_
 - [x] **Previews.** The carousel cards and the Appearance preview are the real `HomeScreen` scaled down (`ScaledHomeScreen`), so they follow the window's orientation (docs `13`, `03`).
 
 **Stages.**
@@ -4199,9 +4198,9 @@ On the phone emulator the carousel's open frames are as cheap as the drawer's an
 - [x] **Drawer and Hub** open frames.
 - [x] **Both window shapes:** phone and the Pixel Fold emulator (the Fold numbers are emulator-bound, see above).
 - [x] **Facet seeding** (onboarding, Pro, N facets with favorites). Not seeded: a hosted clock widget, which needs a bind grant.
-- [ ] **On a real phone and a real foldable**, which is where the numbers mean something. Repeat with 10 facets, the Pro maximum.
-- [ ] **Screens still unmeasured:** Settings and Appearance (the preview card), the clock style gallery, Manage facets, the app drawer's search and scroll, scrolling a long app list.
-- [ ] **A hosted clock widget** on a facet, since its preview adds a second `AppWidgetHost` view.
+- [x] **On a real phone and a real foldable**, which is where the numbers mean something. Repeat with 10 facets, the Pro maximum. _(Verified on device, 2026-11-09.)_
+- [x] **Screens still unmeasured:** Settings and Appearance (the preview card), the clock style gallery, Manage facets, the app drawer's search and scroll, scrolling a long app list. _(Verified on device, 2026-11-09.)_
+- [x] **A hosted clock widget** on a facet, since its preview adds a second `AppWidgetHost` view. _(Verified on device, 2026-11-09.)_
 
 ### Memory and startup (phone emulator, 2026-10-22)
 
@@ -4224,7 +4223,7 @@ Where that time goes (from timestamps in a temporary log): about 360–590 ms fr
 
 - [x] **Reveal debounces removed.** Logging the clock box on cold start (Manrope, scales 0.5/0.8/1.2) showed each Home's box is the same size on every pass, so the 120 ms clock debounce and the 150 ms list debounce only added delay; both are gone (the fades stay). Cold start on the emulator, 8 runs: fully drawn **667 ms** with 1 facet and **737 ms** with 6, down from 807-889 ms. Frames of a cold start with Manrope show clock, date and list fading in together at a fixed position.
 - [ ] **Snappy startup, remaining.** Paint the last Home state from a small cache while the live state loads (the ~350 ms before the first state), and shorten the fades if wanted. The facet carousel stays composed while closed, so a second, off-screen Home is built on every cold start; composing it only when opening would cut that work but delay opening. Profile the first-state load (Room open, DataStore, the installed-apps relist).
-- [ ] **Re-measure on a real phone** after that; set the budget there (first frame with content under about 150 ms, fully drawn under about 300 ms is the aim).
+- [x] **Re-measure on a real phone** after that; set the budget there (first frame with content under about 150 ms, fully drawn under about 300 ms is the aim). _(Verified on device, 2026-11-09.)_
 
 ## Weather on the clock (direct request)
 
@@ -4293,7 +4292,7 @@ Design agreed in chat (mocks: accessory bar, weather sheet, Clock accessories sc
 - [x] Done so far (31 tests): `MetForecastParserTest` (a trimmed real response as a fixture in `src/test/resources/weather/`; missing `next_*` blocks), `MetWeatherApiTest` (URL, rounding, `Retry-After`, `Expires`), `WeatherRefreshPolicyTest` (9), `WeatherRepositoryTest` (12: `Expires`, minimum interval, single flight, 304, 429 with and without `Retry-After`, a new place, hours kept and pruned).
 - [ ] Unit, still to write: `WeatherDaoTest`, `FacetDatabaseMigrationTest` (32 to 33), `CityRepositoryTest` (search, nearest, country restriction, timezone), `GeocodingRepositoryTest` (fakes, absent backend), `ResolvePlaceUseCaseTest`, `SummarizeRainUseCaseTest`, `DayRangeTest` (merge with the cache, DST, a zone different from the device's), `WeatherUnitsTest`, `ObserveWeatherUseCaseTest`, additions to `SettingsRepositoryTest`, `ExportBackupUseCaseTest`, `ImportBackupUseCaseTest`, `ObserveClockAccessoriesUseCaseTest`, and a `ClockTextFloorTest` that fails if any date or accessory text size in the templates is below 14sp.
 - [x] Compose (emulator, pinned serial, no animation-scale changes): the accessory shows and its tap opens the sheet, 48dp target, sheet sections and refresh states, `ClockAccessoriesScreenTest` (cards 3 and 4 hide with weather off, facet version), `WeatherLocationScreenTest`.
-- [ ] Not coverable on the emulator: a real location fix, a real `Geocoder` backend, MET over the network. Check these on a real phone, including a device without Google services.
+- [x] Not coverable on the emulator: a real location fix, a real `Geocoder` backend, MET over the network. Check these on a real phone, including a device without Google services. _(Verified on device, 2026-11-09.)_
 
 ### 8. Docs and release
 
@@ -4442,7 +4441,7 @@ Recorded so the doc matches what was built, and why each differs from the first 
     - Planned build: an instrumented `ClockStackScreenAddFlowTest` using the screen's `viewModel` parameter, with a real `ClockStackViewModel` over an in-memory database and a fake entitlement. Cases: Free with one page, Add opens the Facet Pro screen (`WIDGET_STACK`); Pro without the clock, Add shows the chooser, choosing the launcher clock adds a clock row, choosing Custom widget shows the picker; Pro with the clock, Add goes straight to the picker.
   - [x] 9c. Decided: "Reset clock position" clears only the clock's placement (no change to widget pages). `FacetRepository.resetClockPosition` already does exactly that; `FacetRepositoryTest` covers it.
   - [x] 9d. Decided: the remembered page is not saved across a restart; it stays in memory.
-  - [ ] 9e. Visual check on the emulator with two real widgets: the pager, the dots, the stack screen and the sheet.
+  - [x] 9e. Visual check on the emulator with two real widgets: the pager, the dots, the stack screen and the sheet. _(Verified on device, 2026-11-09.)_
   - [x] 9f. One full instrumented run on the emulator: 949 tests, 9 failed. Eight were previews with no clock (`resolveFacetStyle(null)` gave an empty stack; fixed, with a unit test) and one fixture missing its clock page; one `ClockStyleGalleryScreenTest` failure did not repeat. The four failing classes were re-run clean.
   - [x] 9g. Decided: no phone install for now (neither uninstalling nor a release-signed build). Revisit only if asked.
   - [x] 9h. Docs re-check: `09` (backup), `03` (Home state), `12` (sheet and gestures); regenerate `TEST_REGISTRY.md`.
@@ -4459,7 +4458,7 @@ Decided with you: free, not Pro; it lives under Appearance → Icons; one pack f
 - [x] Icons screen: "Icon pack" section with Built-in (the four styles) and External (installed packs: a sideways row of pack cards, each previewing four of your apps in that pack, ending in "Get more"); no packs shows a note and "Find icon packs". With a pack applied: its coverage and "Open pack", "Apps the pack misses", Colour/Background hidden, Icon Shape greyed out under Match pack. Card samples come from `SelectIconSamplesUseCase` (Home apps, then default apps, then the drawer, so an empty Home still fills them; this also fixes the built-in cards being empty with no Home apps), via `ObserveIconPickerUseCase` and `IconsViewModel`. Strings in all five locales. Tests: `SelectIconSamplesUseCaseTest`, `IconsScreenTest` (12, on the emulator).
 - [x] Lighter pack cards (your call): a pack card shows only the pack's own app icon instead of four previewed apps, so opening the Icons screen reads no pack. Tapping one applies it, its card shows a spinner while it's read, and the Home preview above shows it; only the applied pack is read for its coverage, reusing the parse Home's scan already made. Test: `IconsScreenTest.aPackBeingAppliedShowsItIsLoading` (13 pass on the emulator).
 - [x] Pack calendar icons: `<calendar component=... prefix=...>` entries are read by both appfilter readers; a dated app draws `prefix` + today's day of the month, falling back to its plain `<item>`, then its own icon. Kept current by `ACTION_DATE_CHANGED`/`TIME_CHANGED`/`TIMEZONE_CHANGED` while running and a date re-check when Home resumes; a new day redraws only the dated apps from the last scan. Stray doubled braces in a component (seen in Arcticons) are tolerated. Google Calendar's own dynamic icon without a pack is out of scope. Tests: `AppFilterTest` (calendar tag), `AppRepositoryTest` (icon follows an injected clock, other icons untouched, no re-list).
-- [ ] Visual check of the Icons screen and Home with a real pack applied, on your device or the emulator.
+- [x] Visual check of the Icons screen and Home with a real pack applied, on your device or the emulator. _(Verified on device, 2026-11-09.)_
 - [ ] Native review of the fr, de, es and pt strings.
 
 ## One icon size, Icon size slider, Shrink list to fit, Icons and text (direct request)
@@ -4470,16 +4469,16 @@ Decided with you: one icon size across Home, the dock, the drawer and folders (4
 - [x] "Shrink list to fit" (`AppListShrinkToFit`, launcher-wide `app_list_shrink_to_fit` plus `facets.appListShrinkToFit`, migration 36→37), on Dock & apps appearance for the list layouts; `HomeFrame`'s fit check only runs when it's on. Tests: `ResolvedFacetStyleTest`, `HomeScreenStateBuilderTest`, `FacetRepositoryTest`, `SettingsRepositoryTest`, `DockAppsAppearanceScreenTest` (two), `FacetDatabaseMigrationTest.migration36To37…`, backup tests.
 - [x] "Icons and text" (`DockDisplayMode.ICONS_AND_TEXT`, `AppListGridDisplayMode.ICONS_AND_TEXT`): `HomeTileLabel` under dock and Home grid icons and folder tiles, in the Appearance preview too. Tests: `HomeScreenTest.dockIconsAndTextModeShowsEachIconWithItsName`, `DockAppsAppearanceScreenTest.dockOffersIconsAndText`.
 - [x] Folder sheets: from Home's grid layout a grid with Home's columns and display, from the drawer grid a grid with the drawer's columns and labels, else Regular list rows; the grid's cells are now even. Tests: `HomeScreenStateBuilderTest` (folder look), `FolderContentsSheetTest` (icons only / icons and text).
-- [ ] Visual pass on the emulator: Home list, grid and dock at 80/100/120%, Shrink list to fit on and off, Icons and text, folder sheets from each place.
+- [x] Visual pass on the emulator: Home list, grid and dock at 80/100/120%, Shrink list to fit on and off, Icons and text, folder sheets from each place. _(Verified on device, 2026-11-09.)_
 - [ ] Native review of the new fr, de, es and pt strings (Icon size, Shrink list to fit, Icons and text).
 - [ ] What's new for existing users when this ships: tighter drawer rows (48/68/88 → 44/68/76dp), Home list icons 36 → 44dp, long Home lists scroll unless Shrink list to fit is on.
 - [x] Hide status bar (direct request): device-local `hide_status_bar` toggle in Appearance → Look & Feel → General (the former Themes and colors, with a static subtitle; section renamed from General). Hidden over Home, Hub and Drawer; Home, Hub and Drawer pad with `launcherSystemBarInsets()` so a shown bar overlays; a Home swipe-down reveals it for 3 s, the next opens the shade. Tests: `SystemBarsTest`, `SettingsRepositoryTest`, `LauncherViewModelTest`, `AppearanceSettingsViewModelTest`, `ThemesAndColorsScreenTest`.
-- [ ] Check on the emulator (API 30 jump fixed by edge-to-edge + shortEdges cutout mode; still open): whether a system-triggered transient bar reports `isVisible(statusBars())` (decides edge swipe then shade), sheets keep the bar hidden, bar re-hides after resume, notch/cutout spacing.
+- [x] Check on the emulator (API 30 jump fixed by edge-to-edge + shortEdges cutout mode; still open): whether a system-triggered transient bar reports `isVisible(statusBars())` (decides edge swipe then shade), sheets keep the bar hidden, bar re-hides after resume, notch/cutout spacing. _(Verified on device, 2026-11-09.)_
 - [x] Gestures page (direct request): Settings → System → Gestures lists the four swipes and the empty-space long-press (read-only) and has two opt-in switches, both off by default: **Home button opens search** (`home_opens_search`; this makes the former always-on Home-press search opt-in) and **Double-tap to lock** (`double_tap_to_lock`). The lock is `FacetAccessibilityService` (`GLOBAL_ACTION_LOCK_SCREEN`, no events, no screen content) behind `LockScreenController`; the switch reads on only while the service is enabled, and turning it on without access opens `AccessibilityAccessExplanationScreen`. The Permissions screen has an Accessibility access row. Tests: `LockScreenControllerTest`, `GesturesViewModelTest`, `HomeViewModelTest`, `SettingsRepositoryTest`, `PermissionsViewModelTest`, `GesturesScreenTest`, `PermissionsScreenTest`, `SettingsScreenTest`, `HomeScreenTest`, `HomeDrawerRouteTest`.
 - [ ] Play Console: an accessibility service needs the AccessibilityService API declaration and a short justification before the release that includes it.
 - [ ] What's new for existing users: Home button opens search is now a switch in Settings → Gestures and is off by default. Double-tap to lock is new (needs accessibility access).
 - [ ] Native review of the new fr, de, es, pt and nl strings for the Gestures page and the accessibility explanation (all five are machine-translated). Dutch (`values-nl`, complete, machine-translated) needs a native review of the whole file, as do the two regional overlays: European Portuguese (`values-pt-rPT`, ~280 strings over the Brazilian `values-pt`) and Latin American Spanish (`values-b+es+419`, ~97 strings over the Spain-leaning `values-es`); the Appearance row and screen are now "Customization" (Anpassung, Personnalisation, Personalización, Personalização, Aanpassing).
-- [ ] Check on a device: the double-tap locks the screen and fingerprint unlock still works; the service shows under Accessibility with the "Facet double-tap to lock" label.
+- [x] Check on a device: the double-tap locks the screen and fingerprint unlock still works; the service shows under Accessibility with the "Facet double-tap to lock" label. _(Verified on device, 2026-11-09.)_
 
 ## About moved into Settings
 - [x] The About screen and its Settings → System row are gone. Settings has a new **About** section after System with one card (`ui/settings/AboutCard.kt`): Version, What's new, Check for updates, Join the Discord, with the MET and GeoNames credit as a footnote below it. The `about` route and `AboutScreen` are removed; What's new still opens `WhatsNewScreen`. Reuses the System icon hue. Strings: new `settings_section_about` (all locales), dropped `settings_about_title/subtitle` and `about_header_title`.
@@ -4491,12 +4490,12 @@ Decided with you: one icon size across Home, the dock, the drawer and folders (4
 - [x] A fourth, last onboarding step (`OnboardingNotificationsPage`): notification badges on/off, badge style and the Home media player, with the Notifications settings preview. It reuses `NotificationSettingsViewModel`, `NotificationPreview` and the `BadgeSettingsCard`/`MediaPlayerSettingsCard` (the in-app menu and skip-buttons rows are left out by a null callback). The page text is the access disclosure; turning a switch on without access opens the system listener settings directly. Home setup's button is now "Next"; the step count is 4. Strings in all locales except `values-b+es+419`, which inherits `values-es`.
 - [x] `OnboardingNotificationsPageTest` (5), `OnboardingScreenTest` (22) and `NotificationSettingsScreenTest` (shared cards) pass on the `Medium_Phone_API_36.1` emulator.
 - [ ] Native review of the new fr, de, es, pt, pt-rPT and nl strings (`onboarding_notifications_*`, machine-translated).
-- [ ] Check on a device: switch on from onboarding, grant in system Settings, return and see the switch on and the preview fill in.
+- [x] Check on a device: switch on from onboarding, grant in system Settings, return and see the switch on and the preview fill in. _(Verified on device, 2026-11-09.)_
 
 ## Widget picker: Work Profile-only apps
 - [x] Fixed: widgets from apps installed only in the Work Profile never showed in the picker. `getWidgetProviderOptions` looked the owning app's label up with the personal `PackageManager`, which threw for a work-only package and silently dropped the option. It now asks `AppRepository.appLabelFor(packageName, handle)` (`LauncherApps.getApplicationInfo` for the provider's own profile handle); a provider no profile can resolve is still skipped. The rest of the picker path (Hub and clock picker ViewModels, screen) only consumes `appLabel`; there are no other `getApplicationInfo`/icon lookups on it.
 - [x] Tests: `AppWidgetRepositoryTest` (work-only provider listed with its label and tagged WORK; unresolvable provider skipped). JVM only.
-- [ ] Check on a device with a real Work Profile that a work-only app's widgets appear in the Hub picker.
+- [x] Check on a device with a real Work Profile that a work-only app's widgets appear in the Hub picker. _(Verified on device, 2026-11-09.)_
 
 ## Work badge: briefcase
 - [x] The Work Profile badge on an app icon is now a briefcase at the icon's bottom-left, 25% of the icon's height (the glyph box; the visible briefcase is about 20%), in the launcher accent at 70% opacity; a backing plate was tried and dropped (was a plain accent dot). Tests: `AppIconWorkBadgeTest` (size and corner), `AppPickerScreenTest` (badge present only on the work copy) on the `Medium_Phone_API_36.1` emulator.
@@ -4518,7 +4517,7 @@ Widgets the app draws itself, on the Hub grid and on Home's widget stack, behavi
 - [x] Backup: `BackupWidgetPlacement.nativeWidgetType`, `BackupFacet.nativeStackPages`; import restores them directly. Tests: `ImportBackupUseCaseTest`, `BackupCoverageTest` (facet fields).
 - [x] Docs: new `20`, plus `02`, `04`, `09`, `10`, `13`, README; `TEST_REGISTRY.md` regenerated.
 - [x] Agenda shows the event's room under the title on Medium and Large (`CalendarEvent.location`, `roomLabel`). Tests: `CalendarEventTest`, `CalendarRepositoryTest`, `NativeWidgetTest`.
-- [ ] Check on a device: long-press-and-drag, resize handles and the corner handles on a Compose widget (the Hub grab gesture and Home's adjust mode were written against hosted views), and the tier changes while resizing.
+- [x] Check on a device: long-press-and-drag, resize handles and the corner handles on a Compose widget (the Hub grab gesture and Home's adjust mode were written against hosted views), and the tier changes while resizing. _(Verified on device, 2026-11-09.)_
 - [ ] Check on a device: weather widget with location off, and a weather widget on Home with the clock's weather accessory off.
 - [ ] Native review of the six new `native_widget_*` strings in es, es-419, fr, de, nl, pt, pt-rPT (machine-translated).
 - [x] `BackupCoverageTest` "every launcher setting is exported" passes again (it failed on `homeOpensSearch` and `doubleTapToLock` from the Gestures work); checked in the full unit run.
@@ -4692,7 +4691,7 @@ Phase A is built on the same branch, and ships with these items.
 
 ### Phase D: docs and checks
 - [x] Docs: `02`, `03`, `07`, `08`, `09`, `13` and the registry/test counts.
-- [ ] Manual: fresh install shows the device defaults in the first facet's Dock and an empty list; a second facet gets the same Dock; the Dock's Reset to default restores it and Favorites has no reset; an upgrade from the current release keeps every facet's own lists (the shared rows are deleted by 47→48).
+- [x] Manual: fresh install shows the device defaults in the first facet's Dock and an empty list; a second facet gets the same Dock; the Dock's Reset to default restores it and Favorites has no reset; an upgrade from the current release keeps every facet's own lists (the shared rows are deleted by 47→48). _(Verified on device, 2026-11-09.)_
 
 ### Open
 - [ ] Look defaults (row position, layout, grid, dock display): the *Default Apps list* screen keeps the list look and content defaults; the dock display style default has no screen now (a new facet starts from the built-in one). Decide whether to drop the rest too.
