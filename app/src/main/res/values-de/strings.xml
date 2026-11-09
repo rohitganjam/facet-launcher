@@ -795,7 +795,7 @@
     <string name="facet_carousel_facet_settings">Facetteneinstellungen</string>
     <string name="facet_carousel_delete_facet">Facette löschen</string>
     <string name="facet_carousel_add_facet">Facette hinzufügen</string>
-    <string name="facet_carousel_add_facet_subtitle">Startet mit der Standarduhr, dem Kalender, den Lieblingsapps und Einstellungen deines Launchers. Passe sie pro Facette an.</string>
+    <string name="facet_carousel_add_facet_subtitle">Startet mit einer Uhr, den Standardapps deines Geräts im Dock und dem Look deines Launchers.</string>
     <string name="facet_carousel_add_glyph">+</string>
 
     <!-- ManageFacetsScreen -->

@@ -260,6 +260,22 @@ class HomeScreenWiringTest {
     }
 
     @Test
+    fun theHomeSheetOffersToAdjustTheWidgetShowing() {
+        // Given a widget showing and the Home sheet opened from free space
+        setHome(appState(PlacedItem.SingleApp(mail)), HomeScreenActions(item = HomeItemActions(onAppClick = {})))
+        composeRule.onNodeWithTag("home_screen_root").performTouchInput { longClick(Offset(width * 0.75f, 4f)) }
+        composeRule.waitForIdle()
+
+        // When the adjust row is tapped
+        composeRule.onNodeWithTag("home_sheet_adjust").performClick()
+        composeRule.waitForIdle()
+
+        // Then the sheet is replaced by the adjust controls
+        composeRule.onNodeWithTag("home_menu_sheet").assertDoesNotExist()
+        composeRule.onNodeWithTag("clock_adjust_toolbar").assertExists()
+    }
+
+    @Test
     fun longPressingTheClockOpensTheWidgetSheetNotTheHomeSheet() {
         // Given the native clock showing, and counters on the clock sheet's actions
         val calls = mutableListOf<String>()

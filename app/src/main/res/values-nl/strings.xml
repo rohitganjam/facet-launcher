@@ -773,7 +773,7 @@
     <string name="facet_carousel_facet_settings">Facetinstellingen</string>
     <string name="facet_carousel_delete_facet">Facet verwijderen</string>
     <string name="facet_carousel_add_facet">Facet toevoegen</string>
-    <string name="facet_carousel_add_facet_subtitle">Begint met de standaardklok, agenda, favoriete apps en instellingen van je launcher. Pas ze per facet aan.</string>
+    <string name="facet_carousel_add_facet_subtitle">Begint met een klok, de standaardapps van je apparaat in het Dock en de look van je launcher.</string>
     <string name="facet_carousel_add_glyph">+</string>
 
     <string name="manage_facets_delete_message">Dit kan niet ongedaan worden gemaakt. De favorieten worden ook verwijderd.</string>

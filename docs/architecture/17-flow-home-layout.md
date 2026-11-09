@@ -106,7 +106,7 @@ With two or more clock pages the portrait list also moves down by `CLOCK_PAGE_DO
 
 ## 4. Landscape adjust mode
 
-Long-pressing a widget (the clock, the events under it, a Facet widget or a hosted one) opens that widget's sheet, whose "Adjust widget size & position" row enters adjust mode ([12](12-flow-drawer-search-and-app-actions.md) §4); the free-space Home sheet has no such row. The controls:
+Long-pressing a widget (the clock, the events under it, a Facet widget or a hosted one) opens that widget's sheet, whose "Adjust widget size & position" row enters adjust mode ([12](12-flow-drawer-search-and-app-actions.md) §4); the free-space Home sheet has the same row (`home_sheet_adjust`) while the stack has a page, and it adjusts the page showing; with an empty stack it shows Add widget and Widget stack instead. The controls:
 
 - **Divider handle.** `ClockZoneHandle(dragOrientation = Horizontal)`: a full-height rail in the gap
   between the panes, dragged left and right. The pane width is saved in landscape's own

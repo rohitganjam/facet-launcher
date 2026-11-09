@@ -795,7 +795,7 @@
     <string name="facet_carousel_facet_settings">Ajustes de faceta</string>
     <string name="facet_carousel_delete_facet">Eliminar faceta</string>
     <string name="facet_carousel_add_facet">Añadir faceta</string>
-    <string name="facet_carousel_add_facet_subtitle">Comienza con el reloj, calendario, apps favoritas y ajustes predeterminados de tu launcher. Personalízalos por faceta.</string>
+    <string name="facet_carousel_add_facet_subtitle">Comienza con un reloj, las apps predeterminadas de tu dispositivo en el Dock y el aspecto de tu launcher.</string>
     <string name="facet_carousel_add_glyph">+</string>
 
     <!-- ManageFacetsScreen -->

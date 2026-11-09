@@ -872,7 +872,7 @@
     <string name="facet_carousel_facet_settings">Facet settings</string>
     <string name="facet_carousel_delete_facet">Delete facet</string>
     <string name="facet_carousel_add_facet">Add facet</string>
-    <string name="facet_carousel_add_facet_subtitle">Starts with your launcher\'s default clock, calendar, favorite apps, and settings. Customize them per facet.</string>
+    <string name="facet_carousel_add_facet_subtitle">Starts with a clock, your device\'s default apps in the Dock, and your launcher\'s look.</string>
     <string name="facet_carousel_add_glyph">+</string>
 
     <!-- ManageFacetsScreen (delete dialog title reuses facet_carousel_delete_title;

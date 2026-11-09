@@ -148,7 +148,7 @@ private fun stackSummaryText(stack: HomeClockStackState): String = when {
     else -> stringResource(R.string.widget_sheet_stack_pages, stack.pageCount)
 }
 
-/** The Home sheet, opened by a long-press on free space: the facet's and the launcher's settings (and, while the stack is empty, add a widget and the widget stack). */
+/** The Home sheet, opened by a long-press on free space: the facet's and the launcher's settings (and add a widget and the widget stack while it is empty, adjust the widget showing otherwise). */
 @Composable
 internal fun HomeMenuSheet(stack: HomeClockStackState, actions: HomeClockActions) {
     val close = { actions.onAdjustModeChange(HomeMenuMode.NONE) }
@@ -178,6 +178,7 @@ internal fun HomeMenuSheet(stack: HomeClockStackState, actions: HomeClockActions
                 close()
                 actions.onWidgetStackClick()
             },
+            onAdjustClick = { actions.onAdjustModeChange(HomeMenuMode.ADJUST) },
             stackSummary = stackSummaryText(stack),
             stackEmpty = stack.isBlank,
         )

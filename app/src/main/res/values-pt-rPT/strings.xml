@@ -258,7 +258,7 @@
     <string name="facet_carousel_launcher_settings_subtitle">Aparência, favoritos, gaveta e mais</string>
     <string name="facet_carousel_facet_settings">Definições da faceta</string>
     <string name="facet_carousel_delete_facet">Eliminar faceta</string>
-    <string name="facet_carousel_add_facet_subtitle">Começa com o relógio predefinido, o calendário, as apps favoritas e as definições do seu launcher. Personalize cada faceta.</string>
+    <string name="facet_carousel_add_facet_subtitle">Começa com um relógio, as apps predefinidas do seu dispositivo no Dock e o aspeto do seu launcher.</string>
     <string name="preview_media_title">A reproduzir</string>
     <string name="manage_facets_delete_message">Esta ação não pode ser anulada. Os favoritos dela também serão removidos.</string>
     <string name="manage_facets_header_title">Gerir facetas</string>
