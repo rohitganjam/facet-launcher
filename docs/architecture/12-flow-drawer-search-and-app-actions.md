@@ -303,7 +303,7 @@ list's own scroll, which hands leftover drag back via `appListNestedScrollConnec
 Commit happens when the drag has travelled `COMMIT_TRAVEL_FRACTION` (20%) of the container *from where
 that drag started*, or released above `VELOCITY_THRESHOLD_PX` (1500 px/s); anything short springs back.
 A downward drag from a closed drawer expands the notification shade on the same terms
-(`SWIPE_DOWN_SHADE_FRACTION`, 20% of the height). With "Hide status bar" on and the bar hidden, that swipe reveals
+(`SWIPE_DOWN_SHADE_FRACTION`, 20% of the height). The drag follows the finger: `HomeSwipeController.shade` fills 0 to 1 over that distance and feeds the same Home fade as the Drawer (`homeLayerFade`), so Home is fully transparent when releasing would open the shade, It animates back on release or cancel, or after `SHADE_OPEN_HOLD_MS` once the shade has been asked to open (so Home does not reappear before the system shade covers it). With "Hide status bar" on and the bar hidden, that swipe reveals
 the bar instead (`SystemBarsState.revealStatusBar`) and the next one opens the shade; see [13](13-flow-facets-theme-notifications-onboarding.md) §2a.
 
 Every Home action menu — `AppContextMenu`, `FolderTileContextMenu`, the Home sheet, the clock's sheet and the one-time

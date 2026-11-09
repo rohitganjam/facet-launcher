@@ -452,7 +452,8 @@ fun HomeDrawerRoute(
                     // Home gives way to whichever panel (Drawer, Hub, Switch Facets) is opening, the same
                     // way for all three: fades out and shrinks slightly, leaving only the wallpaper and
                     // the panel's own scrim.
-                    val fade = homeLayerFade(swipe.drawer.progress.value, swipe.hub.progress.value, swipe.facet.progress.value)
+                    // The shade pull-down fades Home like the Drawer does.
+                    val fade = homeLayerFade(maxOf(swipe.drawer.progress.value, swipe.shade.progress.value), swipe.hub.progress.value, swipe.facet.progress.value)
                     alpha = fade.alpha
                     scaleX = fade.scale
                     scaleY = fade.scale
