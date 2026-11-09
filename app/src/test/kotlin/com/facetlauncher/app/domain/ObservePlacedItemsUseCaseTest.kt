@@ -27,13 +27,13 @@ import org.robolectric.RobolectricTestRunner
 @RunWith(RobolectricTestRunner::class)
 class ObservePlacedItemsUseCaseTest {
 
-    private val target = PlacementTarget.GlobalDock
+    private val target = PlacementTarget(com.facetlauncher.app.data.model.PlacementList.DOCK, 1L)
 
     private fun appInfo(letter: Char) =
         AppInfo(packageName = "com.example.$letter", activityName = ".Main", label = "$letter App", icon = null)
 
     private fun appEntity(app: AppInfo, position: Int) =
-        AppPlacementEntity(list = target.list, packageName = app.packageName, activityName = app.activityName, position = position, userId = 0)
+        AppPlacementEntity(list = target.list, facetId = target.facetId, packageName = app.packageName, activityName = app.activityName, position = position, userId = 0)
 
     private class Fixture(
         installed: Flow<List<AppInfo>>,

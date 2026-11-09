@@ -23,7 +23,10 @@ import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.collections.immutable.toImmutableSet
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -36,8 +39,6 @@ import com.facetlauncher.app.data.model.PlacementTarget
 import com.facetlauncher.app.data.model.PlacementList
 
 data class FavoritesPickerUiState(
-    /** `false` when this picker is editing the launcher-wide default Favorites list (reached from Settings) rather than one facet's own. */
-    val isFacetScoped: Boolean = true,
     val query: String = "",
     /** Favorited apps at the moment this screen was opened, in their favorites order — stays
      * exactly this set/order for the rest of this visit no matter what gets checked/unchecked
@@ -60,9 +61,8 @@ data class FavoritesPickerUiState(
 }
 
 /**
- * Favorites picker (`4j`) — also doubles as the "Default favorites" picker reached from Settings.
- * No `facetId` (or [NO_ACTIVE_FACET_ID]) means the launcher-wide default list
- * (`PlacementTarget.GlobalFavorites`) rather than one facet's own.
+ * Favorites picker (`4j`) for one facet's own list: reached from that facet's settings with its `facetId`,
+ * or from onboarding without one, which points it at the first facet through [useFacet].
  */
 @HiltViewModel
 class FavoritesPickerViewModel @Inject constructor(
@@ -75,7 +75,9 @@ class FavoritesPickerViewModel @Inject constructor(
     private val usageAccessRepository: UsageAccessRepository,
 ) : ViewModel() {
 
-    private val facetId: Long? = savedStateHandle.get<Long>("facetId")?.takeIf { it != NO_ACTIVE_FACET_ID }
+    private val argFacetId: Long? = savedStateHandle.get<Long>("facetId")?.takeIf { it != NO_ACTIVE_FACET_ID }
+    private val chosenFacetId = MutableStateFlow(argFacetId)
+    private val facetId: Long? get() = chosenFacetId.value
     private val query = MutableStateFlow("")
     private val installedApps = MutableStateFlow<List<AppInfo>>(emptyList())
     private val sortOption = MutableStateFlow(AppSortOption.ALPHABETICAL)
@@ -85,12 +87,19 @@ class FavoritesPickerViewModel @Inject constructor(
     /** `PACKAGE_USAGE_STATS` has no grant-change callback — re-checked via [refreshUsageAccessGranted] on this screen's resume. */
     val usageAccessGranted: StateFlow<Boolean> = _usageAccessGranted.asStateFlow()
 
-    private val maxFavorites: Int
-        get() = if (facetId != null) AppListLimits.MAX_FAVORITES else AppListLimits.MAX_FAVORITES
+    private val target: PlacementTarget? get() = facetId?.let { PlacementTarget(PlacementList.FAVORITES, it) }
 
-    private val target = PlacementTarget(PlacementList.FAVORITES, facetId)
+    /** For a screen not reached through a facet's route (onboarding): edit this facet's Favorites. A route's own facet wins. */
+    fun useFacet(id: Long) {
+        if (argFacetId == null && chosenFacetId.value != id) {
+            loadOrder.value = null
+            chosenFacetId.value = id
+        }
+    }
 
-    private fun observeItems(): Flow<List<PlacedItem>> = observePlacedItems.items(target)
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private fun observeItems(): Flow<List<PlacedItem>> =
+        chosenFacetId.flatMapLatest { id -> if (id == null) flowOf(emptyList()) else observePlacedItems.items(PlacementTarget(PlacementList.FAVORITES, id)) }
 
     /** Latched from the favorites' live order the first time it's observed; never updated after — see [FavoritesPickerUiState.selectedResults]. */
     private val loadOrder = MutableStateFlow<List<String>?>(null)
@@ -122,14 +131,13 @@ class FavoritesPickerViewModel @Inject constructor(
         // regardless of how many apps it holds.
         val itemCount = favorites.size + placedFolderIds.size
         FavoritesPickerUiState(
-            isFacetScoped = facetId != null,
             query = query,
             selectedResults = selected.sortedBy { order.indexOf(it.listKey) }.toImmutableList(),
             otherResults = sortAppsForPicker(other, sortOption, sortDirection).toImmutableList(),
             favoriteComponents = liveOrder.toImmutableSet(),
             folders = folders.toImmutableList(),
             placedFolderIds = placedFolderIds.toImmutableSet(),
-            canAddMore = itemCount < maxFavorites,
+            canAddMore = itemCount < AppListLimits.MAX_FAVORITES,
             sortOption = sortOption,
             sortDirection = sortDirection,
         )
@@ -161,6 +169,7 @@ class FavoritesPickerViewModel @Inject constructor(
     }
 
     fun toggleFavorite(app: AppInfo) {
+        val target = target ?: return
         val state = uiState.value
         val isFavorite = app.listKey in state.favoriteComponents
         viewModelScope.launch {
@@ -174,6 +183,7 @@ class FavoritesPickerViewModel @Inject constructor(
 
     /** The Folders tab's own checkbox — un-placing here never deletes the folder, only removes it from this specific Favorites list. */
     fun toggleFolder(folder: Folder) {
+        val target = target ?: return
         val state = uiState.value
         val isPlaced = folder.id in state.placedFolderIds
         viewModelScope.launch {

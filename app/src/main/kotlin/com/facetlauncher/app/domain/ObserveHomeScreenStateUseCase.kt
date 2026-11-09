@@ -103,17 +103,17 @@ class ObserveHomeScreenStateUseCase @Inject constructor(
         val appListItems = combine(activeFacet, refreshTrigger) { facet, _ -> facet }.flatMapLatest { facet -> observeAppListItems(facet) }
 
         val dockApps = activeFacet.flatMapLatest { facet ->
-            observePlacedItems.items(facet.placementTarget(PlacementList.DOCK))
+            facet?.let { observePlacedItems.items(it.placementTarget(PlacementList.DOCK)) } ?: flowOf(emptyList())
         }
 
         // Unconditional — unlike appListItems, which only resolves Favorites when the active list
         // mode actually is FAVORITES. Paired with dockApps below purely to stay within combine()'s
         // supported arity (see badgeCountsAndAccessories' own comment further down).
         val favoriteItems = activeFacet.flatMapLatest { facet ->
-            observePlacedItems.items(facet.placementTarget(PlacementList.FAVORITES))
+            facet?.let { observePlacedItems.items(it.placementTarget(PlacementList.FAVORITES)) } ?: flowOf(emptyList())
         }
         val favoriteCells = activeFacet.flatMapLatest { facet ->
-            observePlacedItems.gridCells(facet.placementTarget(PlacementList.FAVORITES))
+            facet?.let { observePlacedItems.gridCells(it.placementTarget(PlacementList.FAVORITES)) } ?: flowOf(SavedGridCells())
         }
         val dockAndFavoriteItems = combine(dockApps, favoriteItems, favoriteCells) { dock, favorites, cells -> Triple(dock, favorites, cells) }
 

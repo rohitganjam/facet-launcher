@@ -14,7 +14,6 @@ import com.facetlauncher.app.data.model.HomeWallpaper
 import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.data.model.ListContentMode
 import com.facetlauncher.app.data.model.PlacedItem
-import com.facetlauncher.app.domain.ApplyFacetDefaultsUseCase
 import com.facetlauncher.app.domain.FacetDefaultsScope
 import com.facetlauncher.app.domain.GetInstalledAppsUseCase
 import com.facetlauncher.app.domain.SelectPreviewAppsUseCase
@@ -77,14 +76,12 @@ class HomeAppsListSettingsViewModelTest {
         facetRepository: FacetRepository = mock(FacetRepository::class.java),
         placementRepository: PlacementRepository = mock(PlacementRepository::class.java),
         observePlacedItems: ObservePlacedItemsUseCase = mock(ObservePlacedItemsUseCase::class.java),
-        applyFacetDefaults: ApplyFacetDefaultsUseCase = mock(ApplyFacetDefaultsUseCase::class.java),
     ): HomeAppsListSettingsViewModel {
         val getInstalledApps = mock(GetInstalledAppsUseCase::class.java)
         val defaultAppRepository = mock(DefaultAppRepository::class.java)
         `when`(settingsRepository.settings).thenReturn(flowOf(settings))
         `when`(facetRepository.observeFacets()).thenReturn(MutableStateFlow(facets))
         facetId?.let { `when`(observePlacedItems.items(PlacementTarget(PlacementList.FAVORITES, it))).thenReturn(flowOf(favorites)) }
-        `when`(observePlacedItems.items(PlacementTarget.GlobalFavorites)).thenReturn(flowOf(favorites))
         `when`(getInstalledApps.observe()).thenReturn(flowOf(emptyList()))
         `when`(defaultAppRepository.getDefaultAppPackages()).thenReturn(emptyList())
         return HomeAppsListSettingsViewModel(
@@ -97,14 +94,13 @@ class HomeAppsListSettingsViewModelTest {
             defaultAppRepository,
             getInstalledApps,
             SelectPreviewAppsUseCase(),
-            applyFacetDefaults,
         )
     }
 
     @Test
     fun `favorites flow through to uiState`() = runTest {
         val twoFavorites = (1..2).map(::appInfo).map { PlacedItem.SingleApp(it) }
-        val viewModel = createViewModel(favorites = twoFavorites)
+        val viewModel = createViewModel(facetId = 5L, facets = listOf(Facet(id = 5L, name = "Work", position = 0)), favorites = twoFavorites)
         backgroundScope.launch { viewModel.uiState.collect {} }
         testDispatcher.scheduler.advanceUntilIdle()
 
@@ -115,28 +111,13 @@ class HomeAppsListSettingsViewModelTest {
     fun `a favorited folder is counted and shows up in uiState, not just apps`() = runTest {
         val folder = com.facetlauncher.app.data.model.Folder(id = 1L, name = "Games", apps = emptyList())
         val favorites = listOf(PlacedItem.SingleApp(appInfo(1)), PlacedItem.FolderItem(folder))
-        val viewModel = createViewModel(favorites = favorites)
+        val viewModel = createViewModel(facetId = 5L, facets = listOf(Facet(id = 5L, name = "Work", position = 0)), favorites = favorites)
         backgroundScope.launch { viewModel.uiState.collect {} }
         testDispatcher.scheduler.advanceUntilIdle()
 
         assertEquals(2, viewModel.uiState.value.favorites.size)
         assertEquals("2 of ${AppListLimits.MAX_FAVORITES}", viewModel.uiState.value.favoritesLabel)
         assertEquals(favorites, viewModel.uiState.value.previewApps)
-    }
-
-    @Test
-    fun `global-scoped setter writes to SettingsRepository`() = runTest {
-        // position/presentation/vertical alignment setters moved to AppearanceSettingsViewModel
-        // (see chat history — look fields, edited from Settings -> Appearance now); covered there.
-        val settingsRepository = mock(SettingsRepository::class.java)
-        val viewModel = createViewModel(settingsRepository = settingsRepository)
-
-        viewModel.setListContentMode(ListContentMode.RECENTS)
-        viewModel.setAppsToShowCount(7)
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        verify(settingsRepository).setListContentMode(ListContentMode.RECENTS)
-        verify(settingsRepository).setAppsToShowCount(7)
     }
 
     @Test
@@ -158,56 +139,14 @@ class HomeAppsListSettingsViewModelTest {
     }
 
     @Test
-    fun `copy to facets applies the apps list defaults to exactly the chosen facets`() = runTest {
-        val applyDefaults = mock(ApplyFacetDefaultsUseCase::class.java)
-        val facets = listOf(Facet(id = 1L, name = "A", position = 0), Facet(id = 2L, name = "B", position = 1))
-        val viewModel = createViewModel(facets = facets, applyFacetDefaults = applyDefaults)
-        backgroundScope.launch { viewModel.uiState.collect {} }
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        viewModel.copyToFacets(setOf(2L))
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        assertEquals(listOf(1L, 2L), viewModel.uiState.value.facets.map { it.id })
-        verify(applyDefaults).invoke(2L, FacetDefaultsScope.APPS_LIST)
-        verify(applyDefaults).invoke(2L, FacetDefaultsScope.LOOK)
-        verify(applyDefaults, org.mockito.Mockito.never()).invoke(1L, FacetDefaultsScope.APPS_LIST)
-    }
-
-    @Test
-    fun `reset to default applies the apps list defaults to the facet`() = runTest {
-        val applyDefaults = mock(ApplyFacetDefaultsUseCase::class.java)
-        val viewModel = createViewModel(facetId = 7L, facets = listOf(Facet(id = 7L, name = "Work", position = 0)), applyFacetDefaults = applyDefaults)
-
-        viewModel.resetToDefault()
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        verify(applyDefaults).invoke(7L, FacetDefaultsScope.APPS_LIST)
-        verify(applyDefaults).invoke(7L, FacetDefaultsScope.LOOK)
-    }
-
-    @Test
-    fun `reset to default does nothing at launcher scope`() = runTest {
-        val applyDefaults = mock(ApplyFacetDefaultsUseCase::class.java)
-        val viewModel = createViewModel(applyFacetDefaults = applyDefaults)
-
-        viewModel.resetToDefault()
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        org.mockito.Mockito.verifyNoInteractions(applyDefaults)
-    }
-
-    @Test
-    fun `global reorderFavorites hits the default list, folders included`() = runTest {
+    fun `launcher scope has no favorites list to reorder`() = runTest {
         val placementRepository = mock(PlacementRepository::class.java)
         val viewModel = createViewModel(placementRepository = placementRepository)
-        val folder = com.facetlauncher.app.data.model.Folder(id = 1L, name = "Games", apps = emptyList())
-        val reordered = listOf(PlacedItem.FolderItem(folder), PlacedItem.SingleApp(appInfo(1)))
 
-        viewModel.reorderFavorites(reordered)
+        viewModel.reorderFavorites(listOf(PlacedItem.SingleApp(appInfo(1))))
         testDispatcher.scheduler.advanceUntilIdle()
 
-        verify(placementRepository).reorderItems(PlacementTarget.GlobalFavorites, reordered)
+        org.mockito.Mockito.verifyNoInteractions(placementRepository)
     }
 
     @Test
@@ -222,22 +161,6 @@ class HomeAppsListSettingsViewModelTest {
 
         verify(placementRepository).reorderItems(PlacementTarget(PlacementList.FAVORITES, 7L), reordered)
     }
-
-    @Test
-    fun `global-scoped look setters write to SettingsRepository`() = runTest {
-        val settingsRepository = mock(SettingsRepository::class.java)
-        val viewModel = createViewModel(settingsRepository = settingsRepository)
-
-        viewModel.setAppRowPosition(AppRowPosition.RIGHT)
-        viewModel.setAppRowPresentation(AppRowPresentation.TEXT_ONLY)
-        viewModel.setAppListVerticalAlignment(AppListVerticalAlignment.TOP)
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        verify(settingsRepository).setAppRowPosition(AppRowPosition.RIGHT)
-        verify(settingsRepository).setAppRowPresentation(AppRowPresentation.TEXT_ONLY)
-        verify(settingsRepository).setAppListVerticalAlignment(AppListVerticalAlignment.TOP)
-    }
-
 
     @Test
     fun `facet-scoped look setters write to that facet's row, not SettingsRepository`() = runTest {
@@ -259,58 +182,20 @@ class HomeAppsListSettingsViewModelTest {
         verify(settingsRepository, org.mockito.Mockito.never()).setAppRowPosition(AppRowPosition.RIGHT)
     }
 
-
-    @Test
-    fun `setAllowLandscape writes to SettingsRepository and the state reflects the setting`() = runTest {
-        val settingsRepository = mock(SettingsRepository::class.java)
-        val viewModel = createViewModel(settingsRepository = settingsRepository, settings = LauncherSettings(allowLandscape = false))
-        backgroundScope.launch { viewModel.uiState.collect {} }
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        viewModel.setAllowLandscape(true)
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        verify(settingsRepository).setAllowLandscape(true)
-        assertEquals(false, viewModel.uiState.value.allowLandscape)
-    }
-
-
-    @Test
-    fun `global-scoped landscape alignment setters write the landscape group of SettingsRepository`() = runTest {
-        val settingsRepository = mock(SettingsRepository::class.java)
-        val viewModel = createViewModel(settingsRepository = settingsRepository)
-
-        viewModel.setLandscapeAppRowPosition(AppRowPosition.CENTER)
-        viewModel.setLandscapeAppListVerticalAlignment(AppListVerticalAlignment.TOP)
-        viewModel.setLandscapeAppListColumnAlignment(AppListColumnAlignment.MIRRORED)
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        val captor = LandscapeTransformCaptor()
-        verify(settingsRepository, org.mockito.Mockito.times(3)).updateLandscape(captor.capture())
-        assertEquals(
-            LandscapeOverrides(
-                appRowPosition = AppRowPosition.CENTER,
-                appListVerticalAlignment = AppListVerticalAlignment.TOP,
-                appListColumnAlignment = AppListColumnAlignment.MIRRORED,
-            ),
-            captor.applied(),
-        )
-    }
-
-
     @Test
     fun `a null landscape choice clears the field, back to same as portrait`() = runTest {
-        val settingsRepository = mock(SettingsRepository::class.java)
-        val viewModel = createViewModel(settingsRepository = settingsRepository)
+        val facetRepository = mock(FacetRepository::class.java)
+        val facet = Facet(id = 7L, name = "Work", position = 0)
+        `when`(facetRepository.getById(7L)).thenReturn(facet)
+        val viewModel = createViewModel(facetId = 7L, facets = listOf(facet), facetRepository = facetRepository)
 
         viewModel.setLandscapeAppRowPosition(null)
         testDispatcher.scheduler.advanceUntilIdle()
 
         val captor = LandscapeTransformCaptor()
-        verify(settingsRepository).updateLandscape(captor.capture())
+        verify(facetRepository).updateLandscape(eqOf(facet.id), captor.capture())
         assertEquals(LandscapeOverrides(), captor.last(LandscapeOverrides(appRowPosition = AppRowPosition.RIGHT)))
     }
-
 
     @Test
     fun `facet-scoped landscape alignment setters write that facet's landscape group`() = runTest {
@@ -328,7 +213,6 @@ class HomeAppsListSettingsViewModelTest {
         assertEquals(AppRowPosition.RIGHT, captor.last(LandscapeOverrides()).appRowPosition)
         verify(settingsRepository, org.mockito.Mockito.never()).updateLandscape(LandscapeTransformCaptor().capture())
     }
-
 
     @Test
     fun `the landscape rows show this scope's own landscape values, null meaning same as portrait`() = runTest {

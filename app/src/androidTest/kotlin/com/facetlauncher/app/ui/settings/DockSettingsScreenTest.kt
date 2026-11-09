@@ -53,7 +53,7 @@ class DockSettingsScreenTest {
     private fun setContent(
         onBack: () -> Unit = {},
         onAddDockApp: () -> Unit = {},
-        facetId: Long? = null,
+        facetId: Long = 1L,
         seed: suspend (AppRepository, PlacementRepository, FolderRepository, FacetRepository) -> Unit = { _, _, _, _ -> },
     ) {
         composeRule.setContent {
@@ -70,18 +70,16 @@ class DockSettingsScreenTest {
                 val folderRepository = FolderRepository(database.folderDao(), appRepository)
                 val placementRepository = PlacementRepository(database.appPlacementDao(), database.folderPlacementDao())
                 val observePlacedItems = ObservePlacedItemsUseCase(placementRepository, folderRepository, appRepository)
-                if (facetId != null) {
-                    runBlocking { database.facetDao().insert(com.facetlauncher.app.data.local.FacetEntity(id = facetId, name = "P", position = 0)) }
-                }
+                runBlocking { database.facetDao().insert(com.facetlauncher.app.data.local.FacetEntity(id = facetId, name = "P", position = 0)) }
                 runBlocking { seed(appRepository, placementRepository, folderRepository, facetRepository) }
                 DockSettingsViewModel(
-                    SavedStateHandle(facetId?.let { mapOf("facetId" to it) } ?: emptyMap()),
+                    SavedStateHandle(mapOf("facetId" to facetId)),
                     settingsRepository,
                     facetRepository,
                     placementRepository,
                     observePlacedItems,
                     WallpaperRepository(WallpaperManager.getInstance(context)),
-                    ApplyFacetDefaultsUseCase(facetRepository, placementRepository, settingsRepository),
+                    ApplyFacetDefaultsUseCase(facetRepository, com.facetlauncher.app.domain.SeedFacetDefaultsUseCase(com.facetlauncher.app.data.DefaultAppRepository(context), placementRepository, com.facetlauncher.app.domain.GetInstalledAppsUseCase(appRepository)), settingsRepository),
                 )
             }
             FacetLauncherTheme {
@@ -95,7 +93,7 @@ class DockSettingsScreenTest {
     fun headerAndPreviewRender() {
         setContent()
         composeRule.onNodeWithTag("back_button").assertIsDisplayed()
-        composeRule.onNodeWithText("Default Dock Apps").assertIsDisplayed()
+        composeRule.onNodeWithText("Dock Apps").assertIsDisplayed()
         composeRule.onNodeWithTag("dock_settings_preview_card").assertExists()
     }
 
@@ -105,24 +103,6 @@ class DockSettingsScreenTest {
         setContent(onBack = { backInvoked = true })
         composeRule.onNodeWithTag("back_button").performClick()
         assertEquals(true, backInvoked)
-    }
-
-    @Test
-    fun dockDisplayStyleRowChangesTheGlobalSetting() {
-        // Given the default dock, Icons selected by default
-        setContent()
-        composeRule.onNodeWithTag("dock_settings_screen").performScrollToNode(hasTestTag("dock_display_style_row"))
-        composeRule.onNodeWithTag("dock_display_style_row").assertTextContains("Icons")
-
-        // When picking "Text"
-        composeRule.onNodeWithTag("dock_display_style_row").performClick()
-        composeRule.waitForIdle()
-        composeRule.onNodeWithTag("dock_display_style_row_option_TEXT").performClick()
-
-        // Then it's persisted to the launcher-wide settings
-        composeRule.waitUntil(timeoutMillis = 3_000) {
-            runBlocking { settingsRepository.settings.first().dockDisplayMode == com.facetlauncher.app.data.model.DockDisplayMode.TEXT }
-        }
     }
 
     @Test
@@ -164,12 +144,12 @@ class DockSettingsScreenTest {
     }
 
     @Test
-    fun aFolderInTheDefaultDock_rendersAsAFolderTileInThePreview_notItsAppsFlattened() {
+    fun aFolderInTheDock_rendersAsAFolderTileInThePreview_notItsAppsFlattened() {
         var folderId = 0L
         setContent(
             seed = { _, placementRepository, folderRepository, _ ->
                 folderId = folderRepository.createFolder("Games")
-                placementRepository.placeFolder(PlacementTarget.GlobalDock, folderId, position = 0)
+                placementRepository.placeFolder(PlacementTarget(PlacementList.DOCK, 1L), folderId, position = 0)
             },
         )
 
@@ -217,80 +197,34 @@ class DockSettingsScreenTest {
     }
 
     @Test
-    fun resetToDefaultAsksForConfirmationAndCopiesTheDefaultDockIntoTheFacet() {
-        // Given a facet with its own dock and a different launcher-wide default dock
+    fun resetToDefaultAsksForConfirmationAndReseedsTheDockFromTheDeviceDefaults() {
+        // Given a facet whose own dock holds a stale app that is not installed
         var facetPlacements: PlacementRepository? = null
         setContent(
             facetId = 42L,
-            seed = { appRepository, placementRepository, _, _ ->
+            seed = { _, placementRepository, _, _ ->
                 facetPlacements = placementRepository
-                val apps = appRepository.getTestableApps()
-                placementRepository.addApp(PlacementTarget(PlacementList.DOCK, 42L), apps[0], position = 0)
-                placementRepository.addApp(PlacementTarget.GlobalDock, apps[1], position = 0)
+                placementRepository.restoreApp(
+                    com.facetlauncher.app.data.local.AppPlacementEntity(list = PlacementList.DOCK, facetId = 42L, packageName = "com.example.stale", activityName = ".Main", position = 0),
+                )
             },
         )
         composeRule.waitUntil(timeoutMillis = 3_000) {
             composeRule.onAllNodesWithTag("dock_settings_reset_row").fetchSemanticsNodes().isNotEmpty()
         }
+        val owned = { runBlocking { facetPlacements!!.getRawApps(PlacementTarget(PlacementList.DOCK, 42L)).map { it.packageName } } }
 
-        // When tapping Reset to default, then cancelling
+        // When tapping Reset to default, then cancelling, nothing changes
         composeRule.onNodeWithTag("dock_settings_reset_row").performClick()
         composeRule.onNodeWithTag("confirm_dialog").assertIsDisplayed()
         composeRule.onNodeWithTag("confirm_dialog_cancel").performClick()
-
-        // Then nothing changed
-        val owned = { runBlocking { facetPlacements!!.getRawApps(PlacementTarget(PlacementList.DOCK, 42L)).map { it.packageName } } }
-        val before = owned()
+        assertEquals(listOf("com.example.stale"), owned())
 
         // When tapping it again and confirming
         composeRule.onNodeWithTag("dock_settings_reset_row").performClick()
         composeRule.onNodeWithTag("confirm_dialog_confirm").performClick()
 
-        // Then the facet's dock is a copy of the default dock
-        val defaultDock = runBlocking { facetPlacements!!.getRawApps(PlacementTarget.GlobalDock).map { it.packageName } }
-        composeRule.waitUntil(timeoutMillis = 5_000) { owned() == defaultDock }
-        assertEquals(1, before.size)
-    }
-
-    @Test
-    fun copyToFacetsCopiesTheDefaultDockOntoTheSelectedFacetsOnly() {
-        // Given two facets and a launcher-wide default dock with one app
-        var placements: PlacementRepository? = null
-        val facetIds = mutableListOf<Long>()
-        setContent(
-            seed = { appRepository, placementRepository, _, facetRepository ->
-                placements = placementRepository
-                facetIds += facetRepository.addFacet().id
-                facetIds += facetRepository.addFacet().id
-                placementRepository.addApp(PlacementTarget.GlobalDock, appRepository.getTestableApps()[0], position = 0)
-            },
-        )
-        composeRule.waitForIdle()
-
-        // When opening Copy to facets (scrolled into view), deselecting the second facet and confirming
-        composeRule.onNodeWithTag("dock_settings_screen").performScrollToNode(hasTestTag("dock_settings_copy_row"))
-        // The row only takes taps once the facets have loaded
-        composeRule.waitUntil(timeoutMillis = 5_000) {
-            composeRule.onAllNodes(hasTestTag("dock_settings_copy_row") and hasClickAction()).fetchSemanticsNodes().isNotEmpty()
-        }
-        composeRule.onNodeWithTag("dock_settings_copy_row").performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnClick)
-        composeRule.waitUntil(timeoutMillis = 5_000) {
-            composeRule.onAllNodesWithTag("copy_to_facets_row_${facetIds[1]}").fetchSemanticsNodes().isNotEmpty()
-        }
-        composeRule.onNodeWithTag("copy_to_facets_row_${facetIds[1]}").performClick()
-        composeRule.onNodeWithTag("copy_to_facets_confirm").performClick()
-
-        // Then the first facet's dock is a copy of the default and the second one is untouched
-        val dockOf = { id: Long -> runBlocking { placements!!.getRawApps(PlacementTarget(PlacementList.DOCK, id)).size } }
-        composeRule.waitUntil(timeoutMillis = 5_000) { dockOf(facetIds[0]) == 1 }
-        assertEquals(0, dockOf(facetIds[1]))
-    }
-
-    @Test
-    fun launcherScopeIsTitledAsTheDefaultWithANote() {
-        setContent()
-
-        composeRule.onNodeWithText("Default Dock Apps").assertIsDisplayed()
-        composeRule.onNodeWithTag("defaults_screen_note").assertExists()
+        // Then the stale app is gone: the dock holds the device's default apps instead
+        composeRule.waitUntil(timeoutMillis = 5_000) { "com.example.stale" !in owned() }
     }
 }

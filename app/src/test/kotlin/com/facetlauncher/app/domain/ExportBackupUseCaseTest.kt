@@ -87,19 +87,11 @@ class ExportBackupUseCaseTest {
         `when`(placementRepository.getRawApps(PlacementTarget(PlacementList.FAVORITES, 7))).thenReturn(
             listOf(AppPlacementEntity(list = PlacementList.FAVORITES, id = 1, facetId = 7, packageName = "com.example.a", activityName = ".Main", position = 0)),
         )
-        `when`(placementRepository.getRawApps(PlacementTarget.GlobalDock)).thenReturn(
-            listOf(AppPlacementEntity(list = PlacementList.DOCK, id = 1, packageName = "com.example.b", activityName = ".Main", position = 0)),
-        )
         `when`(placementRepository.getRawApps(PlacementTarget(PlacementList.DOCK, 7))).thenReturn(
             listOf(AppPlacementEntity(list = PlacementList.DOCK, id = 1, facetId = 7, packageName = "com.example.d", activityName = ".Main", position = 0)),
         )
         `when`(placementRepository.getRawFolderPlacements(PlacementTarget(PlacementList.DOCK, 7))).thenReturn(emptyList())
         `when`(placementRepository.getRawFolderPlacements(PlacementTarget(PlacementList.FAVORITES, 7))).thenReturn(emptyList())
-        `when`(placementRepository.getRawApps(PlacementTarget.GlobalFavorites)).thenReturn(
-            listOf(AppPlacementEntity(list = PlacementList.FAVORITES, id = 1, packageName = "com.example.c", activityName = ".Main", position = 0)),
-        )
-        `when`(placementRepository.getRawFolderPlacements(PlacementTarget.GlobalDock)).thenReturn(emptyList())
-        `when`(placementRepository.getRawFolderPlacements(PlacementTarget.GlobalFavorites)).thenReturn(emptyList())
         `when`(widgetPlacementRepository.observeAll()).thenReturn(
             flowOf(listOf(WidgetPlacementEntity(appWidgetId = 42, providerPackageName = "com.example.widgets", providerClassName = ".W", row = 1, col = 2, colSpan = 2, rowSpan = 1, landscapeOrder = 3))),
         )
@@ -129,11 +121,11 @@ class ExportBackupUseCaseTest {
         assertEquals(true, bundle.settings.doubleTapToLock)
         assertEquals("TEXT", bundle.settings.appListGridDisplayMode)
         assertEquals(0, bundle.settings.activeFacetIndex)
-        assertEquals(1, bundle.dockApps.size)
-        assertEquals("com.example.b", bundle.dockApps[0].packageName)
         assertEquals(1, bundle.facets[0].dockApps.size)
         assertEquals("com.example.d", bundle.facets[0].dockApps[0].packageName)
-        assertEquals(1, bundle.defaultFavoriteApps.size)
+        // The launcher-wide lists no longer exist, so none is written
+        assertEquals(0, bundle.dockApps.size)
+        assertEquals(0, bundle.defaultFavoriteApps.size)
         assertEquals(1, bundle.widgetPlacements.size)
         assertEquals("com.example.widgets", bundle.widgetPlacements[0].providerPackageName)
         assertEquals(2, bundle.widgetPlacements[0].colSpan)
@@ -144,10 +136,6 @@ class ExportBackupUseCaseTest {
     fun `no active facet leaves activeFacetIndex null`() = runTest {
         `when`(settingsRepository.settings).thenReturn(flowOf(LauncherSettings()))
         `when`(facetRepository.observeFacets()).thenReturn(flowOf(emptyList()))
-        `when`(placementRepository.getRawApps(PlacementTarget.GlobalDock)).thenReturn(emptyList())
-        `when`(placementRepository.getRawFolderPlacements(PlacementTarget.GlobalDock)).thenReturn(emptyList())
-        `when`(placementRepository.getRawApps(PlacementTarget.GlobalFavorites)).thenReturn(emptyList())
-        `when`(placementRepository.getRawFolderPlacements(PlacementTarget.GlobalFavorites)).thenReturn(emptyList())
         `when`(widgetPlacementRepository.observeAll()).thenReturn(flowOf(emptyList()))
         val uri = mock(Uri::class.java)
 
@@ -167,7 +155,7 @@ class ExportBackupUseCaseTest {
         )
         `when`(facetRepository.observeFacets()).thenReturn(flowOf(listOf(facet)))
         `when`(widgetPlacementRepository.observeAll()).thenReturn(flowOf(emptyList()))
-        for (target in listOf(PlacementTarget(PlacementList.FAVORITES, 7), PlacementTarget(PlacementList.DOCK, 7), PlacementTarget.GlobalDock, PlacementTarget.GlobalFavorites)) {
+        for (target in listOf(PlacementTarget(PlacementList.FAVORITES, 7), PlacementTarget(PlacementList.DOCK, 7))) {
             `when`(placementRepository.getRawApps(target)).thenReturn(emptyList())
             `when`(placementRepository.getRawFolderPlacements(target)).thenReturn(emptyList())
         }
@@ -202,7 +190,7 @@ class ExportBackupUseCaseTest {
         )
         `when`(facetRepository.observeFacets()).thenReturn(flowOf(listOf(facet)))
         `when`(widgetPlacementRepository.observeAll()).thenReturn(flowOf(emptyList()))
-        for (target in listOf(PlacementTarget(PlacementList.FAVORITES, 7), PlacementTarget(PlacementList.DOCK, 7), PlacementTarget.GlobalDock, PlacementTarget.GlobalFavorites)) {
+        for (target in listOf(PlacementTarget(PlacementList.FAVORITES, 7), PlacementTarget(PlacementList.DOCK, 7))) {
             `when`(placementRepository.getRawApps(target)).thenReturn(emptyList())
             `when`(placementRepository.getRawFolderPlacements(target)).thenReturn(emptyList())
         }

@@ -16,7 +16,7 @@ screens are covered in `13 §1b`.
 ## 2. The request (`data/weather/MetWeatherApi`)
 
 One `GET` to `https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=…&lon=…[&altitude=…]` with the
-coordinates rounded to two decimals (`WeatherPlace.rounded`; MET accepts four). The `User-Agent` is
+coordinates rounded to three decimals (`WeatherPlace.rounded`; MET accepts four). The `User-Agent` is
 `FacetLauncher/<versionName> github.com/rohitganjam/facet-launcher`, since MET requires an app name and a way to reach the
 developer and blocks requests without one. When a `Last-Modified` came back last time it goes out as `If-Modified-Since`.
 The answer is turned into a `WeatherApiResult`:
@@ -77,7 +77,7 @@ weather is shown, so with weather off no location is read, no geocoder is asked 
   location with a 10-second timeout, else the last known), only with `ACCESS_COARSE_LOCATION` or fine, and never
   in the background. Without the permission the result is `NeedsLocationPermission`; with the permission but no fix and no
   earlier place it is `NoLocation`. A stored place is kept while the device is within 5 km of it, so walking around does
-  not refetch; a new one is rounded to two decimals, with the fix's altitude when it has one (an altitude of exactly 0
+  not refetch; a new one is rounded to three decimals, with the fix's altitude when it has one (an altitude of exactly 0
   counts as unknown).
 - **Chosen city:** the city's coordinates, rounded, with no permission and no location read; no city is `NoCity`. The
   chosen city is one of the saved cities (up to 10, `savedWeatherCities`) the location screen keeps for switching.
@@ -86,7 +86,7 @@ weather is shown, so with weather off no location is read, no geocoder is asked 
 
 `ResolvePlaceUseCase` names a position: the device's geocoder (`AndroidPlaceGeocoder`, `Geocoder` in the user's locale; the
 listener API from Android 13, the blocking one before) answers first, with the city (`locality`, then `subAdminArea`, then
-`adminArea`); otherwise the nearest city of the bundled list is used, and the UI shows it as "Near X". The name is stored with
+`adminArea`), prefixed by the neighbourhood (`subLocality`) as "Indiranagar, Bengaluru" when it has one and differs from the city (a reverse lookup only; the city picker's search keeps the plain city); otherwise the nearest city of the bundled list is used, and the UI shows it as "Near X". The name is stored with
 its source (`PlaceNameSource`) in the fetch state and dropped when the place changes; a name that came from the list is
 asked for again on the next refresh in case the geocoder works by then. The nearest listed city (in the geocoder's country
 when it gave one, within 300 km) also supplies the IANA timezone.

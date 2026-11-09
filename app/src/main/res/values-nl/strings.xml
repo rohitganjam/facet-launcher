@@ -259,30 +259,14 @@
     <string name="settings_all_day_events_visible">Evenementen van een hele dag zichtbaar</string>
     <string name="settings_all_day_events_hidden">Evenementen van een hele dag verborgen</string>
     <string name="settings_dock_title">Dock</string>
-    <string name="settings_default_dock_title">Standaard dock-apps</string>
-    <string name="home_apps_list_default_header_title">Standaard appslijst</string>
     <string name="defaults_screen_note">Wordt gebruikt wanneer je een facet maakt of terugzet.</string>
     <string name="reset_to_default_title">Terugzetten naar standaard</string>
     <string name="reset_to_default_confirm">Terugzetten</string>
-    <string name="reset_dock_subtitle">Vervang deze dock door de standaarddock</string>
-    <string name="reset_dock_confirm_message">Hiermee wordt de dock van deze facet vervangen door de standaarddock. De apps die je hier hebt geplaatst gaan verloren.</string>
-    <string name="reset_apps_subtitle">Vervang deze lijst door de standaardlijst</string>
-    <string name="reset_apps_confirm_message">Hiermee worden de favorieten, de lijstinhoud en het aantal apps van deze facet vervangen door de standaardwaarden. De favorieten die je hier hebt gekozen gaan verloren.</string>
+    <string name="reset_dock_subtitle">Vervang deze dock door de standaardapps van het apparaat</string>
+    <string name="reset_dock_confirm_message">Hiermee wordt de dock van deze facet vervangen door de standaardapps van het apparaat. De apps die je hier hebt geplaatst gaan verloren.</string>
     <string name="reset_look_subtitle">Vervang het uiterlijk van de lijst door de standaard</string>
     <string name="reset_look_confirm_message">Hiermee worden de lijstindeling en de uitlijning van deze facet vervangen door de standaardwaarden.</string>
-    <plurals name="settings_dock_apps_count">
-        <item quantity="one">%d dock-app</item>
-        <item quantity="other">%d dock-apps</item>
-    </plurals>
-    <plurals name="settings_dock_folders_count">
-        <item quantity="one">%d map</item>
-        <item quantity="other">%d mappen</item>
-    </plurals>
     <string name="settings_home_apps_list_title">Appslijst op startscherm</string>
-    <plurals name="settings_favorites_count">
-        <item quantity="one">%1$d favoriet</item>
-        <item quantity="other">%1$d favorieten</item>
-    </plurals>
     <plurals name="settings_recents_count">
         <item quantity="one">%1$d recente</item>
         <item quantity="other">%1$d recente</item>
@@ -381,7 +365,7 @@
     <string name="app_list_grid_display_mode_icons">Pictogrammen</string>
     <string name="app_list_grid_display_mode_text">Tekst</string>
 
-    <string name="home_apps_list_position">Uitlijning van startschermapps</string>
+    <string name="home_apps_list_position">Uitlijning van de appslijst</string>
     <string name="home_apps_list_list_position">Positie van de appslijst</string>
     <string name="appearance_allow_landscape_title">Liggende modus toestaan</string>
     <string name="appearance_allow_landscape_subtitle">Gebruik een liggende indeling als het scherm breed genoeg is. Uit houdt Home staand.</string>
@@ -399,10 +383,8 @@
     <string name="app_list_grid_display_mode_icons_and_text">Pictogrammen en tekst</string>
     <string name="dock_display_mode_icons_and_text">Pictogrammen en tekst</string>
     <string name="home_apps_list_content_facet">Inhoud van de appslijst</string>
-    <string name="home_apps_list_content_default">Standaardinhoud van de appslijst</string>
     <string name="home_apps_list_apps_to_show">Te tonen apps</string>
     <string name="home_apps_list_favorites_facet">Favorieten</string>
-    <string name="home_apps_list_favorites_default">Standaardfavorieten</string>
     <string name="drag_to_reorder_content_description">Sleep om de volgorde te wijzigen</string>
 
     <string name="app_drawer_settings_header_title">App-lade</string>
@@ -789,7 +771,7 @@
     <string name="facet_carousel_facet_settings">Facetinstellingen</string>
     <string name="facet_carousel_delete_facet">Facet verwijderen</string>
     <string name="facet_carousel_add_facet">Facet toevoegen</string>
-    <string name="facet_carousel_add_facet_subtitle">Begint met de standaardklok, agenda, favoriete apps en instellingen van je launcher. Pas ze per facet aan.</string>
+    <string name="facet_carousel_add_facet_subtitle">Begint met een klok, de standaardapps van je apparaat in het Dock en de look van je launcher.</string>
     <string name="facet_carousel_add_glyph">+</string>
 
     <string name="manage_facets_delete_message">Dit kan niet ongedaan worden gemaakt. De favorieten worden ook verwijderd.</string>
@@ -1092,10 +1074,6 @@
         <item quantity="one">Kopiëren naar %d facet</item>
         <item quantity="other">Kopiëren naar %d facetten</item>
     </plurals>
-    <string name="copy_dock_subtitle">Vervangt de dock van de gekozen facetten door deze</string>
-    <string name="copy_dock_sheet_message">Vervangt de dock van elke geselecteerde facet door de standaarddock.</string>
-    <string name="copy_apps_subtitle">Vervangt de appslijst van de gekozen facetten door deze</string>
-    <string name="copy_apps_sheet_message">Vervangt de favorieten, de lijstinhoud en het aantal apps van elke geselecteerde facet door de standaardwaarden.</string>
     <string name="copy_look_subtitle">Vervangt het uiterlijk van apps van de gekozen facetten door dit</string>
     <string name="copy_look_sheet_message">Vervangt de lijstindeling en de uitlijning van elke geselecteerde facet door de standaardwaarden.</string>
 </resources>

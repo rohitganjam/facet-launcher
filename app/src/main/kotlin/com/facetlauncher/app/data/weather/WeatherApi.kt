@@ -45,7 +45,7 @@ interface WeatherApi {
 
 /**
  * MET Norway Locationforecast 2.0 `compact`. Identifies itself with a `User-Agent` as MET requires, sends the
- * coordinates rounded to two decimals (MET accepts four), and uses a conditional request when it has a
+ * coordinates rounded to three decimals (MET accepts four), and uses a conditional request when it has a
  * `Last-Modified` from the previous answer. The only code that opens a network connection in the app.
  */
 @Singleton
@@ -100,7 +100,7 @@ class MetWeatherApi @Inject constructor(
 
         fun requestUrl(place: WeatherPlace): String {
             val altitude = place.altitudeM?.let { "&altitude=$it" }.orEmpty()
-            return String.format(Locale.ROOT, "%s?lat=%.2f&lon=%.2f%s", BASE_URL, place.latitude, place.longitude, altitude)
+            return String.format(Locale.ROOT, "%s?lat=%.${WeatherPlace.COORDINATE_DECIMALS}f&lon=%.${WeatherPlace.COORDINATE_DECIMALS}f%s", BASE_URL, place.latitude, place.longitude, altitude)
         }
 
         fun parseHttpDate(value: String?): Instant? = try {

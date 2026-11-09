@@ -723,6 +723,28 @@ object Migrations {
         override fun migrate(db: SupportSQLiteDatabase) = materializeFacetDefaults(db, launcher())
     }
 
+    /**
+     * 47→48 changes no schema: the launcher-wide Dock and Favorites no longer exist (a facet owns its lists, copied into it since 44→45),
+     * so their rows (no facet, owner key 0) are deleted.
+     */
+    val MIGRATION_47_48: Migration = object : Migration(47, 48) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("DELETE FROM app_placements WHERE facetId IS NULL")
+            db.execSQL("DELETE FROM folder_placements WHERE facetId IS NULL")
+        }
+    }
+
+    /**
+     * 48→49: whether Home may rotate becomes a facet's own choice (`facets.allowLandscape`). Every facet takes the launcher-wide value the
+     * switch had, so nothing changes on screen. [launcherAllowLandscape] reads it from the settings DataStore, which the database cannot.
+     */
+    fun migration48To49(launcherAllowLandscape: () -> Boolean): Migration = object : Migration(48, 49) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("ALTER TABLE facets ADD COLUMN allowLandscape INTEGER NOT NULL DEFAULT 1")
+            db.execSQL("UPDATE facets SET allowLandscape = ?", arrayOf<Any?>(if (launcherAllowLandscape()) 1 else 0))
+        }
+    }
+
     val ALL: Array<Migration> = arrayOf(
         MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15, MIGRATION_15_16,
         MIGRATION_16_17, MIGRATION_17_18, MIGRATION_18_19, MIGRATION_19_20, MIGRATION_20_21, MIGRATION_21_22,
@@ -741,5 +763,6 @@ object Migrations {
         MIGRATION_39_40,
         MIGRATION_40_41,
         MIGRATION_41_42,
+        MIGRATION_47_48,
     )
 }

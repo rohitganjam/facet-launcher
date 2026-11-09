@@ -4,11 +4,11 @@
 (favorites), the Home dock, or inside a folder. This flow covers every write to the
 placement tables (`app_placements` and `folder_placements`, plus `folder_apps` for folder membership) and the three background processes that keep them consistent with the OS.
 
-## 1. The routing rule — global vs per-facet
+## 1. The routing rule — the active facet's own list
 
 Every add/remove goes through a `domain/` use case that decides which list to write (`DOCK` or
-`FAVORITES`) and whose it is: the **active facet's own** list (the launcher-wide default only when there
-is no active facet). The composable and ViewModel never know which rows were hit.
+`FAVORITES`) and whose it is: the **active facet's own** list (nothing is written when there is no active
+facet; there is no launcher-wide list). The composable and ViewModel never know which rows were hit.
 
 ```mermaid
 flowchart TB
@@ -19,8 +19,8 @@ flowchart TB
     S --> F["facetRepository.getById(activeFacetId)"]
     F --> D{"facet.placementTarget(list)"}
     D -- "an active facet" --> T1["PlacementTarget(list, facet.id)"]
-    D -- "no active facet" --> T2["PlacementTarget(list) — launcher-wide"]
-    T1 & T2 --> POS["position = observePlacedItems.items(target).first().size\n(append to end)"]
+    D -- "no active facet" --> T2["null: nothing is written"]
+    T1 --> POS["position = observePlacedItems.items(target).first().size\n(append to end)"]
     POS --> DAO["appPlacementDao.upsert(AppPlacementEntity(list, pkg, activity, position, profile, userId))"]
     DAO --> ROOM[(Room invalidates table)]
     ROOM --> HOME["Home / Drawer re-emit via combine\n(see 03 §2)"]
@@ -39,10 +39,10 @@ Reordering rewrites `position = index` for every item in the list (an `upsert` p
 
 | Surface (all use `ui/components/DragReorderState`) | ViewModel call | Repository | Mechanism |
 |---|---|---|---|
-| Dock settings (`DockSettingsScreen`) | `DockSettingsViewModel` → | `PlacementRepository.reorderItems(PlacementTarget(DOCK, facetId), items)` | `upsert` of every app and folder placement with `position = index` (`AppPlacementDao.upsert` / `FolderPlacementDao.upsert`); `replaceItems(target, items)` instead calls `deleteAllForOwner(list, facetId)` first, and `copyList(from, to)` does the same with a copy of another list's raw rows (apps and folder placements, uninstalled apps included): `ApplyFacetDefaultsUseCase` uses it to seed a facet from the launcher-wide list, when it is created or reset |
+| Dock settings (`DockSettingsScreen`) | `DockSettingsViewModel` → | `PlacementRepository.reorderItems(PlacementTarget(DOCK, facetId), items)` | `upsert` of every app and folder placement with `position = index` (`AppPlacementDao.upsert` / `FolderPlacementDao.upsert`); `replaceItems(target, items)` instead calls `deleteAllForOwner(list, facetId)` first. The Dock's *Reset to default* clears the Dock and re-seeds it (`SeedFacetDefaultsUseCase`, `ApplyFacetDefaultsUseCase` scope `DOCK`) |
 | Home app list settings (`HomeAppsListSettingsScreen`) | `HomeAppsListSettingsViewModel` → | `PlacementRepository.reorderItems(PlacementTarget(FAVORITES, facetId), items)` | same |
 | Folder contents (`FolderDetailScreen`) | `FolderDetailViewModel` → | `FolderRepository.reorderFolderApps(folderId, apps)` | same |
-| Onboarding (`OnboardingHomeSetupPage`) | `OnboardingViewModel.reorderDockApps / reorderFavorites` | `PlacementRepository.reorderItems` on the launcher-wide targets only; `OnboardingViewModel.finish` then copies them onto the existing facets (`ApplyFacetDefaultsUseCase`, scopes `DOCK` and `APPS_LIST`) | same |
+| Onboarding (`OnboardingHomeSetupPage`) | `OnboardingViewModel.reorderDockApps / reorderFavorites` | `PlacementRepository.reorderItems` on the first (active) facet's own targets; `OnboardingViewModel.finish` then applies only the content mode and count (`ApplyFacetDefaultsUseCase`, scope `APPS_LIST`) | same |
 | Home's single-column list and Dock (`PickUpReorderHost`, [12 §3](12-flow-drawer-search-and-app-actions.md)) | `DrawerViewModel.onReorderList` → `ReorderActiveListUseCase` | `PlacementRepository.reorderItems(resolveTarget(list), items)` (the active facet's own list) | same; list only in Favorites mode |
 | An open folder on Home (`FolderContentsSheet`) | `DrawerViewModel.onReorderFolderApps` | `FolderRepository.reorderFolderApps(folderId, apps)` | same |
 | Manage facets (`ManageFacetsScreen`) | `ManageFacetsViewModel.reorderFacets` | `FacetRepository.reorderFacets` | `update` per facet with new `position` |
@@ -86,14 +86,12 @@ flowchart LR
     subgraph LVM["LauncherViewModel.init (process lifetime)"]
         A["CleanUpUninstalledAppsUseCase()\ncollects forever"]
         B["RepairOrphanedProfileRowsUseCase()\nruns once"]
-        C["SeedDefaultDockUseCase()\nruns once per install"]
     end
     OS1["LauncherApps.Callback.onPackageRemoved\n→ AppRepository.observeUninstalledPackages(): (pkg, userId)"] --> A
     OS2["ACTION_MANAGED_PROFILE_REMOVED\n→ AppRepository.observeProfileRemoved(): UserHandle"] --> A
     A -- "removeByPackage(pkg, userId) on all 5 repos" --> T1[(app_placements, folder_apps)]
     A -- "removeByUserId(handle.hashCode()) on all 5 repos" --> T1
     B -- "getOrphanedRows() WHERE userId = -1\n→ backfillUserId(entity, handlesFor(profile).singleOrNull().hashCode())" --> T1
-    C -- "defaults_seeded == false →\nDefaultAppRepository.getDefaultAppPackages()\n∩ installed → placementRepository.addApp × ≤ MAX_DOCK_APPS\n→ setDefaultsSeeded(true)" --> T2[(app_placements)]
 ```
 
 | Process | Trigger | Effect | Why it exists |
@@ -101,7 +99,7 @@ flowchart LR
 | **Uninstall cleanup** | Per-package `onPackageRemoved` (not `onPackagesUnavailable` — a paused Work Profile must keep its rows) | Deletes the matching rows from `app_placements` (every list, global and per-facet: `deleteByPackage(list, global, pkg, userId)` for `DOCK` and `FAVORITES`, `global = true` and `false`) and from `folder_apps` for that `(pkg, userId)` | Hydration already *hides* missing apps; this makes the removal permanent so the slot frees up and backups don't carry ghosts |
 | **Profile removal sweep** | `ACTION_MANAGED_PROFILE_REMOVED` with `EXTRA_USER` | `removeByUserId` for that exact handle only | Unenrolling a Work Profile doesn't reliably fire per-package events; scoped to the handle so a clone profile in the same `AppProfile` category survives |
 | **Orphan repair** | Once, at startup | Rows written before schema v20 have `userId = -1`; resolved from their `profile` if exactly one live handle matches that category | Without it, pre-v20 rows never join against the live list and vanish from Home |
-| **Default dock seed** | Once, gated by `defaults_seeded`, before the first facet is created (`LauncherViewModel.init` runs it ahead of `EnsureActiveFacetUseCase.keepUsable`) | Fills an empty launcher-wide dock with the OS-resolved browser/SMS/camera/mail/phone apps that are installed | A fresh install (and onboarding) shows a usable dock immediately, independent of the onboarding UI; the first facet copies this dock when it is created |
+| **Facet dock seed** | When a facet is created (`ApplyFacetDefaultsUseCase.applyAll`), and on the Dock's "Reset to default" (`replace = true`) | `SeedFacetDefaultsUseCase` fills the facet's empty Dock with the OS-resolved browser/SMS/camera/mail/phone apps that are installed (at most `MAX_DOCK_APPS`); Favorites start empty | A fresh install and onboarding show a usable dock immediately, independent of the onboarding UI; each facet then owns its list |
 
 ## 5. Invariants this flow guarantees
 

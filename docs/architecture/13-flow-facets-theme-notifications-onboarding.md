@@ -6,9 +6,8 @@ Four smaller flows that don't fit the earlier docs but are load-bearing for how 
 
 A *facet* is a named Home configuration (`facets` row). Exactly one is active
 (`active_facet_id` in DataStore). A facet **owns** its dock, favorites, list content and look. The launcher-wide
-values (Settings → Apps and folders: *Default Dock Apps*, *Default Apps list*; a facet's own screens are *Dock Apps* and *Apps List*) are only a
-seed: `ApplyFacetDefaultsUseCase` copies them into a facet when it is created and again when the user taps *Reset to default* on
-one of its screens. Editing a facet never touches the defaults, and editing the defaults never touches an existing facet, unless the user asks: each launcher-level default screen has a *Copy to facets* row that opens a bottom sheet (`CopyToFacetsSheet`, every facet checked to start, the current one marked) and, on confirm, applies that screen's scope to the facets left checked.
+values (the list content and look a new facet starts with, kept in the launcher settings with no screen of their own; a facet's own screens are *Dock Apps* and *Apps List*) are only a
+seed: `ApplyFacetDefaultsUseCase` applies them to a facet when it is created, and the Dock's *Reset to default* re-seeds the Dock from the device's default apps. There is no launcher-wide Dock, Favorites or Apps list screen, and no *Copy to facets* from defaults. There is no launcher-wide Home setting with a control: *Allow landscape mode* is each facet's own switch (`Facet.allowLandscape`), on its Apps list screen.
 
 ```mermaid
 flowchart TB
@@ -30,13 +29,12 @@ flowchart TB
     end
     subgraph OWN["Destination screens — each edits the facet's own values (no Inherit/Override switch)"]
         C1["ClockStyleGalleryScreen, ClockAccessoriesScreen\nUpdateClockConfigUseCase(facet, change) — the clock's own settings"]
-        C2["HomeAppsListSettingsScreen\nsetListContentMode / setAppsToShowCount / reorderFavorites on the facet\n+ Reset to default → ApplyFacetDefaultsUseCase(APPS_LIST)"]
+        C2["HomeAppsListSettingsScreen\nsetListContentMode / setAppsToShowCount / reorderFavorites on the facet"]
         C3["DockSettingsScreen\ndockDisplayMode on the facet, reorderDockItems on its Dock list (app_placements)\n+ Reset to default → ApplyFacetDefaultsUseCase(DOCK: list and display style)"]
         C4["CalendarSettingsSheet\nUpdateClockConfigUseCase(facet, calendar change)"]
     end
     subgraph LOOK["HomeAppsListSettingsScreen — the facet's own list look"]
-        A1["appRowPosition /\nappRowPresentation / appListVerticalAlignment /\nappListLayout / appListColumnAlignment /\nappListGridColumns / appListGridDisplayMode / appListShrinkToFit\nfacetRepository.setXxx(facet, value) — writes directly\n+ Reset to default → ApplyFacetDefaultsUseCase(APPS_LIST, then LOOK)"]
-        A2["The same screen at launcher scope edits the defaults a new or reset facet is seeded from\n(the Default Apps list row)\n+ Copy to facets → ApplyFacetDefaultsUseCase(APPS_LIST, then LOOK) for each facet picked in the sheet"]
+        A1["appRowPosition /\nappRowPresentation / appListVerticalAlignment /\nappListLayout / appListColumnAlignment /\nappListGridColumns / appListGridDisplayMode / appListShrinkToFit\nfacetRepository.setXxx(facet, value) — writes directly"]
         A3["Landscape alignment (appRowPosition / appListColumnAlignment /\nappListVerticalAlignment): nullable landscape twins, null = Same as portrait\n(LandscapeOverrides group, resolved once by HomeUiState.listAlignment(mode))"]
     end
     EAF["EnsureActiveFacetUseCase.keepUsable()\nno facets → addFacet(); active not found or disabled → first selectable facet"] --> S1
@@ -58,13 +56,13 @@ flowchart TB
   Apps list / Dock rows, mirroring `SettingsScreen`'s own
   layout: tonal `SettingsCard`s (28dp, no shadow or border), a `SettingsIconBadge` on each row in
   the same hue as on Settings, inset dividers, no chevrons. There is no Inherit/Override switch anywhere: each of the two destination
-  screens edits the facet's own values and, at facet scope, ends with a *Reset to default* row (`ResetToDefaultCard`, behind a `ConfirmDialog`
-  that names what is lost) that calls `ApplyFacetDefaultsUseCase` for that screen's scope (see the diagram above).
+  screens edits the facet's own values and, the Dock screen ends with a *Reset to default* row (`ResetToDefaultCard`, behind a `ConfirmDialog`
+  that names what is lost) that reseeds the facet's dock from the device defaults (see the diagram above); the Apps list screen has none.
 - **`AppearanceSettingsScreen` is a hub of short sections**, each a card of one or two rows that open their own screen. It has no clock or calendar rows: a clock's style, accessories and calendar settings are reached only from the clock's own sheet and the widget stack (a facet's settings has no Appearance row either; its Home section has no look screen of its own). It shows only "Look & Feel": the App Drawer and Notifications rows are on the main Settings screen's Customization card, below the Launcher appearance row that opens this screen (`SettingsViewModel` reads the notification access for the latter). (The Home list's look is not here: it is on the Apps list screen, `HomeAppsListSettingsScreen`, for the defaults and for a facet), and, global
   only, the Look & Feel section (three rows: "Colors and Themes" → `ThemesAndColorsScreen` with a static "Themes, accent, status bar" subtitle, "Fonts" → `FontsScreen`, "Icons" → `IconsScreen`, the last two showing their current value).
   The two moved-out screens each show the same live `AppearancePreviewCard` above their controls and share
-  `AppearanceSettingsViewModel` (a separate instance per back-stack entry). `HomeAppsListSettingsScreen` (`appListLookItems` in `AppListLookItems.kt`, with `HomeAppsListSettingsViewModel`) holds the `LOOK`
-  fields above under the list content card, in cards on the global screen (one fewer on a facet's): an "Allow landscape mode" switch (global only, `SettingsToggleRow`; off hides the Landscape alignment card), the layout card (list layout, presentation or grid rows), then "Portrait alignment" and "Landscape alignment" under `SettingsSectionHeader`s. Each alignment card has the layout's horizontal row (row position, or column alignment for two columns, none for a grid) and the list position. Landscape's rows add a "Same as portrait" choice, stored as `null`; the preview is the screen's `HomeSurfacePreview`, portrait-shaped; three pages, each a Home preview plus only its own card(s), reached from the "General" rows: `ThemesAndColorsScreen` (route `themesAndColors`: launcher theme, status bar icons, accent), `FontsScreen` (route `fonts`: launcher font style, font color, size, weight, then a `FontPreviewRow` of sample text in
+  `AppearanceSettingsViewModel` (a separate instance per back-stack entry). `HomeAppsListSettingsScreen` (`AppListLayoutRows` and `appListAlignmentItems` in `AppListLookItems.kt`, with `HomeAppsListSettingsViewModel`, always for one facet) holds the `LOOK`
+  fields: the layout rows (list layout, presentation or grid rows, at the top of the list content card); below it, "Portrait alignment" and "Landscape alignment" under `SettingsSectionHeader`s. Each alignment card has the layout's horizontal row (row position, or column alignment for two columns, none for a grid) and the list position. Landscape's rows add a "Same as portrait" choice, stored as `null`; the preview is the screen's `HomeSurfacePreview`, portrait-shaped; three pages, each a Home preview plus only its own card(s), reached from the "General" rows: `ThemesAndColorsScreen` (route `themesAndColors`: launcher theme, status bar icons, accent), `FontsScreen` (route `fonts`: launcher font style, font color, size, weight, then a `FontPreviewRow` of sample text in
   Home's styles as the card's last row) and `IconsScreen` (route `icons`): a Home preview, four style cards (default, monochrome, glyph, outline) each showing a 2×2 sample of the user's own icons on `SurfaceContainer` in the chosen colour, a colour dropdown (accent, theme, theme inverted; monochrome has no inverted), a background dropdown (none, tile or reversed tile, glyph and outline only) and the shape picker. `IconStyle`, `IconColour` and `IconBackground` are views of `IconRenderMode`, whose existing stored values are unchanged; a tile (`GLYPH_TILE_*`, `OUTLINE_TILE_*`) fills the icon shape in the colour with the picture in the text tone that reads on it, and a reversed tile (`*_REVERSED_*`) swaps the two; theme inverted is `GLYPH_INVERTED`/`OUTLINE_INVERTED`, the same pictures in `InkInverted`, the opposite of the text colour, with no tile. Glyph and outline draw from the app's themed monochrome layer when it ships one (the outline is a 4 px rim at the 192 px mask size, with its opacities scaled so the 95th percentile is full), else from the plain icon by plate removal (a flat colour, else an edge-walled fill that follows gradients) or edge detection (on the glyph alone over mid grey, its rim kept inside the glyph at the same 4 px width and detail lines thinner, so the plate's own edge never shows; the whole icon's edges only where plate removal fails and they are not too busy for line art; the edge strengths are then scaled by one factor so the 95th percentile of the drawn pixels is fully opaque, which brings every icon's brightest lines to the same level and keeps its gradient), and draw the whole icon where neither works, its lightness anchored so the accent sits at the accent's own lightness among the icon's tones, such as art-heavy icons, see `IconStyler`.
   `dockDisplayMode` ("Show Dock apps as") is edited on the Dock screen (`DockSettingsScreen`, `DockSettingsViewModel.setDockDisplayMode`), above the apps card, and follows that screen's Reset to default and Copy to facets (scope `DOCK`). Row titles on the look screen:
   `appRowPosition` → "Home Apps Alignment",
@@ -104,9 +102,8 @@ flowchart TB
   not on `ClockStyleGalleryScreen` — that screen dropped its own calendar-preview block entirely
   (see chat history). The preview's `favorites`/`dockItems`/`calendarEvents` are this scope's real,
   live content, not sampled installed apps or fixed sample events: `AppearanceSettingsViewModel`
-  observes `ObservePlacedItemsUseCase` for the facet's own and the launcher-wide Favorites and Dock, picked by scope via `effectiveFavorites`/`effectiveDockItems`
-  (`if (facet != null) facetFavorites else globalFavorites`, same for dock) —
-  identical to `HomeAppsListSettingsViewModel`/`DockSettingsViewModel`'s own choice. Calendar
+  observes the facet's own Favorites and Dock through `ObservePlacedItemsUseCase`, or at launcher scope the active facet's through
+  `ObserveActiveFacetItemsUseCase` (`favorites`/`dockItems`). Calendar
   events come from `CalendarRepository.getUpcomingEvents`, gated by `CalendarPermissionRepository
   .isGranted()` (empty when ungranted, never a sample fallback), with facet-or-global
   `showAllDay`/`calendarIds` of the clock's calendar settings resolved the same way `ObserveHomeScreenStateUseCase`
@@ -125,11 +122,11 @@ flowchart TB
 - **Switching is one DataStore write.** Everything downstream is reactive:
   `ObserveHomeScreenStateUseCase` recomputes `activeFacet` from `combine(settings, facets)` and
   `flatMapLatest` tears down the previous facet's Room subscriptions.
-- **Creating or resetting copies the default, it does not link to it.** `ApplyFacetDefaultsUseCase` copies the launcher-wide rows
-  (`PlacementRepository.copyList`, apps and folder placements) and values into the facet, so its list (its `app_placements` /
-  `folder_placements` rows for that `list` and `facetId`) is an independent copy from that moment. The default dock is seeded
-  (`SeedDefaultDockUseCase`) before the first facet is created, and onboarding's choices, made on the launcher-wide lists, are copied onto the
-  existing facets when it finishes (`OnboardingViewModel.finish`).
+- **Creating or resetting seeds, it does not link.** `ApplyFacetDefaultsUseCase` gives a new facet a Dock of the device's default apps
+  (`SeedFacetDefaultsUseCase`, from `DefaultAppRepository`) and empty Favorites, and copies the launcher settings' look and Favorites
+  content mode and count into it, so its lists (its `app_placements` / `folder_placements` rows for that `list` and `facetId`) are its own
+  from that moment. The Dock's "Reset to default" re-seeds from the device defaults. Onboarding edits the first facet's own lists
+  directly (`OnboardingViewModel`, and the pickers through `useFacet`); finishing applies only the content mode and count.
 - **One resolver for everything a facet owns:** `domain/ResolvedFacetStyle.kt`'s
   `resolveFacetStyle(facet, settings)` returns the clock block, apps-list look, dock display mode,
   calendar display, the clock and list placement in each orientation (`clockPlacement`, `listAlignment`,
@@ -188,7 +185,7 @@ Weather widget can reach them whether or not the clock shows weather.
 
 The Home sheet no longer has a *Clock & calendar settings* row or its facet scope badge: a clock's settings are always its own, reached from the clock's own sheet (a long-press on the clock or its calendar, [12](12-flow-drawer-search-and-app-actions.md) §4). A facet's settings screen has a *Home* section with *Widgets* (that facet's widget stack, `clockStack?facetId=`), above the *Apps and folders* section with *Apps list*, *Dock* and *Dock & apps appearance* (`DockAppsAppearanceScreen` directly, with no Appearance hub in between). Those three screens edit the facet's own values and end with *Reset to default*; at launcher scope they are the *Default …* screens under Settings → Apps and folders and carry a one-line note that they are used when a facet is created or reset.
 
-The Home sheet has a *Switch facet* row (`home_sheet_switch_facet`) that opens the facet carousel (`HomeClockActions.onOpenFacetCarousel` → `swipe.facet.open()`); `FacetCarouselScreen(isOpen)` puts its pager back on the active facet whenever the overlay is closed, so it always opens there. On the Settings folder screen the header's 3-dot menu (`FolderDetailMenu`) offers Rename, Dock and Favorites add/remove and Delete; the Dock and Favorites rows carry a `FacetScopeBadge` (only with 2+ facets) because that screen is where the facet is not otherwise visible, fed by `ObserveFolderPlacementUseCase`. The app and folder long-press menus on Home and in the Drawer show no badge.
+The Home sheet has an *Adjust widget size & position* row (`home_sheet_adjust`, while the stack has a page) that enters adjust mode for the page showing, as the widget sheet's row does, and a *Switch facet* row (`home_sheet_switch_facet`) that opens the facet carousel (`HomeClockActions.onOpenFacetCarousel` → `swipe.facet.open()`); `FacetCarouselScreen(isOpen)` puts its pager back on the active facet whenever the overlay is closed, so it always opens there. On the Settings folder screen the header's 3-dot menu (`FolderDetailMenu`) offers Rename, Dock and Favorites add/remove and Delete; the Dock and Favorites rows carry a `FacetScopeBadge` (only with 2+ facets) because that screen is where the facet is not otherwise visible, fed by `ObserveFolderPlacementUseCase`. The app and folder long-press menus on Home and in the Drawer show no badge.
 
 `HomeScreenStateBuilder` gates the items: the alarm and battery only when their switch is on, the weather
 (`HomeWeatherState`, from `ObserveWeatherUseCase`) only when its switch is on and the forecast is not outdated.
@@ -448,7 +445,7 @@ flowchart LR
     FIN --> HOME["FacetNavHost (HOME)"]
     HOME --> PROMPT["HomeScreen: 'Set as default' prompt\n(coach mark HOME_SET_DEFAULT_PROMPT, until dismissed\nor DefaultLauncherRepository.isDefaultLauncher())"]
     HOME --> GEST["Gesture hint overlay\n(coach mark HOME_GESTURES)"]
-    SEED["SeedDefaultDockUseCase (runs in parallel from LauncherViewModel.init,\nnot gated on onboarding)"] --> SETUP
+    SEED["SeedFacetDefaultsUseCase (seeds the first facet's Dock when it is created\nat launch, not gated on onboarding)"] --> SETUP
 ```
 
 - The gate is `LauncherUiState.onboardingCompleted: Boolean?`, fed by its own settings collector (not the apps/work-profile
@@ -462,8 +459,9 @@ flowchart LR
   stack here); the VM re-checks the grant on resume, and the switches show on only while access is held. Skipping asks for nothing.
 - Onboarding is outside the nav graph (a top-level `when` branch in `LauncherActivity`), so Back
   can never pop into it and it never appears on the back stack.
-- The dock the user sees on the setup page is already seeded — `SeedDefaultDockUseCase` runs at
-  first launch regardless of onboarding, keyed on `defaults_seeded`.
+- The dock the user sees on the setup page is already seeded — the first facet is created at launch with the
+  device's default apps in its Dock (`SeedFacetDefaultsUseCase`), regardless of onboarding. The setup page and the
+  pickers it opens edit that facet's lists (`OnboardingUiState.facetId`).
 - "Set as default launcher" is a system action (`DefaultLauncherRepository.requestDefaultLauncherIntent()`
   → `RoleManager` request); Facet only prompts when it is confirmed *not* to hold the role. `HomeUiState.isDefaultLauncher`
   is tri-state (`null` until the async `RoleManager` check resolves): an already-default device never shows the sheet —

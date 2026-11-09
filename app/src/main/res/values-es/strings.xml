@@ -255,30 +255,14 @@
     <string name="settings_all_day_events_visible">Eventos de todo el día visibles</string>
     <string name="settings_all_day_events_hidden">Eventos de todo el día ocultos</string>
     <string name="settings_dock_title">Dock</string>
-    <string name="settings_default_dock_title">Apps del dock predeterminadas</string>
-    <string name="home_apps_list_default_header_title">Lista de apps predeterminada</string>
     <string name="defaults_screen_note">Se usa al crear una faceta o restablecer una.</string>
     <string name="reset_to_default_title">Restablecer valores predeterminados</string>
     <string name="reset_to_default_confirm">Restablecer</string>
-    <string name="reset_dock_subtitle">Sustituye este dock por el predeterminado</string>
-    <string name="reset_dock_confirm_message">Esto sustituye el dock de esta faceta por el dock predeterminado. Las apps que colocaste aquí se perderán.</string>
-    <string name="reset_apps_subtitle">Sustituye esta lista por la predeterminada</string>
-    <string name="reset_apps_confirm_message">Esto sustituye los favoritos, el contenido de la lista y el número de apps de esta faceta por los valores predeterminados. Los favoritos que elegiste aquí se perderán.</string>
+    <string name="reset_dock_subtitle">Sustituye este dock por las apps predeterminadas del dispositivo</string>
+    <string name="reset_dock_confirm_message">Esto sustituye el dock de esta faceta por las apps predeterminadas del dispositivo. Las apps que colocaste aquí se perderán.</string>
     <string name="reset_look_subtitle">Sustituye el aspecto de la lista por el predeterminado</string>
     <string name="reset_look_confirm_message">Esto sustituye el diseño de la lista y la alineación de esta faceta por los valores predeterminados.</string>
-    <plurals name="settings_dock_apps_count">
-        <item quantity="one">%d app del Dock</item>
-        <item quantity="other">%d apps del Dock</item>
-    </plurals>
-    <plurals name="settings_dock_folders_count">
-        <item quantity="one">%d carpeta</item>
-        <item quantity="other">%d carpetas</item>
-    </plurals>
     <string name="settings_home_apps_list_title">Lista de apps de inicio</string>
-    <plurals name="settings_favorites_count">
-        <item quantity="one">%1$d favorito</item>
-        <item quantity="other">%1$d favoritos</item>
-    </plurals>
     <plurals name="settings_recents_count">
         <item quantity="one">%1$d reciente</item>
         <item quantity="other">%1$d recientes</item>
@@ -398,10 +382,8 @@
     <string name="app_list_grid_display_mode_icons_and_text">Iconos y texto</string>
     <string name="dock_display_mode_icons_and_text">Iconos y texto</string>
     <string name="home_apps_list_content_facet">Contenido de la lista de apps</string>
-    <string name="home_apps_list_content_default">Contenido predeterminado de la lista de apps</string>
     <string name="home_apps_list_apps_to_show">Apps a mostrar</string>
     <string name="home_apps_list_favorites_facet">Favoritos</string>
-    <string name="home_apps_list_favorites_default">Favoritos predeterminados</string>
     <string name="drag_to_reorder_content_description">Arrastra para reordenar</string>
 
     <!-- AppDrawerSettingsScreen -->
@@ -811,7 +793,7 @@
     <string name="facet_carousel_facet_settings">Ajustes de faceta</string>
     <string name="facet_carousel_delete_facet">Eliminar faceta</string>
     <string name="facet_carousel_add_facet">Añadir faceta</string>
-    <string name="facet_carousel_add_facet_subtitle">Comienza con el reloj, calendario, apps favoritas y ajustes predeterminados de tu launcher. Personalízalos por faceta.</string>
+    <string name="facet_carousel_add_facet_subtitle">Comienza con un reloj, las apps predeterminadas de tu dispositivo en el Dock y el aspecto de tu launcher.</string>
     <string name="facet_carousel_add_glyph">+</string>
 
     <!-- ManageFacetsScreen -->
@@ -1150,10 +1132,6 @@
         <item quantity="one">Copiar a %d faceta</item>
         <item quantity="other">Copiar a %d facetas</item>
     </plurals>
-    <string name="copy_dock_subtitle">Sustituye el dock de las facetas que elijas por este</string>
-    <string name="copy_dock_sheet_message">Sustituye el dock de cada faceta seleccionada por el dock predeterminado.</string>
-    <string name="copy_apps_subtitle">Sustituye la lista de apps de las facetas que elijas por esta</string>
-    <string name="copy_apps_sheet_message">Sustituye los favoritos, el contenido de la lista y el número de apps de cada faceta seleccionada por los valores predeterminados.</string>
     <string name="copy_look_subtitle">Sustituye el aspecto de las apps de las facetas que elijas por este</string>
     <string name="copy_look_sheet_message">Sustituye el diseño de la lista y la alineación de cada faceta seleccionada por los valores predeterminados.</string>
 </resources>

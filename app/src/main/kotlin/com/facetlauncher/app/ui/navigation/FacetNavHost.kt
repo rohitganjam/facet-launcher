@@ -107,21 +107,17 @@ object FacetDestinations {
 
     fun folderAppPicker(folderId: Long) = "folderAppPicker/$folderId"
 
-    /** Omitting [facetId] (or passing [NO_ACTIVE_FACET_ID]) opens the launcher-wide default Favorites list. */
-    fun favoritesPicker(facetId: Long? = null) =
-        if (facetId != null && facetId != NO_ACTIVE_FACET_ID) "favoritesPicker?facetId=$facetId" else "favoritesPicker"
+    /** One facet's own Favorites picker. */
+    fun favoritesPicker(facetId: Long) = "favoritesPicker?facetId=$facetId"
 
-    /** Omitting [facetId] (or passing [NO_ACTIVE_FACET_ID]) opens the launcher-wide default dock. */
-    fun dockPicker(facetId: Long? = null) =
-        if (facetId != null && facetId != NO_ACTIVE_FACET_ID) "dockPicker?facetId=$facetId" else "dockPicker"
+    /** One facet's own Dock picker. */
+    fun dockPicker(facetId: Long) = "dockPicker?facetId=$facetId"
 
-    /** Omitting [facetId] (or passing [NO_ACTIVE_FACET_ID]) opens the launcher-wide default Home apps list. */
-    fun homeAppsListSettings(facetId: Long? = null) =
-        if (facetId != null && facetId != NO_ACTIVE_FACET_ID) "homeAppsListSettings?facetId=$facetId" else "homeAppsListSettings"
+    /** One facet's own Apps list settings. */
+    fun homeAppsListSettings(facetId: Long) = "homeAppsListSettings?facetId=$facetId"
 
-    /** Omitting [facetId] (or passing [NO_ACTIVE_FACET_ID]) opens the launcher-wide default dock. */
-    fun dockSettings(facetId: Long? = null) =
-        if (facetId != null && facetId != NO_ACTIVE_FACET_ID) "dockSettings?facetId=$facetId" else "dockSettings"
+    /** One facet's own Dock settings. */
+    fun dockSettings(facetId: Long) = "dockSettings?facetId=$facetId"
 
     /** Omitting [facetId] (or passing [NO_ACTIVE_FACET_ID]) opens the launcher-wide Clock accessories. */
     /** The widget stack of [facetId]; omitting it (or passing [NO_ACTIVE_FACET_ID]) opens the active facet's. */
@@ -221,8 +217,6 @@ fun FacetNavHost(
                 onNavigateToAppearance = { navController.navigate(FacetDestinations.APPEARANCE_SETTINGS) },
                 onNavigateToAppDrawerSettings = { navController.navigate(FacetDestinations.APP_DRAWER_SETTINGS) },
                 onNavigateToNotificationSettings = { navController.navigate(FacetDestinations.NOTIFICATION_SETTINGS) },
-                onNavigateToDockSettings = { navController.navigate(FacetDestinations.dockSettings()) },
-                onNavigateToHomeAppsListSettings = { navController.navigate(FacetDestinations.homeAppsListSettings()) },
                 onNavigateToFolders = { navController.navigate(FacetDestinations.FOLDERS_SETTINGS) },
                 onNavigateToGestures = { navController.navigate(FacetDestinations.GESTURES) },
                 onNavigateToWeatherSettings = { navController.navigate(FacetDestinations.UNITS_AND_LOCATION) },
@@ -298,7 +292,7 @@ fun FacetNavHost(
             FacetDestinations.DOCK_SETTINGS,
             arguments = listOf(navArgument("facetId") { type = NavType.LongType; defaultValue = NO_ACTIVE_FACET_ID }),
         ) { backStackEntry ->
-            val facetId = backStackEntry.arguments?.getLong("facetId")?.takeIf { it != NO_ACTIVE_FACET_ID }
+            val facetId = backStackEntry.arguments?.getLong("facetId") ?: NO_ACTIVE_FACET_ID
             DockSettingsScreen(
                 onBack = { navController.popBackStackSafely() },
                 onAddDockApp = { navController.navigate(FacetDestinations.dockPicker(facetId)) },
@@ -308,7 +302,7 @@ fun FacetNavHost(
             FacetDestinations.HOME_APPS_LIST_SETTINGS,
             arguments = listOf(navArgument("facetId") { type = NavType.LongType; defaultValue = NO_ACTIVE_FACET_ID }),
         ) { backStackEntry ->
-            val facetId = backStackEntry.arguments?.getLong("facetId")?.takeIf { it != NO_ACTIVE_FACET_ID }
+            val facetId = backStackEntry.arguments?.getLong("facetId") ?: NO_ACTIVE_FACET_ID
             HomeAppsListSettingsScreen(
                 onBack = { navController.popBackStackSafely() },
                 onEditFavorites = { navController.navigate(FacetDestinations.favoritesPicker(facetId)) },

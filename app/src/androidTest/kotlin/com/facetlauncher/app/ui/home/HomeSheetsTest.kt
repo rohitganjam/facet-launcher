@@ -28,6 +28,7 @@ class HomeSheetsTest {
                     onLauncherSettingsClick = { calls += "launcher-settings" },
                     onAddWidgetClick = { calls += "add" },
                     onWidgetStackClick = { calls += "stack" },
+                    onAdjustClick = { calls += "adjust" },
                     stackSummary = stackSummary,
                     stackEmpty = stackEmpty,
                 )
@@ -54,12 +55,13 @@ class HomeSheetsTest {
     }
 
     @Test
-    fun theHomeSheetHoldsOnlySwitchFacetAndTheSettingsWhileAWidgetIsShowing() {
+    fun theHomeSheetHoldsAdjustSwitchFacetAndTheSettingsWhileAWidgetIsShowing() {
         // Given the Home sheet over a stack with a widget
         val calls = mutableListOf<String>()
         setHomeSheet(calls = calls)
 
-        // Then it has Switch facet and the two settings rows, none of the widget's
+        // Then it has Adjust, Switch facet and the two settings rows, none of the widget's other rows
+        composeRule.onNodeWithTag("home_sheet_adjust").assertIsDisplayed()
         composeRule.onNodeWithTag("home_sheet_switch_facet").assertIsDisplayed()
         composeRule.onNodeWithTag("home_sheet_facet_settings").assertIsDisplayed()
         composeRule.onNodeWithTag("home_sheet_launcher_settings").assertIsDisplayed()
@@ -68,10 +70,11 @@ class HomeSheetsTest {
         }
 
         // And each row fires its own action
+        composeRule.onNodeWithTag("home_sheet_adjust").performClick()
         composeRule.onNodeWithTag("home_sheet_switch_facet").performClick()
         composeRule.onNodeWithTag("home_sheet_facet_settings").performClick()
         composeRule.onNodeWithTag("home_sheet_launcher_settings").performClick()
-        assertEquals(listOf("switch-facet", "facet-settings", "launcher-settings"), calls)
+        assertEquals(listOf("adjust", "switch-facet", "facet-settings", "launcher-settings"), calls)
     }
 
     @Test
@@ -85,6 +88,7 @@ class HomeSheetsTest {
         composeRule.onNodeWithTag("widget_sheet_stack").performClick()
         assertEquals(listOf("add", "stack"), calls)
         composeRule.onNodeWithTag("home_sheet_facet_settings").assertIsDisplayed()
+        composeRule.onNodeWithTag("home_sheet_adjust").assertDoesNotExist()
     }
 
     @Test

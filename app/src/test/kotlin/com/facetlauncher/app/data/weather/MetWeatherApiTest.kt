@@ -10,20 +10,20 @@ import org.junit.Test
 class MetWeatherApiTest {
 
     @Test
-    fun `the request carries two decimal coordinates and an optional altitude`() {
+    fun `the request carries three decimal coordinates and an optional altitude`() {
         assertEquals(
-            "https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=12.97&lon=77.59",
-            MetWeatherApi.requestUrl(WeatherPlace(12.97, 77.59)),
+            "https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=12.972&lon=77.595",
+            MetWeatherApi.requestUrl(WeatherPlace(12.972, 77.595)),
         )
         assertEquals(
-            "https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=12.97&lon=77.59&altitude=920",
-            MetWeatherApi.requestUrl(WeatherPlace(12.97, 77.59, altitudeM = 920)),
+            "https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=12.972&lon=77.595&altitude=920",
+            MetWeatherApi.requestUrl(WeatherPlace(12.972, 77.595, altitudeM = 920)),
         )
     }
 
     @Test
-    fun `a place is rounded to two decimals so noise never makes a new place`() {
-        assertEquals(WeatherPlace(12.97, 77.59), WeatherPlace.rounded(12.9716, 77.5946))
+    fun `a place is rounded to three decimals so noise never makes a new place`() {
+        assertEquals(WeatherPlace(12.972, 77.595), WeatherPlace.rounded(12.9716, 77.5946))
         assertEquals(WeatherPlace.rounded(12.9701, 77.5899), WeatherPlace.rounded(12.9699, 77.5901))
     }
 

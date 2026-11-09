@@ -22,7 +22,7 @@ app/src/main/kotlin/com/facetlauncher/app/
 │   ├── widget/                    (3)   AppWidgetRepository + LauncherAppWidgetHost (AppWidgetHost subclass) + WidgetConfigureActivity (invisible trampoline that opens a widget's configure activity)
 │   └── FacetNotificationListenerService.kt   @AndroidEntryPoint service feeding NotificationBadgeRepository (its component is also what MediaSessionRepository reads sessions through)
 │
-├── domain/                        (70)  59 *UseCase classes + FlowCombine.kt, HubGridConstants.kt, NativeWidgetSizing.kt, BackupMapping.kt, WeatherUnits.kt, WeatherDay.kt, RainSummary.kt
+├── domain/                        (71)  60 *UseCase classes + FlowCombine.kt, HubGridConstants.kt, NativeWidgetSizing.kt, BackupMapping.kt, WeatherUnits.kt, WeatherDay.kt, RainSummary.kt
 │                                        Composes ≥1 repositories, or pure logic (grid placement, ranking, grouping)
 │
 └── ui/

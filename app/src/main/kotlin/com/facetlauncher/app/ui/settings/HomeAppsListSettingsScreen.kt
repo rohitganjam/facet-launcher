@@ -57,9 +57,6 @@ import com.facetlauncher.app.ui.components.AppIconSize
 import com.facetlauncher.app.ui.components.BackButton
 import com.facetlauncher.app.ui.components.CardDivider
 import com.facetlauncher.app.ui.components.HomeSurfacePreview
-import com.facetlauncher.app.ui.components.CopyToFacetsCard
-import com.facetlauncher.app.ui.components.DefaultsNote
-import com.facetlauncher.app.ui.components.ResetToDefaultCard
 import com.facetlauncher.app.ui.components.LabeledDropdownRow
 import com.facetlauncher.app.ui.components.ReorderRowDefaults
 import com.facetlauncher.app.ui.components.LocalSettingsRowInset
@@ -78,7 +75,7 @@ import com.facetlauncher.app.ui.theme.resolve
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 
-/** Settings → Home & Apps → Home Apps List (the defaults a new facet starts with) — also a facet's own Apps-list screen when `viewModel` is facet-scoped, with a Reset to default action. */
+/** A facet's own Apps-list screen: its list layout, content, Favorites and alignment. */
 @Composable
 fun HomeAppsListSettingsScreen(
     onBack: () -> Unit,
@@ -95,7 +92,6 @@ fun HomeAppsListSettingsScreen(
         onAppsToShowCountChange = viewModel::setAppsToShowCount,
         onReorderFavorites = viewModel::reorderFavorites,
         lookActions = AppListLookActions(
-            onAllowLandscapeChange = viewModel::setAllowLandscape,
             onLayoutChange = viewModel::setAppListLayout,
             onPresentationChange = viewModel::setAppRowPresentation,
             onGridColumnsChange = viewModel::setAppListGridColumns,
@@ -107,9 +103,8 @@ fun HomeAppsListSettingsScreen(
             onLandscapeRowPositionChange = viewModel::setLandscapeAppRowPosition,
             onLandscapeColumnAlignmentChange = viewModel::setLandscapeAppListColumnAlignment,
             onLandscapeVerticalAlignmentChange = viewModel::setLandscapeAppListVerticalAlignment,
+            onAllowLandscapeChange = viewModel::setAllowLandscape,
         ),
-        onResetToDefault = viewModel::resetToDefault,
-        onCopyToFacets = viewModel::copyToFacets,
         modifier = modifier,
     )
 }
@@ -123,13 +118,11 @@ private fun HomeAppsListSettingsContent(
     onAppsToShowCountChange: (Int) -> Unit,
     onReorderFavorites: (List<PlacedItem>) -> Unit,
     lookActions: AppListLookActions,
-    onResetToDefault: () -> Unit,
-    onCopyToFacets: (Set<Long>) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     StickyHeaderLayout(
         modifier = modifier,
-        header = { HomeAppsListSettingsHeader(isFacetScoped = uiState.isFacetScoped, onBack = onBack) },
+        header = { HomeAppsListSettingsHeader(onBack = onBack) },
         content = { headerHeight ->
             LazyColumn(
                 modifier = Modifier
@@ -156,50 +149,18 @@ private fun HomeAppsListSettingsContent(
                         modifier = Modifier.padding(bottom = 20.dp).testTag("home_apps_list_preview_card"),
                     )
                 }
-                listContentItem(uiState, onListContentModeChange, onAppsToShowCountChange, onEditFavorites, onReorderFavorites)
+                listContentItem(uiState, lookActions, onListContentModeChange, onAppsToShowCountChange, onEditFavorites, onReorderFavorites)
                 item { Spacer(modifier = Modifier.height(16.dp)) }
-                appListLookItems(uiState, lookActions)
-                appsResetOrCopyItems(uiState, onResetToDefault, onCopyToFacets)
+                appListAlignmentItems(uiState, lookActions)
             }
         },
     )
 }
 
-/** Facet scope offers "Reset to default"; launcher scope offers "Copy to facets". */
-private fun LazyListScope.appsResetOrCopyItems(
-    uiState: HomeAppsListUiState,
-    onResetToDefault: () -> Unit,
-    onCopyToFacets: (Set<Long>) -> Unit,
-) {
-    if (uiState.isFacetScoped) {
-        item { Spacer(modifier = Modifier.height(16.dp)) }
-        item {
-            ResetToDefaultCard(
-                subtitle = stringResource(R.string.reset_apps_subtitle),
-                confirmMessage = stringResource(R.string.reset_apps_confirm_message),
-                onReset = onResetToDefault,
-                testTagPrefix = "home_apps_list",
-            )
-        }
-    } else {
-        item { Spacer(modifier = Modifier.height(16.dp)) }
-        item {
-            CopyToFacetsCard(
-                facets = uiState.facets,
-                activeFacetId = uiState.settings.activeFacetId,
-                subtitle = stringResource(R.string.copy_apps_subtitle),
-                sheetMessage = stringResource(R.string.copy_apps_sheet_message),
-                onCopy = onCopyToFacets,
-                testTagPrefix = "home_apps_list",
-            )
-        }
-        item { DefaultsNote(modifier = Modifier.padding(top = 12.dp)) }
-    }
-}
-
-/** What the list shows, how many apps, and (for favorites) which apps and their order. */
+/** A facet's list layout, what it shows, how many apps, and its Favorites and their order. */
 private fun LazyListScope.listContentItem(
     uiState: HomeAppsListUiState,
+    lookActions: AppListLookActions,
     onListContentModeChange: (ListContentMode) -> Unit,
     onAppsToShowCountChange: (Int) -> Unit,
     onEditFavorites: () -> Unit,
@@ -207,8 +168,10 @@ private fun LazyListScope.listContentItem(
 ) {
     item {
         SettingsCard(fullBleedRows = true) {
+            AppListLayoutRows(uiState, lookActions)
+            CardDivider()
             LabeledDropdownRow(
-                title = stringResource(if (uiState.isFacetScoped) R.string.home_apps_list_content_facet else R.string.home_apps_list_content_default),
+                title = stringResource(R.string.home_apps_list_content_facet),
                 options = ListContentMode.entries,
                 selected = uiState.listContentMode,
                 label = { stringResource(it.displayNameRes) },
@@ -228,7 +191,7 @@ private fun LazyListScope.listContentItem(
             }
             CardDivider()
             HomeAppsListClickableRow(
-                title = stringResource(if (uiState.isFacetScoped) R.string.home_apps_list_favorites_facet else R.string.home_apps_list_favorites_default),
+                title = stringResource(R.string.home_apps_list_favorites_facet),
                 subtitle = uiState.favoritesLabel,
                 onClick = onEditFavorites,
                 testTag = "default_favorites_row",
@@ -245,7 +208,7 @@ private fun LazyListScope.listContentItem(
 }
 
 @Composable
-private fun HomeAppsListSettingsHeader(isFacetScoped: Boolean, onBack: () -> Unit, modifier: Modifier = Modifier) {
+private fun HomeAppsListSettingsHeader(onBack: () -> Unit, modifier: Modifier = Modifier) {
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -258,7 +221,7 @@ private fun HomeAppsListSettingsHeader(isFacetScoped: Boolean, onBack: () -> Uni
     ) {
         BackButton(onClick = onBack)
         Text(
-            text = stringResource(if (isFacetScoped) R.string.facet_settings_apps_list_settings_title else R.string.home_apps_list_default_header_title),
+            text = stringResource(R.string.facet_settings_apps_list_settings_title),
             style = MaterialTheme.typography.headlineSmall,
             color = Ink,
         )
@@ -386,8 +349,6 @@ private fun HomeAppsListSettingsScreenPreview() {
             onAppsToShowCountChange = {},
             onReorderFavorites = {},
             lookActions = AppListLookActions.None,
-            onResetToDefault = {},
-            onCopyToFacets = {},
         )
     }
 }

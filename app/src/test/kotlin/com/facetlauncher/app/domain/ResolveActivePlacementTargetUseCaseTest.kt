@@ -36,9 +36,9 @@ class ResolveActivePlacementTargetUseCaseTest {
     }
 
     @Test
-    fun `no active facet resolves both lists to the launcher-wide ones`() = runTest {
+    fun `no active facet resolves no list`() = runTest {
         val useCase = useCase(null)
-        assertEquals(PlacementTarget.GlobalDock, useCase(PlacementList.DOCK))
-        assertEquals(PlacementTarget.GlobalFavorites, useCase(PlacementList.FAVORITES))
+        assertEquals(null, useCase(PlacementList.DOCK))
+        assertEquals(null, useCase(PlacementList.FAVORITES))
     }
 }

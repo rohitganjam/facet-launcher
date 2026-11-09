@@ -8,6 +8,7 @@ import androidx.compose.ui.input.pointer.PointerInputChange
 import androidx.compose.ui.input.pointer.PointerType
 import com.facetlauncher.app.ui.home.ClockPagerState
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.test.TestCoroutineScheduler
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -25,6 +26,7 @@ private class SteppingFrameClock : MonotonicFrameClock {
 
 class HomeSwipeControllerTest {
 
+    private val testScheduler = TestCoroutineScheduler()
     private var clockAdjustEnded = 0
     private var shadeExpanded = 0
 
@@ -33,7 +35,7 @@ class HomeSwipeControllerTest {
     private val clockZone = Rect(0f, 0f, 1000f, 600f)
 
     private fun controller(width: Float = 1000f, height: Float = 2000f): HomeSwipeController {
-        val scope = CoroutineScope(UnconfinedTestDispatcher() + SteppingFrameClock())
+        val scope = CoroutineScope(UnconfinedTestDispatcher(testScheduler) + SteppingFrameClock())
         return HomeSwipeController(
             containerHeightPx = { height },
             containerWidthPx = { width },
@@ -145,6 +147,73 @@ class HomeSwipeControllerTest {
         swipe.settle(velocity = 0f)
 
         assertEquals(1, shadeExpanded)
+    }
+
+    @Test
+    fun `a downward drag fills the shade pull and is fully faded at the commit distance`() {
+        val swipe = controller(height = 2000f)
+
+        swipe.start()
+        swipe.drag(dx = 0f, dy = 200f)
+        val halfway = swipe.shade.progress.value
+        swipe.drag(dx = 0f, dy = 400f)
+
+        assertEquals(0.5f, halfway, 0.0001f)
+        assertEquals(1f, swipe.shade.progress.value, 0f)
+        assertEquals(0f, homeLayerFade(swipe.shade.progress.value, 0f, 0f).alpha, 0f)
+    }
+
+    @Test
+    fun `an uncommitted shade pull returns to zero right after release`() {
+        val short = controller(height = 2000f)
+        short.start()
+        short.drag(dx = 0f, dy = 100f)
+        short.settle(velocity = 0f)
+
+        assertEquals(0f, short.shade.progress.value, 0f)
+    }
+
+    @Test
+    fun `a committed shade pull stays faded while the shade opens then returns`() {
+        val long = controller(height = 2000f)
+        long.start()
+        long.drag(dx = 0f, dy = 500f)
+        long.settle(velocity = 0f)
+
+        val heldAfterRelease = long.shade.progress.value
+        testScheduler.advanceTimeBy(SHADE_OPEN_HOLD_MS + 1)
+        testScheduler.runCurrent()
+
+        assertEquals(1f, heldAfterRelease, 0f)
+        assertEquals(0f, long.shade.progress.value, 0f)
+    }
+
+    @Test
+    fun `a cancelled downward drag returns the shade pull to zero`() {
+        val swipe = controller(height = 2000f)
+
+        swipe.start()
+        swipe.drag(dx = 0f, dy = 300f)
+        swipe.cancel()
+
+        assertEquals(0f, swipe.shade.progress.value, 0f)
+    }
+
+    @Test
+    fun `a downward drag does not pull the shade when swipe down is off or the drawer started open`() {
+        val off = controller(height = 2000f).also { it.swipeDownEnabled = false }
+        off.start()
+        off.drag(dx = 0f, dy = 300f)
+
+        val open = controller(height = 2000f)
+        open.start()
+        open.drag(dx = 0f, dy = -1000f)
+        open.settle(velocity = 0f)
+        open.start()
+        open.drag(dx = 0f, dy = 300f)
+
+        assertEquals(0f, off.shade.progress.value, 0f)
+        assertEquals(0f, open.shade.progress.value, 0f)
     }
 
     @Test

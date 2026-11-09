@@ -24,11 +24,11 @@ import com.facetlauncher.app.data.AppRepository
 import com.facetlauncher.app.data.DefaultAppRepository
 import com.facetlauncher.app.data.FolderRepository
 import com.facetlauncher.app.data.FacetRepository
+import com.facetlauncher.app.data.model.landscape
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.WallpaperRepository
 import com.facetlauncher.app.data.local.FacetDatabase
 import androidx.compose.ui.test.assertCountEquals
-import com.facetlauncher.app.domain.ApplyFacetDefaultsUseCase
 import com.facetlauncher.app.domain.GetInstalledAppsUseCase
 import com.facetlauncher.app.domain.SelectPreviewAppsUseCase
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
@@ -91,7 +91,6 @@ class HomeAppsListSettingsScreenTest {
                     DefaultAppRepository(context),
                     GetInstalledAppsUseCase(appRepository),
                     SelectPreviewAppsUseCase(),
-                    ApplyFacetDefaultsUseCase(facetRepository, placementRepository, settingsRepository),
                 )
             }
             FacetLauncherTheme {
@@ -101,10 +100,27 @@ class HomeAppsListSettingsScreenTest {
         composeRule.waitForIdle()
     }
 
+    /** The screen over a freshly-added facet; returns the real [FacetRepository] it writes to. */
+    private fun setFacetContent(): FacetRepository {
+        lateinit var facetRepo: FacetRepository
+        setContent(facetScoped = true, onFacetRepo = { repo, _ -> facetRepo = repo })
+        awaitFacetTitle()
+        return facetRepo
+    }
+
+    private fun facets(repo: FacetRepository) = runBlocking { repo.observeFacets().first() }
+
+    /** The facet-scoped state resolves asynchronously (a Room query behind the ViewModel's StateFlow), and shows as the facet's title. */
+    private fun awaitFacetTitle() {
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            composeRule.onAllNodesWithText("Apps List").fetchSemanticsNodes().isNotEmpty()
+        }
+    }
+
     @Test
-    fun headerAndPreviewRender() {
-        setContent()
-        composeRule.onNodeWithText("Default Apps list").assertIsDisplayed()
+    fun aFacetScopedScreenRendersItsHeaderAndPreview() {
+        setContent(facetScoped = true)
+        awaitFacetTitle()
         composeRule.onNodeWithTag("back_button").assertIsDisplayed()
         composeRule.onNodeWithTag("home_apps_list_preview_card").assertExists()
     }
@@ -125,31 +141,11 @@ class HomeAppsListSettingsScreenTest {
     @Test
     fun favoritesRowIsClickable() {
         var navigated = false
-        setContent(onEditFavorites = { navigated = true })
+        setContent(facetScoped = true, onEditFavorites = { navigated = true })
+        awaitFacetTitle()
         composeRule.onNodeWithTag("home_apps_list_settings_screen").performScrollToNode(hasTestTag("default_favorites_row"))
         composeRule.onNodeWithTag("default_favorites_row").performClick()
         assertEquals(true, navigated)
-    }
-
-    @Test
-    fun aFolderFavoritedGlobally_isCountedAndShownInPreviewAndReorderList() {
-        var folderId = 0L
-        setContent(
-            seed = { folderRepository, placementRepository, _, _ ->
-                folderId = folderRepository.createFolder("Games")
-                placementRepository.placeFolder(PlacementTarget.GlobalFavorites, folderId, position = 0)
-            },
-        )
-
-        composeRule.onNodeWithTag("home_apps_list_settings_screen").performScrollToNode(hasTestTag("default_favorites_row"))
-        // The real installed-apps query backing the preview/uiState resolves asynchronously —
-        // wait for it rather than assuming setContent's own waitForIdle already caught it.
-        composeRule.waitUntil(timeoutMillis = 5_000) {
-            runCatching { composeRule.onNodeWithTag("default_favorites_row").assertTextContains("1 of ${com.facetlauncher.app.data.model.AppListLimits.MAX_FAVORITES}") }.isSuccess
-        }
-        composeRule.onNodeWithTag("default_favorite_reorder_row_folder_$folderId").assertExists()
-        // Renders as a real folder row in the preview, not a flattened list of the folder's apps.
-        composeRule.onNodeWithTag("home_surface_preview_folder_row_$folderId").assertExists()
     }
 
     @Test
@@ -180,9 +176,7 @@ class HomeAppsListSettingsScreenTest {
         // The facet-scoped state resolves asynchronously (Room query behind the ViewModel's
         // StateFlow combine) — wait for the reset row to actually render rather than assuming
         // setContent()'s own waitForIdle() already caught it.
-        composeRule.waitUntil(timeoutMillis = 3_000) {
-            composeRule.onAllNodesWithTag("home_apps_list_reset_row").fetchSemanticsNodes().isNotEmpty()
-        }
+        awaitFacetTitle()
 
         // The content-mode control is live, with no Inherit/Override switch, and writes to this facet's own row
         composeRule.onNodeWithTag("default_list_content_row").assertIsEnabled()
@@ -201,54 +195,11 @@ class HomeAppsListSettingsScreenTest {
         setContent(facetScoped = true)
 
         // The facet-scoped state resolves asynchronously — wait for the reset row to render
-        composeRule.waitUntil(timeoutMillis = 3_000) {
-            composeRule.onAllNodesWithTag("home_apps_list_reset_row").fetchSemanticsNodes().isNotEmpty()
-        }
+        awaitFacetTitle()
 
         // Then the controls are live and the title is the facet's
         composeRule.onNodeWithTag("default_list_content_row").assertIsEnabled()
         composeRule.onNodeWithText("Apps List").assertIsDisplayed()
-    }
-
-    @Test
-    fun resetToDefaultCopiesTheDefaultFavoritesAndContentModeIntoTheFacet() {
-        // Given a facet whose list content mode differs from the launcher's, and a default favorite
-        lateinit var facetRepo: FacetRepository
-        lateinit var placements: PlacementRepository
-        var facetId = 0L
-        setContent(
-            facetScoped = true,
-            onFacetRepo = { repo, id -> facetRepo = repo; facetId = requireNotNull(id) },
-            seed = { _, placementRepository, facetRepository, id ->
-                placements = placementRepository
-                facetRepository.setListContentMode(requireNotNull(id), com.facetlauncher.app.data.model.ListContentMode.MOST_USED)
-                placementRepository.addApp(PlacementTarget.GlobalFavorites, appInfoForTest(), position = 0)
-            },
-        )
-        // The reset row is further down the lazy list now, so wait for the facet's title instead
-        composeRule.waitUntil(timeoutMillis = 3_000) {
-            composeRule.onAllNodesWithText("Apps List").fetchSemanticsNodes().isNotEmpty()
-        }
-
-        // When resetting and confirming
-        composeRule.onNodeWithTag("home_apps_list_settings_screen").performScrollToNode(hasTestTag("home_apps_list_reset_row"))
-        composeRule.onNodeWithTag("home_apps_list_reset_row").performClick()
-        composeRule.onNodeWithTag("confirm_dialog_confirm").performClick()
-
-        // Then the facet follows the default: Favorites mode, and its list is a copy of the default one
-        composeRule.waitUntil(timeoutMillis = 5_000) {
-            runBlocking {
-                facetRepo.getById(facetId)?.listContentMode == com.facetlauncher.app.data.model.ListContentMode.FAVORITES &&
-                    placements.getRawApps(PlacementTarget(PlacementList.FAVORITES, facetId)).size == 1
-            }
-        }
-    }
-
-    @Test
-    fun launcherScopeIsTitledAsTheDefault() {
-        setContent()
-
-        composeRule.onNodeWithText("Default Apps list").assertIsDisplayed()
     }
 
     private fun appInfoForTest() = com.facetlauncher.app.data.model.AppInfo(
@@ -256,16 +207,16 @@ class HomeAppsListSettingsScreenTest {
     )
 
     @Test
-    fun appRowPositionPresentationAndVerticalAlignmentRowsChangeTheGlobalSetting() {
-        // Given the screen
-        setContent()
+    fun appRowPositionPresentationAndVerticalAlignmentRowsChangeTheFacetsValues() {
+        // Given a facet's screen
+        val repo = setFacetContent()
         composeRule.onNodeWithTag("home_apps_list_settings_screen").performScrollToNode(hasTestTag("appearance_app_row_position_row"))
 
         composeRule.onNodeWithTag("appearance_app_row_position_row").performClick()
         composeRule.waitForIdle()
         composeRule.onNodeWithTag("appearance_app_row_position_row_option_RIGHT").performClick()
         composeRule.waitUntil(timeoutMillis = 3_000) {
-            runBlocking { settingsRepository.settings.first().appRowPosition == com.facetlauncher.app.data.model.AppRowPosition.RIGHT }
+            facets(repo).any { it.appRowPosition == com.facetlauncher.app.data.model.AppRowPosition.RIGHT }
         }
 
         composeRule.onNodeWithTag("home_apps_list_settings_screen").performScrollToNode(hasTestTag("appearance_app_row_presentation_row"))
@@ -273,7 +224,7 @@ class HomeAppsListSettingsScreenTest {
         composeRule.waitForIdle()
         composeRule.onNodeWithTag("appearance_app_row_presentation_row_option_TEXT_ONLY").performClick()
         composeRule.waitUntil(timeoutMillis = 3_000) {
-            runBlocking { settingsRepository.settings.first().appRowPresentation == com.facetlauncher.app.data.model.AppRowPresentation.TEXT_ONLY }
+            facets(repo).any { it.appRowPresentation == com.facetlauncher.app.data.model.AppRowPresentation.TEXT_ONLY }
         }
 
         composeRule.onNodeWithTag("home_apps_list_settings_screen").performScrollToNode(hasTestTag("appearance_app_list_vertical_alignment_row"))
@@ -281,16 +232,16 @@ class HomeAppsListSettingsScreenTest {
         composeRule.waitForIdle()
         composeRule.onNodeWithTag("appearance_app_list_vertical_alignment_row_option_TOP").performClick()
         composeRule.waitUntil(timeoutMillis = 3_000) {
-            runBlocking { settingsRepository.settings.first().appListVerticalAlignment == com.facetlauncher.app.data.model.AppListVerticalAlignment.TOP }
+            facets(repo).any { it.appListVerticalAlignment == com.facetlauncher.app.data.model.AppListVerticalAlignment.TOP }
         }
     }
 
     @Test
     fun lookRowsShowTheirTitles() {
-        setContent()
+        setFacetContent()
 
         // The Clock card sits above these rows, so each is scrolled into view before it's checked.
-        listOf("Home Apps Alignment", "Show Home apps as", "Home Apps list position").forEach { title ->
+        listOf("Apps list alignment", "Show Home apps as", "Apps list position").forEach { title ->
             composeRule.onNodeWithTag("home_apps_list_settings_screen").performScrollToNode(hasText(title))
             // The Portrait and Landscape alignment cards share these two titles; the first is the Portrait one.
             composeRule.onAllNodesWithText(title)[0].assertIsDisplayed()
@@ -299,8 +250,8 @@ class HomeAppsListSettingsScreenTest {
 
     @Test
     fun shrinkListToFitIsOfferedForAListAndStoredWhenTurnedOn() {
-        // Given the default list layout, where long lists scroll
-        setContent()
+        // Given a facet with the default list layout, where long lists scroll
+        val facetRepo = setFacetContent()
         composeRule.onNodeWithTag("home_apps_list_settings_screen").performScrollToNode(hasTestTag("appearance_app_list_shrink_to_fit_row"))
         composeRule.onNodeWithTag("appearance_app_list_shrink_to_fit_row").assertTextContains("Off")
 
@@ -309,16 +260,16 @@ class HomeAppsListSettingsScreenTest {
         composeRule.waitForIdle()
         composeRule.onNodeWithTag("appearance_app_list_shrink_to_fit_row_option_ON").performClick()
 
-        // Then it's stored launcher-wide
+        // Then it's stored on the facet
         composeRule.waitUntil(timeoutMillis = 3_000) {
-            runBlocking { settingsRepository.settings.first().appListShrinkToFit == com.facetlauncher.app.data.model.AppListShrinkToFit.ON }
+            runBlocking { facetRepo.observeFacets().first().any { it.appListShrinkToFit == com.facetlauncher.app.data.model.AppListShrinkToFit.ON } }
         }
     }
 
     @Test
     fun shrinkListToFitIsNotOfferedForTheGrid() {
-        // Given the grid layout
-        setContent()
+        // Given a facet on the grid layout
+        setFacetContent()
         composeRule.onNodeWithTag("home_apps_list_settings_screen").performScrollToNode(hasTestTag("appearance_app_list_layout_row"))
         composeRule.onNodeWithTag("appearance_app_list_layout_row").performClick()
         composeRule.waitForIdle()
@@ -331,8 +282,8 @@ class HomeAppsListSettingsScreenTest {
 
     @Test
     fun landscapeAlignmentRowsWriteTheLandscapeSettingAndLeavePortraitAlone() {
-        // Given the screen at global scope
-        setContent()
+        // Given a facet's screen
+        val repo = setFacetContent()
 
         // When the landscape position and list position are chosen
         composeRule.onNodeWithTag("home_apps_list_settings_screen").performScrollToNode(hasTestTag("appearance_landscape_app_row_position_row"))
@@ -340,28 +291,33 @@ class HomeAppsListSettingsScreenTest {
         composeRule.waitForIdle()
         composeRule.onNodeWithTag("appearance_landscape_app_row_position_row_option_CENTER").performClick()
         composeRule.waitUntil(timeoutMillis = 3_000) {
-            runBlocking { settingsRepository.settings.first().landscape.appRowPosition == com.facetlauncher.app.data.model.AppRowPosition.CENTER }
+            facets(repo).any { it.landscape.appRowPosition == com.facetlauncher.app.data.model.AppRowPosition.CENTER }
         }
         composeRule.onNodeWithTag("home_apps_list_settings_screen").performScrollToNode(hasTestTag("appearance_landscape_app_list_vertical_alignment_row"))
         composeRule.onNodeWithTag("appearance_landscape_app_list_vertical_alignment_row").performClick()
         composeRule.waitForIdle()
         composeRule.onNodeWithTag("appearance_landscape_app_list_vertical_alignment_row_option_TOP").performClick()
         composeRule.waitUntil(timeoutMillis = 3_000) {
-            runBlocking { settingsRepository.settings.first().landscape.appListVerticalAlignment == com.facetlauncher.app.data.model.AppListVerticalAlignment.TOP }
+            facets(repo).any { it.landscape.appListVerticalAlignment == com.facetlauncher.app.data.model.AppListVerticalAlignment.TOP }
         }
 
         // Then portrait's own values are unchanged
-        val settings = runBlocking { settingsRepository.settings.first() }
-        org.junit.Assert.assertEquals(com.facetlauncher.app.data.model.AppRowPosition.LEFT, settings.appRowPosition)
-        org.junit.Assert.assertEquals(com.facetlauncher.app.data.model.AppListVerticalAlignment.BOTTOM, settings.appListVerticalAlignment)
+        val facet = facets(repo).single()
+        org.junit.Assert.assertEquals(com.facetlauncher.app.data.model.AppRowPosition.LEFT, facet.appRowPosition)
+        org.junit.Assert.assertEquals(com.facetlauncher.app.data.model.AppListVerticalAlignment.BOTTOM, facet.appListVerticalAlignment)
     }
 
     @Test
     fun choosingSameAsPortraitClearsTheLandscapeSetting() {
-        // Given a saved landscape position
-        setContent()
-        runBlocking { settingsRepository.updateLandscape { it.copy(appRowPosition = com.facetlauncher.app.data.model.AppRowPosition.RIGHT) } }
+        // Given a facet with a saved landscape position
+        val repo = setFacetContent()
+        runBlocking { repo.updateLandscape(facets(repo).single().id) { it.copy(appRowPosition = com.facetlauncher.app.data.model.AppRowPosition.RIGHT) } }
+        // The seeded value reaches the screen asynchronously; wait for it so choosing "Same as portrait" is a real change
+        composeRule.waitUntil(timeoutMillis = 3_000) { facets(repo).single().landscape.appRowPosition == com.facetlauncher.app.data.model.AppRowPosition.RIGHT }
         composeRule.onNodeWithTag("home_apps_list_settings_screen").performScrollToNode(hasTestTag("appearance_landscape_app_row_position_row"))
+        composeRule.waitUntil(timeoutMillis = 3_000) {
+            composeRule.onAllNodes(hasTestTag("appearance_landscape_app_row_position_row") and hasText("Right", substring = true)).fetchSemanticsNodes().isNotEmpty()
+        }
 
         // When "Same as portrait" is chosen
         composeRule.onNodeWithTag("appearance_landscape_app_row_position_row").performClick()
@@ -370,37 +326,25 @@ class HomeAppsListSettingsScreenTest {
 
         // Then the landscape value is cleared
         composeRule.waitUntil(timeoutMillis = 3_000) {
-            runBlocking { settingsRepository.settings.first().landscape.appRowPosition == null }
+            facets(repo).single().landscape.appRowPosition == null
         }
     }
 
     @Test
-    fun theAllowLandscapeSwitchTurnsLandscapeOffAndHidesTheLandscapeAlignment() {
-        // Given the global screen with landscape allowed
-        setContent()
-        composeRule.onNodeWithTag("appearance_allow_landscape_row").assertExists()
+    fun turningLandscapeOffHidesTheLandscapeAlignmentAndIsSavedOnTheFacet() {
+        // Given a facet's screen with landscape allowed
+        val repo = setFacetContent()
         composeRule.onNodeWithTag("home_apps_list_settings_screen").performScrollToNode(hasTestTag("appearance_landscape_app_list_vertical_alignment_row"))
         composeRule.onNodeWithTag("appearance_landscape_app_list_vertical_alignment_row").assertExists()
 
-        // When the switch is turned off
+        // When the facet's landscape switch is turned off
+        composeRule.onNodeWithTag("home_apps_list_settings_screen").performScrollToNode(hasTestTag("appearance_allow_landscape_row"))
         composeRule.onNodeWithTag("appearance_allow_landscape_row").performClick()
 
-        // Then the setting is saved and the landscape alignment rows go away
-        composeRule.waitUntil(timeoutMillis = 3_000) { runBlocking { !settingsRepository.settings.first().allowLandscape } }
+        // Then it is saved on that facet and the landscape alignment rows go away
+        composeRule.waitUntil(timeoutMillis = 3_000) { facets(repo).single().allowLandscape.not() }
         composeRule.waitUntil(timeoutMillis = 3_000) {
             composeRule.onAllNodesWithTag("appearance_landscape_app_list_vertical_alignment_row").fetchSemanticsNodes().isEmpty()
         }
-    }
-
-    @Test
-    fun aFacetScopedScreenHasNoAllowLandscapeSwitch() {
-        // Given a facet-scoped screen
-        setContent(facetScoped = true)
-        composeRule.waitUntil(timeoutMillis = 3_000) {
-            composeRule.onAllNodesWithTag("home_apps_list_reset_row").fetchSemanticsNodes().isNotEmpty()
-        }
-
-        // Then the launcher-wide switch isn't there
-        composeRule.onNodeWithTag("appearance_allow_landscape_row").assertDoesNotExist()
     }
 }

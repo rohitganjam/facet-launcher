@@ -51,8 +51,6 @@ class SettingsViewModelTest {
     private fun appInfo(n: Int) = AppInfo(packageName = "com.example.$n", activityName = ".Main", label = "App $n", icon = null)
 
     private fun createViewModel(
-        dockApps: List<AppInfo> = emptyList(),
-        defaultFavorites: List<AppInfo> = emptyList(),
         folderCount: Int = 0,
         isDefaultLauncher: Boolean = false,
         settings: LauncherSettings = LauncherSettings(),
@@ -63,19 +61,16 @@ class SettingsViewModelTest {
         enabledRuleCount: Int = automationRuleCount,
         notificationAccessRepository: com.facetlauncher.app.data.NotificationAccessRepository =
             mock(com.facetlauncher.app.data.NotificationAccessRepository::class.java).also { `when`(it.isGranted()).thenReturn(false) },
+        settingsRepository: SettingsRepository = mock(SettingsRepository::class.java),
     ): SettingsViewModel {
-        val settingsRepository = mock(SettingsRepository::class.java)
         `when`(settingsRepository.settings).thenReturn(flowOf(settings))
-        val observePlacedItems = mock(ObservePlacedItemsUseCase::class.java)
-        `when`(observePlacedItems.items(PlacementTarget.GlobalDock)).thenReturn(flowOf(dockApps.map { PlacedItem.SingleApp(it) }))
-        `when`(observePlacedItems.items(PlacementTarget.GlobalFavorites)).thenReturn(flowOf(defaultFavorites.map { PlacedItem.SingleApp(it) }))
         val folderRepository = mock(FolderRepository::class.java)
         `when`(folderRepository.observeFolders()).thenReturn(flowOf((1..folderCount).map { mock(com.facetlauncher.app.data.model.Folder::class.java) }))
         val defaultLauncherRepository = mock(DefaultLauncherRepository::class.java)
         runBlocking { `when`(defaultLauncherRepository.isDefaultLauncher()).thenReturn(isDefaultLauncher) }
         val workProfileRepository = mock(WorkProfileRepository::class.java)
         `when`(workProfileRepository.observeWorkProfiles()).thenReturn(flowOf(workProfiles))
-        val useCase = ObserveSettingsScreenStateUseCase(settingsRepository, observePlacedItems, folderRepository)
+        val useCase = ObserveSettingsScreenStateUseCase(settingsRepository, folderRepository)
         val automationRuleRepository = mock(com.facetlauncher.app.data.AutomationRuleRepository::class.java)
         `when`(automationRuleRepository.observeRules()).thenReturn(
             flowOf(
@@ -118,17 +113,12 @@ class SettingsViewModelTest {
     }
 
     @Test
-    fun `uiState composes dock apps, default favorites, settings, and default-launcher status`() = runTest {
-        val dockApps = (1..3).map(::appInfo)
-        val defaultFavorites = (1..2).map(::appInfo)
-        val viewModel = createViewModel(dockApps = dockApps, defaultFavorites = defaultFavorites, folderCount = 4, isDefaultLauncher = true)
+    fun `uiState composes the folder count, settings, and default-launcher status`() = runTest {
+        val viewModel = createViewModel(folderCount = 4, isDefaultLauncher = true)
         backgroundScope.launch { viewModel.uiState.collect {} }
         testDispatcher.scheduler.advanceUntilIdle()
 
-        assertEquals(3, viewModel.uiState.value.dockItems.size)
-        assertEquals(2, viewModel.uiState.value.defaultFavorites.size)
-        // The folder count reflects the whole library, independent of the dock — see
-        // ObserveSettingsScreenStateUseCase's own doc for why this isn't derived from dockItems.
+        // The folder count reflects the whole library, wherever each folder is placed.
         assertEquals(4, viewModel.uiState.value.folderCount)
         assertEquals(true, viewModel.uiState.value.isDefaultLauncher)
     }

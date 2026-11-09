@@ -60,7 +60,6 @@ class BenchmarkSeedReceiver : BroadcastReceiver() {
         val placementRepository = repositories.placementRepository()
         val appRepository = repositories.appRepository()
         settingsRepository.setOnboardingCompleted(true)
-        settingsRepository.setDefaultsSeeded(true)
         settingsRepository.markCoachMarkSeen(HOME_GESTURES_COACH_MARK_ID)
         settingsRepository.markCoachMarkSeen(HOME_SET_DEFAULT_PROMPT_ID)
 

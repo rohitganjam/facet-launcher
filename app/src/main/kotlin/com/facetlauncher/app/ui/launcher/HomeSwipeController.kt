@@ -9,6 +9,11 @@ import androidx.compose.ui.unit.Velocity
 import com.facetlauncher.app.ui.home.ClockPagerState
 import kotlin.math.abs
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+
+/** How long Home stays faded after a committed pull-down, covering the system shade's start-up lag. */
+internal const val SHADE_OPEN_HOLD_MS = 250L
 
 /**
  * Turns Home's drags into the Drawer (up), Hub (right) and Switch Facets (left) open/close axes.
@@ -25,7 +30,7 @@ import kotlinx.coroutines.CoroutineScope
 internal class HomeSwipeController(
     containerHeightPx: () -> Float,
     containerWidthPx: () -> Float,
-    coroutineScope: CoroutineScope,
+    private val coroutineScope: CoroutineScope,
     private val endClockAdjust: () -> Unit,
     private val expandNotificationShade: () -> Unit,
     val clockPager: ClockPagerState,
@@ -35,6 +40,9 @@ internal class HomeSwipeController(
     val hub = SwipeAxisState(containerWidthPx, coroutineScope)
     val facet = SwipeAxisState(containerWidthPx, coroutineScope)
     private val shadeDistancePx = { containerHeightPx() * SWIPE_DOWN_SHADE_FRACTION }
+
+    /** A downward pull from a closed drawer: 0 to 1 over the distance that commits the shade, so Home is fully faded when letting go would open it. */
+    val shade = SwipeAxisState(shadeDistancePx, coroutineScope)
 
     /** Settings → Gestures: a direction turned off opens nothing. Up (the Drawer) is always on. */
     var swipeLeftEnabled = true
@@ -85,6 +93,7 @@ internal class HomeSwipeController(
             Axis.VERTICAL -> {
                 drawer.dragBy(-dy)
                 rawDragDistance += dy
+                if (swipeDownEnabled && dragStartedClosed) shade.dragBy(dy)
             }
             Axis.HORIZONTAL -> dragHorizontally(dx)
         }
@@ -113,7 +122,9 @@ internal class HomeSwipeController(
         when (dragAxis) {
             Axis.VERTICAL -> {
                 drawer.settle(velocity = -velocity)
-                if (shouldExpandShade(velocity)) expandNotificationShade()
+                val expands = shouldExpandShade(velocity)
+                releaseShadePull(holdFaded = expands)
+                if (expands) expandNotificationShade()
             }
             Axis.HORIZONTAL -> if (pagerOwnsDrag == true) clockPager.settle(velocity) else settleHorizontal()
             null -> Unit
@@ -125,9 +136,23 @@ internal class HomeSwipeController(
 
     fun cancel() {
         when (dragAxis) {
-            Axis.VERTICAL -> drawer.settle()
+            Axis.VERTICAL -> {
+                drawer.settle()
+                releaseShadePull()
+            }
             Axis.HORIZONTAL -> if (pagerOwnsDrag == true) clockPager.settle(0f) else settleHorizontal()
             null -> Unit
+        }
+    }
+
+    /** Home returns from the pull-down fade; when the shade is opening it stays faded until the system shade has had time to cover it. */
+    private fun releaseShadePull(holdFaded: Boolean = false) {
+        coroutineScope.launch {
+            if (holdFaded) {
+                shade.open()
+                delay(SHADE_OPEN_HOLD_MS)
+            }
+            shade.close()
         }
     }
 

@@ -160,6 +160,10 @@ class FacetRepository @Inject constructor(
         update(facetId) { it.copy(appRowPosition = position) }
     }
 
+    suspend fun setAllowLandscape(facetId: Long, allow: Boolean) {
+        update(facetId) { it.copy(allowLandscape = allow) }
+    }
+
     suspend fun setAppRowPresentation(facetId: Long, presentation: AppRowPresentation) {
         update(facetId) { it.copy(appRowPresentation = presentation) }
     }

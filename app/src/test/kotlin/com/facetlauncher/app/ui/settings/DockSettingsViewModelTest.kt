@@ -58,7 +58,7 @@ class DockSettingsViewModelTest {
         }
 
     private fun createViewModel(
-        facetId: Long? = null,
+        facetId: Long = 1L,
         dockItems: List<PlacedItem> = emptyList(),
         facets: List<Facet> = emptyList(),
         settingsRepository: SettingsRepository = mock(SettingsRepository::class.java),
@@ -69,10 +69,9 @@ class DockSettingsViewModelTest {
     ): DockSettingsViewModel {
         `when`(settingsRepository.settings).thenReturn(flowOf(LauncherSettings()))
         `when`(facetRepository.observeFacets()).thenReturn(MutableStateFlow(facets))
-        `when`(observePlacedItems.items(PlacementTarget.GlobalDock)).thenReturn(flowOf(dockItems))
-        facetId?.let { `when`(observePlacedItems.items(PlacementTarget(PlacementList.DOCK, it))).thenReturn(flowOf(dockItems)) }
+        `when`(observePlacedItems.items(PlacementTarget(PlacementList.DOCK, facetId))).thenReturn(flowOf(dockItems))
         return DockSettingsViewModel(
-            SavedStateHandle(facetId?.let { mapOf("facetId" to it) } ?: emptyMap()),
+            SavedStateHandle(mapOf("facetId" to facetId)),
             settingsRepository,
             facetRepository,
             placementRepository,
@@ -93,31 +92,7 @@ class DockSettingsViewModelTest {
     }
 
     @Test
-    fun `global-scoped reorder writes to the launcher-wide dock list`() = runTest {
-        val settingsRepository = mock(SettingsRepository::class.java)
-        val placementRepository = mock(PlacementRepository::class.java)
-        val viewModel = createViewModel(settingsRepository = settingsRepository, placementRepository = placementRepository)
-        val reordered = listOf(PlacedItem.SingleApp(appInfo(2)), PlacedItem.SingleApp(appInfo(1)))
-
-        viewModel.reorderDockItems(reordered)
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        verify(placementRepository).reorderItems(PlacementTarget.GlobalDock, reordered)
-    }
-
-    @Test
-    fun `global-scoped display style writes to SettingsRepository`() = runTest {
-        val settingsRepository = mock(SettingsRepository::class.java)
-        val viewModel = createViewModel(settingsRepository = settingsRepository)
-
-        viewModel.setDockDisplayMode(DockDisplayMode.TEXT)
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        verify(settingsRepository).setDockDisplayMode(DockDisplayMode.TEXT)
-    }
-
-    @Test
-    fun `facet-scoped display style writes to that facet, not SettingsRepository`() = runTest {
+    fun `display style writes to that facet, not SettingsRepository`() = runTest {
         val settingsRepository = mock(SettingsRepository::class.java)
         val facetRepository = mock(FacetRepository::class.java)
         val facet = Facet(id = 7L, name = "Work", position = 0)
@@ -132,7 +107,7 @@ class DockSettingsViewModelTest {
     }
 
     @Test
-    fun `facet-scoped reorder writes to that facet, not the launcher-wide dock`() = runTest {
+    fun `reorder writes to that facet's own dock`() = runTest {
         val placementRepository = mock(PlacementRepository::class.java)
         val facet = Facet(id = 7L, name = "Work", position = 0)
         val viewModel = createViewModel(
@@ -159,31 +134,13 @@ class DockSettingsViewModelTest {
     }
 
     @Test
-    fun `a facet-scoped screen lists that facet's own dock, not the launcher's`() = runTest {
+    fun `the screen lists that facet's own dock`() = runTest {
         val facet = Facet(id = 3L, name = "Work", position = 0)
         val viewModel = createViewModel(facetId = 3L, facets = listOf(facet), dockItems = listOf(PlacedItem.SingleApp(appInfo(1))))
         backgroundScope.launch { viewModel.uiState.collect {} }
         testDispatcher.scheduler.advanceUntilIdle()
 
-        assertEquals(true, viewModel.uiState.value.isFacetScoped)
         assertEquals(1, viewModel.uiState.value.dockItems.size)
-    }
-
-    @Test
-    fun `copy to facets applies the dock defaults to exactly the chosen facets`() = runTest {
-        val applyDefaults = mock(ApplyFacetDefaultsUseCase::class.java)
-        val facets = listOf(Facet(id = 1L, name = "A", position = 0), Facet(id = 2L, name = "B", position = 1), Facet(id = 3L, name = "C", position = 2))
-        val viewModel = createViewModel(facets = facets, applyFacetDefaults = applyDefaults)
-        backgroundScope.launch { viewModel.uiState.collect {} }
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        viewModel.copyToFacets(setOf(1L, 3L))
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        assertEquals(listOf(1L, 2L, 3L), viewModel.uiState.value.facets.map { it.id })
-        verify(applyDefaults).invoke(1L, FacetDefaultsScope.DOCK)
-        verify(applyDefaults).invoke(3L, FacetDefaultsScope.DOCK)
-        verify(applyDefaults, org.mockito.Mockito.never()).invoke(2L, FacetDefaultsScope.DOCK)
     }
 
     @Test
@@ -197,14 +154,4 @@ class DockSettingsViewModelTest {
         verify(applyDefaults).invoke(3L, FacetDefaultsScope.DOCK)
     }
 
-    @Test
-    fun `reset to default does nothing at launcher scope`() = runTest {
-        val applyDefaults = mock(ApplyFacetDefaultsUseCase::class.java)
-        val viewModel = createViewModel(applyFacetDefaults = applyDefaults)
-
-        viewModel.resetToDefault()
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        org.mockito.Mockito.verifyNoInteractions(applyDefaults)
-    }
 }

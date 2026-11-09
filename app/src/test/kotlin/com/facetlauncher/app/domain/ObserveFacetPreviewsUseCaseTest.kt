@@ -66,11 +66,10 @@ class ObserveFacetPreviewsUseCaseTest {
 
     @Test
     fun `each facet previews its own favorites`() = runTest {
-        // Given two facets with different favorites, and a launcher-wide default that neither uses
+        // Given two facets with different favorites
         val fixture = Fixture()
         `when`(fixture.observePlacedItems.itemsForFacets(PlacementList.FAVORITES, listOf(1L, 2L)))
             .thenReturn(flowOf(mapOf(1L to listOf(PlacedItem.SingleApp(appInfo('a'))), 2L to emptyList())))
-        `when`(fixture.observePlacedItems.items(PlacementTarget.GlobalFavorites)).thenReturn(flowOf(listOf(PlacedItem.SingleApp(appInfo('d')))))
         fixture.facetsFlow.value = listOf(
             Facet(id = 1L, name = "P1", position = 0),
             Facet(id = 2L, name = "P2", position = 1),
@@ -86,11 +85,10 @@ class ObserveFacetPreviewsUseCaseTest {
 
     @Test
     fun `each facet previews its own dock`() = runTest {
-        // Given two facets with different docks, and a launcher-wide default that neither uses
+        // Given two facets with different docks
         val fixture = Fixture()
         `when`(fixture.observePlacedItems.itemsForFacets(PlacementList.DOCK, listOf(1L, 2L)))
             .thenReturn(flowOf(mapOf(1L to listOf(PlacedItem.SingleApp(appInfo('a'))), 2L to emptyList())))
-        `when`(fixture.observePlacedItems.items(PlacementTarget.GlobalDock)).thenReturn(flowOf(listOf(PlacedItem.SingleApp(appInfo('d')))))
         fixture.facetsFlow.value = listOf(
             Facet(id = 1L, name = "P1", position = 0),
             Facet(id = 2L, name = "P2", position = 1),

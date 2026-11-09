@@ -31,7 +31,7 @@ fun SettingsToggleRow(
 ) {
     Row(
         modifier = modifier.fillMaxWidth().padding(vertical = 13.dp).alpha(if (enabled) 1f else DISABLED_ALPHA),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        horizontalArrangement = Arrangement.spacedBy(ROW_CONTROL_GAP),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         // Constrains the label/subtitle to the space left of the Switch so a long subtitle wraps

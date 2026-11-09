@@ -133,7 +133,6 @@ private object Keys {
     val HOME_APPS_FONT_WEIGHT = stringPreferencesKey("home_apps_font_weight")
     val CLOCK_ALIGNMENT = stringPreferencesKey("clock_alignment")
     val CLOCK_ZONE_HEIGHT_DP = floatPreferencesKey("clock_zone_height_dp")
-    val ALLOW_LANDSCAPE = booleanPreferencesKey("allow_landscape")
     val HIDE_STATUS_BAR = booleanPreferencesKey("hide_status_bar")
     val LANDSCAPE_CLOCK_ALIGNMENT = stringPreferencesKey("landscape_clock_alignment")
     val LANDSCAPE_CLOCK_ZONE_HEIGHT_DP = floatPreferencesKey("landscape_clock_zone_height_dp")
@@ -146,7 +145,6 @@ private object Keys {
     val APP_LIST_GRID_DISPLAY_MODE = stringPreferencesKey("app_list_grid_display_mode")
     val APP_LIST_SHRINK_TO_FIT = stringPreferencesKey("app_list_shrink_to_fit")
     val ONBOARDING_COMPLETED = booleanPreferencesKey("onboarding_completed")
-    val DEFAULTS_SEEDED = booleanPreferencesKey("defaults_seeded")
     val COACH_MARKS_SEEN = stringSetPreferencesKey("coach_marks_seen")
 }
 
@@ -256,7 +254,6 @@ class SettingsRepository @Inject constructor(
             clockAlignment = preferences[Keys.CLOCK_ALIGNMENT]?.let { runCatching { ClockAlignment.valueOf(it) }.getOrNull() }
                 ?: defaults.clockAlignment,
             clockZoneHeightDp = preferences[Keys.CLOCK_ZONE_HEIGHT_DP],
-            allowLandscape = preferences[Keys.ALLOW_LANDSCAPE] ?: defaults.allowLandscape,
             hideStatusBar = preferences[Keys.HIDE_STATUS_BAR] ?: defaults.hideStatusBar,
             landscape = preferences.toLandscapeOverrides(),
             appListVerticalAlignment = preferences[Keys.APP_LIST_VERTICAL_ALIGNMENT]?.let { runCatching { AppListVerticalAlignment.valueOf(it) }.getOrNull() }
@@ -272,7 +269,6 @@ class SettingsRepository @Inject constructor(
             appListShrinkToFit = preferences[Keys.APP_LIST_SHRINK_TO_FIT]?.let { runCatching { AppListShrinkToFit.valueOf(it) }.getOrNull() }
                 ?: defaults.appListShrinkToFit,
             onboardingCompleted = preferences[Keys.ONBOARDING_COMPLETED] ?: defaults.onboardingCompleted,
-            defaultsSeeded = preferences[Keys.DEFAULTS_SEEDED] ?: defaults.defaultsSeeded,
             coachMarksSeen = preferences[Keys.COACH_MARKS_SEEN] ?: defaults.coachMarksSeen,
         )
     }
@@ -568,10 +564,6 @@ class SettingsRepository @Inject constructor(
         dataStore.edit { it[Keys.HOME_APPS_FONT_WEIGHT] = weight.name }
     }
 
-    suspend fun setAllowLandscape(allow: Boolean) {
-        dataStore.edit { it[Keys.ALLOW_LANDSCAPE] = allow }
-    }
-
     suspend fun setClockAlignment(alignment: ClockAlignment) {
         dataStore.edit { it[Keys.CLOCK_ALIGNMENT] = alignment.name }
     }
@@ -630,10 +622,6 @@ class SettingsRepository @Inject constructor(
             it[Keys.ONBOARDING_COMPLETED] = completed
             if (completed) it[Keys.COACH_MARKS_SEEN] = (it[Keys.COACH_MARKS_SEEN] ?: emptySet()) + whatsNewSeenId(BuildConfig.VERSION_NAME)
         }
-    }
-
-    suspend fun setDefaultsSeeded(seeded: Boolean) {
-        dataStore.edit { it[Keys.DEFAULTS_SEEDED] = seeded }
     }
 
     /** Takes [id] back out of the dismissed-coach-marks set, so that prompt can show again. Used by the debug build's Settings tools. */

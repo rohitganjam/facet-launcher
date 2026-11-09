@@ -36,13 +36,12 @@ const val LEGACY_LAUNCHER_DEFAULT = "LAUNCHER_DEFAULT"
  *   are local-`ContentProvider` autoincrement values tied to which calendar accounts are synced
  *   on *this* device in *this* order — not portable to another device/reinstall, and silently
  *   matching the wrong calendar by coincidence is worse than just re-deriving them fresh.
- * - `allowLandscape`: a choice about this device (whether Home may rotate), not a layout preference.
  * - `calendarPermissionRequested`/`contactsPermissionRequested`/`bluetoothPermissionRequested`/
  *   `locationPermissionRequested`: track *this install's* runtime
  *   permission-request history, not a user preference — restoring `true` onto a device that was
  *   never actually asked would wrongly skip straight to the "go to App Info" fallback instead of
  *   firing the real system permission dialog.
- * - `onboardingCompleted`/`defaultsSeeded`/`coachMarksSeen`: this install's own first-run
+ * - `onboardingCompleted`/`coachMarksSeen`: this install's own first-run
  *   progress, not a user preference — restoring `true`/a populated set onto a fresh install would
  *   skip the first-run flow and its dock-seeding/coach-mark introductions entirely.
  */
@@ -54,8 +53,10 @@ data class BackupBundle(
     /** `@SerialName` keeps the JSON key `"profiles"` so backups exported before the Facet rename still import. */
     @SerialName("profiles")
     val facets: List<BackupFacet>,
-    val dockApps: List<BackupAppEntry>,
-    val defaultFavoriteApps: List<BackupAppEntry>,
+    /** Legacy: the launcher-wide Dock of older backups, read only so a facet without its own Dock inherits it ([BackupUpgrade]). Never written. */
+    val dockApps: List<BackupAppEntry> = emptyList(),
+    /** Legacy: the launcher-wide Favorites of older backups, read like [dockApps]. Never written. */
+    val defaultFavoriteApps: List<BackupAppEntry> = emptyList(),
     val widgetPlacements: List<BackupWidgetPlacement>,
     /**
      * The whole folder library (F-Folders) — every folder, regardless of where (if anywhere) it's
@@ -66,9 +67,9 @@ data class BackupBundle(
      * deserializes cleanly, with no folders to restore).
      */
     val folders: List<BackupFolder> = emptyList(),
-    /** A folder placed in the launcher-wide default Dock — mirrors [dockApps] on the folder side. */
+    /** Legacy: a folder placed in the launcher-wide Dock of older backups — mirrors [dockApps] on the folder side. Never written. */
     val dockFolderPlacements: List<BackupFolderPlacement> = emptyList(),
-    /** A folder placed in the launcher-wide default Favorites list — mirrors [defaultFavoriteApps] on the folder side. */
+    /** Legacy: a folder placed in the launcher-wide Favorites of older backups — mirrors [defaultFavoriteApps]. Never written. */
     val defaultFavoriteFolderPlacements: List<BackupFolderPlacement> = emptyList(),
 )
 
@@ -226,6 +227,8 @@ data class BackupFacet(
     /** Optional and additive, like [BackupSettings.landscapeAppRowPosition]. */
     val landscapeAppRowPosition: String? = null,
     val landscapeAppListColumnAlignment: String? = null,
+    /** Purely additive and defaulted, so no version bump; a backup from before it kept the switch device-local, so its facets allow landscape. */
+    val allowLandscape: Boolean = true,
     val appListGridColumns: String = LEGACY_LAUNCHER_DEFAULT,
     val appListGridDisplayMode: String = LEGACY_LAUNCHER_DEFAULT,
     val appListShrinkToFit: String = LEGACY_LAUNCHER_DEFAULT,

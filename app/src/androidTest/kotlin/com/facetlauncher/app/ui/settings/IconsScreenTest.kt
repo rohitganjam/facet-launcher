@@ -62,7 +62,7 @@ class IconsScreenTest {
     private fun iconsViewModel(context: Context): IconsViewModel {
         val iconPacks = IconPackRepository(context, host.settingsRepository)
         val observeIconPicker = ObserveIconPickerUseCase(
-            host.observePlacedItems,
+            com.facetlauncher.app.domain.ObserveActiveFacetItemsUseCase(host.settingsRepository, host.observePlacedItems),
             GetInstalledAppsUseCase(host.appRepository),
             host.appRepository,
             iconPacks,

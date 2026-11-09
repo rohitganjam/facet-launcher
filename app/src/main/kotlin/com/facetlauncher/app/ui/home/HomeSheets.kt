@@ -41,7 +41,8 @@ import com.facetlauncher.app.ui.theme.SurfaceContainer
 
 /**
  * The Home sheet, opened by a long-press on free space: the facet's and the launcher's settings. With no widget in the stack there is
- * nothing to long-press, so the stack's own rows (add a widget, the widget stack) are here too.
+ * nothing to long-press, so the stack's own rows (add a widget, the widget stack) are here too; otherwise the sheet offers to adjust the
+ * widget showing, so resizing never depends on finding the widget to long-press.
  */
 @Composable
 fun HomeMenuSheetContent(
@@ -50,6 +51,7 @@ fun HomeMenuSheetContent(
     onLauncherSettingsClick: () -> Unit,
     onAddWidgetClick: () -> Unit,
     onWidgetStackClick: () -> Unit,
+    onAdjustClick: () -> Unit,
     /** What the Widget stack row says is in the stack; only shown while the stack is empty. */
     stackSummary: String,
     modifier: Modifier = Modifier,
@@ -76,6 +78,8 @@ fun HomeMenuSheetContent(
                 CardDivider(startInset = SettingsIconBadgeInset)
                 WidgetStackRow(stackSummary, onWidgetStackClick)
             }
+        } else {
+            SettingsCard(fullBleedRows = true) { AdjustWidgetRow(onAdjustClick) }
         }
         SettingsRows(onSwitchFacetClick, onFacetSettingsClick, onLauncherSettingsClick)
     }
@@ -128,19 +132,24 @@ fun WidgetSheetContent(
             WidgetSheetTarget.Hosted -> Unit
         }
         SettingsCard(fullBleedRows = true) {
-            AdjustRow(
-                icon = Icons.Outlined.OpenInFull,
-                hue = SettingsSectionHue.APPEARANCE,
-                label = stringResource(R.string.widget_sheet_adjust_label),
-                subtitle = stringResource(R.string.widget_sheet_adjust_subtitle),
-                onClick = onAdjustClick,
-                testTag = "widget_sheet_adjust",
-            )
+            AdjustWidgetRow(onAdjustClick, testTag = "widget_sheet_adjust")
             PageRows(onReplaceWidgetClick, onRemoveWidgetClick)
             CardDivider(startInset = SettingsIconBadgeInset)
             WidgetStackRow(stackSummary, onWidgetStackClick)
         }
     }
+}
+
+@Composable
+private fun AdjustWidgetRow(onClick: () -> Unit, testTag: String = "home_sheet_adjust") {
+    AdjustRow(
+        icon = Icons.Outlined.OpenInFull,
+        hue = SettingsSectionHue.APPEARANCE,
+        label = stringResource(R.string.widget_sheet_adjust_label),
+        subtitle = stringResource(R.string.widget_sheet_adjust_subtitle),
+        onClick = onClick,
+        testTag = testTag,
+    )
 }
 
 @Composable
@@ -204,7 +213,7 @@ private fun AdjustRow(
 @Composable
 private fun HomeMenuSheetPreview() {
     FacetLauncherTheme {
-        HomeMenuSheetContent({}, {}, {}, {}, {}, stackSummary = "Clock", modifier = Modifier.background(SurfaceContainer))
+        HomeMenuSheetContent({}, {}, {}, {}, {}, {}, stackSummary = "Clock", modifier = Modifier.background(SurfaceContainer))
     }
 }
 
@@ -212,7 +221,7 @@ private fun HomeMenuSheetPreview() {
 @Composable
 private fun HomeMenuSheetEmptyPreview() {
     FacetLauncherTheme {
-        HomeMenuSheetContent({}, {}, {}, {}, {}, stackSummary = "Empty", stackEmpty = true, modifier = Modifier.background(SurfaceContainer))
+        HomeMenuSheetContent({}, {}, {}, {}, {}, {}, stackSummary = "Empty", stackEmpty = true, modifier = Modifier.background(SurfaceContainer))
     }
 }
 

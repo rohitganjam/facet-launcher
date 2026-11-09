@@ -178,8 +178,6 @@ class ImportBackupUseCaseTest {
         // Then existing data is wiped first...
         verify(folderRepository).deleteAllFolders()
         verify(facetRepository).deleteAllFacets()
-        verify(placementRepository).deleteAll(PlacementTarget.GlobalDock)
-        verify(placementRepository).deleteAll(PlacementTarget.GlobalFavorites)
         // ...the backup's own data is restored, favorites attached to the newly-created facet's real id...
         verify(placementRepository).restoreApp(AppPlacementEntity(list = PlacementList.FAVORITES, facetId = 99L, packageName = "com.example.a", activityName = ".Main", position = 0))
         verify(placementRepository).restoreApp(AppPlacementEntity(list = PlacementList.DOCK, facetId = 99L, packageName = "com.example.dock", activityName = ".Main", position = 0))
@@ -201,8 +199,6 @@ class ImportBackupUseCaseTest {
         verify(repairOrphanedProfileRows).invoke()
         // ...and widgets are reported back, not silently written to widget_placements.
         assertEquals(1, result.facetCount)
-        assertEquals(1, result.dockAppCount)
-        assertEquals(1, result.defaultFavoriteCount)
         assertEquals(1, result.pendingWidgetPlacements.size)
         assertEquals("com.example.widgets", result.pendingWidgetPlacements[0].providerPackageName)
         assertEquals(4, result.pendingWidgetPlacements[0].landscapeOrder)

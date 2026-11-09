@@ -95,8 +95,13 @@ internal class AppearanceScreenTestHost(private val composeRule: ComposeContentT
                 this@AppearanceScreenTestHost.appRepository = appRepository
                 this@AppearanceScreenTestHost.observePlacedItems = observePlacedItems
                 this@AppearanceScreenTestHost.settingsRepository = settingsRepository
+                // Launcher scope previews the active facet's lists, so a facet always exists and is active; [seedApps] gets its id.
+                val listFacetId = facetId ?: ACTIVE_FACET_ID
+                runBlocking {
+                    database.facetDao().insert(com.facetlauncher.app.data.local.FacetEntity(id = listFacetId, name = "P", position = 0))
+                    settingsRepository.setActiveFacetId(listFacetId)
+                }
                 if (facetId != null) {
-                    runBlocking { database.facetDao().insert(com.facetlauncher.app.data.local.FacetEntity(id = facetId, name = "P", position = 0)) }
                     // Every real facet starts with the launcher clock as its one page; an empty stack draws no clock.
                     runBlocking {
                         database.clockStackItemDao().insert(
@@ -105,22 +110,28 @@ internal class AppearanceScreenTestHost(private val composeRule: ComposeContentT
                     }
                 }
                 runBlocking { seed(facetRepository, facetId) }
-                runBlocking { seedApps(appRepository, placementRepository, facetId) }
+                runBlocking { seedApps(appRepository, placementRepository, listFacetId) }
                 AppearanceSettingsViewModel(
                     SavedStateHandle(facetId?.let { mapOf("facetId" to it) } ?: emptyMap()),
                     settingsRepository,
                     facetRepository,
                     observePlacedItems,
+                    com.facetlauncher.app.domain.ObserveActiveFacetItemsUseCase(settingsRepository, observePlacedItems),
                     FakeCalendarRepository(context.contentResolver, calendarEvents),
                     FakeCalendarPermissionRepository(context, granted = calendarGranted),
                     wallpaperRepository,
                     FakeNotificationAccessRepository(context, granted = notificationAccessGranted),
-                    com.facetlauncher.app.domain.ApplyFacetDefaultsUseCase(facetRepository, placementRepository, settingsRepository),
+                    com.facetlauncher.app.domain.ApplyFacetDefaultsUseCase(facetRepository, com.facetlauncher.app.domain.SeedFacetDefaultsUseCase(com.facetlauncher.app.data.DefaultAppRepository(context), placementRepository, com.facetlauncher.app.domain.GetInstalledAppsUseCase(appRepository)), settingsRepository),
                 ).also { screenViewModel = it }
             }
             // The assertions assume the portrait Home layout, whatever the device's window is.
             CompositionLocalProvider(LocalAllowLandscape provides false) { FacetLauncherTheme { screen(viewModel) } }
         }
         return settingsRepository
+    }
+
+    private companion object {
+        /** The facet that exists, and is active, at launcher scope; a fresh in-memory database would number its first facet 1. */
+        const val ACTIVE_FACET_ID = 1L
     }
 }

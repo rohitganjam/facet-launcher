@@ -255,30 +255,14 @@
     <string name="settings_all_day_events_visible">Ganztägige Termine sichtbar</string>
     <string name="settings_all_day_events_hidden">Ganztägige Termine ausgeblendet</string>
     <string name="settings_dock_title">Dock</string>
-    <string name="settings_default_dock_title">Standard-Dock-Apps</string>
-    <string name="home_apps_list_default_header_title">Standard-App-Liste</string>
     <string name="defaults_screen_note">Wird verwendet, wenn du eine Facette erstellst oder zurücksetzt.</string>
     <string name="reset_to_default_title">Auf Standard zurücksetzen</string>
     <string name="reset_to_default_confirm">Zurücksetzen</string>
-    <string name="reset_dock_subtitle">Dieses Dock durch das Standard-Dock ersetzen</string>
-    <string name="reset_dock_confirm_message">Dadurch wird das Dock dieser Facette durch das Standard-Dock ersetzt. Die hier platzierten Apps gehen verloren.</string>
-    <string name="reset_apps_subtitle">Diese Liste durch die Standardliste ersetzen</string>
-    <string name="reset_apps_confirm_message">Dadurch werden Favoriten, Listeninhalt und App-Anzahl dieser Facette durch die Standardwerte ersetzt. Die hier gewählten Favoriten gehen verloren.</string>
+    <string name="reset_dock_subtitle">Dieses Dock durch die Standard-Apps des Geräts ersetzen</string>
+    <string name="reset_dock_confirm_message">Dadurch wird das Dock dieser Facette durch die Standard-Apps des Geräts ersetzt. Die hier platzierten Apps gehen verloren.</string>
     <string name="reset_look_subtitle">Listendarstellung durch den Standard ersetzen</string>
     <string name="reset_look_confirm_message">Dadurch werden Listenlayout und Ausrichtung dieser Facette durch die Standardwerte ersetzt.</string>
-    <plurals name="settings_dock_apps_count">
-        <item quantity="one">%d Dock-App</item>
-        <item quantity="other">%d Dock-Apps</item>
-    </plurals>
-    <plurals name="settings_dock_folders_count">
-        <item quantity="one">%d Ordner</item>
-        <item quantity="other">%d Ordner</item>
-    </plurals>
     <string name="settings_home_apps_list_title">Startbildschirm-App-Liste</string>
-    <plurals name="settings_favorites_count">
-        <item quantity="one">%1$d Favorit</item>
-        <item quantity="other">%1$d Favoriten</item>
-    </plurals>
     <plurals name="settings_recents_count">
         <item quantity="one">%1$d kürzlich verwendete App</item>
         <item quantity="other">%1$d kürzlich verwendete Apps</item>
@@ -398,10 +382,8 @@
     <string name="app_list_grid_display_mode_icons_and_text">Symbole und Text</string>
     <string name="dock_display_mode_icons_and_text">Symbole und Text</string>
     <string name="home_apps_list_content_facet">App-Listeninhalt</string>
-    <string name="home_apps_list_content_default">Standard-App-Listeninhalt</string>
     <string name="home_apps_list_apps_to_show">Anzuzeigende Apps</string>
     <string name="home_apps_list_favorites_facet">Favoriten</string>
-    <string name="home_apps_list_favorites_default">Standardfavoriten</string>
     <string name="drag_to_reorder_content_description">Zum Neuanordnen ziehen</string>
 
     <!-- AppDrawerSettingsScreen -->
@@ -811,7 +793,7 @@
     <string name="facet_carousel_facet_settings">Facetteneinstellungen</string>
     <string name="facet_carousel_delete_facet">Facette löschen</string>
     <string name="facet_carousel_add_facet">Facette hinzufügen</string>
-    <string name="facet_carousel_add_facet_subtitle">Startet mit der Standarduhr, dem Kalender, den Lieblingsapps und Einstellungen deines Launchers. Passe sie pro Facette an.</string>
+    <string name="facet_carousel_add_facet_subtitle">Startet mit einer Uhr, den Standardapps deines Geräts im Dock und dem Look deines Launchers.</string>
     <string name="facet_carousel_add_glyph">+</string>
 
     <!-- ManageFacetsScreen -->
@@ -1150,10 +1132,6 @@
         <item quantity="one">Auf %d Facette kopieren</item>
         <item quantity="other">Auf %d Facetten kopieren</item>
     </plurals>
-    <string name="copy_dock_subtitle">Ersetzt das Dock der gewählten Facetten durch dieses</string>
-    <string name="copy_dock_sheet_message">Ersetzt das Dock jeder ausgewählten Facette durch das Standard-Dock.</string>
-    <string name="copy_apps_subtitle">Ersetzt die App-Liste der gewählten Facetten durch diese</string>
-    <string name="copy_apps_sheet_message">Ersetzt Favoriten, Listeninhalt und App-Anzahl jeder ausgewählten Facette durch die Standardwerte.</string>
     <string name="copy_look_subtitle">Ersetzt App-Darstellung der gewählten Facetten durch diese</string>
     <string name="copy_look_sheet_message">Ersetzt Listenlayout und Ausrichtung jeder ausgewählten Facette durch die Standardwerte.</string>
 </resources>

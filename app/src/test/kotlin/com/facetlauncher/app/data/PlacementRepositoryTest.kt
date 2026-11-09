@@ -34,17 +34,20 @@ import org.robolectric.RobolectricTestRunner
 
 /**
  * One repository now backs all four lists, so every shared behavior is checked against each of
- * them: the launcher-wide Dock and Favorites, and a facet's own Dock and Favorites.
+ * them: each facet's own Dock and Favorites.
  */
 @RunWith(RobolectricTestRunner::class)
 class PlacementRepositoryTest {
 
     private val facetOne = 1L
     private val facetTwo = 2L
+    private val facetThree = 3L
+    private val facetThreeDock = PlacementTarget(PlacementList.DOCK, facetThree)
+    private val facetThreeFavorites = PlacementTarget(PlacementList.FAVORITES, facetThree)
 
     private val allTargets = listOf(
-        PlacementTarget.GlobalDock,
-        PlacementTarget.GlobalFavorites,
+        facetThreeDock,
+        facetThreeFavorites,
         PlacementTarget(PlacementList.DOCK, facetOne),
         PlacementTarget(PlacementList.FAVORITES, facetOne),
     )
@@ -117,7 +120,7 @@ class PlacementRepositoryTest {
 
     @Test
     fun `the list collapses live when AppRepository reports an uninstall, without resubscribing`() = runTest {
-        val target = PlacementTarget.GlobalDock
+        val target = facetThreeDock
         val a = appInfo('a')
         val installedApps = MutableStateFlow(listOf(a))
         val appRepository = mock(AppRepository::class.java)
@@ -139,16 +142,16 @@ class PlacementRepositoryTest {
 
     @Test
     fun `the same app in all four lists stays separate`() = runTest {
-        // Given one app added to the launcher-wide Dock, launcher-wide Favorites and facet 1's Dock and Favorites
+        // Given one app added to the facet 3's Dock and Favorites and facet 1's Dock and Favorites
         val a = appInfo('a')
         val repo = repository(installed(a))
         allTargets.forEach { repo.addApp(it, a, position = 0) }
 
-        // When it is removed from only the launcher-wide Dock
-        repo.removeApp(PlacementTarget.GlobalDock, a)
+        // When it is removed from only facet 3's Dock
+        repo.removeApp(facetThreeDock, a)
 
         // Then the other three lists still hold it
-        assertEquals(emptyList<AppInfo>(), repo.observeApps(PlacementTarget.GlobalDock).first())
+        assertEquals(emptyList<AppInfo>(), repo.observeApps(facetThreeDock).first())
         allTargets.drop(1).forEach { assertEquals(listOf(a), repo.observeApps(it).first()) }
     }
 
@@ -160,10 +163,10 @@ class PlacementRepositoryTest {
             val repo = repository(installed(a))
             repo.addApp(PlacementTarget(list, facetOne), a, position = 0)
 
-            // Then facet 2 and the launcher-wide list see nothing
+            // Then facets 2 and 3 see nothing
             assertEquals(listOf(a), repo.observeApps(PlacementTarget(list, facetOne)).first())
             assertEquals(emptyList<AppInfo>(), repo.observeApps(PlacementTarget(list, facetTwo)).first())
-            assertEquals(emptyList<AppInfo>(), repo.observeApps(PlacementTarget(list)).first())
+            assertEquals(emptyList<AppInfo>(), repo.observeApps(PlacementTarget(list, facetThree)).first())
         }
     }
 
@@ -222,7 +225,7 @@ class PlacementRepositoryTest {
         repo.removeByUserId(10)
 
         // Then only that handle's row is gone
-        assertEquals(emptyList<AppPlacementEntity>(), repo.getRawApps(PlacementTarget.GlobalDock))
+        assertEquals(emptyList<AppPlacementEntity>(), repo.getRawApps(facetThreeDock))
         assertEquals(listOf(20), repo.getRawApps(PlacementTarget(PlacementList.FAVORITES, facetTwo)).map { it.userId })
     }
 
@@ -285,11 +288,11 @@ class PlacementRepositoryTest {
         val repo = repository(installed(a), folderDao = folderDao)
         allTargets.forEach { repo.placeFolder(it, folderId, position = 0) }
 
-        // When un-placing it from the launcher-wide Dock
-        repo.removeFolderPlacement(PlacementTarget.GlobalDock, folderId)
+        // When un-placing it from the facet 3's Dock
+        repo.removeFolderPlacement(facetThreeDock, folderId)
 
         // Then that list no longer shows it, the others do, and the folder library still has it
-        assertTrue(repo.observeItems(PlacementTarget.GlobalDock).first().isEmpty())
+        assertTrue(repo.observeItems(facetThreeDock).first().isEmpty())
         allTargets.drop(1).forEach { assertEquals(1, repo.observeItems(it).first().size) }
         assertEquals(1, folderDao.observeAllWithApps().first().size)
     }
@@ -427,12 +430,12 @@ class PlacementRepositoryTest {
             repo.placeFolder(it, folderId, position = 1)
         }
 
-        // When the launcher-wide Favorites is wiped (as a backup restore does)
-        repo.deleteAll(PlacementTarget.GlobalFavorites)
+        // When the facet 3's Favorites is wiped (as a backup restore does)
+        repo.deleteAll(facetThreeFavorites)
 
         // Then it is empty and the other lists keep both rows
-        assertTrue(repo.observeItems(PlacementTarget.GlobalFavorites).first().isEmpty())
-        allTargets.filter { it != PlacementTarget.GlobalFavorites }.forEach { assertEquals(2, repo.observeItems(it).first().size) }
+        assertTrue(repo.observeItems(facetThreeFavorites).first().isEmpty())
+        allTargets.filter { it != facetThreeFavorites }.forEach { assertEquals(2, repo.observeItems(it).first().size) }
     }
 
     @Test
@@ -529,11 +532,11 @@ class PlacementRepositoryTest {
 
     @Test
     fun `orphaned rows are found across every list and backfilled in place`() = runTest {
-        // Given an orphaned (userId -1) row in the launcher-wide Dock and one in facet 1's Favorites, plus a healthy row
+        // Given an orphaned (userId -1) row in facet 3's Dock and one in facet 1's Favorites, plus a healthy row
         val dao = FakeAppPlacementDao()
-        dao.upsert(AppPlacementEntity(list = PlacementList.DOCK, packageName = "com.example.a", activityName = ".Main", position = 0, userId = -1))
+        dao.upsert(AppPlacementEntity(list = PlacementList.DOCK, facetId = facetThree, packageName = "com.example.a", activityName = ".Main", position = 0, userId = -1))
         dao.upsert(AppPlacementEntity(list = PlacementList.FAVORITES, facetId = facetOne, packageName = "com.example.b", activityName = ".Main", position = 0, userId = -1))
-        dao.upsert(AppPlacementEntity(list = PlacementList.DOCK, packageName = "com.example.c", activityName = ".Main", position = 1, userId = 0))
+        dao.upsert(AppPlacementEntity(list = PlacementList.DOCK, facetId = facetThree, packageName = "com.example.c", activityName = ".Main", position = 1, userId = 0))
         val repo = repository(installed(), dao)
 
         // Then both orphans are reported
@@ -544,7 +547,7 @@ class PlacementRepositoryTest {
         repo.backfillUserId(orphans.first { it.packageName == "com.example.a" }, userId = 10)
 
         // Then it is updated in place, not duplicated, and no longer reported
-        assertEquals(listOf(10, 0), repo.getRawApps(PlacementTarget.GlobalDock).map { it.userId })
+        assertEquals(listOf(10, 0), repo.getRawApps(facetThreeDock).map { it.userId })
         assertEquals(listOf("com.example.b"), repo.getOrphanedRows().map { it.packageName })
     }
 }

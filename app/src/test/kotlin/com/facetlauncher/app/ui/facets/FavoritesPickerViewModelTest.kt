@@ -77,7 +77,6 @@ class FavoritesPickerViewModelTest {
         val observePlacedItems = mock(ObservePlacedItemsUseCase::class.java)
         `when`(observePlacedItems.items(PlacementTarget(PlacementList.FAVORITES, facetId)))
             .thenReturn(flowOf(favorites.map { PlacedItem.SingleApp(it) }))
-        `when`(observePlacedItems.items(PlacementTarget.GlobalFavorites)).thenReturn(flowOf(emptyList()))
 
         val folderRepository = mock(FolderRepository::class.java)
         `when`(folderRepository.observeFolders()).thenReturn(flowOf(emptyList()))
@@ -97,6 +96,22 @@ class FavoritesPickerViewModelTest {
             sortAppsForPicker,
             usageAccessRepository,
         )
+    }
+
+    @Test
+    fun `useFacet does not override the facet a route opened the picker for`() = runTest {
+        // Given a picker opened for facet 5 with one favorite
+        val a = appInfo('a')
+        val viewModel = createViewModel(facetId = 5L, installed = listOf(a), favorites = listOf(a))
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // When it is asked to use another facet
+        viewModel.useFacet(9L)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Then it keeps showing facet 5's favorites
+        assertEquals(listOf(a), viewModel.uiState.value.selectedResults)
     }
 
     @Test

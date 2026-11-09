@@ -11,11 +11,11 @@ class ReorderActiveListUseCase @Inject constructor(
     private val placementRepository: PlacementRepository,
 ) {
     suspend operator fun invoke(list: PlacementList, orderedItems: List<PlacedItem>) {
-        placementRepository.reorderItems(resolveTarget(list), orderedItems)
+        resolveTarget(list)?.let { placementRepository.reorderItems(it, orderedItems) }
     }
 
     /** A drag on Home's grid: saves the Favorites' new cells for [landscape] or portrait; the list order is not changed. */
     suspend fun saveGridCells(landscape: Boolean, cells: Map<String, GridCell>) {
-        placementRepository.saveGridCells(resolveTarget(PlacementList.FAVORITES), landscape, cells)
+        resolveTarget(PlacementList.FAVORITES)?.let { placementRepository.saveGridCells(it, landscape, cells) }
     }
 }

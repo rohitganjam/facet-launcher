@@ -14,6 +14,7 @@ import com.facetlauncher.app.data.local.WeatherDao
 import com.facetlauncher.app.data.local.WidgetPlacementDao
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
+import com.facetlauncher.app.data.local.legacyAllowLandscape
 import com.facetlauncher.app.data.local.legacyLauncherClock
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.model.ClockWidgetConfig
@@ -47,6 +48,12 @@ object DatabaseModule {
             .addMigrations(
                 Migrations.migration44To45 {
                     runCatching { runBlocking { SettingsRepository(settingsDataStore.get()).settings.first() } }.getOrDefault(LauncherSettings())
+                },
+            )
+            // Read only when 48→49 runs; every facet takes the launcher-wide landscape switch's value.
+            .addMigrations(
+                Migrations.migration48To49 {
+                    runCatching { runBlocking { settingsDataStore.get().data.first().legacyAllowLandscape() } }.getOrDefault(true)
                 },
             )
             // Real installs now hold real user data (facets, dock/favorite layout, widget

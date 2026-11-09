@@ -26,6 +26,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
@@ -51,7 +52,6 @@ import java.time.LocalDate
 import java.time.ZoneId
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
-import java.util.Locale
 import kotlinx.collections.immutable.persistentListOf
 
 private val ROW_HEIGHT = 40.dp
@@ -81,7 +81,7 @@ internal fun AgendaNativeWidget(tier: WidgetTier, calendar: HomeCalendarState, o
     val now by rememberTickingNow(clock)
     val nowMillis = now.atZone(clock.zone).toInstant().toEpochMilli()
     val upcoming = remember(calendar.events, nowMillis) { calendar.events.filter { it.isAllDay || it.endTimeMillis > nowMillis } }
-    val locale = Locale.getDefault()
+    val locale = LocalConfiguration.current.locales[0]
     val formatter = remember(locale) { DateTimeFormatter.ofPattern("h:mm", locale) }
     val showRoom = tier != WidgetTier.SMALL
     val zone = clock.zone

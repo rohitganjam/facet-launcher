@@ -34,6 +34,7 @@ import com.facetlauncher.app.domain.ObserveSettingsScreenStateUseCase
 import com.facetlauncher.app.ui.FakeEntitlementRepository
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import java.io.File
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -59,8 +60,6 @@ class SettingsScreenTest {
         onViewFacetPro: () -> Unit = {},
         entitlement: EntitlementRepository = EntitlementRepository(),
         onNavigateToAppearance: () -> Unit = {},
-        onNavigateToDockSettings: () -> Unit = {},
-        onNavigateToHomeAppsListSettings: () -> Unit = {},
         onNavigateToFolders: () -> Unit = {},
         onNavigateToGestures: () -> Unit = {},
         onNavigateToWeatherSettings: () -> Unit = {},
@@ -93,7 +92,7 @@ class SettingsScreenTest {
                     }
                 }
                 SettingsViewModel(
-                    ObserveSettingsScreenStateUseCase(settingsRepository, observePlacedItems, folderRepository),
+                    ObserveSettingsScreenStateUseCase(settingsRepository, folderRepository),
                     DefaultLauncherRepository(context),
                     WorkProfileRepository(context.getSystemService(UserManager::class.java), appRepository, context),
                     AutomationRuleRepository(database.automationRuleDao(), database.facetDao()),
@@ -112,8 +111,6 @@ class SettingsScreenTest {
                     onNavigateToAppearance = onNavigateToAppearance,
                     onNavigateToAppDrawerSettings = onNavigateToAppDrawerSettings,
                     onNavigateToNotificationSettings = onNavigateToNotificationSettings,
-                    onNavigateToDockSettings = onNavigateToDockSettings,
-                    onNavigateToHomeAppsListSettings = onNavigateToHomeAppsListSettings,
                     onNavigateToFolders = onNavigateToFolders,
                     onNavigateToGestures = onNavigateToGestures,
                     onNavigateToWeatherSettings = onNavigateToWeatherSettings,
@@ -203,35 +200,13 @@ class SettingsScreenTest {
     }
 
     @Test
-    fun dockRowIsClickableAndReflectsDockAppCount() {
-        // Given the settings screen, scrolled to the "Dock" row under HOME & APPS — Dock and Home
-        // Apps List used to be one combined row/screen; they're now separate (see chat history).
-        var navigated = false
-        setContent(onNavigateToDockSettings = { navigated = true })
-        composeRule.onNodeWithTag("settings_screen").performScrollToNode(hasTestTag("dock_settings_row"))
-        composeRule.onNodeWithTag("dock_settings_row").assertTextContains("0 Dock Apps", substring = true)
+    fun thereIsNoLauncherWideDockOrAppsListRow() {
+        // Given the settings screen, scrolled to the Home & Apps card: a facet owns its Dock and Apps list, so there are no default rows
+        setContent()
+        composeRule.onNodeWithTag("settings_screen").performScrollToNode(hasTestTag("folders_settings_row"))
 
-        // When tapping it
-        composeRule.onNodeWithTag("dock_settings_row").performClick()
-
-        // Then its callback fires
-        assertEquals(true, navigated)
-    }
-
-    @Test
-    fun homeAppsListRowIsClickableAndReflectsListContentCount() {
-        // Given the settings screen, scrolled to the "Home Apps List" row under HOME & APPS.
-        // Defaults: Favorites content mode with 0 default favorites.
-        var navigated = false
-        setContent(onNavigateToHomeAppsListSettings = { navigated = true })
-        composeRule.onNodeWithTag("settings_screen").performScrollToNode(hasTestTag("home_apps_list_settings_row"))
-        composeRule.onNodeWithTag("home_apps_list_settings_row").assertTextContains("0 Favorites", substring = true)
-
-        // When tapping it
-        composeRule.onNodeWithTag("home_apps_list_settings_row").performClick()
-
-        // Then its callback fires
-        assertEquals(true, navigated)
+        composeRule.onAllNodesWithTag("dock_settings_row").assertCountEquals(0)
+        composeRule.onAllNodesWithTag("home_apps_list_settings_row").assertCountEquals(0)
     }
 
     @Test

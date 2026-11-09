@@ -400,19 +400,12 @@ data class LauncherSettings(
     val appListGridDisplayMode: AppListGridDisplayMode = AppListGridDisplayMode.ICONS,
     /** Only meaningful in the list layouts — see [AppListShrinkToFit]. */
     val appListShrinkToFit: AppListShrinkToFit = AppListShrinkToFit.OFF,
-    /**
-     * Whether Home may use its landscape layout and the screen may rotate. Off keeps everything in portrait and hides
-     * the landscape settings. Launcher-wide and device-local (not facet-overridable, not backed up).
-     */
-    val allowLandscape: Boolean = true,
     /** Hides the status bar over Home, Hub and Drawer; a swipe down reveals it for a few seconds. Launcher-wide and device-local (not backed up). */
     val hideStatusBar: Boolean = false,
     /** Landscape's own values for the props that differ between orientations; `null` fields use the portrait value. */
     val landscape: LandscapeOverrides = LandscapeOverrides(),
     /** Whether the first-run onboarding flow has been completed (or skipped past its final step). Gates [LauncherActivity][com.facetlauncher.app.LauncherActivity]'s onboarding branch. Install-local — excluded from the backup bundle. */
     val onboardingCompleted: Boolean = false,
-    /** One-shot guard for [SeedDefaultDockUseCase][com.facetlauncher.app.domain.SeedDefaultDockUseCase] — set once the dock's default apps have been seeded, so a re-run (or a later manual empty-dock) never re-seeds. Install-local — excluded from the backup bundle. */
-    val defaultsSeeded: Boolean = false,
     /** Ids of dismissed post-onboarding coach marks (e.g. `"HOME_GESTURES"`) — additive, never cleared. Install-local — excluded from the backup bundle. */
     val coachMarksSeen: Set<String> = emptySet(),
 ) {

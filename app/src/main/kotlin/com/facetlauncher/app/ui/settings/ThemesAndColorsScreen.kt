@@ -199,7 +199,7 @@ private fun ThemesAndColorsScreenPreview() {
     FacetLauncherTheme {
         ThemesAndColorsContent(
             settings = LauncherSettings(),
-            uiState = AppearanceSettingsUiState(globalFavorites = DesignTimeFavorites, globalDockItems = DesignTimeDockItems),
+            uiState = AppearanceSettingsUiState(favorites = DesignTimeFavorites, dockItems = DesignTimeDockItems),
             homeWallpaper = HomeWallpaper.Unavailable,
             onBack = {},
             onThemeModeChange = {},

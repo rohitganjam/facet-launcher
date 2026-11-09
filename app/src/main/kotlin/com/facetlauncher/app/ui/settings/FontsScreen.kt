@@ -171,7 +171,7 @@ private fun FontsScreenPreview() {
     FacetLauncherTheme {
         FontsContent(
             settings = LauncherSettings(),
-            uiState = AppearanceSettingsUiState(globalFavorites = DesignTimeFavorites, globalDockItems = DesignTimeDockItems),
+            uiState = AppearanceSettingsUiState(favorites = DesignTimeFavorites, dockItems = DesignTimeDockItems),
             homeWallpaper = HomeWallpaper.Unavailable,
             onBack = {},
             onLauncherFontOptionChange = {},

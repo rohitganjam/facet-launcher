@@ -1,5 +1,6 @@
 package com.facetlauncher.app.ui.nativewidget
 
+import androidx.compose.ui.platform.LocalConfiguration
 import android.content.res.Configuration
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -43,7 +44,6 @@ import com.facetlauncher.app.ui.theme.Ink
 import com.facetlauncher.app.ui.theme.Muted
 import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle as DateTextStyle
-import java.util.Locale
 
 private val HOUR_COLUMN_WIDTH = 52.dp
 private val DAY_ROW_HEIGHT = 30.dp
@@ -96,7 +96,8 @@ private fun LargeWeather(weather: WeatherState, ui: WeatherUiState, size: DpSize
     val hoursShown = (size.width / HOUR_COLUMN_WIDTH).toInt().coerceIn(1, weather.hourly.size.coerceAtLeast(1))
     val daysShown = ((size.height - 150.dp) / DAY_ROW_HEIGHT).toInt().coerceIn(0, weather.days.size)
     val pattern = if (ui.use24HourTime) "HH" else "ha"
-    val hourFormat = remember(pattern, weather.zone) { DateTimeFormatter.ofPattern(pattern, Locale.getDefault()).withZone(weather.zone) }
+    val locale = LocalConfiguration.current.locales[0]
+    val hourFormat = remember(pattern, weather.zone, locale) { DateTimeFormatter.ofPattern(pattern, locale).withZone(weather.zone) }
     Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             NowIcon(weather, ui, Modifier.size(48.dp))
@@ -150,8 +151,9 @@ private fun HourCell(hour: WeatherHour, isNow: Boolean, format: DateTimeFormatte
 @Composable
 private fun DayRow(day: WeatherDay, ui: WeatherUiState) {
     val condition = conditionOf(day.symbolCode, day.precipitationMm)
+    val locale = LocalConfiguration.current.locales[0]
     Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-        Text(day.date.dayOfWeek.getDisplayName(DateTextStyle.SHORT, Locale.getDefault()), style = MaterialTheme.typography.bodySmall, color = Ink, modifier = Modifier.width(44.dp), maxLines = 1)
+        Text(day.date.dayOfWeek.getDisplayName(DateTextStyle.SHORT, locale), style = MaterialTheme.typography.bodySmall, color = Ink, modifier = Modifier.width(44.dp), maxLines = 1)
         WeatherIcon(weatherIconKind(condition, night = false), Ink, Modifier.size(20.dp), ui.iconStyle)
         Spacer(Modifier.weight(1f))
         Text(

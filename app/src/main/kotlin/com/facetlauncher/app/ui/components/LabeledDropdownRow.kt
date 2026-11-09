@@ -70,8 +70,9 @@ fun <T> LabeledDropdownRow(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
+            // Takes only the width the value leaves (minus the gap), so a long title wraps instead of crowding it.
             Row(
-                modifier = titleModifier,
+                modifier = titleModifier.weight(1f, fill = false).padding(end = ROW_CONTROL_GAP),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 leading?.invoke()
@@ -82,6 +83,9 @@ fun <T> LabeledDropdownRow(
         if (subtitle != null) Text(text = subtitle, style = MaterialTheme.typography.bodyMedium, color = Muted)
     }
 }
+
+/** Minimum space between a settings row's title and its trailing control. */
+internal val ROW_CONTROL_GAP = 16.dp
 
 /** The row's value with its chevron, and the themed menu anchored to it. */
 @Composable

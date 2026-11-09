@@ -33,6 +33,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import com.facetlauncher.app.data.PlacementRepository
+import com.facetlauncher.app.data.model.PlacementList
 import com.facetlauncher.app.data.model.PlacementTarget
 
 class FontsScreenTest {
@@ -137,10 +138,10 @@ class FontsScreenTest {
         // Given the screen, App label color at its default, one real (installed) favorite seeded
         var favoriteLabel = ""
         setContent(
-            seedApps = { appRepository, placementRepository, _ ->
+            seedApps = { appRepository, placementRepository, facetId ->
                 val app = appRepository.getTestableApps()[0]
                 favoriteLabel = app.label
-                placementRepository.addApp(PlacementTarget.GlobalFavorites, app, position = 0)
+                placementRepository.addApp(PlacementTarget(PlacementList.FAVORITES, facetId!!), app, position = 0)
             },
         )
         composeRule.onNodeWithTag("appearance_preview_card").assertIsDisplayed()

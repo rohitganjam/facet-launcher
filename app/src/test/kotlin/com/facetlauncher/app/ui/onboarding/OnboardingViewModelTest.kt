@@ -27,12 +27,11 @@ import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import com.facetlauncher.app.data.model.PlacementList
 import com.facetlauncher.app.data.model.PlacementTarget
 import com.facetlauncher.app.data.PlacementRepository
 import com.facetlauncher.app.data.AppRepository
-import com.facetlauncher.app.data.FacetRepository
 import kotlinx.coroutines.flow.flowOf
-import com.facetlauncher.app.data.model.Facet
 import com.facetlauncher.app.domain.ApplyFacetDefaultsUseCase
 import com.facetlauncher.app.domain.FacetDefaultsScope
 import com.facetlauncher.app.domain.ObservePlacedItemsUseCase
@@ -48,6 +47,10 @@ class OnboardingViewModelTest {
 
     @After
     fun tearDown() { Dispatchers.resetMain() }
+
+    private val facetId = 5L
+    private val favoritesTarget = PlacementTarget(PlacementList.FAVORITES, facetId)
+    private val dockTarget = PlacementTarget(PlacementList.DOCK, facetId)
 
     private fun appInfo(name: String) = AppInfo("com.example.$name", ".Main", name, icon = null)
 
@@ -70,12 +73,10 @@ class OnboardingViewModelTest {
         val dockFlow = MutableStateFlow(dockApps)
         val placementRepository = mock(PlacementRepository::class.java)
         val observePlacedItems = mock(ObservePlacedItemsUseCase::class.java)
-        `when`(observePlacedItems.apps(PlacementTarget.GlobalFavorites)).thenReturn(favoritesFlow)
-        `when`(observePlacedItems.apps(PlacementTarget.GlobalDock)).thenReturn(dockFlow)
+        `when`(observePlacedItems.apps(favoritesTarget)).thenReturn(favoritesFlow)
+        `when`(observePlacedItems.apps(dockTarget)).thenReturn(dockFlow)
         val settingsRepository = mock(SettingsRepository::class.java)
-        `when`(settingsRepository.settings).thenReturn(MutableStateFlow(settings))
-        val facetRepository = mock(FacetRepository::class.java)
-        `when`(facetRepository.observeFacets()).thenReturn(flowOf(listOf(Facet(id = 5L, name = "Facet 1", position = 0), Facet(id = 6L, name = "Facet 2", position = 1))))
+        `when`(settingsRepository.settings).thenReturn(MutableStateFlow(settings.copy(activeFacetId = facetId)))
         val applyFacetDefaults = mock(ApplyFacetDefaultsUseCase::class.java)
         val appRepository = mock(AppRepository::class.java)
         `when`(appRepository.observeInstalledApps()).thenReturn(flowOf(installedApps))
@@ -83,7 +84,6 @@ class OnboardingViewModelTest {
             placementRepository,
             observePlacedItems,
             settingsRepository,
-            facetRepository,
             applyFacetDefaults,
             appRepository,
         )
@@ -107,8 +107,8 @@ class OnboardingViewModelTest {
     }
 
     @Test
-    fun `finish copies the onboarding dock and apps list onto every facet, then leaves`() = runTest {
-        // Given the choices made during onboarding sit in the launcher-wide defaults
+    fun `finish applies the content defaults to the first facet only, then leaves`() = runTest {
+        // Given the first facet is active
         val f = fixture()
         var left = false
 
@@ -116,13 +116,21 @@ class OnboardingViewModelTest {
         f.viewModel.finish { left = true }
         testDispatcher.scheduler.advanceUntilIdle()
 
-        // Then each facet gets the dock and apps list defaults, and onboarding is left afterwards
-        verify(f.applyFacetDefaults).invoke(5L, FacetDefaultsScope.DOCK)
-        verify(f.applyFacetDefaults).invoke(5L, FacetDefaultsScope.APPS_LIST)
-        verify(f.applyFacetDefaults).invoke(6L, FacetDefaultsScope.DOCK)
-        verify(f.applyFacetDefaults).invoke(6L, FacetDefaultsScope.APPS_LIST)
-        verify(f.applyFacetDefaults, org.mockito.Mockito.never()).invoke(5L, FacetDefaultsScope.LOOK)
+        // Then only its content mode and count are applied: its lists are its own, so the Dock is not reseeded
+        verify(f.applyFacetDefaults).invoke(facetId, FacetDefaultsScope.APPS_LIST)
+        verify(f.applyFacetDefaults, org.mockito.Mockito.never()).invoke(facetId, FacetDefaultsScope.DOCK)
+        verify(f.applyFacetDefaults, org.mockito.Mockito.never()).invoke(facetId, FacetDefaultsScope.LOOK)
         assertEquals(true, left)
+    }
+
+    @Test
+    fun `uiState names the first facet whose lists are being set up`() = runTest {
+        val f = fixture()
+        backgroundScope.launch { f.viewModel.uiState.collect {} }
+        runCurrent()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(facetId, f.viewModel.uiState.value.facetId)
     }
 
     @Test
@@ -253,11 +261,11 @@ class OnboardingViewModelTest {
         f.viewModel.reorderDockApps(reordered)
         testDispatcher.scheduler.advanceUntilIdle()
 
-        verify(f.placementRepository).reorderItems(PlacementTarget.GlobalDock, reordered.map { PlacedItem.SingleApp(it) })
+        verify(f.placementRepository).reorderItems(dockTarget, reordered.map { PlacedItem.SingleApp(it) })
     }
 
     @Test
-    fun `reorderFavorites delegates to the default favorite repository`() = runTest {
+    fun `reorderFavorites writes the first facet's favorites`() = runTest {
         val apps = listOf(appInfo("a"), appInfo("b"))
         val f = fixture(favorites = apps)
         backgroundScope.launch { f.viewModel.uiState.collect {} }
@@ -267,6 +275,6 @@ class OnboardingViewModelTest {
         f.viewModel.reorderFavorites(reordered)
         testDispatcher.scheduler.advanceUntilIdle()
 
-        verify(f.placementRepository).reorderItems(PlacementTarget.GlobalFavorites, reordered.map { PlacedItem.SingleApp(it) })
+        verify(f.placementRepository).reorderItems(favoritesTarget, reordered.map { PlacedItem.SingleApp(it) })
     }
 }

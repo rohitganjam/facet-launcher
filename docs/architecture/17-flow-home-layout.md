@@ -16,10 +16,11 @@ activity, and state lives in the ViewModels. Callers and tests can force a mode 
 
 ### 1.0 Allowing landscape at all
 
-Settings → Default Apps list has a launcher-wide **Allow landscape mode** switch
-(`allow_landscape`, default on, global screen only). Off, everything stays portrait:
+Each facet has its own **Allow landscape mode** switch (`Facet.allowLandscape`, default on, set on the facet's Apps list screen
+through `HomeAppsListSettingsViewModel.setAllowLandscape`). The active facet's value drives Home, so switching facets can rotate or lock the screen.
+The screen hides its Landscape alignment card while it is off. Off, everything stays portrait:
 `rememberHomeLayoutMode()` returns portrait whatever the window (it reads `LocalAllowLandscape`, which
-`LauncherActivity` provides from the setting, so Home, the Hub and the route all follow), `LauncherActivity`
+`LauncherActivity` provides from the active facet (`LauncherViewModel` joins `FacetRepository.observeFacets()` with `activeFacetId`), so Home, the Hub and the route all follow), `LauncherActivity`
 requests a portrait orientation (`homeRequestedOrientation`, applied once settings have loaded; Android
 ignores it on large screens, where the layout is still forced portrait), and the Landscape alignment card is
 hidden. The landscape values already saved are kept and come back when the switch is turned on.
@@ -106,7 +107,7 @@ With two or more clock pages the portrait list also moves down by `CLOCK_PAGE_DO
 
 ## 4. Landscape adjust mode
 
-Long-pressing a widget (the clock, the events under it, a Facet widget or a hosted one) opens that widget's sheet, whose "Adjust widget size & position" row enters adjust mode ([12](12-flow-drawer-search-and-app-actions.md) §4); the free-space Home sheet has no such row. The controls:
+Long-pressing a widget (the clock, the events under it, a Facet widget or a hosted one) opens that widget's sheet, whose "Adjust widget size & position" row enters adjust mode ([12](12-flow-drawer-search-and-app-actions.md) §4); the free-space Home sheet has the same row (`home_sheet_adjust`) while the stack has a page, and it adjusts the page showing; with an empty stack it shows Add widget and Widget stack instead. The controls:
 
 - **Divider handle.** `ClockZoneHandle(dragOrientation = Horizontal)`: a full-height rail in the gap
   between the panes, dragged left and right. The pane width is saved in landscape's own

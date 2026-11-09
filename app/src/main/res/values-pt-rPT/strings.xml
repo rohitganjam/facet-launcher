@@ -65,9 +65,7 @@
     <string name="home_apps_list_grid_display">Apresentação da grelha</string>
     <string name="home_apps_list_shrink_to_fit">Ajustar lista ao ecrã</string>
     <string name="home_apps_list_layout">Esquema da lista de apps</string>
-    <string name="home_apps_list_content_default">Conteúdo predefinido da lista de apps</string>
     <string name="home_apps_list_apps_to_show">Apps a mostrar</string>
-    <string name="home_apps_list_favorites_default">Favoritos predefinidos</string>
 
     <string name="app_drawer_show_apps_as">Mostrar apps como</string>
     <string name="app_drawer_grid_density">Densidade da grelha</string>
@@ -259,7 +257,7 @@
     <string name="facet_carousel_launcher_settings_subtitle">Aparência, favoritos, gaveta e mais</string>
     <string name="facet_carousel_facet_settings">Definições da faceta</string>
     <string name="facet_carousel_delete_facet">Eliminar faceta</string>
-    <string name="facet_carousel_add_facet_subtitle">Começa com o relógio predefinido, o calendário, as apps favoritas e as definições do seu launcher. Personalize cada faceta.</string>
+    <string name="facet_carousel_add_facet_subtitle">Começa com um relógio, as apps predefinidas do seu dispositivo no Dock e o aspeto do seu launcher.</string>
     <string name="preview_media_title">A reproduzir</string>
     <string name="manage_facets_delete_message">Esta ação não pode ser anulada. Os favoritos dela também serão removidos.</string>
     <string name="manage_facets_header_title">Gerir facetas</string>
@@ -322,19 +320,13 @@
     <string name="native_widget_media_empty">Nada em reprodução</string>
     <string name="native_widget_picker_section">Widgets do Facet</string>
 
-    <string name="settings_default_dock_title">Apps do dock predefinidas</string>
-    <string name="home_apps_list_default_header_title">Lista de apps predefinida</string>
     <string name="defaults_screen_note">Usado quando cria uma faceta ou repõe uma.</string>
     <string name="reset_to_default_title">Repor predefinição</string>
     <string name="reset_to_default_confirm">Repor</string>
-    <string name="reset_dock_subtitle">Substituir este dock pelo dock predefinido</string>
-    <string name="reset_dock_confirm_message">Isto substitui o dock desta faceta pelo dock predefinido. As apps que colocou aqui serão perdidas.</string>
-    <string name="reset_apps_subtitle">Substituir esta lista pela predefinida</string>
-    <string name="reset_apps_confirm_message">Isto substitui os favoritos, o conteúdo da lista e o número de apps desta faceta pelos valores predefinidos. Os favoritos que escolheu aqui serão perdidos.</string>
+    <string name="reset_dock_subtitle">Substituir este dock pelas apps predefinidas do dispositivo</string>
+    <string name="reset_dock_confirm_message">Isto substitui o dock desta faceta pelas apps predefinidas do dispositivo. As apps que colocou aqui serão perdidas.</string>
     <string name="reset_look_subtitle">Substituir o aspeto da lista pelo predefinido</string>
     <string name="reset_look_confirm_message">Isto substitui o esquema da lista e o alinhamento desta faceta pelos valores predefinidos.</string>
-    <string name="copy_dock_sheet_message">Substitui o dock de cada faceta selecionada pelo dock predefinido.</string>
-    <string name="copy_apps_sheet_message">Substitui os favoritos, o conteúdo da lista e o número de apps de cada faceta selecionada pelos valores predefinidos.</string>
     <string name="copy_look_subtitle">Substitui o aspeto das apps das facetas escolhidas por este</string>
     <string name="copy_look_sheet_message">Substitui o esquema da lista e o alinhamento de cada faceta selecionada pelos valores predefinidos.</string>
     <string name="settings_appearance_title">Aspeto do launcher</string>

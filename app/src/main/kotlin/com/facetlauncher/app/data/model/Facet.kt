@@ -38,6 +38,8 @@ data class Facet(
     val landscapeAppRowPosition: AppRowPosition? = null,
     val landscapeAppListVerticalAlignment: AppListVerticalAlignment? = null,
     val landscapeAppListColumnAlignment: AppListColumnAlignment? = null,
+    /** Whether Home uses its landscape layout and the screen may rotate while this facet is active; off locks portrait and hides the landscape settings. */
+    val allowLandscape: Boolean = true,
     val appRowPresentation: AppRowPresentation = AppRowPresentation.ICON_AND_TEXT,
     val listContentMode: ListContentMode = ListContentMode.FAVORITES,
     val appsToShowCount: Int = AppListLimits.DEFAULT_APPS_TO_SHOW,
@@ -84,5 +86,5 @@ fun Facet.withLandscape(overrides: LandscapeOverrides): Facet = copy(
     landscapeAppListColumnAlignment = overrides.appListColumnAlignment,
 )
 
-/** Where [list] lives for `this` facet: its own rows (the launcher-wide list when there is no active facet). */
-fun Facet?.placementTarget(list: PlacementList): PlacementTarget = PlacementTarget(list, this?.id)
+/** Where [list] lives for `this` facet: its own rows. */
+fun Facet.placementTarget(list: PlacementList): PlacementTarget = PlacementTarget(list, id)

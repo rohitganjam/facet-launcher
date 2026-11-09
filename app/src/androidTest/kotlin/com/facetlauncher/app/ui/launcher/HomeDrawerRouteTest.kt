@@ -117,7 +117,6 @@ import com.facetlauncher.app.domain.RecentlyInstalledAppsUseCase
 import com.facetlauncher.app.domain.RepairOrphanedProfileRowsUseCase
 import com.facetlauncher.app.domain.ResolveWidgetDropUseCase
 import com.facetlauncher.app.domain.ResolveWidgetResizeUseCase
-import com.facetlauncher.app.domain.SeedDefaultDockUseCase
 import com.facetlauncher.app.domain.SelectableFacetsUseCase
 import com.facetlauncher.app.domain.AddClockStackItemUseCase
 import com.facetlauncher.app.domain.CommitClockPlacementUseCase
@@ -154,6 +153,7 @@ import org.mockito.Mockito.`when`
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.verifyNoInteractions
 import com.facetlauncher.app.data.PlacementRepository
+import com.facetlauncher.app.data.model.PlacementList
 import com.facetlauncher.app.data.model.PlacementTarget
 import com.facetlauncher.app.domain.AddToActiveListUseCase
 import com.facetlauncher.app.domain.RemoveFromActiveListUseCase
@@ -269,7 +269,12 @@ class HomeDrawerRouteTest {
                 PlacementRepository(database.appPlacementDao(), database.folderPlacementDao()).also { repo ->
                     // Never seeded otherwise — the app list combines DB rows against installed apps, so with
                     // zero rows it stays permanently empty regardless of how fast/slow the installed-apps side is.
-                    runBlocking { apps.take(favoriteCount).forEachIndexed { index, app -> repo.addApp(PlacementTarget.GlobalFavorites, app, position = index) } }
+                    // The favorites belong to the active facet, so it is created and activated here (EnsureActiveFacetUseCase then finds it usable).
+                    runBlocking {
+                        val facet = facetRepository.addFacet()
+                        settingsRepository.setActiveFacetId(facet.id)
+                        apps.take(favoriteCount).forEachIndexed { index, app -> repo.addApp(PlacementTarget(PlacementList.FAVORITES, facet.id), app, position = index) }
+                    }
                 }
             }
             val observePlacedItems = remember { ObservePlacedItemsUseCase(placementRepository, FolderRepository(database.folderDao(), appRepository), appRepository) }
@@ -334,11 +339,11 @@ class HomeDrawerRouteTest {
                         appRepository, placementRepository,
                         FolderRepository(database.folderDao(), appRepository),
                     ),
-                    SeedDefaultDockUseCase(settingsRepository, DefaultAppRepository(context), placementRepository, GetInstalledAppsUseCase(appRepository)),
                     SyncFacetShortcutsUseCase(SelectableFacetsUseCase(facetRepository, EntitlementRepository()), FacetShortcutRepository(context)),
                     testAutomation(context, database, facetRepository, settingsRepository).activate,
                     testAutomation(context, database, facetRepository, settingsRepository).run,
                     settingsRepository,
+                    facetRepository,
                     WorkProfileRepository(context.getSystemService(UserManager::class.java), appRepository, context),
                 )
             }
@@ -1106,21 +1111,20 @@ class HomeDrawerRouteTest {
     fun holdingARowAndDraggingLeftPicksItUpWithoutOpeningTheSheetOrTheCarousel() {
         // Given Home with a favorite app row
         setContent()
-        val iconCenter = composeRule.onNodeWithTag("home_app_icon_com.example.A", useUnmergedTree = true)
+        val rowY = composeRule.onNodeWithTag("home_app_icon_com.example.A", useUnmergedTree = true)
             .fetchSemanticsNode()
             .boundsInRoot
-            .center
+            .center.y
         val rootWidth = composeRule.onRoot().fetchSemanticsNode().boundsInRoot.width
 
-        // When holding that row past the long-press threshold, then dragging left well past the swipe distance
-        // (regression: this used to also open the facet carousel)
-        composeRule.mainClock.autoAdvance = false
-        composeRule.onRoot().performTouchInput { down(iconCenter) }
-        composeRule.mainClock.advanceTimeBy(600)
-        composeRule.mainClock.autoAdvance = true
-        composeRule.waitForIdle()
-        composeRule.onNodeWithTag("home_screen_root").performTouchInput {
-            moveTo(iconCenter - Offset(rootWidth * 0.6f, 0f))
+        // When holding the row's right side past the long-press threshold, then dragging left well past the swipe
+        // distance and staying on screen (regression: this used to also open the facet carousel)
+        val start = Offset(rootWidth * 0.9f, rowY)
+        composeRule.onRoot().performTouchInput {
+            down(start)
+            advanceEventTime(700)
+            moveTo(start - Offset(rootWidth * 0.3f, 0f))
+            moveTo(start - Offset(rootWidth * 0.8f, 0f))
             up()
         }
         settleAnimation()

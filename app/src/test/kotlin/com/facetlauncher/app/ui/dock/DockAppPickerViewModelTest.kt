@@ -66,6 +66,7 @@ class DockAppPickerViewModelTest {
         installed: List<AppInfo>,
         dockApps: List<AppInfo>,
         usageAccessGranted: Boolean = false,
+        viaRoute: Boolean = true,
     ): DockAppPickerViewModel {
         val appRepository = mock(AppRepository::class.java)
         `when`(appRepository.getInstalledApps()).thenReturn(installed)
@@ -73,7 +74,8 @@ class DockAppPickerViewModelTest {
 
         val placementRepository = mock(PlacementRepository::class.java)
         val observePlacedItems = mock(ObservePlacedItemsUseCase::class.java)
-        `when`(observePlacedItems.items(PlacementTarget.GlobalDock)).thenReturn(flowOf(dockApps.map { PlacedItem.SingleApp(it) }))
+        `when`(observePlacedItems.items(PlacementTarget(com.facetlauncher.app.data.model.PlacementList.DOCK, 5L)))
+            .thenReturn(flowOf(dockApps.map { PlacedItem.SingleApp(it) }))
 
         val folderRepository = mock(FolderRepository::class.java)
         `when`(folderRepository.observeFolders()).thenReturn(flowOf(emptyList()))
@@ -85,7 +87,7 @@ class DockAppPickerViewModelTest {
         val sortAppsForPicker = SortAppsForPickerUseCase(usageStatsRepository)
 
         return DockAppPickerViewModel(
-            SavedStateHandle(),
+            SavedStateHandle(if (viaRoute) mapOf("facetId" to 5L) else emptyMap()),
             getInstalledApps,
             placementRepository,
             observePlacedItems,
@@ -111,6 +113,23 @@ class DockAppPickerViewModelTest {
 
         assertEquals(SortDirection.DESCENDING, viewModel.uiState.value.sortDirection)
         assertEquals(listOf(b, a), viewModel.uiState.value.selectedResults)
+    }
+
+    @Test
+    fun `useFacet points a picker without a route at that facet's own dock`() = runTest {
+        // Given a picker opened without a facet route (as onboarding does), whose facet's dock holds one app
+        val a = appInfo('a')
+        val b = appInfo('b')
+        val viewModel = createViewModel(installed = listOf(a, b), dockApps = listOf(b), viaRoute = false)
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // When it is pointed at the facet
+        viewModel.useFacet(5L)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Then the facet's dock is what is selected
+        assertEquals(listOf(b), viewModel.uiState.value.selectedResults)
     }
 
     @Test

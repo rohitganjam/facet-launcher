@@ -27,6 +27,11 @@ A minimal, fast Android home screen launcher. Prioritizes speed and low visual c
 - No OEM-level system theming support (e.g. Samsung Theme Park / Galaxy Store icon packs) — these apply icons before any third-party launcher can render them; undetectable by design.
 - No web search fallback in the app drawer search — search (now in scope per F6) covers apps and contacts only.
 
+
+## 3b. Pro (status, 2026-11-09)
+
+Facet Pro is a one-time Google Play purchase (`facet_pro`). It unlocks 10 facets instead of 3, device-based automation triggers and more than 2 rules, and the Home clock widget stack (up to 5 pages; free keeps one). Billing, the Play Console product and real-device purchase, restore, refund and offline testing are done. See `docs/architecture/16-flow-billing.md`.
+
 ---
 
 ## 3a. Parked for Future Consideration

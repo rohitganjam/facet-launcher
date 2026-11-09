@@ -80,14 +80,14 @@ class AppearanceSettingsScreenTest {
         var favorite2Label = ""
         var dockLabel = ""
         setContent(
-            seedApps = { appRepository, placementRepository, _ ->
+            seedApps = { appRepository, placementRepository, facetId ->
                 val installed = appRepository.getTestableApps()
                 favorite1Label = installed[0].label
                 favorite2Label = installed[1].label
                 dockLabel = installed[2].label
-                placementRepository.addApp(PlacementTarget.GlobalFavorites, installed[0], position = 0)
-                placementRepository.addApp(PlacementTarget.GlobalFavorites, installed[1], position = 1)
-                placementRepository.addApp(PlacementTarget.GlobalDock, installed[2], position = 0)
+                placementRepository.addApp(PlacementTarget(PlacementList.FAVORITES, facetId!!), installed[0], position = 0)
+                placementRepository.addApp(PlacementTarget(PlacementList.FAVORITES, facetId!!), installed[1], position = 1)
+                placementRepository.addApp(PlacementTarget(PlacementList.DOCK, facetId!!), installed[2], position = 0)
             },
         )
 
@@ -108,10 +108,10 @@ class AppearanceSettingsScreenTest {
         // Given the screen, one real (installed) favorite seeded
         var favoriteLabel = ""
         setContent(
-            seedApps = { appRepository, placementRepository, _ ->
+            seedApps = { appRepository, placementRepository, facetId ->
                 val app = appRepository.getTestableApps()[0]
                 favoriteLabel = app.label
-                placementRepository.addApp(PlacementTarget.GlobalFavorites, app, position = 0)
+                placementRepository.addApp(PlacementTarget(PlacementList.FAVORITES, facetId!!), app, position = 0)
             },
         )
 

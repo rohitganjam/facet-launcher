@@ -34,7 +34,7 @@ class RefreshWeatherUseCaseTest {
     private val cities = mock(CityRepository::class.java)
     private val useCase = RefreshWeatherUseCase(settingsRepository, locationRepository, weatherRepository, ResolvePlaceUseCase(geocoder, cities))
 
-    private val bengaluru = WeatherPlace(12.97, 77.59)
+    private val bengaluru = WeatherPlace(12.972, 77.595)
     private val pune = WeatherCity("Pune", 18.5204, 73.8567, "Asia/Kolkata")
 
     private fun settings(mode: WeatherLocationMode, city: WeatherCity? = null) {
@@ -51,13 +51,13 @@ class RefreshWeatherUseCaseTest {
     fun `a chosen city is refreshed without touching the location`() = runTest {
         settings(WeatherLocationMode.CITY, pune)
         storedState(WeatherFetchState())
-        `when`(weatherRepository.refresh(WeatherPlace(18.52, 73.86))).thenReturn(RefreshOutcome.Updated)
+        `when`(weatherRepository.refresh(WeatherPlace(18.520, 73.857))).thenReturn(RefreshOutcome.Updated)
 
         val result = useCase()
 
         assertEquals(WeatherRefreshResult.Done(RefreshOutcome.Updated), result)
         verify(locationRepository, never()).currentLocation()
-        verify(weatherRepository, never()).setPlaceName(WeatherPlace(18.52, 73.86), "Pune", PlaceNameSource.GEOCODER)
+        verify(weatherRepository, never()).setPlaceName(WeatherPlace(18.520, 73.857), "Pune", PlaceNameSource.GEOCODER)
     }
 
     @Test
@@ -85,11 +85,11 @@ class RefreshWeatherUseCaseTest {
         storedState(WeatherFetchState())
         `when`(locationRepository.isPermissionGranted()).thenReturn(true)
         `when`(locationRepository.currentLocation()).thenReturn(DeviceLocation(12.9716, 77.5946, 920))
-        val place = WeatherPlace(12.97, 77.59, 920)
+        val place = WeatherPlace(12.972, 77.595, 920)
         `when`(weatherRepository.refresh(place)).thenReturn(RefreshOutcome.Updated)
         // Given the weather state after the refresh holds the place but no name, and the geocoder knows it
         `when`(weatherRepository.observeState()).thenReturn(flowOf(WeatherFetchState()), flowOf(WeatherFetchState(place = place)))
-        `when`(geocoder.reverse(12.97, 77.59, Locale.getDefault())).thenReturn(GeocodedPlace("Bengaluru", "Karnataka", "IN", 12.97, 77.59))
+        `when`(geocoder.reverse(12.972, 77.595, Locale.getDefault())).thenReturn(GeocodedPlace("Bengaluru", "Karnataka", "IN", 12.97, 77.59))
 
         val result = useCase()
 
@@ -120,14 +120,14 @@ class RefreshWeatherUseCaseTest {
         `when`(locationRepository.isPermissionGranted()).thenReturn(true)
         `when`(locationRepository.currentLocation()).thenReturn(DeviceLocation(18.5204, 73.8567, null))
         `when`(weatherRepository.refresh(bengaluru)).thenReturn(RefreshOutcome.UpToDate)
-        `when`(weatherRepository.refresh(WeatherPlace(18.52, 73.86))).thenReturn(RefreshOutcome.Updated)
+        `when`(weatherRepository.refresh(WeatherPlace(18.520, 73.857))).thenReturn(RefreshOutcome.Updated)
 
         val result = useCase()
 
         // Then the stored place was fetched without waiting for the fix, and the new place after it
         assertEquals(WeatherRefreshResult.Done(RefreshOutcome.Updated), result)
         verify(weatherRepository).refresh(bengaluru)
-        verify(weatherRepository).refresh(WeatherPlace(18.52, 73.86))
+        verify(weatherRepository).refresh(WeatherPlace(18.520, 73.857))
     }
 
     @Test
@@ -173,13 +173,13 @@ class RefreshWeatherUseCaseTest {
         settings(WeatherLocationMode.CURRENT)
         storedState(WeatherFetchState(place = bengaluru, placeName = "Bengaluru", placeNameSource = PlaceNameSource.GEOCODER))
         `when`(locationRepository.isPermissionGranted()).thenReturn(true)
-        `when`(locationRepository.currentLocation()).thenReturn(DeviceLocation(12.97, 77.59, null))
+        `when`(locationRepository.currentLocation()).thenReturn(DeviceLocation(12.972, 77.595, null))
         `when`(weatherRepository.refresh(bengaluru)).thenReturn(RefreshOutcome.UpToDate)
 
         useCase()
 
         // Then the geocoder is not asked and no name is written
-        verify(geocoder, never()).reverse(12.97, 77.59, Locale.getDefault())
+        verify(geocoder, never()).reverse(12.972, 77.595, Locale.getDefault())
         verify(weatherRepository, never()).setPlaceName(bengaluru, "Bengaluru", PlaceNameSource.GEOCODER)
     }
 
@@ -188,10 +188,10 @@ class RefreshWeatherUseCaseTest {
         settings(WeatherLocationMode.CURRENT)
         storedState(WeatherFetchState(place = bengaluru, placeName = "Bengaluru", placeNameSource = PlaceNameSource.OFFLINE))
         `when`(locationRepository.isPermissionGranted()).thenReturn(true)
-        `when`(locationRepository.currentLocation()).thenReturn(DeviceLocation(12.97, 77.59, null))
+        `when`(locationRepository.currentLocation()).thenReturn(DeviceLocation(12.972, 77.595, null))
         `when`(weatherRepository.refresh(bengaluru)).thenReturn(RefreshOutcome.UpToDate)
-        `when`(geocoder.reverse(12.97, 77.59, Locale.getDefault())).thenReturn(GeocodedPlace("ಬೆಂಗಳೂರು", null, "IN", 12.97, 77.59))
-        `when`(cities.nearest(12.97, 77.59, "IN", ResolvePlaceUseCase.MAX_CITY_KM)).thenReturn(City("Bengaluru", "Karnataka", "IN", 12.97, 77.59, 1, "Asia/Kolkata"))
+        `when`(geocoder.reverse(12.972, 77.595, Locale.getDefault())).thenReturn(GeocodedPlace("ಬೆಂಗಳೂರು", null, "IN", 12.972, 77.595))
+        `when`(cities.nearest(12.972, 77.595, "IN", ResolvePlaceUseCase.MAX_CITY_KM)).thenReturn(City("Bengaluru", "Karnataka", "IN", 12.972, 77.595, 1, "Asia/Kolkata"))
 
         useCase()
 

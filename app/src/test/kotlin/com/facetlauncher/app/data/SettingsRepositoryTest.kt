@@ -159,7 +159,6 @@ class SettingsRepositoryTest {
         assertEquals(AppListGridColumns.FOUR, settings.appListGridColumns)
         assertEquals(AppListGridDisplayMode.ICONS, settings.appListGridDisplayMode)
         assertFalse(settings.onboardingCompleted)
-        assertFalse(settings.defaultsSeeded)
         assertEquals(emptySet<String>(), settings.coachMarksSeen)
     }
 
@@ -175,20 +174,6 @@ class SettingsRepositoryTest {
         val settings = repository.settings.first()
         assertEquals(AppListGridColumns.THREE, settings.appListGridColumns)
         assertEquals(3, settings.appListGridColumns.columns)
-    }
-
-    @Test
-    fun `setOnboardingCompleted and setDefaultsSeeded round-trip independently`() = runTest {
-        // Given a repository
-        val repository = createRepository()
-
-        // When only one is set
-        repository.setOnboardingCompleted(true)
-
-        // Then it round-trips and the other stays at its default
-        val settings = repository.settings.first()
-        assertEquals(true, settings.onboardingCompleted)
-        assertFalse(settings.defaultsSeeded)
     }
 
     @Test
@@ -568,16 +553,6 @@ class SettingsRepositoryTest {
         repository.setHideStatusBar(true)
 
         assertEquals(true, repository.settings.first().hideStatusBar)
-    }
-
-    @Test
-    fun `allow landscape defaults to on and persists when turned off`() = runTest {
-        val repository = createRepository()
-        assertEquals(true, repository.settings.first().allowLandscape)
-
-        repository.setAllowLandscape(false)
-
-        assertEquals(false, repository.settings.first().allowLandscape)
     }
 
     @Test

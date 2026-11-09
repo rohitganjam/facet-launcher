@@ -23,7 +23,10 @@ import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.collections.immutable.toImmutableSet
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -36,8 +39,6 @@ import com.facetlauncher.app.data.model.PlacementTarget
 import com.facetlauncher.app.data.model.PlacementList
 
 data class DockAppPickerUiState(
-    /** `false` when this picker is editing the launcher-wide default dock (reached from Settings) rather than one facet's own. */
-    val isFacetScoped: Boolean = false,
     val query: String = "",
     /** In-dock apps at the moment this screen was opened, in their dock order — stays exactly
      * this set/order for the rest of this visit no matter what gets checked/unchecked below;
@@ -61,10 +62,8 @@ data class DockAppPickerUiState(
 }
 
 /**
- * Dock app picker (`4k`) — also doubles as one facet's own dock picker (reached from that
- * facet's settings). No `facetId` (or [NO_ACTIVE_FACET_ID]) means the launcher-wide default
- * dock (`PlacementTarget.GlobalDock`) rather than one facet's own — the
- * same split [com.facetlauncher.app.ui.facets.FavoritesPickerViewModel] uses for favorites.
+ * Dock app picker (`4k`) for one facet's own dock: reached from that facet's settings with its `facetId`,
+ * or from onboarding without one, which points it at the first facet through [useFacet].
  */
 @HiltViewModel
 class DockAppPickerViewModel @Inject constructor(
@@ -77,7 +76,9 @@ class DockAppPickerViewModel @Inject constructor(
     private val usageAccessRepository: UsageAccessRepository,
 ) : ViewModel() {
 
-    private val facetId: Long? = savedStateHandle.get<Long>("facetId")?.takeIf { it != NO_ACTIVE_FACET_ID }
+    private val argFacetId: Long? = savedStateHandle.get<Long>("facetId")?.takeIf { it != NO_ACTIVE_FACET_ID }
+    private val chosenFacetId = MutableStateFlow(argFacetId)
+    private val facetId: Long? get() = chosenFacetId.value
     private val query = MutableStateFlow("")
     private val installedApps = MutableStateFlow<List<AppInfo>>(emptyList())
     private val sortOption = MutableStateFlow(AppSortOption.ALPHABETICAL)
@@ -87,9 +88,19 @@ class DockAppPickerViewModel @Inject constructor(
     /** `PACKAGE_USAGE_STATS` has no grant-change callback — re-checked via [refreshUsageAccessGranted] on this screen's resume. */
     val usageAccessGranted: StateFlow<Boolean> = _usageAccessGranted.asStateFlow()
 
-    private val target = PlacementTarget(PlacementList.DOCK, facetId)
+    private val target: PlacementTarget? get() = facetId?.let { PlacementTarget(PlacementList.DOCK, it) }
 
-    private fun observeDockItems(): Flow<List<PlacedItem>> = observePlacedItems.items(target)
+    /** For a screen not reached through a facet's route (onboarding): edit this facet's Dock. A route's own facet wins. */
+    fun useFacet(id: Long) {
+        if (argFacetId == null && chosenFacetId.value != id) {
+            loadOrder.value = null
+            chosenFacetId.value = id
+        }
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private fun observeDockItems(): Flow<List<PlacedItem>> =
+        chosenFacetId.flatMapLatest { id -> if (id == null) flowOf(emptyList()) else observePlacedItems.items(PlacementTarget(PlacementList.DOCK, id)) }
 
     /** Latched from the dock's live order the first time it's observed; never updated after — see [DockAppPickerUiState.selectedResults]. */
     private val loadOrder = MutableStateFlow<List<String>?>(null)
@@ -121,7 +132,6 @@ class DockAppPickerViewModel @Inject constructor(
         // a folder costs exactly one slot regardless of how many apps it holds.
         val itemCount = dockApps.size + placedFolderIds.size
         DockAppPickerUiState(
-            isFacetScoped = facetId != null,
             query = query,
             selectedResults = selected.sortedBy { order.indexOf(it.listKey) }.toImmutableList(),
             otherResults = sortAppsForPicker(other, sortOption, sortDirection).toImmutableList(),
@@ -161,6 +171,7 @@ class DockAppPickerViewModel @Inject constructor(
     }
 
     fun toggleDockApp(app: AppInfo) {
+        val target = target ?: return
         val state = uiState.value
         val isInDock = app.listKey in state.dockPackageComponents
         viewModelScope.launch {
@@ -174,6 +185,7 @@ class DockAppPickerViewModel @Inject constructor(
 
     /** The Folders tab's own checkbox — un-placing here never deletes the folder, only removes it from this specific Dock. */
     fun toggleFolder(folder: Folder) {
+        val target = target ?: return
         val state = uiState.value
         val isPlaced = folder.id in state.placedFolderIds
         viewModelScope.launch {
