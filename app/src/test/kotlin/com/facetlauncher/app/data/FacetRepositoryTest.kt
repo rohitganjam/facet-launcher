@@ -289,6 +289,23 @@ class FacetRepositoryTest {
     }
 
     @Test
+    fun `setAllowLandscape stores the facet's own value and leaves other facets alone`() = runTest {
+        // Given two new facets, both allowing landscape
+        val repository = FacetRepository(FakeFacetDao(), FakeClockStackItemDao())
+        val first = repository.addFacet()
+        val second = repository.addFacet()
+        assertEquals(true, first.allowLandscape)
+
+        // When the first turns landscape off
+        repository.setAllowLandscape(first.id, false)
+
+        // Then only the first is portrait-only
+        val stored = repository.observeFacets().first().associateBy { it.id }
+        assertEquals(false, stored.getValue(first.id).allowLandscape)
+        assertEquals(true, stored.getValue(second.id).allowLandscape)
+    }
+
+    @Test
     fun `setAppListShrinkToFit stores the facet's own value`() = runTest {
         // Given a new facet, shrinking off
         val repository = FacetRepository(FakeFacetDao(), FakeClockStackItemDao())

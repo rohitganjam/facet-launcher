@@ -48,7 +48,7 @@ class BackupCoverageTest {
             "selectedCalendarIds", "calendarColors", // keyed by this device's calendar row ids
             "calendarPermissionRequested", "contactsPermissionRequested", "bluetoothPermissionRequested", "locationPermissionRequested",
             "onboardingCompleted", "coachMarksSeen", // this install's first-run progress
-            "allowLandscape", "hideStatusBar", // per-device choices
+            "hideStatusBar", // a per-device choice
         )
         // drawerGridDensity is stored as drawerGridSize, and the landscape group as flat landscape* fields
         val renamed = mapOf("drawerGridDensity" to "drawerGridSize")

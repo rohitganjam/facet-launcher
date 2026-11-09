@@ -7,7 +7,7 @@ Four smaller flows that don't fit the earlier docs but are load-bearing for how 
 A *facet* is a named Home configuration (`facets` row). Exactly one is active
 (`active_facet_id` in DataStore). A facet **owns** its dock, favorites, list content and look. The launcher-wide
 values (the list content and look a new facet starts with, kept in the launcher settings with no screen of their own; a facet's own screens are *Dock Apps* and *Apps List*) are only a
-seed: `ApplyFacetDefaultsUseCase` applies them to a facet when it is created, and the Dock's *Reset to default* re-seeds the Dock from the device's default apps. There is no launcher-wide Dock, Favorites or Apps list screen, and no *Copy to facets* from defaults. The only launcher-wide Home setting with a control is the *Allow landscape mode* switch, a row in Settings → Home & apps (`SettingsViewModel.setAllowLandscape`).
+seed: `ApplyFacetDefaultsUseCase` applies them to a facet when it is created, and the Dock's *Reset to default* re-seeds the Dock from the device's default apps. There is no launcher-wide Dock, Favorites or Apps list screen, and no *Copy to facets* from defaults. There is no launcher-wide Home setting with a control: *Allow landscape mode* is each facet's own switch (`Facet.allowLandscape`), on its Apps list screen.
 
 ```mermaid
 flowchart TB

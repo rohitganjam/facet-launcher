@@ -3,6 +3,7 @@ package com.facetlauncher.app.ui.launcher
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.WorkProfileInfo
 import com.facetlauncher.app.data.WorkProfileRepository
@@ -71,7 +72,7 @@ data class LauncherUiState(
     val launcherFontOption: LauncherFontOption = LauncherFontOption.SYSTEM,
     val homeAppsFontWeight: FontWeightOption = FontWeightOption.REGULAR,
     val fontScaleOption: FontScaleOption = FontScaleOption.DEFAULT,
-    /** `LauncherSettings.allowLandscape`: off keeps Home in portrait and locks the screen's orientation. */
+    /** The active facet's `allowLandscape`: off keeps Home in portrait and locks the screen's orientation. */
     val allowLandscape: Boolean = true,
     /** `LauncherSettings.hideStatusBar`: hides the status bar over Home, Hub and Drawer. */
     val hideStatusBar: Boolean = false,
@@ -106,6 +107,7 @@ class LauncherViewModel @Inject constructor(
     private val activateFacetById: ActivateFacetByIdUseCase,
     private val runFacetAutomation: RunFacetAutomationUseCase,
     private val settingsRepository: SettingsRepository,
+    private val facetRepository: FacetRepository,
     private val workProfileRepository: WorkProfileRepository,
 ) : ViewModel() {
 
@@ -150,7 +152,7 @@ class LauncherViewModel @Inject constructor(
         // Live, not one-shot — an install/uninstall/update while Facet is in the foreground
         // (including via the app long-press menu's Uninstall action) must be reflected without
         // requiring a process restart; see AppRepository.observeInstalledApps.
-        combine(getInstalledApps.observe(), settingsRepository.settings, workProfileRepository.observeWorkProfiles()) { apps, settings, workProfiles ->
+        combine(getInstalledApps.observe(), settingsRepository.settings, workProfileRepository.observeWorkProfiles(), facetRepository.observeFacets()) { apps, settings, workProfiles, facets ->
             _uiState.value.copy(
                 apps = apps.toImmutableList(),
                 isLoading = false,
@@ -166,7 +168,7 @@ class LauncherViewModel @Inject constructor(
                 launcherFontOption = settings.launcherFontOption,
                 homeAppsFontWeight = settings.homeAppsFontWeight,
                 fontScaleOption = settings.fontScaleOption,
-                allowLandscape = settings.allowLandscape,
+                allowLandscape = facets.firstOrNull { it.id == settings.activeFacetId }?.allowLandscape ?: true,
                 hideStatusBar = settings.hideStatusBar,
                 homeOpensSearch = settings.homeOpensSearch,
                 swipeLeftEnabled = settings.swipeLeftEnabled,

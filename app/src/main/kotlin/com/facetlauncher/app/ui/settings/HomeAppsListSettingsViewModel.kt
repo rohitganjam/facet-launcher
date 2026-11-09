@@ -79,8 +79,8 @@ data class HomeAppsListUiState(
     val appListGridColumns: AppListGridColumns get() = style.appList.gridColumns
     val appListGridDisplayMode: AppListGridDisplayMode get() = style.appList.gridDisplayMode
     val appListShrinkToFit: AppListShrinkToFit get() = style.appList.shrinkToFit
-    /** Launcher-wide: off keeps Home in portrait, and the landscape settings are hidden. */
-    val allowLandscape: Boolean get() = settings.allowLandscape
+    /** This facet's: off keeps Home in portrait while it is active, and the landscape settings are hidden. */
+    val allowLandscape: Boolean get() = facet?.allowLandscape ?: true
     /** What the Landscape rows show: this facet's own landscape values, `null` meaning "same as portrait". */
     val landscape: LandscapeOverrides get() = facet?.landscape ?: settings.landscape
     val favoritesLabel: String get() = "${favorites.size} of ${AppListLimits.MAX_FAVORITES}"
@@ -175,6 +175,8 @@ class HomeAppsListSettingsViewModel @Inject constructor(
 
     fun setAppListShrinkToFit(shrink: AppListShrinkToFit) =
         writeLook({ facetRepository.setAppListShrinkToFit(it, shrink) })
+
+    fun setAllowLandscape(allow: Boolean) = writeLook({ facetRepository.setAllowLandscape(it, allow) })
 
     fun setLandscapeAppRowPosition(position: AppRowPosition?) = updateLandscape { it.copy(appRowPosition = position) }
 

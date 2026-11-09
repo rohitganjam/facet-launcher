@@ -331,28 +331,20 @@ class HomeAppsListSettingsScreenTest {
     }
 
     @Test
-    fun turningLandscapeOffHidesTheLandscapeAlignment() {
+    fun turningLandscapeOffHidesTheLandscapeAlignmentAndIsSavedOnTheFacet() {
         // Given a facet's screen with landscape allowed
-        setFacetContent()
+        val repo = setFacetContent()
         composeRule.onNodeWithTag("home_apps_list_settings_screen").performScrollToNode(hasTestTag("appearance_landscape_app_list_vertical_alignment_row"))
         composeRule.onNodeWithTag("appearance_landscape_app_list_vertical_alignment_row").assertExists()
 
-        // When landscape is turned off launcher-wide
-        runBlocking { settingsRepository.setAllowLandscape(false) }
+        // When the facet's landscape switch is turned off
+        composeRule.onNodeWithTag("home_apps_list_settings_screen").performScrollToNode(hasTestTag("appearance_allow_landscape_row"))
+        composeRule.onNodeWithTag("appearance_allow_landscape_row").performClick()
 
-        // Then the landscape alignment rows go away
+        // Then it is saved on that facet and the landscape alignment rows go away
+        composeRule.waitUntil(timeoutMillis = 3_000) { facets(repo).single().allowLandscape.not() }
         composeRule.waitUntil(timeoutMillis = 3_000) {
             composeRule.onAllNodesWithTag("appearance_landscape_app_list_vertical_alignment_row").fetchSemanticsNodes().isEmpty()
         }
-    }
-
-    @Test
-    fun aFacetScopedScreenHasNoAllowLandscapeSwitch() {
-        // Given a facet-scoped screen
-        setContent(facetScoped = true)
-        awaitFacetTitle()
-
-        // Then the launcher-wide switch isn't there
-        composeRule.onNodeWithTag("appearance_allow_landscape_row").assertDoesNotExist()
     }
 }

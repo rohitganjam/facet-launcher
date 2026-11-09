@@ -343,6 +343,7 @@ class HomeDrawerRouteTest {
                     testAutomation(context, database, facetRepository, settingsRepository).activate,
                     testAutomation(context, database, facetRepository, settingsRepository).run,
                     settingsRepository,
+                    facetRepository,
                     WorkProfileRepository(context.getSystemService(UserManager::class.java), appRepository, context),
                 )
             }

@@ -43,6 +43,7 @@ erDiagram
         boolean clockPlacementOwn "false until first adjusted on Home: then alignment, zone height, scale and their landscape twins are the facet's own"
         string clockAlignment "own placement, used while clockPlacementOwn"
         float clockZoneHeightDp "nullable"
+        boolean allowLandscape "default true; off = this facet is portrait only"
         string appRowPosition
         string appRowPresentation
         string listContentMode
@@ -367,6 +368,7 @@ Room.databaseBuilder(context, FacetDatabase::class.java, "facet.db")
 | 45→46 | **Auto-migration** (`@AutoMigration(from = 45, to = 46, spec = DropFacetOverrideFlags)`): `facets` loses `overrideApps`, `overridingFavorites` and `overrideDock`. Nothing is lost: 44→45 has already copied the launcher's values into every facet that inherited them. `FacetDatabaseMigrationTest.migration45To46DropsTheOverrideFlagsAndKeepsTheFacetsOwnValues`. |
 | 46→47 | **Auto-migration** (`@AutoMigration(from = 46, to = 47)`): `app_placements` and `folder_placements` each gain four nullable columns, `portraitRow`, `portraitColumn`, `landscapeRow` and `landscapeColumn` (a Home grid cell counted from the anchor edge). All null until an item is first moved on a grid, when its place still follows `position`. Nothing reads them yet. `FacetDatabaseMigrationTest.migration46To47AddsEmptyHomeCellsAndKeepsEveryPlacement`. |
 | 47→48 | **Manual, no schema change** (`Migrations.MIGRATION_47_48`): deletes every `app_placements` and `folder_placements` row with a null `facetId`, the launcher-wide Dock and Favorites that no longer exist (a facet has held its own copy since 44→45). The columns stay nullable. `FacetDatabaseMigrationTest.migration47To48DeletesTheLauncherWideListsAndKeepsFacetLists`. |
+| 48→49 | **Manual** (`Migrations.migration48To49`, reading the old key through `legacyAllowLandscape` in `FacetDefaultsMigration.kt`): `facets` gains `allowLandscape INTEGER NOT NULL DEFAULT 1`, and every facet is set to the launcher-wide `allow_landscape` the DataStore held, read through a supplier like 44→45, so nothing changes on screen. The DataStore key is no longer written or read after this. `FacetDatabaseMigrationTest.migration48To49GivesEveryFacetTheLauncherWideLandscapeChoice`. |
 
 The landscape twins are handled as one `LandscapeOverrides` group (clock alignment, divider, scale, widget size, row position, vertical and column alignment; every field nullable). Settings hold it as `LauncherSettings.landscape`, read from the six `landscape_*` keys and written only through `updateLandscape`. A facet keeps the flat columns above (so the schema is unchanged) and exposes the group as `FacetEntity.landscape` / `withLandscape(...)`, written through `FacetRepository.updateLandscape`. `resolveLandscape` is the one resolution rule (see [17](17-flow-home-layout.md) §1.0).
 
@@ -389,7 +391,6 @@ erDiagram
         boolean use_24_hour_time "default false"
         string clock_alignment "ClockAlignment, default LEFT; also positions the calendar events strip"
         float clock_zone_height_dp "nullable, absent = template height"
-        boolean allow_landscape "default true; off = portrait only"
         boolean hide_status_bar "default false; hides the status bar over Home, Hub and Drawer"
         string landscape_clock_alignment "nullable, absent = use clock_alignment"
         float landscape_clock_zone_height_dp "nullable, absent = use clock_zone_height_dp"
@@ -514,7 +515,6 @@ DataStore serialises writes and is main-safe; callers `viewModelScope.launch { }
 | `chooseWeatherCity(WeatherCity): Boolean` | `weather_saved_cities`, the four city keys, `weather_location_mode` | add the city to the saved list unless already there (refused, returning false, past 10), make it the chosen city and switch to city mode | `WeatherLocationViewModel` |
 | `removeWeatherCity(WeatherCity)` | `weather_saved_cities`, the four city keys | drop it from the list; clear the four keys when it was the chosen one | `WeatherLocationViewModel` |
 | `setSavedWeatherCities(List<WeatherCity>)` | `weather_saved_cities` | replace the list (restore), at most 10 | `ImportBackupUseCase` |
-| `setAllowLandscape(Boolean)` | `allow_landscape` | set | `SettingsViewModel` |
 | `setHideStatusBar(Boolean)` | `hide_status_bar` | set | `AppearanceSettingsViewModel` |
 | `setClockAlignment(ClockAlignment)` | `clock_alignment` | set | `ClockStyleGalleryViewModel`, `HomeViewModel` (clock adjust toolbar) |
 | `setShowWeather(Boolean)` | `show_weather` | set | `TurnOffWeatherUseCase`, weather settings |
@@ -614,7 +614,6 @@ its position (see chat history: calendar/appearance styling consolidation).
 | `weather_icon_style` | String | `weatherIconStyle` | `COLORED` | `MONOCHROME` or `COLORED` weather pictures; the launcher default, a facet overriding the clock uses its own `clockWeatherIconStyle` |
 | `clock_alignment` | String (`ClockAlignment`) | `clockAlignment` | `LEFT` | also positions the calendar events strip |
 | `clock_zone_height_dp` | Float | `clockZoneHeightDp` | `null` (= template's natural height) | nullable — `resetClockZoneHeight()` removes the key |
-| `allow_landscape` | Boolean | `allowLandscape` | `true` | launcher-wide: off keeps Home in portrait, locks the screen to portrait and hides the landscape settings |
 | `hide_status_bar` | Boolean | `hideStatusBar` | `false` | launcher-wide: hides the status bar over Home, Hub and Drawer; a swipe-down shows it for 3 s ([13](13-flow-facets-theme-notifications-onboarding.md) §2a) |
 | `landscape_clock_alignment` | String (`ClockAlignment`) | `landscapeClockAlignment` | `null` (= `clock_alignment`) | landscape's own placement, written from Home's adjust mode in landscape |
 | `landscape_clock_zone_height_dp` | Float | `landscapeClockZoneHeightDp` | `null` (= `clock_zone_height_dp`) | landscape's divider position (the clock pane width) |
@@ -776,7 +775,7 @@ through a user-chosen SAF `Uri`. Import refuses `backupVersion > CURRENT_BACKUP_
 older (fields added since carry defaults). Contents: `settings: BackupSettings` — every DataStore key except
 the ones below, with `activeFacetIndex` instead of `active_facet_id` and the `landscape_*` keys as flat
 `landscape*` fields. **Not backed up** (all deliberate): `active_facet_id` (a row id), `selected_calendar_ids`
-and `calendar_colors` (keyed by this device's calendar row ids), `allow_landscape` and `hide_status_bar` (per-device choices),
+and `calendar_colors` (keyed by this device's calendar row ids), `hide_status_bar` (a per-device choice),
 all four `*_permission_requested` flags and `onboarding_completed`, `coach_marks_seen`
 (this install's own history). `BackupFacet` carries every `Facet` field except the id and the hosted
 clock stack (`Facet.clockStack`, the rows of `clock_stack_items`): an `AppWidgetHost` id is not

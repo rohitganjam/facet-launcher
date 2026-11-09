@@ -1385,6 +1385,29 @@ class FacetDatabaseMigrationTest {
     }
 
     @Test
+    fun migration48To49GivesEveryFacetTheLauncherWideLandscapeChoice() {
+        // Given a v48 database with two facets, and a launcher whose landscape switch was off
+        val db48 = helper.createDatabase(TEST_DB, 48)
+        listOf(1L, 2L).forEach { id ->
+            db48.execSQL(
+                "INSERT INTO facets (id, name, position, clockPlacementOwn, clockAlignment, appRowPosition, appRowPresentation, listContentMode, " +
+                    "appsToShowCount, appListVerticalAlignment, appListLayout, appListColumnAlignment, appListGridColumns, appListGridDisplayMode, " +
+                    "appListShrinkToFit, dockDisplayMode) VALUES ($id, 'Facet $id', $id, 0, 'LEFT', 'LEFT', 'ICON_AND_TEXT', 'FAVORITES', 6, 'BOTTOM', " +
+                    "'SINGLE_COLUMN', 'BOTH_LEFT', 'FOUR', 'ICONS', 'OFF', 'ICONS')",
+            )
+        }
+        db48.close()
+
+        // When migrating to v49 (Room also validates the result against the exported v49 schema)
+        val db49 = helper.runMigrationsAndValidate(TEST_DB, 49, true, Migrations.migration48To49 { false })
+
+        // Then every facet holds the launcher's value, so nothing changes on screen
+        db49.query("SELECT allowLandscape FROM facets ORDER BY id").use {
+            assertEquals(listOf(0, 0), generateSequence { if (it.moveToNext()) it.getInt(0) else null }.toList())
+        }
+    }
+
+    @Test
     fun migration44To45HandlesAnEmptyLauncherDock() {
         // Given an inheriting facet with a stale own dock row and no launcher dock
         val db44 = helper.createDatabase(TEST_DB, 44)

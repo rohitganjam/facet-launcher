@@ -133,7 +133,6 @@ private object Keys {
     val HOME_APPS_FONT_WEIGHT = stringPreferencesKey("home_apps_font_weight")
     val CLOCK_ALIGNMENT = stringPreferencesKey("clock_alignment")
     val CLOCK_ZONE_HEIGHT_DP = floatPreferencesKey("clock_zone_height_dp")
-    val ALLOW_LANDSCAPE = booleanPreferencesKey("allow_landscape")
     val HIDE_STATUS_BAR = booleanPreferencesKey("hide_status_bar")
     val LANDSCAPE_CLOCK_ALIGNMENT = stringPreferencesKey("landscape_clock_alignment")
     val LANDSCAPE_CLOCK_ZONE_HEIGHT_DP = floatPreferencesKey("landscape_clock_zone_height_dp")
@@ -255,7 +254,6 @@ class SettingsRepository @Inject constructor(
             clockAlignment = preferences[Keys.CLOCK_ALIGNMENT]?.let { runCatching { ClockAlignment.valueOf(it) }.getOrNull() }
                 ?: defaults.clockAlignment,
             clockZoneHeightDp = preferences[Keys.CLOCK_ZONE_HEIGHT_DP],
-            allowLandscape = preferences[Keys.ALLOW_LANDSCAPE] ?: defaults.allowLandscape,
             hideStatusBar = preferences[Keys.HIDE_STATUS_BAR] ?: defaults.hideStatusBar,
             landscape = preferences.toLandscapeOverrides(),
             appListVerticalAlignment = preferences[Keys.APP_LIST_VERTICAL_ALIGNMENT]?.let { runCatching { AppListVerticalAlignment.valueOf(it) }.getOrNull() }
@@ -564,10 +562,6 @@ class SettingsRepository @Inject constructor(
 
     suspend fun setHomeAppsFontWeight(weight: FontWeightOption) {
         dataStore.edit { it[Keys.HOME_APPS_FONT_WEIGHT] = weight.name }
-    }
-
-    suspend fun setAllowLandscape(allow: Boolean) {
-        dataStore.edit { it[Keys.ALLOW_LANDSCAPE] = allow }
     }
 
     suspend fun setClockAlignment(alignment: ClockAlignment) {

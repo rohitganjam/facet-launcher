@@ -47,6 +47,9 @@ class LauncherViewModelTest {
         Dispatchers.resetMain()
     }
 
+    private fun facetRepository(facets: List<com.facetlauncher.app.data.model.Facet> = emptyList()): com.facetlauncher.app.data.FacetRepository =
+        mock(com.facetlauncher.app.data.FacetRepository::class.java).also { `when`(it.observeFacets()).thenReturn(flowOf(facets)) }
+
     private fun fakeWorkProfileRepository(workProfiles: List<WorkProfileInfo> = emptyList()): WorkProfileRepository {
         val repository = mock(WorkProfileRepository::class.java)
         `when`(repository.observeWorkProfiles()).thenReturn(flowOf(workProfiles))
@@ -78,6 +81,7 @@ class LauncherViewModelTest {
             activateFacetById,
             mock(RunFacetAutomationUseCase::class.java),
             settingsRepository,
+            facetRepository(),
             fakeWorkProfileRepository(),
         )
 
@@ -115,6 +119,7 @@ class LauncherViewModelTest {
             activateFacetById,
             mock(RunFacetAutomationUseCase::class.java),
             settingsRepository,
+            facetRepository(),
             fakeWorkProfileRepository(),
         )
 
@@ -150,6 +155,7 @@ class LauncherViewModelTest {
             mock(ActivateFacetByIdUseCase::class.java),
             mock(RunFacetAutomationUseCase::class.java),
             settingsRepository,
+            facetRepository(),
             fakeWorkProfileRepository(),
         )
 
@@ -186,6 +192,7 @@ class LauncherViewModelTest {
             activateFacetById,
             mock(RunFacetAutomationUseCase::class.java),
             settingsRepository,
+            facetRepository(),
             fakeWorkProfileRepository(),
         )
         testDispatcher.scheduler.advanceUntilIdle()
@@ -223,6 +230,7 @@ class LauncherViewModelTest {
             activateFacetById,
             mock(RunFacetAutomationUseCase::class.java),
             settingsRepository,
+            facetRepository(),
             fakeWorkProfileRepository(listOf(workProfile)),
         )
         testDispatcher.scheduler.advanceUntilIdle()
@@ -254,6 +262,7 @@ class LauncherViewModelTest {
             activateFacetById,
             mock(RunFacetAutomationUseCase::class.java),
             settingsRepository,
+            facetRepository(),
             fakeWorkProfileRepository(),
         )
         testDispatcher.scheduler.advanceUntilIdle()
@@ -285,6 +294,7 @@ class LauncherViewModelTest {
             activateFacetById,
             mock(RunFacetAutomationUseCase::class.java),
             settingsRepository,
+            facetRepository(),
             fakeWorkProfileRepository(),
         )
         testDispatcher.scheduler.advanceUntilIdle()
@@ -314,6 +324,7 @@ class LauncherViewModelTest {
             activateFacetById,
             mock(RunFacetAutomationUseCase::class.java),
             settingsRepository,
+            facetRepository(),
             fakeWorkProfileRepository(),
         )
 
@@ -346,6 +357,7 @@ class LauncherViewModelTest {
             activateFacetById,
             mock(RunFacetAutomationUseCase::class.java),
             settingsRepository,
+            facetRepository(),
             fakeWorkProfileRepository(),
         )
 
@@ -358,11 +370,11 @@ class LauncherViewModelTest {
     }
 
     @Test
-    fun `reflects allowLandscape from settings`() = runTest {
+    fun `reflects the active facet's allowLandscape`() = runTest {
         val repository = mock(AppRepository::class.java)
         `when`(repository.observeInstalledApps()).thenReturn(flowOf(emptyList()))
         val settingsRepository = mock(SettingsRepository::class.java)
-        `when`(settingsRepository.settings).thenReturn(flowOf(LauncherSettings(allowLandscape = false, onboardingCompleted = true)))
+        `when`(settingsRepository.settings).thenReturn(flowOf(LauncherSettings(activeFacetId = 7, onboardingCompleted = true)))
         val viewModel = LauncherViewModel(
             GetInstalledAppsUseCase(repository),
             mock(EnsureActiveFacetUseCase::class.java),
@@ -372,6 +384,7 @@ class LauncherViewModelTest {
             mock(ActivateFacetByIdUseCase::class.java),
             mock(RunFacetAutomationUseCase::class.java),
             settingsRepository,
+            facetRepository(listOf(com.facetlauncher.app.data.model.Facet(id = 7, name = "Car", position = 0, allowLandscape = false), com.facetlauncher.app.data.model.Facet(id = 8, name = "Home", position = 1))),
             fakeWorkProfileRepository(),
         )
         testDispatcher.scheduler.advanceUntilIdle()
@@ -394,6 +407,7 @@ class LauncherViewModelTest {
             mock(ActivateFacetByIdUseCase::class.java),
             mock(RunFacetAutomationUseCase::class.java),
             settingsRepository,
+            facetRepository(),
             fakeWorkProfileRepository(),
         )
         testDispatcher.scheduler.advanceUntilIdle()

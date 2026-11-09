@@ -81,21 +81,7 @@ class SettingsViewModelTest {
         )
         val facetRepository = mock(com.facetlauncher.app.data.FacetRepository::class.java)
         `when`(facetRepository.observeFacets()).thenReturn(flowOf((1..facetCount).map { com.facetlauncher.app.data.model.Facet(id = it.toLong(), name = "F$it", position = it) }))
-        return SettingsViewModel(useCase, defaultLauncherRepository, workProfileRepository, automationRuleRepository, FakeEntitlementRepository(isPro), facetRepository, notificationAccessRepository, settingsRepository)
-    }
-
-    @Test
-    fun `setAllowLandscape writes the launcher-wide setting`() = runTest {
-        // Given a view model over a mocked settings repository
-        val settingsRepository = mock(SettingsRepository::class.java)
-        val viewModel = createViewModel(settingsRepository = settingsRepository)
-
-        // When landscape is turned off
-        viewModel.setAllowLandscape(false)
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        // Then it is written to the repository
-        org.mockito.Mockito.verify(settingsRepository).setAllowLandscape(false)
+        return SettingsViewModel(useCase, defaultLauncherRepository, workProfileRepository, automationRuleRepository, FakeEntitlementRepository(isPro), facetRepository, notificationAccessRepository)
     }
 
     @Test

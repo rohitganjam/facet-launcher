@@ -400,11 +400,6 @@ data class LauncherSettings(
     val appListGridDisplayMode: AppListGridDisplayMode = AppListGridDisplayMode.ICONS,
     /** Only meaningful in the list layouts — see [AppListShrinkToFit]. */
     val appListShrinkToFit: AppListShrinkToFit = AppListShrinkToFit.OFF,
-    /**
-     * Whether Home may use its landscape layout and the screen may rotate. Off keeps everything in portrait and hides
-     * the landscape settings. Launcher-wide and device-local (not facet-overridable, not backed up).
-     */
-    val allowLandscape: Boolean = true,
     /** Hides the status bar over Home, Hub and Drawer; a swipe down reveals it for a few seconds. Launcher-wide and device-local (not backed up). */
     val hideStatusBar: Boolean = false,
     /** Landscape's own values for the props that differ between orientations; `null` fields use the portrait value. */

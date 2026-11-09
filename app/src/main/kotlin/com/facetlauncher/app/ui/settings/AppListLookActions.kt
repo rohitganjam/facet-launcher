@@ -22,8 +22,9 @@ internal data class AppListLookActions(
     val onLandscapeRowPositionChange: (AppRowPosition?) -> Unit,
     val onLandscapeColumnAlignmentChange: (AppListColumnAlignment?) -> Unit,
     val onLandscapeVerticalAlignmentChange: (AppListVerticalAlignment?) -> Unit,
+    val onAllowLandscapeChange: (Boolean) -> Unit,
 ) {
     companion object {
-        val None = AppListLookActions({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {})
+        val None = AppListLookActions({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {})
     }
 }

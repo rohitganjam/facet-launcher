@@ -8,7 +8,6 @@ import com.facetlauncher.app.data.DefaultLauncherRepository
 import com.facetlauncher.app.data.EntitlementRepository
 import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.NotificationAccessRepository
-import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.WorkProfileRepository
 import com.facetlauncher.app.domain.ObserveSettingsScreenStateUseCase
 import com.facetlauncher.app.domain.combine
@@ -36,7 +35,6 @@ class SettingsViewModel @Inject constructor(
     entitlementRepository: EntitlementRepository,
     facetRepository: FacetRepository,
     private val notificationAccessRepository: NotificationAccessRepository,
-    private val settingsRepository: SettingsRepository,
 ) : ViewModel() {
 
     private val isDefaultLauncher = MutableStateFlow(false)
@@ -71,11 +69,6 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             isDefaultLauncher.value = defaultLauncherRepository.isDefaultLauncher()
         }
-    }
-
-    /** Launcher-wide: off keeps Home in portrait and locks the screen's orientation. */
-    fun setAllowLandscape(allow: Boolean) {
-        viewModelScope.launch { settingsRepository.setAllowLandscape(allow) }
     }
 
     /** Notification access has no grant-change callback: the screen calls this on resume, so returning from the Notifications page updates its row. */

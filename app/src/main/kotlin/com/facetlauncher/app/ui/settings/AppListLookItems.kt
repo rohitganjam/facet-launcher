@@ -35,8 +35,19 @@ internal fun LazyListScope.appListAlignmentItems(uiState: HomeAppsListUiState, a
             onVerticalAlignmentChange = { it?.let(actions.onVerticalAlignmentChange) },
         )
     }
+    item { SettingsSectionHeader(stringResource(R.string.appearance_alignment_landscape_title)) }
+    item {
+        SettingsCard {
+            SettingsToggleRow(
+                title = stringResource(R.string.appearance_allow_landscape_title),
+                subtitle = stringResource(R.string.appearance_allow_landscape_subtitle),
+                checked = uiState.allowLandscape,
+                onCheckedChange = actions.onAllowLandscapeChange,
+                testTag = "appearance_allow_landscape_row",
+            )
+        }
+    }
     if (uiState.allowLandscape) {
-        item { SettingsSectionHeader(stringResource(R.string.appearance_alignment_landscape_title)) }
         item {
             AlignmentCard(
                 uiState = uiState,

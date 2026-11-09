@@ -1,5 +1,7 @@
 package com.facetlauncher.app.data.local
 
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.facetlauncher.app.data.model.GLOBAL_OWNER_KEY
 import com.facetlauncher.app.data.model.LauncherSettings
@@ -66,3 +68,6 @@ private fun copyListToInheritingFacets(db: SupportSQLiteDatabase, list: Placemen
         arrayOf<Any?>(list.name),
     )
 }
+
+/** The launcher-wide "Allow landscape mode" the DataStore held before 48→49 moved it onto each facet; read only by that step. */
+fun Preferences.legacyAllowLandscape(): Boolean = this[booleanPreferencesKey("allow_landscape")] ?: true

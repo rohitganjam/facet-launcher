@@ -36,7 +36,6 @@ const val LEGACY_LAUNCHER_DEFAULT = "LAUNCHER_DEFAULT"
  *   are local-`ContentProvider` autoincrement values tied to which calendar accounts are synced
  *   on *this* device in *this* order — not portable to another device/reinstall, and silently
  *   matching the wrong calendar by coincidence is worse than just re-deriving them fresh.
- * - `allowLandscape`: a choice about this device (whether Home may rotate), not a layout preference.
  * - `calendarPermissionRequested`/`contactsPermissionRequested`/`bluetoothPermissionRequested`/
  *   `locationPermissionRequested`: track *this install's* runtime
  *   permission-request history, not a user preference — restoring `true` onto a device that was
@@ -228,6 +227,8 @@ data class BackupFacet(
     /** Optional and additive, like [BackupSettings.landscapeAppRowPosition]. */
     val landscapeAppRowPosition: String? = null,
     val landscapeAppListColumnAlignment: String? = null,
+    /** Purely additive and defaulted, so no version bump; a backup from before it kept the switch device-local, so its facets allow landscape. */
+    val allowLandscape: Boolean = true,
     val appListGridColumns: String = LEGACY_LAUNCHER_DEFAULT,
     val appListGridDisplayMode: String = LEGACY_LAUNCHER_DEFAULT,
     val appListShrinkToFit: String = LEGACY_LAUNCHER_DEFAULT,

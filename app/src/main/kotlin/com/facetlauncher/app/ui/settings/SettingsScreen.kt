@@ -75,7 +75,6 @@ import com.facetlauncher.app.ui.components.SettingsCard
 import com.facetlauncher.app.ui.components.SettingsIconBadge
 import com.facetlauncher.app.ui.components.SettingsIconBadgeInset
 import com.facetlauncher.app.ui.components.SettingsSectionHeader
-import com.facetlauncher.app.ui.components.SettingsToggleRow
 import com.facetlauncher.app.ui.components.StickyHeaderLayout
 import com.facetlauncher.app.ui.pro.ProSettingsCard
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
@@ -134,7 +133,6 @@ fun SettingsScreen(
         onNavigateToAppearance = onNavigateToAppearance,
         onNavigateToAppDrawerSettings = onNavigateToAppDrawerSettings,
         onNavigateToNotificationSettings = onNavigateToNotificationSettings,
-        onAllowLandscapeChange = viewModel::setAllowLandscape,
         onNavigateToFolders = onNavigateToFolders,
         onNavigateToGestures = onNavigateToGestures,
         onNavigateToWeatherSettings = onNavigateToWeatherSettings,
@@ -159,7 +157,6 @@ private fun SettingsContent(
     onNavigateToAppearance: () -> Unit,
     onNavigateToAppDrawerSettings: () -> Unit,
     onNavigateToNotificationSettings: () -> Unit,
-    onAllowLandscapeChange: (Boolean) -> Unit,
     onNavigateToFolders: () -> Unit,
     onNavigateToGestures: () -> Unit,
     onNavigateToWeatherSettings: () -> Unit,
@@ -203,17 +200,6 @@ private fun SettingsContent(
 
                 item { SettingsSectionHeader(stringResource(R.string.settings_section_home_apps)) }
                 item { HomeAppsCard(uiState, onNavigateToFolders) }
-                item {
-                    SettingsCard(modifier = Modifier.padding(top = 16.dp)) {
-                        SettingsToggleRow(
-                            title = stringResource(R.string.appearance_allow_landscape_title),
-                            subtitle = stringResource(R.string.appearance_allow_landscape_subtitle),
-                            checked = uiState.settings.allowLandscape,
-                            onCheckedChange = onAllowLandscapeChange,
-                            testTag = "appearance_allow_landscape_row",
-                        )
-                    }
-                }
 
                 item { SettingsSectionHeader(stringResource(R.string.settings_section_system)) }
                 item {
@@ -523,7 +509,6 @@ private fun SettingsScreenPreview() {
             onNavigateToAppearance = {},
             onNavigateToAppDrawerSettings = {},
             onNavigateToNotificationSettings = {},
-            onAllowLandscapeChange = {},
             onNavigateToFolders = {},
             onNavigateToGestures = {},
             onNavigateToWeatherSettings = {},

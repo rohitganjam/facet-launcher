@@ -103,6 +103,7 @@ fun HomeAppsListSettingsScreen(
             onLandscapeRowPositionChange = viewModel::setLandscapeAppRowPosition,
             onLandscapeColumnAlignmentChange = viewModel::setLandscapeAppListColumnAlignment,
             onLandscapeVerticalAlignmentChange = viewModel::setLandscapeAppListVerticalAlignment,
+            onAllowLandscapeChange = viewModel::setAllowLandscape,
         ),
         modifier = modifier,
     )

@@ -99,7 +99,6 @@ class SettingsScreenTest {
                     entitlement,
                     facetRepository,
                     FakeNotificationAccessRepository(context, granted = notificationAccessGranted),
-                    settingsRepository,
                 )
             }
             FacetLauncherTheme {
@@ -208,19 +207,6 @@ class SettingsScreenTest {
 
         composeRule.onAllNodesWithTag("dock_settings_row").assertCountEquals(0)
         composeRule.onAllNodesWithTag("home_apps_list_settings_row").assertCountEquals(0)
-    }
-
-    @Test
-    fun theAllowLandscapeSwitchWritesTheLauncherWideSetting() {
-        // Given the settings screen with landscape allowed
-        val repository = setContent()
-        composeRule.onNodeWithTag("settings_screen").performScrollToNode(hasTestTag("appearance_allow_landscape_row"))
-
-        // When the switch is turned off
-        composeRule.onNodeWithTag("appearance_allow_landscape_row").performClick()
-
-        // Then the setting is saved
-        composeRule.waitUntil(timeoutMillis = 3_000) { runBlocking { !repository.settings.first().allowLandscape } }
     }
 
     @Test

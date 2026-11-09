@@ -89,8 +89,8 @@ data class AppearanceSettingsUiState(
     val appListVerticalAlignment: AppListVerticalAlignment get() = style.appList.verticalAlignment
     val appListLayout: AppListLayout get() = style.appList.layout
     val appListColumnAlignment: AppListColumnAlignment get() = style.appList.columnAlignment
-    /** Launcher-wide: off keeps Home in portrait, and the landscape settings below are hidden. */
-    val allowLandscape: Boolean get() = settings.allowLandscape
+    /** This facet's: off keeps Home in portrait while it is active, and the landscape settings are hidden. */
+    val allowLandscape: Boolean get() = facet?.allowLandscape ?: true
     /** What the Landscape rows show: this scope's own landscape values, `null` meaning "same as portrait". */
     val landscape: LandscapeOverrides get() = facet?.landscape ?: settings.landscape
     val appListGridColumns: AppListGridColumns get() = style.appList.gridColumns

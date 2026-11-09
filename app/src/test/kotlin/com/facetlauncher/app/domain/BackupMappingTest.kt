@@ -51,6 +51,13 @@ class BackupMappingTest {
     }
 
     @Test
+    fun `a facet's landscape switch survives a backup round trip`() {
+        val restored = facet.copy(allowLandscape = false).toBackupFacet(favorites = emptyList(), dockApps = emptyList()).toFacet()
+
+        assertEquals(false, restored.allowLandscape)
+    }
+
+    @Test
     fun `a facet without landscape values restores with none`() {
         val restored = facet.toBackupFacet(favorites = emptyList(), dockApps = emptyList()).toFacet()
 
