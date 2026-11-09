@@ -142,7 +142,7 @@ pack (`IconPackRepository`, which reads that choice from `SettingsRepository`).
 | `RecentlyChangedAppsUseCase` | pure (installed or updated within 72h, newest change first) | — | `AppDrawerScreen` search sheet (via `DrawerListUseCases`) |
 | `RemoveFromActiveListUseCase` | write: removes an app or folder from a list for the active facet | `ResolveActivePlacementTargetUseCase`, `PlacementRepository` | `DrawerViewModel` |
 | `ResolveActivePlacementTargetUseCase` | read: which concrete list the active facet reads `DOCK` or `FAVORITES` from (its own), or `null` with no active facet | `SettingsRepository`, `FacetRepository` | `AddToActiveListUseCase`, `RemoveFromActiveListUseCase` |
-| `ApplyFacetDefaultsUseCase` | write: re-seeds a facet's Dock from the device defaults (with the dock display style), copies Favorites content mode and count, or the Home list look, per `FacetDefaultsScope` (`DOCK`, `APPS_LIST`, `LOOK`); `applyAll` seeds a new facet | `FacetRepository`, `SeedFacetDefaultsUseCase`, `SettingsRepository` | `AddFacetUseCase`, `EnsureActiveFacetUseCase`, `DockSettingsViewModel`, `HomeAppsListSettingsViewModel`, `AppearanceSettingsViewModel`, `OnboardingViewModel` |
+| `ApplyFacetDefaultsUseCase` | write: re-seeds a facet's Dock from the device defaults (with the dock display style), copies Favorites content mode and count, or the Home list look, per `FacetDefaultsScope` (`DOCK`, `APPS_LIST`, `LOOK`); `applyAll` seeds a new facet | `FacetRepository`, `SeedFacetDefaultsUseCase`, `SettingsRepository` | `AddFacetUseCase`, `EnsureActiveFacetUseCase`, `DockSettingsViewModel`, `AppearanceSettingsViewModel`, `OnboardingViewModel` |
 | `RefreshWeatherUseCase` | write: one refresh of the weather for the current location (read, with a 5 km hysteresis, then named) or the chosen city, through the repository's gate; returns `WeatherRefreshResult` | `SettingsRepository`, `LocationRepository`, `WeatherRepository`, `ResolvePlaceUseCase` | `WeatherViewModel` (Home resume and the sheet's button) |
 | `TurnOffWeatherUseCase` | write: weather off for the launcher default and every facet that shows it | `SettingsRepository`, `FacetRepository` | `WeatherLocationViewModel` (the leave-without-a-city dialog) |
 | `ResolvePlaceUseCase` | read: name a position (`Geocoder`, else the nearest listed city as an offline "Near X") and find its timezone | `PlaceGeocoder`, `CityRepository` | `RefreshWeatherUseCase` |
@@ -199,7 +199,7 @@ Non-use-case files in `domain/`: `FlowCombine.kt` (6/7-ary `combine`), `HubGridC
 | `IconsViewModel` | `IconsScreen`'s built-in style and icon pack cards (alongside `AppearanceSettingsViewModel`, which keeps the preview and shape) | — |
 | `AppDrawerSettingsViewModel` | `AppDrawerSettingsScreen` (settings, plus the wallpaper and installed apps behind its preview) | — |
 | `DockSettingsViewModel` | `DockSettingsScreen` | `facetId?` |
-| `HomeAppsListSettingsViewModel` | `HomeAppsListSettingsScreen` | `facetId?` |
+| `HomeAppsListSettingsViewModel` | `HomeAppsListSettingsScreen` | `facetId` |
 | `CalendarSettingsViewModel` | `CalendarSettingsSheet` | `bind(facetId)` |
 | `NotificationSettingsViewModel` | `NotificationSettingsScreen` | — |
 | `NotificationAccessExplanationViewModel` | `NotificationAccessExplanationScreen` | — |

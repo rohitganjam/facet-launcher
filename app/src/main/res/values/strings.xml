@@ -295,7 +295,6 @@
     <string name="settings_all_day_events_visible">All-day events visible</string>
     <string name="settings_all_day_events_hidden">All-day events hidden</string>
     <string name="settings_dock_title">Dock</string>
-    <string name="home_apps_list_default_header_title">Default Apps list</string>
     <string name="defaults_screen_note">Used when you create a facet or reset one.</string>
     <string name="reset_to_default_title">Reset to default</string>
     <string name="reset_to_default_confirm">Reset</string>
@@ -434,7 +433,6 @@
     <string name="app_list_grid_display_mode_icons_and_text">Icons and text</string>
     <string name="dock_display_mode_icons_and_text">Icons and text</string>
     <string name="home_apps_list_content_facet">App list content</string>
-    <string name="home_apps_list_content_default">Default App list content</string>
     <string name="home_apps_list_apps_to_show">Apps to show</string>
     <string name="home_apps_list_favorites_facet">Favorites</string>
     <string name="drag_to_reorder_content_description">Drag to reorder</string>
@@ -1223,8 +1221,6 @@
         <item quantity="one">Copy to %d facet</item>
         <item quantity="other">Copy to %d facets</item>
     </plurals>
-    <string name="copy_apps_subtitle">Replace the apps list of the facets you choose with this one</string>
-    <string name="copy_apps_sheet_message">Replaces the favorites, list content and app count of each selected facet with the defaults.</string>
     <string name="copy_look_subtitle">Replace the apps look of the facets you choose with this one</string>
     <string name="copy_look_sheet_message">Replaces the list layout and alignment of each selected facet with the defaults.</string>
 </resources>

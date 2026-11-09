@@ -28,7 +28,6 @@ import androidx.compose.material.icons.filled.Layers
 import androidx.compose.material.icons.outlined.AutoMode
 import androidx.compose.material.icons.outlined.Dock
 import androidx.compose.material.icons.outlined.Folder
-import androidx.compose.material.icons.outlined.FormatListBulleted
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Palette
 import androidx.compose.material.icons.outlined.SettingsBackupRestore
@@ -68,7 +67,6 @@ import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.DrawerPresentation
 import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.data.model.NotificationBadgeStyle
-import com.facetlauncher.app.data.model.ListContentMode
 import com.facetlauncher.app.data.model.PlacedItem
 import com.facetlauncher.app.ui.components.BackButton
 import com.facetlauncher.app.ui.components.CardDivider
@@ -77,6 +75,7 @@ import com.facetlauncher.app.ui.components.SettingsCard
 import com.facetlauncher.app.ui.components.SettingsIconBadge
 import com.facetlauncher.app.ui.components.SettingsIconBadgeInset
 import com.facetlauncher.app.ui.components.SettingsSectionHeader
+import com.facetlauncher.app.ui.components.SettingsToggleRow
 import com.facetlauncher.app.ui.components.StickyHeaderLayout
 import com.facetlauncher.app.ui.pro.ProSettingsCard
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
@@ -106,7 +105,6 @@ fun SettingsScreen(
     onNavigateToAppearance: () -> Unit,
     onNavigateToAppDrawerSettings: () -> Unit,
     onNavigateToNotificationSettings: () -> Unit,
-    onNavigateToHomeAppsListSettings: () -> Unit,
     onNavigateToFolders: () -> Unit,
     onNavigateToGestures: () -> Unit,
     onNavigateToWeatherSettings: () -> Unit,
@@ -136,7 +134,7 @@ fun SettingsScreen(
         onNavigateToAppearance = onNavigateToAppearance,
         onNavigateToAppDrawerSettings = onNavigateToAppDrawerSettings,
         onNavigateToNotificationSettings = onNavigateToNotificationSettings,
-        onNavigateToHomeAppsListSettings = onNavigateToHomeAppsListSettings,
+        onAllowLandscapeChange = viewModel::setAllowLandscape,
         onNavigateToFolders = onNavigateToFolders,
         onNavigateToGestures = onNavigateToGestures,
         onNavigateToWeatherSettings = onNavigateToWeatherSettings,
@@ -161,7 +159,7 @@ private fun SettingsContent(
     onNavigateToAppearance: () -> Unit,
     onNavigateToAppDrawerSettings: () -> Unit,
     onNavigateToNotificationSettings: () -> Unit,
-    onNavigateToHomeAppsListSettings: () -> Unit,
+    onAllowLandscapeChange: (Boolean) -> Unit,
     onNavigateToFolders: () -> Unit,
     onNavigateToGestures: () -> Unit,
     onNavigateToWeatherSettings: () -> Unit,
@@ -204,7 +202,18 @@ private fun SettingsContent(
                 item { AppearanceCard(uiState, onNavigateToAppearance, onNavigateToAppDrawerSettings, onNavigateToNotificationSettings) }
 
                 item { SettingsSectionHeader(stringResource(R.string.settings_section_home_apps)) }
-                item { HomeAppsCard(uiState, onNavigateToHomeAppsListSettings, onNavigateToFolders) }
+                item { HomeAppsCard(uiState, onNavigateToFolders) }
+                item {
+                    SettingsCard(modifier = Modifier.padding(top = 16.dp)) {
+                        SettingsToggleRow(
+                            title = stringResource(R.string.appearance_allow_landscape_title),
+                            subtitle = stringResource(R.string.appearance_allow_landscape_subtitle),
+                            checked = uiState.settings.allowLandscape,
+                            onCheckedChange = onAllowLandscapeChange,
+                            testTag = "appearance_allow_landscape_row",
+                        )
+                    }
+                }
 
                 item { SettingsSectionHeader(stringResource(R.string.settings_section_system)) }
                 item {
@@ -345,18 +354,9 @@ private fun notificationsSummary(settings: LauncherSettings, accessGranted: Bool
 @Composable
 private fun HomeAppsCard(
     uiState: SettingsUiState,
-    onNavigateToHomeAppsListSettings: () -> Unit,
     onNavigateToFolders: () -> Unit,
 ) {
     SettingsCard(fullBleedRows = true) {
-        ClickableRow(
-            title = stringResource(R.string.home_apps_list_default_header_title),
-            subtitle = appsListSummary(uiState.settings.listContentMode, uiState.settings.appsToShowCount),
-            onClick = onNavigateToHomeAppsListSettings,
-            testTag = "home_apps_list_settings_row",
-            leadingIcon = iconBadge(Icons.Outlined.FormatListBulleted, SettingsSectionHue.HOME_APPS),
-        )
-        CardDivider(startInset = SettingsIconBadgeInset)
         ClickableRow(
             title = stringResource(R.string.settings_folders_title),
             subtitle = folderCountSummary(uiState.folderCount),
@@ -458,14 +458,6 @@ private fun SettingsHeader(onBack: () -> Unit, modifier: Modifier = Modifier) {
     }
 }
 
-/** "Favorites"/"5 Most used"/"5 Recents" — what new facets' Home list shows by default. */
-@Composable
-private fun appsListSummary(mode: ListContentMode, appsToShowCount: Int): String = when (mode) {
-    ListContentMode.FAVORITES -> stringResource(mode.displayNameRes)
-    ListContentMode.RECENTS -> pluralStringResource(R.plurals.settings_recents_count, appsToShowCount, appsToShowCount)
-    ListContentMode.MOST_USED -> stringResource(R.string.settings_most_used_count, appsToShowCount)
-}
-
 /** "No folders yet" / "1 folder" / "3 folders" for the Folders row's own subtitle — the full folder library's size, independent of where (if anywhere) each folder is placed. */
 @Composable
 private fun folderCountSummary(count: Int): String =
@@ -531,7 +523,7 @@ private fun SettingsScreenPreview() {
             onNavigateToAppearance = {},
             onNavigateToAppDrawerSettings = {},
             onNavigateToNotificationSettings = {},
-            onNavigateToHomeAppsListSettings = {},
+            onAllowLandscapeChange = {},
             onNavigateToFolders = {},
             onNavigateToGestures = {},
             onNavigateToWeatherSettings = {},

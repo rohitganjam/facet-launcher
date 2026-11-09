@@ -14,7 +14,6 @@ import com.facetlauncher.app.data.model.HomeWallpaper
 import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.data.model.ListContentMode
 import com.facetlauncher.app.data.model.PlacedItem
-import com.facetlauncher.app.domain.ApplyFacetDefaultsUseCase
 import com.facetlauncher.app.domain.FacetDefaultsScope
 import com.facetlauncher.app.domain.GetInstalledAppsUseCase
 import com.facetlauncher.app.domain.SelectPreviewAppsUseCase
@@ -77,7 +76,6 @@ class HomeAppsListSettingsViewModelTest {
         facetRepository: FacetRepository = mock(FacetRepository::class.java),
         placementRepository: PlacementRepository = mock(PlacementRepository::class.java),
         observePlacedItems: ObservePlacedItemsUseCase = mock(ObservePlacedItemsUseCase::class.java),
-        applyFacetDefaults: ApplyFacetDefaultsUseCase = mock(ApplyFacetDefaultsUseCase::class.java),
     ): HomeAppsListSettingsViewModel {
         val getInstalledApps = mock(GetInstalledAppsUseCase::class.java)
         val defaultAppRepository = mock(DefaultAppRepository::class.java)
@@ -96,7 +94,6 @@ class HomeAppsListSettingsViewModelTest {
             defaultAppRepository,
             getInstalledApps,
             SelectPreviewAppsUseCase(),
-            applyFacetDefaults,
         )
     }
 
@@ -124,21 +121,6 @@ class HomeAppsListSettingsViewModelTest {
     }
 
     @Test
-    fun `global-scoped setter writes to SettingsRepository`() = runTest {
-        // position/presentation/vertical alignment setters moved to AppearanceSettingsViewModel
-        // (see chat history — look fields, edited from Settings -> Appearance now); covered there.
-        val settingsRepository = mock(SettingsRepository::class.java)
-        val viewModel = createViewModel(settingsRepository = settingsRepository)
-
-        viewModel.setListContentMode(ListContentMode.RECENTS)
-        viewModel.setAppsToShowCount(7)
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        verify(settingsRepository).setListContentMode(ListContentMode.RECENTS)
-        verify(settingsRepository).setAppsToShowCount(7)
-    }
-
-    @Test
     fun `appRowPosition and appRowPresentation are the facet's own values`() = runTest {
         // A facet with explicit look values (set from Dock & Apps layout) shows them here —
         // the preview needs them, even though this screen does not edit them.
@@ -154,23 +136,6 @@ class HomeAppsListSettingsViewModelTest {
         assertEquals(AppRowPosition.RIGHT, viewModel.uiState.value.appRowPosition)
         assertEquals(AppRowPresentation.TEXT_ONLY, viewModel.uiState.value.appRowPresentation)
         assertEquals(AppListVerticalAlignment.TOP, viewModel.uiState.value.appListVerticalAlignment)
-    }
-
-    @Test
-    fun `copy to facets applies the apps list defaults to exactly the chosen facets`() = runTest {
-        val applyDefaults = mock(ApplyFacetDefaultsUseCase::class.java)
-        val facets = listOf(Facet(id = 1L, name = "A", position = 0), Facet(id = 2L, name = "B", position = 1))
-        val viewModel = createViewModel(facets = facets, applyFacetDefaults = applyDefaults)
-        backgroundScope.launch { viewModel.uiState.collect {} }
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        viewModel.copyToFacets(setOf(2L))
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        assertEquals(listOf(1L, 2L), viewModel.uiState.value.facets.map { it.id })
-        verify(applyDefaults).invoke(2L, FacetDefaultsScope.APPS_LIST)
-        verify(applyDefaults).invoke(2L, FacetDefaultsScope.LOOK)
-        verify(applyDefaults, org.mockito.Mockito.never()).invoke(1L, FacetDefaultsScope.APPS_LIST)
     }
 
     @Test
@@ -198,22 +163,6 @@ class HomeAppsListSettingsViewModelTest {
     }
 
     @Test
-    fun `global-scoped look setters write to SettingsRepository`() = runTest {
-        val settingsRepository = mock(SettingsRepository::class.java)
-        val viewModel = createViewModel(settingsRepository = settingsRepository)
-
-        viewModel.setAppRowPosition(AppRowPosition.RIGHT)
-        viewModel.setAppRowPresentation(AppRowPresentation.TEXT_ONLY)
-        viewModel.setAppListVerticalAlignment(AppListVerticalAlignment.TOP)
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        verify(settingsRepository).setAppRowPosition(AppRowPosition.RIGHT)
-        verify(settingsRepository).setAppRowPresentation(AppRowPresentation.TEXT_ONLY)
-        verify(settingsRepository).setAppListVerticalAlignment(AppListVerticalAlignment.TOP)
-    }
-
-
-    @Test
     fun `facet-scoped look setters write to that facet's row, not SettingsRepository`() = runTest {
         val settingsRepository = mock(SettingsRepository::class.java)
         val facetRepository = mock(FacetRepository::class.java)
@@ -233,58 +182,20 @@ class HomeAppsListSettingsViewModelTest {
         verify(settingsRepository, org.mockito.Mockito.never()).setAppRowPosition(AppRowPosition.RIGHT)
     }
 
-
-    @Test
-    fun `setAllowLandscape writes to SettingsRepository and the state reflects the setting`() = runTest {
-        val settingsRepository = mock(SettingsRepository::class.java)
-        val viewModel = createViewModel(settingsRepository = settingsRepository, settings = LauncherSettings(allowLandscape = false))
-        backgroundScope.launch { viewModel.uiState.collect {} }
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        viewModel.setAllowLandscape(true)
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        verify(settingsRepository).setAllowLandscape(true)
-        assertEquals(false, viewModel.uiState.value.allowLandscape)
-    }
-
-
-    @Test
-    fun `global-scoped landscape alignment setters write the landscape group of SettingsRepository`() = runTest {
-        val settingsRepository = mock(SettingsRepository::class.java)
-        val viewModel = createViewModel(settingsRepository = settingsRepository)
-
-        viewModel.setLandscapeAppRowPosition(AppRowPosition.CENTER)
-        viewModel.setLandscapeAppListVerticalAlignment(AppListVerticalAlignment.TOP)
-        viewModel.setLandscapeAppListColumnAlignment(AppListColumnAlignment.MIRRORED)
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        val captor = LandscapeTransformCaptor()
-        verify(settingsRepository, org.mockito.Mockito.times(3)).updateLandscape(captor.capture())
-        assertEquals(
-            LandscapeOverrides(
-                appRowPosition = AppRowPosition.CENTER,
-                appListVerticalAlignment = AppListVerticalAlignment.TOP,
-                appListColumnAlignment = AppListColumnAlignment.MIRRORED,
-            ),
-            captor.applied(),
-        )
-    }
-
-
     @Test
     fun `a null landscape choice clears the field, back to same as portrait`() = runTest {
-        val settingsRepository = mock(SettingsRepository::class.java)
-        val viewModel = createViewModel(settingsRepository = settingsRepository)
+        val facetRepository = mock(FacetRepository::class.java)
+        val facet = Facet(id = 7L, name = "Work", position = 0)
+        `when`(facetRepository.getById(7L)).thenReturn(facet)
+        val viewModel = createViewModel(facetId = 7L, facets = listOf(facet), facetRepository = facetRepository)
 
         viewModel.setLandscapeAppRowPosition(null)
         testDispatcher.scheduler.advanceUntilIdle()
 
         val captor = LandscapeTransformCaptor()
-        verify(settingsRepository).updateLandscape(captor.capture())
+        verify(facetRepository).updateLandscape(eqOf(facet.id), captor.capture())
         assertEquals(LandscapeOverrides(), captor.last(LandscapeOverrides(appRowPosition = AppRowPosition.RIGHT)))
     }
-
 
     @Test
     fun `facet-scoped landscape alignment setters write that facet's landscape group`() = runTest {
@@ -302,7 +213,6 @@ class HomeAppsListSettingsViewModelTest {
         assertEquals(AppRowPosition.RIGHT, captor.last(LandscapeOverrides()).appRowPosition)
         verify(settingsRepository, org.mockito.Mockito.never()).updateLandscape(LandscapeTransformCaptor().capture())
     }
-
 
     @Test
     fun `the landscape rows show this scope's own landscape values, null meaning same as portrait`() = runTest {

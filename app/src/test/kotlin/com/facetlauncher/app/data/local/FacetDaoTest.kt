@@ -2,6 +2,7 @@ package com.facetlauncher.app.data.local
 
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
+import com.facetlauncher.app.data.model.AppRowPosition
 import com.facetlauncher.app.data.model.ListContentMode
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
@@ -43,6 +44,22 @@ class FacetDaoTest {
         // Then a fresh read (forcing the value through Converters.toListContentMode) reflects it
         val result = dao.observeAll().first().single()
         assertEquals(ListContentMode.MOST_USED, result.listContentMode)
+    }
+
+    @Test
+    fun `landscape row position round-trips as null, not as left`() = runTest {
+        // Given a facet whose landscape row position is right
+        val dao = createDao()
+        val id = dao.insert(FacetEntity(name = "Facet 1", position = 0, landscapeAppRowPosition = AppRowPosition.RIGHT))
+        assertEquals(AppRowPosition.RIGHT, dao.observeAll().first().single().landscapeAppRowPosition)
+
+        // When it is set back to null, "same as portrait"
+        dao.update(FacetEntity(id = id, name = "Facet 1", position = 0, appRowPosition = AppRowPosition.RIGHT, landscapeAppRowPosition = null))
+
+        // Then it reads back as null, so landscape follows the portrait value instead of a stuck left
+        val result = dao.observeAll().first().single()
+        assertNull(result.landscapeAppRowPosition)
+        assertEquals(AppRowPosition.RIGHT, result.appRowPosition)
     }
 
     @Test

@@ -255,7 +255,6 @@
     <string name="settings_all_day_events_visible">Eventos de dia inteiro visíveis</string>
     <string name="settings_all_day_events_hidden">Eventos de dia inteiro ocultos</string>
     <string name="settings_dock_title">Dock</string>
-    <string name="home_apps_list_default_header_title">Lista de apps padrão</string>
     <string name="defaults_screen_note">Usado quando você cria uma faceta ou redefine uma.</string>
     <string name="reset_to_default_title">Redefinir para o padrão</string>
     <string name="reset_to_default_confirm">Redefinir</string>
@@ -383,7 +382,6 @@
     <string name="app_list_grid_display_mode_icons_and_text">Ícones e texto</string>
     <string name="dock_display_mode_icons_and_text">Ícones e texto</string>
     <string name="home_apps_list_content_facet">Conteúdo da lista de apps</string>
-    <string name="home_apps_list_content_default">Conteúdo padrão da lista de apps</string>
     <string name="home_apps_list_apps_to_show">Apps a exibir</string>
     <string name="home_apps_list_favorites_facet">Favoritos</string>
     <string name="drag_to_reorder_content_description">Arraste para reordenar</string>
@@ -1134,8 +1132,6 @@
         <item quantity="one">Copiar para %d faceta</item>
         <item quantity="other">Copiar para %d facetas</item>
     </plurals>
-    <string name="copy_apps_subtitle">Substitui a lista de apps das facetas escolhidas por esta</string>
-    <string name="copy_apps_sheet_message">Substitui os favoritos, o conteúdo da lista e a quantidade de apps de cada faceta selecionada pelos valores padrão.</string>
     <string name="copy_look_subtitle">Substitui a aparência dos apps das facetas escolhidas por esta</string>
     <string name="copy_look_sheet_message">Substitui o layout da lista e o alinhamento de cada faceta selecionada pelos valores padrão.</string>
 </resources>

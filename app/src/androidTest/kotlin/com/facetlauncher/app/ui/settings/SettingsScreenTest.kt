@@ -34,6 +34,7 @@ import com.facetlauncher.app.domain.ObserveSettingsScreenStateUseCase
 import com.facetlauncher.app.ui.FakeEntitlementRepository
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import java.io.File
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -59,7 +60,6 @@ class SettingsScreenTest {
         onViewFacetPro: () -> Unit = {},
         entitlement: EntitlementRepository = EntitlementRepository(),
         onNavigateToAppearance: () -> Unit = {},
-        onNavigateToHomeAppsListSettings: () -> Unit = {},
         onNavigateToFolders: () -> Unit = {},
         onNavigateToGestures: () -> Unit = {},
         onNavigateToWeatherSettings: () -> Unit = {},
@@ -99,6 +99,7 @@ class SettingsScreenTest {
                     entitlement,
                     facetRepository,
                     FakeNotificationAccessRepository(context, granted = notificationAccessGranted),
+                    settingsRepository,
                 )
             }
             FacetLauncherTheme {
@@ -111,7 +112,6 @@ class SettingsScreenTest {
                     onNavigateToAppearance = onNavigateToAppearance,
                     onNavigateToAppDrawerSettings = onNavigateToAppDrawerSettings,
                     onNavigateToNotificationSettings = onNavigateToNotificationSettings,
-                    onNavigateToHomeAppsListSettings = onNavigateToHomeAppsListSettings,
                     onNavigateToFolders = onNavigateToFolders,
                     onNavigateToGestures = onNavigateToGestures,
                     onNavigateToWeatherSettings = onNavigateToWeatherSettings,
@@ -201,28 +201,26 @@ class SettingsScreenTest {
     }
 
     @Test
-    fun thereIsNoLauncherWideDockRow() {
-        // Given the settings screen, scrolled to the Home & Apps card: a facet owns its Dock, so there is no default Dock row
+    fun thereIsNoLauncherWideDockOrAppsListRow() {
+        // Given the settings screen, scrolled to the Home & Apps card: a facet owns its Dock and Apps list, so there are no default rows
         setContent()
-        composeRule.onNodeWithTag("settings_screen").performScrollToNode(hasTestTag("home_apps_list_settings_row"))
+        composeRule.onNodeWithTag("settings_screen").performScrollToNode(hasTestTag("folders_settings_row"))
 
         composeRule.onAllNodesWithTag("dock_settings_row").assertCountEquals(0)
+        composeRule.onAllNodesWithTag("home_apps_list_settings_row").assertCountEquals(0)
     }
 
     @Test
-    fun homeAppsListRowIsClickableAndReflectsListContentCount() {
-        // Given the settings screen, scrolled to the "Home Apps List" row under HOME & APPS.
-        // Defaults: Favorites content mode.
-        var navigated = false
-        setContent(onNavigateToHomeAppsListSettings = { navigated = true })
-        composeRule.onNodeWithTag("settings_screen").performScrollToNode(hasTestTag("home_apps_list_settings_row"))
-        composeRule.onNodeWithTag("home_apps_list_settings_row").assertTextContains("Favorites", substring = true)
+    fun theAllowLandscapeSwitchWritesTheLauncherWideSetting() {
+        // Given the settings screen with landscape allowed
+        val repository = setContent()
+        composeRule.onNodeWithTag("settings_screen").performScrollToNode(hasTestTag("appearance_allow_landscape_row"))
 
-        // When tapping it
-        composeRule.onNodeWithTag("home_apps_list_settings_row").performClick()
+        // When the switch is turned off
+        composeRule.onNodeWithTag("appearance_allow_landscape_row").performClick()
 
-        // Then its callback fires
-        assertEquals(true, navigated)
+        // Then the setting is saved
+        composeRule.waitUntil(timeoutMillis = 3_000) { runBlocking { !repository.settings.first().allowLandscape } }
     }
 
     @Test

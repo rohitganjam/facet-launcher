@@ -8,8 +8,6 @@ import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.WallpaperRepository
 import com.facetlauncher.app.data.model.Facet
-import com.facetlauncher.app.domain.ApplyFacetDefaultsUseCase
-import com.facetlauncher.app.domain.FacetDefaultsScope
 import com.facetlauncher.app.domain.ResolvedFacetStyle
 import com.facetlauncher.app.domain.ObservePlacedItemsUseCase
 import com.facetlauncher.app.domain.resolveFacetStyle
@@ -59,10 +57,8 @@ private const val PREVIEW_APP_COUNT = 3
  */
 data class HomeAppsListUiState(
     val facet: Facet? = null,
-    /** Every facet, for the default screen's "Copy to facets". */
-    val facets: ImmutableList<Facet> = persistentListOf(),
     val settings: LauncherSettings = LauncherSettings(),
-    /** The facet's own Favorites; empty at launcher scope, which has no list. */
+    /** The facet's own Favorites. */
     val favorites: ImmutableList<PlacedItem> = persistentListOf(),
     /** What the preview renders in a non-Favorites mode — a recognizable app sample. */
     val previewSourceApps: ImmutableList<PlacedItem> = persistentListOf(),
@@ -71,7 +67,6 @@ data class HomeAppsListUiState(
     val appLabelColorOption: ClockColorOption = ClockColorOption.THEME,
     val homeAppsFontWeight: FontWeightOption = FontWeightOption.REGULAR,
 ) {
-    val isFacetScoped: Boolean get() = facet != null
     private val style: ResolvedFacetStyle by lazy(LazyThreadSafetyMode.NONE) { resolveFacetStyle(facet, settings) }
     /** The preview needs the look here. */
     val appRowPosition: AppRowPosition get() = style.appList.rowPosition
@@ -86,19 +81,14 @@ data class HomeAppsListUiState(
     val appListShrinkToFit: AppListShrinkToFit get() = style.appList.shrinkToFit
     /** Launcher-wide: off keeps Home in portrait, and the landscape settings are hidden. */
     val allowLandscape: Boolean get() = settings.allowLandscape
-    /** What the Landscape rows show: this scope's own landscape values, `null` meaning "same as portrait". */
+    /** What the Landscape rows show: this facet's own landscape values, `null` meaning "same as portrait". */
     val landscape: LandscapeOverrides get() = facet?.landscape ?: settings.landscape
     val favoritesLabel: String get() = "${favorites.size} of ${AppListLimits.MAX_FAVORITES}"
-    /** What the preview renders — a facet's [favorites] in Favorites mode, a recognizable app sample otherwise (and at launcher scope). */
-    val previewApps: ImmutableList<PlacedItem> get() = if (isFacetScoped && listContentMode == ListContentMode.FAVORITES) favorites else previewSourceApps
+    /** What the preview renders — a facet's [favorites] in Favorites mode, a recognizable app sample otherwise. */
+    val previewApps: ImmutableList<PlacedItem> get() = if (listContentMode == ListContentMode.FAVORITES) favorites else previewSourceApps
 }
 
-/**
- * Settings → Home & Apps → Default Apps list, and (with a `facetId`) a facet's own Apps-list
- * screen. No `facetId` (or [NO_ACTIVE_FACET_ID]) edits the launcher-wide list content and look a
- * new facet starts with (there is no launcher-wide Favorites list); a real id edits that
- * facet's own content mode, count, look and favorites.
- */
+/** A facet's own Apps-list screen: its content mode, count, look and Favorites (the facet is the `facetId` argument). */
 @HiltViewModel
 class HomeAppsListSettingsViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
@@ -110,7 +100,6 @@ class HomeAppsListSettingsViewModel @Inject constructor(
     private val defaultAppRepository: DefaultAppRepository,
     getInstalledApps: GetInstalledAppsUseCase,
     private val selectPreviewApps: SelectPreviewAppsUseCase,
-    private val applyFacetDefaults: ApplyFacetDefaultsUseCase,
 ) : ViewModel() {
 
     private val facetId: Long? = savedStateHandle.get<Long>("facetId")?.takeIf { it != NO_ACTIVE_FACET_ID }
@@ -129,7 +118,6 @@ class HomeAppsListSettingsViewModel @Inject constructor(
         val (wallpaper, installed, preferred) = previewInputs
         HomeAppsListUiState(
             facet = facets.find { it.id == facetId },
-            facets = facets.toImmutableList(),
             settings = settings,
             favorites = favorites.toImmutableList(),
             previewSourceApps = selectPreviewApps(installed, preferred, PREVIEW_APP_COUNT).map { PlacedItem.SingleApp(it) }.toImmutableList(),
@@ -147,14 +135,12 @@ class HomeAppsListSettingsViewModel @Inject constructor(
     fun setListContentMode(mode: ListContentMode) {
         viewModelScope.launch {
             facetId?.let { pid -> facetRepository.getById(pid)?.let { facetRepository.setListContentMode(it.id, mode) } }
-                ?: settingsRepository.setListContentMode(mode)
         }
     }
 
     fun setAppsToShowCount(count: Int) {
         viewModelScope.launch {
             facetId?.let { pid -> facetRepository.getById(pid)?.let { facetRepository.setAppsToShowCount(it.id, count) } }
-                ?: settingsRepository.setAppsToShowCount(count)
         }
     }
 
@@ -163,48 +149,32 @@ class HomeAppsListSettingsViewModel @Inject constructor(
         viewModelScope.launch { placementRepository.reorderItems(PlacementTarget(PlacementList.FAVORITES, id), orderedItems) }
     }
 
-    /** "Copy to facets": replaces the content mode, count and list look of each chosen facet with the launcher-wide ones. Favorites are not touched. */
-    fun copyToFacets(facetIds: Set<Long>) {
-        viewModelScope.launch {
-            facetIds.forEach {
-                applyFacetDefaults(it, FacetDefaultsScope.APPS_LIST)
-                applyFacetDefaults(it, FacetDefaultsScope.LOOK)
-            }
-        }
+    /** Writes this facet's own value. */
+    private fun writeLook(onFacet: suspend (Long) -> Unit) {
+        viewModelScope.launch { facetId?.let { pid -> facetRepository.getById(pid)?.let { onFacet(it.id) } } }
     }
 
-    /** Facet-or-global write: a facet's own value, or the launcher-wide default a new facet is seeded from. */
-    private fun writeLook(onFacet: suspend (Long) -> Unit, onGlobal: suspend () -> Unit) {
-        viewModelScope.launch {
-            facetId?.let { pid -> facetRepository.getById(pid)?.let { onFacet(it.id) } } ?: onGlobal()
-        }
-    }
-
-    fun setAppRowPosition(position: AppRowPosition) = writeLook({ facetRepository.setAppRowPosition(it, position) }, { settingsRepository.setAppRowPosition(position) })
+    fun setAppRowPosition(position: AppRowPosition) = writeLook({ facetRepository.setAppRowPosition(it, position) })
 
     fun setAppRowPresentation(presentation: AppRowPresentation) =
-        writeLook({ facetRepository.setAppRowPresentation(it, presentation) }, { settingsRepository.setAppRowPresentation(presentation) })
+        writeLook({ facetRepository.setAppRowPresentation(it, presentation) })
 
     fun setAppListVerticalAlignment(alignment: AppListVerticalAlignment) =
-        writeLook({ facetRepository.setAppListVerticalAlignment(it, alignment) }, { settingsRepository.setAppListVerticalAlignment(alignment) })
+        writeLook({ facetRepository.setAppListVerticalAlignment(it, alignment) })
 
-    fun setAppListLayout(layout: AppListLayout) = writeLook({ facetRepository.setAppListLayout(it, layout) }, { settingsRepository.setAppListLayout(layout) })
+    fun setAppListLayout(layout: AppListLayout) = writeLook({ facetRepository.setAppListLayout(it, layout) })
 
     fun setAppListColumnAlignment(alignment: AppListColumnAlignment) =
-        writeLook({ facetRepository.setAppListColumnAlignment(it, alignment) }, { settingsRepository.setAppListColumnAlignment(alignment) })
+        writeLook({ facetRepository.setAppListColumnAlignment(it, alignment) })
 
     fun setAppListGridColumns(columns: AppListGridColumns) =
-        writeLook({ facetRepository.setAppListGridColumns(it, columns) }, { settingsRepository.setAppListGridColumns(columns) })
+        writeLook({ facetRepository.setAppListGridColumns(it, columns) })
 
     fun setAppListGridDisplayMode(mode: AppListGridDisplayMode) =
-        writeLook({ facetRepository.setAppListGridDisplayMode(it, mode) }, { settingsRepository.setAppListGridDisplayMode(mode) })
+        writeLook({ facetRepository.setAppListGridDisplayMode(it, mode) })
 
     fun setAppListShrinkToFit(shrink: AppListShrinkToFit) =
-        writeLook({ facetRepository.setAppListShrinkToFit(it, shrink) }, { settingsRepository.setAppListShrinkToFit(shrink) })
-
-    fun setAllowLandscape(allow: Boolean) {
-        viewModelScope.launch { settingsRepository.setAllowLandscape(allow) }
-    }
+        writeLook({ facetRepository.setAppListShrinkToFit(it, shrink) })
 
     fun setLandscapeAppRowPosition(position: AppRowPosition?) = updateLandscape { it.copy(appRowPosition = position) }
 
@@ -212,7 +182,7 @@ class HomeAppsListSettingsViewModel @Inject constructor(
 
     fun setLandscapeAppListColumnAlignment(alignment: AppListColumnAlignment?) = updateLandscape { it.copy(appListColumnAlignment = alignment) }
 
-    /** This scope's landscape values: the facet's own when facet-scoped, the launcher-wide ones otherwise. */
+    /** This facet's landscape values. */
     private fun updateLandscape(transform: (LandscapeOverrides) -> LandscapeOverrides) =
-        writeLook({ facetRepository.updateLandscape(it, transform) }, { settingsRepository.updateLandscape(transform) })
+        writeLook({ facetRepository.updateLandscape(it, transform) })
 }

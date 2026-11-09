@@ -113,9 +113,8 @@ object FacetDestinations {
     /** One facet's own Dock picker. */
     fun dockPicker(facetId: Long) = "dockPicker?facetId=$facetId"
 
-    /** The launcher-wide Default Apps list settings (list content and look a new facet starts with) when [facetId] is omitted, else that facet's own. */
-    fun homeAppsListSettings(facetId: Long? = null) =
-        if (facetId != null && facetId != NO_ACTIVE_FACET_ID) "homeAppsListSettings?facetId=$facetId" else "homeAppsListSettings"
+    /** One facet's own Apps list settings. */
+    fun homeAppsListSettings(facetId: Long) = "homeAppsListSettings?facetId=$facetId"
 
     /** One facet's own Dock settings. */
     fun dockSettings(facetId: Long) = "dockSettings?facetId=$facetId"
@@ -218,7 +217,6 @@ fun FacetNavHost(
                 onNavigateToAppearance = { navController.navigate(FacetDestinations.APPEARANCE_SETTINGS) },
                 onNavigateToAppDrawerSettings = { navController.navigate(FacetDestinations.APP_DRAWER_SETTINGS) },
                 onNavigateToNotificationSettings = { navController.navigate(FacetDestinations.NOTIFICATION_SETTINGS) },
-                onNavigateToHomeAppsListSettings = { navController.navigate(FacetDestinations.homeAppsListSettings()) },
                 onNavigateToFolders = { navController.navigate(FacetDestinations.FOLDERS_SETTINGS) },
                 onNavigateToGestures = { navController.navigate(FacetDestinations.GESTURES) },
                 onNavigateToWeatherSettings = { navController.navigate(FacetDestinations.UNITS_AND_LOCATION) },

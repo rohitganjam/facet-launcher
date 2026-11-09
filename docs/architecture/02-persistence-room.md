@@ -307,7 +307,9 @@ writes back the change, so a caller holding an older `Facet` cannot overwrite a 
 `name` string. Each `to*` converter is **lenient**: an unknown stored string falls back to the
 enum's default (`ListContentMode.FAVORITES`, `ClockTemplateId.LIGHT_STACK`, `AppProfile.PERSONAL`, …)
 instead of returning `null`, because Room's generated code for a `NOT NULL` column crashes on a
-null converter result. Renaming an enum constant therefore never needs a migration.
+null converter result. Renaming an enum constant therefore never needs a migration. The exception is `AppRowPosition`,
+whose converter is nullable both ways: `landscapeAppRowPosition` is a nullable column (`null` is "same as portrait"), and a converter
+that turns `null` into `LEFT` would make that value read back as a stuck left (`FacetDaoTest`); an unknown non-null string still falls back to `LEFT`.
 
 ## 4. Migration policy (as configured)
 
@@ -463,9 +465,8 @@ Notifications, Permission bookkeeping, and First-run.
 
 **The Home look keys follow the same rule.** `appRowPosition`/`appRowPresentation`/`appListVerticalAlignment`/
 `appListLayout`/`appListColumnAlignment`/`appListGridColumns`/`appListGridDisplayMode`/
-`appListShrinkToFit` and the three landscape twins are edited on the Apps list screen (Settings → Default Apps list,
-and each facet's own copy of the screen). The launcher-wide values only seed a new or reset facet
-(`ApplyFacetDefaultsUseCase`, scope `LOOK`, run with `APPS_LIST` by the Apps list screen's reset and copy); a facet's value is always its own, with no `LAUNCHER_DEFAULT`
+`appListShrinkToFit` and the three landscape twins are edited on each facet's own Apps list screen. The launcher-wide values only seed a new facet
+(`ApplyFacetDefaultsUseCase`, scope `LOOK`, run with `APPS_LIST`) and have no screen; a facet's value is always its own, with no `LAUNCHER_DEFAULT`
 marker. `dockDisplayMode` is the same kind of default but is edited on the Dock screen and copied with the dock (scope `DOCK`). A facet's landscape twin is its own too, `null` meaning "same as portrait".
 
 ### 5.2 Read path
@@ -513,26 +514,26 @@ DataStore serialises writes and is main-safe; callers `viewModelScope.launch { }
 | `chooseWeatherCity(WeatherCity): Boolean` | `weather_saved_cities`, the four city keys, `weather_location_mode` | add the city to the saved list unless already there (refused, returning false, past 10), make it the chosen city and switch to city mode | `WeatherLocationViewModel` |
 | `removeWeatherCity(WeatherCity)` | `weather_saved_cities`, the four city keys | drop it from the list; clear the four keys when it was the chosen one | `WeatherLocationViewModel` |
 | `setSavedWeatherCities(List<WeatherCity>)` | `weather_saved_cities` | replace the list (restore), at most 10 | `ImportBackupUseCase` |
-| `setAllowLandscape(Boolean)` | `allow_landscape` | set | `HomeAppsListSettingsViewModel` |
+| `setAllowLandscape(Boolean)` | `allow_landscape` | set | `SettingsViewModel` |
 | `setHideStatusBar(Boolean)` | `hide_status_bar` | set | `AppearanceSettingsViewModel` |
 | `setClockAlignment(ClockAlignment)` | `clock_alignment` | set | `ClockStyleGalleryViewModel`, `HomeViewModel` (clock adjust toolbar) |
 | `setShowWeather(Boolean)` | `show_weather` | set | `TurnOffWeatherUseCase`, weather settings |
 | `setClockZoneHeight(Float)` | `clock_zone_height_dp` | set | `HomeViewModel` (zone drag handle) |
 | `resetClockZoneHeight()` | `clock_zone_height_dp` and `landscape_clock_zone_height_dp` | **remove** | `ClockStyleGalleryViewModel` |
-| `updateLandscape((LandscapeOverrides) -> LandscapeOverrides)` | all six `landscape_*` keys | set each field, or **remove** it when `null` | `HomeViewModel` (landscape adjust commits), `HomeAppsListSettingsViewModel` (Landscape alignment rows), `ClockStyleGalleryViewModel` (Reset position), `ImportBackupUseCase` |
+| `updateLandscape((LandscapeOverrides) -> LandscapeOverrides)` | all six `landscape_*` keys | set each field, or **remove** it when `null` | `HomeViewModel` (landscape adjust commits), `ClockStyleGalleryViewModel` (Reset position), `ImportBackupUseCase` |
 | `setShowAllDayEvents(Boolean)` | `show_all_day_events` | set | `CalendarSettingsViewModel` |
 | `setSelectedCalendarIds(Set<String>)` | `selected_calendar_ids` | set | `CalendarSettingsViewModel` |
 | `setCalendarColors(Map<String,String>)` | `calendar_colors` | set (encoded `id:color`) | `EnsureCalendarColorsUseCase` (app-wide, on every calendar change), `CalendarSettingsViewModel` after `AssignCalendarColorsUseCase` |
-| `setListContentMode(ListContentMode)` | `list_content_mode` | set | `HomeAppsListSettingsViewModel`, `OnboardingViewModel` |
-| `setAppsToShowCount(Int)` | `apps_to_show_count` | set | `HomeAppsListSettingsViewModel`, `OnboardingViewModel` |
-| `setAppRowPosition(AppRowPosition)` | `app_row_position` | set | `HomeAppsListSettingsViewModel` |
-| `setAppRowPresentation(AppRowPresentation)` | `app_row_presentation` | set | `HomeAppsListSettingsViewModel` |
-| `setAppListVerticalAlignment(AppListVerticalAlignment)` | `app_list_vertical_alignment` | set | `HomeAppsListSettingsViewModel` |
-| `setAppListLayout(AppListLayout)` | `app_list_layout` | set | `HomeAppsListSettingsViewModel`, `ImportBackupUseCase` |
-| `setAppListColumnAlignment(AppListColumnAlignment)` | `app_list_column_alignment` | set | `HomeAppsListSettingsViewModel`, `ImportBackupUseCase` |
-| `setAppListGridColumns(AppListGridColumns)` | `app_list_grid_columns` | set | `HomeAppsListSettingsViewModel`, `ImportBackupUseCase` |
-| `setAppListGridDisplayMode(AppListGridDisplayMode)` | `app_list_grid_display_mode` | set | `HomeAppsListSettingsViewModel`, `ImportBackupUseCase` |
-| `setAppListShrinkToFit(AppListShrinkToFit)` | `app_list_shrink_to_fit` | set | `HomeAppsListSettingsViewModel`, `ImportBackupUseCase` |
+| `setListContentMode(ListContentMode)` | `list_content_mode` | set | `OnboardingViewModel` |
+| `setAppsToShowCount(Int)` | `apps_to_show_count` | set | `OnboardingViewModel` |
+| `setAppRowPosition(AppRowPosition)` | `app_row_position` | set |  —  |
+| `setAppRowPresentation(AppRowPresentation)` | `app_row_presentation` | set |  —  |
+| `setAppListVerticalAlignment(AppListVerticalAlignment)` | `app_list_vertical_alignment` | set |  —  |
+| `setAppListLayout(AppListLayout)` | `app_list_layout` | set | `ImportBackupUseCase` |
+| `setAppListColumnAlignment(AppListColumnAlignment)` | `app_list_column_alignment` | set | `ImportBackupUseCase` |
+| `setAppListGridColumns(AppListGridColumns)` | `app_list_grid_columns` | set | `ImportBackupUseCase` |
+| `setAppListGridDisplayMode(AppListGridDisplayMode)` | `app_list_grid_display_mode` | set | `ImportBackupUseCase` |
+| `setAppListShrinkToFit(AppListShrinkToFit)` | `app_list_shrink_to_fit` | set | `ImportBackupUseCase` |
 | `setHomeAppsFontWeight(FontWeightOption)` | `home_apps_font_weight` | set | `AppearanceSettingsViewModel` |
 | `setAppLabelColorOption(ClockColorOption)` | `app_label_color_option` | set | `AppearanceSettingsViewModel` |
 | `setDockDisplayMode(DockDisplayMode)` | `dock_display_mode` | set | `DockSettingsViewModel` |

@@ -16,8 +16,8 @@ activity, and state lives in the ViewModels. Callers and tests can force a mode 
 
 ### 1.0 Allowing landscape at all
 
-Settings → Default Apps list has a launcher-wide **Allow landscape mode** switch
-(`allow_landscape`, default on, global screen only). Off, everything stays portrait:
+Settings → Home & apps has a launcher-wide **Allow landscape mode** switch
+(`allow_landscape`, default on; `SettingsViewModel.setAllowLandscape`). The facet's Apps list screen hides its Landscape alignment card while it is off. Off, everything stays portrait:
 `rememberHomeLayoutMode()` returns portrait whatever the window (it reads `LocalAllowLandscape`, which
 `LauncherActivity` provides from the setting, so Home, the Hub and the route all follow), `LauncherActivity`
 requests a portrait orientation (`homeRequestedOrientation`, applied once settings have loaded; Android

@@ -11,7 +11,6 @@ import com.facetlauncher.app.data.model.AppRowPresentation
 
 /** Every change the Home apps list's look controls can make; the Home apps screen builds one from its ViewModel. */
 internal data class AppListLookActions(
-    val onAllowLandscapeChange: (Boolean) -> Unit,
     val onLayoutChange: (AppListLayout) -> Unit,
     val onPresentationChange: (AppRowPresentation) -> Unit,
     val onGridColumnsChange: (AppListGridColumns) -> Unit,
@@ -25,6 +24,6 @@ internal data class AppListLookActions(
     val onLandscapeVerticalAlignmentChange: (AppListVerticalAlignment?) -> Unit,
 ) {
     companion object {
-        val None = AppListLookActions({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {})
+        val None = AppListLookActions({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {})
     }
 }

@@ -59,12 +59,13 @@ class Converters {
     fun toFontWeightOption(value: String?): FontWeightOption =
         value?.let { runCatching { FontWeightOption.valueOf(it) }.getOrNull() } ?: FontWeightOption.REGULAR
 
+    // Nullable both ways: landscape's row position is `null` for "same as portrait" and must read back as `null`.
     @TypeConverter
-    fun fromAppRowPosition(position: AppRowPosition): String = position.name
+    fun fromAppRowPosition(position: AppRowPosition?): String? = position?.name
 
     @TypeConverter
-    fun toAppRowPosition(value: String?): AppRowPosition =
-        value?.let { runCatching { AppRowPosition.valueOf(it) }.getOrNull() } ?: AppRowPosition.LEFT
+    fun toAppRowPosition(value: String?): AppRowPosition? =
+        value?.let { runCatching { AppRowPosition.valueOf(it) }.getOrDefault(AppRowPosition.LEFT) }
 
     @TypeConverter
     fun fromAppRowPresentation(presentation: AppRowPresentation): String = presentation.name

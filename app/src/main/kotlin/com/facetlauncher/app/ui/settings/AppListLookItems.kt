@@ -23,11 +23,6 @@ import com.facetlauncher.app.ui.components.SettingsSectionHeader
 import com.facetlauncher.app.ui.components.SettingsToggleRow
 import kotlin.enums.EnumEntries
 
-/** An "Allow landscape mode" switch: launcher-wide, so only at launcher scope; off hides the landscape alignment card. */
-internal fun LazyListScope.appListLandscapeItem(uiState: HomeAppsListUiState, actions: AppListLookActions) {
-    if (!uiState.isFacetScoped) allowLandscapeItem(uiState.allowLandscape, actions.onAllowLandscapeChange)
-}
-
 /** Where the Home apps list sits: portrait and landscape alignment. */
 internal fun LazyListScope.appListAlignmentItems(uiState: HomeAppsListUiState, actions: AppListLookActions) {
     item { SettingsSectionHeader(stringResource(R.string.appearance_alignment_portrait_title)) }
@@ -49,20 +44,6 @@ internal fun LazyListScope.appListAlignmentItems(uiState: HomeAppsListUiState, a
                 onRowPositionChange = actions.onLandscapeRowPositionChange,
                 onColumnAlignmentChange = actions.onLandscapeColumnAlignmentChange,
                 onVerticalAlignmentChange = actions.onLandscapeVerticalAlignmentChange,
-            )
-        }
-    }
-}
-
-private fun LazyListScope.allowLandscapeItem(allowLandscape: Boolean, onAllowLandscapeChange: (Boolean) -> Unit) {
-    item {
-        SettingsCard(modifier = Modifier.padding(bottom = 16.dp)) {
-            SettingsToggleRow(
-                title = stringResource(R.string.appearance_allow_landscape_title),
-                subtitle = stringResource(R.string.appearance_allow_landscape_subtitle),
-                checked = allowLandscape,
-                onCheckedChange = onAllowLandscapeChange,
-                testTag = "appearance_allow_landscape_row",
             )
         }
     }

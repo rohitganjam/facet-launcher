@@ -255,7 +255,6 @@
     <string name="settings_all_day_events_visible">Événements toute la journée visibles</string>
     <string name="settings_all_day_events_hidden">Événements toute la journée masqués</string>
     <string name="settings_dock_title">Dock</string>
-    <string name="home_apps_list_default_header_title">Liste d\'apps par défaut</string>
     <string name="defaults_screen_note">Utilisé quand vous créez une facette ou en réinitialisez une.</string>
     <string name="reset_to_default_title">Rétablir les valeurs par défaut</string>
     <string name="reset_to_default_confirm">Rétablir</string>
@@ -383,7 +382,6 @@
     <string name="app_list_grid_display_mode_icons_and_text">Icônes et texte</string>
     <string name="dock_display_mode_icons_and_text">Icônes et texte</string>
     <string name="home_apps_list_content_facet">Contenu de la liste d\'apps</string>
-    <string name="home_apps_list_content_default">Contenu par défaut de la liste d\'apps</string>
     <string name="home_apps_list_apps_to_show">Apps à afficher</string>
     <string name="home_apps_list_favorites_facet">Favoris</string>
     <string name="drag_to_reorder_content_description">Faites glisser pour réorganiser</string>
@@ -1134,8 +1132,6 @@
         <item quantity="one">Copier vers %d facette</item>
         <item quantity="other">Copier vers %d facettes</item>
     </plurals>
-    <string name="copy_apps_subtitle">Remplace la liste d\'apps des facettes choisies par celle-ci</string>
-    <string name="copy_apps_sheet_message">Remplace les favoris, le contenu de la liste et le nombre d\'apps de chaque facette sélectionnée par les valeurs par défaut.</string>
     <string name="copy_look_subtitle">Remplace l\'apparence des apps des facettes choisies par celle-ci</string>
     <string name="copy_look_sheet_message">Remplace la disposition de la liste et l\'alignement de chaque facette sélectionnée par les valeurs par défaut.</string>
 </resources>

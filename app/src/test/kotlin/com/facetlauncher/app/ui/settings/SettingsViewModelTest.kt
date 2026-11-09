@@ -61,8 +61,8 @@ class SettingsViewModelTest {
         enabledRuleCount: Int = automationRuleCount,
         notificationAccessRepository: com.facetlauncher.app.data.NotificationAccessRepository =
             mock(com.facetlauncher.app.data.NotificationAccessRepository::class.java).also { `when`(it.isGranted()).thenReturn(false) },
+        settingsRepository: SettingsRepository = mock(SettingsRepository::class.java),
     ): SettingsViewModel {
-        val settingsRepository = mock(SettingsRepository::class.java)
         `when`(settingsRepository.settings).thenReturn(flowOf(settings))
         val folderRepository = mock(FolderRepository::class.java)
         `when`(folderRepository.observeFolders()).thenReturn(flowOf((1..folderCount).map { mock(com.facetlauncher.app.data.model.Folder::class.java) }))
@@ -81,7 +81,21 @@ class SettingsViewModelTest {
         )
         val facetRepository = mock(com.facetlauncher.app.data.FacetRepository::class.java)
         `when`(facetRepository.observeFacets()).thenReturn(flowOf((1..facetCount).map { com.facetlauncher.app.data.model.Facet(id = it.toLong(), name = "F$it", position = it) }))
-        return SettingsViewModel(useCase, defaultLauncherRepository, workProfileRepository, automationRuleRepository, FakeEntitlementRepository(isPro), facetRepository, notificationAccessRepository)
+        return SettingsViewModel(useCase, defaultLauncherRepository, workProfileRepository, automationRuleRepository, FakeEntitlementRepository(isPro), facetRepository, notificationAccessRepository, settingsRepository)
+    }
+
+    @Test
+    fun `setAllowLandscape writes the launcher-wide setting`() = runTest {
+        // Given a view model over a mocked settings repository
+        val settingsRepository = mock(SettingsRepository::class.java)
+        val viewModel = createViewModel(settingsRepository = settingsRepository)
+
+        // When landscape is turned off
+        viewModel.setAllowLandscape(false)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Then it is written to the repository
+        org.mockito.Mockito.verify(settingsRepository).setAllowLandscape(false)
     }
 
     @Test
