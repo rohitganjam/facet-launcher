@@ -1215,12 +1215,18 @@
     <string name="native_widget_allow">Allow</string>
     <string name="calendar_work_calendar">Work calendar</string>
     <string name="calendar_work_calendar_n">Work calendar %1$d</string>
-    <string name="copy_to_facets_title">Copy to facets</string>
-    <string name="copy_to_facets_current">Current</string>
-    <plurals name="copy_to_facets_confirm">
-        <item quantity="one">Copy to %d facet</item>
-        <item quantity="other">Copy to %d facets</item>
+    <string name="copy_from_facet_title">Copy from facet</string>
+    <string name="copy_from_facet_none">No other facets to copy from</string>
+    <string name="copy_from_facet_dock_subtitle">Use another facet\'s Dock</string>
+    <string name="copy_from_facet_apps_subtitle">Use another facet\'s Apps list</string>
+    <string name="copy_from_facet_widgets_subtitle">Use another facet\'s widgets</string>
+    <string name="copy_from_facet_confirm_title">Copy from %1$s?</string>
+    <string name="copy_from_facet_confirm">Copy</string>
+    <string name="copy_from_facet_dock_message">This replaces the Dock apps and style of this facet with those of %1$s.</string>
+    <string name="copy_from_facet_apps_message">This replaces this facet\'s Favorites, list content and look, landscape included, with those of %1$s.</string>
+    <string name="copy_from_facet_widgets_message">This replaces this facet\'s widgets with those of %1$s. Widgets from other apps are added again one by one and may ask for permission or open their own setup.</string>
+    <plurals name="copy_from_facet_widgets_omitted">
+        <item quantity="one">%d widget could not be copied</item>
+        <item quantity="other">%d widgets could not be copied</item>
     </plurals>
-    <string name="copy_look_subtitle">Replace the apps look of the facets you choose with this one</string>
-    <string name="copy_look_sheet_message">Replaces the list layout and alignment of each selected facet with the defaults.</string>
 </resources>

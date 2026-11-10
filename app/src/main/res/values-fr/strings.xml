@@ -1126,12 +1126,18 @@
     <string name="native_widget_allow">Autoriser</string>
     <string name="calendar_work_calendar">Agenda professionnel</string>
     <string name="calendar_work_calendar_n">Agenda professionnel %1$d</string>
-    <string name="copy_to_facets_title">Copier vers des facettes</string>
-    <string name="copy_to_facets_current">Actuelle</string>
-    <plurals name="copy_to_facets_confirm">
-        <item quantity="one">Copier vers %d facette</item>
-        <item quantity="other">Copier vers %d facettes</item>
+    <string name="copy_from_facet_title">Copier depuis une facette</string>
+    <string name="copy_from_facet_none">Aucune autre facette à copier</string>
+    <string name="copy_from_facet_dock_subtitle">Utiliser le dock d\'une autre facette</string>
+    <string name="copy_from_facet_apps_subtitle">Utiliser la liste d\'apps d\'une autre facette</string>
+    <string name="copy_from_facet_widgets_subtitle">Utiliser les widgets d\'une autre facette</string>
+    <string name="copy_from_facet_confirm_title">Copier depuis %1$s ?</string>
+    <string name="copy_from_facet_confirm">Copier</string>
+    <string name="copy_from_facet_dock_message">Cela remplace les apps et le style du dock de cette facette par ceux de %1$s.</string>
+    <string name="copy_from_facet_apps_message">Cela remplace les favoris, le contenu et l\'apparence de la liste de cette facette, paysage inclus, par ceux de %1$s.</string>
+    <string name="copy_from_facet_widgets_message">Cela remplace les widgets de cette facette par ceux de %1$s. Les widgets d\'autres apps sont ajoutés de nouveau un par un et peuvent demander une autorisation ou ouvrir leur propre configuration.</string>
+    <plurals name="copy_from_facet_widgets_omitted">
+        <item quantity="one">%d widget n\'a pas pu être copié</item>
+        <item quantity="other">%d widgets n\'ont pas pu être copiés</item>
     </plurals>
-    <string name="copy_look_subtitle">Remplace l\'apparence des apps des facettes choisies par celle-ci</string>
-    <string name="copy_look_sheet_message">Remplace la disposition de la liste et l\'alignement de chaque facette sélectionnée par les valeurs par défaut.</string>
 </resources>

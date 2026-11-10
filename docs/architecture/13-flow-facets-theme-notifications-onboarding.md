@@ -7,7 +7,7 @@ Four smaller flows that don't fit the earlier docs but are load-bearing for how 
 A *facet* is a named Home configuration (`facets` row). Exactly one is active
 (`active_facet_id` in DataStore). A facet **owns** its dock, favorites, list content and look. The launcher-wide
 values (the list content and look a new facet starts with, kept in the launcher settings with no screen of their own; a facet's own screens are *Dock Apps* and *Apps List*) are only a
-seed: `ApplyFacetDefaultsUseCase` applies them to a facet when it is created, and the Dock's *Reset to default* re-seeds the Dock from the device's default apps. There is no launcher-wide Dock, Favorites or Apps list screen, and no *Copy to facets* from defaults. There is no launcher-wide Home setting with a control: *Allow landscape mode* is each facet's own switch (`Facet.allowLandscape`), on its Apps list screen.
+seed: `ApplyFacetDefaultsUseCase` applies them to a facet when it is created, and the Dock's *Reset to default* re-seeds the Dock from the device's default apps. There is no launcher-wide Dock, Favorites or Apps list screen, and no *Copy to facets* from defaults. Each of a facet's Dock, Apps list and Widgets (stack) screens instead ends with a *Copy from facet* row (`CopyFromFacetCard`): a bottom sheet lists the other facets, picking one asks to confirm what is replaced, then the screen's content and settings are copied from it (see *Copy from facet* below). There is no launcher-wide Home setting with a control: *Allow landscape mode* is each facet's own switch (`Facet.allowLandscape`), on its Apps list screen.
 
 ```mermaid
 flowchart TB
@@ -485,3 +485,17 @@ flowchart LR
   gesture starts from: clock hold (top-left, under the default clock), Switch facets (right edge), Widgets (left edge),
   All your apps (bottom-right). Its "Got it" is a `SurfaceButton` with a 1.5dp `Muted` border and a soft shadow, because
   the button's fill is nearly the overlay's color (a 1.05–1.3:1 difference) — the border keeps ≥3:1 in both themes.
+
+## Copy from facet
+
+The Dock, Apps list and Widgets screens each end with a *Copy from facet* row. `CopyFromFacetCard` (`ui/components`) opens a `ThemedModalBottomSheet` of the other facets, then a `ConfirmDialog` naming the chosen facet; it replaces what the screen owns and never touches another screen's data.
+
+| Screen | What is replaced | Where |
+|---|---|---|
+| Dock | the Dock list (apps, folder placements, grid cells) and the display style | `CopyFacetSettingsUseCase.copyDock` → `PlacementRepository.copyList`, `FacetRepository.copyDockSettings` |
+| Apps list | the Favorites list (with grid cells), content mode and count, the list look (layout, presentation, row position, alignments, grid, shrink to fit), the landscape twins and *Allow landscape* | `CopyFacetSettingsUseCase.copyAppsList` → `PlacementRepository.copyList`, `FacetRepository.copyAppsListSettings` |
+| Widgets (stack) | the clock's placement (alignment and zone height, both orientations) and every stack page with its size, alignment and settings | `CopyFacetWidgetsUseCase`, driven by `ClockStackViewModel.copyFromFacet` |
+
+A folder placement points at the same folder, so a copy shares folders, and uninstalled apps are copied as rows and drop out at display as usual. A facet never copies from itself.
+
+**Hosted widgets.** A page Facet draws itself (the clock, weather, agenda, now playing) is copied as a row. A hosted widget cannot share its host id, so `ClockStackViewModel` re-adds it: it allocates a new id, binds it to the source's provider and profile (`bindAppWidgetIdIfAllowed`, else the system's bind-permission screen), launches the provider's configure activity when it declares one, then stores the page under the new id with the source's size and alignment. The widget's own settings live in its provider, keyed by id, so they are re-chosen in that configure screen; they are not cloned. A widget whose provider is gone, whose permission or setup is cancelled, or that is past the plan's stack limit (one page on Free) is skipped and counted in a toast. The target's stack is cleared first and its host ids released, so a cancelled copy leaves the pages copied so far.

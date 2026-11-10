@@ -63,7 +63,8 @@ class ClockStackScreenAddFlowTest {
         shownFacetId = facetId
         val appWidgets = mock(AppWidgetRepository::class.java)
         val viewModel = ClockStackViewModel(
-            SavedStateHandle(), settings, stack, appWidgets, RemoveClockStackItemUseCase(stack, appWidgets), AddClockStackItemUseCase(stack, entitlement), entitlement, Dispatchers.IO,
+            SavedStateHandle(), settings, stack, appWidgets, RemoveClockStackItemUseCase(stack, appWidgets), AddClockStackItemUseCase(stack, entitlement),
+            com.facetlauncher.app.domain.CopyFacetWidgetsUseCase(stack, facets, appWidgets, entitlement), facets, entitlement, Dispatchers.IO,
         )
         composeRule.setContent {
             FacetLauncherTheme {

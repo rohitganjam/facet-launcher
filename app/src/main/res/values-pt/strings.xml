@@ -1126,12 +1126,18 @@
     <string name="native_widget_allow">Permitir</string>
     <string name="calendar_work_calendar">Calendário de trabalho</string>
     <string name="calendar_work_calendar_n">Calendário de trabalho %1$d</string>
-    <string name="copy_to_facets_title">Copiar para facetas</string>
-    <string name="copy_to_facets_current">Atual</string>
-    <plurals name="copy_to_facets_confirm">
-        <item quantity="one">Copiar para %d faceta</item>
-        <item quantity="other">Copiar para %d facetas</item>
+    <string name="copy_from_facet_title">Copiar de uma faceta</string>
+    <string name="copy_from_facet_none">Nenhuma outra faceta para copiar</string>
+    <string name="copy_from_facet_dock_subtitle">Usar o dock de outra faceta</string>
+    <string name="copy_from_facet_apps_subtitle">Usar a lista de apps de outra faceta</string>
+    <string name="copy_from_facet_widgets_subtitle">Usar os widgets de outra faceta</string>
+    <string name="copy_from_facet_confirm_title">Copiar de %1$s?</string>
+    <string name="copy_from_facet_confirm">Copiar</string>
+    <string name="copy_from_facet_dock_message">Isto substitui os apps e o estilo do dock desta faceta pelos de %1$s.</string>
+    <string name="copy_from_facet_apps_message">Isto substitui os favoritos, o conteúdo e a aparência da lista desta faceta, incluindo o modo paisagem, pelos de %1$s.</string>
+    <string name="copy_from_facet_widgets_message">Isto substitui os widgets desta faceta pelos de %1$s. Widgets de outros apps são adicionados novamente um a um e podem pedir permissão ou abrir a própria configuração.</string>
+    <plurals name="copy_from_facet_widgets_omitted">
+        <item quantity="one">%d widget não pôde ser copiado</item>
+        <item quantity="other">%d widgets não puderam ser copiados</item>
     </plurals>
-    <string name="copy_look_subtitle">Substitui a aparência dos apps das facetas escolhidas por esta</string>
-    <string name="copy_look_sheet_message">Substitui o layout da lista e o alinhamento de cada faceta selecionada pelos valores padrão.</string>
 </resources>

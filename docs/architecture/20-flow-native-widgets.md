@@ -126,6 +126,7 @@ still shows its empty text while that place loads.
   its item id, so the existing "this page is a widget" logic (size, alignment, no calendar block) applies; only the leaf
   (`ClockBlock`) branches on `nativeType`, drawing `NativeWidget` instead of `ClockWidgetTile`. A long press anywhere on the page opens the clock menu: the widgets have no long-press action, so `longPressFallback` (`LongPressFallback.kt`) runs Home's. It watches before the children, which would otherwise consume the touch with their own tap handlers, and takes the rest of the touch once it fires so the tap does not also run.
   Tapping a Work Profile event opens the work Calendar app (`openCalendarEvent` in `CalendarEventOpener.kt`, via `LauncherApps.startMainActivity` for the default calendar package in the work profile): its event id means nothing to the personal app. It opens the app, not the event.
+- **Copy from facet.** The stack screen's last row replaces the stack with another facet's (`CopyFacetWidgetsUseCase`, `ClockStackRepository.appendCopy`): native pages keep their size, alignment and `nativeWidgetConfig`; hosted ones are re-bound. See [13](13-flow-facets-theme-notifications-onboarding.md#copy-from-facet).
 - **Remove.** Hub trash and the stack screen's Remove. `ClockStackScreen` labels the row with the widget's name and offers no Configure.
 
 ## 5. Backup

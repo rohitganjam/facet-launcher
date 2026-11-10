@@ -8,6 +8,7 @@ import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.WallpaperRepository
 import com.facetlauncher.app.data.model.Facet
+import com.facetlauncher.app.domain.CopyFacetSettingsUseCase
 import com.facetlauncher.app.domain.ResolvedFacetStyle
 import com.facetlauncher.app.domain.ObservePlacedItemsUseCase
 import com.facetlauncher.app.domain.resolveFacetStyle
@@ -66,6 +67,8 @@ data class HomeAppsListUiState(
     /** Home's app label color/weight — global only, no per-facet override; drives the preview's label rendering. */
     val appLabelColorOption: ClockColorOption = ClockColorOption.THEME,
     val homeAppsFontWeight: FontWeightOption = FontWeightOption.REGULAR,
+    /** The other facets, for Copy from facet. */
+    val otherFacets: ImmutableList<Facet> = persistentListOf(),
 ) {
     private val style: ResolvedFacetStyle by lazy(LazyThreadSafetyMode.NONE) { resolveFacetStyle(facet, settings) }
     /** The preview needs the look here. */
@@ -100,6 +103,7 @@ class HomeAppsListSettingsViewModel @Inject constructor(
     private val defaultAppRepository: DefaultAppRepository,
     getInstalledApps: GetInstalledAppsUseCase,
     private val selectPreviewApps: SelectPreviewAppsUseCase,
+    private val copyFacetSettings: CopyFacetSettingsUseCase,
 ) : ViewModel() {
 
     private val facetId: Long? = savedStateHandle.get<Long>("facetId")?.takeIf { it != NO_ACTIVE_FACET_ID }
@@ -124,12 +128,19 @@ class HomeAppsListSettingsViewModel @Inject constructor(
             homeWallpaper = wallpaper,
             appLabelColorOption = settings.appLabelColorOption,
             homeAppsFontWeight = settings.homeAppsFontWeight,
+            otherFacets = facets.filter { it.id != facetId }.toImmutableList(),
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), HomeAppsListUiState())
 
     init {
         viewModelScope.launch { homeWallpaper.value = wallpaperRepository.currentHomeWallpaper() }
         viewModelScope.launch { preferredPreviewPackages.value = defaultAppRepository.getDefaultAppPackages() }
+    }
+
+    /** "Copy from facet": Favorites, content, count and look (landscape and Allow landscape included) become a copy of [sourceFacetId]'s. */
+    fun copyFromFacet(sourceFacetId: Long) {
+        val target = facetId ?: return
+        viewModelScope.launch { copyFacetSettings.copyAppsList(sourceFacetId, target) }
     }
 
     fun setListContentMode(mode: ListContentMode) {

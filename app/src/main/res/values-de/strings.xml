@@ -1126,12 +1126,18 @@
     <string name="native_widget_allow">Erlauben</string>
     <string name="calendar_work_calendar">Arbeitskalender</string>
     <string name="calendar_work_calendar_n">Arbeitskalender %1$d</string>
-    <string name="copy_to_facets_title">Auf Facetten kopieren</string>
-    <string name="copy_to_facets_current">Aktuell</string>
-    <plurals name="copy_to_facets_confirm">
-        <item quantity="one">Auf %d Facette kopieren</item>
-        <item quantity="other">Auf %d Facetten kopieren</item>
+    <string name="copy_from_facet_title">Von Facette kopieren</string>
+    <string name="copy_from_facet_none">Keine andere Facette zum Kopieren</string>
+    <string name="copy_from_facet_dock_subtitle">Dock einer anderen Facette verwenden</string>
+    <string name="copy_from_facet_apps_subtitle">App-Liste einer anderen Facette verwenden</string>
+    <string name="copy_from_facet_widgets_subtitle">Widgets einer anderen Facette verwenden</string>
+    <string name="copy_from_facet_confirm_title">Von %1$s kopieren?</string>
+    <string name="copy_from_facet_confirm">Kopieren</string>
+    <string name="copy_from_facet_dock_message">Dies ersetzt die Dock-Apps und den Stil dieser Facette durch die von %1$s.</string>
+    <string name="copy_from_facet_apps_message">Dies ersetzt Favoriten, Listeninhalt und Darstellung dieser Facette, einschließlich Querformat, durch die von %1$s.</string>
+    <string name="copy_from_facet_widgets_message">Dies ersetzt die Widgets dieser Facette durch die von %1$s. Widgets anderer Apps werden einzeln neu hinzugefügt und fragen ggf. nach einer Berechtigung oder öffnen ihre eigene Einrichtung.</string>
+    <plurals name="copy_from_facet_widgets_omitted">
+        <item quantity="one">%d Widget konnte nicht kopiert werden</item>
+        <item quantity="other">%d Widgets konnten nicht kopiert werden</item>
     </plurals>
-    <string name="copy_look_subtitle">Ersetzt App-Darstellung der gewählten Facetten durch diese</string>
-    <string name="copy_look_sheet_message">Ersetzt Listenlayout und Ausrichtung jeder ausgewählten Facette durch die Standardwerte.</string>
 </resources>

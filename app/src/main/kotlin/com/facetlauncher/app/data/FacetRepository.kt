@@ -156,6 +156,55 @@ class FacetRepository @Inject constructor(
         }
     }
 
+    /** Copies [sourceId]'s Dock display style onto [targetId]. */
+    suspend fun copyDockSettings(sourceId: Long, targetId: Long) {
+        val source = facetDao.getById(sourceId)?.toFacet() ?: return
+        update(targetId) { it.copy(dockDisplayMode = source.dockDisplayMode) }
+    }
+
+    /** Copies [sourceId]'s Apps list settings (content, count, look, landscape twins, Allow landscape) onto [targetId]. */
+    suspend fun copyAppsListSettings(sourceId: Long, targetId: Long) {
+        val source = facetDao.getById(sourceId)?.toFacet() ?: return
+        update(targetId) {
+            it.copy(
+                listContentMode = source.listContentMode,
+                appsToShowCount = source.appsToShowCount,
+                appRowPosition = source.appRowPosition,
+                appRowPresentation = source.appRowPresentation,
+                appListVerticalAlignment = source.appListVerticalAlignment,
+                appListLayout = source.appListLayout,
+                appListColumnAlignment = source.appListColumnAlignment,
+                appListGridColumns = source.appListGridColumns,
+                appListGridDisplayMode = source.appListGridDisplayMode,
+                appListShrinkToFit = source.appListShrinkToFit,
+                allowLandscape = source.allowLandscape,
+            ).withLandscape(
+                it.landscape.copy(
+                    appRowPosition = source.landscape.appRowPosition,
+                    appListVerticalAlignment = source.landscape.appListVerticalAlignment,
+                    appListColumnAlignment = source.landscape.appListColumnAlignment,
+                ),
+            )
+        }
+    }
+
+    /** Copies [sourceId]'s clock placement (alignment and zone height, landscape twins included) onto [targetId]. */
+    suspend fun copyClockPlacement(sourceId: Long, targetId: Long) {
+        val source = facetDao.getById(sourceId)?.toFacet() ?: return
+        update(targetId) {
+            it.copy(
+                clockPlacementOwn = source.clockPlacementOwn,
+                clockAlignment = source.clockAlignment,
+                clockZoneHeightDp = source.clockZoneHeightDp,
+            ).withLandscape(
+                it.landscape.copy(
+                    clockAlignment = source.landscape.clockAlignment,
+                    clockZoneHeightDp = source.landscape.clockZoneHeightDp,
+                ),
+            )
+        }
+    }
+
     suspend fun setAppRowPosition(facetId: Long, position: AppRowPosition) {
         update(facetId) { it.copy(appRowPosition = position) }
     }

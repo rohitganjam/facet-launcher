@@ -9,10 +9,13 @@ import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.local.FacetDatabase
 import com.facetlauncher.app.data.local.FacetEntity
 import com.facetlauncher.app.data.model.ClockStackItemKind
+import com.facetlauncher.app.data.model.NativeWidgetType
 import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.data.widget.AppWidgetRepository
 import com.facetlauncher.app.domain.AddClockStackItemResult
+import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.domain.AddClockStackItemUseCase
+import com.facetlauncher.app.domain.CopyFacetWidgetsUseCase
 import com.facetlauncher.app.domain.RemoveClockStackItemUseCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -43,6 +46,7 @@ class ClockStackViewModelTest {
     private lateinit var database: FacetDatabase
     private lateinit var repository: ClockStackRepository
     private lateinit var appWidgetRepository: AppWidgetRepository
+    private lateinit var facetRepository: FacetRepository
     private val entitlement = FakeEntitlementRepository(initial = true)
     private var facetId = 0L
 
@@ -55,6 +59,7 @@ class ClockStackViewModelTest {
         repository = ClockStackRepository(database, database.clockStackItemDao())
         facetId = database.facetDao().insert(FacetEntity(name = "Home", position = 0))
         appWidgetRepository = mock(AppWidgetRepository::class.java)
+        facetRepository = FacetRepository(database.facetDao(), database.clockStackItemDao())
     }
 
     @After
@@ -72,6 +77,8 @@ class ClockStackViewModelTest {
             settings, repository, appWidgetRepository,
             RemoveClockStackItemUseCase(repository, appWidgetRepository),
             AddClockStackItemUseCase(repository, entitlement),
+            CopyFacetWidgetsUseCase(repository, facetRepository, appWidgetRepository, entitlement),
+            facetRepository,
             entitlement, dispatcher,
         )
     }
@@ -211,5 +218,66 @@ class ClockStackViewModelTest {
     @Test
     fun `with no facet in the route the active facet's stack is shown`() = runTest {
         assertEquals(facetId, viewModel(routeFacetId = null, activeFacetId = facetId).current().facetId)
+    }
+
+    @Test
+    fun `copying from a facet lists the other facets and copies native pages with a Done event`() = runTest {
+        // Given a source facet with a clock and a weather page, and this facet with a page of its own
+        val source = database.facetDao().insert(FacetEntity(name = "Work", position = 1))
+        repository.addClock(source)
+        repository.addNativeWidget(source, NativeWidgetType.WEATHER)
+        repository.addNativeWidget(facetId, NativeWidgetType.AGENDA)
+        val viewModel = viewModel()
+        assertEquals(listOf(source), viewModel.current().otherFacets.map { it.id })
+
+        // When this facet copies from the source
+        viewModel.copyFromFacet(source)
+
+        // Then the stack is the source's, in order, and the copy reports nothing omitted
+        assertEquals(ClockStackCopyEvent.Done(omitted = 0), viewModel.copyEvents.first())
+        assertEquals(listOf(ClockStackItemKind.CLOCK, ClockStackItemKind.NATIVE_WIDGET), repository.getAll(facetId).map { it.kind })
+        assertEquals(NativeWidgetType.WEATHER, repository.getAll(facetId)[1].nativeWidgetType)
+    }
+
+    @Test
+    fun `copying a hosted widget binds a new id and stores it on this facet`() = runTest {
+        // Given a source facet with a hosted widget whose provider is still installed
+        val source = database.facetDao().insert(FacetEntity(name = "Work", position = 1))
+        repository.addWidget(source, 7)
+        val provider = android.content.ComponentName("com.example", "com.example.Widget")
+        val handle = android.os.Process.myUserHandle()
+        val info = mock(android.appwidget.AppWidgetProviderInfo::class.java)
+        info.provider = provider
+        `when`(info.profile).thenReturn(handle)
+        `when`(appWidgetRepository.getAppWidgetInfo(7)).thenReturn(info)
+        `when`(appWidgetRepository.getAppWidgetInfo(99)).thenReturn(info)
+        `when`(appWidgetRepository.allocateAppWidgetId()).thenReturn(99)
+        `when`(appWidgetRepository.bindAppWidgetIdIfAllowed(99, provider, handle)).thenReturn(true)
+        `when`(appWidgetRepository.createConfigureIntent(99, info)).thenReturn(null)
+
+        // When this facet copies from the source
+        val viewModel = viewModel()
+        viewModel.copyFromFacet(source)
+
+        // Then the page is stored under the new id and the source keeps its own
+        assertEquals(ClockStackCopyEvent.Done(omitted = 0), viewModel.copyEvents.first())
+        assertEquals(listOf(99), repository.getAll(facetId).map { it.appWidgetId })
+        assertEquals(listOf(7), repository.getAll(source).map { it.appWidgetId })
+    }
+
+    @Test
+    fun `a hosted widget whose app is gone is skipped and counted`() = runTest {
+        // Given a source hosted widget with no provider any more
+        val source = database.facetDao().insert(FacetEntity(name = "Work", position = 1))
+        repository.addWidget(source, 7)
+        `when`(appWidgetRepository.getAppWidgetInfo(7)).thenReturn(null)
+
+        // When copied
+        val viewModel = viewModel()
+        viewModel.copyFromFacet(source)
+
+        // Then nothing is stored and one page is reported as not copied
+        assertEquals(ClockStackCopyEvent.Done(omitted = 1), viewModel.copyEvents.first())
+        assertEquals(emptyList<Long>(), repository.getAll(facetId).map { it.id })
     }
 }
