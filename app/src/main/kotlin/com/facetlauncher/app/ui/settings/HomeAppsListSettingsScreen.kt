@@ -56,6 +56,7 @@ import com.facetlauncher.app.ui.components.AppIcon
 import com.facetlauncher.app.ui.components.AppIconSize
 import com.facetlauncher.app.ui.components.BackButton
 import com.facetlauncher.app.ui.components.CardDivider
+import com.facetlauncher.app.ui.components.CopyFromFacetCard
 import com.facetlauncher.app.ui.components.HomeSurfacePreview
 import com.facetlauncher.app.ui.components.LabeledDropdownRow
 import com.facetlauncher.app.ui.components.ReorderRowDefaults
@@ -91,6 +92,7 @@ fun HomeAppsListSettingsScreen(
         onListContentModeChange = viewModel::setListContentMode,
         onAppsToShowCountChange = viewModel::setAppsToShowCount,
         onReorderFavorites = viewModel::reorderFavorites,
+        onCopyFromFacet = viewModel::copyFromFacet,
         lookActions = AppListLookActions(
             onLayoutChange = viewModel::setAppListLayout,
             onPresentationChange = viewModel::setAppRowPresentation,
@@ -119,6 +121,7 @@ private fun HomeAppsListSettingsContent(
     onReorderFavorites: (List<PlacedItem>) -> Unit,
     lookActions: AppListLookActions,
     modifier: Modifier = Modifier,
+    onCopyFromFacet: (Long) -> Unit = {},
 ) {
     StickyHeaderLayout(
         modifier = modifier,
@@ -152,6 +155,16 @@ private fun HomeAppsListSettingsContent(
                 listContentItem(uiState, lookActions, onListContentModeChange, onAppsToShowCountChange, onEditFavorites, onReorderFavorites)
                 item { Spacer(modifier = Modifier.height(16.dp)) }
                 appListAlignmentItems(uiState, lookActions)
+                item { Spacer(modifier = Modifier.height(16.dp)) }
+                item {
+                    CopyFromFacetCard(
+                        facets = uiState.otherFacets,
+                        subtitle = stringResource(R.string.copy_from_facet_apps_subtitle),
+                        confirmMessageRes = R.string.copy_from_facet_apps_message,
+                        onCopy = onCopyFromFacet,
+                        testTagPrefix = "home_apps_list_settings",
+                    )
+                }
             }
         },
     )

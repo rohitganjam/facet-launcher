@@ -9,6 +9,7 @@ import com.facetlauncher.app.data.WallpaperRepository
 import com.facetlauncher.app.data.model.Facet
 import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.domain.ApplyFacetDefaultsUseCase
+import com.facetlauncher.app.domain.CopyFacetSettingsUseCase
 import com.facetlauncher.app.domain.FacetDefaultsScope
 import com.facetlauncher.app.domain.resolveFacetStyle
 import com.facetlauncher.app.domain.ObservePlacedItemsUseCase
@@ -41,6 +42,8 @@ data class DockSettingsUiState(
     val appLabelColorOption: ClockColorOption = ClockColorOption.THEME,
     val homeAppsFontWeight: FontWeightOption = FontWeightOption.REGULAR,
     val homeWallpaper: HomeWallpaper = HomeWallpaper.Unavailable,
+    /** The other facets, for Copy from facet. */
+    val otherFacets: ImmutableList<Facet> = persistentListOf(),
 ) {
     /** The preview needs the dock's display mode here. */
     val dockDisplayMode: DockDisplayMode get() = resolveFacetStyle(facet, settings).dockDisplayMode
@@ -56,6 +59,7 @@ class DockSettingsViewModel @Inject constructor(
     private val observePlacedItems: ObservePlacedItemsUseCase,
     private val wallpaperRepository: WallpaperRepository,
     private val applyFacetDefaults: ApplyFacetDefaultsUseCase,
+    private val copyFacetSettings: CopyFacetSettingsUseCase,
 ) : ViewModel() {
 
     private val facetId: Long = savedStateHandle.get<Long>("facetId") ?: NO_ACTIVE_FACET_ID
@@ -75,6 +79,7 @@ class DockSettingsViewModel @Inject constructor(
             appLabelColorOption = settings.appLabelColorOption,
             homeAppsFontWeight = settings.homeAppsFontWeight,
             homeWallpaper = wallpaper,
+            otherFacets = facets.filter { it.id != facetId }.toImmutableList(),
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), DockSettingsUiState())
 
@@ -88,6 +93,11 @@ class DockSettingsViewModel @Inject constructor(
 
     fun setDockDisplayMode(mode: DockDisplayMode) {
         viewModelScope.launch { facetRepository.setDockDisplayMode(facetId, mode) }
+    }
+
+    /** "Copy from facet": this Dock (apps, folders, cells and display style) becomes a copy of [sourceFacetId]'s. */
+    fun copyFromFacet(sourceFacetId: Long) {
+        viewModelScope.launch { copyFacetSettings.copyDock(sourceFacetId, facetId) }
     }
 
     /** "Reset to default": re-seeds this facet's dock from the device's default apps and restores the default display style. */

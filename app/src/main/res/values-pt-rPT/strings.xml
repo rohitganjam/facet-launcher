@@ -327,8 +327,6 @@
     <string name="reset_dock_confirm_message">Isto substitui o dock desta faceta pelas apps predefinidas do dispositivo. As apps que colocou aqui serão perdidas.</string>
     <string name="reset_look_subtitle">Substituir o aspeto da lista pelo predefinido</string>
     <string name="reset_look_confirm_message">Isto substitui o esquema da lista e o alinhamento desta faceta pelos valores predefinidos.</string>
-    <string name="copy_look_subtitle">Substitui o aspeto das apps das facetas escolhidas por este</string>
-    <string name="copy_look_sheet_message">Substitui o esquema da lista e o alinhamento de cada faceta selecionada pelos valores predefinidos.</string>
     <string name="settings_appearance_title">Aspeto do launcher</string>
     <string name="settings_appearance_subtitle">Temas, tipos de letra e ícones</string>
     <string name="appearance_header_title">Aspeto do launcher</string>

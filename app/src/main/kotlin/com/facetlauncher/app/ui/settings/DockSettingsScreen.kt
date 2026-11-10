@@ -53,7 +53,7 @@ import com.facetlauncher.app.ui.components.AppIconSize
 import com.facetlauncher.app.ui.components.BackButton
 import com.facetlauncher.app.ui.components.CardDivider
 import com.facetlauncher.app.ui.components.HomeSurfacePreview
-import com.facetlauncher.app.ui.components.CopyToFacetsCard
+import com.facetlauncher.app.ui.components.CopyFromFacetCard
 import com.facetlauncher.app.ui.components.DefaultsNote
 import com.facetlauncher.app.ui.components.ResetToDefaultCard
 import com.facetlauncher.app.ui.components.LabeledDropdownRow
@@ -89,6 +89,7 @@ fun DockSettingsScreen(
         onDockDisplayModeChange = viewModel::setDockDisplayMode,
         onReorderDockItems = viewModel::reorderDockItems,
         onResetToDefault = viewModel::resetToDefault,
+        onCopyFromFacet = viewModel::copyFromFacet,
         modifier = modifier,
     )
 }
@@ -101,6 +102,7 @@ private fun DockSettingsContent(
     onDockDisplayModeChange: (DockDisplayMode) -> Unit,
     onReorderDockItems: (List<PlacedItem>) -> Unit,
     onResetToDefault: () -> Unit,
+    onCopyFromFacet: (Long) -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     StickyHeaderLayout(
@@ -141,6 +143,16 @@ private fun DockSettingsContent(
                 }
                 dockAppsItem(uiState, onAddDockApp, onReorderDockItems)
                 dockResetItems(onResetToDefault)
+                item { Spacer(modifier = Modifier.height(16.dp)) }
+                item {
+                    CopyFromFacetCard(
+                        facets = uiState.otherFacets,
+                        subtitle = stringResource(R.string.copy_from_facet_dock_subtitle),
+                        confirmMessageRes = R.string.copy_from_facet_dock_message,
+                        onCopy = onCopyFromFacet,
+                        testTagPrefix = "dock_settings",
+                    )
+                }
             }
         },
     )

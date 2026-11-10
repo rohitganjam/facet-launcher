@@ -4706,3 +4706,22 @@ Phase A is built on the same branch, and ships with these items.
 - [x] The launcher-wide *Default Apps list* screen is gone (its Settings row, the launcher-scope route and the Copy to facets card); `HomeAppsListSettingsScreen` is a facet's own screen only. *Allow landscape mode* is now a row in Settings → Home & apps (`SettingsViewModel.setAllowLandscape`). `copy_apps_*` and the default header strings are removed. A facet-to-facet copy can replace Copy to facets later if wanted.
 - [x] Fixed: `Converters.toAppRowPosition(null)` returned `LEFT`, so a facet's landscape row position read back as a stuck left instead of "same as portrait" (`null`). The converter is nullable both ways; `FacetDaoTest` covers the round trip against real Room.
 - [x] *Allow landscape mode* is a facet's own setting: `Facet.allowLandscape` (Room v49, `Migrations.migration48To49` seeds every facet from the old launcher-wide DataStore key), a switch on the facet's Apps list screen, exported in `BackupFacet`. `LauncherViewModel` follows the active facet, so switching facets can rotate or lock the screen. The Settings card, `SettingsViewModel.setAllowLandscape` and `LauncherSettings.allowLandscape` are gone. Tests: `FacetRepositoryTest`, `BackupMappingTest`, `LauncherViewModelTest`, `FacetDatabaseMigrationTest.migration48To49…`, `HomeAppsListSettingsScreenTest`.
+
+## Copy from facet (direct request)
+A *Copy from facet* row at the bottom of each facet's Dock, Apps list and Widgets (stack) screen: a bottom sheet lists the other facets, picking one asks to confirm, then that screen's content and settings are copied from it, replacing what the target had. Design in `13` (*Copy from facet*).
+
+### Decisions
+- **Replace, not merge.** The confirmation names what is lost. A facet cannot copy from itself.
+- **Hosted widgets are re-added, with their configuration.** Each gets a new host id bound to the source's provider and profile, goes through the system's bind-permission screen when needed and through the provider's own configure activity, then keeps the source's size and alignment. A widget's own settings live in its provider keyed by id and cannot be cloned, so they are re-chosen in that configure screen. Native pages (clock, weather, agenda, now playing) copy size, alignment and `nativeWidgetConfig` directly.
+- **Plan limit applies.** A Free facet copies only the stack's first page (`clockStackLimit`); the rest are counted as not copied.
+- **Dock** takes apps, folder placements, grid cells and display style. **Apps list** takes Favorites with cells, content mode and count, the list look, landscape twins and Allow landscape.
+
+### Steps
+- [x] `PlacementRepository.copyList`, `FacetRepository.copyDockSettings` / `copyAppsListSettings` / `copyClockPlacement`, `ClockStackRepository.appendCopy`.
+- [x] `CopyFacetSettingsUseCase` (Dock, Apps list) and `CopyFacetWidgetsUseCase` (`prepare`, `appendNative`, `appendHosted`); tests `CopyFacetSettingsUseCaseTest`, `CopyFacetWidgetsUseCaseTest` (real Room).
+- [x] `CopyFromFacetCard` and its sheet and confirmation (`CopyFromFacetCardTest`, instrumented); the row on `DockSettingsScreen`, `HomeAppsListSettingsScreen` and `ClockStackScreen`; strings in en, de, es, fr, nl, pt (pt-PT and es-419 inherit).
+- [x] `ClockStackViewModel.copyFromFacet` with the bind and configure round trip per hosted widget (`copyEvents`, `onCopyBindResult`, `onCopyConfigureResult`); tests for native pages, a hosted widget and a gone provider; Dock and Apps list ViewModel tests.
+- [x] Docs: `07`, `08`, `13`, `20`, README counts; `TEST_REGISTRY.md` regenerated.
+- [ ] Check on a device with a real hosted widget: the bind-permission and configure screens appear in turn, the copied widget keeps its size, a cancelled setup is counted, and a Work Profile widget binds.
+- [ ] Native review of the new fr, de, es, nl and pt strings (machine-translated).
+- [x] Removed the unused `CopyToFacetsCard` (and its test and the `copy_to_facets_*` and `copy_look_*` strings, all locales), a leftover of the old launcher-wide Copy to facets.

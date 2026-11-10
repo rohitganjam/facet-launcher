@@ -66,6 +66,25 @@ class ClockStackRepository @Inject constructor(
         }
     }
 
+    /**
+     * Appends a copy of [page] (its size, alignment and native settings included) to [facetId], bound to [appWidgetId] when it is a
+     * hosted widget. `false`, nothing written, when the stack already holds [limit] pages or the clock is already on it.
+     */
+    suspend fun appendCopy(facetId: Long, page: ClockStackItem, appWidgetId: Int?, limit: Int): Boolean = database.withTransaction {
+        val rows = dao.getAll(facetId)
+        if (rows.size >= limit) return@withTransaction false
+        if (page.kind == ClockStackItemKind.CLOCK && rows.any { it.kind == ClockStackItemKind.CLOCK }) return@withTransaction false
+        dao.insert(
+            ClockStackItemEntity(
+                facetId = facetId, position = rows.size, kind = page.kind, appWidgetId = appWidgetId, nativeWidgetType = page.nativeWidgetType,
+                widthDp = page.widthDp, heightDp = page.heightDp, alignment = page.alignment,
+                landscapeWidthDp = page.landscapeWidthDp, landscapeHeightDp = page.landscapeHeightDp, landscapeAlignment = page.landscapeAlignment,
+                nativeWidgetConfig = page.nativeWidgetConfig,
+            ),
+        )
+        true
+    }
+
     suspend fun setConfig(itemId: Long, config: NativeWidgetConfig) = dao.updateConfig(itemId, config.encode())
 
     /** Gives the facet's clock page the settings and box a backup carried; a facet with no clock page, or a backup without them, is left as it is. */

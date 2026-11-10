@@ -34,6 +34,7 @@ import com.facetlauncher.app.data.model.PlacementTarget
 import com.facetlauncher.app.data.model.PlacementList
 import com.facetlauncher.app.data.PlacementRepository
 import com.facetlauncher.app.domain.ApplyFacetDefaultsUseCase
+import com.facetlauncher.app.domain.CopyFacetSettingsUseCase
 import com.facetlauncher.app.domain.FacetDefaultsScope
 import com.facetlauncher.app.domain.ObservePlacedItemsUseCase
 
@@ -78,6 +79,7 @@ class DockSettingsViewModelTest {
             observePlacedItems,
             fakeWallpaperRepository(),
             applyFacetDefaults,
+            CopyFacetSettingsUseCase(placementRepository, facetRepository),
         )
     }
 
@@ -154,4 +156,18 @@ class DockSettingsViewModelTest {
         verify(applyDefaults).invoke(3L, FacetDefaultsScope.DOCK)
     }
 
+    @Test
+    fun `copy from facet copies the source dock onto this facet and lists the other facets`() = runTest {
+        val placementRepository = mock(PlacementRepository::class.java)
+        val facets = listOf(Facet(id = 3L, name = "Work", position = 0), Facet(id = 4L, name = "Play", position = 1))
+        val viewModel = createViewModel(facetId = 3L, facets = facets, placementRepository = placementRepository)
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        testDispatcher.scheduler.advanceUntilIdle()
+        assertEquals(listOf(4L), viewModel.uiState.value.otherFacets.map { it.id })
+
+        viewModel.copyFromFacet(4L)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        verify(placementRepository).copyList(PlacementTarget(PlacementList.DOCK, 4L), PlacementTarget(PlacementList.DOCK, 3L))
+    }
 }

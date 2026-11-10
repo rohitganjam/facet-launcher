@@ -1126,12 +1126,18 @@
     <string name="native_widget_allow">Permitir</string>
     <string name="calendar_work_calendar">Calendario de trabajo</string>
     <string name="calendar_work_calendar_n">Calendario de trabajo %1$d</string>
-    <string name="copy_to_facets_title">Copiar a facetas</string>
-    <string name="copy_to_facets_current">Actual</string>
-    <plurals name="copy_to_facets_confirm">
-        <item quantity="one">Copiar a %d faceta</item>
-        <item quantity="other">Copiar a %d facetas</item>
+    <string name="copy_from_facet_title">Copiar de otra faceta</string>
+    <string name="copy_from_facet_none">No hay otras facetas de las que copiar</string>
+    <string name="copy_from_facet_dock_subtitle">Usar el dock de otra faceta</string>
+    <string name="copy_from_facet_apps_subtitle">Usar la lista de apps de otra faceta</string>
+    <string name="copy_from_facet_widgets_subtitle">Usar los widgets de otra faceta</string>
+    <string name="copy_from_facet_confirm_title">¿Copiar de %1$s?</string>
+    <string name="copy_from_facet_confirm">Copiar</string>
+    <string name="copy_from_facet_dock_message">Esto sustituye las apps y el estilo del dock de esta faceta por los de %1$s.</string>
+    <string name="copy_from_facet_apps_message">Esto sustituye los favoritos, el contenido y el aspecto de la lista de esta faceta, incluido el modo horizontal, por los de %1$s.</string>
+    <string name="copy_from_facet_widgets_message">Esto sustituye los widgets de esta faceta por los de %1$s. Los widgets de otras apps se añaden de nuevo uno a uno y pueden pedir permiso o abrir su propia configuración.</string>
+    <plurals name="copy_from_facet_widgets_omitted">
+        <item quantity="one">No se pudo copiar %d widget</item>
+        <item quantity="other">No se pudieron copiar %d widgets</item>
     </plurals>
-    <string name="copy_look_subtitle">Sustituye el aspecto de las apps de las facetas que elijas por este</string>
-    <string name="copy_look_sheet_message">Sustituye el diseño de la lista y la alineación de cada faceta seleccionada por los valores predeterminados.</string>
 </resources>

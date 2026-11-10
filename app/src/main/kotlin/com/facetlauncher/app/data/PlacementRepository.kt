@@ -134,6 +134,15 @@ class PlacementRepository @Inject constructor(
         }
     }
 
+    /** Makes [target]'s list an exact copy of [source]'s, grid cells included; what [target] held is replaced. */
+    suspend fun copyList(source: PlacementTarget, target: PlacementTarget) {
+        val apps = getRawApps(source)
+        val folders = getRawFolderPlacements(source)
+        deleteAll(target)
+        apps.forEach { appPlacementDao.upsert(it.copy(id = 0, list = target.list, facetId = target.facetId, ownerKey = target.ownerKey)) }
+        folders.forEach { folderPlacementDao.upsert(it.copy(id = 0, list = target.list, facetId = target.facetId, ownerKey = target.ownerKey)) }
+    }
+
     /** Wipes the target's apps and folder placements — before a backup restore, or when seeding an override. */
     suspend fun deleteAll(target: PlacementTarget) {
         appPlacementDao.deleteAllForOwner(target.list, target.ownerKey)

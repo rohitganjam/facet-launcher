@@ -1068,12 +1068,18 @@
     <string name="native_widget_allow">Toestaan</string>
     <string name="calendar_work_calendar">Werkagenda</string>
     <string name="calendar_work_calendar_n">Werkagenda %1$d</string>
-    <string name="copy_to_facets_title">Kopiëren naar facetten</string>
-    <string name="copy_to_facets_current">Huidige</string>
-    <plurals name="copy_to_facets_confirm">
-        <item quantity="one">Kopiëren naar %d facet</item>
-        <item quantity="other">Kopiëren naar %d facetten</item>
+    <string name="copy_from_facet_title">Kopiëren van facet</string>
+    <string name="copy_from_facet_none">Geen andere facetten om van te kopiëren</string>
+    <string name="copy_from_facet_dock_subtitle">De dock van een ander facet gebruiken</string>
+    <string name="copy_from_facet_apps_subtitle">De applijst van een ander facet gebruiken</string>
+    <string name="copy_from_facet_widgets_subtitle">De widgets van een ander facet gebruiken</string>
+    <string name="copy_from_facet_confirm_title">Kopiëren van %1$s?</string>
+    <string name="copy_from_facet_confirm">Kopiëren</string>
+    <string name="copy_from_facet_dock_message">Dit vervangt de dock-apps en -stijl van dit facet door die van %1$s.</string>
+    <string name="copy_from_facet_apps_message">Dit vervangt de favorieten, de lijstinhoud en het uiterlijk van dit facet, inclusief liggend, door die van %1$s.</string>
+    <string name="copy_from_facet_widgets_message">Dit vervangt de widgets van dit facet door die van %1$s. Widgets van andere apps worden een voor een opnieuw toegevoegd en kunnen om toestemming vragen of hun eigen configuratie openen.</string>
+    <plurals name="copy_from_facet_widgets_omitted">
+        <item quantity="one">%d widget kon niet worden gekopieerd</item>
+        <item quantity="other">%d widgets konden niet worden gekopieerd</item>
     </plurals>
-    <string name="copy_look_subtitle">Vervangt het uiterlijk van apps van de gekozen facetten door dit</string>
-    <string name="copy_look_sheet_message">Vervangt de lijstindeling en de uitlijning van elke geselecteerde facet door de standaardwaarden.</string>
 </resources>

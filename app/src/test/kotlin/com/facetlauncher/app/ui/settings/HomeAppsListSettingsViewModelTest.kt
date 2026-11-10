@@ -15,6 +15,7 @@ import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.data.model.ListContentMode
 import com.facetlauncher.app.data.model.PlacedItem
 import com.facetlauncher.app.domain.FacetDefaultsScope
+import com.facetlauncher.app.domain.CopyFacetSettingsUseCase
 import com.facetlauncher.app.domain.GetInstalledAppsUseCase
 import com.facetlauncher.app.domain.SelectPreviewAppsUseCase
 import kotlinx.coroutines.Dispatchers
@@ -94,6 +95,7 @@ class HomeAppsListSettingsViewModelTest {
             defaultAppRepository,
             getInstalledApps,
             SelectPreviewAppsUseCase(),
+            CopyFacetSettingsUseCase(placementRepository, facetRepository),
         )
     }
 
@@ -228,5 +230,20 @@ class HomeAppsListSettingsViewModelTest {
         // Then a facet shows its own landscape values, not the launcher's
         assertEquals(AppRowPosition.CENTER, viewModel.uiState.value.landscape.appRowPosition)
         assertEquals(null, viewModel.uiState.value.landscape.appListVerticalAlignment)
+    }
+
+    @Test
+    fun `copy from facet copies the source favorites onto this facet and lists the other facets`() = runTest {
+        val placementRepository = mock(PlacementRepository::class.java)
+        val facets = listOf(Facet(id = 5L, name = "Work", position = 0), Facet(id = 6L, name = "Play", position = 1))
+        val viewModel = createViewModel(facetId = 5L, facets = facets, placementRepository = placementRepository)
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        testDispatcher.scheduler.advanceUntilIdle()
+        assertEquals(listOf(6L), viewModel.uiState.value.otherFacets.map { it.id })
+
+        viewModel.copyFromFacet(6L)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        verify(placementRepository).copyList(PlacementTarget(PlacementList.FAVORITES, 6L), PlacementTarget(PlacementList.FAVORITES, 5L))
     }
 }

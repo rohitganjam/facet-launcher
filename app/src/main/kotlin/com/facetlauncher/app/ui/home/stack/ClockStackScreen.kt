@@ -1,6 +1,7 @@
 package com.facetlauncher.app.ui.home.stack
 
 import android.content.res.Configuration
+import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -22,6 +23,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -36,6 +38,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -45,6 +48,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
@@ -61,6 +65,7 @@ import com.facetlauncher.app.data.model.ProReason
 import com.facetlauncher.app.domain.AddClockStackItemResult
 import com.facetlauncher.app.ui.components.BackButton
 import com.facetlauncher.app.ui.components.CardDivider
+import com.facetlauncher.app.ui.components.CopyFromFacetCard
 import com.facetlauncher.app.ui.components.ProPill
 import com.facetlauncher.app.ui.components.ReorderRowDefaults
 import com.facetlauncher.app.ui.components.SettingsCard
@@ -84,6 +89,7 @@ import com.facetlauncher.app.ui.theme.Muted
 import com.facetlauncher.app.ui.theme.SettingsSectionHue
 import com.facetlauncher.app.ui.theme.Surface
 import com.facetlauncher.app.ui.theme.SurfaceContainer
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 
 private val STACK_ROW_HEIGHT = 64.dp
@@ -112,6 +118,7 @@ fun ClockStackScreen(
     var configureRef by remember { mutableStateOf<NativeWidgetRef?>(null) }
     // A widget's own configure screen: nothing to read back, the host view redraws itself.
     val configureLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) {}
+    CopyFromFacetSystemScreens(viewModel.copyEvents, viewModel::onCopyBindResult, viewModel::onCopyConfigureResult)
 
     Box(modifier = modifier.fillMaxSize()) {
         ClockStackContent(
@@ -119,6 +126,7 @@ fun ClockStackScreen(
             onBack = onBack,
             onReorder = viewModel::reorder,
             onRemove = viewModel::remove,
+            onCopyFromFacet = viewModel::copyFromFacet,
             onConfigure = { row ->
                 val configureIntent = row.appWidgetId?.let { viewModel.configureIntent(it) }
                 when {
@@ -163,6 +171,34 @@ fun ClockStackScreen(
                 showPicker = true
             },
         )
+    }
+}
+
+/** Launches the system screens a Copy from facet needs for each hosted widget (bind permission, then its configure screen) and reports the outcome. */
+@Composable
+private fun CopyFromFacetSystemScreens(
+    events: Flow<ClockStackCopyEvent>,
+    onBindResult: (granted: Boolean) -> Unit,
+    onConfigureResult: (resultOk: Boolean) -> Unit,
+) {
+    val bindLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        onBindResult(result.resultCode == android.app.Activity.RESULT_OK)
+    }
+    val configureLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        onConfigureResult(result.resultCode == android.app.Activity.RESULT_OK)
+    }
+    val context = LocalContext.current
+    LaunchedEffect(events) {
+        events.collect { event ->
+            when (event) {
+                is ClockStackCopyEvent.LaunchBindPermission -> bindLauncher.launch(event.intent)
+                is ClockStackCopyEvent.LaunchConfigure -> configureLauncher.launch(event.intent)
+                is ClockStackCopyEvent.Done -> if (event.omitted > 0) {
+                    val message = context.resources.getQuantityString(R.plurals.copy_from_facet_widgets_omitted, event.omitted, event.omitted)
+                    Toast.makeText(context, message, Toast.LENGTH_LONG).show()
+                }
+            }
+        }
     }
 }
 
@@ -226,6 +262,7 @@ internal fun ClockStackContent(
     onConfigure: (ClockStackRow) -> Unit,
     onAdd: () -> Unit,
     modifier: Modifier = Modifier,
+    onCopyFromFacet: (Long) -> Unit = {},
 ) {
     // A committed reorder re-emits the list from Room; re-seeding the working copy on identity keeps the drag state from
     // fighting the fresh list, the same pattern the facet list uses.
@@ -243,6 +280,7 @@ internal fun ClockStackContent(
                 onRemove = onRemove,
                 onConfigure = onConfigure,
                 onAdd = onAdd,
+                onCopyFromFacet = onCopyFromFacet,
                 contentPadding = PaddingValues(start = 24.dp, end = 24.dp, top = headerHeight + 12.dp, bottom = 24.dp),
                 modifier = Modifier
                     .fillMaxSize()
@@ -290,6 +328,7 @@ private fun ClockStackList(
     onRemove: (Long) -> Unit,
     onConfigure: (ClockStackRow) -> Unit,
     onAdd: () -> Unit,
+    onCopyFromFacet: (Long) -> Unit,
     contentPadding: PaddingValues,
     modifier: Modifier = Modifier,
 ) {
@@ -339,16 +378,31 @@ private fun ClockStackList(
         if (uiState.showAdd) {
             item(key = "add") { AddRow(showProPill = uiState.addNeedsPro, onClick = onAdd, modifier = Modifier.fillMaxWidth().testTag("clock_stack_add_row")) }
         }
-        if (uiState.addNeedsPro && !uiState.isPro && rows.items.isNotEmpty()) {
-            item(key = "free_hint") {
-                Text(
-                    text = stringResource(R.string.clock_stack_full_free_hint),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Muted,
-                    modifier = Modifier.testTag("clock_stack_free_hint"),
-                )
-            }
+        stackFooterItems(uiState, hasRows = rows.items.isNotEmpty(), onCopyFromFacet)
+    }
+}
+
+/** The free-plan hint under a full stack, then the Copy from facet row. */
+private fun LazyListScope.stackFooterItems(uiState: ClockStackUiState, hasRows: Boolean, onCopyFromFacet: (Long) -> Unit) {
+    if (uiState.addNeedsPro && !uiState.isPro && hasRows) {
+        item(key = "free_hint") {
+            Text(
+                text = stringResource(R.string.clock_stack_full_free_hint),
+                style = MaterialTheme.typography.bodySmall,
+                color = Muted,
+                modifier = Modifier.testTag("clock_stack_free_hint"),
+            )
         }
+    }
+    item(key = "copy_from_facet") {
+        CopyFromFacetCard(
+            facets = uiState.otherFacets,
+            subtitle = stringResource(R.string.copy_from_facet_widgets_subtitle),
+            confirmMessageRes = R.string.copy_from_facet_widgets_message,
+            onCopy = onCopyFromFacet,
+            testTagPrefix = "clock_stack",
+            modifier = Modifier.padding(top = 12.dp),
+        )
     }
 }
 
