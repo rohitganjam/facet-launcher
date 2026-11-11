@@ -902,6 +902,8 @@
     <string name="widget_sheet_settings">%1$s settings</string>
     <string name="widget_sheet_weather_settings_subtitle">Where the forecast is for</string>
     <string name="widget_sheet_agenda_settings_subtitle">Which calendars and events show</string>
+    <string name="widget_sheet_now_playing_settings_subtitle">How it looks</string>
+    <string name="native_widget_background">Background</string>
     <string name="hub_grid_configure_widget">Configure widget</string>
     <string name="clock_adjust_alignment_heading">Alignment</string>
     <string name="clock_adjust_align_left">Align left</string>

@@ -31,11 +31,13 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.facetlauncher.app.R
+import com.facetlauncher.app.data.model.GlassStyle
 import com.facetlauncher.app.data.model.NativeWidgetConfig
 import com.facetlauncher.app.data.model.NativeWidgetRef
 import com.facetlauncher.app.data.model.NativeWidgetType
 import com.facetlauncher.app.data.model.WeatherCity
 import com.facetlauncher.app.data.model.selectsCalendar
+import com.facetlauncher.app.ui.components.LabeledDropdownRow
 import com.facetlauncher.app.ui.components.ThemedModalBottomSheet
 import com.facetlauncher.app.ui.components.WeatherLocationPicker
 import com.facetlauncher.app.ui.components.calendarSubtitle
@@ -51,7 +53,7 @@ import com.facetlauncher.app.ui.theme.SurfaceContainer
 import com.facetlauncher.app.ui.theme.resolvedColor
 import kotlinx.collections.immutable.ImmutableList
 
-/** The settings of one Weather or Agenda widget, on the Hub or on Home: its own calendars or location, or the launcher's. */
+/** The settings of one native widget, on the Hub or on Home: its background, and for Weather and Agenda its own location or calendars, or the launcher's. */
 @Composable
 fun NativeWidgetConfigSheet(
     ref: NativeWidgetRef,
@@ -90,6 +92,14 @@ internal fun NativeWidgetConfigContent(
             verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             Text(text = stringResource(type.labelRes()), style = MaterialTheme.typography.titleMedium, color = Ink)
+            LabeledDropdownRow(
+                title = stringResource(R.string.native_widget_background),
+                options = GlassStyle.entries,
+                selected = config.glass ?: NativeWidgetConfig.DEFAULT_GLASS,
+                label = { stringResource(it.displayNameRes) },
+                onSelect = { onConfigChange(config.copy(glass = it)) },
+                testTag = "hub_widget_config_glass",
+            )
             when (type) {
                 NativeWidgetType.AGENDA -> AgendaConfig(config, state, onConfigChange)
                 NativeWidgetType.WEATHER -> WeatherConfig(config, state.savedCities, onConfigChange)

@@ -43,8 +43,8 @@ The agenda's room line is `CalendarEvent.location` (`EVENT_LOCATION`, read with 
 shortened by `roomLabel`: a Workspace room such as `BLR-Innovate-2-Marie Curie (4)` shows as `Marie Curie (4)`; a plain
 location is left as typed. Small never shows it, and a row with a room counts as taller when working out how many fit.
 
-The widget draws its own backing (`Surface` at 60%, `MaterialTheme.shapes.large`) so it reads over the wallpaper like a
-hosted tile, and insets its content by 8dp.
+The widget draws its own backing, a `GlassStyle` panel (`Modifier.glassBackground`, `MaterialTheme.shapes.large`) so it reads over the wallpaper like a
+hosted tile, and insets its content by 8dp. The style is the widget's own (§3a); it defaults to Light frost (`NativeWidgetConfig.DEFAULT_GLASS`), and Off draws none.
 
 ## 3. Data
 
@@ -66,13 +66,13 @@ path, keyed by `NativeWidgetRef` (`Hub(appWidgetId)` or `Home(itemId)`):
 
 - `NativeWidgetConfig` (JSON, a field left out while it follows the launcher; a value that does not parse follows the launcher) stores it: Agenda's chosen calendar ids and all-day choice (an Agenda never follows the launcher: `null` ids mean every calendar,
   calendars added later included, and `null` all-day means shown, so a new Agenda starts on every calendar), Weather's current location or a saved
-  city (`null` follows the launcher's Weather settings); Now Playing has none. `SetNativeWidgetConfigUseCase` writes either store and
+  city (`null` follows the launcher's Weather settings); and, for all three widgets, `glass` (its background; `null` is the default, Light frost, and counts as following the launcher). `SetNativeWidgetConfigUseCase` writes either store and
   `ObserveNativeWidgetSettingsUseCase` reads it back.
   The config also has a `clock` section (`ClockWidgetConfig`: look, accessories, weather location, and the calendar under it) for the clock page of the
   stack (see `docs/proposals/clock-as-facet-widget.md`): Home, the previews and the clock settings screens read and write it through `resolveFacetStyle` and
   `UpdateClockConfigUseCase` ([13](13-flow-facets-theme-notifications-onboarding.md) §1b). It is not a `NativeWidgetType`: that enum is the card widgets.
 - `ObserveNativeWidgetOverridesUseCase` turns every widget with a setting (Hub placements and the active facet's Home pages) into a
-  `NativeWidgetOverride` (its events, or its `WeatherState`) through `NativeWidgetOverrideResolver`, re-derived every five minutes.
+  `NativeWidgetOverride` (its events, its `WeatherState`, or just its `glass` for a widget that only chose a background) through `NativeWidgetOverrideResolver`, re-derived every five minutes.
   `NativeWidgetAccessViewModel` exposes the map; `HomeDrawerRoute` puts it in `NativeWidgetState.overrides`, and `NativeWidget` reads
   its own entry by its `ref`.
 - An Agenda's calendar list also offers the Work Profile's calendars, read through Android's cross-profile (enterprise) calendar API
@@ -85,8 +85,8 @@ path, keyed by `NativeWidgetRef` (`Hub(appWidgetId)` or `Home(itemId)`):
   gate, so widgets on one city make one request, and a place equal to the launcher-wide one reads the launcher's own stored forecast and
   makes none. "Current location" while the launcher already follows the position is the launcher's forecast too.
 - A widget's settings are opened from its long-press menu, not a button on it. On Home the widget sheet has "Agenda settings" or "Weather
-  settings" (`HomeClockActions.onConfigureNativeWidget`); on the Hub the context menu has Configure widget (`hub_grid_configure_widget`).
-  Now playing has none. Both call `onConfigure(ref)`, and `HomeDrawerRoute` opens `NativeWidgetConfigSheet(ref)` (`HomeOverlayState.configureRef`).
+  settings" or "Now playing settings" (`HomeClockActions.onConfigureNativeWidget`); on the Hub the context menu has Configure widget (`hub_grid_configure_widget`).
+  Every native widget has the sheet, whose first row is its Background dropdown (`hub_widget_config_glass`). Both call `onConfigure(ref)`, and `HomeDrawerRoute` opens `NativeWidgetConfigSheet(ref)` (`HomeOverlayState.configureRef`).
   A **Weather** widget also opens its own weather sheet when tapped (`NativeWidgetActions.onOpenWeather(ref)`, which shows that widget's
   forecast), with a 3-dot button to the right of the rain summary that calls the same `onConfigure(ref)`.
 - On adding a Weather or Agenda widget (one that has settings at its default size), from the Hub picker or to a Home page, the picker emits

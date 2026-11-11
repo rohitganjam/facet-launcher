@@ -22,8 +22,14 @@ data class NativeWidgetConfig(
     val weatherLocation: WidgetWeatherLocation? = null,
     /** A clock's own settings; a clock has no launcher-wide setting to follow, so a clock widget always carries them. */
     val clock: ClockWidgetConfig? = null,
+    /** The panel behind the widget; `null` is the default, [DEFAULT_GLASS]. */
+    val glass: GlassStyle? = null,
 ) {
-    val followsLauncher: Boolean get() = calendarIds == null && showAllDayEvents == null && weatherLocation == null && clock == null
+    val followsLauncher: Boolean get() = calendarIds == null && showAllDayEvents == null && weatherLocation == null && clock == null && glass == null
+
+    companion object {
+        val DEFAULT_GLASS = GlassStyle.FROST
+    }
 }
 
 /** The stored shape of [NativeWidgetConfig]: JSON, with a field left out while it follows the launcher. */
@@ -33,6 +39,7 @@ private data class StoredConfig(
     val showAllDayEvents: Boolean? = null,
     val weather: StoredWeather? = null,
     val clock: StoredClock? = null,
+    val glass: String? = null,
 )
 
 /** A clock's settings, every enum by name; a name this version does not know reads as that field's default. */
@@ -71,7 +78,7 @@ private val configJson = Json { ignoreUnknownKeys = true }
 /** The stored form: JSON, or `null` when the widget follows the launcher. */
 fun NativeWidgetConfig.encode(): String? {
     if (followsLauncher) return null
-    return configJson.encodeToString(StoredConfig(calendarIds?.sorted(), showAllDayEvents, weatherLocation?.toStored(), clock?.toStored()))
+    return configJson.encodeToString(StoredConfig(calendarIds?.sorted(), showAllDayEvents, weatherLocation?.toStored(), clock?.toStored(), glass?.name))
 }
 
 private fun WidgetWeatherLocation.toStored(): StoredWeather = when (this) {
@@ -110,6 +117,7 @@ fun decodeNativeWidgetConfig(encoded: String?): NativeWidgetConfig {
         showAllDayEvents = stored.showAllDayEvents,
         weatherLocation = stored.weather?.toLocation(),
         clock = stored.clock?.toConfig(),
+        glass = stored.glass?.let { name -> GlassStyle.entries.firstOrNull { it.name == name } },
     )
 }
 

@@ -819,6 +819,8 @@
     <string name="widget_sheet_settings">Definições de %1$s</string>
     <string name="widget_sheet_weather_settings_subtitle">De onde é a previsão</string>
     <string name="widget_sheet_agenda_settings_subtitle">Que calendários e eventos aparecem</string>
+    <string name="widget_sheet_now_playing_settings_subtitle">O aspeto</string>
+    <string name="native_widget_background">Fundo</string>
     <string name="hub_grid_configure_widget">Configurar widget</string>
     <string name="clock_adjust_alignment_heading">Alinhamento</string>
     <string name="clock_adjust_align_left">Alinhar à esquerda</string>

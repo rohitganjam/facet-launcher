@@ -792,6 +792,8 @@
     <string name="widget_sheet_settings">Instellingen voor %1$s</string>
     <string name="widget_sheet_weather_settings_subtitle">Waar het weerbericht voor geldt</string>
     <string name="widget_sheet_agenda_settings_subtitle">Welke agenda\'s en afspraken worden getoond</string>
+    <string name="widget_sheet_now_playing_settings_subtitle">Hoe het eruitziet</string>
+    <string name="native_widget_background">Achtergrond</string>
     <string name="hub_grid_configure_widget">Widget configureren</string>
     <string name="clock_adjust_alignment_heading">Uitlijning</string>
     <string name="clock_adjust_align_left">Links uitlijnen</string>

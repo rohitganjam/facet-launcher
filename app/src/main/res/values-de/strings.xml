@@ -810,6 +810,8 @@
     <string name="widget_sheet_settings">%1$s-Einstellungen</string>
     <string name="widget_sheet_weather_settings_subtitle">Für welchen Ort die Vorhersage gilt</string>
     <string name="widget_sheet_agenda_settings_subtitle">Welche Kalender und Termine angezeigt werden</string>
+    <string name="widget_sheet_now_playing_settings_subtitle">Wie es aussieht</string>
+    <string name="native_widget_background">Hintergrund</string>
     <string name="hub_grid_configure_widget">Widget konfigurieren</string>
     <string name="clock_adjust_alignment_heading">Ausrichtung</string>
     <string name="clock_adjust_align_left">Linksbündig</string>

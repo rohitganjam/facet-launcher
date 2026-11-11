@@ -46,6 +46,20 @@ class NativeWidgetConfigTest {
     }
 
     @Test
+    fun `a widget's background round trips and is kept apart from following the launcher`() {
+        // Given a widget with only a background chosen
+        val config = NativeWidgetConfig(glass = GlassStyle.SMOKED)
+
+        // When encoded and decoded
+        val decoded = decodeNativeWidgetConfig(config.encode())
+
+        // Then it is kept and the widget no longer counts as following the launcher
+        assertEquals(GlassStyle.SMOKED, decoded.glass)
+        assertTrue(!decoded.followsLauncher)
+        assertNull(decodeNativeWidgetConfig("{\"glass\":\"NOT_A_STYLE\"}").glass)
+    }
+
+    @Test
     fun `no calendars chosen is kept apart from following the launcher`() {
         // Given an explicitly empty selection
         val decoded = decodeNativeWidgetConfig(NativeWidgetConfig(calendarIds = emptySet()).encode())

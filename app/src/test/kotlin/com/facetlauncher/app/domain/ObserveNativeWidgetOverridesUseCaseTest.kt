@@ -9,6 +9,7 @@ import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.WidgetPlacementRepository
 import com.facetlauncher.app.data.local.WidgetPlacementEntity
 import com.facetlauncher.app.data.model.CalendarEvent
+import com.facetlauncher.app.data.model.GlassStyle
 import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.data.model.ClockStackItem
 import com.facetlauncher.app.data.model.ClockStackItemKind
@@ -98,6 +99,25 @@ class ObserveNativeWidgetOverridesUseCaseTest {
         // Then the first reads its own calendar, and the new one every calendar
         assertEquals(listOf(event), overrides[NativeWidgetRef.Hub(-1)]?.events)
         assertEquals(listOf(event, everything), overrides[NativeWidgetRef.Hub(-2)]?.events)
+    }
+
+    @Test
+    fun `a widget with only a background gets an override carrying it`() = runTest {
+        // Given a Now playing widget and an agenda that each chose a background, and a Now playing that did not
+        given(
+            native(-1, NativeWidgetType.NOW_PLAYING, NativeWidgetConfig(glass = GlassStyle.BRIGHT)),
+            native(-2, NativeWidgetType.AGENDA, NativeWidgetConfig(glass = GlassStyle.OFF)),
+            native(-3, NativeWidgetType.NOW_PLAYING, NativeWidgetConfig()),
+        )
+        `when`(calendarPermission.isGranted()).thenReturn(true)
+
+        // When observing
+        val overrides = useCase()().first()
+
+        // Then the choices are carried, and the widget that chose nothing has no entry
+        assertEquals(GlassStyle.BRIGHT, overrides[NativeWidgetRef.Hub(-1)]?.glass)
+        assertEquals(GlassStyle.OFF, overrides[NativeWidgetRef.Hub(-2)]?.glass)
+        assertNull(overrides[NativeWidgetRef.Hub(-3)])
     }
 
     @Test

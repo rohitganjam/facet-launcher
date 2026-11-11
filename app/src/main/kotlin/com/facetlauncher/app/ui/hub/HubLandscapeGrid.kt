@@ -4,7 +4,6 @@ import androidx.compose.ui.unit.DpSize
 import com.facetlauncher.app.ui.nativewidget.NativeWidgetEnvironment
 import com.facetlauncher.app.data.model.NativeWidgetRef
 import com.facetlauncher.app.ui.nativewidget.NativeWidget
-import com.facetlauncher.app.ui.nativewidget.hasSettings
 import com.facetlauncher.app.domain.minSpan
 import android.appwidget.AppWidgetHostView
 import android.content.Context
@@ -444,7 +443,7 @@ private fun LandscapeWidgetMenu(
         onDismissRequest = { state.menuForId = null },
         shape = MaterialTheme.shapes.medium,
     ) {
-        if (widget.nativeWidgetType?.hasSettings == true) {
+        if (widget.nativeWidgetType != null) {
             ThemedDropdownMenuItem(
                 label = stringResource(R.string.hub_grid_configure_widget),
                 onClick = {
