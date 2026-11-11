@@ -57,6 +57,21 @@ class BatteryRepositoryTest {
     }
 
     @Test
+    fun `a broadcast without a usable level emits nothing`() = runTest {
+        // Given a sticky broadcast that carries no level or scale
+        context.sendStickyBroadcast(Intent(Intent.ACTION_BATTERY_CHANGED).putExtra(BatteryManager.EXTRA_STATUS, BatteryManager.BATTERY_STATUS_UNKNOWN))
+
+        // When observing battery status
+        val results = mutableListOf<BatteryStatus>()
+        val job = launch { repository.observeBatteryStatus().collect { results.add(it) } }
+        idle()
+        job.cancel()
+
+        // Then there is no reading, rather than a 0% one
+        assertTrue(results.isEmpty())
+    }
+
+    @Test
     fun `re-emits when the battery state changes`() = runTest {
         // Given no sticky state yet, an active subscriber
         val results = mutableListOf<BatteryStatus>()
