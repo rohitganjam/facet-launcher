@@ -31,6 +31,7 @@
     <plurals name="backup_widgets_need_readding_count">
         <item quantity="one">%d widget debe agregarse de nuevo abajo</item>
         <item quantity="other">%d widgets deben agregarse de nuevo abajo</item>
+        <item quantity="many">%d de widgets deben agregarse de nuevo abajo</item>
     </plurals>
     <string name="backup_restore_readd">Agregar de nuevo</string>
 

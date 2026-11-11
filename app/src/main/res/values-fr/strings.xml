@@ -171,6 +171,7 @@
     <plurals name="folder_app_count">
         <item quantity="one">%d app</item>
         <item quantity="other">%d apps</item>
+        <item quantity="many">%d de apps</item>
     </plurals>
 
     <!-- AppContextMenu -->
@@ -268,6 +269,7 @@
     <plurals name="settings_folders_count">
         <item quantity="one">%d dossier</item>
         <item quantity="other">%d dossiers</item>
+        <item quantity="many">%d de dossiers</item>
     </plurals>
     <string name="settings_weather_title">Réglages météo</string>
     <string name="settings_weather_subtitle">Position et unités</string>
@@ -439,10 +441,12 @@
     <plurals name="backup_restored_facets_count">
         <item quantity="one">%d facette restaurée</item>
         <item quantity="other">%d facettes restaurées</item>
+        <item quantity="many">%d de facettes restaurées</item>
     </plurals>
     <plurals name="backup_widgets_need_readding_count">
         <item quantity="one">%d widget doit être réajouté ci-dessous</item>
         <item quantity="other">%d widgets doivent être réajoutés ci-dessous</item>
+        <item quantity="many">%d de widgets doivent être réajoutés ci-dessous</item>
     </plurals>
     <string name="backup_restore_import_failed_invalid_file">Ce fichier n\'est pas une sauvegarde Facet valide</string>
     <string name="backup_restore_import_failed_unsupported_version">Cette sauvegarde a été créée par une version plus récente de Facet</string>
@@ -475,6 +479,7 @@
     <plurals name="settings_facet_automation_rules">
         <item quantity="one">%d règle</item>
         <item quantity="other">%d règles</item>
+        <item quantity="many">%d de règles</item>
     </plurals>
     <string name="automation_header_title">Automatisation des facettes</string>
     <string name="automation_editor_new">Nouvelle règle</string>
@@ -547,10 +552,12 @@
     <plurals name="settings_pro_facet_count">
         <item quantity="one">%d facette</item>
         <item quantity="other">%d facettes</item>
+        <item quantity="many">%d de facettes</item>
     </plurals>
     <plurals name="settings_pro_triggers_running">
         <item quantity="one">%d déclencheur actif</item>
         <item quantity="other">%d déclencheurs actifs</item>
+        <item quantity="many">%d de déclencheurs actifs</item>
     </plurals>
     <string name="pro_done">Terminé</string>
     <string name="pro_upgrade_trigger">Les règles qui réagissent au Bluetooth, au Wi-Fi, aux écouteurs ou à la batterie font partie de Pro.</string>
@@ -756,6 +763,7 @@
     <plurals name="facet_carousel_count">
         <item quantity="one">%d facette disponible</item>
         <item quantity="other">%d facettes disponibles</item>
+        <item quantity="many">%d de facettes disponibles</item>
     </plurals>
     <string name="facet_carousel_reorder">Réorganiser</string>
     <string name="facet_carousel_launcher_settings">Réglages du launcher</string>
@@ -785,6 +793,7 @@
     <plurals name="format_count_apps">
         <item quantity="one">%1$d app</item>
         <item quantity="other">%1$d apps</item>
+        <item quantity="many">%1$d de apps</item>
     </plurals>
     <string name="facet_settings_dock_settings_title">Apps du dock</string>
     <string name="facet_settings_rename_explanation">Renommez cette facette.</string>
@@ -832,6 +841,7 @@
     <plurals name="hub_widget_picker_option_count">
         <item quantity="one">%d widget</item>
         <item quantity="other">%d widgets</item>
+        <item quantity="many">%d de widgets</item>
     </plurals>
     <string name="hub_widget_dimensions">%1$d×%2$d</string>
     <string name="hub_widget_label_with_dimensions">%1$s %2$d×%3$d</string>
@@ -884,6 +894,7 @@
     <plurals name="icons_screen_pack_count">
         <item quantity="one">%d pack</item>
         <item quantity="other">%d packs</item>
+        <item quantity="many">%d de packs</item>
     </plurals>
     <string name="icons_screen_get_more">En obtenir</string>
     <string name="icons_screen_no_packs">Aucun pack d\'icônes installé. Les packs conçus pour Nova, Lawnchair, ADW ou Apex fonctionnent aussi ici.</string>
@@ -1109,5 +1120,6 @@
     <plurals name="copy_from_facet_widgets_omitted">
         <item quantity="one">%d widget n\'a pas pu être copié</item>
         <item quantity="other">%d widgets n\'ont pas pu être copiés</item>
+        <item quantity="many">%d de widgets n\'ont pas pu être copiés</item>
     </plurals>
 </resources>

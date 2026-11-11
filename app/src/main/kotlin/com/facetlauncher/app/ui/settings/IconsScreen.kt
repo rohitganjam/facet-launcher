@@ -3,7 +3,6 @@ package com.facetlauncher.app.ui.settings
 import android.content.Context
 import android.content.Intent
 import android.content.res.Configuration
-import android.net.Uri
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -56,6 +55,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.core.net.toUri
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.facetlauncher.app.R
@@ -145,8 +145,8 @@ fun IconsScreen(
 
 /** The Play Store's icon pack search, or the same search on the web where there is no Play Store. */
 private fun openIconPackSearch(context: Context) {
-    val opened = runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(PLAY_STORE_ICON_PACK_SEARCH))) }.isSuccess
-    if (!opened) runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(WEB_ICON_PACK_SEARCH))) }
+    val opened = runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, PLAY_STORE_ICON_PACK_SEARCH.toUri())) }.isSuccess
+    if (!opened) runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, WEB_ICON_PACK_SEARCH.toUri())) }
 }
 
 @Composable

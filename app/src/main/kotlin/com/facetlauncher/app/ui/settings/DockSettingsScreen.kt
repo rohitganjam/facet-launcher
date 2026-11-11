@@ -102,8 +102,8 @@ private fun DockSettingsContent(
     onDockDisplayModeChange: (DockDisplayMode) -> Unit,
     onReorderDockItems: (List<PlacedItem>) -> Unit,
     onResetToDefault: () -> Unit,
-    onCopyFromFacet: (Long) -> Unit = {},
     modifier: Modifier = Modifier,
+    onCopyFromFacet: (Long) -> Unit = {},
 ) {
     StickyHeaderLayout(
         modifier = modifier,

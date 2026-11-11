@@ -119,6 +119,7 @@
     <plurals name="backup_widgets_need_readding_count">
         <item quantity="one">%d widget tem de ser adicionado novamente abaixo</item>
         <item quantity="other">%d widgets têm de ser adicionados novamente abaixo</item>
+        <item quantity="many">%d de widgets têm de ser adicionados novamente abaixo</item>
     </plurals>
     <string name="backup_restore_import_failed_invalid_file">Esse ficheiro não é uma cópia de segurança válida do Facet</string>
     <string name="backup_restore_import_failed_unsupported_version">Essa cópia de segurança foi feita por uma versão mais recente do Facet</string>
@@ -170,6 +171,7 @@
     <plurals name="settings_pro_triggers_running">
         <item quantity="one">%d acionador ativo</item>
         <item quantity="other">%d acionadores ativos</item>
+        <item quantity="many">%d de acionadores ativos</item>
     </plurals>
     <string name="pro_upgrade_trigger">Regras que reagem a Bluetooth, Wi-Fi, auriculares ou à bateria fazem parte do Pro.</string>
     <string name="pro_upgrade_rule_limit">O plano gratuito inclui 2 regras. Com o Pro pode adicionar mais.</string>
