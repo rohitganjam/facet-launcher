@@ -30,7 +30,6 @@
     <string name="settings_change_wallpaper_title">Alterar imagem de fundo</string>
     <string name="settings_change_wallpaper_subtitle">Altere a imagem de fundo do sistema</string>
     <string name="settings_calendars_title">Calendários a mostrar</string>
-    <string name="settings_home_apps_list_title">Lista de apps do ecrã inicial</string>
     <string name="settings_show_as">Mostrar como %1$s</string>
     <string name="settings_contact_search">Pesquisa de contactos %1$s</string>
     <string name="settings_settings_search">Pesquisa de definições %1$s</string>
@@ -198,10 +197,8 @@
     <string name="folders_settings_delete_folder">Eliminar pasta</string>
     <string name="folders_settings_delete_message">Isto elimina permanentemente \"%1$s\" e remove-a de todas as listas do Dock e de Favoritos em que estiver.</string>
     <string name="calendar_settings_header_title">Definições do calendário</string>
-    <string name="calendar_settings_follows_launcher_wide">Segue a definição de calendário do launcher</string>
     <string name="calendar_settings_show_all_day_events">Mostrar eventos de dia inteiro</string>
     <string name="calendar_settings_items_to_display">Itens a mostrar</string>
-    <string name="calendar_settings_preview_event_1">Reunião de equipa</string>
 
     <string name="open_settings">Abrir definições</string>
     <string name="usage_access_explanation_headline">Recentes e Mais usados mostram apps com base na forma como realmente usa o seu telemóvel.</string>
@@ -254,6 +251,7 @@
     <string name="facet_carousel_delete_title">Eliminar %1$s?</string>
     <string name="facet_carousel_delete_message">Esta ação não pode ser anulada. Os favoritos dela também serão removidos.</string>
     <string name="facet_carousel_launcher_settings">Definições do launcher</string>
+    <string name="facet_shortcut_label">Mudar para %1$s</string>
     <string name="facet_carousel_launcher_settings_subtitle">Aparência, favoritos, gaveta e mais</string>
     <string name="facet_carousel_facet_settings">Definições da faceta</string>
     <string name="facet_carousel_delete_facet">Eliminar faceta</string>
@@ -298,7 +296,6 @@
     <string name="weather_location_pick_prompt">Pesquise uma cidade abaixo e toque nela para a adicionar aqui.</string>
     <string name="weather_location_limit">Pode manter até %1$d cidades. Remova uma para adicionar outra.</string>
     <string name="weather_leave_message">O tempo precisa de uma cidade. O que quer fazer?</string>
-    <string name="clock_accessories_inheriting">Esta faceta usa as definições de relógio do launcher. Ative «Personalizar» em Estilo do relógio para as alterar.</string>
 
     <string name="gesture_swipe_down_subtitle">Abrir o painel de notificações</string>
     <string name="gesture_long_press_title">Manter premido um espaço vazio</string>
@@ -325,8 +322,6 @@
     <string name="reset_to_default_confirm">Repor</string>
     <string name="reset_dock_subtitle">Substituir este dock pelas apps predefinidas do dispositivo</string>
     <string name="reset_dock_confirm_message">Isto substitui o dock desta faceta pelas apps predefinidas do dispositivo. As apps que colocou aqui serão perdidas.</string>
-    <string name="reset_look_subtitle">Substituir o aspeto da lista pelo predefinido</string>
-    <string name="reset_look_confirm_message">Isto substitui o esquema da lista e o alinhamento desta faceta pelos valores predefinidos.</string>
     <string name="settings_appearance_title">Aspeto do launcher</string>
     <string name="settings_appearance_subtitle">Temas, tipos de letra e ícones</string>
     <string name="appearance_header_title">Aspeto do launcher</string>

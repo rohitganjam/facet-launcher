@@ -86,7 +86,7 @@ class PlacementRepository @Inject constructor(
         appPlacementDao.deleteByUserId(userId)
     }
 
-    /** Replaces the target's entire list with [items], carrying folder placements as well as apps — used to seed a clean copy when a facet switches to Override. */
+    /** Replaces the target's entire list with [items], folder placements included. */
     suspend fun replaceItems(target: PlacementTarget, items: List<PlacedItem>) {
         deleteAll(target)
         reorderItems(target, items)

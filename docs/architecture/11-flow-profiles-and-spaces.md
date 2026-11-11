@@ -22,7 +22,7 @@ flowchart TB
 `AppRepository.profileFor(handle)` is the single source of truth; `WorkProfileRepository`,
 `PrivateSpaceRepository`, `AppWidgetRepository` and `RepairOrphanedProfileRowsUseCase` all go
 through it (or `resolveUserHandle(profile)` / `handlesFor(profile)`). `OTHER` is the safe
-fallback: such apps appear in the Personal tab with no badge, never behind a Work tab.
+fallback: such apps appear in the Personal tab, never behind a Work tab, with their own small badge (`OtherProfileBadge` in `AppIcon`) so a cloned copy can be told from the original.
 
 ## 2. Work Profile
 
@@ -68,7 +68,7 @@ stateDiagram-v2
 | Permission | `ACCESS_HIDDEN_PROFILES` in the manifest | without it `getLauncherUserInfo` returns `null` and the space is invisible (classified `OTHER`, but its apps aren't listed anyway) |
 | Entry point | Drawer bottom row (`showPrivateSpaceRow = state !is NotConfigured`) in `HomeDrawerRoute` | `Unlocked` → opens `PrivateSpaceScreen`; `Locked` → `drawerViewModel.requestUnlockPrivateSpace()` → `userManager.requestQuietModeEnabled(false, handle)` (system shows the lock UI); state flips to `Unlocked` on the resulting broadcast |
 | App list | `PrivateSpaceRepository.observePrivateSpaceApps()` = `appRepository.observeAppsForProfile(PRIVATE)`; `PrivateSpaceViewModel` + `RankBySearchRelevanceUseCase` + `RecentlyInstalledAppsUseCase` + `SettingsRepository` | own screen with its own search and `PrivateSpaceTheme`; also gets its own independent "Recently installed" category, same global `recentlyInstalledPosition` setting as the main Drawer's (including `SHOW_LAST` placement) — see [12-flow-drawer-search-and-app-actions.md §1b](12-flow-drawer-search-and-app-actions.md) |
-| Exclusion | `GetInstalledAppsUseCase` filters `profile == PRIVATE` out of both `invoke()` and `observe()` | Private apps never appear in the main drawer, pickers, favorites or dock — by design (Android's own launcher contract) |
+| Exclusion | `GetInstalledAppsUseCase` filters `profile == PRIVATE` out of both `invoke()` and `observe()` (`observe()` also drops Facet's own package) | Private apps never appear in the main drawer, pickers, favorites or dock — by design (Android's own launcher contract) |
 | Persistence | none — Private Space apps can't be placed, so no rows carry `profile = PRIVATE` | |
 
 ## 4. Samsung Secure Folder
@@ -82,7 +82,7 @@ when non-null. Nothing else in the app knows Secure Folder exists.
 
 | Event | Handler | Effect |
 |---|---|---|
-| Work Profile removed | `CleanUpUninstalledAppsUseCase` via `observeProfileRemoved()` | `removeByUserId(handle.hashCode())` on all five placement/folder repositories |
+| Work Profile removed | `CleanUpUninstalledAppsUseCase` via `observeProfileRemoved()` | `removeByUserId(handle.hashCode())` on `PlacementRepository` and `FolderRepository` |
 | Private Space removed | nothing to do | no persisted rows |
 | Pre-v20 rows (`userId = -1`) | `RepairOrphanedProfileRowsUseCase` at startup | `backfillUserId` from `handlesFor(profile).singleOrNull()` — ambiguous (two handles in one category) rows stay `-1` and hidden |
 | Restore from backup | `ImportBackupUseCase` runs the same `RepairOrphanedProfileRowsUseCase` once after the last restore | restored rows (`userId = -1`) are resolved immediately, not at the next launch — see [09 §2](09-flow-backup-restore.md) |

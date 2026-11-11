@@ -74,7 +74,7 @@ use the unscaled sizes so they never shift.
 
 A list row is its icon plus `DrawerListItemSize.verticalPaddingDp` above and below: Compact 36 + 4, Regular 44 + 12,
 Spacious 44 + 16. A text-only Home row keeps the icon's height. Home's list uses Regular; with
-`appListShrinkToFit` on (`AppListShrinkToFit`, facet-overridable, off by default) `HomeFrame`'s one-shot fit check drops it
+`appListShrinkToFit` on (`AppListShrinkToFit`, the facet's own value, off by default) `HomeFrame`'s one-shot fit check drops it
 to Compact when the Regular list wouldn't fit, otherwise the list keeps Regular rows and scrolls. The dock is not part
 of the check. "Icons and text" (`DockDisplayMode.ICONS_AND_TEXT`, `AppListGridDisplayMode.ICONS_AND_TEXT`) puts a
 one-line name under each dock or grid icon (`HomeTileLabel`, Home's label style, the dock caps its width at `GRID_LABEL_WIDTH` × scale, a grid tile takes its whole cell; grid cells sit 2dp apart).
@@ -107,7 +107,7 @@ With two or more clock pages the portrait list also moves down by `CLOCK_PAGE_DO
 
 ## 4. Landscape adjust mode
 
-Long-pressing a widget (the clock, the events under it, a Facet widget or a hosted one) opens that widget's sheet, whose "Adjust widget size & position" row enters adjust mode ([12](12-flow-drawer-search-and-app-actions.md) §4); the free-space Home sheet has the same row (`home_sheet_adjust`) while the stack has a page, and it adjusts the page showing; with an empty stack it shows Add widget and Widget stack instead. The controls:
+Long-pressing a widget (the clock, the events under it, a Facet widget or a hosted one) opens that widget's sheet, whose "Adjust widget size & position" row enters adjust mode ([12](12-flow-drawer-search-and-app-actions.md) §4); the free-space Home sheet has the same row (the same `widget_sheet_adjust_label` string) while the stack has a page, and it adjusts the page showing; with an empty stack it shows Add widget and Widget stack instead. The controls:
 
 - **Divider handle.** `ClockZoneHandle(dragOrientation = Horizontal)`: a full-height rail in the gap
   between the panes, dragged left and right. The pane width is saved in landscape's own
@@ -161,7 +161,7 @@ resolution (handle bounds, fit limits, effective scale and widget size, pane wid
 The landscape widget grid is built (see [10](10-flow-hub-widgets.md) §5). Not built yet: landscape
 facet-preview cards, and gesture thresholds for a short window.
 
-## 5. Who owns the placement
+## 6. Who owns the placement
 
 A facet's clock placement (alignment, divider height, landscape twins; the size is the clock page's dp box) is always set from this screen, never from
 Settings, and never inherited by choice. `CommitClockPlacementUseCase` saves each adjust-mode commit to the active

@@ -145,8 +145,7 @@ header, when sent, sets the earliest next attempt.
   (`weatherLocation`) for the location mode and city. The permission is requested with `ACCESS_COARSE_LOCATION` only, from the
   Location card, and its state is re-read on resume. The city search runs 400 ms after the last keystroke
   (`WeatherLocationViewModel`) through `SearchPlacesUseCase`.
-- **Icons.** `weatherIconStyle` (coloured by default, monochrome optional) is a launcher default that a facet overrides with the clock
-  (`clockWeatherIconStyle`); the coloured set is nine PNGs (192 px), original artwork inspired by Google's Weather Icons v4.
+- **Icons.** `weatherIconStyle` (coloured by default, monochrome optional) is each clock's own (`ClockWidgetConfig.weatherIconStyle`; the launcher-wide `weather_icon_style` key is only restored from backups now); the coloured set is nine PNGs (192 px), original artwork inspired by Google's Weather Icons v4.
 - **Credits:** the About section of Settings lists MET Norway and GeoNames.
 
 Tests: `WeatherConditionTest`, `WeatherViewModelTest` (JVM); `ClockAccessoriesScreenTest`, `WeatherLocationScreenTest` and

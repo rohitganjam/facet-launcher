@@ -1,7 +1,7 @@
 # 12 — Flow: App Drawer — search, tabs, and per-app actions
 
 The drawer is the one surface that fans out to the most repositories (`DrawerViewModel` injects
-10 repositories, 4 use cases and the two notification helpers `NotificationActionController` and `NotificationOpener`). Its app list comes from *outside* (`FacetNavHost` passes
+12 repositories, 5 use cases, the `DrawerListUseCases` bundle and the two notification helpers `NotificationActionController` and `NotificationOpener`). Its app list comes from *outside* (`FacetNavHost` passes
 `LauncherUiState.apps`); the ViewModel owns search, tabs' supporting data, and every action.
 
 ## 1. Data in
@@ -36,8 +36,8 @@ above everything, even a `SHOW_FIRST` folder section; `SHOW_LAST` places it belo
 a `SHOW_LAST` folder section — each independent of the other (a folder section and the category can
 sit at opposite ends, or the same end, with the category always the outermost item at that end).
 **List-only**: it has no grid-tile counterpart, so it disappears entirely when
-`DrawerPresentation.GRID` is selected (`recentlyInstalledOffset`/`showRecentlyInstalledTrailing` are
-both forced false whenever `presentation == GRID`). Computed live via `RecentlyInstalledAppsUseCase`
+`DrawerPresentation.GRID` is selected (`recentlyInstalledLeadingSlots` in `DrawerTab.kt` returns 0
+whenever `presentation == GRID`, so `recentlyInstalledOffset` is 0 there). Computed live via `RecentlyInstalledAppsUseCase`
 (`domain/`, pure/stateless — filters `AppInfo.firstInstallTime` within the last 72 hours, sorted
 newest-first) over `tabScopedApps`, the *same* tab-filtered source the lettered list uses —
 deliberately unlike pinned folders (which are **not** tab-filtered): the Personal tab shows only
@@ -89,13 +89,13 @@ in Grid) and a third `RailSelection` case, `RecentlyInstalled`. Slot ordering in
 Recently Installed then a `TOP` folder glyph at the top end, a `BOTTOM` folder glyph then Recently
 Installed at the bottom end — so the category is always the outermost item at whichever end it's
 on. Tapping/dragging onto it scrolls to index `0` when `SHOW_FIRST`, or to the very last index
-(after any `SHOW_LAST` folder section) when `SHOW_LAST` — `onRailSelectionChanged`'s
-`RailSelection.RecentlyInstalled` branch and `RailSelection.Folders`' `SHOW_LAST` branch now share
-a local `afterLetteredContentIndex()` helper for that shared "index right after all lettered
-content" computation.
+(after any `SHOW_LAST` folder section) when `SHOW_LAST`. All three rail targets (a letter, Folders,
+Recently installed) come from one pure function, `railScrollTarget` (`ui/drawer/DrawerRailTarget.kt`);
+its `afterLettered` value is the shared "index right after all lettered content" that the
+`RecentlyInstalled` branch and `Folders`' `SHOW_LAST` branch both use.
 
-A leading header+row shifts every absolute lazy-list index after it by 2 — `letterIndexOffset`
-(used by the alphabet rail's letter-jump) and `onRailSelectionChanged`'s `RailSelection.Folders`
+A leading header+row shifts every absolute lazy-list index after it by 2 — `railScrollTarget`'s
+`Letter` branch and its `RailSelection.Folders`
 case (`SHOW_FIRST`'s fixed offset and `SHOW_LAST`'s summed index) add a `recentlyInstalledOffset`
 (0 or 2, and always 0 in Grid or when the position is `SHOW_LAST`) to stay correct. A trailing
 header+row needs no such offset — `DrawerListContent` renders it as the very last two `item`s
@@ -163,7 +163,7 @@ The drawer's search bar (`DrawerSearchBar`) is a button: tapping it, or a Home p
 
 ```mermaid
 flowchart LR
-    Q["searchQuery: MutableStateFlow&lt;String&gt;\n(onQueryChanged)"]
+    Q["searchQuery: MutableStateFlow&lt;String&gt;\n(onQueryChange)"]
     Q --> A["Apps: filtered in the composable\nRankBySearchRelevanceUseCase(apps, query) { label }\nprefix match ranks above substring"]
     Q --> C{"settings.searchContactsEnabled\n&amp;&amp; ContactPermissionRepository.isGranted()"}
     C -- yes --> CR["ContactRepository.searchContacts(query, MAX_CONTACT_RESULTS)\nContactsContract via ContentResolver, Dispatchers.IO\n→ rankBySearchRelevance { displayName }"]
@@ -193,7 +193,7 @@ flowchart LR
 | Launch | `onAppClick` → `LauncherActivity.launchApp` | other-profile apps via `LauncherApps.startMainActivity`; also fired by tapping the sheet header's icon or name (`onOpenApp`, sheet closes first) |
 | Notifications zone | `DrawerViewModel.observeAppNotifications(app)` → `ObserveAppNotificationsUseCase` (setting `show_notifications_in_app_menu` + `NotificationAccessRepository.isGranted()` + `NotificationBadgeRepository.notificationsFor(pkg, handle)`) → `AppNotificationsState(notifications, needsAccess)` | live while the sheet is open; only this app in this profile; see below |
 | Open / dismiss a notification | `DrawerViewModel.openNotification(n)` → `NotificationOpener.open(contentIntent)`, then `NotificationActionController.dismiss` if the notification asked for `autoCancel`; swipe and "Clear all" → `dismissNotifications(keys)` → the listener's `cancelNotifications` | a dismiss with no connected listener is a no-op that returns false |
-| Add/remove to Favorites / Dock | `QuickAddState` from `ObserveQuickAddStateUseCase` decides which action is offered; `DrawerViewModel.onFavoritesAction / onDockAction` → the 4 app use cases | routing in [08 §1](08-flow-placements.md) |
+| Add/remove to Favorites / Dock | `QuickAddState` from `ObserveQuickAddStateUseCase` decides which action is offered; `DrawerViewModel.onFavoritesAction / onDockAction` (and `onFolderFavoritesAction / onFolderDockAction` for a folder) → `applyPlacement` → `AddToActiveListUseCase` / `RemoveFromActiveListUseCase` | routing in [08 §1](08-flow-placements.md) |
 | Add to folder / create folder | `DrawerViewModel.createFolder(app, name)`, `addToFolder(app, folderId)` → `FolderRepository` | `folders` observed for the submenu |
 | Notification dot/count | `badgeCounts` = `NotificationBadgeRepository.badgeCounts` gated by `notification_dots_enabled` | style from `notification_badge_style` |
 | App info | `DrawerViewModel.openAppInfo(app)` → `AppRepository.openAppDetails` (`LauncherApps.startAppDetailsActivity`, profile-aware) | header icon button |
@@ -298,7 +298,7 @@ A drag locks to an axis only after 16dp of travel (`HOME_SWIPE_SLOP`), and count
 if its vertical movement exceeds `VERTICAL_DOMINANCE` (1.2x) the horizontal — anything else is
 horizontal. A touch that starts inside the app list's own region is still watched, but only a
 horizontal-dominant drag is claimed (so Hub/carousel work over the list); a vertical one is left to the
-list's own scroll, which hands leftover drag back via `appListNestedScrollConnection`. The list's bounds reach the route through a `snapshotFlow` in `HomeScreen`, not a `SideEffect` (which would report stale bounds — the layout state is written after layout and read nowhere in composition — so the drawer would claim drags that should scroll the list).
+list's own scroll, which hands leftover drag back via `appListNestedScrollConnection`. The list's bounds reach the route through a `snapshotFlow` in `HomeBoundsReporting` (`ui/home/HomeScreenEffects.kt`), not a `SideEffect` (which would report stale bounds — the layout state is written after layout and read nowhere in composition — so the drawer would claim drags that should scroll the list).
 
 Commit happens when the drag has travelled `COMMIT_TRAVEL_FRACTION` (20%) of the container *from where
 that drag started*, or released above `VELOCITY_THRESHOLD_PX` (1500 px/s); anything short springs back.
@@ -308,7 +308,7 @@ the bar instead (`SystemBarsState.revealStatusBar`) and the next one opens the s
 
 Every Home action menu — `AppContextMenu`, `FolderTileContextMenu`, the Home sheet, the clock's sheet and the one-time
 "make Facet your home screen" prompt (`SetDefaultLauncherSheet`) — is a `ThemedModalBottomSheet` (`components/`): one themed M3 `ModalBottomSheet`, so the surface runs behind the
-system bars and swipe-down and Back dismiss it the same way everywhere. The surface is `Surface` unless the caller passes `containerColor`: the clock's sheets pass the dimmer `SurfaceContainer` because their content is tonal `SettingsCard`s of icon-badge rows. Two sheets, by what is pressed: a long-press on **free space** opens the Home sheet (`HomeMenuMode.MENU`, `HomeMenuSheetContent`: Facet settings and Launcher settings; with an empty stack, where there is no widget to press, also Add widget and the Widget stack), and a long-press on **a widget** (the clock, the events under it, a Facet widget page or a hosted widget page) opens that widget's sheet (`HomeMenuMode.WIDGET_MENU`, `WidgetSheetContent`, target by `HomeClockWidgetState.sheetTarget()`). Its first card is that widget's settings: the clock's Clock styles (full-screen options) and Calendar settings (which swaps this sheet for the calendar settings bottom sheet, `HomeMenuMode.CALENDAR_SETTINGS`, hosted by `HomeDrawerRoute` as `CalendarSettingsSheet`: it closes on Home press like every sheet); "<Widget> settings" for Weather and Agenda, which opens the settings sheet the widgets' 3-dot button used to (`HomeClockActions.onConfigureNativeWidget`); nothing for Now playing or a hosted widget. The second card is Adjust widget size & position (the only way into resize mode), Replace widget, Remove widget and the Widget stack. The widgets have no 3-dot button; on the Hub the long-press menu has Configure widget for a widget with settings. A tap on an event still opens the event; the long-press on the events block is `longPressFallback`. Add widget opens the clock widget picker with `ClockWidgetPickerTarget.Add`, Replace with `Replace` (`HomeOverlayState.clockWidgetPickerTarget`); Remove goes through `ClockWidgetFacetController.remove`. While one is showing, Home's swipes
+system bars and swipe-down and Back dismiss it the same way everywhere. The surface is `Surface` unless the caller passes `containerColor`: the clock's sheets pass the dimmer `SurfaceContainer` because their content is tonal `SettingsCard`s of icon-badge rows. Two sheets, by what is pressed: a long-press on **free space** opens the Home sheet (`HomeMenuMode.MENU`, `HomeMenuSheetContent`: a first card that is Adjust widget size & position while the stack has a page, or Add widget and the Widget stack when it is empty, then Switch facet, Facet settings and Launcher settings), and a long-press on **a widget** (the clock, the events under it, a Facet widget page or a hosted widget page) opens that widget's sheet (`HomeMenuMode.WIDGET_MENU`, `WidgetSheetContent`, target by `HomeClockWidgetState.sheetTarget()`). Its first card is that widget's settings: the clock's Clock styles (full-screen options) and Calendar settings (which swaps this sheet for the calendar settings bottom sheet, `HomeMenuMode.CALENDAR_SETTINGS`, hosted by `HomeDrawerRoute` as `CalendarSettingsSheet`: it closes on Home press like every sheet); "<Widget> settings" for Weather and Agenda, which opens the settings sheet the widgets' 3-dot button used to (`HomeClockActions.onConfigureNativeWidget`); nothing for Now playing or a hosted widget. The second card is Adjust widget size & position, Replace widget, Remove widget and the Widget stack. The widgets have no 3-dot button; on the Hub the long-press menu has Configure widget for a widget with settings. A tap on an event still opens the event; the long-press on the events block is `longPressFallback`. Add widget opens the clock widget picker with `ClockWidgetPickerTarget.Add`, Replace with `Replace` (`HomeOverlayState.clockWidgetPickerTarget`); Remove goes through `ClockWidgetFacetController.remove`. While one is showing, Home's swipes
 are off — otherwise the still-down finger that opened the sheet could go on to open the carousel or Hub
 behind it. The wrapper calls `BlockHomeSwipesWhileShown()` (`HomeSwipeGate`, provided by
 `LauncherActivity` via `LocalHomeSwipeGate`); `HomeDrawerRoute` skips its swipe detector and the app
@@ -316,7 +316,7 @@ list's scroll handoff while the gate is non-zero (clock *adjust mode*, with its 
 is gated separately on `homeMenuMode`).
 System back is unaffected.
 
-**Adjust mode** (`HomeMenuMode.ADJUST`, entered from the Home sheet) has no sheet: the clock or hosted widget
+**Adjust mode** (`HomeMenuMode.ADJUST`, entered from the Home sheet's or a widget sheet's adjust row) has no sheet: the clock or hosted widget
 gets corner resize handles, a full-width height handle (`ClockZoneHandle`, 48dp touch strip), and the
 `ClockAdjustToolbar` — an "Alignment" pill with left / center / right. The toolbar sits *below* the height
 handle (strip + `CLOCK_ADJUST_TOOLBAR_GAP`), not under the clock: the clock block is pinned only 24dp

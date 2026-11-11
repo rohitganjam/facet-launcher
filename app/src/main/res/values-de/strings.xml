@@ -63,8 +63,6 @@
     <string name="icon_colour_theme">Design</string>
     <string name="icon_colour_theme_inverted">Design invertiert</string>
     <string name="icons_screen_title">Symbole</string>
-    <string name="icons_screen_subtitle">Stil, Farbe und Form</string>
-    <string name="icons_screen_style">Stil</string>
     <string name="icons_screen_colour">Farbe</string>
     <string name="icon_render_glyph_tile_accent">Symbol-Kachel (Akzent)</string>
     <string name="icon_render_glyph_tile_ink">Symbol-Kachel (Design)</string>
@@ -226,7 +224,6 @@
     <!-- Generic join templates -->
     <string name="dot_join_2">%1$s · %2$s</string>
     <string name="dot_join_3">%1$s · %2$s · %3$s</string>
-    <string name="comma_join_2">%1$s, %2$s</string>
 
     <!-- SettingsScreen -->
     <string name="settings_header_title">Einstellungen</string>
@@ -245,29 +242,13 @@
     <string name="settings_appearance_subtitle">Designs, Schriften und Icons</string>
     <string name="settings_clock_calendar_title">Uhrstil</string>
     <string name="settings_time_format_24h">24-Stunden-Format</string>
-    <string name="settings_time_format_12h">12-Stunden-Format</string>
     <string name="settings_calendars_title">Anzuzeigende Kalender</string>
-    <plurals name="settings_calendars_selected">
-        <item quantity="one">%1$d Kalender ausgewählt</item>
-        <item quantity="other">%1$d Kalender ausgewählt</item>
-    </plurals>
-    <string name="settings_calendars_all">Alle Kalender</string>
-    <string name="settings_all_day_events_visible">Ganztägige Termine sichtbar</string>
-    <string name="settings_all_day_events_hidden">Ganztägige Termine ausgeblendet</string>
     <string name="settings_dock_title">Dock</string>
     <string name="defaults_screen_note">Wird verwendet, wenn du eine Facette erstellst oder zurücksetzt.</string>
     <string name="reset_to_default_title">Auf Standard zurücksetzen</string>
     <string name="reset_to_default_confirm">Zurücksetzen</string>
     <string name="reset_dock_subtitle">Dieses Dock durch die Standard-Apps des Geräts ersetzen</string>
     <string name="reset_dock_confirm_message">Dadurch wird das Dock dieser Facette durch die Standard-Apps des Geräts ersetzt. Die hier platzierten Apps gehen verloren.</string>
-    <string name="reset_look_subtitle">Listendarstellung durch den Standard ersetzen</string>
-    <string name="reset_look_confirm_message">Dadurch werden Listenlayout und Ausrichtung dieser Facette durch die Standardwerte ersetzt.</string>
-    <string name="settings_home_apps_list_title">Startbildschirm-App-Liste</string>
-    <plurals name="settings_recents_count">
-        <item quantity="one">%1$d kürzlich verwendete App</item>
-        <item quantity="other">%1$d kürzlich verwendete Apps</item>
-    </plurals>
-    <string name="settings_most_used_count">%1$d meistgenutzt</string>
     <string name="settings_app_drawer_title">App-Drawer</string>
     <string name="settings_show_as">Als %1$s anzeigen</string>
     <string name="settings_search_on">Ein</string>
@@ -282,7 +263,6 @@
     <string name="settings_notifications_summary_media_on">Medienplayer an</string>
     <string name="settings_notifications_summary_media_off">Medienplayer aus</string>
     <string name="settings_notifications_needs_access">Benachrichtigungszugriff nötig</string>
-    <string name="settings_calendars_needs_access">Kalenderzugriff nötig</string>
     <string name="settings_folders_title">Ordner</string>
     <string name="settings_folders_none">Noch keine Ordner</string>
     <plurals name="settings_folders_count">
@@ -307,7 +287,6 @@
     <string name="media_player_row_title">Medienplayer auf dem Startbildschirm anzeigen</string>
     <string name="media_skip_buttons_row_title">Überspringen-Tasten anzeigen</string>
     <string name="notification_preview_title">Vorschau</string>
-    <string name="notification_preview_app">Nachrichten</string>
     <string name="notification_preview_no_access">Für die Vorschau von Badges und Mediaplayer wird Benachrichtigungszugriff benötigt.</string>
     <string name="notification_preview_allow_access">Zugriff erlauben</string>
     <string name="notification_preview_disabled">Badges und Mediaplayer sind aus, daher zeigt Home keine Benachrichtigungen.</string>
@@ -636,14 +615,9 @@
 
     <!-- CalendarSettingsScreen -->
     <string name="calendar_settings_header_title">Kalendereinstellungen</string>
-    <string name="calendar_settings_follows_launcher_wide">Folgt der launcherweiten Kalendereinstellung</string>
     <string name="calendar_settings_show_all_day_events">Ganztägige Termine anzeigen</string>
     <string name="calendar_settings_show_indicator">Kalenderindikator anzeigen</string>
     <string name="calendar_settings_items_to_display">Angezeigte Einträge</string>
-    <string name="calendar_settings_preview_event_1">Team-Standup</string>
-    <string name="calendar_settings_preview_event_2">Design-Review</string>
-    <string name="calendar_settings_preview_event_3">Mittagessen mit Sam</string>
-    <string name="calendar_settings_preview_sample_note">Beispieltermine</string>
     <string name="calendar_settings_no_calendars_found">Keine Kalender auf diesem Gerät gefunden.</string>
     <string name="calendar_settings_access_off">Kalenderzugriff aus — Termine ausgeblendet.</string>
 
@@ -787,7 +761,7 @@
     <string name="facet_carousel_launcher_settings">Launcher-Einstellungen</string>
     <string name="facet_carousel_launcher_settings_subtitle">Design, Favoriten, Drawer und mehr</string>
     <string name="facet_carousel_active">Aktiv</string>
-    <string name="facet_carousel_no_favorites">Noch keine Favoriten</string>
+    <string name="facet_shortcut_label">Zu %1$s wechseln</string>
     <string name="preview_media_title">Wiedergabe</string>
     <string name="preview_media_artist">Interpret</string>
     <string name="facet_carousel_facet_settings">Facetteneinstellungen</string>
@@ -931,8 +905,6 @@
     <string name="facet_settings_section_home">Startseite</string>
     <string name="facet_settings_widgets_title">Widgets</string>
     <string name="facet_settings_widgets_subtitle">Was oben auf der Startseite dieser Facette steht</string>
-    <string name="facet_settings_appearance_title">Darstellung</string>
-    <string name="facet_settings_appearance_clock_label">Uhr: %1$s</string>
     <string name="facet_settings_appearance_dock_icons">Dock-Symbole</string>
     <string name="facet_settings_appearance_dock_text">Dock-Text</string>
     <string name="facet_settings_appearance_dock_icons_and_text">Dock-Symbole und -Text</string>
@@ -1075,8 +1047,6 @@
     <string name="weather_leave_turn_off">Wetter ausschalten</string>
     <string name="weather_leave_use_current">Aktuellen Standort verwenden</string>
     <string name="weather_leave_choose_city">Stadt wählen</string>
-    <string name="clock_accessories_inheriting">Diese Facette nutzt die Uhr-Einstellungen des Launchers. Aktiviere „Überschreiben“ unter Uhrstil, um sie zu ändern.</string>
-    <string name="clock_accessories_open_clock_style">Uhrstil</string>
     <string name="weather_location_current_short">Aktueller Standort</string>
     <string name="settings_gestures_title">Gesten</string>
     <string name="settings_gestures_subtitle">Wischen, Tippen und die Home-Taste</string>

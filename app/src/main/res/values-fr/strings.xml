@@ -63,8 +63,6 @@
     <string name="icon_colour_theme">Thème</string>
     <string name="icon_colour_theme_inverted">Thème inversé</string>
     <string name="icons_screen_title">Icônes</string>
-    <string name="icons_screen_subtitle">Style, couleur et forme</string>
-    <string name="icons_screen_style">Style</string>
     <string name="icons_screen_colour">Couleur</string>
     <string name="icon_render_glyph_tile_accent">Glyphe sur tuile (accent)</string>
     <string name="icon_render_glyph_tile_ink">Glyphe sur tuile (thème)</string>
@@ -226,7 +224,6 @@
     <!-- Generic join templates -->
     <string name="dot_join_2">%1$s · %2$s</string>
     <string name="dot_join_3">%1$s · %2$s · %3$s</string>
-    <string name="comma_join_2">%1$s, %2$s</string>
 
     <!-- SettingsScreen -->
     <string name="settings_header_title">Réglages</string>
@@ -245,29 +242,13 @@
     <string name="settings_appearance_subtitle">Thèmes, polices et icônes</string>
     <string name="settings_clock_calendar_title">Style d\'horloge</string>
     <string name="settings_time_format_24h">Format 24 heures</string>
-    <string name="settings_time_format_12h">Format 12 heures</string>
     <string name="settings_calendars_title">Calendriers à afficher</string>
-    <plurals name="settings_calendars_selected">
-        <item quantity="one">%1$d calendrier sélectionné</item>
-        <item quantity="other">%1$d calendriers sélectionnés</item>
-    </plurals>
-    <string name="settings_calendars_all">Tous les agendas</string>
-    <string name="settings_all_day_events_visible">Événements toute la journée visibles</string>
-    <string name="settings_all_day_events_hidden">Événements toute la journée masqués</string>
     <string name="settings_dock_title">Dock</string>
     <string name="defaults_screen_note">Utilisé quand vous créez une facette ou en réinitialisez une.</string>
     <string name="reset_to_default_title">Rétablir les valeurs par défaut</string>
     <string name="reset_to_default_confirm">Rétablir</string>
     <string name="reset_dock_subtitle">Remplacer ce dock par les apps par défaut de l\'appareil</string>
     <string name="reset_dock_confirm_message">Cela remplace le dock de cette facette par les apps par défaut de l\'appareil. Les apps que vous y avez placées seront perdues.</string>
-    <string name="reset_look_subtitle">Remplacer l\'apparence de la liste par celle par défaut</string>
-    <string name="reset_look_confirm_message">Cela remplace la disposition de la liste et l\'alignement de cette facette par les valeurs par défaut.</string>
-    <string name="settings_home_apps_list_title">Liste d\'apps de l\'accueil</string>
-    <plurals name="settings_recents_count">
-        <item quantity="one">%1$d récente</item>
-        <item quantity="other">%1$d récentes</item>
-    </plurals>
-    <string name="settings_most_used_count">%1$d les plus utilisées</string>
     <string name="settings_app_drawer_title">Tiroir d\'apps</string>
     <string name="settings_show_as">Afficher comme %1$s</string>
     <string name="settings_search_on">Activé</string>
@@ -282,7 +263,6 @@
     <string name="settings_notifications_summary_media_on">Lecteur activé</string>
     <string name="settings_notifications_summary_media_off">Lecteur désactivé</string>
     <string name="settings_notifications_needs_access">Accès aux notifications requis</string>
-    <string name="settings_calendars_needs_access">Accès au calendrier requis</string>
     <string name="settings_folders_title">Dossiers</string>
     <string name="settings_folders_none">Aucun dossier pour l\'instant</string>
     <plurals name="settings_folders_count">
@@ -307,7 +287,6 @@
     <string name="media_player_row_title">Afficher le lecteur multimédia sur l\'écran d\'accueil</string>
     <string name="media_skip_buttons_row_title">Afficher les boutons de saut</string>
     <string name="notification_preview_title">Aperçu</string>
-    <string name="notification_preview_app">Messages</string>
     <string name="notification_preview_no_access">L\'accès aux notifications est nécessaire pour prévisualiser les badges et le lecteur.</string>
     <string name="notification_preview_allow_access">Autoriser l\'accès</string>
     <string name="notification_preview_disabled">Les badges et le lecteur sont désactivés, l\'accueil n\'affichera donc aucune notification.</string>
@@ -636,14 +615,9 @@
 
     <!-- CalendarSettingsScreen -->
     <string name="calendar_settings_header_title">Réglages du calendrier</string>
-    <string name="calendar_settings_follows_launcher_wide">Suit le réglage de calendrier général du launcher</string>
     <string name="calendar_settings_show_all_day_events">Afficher les événements toute la journée</string>
     <string name="calendar_settings_show_indicator">Afficher l\'indicateur du calendrier</string>
     <string name="calendar_settings_items_to_display">Éléments à afficher</string>
-    <string name="calendar_settings_preview_event_1">Point d\'équipe</string>
-    <string name="calendar_settings_preview_event_2">Revue de design</string>
-    <string name="calendar_settings_preview_event_3">Déjeuner avec Sam</string>
-    <string name="calendar_settings_preview_sample_note">Exemples d\'événements</string>
     <string name="calendar_settings_no_calendars_found">Aucun calendrier trouvé sur cet appareil.</string>
     <string name="calendar_settings_access_off">Accès au calendrier désactivé — événements masqués.</string>
 
@@ -787,7 +761,7 @@
     <string name="facet_carousel_launcher_settings">Réglages du launcher</string>
     <string name="facet_carousel_launcher_settings_subtitle">Apparence, favoris, tiroir et plus</string>
     <string name="facet_carousel_active">Active</string>
-    <string name="facet_carousel_no_favorites">Aucun favori pour l\'instant</string>
+    <string name="facet_shortcut_label">Passer à %1$s</string>
     <string name="preview_media_title">Lecture en cours</string>
     <string name="preview_media_artist">Artiste</string>
     <string name="facet_carousel_facet_settings">Réglages de la facette</string>
@@ -931,8 +905,6 @@
     <string name="facet_settings_section_home">Accueil</string>
     <string name="facet_settings_widgets_title">Widgets</string>
     <string name="facet_settings_widgets_subtitle">Ce qui se trouve en haut de l\'accueil de cette facette</string>
-    <string name="facet_settings_appearance_title">Apparence</string>
-    <string name="facet_settings_appearance_clock_label">Horloge : %1$s</string>
     <string name="facet_settings_appearance_dock_icons">Icônes du dock</string>
     <string name="facet_settings_appearance_dock_text">Texte du dock</string>
     <string name="facet_settings_appearance_dock_icons_and_text">Icônes et texte du dock</string>
@@ -1075,8 +1047,6 @@
     <string name="weather_leave_turn_off">Désactiver la météo</string>
     <string name="weather_leave_use_current">Utiliser la position actuelle</string>
     <string name="weather_leave_choose_city">Choisir une ville</string>
-    <string name="clock_accessories_inheriting">Cette facette utilise les réglages d\'horloge du launcher. Activez « Personnaliser » dans Style de l\'horloge pour les modifier.</string>
-    <string name="clock_accessories_open_clock_style">Style de l\'horloge</string>
     <string name="weather_location_current_short">Position actuelle</string>
     <string name="settings_gestures_title">Gestes</string>
     <string name="settings_gestures_subtitle">Balayages, appuis et bouton Accueil</string>

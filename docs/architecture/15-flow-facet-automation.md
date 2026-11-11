@@ -225,15 +225,15 @@ sequenceDiagram
     autonumber
     participant UI as Carousel / Manage / Facet settings / shortcut / deep link
     participant UC as ActivateFacetByIdUseCase
-    participant FR as FacetRepository
+    participant FR as SelectableFacetsUseCase
     participant RF as RefreshAutomationStateUseCase
     participant AS as AutomationStateRepository
     participant SR as SettingsRepository
     UI->>UC: invoke(facetId)   source defaults to MANUAL
-    UC->>FR: getById(facetId)
-    alt facet does not exist
+    UC->>FR: invoke() → selectable facet ids
+    alt facet missing or disabled on the free plan
         UC-->>UI: no-op
-    else facet exists
+    else facet is selectable
         UC->>RF: invoke()   re-sample the rules against the clock
         UC->>AS: update { it.afterManualSwitch(facetId) }
         Note over UC,AS: state is written BEFORE the active facet
@@ -308,7 +308,7 @@ true — is shown again; this is why evaluation is level-based and not edge-trig
 ## 5b. The runner (built)
 
 `RunFacetAutomationUseCase` is a long-running collector launched once from `LauncherViewModel.init`
-([03 §4](03-reactive-data-flow.md)), passing in `homePressedEvent`. It merges four triggers and runs one
+([03 §4](03-reactive-data-flow.md)), passing in `homePressedEvent`. It merges six triggers and runs one
 `ApplyFacetAutomationUseCase` pass for each:
 
 | Trigger | Source |
@@ -317,6 +317,8 @@ true — is shown again; this is why evaluation is level-based and not edge-trig
 | Home press | `LauncherViewModel.homePressedEvent` |
 | Any rule added, edited, toggled or deleted | `AutomationRuleRepository.observeRules()` |
 | The active facet changed (also covers first launch, once a facet exists) | `SettingsRepository.settings` mapped to `activeFacetId`, distinct |
+| Any device reading changed (battery, headphones, Wi-Fi, Bluetooth) | `DeviceStateRepository.deviceState` |
+| Pro gained or lost | `EntitlementRepository.isPro` |
 
 - **One sequential collector with `conflate()`**, so passes never overlap and a burst collapses into
   one pending pass. That makes a lock unnecessary; the atomic state `update` covers the state file.
@@ -326,8 +328,8 @@ true — is shown again; this is why evaluation is level-based and not edge-trig
   by hand in the meantime, it calls `ActivateFacetByIdUseCase(…, AUTOMATION)`.
 - **No valid active facet yet** (a fresh install before the first facet exists) means the pass does
   nothing and writes nothing; the active-facet trigger re-runs it once a facet exists.
-- **Rule truth today.** A schedule is true when `Schedule.isActiveAt(now)` for the injected `Clock`. The
-  other trigger types are never met until their sources exist (phase 5).
+- **Rule truth.** A schedule is true when `Schedule.isActiveAt(now)` for the injected `Clock`; the device
+  triggers are true by `AutomationTrigger.isMetBy(DeviceState, now)` (§5c).
 - **No alarms.** A schedule is applied when the user looks at the phone, never underneath them: a 9:00
   rule that applies at 9:03 on unlock is indistinguishable from exact timing.
 
@@ -363,7 +365,7 @@ fire on a guess at startup. An empty Bluetooth set is a real answer, so a "not c
   pass; a rule whose permission is missing is never met. `AutomationTrigger.requiredPermission()` maps
   Bluetooth to `BLUETOOTH_CONNECT` and a *named* Wi-Fi network to `ACCESS_FINE_LOCATION` (the other
   triggers need none). The manifest declares `BLUETOOTH_CONNECT`, `ACCESS_FINE_LOCATION`,
-  `ACCESS_NETWORK_STATE` and `ACCESS_WIFI_STATE`, and still no `INTERNET`. On Android 11 (`minSdk 30`)
+  `ACCESS_NETWORK_STATE` and `ACCESS_WIFI_STATE` (`INTERNET` is declared too, but for weather only, see [18](18-flow-weather.md)). On Android 11 (`minSdk 30`)
   `BLUETOOTH_CONNECT` does not exist: the manifest also declares the install-time `BLUETOOTH` with
   `maxSdkVersion="30"`, and `bluetoothPermissionName()` makes Bluetooth read as granted from that, so no
   runtime request is shown there. Wi-Fi names on Android 11 come from `WifiManager.connectionInfo`
@@ -462,74 +464,6 @@ sampling: a connection that came and went while the screen was off is never seen
 | `RunFacetAutomationUseCase` | Runs a pass when `isPro` changes, so a lapse or purchase takes effect without waiting for a wake event. |
 | `SaveAutomationRuleUseCase` | Refuses a Pro trigger for a free user (`ProRequired(TRIGGER)`), then a *new* rule past the free limit (`ProRequired(RULE_LIMIT)`); only then validates and writes. Editing never counts as adding. |
 | `ObserveFacetAutomationUseCase` / `RuleEditorViewModel` | Mark rows `NEEDS_PRO`, show pills, and route a refused pick or save to the Facet Pro screen (§5d). |
-
-**Permission gate.** A trigger change goes through `RuleEditorViewModel.changeTrigger(candidate, request)`.
-The candidate is built purely in `RuleEditorState`; the ViewModel asks `candidate.trigger.requiredPermission()`:
-
-```mermaid
-sequenceDiagram
-    participant S as Editor sheet
-    participant VM as RuleEditorViewModel
-    participant L as Permission launcher
-    S->>VM: changeTrigger(candidate)
-    alt no permission needed or already granted
-        VM->>VM: apply candidate and load its picker lists
-    else permission missing
-        VM->>L: request(permission)
-        L-->>VM: granted or refused
-        VM->>VM: record that it was asked, DeviceStateRepository.onPermissionsChanged()
-        alt granted
-            VM->>VM: apply candidate and load its picker lists
-        else refused
-            VM->>VM: keep the old trigger, set permissionDenied
-            Note over S: note with Open settings under the When row
-        end
-    end
-```
-
-The launcher is a Compose `ActivityResultLauncher` (`rememberPermissionRequest`), passed in as a plain
-callback so the ViewModel stays free of Activity types. A refusal keeps the trigger the rule already had
-(Schedule for a new rule), so the rest of the rule is never opened for a trigger that cannot run. An
-unavailable row in the list requests its permission when tapped; only a refusal opens the editor.
-
-**Pro states (free user).** `ObserveFacetAutomationUseCase` marks rules outside
-`CanUseTriggerUseCase.entitledRuleIds` as `NEEDS_PRO` (ahead of a missing permission): the row is dimmed
-with a lock and "Paused. Needs Pro", its switch is off, and tapping it opens the Facet Pro screen. The *When*
-dropdown shows a Pro pill on each device trigger; picking one sets `RuleEditorState.proRequired` instead of
-asking for a permission. At the free limit the "Add rule" row carries a Pro pill and opens the same sheet,
-and a dashed strip under the Rules card ("Free includes 2 schedule rules…" + Upgrade to Pro, right-aligned) shows once a free user has reached the 2-rule limit
-(not before). The shared Facet Pro screen (`ui/pro/FacetProScreen`, also used by the facet limits and Settings) explains what Pro gives and holds Buy and Restore; it replaced an earlier bottom sheet. The editor sends the user there through `onOpenFacetPro` and keeps the draft; the billing plan added
-the purchase action.
-
-**Not built yet:** a "Device not found" row for a Bluetooth rule whose device was unpaired.
-
-## 6. Triggers, gating and the Pro seam
-
-The schedule trigger, the runner (§5b), the device triggers (§5c) and the UI (§5d) are built; the Pro
-seam below is not.
-
-**Rule usability.** A rule is met only when it is usable and its condition holds. The permission half of
-usability is built (§5c); the Pro half is built. An unusable rule is simply never true.
-
-| Trigger | Condition | Permission (requested when the type is chosen) |
-|---|---|---|
-| Schedule (free) | day of week and time window, to the minute (§3b); an Until before From means overnight | none |
-| Bluetooth device | connected, or not connected | `BLUETOOTH_CONNECT` (runtime, asked when chosen) |
-| Wi-Fi | "Any network" or "Named network" (a separate Network field picks it); connected or not | `ACCESS_NETWORK_STATE` (normal, no prompt) for any network; location, requested on choosing "Named network", to read and pick a network name |
-| Headphones | plugged in or not | none |
-| Battery | a charging state (Charging or Not charging) plus a strict above / below level that works in either state (5% stops; level and charging state come from the battery broadcast) | none |
-
-**When evaluation runs.** Lazily, when Home is about to be seen: screen on, unlock, Home press, app
-start. No alarms and no `SCHEDULE_EXACT_ALARM`; a 9:00 rule applying at 9:03 on unlock is
-indistinguishable from exact timing, and nothing switches under the user mid-use. Device state
-(Bluetooth, charging) is also read at startup because a killed process misses broadcasts. The cost is
-sampling: a connection that came and went while the screen was off is never seen.
-
-**Pro gating (built).** `EntitlementRepository.isPro` is the single seam; everything else reads it. `CanUseTriggerUseCase` and the rule limit decide what it allows. Free users get
-schedule rules only, and at most 2 rules in total (`AutomationLimits`, §3b); device triggers and more
-rules are Pro. When entitlement is lost, Pro-trigger rules
-and rules beyond the free 2 are paused (shown dimmed, never deleted) because the runner filters them out
-of `conditionsMet`; the first two schedule rules by list order stay active.
 
 **Permission gate.** The permission is requested at the moment the user makes the choice that needs it
 (after the Pro check), so a rule can never be configured without it. For Bluetooth that is choosing the

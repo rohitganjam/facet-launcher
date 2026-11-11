@@ -68,7 +68,7 @@ path, keyed by `NativeWidgetRef` (`Hub(appWidgetId)` or `Home(itemId)`):
   calendars added later included, and `null` all-day means shown, so a new Agenda starts on every calendar), Weather's current location or a saved
   city (`null` follows the launcher's Weather settings); Now Playing has none. `SetNativeWidgetConfigUseCase` writes either store and
   `ObserveNativeWidgetSettingsUseCase` reads it back.
-  The config also has a `clock` section (`ClockWidgetConfig`: look, accessories, weather location, and the calendar under it) for the clock widget that is being
+  The config also has a `clock` section (`ClockWidgetConfig`: look, accessories, weather location, and the calendar under it) for the clock page of the
   stack (see `docs/proposals/clock-as-facet-widget.md`): Home, the previews and the clock settings screens read and write it through `resolveFacetStyle` and
   `UpdateClockConfigUseCase` ([13](13-flow-facets-theme-notifications-onboarding.md) §1b). It is not a `NativeWidgetType`: that enum is the card widgets.
 - `ObserveNativeWidgetOverridesUseCase` turns every widget with a setting (Hub placements and the active facet's Home pages) into a
@@ -115,7 +115,7 @@ still shows its empty text while that place loads.
 ## 4. Adding, replacing, removing
 
 - **Pickers.** Both `HubWidgetPickerContent` screens list a "Facet widgets" section (`NativeWidgetPickerSection`: one header with a count, then a bordered tile per type like an installed widget's, its sample scaled to fit and its name below, two tiles per row as in the app groups). The Home picker (`ClockWidgetPickerScreen`) also offers the **Clock** first in that section while the facet has none (`clockAvailable`, from `HomeDrawerRoute`), through `ClockWidgetPickerViewModel.onClockSelect` (replace the page with the clock, or append it); the Hub picker never does.
-  drawn at its default size with sample data) above the installed apps' widgets.
+  The section sits above the installed apps' widgets, each sample drawn at its default size with sample data.
 - **Hub.** `HubWidgetPickerViewModel.onNativeWidgetSelect` places it at `defaultSpan` through `PlaceWidgetUseCase` with
   `nextNativeId()`; there is no bind or configure step. The 20-widget cap still applies.
 - **Home stack.** `ClockWidgetPickerViewModel.onNativeWidgetSelect` goes through `AddClockStackItemUseCase.addNativeWidget` or

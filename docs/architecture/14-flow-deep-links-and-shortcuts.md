@@ -26,7 +26,7 @@ sequenceDiagram
 ```
 
 - **One `ShortcutInfoCompat` per facet**, id `"facet_<id>"`, `shortLabel`/`longLabel` =
-  `"Switch to <facet's live name>"`, `rank` = facet position, launch intent = explicit `ACTION_VIEW`
+  `"Switch to <facet's live name>"` (the `facet_shortcut_label` string resource, translated in every locale), `rank` = facet position, launch intent = explicit `ACTION_VIEW`
   to `LauncherActivity` with `data = buildFacetDeepLinkUri(facet.id)`.
 - **Display name and trigger key are different fields, never conflated.** What the OS picker shows
   is the label (`"Switch to <facet.name>"` — reads as an action, since that's how it appears listed
@@ -50,7 +50,7 @@ sequenceDiagram
     participant LA as LauncherActivity
     participant LVM as LauncherViewModel
     participant UC as ActivateFacetByIdUseCase
-    participant FR as FacetRepository
+    participant FR as SelectableFacetsUseCase
     participant SR as SettingsRepository
     Ext->>LA: ACTION_VIEW, data = facetlauncher://facet/{id}
     alt cold start
@@ -61,11 +61,12 @@ sequenceDiagram
     LA->>LVM: activateFacetFromDeepLink(uri)
     LVM->>LVM: parseFacetIdFromDeepLink(uri)   (null → no-op, wrong scheme/host/non-numeric id)
     LVM->>UC: invoke(facetId)
-    UC->>FR: getById(facetId)
-    alt facet exists
+    UC->>FR: invoke() → the ids the user may switch to
+    alt facet is selectable
+        UC->>UC: MANUAL source: refreshAutomationState(), then AutomationState.afterManualSwitch(facetId)
         UC->>SR: setActiveFacetId(facetId)
-        SR-->>LVM: LauncherSettings.activeFacetId (StateFlow)   — rejoins 13 §1's existing Facets flow
-    else facet not found (deleted, bad id, race)
+        SR-->>LVM: LauncherSettings.activeFacetId (settings Flow)   — rejoins 13 §1's existing Facets flow
+    else facet not found or disabled (deleted, bad id, race, past the free limit)
         UC->>UC: no-op
     end
 ```
@@ -88,7 +89,7 @@ sequenceDiagram
   `FacetSwitchSource.AUTOMATION`, which changes the active facet and nothing else.
 - **No new reactive plumbing.** Once `setActiveFacetId` is called, the switch propagates exactly the
   way `FacetCarouselViewModel.selectFacet` already does — [13 §1](13-flow-facets-theme-notifications-onboarding.md)'s
-  `S1 → HOME` arrow — through `LauncherSettings.activeFacetId`'s `StateFlow` into
+  `S1 → HOME` arrow — through `LauncherSettings.activeFacetId` in the `settings` flow into
   `ObserveHomeScreenStateUseCase`/`HomeViewModel` and out to Compose.
 - **Scheduled timers** (a future launcher-side scheduler) are out of scope here, but need no new
   entry point when built — a `WorkManager` job (or similar) can call `ActivateFacetByIdUseCase`

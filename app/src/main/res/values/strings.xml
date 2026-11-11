@@ -69,8 +69,6 @@
     <string name="icon_colour_theme">Theme</string>
     <string name="icon_colour_theme_inverted">Theme inverted</string>
     <string name="icons_screen_title">Icons</string>
-    <string name="icons_screen_subtitle">Style, colour and shape</string>
-    <string name="icons_screen_style">Style</string>
     <string name="icons_screen_colour">Colour</string>
     <string name="icon_render_glyph_tile_accent">Glyph tile (Accent)</string>
     <string name="icon_render_glyph_tile_ink">Glyph tile (Theme)</string>
@@ -266,7 +264,6 @@
          phrase). -->
     <string name="dot_join_2">%1$s · %2$s</string>
     <string name="dot_join_3">%1$s · %2$s · %3$s</string>
-    <string name="comma_join_2">%1$s, %2$s</string>
 
     <!-- SettingsScreen -->
     <string name="settings_header_title">Settings</string>
@@ -285,29 +282,13 @@
     <string name="settings_appearance_subtitle">Themes, fonts and icons</string>
     <string name="settings_clock_calendar_title">Clock Style</string>
     <string name="settings_time_format_24h">24-hour time</string>
-    <string name="settings_time_format_12h">12-hour time</string>
     <string name="settings_calendars_title">Calendars to display</string>
-    <plurals name="settings_calendars_selected">
-        <item quantity="one">%1$d calendar selected</item>
-        <item quantity="other">%1$d calendars selected</item>
-    </plurals>
-    <string name="settings_calendars_all">All calendars</string>
-    <string name="settings_all_day_events_visible">All-day events visible</string>
-    <string name="settings_all_day_events_hidden">All-day events hidden</string>
     <string name="settings_dock_title">Dock</string>
     <string name="defaults_screen_note">Used when you create a facet or reset one.</string>
     <string name="reset_to_default_title">Reset to default</string>
     <string name="reset_to_default_confirm">Reset</string>
     <string name="reset_dock_subtitle">Replace this dock with your device\'s default apps</string>
     <string name="reset_dock_confirm_message">This replaces the dock of this facet with your device\'s default apps. The apps you placed here will be lost.</string>
-    <string name="reset_look_subtitle">Replace the apps list look with the default</string>
-    <string name="reset_look_confirm_message">This replaces this facet\'s list layout and alignment with the defaults.</string>
-    <string name="settings_home_apps_list_title">Home Apps List</string>
-    <plurals name="settings_recents_count">
-        <item quantity="one">%1$d Recent</item>
-        <item quantity="other">%1$d Recents</item>
-    </plurals>
-    <string name="settings_most_used_count">%1$d Most used</string>
     <string name="settings_app_drawer_title">App Drawer</string>
     <string name="settings_show_as">Show as %1$s</string>
     <string name="settings_search_on">On</string>
@@ -322,7 +303,6 @@
     <string name="settings_notifications_summary_media_on">Media player on</string>
     <string name="settings_notifications_summary_media_off">Media player off</string>
     <string name="settings_notifications_needs_access">Needs notification access</string>
-    <string name="settings_calendars_needs_access">Needs calendar access</string>
     <string name="settings_folders_title">Folders</string>
     <string name="settings_folders_none">No folders yet</string>
     <plurals name="settings_folders_count">
@@ -347,7 +327,6 @@
     <string name="media_player_row_title">Show media player in home screen</string>
     <string name="media_skip_buttons_row_title">Show skip buttons</string>
     <string name="notification_preview_title">Preview</string>
-    <string name="notification_preview_app">Messages</string>
     <string name="notification_preview_no_access">Notification access is needed to preview badges and the media player.</string>
     <string name="notification_preview_allow_access">Allow access</string>
     <string name="notification_preview_disabled">Badges and the media player are off, so Home won\'t show any notifications.</string>
@@ -698,14 +677,9 @@
     <!-- CalendarSettingsScreen (a "Calendars to display" row reuses settings_calendars_title;
          its "Turn on" action reuses permission_turn_on) -->
     <string name="calendar_settings_header_title">Calendar settings</string>
-    <string name="calendar_settings_follows_launcher_wide">Follows the launcher-wide Calendar setting</string>
     <string name="calendar_settings_show_all_day_events">Show all-day events</string>
     <string name="calendar_settings_show_indicator">Show calendar indicator</string>
     <string name="calendar_settings_items_to_display">Items to display</string>
-    <string name="calendar_settings_preview_event_1">Team standup</string>
-    <string name="calendar_settings_preview_event_2">Design review</string>
-    <string name="calendar_settings_preview_event_3">Lunch with Sam</string>
-    <string name="calendar_settings_preview_sample_note">Sample events</string>
     <string name="calendar_settings_no_calendars_found">No calendars found on this device.</string>
     <string name="calendar_settings_access_off">Calendar access off — events hidden.</string>
 
@@ -864,7 +838,7 @@
     <string name="facet_carousel_launcher_settings">Launcher settings</string>
     <string name="facet_carousel_launcher_settings_subtitle">Appearance, favorites, drawer and more</string>
     <string name="facet_carousel_active">Active</string>
-    <string name="facet_carousel_no_favorites">No favorites yet</string>
+    <string name="facet_shortcut_label">Switch to %1$s</string>
     <string name="preview_media_title">Now playing</string>
     <string name="preview_media_artist">Artist</string>
     <string name="facet_carousel_facet_settings">Facet settings</string>
@@ -897,8 +871,6 @@
     <string name="facet_settings_section_home">Home</string>
     <string name="facet_settings_widgets_title">Widgets</string>
     <string name="facet_settings_widgets_subtitle">What sits at the top of this facet\'s Home</string>
-    <string name="facet_settings_appearance_title">Appearance</string>
-    <string name="facet_settings_appearance_clock_label">%1$s clock</string>
     <string name="facet_settings_appearance_dock_icons">Dock icons</string>
     <string name="facet_settings_appearance_dock_text">Dock text</string>
     <string name="facet_settings_appearance_dock_icons_and_text">Dock icons and text</string>
@@ -1158,8 +1130,6 @@
     <string name="weather_leave_use_current">Use current location</string>
     <string name="weather_leave_choose_city">Choose a city</string>
 
-    <string name="clock_accessories_inheriting">This facet uses the launcher\'s clock settings. Turn on Override in Clock style to change these.</string>
-    <string name="clock_accessories_open_clock_style">Clock style</string>
     <string name="weather_location_current_short">Current location</string>
 
     <!-- Gestures -->

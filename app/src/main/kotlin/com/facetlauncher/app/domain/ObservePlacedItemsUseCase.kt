@@ -35,7 +35,7 @@ class ObservePlacedItemsUseCase @Inject constructor(
     /** The target's apps only, in position order. */
     fun apps(target: PlacementTarget): Flow<List<AppInfo>> =
         combine(placementRepository.observeAppEntities(target), appRepository.observeInstalledApps()) { entities, installed ->
-            hydrate(entities, installed)
+            hydrate(entities, indexByComponent(installed))
         }
 
     /**
@@ -45,7 +45,8 @@ class ObservePlacedItemsUseCase @Inject constructor(
     fun appsForFacets(list: PlacementList, facetIds: List<Long>): Flow<Map<Long, List<AppInfo>>> {
         if (facetIds.isEmpty()) return flowOf(emptyMap())
         return combine(placementRepository.observeAppEntitiesForFacets(list, facetIds), appRepository.observeInstalledApps()) { perFacet, installed ->
-            facetIds.indices.associate { index -> facetIds[index] to hydrate(perFacet[index], installed) }
+            val installedByComponent = indexByComponent(installed)
+            facetIds.indices.associate { index -> facetIds[index] to hydrate(perFacet[index], installedByComponent) }
         }
     }
 
@@ -57,7 +58,7 @@ class ObservePlacedItemsUseCase @Inject constructor(
             folderRepository.observeFolders(),
             appRepository.observeInstalledApps(),
         ) { appEntities, placements, folders, installed ->
-            mergeItems(appEntities, placements, folders, installed)
+            mergeItems(appEntities, placements, folders, indexByComponent(installed))
         }
 
     /** Batched counterpart of [items] for [list], mirroring [appsForFacets]. */
@@ -69,19 +70,22 @@ class ObservePlacedItemsUseCase @Inject constructor(
             folderRepository.observeFolders(),
             appRepository.observeInstalledApps(),
         ) { perFacetApps, perFacetPlacements, folders, installed ->
+            val installedByComponent = indexByComponent(installed)
             facetIds.indices.associate { index ->
-                facetIds[index] to mergeItems(perFacetApps[index], perFacetPlacements[index], folders, installed)
+                facetIds[index] to mergeItems(perFacetApps[index], perFacetPlacements[index], folders, installedByComponent)
             }
         }
     }
+
+    private fun indexByComponent(installed: List<AppInfo>): Map<Triple<String, String, Int>, AppInfo> =
+        installed.associateBy { Triple(it.packageName, it.activityName, it.userHandle.hashCode()) }
 
     private fun mergeItems(
         appEntities: List<AppPlacementEntity>,
         placements: List<FolderPlacementEntity>,
         folders: List<Folder>,
-        installed: List<AppInfo>,
+        installedByComponent: Map<Triple<String, String, Int>, AppInfo>,
     ): List<PlacedItem> {
-        val installedByComponent = installed.associateBy { Triple(it.packageName, it.activityName, it.userHandle.hashCode()) }
         val foldersById = folders.associateBy { it.id }
 
         val appItems = appEntities.mapNotNull { entity ->
@@ -97,8 +101,10 @@ class ObservePlacedItemsUseCase @Inject constructor(
         return (appItems + folderItems).sortedBy { it.first }.map { it.second }
     }
 
-    private fun hydrate(entities: List<AppPlacementEntity>, installed: List<AppInfo>): List<AppInfo> {
-        val installedByComponent = installed.associateBy { Triple(it.packageName, it.activityName, it.userHandle.hashCode()) }
+    private fun hydrate(
+        entities: List<AppPlacementEntity>,
+        installedByComponent: Map<Triple<String, String, Int>, AppInfo>,
+    ): List<AppInfo> {
         return entities.sortedBy { it.position }
             .mapNotNull { entity -> installedByComponent[Triple(entity.packageName, entity.activityName, entity.userId)] }
     }

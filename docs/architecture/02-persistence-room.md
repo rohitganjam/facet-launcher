@@ -4,8 +4,8 @@
 
 | Store | Location | What it holds | Written by | Survives |
 |---|---|---|---|---|
-| Room `FacetDatabase` | `facet.db` (schema **v47**, `exportSchema = true` → `app/schemas/…/1.json … 47.json`) | Facets + every *placement*: favorites, dock, folders, folder membership, widget grid positions, plus the facet automation rules (`automation_rules`) the weather cache (`weather_hours`, `weather_meta`) and each facet's clock stack (`clock_stack_items`) | 7 repositories (§2): `FacetRepository`, `PlacementRepository`, `FolderRepository`, `WidgetPlacementRepository`, `AutomationRuleRepository`, `WeatherRepository` (through `RoomWeatherStore`), `ClockStackRepository` | Reinstall-over-upgrade (migrations); **not** downgrade (dropped) |
-| `DataStore<Preferences>` | `facet_settings` (`datastore/facet_settings.preferences_pb`) | **All launcher-wide settings and defaults** — clock/app-list/dock design defaults (the calendar events strip has no design defaults of its own — see below), theme, drawer, search, permission-prompt flags, onboarding/seed/coach-mark flags, active facet id, the clock accessory switches, weather units and location, the icon pack and size — 86 keys (§5) | `SettingsRepository` only | Any upgrade (missing keys fall back to `LauncherSettings()` defaults) |
+| Room `FacetDatabase` | `facet.db` (schema **v49**, `exportSchema = true` → `app/schemas/…/1.json … 49.json`) | Facets + every *placement*: favorites, dock, folders, folder membership, widget grid positions, plus the facet automation rules (`automation_rules`) the weather cache (`weather_hours`, `weather_meta`) and each facet's clock stack (`clock_stack_items`) | 7 repositories (§2): `FacetRepository`, `PlacementRepository`, `FolderRepository`, `WidgetPlacementRepository`, `AutomationRuleRepository`, `WeatherRepository` (through `RoomWeatherStore`), `ClockStackRepository` | Reinstall-over-upgrade (migrations); **not** downgrade (dropped) |
+| `DataStore<Preferences>` | `facet_settings` (`datastore/facet_settings.preferences_pb`) | **All launcher-wide settings and defaults** — clock/app-list/dock design defaults (the calendar events strip has no design defaults of its own — see below), theme, drawer, search, permission-prompt flags, onboarding/seed/coach-mark flags, active facet id, the clock accessory switches, weather units and location, the icon pack and size — 79 keys (§5) | `SettingsRepository` only | Any upgrade (missing keys fall back to `LauncherSettings()` defaults) |
 | `DataStore<Preferences>` | `facet_entitlement` (`datastore/facet_entitlement.preferences_pb`) | The cached Pro state (`pro_purchased`; excluded from Android backups and device transfer by `res/xml/data_extraction_rules.xml`), so Pro works offline and at cold start; debug builds also keep `debug_entitlement_mode` here | `PlayEntitlementRepository`, only from an explicit Google Play answer | Same as `facet_settings`; **not** in the backup file, so a restore can never grant Pro |
 | `DataStore<Preferences>` | `facet_automation` (`datastore/facet_automation.preferences_pb`) | Facet-automation bookkeeping: the baseline facet, the ordered active rule ids, the suppressed rule ids (§5.7) | `AutomationStateRepository` (via `ActivateFacetByIdUseCase`) | Same as `facet_settings`; **not** in the backup file |
 | System `AppWidgetService` | Android framework, keyed by `HUB_APP_WIDGET_HOST_ID = 1024` | Which `appWidgetId`s are bound to which providers for this host | `LauncherAppWidgetHost` via `AppWidgetRepository` (allocate/bind/delete) | App data clear **does not** clear it → orphan detection in `ObserveHubStateUseCase` |
@@ -25,8 +25,8 @@ page, see [13](13-flow-facets-theme-notifications-onboarding.md). The ER diagram
 the defaults are in §5. The calendar events strip is the one exception to this pattern — it has no
 design fields of its own anywhere (Room or DataStore); it reads the global-only
 `home_apps_font_weight`/`app_label_color_option` (§5.4 "Home app list") and `launcher_font_option`
-(§5.4 "Theme & appearance") keys for font/weight/color, and `clockAlignment` (Room,
-facet-overridable) for its position — see chat history: calendar/appearance styling consolidation.
+(§5.4 "Theme & appearance") keys for font/weight/color, and the facet's `clockAlignment` (Room)
+for its position.
 
 What is **not** persisted: the installed-app list. Room rows reference apps only by
 `(packageName, activityName, userId)`; labels, icons and `UserHandle`s are re-resolved live from
@@ -43,6 +43,11 @@ erDiagram
         boolean clockPlacementOwn "false until first adjusted on Home: then alignment, zone height, scale and their landscape twins are the facet's own"
         string clockAlignment "own placement, used while clockPlacementOwn"
         float clockZoneHeightDp "nullable"
+        string landscapeClockAlignment "nullable: null = same as portrait"
+        float landscapeClockZoneHeightDp "nullable"
+        string landscapeAppRowPosition "nullable: null = same as portrait"
+        string landscapeAppListVerticalAlignment "nullable"
+        string landscapeAppListColumnAlignment "nullable"
         boolean allowLandscape "default true; off = this facet is portrait only"
         string appRowPosition
         string appRowPresentation
@@ -159,6 +164,25 @@ erDiagram
         string placeNameSource "GEOCODER or OFFLINE"
     }
 
+    automation_rules {
+        long id PK
+        int position "rule order"
+        boolean enabled
+        long targetFacetId FK "CASCADE"
+        string endBehavior
+        long endFacetId FK "nullable, SET NULL"
+        string triggerType
+        boolean negated
+        int scheduleDays "bit per weekday, Monday = bit 0"
+        int scheduleStartMinute
+        int scheduleEndMinute
+        string deviceAddress "nullable"
+        string deviceName "nullable"
+        string wifiSsid "nullable"
+        int batteryThreshold "nullable"
+        string batteryDirection "nullable"
+    }
+
     facets ||--o{ automation_rules : "rule target (CASCADE)"
     facets |o--o{ automation_rules : "switch-to end facet (SET NULL)"
     facets |o--o{ app_placements : "per-facet dock and favorites"
@@ -169,9 +193,9 @@ erDiagram
 ### Reading the diagram
 
 - **One table per kind, two lists, two scopes.** `app_placements` and `folder_placements` hold every
-  Dock and Favorites entry. `list` (`PlacementList.DOCK | FAVORITES`) picks the list; a null `facetId`
-  is the *launcher-wide default* list (the seed a new facet is copied from) and a facet id is that facet's own
-  list, always the live one for that facet via `Facet.placementTarget(list)`;
+  Dock and Favorites entry. `list` (`PlacementList.DOCK | FAVORITES`) picks the list; `facetId` names the facet that
+  owns the list, always the live one for that facet via `Facet.placementTarget(list)` (there is no launcher-wide list;
+  see the `ownerKey` bullet for the nullable column);
   `AddToActiveListUseCase` / `RemoveFromActiveListUseCase` ask
   `ResolveActivePlacementTargetUseCase` for the right `PlacementTarget(list, facetId)` and write it
   through `PlacementRepository`, the one repository over both tables.
@@ -229,11 +253,12 @@ flowchart LR
     FD -. "facet exists check on save" .-> ARR
 
     AR -. "observeInstalledApps()" .-> FOR
-    AR -. "observeInstalledApps()" .-> PR
-    FOR -. "observeFolders()" .-> PR
 
     FR -- "Flow of List Facet" --> OUT((use cases / ViewModels))
-    PR -- "Flow of List PlacedItem, or Map facetId to List PlacedItem" --> OUT
+    PR -- "raw Flow of List AppPlacementEntity and FolderPlacementEntity" --> OPI["ObservePlacedItemsUseCase\n(domain: joins rows with folders and installed apps)"]
+    FOR -. "observeFolders()" .-> OPI
+    AR -. "observeInstalledApps()" .-> OPI
+    OPI -- "Flow of List PlacedItem, or Map facetId to List PlacedItem" --> OUT
     FOR -- "Flow of List Folder" --> OUT
     WPR -- "Flow of List WidgetPlacementEntity" --> OUT
     ARR -- "Flow of List AutomationRule" --> OUT
@@ -248,8 +273,8 @@ Every DAO follows the same shape, which is what makes the reactive layer uniform
 |---|---|---|
 | Observe | `fun observe(list, ownerKey): Flow<List<Entity>>` (placements) / `observeAll()` — always `ORDER BY position ASC` | Cold `Flow`; re-emits after any write to the queried table(s). Main-safe. |
 | Write | `suspend fun upsert(entity): Long` with `OnConflictStrategy.REPLACE`; `suspend fun delete…` | Runs on Room's own I/O executor; the caller just `suspend`s. |
-| Scoped delete | `deleteByComponent(list, ownerKey, pkg, activity, userId)`, `deleteByPackage(list, global, pkg, userId)`, `deleteByUserId(list, global, userId)`, `deleteAllForOwner(list, ownerKey)` | Used by `CleanUpUninstalledAppsUseCase` (uninstall), profile-removal handling, facet deletion, and backup restore. |
-| Repair | `suspend fun getOrphaned(list, global): List<Entity>` (`WHERE userId = -1`) | One-shot; only `RepairOrphanedProfileRowsUseCase` calls it. |
+| Scoped delete | `deleteByComponent(list, ownerKey, pkg, activity, userId)`, `deleteByPackage(pkg, userId)`, `deleteByUserId(userId)`, `deleteAllForOwner(list, ownerKey)` | Used by `CleanUpUninstalledAppsUseCase` (uninstall), profile-removal handling, facet deletion, and backup restore. |
+| Repair | `suspend fun getOrphaned(): List<Entity>` (`WHERE userId = -1`) | One-shot; only `RepairOrphanedProfileRowsUseCase` calls it. |
 | Raw export | (repository) `getRawXxx() = dao.observe(list, owner).first()` | Backup export reads *unhydrated* rows so an app that is currently uninstalled still gets backed up. |
 
 ### DAO method matrix (every method, every DAO)
@@ -257,13 +282,13 @@ Every DAO follows the same shape, which is what makes the reactive layer uniform
 | DAO | Observe | Write | Delete | Read one-shot |
 |---|---|---|---|---|
 | `FacetDao` | `observeAll()` | `insert(facet): Long` (plain `@Insert`, **no** REPLACE — ids are never reused), `update(facet)` | `delete(facet)`, `deleteAll()` | `getById(id)` |
-| `AppPlacementDao` | `observe(list, ownerKey)` | `upsert(entity): Long` (REPLACE) | `deleteByComponent(list, ownerKey, pkg, activity, userId)`, `deleteByPackage(list, global, pkg, userId)`, `deleteByUserId(list, global, userId)`, `deleteAllForOwner(list, ownerKey)` | `getOrphaned(list, global)` (`userId = -1`) |
+| `AppPlacementDao` | `observe(list, ownerKey)` | `upsert(entity): Long` (REPLACE) | `deleteByComponent(list, ownerKey, pkg, activity, userId)`, `deleteByPackage(pkg, userId)` and `deleteByUserId(userId)` (both across every list and owner), `deleteAllForOwner(list, ownerKey)` | `getOrphaned()` (`userId = -1`) |
 | `FolderPlacementDao` | `observe(list, ownerKey)` | `upsert` (REPLACE) | `deleteByFolderId(list, ownerKey, folderId)`, `deleteAllForOwner(list, ownerKey)` | — |
 | `FolderDao` | `observeAllWithApps()` (`@Transaction`, `FolderWithApps`) | `insertFolder(folder): Long`, `renameFolder(id, name)`, `upsertFolderApp(app): Long` | `deleteFolder(id)`, `deleteAllFolders()`, `deleteFolderApp(folderId, pkg, activity, userId)`, `deleteFolderAppsByPackage(pkg, userId)`, `deleteFolderAppsByUserId(userId)` | `getOrphanedFolderApps()` |
 | `AutomationRuleDao` | `observeAll()` (`ORDER BY position ASC, id ASC`) | `insert(rule): Long`, `update(rule)`, `setEnabled(id, enabled)` | `deleteById(id)` | `getById(id)`, `maxPosition()` (`-1` when empty) |
-| `ClockStackItemDao` | `observe(facetId)`, `observeAll()` (`ORDER BY position, id`) | `insert` | `delete(id)`, `deleteAll(facetId)` | `getAll(facetId)`, `getById(id)`; updates `clearClockBoxes(facetId)` (a facet's clock pages only, both orientations), `replace` (swaps the kind, widget id and native type, resets the sizes), `setPosition`, `setSize`, `setLandscapeSize`, `setAlignment`, `setLandscapeAlignment`. `ClockStackRepository` wraps add (clock, hosted widget, native widget), replace, remove, reorder, clear and a backup's `restoreNativeWidgets` in `database.withTransaction`, caps a stack at `MAX_CLOCK_STACK_ITEMS` (5) and allows one `CLOCK` item |
+| `ClockStackItemDao` | `observe(facetId)`, `observeAll()` (`ORDER BY position, id`) | `insert` | `delete(id)`, `deleteAll(facetId)` | `getAll(facetId)`, `getById(id)`; updates `clearClockBoxes(facetId)` (a facet's clock pages only, both orientations), `replace` (swaps the kind, widget id and native type, resets the sizes), `setPosition`, `setSize`, `setLandscapeSize`, `setAlignment`, `setLandscapeAlignment`, `updateConfig(id, config)` (a native widget page's own settings). `ClockStackRepository` wraps add (clock, hosted widget, native widget), replace, remove, reorder, clear and a backup's `restoreNativeWidgets` in `database.withTransaction`, caps a stack at `MAX_CLOCK_STACK_ITEMS` (5) and allows one `CLOCK` item |
 | `WeatherDao` | `observeHours()` (`ORDER BY timeEpochSecond ASC`), `observeMeta()` (the one row, or `null`) | `insertHours(list)` (REPLACE), `upsertMeta(meta)` (REPLACE) | `clearHours()` | `getHours()`, `getMeta()`. `RoomWeatherStore.replaceHours` clears and inserts inside `database.withTransaction`, so a reader never sees half a forecast; `writeState` stores `placeName` and `placeNameSource` with the rest of the fetch state, and `WeatherRepository` drops them when the place changes |
-| `WidgetPlacementDao` | `observeAll()` (no ORDER BY — grid position is `row`/`col`, not `position`) | `upsert(placement)` (REPLACE on `appWidgetId`) | `deleteById(appWidgetId)`, `delete(placement)` | `getById(appWidgetId)` |
+| `WidgetPlacementDao` | `observeAll()` (no ORDER BY — grid position is `row`/`col`, not `position`) | `upsert(placement)` (REPLACE on `appWidgetId`), `updateConfig(appWidgetId, config)` (a native widget's own settings, `nativeWidgetConfig`) | `deleteById(appWidgetId)`, `delete(placement)`, `deleteAllNative()` (every row with a `nativeWidgetType`) | `getById(appWidgetId)`, `minAppWidgetId()` (`null` when empty; `WidgetPlacementRepository.nextNativeId()` gives a native widget one below the lowest, always negative, so it never meets a host-issued id) |
 
 Exceptions to the common shape, all deliberate:
 
@@ -294,8 +319,8 @@ Exceptions to the common shape, all deliberate:
 `FacetEntity` is the Room row and stays inside `data/local`. `FacetRepository` maps it to `Facet`
 (`data/model/Facet.kt`) with `FacetMapping.kt`, so ViewModels, use cases and composables never see the
 entity: `observeFacets()` and `getById()` return `Facet`, and `restoreFacet()` takes one. `Facet` has the
-same fields as the row except `selectedCalendarIds`, which is a real `Set<String>?` where the row keeps a
-comma-joined `selectedCalendarIdsCsv`. The helpers (`resolveLandscape`,
+same fields as the row plus `clockStack` (the facet's `clock_stack_items`, joined in by `FacetRepository`;
+calendar selection now lives in each clock's own config, not on the facet). The helpers (`resolveLandscape`,
 `landscape`, `placementTarget`, …) are extensions on `Facet`.
 
 Every facet write takes a facet id (`setClockPlacement(facetId, …)`). The repository re-reads the row and
@@ -316,7 +341,10 @@ that turns `null` into `LEFT` would make that value read back as a stuck left (`
 
 ```kotlin
 Room.databaseBuilder(context, FacetDatabase::class.java, "facet.db")
-    .addMigrations(*Migrations.ALL)                       // 10→11 … 32→33, explicit SQL
+    .addMigrations(*Migrations.ALL)                       // 10→11 … 47→48, explicit SQL
+    .addMigrations(Migrations.migration42To43 { … })      // these three read the old DataStore values
+    .addMigrations(Migrations.migration44To45 { … })      // (runBlocking, on Room's own executor,
+    .addMigrations(Migrations.migration48To49 { … })      //  only when that step actually runs)
     .fallbackToDestructiveMigrationOnDowngrade(dropAllTables = true)
     .build()
 ```
@@ -325,6 +353,7 @@ Room.databaseBuilder(context, FacetDatabase::class.java, "facet.db")
   process documented in `Migrations.kt` is: bump `FacetDatabase.VERSION` → add
   `MIGRATION_<old>_<new>` to `ALL` → add a `FacetDatabaseMigrationTest` case
   (`app/src/androidTest/.../data/local/FacetDatabaseMigrationTest.kt`, built on `MigrationTestHelper`).
+- Three steps are Room auto-migrations declared on `@Database` (43→44 and 45→46 with a column-drop spec, 46→47), not entries in `ALL`.
 - **Downgrade** drops all tables (dev-only scenario).
 - Versions 1–9 have exported schemas but no shipped migrations — they predate any production install.
 
@@ -370,7 +399,7 @@ Room.databaseBuilder(context, FacetDatabase::class.java, "facet.db")
 | 47→48 | **Manual, no schema change** (`Migrations.MIGRATION_47_48`): deletes every `app_placements` and `folder_placements` row with a null `facetId`, the launcher-wide Dock and Favorites that no longer exist (a facet has held its own copy since 44→45). The columns stay nullable. `FacetDatabaseMigrationTest.migration47To48DeletesTheLauncherWideListsAndKeepsFacetLists`. |
 | 48→49 | **Manual** (`Migrations.migration48To49`, reading the old key through `legacyAllowLandscape` in `FacetDefaultsMigration.kt`): `facets` gains `allowLandscape INTEGER NOT NULL DEFAULT 1`, and every facet is set to the launcher-wide `allow_landscape` the DataStore held, read through a supplier like 44→45, so nothing changes on screen. The DataStore key is no longer written or read after this. `FacetDatabaseMigrationTest.migration48To49GivesEveryFacetTheLauncherWideLandscapeChoice`. |
 
-The landscape twins are handled as one `LandscapeOverrides` group (clock alignment, divider, scale, widget size, row position, vertical and column alignment; every field nullable). Settings hold it as `LauncherSettings.landscape`, read from the six `landscape_*` keys and written only through `updateLandscape`. A facet keeps the flat columns above (so the schema is unchanged) and exposes the group as `FacetEntity.landscape` / `withLandscape(...)`, written through `FacetRepository.updateLandscape`. `resolveLandscape` is the one resolution rule (see [17](17-flow-home-layout.md) §1.0).
+The landscape twins are handled as one `LandscapeOverrides` group (clock alignment, divider, row position, vertical and column alignment; every field nullable). Settings hold it as `LauncherSettings.landscape`, read from the five `landscape_*` keys and written only through `updateLandscape`. A facet keeps the flat columns above (so the schema is unchanged) and exposes the group as `FacetEntity.landscape` / `withLandscape(...)`, written through `FacetRepository.updateLandscape`. `resolveLandscape` is the one resolution rule (see [17](17-flow-home-layout.md) §1.0).
 
 ## 5. DataStore — `facet_settings` (`SettingsRepository`)
 
@@ -423,7 +452,7 @@ erDiagram
         string launcher_font_option "LauncherFontOption, default SYSTEM"
         string font_scale_option "FontScaleOption, default DEFAULT"
         string drawer_presentation "DrawerPresentation, default LIST"
-        string drawer_grid_size "DrawerGridDensity, default COMPACT (legacy FIVE_BY_SIX etc. still read)"
+        string drawer_grid_size "DrawerGridDensity, default REGULAR (legacy FIVE_BY_SIX etc. still read)"
         string drawer_list_item_size "DrawerListItemSize, default REGULAR"
         float drawer_opacity "default 0.6"
         boolean show_drawer_icons "default true"
@@ -487,9 +516,10 @@ val settings: Flow<LauncherSettings> = dataStore.data.map { preferences ->
 ```
 
 - One `Flow<LauncherSettings>`; every consumer (`ObserveHomeScreenStateUseCase`,
-  `LauncherViewModel`, 20 ViewModels, 11 use cases) `combine`s or `.first()`s it. There is no
-  per-key flow.
-- Every emission is the **whole** immutable `LauncherSettings` (50 fields); DataStore emits on any
+  `LauncherViewModel`, 29 ViewModels and 25 use cases in all) `combine`s or `.first()`s it. There is no
+  per-key flow, and the flow is cold and unshared: each collector runs the whole
+  `Preferences → LauncherSettings` mapping itself on every write (finding F16 in `05`).
+- Every emission is the **whole** immutable `LauncherSettings` (74 fields); DataStore emits on any
   key change, so a coach-mark write re-emits theme/clock/drawer settings too — consumers rely on
   `combine`/`distinctUntilChanged` in their own graphs to avoid recomposing.
 - Defaults come from `LauncherSettings()`'s constructor defaults, which are the single source of
@@ -507,23 +537,23 @@ DataStore serialises writes and is main-safe; callers `viewModelScope.launch { }
 
 | Writer | Key | Op | Called from |
 |---|---|---|---|
-| `setUse24HourTime(Boolean)` | `use_24_hour_time` | set | `ClockStyleGalleryViewModel` |
+| `setUse24HourTime(Boolean)` | `use_24_hour_time` | set | `ImportBackupUseCase` only (restore); no screen writes this launcher-wide key any more |
 | `setTemperatureUnit`, `setWindSpeedUnit`, `setRainUnit`, `setPressureUnit` | `temperature_unit`, `wind_speed_unit`, `rain_unit`, `pressure_unit` | set | `UnitsAndLocationViewModel` |
-| `setWeatherIconStyle(WeatherIconStyle)` | `weather_icon_style` | set | `ClockAccessoriesViewModel` (default screen; a facet uses `FacetRepository.setClockWeatherIconStyle`) |
-| `setWeatherLocationMode(WeatherLocationMode)` | `weather_location_mode` | set | none yet |
+| `setWeatherIconStyle(WeatherIconStyle)` | `weather_icon_style` | set | `ImportBackupUseCase` only (restore); no screen writes this launcher-wide key any more |
+| `setWeatherLocationMode(WeatherLocationMode)` | `weather_location_mode` | set | `WeatherLocationViewModel`, `ImportBackupUseCase` (restore) |
 | `setWeatherCity(WeatherCity?)` | `weather_city_name`, `weather_city_latitude`, `weather_city_longitude`, `weather_city_timezone` | set the four together, or remove all four on `null` | none yet |
 | `chooseWeatherCity(WeatherCity): Boolean` | `weather_saved_cities`, the four city keys, `weather_location_mode` | add the city to the saved list unless already there (refused, returning false, past 10), make it the chosen city and switch to city mode | `WeatherLocationViewModel` |
 | `removeWeatherCity(WeatherCity)` | `weather_saved_cities`, the four city keys | drop it from the list; clear the four keys when it was the chosen one | `WeatherLocationViewModel` |
 | `setSavedWeatherCities(List<WeatherCity>)` | `weather_saved_cities` | replace the list (restore), at most 10 | `ImportBackupUseCase` |
 | `setHideStatusBar(Boolean)` | `hide_status_bar` | set | `AppearanceSettingsViewModel` |
-| `setClockAlignment(ClockAlignment)` | `clock_alignment` | set | `ClockStyleGalleryViewModel`, `HomeViewModel` (clock adjust toolbar) |
+| `setClockAlignment(ClockAlignment)` | `clock_alignment` | set | `ImportBackupUseCase` only (restore); no screen writes this launcher-wide key any more |
 | `setShowWeather(Boolean)` | `show_weather` | set | `TurnOffWeatherUseCase`, weather settings |
-| `setClockZoneHeight(Float)` | `clock_zone_height_dp` | set | `HomeViewModel` (zone drag handle) |
-| `resetClockZoneHeight()` | `clock_zone_height_dp` and `landscape_clock_zone_height_dp` | **remove** | `ClockStyleGalleryViewModel` |
-| `updateLandscape((LandscapeOverrides) -> LandscapeOverrides)` | all six `landscape_*` keys | set each field, or **remove** it when `null` | `HomeViewModel` (landscape adjust commits), `ClockStyleGalleryViewModel` (Reset position), `ImportBackupUseCase` |
-| `setShowAllDayEvents(Boolean)` | `show_all_day_events` | set | `CalendarSettingsViewModel` |
-| `setSelectedCalendarIds(Set<String>)` | `selected_calendar_ids` | set | `CalendarSettingsViewModel` |
-| `setCalendarColors(Map<String,String>)` | `calendar_colors` | set (encoded `id:color`) | `EnsureCalendarColorsUseCase` (app-wide, on every calendar change), `CalendarSettingsViewModel` after `AssignCalendarColorsUseCase` |
+| `setClockZoneHeight(Float)` | `clock_zone_height_dp` | set | `ImportBackupUseCase` only (restore); no screen writes this launcher-wide key any more |
+| `resetClockZoneHeight()` | `clock_zone_height_dp` and `landscape_clock_zone_height_dp` | **remove** | `ImportBackupUseCase` only (restore); no screen writes this launcher-wide key any more |
+| `updateLandscape((LandscapeOverrides) -> LandscapeOverrides)` | all five `landscape_*` keys | set each field, or **remove** it when `null` | `ImportBackupUseCase` only (restore); no screen writes these launcher-wide keys any more (a facet's landscape values go through `FacetRepository.updateLandscape`) |
+| `setShowAllDayEvents(Boolean)` | `show_all_day_events` | set | `ImportBackupUseCase` only (restore); no screen writes this launcher-wide key any more |
+| `setSelectedCalendarIds(Set<String>)` | `selected_calendar_ids` | set | no caller in production code (tests only) |
+| `setCalendarColors(Map<String,String>)` | `calendar_colors` | set (encoded `id:color`) | `CalendarSettingsViewModel`, `EnsureCalendarColorsUseCase` |
 | `setListContentMode(ListContentMode)` | `list_content_mode` | set | `OnboardingViewModel` |
 | `setAppsToShowCount(Int)` | `apps_to_show_count` | set | `OnboardingViewModel` |
 | `setAppRowPosition(AppRowPosition)` | `app_row_position` | set |  —  |
@@ -536,7 +566,7 @@ DataStore serialises writes and is main-safe; callers `viewModelScope.launch { }
 | `setAppListShrinkToFit(AppListShrinkToFit)` | `app_list_shrink_to_fit` | set | `ImportBackupUseCase` |
 | `setHomeAppsFontWeight(FontWeightOption)` | `home_apps_font_weight` | set | `AppearanceSettingsViewModel` |
 | `setAppLabelColorOption(ClockColorOption)` | `app_label_color_option` | set | `AppearanceSettingsViewModel` |
-| `setDockDisplayMode(DockDisplayMode)` | `dock_display_mode` | set | `DockSettingsViewModel` |
+| `setDockDisplayMode(DockDisplayMode)` | `dock_display_mode` | set | `ImportBackupUseCase` only (restore); no screen writes this launcher-wide key any more |
 | `setActiveFacetId(Long)` | `active_facet_id` | set | `FacetCarouselViewModel`, `ManageFacetsViewModel`, `EnsureActiveFacetUseCase`, `ActivateFacetByIdUseCase`, `ImportBackupUseCase` |
 | `setThemeMode(ThemeMode)` | `theme_mode` | set | `AppearanceSettingsViewModel` |
 | `setSystemBarIconStyle(SystemBarIconStyle)` | `system_bar_icon_style` | set | `AppearanceSettingsViewModel`, `ImportBackupUseCase` |
@@ -557,11 +587,11 @@ DataStore serialises writes and is main-safe; callers `viewModelScope.launch { }
 | `setDrawerOpacity(Float)` | `drawer_opacity` | set | `AppDrawerSettingsViewModel` |
 | `setShowDrawerIcons(Boolean)` | `show_drawer_icons` | set | `AppDrawerSettingsViewModel` |
 | `setShowDrawerLabels(Boolean)` | `show_drawer_labels` | set | `AppDrawerSettingsViewModel` |
-| `setSearchBarPosition(SearchBarPosition)` | `search_bar_position` | set | `AppDrawerSettingsViewModel` |
-| `setDrawerFolderDisplayMode(DrawerFolderDisplayMode)` | `drawer_folder_display_mode` | set | `AppDrawerSettingsViewModel` |
+| `setSearchBarPosition(SearchBarPosition)` | `search_bar_position` | set | `AppDrawerSettingsViewModel`, `OnboardingViewModel`, `ImportBackupUseCase` (restore) |
+| `setDrawerFolderDisplayMode(DrawerFolderDisplayMode)` | `drawer_folder_display_mode` | set | `AppDrawerSettingsViewModel`, `OnboardingViewModel`, `ImportBackupUseCase` (restore) |
 | `setRecentlyInstalledPosition(RecentlyInstalledPosition)` | `recently_installed_position` | set | `AppDrawerSettingsViewModel` |
-| `setSearchContactsEnabled(Boolean)` | `search_contacts_enabled` | set | `AppDrawerSettingsViewModel`, `DrawerViewModel` (inline prompt) |
-| `setSearchSettingsEnabled(Boolean)` | `search_settings_enabled` | set | `AppDrawerSettingsViewModel` |
+| `setSearchContactsEnabled(Boolean)` | `search_contacts_enabled` | set | `AppDrawerSettingsViewModel`, `DrawerViewModel`, `OnboardingViewModel`, `ImportBackupUseCase` (restore) |
+| `setSearchSettingsEnabled(Boolean)` | `search_settings_enabled` | set | `AppDrawerSettingsViewModel`, `OnboardingViewModel`, `ImportBackupUseCase` (restore) |
 | `setNotificationDotsEnabled(Boolean)` | `notification_dots_enabled` | set | `NotificationSettingsViewModel`, `NotificationAccessExplanationViewModel` |
 | `setHomeOpensSearch(Boolean)` | `home_opens_search` | set | `GesturesViewModel` |
 | `setDoubleTapToLock(Boolean)` | `double_tap_to_lock` | set | `GesturesViewModel` |
@@ -577,8 +607,9 @@ DataStore serialises writes and is main-safe; callers `viewModelScope.launch { }
 | `setContactsPermissionRequested(Boolean)` | `contacts_permission_requested` | set | `PermissionsViewModel` |
 | `setBluetoothPermissionRequested(Boolean)` | `bluetooth_permission_requested` | set | `PermissionsViewModel`, `RuleEditorViewModel` |
 | `setLocationPermissionRequested(Boolean)` | `location_permission_requested` | set | `PermissionsViewModel`, `RuleEditorViewModel` |
-| `setOnboardingCompleted(Boolean)` | `onboarding_completed` | set | `LauncherViewModel.completeOnboarding()` |
-| `markCoachMarkSeen(String)` | `coach_marks_seen` | set (union with existing) | `HomeViewModel` |
+| `setOnboardingCompleted(Boolean)` | `onboarding_completed` (and, when `true`, adds the running version's What's new id to `coach_marks_seen`, so a fresh install is not shown release notes) | set | `LauncherViewModel.completeOnboarding()` |
+| `markCoachMarkSeen(String)` | `coach_marks_seen` | set (union with existing) | `HomeViewModel`, `WhatsNewViewModel`, `WhatsNewPillViewModel` |
+| `clearCoachMarkSeen(String)` | `coach_marks_seen` | set (removes that one id) | the debug build's Settings tools only (`DebugSettingsEntryImpl`) |
 
 `ImportBackupUseCase.applySettings()` restores settings by calling these same setters one at a time (42 calls, plus `setActiveFacetId` after facets are re-inserted) —
 there is no bulk "replace all preferences" entry point, so a restore is not atomic at the
@@ -586,7 +617,7 @@ DataStore level either.
 
 ### 5.4 Key registry by section
 
-The same 73 keys, grouped the way Settings screens present them, with the `LauncherSettings` field
+The same 79 keys, grouped the way Settings screens present them, with the `LauncherSettings` field
 each maps to. Defaults are `LauncherSettings()`'s constructor defaults.
 
 #### Clock (a clock holds its own style, accessories and calendar in `ClockWidgetConfig`; only these launcher-wide keys remain)
@@ -597,8 +628,8 @@ edited anywhere: they are the launcher's built-in fallback for a facet that has 
 
 The calendar events strip has no design keys of its own here any more — it reads the global-only
 `home_apps_font_weight`/`app_label_color_option` ("Home app list", below) and `launcher_font_option`
-("Theme & appearance", below) keys for font/weight/color, and `clock_alignment` in this section for
-its position (see chat history: calendar/appearance styling consolidation).
+("Theme & appearance", below) keys for font/weight/color, and the clock's alignment for
+its position.
 
 | Key | Type | `LauncherSettings` field | Default | Notes |
 |---|---|---|---|---|
@@ -611,12 +642,12 @@ its position (see chat history: calendar/appearance styling consolidation).
 | `weather_location_mode` | String (`WeatherLocationMode`) | `weatherLocationMode` | `CURRENT` | launcher-wide |
 | `weather_city_name`, `weather_city_latitude` (Double), `weather_city_longitude` (Double), `weather_city_timezone` | String / Double | `weatherCity` | `null` | the chosen city; it reads as `null` unless all four keys are present |
 | `weather_saved_cities` | String | `savedWeatherCities` | empty | the cities kept for switching, one per line with tab-separated name, latitude, longitude and timezone; the chosen city is added to the read list when an older install stored it without a list |
-| `weather_icon_style` | String | `weatherIconStyle` | `COLORED` | `MONOCHROME` or `COLORED` weather pictures; the launcher default, a facet overriding the clock uses its own `clockWeatherIconStyle` |
+| `weather_icon_style` | String | `weatherIconStyle` | `COLORED` | `MONOCHROME` or `COLORED` weather pictures; the launcher-wide default; each clock keeps its own in its config (`ClockWidgetConfig.weatherIconStyle`) |
 | `clock_alignment` | String (`ClockAlignment`) | `clockAlignment` | `LEFT` | also positions the calendar events strip |
 | `clock_zone_height_dp` | Float | `clockZoneHeightDp` | `null` (= template's natural height) | nullable — `resetClockZoneHeight()` removes the key |
 | `hide_status_bar` | Boolean | `hideStatusBar` | `false` | launcher-wide: hides the status bar over Home, Hub and Drawer; a swipe-down shows it for 3 s ([13](13-flow-facets-theme-notifications-onboarding.md) §2a) |
-| `landscape_clock_alignment` | String (`ClockAlignment`) | `landscapeClockAlignment` | `null` (= `clock_alignment`) | landscape's own placement, written from Home's adjust mode in landscape |
-| `landscape_clock_zone_height_dp` | Float | `landscapeClockZoneHeightDp` | `null` (= `clock_zone_height_dp`) | landscape's divider position (the clock pane width) |
+| `landscape_clock_alignment` | String (`ClockAlignment`) | `landscape.clockAlignment` | `null` (= `clock_alignment`) | landscape's own placement, written from Home's adjust mode in landscape |
+| `landscape_clock_zone_height_dp` | Float | `landscape.clockZoneHeightDp` | `null` (= `clock_zone_height_dp`) | landscape's divider position (the clock pane width) |
 
 #### Calendar selection (global; the Agenda widget and the clock keep their own)
 
@@ -624,7 +655,7 @@ its position (see chat history: calendar/appearance styling consolidation).
 |---|---|---|---|---|
 | `show_all_day_events` | Boolean | `showAllDayEvents` | `true` | |
 | `selected_calendar_ids` | Set<String> | `selectedCalendarIds` | `null` (= all calendars) | nullable — absent key means "every calendar" |
-| `calendar_colors` | Set<String> encoded `"<calendarId>:<colorName>"` | `calendarColors: Map<String,String>` | `{}` | Assigned by `AssignCalendarColorsUseCase`; split at the last `:` on read (a Work Profile id is `work:<n>`), entries without one are dropped; not facet-overridable |
+| `calendar_colors` | Set<String> encoded `"<calendarId>:<colorName>"` | `calendarColors: Map<String,String>` | `{}` | Assigned by `AssignCalendarColorsUseCase`; split at the last `:` on read (a Work Profile id is `work:<n>`), entries without one are dropped; launcher-wide |
 
 #### Home app list (launcher defaults: they seed a new or reset facet)
 
@@ -633,18 +664,18 @@ its position (see chat history: calendar/appearance styling consolidation).
 | `list_content_mode` | String (`ListContentMode`) | `listContentMode` | `FAVORITES` | `FAVORITES` / `RECENTS` / `MOST_USED` |
 | `apps_to_show_count` | Int | `appsToShowCount` | `AppListLimits.DEFAULT_APPS_TO_SHOW` | |
 | `app_row_position` | String (`AppRowPosition`) | `appRowPosition` | `LEFT` | |
-| `landscape_app_row_position` | String (`AppRowPosition`) | `landscapeAppRowPosition` | `null` (= `app_row_position`) | landscape's own; the key is removed for "Same as portrait" |
-| `landscape_app_list_vertical_alignment` | String (`AppListVerticalAlignment`) | `landscapeAppListVerticalAlignment` | `null` (= `app_list_vertical_alignment`) | same |
-| `landscape_app_list_column_alignment` | String (`AppListColumnAlignment`) | `landscapeAppListColumnAlignment` | `null` (= `app_list_column_alignment`) | two-column only; same |
+| `landscape_app_row_position` | String (`AppRowPosition`) | `landscape.appRowPosition` | `null` (= `app_row_position`) | landscape's own; the key is removed for "Same as portrait" |
+| `landscape_app_list_vertical_alignment` | String (`AppListVerticalAlignment`) | `landscape.appListVerticalAlignment` | `null` (= `app_list_vertical_alignment`) | same |
+| `landscape_app_list_column_alignment` | String (`AppListColumnAlignment`) | `landscape.appListColumnAlignment` | `null` (= `app_list_column_alignment`) | two-column only; same |
 | `app_row_presentation` | String (`AppRowPresentation`) | `appRowPresentation` | `ICON_AND_TEXT` | |
 | `app_list_vertical_alignment` | String (`AppListVerticalAlignment`) | `appListVerticalAlignment` | `BOTTOM` | |
 | `app_list_layout` | String (`AppListLayout`) | `appListLayout` | `SINGLE_COLUMN` | single column / two column / grid |
 | `app_list_column_alignment` | String (`AppListColumnAlignment`) | `appListColumnAlignment` | `BOTH_LEFT` | two-column only |
 | `app_list_grid_columns` | String (`AppListGridColumns`) | `appListGridColumns` | `FOUR` | grid only — 3/4/5/6 |
 | `app_list_grid_display_mode` | String (`AppListGridDisplayMode`) | `appListGridDisplayMode` | `ICONS` | grid only — icons, text, or icons and text |
-| `app_list_shrink_to_fit` | String (`AppListShrinkToFit`) | `appListShrinkToFit` | `OFF` | list layouts only — Compact rows when Regular ones wouldn't fit; off, the list scrolls; facet-overridable (`facets.appListShrinkToFit`) |
-| `home_apps_font_weight` | String (`FontWeightOption`) | `homeAppsFontWeight` | `REGULAR` | not facet-overridable; also styles the calendar events strip |
-| `app_label_color_option` | String (`ClockColorOption`) | `appLabelColorOption` | `THEME` | not facet-overridable; also styles the calendar events strip |
+| `app_list_shrink_to_fit` | String (`AppListShrinkToFit`) | `appListShrinkToFit` | `OFF` | list layouts only — Compact rows when Regular ones wouldn't fit; off, the list scrolls; seeds a facet's own `facets.appListShrinkToFit` |
+| `home_apps_font_weight` | String (`FontWeightOption`) | `homeAppsFontWeight` | `REGULAR` | launcher-wide, no facet column; also styles the calendar events strip |
+| `app_label_color_option` | String (`ClockColorOption`) | `appLabelColorOption` | `THEME` | launcher-wide, no facet column; also styles the calendar events strip |
 
 #### Dock (launcher default: seeds a new or reset facet)
 
@@ -663,12 +694,12 @@ its position (see chat history: calendar/appearance styling consolidation).
 | Key | Type | Field | Default | Notes |
 |---|---|---|---|---|
 | `theme_mode` | String (`ThemeMode`) | `themeMode` | `SYSTEM` | |
-| `system_bar_icon_style` | String (`SystemBarIconStyle`) | `systemBarIconStyle` | `MATCH_THEME` | status + 3-button nav icon color over the wallpaper; global, not facet-overridable; see 13 §2 |
+| `system_bar_icon_style` | String (`SystemBarIconStyle`) | `systemBarIconStyle` | `MATCH_THEME` | status + 3-button nav icon color over the wallpaper; launcher-wide; see 13 §2 |
 | `accent_from_system` | Boolean | `accentFromSystem` | `true` | Material You / wallpaper accent when true |
 | `custom_accent_swatch` | String (`AccentSwatch.name`) | `customAccentSwatch` | `null` | nullable; parsed to enum in `LauncherActivity` |
 | `wallpaper_accent_role` | String (`WallpaperAccentRole`) | `wallpaperAccentRole` | `PRIMARY` | only meaningful when `accent_from_system` |
 | `icon_render_mode` | String (`IconRenderMode`) | `iconRenderMode` | `SYSTEM_DEFAULT` | |
-| `icon_shape` | String (`IconShape`) | `iconShape` | `SQUIRCLE` | icon outline (Squircle n=4 / Rounded n=2.6 / Circle / Square); global, not facet-overridable; backed up |
+| `icon_shape` | String (`IconShape`) | `iconShape` | `SQUIRCLE` | icon outline (Squircle n=4 / Rounded n=2.6 / Circle / Square); launcher-wide; backed up |
 | `icon_scale_percent` | Int | `iconScalePercent` | `100` | Icon size, 80..120 (clamped on read and write); scales every app icon outside settings (`LocalIconScale`); global; backed up |
 | `icon_pack_package` | String | `iconPackPackage` | `null` (absent) | installed icon pack applied launcher-wide; while set, `effectiveIconRenderMode` is `SYSTEM_DEFAULT` and `icon_render_mode` is kept for when it's cleared; cleared by `IconPackRepository.loadApplied` when the pack isn't installed; backed up |
 | `icon_pack_fallback` | String (`IconPackFallback`) | `iconPackFallback` | `MATCH_PACK` | apps the pack has no icon for: the pack's back/mask/upon art, or their own icon; backed up |
@@ -681,7 +712,7 @@ its position (see chat history: calendar/appearance styling consolidation).
 | Key | Type | Field | Default |
 |---|---|---|---|
 | `drawer_presentation` | String (`DrawerPresentation`) | `drawerPresentation` | `LIST` |
-| `drawer_grid_size` | String (`DrawerGridDensity`) | `drawerGridDensity` | `COMPACT` |
+| `drawer_grid_size` | String (`DrawerGridDensity`) | `drawerGridDensity` | `REGULAR` |
 | `drawer_list_item_size` | String (`DrawerListItemSize`) | `drawerListItemSize` | `REGULAR` | a row is icon + padding each side: Compact 36 + 4, Regular 44 + 12, Spacious 44 + 16 (icons × Icon size); also sizes Private Space's rows |
 | `drawer_opacity` | Float | `drawerOpacity` | `0.6` |
 | `show_drawer_icons` | Boolean | `showDrawerIcons` | `true` |
@@ -746,7 +777,7 @@ live from the OS on every check), the installed-app list, and notification count
 
 1. Add the `Keys.X = xPreferencesKey("snake_case")` constant and the `LauncherSettings` field with its default.
 2. Add the read line in `settings` (`?: defaults.x`, lenient enum parse) and the `setX()` writer.
-3. Decide whether it is facet-overridable; if so, add the `facets` column (+ migration, §4) and the gate.
+3. Decide whether a facet owns it; if so, add the `facets` column (+ migration, §4) and seed it from the launcher value in `FacetRepository.apply…Defaults` (called by `ApplyFacetDefaultsUseCase`).
 4. Decide whether it belongs in `BackupSettings` (+ `BackupMapping` both ways). Bump `CURRENT_BACKUP_VERSION` only for a breaking change — a defaulted additive field doesn't need one ([09 §4](09-flow-backup-restore.md)).
 5. Add a `SettingsRepositoryTest` case for default + round-trip, and a row in 5.3 and 5.4 here.
 
@@ -770,7 +801,7 @@ baseline facet was deleted.
 
 ## 6. Backup file format (`BackupBundle`, `data/model/BackupBundle.kt`)
 
-`CURRENT_BACKUP_VERSION = 5`; `kotlinx-serialization` JSON written/read by `BackupRepository`
+`CURRENT_BACKUP_VERSION = 6`; `kotlinx-serialization` JSON written/read by `BackupRepository`
 through a user-chosen SAF `Uri`. Import refuses `backupVersion > CURRENT_BACKUP_VERSION`, accepts
 older (fields added since carry defaults). Contents: `settings: BackupSettings` — every DataStore key except
 the ones below, with `activeFacetIndex` instead of `active_facet_id` and the `landscape_*` keys as flat
