@@ -1199,4 +1199,14 @@
         <item quantity="one">%d widget could not be copied</item>
         <item quantity="other">%d widgets could not be copied</item>
     </plurals>
+    <string name="dock_background">Dock background</string>
+    <string name="list_item_background">List item background</string>
+    <string name="calendar_background">Calendar background</string>
+    <string name="media_player_background">Media player background</string>
+    <string name="glass_style_off">Off</string>
+    <string name="glass_style_frost">Light frost</string>
+    <string name="glass_style_smoked">Smoked</string>
+    <string name="glass_style_bright">Bright</string>
+    <string name="glass_style_rim_light">Rim light</string>
+    <string name="glass_style_accent">Accent</string>
 </resources>

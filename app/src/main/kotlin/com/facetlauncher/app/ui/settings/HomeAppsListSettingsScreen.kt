@@ -106,6 +106,7 @@ fun HomeAppsListSettingsScreen(
             onLandscapeColumnAlignmentChange = viewModel::setLandscapeAppListColumnAlignment,
             onLandscapeVerticalAlignmentChange = viewModel::setLandscapeAppListVerticalAlignment,
             onAllowLandscapeChange = viewModel::setAllowLandscape,
+            onGlassChange = viewModel::setAppsListGlass,
         ),
         modifier = modifier,
     )
@@ -146,6 +147,7 @@ private fun HomeAppsListSettingsContent(
                         appListColumnAlignment = uiState.appListColumnAlignment,
                         appListGridColumns = uiState.appListGridColumns,
                         appListGridDisplayMode = uiState.appListGridDisplayMode,
+                        appsListGlass = uiState.appsListGlass,
                         labelColor = uiState.appLabelColorOption.resolve(),
                         labelFontWeight = uiState.homeAppsFontWeight.resolve(),
                         homeWallpaper = uiState.homeWallpaper,

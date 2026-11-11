@@ -388,6 +388,10 @@ expanded, trimmed and cut to 300 characters by `notificationTitleAndText`), `pos
 The same notification-access grant also backs Home's media player row, opt-in via "Show media player in home screen"
 (`show_media_player_on_home`, default off; `show_media_skip_buttons`, default on) on the same Notifications page.
 
+### Glass panels
+
+Four components can sit on a frosted panel, each with its own background style, set from a *Dock background*, *List item background*, *Calendar background* or *Media player background* dropdown (`GlassStyle`: Off, Light frost, Smoked, Bright, Rim light, Accent), drawn by `Modifier.glassBackground` (`ui/components/GlassBackground.kt`). The styles tint rather than blur, since Compose cannot blur the wallpaper behind the window. The dock (`Facet.dockGlass`, Dock screen) and the apps list items (`Facet.appsListGlass`, Apps list screen) are each facet's own; the calendar events (`ClockCalendarConfig.glass`, the calendar settings sheet) follow the clock's config; the media row (`LauncherSettings.mediaPlayerGlass`, Notifications page) is launcher-wide. `ResolvedFacetStyle` carries the dock and apps list styles and `CalendarDisplayOptions.glass` the calendar's into `HomeScreenState`; the dock and apps list previews draw them too. The gap above the media row and the one below it are the same, `HOME_MEDIA_ROW_GAP` (12dp), so a panel behind the row sits evenly between the calendar and the list.
+
 ```mermaid
 sequenceDiagram
     participant MSM as MediaSessionManager

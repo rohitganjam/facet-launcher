@@ -1,5 +1,6 @@
 package com.facetlauncher.app.ui.home
 
+import com.facetlauncher.app.data.model.GlassStyle
 import com.facetlauncher.app.data.model.WeatherIconStyle
 import com.facetlauncher.app.domain.SavedGridCells
 import com.facetlauncher.app.domain.ListAlignment
@@ -163,12 +164,15 @@ data class HomeListState(
     val gridCells: SavedGridCells = SavedGridCells(),
     /** "Shrink list to fit": drop to Compact rows when Regular ones wouldn't fit; off, the list scrolls instead. */
     val shrinkToFit: Boolean = false,
+    /** The frosted-glass panel behind each item. */
+    val glass: GlassStyle = GlassStyle.OFF,
 )
 
 @Immutable
 data class HomeDockState(
     val items: List<PlacedItem>,
     val displayMode: DockDisplayMode = DockDisplayMode.ICONS,
+    val glass: GlassStyle = GlassStyle.OFF,
 )
 
 /** The media row, shown while [player] is non-null. */
@@ -176,6 +180,7 @@ data class HomeDockState(
 data class HomeMediaState(
     val player: MediaPlayerState? = null,
     val showSkipButtons: Boolean = true,
+    val glass: GlassStyle = GlassStyle.OFF,
 )
 
 /** Everything `HomeScreen` shows. */

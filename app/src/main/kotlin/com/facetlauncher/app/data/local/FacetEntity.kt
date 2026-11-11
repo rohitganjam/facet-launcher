@@ -18,6 +18,7 @@ import com.facetlauncher.app.data.model.ClockDateStyle
 import com.facetlauncher.app.data.model.ClockFontOption
 import com.facetlauncher.app.data.model.ClockTemplateId
 import com.facetlauncher.app.data.model.DockDisplayMode
+import com.facetlauncher.app.data.model.GlassStyle
 import com.facetlauncher.app.data.model.ListContentMode
 import com.facetlauncher.app.data.model.WeatherIconStyle
 
@@ -55,4 +56,8 @@ data class FacetEntity(
 
     // Dock section
     val dockDisplayMode: DockDisplayMode = DockDisplayMode.ICONS,
+
+    // Glass panels
+    val dockGlass: GlassStyle = GlassStyle.OFF,
+    val appsListGlass: GlassStyle = GlassStyle.OFF,
 )

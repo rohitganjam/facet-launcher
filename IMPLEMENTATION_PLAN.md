@@ -4725,3 +4725,9 @@ A *Copy from facet* row at the bottom of each facet's Dock, Apps list and Widget
 - [ ] Check on a device with a real hosted widget: the bind-permission and configure screens appear in turn, the copied widget keeps its size, a cancelled setup is counted, and a Work Profile widget binds.
 - [ ] Native review of the new fr, de, es, nl and pt strings (machine-translated).
 - [x] Removed the unused `CopyToFacetsCard` (and its test and the `copy_to_facets_*` and `copy_look_*` strings, all locales), a leftover of the old launcher-wide Copy to facets.
+
+## Backgrounds
+
+- [x] `GlassStyle` (Off, Light frost, Smoked, Bright, Rim light, Accent) and `Modifier.glassBackground` (a tint, no blur) behind the dock (`Facet.dockGlass`, Room v50), apps list items (`Facet.appsListGlass`), the clock's calendar events (`ClockCalendarConfig.glass`) and the media row (`LauncherSettings.mediaPlayerGlass`); a background dropdown on each one's settings screen (*Dock background*, *List item background*, *Calendar background*, *Media player background*), and in the dock and apps list previews; backup carries all four. Tests: `FacetRepositoryTest`, `SettingsRepositoryTest`, `NativeWidgetConfigTest`, `FacetDatabaseMigrationTest` (v49→50).
+- [ ] Compose UI tests for the four dropdowns, and a check on a device.
+- [ ] Native review of the new `*_background` and `glass_style_*` strings (machine-translated); the `BackupFacet` dock and apps list flags are not yet in the backup round-trip test.

@@ -33,6 +33,19 @@ class NativeWidgetConfigTest {
     }
 
     @Test
+    fun `a clock's calendar glass round trips and defaults off`() {
+        // Given a clock whose calendar has a glass style
+        val clock = ClockWidgetConfig(calendar = ClockCalendarConfig(glass = GlassStyle.ACCENT))
+
+        // When encoded and decoded
+        val decoded = decodeNativeWidgetConfig(NativeWidgetConfig(clock = clock).encode())
+
+        // Then glass is kept, and a stored clock without the field reads as off
+        assertEquals(GlassStyle.ACCENT, decoded.clock?.calendar?.glass)
+        assertEquals(GlassStyle.OFF, decodeNativeWidgetConfig(NativeWidgetConfig(clock = ClockWidgetConfig()).encode()).clock?.calendar?.glass)
+    }
+
+    @Test
     fun `no calendars chosen is kept apart from following the launcher`() {
         // Given an explicitly empty selection
         val decoded = decodeNativeWidgetConfig(NativeWidgetConfig(calendarIds = emptySet()).encode())

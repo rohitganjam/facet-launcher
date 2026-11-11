@@ -86,6 +86,7 @@ data class BackupSettings(
     /** Purely additive and defaulted, so no version bump. */
     val showMediaPlayerOnHome: Boolean = false,
     val showMediaSkipButtons: Boolean = true,
+    val mediaPlayerGlass: String = GlassStyle.OFF.name,
     val showNotificationsInAppMenu: Boolean = true,
     val homeOpensSearch: Boolean = false,
     val doubleTapToLock: Boolean = false,
@@ -239,6 +240,9 @@ data class BackupFacet(
     /** Legacy (version 5 and older): `false` meant the facet used the launcher's dock. `null` in a current backup. */
     val overrideDock: Boolean? = null,
     val dockDisplayMode: String = DockDisplayMode.ICONS.name,
+    /** Purely additive and defaulted, so no version bump; a backup from before them has no glass. */
+    val dockGlass: String = GlassStyle.OFF.name,
+    val appsListGlass: String = GlassStyle.OFF.name,
     /** This facet's own dock. A backup from before version 6 holds it only when the facet overrode the dock; `upgradedToCurrent` fills it from the launcher's otherwise. */
     val dockApps: List<BackupAppEntry> = emptyList(),
     val overrideCalendar: Boolean = false,

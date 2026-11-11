@@ -255,6 +255,8 @@ data class LauncherSettings(
     /** Opt-in: the media player row under Home's clock. Also needs notification access (a media session is read through the listener grant). */
     val showMediaPlayerOnHome: Boolean = false,
     val showMediaSkipButtons: Boolean = true,
+    /** The frosted-glass panel behind the media player row. */
+    val mediaPlayerGlass: GlassStyle = GlassStyle.OFF,
     /** Lists an app's notifications in its long-press menu. Also needs notification access. */
     val showNotificationsInAppMenu: Boolean = true,
     val showDrawerIcons: Boolean = true,

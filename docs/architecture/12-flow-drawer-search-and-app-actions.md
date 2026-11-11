@@ -328,7 +328,7 @@ It swallows taps on its own surface even when disabled, because Home's root exit
 it unconsumed (empty space); there is no Done button — tapping the clock or empty space, Back and Home all exit.
 
 **Media player row** (`MediaPlayerRow`, see [13 §3](13-flow-facets-theme-notifications-onboarding.md)) sits just under the
-clock block, at `handlePx - HOME_CLOCK_MIN_GAP + HOME_MEDIA_ROW_TOP_GAP`, and while visible pushes a top-aligned app list
+clock block, at `handlePx - HOME_CLOCK_MIN_GAP + HOME_MEDIA_ROW_GAP`, and while visible pushes a top-aligned app list
 down by its own measured height (`HomeMediaLayout.listTopPx` replaces `handlePx` for the list's offset, max height and the compact-spacing
 check). A bottom-aligned list stays put and the row fills the gap. Its height is kept after it hides, and it is not composed
 in clock adjust mode (so the handles own that space), so neither shifts the list. Its taps are scoped to the art and the

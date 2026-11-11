@@ -44,6 +44,7 @@ import androidx.compose.ui.zIndex
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.facetlauncher.app.R
+import com.facetlauncher.app.data.model.GlassStyle
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.DockDisplayMode
 import com.facetlauncher.app.data.model.HomeWallpaper
@@ -87,6 +88,7 @@ fun DockSettingsScreen(
         onBack = onBack,
         onAddDockApp = onAddDockApp,
         onDockDisplayModeChange = viewModel::setDockDisplayMode,
+        onDockGlassChange = viewModel::setDockGlass,
         onReorderDockItems = viewModel::reorderDockItems,
         onResetToDefault = viewModel::resetToDefault,
         onCopyFromFacet = viewModel::copyFromFacet,
@@ -100,6 +102,7 @@ private fun DockSettingsContent(
     onBack: () -> Unit,
     onAddDockApp: () -> Unit,
     onDockDisplayModeChange: (DockDisplayMode) -> Unit,
+    onDockGlassChange: (GlassStyle) -> Unit,
     onReorderDockItems: (List<PlacedItem>) -> Unit,
     onResetToDefault: () -> Unit,
     modifier: Modifier = Modifier,
@@ -123,24 +126,14 @@ private fun DockSettingsContent(
                         appList = persistentListOf(),
                         dockApps = uiState.dockItems,
                         dockDisplayMode = uiState.dockDisplayMode,
+                        dockGlass = uiState.dockGlass,
                         labelColor = uiState.appLabelColorOption.resolve(),
                         labelFontWeight = uiState.homeAppsFontWeight.resolve(),
                         homeWallpaper = uiState.homeWallpaper,
                         modifier = Modifier.padding(bottom = 20.dp).testTag("dock_settings_preview_card"),
                     )
                 }
-                item {
-                    SettingsCard(modifier = Modifier.padding(bottom = 16.dp)) {
-                        LabeledDropdownRow(
-                            title = stringResource(R.string.dock_display_style),
-                            options = DockDisplayMode.entries,
-                            selected = uiState.dockDisplayMode,
-                            label = { stringResource(it.displayNameRes) },
-                            onSelect = onDockDisplayModeChange,
-                            testTag = "dock_display_style_row",
-                        )
-                    }
-                }
+                item { DockStyleCard(uiState, onDockDisplayModeChange, onDockGlassChange) }
                 dockAppsItem(uiState, onAddDockApp, onReorderDockItems)
                 dockResetItems(onResetToDefault)
                 item { Spacer(modifier = Modifier.height(16.dp)) }
@@ -156,6 +149,30 @@ private fun DockSettingsContent(
             }
         },
     )
+}
+
+/** The dock's display style and the background behind it. */
+@Composable
+private fun DockStyleCard(uiState: DockSettingsUiState, onDockDisplayModeChange: (DockDisplayMode) -> Unit, onDockGlassChange: (GlassStyle) -> Unit) {
+    SettingsCard(modifier = Modifier.padding(bottom = 16.dp)) {
+        LabeledDropdownRow(
+            title = stringResource(R.string.dock_display_style),
+            options = DockDisplayMode.entries,
+            selected = uiState.dockDisplayMode,
+            label = { stringResource(it.displayNameRes) },
+            onSelect = onDockDisplayModeChange,
+            testTag = "dock_display_style_row",
+        )
+        CardDivider()
+        LabeledDropdownRow(
+            title = stringResource(R.string.dock_background),
+            options = GlassStyle.entries,
+            selected = uiState.dockGlass,
+            label = { stringResource(it.displayNameRes) },
+            onSelect = onDockGlassChange,
+            testTag = "dock_glass_row",
+        )
+    }
 }
 
 private fun LazyListScope.dockResetItems(onResetToDefault: () -> Unit) {
@@ -324,6 +341,7 @@ private fun DockSettingsScreenPreview() {
             onBack = {},
             onAddDockApp = {},
             onDockDisplayModeChange = {},
+            onDockGlassChange = {},
             onReorderDockItems = {},
             onResetToDefault = {},
         )

@@ -6,6 +6,7 @@ import com.facetlauncher.app.data.DefaultAppRepository
 import com.facetlauncher.app.data.NotificationAccessRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.WallpaperRepository
+import com.facetlauncher.app.data.model.GlassStyle
 import com.facetlauncher.app.data.model.HomeWallpaper
 import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.data.model.ListContentMode
@@ -114,6 +115,10 @@ class NotificationSettingsViewModel @Inject constructor(
 
     fun setShowSkipButtons(enabled: Boolean) {
         viewModelScope.launch { settingsRepository.setShowMediaSkipButtons(enabled) }
+    }
+
+    fun setMediaPlayerGlass(style: GlassStyle) {
+        viewModelScope.launch { settingsRepository.setMediaPlayerGlass(style) }
     }
 
     fun setShowNotificationsInAppMenu(enabled: Boolean) {

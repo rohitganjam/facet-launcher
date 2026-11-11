@@ -1,5 +1,6 @@
 package com.facetlauncher.app.domain
 
+import com.facetlauncher.app.data.model.GlassStyle
 import com.facetlauncher.app.data.model.NativeWidgetConfig
 import com.facetlauncher.app.data.model.decodeNativeWidgetConfig
 import com.facetlauncher.app.data.model.encode
@@ -103,6 +104,8 @@ fun Facet.toBackupFacet(
     landscapeAppRowPosition = landscapeAppRowPosition?.name,
     landscapeAppListColumnAlignment = landscapeAppListColumnAlignment?.name,
     allowLandscape = allowLandscape,
+    dockGlass = dockGlass.name,
+    appsListGlass = appsListGlass.name,
     appListGridColumns = appListGridColumns.name,
     appListGridDisplayMode = appListGridDisplayMode.name,
     appListShrinkToFit = appListShrinkToFit.name,
@@ -157,6 +160,8 @@ fun BackupFacet.toFacet(): Facet = Facet(
     landscapeAppRowPosition = landscapeAppRowPosition?.toEnumOrNull(),
     landscapeAppListColumnAlignment = landscapeAppListColumnAlignment?.toEnumOrNull(),
     allowLandscape = allowLandscape,
+    dockGlass = dockGlass.toEnumOrDefault(GlassStyle.OFF),
+    appsListGlass = appsListGlass.toEnumOrDefault(GlassStyle.OFF),
     appListGridColumns = appListGridColumns.toEnumOrDefault(AppListGridColumns.FOUR),
     appListGridDisplayMode = appListGridDisplayMode.toEnumOrDefault(AppListGridDisplayMode.ICONS),
     appListShrinkToFit = appListShrinkToFit.toEnumOrDefault(AppListShrinkToFit.OFF),

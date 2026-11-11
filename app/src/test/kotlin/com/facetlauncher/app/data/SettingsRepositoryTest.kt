@@ -1,6 +1,7 @@
 package com.facetlauncher.app.data
 
 import com.facetlauncher.app.BuildConfig
+import com.facetlauncher.app.data.model.GlassStyle
 import com.facetlauncher.app.data.model.LandscapeOverrides
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
@@ -131,6 +132,7 @@ class SettingsRepositoryTest {
         assertEquals(NotificationBadgeStyle.DOT, settings.notificationBadgeStyle)
         assertEquals(false, settings.showMediaPlayerOnHome)
         assertEquals(true, settings.showMediaSkipButtons)
+        assertEquals(GlassStyle.OFF, settings.mediaPlayerGlass)
         assertEquals(true, settings.showNotificationsInAppMenu)
         assertEquals(true, settings.showDrawerIcons)
         assertEquals(true, settings.showDrawerLabels)
@@ -292,6 +294,7 @@ class SettingsRepositoryTest {
         repository.setNotificationBadgeStyle(NotificationBadgeStyle.COUNT)
         repository.setShowMediaPlayerOnHome(true)
         repository.setShowMediaSkipButtons(false)
+        repository.setMediaPlayerGlass(GlassStyle.SMOKED)
         repository.setShowNotificationsInAppMenu(false)
         repository.setShowDrawerIcons(false)
         repository.setShowDrawerLabels(false)
@@ -330,6 +333,7 @@ class SettingsRepositoryTest {
         assertEquals(NotificationBadgeStyle.COUNT, settings.notificationBadgeStyle)
         assertEquals(true, settings.showMediaPlayerOnHome)
         assertEquals(false, settings.showMediaSkipButtons)
+        assertEquals(GlassStyle.SMOKED, settings.mediaPlayerGlass)
         assertEquals(false, settings.showNotificationsInAppMenu)
         assertEquals(false, settings.showDrawerIcons)
         assertEquals(false, settings.showDrawerLabels)

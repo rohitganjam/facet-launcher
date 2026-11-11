@@ -32,6 +32,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.facetlauncher.app.R
+import com.facetlauncher.app.data.model.GlassStyle
 import com.facetlauncher.app.data.model.NotificationBadgeStyle
 import com.facetlauncher.app.ui.components.StickyHeaderScrollColumn
 import com.facetlauncher.app.ui.components.CardDivider
@@ -90,6 +91,7 @@ fun NotificationSettingsScreen(
             if (checked && !uiState.isAccessGranted) onNavigateToNotificationAccessExplanation()
         },
         onShowSkipButtonsChange = viewModel::setShowSkipButtons,
+        onMediaGlassChange = viewModel::setMediaPlayerGlass,
         onGrantAccess = onNavigateToNotificationAccessExplanation,
         modifier = modifier,
     )
@@ -104,6 +106,7 @@ private fun NotificationSettingsContent(
     onShowInAppMenuChange: (Boolean) -> Unit,
     onShowMediaPlayerChange: (Boolean) -> Unit,
     onShowSkipButtonsChange: (Boolean) -> Unit,
+    onMediaGlassChange: (GlassStyle) -> Unit,
     onGrantAccess: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -137,6 +140,8 @@ private fun NotificationSettingsContent(
             showSkipButtons = uiState.settings.showMediaSkipButtons,
             onEnabledChange = onShowMediaPlayerChange,
             onShowSkipButtonsChange = onShowSkipButtonsChange,
+            glass = uiState.settings.mediaPlayerGlass,
+            onGlassChange = onMediaGlassChange,
             modifier = Modifier.padding(top = 16.dp),
         )
 
@@ -210,6 +215,8 @@ internal fun MediaPlayerSettingsCard(
     onEnabledChange: (Boolean) -> Unit,
     onShowSkipButtonsChange: ((Boolean) -> Unit)?,
     modifier: Modifier = Modifier,
+    glass: GlassStyle = GlassStyle.OFF,
+    onGlassChange: ((GlassStyle) -> Unit)? = null,
 ) {
     SettingsCard(modifier = modifier) {
         Row(
@@ -245,6 +252,18 @@ internal fun MediaPlayerSettingsCard(
                 )
             }
         }
+        if (onGlassChange != null) {
+            CardDivider()
+            LabeledDropdownRow(
+            title = stringResource(R.string.media_player_background),
+            options = GlassStyle.entries,
+            selected = glass,
+            label = { stringResource(it.displayNameRes) },
+            onSelect = onGlassChange,
+            enabled = enabled,
+            testTag = "media_glass_row",
+        )
+        }
     }
 }
 
@@ -261,6 +280,7 @@ private fun NotificationSettingsScreenPreview() {
             onShowInAppMenuChange = {},
             onShowMediaPlayerChange = {},
             onShowSkipButtonsChange = {},
+            onMediaGlassChange = {},
             onGrantAccess = {},
         )
     }

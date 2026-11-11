@@ -1408,6 +1408,29 @@ class FacetDatabaseMigrationTest {
     }
 
     @Test
+    fun migration49To50AddsGlassStylesThatStartOff() {
+        // Given a v49 database with a facet
+        val db49 = helper.createDatabase(TEST_DB, 49)
+        db49.execSQL(
+            "INSERT INTO facets (id, name, position, clockPlacementOwn, clockAlignment, appRowPosition, appRowPresentation, listContentMode, " +
+                "appsToShowCount, appListVerticalAlignment, appListLayout, appListColumnAlignment, appListGridColumns, appListGridDisplayMode, " +
+                "appListShrinkToFit, dockDisplayMode) VALUES (1, 'Facet', 1, 0, 'LEFT', 'LEFT', 'ICON_AND_TEXT', 'FAVORITES', 6, 'BOTTOM', " +
+                "'SINGLE_COLUMN', 'BOTH_LEFT', 'FOUR', 'ICONS', 'OFF', 'ICONS')",
+        )
+        db49.close()
+
+        // When migrating to v50 (Room also validates the result against the exported v50 schema)
+        val db50 = helper.runMigrationsAndValidate(TEST_DB, 50, true, Migrations.MIGRATION_49_50)
+
+        // Then the facet's dock and apps list have no glass
+        db50.query("SELECT dockGlass, appsListGlass FROM facets").use {
+            it.moveToFirst()
+            assertEquals("OFF", it.getString(0))
+            assertEquals("OFF", it.getString(1))
+        }
+    }
+
+    @Test
     fun migration44To45HandlesAnEmptyLauncherDock() {
         // Given an inheriting facet with a stale own dock row and no launcher dock
         val db44 = helper.createDatabase(TEST_DB, 44)

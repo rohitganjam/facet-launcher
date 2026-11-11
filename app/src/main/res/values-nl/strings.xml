@@ -1052,4 +1052,14 @@
         <item quantity="one">%d widget kon niet worden gekopieerd</item>
         <item quantity="other">%d widgets konden niet worden gekopieerd</item>
     </plurals>
+    <string name="dock_background">Dock-achtergrond</string>
+    <string name="list_item_background">Achtergrond van lijstitems</string>
+    <string name="calendar_background">Agenda-achtergrond</string>
+    <string name="media_player_background">Achtergrond van mediaspeler</string>
+    <string name="glass_style_off">Uit</string>
+    <string name="glass_style_frost">Lichte vorst</string>
+    <string name="glass_style_smoked">Rookglas</string>
+    <string name="glass_style_bright">Helder</string>
+    <string name="glass_style_rim_light">Lichtrand</string>
+    <string name="glass_style_accent">Accent</string>
 </resources>

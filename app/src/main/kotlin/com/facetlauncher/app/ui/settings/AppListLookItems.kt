@@ -2,10 +2,13 @@ package com.facetlauncher.app.ui.settings
 
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.facetlauncher.app.R
+import com.facetlauncher.app.data.model.GlassStyle
 import com.facetlauncher.app.data.model.AppListColumnAlignment
 import com.facetlauncher.app.data.model.AppListGridColumns
 import com.facetlauncher.app.data.model.AppListGridDisplayMode
@@ -111,6 +114,15 @@ internal fun ColumnScope.AppListLayoutRows(uiState: HomeAppsListUiState, actions
             testTag = "appearance_app_list_shrink_to_fit_row",
         )
     }
+    CardDivider()
+    LabeledDropdownRow(
+        title = stringResource(R.string.list_item_background),
+        options = GlassStyle.entries,
+        selected = uiState.appsListGlass,
+        label = { stringResource(it.displayNameRes) },
+        onSelect = actions.onGlassChange,
+        testTag = "apps_list_glass_row",
+    )
 }
 
 /**

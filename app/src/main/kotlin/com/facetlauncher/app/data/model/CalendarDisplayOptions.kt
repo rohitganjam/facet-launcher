@@ -4,6 +4,7 @@ package com.facetlauncher.app.data.model
 data class CalendarDisplayOptions(
     val showIndicator: Boolean = true,
     val itemsToShow: Int = MAX_ITEMS,
+    val glass: GlassStyle = GlassStyle.OFF,
 ) {
     companion object {
         const val MIN_ITEMS = 1

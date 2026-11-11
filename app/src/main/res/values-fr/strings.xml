@@ -1122,4 +1122,14 @@
         <item quantity="other">%d widgets n\'ont pas pu être copiés</item>
         <item quantity="many">%d de widgets n\'ont pas pu être copiés</item>
     </plurals>
+    <string name="dock_background">Arrière-plan du dock</string>
+    <string name="list_item_background">Arrière-plan des éléments de la liste</string>
+    <string name="calendar_background">Arrière-plan du calendrier</string>
+    <string name="media_player_background">Arrière-plan du lecteur</string>
+    <string name="glass_style_off">Désactivé</string>
+    <string name="glass_style_frost">Givre clair</string>
+    <string name="glass_style_smoked">Fumé</string>
+    <string name="glass_style_bright">Brillant</string>
+    <string name="glass_style_rim_light">Bord lumineux</string>
+    <string name="glass_style_accent">Accent</string>
 </resources>

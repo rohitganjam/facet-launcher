@@ -1,6 +1,7 @@
 package com.facetlauncher.app.domain
 
 import androidx.compose.runtime.Immutable
+import com.facetlauncher.app.data.model.GlassStyle
 import com.facetlauncher.app.data.model.AppListColumnAlignment
 import com.facetlauncher.app.data.model.AppListGridColumns
 import com.facetlauncher.app.data.model.AppListGridDisplayMode
@@ -78,6 +79,9 @@ data class ResolvedFacetStyle(
     val clock: ClockWidgetConfig,
     val appList: ResolvedAppListStyle,
     val dockDisplayMode: DockDisplayMode,
+    /** Frosted-glass panels behind the dock and the apps list items; off without a facet. */
+    val dockGlass: GlassStyle = GlassStyle.OFF,
+    val appsListGlass: GlassStyle = GlassStyle.OFF,
     val calendarDisplay: CalendarDisplayOptions,
     /** The clock's alignment, divider position and scale in each orientation. */
     val clockPlacement: Oriented<ClockPlacement>,
@@ -92,7 +96,9 @@ fun resolveFacetStyle(facet: Facet?, settings: LauncherSettings): ResolvedFacetS
     clock = effectiveClockConfig(facet, settings),
     appList = resolveAppListStyle(facet, settings),
     dockDisplayMode = facet?.dockDisplayMode ?: settings.dockDisplayMode,
-    calendarDisplay = effectiveClockConfig(facet, settings).calendar.let { CalendarDisplayOptions(it.showIndicator, it.itemsToShow) },
+    dockGlass = facet?.dockGlass ?: GlassStyle.OFF,
+    appsListGlass = facet?.appsListGlass ?: GlassStyle.OFF,
+    calendarDisplay = effectiveClockConfig(facet, settings).calendar.let { CalendarDisplayOptions(it.showIndicator, it.itemsToShow, it.glass) },
     clockPlacement = resolveClockPlacement(facet, settings),
     listAlignment = resolveListAlignment(facet, settings),
     // No facet (a launcher-wide preview) draws the launcher clock alone.

@@ -1,5 +1,6 @@
 package com.facetlauncher.app.domain
 
+import com.facetlauncher.app.data.model.GlassStyle
 import com.facetlauncher.app.data.model.BackupFacet
 import com.facetlauncher.app.data.model.NativeWidgetType
 import com.facetlauncher.app.data.WidgetPlacementRepository
@@ -181,6 +182,7 @@ class ImportBackupUseCase @Inject constructor(
             setNotificationBadgeStyle(settings.notificationBadgeStyle.toEnumOrDefault(NotificationBadgeStyle.DOT))
             setShowMediaPlayerOnHome(settings.showMediaPlayerOnHome)
             setShowMediaSkipButtons(settings.showMediaSkipButtons)
+            setMediaPlayerGlass(settings.mediaPlayerGlass.toEnumOrDefault(GlassStyle.OFF))
             setShowNotificationsInAppMenu(settings.showNotificationsInAppMenu)
             setHomeOpensSearch(settings.homeOpensSearch)
             setDoubleTapToLock(settings.doubleTapToLock)

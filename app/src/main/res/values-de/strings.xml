@@ -1110,4 +1110,14 @@
         <item quantity="one">%d Widget konnte nicht kopiert werden</item>
         <item quantity="other">%d Widgets konnten nicht kopiert werden</item>
     </plurals>
+    <string name="dock_background">Dock-Hintergrund</string>
+    <string name="list_item_background">Hintergrund der Listeneinträge</string>
+    <string name="calendar_background">Kalenderhintergrund</string>
+    <string name="media_player_background">Hintergrund des Medienplayers</string>
+    <string name="glass_style_off">Aus</string>
+    <string name="glass_style_frost">Helles Milchglas</string>
+    <string name="glass_style_smoked">Rauchglas</string>
+    <string name="glass_style_bright">Hell</string>
+    <string name="glass_style_rim_light">Lichtkante</string>
+    <string name="glass_style_accent">Akzent</string>
 </resources>

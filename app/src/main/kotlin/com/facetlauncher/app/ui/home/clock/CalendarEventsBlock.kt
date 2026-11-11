@@ -23,9 +23,11 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.facetlauncher.app.data.model.GlassStyle
 import com.facetlauncher.app.data.model.CalendarDisplayOptions
 import com.facetlauncher.app.data.model.CalendarEvent
 import com.facetlauncher.app.data.model.ClockAlignment
+import com.facetlauncher.app.ui.components.glassBackground
 import com.facetlauncher.app.ui.home.rememberTickingNow
 import com.facetlauncher.app.ui.theme.Accent
 import com.facetlauncher.app.ui.theme.AccentSwatch
@@ -102,7 +104,8 @@ fun CalendarEventsBlock(
     if (visibleEvents.isEmpty()) return
 
     Column(
-        modifier = modifier.testTag("clock_event_rows").padding(top = 10.dp),
+        modifier = modifier.testTag("clock_event_rows").padding(top = 10.dp)
+            .glassBackground(display.glass).then(if (display.glass != GlassStyle.OFF) Modifier.padding(12.dp) else Modifier),
         verticalArrangement = Arrangement.spacedBy(9.dp),
         horizontalAlignment = alignment.resolve(),
     ) {

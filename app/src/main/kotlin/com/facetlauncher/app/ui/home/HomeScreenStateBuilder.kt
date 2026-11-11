@@ -107,8 +107,9 @@ fun ResolvedFacetStyle.toHomeScreenState(
         reorderable = appList.contentMode == ListContentMode.FAVORITES,
         gridCells = if (appList.contentMode == ListContentMode.FAVORITES) content.listCells else SavedGridCells(),
         shrinkToFit = appList.shrinkToFit == AppListShrinkToFit.ON,
+        glass = appsListGlass,
     ),
-    dock = HomeDockState(items = content.dockItems, displayMode = dockDisplayMode),
+    dock = HomeDockState(items = content.dockItems, displayMode = dockDisplayMode, glass = dockGlass),
     clock = HomeClockState(
         use24HourTime = clock.use24HourTime,
         templateId = clock.templateId,
@@ -147,7 +148,7 @@ fun ResolvedFacetStyle.toHomeScreenState(
         isCharging = content.clockAccessories?.isCharging ?: false,
         weather = content.weather?.takeIf { clock.showWeather && !it.isOutdated }?.toHomeWeather(settings, clock.weatherIconStyle),
     ),
-    media = HomeMediaState(player = content.mediaPlayer, showSkipButtons = settings.showMediaSkipButtons),
+    media = HomeMediaState(player = content.mediaPlayer, showSkipButtons = settings.showMediaSkipButtons, glass = settings.mediaPlayerGlass),
 ).withNativeWidgets(settings, content.weather, content.weatherRefreshing, clock)
 
 private fun WeatherState.toHomeWeather(settings: LauncherSettings, iconStyle: WeatherIconStyle) = HomeWeatherState(

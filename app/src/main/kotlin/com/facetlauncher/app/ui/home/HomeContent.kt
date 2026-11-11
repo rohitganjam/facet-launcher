@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
@@ -29,10 +30,12 @@ import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import com.facetlauncher.app.data.model.GlassStyle
 import com.facetlauncher.app.data.model.landscape
 import com.facetlauncher.app.data.model.AppListVerticalAlignment
 import com.facetlauncher.app.data.model.ClockAlignment
 import com.facetlauncher.app.data.model.DockDisplayMode
+import com.facetlauncher.app.ui.components.glassBackground
 import com.facetlauncher.app.ui.home.HomeMenuMode
 import com.facetlauncher.app.ui.theme.launcherSystemBarInsets
 import kotlin.math.roundToInt
@@ -69,8 +72,13 @@ internal fun HomePortraitContent(frame: HomeFrame) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = 12.dp, bottom = 4.dp)
+                    .then(if (frame.state.dock.glass != GlassStyle.OFF) Modifier.padding(horizontal = 12.dp) else Modifier)
+                    .glassBackground(frame.state.dock.glass, MaterialTheme.shapes.large)
+                    // Even space inside the panel; text tiles already carry 14dp above and below.
+                    .then(if (frame.state.dock.glass == GlassStyle.OFF) Modifier else if (frame.state.dock.displayMode == DockDisplayMode.TEXT) Modifier.padding(horizontal = 10.dp) else Modifier.padding(12.dp))
                     .testTag(homeTag("home_dock_row")),
-                horizontalArrangement = Arrangement.SpaceEvenly,
+                // Inside a glass panel the outer icons sit the same distance from its edge as from its top and bottom.
+                horizontalArrangement = if (frame.state.dock.glass != GlassStyle.OFF) Arrangement.SpaceBetween else Arrangement.SpaceEvenly,
             ) {
                 HomeDockItems(frame, frame.state.dock.displayMode)
             }
@@ -209,7 +217,7 @@ private fun BoxScope.LandscapeAppsPane(frame: HomeFrame) {
             Modifier
                 .align(Alignment.TopStart)
                 .onSizeChanged { if (it.height > 0) layout.mediaRowHeightPx = it.height.toFloat() }
-                .padding(bottom = HOME_MEDIA_ROW_BOTTOM_GAP)
+                .padding(bottom = HOME_MEDIA_ROW_GAP)
                 .graphicsLayer { alpha = media.fraction },
         )
     }

@@ -1,5 +1,6 @@
 package com.facetlauncher.app.ui.settings
 
+import com.facetlauncher.app.data.model.GlassStyle
 import com.facetlauncher.app.data.model.AppListColumnAlignment
 import com.facetlauncher.app.data.model.AppListGridColumns
 import com.facetlauncher.app.data.model.AppListGridDisplayMode
@@ -23,8 +24,9 @@ internal data class AppListLookActions(
     val onLandscapeColumnAlignmentChange: (AppListColumnAlignment?) -> Unit,
     val onLandscapeVerticalAlignmentChange: (AppListVerticalAlignment?) -> Unit,
     val onAllowLandscapeChange: (Boolean) -> Unit,
+    val onGlassChange: (GlassStyle) -> Unit,
 ) {
     companion object {
-        val None = AppListLookActions({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {})
+        val None = AppListLookActions({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {})
     }
 }

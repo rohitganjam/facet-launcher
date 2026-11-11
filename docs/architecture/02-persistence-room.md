@@ -4,8 +4,8 @@
 
 | Store | Location | What it holds | Written by | Survives |
 |---|---|---|---|---|
-| Room `FacetDatabase` | `facet.db` (schema **v49**, `exportSchema = true` → `app/schemas/…/1.json … 49.json`) | Facets + every *placement*: favorites, dock, folders, folder membership, widget grid positions, plus the facet automation rules (`automation_rules`) the weather cache (`weather_hours`, `weather_meta`) and each facet's clock stack (`clock_stack_items`) | 7 repositories (§2): `FacetRepository`, `PlacementRepository`, `FolderRepository`, `WidgetPlacementRepository`, `AutomationRuleRepository`, `WeatherRepository` (through `RoomWeatherStore`), `ClockStackRepository` | Reinstall-over-upgrade (migrations); **not** downgrade (dropped) |
-| `DataStore<Preferences>` | `facet_settings` (`datastore/facet_settings.preferences_pb`) | **All launcher-wide settings and defaults** — clock/app-list/dock design defaults (the calendar events strip has no design defaults of its own — see below), theme, drawer, search, permission-prompt flags, onboarding/seed/coach-mark flags, active facet id, the clock accessory switches, weather units and location, the icon pack and size — 79 keys (§5) | `SettingsRepository` only | Any upgrade (missing keys fall back to `LauncherSettings()` defaults) |
+| Room `FacetDatabase` | `facet.db` (schema **v50**, `exportSchema = true` → `app/schemas/…/1.json … 50.json`) | Facets + every *placement*: favorites, dock, folders, folder membership, widget grid positions, plus the facet automation rules (`automation_rules`) the weather cache (`weather_hours`, `weather_meta`) and each facet's clock stack (`clock_stack_items`) | 7 repositories (§2): `FacetRepository`, `PlacementRepository`, `FolderRepository`, `WidgetPlacementRepository`, `AutomationRuleRepository`, `WeatherRepository` (through `RoomWeatherStore`), `ClockStackRepository` | Reinstall-over-upgrade (migrations); **not** downgrade (dropped) |
+| `DataStore<Preferences>` | `facet_settings` (`datastore/facet_settings.preferences_pb`) | **All launcher-wide settings and defaults** — clock/app-list/dock design defaults (the calendar events strip has no design defaults of its own — see below), theme, drawer, search, permission-prompt flags, onboarding/seed/coach-mark flags, active facet id, the clock accessory switches, weather units and location, the icon pack and size — 80 keys (§5) | `SettingsRepository` only | Any upgrade (missing keys fall back to `LauncherSettings()` defaults) |
 | `DataStore<Preferences>` | `facet_entitlement` (`datastore/facet_entitlement.preferences_pb`) | The cached Pro state (`pro_purchased`; excluded from Android backups and device transfer by `res/xml/data_extraction_rules.xml`), so Pro works offline and at cold start; debug builds also keep `debug_entitlement_mode` here | `PlayEntitlementRepository`, only from an explicit Google Play answer | Same as `facet_settings`; **not** in the backup file, so a restore can never grant Pro |
 | `DataStore<Preferences>` | `facet_automation` (`datastore/facet_automation.preferences_pb`) | Facet-automation bookkeeping: the baseline facet, the ordered active rule ids, the suppressed rule ids (§5.7) | `AutomationStateRepository` (via `ActivateFacetByIdUseCase`) | Same as `facet_settings`; **not** in the backup file |
 | System `AppWidgetService` | Android framework, keyed by `HUB_APP_WIDGET_HOST_ID = 1024` | Which `appWidgetId`s are bound to which providers for this host | `LauncherAppWidgetHost` via `AppWidgetRepository` (allocate/bind/delete) | App data clear **does not** clear it → orphan detection in `ObserveHubStateUseCase` |
@@ -49,6 +49,8 @@ erDiagram
         string landscapeAppListVerticalAlignment "nullable"
         string landscapeAppListColumnAlignment "nullable"
         boolean allowLandscape "default true; off = this facet is portrait only"
+        string dockGlass "GlassStyle, default OFF; the glass behind the dock"
+        string appsListGlass "GlassStyle, default OFF; the glass behind each apps list item"
         string appRowPosition
         string appRowPresentation
         string listContentMode
@@ -398,6 +400,7 @@ Room.databaseBuilder(context, FacetDatabase::class.java, "facet.db")
 | 46→47 | **Auto-migration** (`@AutoMigration(from = 46, to = 47)`): `app_placements` and `folder_placements` each gain four nullable columns, `portraitRow`, `portraitColumn`, `landscapeRow` and `landscapeColumn` (a Home grid cell counted from the anchor edge). All null until an item is first moved on a grid, when its place still follows `position`. Nothing reads them yet. `FacetDatabaseMigrationTest.migration46To47AddsEmptyHomeCellsAndKeepsEveryPlacement`. |
 | 47→48 | **Manual, no schema change** (`Migrations.MIGRATION_47_48`): deletes every `app_placements` and `folder_placements` row with a null `facetId`, the launcher-wide Dock and Favorites that no longer exist (a facet has held its own copy since 44→45). The columns stay nullable. `FacetDatabaseMigrationTest.migration47To48DeletesTheLauncherWideListsAndKeepsFacetLists`. |
 | 48→49 | **Manual** (`Migrations.migration48To49`, reading the old key through `legacyAllowLandscape` in `FacetDefaultsMigration.kt`): `facets` gains `allowLandscape INTEGER NOT NULL DEFAULT 1`, and every facet is set to the launcher-wide `allow_landscape` the DataStore held, read through a supplier like 44→45, so nothing changes on screen. The DataStore key is no longer written or read after this. `FacetDatabaseMigrationTest.migration48To49GivesEveryFacetTheLauncherWideLandscapeChoice`. |
+| 49→50 | **Manual** (`Migrations.MIGRATION_49_50`): `facets` gains `dockGlass` and `appsListGlass`, `TEXT NOT NULL DEFAULT 'OFF'` (a `GlassStyle` name, through `Converters`). The calendar's style lives in the clock's JSON config (`ClockCalendarConfig.glass`) and the media row's in the DataStore, so neither needs a column. `FacetDatabaseMigrationTest.migration49To50AddsGlassStylesThatStartOff`. |
 
 The landscape twins are handled as one `LandscapeOverrides` group (clock alignment, divider, row position, vertical and column alignment; every field nullable). Settings hold it as `LauncherSettings.landscape`, read from the five `landscape_*` keys and written only through `updateLandscape`. A facet keeps the flat columns above (so the schema is unchanged) and exposes the group as `FacetEntity.landscape` / `withLandscape(...)`, written through `FacetRepository.updateLandscape`. `resolveLandscape` is the one resolution rule (see [17](17-flow-home-layout.md) §1.0).
 
@@ -472,6 +475,7 @@ erDiagram
         string notification_badge_style "NotificationBadgeStyle, default DOT"
         boolean show_media_player_on_home "default false"
         boolean show_media_skip_buttons "default true"
+        string media_player_glass_style "GlassStyle, default OFF"
         boolean show_notifications_in_app_menu "default true"
         boolean calendar_permission_requested "default false"
         boolean contacts_permission_requested "default false"
@@ -602,6 +606,7 @@ DataStore serialises writes and is main-safe; callers `viewModelScope.launch { }
 | `setNotificationBadgeStyle(NotificationBadgeStyle)` | `notification_badge_style` | set | `NotificationSettingsViewModel` |
 | `setShowMediaPlayerOnHome(Boolean)` | `show_media_player_on_home` | set | `NotificationSettingsViewModel` |
 | `setShowMediaSkipButtons(Boolean)` | `show_media_skip_buttons` | set | `NotificationSettingsViewModel` |
+| `setMediaPlayerGlass(GlassStyle)` | `media_player_glass_style` | set | `NotificationSettingsViewModel` |
 | `setShowNotificationsInAppMenu(Boolean)` | `show_notifications_in_app_menu` | set | `NotificationSettingsViewModel` |
 | `setCalendarPermissionRequested(Boolean)` | `calendar_permission_requested` | set | `PermissionsViewModel` |
 | `setContactsPermissionRequested(Boolean)` | `contacts_permission_requested` | set | `PermissionsViewModel` |
@@ -617,7 +622,7 @@ DataStore level either.
 
 ### 5.4 Key registry by section
 
-The same 79 keys, grouped the way Settings screens present them, with the `LauncherSettings` field
+The same 80 keys, grouped the way Settings screens present them, with the `LauncherSettings` field
 each maps to. Defaults are `LauncherSettings()`'s constructor defaults.
 
 #### Clock (a clock holds its own style, accessories and calendar in `ClockWidgetConfig`; only these launcher-wide keys remain)
@@ -750,6 +755,7 @@ accessibility grant, and the pair is small enough to set again after a restore.
 | `notification_badge_style` | String (`NotificationBadgeStyle`) | `notificationBadgeStyle` | `DOT` |
 | `show_media_player_on_home` | Boolean | `showMediaPlayerOnHome` | `false` — opt-in; the row also needs notification access, so it only shows when both hold |
 | `show_media_skip_buttons` | Boolean | `showMediaSkipButtons` | `true` |
+| `media_player_glass_style` | String (`GlassStyle`) | `mediaPlayerGlass` | `OFF` — the glass panel behind the media row |
 | `show_notifications_in_app_menu` | Boolean | `showNotificationsInAppMenu` | `true` — lists an app's notifications in its long-press menu; also needs notification access. In `BackupSettings` (defaulted, no version bump) |
 
 #### Permission-prompt bookkeeping
