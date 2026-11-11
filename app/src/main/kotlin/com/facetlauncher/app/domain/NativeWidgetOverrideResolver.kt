@@ -56,7 +56,7 @@ class NativeWidgetOverrideResolver @Inject constructor(
     /** The events an Agenda shows: its own calendars (every calendar until it picks) and all-day choice (shown until it hides them). */
     private suspend fun agendaEvents(config: NativeWidgetConfig): List<CalendarEvent> =
         if (calendarPermissionRepository.isGranted()) {
-            calendarRepository.getUpcomingEvents(config.calendarIds, config.showAllDayEvents ?: true)
+            calendarRepository.getAgendaEvents(config.calendarIds, config.showAllDayEvents ?: true)
         } else {
             emptyList()
         }

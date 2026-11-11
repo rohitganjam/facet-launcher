@@ -89,8 +89,8 @@ class ObserveNativeWidgetOverridesUseCaseTest {
         val everything = CalendarEvent(2, "9", "Lunch", 0, 1, false)
         given(native(-1, NativeWidgetType.AGENDA, NativeWidgetConfig(calendarIds = setOf("5"))), native(-2, NativeWidgetType.AGENDA, NativeWidgetConfig()))
         `when`(calendarPermission.isGranted()).thenReturn(true)
-        `when`(calendars.getUpcomingEvents(setOf("5"), true)).thenReturn(listOf(event))
-        `when`(calendars.getUpcomingEvents(null, true)).thenReturn(listOf(event, everything))
+        `when`(calendars.getAgendaEvents(setOf("5"), true)).thenReturn(listOf(event))
+        `when`(calendars.getAgendaEvents(null, true)).thenReturn(listOf(event, everything))
 
         // When observing
         val overrides = useCase()().first()
@@ -106,7 +106,7 @@ class ObserveNativeWidgetOverridesUseCaseTest {
         val event = CalendarEvent(1, "2", "Standup", 0, 1, false)
         given(native(-1, NativeWidgetType.AGENDA, NativeWidgetConfig(showAllDayEvents = false)))
         `when`(calendarPermission.isGranted()).thenReturn(true)
-        `when`(calendars.getUpcomingEvents(null, false)).thenReturn(listOf(event))
+        `when`(calendars.getAgendaEvents(null, false)).thenReturn(listOf(event))
 
         // Then it reads every calendar with its own all-day choice
         assertEquals(listOf(event), useCase()().first()[NativeWidgetRef.Hub(-1)]?.events)
@@ -123,7 +123,7 @@ class ObserveNativeWidgetOverridesUseCaseTest {
         )
         `when`(clockStack.observe(LauncherSettings().activeFacetId)).thenReturn(flowOf(listOf(page)))
         `when`(calendarPermission.isGranted()).thenReturn(true)
-        `when`(calendars.getUpcomingEvents(setOf("5"), true)).thenReturn(listOf(event))
+        `when`(calendars.getAgendaEvents(setOf("5"), true)).thenReturn(listOf(event))
 
         // When observing
         val overrides = useCase()().first()

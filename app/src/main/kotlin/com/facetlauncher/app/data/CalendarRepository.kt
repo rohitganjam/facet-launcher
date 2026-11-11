@@ -95,7 +95,7 @@ open class CalendarRepository @Inject constructor(
     private fun sampleWorkTitles(): Map<String, List<String>> {
         val now = System.currentTimeMillis()
         val events = runCatching {
-            queryInstances(CalendarContract.Instances.ENTERPRISE_CONTENT_URI, now, now + SAMPLE_WINDOW_MILLIS, WORK_CALENDAR_ID_PREFIX, LocalDate.now(), includeAllDay = true) { true }
+            queryInstances(CalendarContract.Instances.ENTERPRISE_CONTENT_URI, now, now + SAMPLE_WINDOW_MILLIS, WORK_CALENDAR_ID_PREFIX, LocalDate.now().plusDays(1), includeAllDay = true) { true }
         }.getOrDefault(emptyList())
         return events.sortedBy { it.startTimeMillis }.groupBy { it.calendarId }
             .mapValues { (_, list) -> list.map { it.title.trim() }.filter { it.isNotEmpty() }.distinct().take(SAMPLE_TITLES) }
@@ -108,13 +108,20 @@ open class CalendarRepository @Inject constructor(
      * when its [WORK_CALENDAR_ID_PREFIX] id is listed.
      * @param includeAllDay whether all-day events are included at all.
      */
-    open suspend fun getUpcomingEvents(calendarIds: Set<String>?, includeAllDay: Boolean): List<CalendarEvent> = withContext(ioDispatcher) {
-        val (begin, end) = upcomingWindow()
-        val today = LocalDate.now()
-        val personal = queryInstances(CalendarContract.Instances.CONTENT_URI, begin, end, "", today, includeAllDay) { calendarIds.selectsCalendar(it) }
+    open suspend fun getUpcomingEvents(calendarIds: Set<String>?, includeAllDay: Boolean): List<CalendarEvent> =
+        queryEvents(calendarIds, includeAllDay, upcomingWindow(), lastAllDayOffset = 1)
+
+    /** Events for the Agenda widget: local midnight today for [AGENDA_DAYS] days, all-day events dated within them. The widget caps the count. */
+    open suspend fun getAgendaEvents(calendarIds: Set<String>?, includeAllDay: Boolean): List<CalendarEvent> =
+        queryEvents(calendarIds, includeAllDay, agendaWindow(), lastAllDayOffset = AGENDA_DAYS - 1L)
+
+    private suspend fun queryEvents(calendarIds: Set<String>?, includeAllDay: Boolean, window: Pair<Long, Long>, lastAllDayOffset: Long): List<CalendarEvent> = withContext(ioDispatcher) {
+        val (begin, end) = window
+        val lastAllDay = LocalDate.now().plusDays(lastAllDayOffset)
+        val personal = queryInstances(CalendarContract.Instances.CONTENT_URI, begin, end, "", lastAllDay, includeAllDay) { calendarIds.selectsCalendar(it) }
         val wanted = calendarIds.orEmpty().filter { it.startsWith(WORK_CALENDAR_ID_PREFIX) }.toSet()
         val work = if (wanted.isEmpty()) emptyList() else runCatching {
-            queryInstances(CalendarContract.Instances.ENTERPRISE_CONTENT_URI, begin, end, WORK_CALENDAR_ID_PREFIX, today, includeAllDay) { it in wanted }
+            queryInstances(CalendarContract.Instances.ENTERPRISE_CONTENT_URI, begin, end, WORK_CALENDAR_ID_PREFIX, lastAllDay, includeAllDay) { it in wanted }
         }.getOrDefault(emptyList())
         (personal + work).sortedBy { it.startTimeMillis }
     }
@@ -125,7 +132,7 @@ open class CalendarRepository @Inject constructor(
         begin: Long,
         end: Long,
         idPrefix: String,
-        today: LocalDate,
+        lastAllDay: LocalDate,
         includeAllDay: Boolean,
         accept: (calendarId: String) -> Boolean,
     ): List<CalendarEvent> {
@@ -151,7 +158,7 @@ open class CalendarRepository @Inject constructor(
                 while (cursor.moveToNext()) {
                     val calendarId = idPrefix + cursor.getLong(calendarIdCol)
                     val isAllDay = cursor.getInt(allDayCol) != 0
-                    val inAllDayWindow = !isAllDay || (includeAllDay && isOnTodayOrTomorrow(cursor.getLong(beginCol), today))
+                    val inAllDayWindow = !isAllDay || (includeAllDay && isInAllDayRange(cursor.getLong(beginCol), lastAllDay))
                     if (!accept(calendarId) || !inAllDayWindow) continue
                     add(
                         CalendarEvent(
@@ -174,11 +181,12 @@ open class CalendarRepository @Inject constructor(
      * [CalendarContract.Instances.query]'s overlap check against a *local* begin/end window can
      * hand back an all-day event from the wrong side of the window whenever the device is ahead of
      * or behind UTC. Re-derive the event's actual date from its UTC-anchored start and compare it
-     * against today's and tomorrow's local dates instead of trusting the query window alone.
+     * against the local dates from today to [lastAllDay] instead of trusting the query window alone.
      */
-    private fun isOnTodayOrTomorrow(allDayStartMillis: Long, today: LocalDate): Boolean {
+    private fun isInAllDayRange(allDayStartMillis: Long, lastAllDay: LocalDate): Boolean {
         val date = Instant.ofEpochMilli(allDayStartMillis).atZone(ZoneOffset.UTC).toLocalDate()
-        return date == today || date == today.plusDays(1)
+        val today = LocalDate.now()
+        return !date.isBefore(today) && !date.isAfter(lastAllDay)
     }
 
     /** Local midnight today to noon tomorrow; calendar arithmetic keeps it right across DST changes. */
@@ -195,7 +203,20 @@ open class CalendarRepository @Inject constructor(
         }
         return begin.timeInMillis to end.timeInMillis
     }
+
+    /** Local midnight today for [AGENDA_DAYS] days. */
+    private fun agendaWindow(): Pair<Long, Long> {
+        val begin = Calendar.getInstance().apply {
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }
+        val end = (begin.clone() as Calendar).apply { add(Calendar.DAY_OF_MONTH, AGENDA_DAYS) }
+        return begin.timeInMillis to end.timeInMillis
+    }
 }
 
+private const val AGENDA_DAYS = 7
 private const val SAMPLE_TITLES = 3
 private const val SAMPLE_WINDOW_MILLIS = 14L * 24 * 60 * 60 * 1000
