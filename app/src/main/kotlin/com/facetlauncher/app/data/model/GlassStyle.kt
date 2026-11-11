@@ -17,7 +17,7 @@ enum class GlassStyle(@param:StringRes val displayNameRes: Int) {
     BRIGHT(R.string.glass_style_bright),
 
     /** An almost clear fill with a bright diagonal edge. */
-    RIM_LIGHT(R.string.glass_style_rim_light),
+    CLEAR_GLASS(R.string.glass_style_clear_glass),
 
     /** The launcher accent colour as the wash. */
     ACCENT(R.string.glass_style_accent),

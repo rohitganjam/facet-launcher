@@ -38,15 +38,6 @@
     <string name="font_scale_extra_large">Extra groot</string>
     <string name="font_scale_huge">Enorm</string>
 
-    <string name="icon_render_system_default">Systeemstandaard</string>
-    <string name="icon_render_monochrome_black_white">Monochroom (zwart-wit)</string>
-    <string name="icon_render_monochrome_accent">Monochroom (accent)</string>
-    <string name="icon_render_glyph_accent">Symbool (accent)</string>
-    <string name="icon_render_outline_accent">Omtrek (accent)</string>
-    <string name="icon_render_glyph_ink">Symbool (thema)</string>
-    <string name="icon_render_outline_ink">Omtrek (thema)</string>
-    <string name="icon_render_glyph_inverted">Symbool (thema omgekeerd)</string>
-    <string name="icon_render_outline_inverted">Omtrek (thema omgekeerd)</string>
     <string name="icon_style_default">Standaard</string>
     <string name="icon_style_monochrome">Monochroom</string>
     <string name="icon_style_glyph">Symbool</string>
@@ -56,20 +47,8 @@
     <string name="icon_colour_theme_inverted">Thema omgekeerd</string>
     <string name="icons_screen_title">Pictogrammen</string>
     <string name="icons_screen_colour">Kleur</string>
-    <string name="icon_render_glyph_tile_accent">Symbool op tegel (accent)</string>
-    <string name="icon_render_glyph_tile_ink">Symbool op tegel (thema)</string>
-    <string name="icon_render_glyph_tile_inverted">Symbool op tegel (thema omgekeerd)</string>
-    <string name="icon_render_outline_tile_accent">Omtrek op tegel (accent)</string>
-    <string name="icon_render_outline_tile_ink">Omtrek op tegel (thema)</string>
-    <string name="icon_render_outline_tile_inverted">Omtrek op tegel (thema omgekeerd)</string>
     <string name="icon_background_none">Geen</string>
     <string name="icon_background_tile">Tegel</string>
-    <string name="icon_render_glyph_reversed_accent">Symbool op omgekeerde tegel (accent)</string>
-    <string name="icon_render_glyph_reversed_ink">Symbool op omgekeerde tegel (thema)</string>
-    <string name="icon_render_glyph_reversed_inverted">Symbool op omgekeerde tegel (thema omgekeerd)</string>
-    <string name="icon_render_outline_reversed_accent">Omtrek op omgekeerde tegel (accent)</string>
-    <string name="icon_render_outline_reversed_ink">Omtrek op omgekeerde tegel (thema)</string>
-    <string name="icon_render_outline_reversed_inverted">Omtrek op omgekeerde tegel (thema omgekeerd)</string>
     <string name="icon_background_reversed_tile">Omgekeerde tegel</string>
     <string name="icons_screen_background">Achtergrond</string>
     <string name="icon_shape_squircle">Squircle</string>
@@ -1062,6 +1041,6 @@
     <string name="glass_style_frost">Lichte vorst</string>
     <string name="glass_style_smoked">Rookglas</string>
     <string name="glass_style_bright">Helder</string>
-    <string name="glass_style_rim_light">Lichtrand</string>
+    <string name="glass_style_clear_glass">Helder glas</string>
     <string name="glass_style_accent">Accent</string>
 </resources>

@@ -4728,7 +4728,47 @@ A *Copy from facet* row at the bottom of each facet's Dock, Apps list and Widget
 
 ## Backgrounds
 
-- [x] `GlassStyle` (Off, Light frost, Smoked, Bright, Rim light, Accent) and `Modifier.glassBackground` (a tint, no blur) behind the dock (`Facet.dockGlass`, Room v50), apps list items (`Facet.appsListGlass`), the clock's calendar events (`ClockCalendarConfig.glass`) and the media row (`LauncherSettings.mediaPlayerGlass`); a background dropdown on each one's settings screen (*Dock background*, *List item background*, *Calendar background*, *Media player background*), and in the dock and apps list previews; backup carries all four. Tests: `FacetRepositoryTest`, `SettingsRepositoryTest`, `NativeWidgetConfigTest`, `FacetDatabaseMigrationTest` (v49→50).
+- [x] `GlassStyle` (Off, Light frost, Smoked, Bright, Clear glass, Accent) and `Modifier.glassBackground` (a tint, no blur) behind the dock (`Facet.dockGlass`, Room v50), apps list items (`Facet.appsListGlass`), the clock's calendar events (`ClockCalendarConfig.glass`) and the media row (`LauncherSettings.mediaPlayerGlass`); a background dropdown on each one's settings screen (*Dock background*, *List item background*, *Calendar background*, *Media player background*), and in the dock and apps list previews; backup carries all four. Tests: `FacetRepositoryTest`, `SettingsRepositoryTest`, `NativeWidgetConfigTest`, `FacetDatabaseMigrationTest` (v49→50).
 - [x] The Weather, Agenda and Now playing widgets each carry their own background (`NativeWidgetConfig.glass`, default Light frost, in the widget's JSON config, so no schema change): a Background dropdown first in `NativeWidgetConfigSheet`, which Now playing now has too (`NativeWidgetOverride.glass` carries it to `NativeWidget`). Tests: `NativeWidgetConfigTest`, `ObserveNativeWidgetOverridesUseCaseTest`; checked on an emulator.
+- [x] Glass icon backgrounds: `IconBackground` gains `GLASS_FROST`, `GLASS_SMOKED`, `GLASS_BRIGHT`, `GLASS_CLEAR` and `GLASS_ACCENT` (each carries its `GlassStyle`), beside tile and reversed tile in the Icons screen's Background dropdown, glyph and outline only; the picture keeps the chosen colour on a `glassBackground` panel in the icon shape. `IconRenderMode` now carries its style, colour and background directly (30 new stored values, existing ones unchanged), and its unused `icon_render_*` display strings are gone. Tests: `IconRenderModeTest`.
 - [ ] Compose UI tests for the four dropdowns, and a check on a device.
 - [ ] Native review of the new `*_background` and `glass_style_*` strings (machine-translated); the `BackupFacet` dock and apps list flags are not yet in the backup round-trip test.
+
+## Wallpaper-backed glass (draft)
+
+Every background style is a tint today (Compose cannot blur the system wallpaper behind the window). With a copy of the wallpaper, the same styles also blur and refract it. Nothing is built yet.
+
+### Findings (tested on the API 30 and API 36 emulators)
+- `WallpaperManager.peekDrawable()` throws `SecurityException: READ_EXTERNAL_STORAGE denied` on both, with Facet as the default home or not. `builtInDrawable` works but is the factory image, so previews showed the wrong wallpaper until it was dropped (`245ae359`).
+- `getWallpaperColors()` is readable and follows a wallpaper change; previews now paint a primary-to-secondary wash from it, lightness set per theme.
+- Smart Launcher hit the same limit (since Sept 2023) and asks the user for the wallpaper; Niagara does not read it and uses a plain tint.
+- Not yet verified: `WallpaperManager.getWallpaperId()` changing on every system wallpaper change without a permission, and `Activity.registerScreenCaptureCallback` (API 34) for noticing a screenshot.
+
+### Decisions
+- **Tint first, glass as an upgrade.** The six `GlassStyle`s and their dropdowns stay as they are. With a wallpaper copy, the same style is drawn over a blurred and refracted copy of it; without one it is the tint it is now. No separate "real glass" choice.
+- **Clear glass** (`GlassStyle.CLEAR_GLASS`, the near-clear fill with the bright diagonal edge) is the style closest to liquid glass; Frost, Smoked, Bright and Accent become blur plus their tint. A clear panel over a busy wallpaper may need a slight dim of the backdrop or the existing text shadows for legibility.
+- **The user supplies the wallpaper; we cannot capture it.** `PixelCopy` sees only Facet's own window, `MediaProjection` asks for consent every time and records everything on screen, and an accessibility service is too heavy. So: *Choose photo* through the system Photo Picker (no permission), ideally the original photo (full resolution, no bars). Fallback: a *Clean screenshot* helper shows a bare Facet screen over the wallpaper, the user takes a screenshot and picks it; we trim the status and navigation bars and fit it to the screen's aspect ratio.
+- **Library:** `io.github.kyant0:backdrop` (Apache-2.0) draws a captured backdrop into a foreground with blur and refraction (`rememberLayerBackdrop`, `Modifier.layerBackdrop`, `drawBackdrop`). It captures only content in the Compose tree, so the stored image is drawn as a layer behind Home and marked as the backdrop. A new dependency: needs an explicit yes, and its minimum SDK and blur fallback below API 31 must be checked first.
+- **Launcher-wide**, not per facet, for the first version (one stored image, no migration). Per facet can follow.
+- **Stored in app-private storage**, downscaled to about screen size; local only, no network. It is not in the backup bundle, so a restore falls back to the tint.
+
+### When and where we ask
+- **At the moment of choosing**: picking a style other than Off in the Dock, List item, Calendar or Media player background dropdown, while no wallpaper copy is stored. A `ThemedModalBottomSheet` (so it closes on Home press): "Make this background see-through? To blur your wallpaper behind this panel, Facet needs a copy of it. Android doesn't let launchers read your wallpaper, so you'd pick the photo yourself. It stays on your phone." Buttons *Choose photo* and *Not now*; footnote "Without it, this background still works as a tinted panel. You can add the photo later in Appearance > Wallpaper."
+- **Not now**: the style still applies, as the tint it is today. The choice is remembered and we do not ask again unprompted; it comes back only when the user picks a style again or opens Appearance > Wallpaper. Removing the photo returns every panel to the tint.
+- **Standing setting**: the existing wallpaper row in Appearance (today it only fires `ACTION_SET_WALLPAPER`) becomes the place to choose a photo, replace it, remove it, or use a wallpaper app (system-owned, tint only).
+- **Stale copy**: if the system wallpaper changes elsewhere, the stored copy no longer matches. Store `getWallpaperId()` when the photo is set; on a mismatch, fall back to the tint and offer to re-pick. Not onboarding, and never a prompt on launch.
+
+### Steps
+- [ ] Spike on the dock only: one wallpaper layer behind Home marked as the backdrop, the dock panel drawn with `drawBackdrop`, the pick-a-photo sheet from the dock dropdown; confirm the library's minimum SDK, blur fallback and cost on a low-end device.
+- [ ] Wallpaper store: private file plus the system wallpaper id, a repository, a launcher-wide setting for the "not now" choice, and tests.
+- [ ] Appearance > Wallpaper row with choose, replace, remove and use-a-wallpaper-app.
+- [ ] Clean-screenshot helper: bare screen, screenshot detection where available, crop of the status and navigation bars, tests for the crop.
+- [ ] Stale-copy detection and the fall back to the tint.
+- [ ] Extend to the list items, calendar, media row and the Weather, Agenda and Now playing widgets; retune each style's opacity over a blurred backdrop; status and navigation bar icon colour from the stored image (`13 §2a`).
+- [ ] Strings in en, de, es, fr, nl and pt; docs `02`, `07`, `12`, `13`; tests per step.
+
+### Open
+- Always on once a copy exists, or a per-component toggle (leaning always on).
+- Whether the clean-screenshot helper ships in the first version or only the photo picker.
+- Parallax or scrolling alignment of the stored image with the system wallpaper.
+- How the Backdrop library behaves on live wallpapers and below API 31 (the stored image does not depend on the live wallpaper, but the match to what is behind the window does).

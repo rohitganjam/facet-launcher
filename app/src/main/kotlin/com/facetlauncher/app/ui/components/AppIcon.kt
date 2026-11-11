@@ -35,6 +35,7 @@ import com.facetlauncher.app.data.icon.StyledPicture
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.AppProfile
 import com.facetlauncher.app.data.model.DrawerListItemSize
+import com.facetlauncher.app.data.model.GlassStyle
 import com.facetlauncher.app.data.model.IconBackground
 import com.facetlauncher.app.data.model.IconColour
 import com.facetlauncher.app.data.model.IconRenderMode
@@ -230,7 +231,7 @@ private fun AppIconGlyph(icon: ImageBitmap?, monochromeIcon: ImageBitmap?, fromI
                 else -> tintColor.asColorTint()
             },
             alpha = if (pending) 0f else 1f,
-            modifier = modifier.size(size).iconClip(iconShape, paint.tile.takeUnless { pending }, unclipped = styledPicture != null || (fromIconPack && !outline.clipsPackIcons)),
+            modifier = modifier.size(size).iconClip(iconShape, paint.tile.takeUnless { pending }, paint.glass.takeUnless { pending }, unclipped = styledPicture != null || (fromIconPack && !outline.clipsPackIcons)),
         )
     } else {
         Box(
@@ -250,8 +251,10 @@ private fun AppIconGlyph(icon: ImageBitmap?, monochromeIcon: ImageBitmap?, fromI
 
 private fun Color?.asColorTint(): ColorFilter? = this?.let { ColorFilter.tint(it, BlendMode.Color) }
 
-/** A tile is clipped and filled, a styled picture is left unclipped (its own shape is the point), anything else is clipped to the icon shape. */
-private fun Modifier.iconClip(shape: Shape, tile: Color?, unclipped: Boolean): Modifier = when {
+/** A tile is clipped and filled, a glass panel is clipped and tinted, a styled picture is left unclipped (its own shape is the point), anything else is clipped to the icon shape. */
+@Composable
+private fun Modifier.iconClip(shape: Shape, tile: Color?, glass: GlassStyle?, unclipped: Boolean): Modifier = when {
+    glass != null -> glassBackground(glass, shape)
     tile != null -> clip(shape).background(tile)
     unclipped -> this
     else -> clip(shape)
@@ -294,8 +297,8 @@ private fun IconRenderMode.pictureOf(styled: StyledIcon?): ImageBitmap? = when (
 
 private fun IconRenderMode.isStyled() = styledPicture() != null
 
-/** What an icon is painted with: [tone] colours the icon (null leaves it as it is) and [tile], where there is one, fills the icon shape behind it. */
-private class IconPaint(val tone: Color?, val tile: Color? = null)
+/** What an icon is painted with: [tone] colours the icon (null leaves it as it is) and [tile] or [glass], where there is one, fills the icon shape behind it. */
+private class IconPaint(val tone: Color?, val tile: Color? = null, val glass: GlassStyle? = null)
 
 /** The picture a style draws, null for the styles that draw no glyph or outline. */
 private fun IconRenderMode.styledPicture(): StyledPicture? = when (style) {
@@ -312,9 +315,18 @@ private fun IconRenderMode.paint(accent: Color, ink: Color, inkInverted: Color):
         IconColour.THEME -> ink
         IconColour.THEME_INVERTED -> inkInverted
     }
-    if (background == IconBackground.NONE) return IconPaint(tone = colour)
-    val readable = if (abs(ink.lightness() - colour.lightness()) > abs(inkInverted.lightness() - colour.lightness())) ink else inkInverted
-    return if (background == IconBackground.TILE) IconPaint(tone = readable, tile = colour) else IconPaint(tone = colour, tile = readable)
+    return colour.paintedOn(background, ink, inkInverted)
+}
+
+/** A glass panel leaves the picture in the colour, a tile puts the colour behind it, a reversed tile behind a readable tone. */
+private fun Color.paintedOn(background: IconBackground, ink: Color, inkInverted: Color): IconPaint {
+    fun readable() = if (abs(ink.lightness() - lightness()) > abs(inkInverted.lightness() - lightness())) ink else inkInverted
+    return when {
+        background.glass != null -> IconPaint(tone = this, glass = background.glass)
+        background == IconBackground.NONE -> IconPaint(tone = this)
+        background == IconBackground.TILE -> IconPaint(tone = readable(), tile = this)
+        else -> IconPaint(tone = this, tile = readable())
+    }
 }
 
 private fun Color.lightness() = 0.299f * red + 0.587f * green + 0.114f * blue

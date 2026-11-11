@@ -46,15 +46,6 @@
     <string name="font_scale_huge">Enorme</string>
 
     <!-- IconRenderMode -->
-    <string name="icon_render_system_default">Predeterminado del sistema</string>
-    <string name="icon_render_monochrome_black_white">Monocromo (blanco y negro)</string>
-    <string name="icon_render_monochrome_accent">Monocromo (acento)</string>
-    <string name="icon_render_glyph_accent">Glifo (acento)</string>
-    <string name="icon_render_outline_accent">Contorno (acento)</string>
-    <string name="icon_render_glyph_ink">Glifo (tema)</string>
-    <string name="icon_render_outline_ink">Contorno (tema)</string>
-    <string name="icon_render_glyph_inverted">Glifo (tema invertido)</string>
-    <string name="icon_render_outline_inverted">Contorno (tema invertido)</string>
     <string name="icon_style_default">Predeterminado</string>
     <string name="icon_style_monochrome">Monocromo</string>
     <string name="icon_style_glyph">Glifo</string>
@@ -64,20 +55,8 @@
     <string name="icon_colour_theme_inverted">Tema invertido</string>
     <string name="icons_screen_title">Iconos</string>
     <string name="icons_screen_colour">Color</string>
-    <string name="icon_render_glyph_tile_accent">Glifo en mosaico (acento)</string>
-    <string name="icon_render_glyph_tile_ink">Glifo en mosaico (tema)</string>
-    <string name="icon_render_glyph_tile_inverted">Glifo en mosaico (tema invertido)</string>
-    <string name="icon_render_outline_tile_accent">Contorno en mosaico (acento)</string>
-    <string name="icon_render_outline_tile_ink">Contorno en mosaico (tema)</string>
-    <string name="icon_render_outline_tile_inverted">Contorno en mosaico (tema invertido)</string>
     <string name="icon_background_none">Ninguno</string>
     <string name="icon_background_tile">Mosaico</string>
-    <string name="icon_render_glyph_reversed_accent">Glifo en mosaico inverso (acento)</string>
-    <string name="icon_render_glyph_reversed_ink">Glifo en mosaico inverso (tema)</string>
-    <string name="icon_render_glyph_reversed_inverted">Glifo en mosaico inverso (tema invertido)</string>
-    <string name="icon_render_outline_reversed_accent">Contorno en mosaico inverso (acento)</string>
-    <string name="icon_render_outline_reversed_ink">Contorno en mosaico inverso (tema)</string>
-    <string name="icon_render_outline_reversed_inverted">Contorno en mosaico inverso (tema invertido)</string>
     <string name="icon_background_reversed_tile">Mosaico inverso</string>
     <string name="icons_screen_background">Fondo</string>
 
@@ -1132,6 +1111,6 @@
     <string name="glass_style_frost">Escarcha clara</string>
     <string name="glass_style_smoked">Ahumado</string>
     <string name="glass_style_bright">Brillante</string>
-    <string name="glass_style_rim_light">Borde luminoso</string>
+    <string name="glass_style_clear_glass">Cristal transparente</string>
     <string name="glass_style_accent">Acento</string>
 </resources>

@@ -17,8 +17,8 @@ private fun fill(top: Float, bottom: Float, color: Color = Color.White) =
 
 private fun edge(top: Float, bottom: Float, color: Color = Color.White) = fill(top, bottom, color)
 
-/** The diagonal edge of [GlassStyle.RIM_LIGHT]: bright at the top left and bottom right, fading between. */
-private val RimEdge = Brush.linearGradient(
+/** The diagonal edge of [GlassStyle.CLEAR_GLASS]: bright at the top left and bottom right, fading between. */
+private val ClearGlassEdge = Brush.linearGradient(
     listOf(Color.White.copy(alpha = 0.75f), Color.White.copy(alpha = 0.08f), Color.White.copy(alpha = 0.35f)),
 )
 
@@ -34,7 +34,7 @@ fun Modifier.glassBackground(style: GlassStyle, shape: Shape = MaterialTheme.sha
         GlassStyle.FROST -> glassPanel(shape, fill(0.22f, 0.10f), edge(0.35f, 0.08f))
         GlassStyle.SMOKED -> glassPanel(shape, fill(0.42f, 0.42f, Color(0xFF0A0C18)), edge(0.18f, 0.08f))
         GlassStyle.BRIGHT -> glassPanel(shape, fill(0.38f, 0.24f), edge(0.6f, 0.25f))
-        GlassStyle.RIM_LIGHT -> glassPanel(shape, fill(0.07f, 0.05f), RimEdge)
+        GlassStyle.CLEAR_GLASS -> glassPanel(shape, fill(0.07f, 0.05f), ClearGlassEdge)
         GlassStyle.ACCENT -> glassPanel(shape, fill(0.38f, 0.18f, accent), edge(0.45f, 0.15f, accent))
     }
 }
