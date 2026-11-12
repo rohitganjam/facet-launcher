@@ -8,7 +8,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.facetlauncher.app.R
-import com.facetlauncher.app.data.model.GlassStyle
 import com.facetlauncher.app.data.model.AppListColumnAlignment
 import com.facetlauncher.app.data.model.AppListGridColumns
 import com.facetlauncher.app.data.model.AppListGridDisplayMode
@@ -18,6 +17,7 @@ import com.facetlauncher.app.data.model.AppListVerticalAlignment
 import com.facetlauncher.app.data.model.AppRowPosition
 import com.facetlauncher.app.data.model.AppRowPresentation
 import com.facetlauncher.app.ui.components.CardDivider
+import com.facetlauncher.app.ui.components.GlassBackgroundRow
 import com.facetlauncher.app.ui.components.LabeledDropdownRow
 import com.facetlauncher.app.ui.components.SettingsCard
 import com.facetlauncher.app.ui.components.SettingsSectionHeader
@@ -115,11 +115,9 @@ internal fun ColumnScope.AppListLayoutRows(uiState: HomeAppsListUiState, actions
         )
     }
     CardDivider()
-    LabeledDropdownRow(
+    GlassBackgroundRow(
         title = stringResource(R.string.list_item_background),
-        options = GlassStyle.entries,
         selected = uiState.appsListGlass,
-        label = { stringResource(it.displayNameRes) },
         onSelect = actions.onGlassChange,
         testTag = "apps_list_glass_row",
     )

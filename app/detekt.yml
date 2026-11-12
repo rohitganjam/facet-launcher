@@ -41,6 +41,8 @@ Compose:
       - LocalIsDarkTheme
       - LocalWallpaperAccentRole
       - LocalWallpaperBackdrop
+      - LocalIconGlassSamplesWallpaper
+      - LocalGlassBackgroundPrompt
       - LocalCustomAccentSwatch
   CompositionLocalNaming: { active: true }
   ConditionHoist: { active: true }

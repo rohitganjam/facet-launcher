@@ -31,13 +31,12 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.facetlauncher.app.R
-import com.facetlauncher.app.data.model.GlassStyle
 import com.facetlauncher.app.data.model.NativeWidgetConfig
 import com.facetlauncher.app.data.model.NativeWidgetRef
 import com.facetlauncher.app.data.model.NativeWidgetType
 import com.facetlauncher.app.data.model.WeatherCity
 import com.facetlauncher.app.data.model.selectsCalendar
-import com.facetlauncher.app.ui.components.LabeledDropdownRow
+import com.facetlauncher.app.ui.components.GlassBackgroundRow
 import com.facetlauncher.app.ui.components.ThemedModalBottomSheet
 import com.facetlauncher.app.ui.components.WeatherLocationPicker
 import com.facetlauncher.app.ui.components.calendarSubtitle
@@ -92,11 +91,9 @@ internal fun NativeWidgetConfigContent(
             verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             Text(text = stringResource(type.labelRes()), style = MaterialTheme.typography.titleMedium, color = Ink)
-            LabeledDropdownRow(
+            GlassBackgroundRow(
                 title = stringResource(R.string.native_widget_background),
-                options = GlassStyle.entries,
                 selected = config.glass ?: NativeWidgetConfig.DEFAULT_GLASS,
-                label = { stringResource(it.displayNameRes) },
                 onSelect = { onConfigChange(config.copy(glass = it)) },
                 testTag = "hub_widget_config_glass",
             )

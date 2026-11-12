@@ -43,14 +43,26 @@ system wallpaper shows through as before.
 | 31–32 | Blur, brightness and saturation; the lens does nothing, so Clear glass and Dark glass are sharp tinted panels. |
 | 33+ | Everything, including the lens. |
 
+## Prompts
+
+- **First use.** `GlassBackgroundRow` (all five background pickers: dock, apps list, calendar, media row, native widgets) applies the chosen style and, for any style but Off, shows a sheet when `GlassBackgroundPromptViewModel.needsCopy` (no usable copy, not dismissed): *Choose an image* (opens the wallpaper screen) or a remembered *Not now* (`wallpaper_prompt_dismissed`). The state reaches the rows through `LocalGlassBackgroundPrompt`, provided by `FacetNavHost`; without it (previews, tests) there is no prompt.
+- **After Android's picker.** *Set a system wallpaper* records the wallpaper id first. Coming back with a different id and no matching copy, `WallpaperViewModel` shows an offer card (*Choose an image* / *Not now*, the same remembered flag). Facet cannot read the new wallpaper, so the offer asks for the same image.
+
+## Previews
+
+`WallpaperRepository.currentHomeWallpaper()`, the one source of every preview's background (facet carousel cards, the Appearance, dock, list, drawer and notification previews), returns the saved copy first when it still matches the system wallpaper, then falls back to what Android lets it read.
+
+## Real glass on icons
+
+An icon's glass background samples the copy only inside live Home (`LocalIconGlassSamplesWallpaper`, provided in `HomeDrawerRoute`); the drawer, settings, previews and pickers keep the tint.
+
 ## Not built yet
 
-- The first-use prompt when a glass background is applied with no copy, and the remembered "Not now" (`wallpaper_prompt_dismissed` exists, nothing sets it).
-- The *Use my current wallpaper* (screenshot) path and the prompt after returning from the system picker.
-- Icon backgrounds still use the tint (many small panels; real glass there is untested).
+- The *Use my current wallpaper* (screenshot) path.
+- Icon glass on API 33+ uses the lens only when the icon shape is corner-based; other shapes get blur and fill only.
 - A stale copy (system wallpaper changed since it was stored) is not drawn: `WallpaperBackdropViewModel` re-reads the system id on every resume and exposes no copy, so glass is the tint until the user picks again.
 
 ## Tests
 
-`WallpaperCopyRepositoryTest`, `SetWallpaperFromPhotoUseCaseTest`, `WallpaperViewModelTest`, `WallpaperBackdropViewModelTest`, `WallpaperFitTest` (JVM);
-`WallpaperScreenTest` (emulator). `ImageDecoder` and the blur and lens effects are not covered on the JVM; they were checked on the API 36 emulator.
+`WallpaperCopyRepositoryTest`, `SetWallpaperFromPhotoUseCaseTest`, `WallpaperViewModelTest`, `WallpaperBackdropViewModelTest`, `GlassBackgroundPromptViewModelTest`, `WallpaperFitTest` (JVM);
+`WallpaperScreenTest`, `GlassBackgroundRowTest` (emulator). `ImageDecoder` and the blur and lens effects are not covered on the JVM; they were checked on the API 36 emulator.

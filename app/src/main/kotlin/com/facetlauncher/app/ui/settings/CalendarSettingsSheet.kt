@@ -52,6 +52,7 @@ import com.facetlauncher.app.ui.components.calendarSubtitle
 import com.facetlauncher.app.ui.components.calendarTitle
 import com.facetlauncher.app.ui.components.workCalendarPosition
 import com.facetlauncher.app.ui.components.CardDivider
+import com.facetlauncher.app.ui.components.GlassBackgroundRow
 import com.facetlauncher.app.ui.components.LabeledDropdownRow
 import com.facetlauncher.app.ui.components.dashedBorder
 import com.facetlauncher.app.ui.components.LocalSettingsRowInset
@@ -186,11 +187,9 @@ private fun DisplayOptionsCard(
             )
         }
         CardDivider()
-        LabeledDropdownRow(
+        GlassBackgroundRow(
             title = stringResource(R.string.calendar_background),
-            options = GlassStyle.entries,
             selected = uiState.calendarDisplay.glass,
-            label = { stringResource(it.displayNameRes) },
             onSelect = onGlassChange,
             enabled = controlsEnabled,
             testTag = "calendar_glass_row",

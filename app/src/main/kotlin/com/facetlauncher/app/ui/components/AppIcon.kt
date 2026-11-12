@@ -254,7 +254,7 @@ private fun Color?.asColorTint(): ColorFilter? = this?.let { ColorFilter.tint(it
 /** A tile is clipped and filled, a glass panel is clipped and tinted, a styled picture is left unclipped (its own shape is the point), anything else is clipped to the icon shape. */
 @Composable
 private fun Modifier.iconClip(shape: Shape, tile: Color?, glass: GlassStyle?, unclipped: Boolean): Modifier = when {
-    glass != null -> glassBackground(glass, shape)
+    glass != null -> glassBackground(glass, shape, sampleWallpaper = LocalIconGlassSamplesWallpaper.current)
     tile != null -> clip(shape).background(tile)
     unclipped -> this
     else -> clip(shape)

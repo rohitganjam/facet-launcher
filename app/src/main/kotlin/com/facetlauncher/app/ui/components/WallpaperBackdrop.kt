@@ -22,6 +22,9 @@ import com.kyant.backdrop.backdrops.rememberLayerBackdrop
 /** The wallpaper copy glass panels sample, or `null` when there is none (they then draw their plain tint). */
 val LocalWallpaperBackdrop = staticCompositionLocalOf<LayerBackdrop?> { null }
 
+/** `true` inside the live Home screen, where an icon's glass background samples the wallpaper copy; elsewhere (settings, previews, pickers) it stays a tint. */
+val LocalIconGlassSamplesWallpaper = staticCompositionLocalOf { false }
+
 /** Blur needs RenderEffect, which starts at API 31; below that the copy would show unblurred inside a panel, so there is no backdrop. */
 private const val MIN_BACKDROP_SDK = Build.VERSION_CODES.S
 

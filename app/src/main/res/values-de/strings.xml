@@ -230,6 +230,12 @@
     <string name="wallpaper_stale_title">Dein Hintergrundbild hat sich geändert</string>
     <string name="wallpaper_stale_body">Die Glas-Kopie passt nicht mehr dazu. Wähle erneut ein Bild oder entferne die Kopie.</string>
     <string name="wallpaper_failed">Das hat nicht geklappt. Versuche ein anderes Bild.</string>
+    <string name="wallpaper_offer_title">Du hast dein Hintergrundbild geändert</string>
+    <string name="wallpaper_offer_body">Facet kann Hintergründe aus der Android-Auswahl nicht sehen, daher bleibt Glas eine einfache Tönung. Wähle hier dasselbe Bild, und Facet weichzeichnet es hinter deinen Panels.</string>
+    <string name="wallpaper_offer_accept">Bild auswählen</string>
+    <string name="wallpaper_offer_decline">Nicht jetzt</string>
+    <string name="glass_prompt_title">Glas braucht eine Kopie deines Hintergrunds</string>
+    <string name="glass_prompt_body">Android lässt Facet dein Hintergrundbild nicht sehen, daher ist dieser Hintergrund vorerst eine einfache Tönung. Wähle hier ein Bild, und Facet setzt es als Hintergrund und weichzeichnet es hinter deinen Panels.</string>
     <string name="wallpaper_fit_title">Hintergrundbild positionieren</string>
     <string name="wallpaper_fit_hint">Ziehen zum Verschieben, zwei Finger zum Zoomen, doppeltippen zum Zurücksetzen.</string>
     <string name="wallpaper_fit_home">Startbildschirm</string>

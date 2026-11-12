@@ -23,6 +23,8 @@ class WallpaperScreenTest {
     private class Calls {
         var choseImage = 0
         var setSystem = 0
+        var accepted = 0
+        var declined = 0
         var removed = 0
         var cancelled = 0
         var confirmedRect: RectF? = null
@@ -39,6 +41,8 @@ class WallpaperScreenTest {
                     onBack = {},
                     onChooseImage = { calls.choseImage++ },
                     onSetSystemWallpaper = { calls.setSystem++ },
+                    onAcceptOffer = { calls.accepted++ },
+                    onDeclineOffer = { calls.declined++ },
                     onRemoveCopy = { calls.removed++ },
                     onCancelFit = { calls.cancelled++ },
                     onConfirmFit = { rect, lock ->
@@ -66,6 +70,30 @@ class WallpaperScreenTest {
         // Then each reports once
         assertEquals(1, calls.choseImage)
         assertEquals(1, calls.setSystem)
+    }
+
+    @Test
+    fun `the offer after the system picker can be accepted or declined`() {
+        // Given the offer is showing
+        val calls = Calls()
+        setContent(WallpaperUiState(offerCopy = true), calls)
+
+        // When each button is tapped
+        composeRule.onNodeWithTag("wallpaper_offer_accept").performClick()
+        composeRule.onNodeWithTag("wallpaper_offer_decline").performClick()
+
+        // Then each reports once
+        assertEquals(1, calls.accepted)
+        assertEquals(1, calls.declined)
+    }
+
+    @Test
+    fun `without an offer the offer card is absent`() {
+        // Given no offer
+        setContent(WallpaperUiState(), Calls())
+
+        // Then the card does not exist
+        composeRule.onNodeWithTag("wallpaper_offer").assertDoesNotExist()
     }
 
     @Test

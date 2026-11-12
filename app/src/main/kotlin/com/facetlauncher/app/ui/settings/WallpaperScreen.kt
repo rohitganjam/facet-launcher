@@ -97,7 +97,15 @@ fun WallpaperScreen(
         uiState = uiState,
         onBack = onBack,
         onChooseImage = { picker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) },
-        onSetSystemWallpaper = { runCatching { context.startActivity(Intent(Intent.ACTION_SET_WALLPAPER)) } },
+        onSetSystemWallpaper = {
+            viewModel.onSystemPickerOpened()
+            runCatching { context.startActivity(Intent(Intent.ACTION_SET_WALLPAPER)) }
+        },
+        onAcceptOffer = {
+            viewModel.clearOffer()
+            picker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+        },
+        onDeclineOffer = viewModel::declineOffer,
         onRemoveCopy = viewModel::removeCopy,
         onCancelFit = viewModel::cancelFit,
         onConfirmFit = viewModel::confirmFit,
@@ -111,6 +119,8 @@ internal fun WallpaperContent(
     onBack: () -> Unit,
     onChooseImage: () -> Unit,
     onSetSystemWallpaper: () -> Unit,
+    onAcceptOffer: () -> Unit,
+    onDeclineOffer: () -> Unit,
     onRemoveCopy: () -> Unit,
     onCancelFit: () -> Unit,
     onConfirmFit: (RectF, Boolean) -> Unit,
@@ -136,6 +146,7 @@ internal fun WallpaperContent(
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
                 item { WallpaperPreview(uiState) }
+                if (uiState.offerCopy) item { CopyOffer(onAcceptOffer, onDeclineOffer) }
                 item { WallpaperStatus(uiState) }
                 item { ChoiceRows(onChooseImage, onSetSystemWallpaper) }
                 if (uiState.copy != null) item { RemoveRow(onRemoveCopy) }
@@ -160,6 +171,21 @@ private fun WallpaperPreview(uiState: WallpaperUiState, modifier: Modifier = Mod
             )
         } else {
             WallpaperBackground(wallpaper = uiState.systemWallpaper, modifier = previewModifier)
+        }
+    }
+}
+
+/** Shown after Android's picker changed the wallpaper: Facet can't read it, so glass needs the same image chosen here. */
+@Composable
+private fun CopyOffer(onAccept: () -> Unit, onDecline: () -> Unit) {
+    SettingsCard {
+        Column(modifier = Modifier.padding(16.dp).testTag("wallpaper_offer"), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(text = stringResource(R.string.wallpaper_offer_title), style = MaterialTheme.typography.titleMedium, color = Ink)
+            Text(text = stringResource(R.string.wallpaper_offer_body), style = MaterialTheme.typography.bodyMedium, color = Muted)
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                PrimaryButton(text = stringResource(R.string.wallpaper_offer_accept), onClick = onAccept, modifier = Modifier.testTag("wallpaper_offer_accept"))
+                TextActionButton(text = stringResource(R.string.wallpaper_offer_decline), onClick = onDecline, modifier = Modifier.testTag("wallpaper_offer_decline"))
+            }
         }
     }
 }

@@ -231,6 +231,12 @@
     <string name="wallpaper_stale_title">O seu papel de parede mudou</string>
     <string name="wallpaper_stale_body">A cópia do vidro já não corresponde. Escolha uma imagem de novo ou remova a cópia.</string>
     <string name="wallpaper_failed">Não funcionou. Tente outra imagem.</string>
+    <string name="wallpaper_offer_title">Você mudou o papel de parede</string>
+    <string name="wallpaper_offer_body">O Facet não consegue ver papéis de parede escolhidos no seletor do Android, então o vidro é só uma cor. Escolha aqui a mesma imagem e o Facet a desfoca atrás dos seus painéis.</string>
+    <string name="wallpaper_offer_accept">Escolher uma imagem</string>
+    <string name="wallpaper_offer_decline">Agora não</string>
+    <string name="glass_prompt_title">O vidro precisa de uma cópia do seu papel de parede</string>
+    <string name="glass_prompt_body">O Android não deixa o Facet ver seu papel de parede, então este fundo é por enquanto só uma cor. Escolha uma imagem aqui e o Facet a define como papel de parede e a desfoca atrás dos seus painéis.</string>
     <string name="wallpaper_fit_title">Posicione o papel de parede</string>
     <string name="wallpaper_fit_hint">Arraste para mover, faça pinça para ampliar e toque duas vezes para repor.</string>
     <string name="wallpaper_fit_home">Ecrã inicial</string>

@@ -18,6 +18,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -37,6 +38,8 @@ data class WallpaperUiState(
     val picked: Bitmap? = null,
     val isWorking: Boolean = false,
     val failed: Boolean = false,
+    /** `true` after returning from Android's wallpaper picker with a new wallpaper and no matching copy: offer to add one. */
+    val offerCopy: Boolean = false,
 )
 
 /** The wallpaper screen: the glass copy, the picker and fit step that make one, and removing it. */
@@ -44,7 +47,7 @@ data class WallpaperUiState(
 class WallpaperViewModel @Inject constructor(
     private val wallpaperCopyRepository: WallpaperCopyRepository,
     private val wallpaperRepository: WallpaperRepository,
-    settingsRepository: SettingsRepository,
+    private val settingsRepository: SettingsRepository,
     private val setWallpaperFromPhoto: SetWallpaperFromPhotoUseCase,
     private val removeWallpaperCopy: RemoveWallpaperCopyUseCase,
 ) : ViewModel() {
@@ -54,6 +57,9 @@ class WallpaperViewModel @Inject constructor(
         val working: Boolean = false,
         val failed: Boolean = false,
         val systemWallpaper: HomeWallpaper = HomeWallpaper.Unavailable,
+        /** The system wallpaper's id when Android's picker was opened; `null` when it wasn't. */
+        val pickerBaseline: Int? = null,
+        val offerCopy: Boolean = false,
         /** Bumped by [refresh] so the stale check reads the system wallpaper's id again. */
         val checks: Int = 0,
     )
@@ -69,6 +75,7 @@ class WallpaperViewModel @Inject constructor(
             picked = state.picked,
             isWorking = state.working,
             failed = state.failed,
+            offerCopy = state.offerCopy,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), WallpaperUiState())
 
@@ -80,9 +87,29 @@ class WallpaperViewModel @Inject constructor(
     fun refresh() {
         viewModelScope.launch {
             val systemWallpaper = wallpaperRepository.currentHomeWallpaper()
-            local.update { it.copy(systemWallpaper = systemWallpaper, checks = it.checks + 1) }
+            val offer = shouldOfferCopy(local.value.pickerBaseline)
+            local.update { it.copy(systemWallpaper = systemWallpaper, checks = it.checks + 1, pickerBaseline = null, offerCopy = it.offerCopy || offer) }
         }
     }
+
+    /** Android's picker is about to open: remember the wallpaper it starts from, so coming back can tell whether it changed. */
+    fun onSystemPickerOpened() = local.update { it.copy(pickerBaseline = wallpaperCopyRepository.currentSystemWallpaperId()) }
+
+    /** The picker changed the wallpaper and glass has no copy of the new one (none stored, or the stored one is now stale), and the user hasn't said no. */
+    private suspend fun shouldOfferCopy(baseline: Int?): Boolean {
+        val systemId = wallpaperCopyRepository.currentSystemWallpaperId()
+        val settings = settingsRepository.settings.first()
+        val copyMatches = wallpaperCopyRepository.copy.first() != null && settings.wallpaperCopySystemId == systemId
+        return baseline != null && baseline != systemId && !copyMatches && !settings.wallpaperPromptDismissed
+    }
+
+    /** "Not now" on the offer: remembered, so it isn't shown again. */
+    fun declineOffer() {
+        local.update { it.copy(offerCopy = false) }
+        viewModelScope.launch { settingsRepository.setWallpaperPromptDismissed(true) }
+    }
+
+    fun clearOffer() = local.update { it.copy(offerCopy = false) }
 
     /** A photo was picked: decode it for the fit step. */
     fun onPicked(uri: Uri) {

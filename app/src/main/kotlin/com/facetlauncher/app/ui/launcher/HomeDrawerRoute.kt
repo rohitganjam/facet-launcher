@@ -38,6 +38,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -69,6 +70,7 @@ import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.ProReason
 import com.facetlauncher.app.ui.components.AppMenuNotifications
 import com.facetlauncher.app.ui.components.LocalHomeSwipeGate
+import com.facetlauncher.app.ui.components.LocalIconGlassSamplesWallpaper
 import com.facetlauncher.app.ui.drawer.DrawerViewModel
 import com.facetlauncher.app.ui.drawer.PrivateSpaceViewModel
 import com.facetlauncher.app.ui.facets.FacetCarouselScreen
@@ -439,60 +441,62 @@ fun HomeDrawerRoute(
                 containerWidthPx = it.width.toFloat()
             },
     ) {
-        HomeScreen(
-            state = homeScreenState,
-            actions = screenActions,
-            layoutMode = homeLayoutMode,
-            landscapeSpace = homeLandscapeSpace,
-            // Marks the app as fully drawn once Home has faded in, so startup timing covers what the user sees.
-            onFullyReveal = { activity?.reportFullyDrawn() },
-            modifier = Modifier
-                .fillMaxSize()
-                .graphicsLayer {
-                    // Home gives way to whichever panel (Drawer, Hub, Switch Facets) is opening, the same
-                    // way for all three: fades out and shrinks slightly, leaving only the wallpaper and
-                    // the panel's own scrim.
-                    // The shade pull-down fades Home like the Drawer does.
-                    val fade = homeLayerFade(maxOf(swipe.drawer.progress.value, swipe.shade.progress.value), swipe.hub.progress.value, swipe.facet.progress.value)
-                    alpha = fade.alpha
-                    scaleX = fade.scale
-                    scaleY = fade.scale
-                }
-                // Receives the app list's own leftover vertical scroll once it bottoms/tops out.
-                .nestedScroll(appListNestedScroll)
-                .pointerInput(draggingHandle, homeMenuMode, homeSwipeBlocked) {
-                    // Suppress screen-wide gestures while dragging a handle or with a long-press sheet open.
-                    if (draggingHandle || homeSwipeBlocked) return@pointerInput
-                    if (homeMenuMode == HomeMenuMode.ADJUST) {
-                        // Only the clock pages turn. This runs after the handles in the pointer chain, so a handle keeps its own drags.
-                        detectHorizontalDragGestures(
-                            onDragStart = swipe::onAdjustDragStart,
-                            onDragEnd = swipe::onAdjustDragEnd,
-                            onDragCancel = swipe::onAdjustDragCancel,
-                            onHorizontalDrag = swipe::onAdjustDrag,
-                        )
-                        return@pointerInput
+        CompositionLocalProvider(LocalIconGlassSamplesWallpaper provides true) {
+            HomeScreen(
+                state = homeScreenState,
+                actions = screenActions,
+                layoutMode = homeLayoutMode,
+                landscapeSpace = homeLandscapeSpace,
+                // Marks the app as fully drawn once Home has faded in, so startup timing covers what the user sees.
+                onFullyReveal = { activity?.reportFullyDrawn() },
+                modifier = Modifier
+                    .fillMaxSize()
+                    .graphicsLayer {
+                        // Home gives way to whichever panel (Drawer, Hub, Switch Facets) is opening, the same
+                        // way for all three: fades out and shrinks slightly, leaving only the wallpaper and
+                        // the panel's own scrim.
+                        // The shade pull-down fades Home like the Drawer does.
+                        val fade = homeLayerFade(maxOf(swipe.drawer.progress.value, swipe.shade.progress.value), swipe.hub.progress.value, swipe.facet.progress.value)
+                        alpha = fade.alpha
+                        scaleX = fade.scale
+                        scaleY = fade.scale
                     }
-                    if (homeMenuMode != HomeMenuMode.NONE) return@pointerInput
+                    // Receives the app list's own leftover vertical scroll once it bottoms/tops out.
+                    .nestedScroll(appListNestedScroll)
+                    .pointerInput(draggingHandle, homeMenuMode, homeSwipeBlocked) {
+                        // Suppress screen-wide gestures while dragging a handle or with a long-press sheet open.
+                        if (draggingHandle || homeSwipeBlocked) return@pointerInput
+                        if (homeMenuMode == HomeMenuMode.ADJUST) {
+                            // Only the clock pages turn. This runs after the handles in the pointer chain, so a handle keeps its own drags.
+                            detectHorizontalDragGestures(
+                                onDragStart = swipe::onAdjustDragStart,
+                                onDragEnd = swipe::onAdjustDragEnd,
+                                onDragCancel = swipe::onAdjustDragCancel,
+                                onHorizontalDrag = swipe::onAdjustDrag,
+                            )
+                            return@pointerInput
+                        }
+                        if (homeMenuMode != HomeMenuMode.NONE) return@pointerInput
 
-                    detectHomeSwipeGestures(
-                        isBlocked = { homeSwipeGate?.isBlocked == true },
-                        shouldClaim = { position ->
-                            clockWidgetBoundsInHomeRoot?.contains(position) != true &&
-                                appListBoundsInHomeRoot?.contains(position) != true &&
-                                clockPaneBoundsInHomeRoot?.contains(position) != true
-                        },
-                        // App list and landscape clock pane: vertical drags belong to their own scroll, horizontal ones to Hub/carousel.
-                        claimHorizontalOnly = { position ->
-                            appListBoundsInHomeRoot?.contains(position) == true || clockPaneBoundsInHomeRoot?.contains(position) == true
-                        },
-                        onDragStart = swipe::onPointerDragStart,
-                        onDragEnd = swipe::onPointerDragEnd,
-                        onDragCancel = swipe::cancel,
-                        onDrag = swipe::onPointerDrag,
-                    )
-                },
-        )
+                        detectHomeSwipeGestures(
+                            isBlocked = { homeSwipeGate?.isBlocked == true },
+                            shouldClaim = { position ->
+                                clockWidgetBoundsInHomeRoot?.contains(position) != true &&
+                                    appListBoundsInHomeRoot?.contains(position) != true &&
+                                    clockPaneBoundsInHomeRoot?.contains(position) != true
+                            },
+                            // App list and landscape clock pane: vertical drags belong to their own scroll, horizontal ones to Hub/carousel.
+                            claimHorizontalOnly = { position ->
+                                appListBoundsInHomeRoot?.contains(position) == true || clockPaneBoundsInHomeRoot?.contains(position) == true
+                            },
+                            onDragStart = swipe::onPointerDragStart,
+                            onDragEnd = swipe::onPointerDragEnd,
+                            onDragCancel = swipe::cancel,
+                            onDrag = swipe::onPointerDrag,
+                        )
+                    },
+            )
+        }
 
         HomeHubOverlay(
             hub = swipe.hub,

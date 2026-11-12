@@ -125,4 +125,43 @@ class WallpaperRepositoryTest {
         // Then it degrades to the tone rather than propagating the exception
         assertEquals(HomeWallpaper.Tones(listOf(Color.BLUE, Color.BLUE)), result)
     }
+
+    private class FakeCopies(private val stored: Bitmap?, var systemId: Int = 1) : WallpaperCopyRepository(org.robolectric.RuntimeEnvironment.getApplication(), mock(WallpaperManager::class.java)) {
+        override val copy = kotlinx.coroutines.flow.flowOf(stored)
+        override fun currentSystemWallpaperId() = systemId
+    }
+
+    private fun settings(storedId: Int): SettingsRepository {
+        val file = java.io.File.createTempFile("wallpaper", ".preferences_pb").also { it.delete() }
+        return SettingsRepository(androidx.datastore.preferences.core.PreferenceDataStoreFactory.create(produceFile = { file })).also {
+            kotlinx.coroutines.runBlocking { it.setWallpaperCopySystemId(storedId) }
+        }
+    }
+
+    @Test
+    fun `a saved copy that matches the system wallpaper is used for previews`() = runTest {
+        // Given a saved copy recorded for the current wallpaper, and a system wallpaper that could also be read
+        val copy = Bitmap.createBitmap(30, 60, Bitmap.Config.ARGB_8888)
+        `when`(wallpaperManager.peekDrawable()).thenReturn(drawableOf(10, 10))
+        val repository = WallpaperRepository(wallpaperManager, wallpaperCopies = FakeCopies(copy), settingsRepository = settings(1))
+
+        // When the home wallpaper is read
+        val result = repository.currentHomeWallpaper()
+
+        // Then it is the saved copy
+        assertTrue(result is HomeWallpaper.Image && result.bitmap === copy)
+    }
+
+    @Test
+    fun `a saved copy that no longer matches the system wallpaper is ignored`() = runTest {
+        // Given a copy recorded for wallpaper 1 while the system is now at 2, and nothing else readable
+        val copy = Bitmap.createBitmap(30, 60, Bitmap.Config.ARGB_8888)
+        val repository = WallpaperRepository(wallpaperManager, wallpaperCopies = FakeCopies(copy, systemId = 2), settingsRepository = settings(1))
+
+        // When the home wallpaper is read
+        val result = repository.currentHomeWallpaper()
+
+        // Then the stale copy is not used
+        assertEquals(HomeWallpaper.Unavailable, result)
+    }
 }

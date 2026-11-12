@@ -56,6 +56,7 @@ import com.facetlauncher.app.ui.components.CardDivider
 import com.facetlauncher.app.ui.components.HomeSurfacePreview
 import com.facetlauncher.app.ui.components.CopyFromFacetCard
 import com.facetlauncher.app.ui.components.DefaultsNote
+import com.facetlauncher.app.ui.components.GlassBackgroundRow
 import com.facetlauncher.app.ui.components.ResetToDefaultCard
 import com.facetlauncher.app.ui.components.LabeledDropdownRow
 import com.facetlauncher.app.ui.components.ReorderRowDefaults
@@ -164,11 +165,9 @@ private fun DockStyleCard(uiState: DockSettingsUiState, onDockDisplayModeChange:
             testTag = "dock_display_style_row",
         )
         CardDivider()
-        LabeledDropdownRow(
+        GlassBackgroundRow(
             title = stringResource(R.string.dock_background),
-            options = GlassStyle.entries,
             selected = uiState.dockGlass,
-            label = { stringResource(it.displayNameRes) },
             onSelect = onDockGlassChange,
             testTag = "dock_glass_row",
         )

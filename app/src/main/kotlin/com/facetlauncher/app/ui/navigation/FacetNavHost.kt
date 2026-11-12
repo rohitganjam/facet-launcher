@@ -1,5 +1,13 @@
 package com.facetlauncher.app.ui.navigation
 
+import com.facetlauncher.app.ui.settings.GlassBackgroundPromptViewModel
+import com.facetlauncher.app.ui.components.LocalGlassBackgroundPrompt
+import com.facetlauncher.app.ui.components.GlassBackgroundPrompt
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.compose.LifecycleResumeEffect
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
@@ -157,6 +165,7 @@ fun FacetNavHost(
     modifier: Modifier = Modifier,
     navController: NavHostController = rememberNavController(),
     launcherViewModel: LauncherViewModel = hiltViewModel(),
+    promptViewModel: GlassBackgroundPromptViewModel = hiltViewModel(),
 ) {
     val animationSpec = tween<IntOffset>(durationMillis = FACET_TRANSITION_DURATION_MS, easing = FacetTransitionEasing)
 
@@ -166,293 +175,307 @@ fun FacetNavHost(
         }
     }
 
-    NavHost(
-        navController = navController,
-        startDestination = FacetDestinations.HOME,
-        modifier = modifier,
-        // Pure slide, no crossfade: the window shows the wallpaper through any partially-transparent
-        // layer, so a fading-out screen briefly reveals it — reads as a flash of Home. Two opaque
-        // screens sliding past each other always cover the full width, so there's nothing to bleed.
-        // (Switch Facets no longer lives here — it's a follow-finger panel inside HomeDrawerRoute
-        // itself now, like the Hub; see chat history.)
-        enterTransition = { slideInHorizontally(initialOffsetX = { it }, animationSpec = animationSpec) },
-        exitTransition = { slideOutHorizontally(targetOffsetX = { -it }, animationSpec = animationSpec) },
-        popEnterTransition = { slideInHorizontally(initialOffsetX = { -it }, animationSpec = animationSpec) },
-        popExitTransition = { slideOutHorizontally(targetOffsetX = { it }, animationSpec = animationSpec) },
-        // Back gesture: without these Navigation defaults to a scale-down "zoom out" for every screen.
-        predictivePopEnterTransition = { slideInHorizontally(initialOffsetX = { -it }, animationSpec = animationSpec) },
-        predictivePopExitTransition = { slideOutHorizontally(targetOffsetX = { it }, animationSpec = animationSpec) },
-    ) {
-        composable(FacetDestinations.HOME) {
-            HomeDrawerRoute(
-                apps = apps,
-                onAppClick = onAppClick,
-                onNavigateToSettings = { navController.navigate(FacetDestinations.SETTINGS) },
-                onNavigateToFacetSettings = { facetId -> navController.navigate(FacetDestinations.facetSettings(facetId)) },
-                onNavigateToManageFacets = { navController.navigate(FacetDestinations.FACET_MANAGE) },
-                onNavigateToFacetPro = { reason -> navController.navigate(FacetDestinations.facetPro(reason)) },
-                onNavigateToUsageAccessExplanation = {
-                    navController.navigate(FacetDestinations.USAGE_ACCESS_EXPLANATION)
-                },
-                onNavigateToNotificationAccessExplanation = {
-                    navController.navigate(FacetDestinations.NOTIFICATION_ACCESS_EXPLANATION)
-                },
-                onNavigateToUnitsAndLocation = { navController.navigate(FacetDestinations.UNITS_AND_LOCATION) },
-                onNavigateToClockAccessories = { facetId -> navController.navigate(FacetDestinations.clockAccessories(facetId)) },
-                onNavigateToPermissions = { navController.navigate(FacetDestinations.PERMISSIONS) },
-                onNavigateToWhatsNew = { navController.navigate(FacetDestinations.WHATS_NEW) },
-                onNavigateToClockStyle = { facetId -> navController.navigate(FacetDestinations.facetClockStyleGallery(facetId)) },
-                onNavigateToClockStack = { navController.navigate(FacetDestinations.clockStack()) },
-                launcherViewModel = launcherViewModel,
-            )
-        }
-        settingsComposable(FacetDestinations.USAGE_ACCESS_EXPLANATION) {
-            UsageAccessExplanationScreen(onBack = { navController.popBackStackSafely() })
-        }
-        settingsComposable(FacetDestinations.SETTINGS) {
-            SettingsScreen(
-                onBack = { navController.popBackStackSafely() },
-                onViewFacets = { navController.navigate(FacetDestinations.FACET_MANAGE) },
-                onViewFacetAutomation = { navController.navigate(FacetDestinations.FACET_AUTOMATION) },
-                onViewActiveFacetSettings = { facetId -> navController.navigate(FacetDestinations.facetSettings(facetId)) },
-                onViewFacetPro = { navController.navigate(FacetDestinations.facetPro(ProReason.ABOUT)) },
-                onNavigateToAppearance = { navController.navigate(FacetDestinations.APPEARANCE_SETTINGS) },
-                onNavigateToWallpaper = { navController.navigate(FacetDestinations.WALLPAPER) },
-                onNavigateToAppDrawerSettings = { navController.navigate(FacetDestinations.APP_DRAWER_SETTINGS) },
-                onNavigateToNotificationSettings = { navController.navigate(FacetDestinations.NOTIFICATION_SETTINGS) },
-                onNavigateToFolders = { navController.navigate(FacetDestinations.FOLDERS_SETTINGS) },
-                onNavigateToGestures = { navController.navigate(FacetDestinations.GESTURES) },
-                onNavigateToWeatherSettings = { navController.navigate(FacetDestinations.UNITS_AND_LOCATION) },
-                onNavigateToPermissions = { navController.navigate(FacetDestinations.PERMISSIONS) },
-                onNavigateToBackupRestore = { navController.navigate(FacetDestinations.BACKUP_RESTORE) },
-                onNavigateToWhatsNew = { navController.navigate(FacetDestinations.WHATS_NEW) },
-                onNavigateToLicenses = { navController.navigate(FacetDestinations.LICENSES) },
-            )
-        }
-        settingsComposable(FacetDestinations.WALLPAPER) {
-            WallpaperScreen(onBack = { navController.popBackStackSafely() })
-        }
-        settingsComposable(FacetDestinations.LICENSES) {
-            LicensesScreen(
-                onBack = { navController.popBackStackSafely() },
-                onOpenLicense = { id -> navController.navigate(FacetDestinations.licenseText(id)) },
-            )
-        }
-        settingsComposable(
-            FacetDestinations.LICENSE_TEXT,
-            arguments = listOf(navArgument("licenseId") { type = NavType.StringType }),
+    val needsCopy by promptViewModel.needsCopy.collectAsStateWithLifecycle()
+    LifecycleResumeEffect(Unit) {
+        promptViewModel.onResumed()
+        onPauseOrDispose { }
+    }
+    val glassPrompt = remember(needsCopy, navController) {
+        GlassBackgroundPrompt(
+            needsCopy = needsCopy,
+            onChooseImage = { navController.navigate(FacetDestinations.WALLPAPER) },
+            onDecline = promptViewModel::decline,
+        )
+    }
+    CompositionLocalProvider(LocalGlassBackgroundPrompt provides glassPrompt) {
+        NavHost(
+            navController = navController,
+            startDestination = FacetDestinations.HOME,
+            modifier = modifier,
+            // Pure slide, no crossfade: the window shows the wallpaper through any partially-transparent
+            // layer, so a fading-out screen briefly reveals it — reads as a flash of Home. Two opaque
+            // screens sliding past each other always cover the full width, so there's nothing to bleed.
+            // (Switch Facets no longer lives here — it's a follow-finger panel inside HomeDrawerRoute
+            // itself now, like the Hub; see chat history.)
+            enterTransition = { slideInHorizontally(initialOffsetX = { it }, animationSpec = animationSpec) },
+            exitTransition = { slideOutHorizontally(targetOffsetX = { -it }, animationSpec = animationSpec) },
+            popEnterTransition = { slideInHorizontally(initialOffsetX = { -it }, animationSpec = animationSpec) },
+            popExitTransition = { slideOutHorizontally(targetOffsetX = { it }, animationSpec = animationSpec) },
+            // Back gesture: without these Navigation defaults to a scale-down "zoom out" for every screen.
+            predictivePopEnterTransition = { slideInHorizontally(initialOffsetX = { -it }, animationSpec = animationSpec) },
+            predictivePopExitTransition = { slideOutHorizontally(targetOffsetX = { it }, animationSpec = animationSpec) },
         ) {
-            LicenseTextScreen(onBack = { navController.popBackStackSafely() })
-        }
-        settingsComposable(FacetDestinations.BACKUP_RESTORE) {
-            BackupRestoreScreen(onBack = { navController.popBackStackSafely() })
-        }
-        settingsComposable(FacetDestinations.WHATS_NEW) {
-            WhatsNewScreen(onBack = { navController.popBackStackSafely() })
-        }
-        settingsComposable(FacetDestinations.APPEARANCE_SETTINGS) {
-            AppearanceSettingsScreen(
-                onBack = { navController.popBackStackSafely() },
-                onNavigateToThemesAndColors = { navController.navigate(FacetDestinations.THEMES_AND_COLORS) },
-                onNavigateToFonts = { navController.navigate(FacetDestinations.FONTS) },
-                onNavigateToIcons = { navController.navigate(FacetDestinations.ICONS) },
-            )
-        }
-        settingsComposable(
-            FacetDestinations.CLOCK_ACCESSORIES,
-            arguments = listOf(navArgument("facetId") { type = NavType.LongType; defaultValue = NO_ACTIVE_FACET_ID }),
-        ) { backStackEntry ->
-            val facetId = backStackEntry.arguments?.getLong("facetId") ?: NO_ACTIVE_FACET_ID
-            ClockAccessoriesScreen(
-                navigation = ClockAccessoriesNavigation(
+            composable(FacetDestinations.HOME) {
+                HomeDrawerRoute(
+                    apps = apps,
+                    onAppClick = onAppClick,
+                    onNavigateToSettings = { navController.navigate(FacetDestinations.SETTINGS) },
+                    onNavigateToFacetSettings = { facetId -> navController.navigate(FacetDestinations.facetSettings(facetId)) },
+                    onNavigateToManageFacets = { navController.navigate(FacetDestinations.FACET_MANAGE) },
+                    onNavigateToFacetPro = { reason -> navController.navigate(FacetDestinations.facetPro(reason)) },
+                    onNavigateToUsageAccessExplanation = {
+                        navController.navigate(FacetDestinations.USAGE_ACCESS_EXPLANATION)
+                    },
+                    onNavigateToNotificationAccessExplanation = {
+                        navController.navigate(FacetDestinations.NOTIFICATION_ACCESS_EXPLANATION)
+                    },
+                    onNavigateToUnitsAndLocation = { navController.navigate(FacetDestinations.UNITS_AND_LOCATION) },
+                    onNavigateToClockAccessories = { facetId -> navController.navigate(FacetDestinations.clockAccessories(facetId)) },
+                    onNavigateToPermissions = { navController.navigate(FacetDestinations.PERMISSIONS) },
+                    onNavigateToWhatsNew = { navController.navigate(FacetDestinations.WHATS_NEW) },
+                    onNavigateToClockStyle = { facetId -> navController.navigate(FacetDestinations.facetClockStyleGallery(facetId)) },
+                    onNavigateToClockStack = { navController.navigate(FacetDestinations.clockStack()) },
+                    launcherViewModel = launcherViewModel,
+                )
+            }
+            settingsComposable(FacetDestinations.USAGE_ACCESS_EXPLANATION) {
+                UsageAccessExplanationScreen(onBack = { navController.popBackStackSafely() })
+            }
+            settingsComposable(FacetDestinations.SETTINGS) {
+                SettingsScreen(
                     onBack = { navController.popBackStackSafely() },
-                    onOpenWeatherSettings = { navController.navigate(FacetDestinations.UNITS_AND_LOCATION) },
-                ),
-            )
-        }
-        settingsComposable(FacetDestinations.UNITS_AND_LOCATION) {
-            UnitsAndLocationScreen(
-                navigation = UnitsAndLocationNavigation(
+                    onViewFacets = { navController.navigate(FacetDestinations.FACET_MANAGE) },
+                    onViewFacetAutomation = { navController.navigate(FacetDestinations.FACET_AUTOMATION) },
+                    onViewActiveFacetSettings = { facetId -> navController.navigate(FacetDestinations.facetSettings(facetId)) },
+                    onViewFacetPro = { navController.navigate(FacetDestinations.facetPro(ProReason.ABOUT)) },
+                    onNavigateToAppearance = { navController.navigate(FacetDestinations.APPEARANCE_SETTINGS) },
+                    onNavigateToWallpaper = { navController.navigate(FacetDestinations.WALLPAPER) },
+                    onNavigateToAppDrawerSettings = { navController.navigate(FacetDestinations.APP_DRAWER_SETTINGS) },
+                    onNavigateToNotificationSettings = { navController.navigate(FacetDestinations.NOTIFICATION_SETTINGS) },
+                    onNavigateToFolders = { navController.navigate(FacetDestinations.FOLDERS_SETTINGS) },
+                    onNavigateToGestures = { navController.navigate(FacetDestinations.GESTURES) },
+                    onNavigateToWeatherSettings = { navController.navigate(FacetDestinations.UNITS_AND_LOCATION) },
+                    onNavigateToPermissions = { navController.navigate(FacetDestinations.PERMISSIONS) },
+                    onNavigateToBackupRestore = { navController.navigate(FacetDestinations.BACKUP_RESTORE) },
+                    onNavigateToWhatsNew = { navController.navigate(FacetDestinations.WHATS_NEW) },
+                    onNavigateToLicenses = { navController.navigate(FacetDestinations.LICENSES) },
+                )
+            }
+            settingsComposable(FacetDestinations.WALLPAPER) {
+                WallpaperScreen(onBack = { navController.popBackStackSafely() })
+            }
+            settingsComposable(FacetDestinations.LICENSES) {
+                LicensesScreen(
                     onBack = { navController.popBackStackSafely() },
-                    onOpenLocation = { navController.navigate(FacetDestinations.WEATHER_LOCATION) },
+                    onOpenLicense = { id -> navController.navigate(FacetDestinations.licenseText(id)) },
+                )
+            }
+            settingsComposable(
+                FacetDestinations.LICENSE_TEXT,
+                arguments = listOf(navArgument("licenseId") { type = NavType.StringType }),
+            ) {
+                LicenseTextScreen(onBack = { navController.popBackStackSafely() })
+            }
+            settingsComposable(FacetDestinations.BACKUP_RESTORE) {
+                BackupRestoreScreen(onBack = { navController.popBackStackSafely() })
+            }
+            settingsComposable(FacetDestinations.WHATS_NEW) {
+                WhatsNewScreen(onBack = { navController.popBackStackSafely() })
+            }
+            settingsComposable(FacetDestinations.APPEARANCE_SETTINGS) {
+                AppearanceSettingsScreen(
+                    onBack = { navController.popBackStackSafely() },
+                    onNavigateToThemesAndColors = { navController.navigate(FacetDestinations.THEMES_AND_COLORS) },
+                    onNavigateToFonts = { navController.navigate(FacetDestinations.FONTS) },
+                    onNavigateToIcons = { navController.navigate(FacetDestinations.ICONS) },
+                )
+            }
+            settingsComposable(
+                FacetDestinations.CLOCK_ACCESSORIES,
+                arguments = listOf(navArgument("facetId") { type = NavType.LongType; defaultValue = NO_ACTIVE_FACET_ID }),
+            ) { backStackEntry ->
+                val facetId = backStackEntry.arguments?.getLong("facetId") ?: NO_ACTIVE_FACET_ID
+                ClockAccessoriesScreen(
+                    navigation = ClockAccessoriesNavigation(
+                        onBack = { navController.popBackStackSafely() },
+                        onOpenWeatherSettings = { navController.navigate(FacetDestinations.UNITS_AND_LOCATION) },
+                    ),
+                )
+            }
+            settingsComposable(FacetDestinations.UNITS_AND_LOCATION) {
+                UnitsAndLocationScreen(
+                    navigation = UnitsAndLocationNavigation(
+                        onBack = { navController.popBackStackSafely() },
+                        onOpenLocation = { navController.navigate(FacetDestinations.WEATHER_LOCATION) },
+                        onOpenPermissions = { navController.navigate(FacetDestinations.PERMISSIONS) },
+                    ),
+                )
+            }
+            settingsComposable(FacetDestinations.WEATHER_LOCATION) {
+                WeatherLocationScreen(
+                    onBack = { navController.popBackStackSafely() },
                     onOpenPermissions = { navController.navigate(FacetDestinations.PERMISSIONS) },
-                ),
-            )
-        }
-        settingsComposable(FacetDestinations.WEATHER_LOCATION) {
-            WeatherLocationScreen(
-                onBack = { navController.popBackStackSafely() },
-                onOpenPermissions = { navController.navigate(FacetDestinations.PERMISSIONS) },
-            )
-        }
-        settingsComposable(FacetDestinations.THEMES_AND_COLORS) {
-            ThemesAndColorsScreen(onBack = { navController.popBackStackSafely() })
-        }
-        settingsComposable(FacetDestinations.FONTS) {
-            FontsScreen(onBack = { navController.popBackStackSafely() })
-        }
-        settingsComposable(FacetDestinations.ICONS) {
-            IconsScreen(onBack = { navController.popBackStackSafely() })
-        }
-        settingsComposable(
-            FacetDestinations.DOCK_SETTINGS,
-            arguments = listOf(navArgument("facetId") { type = NavType.LongType; defaultValue = NO_ACTIVE_FACET_ID }),
-        ) { backStackEntry ->
-            val facetId = backStackEntry.arguments?.getLong("facetId") ?: NO_ACTIVE_FACET_ID
-            DockSettingsScreen(
-                onBack = { navController.popBackStackSafely() },
-                onAddDockApp = { navController.navigate(FacetDestinations.dockPicker(facetId)) },
-            )
-        }
-        settingsComposable(
-            FacetDestinations.HOME_APPS_LIST_SETTINGS,
-            arguments = listOf(navArgument("facetId") { type = NavType.LongType; defaultValue = NO_ACTIVE_FACET_ID }),
-        ) { backStackEntry ->
-            val facetId = backStackEntry.arguments?.getLong("facetId") ?: NO_ACTIVE_FACET_ID
-            HomeAppsListSettingsScreen(
-                onBack = { navController.popBackStackSafely() },
-                onEditFavorites = { navController.navigate(FacetDestinations.favoritesPicker(facetId)) },
-            )
-        }
-        settingsComposable(FacetDestinations.APP_DRAWER_SETTINGS) {
-            AppDrawerSettingsScreen(onBack = { navController.popBackStackSafely() })
-        }
-        settingsComposable(
-            FacetDestinations.FACET_CLOCK_STYLE_GALLERY,
-            arguments = listOf(navArgument("facetId") { type = NavType.LongType }),
-        ) { backStackEntry ->
-            val facetId = backStackEntry.arguments?.getLong("facetId") ?: NO_ACTIVE_FACET_ID
-            ClockStyleGalleryRoute(
-                onBack = { navController.popBackStackSafely() },
-                onOpenClockAccessories = { navController.navigate(FacetDestinations.clockAccessories(facetId)) },
-            )
-        }
-        settingsComposable(FacetDestinations.PERMISSIONS) {
-            PermissionsScreen(
-                onBack = { navController.popBackStackSafely() },
-                onNavigateToUsageAccessExplanation = { navController.navigate(FacetDestinations.USAGE_ACCESS_EXPLANATION) },
-                onNavigateToNotificationAccessExplanation = {
-                    navController.navigate(FacetDestinations.NOTIFICATION_ACCESS_EXPLANATION)
-                },
-                onNavigateToAccessibilityAccessExplanation = {
-                    navController.navigate(FacetDestinations.ACCESSIBILITY_ACCESS_EXPLANATION)
-                },
-            )
-        }
-        settingsComposable(FacetDestinations.GESTURES) {
-            GesturesScreen(
-                onBack = { navController.popBackStackSafely() },
-                onNavigateToAccessibilityAccessExplanation = {
-                    navController.navigate(FacetDestinations.ACCESSIBILITY_ACCESS_EXPLANATION)
-                },
-            )
-        }
-        settingsComposable(FacetDestinations.ACCESSIBILITY_ACCESS_EXPLANATION) {
-            AccessibilityAccessExplanationScreen(onBack = { navController.popBackStackSafely() })
-        }
-        settingsComposable(FacetDestinations.NOTIFICATION_SETTINGS) {
-            NotificationSettingsScreen(
-                onBack = { navController.popBackStackSafely() },
-                onNavigateToNotificationAccessExplanation = {
-                    navController.navigate(FacetDestinations.NOTIFICATION_ACCESS_EXPLANATION)
-                },
-            )
-        }
-        settingsComposable(FacetDestinations.NOTIFICATION_ACCESS_EXPLANATION) {
-            NotificationAccessExplanationScreen(onBack = { navController.popBackStackSafely() })
-        }
-        settingsComposable(FacetDestinations.FOLDERS_SETTINGS) {
-            FoldersSettingsScreen(
-                onBack = { navController.popBackStackSafely() },
-                onOpenFolder = { folderId -> navController.navigate(FacetDestinations.folderDetail(folderId)) },
-            )
-        }
-        settingsComposable(
-            FacetDestinations.FOLDER_DETAIL,
-            arguments = listOf(navArgument("folderId") { type = NavType.LongType }),
-        ) { backStackEntry ->
-            val folderId = checkNotNull(backStackEntry.arguments?.getLong("folderId"))
-            FolderDetailScreen(
-                onBack = { navController.popBackStackSafely() },
-                onAddToFolder = { navController.navigate(FacetDestinations.folderAppPicker(folderId)) },
-            )
-        }
-        settingsComposable(
-            FacetDestinations.FOLDER_APP_PICKER,
-            arguments = listOf(navArgument("folderId") { type = NavType.LongType }),
-        ) {
-            FolderAppPickerScreen(
-                onDone = { navController.popBackStackSafely() },
-                onNavigateToUsageAccessExplanation = { navController.navigate(FacetDestinations.USAGE_ACCESS_EXPLANATION) },
-            )
-        }
-        settingsComposable(
-            FacetDestinations.DOCK_PICKER,
-            arguments = listOf(navArgument("facetId") { type = NavType.LongType; defaultValue = NO_ACTIVE_FACET_ID }),
-        ) {
-            DockAppPickerScreen(
-                onDone = { navController.popBackStackSafely() },
-                onNavigateToUsageAccessExplanation = { navController.navigate(FacetDestinations.USAGE_ACCESS_EXPLANATION) },
-            )
-        }
-        settingsComposable(FacetDestinations.FACET_AUTOMATION) {
-            FacetAutomationScreen(
-                onBack = { navController.popBackStackSafely() },
-                onOpenFacetPro = { reason -> navController.navigate(FacetDestinations.facetPro(reason)) },
-            )
-        }
-        settingsComposable(
-            FacetDestinations.FACET_PRO,
-            arguments = listOf(navArgument("reason") { type = NavType.StringType }),
-        ) { entry ->
-            val reason = entry.arguments?.getString("reason")?.let { name -> ProReason.entries.firstOrNull { it.name == name } } ?: ProReason.ABOUT
-            FacetProScreen(
-                reason = reason,
-                onBack = { navController.popBackStackSafely() },
-                onAddFacet = { navController.navigate(FacetDestinations.FACET_MANAGE) },
-            )
-        }
-        settingsComposable(
-            FacetDestinations.CLOCK_STACK,
-            arguments = listOf(navArgument("facetId") { type = NavType.LongType; defaultValue = NO_ACTIVE_FACET_ID }),
-        ) {
-            // The widget stack: reorder, configure, remove and add the clock and widgets on Home.
-            ClockStackScreen(
-                onBack = { navController.popBackStackSafely() },
-                onOpenFacetPro = { reason -> navController.navigate(FacetDestinations.facetPro(reason)) },
-                onOpenClockStyle = { facetId -> navController.navigate(FacetDestinations.facetClockStyleGallery(facetId)) },
-            )
-        }
-        settingsComposable(FacetDestinations.FACET_MANAGE) {
-            // Settings → Facets (and the carousel's Reorder button): a normal settings screen.
-            ManageFacetsScreen(
-                onBack = { navController.popBackStackSafely() },
-                onEditFacet = { facetId -> navController.navigate(FacetDestinations.facetSettings(facetId)) },
-                onFacetApply = { navController.popBackStack(FacetDestinations.HOME, inclusive = false) },
-                onOpenFacetPro = { reason -> navController.navigate(FacetDestinations.facetPro(reason)) },
-                onOpenFacetAutomation = { navController.navigate(FacetDestinations.FACET_AUTOMATION) },
-            )
-        }
-        settingsComposable(
-            FacetDestinations.FACET_SETTINGS,
-            arguments = listOf(navArgument("facetId") { type = NavType.LongType }),
-        ) {
-            FacetSettingsScreen(
-                onBack = { navController.popBackStackSafely() },
-                onNavigateToAppsList = { facetId -> navController.navigate(FacetDestinations.homeAppsListSettings(facetId)) },
-                onNavigateToDockSettings = { facetId -> navController.navigate(FacetDestinations.dockSettings(facetId)) },
-                onNavigateToWidgets = { facetId -> navController.navigate(FacetDestinations.clockStack(facetId)) },
-                onFacetApply = { navController.popBackStack(FacetDestinations.HOME, inclusive = false) },
-            )
-        }
-        settingsComposable(
-            FacetDestinations.FAVORITES_PICKER,
-            arguments = listOf(navArgument("facetId") { type = NavType.LongType; defaultValue = NO_ACTIVE_FACET_ID }),
-        ) {
-            FavoritesPickerScreen(
-                onDone = { navController.popBackStackSafely() },
-                onNavigateToUsageAccessExplanation = { navController.navigate(FacetDestinations.USAGE_ACCESS_EXPLANATION) },
-            )
+                )
+            }
+            settingsComposable(FacetDestinations.THEMES_AND_COLORS) {
+                ThemesAndColorsScreen(onBack = { navController.popBackStackSafely() })
+            }
+            settingsComposable(FacetDestinations.FONTS) {
+                FontsScreen(onBack = { navController.popBackStackSafely() })
+            }
+            settingsComposable(FacetDestinations.ICONS) {
+                IconsScreen(onBack = { navController.popBackStackSafely() })
+            }
+            settingsComposable(
+                FacetDestinations.DOCK_SETTINGS,
+                arguments = listOf(navArgument("facetId") { type = NavType.LongType; defaultValue = NO_ACTIVE_FACET_ID }),
+            ) { backStackEntry ->
+                val facetId = backStackEntry.arguments?.getLong("facetId") ?: NO_ACTIVE_FACET_ID
+                DockSettingsScreen(
+                    onBack = { navController.popBackStackSafely() },
+                    onAddDockApp = { navController.navigate(FacetDestinations.dockPicker(facetId)) },
+                )
+            }
+            settingsComposable(
+                FacetDestinations.HOME_APPS_LIST_SETTINGS,
+                arguments = listOf(navArgument("facetId") { type = NavType.LongType; defaultValue = NO_ACTIVE_FACET_ID }),
+            ) { backStackEntry ->
+                val facetId = backStackEntry.arguments?.getLong("facetId") ?: NO_ACTIVE_FACET_ID
+                HomeAppsListSettingsScreen(
+                    onBack = { navController.popBackStackSafely() },
+                    onEditFavorites = { navController.navigate(FacetDestinations.favoritesPicker(facetId)) },
+                )
+            }
+            settingsComposable(FacetDestinations.APP_DRAWER_SETTINGS) {
+                AppDrawerSettingsScreen(onBack = { navController.popBackStackSafely() })
+            }
+            settingsComposable(
+                FacetDestinations.FACET_CLOCK_STYLE_GALLERY,
+                arguments = listOf(navArgument("facetId") { type = NavType.LongType }),
+            ) { backStackEntry ->
+                val facetId = backStackEntry.arguments?.getLong("facetId") ?: NO_ACTIVE_FACET_ID
+                ClockStyleGalleryRoute(
+                    onBack = { navController.popBackStackSafely() },
+                    onOpenClockAccessories = { navController.navigate(FacetDestinations.clockAccessories(facetId)) },
+                )
+            }
+            settingsComposable(FacetDestinations.PERMISSIONS) {
+                PermissionsScreen(
+                    onBack = { navController.popBackStackSafely() },
+                    onNavigateToUsageAccessExplanation = { navController.navigate(FacetDestinations.USAGE_ACCESS_EXPLANATION) },
+                    onNavigateToNotificationAccessExplanation = {
+                        navController.navigate(FacetDestinations.NOTIFICATION_ACCESS_EXPLANATION)
+                    },
+                    onNavigateToAccessibilityAccessExplanation = {
+                        navController.navigate(FacetDestinations.ACCESSIBILITY_ACCESS_EXPLANATION)
+                    },
+                )
+            }
+            settingsComposable(FacetDestinations.GESTURES) {
+                GesturesScreen(
+                    onBack = { navController.popBackStackSafely() },
+                    onNavigateToAccessibilityAccessExplanation = {
+                        navController.navigate(FacetDestinations.ACCESSIBILITY_ACCESS_EXPLANATION)
+                    },
+                )
+            }
+            settingsComposable(FacetDestinations.ACCESSIBILITY_ACCESS_EXPLANATION) {
+                AccessibilityAccessExplanationScreen(onBack = { navController.popBackStackSafely() })
+            }
+            settingsComposable(FacetDestinations.NOTIFICATION_SETTINGS) {
+                NotificationSettingsScreen(
+                    onBack = { navController.popBackStackSafely() },
+                    onNavigateToNotificationAccessExplanation = {
+                        navController.navigate(FacetDestinations.NOTIFICATION_ACCESS_EXPLANATION)
+                    },
+                )
+            }
+            settingsComposable(FacetDestinations.NOTIFICATION_ACCESS_EXPLANATION) {
+                NotificationAccessExplanationScreen(onBack = { navController.popBackStackSafely() })
+            }
+            settingsComposable(FacetDestinations.FOLDERS_SETTINGS) {
+                FoldersSettingsScreen(
+                    onBack = { navController.popBackStackSafely() },
+                    onOpenFolder = { folderId -> navController.navigate(FacetDestinations.folderDetail(folderId)) },
+                )
+            }
+            settingsComposable(
+                FacetDestinations.FOLDER_DETAIL,
+                arguments = listOf(navArgument("folderId") { type = NavType.LongType }),
+            ) { backStackEntry ->
+                val folderId = checkNotNull(backStackEntry.arguments?.getLong("folderId"))
+                FolderDetailScreen(
+                    onBack = { navController.popBackStackSafely() },
+                    onAddToFolder = { navController.navigate(FacetDestinations.folderAppPicker(folderId)) },
+                )
+            }
+            settingsComposable(
+                FacetDestinations.FOLDER_APP_PICKER,
+                arguments = listOf(navArgument("folderId") { type = NavType.LongType }),
+            ) {
+                FolderAppPickerScreen(
+                    onDone = { navController.popBackStackSafely() },
+                    onNavigateToUsageAccessExplanation = { navController.navigate(FacetDestinations.USAGE_ACCESS_EXPLANATION) },
+                )
+            }
+            settingsComposable(
+                FacetDestinations.DOCK_PICKER,
+                arguments = listOf(navArgument("facetId") { type = NavType.LongType; defaultValue = NO_ACTIVE_FACET_ID }),
+            ) {
+                DockAppPickerScreen(
+                    onDone = { navController.popBackStackSafely() },
+                    onNavigateToUsageAccessExplanation = { navController.navigate(FacetDestinations.USAGE_ACCESS_EXPLANATION) },
+                )
+            }
+            settingsComposable(FacetDestinations.FACET_AUTOMATION) {
+                FacetAutomationScreen(
+                    onBack = { navController.popBackStackSafely() },
+                    onOpenFacetPro = { reason -> navController.navigate(FacetDestinations.facetPro(reason)) },
+                )
+            }
+            settingsComposable(
+                FacetDestinations.FACET_PRO,
+                arguments = listOf(navArgument("reason") { type = NavType.StringType }),
+            ) { entry ->
+                val reason = entry.arguments?.getString("reason")?.let { name -> ProReason.entries.firstOrNull { it.name == name } } ?: ProReason.ABOUT
+                FacetProScreen(
+                    reason = reason,
+                    onBack = { navController.popBackStackSafely() },
+                    onAddFacet = { navController.navigate(FacetDestinations.FACET_MANAGE) },
+                )
+            }
+            settingsComposable(
+                FacetDestinations.CLOCK_STACK,
+                arguments = listOf(navArgument("facetId") { type = NavType.LongType; defaultValue = NO_ACTIVE_FACET_ID }),
+            ) {
+                // The widget stack: reorder, configure, remove and add the clock and widgets on Home.
+                ClockStackScreen(
+                    onBack = { navController.popBackStackSafely() },
+                    onOpenFacetPro = { reason -> navController.navigate(FacetDestinations.facetPro(reason)) },
+                    onOpenClockStyle = { facetId -> navController.navigate(FacetDestinations.facetClockStyleGallery(facetId)) },
+                )
+            }
+            settingsComposable(FacetDestinations.FACET_MANAGE) {
+                // Settings → Facets (and the carousel's Reorder button): a normal settings screen.
+                ManageFacetsScreen(
+                    onBack = { navController.popBackStackSafely() },
+                    onEditFacet = { facetId -> navController.navigate(FacetDestinations.facetSettings(facetId)) },
+                    onFacetApply = { navController.popBackStack(FacetDestinations.HOME, inclusive = false) },
+                    onOpenFacetPro = { reason -> navController.navigate(FacetDestinations.facetPro(reason)) },
+                    onOpenFacetAutomation = { navController.navigate(FacetDestinations.FACET_AUTOMATION) },
+                )
+            }
+            settingsComposable(
+                FacetDestinations.FACET_SETTINGS,
+                arguments = listOf(navArgument("facetId") { type = NavType.LongType }),
+            ) {
+                FacetSettingsScreen(
+                    onBack = { navController.popBackStackSafely() },
+                    onNavigateToAppsList = { facetId -> navController.navigate(FacetDestinations.homeAppsListSettings(facetId)) },
+                    onNavigateToDockSettings = { facetId -> navController.navigate(FacetDestinations.dockSettings(facetId)) },
+                    onNavigateToWidgets = { facetId -> navController.navigate(FacetDestinations.clockStack(facetId)) },
+                    onFacetApply = { navController.popBackStack(FacetDestinations.HOME, inclusive = false) },
+                )
+            }
+            settingsComposable(
+                FacetDestinations.FAVORITES_PICKER,
+                arguments = listOf(navArgument("facetId") { type = NavType.LongType; defaultValue = NO_ACTIVE_FACET_ID }),
+            ) {
+                FavoritesPickerScreen(
+                    onDone = { navController.popBackStackSafely() },
+                    onNavigateToUsageAccessExplanation = { navController.navigate(FacetDestinations.USAGE_ACCESS_EXPLANATION) },
+                )
+            }
         }
     }
 }

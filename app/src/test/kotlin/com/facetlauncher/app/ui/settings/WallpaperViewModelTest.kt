@@ -208,4 +208,59 @@ class WallpaperViewModelTest {
         viewModel.uiState.first { it.copy == null }
         assertEquals(-1, settings.settings.first { it.wallpaperCopySystemId == -1 }.wallpaperCopySystemId)
     }
+
+    @Test
+    fun `a wallpaper changed in the system picker with no matching copy offers to add one`() = runTest {
+        // Given no copy and the picker opened at id 1
+        val copies = FakeCopies()
+        val viewModel = viewModel(copies, settings())
+        viewModel.observe(this)
+        viewModel.onSystemPickerOpened()
+
+        // When the wallpaper changes and the screen comes back
+        copies.systemId = 2
+        viewModel.refresh()
+
+        // Then the offer shows
+        assertTrue(viewModel.uiState.first { it.offerCopy }.offerCopy)
+    }
+
+    @Test
+    fun `an unchanged wallpaper or a matching copy offers nothing`() = runTest {
+        // Given the picker opened and closed without a change
+        val copies = FakeCopies()
+        val viewModel = viewModel(copies, settings())
+        viewModel.observe(this)
+        viewModel.onSystemPickerOpened()
+        viewModel.refresh()
+        viewModel.uiState.first { it.systemWallpaper != HomeWallpaper.Unavailable }
+
+        // Then there is no offer
+        assertFalse(viewModel.uiState.value.offerCopy)
+    }
+
+    @Test
+    fun `declining the offer is remembered and a later change is not offered`() = runTest {
+        // Given an offer showing
+        val copies = FakeCopies()
+        val settings = settings()
+        val viewModel = viewModel(copies, settings)
+        viewModel.observe(this)
+        viewModel.onSystemPickerOpened()
+        copies.systemId = 2
+        viewModel.refresh()
+        viewModel.uiState.first { it.offerCopy }
+
+        // When declined
+        viewModel.declineOffer()
+
+        // Then it is gone and remembered, so another change does not bring it back
+        viewModel.uiState.first { !it.offerCopy }
+        assertTrue(settings.settings.first { it.wallpaperPromptDismissed }.wallpaperPromptDismissed)
+        viewModel.onSystemPickerOpened()
+        copies.systemId = 3
+        viewModel.refresh()
+        viewModel.uiState.first { it.systemWallpaper != HomeWallpaper.Unavailable }
+        assertFalse(viewModel.uiState.value.offerCopy)
+    }
 }

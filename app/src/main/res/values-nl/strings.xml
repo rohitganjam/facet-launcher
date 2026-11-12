@@ -234,6 +234,12 @@
     <string name="wallpaper_stale_title">Je achtergrond is veranderd</string>
     <string name="wallpaper_stale_body">De glaskopie komt er niet meer mee overeen. Kies opnieuw een afbeelding of verwijder de kopie.</string>
     <string name="wallpaper_failed">Dat is niet gelukt. Probeer een andere afbeelding.</string>
+    <string name="wallpaper_offer_title">Je hebt je achtergrond gewijzigd</string>
+    <string name="wallpaper_offer_body">Facet kan achtergronden uit de Android-kiezer niet zien, dus glas blijft een gewone tint. Kies hier dezelfde afbeelding en Facet vervaagt die achter je panelen.</string>
+    <string name="wallpaper_offer_accept">Afbeelding kiezen</string>
+    <string name="wallpaper_offer_decline">Niet nu</string>
+    <string name="glass_prompt_title">Glas heeft een kopie van je achtergrond nodig</string>
+    <string name="glass_prompt_body">Android laat Facet je achtergrond niet zien, dus deze achtergrond is voorlopig een gewone tint. Kies hier een afbeelding en Facet stelt die in als achtergrond en vervaagt hem achter je panelen.</string>
     <string name="wallpaper_fit_title">Plaats je achtergrond</string>
     <string name="wallpaper_fit_hint">Sleep om te verplaatsen, knijp om te zoomen, tik twee keer om te herstellen.</string>
     <string name="wallpaper_fit_home">Startscherm</string>

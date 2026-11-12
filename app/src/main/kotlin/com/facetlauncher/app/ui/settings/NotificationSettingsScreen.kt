@@ -36,6 +36,7 @@ import com.facetlauncher.app.data.model.GlassStyle
 import com.facetlauncher.app.data.model.NotificationBadgeStyle
 import com.facetlauncher.app.ui.components.StickyHeaderScrollColumn
 import com.facetlauncher.app.ui.components.CardDivider
+import com.facetlauncher.app.ui.components.GlassBackgroundRow
 import com.facetlauncher.app.ui.components.LabeledDropdownRow
 import com.facetlauncher.app.ui.components.SettingsCard
 import com.facetlauncher.app.ui.theme.Ink
@@ -254,15 +255,13 @@ internal fun MediaPlayerSettingsCard(
         }
         if (onGlassChange != null) {
             CardDivider()
-            LabeledDropdownRow(
-            title = stringResource(R.string.media_player_background),
-            options = GlassStyle.entries,
-            selected = glass,
-            label = { stringResource(it.displayNameRes) },
-            onSelect = onGlassChange,
-            enabled = enabled,
-            testTag = "media_glass_row",
-        )
+            GlassBackgroundRow(
+                title = stringResource(R.string.media_player_background),
+                selected = glass,
+                onSelect = onGlassChange,
+                enabled = enabled,
+                testTag = "media_glass_row",
+            )
         }
     }
 }
