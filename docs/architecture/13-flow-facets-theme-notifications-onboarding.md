@@ -16,7 +16,7 @@ flowchart TB
         EXT["Deep link / dynamic shortcut\n(external trigger — see 14)"] --> UC
         MANA["ManageFacetsScreen / FacetSettingsScreen\n(Apply facet)"] --> UC
         UC --> S1["settingsRepository.setActiveFacetId(id)"]
-        CAR -- "AddFacetUseCase" --> S2["facetRepository.addFacet() (name 'Facet N', position = count)\nthen ApplyFacetDefaultsUseCase.applyAll(id): dock, favorites + content, look"]
+        CAR -- "AddFacetUseCase" --> S2["facetRepository.addFacet() (name 'Facet N', position = highest + 1)\nthen ApplyFacetDefaultsUseCase.applyAll(id): dock, favorites + content, look"]
         MAN["ManageFacetsScreen"] -- "reorderFacets / deleteFacet / rename" --> S3["FacetRepository update/delete\n(delete cascades all per-facet placements)"]
         S1 --> HOME["ObserveHomeScreenStateUseCase\nactiveFacet = facets.first { id == activeFacetId }\n→ flatMapLatest re-subscribes every facet-scoped flow"]
     end
@@ -58,13 +58,13 @@ flowchart TB
   the same hue as on Settings, inset dividers, no chevrons. There is no Inherit/Override switch anywhere: each of the two destination
   screens edits the facet's own values and, the Dock screen ends with a *Reset to default* row (`ResetToDefaultCard`, behind a `ConfirmDialog`
   that names what is lost) that reseeds the facet's dock from the device defaults (see the diagram above); the Apps list screen has none.
-- **`AppearanceSettingsScreen` is a hub of short sections**, each a card of one or two rows that open their own screen. It has no clock or calendar rows: a clock's style, accessories and calendar settings are reached only from the clock's own sheet and the widget stack (a facet's settings has no Appearance row either; its Home section has no look screen of its own). It shows only "Look & Feel": the App Drawer and Notifications rows are on the main Settings screen's Customization card, below the Launcher appearance row that opens this screen (`SettingsViewModel` reads the notification access for the latter). (The Home list's look is not here: it is on the Apps list screen, `HomeAppsListSettingsScreen`, for the defaults and for a facet), and, global
+- **`AppearanceSettingsScreen` is a hub of short sections**, each a card of one or two rows that open their own screen. It has no clock or calendar rows: a clock's style, accessories and calendar settings are reached only from the clock's own sheet and the widget stack (a facet's settings has no Appearance row either; its Home section has no look screen of its own). It shows only "Look & Feel": the App Drawer and Notifications rows are on the main Settings screen's Customization card, below the Launcher appearance row that opens this screen (`SettingsViewModel` reads the notification access for the latter). (The Home list's look is not here: it is on the Apps list screen, `HomeAppsListSettingsScreen`, always for one facet), and, global
   only, the Look & Feel section (three rows: "Colors and Themes" → `ThemesAndColorsScreen` with a static "Themes, accent, status bar" subtitle, "Fonts" → `FontsScreen`, "Icons" → `IconsScreen`, the last two showing their current value).
   The two moved-out screens each show the same live `AppearancePreviewCard` above their controls and share
   `AppearanceSettingsViewModel` (a separate instance per back-stack entry). `HomeAppsListSettingsScreen` (`AppListLayoutRows` and `appListAlignmentItems` in `AppListLookItems.kt`, with `HomeAppsListSettingsViewModel`, always for one facet) holds the `LOOK`
   fields: the layout rows (list layout, presentation or grid rows, at the top of the list content card); below it, "Portrait alignment" and "Landscape alignment" under `SettingsSectionHeader`s. Each alignment card has the layout's horizontal row (row position, or column alignment for two columns, none for a grid) and the list position. Landscape's rows add a "Same as portrait" choice, stored as `null`; the preview is the screen's `HomeSurfacePreview`, portrait-shaped; three pages, each a Home preview plus only its own card(s), reached from the "General" rows: `ThemesAndColorsScreen` (route `themesAndColors`: launcher theme, status bar icons, accent), `FontsScreen` (route `fonts`: launcher font style, font color, size, weight, then a `FontPreviewRow` of sample text in
-  Home's styles as the card's last row) and `IconsScreen` (route `icons`): a Home preview, four style cards (default, monochrome, glyph, outline) each showing a 2×2 sample of the user's own icons on `SurfaceContainer` in the chosen colour, a colour dropdown (accent, theme, theme inverted; monochrome has no inverted), a background dropdown (none, tile or reversed tile, glyph and outline only) and the shape picker. `IconStyle`, `IconColour` and `IconBackground` are views of `IconRenderMode`, whose existing stored values are unchanged; a tile (`GLYPH_TILE_*`, `OUTLINE_TILE_*`) fills the icon shape in the colour with the picture in the text tone that reads on it, and a reversed tile (`*_REVERSED_*`) swaps the two; theme inverted is `GLYPH_INVERTED`/`OUTLINE_INVERTED`, the same pictures in `InkInverted`, the opposite of the text colour, with no tile. Glyph and outline draw from the app's themed monochrome layer when it ships one (the outline is a 4 px rim at the 192 px mask size, with its opacities scaled so the 95th percentile is full), else from the plain icon by plate removal (a flat colour, else an edge-walled fill that follows gradients) or edge detection (on the glyph alone over mid grey, its rim kept inside the glyph at the same 4 px width and detail lines thinner, so the plate's own edge never shows; the whole icon's edges only where plate removal fails and they are not too busy for line art; the edge strengths are then scaled by one factor so the 95th percentile of the drawn pixels is fully opaque, which brings every icon's brightest lines to the same level and keeps its gradient), and draw the whole icon where neither works, its lightness anchored so the accent sits at the accent's own lightness among the icon's tones, such as art-heavy icons, see `IconStyler`.
-  `dockDisplayMode` ("Show Dock apps as") is edited on the Dock screen (`DockSettingsScreen`, `DockSettingsViewModel.setDockDisplayMode`), above the apps card, and follows that screen's Reset to default and Copy to facets (scope `DOCK`). Row titles on the look screen:
+  Home's styles as the card's last row) and `IconsScreen` (route `icons`): a Home preview, four style cards (default, monochrome, glyph, outline) each showing a 2×2 sample of the user's own icons on `SurfaceContainer` in the chosen colour, a colour dropdown (accent, theme, theme inverted; monochrome has no inverted), a background dropdown (none, tile, reversed tile, or one of six glass styles, glyph and outline only) and the shape picker. `IconStyle`, `IconColour` and `IconBackground` are views of `IconRenderMode`, whose existing stored values are unchanged; a tile (`GLYPH_TILE_*`, `OUTLINE_TILE_*`) fills the icon shape in the colour with the picture in the text tone that reads on it, and a reversed tile (`*_REVERSED_*`) swaps the two; a glass background (`*_GLASS_FROST_*`, `_DARK_FROST_`, `_CLEAR_`, `_DARK_GLASS_`, `_BRIGHT_`, `_ACCENT_`, each an `IconBackground` carrying its `GlassStyle`) draws a translucent panel through `Modifier.glassBackground` clipped to the icon shape and the picture in the chosen colour; theme inverted is `GLYPH_INVERTED`/`OUTLINE_INVERTED`, the same pictures in `InkInverted`, the opposite of the text colour, with no tile. Glyph and outline draw from the app's themed monochrome layer when it ships one (the outline is a 4 px rim at the 192 px mask size, with its opacities scaled so the 95th percentile is full), else from the plain icon by plate removal (a flat colour, else an edge-walled fill that follows gradients) or edge detection (on the glyph alone over mid grey, its rim kept inside the glyph at the same 4 px width and detail lines thinner, so the plate's own edge never shows; the whole icon's edges only where plate removal fails and they are not too busy for line art; the edge strengths are then scaled by one factor so the 95th percentile of the drawn pixels is fully opaque, which brings every icon's brightest lines to the same level and keeps its gradient), and draw the whole icon where neither works, its lightness anchored so the accent sits at the accent's own lightness among the icon's tones, such as art-heavy icons, see `IconStyler`.
+  `dockDisplayMode` ("Show Dock apps as") is edited on the Dock screen (`DockSettingsScreen`, `DockSettingsViewModel.setDockDisplayMode`), above the apps card, and follows that screen's Reset to default (scope `DOCK`) and Copy from facet. Row titles on the look screen:
   `appRowPosition` → "Home Apps Alignment",
   `appRowPresentation` → "Show Home apps as", `appListVerticalAlignment` → "Home Apps list
   position". Within "Dock & home", `appListLayout` ("App list layout" — always visible) then gates
@@ -102,8 +102,8 @@ flowchart TB
   not on `ClockStyleGalleryScreen` — that screen dropped its own calendar-preview block entirely
   (see chat history). The preview's `favorites`/`dockItems`/`calendarEvents` are this scope's real,
   live content, not sampled installed apps or fixed sample events: `AppearanceSettingsViewModel`
-  observes the facet's own Favorites and Dock through `ObservePlacedItemsUseCase`, or at launcher scope the active facet's through
-  `ObserveActiveFacetItemsUseCase` (`favorites`/`dockItems`). Calendar
+  observes the active facet's Favorites and Dock through `ObserveActiveFacetItemsUseCase` (`favorites`/`dockItems`); its branch for a
+  route-supplied `facetId` (through `ObservePlacedItemsUseCase`) is never taken, since none of its four routes declares that argument (F20 in `05`). Calendar
   events come from `CalendarRepository.getUpcomingEvents`, gated by `CalendarPermissionRepository
   .isGranted()` (empty when ungranted, never a sample fallback), with facet-or-global
   `showAllDay`/`calendarIds` of the clock's calendar settings resolved the same way `ObserveHomeScreenStateUseCase`
@@ -132,7 +132,7 @@ flowchart TB
   calendar display, the clock and list placement in each orientation (`clockPlacement`, `listAlignment`,
   with the landscape rules; the clock's is the facet's own once `clockPlacementOwn`, else the launcher's built-in fallback) and the facet's clock stack (`clockStack`: each page's kind, widget id, size and alignment per orientation). Home
   (`HomeUiState`) and every preview read it, so a preview cannot show anything Home would not:
-  `FacetCarouselUiState`, `AppearanceUiState`, `CalendarSettingsUiState`, `FacetSettingsUiState`,
+  `FacetCarouselUiState`, `AppearanceSettingsUiState`, `CalendarSettingsUiState`, `FacetSettingsUiState`,
   `HomeAppsListUiState`, `DockSettingsUiState` and `ClockStyleGalleryUiState` all delegate to it. The
   last four hold the launcher's `LauncherSettings` as `settings` instead of a `globalX` field per
   value. `ResolvedFacetStyleTest` covers the own-value, landscape and widget rules, and
@@ -145,8 +145,6 @@ flowchart TB
   view of an id, so a view from the main host would take them from the live one on Home. The saved size
   is used, else the provider's default, as on Home. The controller reaches previews through
   `LocalClockWidgetHost`; without it a preview draws the native clock.
-- **Turning it off does not delete the facet's rows**; they're just ignored until the flag is set
-  again (and are still exported by backup).
 - `FacetCarouselUiState.style(facetId)` is the single per-facet accessor; it replaced twenty `xxx(facetId)` resolvers.
 
 ### 1a. Facet limits and the free plan
@@ -183,9 +181,9 @@ card 3 Icons (while weather is on), then, while weather is on, a *Location* card
 (`UnitsAndLocationScreen`, route `unitsAndLocation`): the four units and the Location card, launcher-wide (`UnitsAndLocationViewModel`), so a
 Weather widget can reach them whether or not the clock shows weather.
 
-The Home sheet no longer has a *Clock & calendar settings* row or its facet scope badge: a clock's settings are always its own, reached from the clock's own sheet (a long-press on the clock or its calendar, [12](12-flow-drawer-search-and-app-actions.md) §4). A facet's settings screen has a *Home* section with *Widgets* (that facet's widget stack, `clockStack?facetId=`), above the *Apps and folders* section with *Apps list*, *Dock* and *Dock & apps appearance* (`DockAppsAppearanceScreen` directly, with no Appearance hub in between). Those three screens edit the facet's own values and end with *Reset to default*; at launcher scope they are the *Default …* screens under Settings → Apps and folders and carry a one-line note that they are used when a facet is created or reset.
+The Home sheet no longer has a *Clock & calendar settings* row or its facet scope badge: a clock's settings are always its own, reached from the clock's own sheet (a long-press on the clock or its calendar, [12](12-flow-drawer-search-and-app-actions.md) §4). A facet's settings screen has a *Home* section with *Widgets* (that facet's widget stack, `clockStack?facetId=`), above the *Apps and folders* section with *Apps List* (`HomeAppsListSettingsScreen`, `homeAppsListSettings?facetId=`) and *Dock Apps* (`DockSettingsScreen`, `dockSettings?facetId=`); the look of the dock and apps is edited on those two screens, and there is no separate appearance screen. Both edit the facet's own values and offer *Copy from facet* (`CopyFromFacetCard`); the Dock screen also ends with *Reset to default* (`ResetToDefaultCard`), and the Apps List screen carries the facet's *Allow landscape* switch. They are always opened for a facet: Settings has no launcher-wide *Default …* pages for them any more, so the launcher-wide values in `facet_settings` only seed a new or reset facet. (The routes' `facetId` argument still defaults to `NO_ACTIVE_FACET_ID` and the two ViewModels still tolerate a missing facet, although no caller navigates without one: finding F20 in `05`.)
 
-The Home sheet has an *Adjust widget size & position* row (`home_sheet_adjust`, while the stack has a page) that enters adjust mode for the page showing, as the widget sheet's row does, and a *Switch facet* row (`home_sheet_switch_facet`) that opens the facet carousel (`HomeClockActions.onOpenFacetCarousel` → `swipe.facet.open()`); `FacetCarouselScreen(isOpen)` puts its pager back on the active facet whenever the overlay is closed, so it always opens there. On the Settings folder screen the header's 3-dot menu (`FolderDetailMenu`) offers Rename, Dock and Favorites add/remove and Delete; the Dock and Favorites rows carry a `FacetScopeBadge` (only with 2+ facets) because that screen is where the facet is not otherwise visible, fed by `ObserveFolderPlacementUseCase`. The app and folder long-press menus on Home and in the Drawer show no badge.
+The Home sheet has an *Adjust widget size & position* row (the same `widget_sheet_adjust_label` string as the widget sheet's, while the stack has a page) that enters adjust mode for the page showing, as the widget sheet's row does, and a *Switch facet* row (`home_sheet_switch_facet`) that opens the facet carousel (`HomeClockActions.onOpenFacetCarousel` → `swipe.facet.open()`); `FacetCarouselScreen(isOpen)` puts its pager back on the active facet whenever the overlay is closed, so it always opens there. On the Settings folder screen the header's 3-dot menu (`FolderDetailMenu`) offers Rename, Dock and Favorites add/remove and Delete; the Dock and Favorites rows carry a `FacetScopeBadge` (only with 2+ facets) because that screen is where the facet is not otherwise visible, fed by `ObserveFolderPlacementUseCase`. The app and folder long-press menus on Home and in the Drawer show no badge.
 
 `HomeScreenStateBuilder` gates the items: the alarm and battery only when their switch is on, the weather
 (`HomeWeatherState`, from `ObserveWeatherUseCase`) only when its switch is on and the forecast is not outdated.
@@ -204,8 +202,7 @@ ahead, and an "Updated" footer with the MET Norway credit and a refresh button. 
 busy-try-later, offline, location permission needed, no city, and already up to date. Its place line opens Clock
 accessories to choose another place. The About section of Settings carries the MET and GeoNames credit too.
 
-Weather pictures come in two styles, the launcher default `weatherIconStyle` (coloured unless changed) or a facet's own while it
-overrides the clock (Settings → Clock accessories → Icons): monochrome,
+Weather pictures come in two styles, chosen per clock (`ClockWidgetConfig.weatherIconStyle`, coloured unless changed; Clock accessories → Icons): monochrome,
 drawn in code in the clock's accessory colour (`WeatherIcon`), or coloured, one bundled PNG per picture
 (`res/drawable-nodpi/weather_color_*`, mapped by `coloredRes()`). The style applies to the accessory row and the sheet;
 `HomeWeatherState.iconStyle` carries it, and `HomeDrawerRoute` hands the active facet's style to the sheet (`WeatherUiState.iconStyle`). The Clock accessories screen opens with
@@ -223,15 +220,15 @@ facet's three switches.
 flowchart LR
     DS["DataStore: theme_mode, accent_from_system,\ncustom_accent_swatch, wallpaper_accent_role,\nicon_render_mode, icon_pack_package, icon_shape, icon_scale_percent,\nlauncher_font_option, home_apps_font_weight, font_scale_option"] --> LVM["LauncherViewModel → LauncherUiState\n(iconRenderMode = effectiveIconRenderMode)"]
     LVM --> ACT["LauncherActivity.setContent"]
-    ACT --> T["FacetLauncherTheme(themeMode, accentFromSystem, customAccentSwatch,\nwallpaperAccentRole, iconRenderMode, iconShape, iconScale, launcherFontOption,\nhomeAppsFontWeight, fontScaleOption)"]
+    ACT --> T["FacetLauncherTheme(themeMode, accentFromSystem, customAccentSwatch,\nwallpaperAccentRole, iconRenderMode, iconShape, forceIconShape, iconScale, launcherFontOption,\nhomeAppsFontWeight, fontScaleOption)"]
     T --> DARK{"themeMode"}
     DARK -- LIGHT --> L[light]
     DARK -- DARK --> D[dark]
     DARK -- SYSTEM --> SYS["isSystemInDarkTheme()"]
     T --> ACC{"accentFromSystem?"}
-    ACC -- "true (Android 12+ only)" --> DYN["dynamicLight/DarkColorScheme(context)\nrole picked by wallpaperAccentRole\n(PRIMARY / SECONDARY / TERTIARY)"]
+    ACC -- "true (Android 12+ only)" --> DYN["dynamicLightColorScheme / dynamicDarkColorScheme(context)\nrole picked by wallpaperAccentRole\n(PRIMARY / SECONDARY / TERTIARY)"]
     ACC -- "false, or Android 11" --> SW["AccentSwatch.valueOf(customAccentSwatch)\nfixed palette"]
-    DYN --> CS["FacetLight/DarkColorScheme(accent)"]
+    DYN --> CS["facetColorScheme(isDark)\nlightColorScheme / darkColorScheme with primary = Accent"]
     SW --> CS
     T --> TYPO["facetTypography(launcherFontOption.fontFamily,\nhomeAppsFontWeight.resolve(), fontScaleOption.scale)"]
     CS --> MT["MaterialTheme(colorScheme, typography, shapes = M3 defaults)"]
@@ -259,7 +256,7 @@ flowchart LR
   onboarding backdrop blur (`setBackgroundBlurRadius`, Android 12+) is skipped.
 - Clock/app-label colours are *not* the M3 scheme directly: `ClockColorOption`
   (`THEME` / `ACCENT_PRIMARY` / …) resolves through `ui/theme/ClockColors.kt` against the current
-  scheme. Clock's own colour is per-facet (`facets.clockColorOption`); the app-label colour
+  scheme. Clock's own colour is each clock's own (`ClockWidgetConfig.colorOption`, stored on its clock stack page); the app-label colour
   (`app_label_color_option`) is global only.
 - `ClockTemplates.kt`'s `NegativePanelTemplate` fills its panel with the resolved clock colour
   itself, so its digits/meridiem/accessory row can't reuse that same colour as their own — they're
@@ -268,7 +265,7 @@ flowchart LR
   is what makes the panel and its content flip together across `THEME`/`THEME_INVERTED` (a fixed
   `Surface` read stayed legible for one and went low-contrast for the other, since `THEME_INVERTED`
   deliberately lands the panel on `Surface`'s own end of the scale).
-- Per-facet Private Space screens use `PrivateSpaceTheme`, a fixed override of the scheme.
+- Private Space screens use `PrivateSpaceTheme`, a fixed dark override of the scheme.
 - **Settings ignores the Font size and Font weight options.** `FacetLauncherTheme` provides two typographies as locals
   (`LocalLauncherTypography`, scaled and weighted, and `LocalUnscaledTypography`, same family at scale 1 and regular weight). `FacetNavHost`
   registers every destination except Home through `settingsComposable`, which wraps it in `UnscaledTypography`, so
@@ -292,9 +289,7 @@ flowchart LR
   (this section's own `launcher_font_option`, via `.fontFamily`), `homeAppsFontWeight` (via
   `.resolve()`), and `appLabelColorOption` (via `.resolve()`) straight from the same three
   DataStore keys shown above, plus `clockAlignment` (Room, per-facet) for its position — it has no
-  design fields or theming path of its own any more (see chat history: calendar/appearance styling
-  consolidation, which removed `calendarFontOption`/`calendarColorOption`/`calendarFontWeight`/
-  `calendarAlignment`).
+  design fields or theming path of its own.
 
 ### 2a. System bar icon color
 
@@ -393,6 +388,10 @@ expanded, trimmed and cut to 300 characters by `notificationTitleAndText`), `pos
 The same notification-access grant also backs Home's media player row, opt-in via "Show media player in home screen"
 (`show_media_player_on_home`, default off; `show_media_skip_buttons`, default on) on the same Notifications page.
 
+### Glass panels
+
+Four components can sit on a frosted panel, each with its own background style, set from a *Dock background*, *List item background*, *Calendar background* or *Media player background* dropdown (`GlassStyle`: Off, Light frost, Dark frost, Clear glass, Dark glass, Bright, Accent), drawn by `Modifier.glassBackground` (`ui/components/GlassBackground.kt`). The styles tint rather than blur, since Compose cannot blur the wallpaper behind the window; with a wallpaper copy the dock also blurs it ([21](21-flow-wallpaper-glass.md)). The dock (`Facet.dockGlass`, Dock screen) and the apps list items (`Facet.appsListGlass`, Apps list screen) are each facet's own; the calendar events (`ClockCalendarConfig.glass`, the calendar settings sheet) follow the clock's config; the media row (`LauncherSettings.mediaPlayerGlass`, Notifications page) is launcher-wide. `ResolvedFacetStyle` carries the dock and apps list styles and `CalendarDisplayOptions.glass` the calendar's into `HomeScreenState`; the dock and apps list previews draw them too. The gap above the media row and the one below it are the same, `HOME_MEDIA_ROW_GAP` (12dp), so a panel behind the row sits evenly between the calendar and the list.
+
 ```mermaid
 sequenceDiagram
     participant MSM as MediaSessionManager
@@ -422,13 +421,13 @@ sequenceDiagram
 - Turning the setting on without access stores it and routes through `NotificationAccessExplanationScreen`; the switch
   reads on only when the stored value and the real grant both hold, like the badges switch.
 - Art comes from the session's bitmap, else a `content:`/`file:` art URI decoded off the main thread (no network).
-- The page is reached from Appearance's global-only Notifications section, whose "Notifications and media" row carries a
+- The page is reached from the main Settings screen's Customization card, whose "Notifications and media" row carries a
   subtext that follows the page: "Dot badges"/"Count badges"/"Badges off", then "Media player on"/"off", joined by " · ".
   Without notification access it says "Needs notification access" instead, since both switches read off then.
-  `AppearanceSettingsViewModel` holds the access flag and re-reads it on resume (`refreshNotificationAccess`).
+  `SettingsViewModel` holds the access flag and `SettingsScreen` re-reads it on resume (`refreshNotificationAccess`); `AppearanceSettingsViewModel` still has a method of the same name that no screen calls any more.
 - The progress line is always Material's `LinearWavyProgressIndicator`; its amplitude eases to 0 (a flat line) when
   playback stops and back up when it resumes. It only exists from Material3 1.5, so `app/build.gradle.kts` overrides the
-  BOM's 1.4.0 with `1.5.0-beta01` (drop the override once a BOM pins a stable 1.5). No OS-version gating (minSdk 24).
+  BOM's 1.4.0 with `1.5.0-beta01` (drop the override once a BOM pins a stable 1.5). No OS-version gating (minSdk 30).
 - Progress is interpolated in the UI from the last reported position/time/speed; it is `null` (empty flat track) when the
   duration is unknown.
 

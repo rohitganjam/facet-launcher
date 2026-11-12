@@ -16,7 +16,7 @@ was showing; this was finding F1, now fixed — see the `git blame` on `AppRepos
 change). Each scan also reads an adaptive icon's themed monochrome layer into `AppInfo.monochromeIcon`, a small alpha-only bitmap (API 33+, null when the app ships none); the glyph and outline pictures built from it are not made here but by `StyledIconCache`, on demand and warmed in the background for all apps (see 13).
 
 With an icon pack applied (`IconPackRepository.selection`, from `icon_pack_package`), the scan swaps in the
-pack's icon (capped at `PACK_ICON_SIZE` = 192px) for every app the pack covers, by exact activity then by
+pack's icon (capped at `PACK_ICON_SIZE` = 256px) for every app the pack covers, by exact activity then by
 package, and sets `AppInfo.iconFromPack` so `AppIcon` draws it unclipped. An app the pack misses gets its own
 icon on the pack's `iconback`/`iconmask`/`iconupon` art under `MATCH_PACK` (also `iconFromPack`), or keeps its
 own icon under `KEEP_DEFAULT` or when the pack ships no such art. Pack icons carry no `monochromeIcon`. The
@@ -112,9 +112,10 @@ Rules this encodes:
   index — so a personal and a work copy of the same app are distinct placements.
 - A Room write re-runs only the join, using `combine`'s cached latest app list; it never re-queries
   `LauncherApps`.
-- `PlacementRepository` serves all four lists' raw rows from the same two tables, `app_placements` and
-  `folder_placements`, each through a `PlacementTarget(list, facetId)`: `DOCK` or `FAVORITES`, for the
-  launcher-wide default (`facetId` null) or for one facet. The join above is identical for all of them.
+- `PlacementRepository` serves every list's raw rows from the same two tables, `app_placements` and
+  `folder_placements`, each through a `PlacementTarget(list, facetId)`: one facet's `DOCK` or `FAVORITES`
+  (there is no launcher-wide list). The join above is identical for all of them.
+- `installedByComponent` is built once per emission (`indexByComponent`), and once for all facets in the batched forms.
 - `itemsForFacets(list, ids)` / `appsForFacets(list, ids)` offer a batched read
   → `Flow<Map<Long, List<PlacedItem>>>` for the facet carousel previews, built the same way. Those
   previews, and the Appearance screens' preview, render the real `HomeScreen` scaled down
@@ -124,7 +125,8 @@ Rules this encodes:
 ## 3. The Home screen state graph
 
 `ObserveHomeScreenStateUseCase.invoke()` is the largest reactive composition in the app. It is
-the one place that decides *which* Room tables feed Home, based on the active facet's override flags.
+the one place that decides *which* Room rows feed Home: the active facet's own Dock and Favorites
+(`facet.placementTarget(list)`). There are no override flags; a facet always owns its lists.
 
 ```mermaid
 flowchart TB
@@ -143,7 +145,9 @@ flowchart TB
     DK --> GDK["ObservePlacedItemsUseCase.items(facet.placementTarget(DOCK))\n(the facet's own list)"]
 
     AF --> CAL{{"flatMapLatest → observeCalendarEvents"}}
-    CAL --> CR["CalendarRepository.getUpcomingEvents(ids, includeAllDay)\n(gated by CalendarPermissionRepository)"]
+    S --> CAL
+    RT --> CAL
+    CAL --> CR["CalendarRepository.getUpcomingEvents(ids, includeAllDay)\n(one-shot, gated by CalendarPermissionRepository)\npaired with calendarDisplay from resolveFacetStyle"]
 
     S --> BC
     NB["NotificationBadgeRepository.badgeCounts\n(StateFlow fed by FacetNotificationListenerService)"] --> BC
@@ -160,21 +164,29 @@ flowchart TB
 
     ALI --> OUT
     DK --> OUT
-    FAV2["favoriteItems (always observed,\nfor the quick-add menu)"] --> OUT
+    AF --> FAV2
+    FAV2["favoriteItems + favoriteCells (always observed:\nthe quick-add menu, and the grid's saved cells\nper orientation, ObservePlacedItemsUseCase.gridCells)"] --> OUT
     CAL --> OUT
     BC --> OUT
     CA --> OUT
     MP --> OUT
     S --> OUT
     F --> OUT
-    OUT{{"combine(8 sources) → HomeScreenState"}} --> HVM["HomeViewModel\ncombine(+ usageAccessPromptDismissed, isDefaultLauncher,\nvisibleClockItemByFacet, entitlement isPro)\n→ HomeUiState"]
+    OUT{{"combine(7 flows) → HomeScreenState"}} --> HVM["HomeViewModel\ncombine(+ usageAccessPromptDismissed, isDefaultLauncher,\nvisibleClockItemByFacet, entitlement isPro)\n→ HomeUiState"]
     HVM --> HS["HomeScreen"]
 ```
 
 Notes:
 
 - The `combine` arity limit (5 in `kotlinx.coroutines`) is worked around with `domain/FlowCombine.kt`
-  (6- and 7-ary overloads) and by pairing unrelated flows (`dockAndFavoriteItems`, `badgeCountsAndAccessories`).
+  (6- and 7-ary overloads) and by pairing unrelated flows (`dockAndFavoriteItems`, which also carries
+  `favoriteCells`, `eventsAndDisplay`, `badgeCountsAndAccessories`). The seven flows combined are `settings`,
+  `dockAndFavoriteItems`, `appListItems`, `facets`, `eventsAndDisplay`, `badgeCountsAndAccessories`, `mediaPlayer`.
+- `activeFacet` is a cold `combine` with no `distinctUntilChanged()`, collected once per branch (six times),
+  and `S` and `F` are themselves unshared. Any DataStore write therefore re-emits it and restarts every
+  `flatMapLatest` branch, re-running the usage-stats and calendar one-shots (findings F16 and F17 in `05`).
+- In `FAVORITES` mode `appListItems` and `favoriteItems` observe the same placement target, so that list is
+  hydrated twice.
 - `refreshTrigger` exists because Recents/Most-used and calendar events are **one-shot** reads
   (`flow { emit(...) }`), not live streams; `HomeViewModel` re-emits the trigger on resume. It also
   re-evaluates the notification-access grant that gates `mediaPlayer`, re-subscribing to
@@ -207,7 +219,8 @@ sequenceDiagram
 
     App->>App: Hilt builds SingletonComponent (lazy — services/DB on first inject)
     Act->>LVM: by viewModels()
-    LVM->>Repos: combine(GetInstalledAppsUseCase.observe(), settings, observeWorkProfiles())
+    LVM->>Repos: combine(GetInstalledAppsUseCase.observe(), settings, observeWorkProfiles(), observeFacets())
+    LVM->>Repos: settings.map { onboardingCompleted }   (own collector, so the onboarding gate never waits on the app scan)
     LVM->>UC: EnsureActiveFacetUseCase.keepUsable()   (creates a facet if none and seeds its Dock with the device defaults, fixes activeFacetId, keeps it valid)
     LVM->>UC: CleanUpUninstalledAppsUseCase()   (collects for process lifetime)
     LVM->>UC: RepairOrphanedProfileRowsUseCase()   (one pass: userId = -1 rows)

@@ -3,6 +3,7 @@ package com.facetlauncher.app.domain
 import com.facetlauncher.app.data.BatteryRepository
 import com.facetlauncher.app.data.NextAlarmRepository
 import com.facetlauncher.app.data.model.BatteryStatus
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
@@ -26,10 +27,23 @@ class ObserveClockAccessoriesUseCaseTest {
     fun `combines the current battery and next-alarm readings`() = runTest {
         // Given a battery reading and no alarm set
         // When observing accessories
-        val result = useCase().first()
+        val result = useCase().first { it.batteryPercent != null }
 
         // Then the combined state reflects both, unmodified
         assertEquals(ClockAccessoryState(nextAlarmMillis = null, batteryPercent = 64, isCharging = false), result)
+    }
+
+    @Test
+    fun `reports no battery percent until a reading arrives`() = runTest {
+        // Given a battery source that has not emitted a reading yet
+        val silent = MutableSharedFlow<BatteryStatus>()
+        `when`(batteryRepository.observeBatteryStatus()).thenReturn(silent)
+
+        // When observing accessories
+        val first = useCase().first()
+
+        // Then the battery is unknown, not 0%
+        assertEquals(null, first.batteryPercent)
     }
 
     @Test
@@ -38,7 +52,7 @@ class ObserveClockAccessoriesUseCaseTest {
         nextAlarmFlow.value = 999_000L
 
         // When observing accessories
-        val result = useCase().first()
+        val result = useCase().first { it.batteryPercent != null }
 
         // Then it's carried through into the combined state
         assertEquals(999_000L, result.nextAlarmMillis)
@@ -50,7 +64,7 @@ class ObserveClockAccessoriesUseCaseTest {
         batteryFlow.value = BatteryStatus(percent = 15, isCharging = true)
 
         // When observing accessories
-        val result = useCase().first()
+        val result = useCase().first { it.batteryPercent != null }
 
         // Then both the percent and charging flag are carried through
         assertEquals(15, result.batteryPercent)

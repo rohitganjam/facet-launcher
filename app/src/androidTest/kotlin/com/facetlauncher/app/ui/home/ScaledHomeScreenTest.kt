@@ -53,14 +53,14 @@ class ScaledHomeScreenTest {
     )
 
     /** A preview at half the window's size, in the window's own configuration unless [configuration] replaces it. */
-    private fun setContent(configuration: Configuration? = null, onClick: (() -> Unit)? = null, settings: () -> LauncherSettings) {
+    private fun setContent(configuration: Configuration? = null, onClick: (() -> Unit)? = null, clockShowsWeather: Boolean = false, settings: () -> LauncherSettings) {
         composeRule.setContent {
             FacetLauncherTheme {
                 val config = configuration ?: LocalConfiguration.current
                 CompositionLocalProvider(LocalConfiguration provides config, LocalAllowLandscape provides (configuration != null)) {
                     val current = settings()
                     ScaledHomeScreen(
-                        style = resolveFacetStyle(null, current),
+                        style = resolveFacetStyle(null, current).let { it.copy(clock = it.clock.copy(showWeather = clockShowsWeather)) },
                         settings = current,
                         content = HomeScreenContent(listItems = listOf(app), dockItems = emptyList(), calendarEvents = emptyList()),
                         homeWallpaper = HomeWallpaper.Unavailable,
@@ -89,7 +89,7 @@ class ScaledHomeScreenTest {
     @Test
     fun `the preview shows the weather accessory while weather is on`() {
         // Given a preview of a launcher with weather on
-        setContent { settings().copy(showWeather = true, temperatureUnit = TemperatureUnit.CELSIUS) }
+        setContent(clockShowsWeather = true) { settings().copy(temperatureUnit = TemperatureUnit.CELSIUS) }
 
         // Then the sample weather sits in the accessory row
         composeRule.onNodeWithContentDescription("21°C, Partly cloudy", substring = true, useUnmergedTree = true).assertExists()

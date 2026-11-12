@@ -31,6 +31,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.facetlauncher.app.R
+import com.facetlauncher.app.data.model.GlassStyle
 import com.facetlauncher.app.data.model.AppListColumnAlignment
 import com.facetlauncher.app.data.model.AppListGridColumns
 import com.facetlauncher.app.data.model.AppListGridDisplayMode
@@ -90,6 +91,9 @@ fun HomeSurfacePreview(
     notificationBadgeStyle: NotificationBadgeStyle = NotificationBadgeStyle.DOT,
     /** Sample unread count for a package; the default draws no badges. */
     badgeCountFor: (String) -> Int? = { null },
+    /** Frosted-glass panels behind the dock and behind each app item, as Home draws them. */
+    dockGlass: GlassStyle = GlassStyle.OFF,
+    appsListGlass: GlassStyle = GlassStyle.OFF,
 ) {
     val items = remember(appList, maxAppItems) { appList.take(maxAppItems).toImmutableList() }
     val shape = RoundedCornerShape(14.dp)
@@ -123,6 +127,7 @@ fun HomeSurfacePreview(
                         labelFontWeight = labelFontWeight,
                         badgeStyle = notificationBadgeStyle,
                         badgeCountFor = badgeCountFor,
+                        glass = appsListGlass,
                     )
                     AppListLayout.TWO_COLUMN -> HomeSurfacePreviewTwoColumns(
                         items = items,
@@ -132,6 +137,7 @@ fun HomeSurfacePreview(
                         labelFontWeight = labelFontWeight,
                         badgeStyle = notificationBadgeStyle,
                         badgeCountFor = badgeCountFor,
+                        glass = appsListGlass,
                     )
                     AppListLayout.SINGLE_COLUMN -> items.forEach { item ->
                         HomeSurfacePreviewRow(
@@ -142,12 +148,18 @@ fun HomeSurfacePreview(
                             labelFontWeight = labelFontWeight,
                             badgeStyle = notificationBadgeStyle,
                             badgeCountFor = badgeCountFor,
+                            glass = appsListGlass,
                         )
                     }
                 }
                 if (dockApps.isNotEmpty()) {
                     Spacer(modifier = Modifier.height(12.dp))
-                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth()
+                            .glassBackground(dockGlass, MaterialTheme.shapes.large)
+                            .then(if (dockGlass == GlassStyle.OFF) Modifier else if (dockDisplayMode == DockDisplayMode.TEXT) Modifier.padding(horizontal = 10.dp) else Modifier.padding(12.dp)),
+                        horizontalArrangement = if (dockGlass != GlassStyle.OFF) Arrangement.SpaceBetween else Arrangement.SpaceEvenly,
+                    ) {
                         dockApps.forEach { item ->
                             DockIcon(
                                 item = item,
@@ -174,6 +186,7 @@ private fun HomeSurfacePreviewTwoColumns(
     labelFontWeight: FontWeight,
     badgeStyle: NotificationBadgeStyle,
     badgeCountFor: (String) -> Int?,
+    glass: GlassStyle,
 ) {
     val (leftPosition, rightPosition) = columnAlignment.toColumnPositions()
     Row(modifier = Modifier.fillMaxWidth()) {
@@ -191,6 +204,7 @@ private fun HomeSurfacePreviewTwoColumns(
                         labelFontWeight = labelFontWeight,
                         badgeStyle = badgeStyle,
                         badgeCountFor = badgeCountFor,
+                        glass = glass,
                     )
                 }
             }
@@ -219,6 +233,10 @@ private fun previewItemStyle(
     )
 }
 
+@Composable
+private fun glassRowModifier(glass: GlassStyle): Modifier =
+    if (glass != GlassStyle.OFF) Modifier.padding(vertical = 2.dp).glassBackground(glass) else Modifier
+
 /** [HomeSurfacePreview]'s single/two-column row dispatch — identical [AppRow]/[FolderRow] call either layout needs, just with a different [position] and item subset. */
 @Composable
 private fun HomeSurfacePreviewRow(
@@ -229,6 +247,7 @@ private fun HomeSurfacePreviewRow(
     labelFontWeight: FontWeight,
     badgeStyle: NotificationBadgeStyle,
     badgeCountFor: (String) -> Int?,
+    glass: GlassStyle = GlassStyle.OFF,
 ) {
     val style = previewItemStyle(item, labelColor, labelFontWeight, badgeStyle, badgeCountFor)
     when (item) {
@@ -238,7 +257,9 @@ private fun HomeSurfacePreviewRow(
             style = style,
             position = position,
             presentation = presentation,
-            verticalPadding = 6.dp,
+            // Glass rows pad the same on every side: 8dp, the row's own side padding.
+            verticalPadding = if (glass != GlassStyle.OFF) 8.dp else 6.dp,
+            modifier = glassRowModifier(glass),
             enableLongPressMenu = false,
             // Distinguishes this preview card's rows from Home's own real AppRow for
             // the same app, in case both are ever present in one semantics tree.
@@ -250,6 +271,7 @@ private fun HomeSurfacePreviewRow(
             style = style,
             position = position,
             presentation = presentation,
+            modifier = glassRowModifier(glass),
             testTagPrefix = "home_surface_preview_",
             enableLongPressMenu = false,
         )
@@ -266,6 +288,7 @@ private fun HomeSurfacePreviewGrid(
     labelFontWeight: FontWeight,
     badgeStyle: NotificationBadgeStyle,
     badgeCountFor: (String) -> Int?,
+    glass: GlassStyle,
 ) {
     LazyVerticalGrid(
         columns = GridCells.Fixed(columns),
@@ -275,7 +298,10 @@ private fun HomeSurfacePreviewGrid(
         userScrollEnabled = false,
     ) {
         items(items, key = { it.stableKey() }) { item ->
-            Box(modifier = Modifier.padding(vertical = 4.dp), contentAlignment = Alignment.Center) {
+            Box(
+                modifier = Modifier.padding(vertical = 4.dp).glassBackground(glass).then(if (glass != GlassStyle.OFF) Modifier.padding(8.dp) else Modifier),
+                contentAlignment = Alignment.Center,
+            ) {
                 val label = when (item) {
                     is PlacedItem.SingleApp -> item.app.label
                     is PlacedItem.FolderItem -> item.folder.name

@@ -1214,19 +1214,20 @@ class HomeScreenTest {
     @Test
     fun repositioningTheClockHigherShrinksItToFitAndPersistsThatScale() {
         // Given a large clock, low on the screen (lots of headroom above it)
-        var committedScale = 2f
+        var committedWidthDp: Int? = null
         composeRule.setContent {
-            var scale by remember { mutableStateOf(2f) }
             var zone by remember { mutableStateOf<Float?>(900f) }
             TestHomeScreen(
                 appListItems = apps(3),
                 clockZoneHeightDp = zone,
                 onClockZoneHeightCommit = { zone = it },
-                clockScale = scale,
-                onClockScaleCommit = { committedScale = it; scale = it },
+                clockScale = 2f,
+                // A scale commit reaches the host as the clock's box size in dp
+                onClockBoxSizeCommit = { width, _ -> committedWidthDp = width },
             )
         }
-        val heightBefore = composeRule.onNodeWithTag("home_clock_block").fetchSemanticsNode().boundsInRoot.height
+        val before = composeRule.onNodeWithTag("home_clock_block").fetchSemanticsNode().boundsInRoot
+        val heightBefore = before.height
 
         // When the move handle is dragged far up, toward the status bar
         enterAdjustMode()
@@ -1236,7 +1237,8 @@ class HomeScreenTest {
         // smaller scale was persisted so it doesn't snap back
         val heightAfter = composeRule.onNodeWithTag("home_clock_block").fetchSemanticsNode().boundsInRoot.height
         assertTrue("clock shrank to fit", heightAfter < heightBefore)
-        assertTrue("the shrunk scale was committed", committedScale < 2f)
+        val committedPx = with(composeRule.density) { requireNotNull(committedWidthDp) { "the shrunk size was not committed" }.dp.toPx() }
+        assertTrue("the committed width $committedPx is under the original ${before.width}", committedPx < before.width)
     }
 
     @Test

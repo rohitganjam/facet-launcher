@@ -202,15 +202,6 @@ class AppContextMenuScalingTest {
     }
 
     @Test
-    fun scopePillsAreCappedSoTheyStayCompactAtTheLargestText() {
-        setContent(systemFontScaleValue = 2f, appTextSize = FontScaleOption.HUGE)
-
-        // The Dock action's "Work" pill, asked for at 2.9x, is held to about 1.3x
-        val pill = composeRule.onNodeWithText("Work", useUnmergedTree = true).performScrollTo().getBoundsInRoot()
-        assertTrue("work pill is ${pill.height} tall", pill.height.value <= 30f)
-    }
-
-    @Test
     fun theNotificationsHeadingStaysOnOneLineAtTheLargestText() {
         setContent(systemFontScaleValue = 2f, appTextSize = FontScaleOption.HUGE)
 

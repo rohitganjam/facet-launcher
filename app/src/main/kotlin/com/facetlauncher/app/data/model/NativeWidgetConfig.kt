@@ -22,8 +22,14 @@ data class NativeWidgetConfig(
     val weatherLocation: WidgetWeatherLocation? = null,
     /** A clock's own settings; a clock has no launcher-wide setting to follow, so a clock widget always carries them. */
     val clock: ClockWidgetConfig? = null,
+    /** The panel behind the widget; `null` is the default, [DEFAULT_GLASS]. */
+    val glass: GlassStyle? = null,
 ) {
-    val followsLauncher: Boolean get() = calendarIds == null && showAllDayEvents == null && weatherLocation == null && clock == null
+    val followsLauncher: Boolean get() = calendarIds == null && showAllDayEvents == null && weatherLocation == null && clock == null && glass == null
+
+    companion object {
+        val DEFAULT_GLASS = GlassStyle.FROST
+    }
 }
 
 /** The stored shape of [NativeWidgetConfig]: JSON, with a field left out while it follows the launcher. */
@@ -33,6 +39,7 @@ private data class StoredConfig(
     val showAllDayEvents: Boolean? = null,
     val weather: StoredWeather? = null,
     val clock: StoredClock? = null,
+    val glass: String? = null,
 )
 
 /** A clock's settings, every enum by name; a name this version does not know reads as that field's default. */
@@ -54,6 +61,7 @@ private data class StoredClock(
     val calendarItems: Int = CalendarDisplayOptions.MAX_ITEMS,
     val calendarAllDay: Boolean = true,
     val calendarIds: List<String>? = null,
+    val calendarGlass: String? = null,
 )
 
 /** A weather location: [city] unset means the phone's position, otherwise the chosen city. */
@@ -70,7 +78,7 @@ private val configJson = Json { ignoreUnknownKeys = true }
 /** The stored form: JSON, or `null` when the widget follows the launcher. */
 fun NativeWidgetConfig.encode(): String? {
     if (followsLauncher) return null
-    return configJson.encodeToString(StoredConfig(calendarIds?.sorted(), showAllDayEvents, weatherLocation?.toStored(), clock?.toStored()))
+    return configJson.encodeToString(StoredConfig(calendarIds?.sorted(), showAllDayEvents, weatherLocation?.toStored(), clock?.toStored(), glass?.name))
 }
 
 private fun WidgetWeatherLocation.toStored(): StoredWeather = when (this) {
@@ -83,7 +91,7 @@ private fun ClockWidgetConfig.toStored() = StoredClock(
     use24Hour = use24HourTime, meridiem = showMeridiem, dateStyle = dateStyle.name, alarm = showAlarm, battery = showBattery,
     weather = showWeather, weatherIcons = weatherIconStyle.name, weatherLocation = weatherLocation?.toStored(),
     calendarIndicator = calendar.showIndicator, calendarItems = calendar.itemsToShow, calendarAllDay = calendar.showAllDay,
-    calendarIds = calendar.calendarIds?.sorted(),
+    calendarIds = calendar.calendarIds?.sorted(), calendarGlass = calendar.glass.name,
 )
 
 private inline fun <reified E : Enum<E>> String?.enumOr(default: E): E = this?.let { name -> enumValues<E>().firstOrNull { it.name == name } } ?: default
@@ -96,7 +104,7 @@ private fun StoredClock.toConfig(): ClockWidgetConfig {
         use24HourTime = use24Hour, showMeridiem = meridiem, dateStyle = dateStyle.enumOr(defaults.dateStyle),
         showAlarm = alarm, showBattery = battery, showWeather = weather, weatherIconStyle = weatherIcons.enumOr(defaults.weatherIconStyle),
         weatherLocation = weatherLocation?.toLocation(),
-        calendar = ClockCalendarConfig(calendarIndicator, calendarItems, calendarAllDay, calendarIds?.toSet()),
+        calendar = ClockCalendarConfig(calendarIndicator, calendarItems, calendarAllDay, calendarIds?.toSet(), calendarGlass.enumOr(GlassStyle.OFF)),
     )
 }
 
@@ -109,6 +117,7 @@ fun decodeNativeWidgetConfig(encoded: String?): NativeWidgetConfig {
         showAllDayEvents = stored.showAllDayEvents,
         weatherLocation = stored.weather?.toLocation(),
         clock = stored.clock?.toConfig(),
+        glass = stored.glass?.let { name -> GlassStyle.entries.firstOrNull { it.name == name } },
     )
 }
 

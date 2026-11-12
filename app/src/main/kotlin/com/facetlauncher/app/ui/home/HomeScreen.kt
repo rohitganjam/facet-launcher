@@ -89,9 +89,8 @@ fun HomeScreen(
 /** Minimum gap always kept between the clock+calendar block's bottom edge and its grab handle. */
 internal val HOME_CLOCK_MIN_GAP = 24.dp
 
-/** Gap between the clock block's bottom edge and the media row, and between the media row and the app list below it. */
-internal val HOME_MEDIA_ROW_TOP_GAP = 8.dp
-internal val HOME_MEDIA_ROW_BOTTOM_GAP = 12.dp
+/** Gap between the clock block's bottom edge and the media row, and between the media row and the app list below it: the same, so a background behind the row sits evenly between them. */
+internal val HOME_MEDIA_ROW_GAP = 12.dp
 
 /** Visible gap between the height handle's touch strip and the alignment toolbar below it — Material's minimum between touch targets. */
 internal val CLOCK_ADJUST_TOOLBAR_GAP = 8.dp

@@ -6,6 +6,7 @@ import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.FolderRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.WidgetPlacementRepository
+import com.facetlauncher.app.data.model.GlassStyle
 import com.facetlauncher.app.data.model.BackupBundle
 import com.facetlauncher.app.data.model.BackupSettings
 import com.facetlauncher.app.data.model.BackupWeatherCity
@@ -78,6 +79,7 @@ private fun LauncherSettings.toBackupSettings(activeFacetIndex: Int?): BackupSet
     notificationBadgeStyle = notificationBadgeStyle.name,
     showMediaPlayerOnHome = showMediaPlayerOnHome,
     showMediaSkipButtons = showMediaSkipButtons,
+    mediaPlayerGlass = mediaPlayerGlass.name,
     showNotificationsInAppMenu = showNotificationsInAppMenu,
     homeOpensSearch = homeOpensSearch,
     doubleTapToLock = doubleTapToLock,

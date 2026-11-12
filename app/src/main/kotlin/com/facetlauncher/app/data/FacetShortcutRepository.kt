@@ -14,7 +14,6 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 private const val SHORTCUT_ID_PREFIX = "facet_"
-private const val SHORTCUT_LABEL_PREFIX = "Switch to "
 
 /**
  * Publishes one dynamic [ShortcutManagerCompat] shortcut per facet, so system automation pickers
@@ -25,8 +24,9 @@ private const val SHORTCUT_LABEL_PREFIX = "Switch to "
  * [ShortcutManagerCompat]'s per-activity cap, so no eviction/capacity logic is needed here.
  *
  * The shortcut's *displayed* name and its *trigger* key are deliberately different fields: the
- * short/long label is `"Switch to <facet's live name>"` (what the user and the OS picker see —
- * reads as an action, not just a name, since that's how it shows up in an automation picker), while
+ * short/long label is the localized `facet_shortcut_label` string with the facet's live name
+ * (what the user and the OS picker see — reads as an action, not just a name, since that's how it
+ * shows up in an automation picker), while
  * the shortcut id (`"facet_<id>"`) and the launch intent's `Uri` ([buildFacetDeepLinkUri]) both
  * carry the facet's numeric, stable [Facet.id] — what
  * [com.facetlauncher.app.domain.ActivateFacetByIdUseCase] actually resolves against. Renaming a
@@ -45,7 +45,7 @@ class FacetShortcutRepository @Inject constructor(
 
     private fun shortcutFor(facet: Facet): ShortcutInfoCompat {
         val intent = Intent(Intent.ACTION_VIEW, buildFacetDeepLinkUri(facet.id), context, LauncherActivity::class.java)
-        val label = "$SHORTCUT_LABEL_PREFIX${facet.name}"
+        val label = context.getString(R.string.facet_shortcut_label, facet.name)
         return ShortcutInfoCompat.Builder(context, "$SHORTCUT_ID_PREFIX${facet.id}")
             .setShortLabel(label)
             .setLongLabel(label)

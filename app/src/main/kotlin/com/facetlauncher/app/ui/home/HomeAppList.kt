@@ -9,10 +9,12 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.BoxWithConstraints
 import kotlinx.coroutines.delay
 import com.facetlauncher.app.ui.components.longPressReorderClickable
+import com.facetlauncher.app.ui.components.glassBackground
 import com.facetlauncher.app.ui.components.gridCellBounds
 import com.facetlauncher.app.ui.components.LocalGridDrag
 import com.facetlauncher.app.ui.components.GridDragState
 import com.facetlauncher.app.ui.components.LiftableCell
+import com.facetlauncher.app.data.model.GlassStyle
 import com.facetlauncher.app.data.model.DrawerGridDensity
 import com.facetlauncher.app.ui.components.HeldAutoScroll
 import com.facetlauncher.app.ui.drawer.targetRowPitch
@@ -116,7 +118,7 @@ internal fun HomeAppTwoColumnList(
     var local by remember(content.items) { mutableStateOf<List<PlacedItem>?>(null) }
     val items = local ?: content.items
     val columns = remember(items, content.style) {
-        listOf(0, 1).map { parity -> HomeAppListContent(items.filterIndexed { index, _ -> index % 2 == parity }, content.style) }
+        listOf(0, 1).map { parity -> HomeAppListContent(items.filterIndexed { index, _ -> index % 2 == parity }, content.style, content.glass) }
     }
     val (leftPosition, rightPosition) = columnAlignment.toColumnPositions()
     val drag = remember { GridDragState() }
@@ -180,6 +182,10 @@ internal fun HomeAppListColumn(
         ) { shown ->
         shown.forEach { item -> key(item.stableKey()) {
             val rowModifier = Modifier.fillMaxWidth(rowWidthFraction).then(if (cellIndexOf != null) Modifier.gridCellBounds(cellIndexOf(item)) else Modifier)
+                .then(if (content.glass != GlassStyle.OFF) Modifier.padding(vertical = 2.dp) else Modifier)
+                .glassBackground(content.glass, sampleWallpaper = true)
+                // The row's own 8dp side padding plus this equals its vertical padding, so the content sits evenly inside the panel.
+                .then(if (content.glass != GlassStyle.OFF) Modifier.padding(horizontal = (verticalPadding - 8.dp).coerceAtLeast(0.dp)) else Modifier)
             when (item) {
                 is PlacedItem.SingleApp -> AppRow(
                     app = item.app,
@@ -270,9 +276,10 @@ internal fun HomeAppGrid(
                     val cell = cellAtIndex(index, width)
                     val item = keyAtCell[cell]?.let(itemByKey::get)
                     val tileModifier = Modifier.height(cellHeight).gridCellBounds(index)
+                    val glassTile = if (item != null) tileModifier.glassBackground(content.glass, sampleWallpaper = true) else tileModifier
                     when (item) {
-                        is PlacedItem.SingleApp -> HomeAppGridTile(item.app, displayMode, actions, content.style, tileModifier, item.gridKey())
-                        is PlacedItem.FolderItem -> HomeFolderGridTile(item.folder, displayMode, actions, content.style, tileModifier, item.gridKey())
+                        is PlacedItem.SingleApp -> HomeAppGridTile(item.app, displayMode, actions, content.style, glassTile, item.gridKey())
+                        is PlacedItem.FolderItem -> HomeFolderGridTile(item.folder, displayMode, actions, content.style, glassTile, item.gridKey())
                         null -> GridEmptyCell(guide = drag.liftedKey != null, isTarget = drag.targetIndex == index, modifier = tileModifier)
                     }
                 }

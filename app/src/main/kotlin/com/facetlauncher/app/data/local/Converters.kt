@@ -8,6 +8,7 @@ import com.facetlauncher.app.data.model.ClockColorOption
 import com.facetlauncher.app.data.model.ClockFontOption
 import com.facetlauncher.app.data.model.ClockTemplateId
 import com.facetlauncher.app.data.model.FontWeightOption
+import com.facetlauncher.app.data.model.GlassStyle
 import com.facetlauncher.app.data.model.ListContentMode
 
 /**
@@ -51,6 +52,13 @@ class Converters {
     @TypeConverter
     fun toClockColorOption(value: String?): ClockColorOption =
         value?.let { runCatching { ClockColorOption.valueOf(it) }.getOrNull() } ?: ClockColorOption.THEME
+
+    @TypeConverter
+    fun fromGlassStyle(style: GlassStyle): String = style.name
+
+    @TypeConverter
+    fun toGlassStyle(value: String?): GlassStyle =
+        value?.let { runCatching { GlassStyle.valueOf(it) }.getOrNull() } ?: GlassStyle.OFF
 
     @TypeConverter
     fun fromFontWeightOption(option: FontWeightOption): String = option.name

@@ -130,9 +130,9 @@ class HomeSheetsTest {
     }
 
     @Test
-    fun nowPlayingAndHostedWidgetsHaveNoSettingsRowButStillAdjustAndReplace() {
+    fun nowPlayingHasASettingsRowForItsBackgroundAndStillAdjustsAndReplaces() {
         setWidgetSheet(WidgetSheetTarget.Native(NativeWidgetType.NOW_PLAYING))
-        composeRule.onNodeWithTag("widget_sheet_settings").assertDoesNotExist()
+        composeRule.onNodeWithTag("widget_sheet_settings").assertExists()
         composeRule.onNodeWithTag("widget_sheet_adjust").assertExists()
         composeRule.onNodeWithTag("widget_sheet_replace").assertExists()
     }

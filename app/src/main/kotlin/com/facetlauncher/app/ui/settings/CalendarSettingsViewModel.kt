@@ -6,6 +6,7 @@ import com.facetlauncher.app.data.CalendarPermissionRepository
 import com.facetlauncher.app.data.CalendarRepository
 import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.SettingsRepository
+import com.facetlauncher.app.data.model.GlassStyle
 import com.facetlauncher.app.data.model.Facet
 import com.facetlauncher.app.domain.resolveFacetStyle
 import com.facetlauncher.app.data.model.CalendarDisplayOptions
@@ -37,7 +38,7 @@ data class CalendarSettingsUiState(
 ) {
     private val calendar: ClockCalendarConfig by lazy(LazyThreadSafetyMode.NONE) { resolveFacetStyle(facet, settings).clock.calendar }
     val effectiveShowAllDayEvents: Boolean get() = calendar.showAllDay
-    val calendarDisplay: CalendarDisplayOptions get() = CalendarDisplayOptions(calendar.showIndicator, calendar.itemsToShow)
+    val calendarDisplay: CalendarDisplayOptions get() = CalendarDisplayOptions(calendar.showIndicator, calendar.itemsToShow, calendar.glass)
     /** `null` means every calendar is selected, calendars added later included. */
     val effectiveSelectedCalendarIds: Set<String>? get() = calendar.calendarIds
     /** The calendar's colour swatch, or `null` when the indicator is off (the picker then drops its colour dots too). */
@@ -112,6 +113,8 @@ class CalendarSettingsViewModel @Inject constructor(
     fun setShowAllDayEvents(enabled: Boolean) = changeCalendar { it.copy(showAllDay = enabled) }
 
     fun setShowCalendarIndicator(enabled: Boolean) = changeCalendar { it.copy(showIndicator = enabled) }
+
+    fun setCalendarGlass(style: GlassStyle) = changeCalendar { it.copy(glass = style) }
 
     fun setCalendarItemsToShow(count: Int) = changeCalendar { it.copy(itemsToShow = count) }
 

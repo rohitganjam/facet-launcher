@@ -27,8 +27,8 @@ flowchart TB
     end
 
     subgraph SRC["Sources"]
-        DAO["data/local — Room DAOs\nFacetDatabase v36"]
-        DS["DataStore of Preferences\nfacet_settings, facet_automation"]
+        DAO["data/local — Room DAOs\nFacetDatabase v49"]
+        DS["DataStore of Preferences\nfacet_settings, facet_automation, facet_entitlement"]
         FW["Framework services\nLauncherApps, UserManager, AppWidgetManager,\nContentResolver, UsageStatsManager, WallpaperManager ..."]
     end
 
@@ -58,6 +58,8 @@ Boundary check results (grep over `app/src/main`):
 - **0** composables inject or call a Repository. ✅ (The dock size cap lives in `AppListLimits.MAX_DOCK_APPS`, so no composable imports a repository type for a constant any more.)
 - **0** composables construct a use case. ✅ (`AppDrawerScreen` takes its ranking/grouping/recents use cases as a `listUseCases` parameter, passed from `DrawerViewModel.listUseCases`; the parameter default only serves previews and tests.)
 - **5** `domain/` files import `android.*` — see F4.
+- **0** screens collect with plain `collectAsState()`; every one uses `collectAsStateWithLifecycle()`. ✅
+- The drawer's composables *invoke* three use cases during composition (through `DrawerListUseCases`) — see F15.
 
 ## 2. Unidirectional data flow, concretely
 
@@ -78,7 +80,7 @@ Concrete conventions the code actually follows:
   `SettingsUiState`, `BackupRestoreUiState`, ...), exposed as `StateFlow<XUiState>` from a private
   `MutableStateFlow`. `HomeViewModel` and `LauncherViewModel` build theirs with
   `combine(...).onEach { _uiState.value = it }.launchIn(viewModelScope)`, so their upstream flows stay
-  collected for the ViewModel's whole lifetime (see F7); most other ViewModels expose
+  collected for the ViewModel's whole lifetime (see F7); most other ViewModels (37 files) expose
   `stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), initial)`, which stops collecting
   when nothing observes the screen.
 - **Writes are fire-and-forget suspend calls** launched in `viewModelScope`; the UI never awaits
@@ -97,21 +99,21 @@ flowchart TB
     subgraph SC["SingletonComponent — lives with FacetApplication (@HiltAndroidApp)"]
         direction TB
         subgraph MODS["@Module @InstallIn(SingletonComponent) — data/di/"]
-            AM["AppModule\nClock, LauncherApps, UserManager,\nUsageStatsManager, AppOpsManager,\nWallpaperManager, ContentResolver\n(all @Singleton)"]
-            DBM["DatabaseModule\nFacetDatabase @Singleton\n+ 7 DAO @Provides (unscoped)"]
+            AM["AppModule\nClock, LauncherApps, UserManager,\nUsageStatsManager, AppOpsManager,\nWallpaperManager, ContentResolver,\n@ApplicationScope CoroutineScope\n(all @Singleton)"]
+            DBM["DatabaseModule\nFacetDatabase @Singleton\n+ 8 DAO @Provides (unscoped)"]
             DSM["DataStoreModule\n3 x DataStore of Preferences @Singleton\n('facet_settings', 'facet_automation' via @AutomationDataStore, 'facet_entitlement' via @EntitlementDataStore)"]
             WM["WidgetModule\nAppWidgetManager, LauncherAppWidgetHost\n(@Singleton)"]
             DPM["DispatcherModule\n@IoDispatcher, @DefaultDispatcher\n(CoroutineDispatcher)"]
             ENM["EntitlementModule\n@Binds PlayEntitlementRepository\n+ 2 @BindsOptionalOf hooks"]
-            WTM["WeatherModule\n@Binds MetWeatherApi to WeatherApi\n@Binds RoomWeatherStore to WeatherStore\n@Binds AndroidPlaceGeocoder to PlaceGeocoder"]
+            WTM["WeatherModule\n@Binds MetWeatherApi to WeatherApi\n@Binds RoomWeatherStore to WeatherStore\n@Binds AndroidPlaceGeocoder to PlaceGeocoder\n@Binds ObserveNativeWidgetOverridesUseCase to NativeWidgetOverrides"]
         end
-        REPOS["53 @Singleton data classes (45 repositories)\n@Singleton class X @Inject constructor(...)\n(no module — constructor injection)"]
+        REPOS["56 @Singleton data classes (48 repositories)\n@Singleton class X @Inject constructor(...)\n(no module — constructor injection)"]
         MODS --> REPOS
     end
 
     subgraph VMC["ViewModelComponent — one per ViewModel instance"]
         UCS["Use cases\nclass X @Inject constructor(...)\nunscoped: new instance per injection"]
-        VMS["35 @HiltViewModel ViewModels\nSavedStateHandle for nav args"]
+        VMS["47 @HiltViewModel ViewModels\nSavedStateHandle for nav args"]
         UCS --> VMS
     end
 
@@ -137,16 +139,18 @@ flowchart TB
 | `CoroutineDispatcher` (`@IoDispatcher`, `@DefaultDispatcher`) | unscoped | `DispatcherModule` provides `Dispatchers.IO` / `Dispatchers.Default`; repositories take them as trailing constructor params defaulting to the same value | Tests pass a `StandardTestDispatcher(testScheduler)` so `withContext` hops run deterministically under `runTest`. |
 | `java.time.Clock` | `@Singleton` | `AppModule.provideClock()` | Time-dependent logic (`NextAlarmRepository`) is testable with a fixed clock. |
 | `FacetDatabase` | `@Singleton` | `DatabaseModule` — `Room.databaseBuilder(..., "facet.db").addMigrations(*Migrations.ALL).fallbackToDestructiveMigrationOnDowngrade(true)` | One DB instance; **no** destructive fallback on upgrade (a missing migration crashes loudly by design). |
-| DAOs (7) | unscoped | `@Provides fun provideXDao(db) = db.xDao()` | Room caches DAO instances internally, so unscoped is free. |
+| DAOs (8) | unscoped | `@Provides fun provideXDao(db) = db.xDao()` | Room caches DAO instances internally, so unscoped is free. |
 | `DataStore<Preferences>` (3) | `@Singleton` | `DataStoreModule` via `preferencesDataStore(name = "facet_settings")` (unqualified) and `preferencesDataStore(name = "facet_automation")` (`@AutomationDataStore`) and `preferencesDataStore(name = "facet_entitlement")` (`@EntitlementDataStore`) delegates | DataStore requires exactly one instance per file. Automation state lives in its own file so it stays out of `LauncherSettings` re-emissions and backups. |
 | `StyledIconCache` | `@Singleton` | Constructor injection; `LauncherActivity` injects it and provides it as `LocalStyledIconCache` | Makes the glyph-only and outline icon pictures, on demand or ahead of it (`WarmStyledIcons` at the root warms every app's while a glyph or outline style is on, so the drawer finds them ready), and keeps only the applied picture (glyph or outline, not both) for each, held weakly, keyed by the icon bitmap, so a rescan that decodes fresh icons recomputes only what is on screen. A bare instance is the local's default, for previews and tests. |
 | `EntitlementRepository` | `@Singleton` | `EntitlementModule` `@Binds` `PlayEntitlementRepository`; two `@BindsOptionalOf` hooks (`EntitlementOverride`, `DebugSettingsEntry`) | The debug source set (`DebugBindingsModule`) fills the optional hooks; a release build leaves them empty, so the override and its Settings row exist only in debug. The benchmark source set provides an `EntitlementOverride` that always forces Pro (a measurement build, never shipped). |
 | `WeatherApi`, `WeatherStore`, `PlaceGeocoder` | `@Singleton` | `WeatherModule` `@Binds` `MetWeatherApi`, `RoomWeatherStore` and `AndroidPlaceGeocoder` | The seams the weather code is tested through: tests pass a fake API, an in-memory store and a fake geocoder, so no test touches the network. |
-| Repositories (44; with `NotificationOpener`, `NotificationActionController`, `LockScreenController`, `MetWeatherApi`, `RoomWeatherStore` and `AndroidPlaceGeocoder`, 50 `@Singleton` classes in `data/`) | `@Singleton` | Constructor injection, no module | They hold `callbackFlow` registrations and in-memory state (`NotificationBadgeRepository.badgeCounts`); a single instance is required for that state to be shared. |
-| Use cases | unscoped | Constructor injection | Stateless by convention; `ObserveHomeScreenStateUseCase` is an exception (holds a `refreshTrigger` `MutableSharedFlow`) — see F8. `EnsureCalendarColorsUseCase` is the other: `@Singleton` (it holds a `Mutex`), and `FacetApplication.onCreate` injects it and collects `keepAssigned()` on the `@ApplicationScope` scope for the app's life, so calendar colours are assigned as calendars appear. |
-| ViewModels (42) | `ViewModelComponent` | `@HiltViewModel`, resolved by `hiltViewModel()` per `NavHost` destination or `by viewModels()` in the Activity | Nav-arg-driven screens (`FacetSettingsViewModel`, `FolderDetailViewModel`, ...) read ids from `SavedStateHandle`. |
+| `NativeWidgetOverrides` | unscoped | `WeatherModule` `@Binds` `ObserveNativeWidgetOverridesUseCase` | The seam `ui/nativewidget` reads each widget's own events or forecast through. |
+| `@ApplicationScope CoroutineScope` | `@Singleton` | `AppModule.provideApplicationScope` (`SupervisorJob` on `@DefaultDispatcher`) | Outlives any ViewModel: `AppRepository`'s shared app list (`shareIn`) and `EnsureCalendarColorsUseCase.keepAssigned()` run on it. |
+| Repositories (47; with `NotificationOpener`, `NotificationActionController`, `LockScreenController`, `MetWeatherApi`, `RoomWeatherStore`, `AndroidPlaceGeocoder`, `AppVersion` and `StyledIconCache`, 55 `@Singleton` classes in `data/`) | `@Singleton` | Constructor injection, no module | They hold `callbackFlow` registrations and in-memory state (`NotificationBadgeRepository.badgeCounts`); a single instance is required for that state to be shared. |
+| Use cases | unscoped | Constructor injection | Stateless by convention. `ObserveHomeScreenStateUseCase` and `ObserveHubStateUseCase` hold a `refreshTrigger` `MutableSharedFlow`, so they are `@ViewModelScoped`: the ViewModel that injects one gets a single instance, and `refresh()` reaches the flow it collects. `EnsureCalendarColorsUseCase` is the other: `@Singleton` (it holds a `Mutex`), and `FacetApplication.onCreate` injects it and collects `keepAssigned()` on the `@ApplicationScope` scope for the app's life, so calendar colours are assigned as calendars appear. |
+| ViewModels (47) | `ViewModelComponent` | `@HiltViewModel`, resolved by `hiltViewModel()` per `NavHost` destination or `by viewModels()` in the Activity | Nav-arg-driven screens (`FacetSettingsViewModel`, `FolderDetailViewModel`, ...) read ids from `SavedStateHandle`. |
 
-Apart from `EntitlementModule` and `WeatherModule`, there are **no interface-to-implementation `@Binds` modules**: every repository is a concrete
+Apart from `EntitlementModule` and `WeatherModule`, there are **no interface-to-implementation `@Binds` modules**: every other repository is a concrete
 `@Singleton class`, and tests substitute them with hand-written DAO fakes (`FolderTestFakes.kt`)
 or Mockito 5 mocks of the concrete repository (inline mock maker, so `final` Kotlin classes mock
 fine) rather than via Hilt test modules — see [06-testing.md](06-testing.md).
@@ -162,13 +166,13 @@ fine) rather than via Hilt test modules — see [06-testing.md](06-testing.md).
 
 `LauncherViewModel` is the app-lifetime orchestrator. Its `init` block:
 
-- collects `combine(GetInstalledAppsUseCase.observe(), SettingsRepository.settings, WorkProfileRepository.observeWorkProfiles())` into `LauncherUiState` (theme, font, icon mode, onboarding flag, live app list, work profiles);
+- collects `combine(GetInstalledAppsUseCase.observe(), SettingsRepository.settings, WorkProfileRepository.observeWorkProfiles(), FacetRepository.observeFacets())` into `LauncherUiState` (theme, font, icon mode, gesture switches, live app list, work profiles, and the active facet's `allowLandscape`); a second, separate collector of `settings` feeds only the onboarding flag, so the onboarding gate never waits on the app scan;
 - runs `EnsureActiveFacetUseCase.keepUsable()` (creates a facet if none exists and keeps `activeFacetId` valid);
 - keeps `CleanUpUninstalledAppsUseCase` collecting for the process lifetime (deletes placement rows on real uninstall broadcasts);
 - runs `RepairOrphanedProfileRowsUseCase` once (backfills `userId = -1` rows left by pre-profile schemas);
 - keeps `SyncFacetShortcutsUseCase` and `RunFacetAutomationUseCase` collecting for the process lifetime (dynamic shortcuts; automation rules);
 - clears `isLoading` after a 3 s timeout so a slow first app scan can't leave the screen blank.
 
-`FacetNavHost` owns 35 string-route destinations (`FacetDestinations`); `Home ⇄ Drawer` is *not* a
+`FacetNavHost` owns 34 string-route destinations (`FacetDestinations`); `Home ⇄ Drawer` is *not* a
 nav transition — `HomeDrawerRoute` handles it as a follow-finger gesture inside the `HOME`
 destination, while `Hub`/`Facets`/settings screens are ordinary destinations.

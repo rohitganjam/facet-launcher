@@ -55,7 +55,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.facetlauncher.app.R
+import com.facetlauncher.app.data.model.GlassStyle
 import com.facetlauncher.app.data.model.MediaPlayerState
+import com.facetlauncher.app.ui.components.glassBackground
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import com.facetlauncher.app.ui.theme.HomeAppTextColor
 import com.facetlauncher.app.ui.theme.homeAppLabelShadow
@@ -80,10 +82,13 @@ fun MediaPlayerRow(
     modifier: Modifier = Modifier,
     labelColor: Color = HomeAppTextColor,
     labelFontWeight: FontWeight = FontWeight.Normal,
+    glass: GlassStyle = GlassStyle.OFF,
 ) {
     Row(
         modifier = modifier
             .fillMaxWidth()
+            .glassBackground(glass, sampleWallpaper = true)
+            .then(if (glass != GlassStyle.OFF) Modifier.padding(10.dp) else Modifier)
             .height(IntrinsicSize.Min)
             .testTag(homeTag("home_media_player")),
         horizontalArrangement = Arrangement.spacedBy(12.dp),

@@ -31,7 +31,9 @@ import com.facetlauncher.app.domain.GetInstalledAppsUseCase
 import com.facetlauncher.app.domain.SortAppsForPickerUseCase
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.flow.flowOf
 import org.junit.Rule
+import org.mockito.Mockito
 import org.junit.Test
 import com.facetlauncher.app.data.model.AppListLimits
 import com.facetlauncher.app.data.PlacementRepository
@@ -50,6 +52,7 @@ class FavoritesPickerScreenTest {
     /** [seed] runs against real (throwaway, in-memory) repositories before the screen renders. */
     private fun setContent(
         onDone: () -> Unit = {},
+        minimumApps: Int = 0,
         seed: suspend (AppRepository, PlacementRepository, FolderRepository) -> Unit = { _, _, _ -> },
     ) {
         composeRule.setContent {
@@ -57,7 +60,7 @@ class FavoritesPickerScreenTest {
             val viewModel = remember {
                 val database = Room.inMemoryDatabaseBuilder(context, FacetDatabase::class.java).allowMainThreadQueries().build()
                 val launcherApps = context.getSystemService(LauncherApps::class.java)
-                val appRepository = AppRepository(launcherApps, context.getSystemService(UserManager::class.java), context)
+                val appRepository = AppRepository(launcherApps, context.getSystemService(UserManager::class.java), context).paddedTo(minimumApps)
                 val folderRepository = FolderRepository(database.folderDao(), appRepository)
                 val placementRepository = PlacementRepository(database.appPlacementDao(), database.folderPlacementDao())
                 val observePlacedItems = ObservePlacedItemsUseCase(placementRepository, folderRepository, appRepository)
@@ -82,6 +85,24 @@ class FavoritesPickerScreenTest {
             }
         }
         composeRule.waitForIdle()
+    }
+
+    /** [this], answering with [minimum] synthetic apps after the real ones, so a test doesn't depend on what the emulator image has installed. */
+    private fun AppRepository.paddedTo(minimum: Int): AppRepository {
+        if (minimum == 0) return this
+        val real = runBlocking { getInstalledApps() }
+        val seeded = real + (0 until minimum).map { AppInfo(packageName = "seed.app.$it", activityName = ".Main", label = "Seed app $it", icon = null) }
+        // By name: a suspend function's continuation parameter can't be matched from Kotlin
+        return Mockito.mock(
+            AppRepository::class.java,
+            Mockito.withSettings().spiedInstance(this).defaultAnswer { call ->
+                when (call.method.name) {
+                    "getInstalledApps" -> seeded
+                    "observeInstalledApps" -> flowOf(seeded)
+                    else -> call.callRealMethod()
+                }
+            },
+        )
     }
 
     @Test
@@ -154,7 +175,7 @@ class FavoritesPickerScreenTest {
     fun checkingIsBlockedAtTheMaxFavoritesCap() {
         // Given favorites already at the cap
         var overflowApp: AppInfo? = null
-        setContent { appRepository, placementRepository, _ ->
+        setContent(minimumApps = AppListLimits.MAX_FAVORITES + 1) { appRepository, placementRepository, _ ->
             val installed = runBlocking { appRepository.getTestableApps() }
             val capApps = installed.take(AppListLimits.MAX_FAVORITES)
             overflowApp = installed.getOrNull(AppListLimits.MAX_FAVORITES)

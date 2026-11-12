@@ -39,6 +39,37 @@ class IconRenderModeTest {
     }
 
     @Test
+    fun `each glass style is its own background on the glyph and outline styles`() {
+        // Given the glass backgrounds
+        val glass = IconBackground.entries.filter { it.glass != null }
+
+        // Then they cover every panel style except Off, once each
+        assertEquals(GlassStyle.entries - GlassStyle.OFF, glass.map { it.glass })
+
+        // And each is reachable from a style and colour, keeping both
+        assertEquals(IconRenderMode.GLYPH_GLASS_DARK_FROST_ACCENT, IconRenderMode.of(IconStyle.GLYPH, IconColour.ACCENT, IconBackground.GLASS_DARK_FROST))
+        assertEquals(IconRenderMode.OUTLINE_GLASS_DARK_GLASS_INVERTED, IconRenderMode.of(IconStyle.OUTLINE, IconColour.THEME_INVERTED, IconBackground.GLASS_DARK_GLASS))
+        assertEquals(IconBackground.GLASS_FROST, IconRenderMode.GLYPH_GLASS_FROST_INK.background)
+    }
+
+    @Test
+    fun `monochrome has no glass background and falls back to none`() {
+        assertEquals(IconRenderMode.MONOCHROME_ACCENT, IconRenderMode.of(IconStyle.MONOCHROME, IconColour.ACCENT, IconBackground.GLASS_FROST))
+    }
+
+    @Test
+    fun `a glass mode keeps the style and colour of the plain mode`() {
+        // Given a glass mode and the plain mode with the same style and colour
+        val plain = IconRenderMode.GLYPH_INK
+        val glass = IconRenderMode.GLYPH_GLASS_BRIGHT_INK
+
+        // Then only the background differs
+        assertEquals(plain.style, glass.style)
+        assertEquals(plain.colour, glass.colour)
+        assertEquals(IconBackground.NONE, plain.background)
+    }
+
+    @Test
     fun `a colour the style lacks falls back to its first`() {
         // Given monochrome has no inverted colour
         // When asking for it anyway

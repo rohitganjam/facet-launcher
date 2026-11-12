@@ -4,6 +4,7 @@ import com.facetlauncher.app.data.model.NativeWidgetType
 import com.facetlauncher.app.data.local.isNative
 import com.facetlauncher.app.data.WidgetPlacementRepository
 import com.facetlauncher.app.data.widget.AppWidgetRepository
+import dagger.hilt.android.scopes.ViewModelScoped
 import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -36,6 +37,7 @@ data class HubDomainState(
  * provider-info lookups (orphan detection, provider labels) — spans more than one repository, so
  * it's a UseCase rather than living in [com.facetlauncher.app.ui.hub.HubViewModel] directly.
  */
+@ViewModelScoped
 class ObserveHubStateUseCase @Inject constructor(
     private val widgetPlacementRepository: WidgetPlacementRepository,
     private val appWidgetRepository: AppWidgetRepository,

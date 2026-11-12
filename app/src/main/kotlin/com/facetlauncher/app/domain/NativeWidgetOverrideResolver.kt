@@ -4,6 +4,7 @@ import com.facetlauncher.app.data.CalendarPermissionRepository
 import com.facetlauncher.app.data.CalendarRepository
 import com.facetlauncher.app.data.LocationRepository
 import com.facetlauncher.app.data.model.CalendarEvent
+import com.facetlauncher.app.data.model.GlassStyle
 import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.data.model.NativeWidgetConfig
 import com.facetlauncher.app.data.model.NativeWidgetType
@@ -26,6 +27,8 @@ data class NativeWidgetOverride(
     val weatherUnavailable: Boolean = false,
     /** The widget is unavailable because it wants the position and the location permission is off. */
     val locationMissing: Boolean = false,
+    /** The widget's own background; `null` is the default. */
+    val glass: GlassStyle? = null,
 )
 
 /** One native widget's own setting, as stored: [key] says which widget, [encodedConfig] is what `NativeWidgetConfig` encodes. */
@@ -33,7 +36,7 @@ data class NativeWidgetSetting<K>(val key: K, val type: NativeWidgetType?, val e
 
 /**
  * Works out what the widgets Facet draws itself show where they are set to their own calendars or location: the calendar's
- * events, or a forecast shared by place. A widget that follows the launcher has no entry in the result.
+ * events, or a forecast shared by place, or its own background. A widget that follows the launcher has no entry in the result.
  */
 class NativeWidgetOverrideResolver @Inject constructor(
     private val calendarRepository: CalendarRepository,
@@ -45,7 +48,11 @@ class NativeWidgetOverrideResolver @Inject constructor(
     private val clock: Clock,
 ) {
     suspend fun <K> resolve(widgets: List<NativeWidgetSetting<K>>, settings: LauncherSettings): Map<K, NativeWidgetOverride> =
-        widgets.mapNotNull { setting -> overrideFor(setting.type, decodeNativeWidgetConfig(setting.encodedConfig), settings)?.let { setting.key to it } }.toMap()
+        widgets.mapNotNull { setting ->
+            val config = decodeNativeWidgetConfig(setting.encodedConfig)
+            val override = overrideFor(setting.type, config, settings)?.copy(glass = config.glass) ?: config.glass?.let { NativeWidgetOverride(glass = it) }
+            override?.let { setting.key to it }
+        }.toMap()
 
     private suspend fun overrideFor(type: NativeWidgetType?, config: NativeWidgetConfig, settings: LauncherSettings): NativeWidgetOverride? = when (type) {
         NativeWidgetType.AGENDA -> NativeWidgetOverride(events = agendaEvents(config))
@@ -56,7 +63,7 @@ class NativeWidgetOverrideResolver @Inject constructor(
     /** The events an Agenda shows: its own calendars (every calendar until it picks) and all-day choice (shown until it hides them). */
     private suspend fun agendaEvents(config: NativeWidgetConfig): List<CalendarEvent> =
         if (calendarPermissionRepository.isGranted()) {
-            calendarRepository.getUpcomingEvents(config.calendarIds, config.showAllDayEvents ?: true)
+            calendarRepository.getAgendaEvents(config.calendarIds, config.showAllDayEvents ?: true)
         } else {
             emptyList()
         }

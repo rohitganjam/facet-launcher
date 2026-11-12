@@ -91,19 +91,7 @@ private fun NotificationPreviewContent(
     modifier: Modifier = Modifier,
 ) {
     val settings = uiState.settings
-    val sampleMedia = MediaPlayerState(
-        packageName = "",
-        title = stringResource(R.string.notification_preview_track),
-        artist = stringResource(R.string.notification_preview_artist),
-        art = null,
-        isPlaying = true,
-        positionMs = 80_000L,
-        durationMs = 210_000L,
-        positionUpdatedAtMs = 0L,
-        playbackSpeed = 1f,
-        canSkipPrevious = true,
-        canSkipNext = true,
-    )
+    val sampleMedia = sampleMediaPlayer()
     val badgeCounts = remember(uiState.homePreviewApps, uiState.dockPreviewApps) {
         // Varied counts so Count style shows more than one number; "12" also exercises the 9+ cap.
         val packages = (uiState.homePreviewApps + uiState.dockPreviewApps).mapNotNull { (it as? PlacedItem.SingleApp)?.app?.packageName }
@@ -124,6 +112,7 @@ private fun NotificationPreviewContent(
             MediaPlayerRow(
                 state = sampleMedia,
                 showSkipButtons = settings.showMediaSkipButtons,
+                glass = settings.mediaPlayerGlass,
                 onPrevious = {},
                 onPlayPause = {},
                 onNext = {},
@@ -150,6 +139,21 @@ private fun NotificationPreviewContent(
         )
     }
 }
+
+@Composable
+private fun sampleMediaPlayer() = MediaPlayerState(
+    packageName = "",
+    title = stringResource(R.string.notification_preview_track),
+    artist = stringResource(R.string.notification_preview_artist),
+    art = null,
+    isPlaying = true,
+    positionMs = 80_000L,
+    durationMs = 210_000L,
+    positionUpdatedAtMs = 0L,
+    playbackSpeed = 1f,
+    canSkipPrevious = true,
+    canSkipNext = true,
+)
 
 private val SAMPLE_BADGE_COUNTS = listOf(3, 12)
 

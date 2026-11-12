@@ -28,7 +28,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -41,6 +40,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.facetlauncher.app.R
 import com.facetlauncher.app.data.model.HomeWallpaper
 import com.facetlauncher.app.data.model.DrawerPresentation
@@ -72,9 +72,9 @@ fun AppearanceSettingsScreen(
     modifier: Modifier = Modifier,
     viewModel: AppearanceSettingsViewModel = hiltViewModel(),
 ) {
-    val settings by viewModel.settings.collectAsState()
-    val uiState by viewModel.uiState.collectAsState()
-    val homeWallpaper by viewModel.homeWallpaper.collectAsState()
+    val settings by viewModel.settings.collectAsStateWithLifecycle()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val homeWallpaper by viewModel.homeWallpaper.collectAsStateWithLifecycle()
     val lifecycleOwner = LocalLifecycleOwner.current
     // No grant-change callback for notification access — re-check on resume so coming back from the
     // Notifications page (and its system Settings redirect) updates the row's subtext.

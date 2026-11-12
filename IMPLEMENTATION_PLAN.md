@@ -4725,3 +4725,61 @@ A *Copy from facet* row at the bottom of each facet's Dock, Apps list and Widget
 - [ ] Check on a device with a real hosted widget: the bind-permission and configure screens appear in turn, the copied widget keeps its size, a cancelled setup is counted, and a Work Profile widget binds.
 - [ ] Native review of the new fr, de, es, nl and pt strings (machine-translated).
 - [x] Removed the unused `CopyToFacetsCard` (and its test and the `copy_to_facets_*` and `copy_look_*` strings, all locales), a leftover of the old launcher-wide Copy to facets.
+
+## Backgrounds
+
+- [x] `GlassStyle` (Off, Light frost, Dark frost, Clear glass, Dark glass, Bright, Accent) and `Modifier.glassBackground` (a tint, no blur) behind the dock (`Facet.dockGlass`, Room v50), apps list items (`Facet.appsListGlass`), the clock's calendar events (`ClockCalendarConfig.glass`) and the media row (`LauncherSettings.mediaPlayerGlass`); a background dropdown on each one's settings screen (*Dock background*, *List item background*, *Calendar background*, *Media player background*), and in the dock and apps list previews; backup carries all four. Tests: `FacetRepositoryTest`, `SettingsRepositoryTest`, `NativeWidgetConfigTest`, `FacetDatabaseMigrationTest` (v49→50).
+- [x] The Weather, Agenda and Now playing widgets each carry their own background (`NativeWidgetConfig.glass`, default Light frost, in the widget's JSON config, so no schema change): a Background dropdown first in `NativeWidgetConfigSheet`, which Now playing now has too (`NativeWidgetOverride.glass` carries it to `NativeWidget`). Tests: `NativeWidgetConfigTest`, `ObserveNativeWidgetOverridesUseCaseTest`; checked on an emulator.
+- [x] Glass icon backgrounds: `IconBackground` gains `GLASS_FROST`, `GLASS_DARK_FROST`, `GLASS_CLEAR`, `GLASS_DARK_GLASS`, `GLASS_BRIGHT` and `GLASS_ACCENT` (each carries its `GlassStyle`), beside tile and reversed tile in the Icons screen's Background dropdown, glyph and outline only; the picture keeps the chosen colour on a `glassBackground` panel in the icon shape. `IconRenderMode` now carries its style, colour and background directly (36 new stored values, existing ones unchanged), and its unused `icon_render_*` display strings are gone. Tests: `IconRenderModeTest`.
+- [ ] Compose UI tests for the four dropdowns, and a check on a device.
+- [ ] Native review of the new `*_background` and `glass_style_*` strings (machine-translated); the `BackupFacet` dock and apps list flags are not yet in the backup round-trip test.
+
+## Wallpaper-backed glass (draft)
+
+Every background style is a tint today (Compose cannot blur the system wallpaper behind the window). With a copy of the wallpaper, the same styles also blur and refract it. Nothing is built yet.
+
+### Findings (tested on the API 30 and API 36 emulators)
+- `WallpaperManager.peekDrawable()` throws `SecurityException: READ_EXTERNAL_STORAGE denied` on both, with Facet as the default home or not. `builtInDrawable` works but is the factory image, so previews showed the wrong wallpaper until it was dropped (`245ae359`).
+- `getWallpaperColors()` is readable and follows a wallpaper change; previews now paint a primary-to-secondary wash from it, lightness set per theme.
+- Smart Launcher hit the same limit (since Sept 2023) and asks the user for the wallpaper; Niagara does not read it and uses a plain tint.
+- Spike (API 36): blur and colour controls work from API 31, the lens (AGSL) from API 33; the library skips them below that. The lens only shows on a busy wallpaper, and a wide short panel smears sideways when the library's depth flag is on, so the lens uses a depth weight (0.5). Production must take the backdrop path only on API 31 and up, because on 30 the unblurred copy would show inside the panel.
+- Not yet verified: `WallpaperManager.getWallpaperId()` changing on every system wallpaper change without a permission, and `Activity.registerScreenCaptureCallback` (API 34) for noticing a screenshot.
+
+### Decisions
+- **Tint first, glass as an upgrade.** The six `GlassStyle`s and their dropdowns stay as they are. With a wallpaper copy, the same style is drawn over a blurred and refracted copy of it; without one it is the tint it is now. No separate "real glass" choice.
+- **Clear glass** (`GlassStyle.CLEAR_GLASS`, the near-clear fill with the bright diagonal edge) is the style closest to liquid glass; Frost, Dark frost, Bright and Accent become blur plus their tint, and Dark glass is Clear glass under a dark wash. A clear panel over a busy wallpaper may need a slight dim of the backdrop or the existing text shadows for legibility.
+- **The user supplies the wallpaper; we cannot capture it.** `PixelCopy` sees only Facet's own window, `MediaProjection` asks for consent every time and records everything on screen, and an accessibility service is too heavy. So: *Choose photo* through the gallery app through `GetContent("image/*")` (no permission; a chooser when several apps answer), ideally the original photo (full resolution, no bars). Fallback: a *Clean screenshot* helper shows a bare Facet screen over the wallpaper, the user takes a screenshot and picks it; we trim the status and navigation bars and fit it to the screen's aspect ratio.
+- **Library:** `io.github.kyant0:backdrop` (Apache-2.0) draws a captured backdrop into a foreground with blur and refraction (`rememberLayerBackdrop`, `Modifier.layerBackdrop`, `drawBackdrop`). It captures only content in the Compose tree, so the stored image is drawn as a layer behind Home and marked as the backdrop. A new dependency: needs an explicit yes, and its minimum SDK and blur fallback below API 31 must be checked first.
+- **Launcher-wide**, not per facet, for the first version (one stored image, no migration). Per facet can follow.
+- **Stored in app-private storage**, downscaled to about screen size; local only, no network. It is not in the backup bundle, so a restore falls back to the tint.
+
+### User flow (agreed)
+**Entry points** (all open the same wallpaper screen): the existing *Change wallpaper* row in Settings > Customization (it extends that row, no new place); the first time a glass background is applied with no wallpaper copy (a `ThemedModalBottomSheet`, so it closes on Home press); and a notice after the system wallpaper changed elsewhere. Never on launch or in onboarding.
+
+**The wallpaper screen, three states**
+- *No copy*: the current system wallpaper as a preview, a line saying real glass needs a copy, and **two equal choices**: *Choose an image for Facet* (path A, real glass) and *Set a system wallpaper* (path C, opens the system wallpaper picker as today; glass stays a tint until the user adds a copy). Below them, a smaller *Use my current wallpaper* link for path B.
+- *Has a copy*: the copy with *Replace* and *Remove*, and "Glass is on".
+- *Stale copy* (the stored `getWallpaperId()` no longer matches): a banner with *Choose a photo again* and *Remove copy*.
+
+**Path A, Choose a photo.** The system Photo Picker (no permission), then a **pan and zoom fit step**: the photo cropped to the screen's aspect, a Home preview over it, the minimum zoom the one that still covers the crop, a double tap to reset. On that step an **ask-each-time choice** of *Home screen* or *Home and lock screen*, default Home. *Set wallpaper* stores the cropped copy (screen resolution, private storage) and sets it with `WallpaperManager.setBitmap` for the chosen screens, so Home, the drawer and the lock screen match; the id is stored for stale detection.
+
+**Path B, Use my current wallpaper** (the screenshot path, included in the first version). A sheet explains Android does not let launchers read the wallpaper and the copy stays on the phone. *Show clean screen* opens a bare Facet screen with only the wallpaper and a hint to take a screenshot (on API 34 and up the screen-capture callback brings them back; unverified). The Photo Picker opens for the screenshot; the status and navigation bars are trimmed and the copy stored. It does not set the system wallpaper, since it already is.
+
+**Path C, Set a system wallpaper.** Opens the system wallpaper picker (`ACTION_SET_WALLPAPER`) exactly as the row does today. On return, if the id changed, a prompt offers *Choose an image for Facet* (A), *Use my current wallpaper* (B, since the system now holds the new one) or *Not now* to keep the tint.
+
+*Not now* anywhere keeps the tint and is remembered; it comes back only when the user applies a glass background again or opens the wallpaper screen. Removing the copy returns every panel to the tint.
+
+### Steps
+- [x] Spike on the dock only (branch `glass-wallpaper-spike`, uncommitted, tested on API 36): a wallpaper copy drawn behind Home and marked as the backdrop, the dock panel drawn with `drawBackdrop` (blur, brightness and saturation per style) and a copy of the library's lens shader with the depth pull as a strength (0.5). Findings below. The spike's test switches and file-based wallpaper loader are throwaway.
+- [x] Wallpaper store: `WallpaperCopyRepository` (private PNG, the system wallpaper id from `getWallpaperId`, `setBitmap`), `wallpaper_copy_system_id` and `wallpaper_prompt_dismissed` in DataStore (`LauncherSettings`, not in backups), `SetWallpaperFromPhotoUseCase`, `RemoveWallpaperCopyUseCase`; `WallpaperBackdropViewModel` feeds `WallpaperBackdropHost` around `FacetNavHost` (API 31+ and portrait only). Tests: `WallpaperCopyRepositoryTest`, `SetWallpaperFromPhotoUseCaseTest`, `WallpaperBackdropViewModelTest`, `SettingsRepositoryTest`. Nothing sets `wallpaper_prompt_dismissed` yet.
+- [x] The wallpaper screen behind the existing *Change wallpaper* row (`WallpaperScreen`, `WallpaperViewModel`, route `wallpaper`): the no-copy and has-copy states with the two equal choices, the stale notice, remove. Not built: the first-use sheet from a glass background, and the *Use my current wallpaper* link. Tests: `WallpaperViewModelTest` (JVM), `WallpaperScreenTest` (emulator).
+- [x] Pan and zoom fit step (`WallpaperFit` maths, cover bounds, 1x to 5x, double-tap reset, a faint Home outline) with the Home or Home-and-lock choice, in `WallpaperScreen`. Tests: `WallpaperFitTest`, `WallpaperScreenTest`. Checked on the API 36 emulator (photo picker, fit, set, Home shows the copy); pinch not exercised by hand.
+- [ ] Clean-screenshot helper: bare screen, screenshot detection where available, crop of the status and navigation bars, tests for the crop.
+- [ ] Stale copy: the id check and the notice on the wallpaper screen are done; the fall back to the tint when it is stale is done (`WallpaperBackdropViewModel`, re-checked on resume); the offer after returning from the system picker is done (`WallpaperViewModel.offerCopy`), and so is the first-use sheet from the glass pickers (`GlassBackgroundRow`, remembered *Not now*); real glass now covers list rows, tiles, calendar, media row, widgets and icon backgrounds on Home. The *Use my current wallpaper* screenshot path is done too (`UseScreenshotAsWallpaperCopyUseCase`).
+- [ ] Extend to the list items, calendar, media row and the Weather, Agenda and Now playing widgets; retune each style's opacity over a blurred backdrop; status and navigation bar icon colour from the stored image (`13 §2a`).
+- [ ] Strings in en, de, es, fr, nl and pt; docs `02`, `07`, `12`, `13`; tests per step.
+
+### Open
+- Always on once a copy exists, or a per-component toggle (leaning always on).
+- Parallax or scrolling alignment of the stored image with the system wallpaper.
+- How the Backdrop library behaves on live wallpapers and below API 31 (the stored image does not depend on the live wallpaper, but the match to what is behind the window does).

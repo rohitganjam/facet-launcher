@@ -46,15 +46,6 @@
     <string name="font_scale_huge">Riesig</string>
 
     <!-- IconRenderMode -->
-    <string name="icon_render_system_default">Systemstandard</string>
-    <string name="icon_render_monochrome_black_white">Monochrom (Schwarz-Weiß)</string>
-    <string name="icon_render_monochrome_accent">Monochrom (Akzent)</string>
-    <string name="icon_render_glyph_accent">Symbol (Akzent)</string>
-    <string name="icon_render_outline_accent">Kontur (Akzent)</string>
-    <string name="icon_render_glyph_ink">Symbol (Design)</string>
-    <string name="icon_render_outline_ink">Kontur (Design)</string>
-    <string name="icon_render_glyph_inverted">Symbol (Design invertiert)</string>
-    <string name="icon_render_outline_inverted">Kontur (Design invertiert)</string>
     <string name="icon_style_default">Standard</string>
     <string name="icon_style_monochrome">Monochrom</string>
     <string name="icon_style_glyph">Symbol</string>
@@ -63,23 +54,9 @@
     <string name="icon_colour_theme">Design</string>
     <string name="icon_colour_theme_inverted">Design invertiert</string>
     <string name="icons_screen_title">Symbole</string>
-    <string name="icons_screen_subtitle">Stil, Farbe und Form</string>
-    <string name="icons_screen_style">Stil</string>
     <string name="icons_screen_colour">Farbe</string>
-    <string name="icon_render_glyph_tile_accent">Symbol-Kachel (Akzent)</string>
-    <string name="icon_render_glyph_tile_ink">Symbol-Kachel (Design)</string>
-    <string name="icon_render_glyph_tile_inverted">Symbol-Kachel (Design invertiert)</string>
-    <string name="icon_render_outline_tile_accent">Kontur-Kachel (Akzent)</string>
-    <string name="icon_render_outline_tile_ink">Kontur-Kachel (Design)</string>
-    <string name="icon_render_outline_tile_inverted">Kontur-Kachel (Design invertiert)</string>
     <string name="icon_background_none">Keine</string>
     <string name="icon_background_tile">Kachel</string>
-    <string name="icon_render_glyph_reversed_accent">Symbol, umgekehrte Kachel (Akzent)</string>
-    <string name="icon_render_glyph_reversed_ink">Symbol, umgekehrte Kachel (Design)</string>
-    <string name="icon_render_glyph_reversed_inverted">Symbol, umgekehrte Kachel (Design invertiert)</string>
-    <string name="icon_render_outline_reversed_accent">Kontur, umgekehrte Kachel (Akzent)</string>
-    <string name="icon_render_outline_reversed_ink">Kontur, umgekehrte Kachel (Design)</string>
-    <string name="icon_render_outline_reversed_inverted">Kontur, umgekehrte Kachel (Design invertiert)</string>
     <string name="icon_background_reversed_tile">Umgekehrte Kachel</string>
     <string name="icons_screen_background">Hintergrund</string>
 
@@ -226,7 +203,6 @@
     <!-- Generic join templates -->
     <string name="dot_join_2">%1$s · %2$s</string>
     <string name="dot_join_3">%1$s · %2$s · %3$s</string>
-    <string name="comma_join_2">%1$s, %2$s</string>
 
     <!-- SettingsScreen -->
     <string name="settings_header_title">Einstellungen</string>
@@ -240,34 +216,56 @@
     <string name="settings_active_facet_title">%1$s-Einstellungen</string>
     <string name="settings_active_facet_subtitle">Einstellungen speziell für %1$s, deine aktuelle Facette</string>
     <string name="settings_change_wallpaper_title">Hintergrundbild ändern</string>
-    <string name="settings_change_wallpaper_subtitle">Ändere das Hintergrundbild deines Systems</string>
+    <string name="settings_change_wallpaper_subtitle">Wähle ein Bild oder öffne die Systemauswahl</string>
+    <string name="wallpaper_title">Hintergrundbild</string>
+    <string name="wallpaper_preview_description">Vorschau des Hintergrundbilds</string>
+    <string name="wallpaper_status_none">Glas-Flächen nutzen eine einfache Tönung. Wähle ein Bild, um dein Hintergrundbild dahinter zu verwischen und zu verzerren.</string>
+    <string name="wallpaper_status_on">Glas ist an. Facet zeichnet diese Kopie hinter deine Flächen.</string>
+    <string name="wallpaper_choose_image_title">Bild für Facet wählen</string>
+    <string name="wallpaper_choose_image_subtitle">Legt es als Hintergrundbild fest und schaltet Glas ein</string>
+    <string name="wallpaper_system_title">Systemhintergrund festlegen</string>
+    <string name="wallpaper_system_subtitle">Öffnet die Hintergrundauswahl von Android. Glas bleibt eine Tönung.</string>
+    <string name="wallpaper_remove_title">Kopie entfernen</string>
+    <string name="wallpaper_remove_subtitle">Glas wird wieder zur Tönung. Dein Hintergrundbild bleibt, wie es ist.</string>
+    <string name="wallpaper_stale_title">Dein Hintergrundbild hat sich geändert</string>
+    <string name="wallpaper_stale_body">Die Glas-Kopie passt nicht mehr dazu. Wähle erneut ein Bild oder entferne die Kopie.</string>
+    <string name="wallpaper_failed">Das hat nicht geklappt. Versuche ein anderes Bild.</string>
+    <string name="wallpaper_offer_title">Du hast dein Hintergrundbild geändert</string>
+    <string name="wallpaper_offer_body">Facet kann Hintergründe aus der Android-Auswahl nicht sehen, daher bleibt Glas eine einfache Tönung. Wähle hier dasselbe Bild, und Facet weichzeichnet es hinter deinen Panels.</string>
+    <string name="wallpaper_offer_accept">Bild auswählen</string>
+    <string name="wallpaper_offer_decline">Nicht jetzt</string>
+    <string name="glass_prompt_title">Glashintergründe brauchen eine Kopie deines Hintergrundbilds</string>
+    <string name="glass_prompt_body">Android lässt Facet dein Hintergrundbild nicht sehen, daher ist dieser Hintergrund vorerst eine einfache Tönung. Wähle hier ein Bild, und Facet setzt es als Hintergrund und weichzeichnet es hinter deinen Panels.</string>
+    <string name="wallpaper_fit_title">Hintergrundbild positionieren</string>
+    <string name="wallpaper_fit_hint">Ziehen zum Verschieben, zwei Finger zum Zoomen, doppeltippen zum Zurücksetzen.</string>
+    <string name="wallpaper_fit_home">Startbildschirm</string>
+    <string name="wallpaper_fit_home_lock">Start- und Sperrbildschirm</string>
+    <string name="wallpaper_fit_set">Hintergrund festlegen</string>
+    <string name="wallpaper_fit_cancel">Abbrechen</string>
+    <string name="wallpaper_screenshot_link">Mein aktuelles Hintergrundbild verwenden</string>
+    <string name="wallpaper_screenshot_title">Screenshot verwenden</string>
+    <string name="wallpaper_screenshot_body">Android lässt Facet dein Hintergrundbild nicht sehen. Facet zeigt es auf einem leeren Bildschirm, damit du einen Screenshot machen kannst, den du dann hier auswählst. Dein Hintergrundbild bleibt unverändert.</string>
+    <string name="wallpaper_screenshot_confirm">Screenshot machen</string>
+    <string name="wallpaper_screenshot_have_image">Ich habe schon ein Bild</string>
+    <string name="wallpaper_capture_title">Mach einen Screenshot</string>
+    <string name="wallpaper_capture_step1">Tippe unten auf &lt;b&gt;Screenshot machen&lt;/b&gt;, um zu beginnen.</string>
+    <string name="wallpaper_capture_step2">&lt;b&gt;Tippe auf Ein/Aus + Leiser&lt;/b&gt; gleichzeitig. Halte die Tasten nicht gedrückt: Sonst öffnet sich stattdessen das Ausschaltmenü.</string>
+    <string name="wallpaper_capture_step3">&lt;b&gt;Tippe irgendwo&lt;/b&gt;, um den Hinweis zurückzuholen, und tippe dann auf &lt;b&gt;Screenshot wählen&lt;/b&gt;.</string>
+    <string name="wallpaper_capture_choose">Screenshot wählen</string>
+    <string name="wallpaper_capture_take">Screenshot machen</string>
+    <string name="wallpaper_capture_return">Zurück</string>
+    <string name="wallpaper_fit_use">Für Glas verwenden</string>
     <string name="settings_appearance_title">Darstellung des Launchers</string>
     <string name="settings_appearance_subtitle">Designs, Schriften und Icons</string>
     <string name="settings_clock_calendar_title">Uhrstil</string>
     <string name="settings_time_format_24h">24-Stunden-Format</string>
-    <string name="settings_time_format_12h">12-Stunden-Format</string>
     <string name="settings_calendars_title">Anzuzeigende Kalender</string>
-    <plurals name="settings_calendars_selected">
-        <item quantity="one">%1$d Kalender ausgewählt</item>
-        <item quantity="other">%1$d Kalender ausgewählt</item>
-    </plurals>
-    <string name="settings_calendars_all">Alle Kalender</string>
-    <string name="settings_all_day_events_visible">Ganztägige Termine sichtbar</string>
-    <string name="settings_all_day_events_hidden">Ganztägige Termine ausgeblendet</string>
     <string name="settings_dock_title">Dock</string>
     <string name="defaults_screen_note">Wird verwendet, wenn du eine Facette erstellst oder zurücksetzt.</string>
     <string name="reset_to_default_title">Auf Standard zurücksetzen</string>
     <string name="reset_to_default_confirm">Zurücksetzen</string>
     <string name="reset_dock_subtitle">Dieses Dock durch die Standard-Apps des Geräts ersetzen</string>
     <string name="reset_dock_confirm_message">Dadurch wird das Dock dieser Facette durch die Standard-Apps des Geräts ersetzt. Die hier platzierten Apps gehen verloren.</string>
-    <string name="reset_look_subtitle">Listendarstellung durch den Standard ersetzen</string>
-    <string name="reset_look_confirm_message">Dadurch werden Listenlayout und Ausrichtung dieser Facette durch die Standardwerte ersetzt.</string>
-    <string name="settings_home_apps_list_title">Startbildschirm-App-Liste</string>
-    <plurals name="settings_recents_count">
-        <item quantity="one">%1$d kürzlich verwendete App</item>
-        <item quantity="other">%1$d kürzlich verwendete Apps</item>
-    </plurals>
-    <string name="settings_most_used_count">%1$d meistgenutzt</string>
     <string name="settings_app_drawer_title">App-Drawer</string>
     <string name="settings_show_as">Als %1$s anzeigen</string>
     <string name="settings_search_on">Ein</string>
@@ -282,7 +280,6 @@
     <string name="settings_notifications_summary_media_on">Medienplayer an</string>
     <string name="settings_notifications_summary_media_off">Medienplayer aus</string>
     <string name="settings_notifications_needs_access">Benachrichtigungszugriff nötig</string>
-    <string name="settings_calendars_needs_access">Kalenderzugriff nötig</string>
     <string name="settings_folders_title">Ordner</string>
     <string name="settings_folders_none">Noch keine Ordner</string>
     <plurals name="settings_folders_count">
@@ -307,7 +304,6 @@
     <string name="media_player_row_title">Medienplayer auf dem Startbildschirm anzeigen</string>
     <string name="media_skip_buttons_row_title">Überspringen-Tasten anzeigen</string>
     <string name="notification_preview_title">Vorschau</string>
-    <string name="notification_preview_app">Nachrichten</string>
     <string name="notification_preview_no_access">Für die Vorschau von Badges und Mediaplayer wird Benachrichtigungszugriff benötigt.</string>
     <string name="notification_preview_allow_access">Zugriff erlauben</string>
     <string name="notification_preview_disabled">Badges und Mediaplayer sind aus, daher zeigt Home keine Benachrichtigungen.</string>
@@ -636,14 +632,9 @@
 
     <!-- CalendarSettingsScreen -->
     <string name="calendar_settings_header_title">Kalendereinstellungen</string>
-    <string name="calendar_settings_follows_launcher_wide">Folgt der launcherweiten Kalendereinstellung</string>
     <string name="calendar_settings_show_all_day_events">Ganztägige Termine anzeigen</string>
     <string name="calendar_settings_show_indicator">Kalenderindikator anzeigen</string>
     <string name="calendar_settings_items_to_display">Angezeigte Einträge</string>
-    <string name="calendar_settings_preview_event_1">Team-Standup</string>
-    <string name="calendar_settings_preview_event_2">Design-Review</string>
-    <string name="calendar_settings_preview_event_3">Mittagessen mit Sam</string>
-    <string name="calendar_settings_preview_sample_note">Beispieltermine</string>
     <string name="calendar_settings_no_calendars_found">Keine Kalender auf diesem Gerät gefunden.</string>
     <string name="calendar_settings_access_off">Kalenderzugriff aus — Termine ausgeblendet.</string>
 
@@ -787,7 +778,7 @@
     <string name="facet_carousel_launcher_settings">Launcher-Einstellungen</string>
     <string name="facet_carousel_launcher_settings_subtitle">Design, Favoriten, Drawer und mehr</string>
     <string name="facet_carousel_active">Aktiv</string>
-    <string name="facet_carousel_no_favorites">Noch keine Favoriten</string>
+    <string name="facet_shortcut_label">Zu %1$s wechseln</string>
     <string name="preview_media_title">Wiedergabe</string>
     <string name="preview_media_artist">Interpret</string>
     <string name="facet_carousel_facet_settings">Facetteneinstellungen</string>
@@ -836,6 +827,8 @@
     <string name="widget_sheet_settings">%1$s-Einstellungen</string>
     <string name="widget_sheet_weather_settings_subtitle">Für welchen Ort die Vorhersage gilt</string>
     <string name="widget_sheet_agenda_settings_subtitle">Welche Kalender und Termine angezeigt werden</string>
+    <string name="widget_sheet_now_playing_settings_subtitle">Wie es aussieht</string>
+    <string name="native_widget_background">Hintergrund</string>
     <string name="hub_grid_configure_widget">Widget konfigurieren</string>
     <string name="clock_adjust_alignment_heading">Ausrichtung</string>
     <string name="clock_adjust_align_left">Linksbündig</string>
@@ -931,8 +924,6 @@
     <string name="facet_settings_section_home">Startseite</string>
     <string name="facet_settings_widgets_title">Widgets</string>
     <string name="facet_settings_widgets_subtitle">Was oben auf der Startseite dieser Facette steht</string>
-    <string name="facet_settings_appearance_title">Darstellung</string>
-    <string name="facet_settings_appearance_clock_label">Uhr: %1$s</string>
     <string name="facet_settings_appearance_dock_icons">Dock-Symbole</string>
     <string name="facet_settings_appearance_dock_text">Dock-Text</string>
     <string name="facet_settings_appearance_dock_icons_and_text">Dock-Symbole und -Text</string>
@@ -1075,8 +1066,6 @@
     <string name="weather_leave_turn_off">Wetter ausschalten</string>
     <string name="weather_leave_use_current">Aktuellen Standort verwenden</string>
     <string name="weather_leave_choose_city">Stadt wählen</string>
-    <string name="clock_accessories_inheriting">Diese Facette nutzt die Uhr-Einstellungen des Launchers. Aktiviere „Überschreiben“ unter Uhrstil, um sie zu ändern.</string>
-    <string name="clock_accessories_open_clock_style">Uhrstil</string>
     <string name="weather_location_current_short">Aktueller Standort</string>
     <string name="settings_gestures_title">Gesten</string>
     <string name="settings_gestures_subtitle">Wischen, Tippen und die Home-Taste</string>
@@ -1140,4 +1129,15 @@
         <item quantity="one">%d Widget konnte nicht kopiert werden</item>
         <item quantity="other">%d Widgets konnten nicht kopiert werden</item>
     </plurals>
+    <string name="dock_background">Dock-Hintergrund</string>
+    <string name="list_item_background">Hintergrund der Listeneinträge</string>
+    <string name="calendar_background">Kalenderhintergrund</string>
+    <string name="media_player_background">Hintergrund des Medienplayers</string>
+    <string name="glass_style_off">Aus</string>
+    <string name="glass_style_frost">Helles Milchglas</string>
+    <string name="glass_style_dark_frost">Dunkles Milchglas</string>
+    <string name="glass_style_bright">Hell</string>
+    <string name="glass_style_clear_glass">Klarglas</string>
+    <string name="glass_style_dark_glass">Dunkles Glas</string>
+    <string name="glass_style_accent">Akzent</string>
 </resources>

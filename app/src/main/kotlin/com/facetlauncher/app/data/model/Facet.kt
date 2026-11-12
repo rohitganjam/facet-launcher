@@ -52,6 +52,10 @@ data class Facet(
 
     // Dock section
     val dockDisplayMode: DockDisplayMode = DockDisplayMode.ICONS,
+
+    /** Frosted-glass panels behind Home's dock and apps list items (the calendar's is `ClockCalendarConfig.glass`, the media row's `LauncherSettings.mediaPlayerGlass`); each its own style. */
+    val dockGlass: GlassStyle = GlassStyle.OFF,
+    val appsListGlass: GlassStyle = GlassStyle.OFF,
 )
 
 /**

@@ -11,8 +11,24 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
+import androidx.core.graphics.ColorUtils
 import com.facetlauncher.app.data.model.HomeWallpaper
+import com.facetlauncher.app.ui.theme.LocalIsDarkTheme
 import com.facetlauncher.app.ui.theme.Wallpaper
+
+private const val BASE_LIGHTNESS = 0.5f
+
+/** How far a light theme lightens, and a dark theme darkens, the base. */
+private const val THEME_LIGHTNESS_SHIFT = 0.1f
+private const val MAX_TONE_SATURATION = 0.6f
+
+/** [argb]'s hue with capped saturation, lightened for a light theme and darkened for a dark one so it never fights the content on it. */
+internal fun wallpaperTone(argb: Int, dark: Boolean): Int {
+    val hsl = FloatArray(3).also { ColorUtils.colorToHSL(argb, it) }
+    hsl[1] = hsl[1].coerceAtMost(MAX_TONE_SATURATION)
+    hsl[2] = if (dark) BASE_LIGHTNESS - THEME_LIGHTNESS_SHIFT else BASE_LIGHTNESS + THEME_LIGHTNESS_SHIFT
+    return ColorUtils.HSLToColor(hsl)
+}
 
 /**
  * Paints the current system wallpaper (from [com.facetlauncher.app.data.WallpaperRepository])
@@ -42,7 +58,8 @@ fun WallpaperBackground(
             )
 
         is HomeWallpaper.Tones -> {
-            val stops = wallpaper.argb.map { Color(it) }.let { if (it.size >= 2) it else it + it }
+            val dark = LocalIsDarkTheme.current
+            val stops = wallpaper.argb.map { Color(wallpaperTone(it, dark)) }.let { if (it.size >= 2) it else it + it }
             Box(tagged.background(Brush.verticalGradient(stops)))
         }
 

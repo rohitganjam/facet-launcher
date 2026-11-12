@@ -46,15 +46,6 @@
     <string name="font_scale_huge">Enorme</string>
 
     <!-- IconRenderMode -->
-    <string name="icon_render_system_default">Predeterminado del sistema</string>
-    <string name="icon_render_monochrome_black_white">Monocromo (blanco y negro)</string>
-    <string name="icon_render_monochrome_accent">Monocromo (acento)</string>
-    <string name="icon_render_glyph_accent">Glifo (acento)</string>
-    <string name="icon_render_outline_accent">Contorno (acento)</string>
-    <string name="icon_render_glyph_ink">Glifo (tema)</string>
-    <string name="icon_render_outline_ink">Contorno (tema)</string>
-    <string name="icon_render_glyph_inverted">Glifo (tema invertido)</string>
-    <string name="icon_render_outline_inverted">Contorno (tema invertido)</string>
     <string name="icon_style_default">Predeterminado</string>
     <string name="icon_style_monochrome">Monocromo</string>
     <string name="icon_style_glyph">Glifo</string>
@@ -63,23 +54,9 @@
     <string name="icon_colour_theme">Tema</string>
     <string name="icon_colour_theme_inverted">Tema invertido</string>
     <string name="icons_screen_title">Iconos</string>
-    <string name="icons_screen_subtitle">Estilo, color y forma</string>
-    <string name="icons_screen_style">Estilo</string>
     <string name="icons_screen_colour">Color</string>
-    <string name="icon_render_glyph_tile_accent">Glifo en mosaico (acento)</string>
-    <string name="icon_render_glyph_tile_ink">Glifo en mosaico (tema)</string>
-    <string name="icon_render_glyph_tile_inverted">Glifo en mosaico (tema invertido)</string>
-    <string name="icon_render_outline_tile_accent">Contorno en mosaico (acento)</string>
-    <string name="icon_render_outline_tile_ink">Contorno en mosaico (tema)</string>
-    <string name="icon_render_outline_tile_inverted">Contorno en mosaico (tema invertido)</string>
     <string name="icon_background_none">Ninguno</string>
     <string name="icon_background_tile">Mosaico</string>
-    <string name="icon_render_glyph_reversed_accent">Glifo en mosaico inverso (acento)</string>
-    <string name="icon_render_glyph_reversed_ink">Glifo en mosaico inverso (tema)</string>
-    <string name="icon_render_glyph_reversed_inverted">Glifo en mosaico inverso (tema invertido)</string>
-    <string name="icon_render_outline_reversed_accent">Contorno en mosaico inverso (acento)</string>
-    <string name="icon_render_outline_reversed_ink">Contorno en mosaico inverso (tema)</string>
-    <string name="icon_render_outline_reversed_inverted">Contorno en mosaico inverso (tema invertido)</string>
     <string name="icon_background_reversed_tile">Mosaico inverso</string>
     <string name="icons_screen_background">Fondo</string>
 
@@ -173,6 +150,7 @@
     <plurals name="folder_app_count">
         <item quantity="one">%d app</item>
         <item quantity="other">%d apps</item>
+        <item quantity="many">%d de apps</item>
     </plurals>
 
     <!-- AppContextMenu -->
@@ -226,7 +204,6 @@
     <!-- Generic join templates -->
     <string name="dot_join_2">%1$s · %2$s</string>
     <string name="dot_join_3">%1$s · %2$s · %3$s</string>
-    <string name="comma_join_2">%1$s, %2$s</string>
 
     <!-- SettingsScreen -->
     <string name="settings_header_title">Ajustes</string>
@@ -240,34 +217,56 @@
     <string name="settings_active_facet_title">Ajustes de %1$s</string>
     <string name="settings_active_facet_subtitle">Ajustes específicos de %1$s, tu faceta actual</string>
     <string name="settings_change_wallpaper_title">Cambiar fondo de pantalla</string>
-    <string name="settings_change_wallpaper_subtitle">Cambia el fondo de pantalla del sistema</string>
+    <string name="settings_change_wallpaper_subtitle">Elige una imagen o abre el selector del sistema</string>
+    <string name="wallpaper_title">Fondo de pantalla</string>
+    <string name="wallpaper_preview_description">Vista previa del fondo de pantalla</string>
+    <string name="wallpaper_status_none">Los paneles de cristal usan un tinte simple. Elige una imagen para desenfocar y curvar tu fondo detrás de ellos.</string>
+    <string name="wallpaper_status_on">El cristal está activado. Facet dibuja esta copia detrás de tus paneles.</string>
+    <string name="wallpaper_choose_image_title">Elegir una imagen para Facet</string>
+    <string name="wallpaper_choose_image_subtitle">La establece como tu fondo y activa el cristal</string>
+    <string name="wallpaper_system_title">Establecer un fondo del sistema</string>
+    <string name="wallpaper_system_subtitle">Abre el selector de fondos de Android. El cristal sigue siendo un tinte.</string>
+    <string name="wallpaper_remove_title">Quitar la copia</string>
+    <string name="wallpaper_remove_subtitle">El cristal vuelve a ser un tinte. Tu fondo se queda como está.</string>
+    <string name="wallpaper_stale_title">Tu fondo ha cambiado</string>
+    <string name="wallpaper_stale_body">La copia del cristal ya no coincide. Elige una imagen otra vez o quita la copia.</string>
+    <string name="wallpaper_failed">No ha funcionado. Prueba con otra imagen.</string>
+    <string name="wallpaper_offer_title">Has cambiado el fondo de pantalla</string>
+    <string name="wallpaper_offer_body">Facet no puede ver los fondos que se eligen en el selector de Android, así que el cristal es un simple tinte. Elige aquí la misma imagen y Facet la desenfocará tras tus paneles.</string>
+    <string name="wallpaper_offer_accept">Elegir una imagen</string>
+    <string name="wallpaper_offer_decline">Ahora no</string>
+    <string name="glass_prompt_title">Los fondos de cristal necesitan una copia de tu fondo de pantalla</string>
+    <string name="glass_prompt_body">Android no deja que Facet vea tu fondo de pantalla, así que este fondo es por ahora un simple tinte. Elige una imagen aquí y Facet la pondrá como fondo y la desenfocará tras tus paneles.</string>
+    <string name="wallpaper_fit_title">Coloca tu fondo</string>
+    <string name="wallpaper_fit_hint">Arrastra para mover, pellizca para ampliar y toca dos veces para restablecer.</string>
+    <string name="wallpaper_fit_home">Pantalla de inicio</string>
+    <string name="wallpaper_fit_home_lock">Pantalla de inicio y de bloqueo</string>
+    <string name="wallpaper_fit_set">Establecer fondo</string>
+    <string name="wallpaper_fit_cancel">Cancelar</string>
+    <string name="wallpaper_screenshot_link">Usar mi fondo actual</string>
+    <string name="wallpaper_screenshot_title">Usar una captura</string>
+    <string name="wallpaper_screenshot_body">Android no deja que Facet vea tu fondo de pantalla. Facet lo mostrará en una pantalla limpia para que hagas una captura y luego la eliges aquí. Tu fondo no cambia.</string>
+    <string name="wallpaper_screenshot_confirm">Hacer captura</string>
+    <string name="wallpaper_screenshot_have_image">Ya tengo una imagen</string>
+    <string name="wallpaper_capture_title">Haz una captura</string>
+    <string name="wallpaper_capture_step1">Toca &lt;b&gt;Hacer captura&lt;/b&gt; abajo para empezar.</string>
+    <string name="wallpaper_capture_step2">&lt;b&gt;Toca Encendido + Bajar volumen&lt;/b&gt; a la vez. No mantengas pulsados los botones: si los mantienes pulsados se abre el menú de apagado.</string>
+    <string name="wallpaper_capture_step3">&lt;b&gt;Toca en cualquier sitio&lt;/b&gt; para ver esta nota de nuevo y toca &lt;b&gt;Elegir captura&lt;/b&gt;.</string>
+    <string name="wallpaper_capture_choose">Elegir captura</string>
+    <string name="wallpaper_capture_take">Hacer captura</string>
+    <string name="wallpaper_capture_return">Volver</string>
+    <string name="wallpaper_fit_use">Usar para el cristal</string>
     <string name="settings_appearance_title">Apariencia del launcher</string>
     <string name="settings_appearance_subtitle">Temas, fuentes e iconos</string>
     <string name="settings_clock_calendar_title">Estilo de reloj</string>
     <string name="settings_time_format_24h">Formato de 24 horas</string>
-    <string name="settings_time_format_12h">Formato de 12 horas</string>
     <string name="settings_calendars_title">Calendarios a mostrar</string>
-    <plurals name="settings_calendars_selected">
-        <item quantity="one">%1$d calendario seleccionado</item>
-        <item quantity="other">%1$d calendarios seleccionados</item>
-    </plurals>
-    <string name="settings_calendars_all">Todos los calendarios</string>
-    <string name="settings_all_day_events_visible">Eventos de todo el día visibles</string>
-    <string name="settings_all_day_events_hidden">Eventos de todo el día ocultos</string>
     <string name="settings_dock_title">Dock</string>
     <string name="defaults_screen_note">Se usa al crear una faceta o restablecer una.</string>
     <string name="reset_to_default_title">Restablecer valores predeterminados</string>
     <string name="reset_to_default_confirm">Restablecer</string>
     <string name="reset_dock_subtitle">Sustituye este dock por las apps predeterminadas del dispositivo</string>
     <string name="reset_dock_confirm_message">Esto sustituye el dock de esta faceta por las apps predeterminadas del dispositivo. Las apps que colocaste aquí se perderán.</string>
-    <string name="reset_look_subtitle">Sustituye el aspecto de la lista por el predeterminado</string>
-    <string name="reset_look_confirm_message">Esto sustituye el diseño de la lista y la alineación de esta faceta por los valores predeterminados.</string>
-    <string name="settings_home_apps_list_title">Lista de apps de inicio</string>
-    <plurals name="settings_recents_count">
-        <item quantity="one">%1$d reciente</item>
-        <item quantity="other">%1$d recientes</item>
-    </plurals>
-    <string name="settings_most_used_count">%1$d más usadas</string>
     <string name="settings_app_drawer_title">Cajón de apps</string>
     <string name="settings_show_as">Mostrar como %1$s</string>
     <string name="settings_search_on">Activado</string>
@@ -282,12 +281,12 @@
     <string name="settings_notifications_summary_media_on">Reproductor activado</string>
     <string name="settings_notifications_summary_media_off">Reproductor desactivado</string>
     <string name="settings_notifications_needs_access">Requiere acceso a notificaciones</string>
-    <string name="settings_calendars_needs_access">Requiere acceso al calendario</string>
     <string name="settings_folders_title">Carpetas</string>
     <string name="settings_folders_none">Aún no hay carpetas</string>
     <plurals name="settings_folders_count">
         <item quantity="one">%d carpeta</item>
         <item quantity="other">%d carpetas</item>
+        <item quantity="many">%d de carpetas</item>
     </plurals>
     <string name="settings_weather_title">Ajustes del tiempo</string>
     <string name="settings_weather_subtitle">Ubicación y unidades</string>
@@ -307,7 +306,6 @@
     <string name="media_player_row_title">Mostrar el reproductor multimedia en la pantalla de inicio</string>
     <string name="media_skip_buttons_row_title">Mostrar botones de salto</string>
     <string name="notification_preview_title">Vista previa</string>
-    <string name="notification_preview_app">Mensajes</string>
     <string name="notification_preview_no_access">Se necesita acceso a las notificaciones para previsualizar insignias y el reproductor.</string>
     <string name="notification_preview_allow_access">Permitir acceso</string>
     <string name="notification_preview_disabled">Las insignias y el reproductor están desactivados, así que Inicio no mostrará notificaciones.</string>
@@ -460,10 +458,12 @@
     <plurals name="backup_restored_facets_count">
         <item quantity="one">Se restauró %d faceta</item>
         <item quantity="other">Se restauraron %d facetas</item>
+        <item quantity="many">Se restauraron %d de facetas</item>
     </plurals>
     <plurals name="backup_widgets_need_readding_count">
         <item quantity="one">%d widget necesita añadirse de nuevo abajo</item>
         <item quantity="other">%d widgets necesitan añadirse de nuevo abajo</item>
+        <item quantity="many">%d de widgets necesitan añadirse de nuevo abajo</item>
     </plurals>
     <string name="backup_restore_import_failed_invalid_file">Ese archivo no es una copia de seguridad válida de Facet</string>
     <string name="backup_restore_import_failed_unsupported_version">Esa copia de seguridad se creó con una versión más reciente de Facet</string>
@@ -496,6 +496,7 @@
     <plurals name="settings_facet_automation_rules">
         <item quantity="one">%d regla</item>
         <item quantity="other">%d reglas</item>
+        <item quantity="many">%d de reglas</item>
     </plurals>
     <string name="automation_header_title">Automatización de facetas</string>
     <string name="automation_editor_new">Nueva regla</string>
@@ -568,10 +569,12 @@
     <plurals name="settings_pro_facet_count">
         <item quantity="one">%d faceta</item>
         <item quantity="other">%d facetas</item>
+        <item quantity="many">%d de facetas</item>
     </plurals>
     <plurals name="settings_pro_triggers_running">
         <item quantity="one">%d disparador activo</item>
         <item quantity="other">%d disparadores activos</item>
+        <item quantity="many">%d de disparadores activos</item>
     </plurals>
     <string name="pro_done">Listo</string>
     <string name="pro_upgrade_trigger">Las reglas que reaccionan al Bluetooth, al Wi-Fi, a los auriculares o a la batería forman parte de Pro.</string>
@@ -636,14 +639,9 @@
 
     <!-- CalendarSettingsScreen -->
     <string name="calendar_settings_header_title">Ajustes de calendario</string>
-    <string name="calendar_settings_follows_launcher_wide">Sigue el ajuste de calendario general del launcher</string>
     <string name="calendar_settings_show_all_day_events">Mostrar eventos de todo el día</string>
     <string name="calendar_settings_show_indicator">Mostrar indicador del calendario</string>
     <string name="calendar_settings_items_to_display">Elementos a mostrar</string>
-    <string name="calendar_settings_preview_event_1">Reunión de equipo</string>
-    <string name="calendar_settings_preview_event_2">Revisión de diseño</string>
-    <string name="calendar_settings_preview_event_3">Almuerzo con Sam</string>
-    <string name="calendar_settings_preview_sample_note">Eventos de ejemplo</string>
     <string name="calendar_settings_no_calendars_found">No se encontraron calendarios en este dispositivo.</string>
     <string name="calendar_settings_access_off">Acceso al calendario desactivado — eventos ocultos.</string>
 
@@ -782,12 +780,13 @@
     <plurals name="facet_carousel_count">
         <item quantity="one">%d faceta disponible</item>
         <item quantity="other">%d facetas disponibles</item>
+        <item quantity="many">%d de facetas disponibles</item>
     </plurals>
     <string name="facet_carousel_reorder">Reordenar</string>
     <string name="facet_carousel_launcher_settings">Ajustes del launcher</string>
     <string name="facet_carousel_launcher_settings_subtitle">Apariencia, favoritos, cajón y más</string>
     <string name="facet_carousel_active">Activa</string>
-    <string name="facet_carousel_no_favorites">Aún no hay favoritos</string>
+    <string name="facet_shortcut_label">Cambiar a %1$s</string>
     <string name="preview_media_title">Reproduciendo</string>
     <string name="preview_media_artist">Artista</string>
     <string name="facet_carousel_facet_settings">Ajustes de faceta</string>
@@ -811,6 +810,7 @@
     <plurals name="format_count_apps">
         <item quantity="one">%1$d app</item>
         <item quantity="other">%1$d apps</item>
+        <item quantity="many">%1$d de apps</item>
     </plurals>
     <string name="facet_settings_dock_settings_title">Apps del dock</string>
     <string name="facet_settings_rename_explanation">Renombra esta faceta.</string>
@@ -836,6 +836,8 @@
     <string name="widget_sheet_settings">Ajustes de %1$s</string>
     <string name="widget_sheet_weather_settings_subtitle">De dónde es el pronóstico</string>
     <string name="widget_sheet_agenda_settings_subtitle">Qué calendarios y eventos se muestran</string>
+    <string name="widget_sheet_now_playing_settings_subtitle">Cómo se ve</string>
+    <string name="native_widget_background">Fondo</string>
     <string name="hub_grid_configure_widget">Configurar widget</string>
     <string name="clock_adjust_alignment_heading">Alineación</string>
     <string name="clock_adjust_align_left">Alinear a la izquierda</string>
@@ -858,6 +860,7 @@
     <plurals name="hub_widget_picker_option_count">
         <item quantity="one">%d widget</item>
         <item quantity="other">%d widgets</item>
+        <item quantity="many">%d de widgets</item>
     </plurals>
     <string name="hub_widget_dimensions">%1$d×%2$d</string>
     <string name="hub_widget_label_with_dimensions">%1$s %2$d×%3$d</string>
@@ -910,6 +913,7 @@
     <plurals name="icons_screen_pack_count">
         <item quantity="one">%d paquete</item>
         <item quantity="other">%d paquetes</item>
+        <item quantity="many">%d de paquetes</item>
     </plurals>
     <string name="icons_screen_get_more">Conseguir más</string>
     <string name="icons_screen_no_packs">No hay paquetes de iconos instalados. Los paquetes para Nova, Lawnchair, ADW o Apex también funcionan aquí.</string>
@@ -931,8 +935,6 @@
     <string name="facet_settings_section_home">Inicio</string>
     <string name="facet_settings_widgets_title">Widgets</string>
     <string name="facet_settings_widgets_subtitle">Lo que va en la parte superior del inicio de esta faceta</string>
-    <string name="facet_settings_appearance_title">Apariencia</string>
-    <string name="facet_settings_appearance_clock_label">Reloj: %1$s</string>
     <string name="facet_settings_appearance_dock_icons">Iconos del dock</string>
     <string name="facet_settings_appearance_dock_text">Texto del dock</string>
     <string name="facet_settings_appearance_dock_icons_and_text">Iconos y texto del dock</string>
@@ -1075,8 +1077,6 @@
     <string name="weather_leave_turn_off">Desactivar el tiempo</string>
     <string name="weather_leave_use_current">Usar la ubicación actual</string>
     <string name="weather_leave_choose_city">Elegir una ciudad</string>
-    <string name="clock_accessories_inheriting">Esta faceta usa los ajustes de reloj del launcher. Activa «Personalizar» en Estilo del reloj para cambiarlos.</string>
-    <string name="clock_accessories_open_clock_style">Estilo del reloj</string>
     <string name="weather_location_current_short">Ubicación actual</string>
     <string name="settings_gestures_title">Gestos</string>
     <string name="settings_gestures_subtitle">Deslizamientos, toques y el botón de inicio</string>
@@ -1139,5 +1139,17 @@
     <plurals name="copy_from_facet_widgets_omitted">
         <item quantity="one">No se pudo copiar %d widget</item>
         <item quantity="other">No se pudieron copiar %d widgets</item>
+        <item quantity="many">No se pudieron copiar %d de widgets</item>
     </plurals>
+    <string name="dock_background">Fondo del dock</string>
+    <string name="list_item_background">Fondo de los elementos de la lista</string>
+    <string name="calendar_background">Fondo del calendario</string>
+    <string name="media_player_background">Fondo del reproductor</string>
+    <string name="glass_style_off">Desactivado</string>
+    <string name="glass_style_frost">Escarcha clara</string>
+    <string name="glass_style_dark_frost">Escarcha oscura</string>
+    <string name="glass_style_bright">Brillante</string>
+    <string name="glass_style_clear_glass">Cristal transparente</string>
+    <string name="glass_style_dark_glass">Cristal oscuro</string>
+    <string name="glass_style_accent">Acento</string>
 </resources>

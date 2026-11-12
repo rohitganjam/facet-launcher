@@ -323,6 +323,7 @@ internal fun HomeMediaSlot(frame: HomeFrame, player: MediaPlayerState, modifier:
         onOpen = media.onOpen,
         labelColor = frame.itemStyle.labelColor,
         labelFontWeight = frame.itemStyle.labelFontWeight,
+        glass = frame.state.media.glass,
         modifier = modifier,
     )
 }

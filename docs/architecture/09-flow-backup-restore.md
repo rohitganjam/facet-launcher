@@ -22,7 +22,7 @@ sequenceDiagram
     end
     UC->>R: widgetPlacementRepository.observeAll().first()
     UC->>UC: BackupMapping — entities to Backup* DTOs, folder/facet refs become list indices
-    UC->>BR: writeBackup(uri, BackupBundle(backupVersion = 4, exportedAtEpochMillis, ...))
+    UC->>BR: writeBackup(uri, BackupBundle(exportedAtEpochMillis, ...))   (backupVersion defaults to CURRENT_BACKUP_VERSION, 6)
     BR->>BR: contentResolver.openFileDescriptor(uri, "wt") truncated to 0, then Json.encodeToString  (Dispatchers.IO)
     UC-->>VM: bundle
     VM-->>S: uiState.message = "Exported N facets …"
@@ -46,18 +46,21 @@ sequenceDiagram
     participant R as repositories
     S->>VM: onImportFileChosen(uri)   (OpenDocument) → confirm dialog ("replaces everything")
     VM->>UC: invoke(uri)
-    UC->>R: backupRepository.readBackup(uri) → bundle?  (null → InvalidFile; trailing bytes after the closing brace are ignored)
+    UC->>R: backupRepository.readBackup(uri) → bundle?  (null → InvalidFile, trailing bytes after the closing brace are ignored)
     UC->>UC: backupVersion > CURRENT_BACKUP_VERSION → UnsupportedVersion
-    UC->>R: applySettings(bundle.settings)  — 41 SettingsRepository setters
+    UC->>UC: read.upgradedToCurrent()  (BackupUpgrade.kt folds older layouts into the current one)
+    UC->>R: applySettings(bundle.settings)  — about 60 SettingsRepository setters
     UC->>R: folderRepository.deleteAllFolders(), then restoreFolder(...) per folder → index→newId map
     UC->>R: facetRepository.deleteAllFacets()   (FK CASCADE clears every per-facet placement)
     loop each BackupFacet
-        UC->>R: restoreFacet(entity.copy(id = 0)) → newId
+        UC->>R: facetRepository.restoreFacet(backupFacet.toFacet()) → newId
+        UC->>R: clockStackRepository.restoreClock(newId, clockConfig, sizes) and restoreNativeWidgets(newId, nativeStackPages)
         UC->>R: placementRepository.restoreApp / restoreFolderPlacement (AppPlacementEntity / PlacementTarget with list + newId, folderIndex→newId)
     end
-    UC->>R: repairOrphanedProfileRows()  (resolves every restored userId = -1)
     UC->>R: settingsRepository.setActiveFacetId(newIds[activeFacetIndex])
-    UC-->>VM: ImportBackupResult.Success(facetCount, pendingWidgetPlacements = bundle.widgetPlacements)
+    UC->>R: widgetPlacementRepository.deleteAllNative(), then upsert each native Hub widget under nextNativeId()
+    UC->>R: repairOrphanedProfileRows()  (resolves every restored userId = -1)
+    UC-->>VM: ImportBackupResult.Success(facetCount, pendingWidgetPlacements = the hosted widget placements only)
     VM-->>S: uiState.pendingWidgets = [...]   (widget re-bind UI, §3)
 ```
 

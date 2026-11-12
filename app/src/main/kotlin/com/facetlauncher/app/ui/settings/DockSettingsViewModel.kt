@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.WallpaperRepository
+import com.facetlauncher.app.data.model.GlassStyle
 import com.facetlauncher.app.data.model.Facet
 import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.domain.ApplyFacetDefaultsUseCase
@@ -47,6 +48,7 @@ data class DockSettingsUiState(
 ) {
     /** The preview needs the dock's display mode here. */
     val dockDisplayMode: DockDisplayMode get() = resolveFacetStyle(facet, settings).dockDisplayMode
+    val dockGlass: GlassStyle get() = facet?.dockGlass ?: GlassStyle.OFF
 }
 
 /** A facet's own Dock screen (`facetId` is required): its apps and display style, and a Reset to default that re-seeds it from the device's default apps. */
@@ -93,6 +95,10 @@ class DockSettingsViewModel @Inject constructor(
 
     fun setDockDisplayMode(mode: DockDisplayMode) {
         viewModelScope.launch { facetRepository.setDockDisplayMode(facetId, mode) }
+    }
+
+    fun setDockGlass(glass: GlassStyle) {
+        viewModelScope.launch { facetRepository.setDockGlass(facetId, glass) }
     }
 
     /** "Copy from facet": this Dock (apps, folders, cells and display style) becomes a copy of [sourceFacetId]'s. */

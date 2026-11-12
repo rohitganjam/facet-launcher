@@ -27,6 +27,8 @@ data class ClockCalendarConfig(
     val itemsToShow: Int = CalendarDisplayOptions.MAX_ITEMS,
     val showAllDay: Boolean = true,
     val calendarIds: Set<String>? = null,
+    /** The frosted-glass panel behind the events. */
+    val glass: GlassStyle = GlassStyle.OFF,
 )
 
 /** The settings stored on this facet's clock page, or `null` when it has none (yet) or no clock. */

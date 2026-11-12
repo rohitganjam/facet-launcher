@@ -52,15 +52,6 @@
     <string name="font_scale_huge">Huge</string>
 
     <!-- IconRenderMode -->
-    <string name="icon_render_system_default">System default</string>
-    <string name="icon_render_monochrome_black_white">Monochrome (Black &amp; white)</string>
-    <string name="icon_render_monochrome_accent">Monochrome (Accent)</string>
-    <string name="icon_render_glyph_accent">Glyph (Accent)</string>
-    <string name="icon_render_outline_accent">Outline (Accent)</string>
-    <string name="icon_render_glyph_ink">Glyph (Theme)</string>
-    <string name="icon_render_outline_ink">Outline (Theme)</string>
-    <string name="icon_render_glyph_inverted">Glyph (Theme inverted)</string>
-    <string name="icon_render_outline_inverted">Outline (Theme inverted)</string>
     <string name="icon_style_default">Default</string>
     <string name="icon_style_monochrome">Monochrome</string>
     <string name="icon_style_glyph">Glyph</string>
@@ -69,23 +60,9 @@
     <string name="icon_colour_theme">Theme</string>
     <string name="icon_colour_theme_inverted">Theme inverted</string>
     <string name="icons_screen_title">Icons</string>
-    <string name="icons_screen_subtitle">Style, colour and shape</string>
-    <string name="icons_screen_style">Style</string>
     <string name="icons_screen_colour">Colour</string>
-    <string name="icon_render_glyph_tile_accent">Glyph tile (Accent)</string>
-    <string name="icon_render_glyph_tile_ink">Glyph tile (Theme)</string>
-    <string name="icon_render_glyph_tile_inverted">Glyph tile (Theme inverted)</string>
-    <string name="icon_render_outline_tile_accent">Outline tile (Accent)</string>
-    <string name="icon_render_outline_tile_ink">Outline tile (Theme)</string>
-    <string name="icon_render_outline_tile_inverted">Outline tile (Theme inverted)</string>
     <string name="icon_background_none">None</string>
     <string name="icon_background_tile">Tile</string>
-    <string name="icon_render_glyph_reversed_accent">Glyph reversed tile (Accent)</string>
-    <string name="icon_render_glyph_reversed_ink">Glyph reversed tile (Theme)</string>
-    <string name="icon_render_glyph_reversed_inverted">Glyph reversed tile (Theme inverted)</string>
-    <string name="icon_render_outline_reversed_accent">Outline reversed tile (Accent)</string>
-    <string name="icon_render_outline_reversed_ink">Outline reversed tile (Theme)</string>
-    <string name="icon_render_outline_reversed_inverted">Outline reversed tile (Theme inverted)</string>
     <string name="icon_background_reversed_tile">Reversed tile</string>
     <string name="icons_screen_background">Background</string>
     <string name="icon_shape_squircle">Squircle</string>
@@ -266,7 +243,6 @@
          phrase). -->
     <string name="dot_join_2">%1$s · %2$s</string>
     <string name="dot_join_3">%1$s · %2$s · %3$s</string>
-    <string name="comma_join_2">%1$s, %2$s</string>
 
     <!-- SettingsScreen -->
     <string name="settings_header_title">Settings</string>
@@ -280,34 +256,56 @@
     <string name="settings_active_facet_title">%1$s Settings</string>
     <string name="settings_active_facet_subtitle">Settings specific to %1$s, your current facet</string>
     <string name="settings_change_wallpaper_title">Change wallpaper</string>
-    <string name="settings_change_wallpaper_subtitle">Change your system wallpaper</string>
+    <string name="settings_change_wallpaper_subtitle">Choose an image or open the system picker</string>
+    <string name="wallpaper_title">Wallpaper</string>
+    <string name="wallpaper_preview_description">Wallpaper preview</string>
+    <string name="wallpaper_status_none">Glass panels use a plain tint. Choose an image to blur and bend your wallpaper behind them.</string>
+    <string name="wallpaper_status_on">Glass is on. Facet draws this copy behind your panels.</string>
+    <string name="wallpaper_choose_image_title">Choose an image for Facet</string>
+    <string name="wallpaper_choose_image_subtitle">Sets it as your wallpaper and turns glass on</string>
+    <string name="wallpaper_system_title">Set a system wallpaper</string>
+    <string name="wallpaper_system_subtitle">Opens Android\'s wallpaper picker. Glass stays a tint.</string>
+    <string name="wallpaper_remove_title">Remove the copy</string>
+    <string name="wallpaper_remove_subtitle">Glass goes back to a tint. Your wallpaper stays as it is.</string>
+    <string name="wallpaper_stale_title">Your wallpaper changed</string>
+    <string name="wallpaper_stale_body">The glass copy no longer matches it. Choose an image again, or remove the copy.</string>
+    <string name="wallpaper_failed">That didn\'t work. Try another image.</string>
+    <string name="wallpaper_offer_title">You changed your wallpaper</string>
+    <string name="wallpaper_offer_body">Facet can\'t see wallpapers set in Android\'s picker, so glass is a plain tint. Choose the same image here and Facet blurs it behind your panels.</string>
+    <string name="wallpaper_offer_accept">Choose an image</string>
+    <string name="wallpaper_offer_decline">Not now</string>
+    <string name="glass_prompt_title">Glass backgrounds require a copy of your wallpaper</string>
+    <string name="glass_prompt_body">Android doesn\'t let Facet see your wallpaper, so this background is a plain tint for now. Choose an image here and Facet sets it as your wallpaper and blurs it behind your panels.</string>
+    <string name="wallpaper_fit_title">Position your wallpaper</string>
+    <string name="wallpaper_fit_hint">Drag to move, pinch to zoom, double-tap to reset.</string>
+    <string name="wallpaper_fit_home">Home screen</string>
+    <string name="wallpaper_fit_home_lock">Home and lock screen</string>
+    <string name="wallpaper_fit_set">Set wallpaper</string>
+    <string name="wallpaper_fit_cancel">Cancel</string>
+    <string name="wallpaper_screenshot_link">Use my current wallpaper</string>
+    <string name="wallpaper_screenshot_title">Use a screenshot</string>
+    <string name="wallpaper_screenshot_body">Android doesn\'t let Facet see your wallpaper. Facet will show it on a clear screen so you can take a screenshot, then you choose it here. Your wallpaper stays as it is.</string>
+    <string name="wallpaper_screenshot_confirm">Take screenshot</string>
+    <string name="wallpaper_screenshot_have_image">I have an image already</string>
+    <string name="wallpaper_capture_title">Take a screenshot</string>
+    <string name="wallpaper_capture_step1">Tap &lt;b&gt;Take screenshot&lt;/b&gt; below to begin.</string>
+    <string name="wallpaper_capture_step2">&lt;b&gt;Tap Power + Volume down&lt;/b&gt; together. Don\'t hold down the buttons: holding them down opens the shutdown menu instead.</string>
+    <string name="wallpaper_capture_step3">&lt;b&gt;Tap anywhere&lt;/b&gt; to bring this note back, then tap &lt;b&gt;Choose screenshot&lt;/b&gt;.</string>
+    <string name="wallpaper_capture_choose">Choose screenshot</string>
+    <string name="wallpaper_capture_take">Take screenshot</string>
+    <string name="wallpaper_capture_return">Return</string>
+    <string name="wallpaper_fit_use">Use for glass</string>
     <string name="settings_appearance_title">Launcher appearance</string>
     <string name="settings_appearance_subtitle">Themes, fonts and icons</string>
     <string name="settings_clock_calendar_title">Clock Style</string>
     <string name="settings_time_format_24h">24-hour time</string>
-    <string name="settings_time_format_12h">12-hour time</string>
     <string name="settings_calendars_title">Calendars to display</string>
-    <plurals name="settings_calendars_selected">
-        <item quantity="one">%1$d calendar selected</item>
-        <item quantity="other">%1$d calendars selected</item>
-    </plurals>
-    <string name="settings_calendars_all">All calendars</string>
-    <string name="settings_all_day_events_visible">All-day events visible</string>
-    <string name="settings_all_day_events_hidden">All-day events hidden</string>
     <string name="settings_dock_title">Dock</string>
     <string name="defaults_screen_note">Used when you create a facet or reset one.</string>
     <string name="reset_to_default_title">Reset to default</string>
     <string name="reset_to_default_confirm">Reset</string>
     <string name="reset_dock_subtitle">Replace this dock with your device\'s default apps</string>
     <string name="reset_dock_confirm_message">This replaces the dock of this facet with your device\'s default apps. The apps you placed here will be lost.</string>
-    <string name="reset_look_subtitle">Replace the apps list look with the default</string>
-    <string name="reset_look_confirm_message">This replaces this facet\'s list layout and alignment with the defaults.</string>
-    <string name="settings_home_apps_list_title">Home Apps List</string>
-    <plurals name="settings_recents_count">
-        <item quantity="one">%1$d Recent</item>
-        <item quantity="other">%1$d Recents</item>
-    </plurals>
-    <string name="settings_most_used_count">%1$d Most used</string>
     <string name="settings_app_drawer_title">App Drawer</string>
     <string name="settings_show_as">Show as %1$s</string>
     <string name="settings_search_on">On</string>
@@ -322,7 +320,6 @@
     <string name="settings_notifications_summary_media_on">Media player on</string>
     <string name="settings_notifications_summary_media_off">Media player off</string>
     <string name="settings_notifications_needs_access">Needs notification access</string>
-    <string name="settings_calendars_needs_access">Needs calendar access</string>
     <string name="settings_folders_title">Folders</string>
     <string name="settings_folders_none">No folders yet</string>
     <plurals name="settings_folders_count">
@@ -347,7 +344,6 @@
     <string name="media_player_row_title">Show media player in home screen</string>
     <string name="media_skip_buttons_row_title">Show skip buttons</string>
     <string name="notification_preview_title">Preview</string>
-    <string name="notification_preview_app">Messages</string>
     <string name="notification_preview_no_access">Notification access is needed to preview badges and the media player.</string>
     <string name="notification_preview_allow_access">Allow access</string>
     <string name="notification_preview_disabled">Badges and the media player are off, so Home won\'t show any notifications.</string>
@@ -698,14 +694,9 @@
     <!-- CalendarSettingsScreen (a "Calendars to display" row reuses settings_calendars_title;
          its "Turn on" action reuses permission_turn_on) -->
     <string name="calendar_settings_header_title">Calendar settings</string>
-    <string name="calendar_settings_follows_launcher_wide">Follows the launcher-wide Calendar setting</string>
     <string name="calendar_settings_show_all_day_events">Show all-day events</string>
     <string name="calendar_settings_show_indicator">Show calendar indicator</string>
     <string name="calendar_settings_items_to_display">Items to display</string>
-    <string name="calendar_settings_preview_event_1">Team standup</string>
-    <string name="calendar_settings_preview_event_2">Design review</string>
-    <string name="calendar_settings_preview_event_3">Lunch with Sam</string>
-    <string name="calendar_settings_preview_sample_note">Sample events</string>
     <string name="calendar_settings_no_calendars_found">No calendars found on this device.</string>
     <string name="calendar_settings_access_off">Calendar access off — events hidden.</string>
 
@@ -864,7 +855,7 @@
     <string name="facet_carousel_launcher_settings">Launcher settings</string>
     <string name="facet_carousel_launcher_settings_subtitle">Appearance, favorites, drawer and more</string>
     <string name="facet_carousel_active">Active</string>
-    <string name="facet_carousel_no_favorites">No favorites yet</string>
+    <string name="facet_shortcut_label">Switch to %1$s</string>
     <string name="preview_media_title">Now playing</string>
     <string name="preview_media_artist">Artist</string>
     <string name="facet_carousel_facet_settings">Facet settings</string>
@@ -897,8 +888,6 @@
     <string name="facet_settings_section_home">Home</string>
     <string name="facet_settings_widgets_title">Widgets</string>
     <string name="facet_settings_widgets_subtitle">What sits at the top of this facet\'s Home</string>
-    <string name="facet_settings_appearance_title">Appearance</string>
-    <string name="facet_settings_appearance_clock_label">%1$s clock</string>
     <string name="facet_settings_appearance_dock_icons">Dock icons</string>
     <string name="facet_settings_appearance_dock_text">Dock text</string>
     <string name="facet_settings_appearance_dock_icons_and_text">Dock icons and text</string>
@@ -930,6 +919,8 @@
     <string name="widget_sheet_settings">%1$s settings</string>
     <string name="widget_sheet_weather_settings_subtitle">Where the forecast is for</string>
     <string name="widget_sheet_agenda_settings_subtitle">Which calendars and events show</string>
+    <string name="widget_sheet_now_playing_settings_subtitle">How it looks</string>
+    <string name="native_widget_background">Background</string>
     <string name="hub_grid_configure_widget">Configure widget</string>
     <string name="clock_adjust_alignment_heading">Alignment</string>
     <string name="clock_adjust_align_left">Align left</string>
@@ -1158,8 +1149,6 @@
     <string name="weather_leave_use_current">Use current location</string>
     <string name="weather_leave_choose_city">Choose a city</string>
 
-    <string name="clock_accessories_inheriting">This facet uses the launcher\'s clock settings. Turn on Override in Clock style to change these.</string>
-    <string name="clock_accessories_open_clock_style">Clock style</string>
     <string name="weather_location_current_short">Current location</string>
 
     <!-- Gestures -->
@@ -1229,4 +1218,15 @@
         <item quantity="one">%d widget could not be copied</item>
         <item quantity="other">%d widgets could not be copied</item>
     </plurals>
+    <string name="dock_background">Dock background</string>
+    <string name="list_item_background">List item background</string>
+    <string name="calendar_background">Calendar background</string>
+    <string name="media_player_background">Media player background</string>
+    <string name="glass_style_off">Off</string>
+    <string name="glass_style_frost">Light frost</string>
+    <string name="glass_style_dark_frost">Dark frost</string>
+    <string name="glass_style_bright">Bright</string>
+    <string name="glass_style_clear_glass">Clear glass</string>
+    <string name="glass_style_dark_glass">Dark glass</string>
+    <string name="glass_style_accent">Accent</string>
 </resources>

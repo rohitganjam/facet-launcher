@@ -27,7 +27,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -43,7 +42,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.facetlauncher.app.R
+import com.facetlauncher.app.data.model.GlassStyle
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.DockDisplayMode
 import com.facetlauncher.app.data.model.HomeWallpaper
@@ -55,6 +56,7 @@ import com.facetlauncher.app.ui.components.CardDivider
 import com.facetlauncher.app.ui.components.HomeSurfacePreview
 import com.facetlauncher.app.ui.components.CopyFromFacetCard
 import com.facetlauncher.app.ui.components.DefaultsNote
+import com.facetlauncher.app.ui.components.GlassBackgroundRow
 import com.facetlauncher.app.ui.components.ResetToDefaultCard
 import com.facetlauncher.app.ui.components.LabeledDropdownRow
 import com.facetlauncher.app.ui.components.ReorderRowDefaults
@@ -81,12 +83,13 @@ fun DockSettingsScreen(
     modifier: Modifier = Modifier,
     viewModel: DockSettingsViewModel = hiltViewModel(),
 ) {
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     DockSettingsContent(
         uiState = uiState,
         onBack = onBack,
         onAddDockApp = onAddDockApp,
         onDockDisplayModeChange = viewModel::setDockDisplayMode,
+        onDockGlassChange = viewModel::setDockGlass,
         onReorderDockItems = viewModel::reorderDockItems,
         onResetToDefault = viewModel::resetToDefault,
         onCopyFromFacet = viewModel::copyFromFacet,
@@ -100,10 +103,11 @@ private fun DockSettingsContent(
     onBack: () -> Unit,
     onAddDockApp: () -> Unit,
     onDockDisplayModeChange: (DockDisplayMode) -> Unit,
+    onDockGlassChange: (GlassStyle) -> Unit,
     onReorderDockItems: (List<PlacedItem>) -> Unit,
     onResetToDefault: () -> Unit,
-    onCopyFromFacet: (Long) -> Unit = {},
     modifier: Modifier = Modifier,
+    onCopyFromFacet: (Long) -> Unit = {},
 ) {
     StickyHeaderLayout(
         modifier = modifier,
@@ -123,24 +127,14 @@ private fun DockSettingsContent(
                         appList = persistentListOf(),
                         dockApps = uiState.dockItems,
                         dockDisplayMode = uiState.dockDisplayMode,
+                        dockGlass = uiState.dockGlass,
                         labelColor = uiState.appLabelColorOption.resolve(),
                         labelFontWeight = uiState.homeAppsFontWeight.resolve(),
                         homeWallpaper = uiState.homeWallpaper,
                         modifier = Modifier.padding(bottom = 20.dp).testTag("dock_settings_preview_card"),
                     )
                 }
-                item {
-                    SettingsCard(modifier = Modifier.padding(bottom = 16.dp)) {
-                        LabeledDropdownRow(
-                            title = stringResource(R.string.dock_display_style),
-                            options = DockDisplayMode.entries,
-                            selected = uiState.dockDisplayMode,
-                            label = { stringResource(it.displayNameRes) },
-                            onSelect = onDockDisplayModeChange,
-                            testTag = "dock_display_style_row",
-                        )
-                    }
-                }
+                item { DockStyleCard(uiState, onDockDisplayModeChange, onDockGlassChange) }
                 dockAppsItem(uiState, onAddDockApp, onReorderDockItems)
                 dockResetItems(onResetToDefault)
                 item { Spacer(modifier = Modifier.height(16.dp)) }
@@ -156,6 +150,28 @@ private fun DockSettingsContent(
             }
         },
     )
+}
+
+/** The dock's display style and the background behind it. */
+@Composable
+private fun DockStyleCard(uiState: DockSettingsUiState, onDockDisplayModeChange: (DockDisplayMode) -> Unit, onDockGlassChange: (GlassStyle) -> Unit) {
+    SettingsCard(modifier = Modifier.padding(bottom = 16.dp)) {
+        LabeledDropdownRow(
+            title = stringResource(R.string.dock_display_style),
+            options = DockDisplayMode.entries,
+            selected = uiState.dockDisplayMode,
+            label = { stringResource(it.displayNameRes) },
+            onSelect = onDockDisplayModeChange,
+            testTag = "dock_display_style_row",
+        )
+        CardDivider()
+        GlassBackgroundRow(
+            title = stringResource(R.string.dock_background),
+            selected = uiState.dockGlass,
+            onSelect = onDockGlassChange,
+            testTag = "dock_glass_row",
+        )
+    }
 }
 
 private fun LazyListScope.dockResetItems(onResetToDefault: () -> Unit) {
@@ -324,6 +340,7 @@ private fun DockSettingsScreenPreview() {
             onBack = {},
             onAddDockApp = {},
             onDockDisplayModeChange = {},
+            onDockGlassChange = {},
             onReorderDockItems = {},
             onResetToDefault = {},
         )

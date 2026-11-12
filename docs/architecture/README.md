@@ -1,19 +1,19 @@
 # Facet Launcher — Living Blueprint
 
-An architecture reference derived from the code at app `0.1.28` (Room schema v32, 374 Kotlin files under `app/src/main`). Every claim below was
+An architecture reference derived from the code at app `0.1.41` (Room schema v50, 537 Kotlin files under `app/src/main`). Every claim below was
 checked against source, not against planning docs; where the code diverges from
 `CLAUDE.md`'s stated conventions, [05-findings.md](05-findings.md) says so.
 
 | Doc | What it covers |
 |---|---|
 | [01-architecture-and-layers.md](01-architecture-and-layers.md) | Layer boundaries, unidirectional data flow, Hilt components/scopes/modules, entry points |
-| [02-persistence-room.md](02-persistence-room.md) | **Everything persisted**: storage map, Room ER diagram (7 tables: placements are two tables, `app_placements` and `folder_placements`), DAO method matrix, DAO→Repository→Flow, converters, migrations v10→v28, the complete DataStore key registry (60 keys, read/write paths, all 62 writers), backup file format |
+| [02-persistence-room.md](02-persistence-room.md) | **Everything persisted**: storage map, Room ER diagram (10 tables: placements are two tables, `app_placements` and `folder_placements`), DAO method matrix, DAO→Repository→Flow, converters, migrations v10→v50, the complete DataStore key registry (80 keys, read/write paths, every writer), backup file format |
 | [03-reactive-data-flow.md](03-reactive-data-flow.md) | The four core reactive flows: live installed-app list, placement hydration, Home state graph, startup |
 | [04-package-structure.md](04-package-structure.md) | Package map with the "where does this file go" rules and the test-tree mirror |
-| [05-findings.md](05-findings.md) | Architect's review: 8 open findings ranked by severity with concrete fixes, plus what's working well |
+| [05-findings.md](05-findings.md) | Architect's review: 12 open findings (layering, cleanup, performance, test gaps) with concrete fixes, plus what's working well |
 | [06-testing.md](06-testing.md) | How tests are done: tiers, harnesses, fixtures, conventions, run commands, coverage gaps |
-| [TEST_REGISTRY.md](TEST_REGISTRY.md) | **Generated** — every test class and case (217 classes / 2117 cases), regenerate with `scripts/gen-test-registry.py` |
-| [07-registries.md](07-registries.md) | Complete inventories: 52 repositories and data singletons (deps, source wrapped, API, consumers), 62 use cases, 42 ViewModels |
+| [TEST_REGISTRY.md](TEST_REGISTRY.md) | **Generated** — every test class and case (344 classes / 3134 cases), regenerate with `scripts/gen-test-registry.py` |
+| [07-registries.md](07-registries.md) | Complete inventories: 57 repositories and data singletons (deps, source wrapped, API, consumers), 72 use cases, 47 ViewModels |
 | [08-flow-placements.md](08-flow-placements.md) | Flow: favorites/dock/folder add, remove, reorder (all in `app_placements` / `folder_placements`); override routing; uninstall cleanup, profile sweep, orphan repair, dock seeding |
 | [09-flow-backup-restore.md](09-flow-backup-restore.md) | Flow: export, destructive import, widget re-bind state machine, versioning |
 | [10-flow-hub-widgets.md](10-flow-hub-widgets.md) | Flow: widget host lifecycle, add (bind/configure/place), move/resize/compact, delete, orphans |
@@ -26,7 +26,8 @@ checked against source, not against planning docs; where the code diverges from
 | [17-flow-home-layout.md](17-flow-home-layout.md) | Flow: how `HomeScreen` picks portrait or landscape from the window shape, what each layout contains, and how landscape adjust mode works |
 | [19-flow-icon-packs.md](19-flow-icon-packs.md) | Flow: finding installed icon packs, reading `appfilter.xml` (text scan or resource), lookup and fallback theming, calendar icons, drawing, the Icons screen, backup |
 | [20-flow-native-widgets.md](20-flow-native-widgets.md) | Flow: widgets Facet draws itself (weather, agenda, now playing) on the Hub and Home's stack — storage, one size-driven layout contract, data, add/replace, backup |
-| [18-flow-weather.md](18-flow-weather.md) | Flow (in progress): the clock's weather accessory and sheet — MET Norway forecast, refresh gate, location and place names, cached hourly rows, settings |
+| [21-flow-wallpaper-glass.md](21-flow-wallpaper-glass.md) | The wallpaper copy behind real glass: the wallpaper screen, the fit step, what decides real glass, and what is not built yet |
+| [18-flow-weather.md](18-flow-weather.md) | Flow: the clock's weather accessory and sheet — MET Norway forecast, refresh gate, location and place names, cached hourly rows, settings |
 
 ## Stack at a glance
 
@@ -36,7 +37,7 @@ checked against source, not against planning docs; where the code diverges from
 | Module layout | `:app` (`minSdk 30`, `targetSdk 36`, `compileSdk 37`), plus `:detekt-rules` (custom Detekt rules) and `:benchmark` (Macrobenchmark tests against `:app`'s `benchmark` build type) |
 | DI | Hilt `2.60.1` via KSP — `@HiltAndroidApp` / `@AndroidEntryPoint` / `@HiltViewModel` |
 | Navigation | `navigation-compose 2.10.2` + `hilt-navigation-compose` — one `NavHost` (`FacetNavHost`) |
-| Persistence | Room `2.8.5` (`facet.db`, v32, schema export on) + `datastore-preferences 1.2.1` (`facet_settings`) |
+| Persistence | Room `2.8.5` (`facet.db`, v50, schema export on) + `datastore-preferences 1.2.1` (`facet_settings`, `facet_automation`, `facet_entitlement`) |
 | Collections in UI state | `kotlinx-collections-immutable` `0.5.2`: composable parameters and UI state carry `ImmutableList`/`ImmutableMap`/`ImmutableSet`, so Compose can skip on them (detekt's `UnstableCollections`) |
 | Async | Coroutines + `Flow`/`StateFlow` only; `collectAsStateWithLifecycle()` in Compose; no `LiveData` |
 | Serialization | `kotlinx-serialization-json` (backup bundle only) |
@@ -51,6 +52,6 @@ The change→doc routing table lives in `CLAUDE.md` ("Living architecture docs")
 - Add a Room entity / column / DAO method → `02` (ER diagram, DAO matrix, migration table).
 - Add a DataStore key → `02 §5` (diagram, writer table, section table) — the `§5.6` checklist.
 - Add a Hilt module or change a scope → `01`; add a repository / use case / ViewModel → `07` + `01` counts.
-- Add or change a user-visible flow → the matching `08`–`13` doc, or a new `14-flow-….md` + a row above.
+- Add or change a user-visible flow → the matching `08`–`21` doc, or a new `22-flow-….md` + a row above.
 - Add/rename/remove a test → `python3 scripts/gen-test-registry.py`; change how tests are done → `06`.
 - Resolve a finding in `05` → delete it rather than marking it done.

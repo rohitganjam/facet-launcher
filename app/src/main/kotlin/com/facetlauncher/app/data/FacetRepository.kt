@@ -6,6 +6,7 @@ import com.facetlauncher.app.data.local.FacetDao
 import com.facetlauncher.app.data.local.toModel
 import com.facetlauncher.app.data.local.toEntity
 import com.facetlauncher.app.data.local.toFacet
+import com.facetlauncher.app.data.model.GlassStyle
 import com.facetlauncher.app.data.model.AppListColumnAlignment
 import com.facetlauncher.app.data.model.AppListGridColumns
 import com.facetlauncher.app.data.model.AppListGridDisplayMode
@@ -159,7 +160,7 @@ class FacetRepository @Inject constructor(
     /** Copies [sourceId]'s Dock display style onto [targetId]. */
     suspend fun copyDockSettings(sourceId: Long, targetId: Long) {
         val source = facetDao.getById(sourceId)?.toFacet() ?: return
-        update(targetId) { it.copy(dockDisplayMode = source.dockDisplayMode) }
+        update(targetId) { it.copy(dockDisplayMode = source.dockDisplayMode, dockGlass = source.dockGlass) }
     }
 
     /** Copies [sourceId]'s Apps list settings (content, count, look, landscape twins, Allow landscape) onto [targetId]. */
@@ -252,6 +253,14 @@ class FacetRepository @Inject constructor(
 
     suspend fun setDockDisplayMode(facetId: Long, mode: DockDisplayMode) {
         update(facetId) { it.copy(dockDisplayMode = mode) }
+    }
+
+    suspend fun setDockGlass(facetId: Long, glass: GlassStyle) {
+        update(facetId) { it.copy(dockGlass = glass) }
+    }
+
+    suspend fun setAppsListGlass(facetId: Long, glass: GlassStyle) {
+        update(facetId) { it.copy(appsListGlass = glass) }
     }
 
     suspend fun deleteFacet(facetId: Long) {

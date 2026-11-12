@@ -2,7 +2,6 @@ package com.facetlauncher.app.ui.nativewidget
 
 import androidx.annotation.StringRes
 import androidx.compose.animation.Crossfade
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -15,28 +14,25 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.facetlauncher.app.R
+import com.facetlauncher.app.data.model.NativeWidgetConfig
 import com.facetlauncher.app.data.model.NativeWidgetRef
 import com.facetlauncher.app.data.model.NativeWidgetType
 import com.facetlauncher.app.domain.WidgetTier
 import com.facetlauncher.app.domain.isConfigurable
 import com.facetlauncher.app.domain.tierFor
 import com.facetlauncher.app.ui.theme.Muted
-import com.facetlauncher.app.ui.theme.Surface
+import com.facetlauncher.app.ui.components.glassBackground
 
 /** The inset around a widget's content, matching the 4dp padding hosted widgets get. */
 private val CONTENT_INSET = 8.dp
 
-/** Opacity of the widget's backing, the drawer's default so it reads over a busy wallpaper like a hosted tile. */
-private const val SURFACE_ALPHA = 0.6f
-
-/** Whether a native widget has settings to open: Weather (its location) and Agenda (its calendars), not Now playing. */
-val NativeWidgetType.hasSettings: Boolean get() = this != NativeWidgetType.NOW_PLAYING
+/** Whether a native widget has settings to open: every one has at least its background. */
+val NativeWidgetType.hasSettings: Boolean get() = true
 
 @StringRes
 fun NativeWidgetType.labelRes(): Int = when (this) {
@@ -62,11 +58,11 @@ fun NativeWidget(
     val tier = type.tierFor(size.width.value.toInt(), size.height.value.toInt())
     val shownState = state.withOverride(ref?.let { state.overrides[it] })
     val openWeather = { actions.onOpenWeather(ref) }
+    val glass = ref?.let { state.overrides[it]?.glass } ?: NativeWidgetConfig.DEFAULT_GLASS
     Box(
         modifier = modifier
             .size(size)
-            .clip(MaterialTheme.shapes.large)
-            .background(Surface.copy(alpha = SURFACE_ALPHA))
+            .glassBackground(glass, MaterialTheme.shapes.large, sampleWallpaper = true)
             .testTag("native_widget_${type.name}"),
     ) {
         Crossfade(targetState = tier, modifier = Modifier.fillMaxSize().padding(CONTENT_INSET), label = "nativeWidgetTier") { shown ->

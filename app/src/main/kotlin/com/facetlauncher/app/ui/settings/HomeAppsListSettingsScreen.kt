@@ -30,7 +30,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -45,6 +44,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.facetlauncher.app.R
 import com.facetlauncher.app.data.model.AppListLimits
 import com.facetlauncher.app.data.model.AppListVerticalAlignment
@@ -84,7 +84,7 @@ fun HomeAppsListSettingsScreen(
     modifier: Modifier = Modifier,
     viewModel: HomeAppsListSettingsViewModel = hiltViewModel(),
 ) {
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     HomeAppsListSettingsContent(
         uiState = uiState,
         onBack = onBack,
@@ -106,6 +106,7 @@ fun HomeAppsListSettingsScreen(
             onLandscapeColumnAlignmentChange = viewModel::setLandscapeAppListColumnAlignment,
             onLandscapeVerticalAlignmentChange = viewModel::setLandscapeAppListVerticalAlignment,
             onAllowLandscapeChange = viewModel::setAllowLandscape,
+            onGlassChange = viewModel::setAppsListGlass,
         ),
         modifier = modifier,
     )
@@ -146,6 +147,7 @@ private fun HomeAppsListSettingsContent(
                         appListColumnAlignment = uiState.appListColumnAlignment,
                         appListGridColumns = uiState.appListGridColumns,
                         appListGridDisplayMode = uiState.appListGridDisplayMode,
+                        appsListGlass = uiState.appsListGlass,
                         labelColor = uiState.appLabelColorOption.resolve(),
                         labelFontWeight = uiState.homeAppsFontWeight.resolve(),
                         homeWallpaper = uiState.homeWallpaper,

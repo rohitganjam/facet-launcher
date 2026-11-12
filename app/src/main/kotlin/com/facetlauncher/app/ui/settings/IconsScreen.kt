@@ -3,7 +3,6 @@ package com.facetlauncher.app.ui.settings
 import android.content.Context
 import android.content.Intent
 import android.content.res.Configuration
-import android.net.Uri
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -37,7 +36,6 @@ import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -57,7 +55,9 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.core.net.toUri
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.facetlauncher.app.R
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.HomeWallpaper
@@ -120,10 +120,10 @@ fun IconsScreen(
     iconsViewModel: IconsViewModel = hiltViewModel(),
 ) {
     val context = LocalContext.current
-    val settings by viewModel.settings.collectAsState()
-    val uiState by viewModel.uiState.collectAsState()
-    val homeWallpaper by viewModel.homeWallpaper.collectAsState()
-    val picker by iconsViewModel.picker.collectAsState()
+    val settings by viewModel.settings.collectAsStateWithLifecycle()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val homeWallpaper by viewModel.homeWallpaper.collectAsStateWithLifecycle()
+    val picker by iconsViewModel.picker.collectAsStateWithLifecycle()
     IconsContent(
         settings = settings,
         uiState = uiState,
@@ -145,8 +145,8 @@ fun IconsScreen(
 
 /** The Play Store's icon pack search, or the same search on the web where there is no Play Store. */
 private fun openIconPackSearch(context: Context) {
-    val opened = runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(PLAY_STORE_ICON_PACK_SEARCH))) }.isSuccess
-    if (!opened) runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(WEB_ICON_PACK_SEARCH))) }
+    val opened = runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, PLAY_STORE_ICON_PACK_SEARCH.toUri())) }.isSuccess
+    if (!opened) runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, WEB_ICON_PACK_SEARCH.toUri())) }
 }
 
 @Composable

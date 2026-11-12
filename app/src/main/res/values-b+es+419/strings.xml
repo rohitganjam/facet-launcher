@@ -31,6 +31,7 @@
     <plurals name="backup_widgets_need_readding_count">
         <item quantity="one">%d widget debe agregarse de nuevo abajo</item>
         <item quantity="other">%d widgets deben agregarse de nuevo abajo</item>
+        <item quantity="many">%d de widgets deben agregarse de nuevo abajo</item>
     </plurals>
     <string name="backup_restore_readd">Agregar de nuevo</string>
 
@@ -60,7 +61,6 @@
     <string name="automation_headphones_out">Audífonos · desconectados</string>
 
     <string name="calendar_settings_header_title">Configuración del calendario</string>
-    <string name="calendar_settings_follows_launcher_wide">Sigue la configuración de calendario general del launcher</string>
     <string name="folder_detail_no_apps_yet">Aún no hay apps en esta carpeta. Toca \"Agregar a carpeta\" para agregar algunas.</string>
     <string name="open_settings">Abrir configuración</string>
     <string name="usage_access_explanation_body">Esto necesita acceso de uso, un permiso especial que se concede desde la configuración del sistema; Facet no puede solicitarlo directamente. Solo lee qué apps abres y por cuánto tiempo; nada sale de tu dispositivo.</string>
@@ -79,6 +79,7 @@
     <string name="drawer_contacts_access_needed">La búsqueda de contactos necesita acceso desde la configuración del sistema.</string>
     <string name="drawer_contacts_search_off">La búsqueda de contactos está desactivada en la configuración del cajón de apps.</string>
     <string name="facet_carousel_launcher_settings">Configuración del launcher</string>
+    <string name="facet_shortcut_label">Cambiar a %1$s</string>
     <string name="facet_carousel_facet_settings">Configuración de faceta</string>
     <string name="facet_carousel_add_facet">Agregar faceta</string>
     <string name="facet_settings_dock_settings_title">Apps del dock</string>
@@ -119,7 +120,6 @@
     <string name="weather_location_limit">Puedes guardar hasta %1$d ciudades. Quita una para agregar otra.</string>
     <string name="weather_leave_message">El clima necesita una ciudad. ¿Qué quieres hacer?</string>
     <string name="weather_leave_turn_off">Desactivar el clima</string>
-    <string name="clock_accessories_inheriting">Esta faceta usa la configuración de reloj del launcher. Activa «Personalizar» en Estilo del reloj para cambiarla.</string>
 
     <string name="gesture_long_press_title">Mantener presionado un espacio vacío</string>
     <string name="gesture_home_opens_search_subtitle">Presiona Inicio cuando ya estés en la pantalla de inicio para abrir el cajón con la búsqueda lista.</string>
@@ -134,6 +134,4 @@
 
     <string name="reset_dock_subtitle">Reemplaza este dock por las apps predeterminadas del dispositivo</string>
     <string name="reset_dock_confirm_message">Esto reemplaza el dock de esta faceta por las apps predeterminadas del dispositivo. Las apps que colocaste aquí se perderán.</string>
-    <string name="reset_look_subtitle">Reemplaza el aspecto de la lista por el predeterminado</string>
-    <string name="reset_look_confirm_message">Esto reemplaza el diseño de la lista y la alineación de esta faceta por los valores predeterminados.</string>
 </resources>

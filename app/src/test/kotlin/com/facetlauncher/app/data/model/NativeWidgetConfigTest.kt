@@ -33,6 +33,33 @@ class NativeWidgetConfigTest {
     }
 
     @Test
+    fun `a clock's calendar glass round trips and defaults off`() {
+        // Given a clock whose calendar has a glass style
+        val clock = ClockWidgetConfig(calendar = ClockCalendarConfig(glass = GlassStyle.ACCENT))
+
+        // When encoded and decoded
+        val decoded = decodeNativeWidgetConfig(NativeWidgetConfig(clock = clock).encode())
+
+        // Then glass is kept, and a stored clock without the field reads as off
+        assertEquals(GlassStyle.ACCENT, decoded.clock?.calendar?.glass)
+        assertEquals(GlassStyle.OFF, decodeNativeWidgetConfig(NativeWidgetConfig(clock = ClockWidgetConfig()).encode()).clock?.calendar?.glass)
+    }
+
+    @Test
+    fun `a widget's background round trips and is kept apart from following the launcher`() {
+        // Given a widget with only a background chosen
+        val config = NativeWidgetConfig(glass = GlassStyle.DARK_FROST)
+
+        // When encoded and decoded
+        val decoded = decodeNativeWidgetConfig(config.encode())
+
+        // Then it is kept and the widget no longer counts as following the launcher
+        assertEquals(GlassStyle.DARK_FROST, decoded.glass)
+        assertTrue(!decoded.followsLauncher)
+        assertNull(decodeNativeWidgetConfig("{\"glass\":\"NOT_A_STYLE\"}").glass)
+    }
+
+    @Test
     fun `no calendars chosen is kept apart from following the launcher`() {
         // Given an explicitly empty selection
         val decoded = decodeNativeWidgetConfig(NativeWidgetConfig(calendarIds = emptySet()).encode())

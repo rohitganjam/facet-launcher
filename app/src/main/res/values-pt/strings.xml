@@ -46,15 +46,6 @@
     <string name="font_scale_huge">Enorme</string>
 
     <!-- IconRenderMode -->
-    <string name="icon_render_system_default">Padrão do sistema</string>
-    <string name="icon_render_monochrome_black_white">Monocromático (preto e branco)</string>
-    <string name="icon_render_monochrome_accent">Monocromático (destaque)</string>
-    <string name="icon_render_glyph_accent">Glifo (destaque)</string>
-    <string name="icon_render_outline_accent">Contorno (destaque)</string>
-    <string name="icon_render_glyph_ink">Glifo (tema)</string>
-    <string name="icon_render_outline_ink">Contorno (tema)</string>
-    <string name="icon_render_glyph_inverted">Glifo (tema invertido)</string>
-    <string name="icon_render_outline_inverted">Contorno (tema invertido)</string>
     <string name="icon_style_default">Padrão</string>
     <string name="icon_style_monochrome">Monocromático</string>
     <string name="icon_style_glyph">Glifo</string>
@@ -63,23 +54,9 @@
     <string name="icon_colour_theme">Tema</string>
     <string name="icon_colour_theme_inverted">Tema invertido</string>
     <string name="icons_screen_title">Ícones</string>
-    <string name="icons_screen_subtitle">Estilo, cor e forma</string>
-    <string name="icons_screen_style">Estilo</string>
     <string name="icons_screen_colour">Cor</string>
-    <string name="icon_render_glyph_tile_accent">Glifo em bloco (destaque)</string>
-    <string name="icon_render_glyph_tile_ink">Glifo em bloco (tema)</string>
-    <string name="icon_render_glyph_tile_inverted">Glifo em bloco (tema invertido)</string>
-    <string name="icon_render_outline_tile_accent">Contorno em bloco (destaque)</string>
-    <string name="icon_render_outline_tile_ink">Contorno em bloco (tema)</string>
-    <string name="icon_render_outline_tile_inverted">Contorno em bloco (tema invertido)</string>
     <string name="icon_background_none">Nenhum</string>
     <string name="icon_background_tile">Bloco</string>
-    <string name="icon_render_glyph_reversed_accent">Glifo em bloco invertido (destaque)</string>
-    <string name="icon_render_glyph_reversed_ink">Glifo em bloco invertido (tema)</string>
-    <string name="icon_render_glyph_reversed_inverted">Glifo em bloco invertido (tema invertido)</string>
-    <string name="icon_render_outline_reversed_accent">Contorno em bloco invertido (destaque)</string>
-    <string name="icon_render_outline_reversed_ink">Contorno em bloco invertido (tema)</string>
-    <string name="icon_render_outline_reversed_inverted">Contorno em bloco invertido (tema invertido)</string>
     <string name="icon_background_reversed_tile">Bloco invertido</string>
     <string name="icons_screen_background">Fundo</string>
 
@@ -173,6 +150,7 @@
     <plurals name="folder_app_count">
         <item quantity="one">%d app</item>
         <item quantity="other">%d apps</item>
+        <item quantity="many">%d de apps</item>
     </plurals>
 
     <!-- AppContextMenu -->
@@ -226,7 +204,6 @@
     <!-- Generic join templates -->
     <string name="dot_join_2">%1$s · %2$s</string>
     <string name="dot_join_3">%1$s · %2$s · %3$s</string>
-    <string name="comma_join_2">%1$s, %2$s</string>
 
     <!-- SettingsScreen -->
     <string name="settings_header_title">Configurações</string>
@@ -240,34 +217,56 @@
     <string name="settings_active_facet_title">Configurações de %1$s</string>
     <string name="settings_active_facet_subtitle">Configurações específicas de %1$s, sua faceta atual</string>
     <string name="settings_change_wallpaper_title">Mudar papel de parede</string>
-    <string name="settings_change_wallpaper_subtitle">Altere o papel de parede do sistema</string>
+    <string name="settings_change_wallpaper_subtitle">Escolha uma imagem ou abra o seletor do sistema</string>
+    <string name="wallpaper_title">Papel de parede</string>
+    <string name="wallpaper_preview_description">Pré-visualização do papel de parede</string>
+    <string name="wallpaper_status_none">Os painéis de vidro usam uma tonalidade simples. Escolha uma imagem para desfocar e curvar o papel de parede atrás deles.</string>
+    <string name="wallpaper_status_on">O vidro está ativado. O Facet desenha esta cópia atrás dos seus painéis.</string>
+    <string name="wallpaper_choose_image_title">Escolher uma imagem para o Facet</string>
+    <string name="wallpaper_choose_image_subtitle">Define-a como papel de parede e ativa o vidro</string>
+    <string name="wallpaper_system_title">Definir um papel de parede do sistema</string>
+    <string name="wallpaper_system_subtitle">Abre o seletor de papéis de parede do Android. O vidro continua a ser uma tonalidade.</string>
+    <string name="wallpaper_remove_title">Remover a cópia</string>
+    <string name="wallpaper_remove_subtitle">O vidro volta a ser uma tonalidade. O seu papel de parede fica como está.</string>
+    <string name="wallpaper_stale_title">O seu papel de parede mudou</string>
+    <string name="wallpaper_stale_body">A cópia do vidro já não corresponde. Escolha uma imagem de novo ou remova a cópia.</string>
+    <string name="wallpaper_failed">Não funcionou. Tente outra imagem.</string>
+    <string name="wallpaper_offer_title">Você mudou o papel de parede</string>
+    <string name="wallpaper_offer_body">O Facet não consegue ver papéis de parede escolhidos no seletor do Android, então o vidro é só uma cor. Escolha aqui a mesma imagem e o Facet a desfoca atrás dos seus painéis.</string>
+    <string name="wallpaper_offer_accept">Escolher uma imagem</string>
+    <string name="wallpaper_offer_decline">Agora não</string>
+    <string name="glass_prompt_title">Os fundos de vidro precisam de uma cópia do seu papel de parede</string>
+    <string name="glass_prompt_body">O Android não deixa o Facet ver seu papel de parede, então este fundo é por enquanto só uma cor. Escolha uma imagem aqui e o Facet a define como papel de parede e a desfoca atrás dos seus painéis.</string>
+    <string name="wallpaper_fit_title">Posicione o papel de parede</string>
+    <string name="wallpaper_fit_hint">Arraste para mover, faça pinça para ampliar e toque duas vezes para repor.</string>
+    <string name="wallpaper_fit_home">Ecrã inicial</string>
+    <string name="wallpaper_fit_home_lock">Ecrã inicial e de bloqueio</string>
+    <string name="wallpaper_fit_set">Definir papel de parede</string>
+    <string name="wallpaper_fit_cancel">Cancelar</string>
+    <string name="wallpaper_screenshot_link">Usar meu papel de parede atual</string>
+    <string name="wallpaper_screenshot_title">Usar uma captura de tela</string>
+    <string name="wallpaper_screenshot_body">O Android não deixa o Facet ver seu papel de parede. O Facet o mostra numa tela limpa para você tirar uma captura e depois escolhê-la aqui. Seu papel de parede continua igual.</string>
+    <string name="wallpaper_screenshot_confirm">Tirar captura</string>
+    <string name="wallpaper_screenshot_have_image">Já tenho uma imagem</string>
+    <string name="wallpaper_capture_title">Tire uma captura</string>
+    <string name="wallpaper_capture_step1">Toque em &lt;b&gt;Tirar captura&lt;/b&gt; abaixo para começar.</string>
+    <string name="wallpaper_capture_step2">&lt;b&gt;Toque em Liga/Desliga + Diminuir volume&lt;/b&gt; juntos. Não mantenha os botões pressionados: mantê-los pressionados abre o menu de desligar.</string>
+    <string name="wallpaper_capture_step3">&lt;b&gt;Toque em qualquer lugar&lt;/b&gt; para ver esta nota de novo e toque em &lt;b&gt;Escolher captura&lt;/b&gt;.</string>
+    <string name="wallpaper_capture_choose">Escolher captura</string>
+    <string name="wallpaper_capture_take">Tirar captura</string>
+    <string name="wallpaper_capture_return">Voltar</string>
+    <string name="wallpaper_fit_use">Usar para o vidro</string>
     <string name="settings_appearance_title">Aparência do launcher</string>
     <string name="settings_appearance_subtitle">Temas, fontes e ícones</string>
     <string name="settings_clock_calendar_title">Estilo do relógio</string>
     <string name="settings_time_format_24h">Formato de 24 horas</string>
-    <string name="settings_time_format_12h">Formato de 12 horas</string>
     <string name="settings_calendars_title">Calendários a exibir</string>
-    <plurals name="settings_calendars_selected">
-        <item quantity="one">%1$d calendário selecionado</item>
-        <item quantity="other">%1$d calendários selecionados</item>
-    </plurals>
-    <string name="settings_calendars_all">Todos os calendários</string>
-    <string name="settings_all_day_events_visible">Eventos de dia inteiro visíveis</string>
-    <string name="settings_all_day_events_hidden">Eventos de dia inteiro ocultos</string>
     <string name="settings_dock_title">Dock</string>
     <string name="defaults_screen_note">Usado quando você cria uma faceta ou redefine uma.</string>
     <string name="reset_to_default_title">Redefinir para o padrão</string>
     <string name="reset_to_default_confirm">Redefinir</string>
     <string name="reset_dock_subtitle">Substituir este dock pelos apps padrão do dispositivo</string>
     <string name="reset_dock_confirm_message">Isto substitui o dock desta faceta pelos apps padrão do dispositivo. Os apps que você colocou aqui serão perdidos.</string>
-    <string name="reset_look_subtitle">Substituir a aparência da lista pela padrão</string>
-    <string name="reset_look_confirm_message">Isto substitui o layout da lista e o alinhamento desta faceta pelos valores padrão.</string>
-    <string name="settings_home_apps_list_title">Lista de apps da tela inicial</string>
-    <plurals name="settings_recents_count">
-        <item quantity="one">%1$d recente</item>
-        <item quantity="other">%1$d recentes</item>
-    </plurals>
-    <string name="settings_most_used_count">%1$d mais usados</string>
     <string name="settings_app_drawer_title">Gaveta de apps</string>
     <string name="settings_show_as">Exibir como %1$s</string>
     <string name="settings_search_on">Ativado</string>
@@ -282,12 +281,12 @@
     <string name="settings_notifications_summary_media_on">Reprodutor ativado</string>
     <string name="settings_notifications_summary_media_off">Reprodutor desativado</string>
     <string name="settings_notifications_needs_access">Requer acesso a notificações</string>
-    <string name="settings_calendars_needs_access">Requer acesso ao calendário</string>
     <string name="settings_folders_title">Pastas</string>
     <string name="settings_folders_none">Ainda não há pastas</string>
     <plurals name="settings_folders_count">
         <item quantity="one">%d pasta</item>
         <item quantity="other">%d pastas</item>
+        <item quantity="many">%d de pastas</item>
     </plurals>
     <string name="settings_weather_title">Configurações do clima</string>
     <string name="settings_weather_subtitle">Localização e unidades</string>
@@ -307,7 +306,6 @@
     <string name="media_player_row_title">Mostrar o reprodutor de mídia na tela inicial</string>
     <string name="media_skip_buttons_row_title">Mostrar botões de pular</string>
     <string name="notification_preview_title">Pré-visualização</string>
-    <string name="notification_preview_app">Mensagens</string>
     <string name="notification_preview_no_access">O acesso às notificações é necessário para visualizar os selos e o player.</string>
     <string name="notification_preview_allow_access">Permitir acesso</string>
     <string name="notification_preview_disabled">Os selos e o player estão desativados, então o Início não mostrará notificações.</string>
@@ -460,10 +458,12 @@
     <plurals name="backup_restored_facets_count">
         <item quantity="one">%d faceta restaurada</item>
         <item quantity="other">%d facetas restauradas</item>
+        <item quantity="many">%d de facetas restauradas</item>
     </plurals>
     <plurals name="backup_widgets_need_readding_count">
         <item quantity="one">%d widget precisa ser adicionado novamente abaixo</item>
         <item quantity="other">%d widgets precisam ser adicionados novamente abaixo</item>
+        <item quantity="many">%d de widgets precisam ser adicionados novamente abaixo</item>
     </plurals>
     <string name="backup_restore_import_failed_invalid_file">Esse arquivo não é um backup válido do Facet</string>
     <string name="backup_restore_import_failed_unsupported_version">Esse backup foi feito por uma versão mais nova do Facet</string>
@@ -496,6 +496,7 @@
     <plurals name="settings_facet_automation_rules">
         <item quantity="one">%d regra</item>
         <item quantity="other">%d regras</item>
+        <item quantity="many">%d de regras</item>
     </plurals>
     <string name="automation_header_title">Automação de facetas</string>
     <string name="automation_editor_new">Nova regra</string>
@@ -568,10 +569,12 @@
     <plurals name="settings_pro_facet_count">
         <item quantity="one">%d faceta</item>
         <item quantity="other">%d facetas</item>
+        <item quantity="many">%d de facetas</item>
     </plurals>
     <plurals name="settings_pro_triggers_running">
         <item quantity="one">%d gatilho ativo</item>
         <item quantity="other">%d gatilhos ativos</item>
+        <item quantity="many">%d de gatilhos ativos</item>
     </plurals>
     <string name="pro_done">Concluído</string>
     <string name="pro_upgrade_trigger">Regras que reagem a Bluetooth, Wi-Fi, fones de ouvido ou à bateria fazem parte do Pro.</string>
@@ -636,14 +639,9 @@
 
     <!-- CalendarSettingsScreen -->
     <string name="calendar_settings_header_title">Configurações de calendário</string>
-    <string name="calendar_settings_follows_launcher_wide">Segue a configuração de calendário do launcher</string>
     <string name="calendar_settings_show_all_day_events">Exibir eventos de dia inteiro</string>
     <string name="calendar_settings_show_indicator">Mostrar indicador do calendário</string>
     <string name="calendar_settings_items_to_display">Itens a exibir</string>
-    <string name="calendar_settings_preview_event_1">Reunião de equipe</string>
-    <string name="calendar_settings_preview_event_2">Revisão de design</string>
-    <string name="calendar_settings_preview_event_3">Almoço com Sam</string>
-    <string name="calendar_settings_preview_sample_note">Eventos de exemplo</string>
     <string name="calendar_settings_no_calendars_found">Nenhum calendário encontrado neste dispositivo.</string>
     <string name="calendar_settings_access_off">Acesso ao calendário desativado — eventos ocultos.</string>
 
@@ -782,12 +780,13 @@
     <plurals name="facet_carousel_count">
         <item quantity="one">%d faceta disponível</item>
         <item quantity="other">%d facetas disponíveis</item>
+        <item quantity="many">%d de facetas disponíveis</item>
     </plurals>
     <string name="facet_carousel_reorder">Reordenar</string>
     <string name="facet_carousel_launcher_settings">Configurações do launcher</string>
     <string name="facet_carousel_launcher_settings_subtitle">Aparência, favoritos, gaveta e mais</string>
     <string name="facet_carousel_active">Ativa</string>
-    <string name="facet_carousel_no_favorites">Ainda sem favoritos</string>
+    <string name="facet_shortcut_label">Mudar para %1$s</string>
     <string name="preview_media_title">Reproduzindo</string>
     <string name="preview_media_artist">Artista</string>
     <string name="facet_carousel_facet_settings">Configurações da faceta</string>
@@ -811,6 +810,7 @@
     <plurals name="format_count_apps">
         <item quantity="one">%1$d app</item>
         <item quantity="other">%1$d apps</item>
+        <item quantity="many">%1$d de apps</item>
     </plurals>
     <string name="facet_settings_dock_settings_title">Apps do dock</string>
     <string name="facet_settings_rename_explanation">Renomeie esta faceta.</string>
@@ -836,6 +836,8 @@
     <string name="widget_sheet_settings">Definições de %1$s</string>
     <string name="widget_sheet_weather_settings_subtitle">De onde é a previsão</string>
     <string name="widget_sheet_agenda_settings_subtitle">Que calendários e eventos aparecem</string>
+    <string name="widget_sheet_now_playing_settings_subtitle">O aspeto</string>
+    <string name="native_widget_background">Fundo</string>
     <string name="hub_grid_configure_widget">Configurar widget</string>
     <string name="clock_adjust_alignment_heading">Alinhamento</string>
     <string name="clock_adjust_align_left">Alinhar à esquerda</string>
@@ -858,6 +860,7 @@
     <plurals name="hub_widget_picker_option_count">
         <item quantity="one">%d widget</item>
         <item quantity="other">%d widgets</item>
+        <item quantity="many">%d de widgets</item>
     </plurals>
     <string name="hub_widget_dimensions">%1$d×%2$d</string>
     <string name="hub_widget_label_with_dimensions">%1$s %2$d×%3$d</string>
@@ -910,6 +913,7 @@
     <plurals name="icons_screen_pack_count">
         <item quantity="one">%d pacote</item>
         <item quantity="other">%d pacotes</item>
+        <item quantity="many">%d de pacotes</item>
     </plurals>
     <string name="icons_screen_get_more">Obter mais</string>
     <string name="icons_screen_no_packs">Nenhum pacote de ícones instalado. Pacotes feitos para Nova, Lawnchair, ADW ou Apex também funcionam aqui.</string>
@@ -931,8 +935,6 @@
     <string name="facet_settings_section_home">Início</string>
     <string name="facet_settings_widgets_title">Widgets</string>
     <string name="facet_settings_widgets_subtitle">O que fica no topo do início desta faceta</string>
-    <string name="facet_settings_appearance_title">Aparência</string>
-    <string name="facet_settings_appearance_clock_label">Relógio: %1$s</string>
     <string name="facet_settings_appearance_dock_icons">Ícones do dock</string>
     <string name="facet_settings_appearance_dock_text">Texto do dock</string>
     <string name="facet_settings_appearance_dock_icons_and_text">Ícones e texto do dock</string>
@@ -1075,8 +1077,6 @@
     <string name="weather_leave_turn_off">Desativar o tempo</string>
     <string name="weather_leave_use_current">Usar a localização atual</string>
     <string name="weather_leave_choose_city">Escolher uma cidade</string>
-    <string name="clock_accessories_inheriting">Esta faceta usa as configurações de relógio do launcher. Ative «Personalizar» em Estilo do relógio para alterá-las.</string>
-    <string name="clock_accessories_open_clock_style">Estilo do relógio</string>
     <string name="weather_location_current_short">Localização atual</string>
     <string name="settings_gestures_title">Gestos</string>
     <string name="settings_gestures_subtitle">Deslizes, toques e o botão Início</string>
@@ -1139,5 +1139,17 @@
     <plurals name="copy_from_facet_widgets_omitted">
         <item quantity="one">%d widget não pôde ser copiado</item>
         <item quantity="other">%d widgets não puderam ser copiados</item>
+        <item quantity="many">%d de widgets não puderam ser copiados</item>
     </plurals>
+    <string name="dock_background">Fundo do dock</string>
+    <string name="list_item_background">Fundo dos itens da lista</string>
+    <string name="calendar_background">Fundo do calendário</string>
+    <string name="media_player_background">Fundo do reprodutor</string>
+    <string name="glass_style_off">Desativado</string>
+    <string name="glass_style_frost">Geada clara</string>
+    <string name="glass_style_dark_frost">Geada escura</string>
+    <string name="glass_style_bright">Brilhante</string>
+    <string name="glass_style_clear_glass">Vidro transparente</string>
+    <string name="glass_style_dark_glass">Vidro escuro</string>
+    <string name="glass_style_accent">Destaque</string>
 </resources>

@@ -38,15 +38,6 @@
     <string name="font_scale_extra_large">Extra groot</string>
     <string name="font_scale_huge">Enorm</string>
 
-    <string name="icon_render_system_default">Systeemstandaard</string>
-    <string name="icon_render_monochrome_black_white">Monochroom (zwart-wit)</string>
-    <string name="icon_render_monochrome_accent">Monochroom (accent)</string>
-    <string name="icon_render_glyph_accent">Symbool (accent)</string>
-    <string name="icon_render_outline_accent">Omtrek (accent)</string>
-    <string name="icon_render_glyph_ink">Symbool (thema)</string>
-    <string name="icon_render_outline_ink">Omtrek (thema)</string>
-    <string name="icon_render_glyph_inverted">Symbool (thema omgekeerd)</string>
-    <string name="icon_render_outline_inverted">Omtrek (thema omgekeerd)</string>
     <string name="icon_style_default">Standaard</string>
     <string name="icon_style_monochrome">Monochroom</string>
     <string name="icon_style_glyph">Symbool</string>
@@ -55,23 +46,9 @@
     <string name="icon_colour_theme">Thema</string>
     <string name="icon_colour_theme_inverted">Thema omgekeerd</string>
     <string name="icons_screen_title">Pictogrammen</string>
-    <string name="icons_screen_subtitle">Stijl, kleur en vorm</string>
-    <string name="icons_screen_style">Stijl</string>
     <string name="icons_screen_colour">Kleur</string>
-    <string name="icon_render_glyph_tile_accent">Symbool op tegel (accent)</string>
-    <string name="icon_render_glyph_tile_ink">Symbool op tegel (thema)</string>
-    <string name="icon_render_glyph_tile_inverted">Symbool op tegel (thema omgekeerd)</string>
-    <string name="icon_render_outline_tile_accent">Omtrek op tegel (accent)</string>
-    <string name="icon_render_outline_tile_ink">Omtrek op tegel (thema)</string>
-    <string name="icon_render_outline_tile_inverted">Omtrek op tegel (thema omgekeerd)</string>
     <string name="icon_background_none">Geen</string>
     <string name="icon_background_tile">Tegel</string>
-    <string name="icon_render_glyph_reversed_accent">Symbool op omgekeerde tegel (accent)</string>
-    <string name="icon_render_glyph_reversed_ink">Symbool op omgekeerde tegel (thema)</string>
-    <string name="icon_render_glyph_reversed_inverted">Symbool op omgekeerde tegel (thema omgekeerd)</string>
-    <string name="icon_render_outline_reversed_accent">Omtrek op omgekeerde tegel (accent)</string>
-    <string name="icon_render_outline_reversed_ink">Omtrek op omgekeerde tegel (thema)</string>
-    <string name="icon_render_outline_reversed_inverted">Omtrek op omgekeerde tegel (thema omgekeerd)</string>
     <string name="icon_background_reversed_tile">Omgekeerde tegel</string>
     <string name="icons_screen_background">Achtergrond</string>
     <string name="icon_shape_squircle">Squircle</string>
@@ -231,7 +208,6 @@
 
     <string name="dot_join_2">%1$s · %2$s</string>
     <string name="dot_join_3">%1$s · %2$s · %3$s</string>
-    <string name="comma_join_2">%1$s, %2$s</string>
 
     <string name="settings_header_title">Instellingen</string>
     <string name="settings_section_facets">Facets</string>
@@ -244,34 +220,56 @@
     <string name="settings_active_facet_title">Instellingen van %1$s</string>
     <string name="settings_active_facet_subtitle">Instellingen speciaal voor %1$s, je huidige facet</string>
     <string name="settings_change_wallpaper_title">Achtergrond wijzigen</string>
-    <string name="settings_change_wallpaper_subtitle">Wijzig je systeemachtergrond</string>
+    <string name="settings_change_wallpaper_subtitle">Kies een afbeelding of open de systeemkiezer</string>
+    <string name="wallpaper_title">Achtergrond</string>
+    <string name="wallpaper_preview_description">Voorbeeld van de achtergrond</string>
+    <string name="wallpaper_status_none">Glaspanelen gebruiken een gewone tint. Kies een afbeelding om je achtergrond erachter te vervagen en te buigen.</string>
+    <string name="wallpaper_status_on">Glas staat aan. Facet tekent deze kopie achter je panelen.</string>
+    <string name="wallpaper_choose_image_title">Kies een afbeelding voor Facet</string>
+    <string name="wallpaper_choose_image_subtitle">Stelt hem in als je achtergrond en zet glas aan</string>
+    <string name="wallpaper_system_title">Een systeemachtergrond instellen</string>
+    <string name="wallpaper_system_subtitle">Opent de achtergrondkiezer van Android. Glas blijft een tint.</string>
+    <string name="wallpaper_remove_title">De kopie verwijderen</string>
+    <string name="wallpaper_remove_subtitle">Glas wordt weer een tint. Je achtergrond blijft zoals hij is.</string>
+    <string name="wallpaper_stale_title">Je achtergrond is veranderd</string>
+    <string name="wallpaper_stale_body">De glaskopie komt er niet meer mee overeen. Kies opnieuw een afbeelding of verwijder de kopie.</string>
+    <string name="wallpaper_failed">Dat is niet gelukt. Probeer een andere afbeelding.</string>
+    <string name="wallpaper_offer_title">Je hebt je achtergrond gewijzigd</string>
+    <string name="wallpaper_offer_body">Facet kan achtergronden uit de Android-kiezer niet zien, dus glas blijft een gewone tint. Kies hier dezelfde afbeelding en Facet vervaagt die achter je panelen.</string>
+    <string name="wallpaper_offer_accept">Afbeelding kiezen</string>
+    <string name="wallpaper_offer_decline">Niet nu</string>
+    <string name="glass_prompt_title">Glazen achtergronden hebben een kopie van je achtergrond nodig</string>
+    <string name="glass_prompt_body">Android laat Facet je achtergrond niet zien, dus deze achtergrond is voorlopig een gewone tint. Kies hier een afbeelding en Facet stelt die in als achtergrond en vervaagt hem achter je panelen.</string>
+    <string name="wallpaper_fit_title">Plaats je achtergrond</string>
+    <string name="wallpaper_fit_hint">Sleep om te verplaatsen, knijp om te zoomen, tik twee keer om te herstellen.</string>
+    <string name="wallpaper_fit_home">Startscherm</string>
+    <string name="wallpaper_fit_home_lock">Start- en vergrendelscherm</string>
+    <string name="wallpaper_fit_set">Achtergrond instellen</string>
+    <string name="wallpaper_fit_cancel">Annuleren</string>
+    <string name="wallpaper_screenshot_link">Mijn huidige achtergrond gebruiken</string>
+    <string name="wallpaper_screenshot_title">Een screenshot gebruiken</string>
+    <string name="wallpaper_screenshot_body">Android laat Facet je achtergrond niet zien. Facet toont hem op een leeg scherm zodat je een screenshot kunt maken, die je hier kiest. Je achtergrond blijft zoals hij is.</string>
+    <string name="wallpaper_screenshot_confirm">Screenshot maken</string>
+    <string name="wallpaper_screenshot_have_image">Ik heb al een afbeelding</string>
+    <string name="wallpaper_capture_title">Maak een screenshot</string>
+    <string name="wallpaper_capture_step1">Tik hieronder op &lt;b&gt;Screenshot maken&lt;/b&gt; om te beginnen.</string>
+    <string name="wallpaper_capture_step2">&lt;b&gt;Tik op Aan/uit + Volume lager&lt;/b&gt; tegelijk. Houd de knoppen niet ingedrukt: dan opent in plaats daarvan het uitschakelmenu.</string>
+    <string name="wallpaper_capture_step3">&lt;b&gt;Tik ergens&lt;/b&gt; om de melding terug te halen en tik dan op &lt;b&gt;Screenshot kiezen&lt;/b&gt;.</string>
+    <string name="wallpaper_capture_choose">Screenshot kiezen</string>
+    <string name="wallpaper_capture_take">Screenshot maken</string>
+    <string name="wallpaper_capture_return">Terug</string>
+    <string name="wallpaper_fit_use">Gebruiken voor glas</string>
     <string name="settings_appearance_title">Uiterlijk van de launcher</string>
     <string name="settings_appearance_subtitle">Thema\'s, lettertypen en iconen</string>
     <string name="settings_clock_calendar_title">Klokstijl</string>
     <string name="settings_time_format_24h">24-uurs tijd</string>
-    <string name="settings_time_format_12h">12-uurs tijd</string>
     <string name="settings_calendars_title">Weer te geven agenda\'s</string>
-    <plurals name="settings_calendars_selected">
-        <item quantity="one">%1$d agenda geselecteerd</item>
-        <item quantity="other">%1$d agenda\'s geselecteerd</item>
-    </plurals>
-    <string name="settings_calendars_all">Alle agenda\'s</string>
-    <string name="settings_all_day_events_visible">Evenementen van een hele dag zichtbaar</string>
-    <string name="settings_all_day_events_hidden">Evenementen van een hele dag verborgen</string>
     <string name="settings_dock_title">Dock</string>
     <string name="defaults_screen_note">Wordt gebruikt wanneer je een facet maakt of terugzet.</string>
     <string name="reset_to_default_title">Terugzetten naar standaard</string>
     <string name="reset_to_default_confirm">Terugzetten</string>
     <string name="reset_dock_subtitle">Vervang deze dock door de standaardapps van het apparaat</string>
     <string name="reset_dock_confirm_message">Hiermee wordt de dock van deze facet vervangen door de standaardapps van het apparaat. De apps die je hier hebt geplaatst gaan verloren.</string>
-    <string name="reset_look_subtitle">Vervang het uiterlijk van de lijst door de standaard</string>
-    <string name="reset_look_confirm_message">Hiermee worden de lijstindeling en de uitlijning van deze facet vervangen door de standaardwaarden.</string>
-    <string name="settings_home_apps_list_title">Appslijst op startscherm</string>
-    <plurals name="settings_recents_count">
-        <item quantity="one">%1$d recente</item>
-        <item quantity="other">%1$d recente</item>
-    </plurals>
-    <string name="settings_most_used_count">%1$d meest gebruikt</string>
     <string name="settings_app_drawer_title">App-lade</string>
     <string name="settings_show_as">Weergeven als %1$s</string>
     <string name="settings_search_on">Aan</string>
@@ -286,7 +284,6 @@
     <string name="settings_notifications_summary_media_on">Mediaspeler aan</string>
     <string name="settings_notifications_summary_media_off">Mediaspeler uit</string>
     <string name="settings_notifications_needs_access">Toegang tot meldingen nodig</string>
-    <string name="settings_calendars_needs_access">Toegang tot agenda nodig</string>
     <string name="settings_folders_title">Mappen</string>
     <string name="settings_folders_none">Nog geen mappen</string>
     <plurals name="settings_folders_count">
@@ -310,7 +307,6 @@
     <string name="media_player_row_title">Mediaspeler tonen op het startscherm</string>
     <string name="media_skip_buttons_row_title">Overslaan-knoppen tonen</string>
     <string name="notification_preview_title">Voorbeeld</string>
-    <string name="notification_preview_app">Berichten</string>
     <string name="notification_preview_no_access">Toegang tot meldingen is nodig om badges en de mediaspeler te bekijken.</string>
     <string name="notification_preview_allow_access">Toegang toestaan</string>
     <string name="notification_preview_disabled">Badges en de mediaspeler zijn uit, dus Home toont geen meldingen.</string>
@@ -631,14 +627,9 @@
     <string name="action_delete">Verwijderen</string>
 
     <string name="calendar_settings_header_title">Agenda-instellingen</string>
-    <string name="calendar_settings_follows_launcher_wide">Volgt de agenda-instelling van de hele launcher</string>
     <string name="calendar_settings_show_all_day_events">Evenementen van een hele dag tonen</string>
     <string name="calendar_settings_show_indicator">Agenda-indicator tonen</string>
     <string name="calendar_settings_items_to_display">Weer te geven items</string>
-    <string name="calendar_settings_preview_event_1">Teamoverleg</string>
-    <string name="calendar_settings_preview_event_2">Designreview</string>
-    <string name="calendar_settings_preview_event_3">Lunch met Sam</string>
-    <string name="calendar_settings_preview_sample_note">Voorbeeldevenementen</string>
     <string name="calendar_settings_no_calendars_found">Geen agenda\'s gevonden op dit apparaat.</string>
     <string name="calendar_settings_access_off">Agendatoegang uit — evenementen verborgen.</string>
 
@@ -765,7 +756,7 @@
     <string name="facet_carousel_launcher_settings">Launcher-instellingen</string>
     <string name="facet_carousel_launcher_settings_subtitle">Uiterlijk, favorieten, lade en meer</string>
     <string name="facet_carousel_active">Actief</string>
-    <string name="facet_carousel_no_favorites">Nog geen favorieten</string>
+    <string name="facet_shortcut_label">Wisselen naar %1$s</string>
     <string name="preview_media_title">Nu aan het afspelen</string>
     <string name="preview_media_artist">Artiest</string>
     <string name="facet_carousel_facet_settings">Facetinstellingen</string>
@@ -792,8 +783,6 @@
     <string name="facet_settings_section_home">Home</string>
     <string name="facet_settings_widgets_title">Widgets</string>
     <string name="facet_settings_widgets_subtitle">Wat bovenaan de Home van deze facet staat</string>
-    <string name="facet_settings_appearance_title">Uiterlijk</string>
-    <string name="facet_settings_appearance_clock_label">Klok: %1$s</string>
     <string name="facet_settings_appearance_dock_icons">Dock-pictogrammen</string>
     <string name="facet_settings_appearance_dock_text">Docktekst</string>
     <string name="facet_settings_appearance_dock_icons_and_text">Dock-pictogrammen en tekst</string>
@@ -820,6 +809,8 @@
     <string name="widget_sheet_settings">Instellingen voor %1$s</string>
     <string name="widget_sheet_weather_settings_subtitle">Waar het weerbericht voor geldt</string>
     <string name="widget_sheet_agenda_settings_subtitle">Welke agenda\'s en afspraken worden getoond</string>
+    <string name="widget_sheet_now_playing_settings_subtitle">Hoe het eruitziet</string>
+    <string name="native_widget_background">Achtergrond</string>
     <string name="hub_grid_configure_widget">Widget configureren</string>
     <string name="clock_adjust_alignment_heading">Uitlijning</string>
     <string name="clock_adjust_align_left">Links uitlijnen</string>
@@ -1014,8 +1005,6 @@
     <string name="weather_leave_use_current">Huidige locatie gebruiken</string>
     <string name="weather_leave_choose_city">Kies een stad</string>
 
-    <string name="clock_accessories_inheriting">Dit facet gebruikt de klokinstellingen van de launcher. Zet Overschrijven aan in Klokstijl om deze te wijzigen.</string>
-    <string name="clock_accessories_open_clock_style">Klokstijl</string>
     <string name="weather_location_current_short">Huidige locatie</string>
 
     <string name="settings_gestures_title">Gebaren</string>
@@ -1082,4 +1071,15 @@
         <item quantity="one">%d widget kon niet worden gekopieerd</item>
         <item quantity="other">%d widgets konden niet worden gekopieerd</item>
     </plurals>
+    <string name="dock_background">Dock-achtergrond</string>
+    <string name="list_item_background">Achtergrond van lijstitems</string>
+    <string name="calendar_background">Agenda-achtergrond</string>
+    <string name="media_player_background">Achtergrond van mediaspeler</string>
+    <string name="glass_style_off">Uit</string>
+    <string name="glass_style_frost">Lichte vorst</string>
+    <string name="glass_style_dark_frost">Donkere vorst</string>
+    <string name="glass_style_bright">Helder</string>
+    <string name="glass_style_clear_glass">Helder glas</string>
+    <string name="glass_style_dark_glass">Donker glas</string>
+    <string name="glass_style_accent">Accent</string>
 </resources>

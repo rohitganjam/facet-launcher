@@ -12,6 +12,7 @@ import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
 import com.facetlauncher.app.BuildConfig
+import com.facetlauncher.app.data.model.GlassStyle
 import com.facetlauncher.app.data.model.AppListColumnAlignment
 import com.facetlauncher.app.data.model.AppListGridColumns
 import com.facetlauncher.app.data.model.AppListGridDisplayMode
@@ -83,6 +84,9 @@ private object Keys {
     val NOTIFICATION_BADGE_STYLE = stringPreferencesKey("notification_badge_style")
     val SHOW_MEDIA_PLAYER_ON_HOME = booleanPreferencesKey("show_media_player_on_home")
     val SHOW_MEDIA_SKIP_BUTTONS = booleanPreferencesKey("show_media_skip_buttons")
+    val MEDIA_PLAYER_GLASS = stringPreferencesKey("media_player_glass_style")
+    val WALLPAPER_COPY_SYSTEM_ID = intPreferencesKey("wallpaper_copy_system_id")
+    val WALLPAPER_PROMPT_DISMISSED = booleanPreferencesKey("wallpaper_prompt_dismissed")
     val SHOW_NOTIFICATIONS_IN_APP_MENU = booleanPreferencesKey("show_notifications_in_app_menu")
     val SHOW_DRAWER_ICONS = booleanPreferencesKey("show_drawer_icons")
     val SHOW_DRAWER_LABELS = booleanPreferencesKey("show_drawer_labels")
@@ -178,6 +182,10 @@ class SettingsRepository @Inject constructor(
             } ?: defaults.notificationBadgeStyle,
             showMediaPlayerOnHome = preferences[Keys.SHOW_MEDIA_PLAYER_ON_HOME] ?: defaults.showMediaPlayerOnHome,
             showMediaSkipButtons = preferences[Keys.SHOW_MEDIA_SKIP_BUTTONS] ?: defaults.showMediaSkipButtons,
+            mediaPlayerGlass = preferences[Keys.MEDIA_PLAYER_GLASS]?.let { runCatching { GlassStyle.valueOf(it) }.getOrNull() }
+                ?: defaults.mediaPlayerGlass,
+            wallpaperCopySystemId = preferences[Keys.WALLPAPER_COPY_SYSTEM_ID] ?: defaults.wallpaperCopySystemId,
+            wallpaperPromptDismissed = preferences[Keys.WALLPAPER_PROMPT_DISMISSED] ?: defaults.wallpaperPromptDismissed,
             showNotificationsInAppMenu = preferences[Keys.SHOW_NOTIFICATIONS_IN_APP_MENU] ?: defaults.showNotificationsInAppMenu,
             showDrawerIcons = preferences[Keys.SHOW_DRAWER_ICONS] ?: defaults.showDrawerIcons,
             showDrawerLabels = preferences[Keys.SHOW_DRAWER_LABELS] ?: defaults.showDrawerLabels,
@@ -339,6 +347,19 @@ class SettingsRepository @Inject constructor(
 
     suspend fun setShowMediaPlayerOnHome(enabled: Boolean) {
         dataStore.edit { it[Keys.SHOW_MEDIA_PLAYER_ON_HOME] = enabled }
+    }
+
+    suspend fun setMediaPlayerGlass(style: GlassStyle) {
+        dataStore.edit { it[Keys.MEDIA_PLAYER_GLASS] = style.name }
+    }
+
+    /** Records the system wallpaper id the glass copy was stored against; -1 clears it. */
+    suspend fun setWallpaperCopySystemId(id: Int) {
+        dataStore.edit { it[Keys.WALLPAPER_COPY_SYSTEM_ID] = id }
+    }
+
+    suspend fun setWallpaperPromptDismissed(dismissed: Boolean) {
+        dataStore.edit { it[Keys.WALLPAPER_PROMPT_DISMISSED] = dismissed }
     }
 
     suspend fun setShowMediaSkipButtons(enabled: Boolean) {

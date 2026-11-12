@@ -28,6 +28,8 @@ internal fun FacetEntity.toFacet(clockStack: List<ClockStackItem> = emptyList())
     appListGridDisplayMode = appListGridDisplayMode,
     appListShrinkToFit = appListShrinkToFit,
     dockDisplayMode = dockDisplayMode,
+    dockGlass = dockGlass,
+    appsListGlass = appsListGlass,
 )
 
 internal fun Facet.toEntity(): FacetEntity = FacetEntity(
@@ -54,4 +56,6 @@ internal fun Facet.toEntity(): FacetEntity = FacetEntity(
     appListGridDisplayMode = appListGridDisplayMode,
     appListShrinkToFit = appListShrinkToFit,
     dockDisplayMode = dockDisplayMode,
+    dockGlass = dockGlass,
+    appsListGlass = appsListGlass,
 )

@@ -16,6 +16,7 @@ import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.data.model.ListContentMode
 import com.facetlauncher.app.data.model.MediaPlayerState
 import com.facetlauncher.app.data.model.PlacedItem
+import dagger.hilt.android.scopes.ViewModelScoped
 import javax.inject.Inject
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -62,6 +63,7 @@ data class HomeScreenState(
  * into the Home screen's state — spans more than one repository, so it's a UseCase rather than
  * being called directly from [com.facetlauncher.app.ui.home.HomeViewModel].
  */
+@ViewModelScoped
 class ObserveHomeScreenStateUseCase @Inject constructor(
     private val settingsRepository: SettingsRepository,
     private val observePlacedItems: ObservePlacedItemsUseCase,

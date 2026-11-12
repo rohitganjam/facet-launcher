@@ -7,6 +7,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.facetlauncher.app.data.model.GlassStyle
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.AppListGridColumns
 import com.facetlauncher.app.data.model.AppListGridDisplayMode
@@ -73,7 +74,7 @@ data class HomeItemStyle(
 
 /** The items an app list shows, with the style they are drawn in. */
 @Immutable
-data class HomeAppListContent(val items: List<PlacedItem>, val style: HomeItemStyle)
+data class HomeAppListContent(val items: List<PlacedItem>, val style: HomeItemStyle, val glass: GlassStyle = GlassStyle.OFF)
 
 /** [app]'s long-press menu, wired to [actions] and [style]. */
 @Composable

@@ -8,7 +8,7 @@ import androidx.compose.runtime.Immutable
  * carousel cards, the Appearance preview card) that can't rely on the Activity's own
  * `windowShowWallpaper` compositing the way Home does. Produced by
  * [com.facetlauncher.app.data.WallpaperRepository]; the fallbacks degrade in order —
- * [Image] (an actual wallpaper bitmap), then [Tones] (its Material You colours, the only thing
+ * [Image] (an actual wallpaper bitmap), then [Tones] (its primary and secondary colours, the only thing
  * available for a live wallpaper), then [Unavailable] (render the plain `Wallpaper` token).
  *
  * Framework/primitive types only — no `androidx.compose.ui.graphics` here.
@@ -17,7 +17,7 @@ import androidx.compose.runtime.Immutable
 sealed interface HomeWallpaper {
     data class Image(val bitmap: Bitmap) : HomeWallpaper
 
-    /** One to three ARGB ints (primary/secondary/tertiary), painted as a vertical gradient. */
+    /** The wallpaper's primary then secondary colour at neutral brightness (one or two ARGB ints), painted as a vertical wash. */
     data class Tones(val argb: List<Int>) : HomeWallpaper
 
     data object Unavailable : HomeWallpaper

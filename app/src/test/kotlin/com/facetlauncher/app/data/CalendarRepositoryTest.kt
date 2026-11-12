@@ -248,6 +248,21 @@ class CalendarRepositoryTest {
     }
 
     @Test
+    fun `getAgendaEvents keeps all-day events for a week but drops later ones`() = runTest {
+        // Given all-day events dated yesterday, 6 days ahead and 7 days ahead (UTC-anchored)
+        val today = LocalDate.now()
+        fun allDay(id: Long, title: String, date: LocalDate) =
+            InstanceRow(eventId = id, calendarId = 1, title = title, beginMillis = date.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli(), allDay = true)
+        stubInstances(listOf(allDay(1, "Yesterday", today.minusDays(1)), allDay(2, "Day 6", today.plusDays(6)), allDay(3, "Day 7", today.plusDays(7))))
+
+        // When fetching the agenda's events
+        val result = repository.getAgendaEvents(calendarIds = null, includeAllDay = true)
+
+        // Then only the next seven days' all-day events remain
+        assertEquals(listOf("Day 6"), result.map { it.title })
+    }
+
+    @Test
     fun `getUpcomingEvents drops tomorrow's all-day event when all-day events are off`() = runTest {
         // Given an all-day event dated tomorrow
         val tomorrow = LocalDate.now().plusDays(1).atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()

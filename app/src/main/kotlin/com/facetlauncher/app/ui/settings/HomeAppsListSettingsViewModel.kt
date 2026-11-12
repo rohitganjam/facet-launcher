@@ -7,6 +7,7 @@ import com.facetlauncher.app.data.DefaultAppRepository
 import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.WallpaperRepository
+import com.facetlauncher.app.data.model.GlassStyle
 import com.facetlauncher.app.data.model.Facet
 import com.facetlauncher.app.domain.CopyFacetSettingsUseCase
 import com.facetlauncher.app.domain.ResolvedFacetStyle
@@ -82,6 +83,7 @@ data class HomeAppsListUiState(
     val appListGridColumns: AppListGridColumns get() = style.appList.gridColumns
     val appListGridDisplayMode: AppListGridDisplayMode get() = style.appList.gridDisplayMode
     val appListShrinkToFit: AppListShrinkToFit get() = style.appList.shrinkToFit
+    val appsListGlass: GlassStyle get() = style.appsListGlass
     /** This facet's: off keeps Home in portrait while it is active, and the landscape settings are hidden. */
     val allowLandscape: Boolean get() = facet?.allowLandscape ?: true
     /** What the Landscape rows show: this facet's own landscape values, `null` meaning "same as portrait". */
@@ -186,6 +188,8 @@ class HomeAppsListSettingsViewModel @Inject constructor(
 
     fun setAppListShrinkToFit(shrink: AppListShrinkToFit) =
         writeLook({ facetRepository.setAppListShrinkToFit(it, shrink) })
+
+    fun setAppsListGlass(glass: GlassStyle) = writeLook({ facetRepository.setAppsListGlass(it, glass) })
 
     fun setAllowLandscape(allow: Boolean) = writeLook({ facetRepository.setAllowLandscape(it, allow) })
 

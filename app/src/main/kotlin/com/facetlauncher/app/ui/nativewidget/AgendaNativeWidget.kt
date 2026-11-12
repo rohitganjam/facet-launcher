@@ -52,12 +52,14 @@ import java.time.LocalDate
 import java.time.ZoneId
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
+import java.util.Locale
 import kotlinx.collections.immutable.persistentListOf
 
 private val ROW_HEIGHT = 40.dp
 private const val MAX_EVENTS = 20
 private val HEADER_HEIGHT = 22.dp
-private val DAY_HEADER_HEIGHT = 22.dp
+private val DAY_HEADER_HEIGHT = 20.dp
+private val DAY_GAP = 10.dp // sets a day's heading apart from the previous day's events
 private val SMALL_ROW_HEIGHT = 28.dp
 private val SMALL_VERTICAL_PADDING = 4.dp
 
@@ -65,7 +67,7 @@ private val SMALL_VERTICAL_PADDING = 4.dp
 private sealed interface AgendaLine {
     val key: String
 
-    data class Day(val date: LocalDate, val millis: Long) : AgendaLine {
+    data class Day(val date: LocalDate, val millis: Long, val first: Boolean) : AgendaLine {
         override val key get() = "day_$date"
     }
 
@@ -85,6 +87,7 @@ internal fun AgendaNativeWidget(tier: WidgetTier, calendar: HomeCalendarState, o
     val formatter = remember(locale) { DateTimeFormatter.ofPattern("h:mm", locale) }
     val showRoom = tier != WidgetTier.SMALL
     val zone = clock.zone
+    val today = now.atZone(zone).toLocalDate()
 
     BoxWithConstraints(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.CenterStart) {
         val smallFit = ((maxHeight - SMALL_VERTICAL_PADDING * 2) / SMALL_ROW_HEIGHT).toInt().coerceAtLeast(1)
@@ -104,8 +107,8 @@ internal fun AgendaNativeWidget(tier: WidgetTier, calendar: HomeCalendarState, o
                 val row: @Composable (AgendaLine) -> Unit = { line ->
                     when (line) {
                         is AgendaLine.Day -> Text(
-                            dayLabel(line.millis, nowMillis), style = MaterialTheme.typography.labelMedium, color = Muted, maxLines = 1,
-                            modifier = Modifier.height(DAY_HEADER_HEIGHT).testTag("agenda_day_${line.date}"),
+                            dayLabel(line.date, line.millis, nowMillis, today, locale), style = MaterialTheme.typography.labelMedium, color = Muted, maxLines = 1,
+                            modifier = Modifier.padding(top = if (line.first) 0.dp else DAY_GAP).height(DAY_HEADER_HEIGHT).testTag("agenda_day_${line.date}"),
                         )
                         is AgendaLine.Item -> {
                             val event = line.event
@@ -148,9 +151,16 @@ private fun EventRow(event: CalendarEvent, barColor: Color, time: String, room: 
     }
 }
 
-/** "Today", "Tomorrow", or the date: the system's own wording for the day, so it is localised. */
-private fun dayLabel(eventMillis: Long, nowMillis: Long): String =
-    DateUtils.getRelativeTimeSpanString(eventMillis, nowMillis, DateUtils.DAY_IN_MILLIS, DateUtils.FORMAT_ABBREV_RELATIVE or DateUtils.FORMAT_SHOW_DATE).toString()
+/** The system's "Today" / "Tomorrow", then the date and weekday, "11th Nov, Wed" (the ordinal suffix in English only). */
+private fun dayLabel(date: LocalDate, eventMillis: Long, nowMillis: Long, today: LocalDate, locale: Locale): String {
+    if (date == today || date == today.plusDays(1)) {
+        return DateUtils.getRelativeTimeSpanString(eventMillis, nowMillis, DateUtils.DAY_IN_MILLIS, DateUtils.FORMAT_ABBREV_RELATIVE).toString()
+    }
+    val day = if (locale.language == "en") "${date.dayOfMonth}${ordinalSuffix(date.dayOfMonth)}" else date.dayOfMonth.toString()
+    return "$day ${date.format(DateTimeFormatter.ofPattern("MMM, EEE", locale))}"
+}
+
+private fun ordinalSuffix(day: Int) = if (day in 11..13) "th" else when (day % 10) { 1 -> "st"; 2 -> "nd"; 3 -> "rd"; else -> "th" }
 
 /** The first [limit] events as lines: with a heading per day, or without headings (Small). */
 private fun List<CalendarEvent>.toLines(zone: ZoneId, showHeadings: Boolean, limit: Int): List<AgendaLine> {
@@ -158,7 +168,7 @@ private fun List<CalendarEvent>.toLines(zone: ZoneId, showHeadings: Boolean, lim
     var day: LocalDate? = null
     for (event in take(limit)) {
         val date = if (event.isAllDay) Instant.ofEpochMilli(event.startTimeMillis).atZone(ZoneOffset.UTC).toLocalDate() else Instant.ofEpochMilli(event.startTimeMillis).atZone(zone).toLocalDate()
-        if (showHeadings && date != day) lines += AgendaLine.Day(date, event.startTimeMillis)
+        if (showHeadings && date != day) lines += AgendaLine.Day(date, event.startTimeMillis, first = lines.isEmpty())
         day = date
         lines += AgendaLine.Item(event)
     }

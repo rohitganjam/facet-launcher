@@ -102,6 +102,7 @@ fun SettingsScreen(
     onViewActiveFacetSettings: (Long) -> Unit,
     onViewFacetPro: () -> Unit,
     onNavigateToAppearance: () -> Unit,
+    onNavigateToWallpaper: () -> Unit,
     onNavigateToAppDrawerSettings: () -> Unit,
     onNavigateToNotificationSettings: () -> Unit,
     onNavigateToFolders: () -> Unit,
@@ -131,6 +132,7 @@ fun SettingsScreen(
         onViewActiveFacetSettings = onViewActiveFacetSettings,
         onViewFacetPro = onViewFacetPro,
         onNavigateToAppearance = onNavigateToAppearance,
+        onNavigateToWallpaper = onNavigateToWallpaper,
         onNavigateToAppDrawerSettings = onNavigateToAppDrawerSettings,
         onNavigateToNotificationSettings = onNavigateToNotificationSettings,
         onNavigateToFolders = onNavigateToFolders,
@@ -155,6 +157,7 @@ private fun SettingsContent(
     onViewActiveFacetSettings: (Long) -> Unit,
     onViewFacetPro: () -> Unit,
     onNavigateToAppearance: () -> Unit,
+    onNavigateToWallpaper: () -> Unit,
     onNavigateToAppDrawerSettings: () -> Unit,
     onNavigateToNotificationSettings: () -> Unit,
     onNavigateToFolders: () -> Unit,
@@ -196,7 +199,7 @@ private fun SettingsContent(
                 item { FacetsCard(uiState, onViewActiveFacetSettings, onViewFacets, onViewFacetAutomation) }
 
                 item { SettingsSectionHeader(stringResource(R.string.settings_section_appearance)) }
-                item { AppearanceCard(uiState, onNavigateToAppearance, onNavigateToAppDrawerSettings, onNavigateToNotificationSettings) }
+                item { AppearanceCard(uiState, onNavigateToAppearance, onNavigateToWallpaper, onNavigateToAppDrawerSettings, onNavigateToNotificationSettings) }
 
                 item { SettingsSectionHeader(stringResource(R.string.settings_section_home_apps)) }
                 item { HomeAppsCard(uiState, onNavigateToFolders) }
@@ -268,15 +271,15 @@ private fun FacetsCard(uiState: SettingsUiState, onViewActiveFacetSettings: (Lon
 private fun AppearanceCard(
     uiState: SettingsUiState,
     onNavigateToAppearance: () -> Unit,
+    onNavigateToWallpaper: () -> Unit,
     onNavigateToAppDrawerSettings: () -> Unit,
     onNavigateToNotificationSettings: () -> Unit,
 ) {
-    val context = LocalContext.current
     SettingsCard(fullBleedRows = true) {
         ClickableRow(
             title = stringResource(R.string.settings_change_wallpaper_title),
             subtitle = stringResource(R.string.settings_change_wallpaper_subtitle),
-            onClick = { runCatching { context.startActivity(Intent(Intent.ACTION_SET_WALLPAPER)) } },
+            onClick = onNavigateToWallpaper,
             testTag = "change_wallpaper_row",
             leadingIcon = iconBadge(Icons.Outlined.Wallpaper, SettingsSectionHue.APPEARANCE),
         )
@@ -507,6 +510,7 @@ private fun SettingsScreenPreview() {
             onViewFacetAutomation = {},
             onViewActiveFacetSettings = {},
             onNavigateToAppearance = {},
+            onNavigateToWallpaper = {},
             onNavigateToAppDrawerSettings = {},
             onNavigateToNotificationSettings = {},
             onNavigateToFolders = {},

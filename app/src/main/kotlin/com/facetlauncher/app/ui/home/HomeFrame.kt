@@ -123,7 +123,7 @@ internal fun rememberHomeFrame(
         clockAppearAlpha = rememberClockAppearAlpha(layout),
         listAppearAlpha = rememberListAppearAlpha(state, layout, media),
         itemStyle = itemStyle,
-        listContent = remember(state.list.items, itemStyle) { HomeAppListContent(state.list.items, itemStyle) },
+        listContent = remember(state.list.items, itemStyle, state.list.glass) { HomeAppListContent(state.list.items, itemStyle, state.list.glass) },
         density = density,
     )
 }
@@ -211,8 +211,8 @@ private fun rememberHomeMediaLayout(
         animationSpec = tween(durationMillis = 200, easing = EmphasizedDecelerateEasing),
         label = "mediaPlayerAppearance",
     )
-    val rowTopPx = rowAnchorPx + with(density) { HOME_MEDIA_ROW_TOP_GAP.toPx() }
-    val belowGapPx = with(density) { HOME_MEDIA_ROW_BOTTOM_GAP.toPx() }
+    val rowTopPx = rowAnchorPx + with(density) { HOME_MEDIA_ROW_GAP.toPx() }
+    val belowGapPx = with(density) { HOME_MEDIA_ROW_GAP.toPx() }
     // The dots get their own row under the divider (and under the media row), which pushes the list down while the stack has several pages.
     val dotsRowPx = if (showsPageDots && !landscape) with(density) { CLOCK_PAGE_DOTS_ROW_HEIGHT.toPx() } else 0f
     fun belowMediaPx(reservePx: Float) = if (reservePx > 0f) maxOf(handlePx, rowTopPx + reservePx + belowGapPx) else handlePx

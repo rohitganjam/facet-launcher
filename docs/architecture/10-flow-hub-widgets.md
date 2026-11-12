@@ -30,9 +30,9 @@ flowchart LR
     SCR -- "createHostView(context, id)" --> VM --> AWR
 ```
 
-- **Host listening** is tied to visibility, not process: `HomeHubOverlay` (in `HomeDrawerRoute`) calls
-  `hubViewModel.onHubVisible()` → `host.startListening()` when the Hub opens (or a clock widget is on Home) and
-  `onHubHidden()` → `stopListening()` in `onDispose`. Widgets don't receive updates while the Hub
+- **Host listening** is tied to visibility, not process: `HomeHubOverlay` (`ui/launcher/HomeOverlays.kt`, wired from `HomeDrawerRoute`) calls
+  `hubViewModel.onHubVisible()` → `AppWidgetRepository.startListening()` when the Hub opens (or a clock widget is on Home) and
+  `onHubHidden()` → `stopListening()` in the `DisposableEffect`'s `onDispose`. Widgets don't receive updates while the Hub
   is closed.
 - **Orphans**: a placement whose `appWidgetId` no longer has provider info (provider uninstalled,
   Work Profile removed, or bindings lost) is rendered as `OrphanedWidgetTile` with
@@ -62,7 +62,7 @@ sequenceDiagram
     participant SYS as AppWidgetManager / Host
     participant UC as PlaceWidgetUseCase
     participant WPR as WidgetPlacementRepository
-    P->>VM: onProviderSelected(option)
+    P->>VM: onProviderSelect(option)   (a widget Facet draws itself takes onNativeWidgetSelect(type) instead, with no bind or configure, see 20)
     VM->>WPR: observeAll().first()  (existing.size ≥ HUB_MAX_WIDGETS → AddFailed(HUB_FULL))
     VM->>AWR: allocateAppWidgetId()
     AWR->>SYS: host.allocateAppWidgetId()
@@ -103,10 +103,10 @@ tries that slot first.
 
 ```mermaid
 flowchart TB
-    G["HubGrid gesture\n(WidgetGrabGesture / WidgetResizeHandle)"]
-    G -- "onWidgetDropped(id, row, col, colSpan, rowSpan)" --> RD["ResolveWidgetDropUseCase\nmove target; push each overlapped widget\nright-then-down; null if anything can't fit"]
-    G -- "onWidgetResized(id, row, col, colSpan, rowSpan)" --> RR["ResolveWidgetResizeUseCase\nresize target; cascade-push overlapped widgets\nstraight down; null if past HUB_MAX_ROWS"]
-    G -- "onWidgetDroppedOnTrash(id)" --> DEL["DeleteWidgetUseCase\nwidgetPlacementRepository.deleteById(id)\nappWidgetRepository.deleteAppWidgetId(id)"]
+    G["HubGrid gesture\n(detectGrabOrResizeGesture in WidgetGrabGesture.kt / WidgetResizeHandle)"]
+    G -- "onWidgetDrop(id, row, col, colSpan, rowSpan)" --> RD["ResolveWidgetDropUseCase\nmove target; push each overlapped widget\nright-then-down; null if anything can't fit"]
+    G -- "onWidgetResize(id, row, col, colSpan, rowSpan)" --> RR["ResolveWidgetResizeUseCase\nresize target; cascade-push overlapped widgets\nstraight down; null if past HUB_MAX_ROWS"]
+    G -- "onWidgetDroppedOnTrash(id)" --> DEL["DeleteWidgetUseCase\nwidgetPlacementRepository.deleteById(id)\nappWidgetRepository.deleteAppWidgetId(id)\n(skipped for a native widget, id below 0)"]
     RD --> M["mergeResolved(current, resolved)"]
     RR --> M
     M --> C["CompactWidgetsUseCase\nevery widget floats up until it rests on another"]

@@ -6,6 +6,7 @@ import android.graphics.Bitmap
 import android.graphics.Color
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
+import androidx.core.graphics.ColorUtils
 import androidx.core.graphics.drawable.toBitmap
 import com.facetlauncher.app.data.di.IoDispatcher
 import com.facetlauncher.app.data.model.HomeWallpaper
@@ -13,11 +14,15 @@ import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 
 /** Largest side of the bitmap handed to the UI — wallpapers are often 2× screen for parallax
  *  scroll, and the preview surfaces that consume this render well under a screenful. */
 private const val MAX_WALLPAPER_DIMENSION = 1080
+
+/** How much of the secondary colour reaches the bottom of the wash; the rest stays primary. */
+private const val SECONDARY_SHARE = 0.4f
 
 /**
  * Reads the current *system* wallpaper (whoever set it — the OS picker, another launcher, a
@@ -32,24 +37,39 @@ private const val MAX_WALLPAPER_DIMENSION = 1080
 open class WallpaperRepository @Inject constructor(
     private val wallpaperManager: WallpaperManager,
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
+    private val wallpaperCopies: WallpaperCopyRepository? = null,
+    private val settingsRepository: SettingsRepository? = null,
 ) {
     /**
-     * Degrades in order: the set home wallpaper, then the built-in default, then the wallpaper's
-     * Material You tones (the only thing a live wallpaper exposes), then [HomeWallpaper.Unavailable].
-     * `peekDrawable`/`builtInDrawable` need Facet to be the active launcher on API 33 — a denial
-     * just advances the chain.
+     * Degrades in order: Facet's own saved copy (when it still matches the system wallpaper), the set home wallpaper, then its primary colour washing toward a blend of its
+     * secondary (the only thing a live wallpaper exposes), then [HomeWallpaper.Unavailable]. The colours
+     * are raw: [com.facetlauncher.app.ui.components.WallpaperBackground] sets brightness for the theme.
+     * `peekDrawable` throws without storage access (API 30 and 36, default launcher or not), so
+     * the image is rare. The built-in default is deliberately not used: it is not the user's wallpaper.
      */
     @SuppressLint("MissingPermission") // a SecurityException is caught below and just advances the chain
     open suspend fun currentHomeWallpaper(): HomeWallpaper = withContext(ioDispatcher) {
-        val drawable = runCatching { wallpaperManager.peekDrawable() }.getOrNull()
-            ?: runCatching { wallpaperManager.builtInDrawable }.getOrNull()
-        drawable?.toBitmapOrNull()?.let { return@withContext HomeWallpaper.Image(it.downscaled()) }
+        savedCopy()?.let { return@withContext HomeWallpaper.Image(it) }
+        runCatching { wallpaperManager.peekDrawable() }.getOrNull()?.toBitmapOrNull()
+            ?.let { return@withContext HomeWallpaper.Image(it.downscaled()) }
 
-        val tones = runCatching { wallpaperManager.getWallpaperColors(WallpaperManager.FLAG_SYSTEM) }.getOrNull()
-            ?.let { listOfNotNull(it.primaryColor, it.secondaryColor, it.tertiaryColor).map(Color::toArgb) }
-        if (!tones.isNullOrEmpty()) return@withContext HomeWallpaper.Tones(tones)
+        val colors = runCatching { wallpaperManager.getWallpaperColors(WallpaperManager.FLAG_SYSTEM) }.getOrNull()
+        val primary = colors?.primaryColor?.toArgb()
+        val secondary = colors?.secondaryColor?.toArgb()
+        if (primary != null) {
+            val bottom = secondary?.let { ColorUtils.blendARGB(primary, it, SECONDARY_SHARE) } ?: primary
+            return@withContext HomeWallpaper.Tones(listOf(primary, bottom))
+        }
 
         HomeWallpaper.Unavailable
+    }
+
+    /** The saved glass copy, unless the system wallpaper has changed since it was stored. */
+    private suspend fun savedCopy(): Bitmap? {
+        val copy = wallpaperCopies?.copy?.first() ?: return null
+        val storedId = settingsRepository?.settings?.first()?.wallpaperCopySystemId ?: return copy
+        val matches = storedId == WallpaperCopyRepository.NO_WALLPAPER_ID || storedId == wallpaperCopies.currentSystemWallpaperId()
+        return copy.takeIf { matches }
     }
 
     private fun Drawable.toBitmapOrNull(): Bitmap? {

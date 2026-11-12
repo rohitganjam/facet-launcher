@@ -52,7 +52,7 @@ data class HomeUiState(
     val calendarDisplay: CalendarDisplayOptions = CalendarDisplayOptions(),
     val badgeCounts: Map<String, Int> = emptyMap(),
     /** The clock's next-alarm/battery accessory row state — see `ui/home/clock/ClockAccessoryRow.kt`. */
-    val clockAccessories: ClockAccessoryState = ClockAccessoryState(nextAlarmMillis = null, batteryPercent = 0, isCharging = false),
+    val clockAccessories: ClockAccessoryState = ClockAccessoryState(nextAlarmMillis = null, batteryPercent = null, isCharging = false),
     /** The media row under the clock — `null` hides it (setting off, no access, or nothing playing/paused). */
     val mediaPlayer: MediaPlayerState? = null,
     /** Set once the user taps the usage-access prompt's own button — the prompt then stays hidden

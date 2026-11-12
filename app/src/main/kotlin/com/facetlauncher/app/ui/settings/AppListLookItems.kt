@@ -2,7 +2,9 @@ package com.facetlauncher.app.ui.settings
 
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.facetlauncher.app.R
@@ -15,6 +17,7 @@ import com.facetlauncher.app.data.model.AppListVerticalAlignment
 import com.facetlauncher.app.data.model.AppRowPosition
 import com.facetlauncher.app.data.model.AppRowPresentation
 import com.facetlauncher.app.ui.components.CardDivider
+import com.facetlauncher.app.ui.components.GlassBackgroundRow
 import com.facetlauncher.app.ui.components.LabeledDropdownRow
 import com.facetlauncher.app.ui.components.SettingsCard
 import com.facetlauncher.app.ui.components.SettingsSectionHeader
@@ -111,6 +114,13 @@ internal fun ColumnScope.AppListLayoutRows(uiState: HomeAppsListUiState, actions
             testTag = "appearance_app_list_shrink_to_fit_row",
         )
     }
+    CardDivider()
+    GlassBackgroundRow(
+        title = stringResource(R.string.list_item_background),
+        selected = uiState.appsListGlass,
+        onSelect = actions.onGlassChange,
+        testTag = "apps_list_glass_row",
+    )
 }
 
 /**

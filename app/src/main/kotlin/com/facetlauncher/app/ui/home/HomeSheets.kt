@@ -32,7 +32,6 @@ import com.facetlauncher.app.ui.components.CardDivider
 import com.facetlauncher.app.ui.components.SettingsCard
 import com.facetlauncher.app.ui.components.SettingsIconBadge
 import com.facetlauncher.app.ui.components.SettingsIconBadgeInset
-import com.facetlauncher.app.ui.nativewidget.hasSettings
 import com.facetlauncher.app.ui.nativewidget.labelRes
 import com.facetlauncher.app.ui.settings.ClickableRow
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
@@ -115,14 +114,18 @@ fun WidgetSheetContent(
     ) {
         when (target) {
             WidgetSheetTarget.Clock -> ClockSettingsCard(onClockStylesClick, onCalendarSettingsClick)
-            is WidgetSheetTarget.Native -> if (target.type.hasSettings) {
+            is WidgetSheetTarget.Native -> {
                 SettingsCard(fullBleedRows = true) {
                     AdjustRow(
                         icon = Icons.Outlined.Tune,
                         hue = SettingsSectionHue.APPEARANCE,
                         label = stringResource(R.string.widget_sheet_settings, stringResource(target.type.labelRes())),
                         subtitle = stringResource(
-                            if (target.type == NativeWidgetType.WEATHER) R.string.widget_sheet_weather_settings_subtitle else R.string.widget_sheet_agenda_settings_subtitle,
+                            when (target.type) {
+                                NativeWidgetType.WEATHER -> R.string.widget_sheet_weather_settings_subtitle
+                                NativeWidgetType.AGENDA -> R.string.widget_sheet_agenda_settings_subtitle
+                                NativeWidgetType.NOW_PLAYING -> R.string.widget_sheet_now_playing_settings_subtitle
+                            },
                         ),
                         onClick = onWidgetSettingsClick,
                         testTag = "widget_sheet_settings",

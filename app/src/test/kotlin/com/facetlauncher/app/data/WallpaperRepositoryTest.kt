@@ -52,39 +52,56 @@ class WallpaperRepositoryTest {
     }
 
     @Test
-    fun `it falls back to the built-in wallpaper when none is set`() = runTest {
-        // Given no explicitly-set wallpaper but a built-in default
+    fun `the built-in wallpaper is never used in place of the user's`() = runTest {
+        // Given no readable wallpaper but a built-in default and readable colors
         `when`(wallpaperManager.peekDrawable()).thenReturn(null)
         `when`(wallpaperManager.builtInDrawable).thenReturn(drawableOf(100, 100))
-
-        // When resolving
-        val result = repository.currentHomeWallpaper()
-
-        // Then the built-in default is used
-        assertTrue(result is HomeWallpaper.Image)
-    }
-
-    @Test
-    fun `it falls back to wallpaper colors when no drawable is available`() = runTest {
-        // Given no drawable (e.g. a live wallpaper) but readable Material You tones
-        `when`(wallpaperManager.peekDrawable()).thenReturn(null)
-        `when`(wallpaperManager.builtInDrawable).thenReturn(null)
         `when`(wallpaperManager.getWallpaperColors(WallpaperManager.FLAG_SYSTEM)).thenReturn(
-            WallpaperColors(Color.valueOf(Color.RED), Color.valueOf(Color.GREEN), null),
+            WallpaperColors(Color.valueOf(Color.RED), null, null),
         )
 
         // When resolving
         val result = repository.currentHomeWallpaper()
 
-        // Then the tones are returned in primary/secondary/tertiary order
-        assertEquals(HomeWallpaper.Tones(listOf(Color.RED, Color.GREEN)), result)
+        // Then it is the colour, not the factory image
+        assertTrue(result is HomeWallpaper.Tones)
+    }
+
+    @Test
+    fun `it falls back to the primary color washing toward a blend of the secondary`() = runTest {
+        // Given no drawable (e.g. a live wallpaper) but readable colors
+        `when`(wallpaperManager.peekDrawable()).thenReturn(null)
+        `when`(wallpaperManager.getWallpaperColors(WallpaperManager.FLAG_SYSTEM)).thenReturn(
+            WallpaperColors(Color.valueOf(Color.RED), Color.valueOf(Color.GREEN), Color.valueOf(Color.BLUE)),
+        )
+
+        // When resolving
+        val result = repository.currentHomeWallpaper() as HomeWallpaper.Tones
+
+        // Then the wash runs from the primary to a 40% blend of the secondary, the tertiary left out
+        val bottom = androidx.core.graphics.ColorUtils.blendARGB(Color.RED, Color.GREEN, 0.4f)
+        assertEquals(listOf(Color.RED, bottom), result.argb)
+    }
+
+    @Test
+    fun `a wallpaper with no secondary color gives just the primary tone`() = runTest {
+        // Given only a primary colour
+        `when`(wallpaperManager.peekDrawable()).thenReturn(null)
+        `when`(wallpaperManager.getWallpaperColors(WallpaperManager.FLAG_SYSTEM)).thenReturn(
+            WallpaperColors(Color.valueOf(Color.RED), null, null),
+        )
+
+        // When resolving
+        val result = repository.currentHomeWallpaper()
+
+        // Then the wash is flat: the primary at both ends
+        assertEquals(HomeWallpaper.Tones(listOf(Color.RED, Color.RED)), result)
     }
 
     @Test
     fun `it returns Unavailable when nothing can be read`() = runTest {
         // Given every source empty (no permission, no colors)
         `when`(wallpaperManager.peekDrawable()).thenReturn(null)
-        `when`(wallpaperManager.builtInDrawable).thenReturn(null)
         `when`(wallpaperManager.getWallpaperColors(WallpaperManager.FLAG_SYSTEM)).thenReturn(null)
 
         // When resolving
@@ -98,7 +115,6 @@ class WallpaperRepositoryTest {
     fun `a thrown SecurityException on peekDrawable is swallowed and the chain continues`() = runTest {
         // Given peekDrawable denied (Facet not the active launcher) but colors readable
         `when`(wallpaperManager.peekDrawable()).thenThrow(SecurityException("denied"))
-        `when`(wallpaperManager.builtInDrawable).thenReturn(null)
         `when`(wallpaperManager.getWallpaperColors(WallpaperManager.FLAG_SYSTEM)).thenReturn(
             WallpaperColors(Color.valueOf(Color.BLUE), null, null),
         )
@@ -106,7 +122,46 @@ class WallpaperRepositoryTest {
         // When resolving
         val result = repository.currentHomeWallpaper()
 
-        // Then it degrades to tones rather than propagating the exception
-        assertEquals(HomeWallpaper.Tones(listOf(Color.BLUE)), result)
+        // Then it degrades to the tone rather than propagating the exception
+        assertEquals(HomeWallpaper.Tones(listOf(Color.BLUE, Color.BLUE)), result)
+    }
+
+    private class FakeCopies(private val stored: Bitmap?, var systemId: Int = 1) : WallpaperCopyRepository(org.robolectric.RuntimeEnvironment.getApplication(), mock(WallpaperManager::class.java)) {
+        override val copy = kotlinx.coroutines.flow.flowOf(stored)
+        override fun currentSystemWallpaperId() = systemId
+    }
+
+    private fun settings(storedId: Int): SettingsRepository {
+        val file = java.io.File.createTempFile("wallpaper", ".preferences_pb").also { it.delete() }
+        return SettingsRepository(androidx.datastore.preferences.core.PreferenceDataStoreFactory.create(produceFile = { file })).also {
+            kotlinx.coroutines.runBlocking { it.setWallpaperCopySystemId(storedId) }
+        }
+    }
+
+    @Test
+    fun `a saved copy that matches the system wallpaper is used for previews`() = runTest {
+        // Given a saved copy recorded for the current wallpaper, and a system wallpaper that could also be read
+        val copy = Bitmap.createBitmap(30, 60, Bitmap.Config.ARGB_8888)
+        `when`(wallpaperManager.peekDrawable()).thenReturn(drawableOf(10, 10))
+        val repository = WallpaperRepository(wallpaperManager, wallpaperCopies = FakeCopies(copy), settingsRepository = settings(1))
+
+        // When the home wallpaper is read
+        val result = repository.currentHomeWallpaper()
+
+        // Then it is the saved copy
+        assertTrue(result is HomeWallpaper.Image && result.bitmap === copy)
+    }
+
+    @Test
+    fun `a saved copy that no longer matches the system wallpaper is ignored`() = runTest {
+        // Given a copy recorded for wallpaper 1 while the system is now at 2, and nothing else readable
+        val copy = Bitmap.createBitmap(30, 60, Bitmap.Config.ARGB_8888)
+        val repository = WallpaperRepository(wallpaperManager, wallpaperCopies = FakeCopies(copy, systemId = 2), settingsRepository = settings(1))
+
+        // When the home wallpaper is read
+        val result = repository.currentHomeWallpaper()
+
+        // Then the stale copy is not used
+        assertEquals(HomeWallpaper.Unavailable, result)
     }
 }
