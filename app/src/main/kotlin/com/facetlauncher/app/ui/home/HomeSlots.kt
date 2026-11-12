@@ -407,7 +407,7 @@ private fun HomeAppListBody(frame: HomeFrame, maxHeight: Dp) {
             verticalPadding = rowPadding,
             iconSize = rowIconSize,
             modifier = Modifier.fillMaxWidth(),
-            rowWidthFraction = SINGLE_COLUMN_ROW_WIDTH_FRACTION,
+            minRowWidthFraction = SINGLE_COLUMN_MIN_ROW_WIDTH_FRACTION,
             onReorder = frame.actions.item.onReorderList
                 ?.takeIf { list.reorderable }
                 ?.let { reorder -> { ordered: List<PlacedItem> -> reorder(PlacementList.FAVORITES, ordered) } },
@@ -465,8 +465,8 @@ private fun UsageAccessStrip(onClick: () -> Unit, modifier: Modifier = Modifier)
     }
 }
 
-/** Single-column rows are only this fraction of the list's width (tap target + ripple), anchored by the row position. */
-private const val SINGLE_COLUMN_ROW_WIDTH_FRACTION = 0.7f
+/** Single-column rows share one width: the widest item's, but at least this fraction of the list's width, anchored by the row position. */
+private const val SINGLE_COLUMN_MIN_ROW_WIDTH_FRACTION = 0.5f
 
 private fun nativeWidgetActions(actions: HomeScreenActions) = NativeWidgetActions(
     onOpenWeather = actions.clock.onOpenNativeWeather,

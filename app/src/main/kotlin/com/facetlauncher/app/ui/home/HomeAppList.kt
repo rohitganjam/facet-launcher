@@ -39,6 +39,8 @@ import com.facetlauncher.app.domain.SavedGridCells
 import com.facetlauncher.app.data.model.gridKey
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -154,8 +156,9 @@ internal fun HomeAppTwoColumnList(
 }
 
 /**
- * One column of Home's app list: an [AppRow] or [FolderRow] per item, packed by [position]. [rowWidthFraction] and
- * [horizontalAlignment] let the single-column layout use it for rows narrower than the list, anchored to a side.
+ * One column of Home's app list: an [AppRow] or [FolderRow] per item, packed by [position]. [minRowWidthFraction] and
+ * [horizontalAlignment] let the single-column layout use rows narrower than the list, anchored to a side: all rows share the widest
+ * item's width, at least that share of the list.
  */
 @Composable
 internal fun HomeAppListColumn(
@@ -166,13 +169,13 @@ internal fun HomeAppListColumn(
     verticalPadding: Dp,
     iconSize: Dp,
     modifier: Modifier = Modifier,
-    rowWidthFraction: Float = 1f,
+    minRowWidthFraction: Float? = null,
     horizontalAlignment: Alignment.Horizontal = Alignment.Start,
     onReorder: ((List<PlacedItem>) -> Unit)? = null,
     /** Two-column list only: a row's place in the whole list, so a drag can tell which cell it is over. */
     cellIndexOf: ((PlacedItem) -> Int)? = null,
 ) {
-    Column(modifier = modifier, horizontalAlignment = horizontalAlignment) {
+    val rows: @Composable ColumnScope.() -> Unit = {
         PickUpReorderHost(
             items = content.items,
             key = { it.stableKey() },
@@ -181,7 +184,7 @@ internal fun HomeAppListColumn(
             onReorder = { onReorder?.invoke(it) },
         ) { shown ->
         shown.forEach { item -> key(item.stableKey()) {
-            val rowModifier = Modifier.fillMaxWidth(rowWidthFraction).then(if (cellIndexOf != null) Modifier.gridCellBounds(cellIndexOf(item)) else Modifier)
+            val rowModifier = Modifier.testTag("home_app_row_${item.stableKey()}").fillMaxWidth().then(if (cellIndexOf != null) Modifier.gridCellBounds(cellIndexOf(item)) else Modifier)
                 .then(if (content.glass != GlassStyle.OFF) Modifier.padding(vertical = 2.dp) else Modifier)
                 .glassBackground(content.glass, sampleWallpaper = true)
                 // The row's own 8dp side padding plus this equals its vertical padding, so the content sits evenly inside the panel.
@@ -211,6 +214,26 @@ internal fun HomeAppListColumn(
         } }
         }
     }
+    if (minRowWidthFraction == null) {
+        Column(modifier = modifier, horizontalAlignment = horizontalAlignment, content = rows)
+    } else {
+        // One width for every row: the widest item's, but at least this share of the list and never wider than it.
+        BoxWithConstraints(modifier = modifier) {
+            Column(
+                modifier = Modifier
+                    .align(horizontalAlignment.asBoxAlignment())
+                    .widthIn(min = maxWidth * minRowWidthFraction, max = maxWidth)
+                    .width(IntrinsicSize.Max),
+                content = rows,
+            )
+        }
+    }
+}
+
+private fun Alignment.Horizontal.asBoxAlignment(): Alignment = when (this) {
+    Alignment.End -> Alignment.TopEnd
+    Alignment.CenterHorizontally -> Alignment.TopCenter
+    else -> Alignment.TopStart
 }
 
 /**
