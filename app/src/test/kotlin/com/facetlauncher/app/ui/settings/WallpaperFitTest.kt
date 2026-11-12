@@ -86,4 +86,18 @@ class WallpaperFitTest {
         assertEquals(before.first, after.first, 0.5f)
         assertEquals(before.second, after.second, 0.5f)
     }
+
+    @Test
+    fun `a photo already the window's shape shows whole and does not throw`() {
+        // Given a photo whose aspect matches the window to within float rounding
+        val matching = FitGeometry(imageWidth = 1080, imageHeight = 2400, boxWidth = 411f, boxHeight = 913.3334f)
+
+        // When it is fully zoomed out
+        val visible = WallpaperFit.initial(matching).visible(matching)
+
+        // Then the visible part sits at the photo's corner and covers it
+        assertEquals(0f, visible.left, 0.5f)
+        assertEquals(0f, visible.top, 0.5f)
+        assertEquals(1080f, visible.width(), 1f)
+    }
 }

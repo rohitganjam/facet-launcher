@@ -12,6 +12,7 @@ import com.facetlauncher.app.data.WallpaperRepository
 import com.facetlauncher.app.data.model.HomeWallpaper
 import com.facetlauncher.app.domain.RemoveWallpaperCopyUseCase
 import com.facetlauncher.app.domain.SetWallpaperFromPhotoUseCase
+import com.facetlauncher.app.domain.UseScreenshotAsWallpaperCopyUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -40,6 +41,8 @@ data class WallpaperUiState(
     val failed: Boolean = false,
     /** `true` after returning from Android's wallpaper picker with a new wallpaper and no matching copy: offer to add one. */
     val offerCopy: Boolean = false,
+    /** `true` while the photo being framed is a screenshot of the current wallpaper: it is stored as the copy only, not set as the wallpaper. */
+    val copyOnly: Boolean = false,
 )
 
 /** The wallpaper screen: the glass copy, the picker and fit step that make one, and removing it. */
@@ -50,6 +53,7 @@ class WallpaperViewModel @Inject constructor(
     private val settingsRepository: SettingsRepository,
     private val setWallpaperFromPhoto: SetWallpaperFromPhotoUseCase,
     private val removeWallpaperCopy: RemoveWallpaperCopyUseCase,
+    private val useScreenshotAsCopy: UseScreenshotAsWallpaperCopyUseCase,
 ) : ViewModel() {
 
     private data class Local(
@@ -60,6 +64,7 @@ class WallpaperViewModel @Inject constructor(
         /** The system wallpaper's id when Android's picker was opened; `null` when it wasn't. */
         val pickerBaseline: Int? = null,
         val offerCopy: Boolean = false,
+        val copyOnly: Boolean = false,
         /** Bumped by [refresh] so the stale check reads the system wallpaper's id again. */
         val checks: Int = 0,
     )
@@ -76,6 +81,7 @@ class WallpaperViewModel @Inject constructor(
             isWorking = state.working,
             failed = state.failed,
             offerCopy = state.offerCopy,
+            copyOnly = state.copyOnly,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), WallpaperUiState())
 
@@ -111,6 +117,9 @@ class WallpaperViewModel @Inject constructor(
 
     fun clearOffer() = local.update { it.copy(offerCopy = false) }
 
+    /** The photo picker is about to open: [copyOnly] is `true` for a screenshot of the current wallpaper, `false` for an image to set as it. */
+    fun onPickStarted(copyOnly: Boolean) = local.update { it.copy(copyOnly = copyOnly) }
+
     /** A photo was picked: decode it for the fit step. */
     fun onPicked(uri: Uri) {
         viewModelScope.launch {
@@ -127,7 +136,7 @@ class WallpaperViewModel @Inject constructor(
         val photo = local.value.picked ?: return
         viewModelScope.launch {
             local.update { it.copy(working = true, failed = false) }
-            val done = setWallpaperFromPhoto(photo, visible, includeLock)
+            val done = if (local.value.copyOnly) useScreenshotAsCopy(photo, visible) else setWallpaperFromPhoto(photo, visible, includeLock)
             local.update { it.copy(picked = if (done) null else it.picked, working = false, failed = !done) }
         }
     }

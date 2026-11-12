@@ -1,5 +1,6 @@
 package com.facetlauncher.app.ui.navigation
 
+import com.facetlauncher.app.ui.settings.WallpaperCaptureScreen
 import com.facetlauncher.app.ui.settings.GlassBackgroundPromptViewModel
 import com.facetlauncher.app.ui.components.LocalGlassBackgroundPrompt
 import com.facetlauncher.app.ui.components.GlassBackgroundPrompt
@@ -99,6 +100,7 @@ object FacetDestinations {
     const val FONTS = "fonts"
     const val ICONS = "icons"
     const val WALLPAPER = "wallpaper"
+    const val WALLPAPER_CAPTURE = "wallpaperCapture"
     const val DOCK_SETTINGS = "dockSettings?facetId={facetId}"
     const val HOME_APPS_LIST_SETTINGS = "homeAppsListSettings?facetId={facetId}"
     const val APP_DRAWER_SETTINGS = "appDrawerSettings"
@@ -251,8 +253,24 @@ fun FacetNavHost(
                     onNavigateToLicenses = { navController.navigate(FacetDestinations.LICENSES) },
                 )
             }
-            settingsComposable(FacetDestinations.WALLPAPER) {
-                WallpaperScreen(onBack = { navController.popBackStackSafely() })
+            settingsComposable(FacetDestinations.WALLPAPER) { entry ->
+                val pickScreenshot by entry.savedStateHandle.getStateFlow(PICK_SCREENSHOT_KEY, false).collectAsStateWithLifecycle()
+                WallpaperScreen(
+                    onBack = { navController.popBackStackSafely() },
+                    onOpenCapture = { navController.navigate(FacetDestinations.WALLPAPER_CAPTURE) },
+                    pickScreenshotRequested = pickScreenshot,
+                    onPickScreenshotConsume = { entry.savedStateHandle[PICK_SCREENSHOT_KEY] = false },
+                )
+            }
+            // Not a settings screen: no background of its own, so the window's wallpaper shows through.
+            composable(FacetDestinations.WALLPAPER_CAPTURE) {
+                WallpaperCaptureScreen(
+                    onChooseScreenshot = {
+                        navController.previousBackStackEntry?.savedStateHandle?.set(PICK_SCREENSHOT_KEY, true)
+                        navController.popBackStackSafely()
+                    },
+                    onReturn = { navController.popBackStackSafely() },
+                )
             }
             settingsComposable(FacetDestinations.LICENSES) {
                 LicensesScreen(
@@ -481,6 +499,9 @@ fun FacetNavHost(
 }
 
 /** A non-Home destination: its text ignores the Font size option, which only Home and the previews follow. */
+/** Set on the wallpaper screen's back stack entry by the capture screen: open the picker for the screenshot just taken. */
+private const val PICK_SCREENSHOT_KEY = "wallpaper_pick_screenshot"
+
 private fun NavGraphBuilder.settingsComposable(
     route: String,
     arguments: List<NamedNavArgument> = emptyList(),

@@ -25,8 +25,9 @@ internal data class WallpaperFit(val zoom: Float, val centerX: Float, val center
         val scale = geometry.coverScale * zoom
         val width = geometry.boxWidth / scale
         val height = geometry.boxHeight / scale
-        val left = (centerX - width / 2f).coerceIn(0f, geometry.imageWidth - width)
-        val top = (centerY - height / 2f).coerceIn(0f, geometry.imageHeight - height)
+        // The room is clamped at 0: a photo already the box's shape can leave a rounding error just below it.
+        val left = (centerX - width / 2f).coerceIn(0f, (geometry.imageWidth - width).coerceAtLeast(0f))
+        val top = (centerY - height / 2f).coerceIn(0f, (geometry.imageHeight - height).coerceAtLeast(0f))
         return RectF(left, top, left + width, top + height)
     }
 

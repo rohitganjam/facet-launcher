@@ -5,7 +5,6 @@ import android.graphics.Bitmap
 import android.graphics.RectF
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
@@ -29,11 +28,14 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.DeleteOutline
 import androidx.compose.material.icons.outlined.Image
 import androidx.compose.material.icons.outlined.Wallpaper
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -71,6 +73,7 @@ import com.facetlauncher.app.ui.theme.ErrorColor
 import com.facetlauncher.app.ui.theme.Ink
 import com.facetlauncher.app.ui.theme.Muted
 import com.facetlauncher.app.ui.theme.SettingsSectionHue
+import com.facetlauncher.app.ui.theme.Surface
 import com.facetlauncher.app.ui.theme.SurfaceContainer
 import kotlin.math.roundToInt
 
@@ -82,28 +85,49 @@ import kotlin.math.roundToInt
 @Composable
 fun WallpaperScreen(
     onBack: () -> Unit,
+    onOpenCapture: () -> Unit,
+    pickScreenshotRequested: Boolean,
+    onPickScreenshotConsume: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: WallpaperViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
-    val picker = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri -> if (uri != null) viewModel.onPicked(uri) }
+    val picker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri -> if (uri != null) viewModel.onPicked(uri) }
     // Coming back from the system picker: the wallpaper may have changed, which can leave the copy stale.
     LifecycleResumeEffect(Unit) {
         viewModel.refresh()
         onPauseOrDispose { }
     }
+    // The capture screen asks for the picker once the user has taken the screenshot.
+    val currentConsume by rememberUpdatedState(onPickScreenshotConsume)
+    LaunchedEffect(pickScreenshotRequested) {
+        if (pickScreenshotRequested) {
+            viewModel.onPickStarted(copyOnly = true)
+            picker.launch("image/*")
+            currentConsume()
+        }
+    }
     WallpaperContent(
         uiState = uiState,
         onBack = onBack,
-        onChooseImage = { picker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) },
+        onChooseImage = {
+            viewModel.onPickStarted(copyOnly = false)
+            picker.launch("image/*")
+        },
+        onTakeScreenshot = onOpenCapture,
+        onUseScreenshot = {
+            viewModel.onPickStarted(copyOnly = true)
+            picker.launch("image/*")
+        },
         onSetSystemWallpaper = {
             viewModel.onSystemPickerOpened()
             runCatching { context.startActivity(Intent(Intent.ACTION_SET_WALLPAPER)) }
         },
         onAcceptOffer = {
             viewModel.clearOffer()
-            picker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+            viewModel.onPickStarted(copyOnly = false)
+            picker.launch("image/*")
         },
         onDeclineOffer = viewModel::declineOffer,
         onRemoveCopy = viewModel::removeCopy,
@@ -118,6 +142,8 @@ internal fun WallpaperContent(
     uiState: WallpaperUiState,
     onBack: () -> Unit,
     onChooseImage: () -> Unit,
+    onUseScreenshot: () -> Unit,
+    onTakeScreenshot: () -> Unit,
     onSetSystemWallpaper: () -> Unit,
     onAcceptOffer: () -> Unit,
     onDeclineOffer: () -> Unit,
@@ -128,7 +154,7 @@ internal fun WallpaperContent(
 ) {
     val photo = uiState.picked
     if (photo != null) {
-        WallpaperFitStep(photo, uiState.isWorking, uiState.failed, onCancelFit, onConfirmFit, modifier)
+        WallpaperFitStep(photo, uiState.isWorking, uiState.failed, uiState.copyOnly, onCancelFit, onConfirmFit, modifier)
         return
     }
     StickyHeaderLayout(
@@ -149,6 +175,7 @@ internal fun WallpaperContent(
                 if (uiState.offerCopy) item { CopyOffer(onAcceptOffer, onDeclineOffer) }
                 item { WallpaperStatus(uiState) }
                 item { ChoiceRows(onChooseImage, onSetSystemWallpaper) }
+                if (uiState.copy == null || uiState.stale) item { ScreenshotLink(onTakeScreenshot, onUseScreenshot) }
                 if (uiState.copy != null) item { RemoveRow(onRemoveCopy) }
             }
         },
@@ -227,6 +254,44 @@ private fun ChoiceRows(onChooseImage: () -> Unit, onSetSystemWallpaper: () -> Un
     }
 }
 
+/** A smaller way in for someone who likes their wallpaper: Facet cannot read it, so they screenshot it and choose the screenshot. */
+@Composable
+private fun ScreenshotLink(onTakeScreenshot: () -> Unit, onUseScreenshot: () -> Unit) {
+    var showHelp by remember { mutableStateOf(false) }
+    TextActionButton(text = stringResource(R.string.wallpaper_screenshot_link), onClick = { showHelp = true }, modifier = Modifier.testTag("wallpaper_screenshot_link"))
+    if (showHelp) {
+        AlertDialog(
+            onDismissRequest = { showHelp = false },
+            modifier = Modifier.testTag("wallpaper_screenshot_dialog"),
+            shape = MaterialTheme.shapes.extraLarge,
+            containerColor = Surface,
+            title = { Text(text = stringResource(R.string.wallpaper_screenshot_title), style = MaterialTheme.typography.titleMedium, color = Ink) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text(text = stringResource(R.string.wallpaper_screenshot_body), style = MaterialTheme.typography.bodyMedium, color = Muted)
+                    PrimaryButton(
+                        text = stringResource(R.string.wallpaper_screenshot_confirm),
+                        onClick = {
+                            showHelp = false
+                            onTakeScreenshot()
+                        },
+                        modifier = Modifier.fillMaxWidth().testTag("wallpaper_screenshot_take"),
+                    )
+                    TextActionButton(
+                        text = stringResource(R.string.wallpaper_screenshot_have_image),
+                        onClick = {
+                            showHelp = false
+                            onUseScreenshot()
+                        },
+                        modifier = Modifier.fillMaxWidth().testTag("wallpaper_screenshot_have_image"),
+                    )
+                }
+            },
+            confirmButton = {},
+        )
+    }
+}
+
 @Composable
 private fun RemoveRow(onRemoveCopy: () -> Unit) {
     SettingsCard(fullBleedRows = true) {
@@ -249,6 +314,7 @@ internal fun WallpaperFitStep(
     photo: Bitmap,
     isWorking: Boolean,
     failed: Boolean,
+    copyOnly: Boolean,
     onCancel: () -> Unit,
     onConfirm: (RectF, Boolean) -> Unit,
     modifier: Modifier = Modifier,
@@ -283,7 +349,7 @@ internal fun WallpaperFitStep(
                 onFitChange = { fit = it },
             )
         }
-        Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
+        if (!copyOnly) Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
             PillOption(stringResource(R.string.wallpaper_fit_home), selected = !includeLock, onClick = { includeLock = false }, testTag = "wallpaper_fit_home", modifier = Modifier.weight(1f))
             PillOption(stringResource(R.string.wallpaper_fit_home_lock), selected = includeLock, onClick = { includeLock = true }, testTag = "wallpaper_fit_home_lock", modifier = Modifier.weight(1f))
         }
@@ -293,7 +359,7 @@ internal fun WallpaperFitStep(
         Row(horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
             TextActionButton(text = stringResource(R.string.wallpaper_fit_cancel), onClick = onCancel, modifier = Modifier.testTag("wallpaper_fit_cancel"))
             PrimaryButton(
-                text = stringResource(R.string.wallpaper_fit_set),
+                text = stringResource(if (copyOnly) R.string.wallpaper_fit_use else R.string.wallpaper_fit_set),
                 onClick = { if (geometry != null && currentFit != null) onConfirm(currentFit.visible(geometry), includeLock) },
                 enabled = !isWorking && geometry != null,
                 modifier = Modifier.testTag("wallpaper_fit_set"),

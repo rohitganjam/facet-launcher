@@ -7,6 +7,7 @@ import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import org.junit.Assert.assertEquals
@@ -24,6 +25,8 @@ class WallpaperScreenTest {
         var choseImage = 0
         var setSystem = 0
         var accepted = 0
+        var screenshot = 0
+        var takeScreenshot = 0
         var declined = 0
         var removed = 0
         var cancelled = 0
@@ -41,6 +44,8 @@ class WallpaperScreenTest {
                     onBack = {},
                     onChooseImage = { calls.choseImage++ },
                     onSetSystemWallpaper = { calls.setSystem++ },
+                    onUseScreenshot = { calls.screenshot++ },
+                    onTakeScreenshot = { calls.takeScreenshot++ },
                     onAcceptOffer = { calls.accepted++ },
                     onDeclineOffer = { calls.declined++ },
                     onRemoveCopy = { calls.removed++ },
@@ -70,6 +75,58 @@ class WallpaperScreenTest {
         // Then each reports once
         assertEquals(1, calls.choseImage)
         assertEquals(1, calls.setSystem)
+    }
+
+    @Test
+    fun `the screenshot link explains first and offers taking one or using an image`() {
+        // Given no copy
+        val calls = Calls()
+        setContent(WallpaperUiState(), calls)
+
+        // When the link is tapped
+        composeRule.onNodeWithTag("wallpaper_screenshot_link").performClick()
+
+        // Then a dialog explains and nothing has happened yet
+        composeRule.onNodeWithTag("wallpaper_screenshot_dialog").assertIsDisplayed()
+        assertEquals(0, calls.screenshot + calls.takeScreenshot)
+
+        // And Take screenshot reports once and closes it
+        composeRule.onNodeWithTag("wallpaper_screenshot_take").performClick()
+        assertEquals(1, calls.takeScreenshot)
+        composeRule.onNodeWithTag("wallpaper_screenshot_dialog").assertDoesNotExist()
+    }
+
+    @Test
+    fun `I have an image already opens the picker`() {
+        // Given the dialog is open
+        val calls = Calls()
+        setContent(WallpaperUiState(), calls)
+        composeRule.onNodeWithTag("wallpaper_screenshot_link").performClick()
+
+        // When the second button is tapped
+        composeRule.onNodeWithTag("wallpaper_screenshot_have_image").performClick()
+
+        // Then the picker is requested once
+        assertEquals(1, calls.screenshot)
+    }
+
+    @Test
+    fun `with a copy there is no screenshot link`() {
+        // Given a matching copy
+        setContent(WallpaperUiState(copy = bitmap(10, 20)), Calls())
+
+        // Then the link is absent
+        composeRule.onNodeWithTag("wallpaper_screenshot_link").assertDoesNotExist()
+    }
+
+    @Test
+    fun `the fit step for a screenshot has no home or lock choice`() {
+        // Given a screenshot being framed
+        setContent(WallpaperUiState(picked = bitmap(200, 400), copyOnly = true), Calls())
+
+        // Then the home and lock options are absent and the button says what it does
+        composeRule.onNodeWithTag("wallpaper_fit_home").assertDoesNotExist()
+        composeRule.onNodeWithText("Use for glass").assertIsDisplayed()
     }
 
     @Test

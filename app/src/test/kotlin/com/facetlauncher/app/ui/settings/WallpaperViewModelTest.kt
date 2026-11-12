@@ -13,6 +13,7 @@ import com.facetlauncher.app.data.WallpaperRepository
 import com.facetlauncher.app.data.model.HomeWallpaper
 import com.facetlauncher.app.domain.RemoveWallpaperCopyUseCase
 import com.facetlauncher.app.domain.SetWallpaperFromPhotoUseCase
+import com.facetlauncher.app.domain.UseScreenshotAsWallpaperCopyUseCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -81,7 +82,7 @@ class WallpaperViewModelTest {
         val wallpaper = object : WallpaperRepository(mock(WallpaperManager::class.java)) {
             override suspend fun currentHomeWallpaper(): HomeWallpaper = HomeWallpaper.Tones(listOf(1, 2))
         }
-        return WallpaperViewModel(copies, wallpaper, settings, SetWallpaperFromPhotoUseCase(copies, settings, dispatcher), RemoveWallpaperCopyUseCase(copies, settings))
+        return WallpaperViewModel(copies, wallpaper, settings, SetWallpaperFromPhotoUseCase(copies, settings, dispatcher), RemoveWallpaperCopyUseCase(copies, settings), UseScreenshotAsWallpaperCopyUseCase(copies, settings, dispatcher))
     }
 
     /** Subscribes straight away, so the state flow is live (it only runs while collected). */
@@ -262,5 +263,26 @@ class WallpaperViewModelTest {
         viewModel.refresh()
         viewModel.uiState.first { it.systemWallpaper != HomeWallpaper.Unavailable }
         assertFalse(viewModel.uiState.value.offerCopy)
+    }
+
+    @Test
+    fun `a screenshot is stored as the copy without setting the wallpaper`() = runTest {
+        // Given the system wallpaper at id 7, which must not be set again, and a screenshot being framed
+        val copies = FakeCopies().apply { systemId = 7; setSucceeds = false }
+        val settings = settings()
+        val viewModel = viewModel(copies, settings)
+        viewModel.observe(this)
+        viewModel.onPickStarted(copyOnly = true)
+        viewModel.onPicked(Uri.parse("content://shot/1"))
+        assertTrue(viewModel.uiState.first { it.picked != null }.copyOnly)
+
+        // When confirmed
+        viewModel.confirmFit(RectF(0f, 0f, 50f, 100f), includeLock = true)
+
+        // Then the copy is stored for the current wallpaper, even though setting a wallpaper would have failed
+        val state = viewModel.uiState.first { it.copy != null && it.picked == null && !it.isWorking }
+        assertFalse(state.failed)
+        assertFalse(state.stale)
+        assertEquals(7, settings.settings.first { it.wallpaperCopySystemId == 7 }.wallpaperCopySystemId)
     }
 }

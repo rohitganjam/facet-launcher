@@ -23,7 +23,7 @@ lens (API 33+).
 
 *Change wallpaper* opens `WallpaperScreen`, which shows the copy (or a stand-in for the system wallpaper) and a status line, then two equal choices:
 
-1. **Choose an image for Facet.** The system Photo Picker (no permission) → the **fit step**: the photo in a screen-shaped window, drag to move, pinch to zoom
+1. **Choose an image for Facet.** The gallery app, through `GetContent("image/*")` (no permission; a chooser when several apps answer) → the **fit step**: the photo in a screen-shaped window, drag to move, pinch to zoom
    (1× to 5× of the zoom that just covers the screen), double-tap to reset, a faint outline of the clock and dock, and a choice of *Home screen* or *Home and lock
    screen* → *Set wallpaper*. The result is cropped to the screen size, set as the system wallpaper, stored as the copy and its system id recorded.
 2. **Set a system wallpaper.** `ACTION_SET_WALLPAPER`, as before. Glass stays a tint.
@@ -48,6 +48,8 @@ system wallpaper shows through as before.
 - **First use.** `GlassBackgroundRow` (all five background pickers: dock, apps list, calendar, media row, native widgets) applies the chosen style and, for any style but Off, shows a sheet when `GlassBackgroundPromptViewModel.needsCopy` (no usable copy, not dismissed): *Choose an image* (opens the wallpaper screen) or a remembered *Not now* (`wallpaper_prompt_dismissed`). The state reaches the rows through `LocalGlassBackgroundPrompt`, provided by `FacetNavHost`; without it (previews, tests) there is no prompt.
 - **After Android's picker.** *Set a system wallpaper* records the wallpaper id first. Coming back with a different id and no matching copy, `WallpaperViewModel` shows an offer card (*Choose an image* / *Not now*, the same remembered flag). Facet cannot read the new wallpaper, so the offer asks for the same image.
 
+- **Use my current wallpaper.** A link on the wallpaper screen (shown with no copy or a stale one) opens a dialog: *Take screenshot* opens `WallpaperCaptureScreen` (route `wallpaperCapture`) and *I have an image already* opens the gallery. The capture screen has no background of its own, so the window's wallpaper shows through, and it hides the system bars; a card with three numbered steps (key actions in bold, including tapping Power + Volume down and not holding them, which opens the shutdown menu) stays until *Take screenshot* is tapped (no timer), which clears it so the screenshot is clean; a tap on the empty screen brings it back. The card also has *Choose screenshot* and *Return*. Choose pops back to the wallpaper screen (*Return* and Back do too, without the picker) and sets `wallpaper_pick_screenshot` on its saved state, which opens the picker. The fit step has no Home/Lock choice, and `UseScreenshotAsWallpaperCopyUseCase` stores the framed part and records the current system id. The system wallpaper is not set.
+
 ## Previews
 
 `WallpaperRepository.currentHomeWallpaper()`, the one source of every preview's background (facet carousel cards, the Appearance, dock, list, drawer and notification previews), returns the saved copy first when it still matches the system wallpaper, then falls back to what Android lets it read.
@@ -58,11 +60,10 @@ An icon's glass background samples the copy only inside live Home (`LocalIconGla
 
 ## Not built yet
 
-- The *Use my current wallpaper* (screenshot) path.
 - Icon glass on API 33+ uses the lens only when the icon shape is corner-based; other shapes get blur and fill only.
 - A stale copy (system wallpaper changed since it was stored) is not drawn: `WallpaperBackdropViewModel` re-reads the system id on every resume and exposes no copy, so glass is the tint until the user picks again.
 
 ## Tests
 
-`WallpaperCopyRepositoryTest`, `SetWallpaperFromPhotoUseCaseTest`, `WallpaperViewModelTest`, `WallpaperBackdropViewModelTest`, `GlassBackgroundPromptViewModelTest`, `WallpaperFitTest` (JVM);
-`WallpaperScreenTest`, `GlassBackgroundRowTest` (emulator). `ImageDecoder` and the blur and lens effects are not covered on the JVM; they were checked on the API 36 emulator.
+`WallpaperCopyRepositoryTest`, `SetWallpaperFromPhotoUseCaseTest`, `WallpaperViewModelTest`, `WallpaperBackdropViewModelTest`, `GlassBackgroundPromptViewModelTest`, `UseScreenshotAsWallpaperCopyUseCaseTest`, `WallpaperFitTest` (JVM);
+`WallpaperScreenTest`, `WallpaperCaptureScreenTest`, `GlassBackgroundRowTest` (emulator). `ImageDecoder` and the blur and lens effects are not covered on the JVM; they were checked on the API 36 emulator.
