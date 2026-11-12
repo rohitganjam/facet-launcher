@@ -1136,7 +1136,7 @@
     </plurals>
     <string name="dock_background">Dock-Hintergrund</string>
     <string name="list_item_background">Hintergrund der Listeneinträge</string>
-    <string name="calendar_background">Kalenderhintergrund</string>
+    <string name="clock_background">Hintergrund</string>
     <string name="media_player_background">Hintergrund des Medienplayers</string>
     <string name="glass_style_off">Aus</string>
     <string name="glass_style_frost">Helles Milchglas</string>

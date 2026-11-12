@@ -16,12 +16,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
-import com.kyant.backdrop.backdrops.LayerBackdrop
+import com.kyant.backdrop.Backdrop
 import com.kyant.backdrop.backdrops.layerBackdrop
 import com.kyant.backdrop.backdrops.rememberLayerBackdrop
 
 /** The wallpaper copy glass panels sample, or `null` when there is none (they then draw their plain tint). */
-val LocalWallpaperBackdrop = staticCompositionLocalOf<LayerBackdrop?> { null }
+val LocalWallpaperBackdrop = staticCompositionLocalOf<Backdrop?> { null }
 
 /**
  * A flat colour a screen draws over the wallpaper (the Hub's dim), which glass panels on it add to what they blur so the blur matches what the

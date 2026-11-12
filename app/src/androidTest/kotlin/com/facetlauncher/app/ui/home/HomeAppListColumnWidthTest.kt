@@ -29,14 +29,14 @@ class HomeAppListColumnWidthTest {
 
     private fun app(index: Int, label: String) = PlacedItem.SingleApp(AppInfo(packageName = "com.example.app$index", activityName = ".Main", label = label, icon = null))
 
-    private fun setList(items: List<PlacedItem.SingleApp>) {
+    private fun setList(items: List<PlacedItem.SingleApp>, position: AppRowPosition = AppRowPosition.LEFT) {
         composeRule.setContent {
             FacetLauncherTheme {
                 Box(Modifier.width(listWidth)) {
                     HomeAppListColumn(
                         content = HomeAppListContent(items, HomeItemStyle(labelColor = Color.White)),
                         actions = HomeItemActions(onAppClick = {}),
-                        position = AppRowPosition.LEFT,
+                        position = position,
                         appRowPresentation = AppRowPresentation.ICON_AND_TEXT,
                         verticalPadding = 8.dp,
                         iconSize = 48.dp,
@@ -71,6 +71,18 @@ class HomeAppListColumnWidthTest {
         val widths = items.map { widthOf(it).value }
         assertTrue("rows differ: $widths", widths.all { kotlin.math.abs(it - widths.first()) < 1f })
         assertTrue("not wider than half: $widths", widths.first() > 200f)
+        assertTrue("past the list: $widths", widths.first() <= listWidth.value + 1f)
+    }
+
+    @Test
+    fun `centred rows are measured for their natural width without crashing`() {
+        // Given a centred list, whose rows are asked how wide they would like to be
+        val items = listOf(app(1, "Mail"), app(2, "A really long application name that needs more room than half"))
+        setList(items, AppRowPosition.CENTER)
+
+        // Then every row still shares one width within the list
+        val widths = items.map { widthOf(it).value }
+        assertTrue("rows differ: $widths", widths.all { kotlin.math.abs(it - widths.first()) < 1f })
         assertTrue("past the list: $widths", widths.first() <= listWidth.value + 1f)
     }
 }

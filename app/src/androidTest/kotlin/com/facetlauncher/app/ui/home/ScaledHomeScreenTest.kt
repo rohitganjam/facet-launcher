@@ -22,6 +22,7 @@ import com.facetlauncher.app.data.model.AppListVerticalAlignment
 import com.facetlauncher.app.data.model.AppRowPosition
 import com.facetlauncher.app.data.model.AppRowPresentation
 import com.facetlauncher.app.data.model.ClockAlignment
+import com.facetlauncher.app.data.model.GlassStyle
 import com.facetlauncher.app.data.model.HomeWallpaper
 import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.data.model.PlacedItem
@@ -53,17 +54,17 @@ class ScaledHomeScreenTest {
     )
 
     /** A preview at half the window's size, in the window's own configuration unless [configuration] replaces it. */
-    private fun setContent(configuration: Configuration? = null, onClick: (() -> Unit)? = null, clockShowsWeather: Boolean = false, settings: () -> LauncherSettings) {
+    private fun setContent(configuration: Configuration? = null, onClick: (() -> Unit)? = null, clockShowsWeather: Boolean = false, clockGlass: GlassStyle = GlassStyle.OFF, wallpaper: HomeWallpaper = HomeWallpaper.Unavailable, settings: () -> LauncherSettings) {
         composeRule.setContent {
             FacetLauncherTheme {
                 val config = configuration ?: LocalConfiguration.current
                 CompositionLocalProvider(LocalConfiguration provides config, LocalAllowLandscape provides (configuration != null)) {
                     val current = settings()
                     ScaledHomeScreen(
-                        style = resolveFacetStyle(null, current).let { it.copy(clock = it.clock.copy(showWeather = clockShowsWeather)) },
+                        style = resolveFacetStyle(null, current).let { it.copy(clock = it.clock.copy(showWeather = clockShowsWeather, glass = clockGlass)) },
                         settings = current,
                         content = HomeScreenContent(listItems = listOf(app), dockItems = emptyList(), calendarEvents = emptyList()),
-                        homeWallpaper = HomeWallpaper.Unavailable,
+                        homeWallpaper = wallpaper,
                         tagPrefix = "test_preview_",
                         onClick = onClick,
                         modifier = Modifier.size((config.screenWidthDp / 2).dp, (config.screenHeightDp / 2).dp).testTag("preview_card"),
@@ -168,5 +169,24 @@ class ScaledHomeScreenTest {
         composeRule.onNodeWithTag("preview_card").performClick()
 
         assertEquals(1, clicks)
+    }
+
+    @Test
+    fun theClockBackgroundShowsInThePreview() {
+        // Given a clock with a background, previewed over no wallpaper at all
+        setContent(clockGlass = GlassStyle.FROST) { settings() }
+
+        // Then the preview draws the one panel behind the clock
+        composeRule.onNodeWithTag("clock_glass_panel", useUnmergedTree = true).assertExists()
+    }
+
+    @Test
+    fun aPreviewOverASavedWallpaperDrawsGlassWithoutCrashing() {
+        // Given a clock background and a saved wallpaper copy to blur
+        val copy = android.graphics.Bitmap.createBitmap(40, 80, android.graphics.Bitmap.Config.ARGB_8888)
+        setContent(clockGlass = GlassStyle.DARK_GLASS, wallpaper = HomeWallpaper.Image(copy)) { settings() }
+
+        // Then the preview still draws the panel
+        composeRule.onNodeWithTag("clock_glass_panel", useUnmergedTree = true).assertExists()
     }
 }

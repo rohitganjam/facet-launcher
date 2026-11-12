@@ -33,16 +33,29 @@ class NativeWidgetConfigTest {
     }
 
     @Test
-    fun `a clock's calendar glass round trips and defaults off`() {
-        // Given a clock whose calendar has a glass style
-        val clock = ClockWidgetConfig(calendar = ClockCalendarConfig(glass = GlassStyle.ACCENT))
+    fun `a clock's background round trips and defaults off`() {
+        // Given a clock with a background shared by its time and events
+        val clock = ClockWidgetConfig(glass = GlassStyle.ACCENT)
 
         // When encoded and decoded
         val decoded = decodeNativeWidgetConfig(NativeWidgetConfig(clock = clock).encode())
 
-        // Then glass is kept, and a stored clock without the field reads as off
-        assertEquals(GlassStyle.ACCENT, decoded.clock?.calendar?.glass)
-        assertEquals(GlassStyle.OFF, decodeNativeWidgetConfig(NativeWidgetConfig(clock = ClockWidgetConfig()).encode()).clock?.calendar?.glass)
+        // Then it is kept, and a clock that chose none reads as off
+        assertEquals(GlassStyle.ACCENT, decoded.clock?.glass)
+        assertEquals(GlassStyle.OFF, decodeNativeWidgetConfig(NativeWidgetConfig(clock = ClockWidgetConfig()).encode()).clock?.glass)
+    }
+
+    @Test
+    fun `a background stored on the calendar becomes the clock's, unless the clock has its own`() {
+        // Given a clock stored the old way, with a background on its events only
+        val old = decodeNativeWidgetConfig("{\"clock\":{\"calendarGlass\":\"DARK_FROST\"}}")
+
+        // Then it is the clock's background now
+        assertEquals(GlassStyle.DARK_FROST, old.clock?.glass)
+
+        // And a clock that already has its own keeps it
+        val both = decodeNativeWidgetConfig("{\"clock\":{\"glass\":\"BRIGHT\",\"calendarGlass\":\"DARK_FROST\"}}")
+        assertEquals(GlassStyle.BRIGHT, both.clock?.glass)
     }
 
     @Test

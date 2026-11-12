@@ -35,7 +35,7 @@ import com.facetlauncher.app.data.model.landscape
 import com.facetlauncher.app.data.model.AppListVerticalAlignment
 import com.facetlauncher.app.data.model.ClockAlignment
 import com.facetlauncher.app.data.model.DockDisplayMode
-import com.facetlauncher.app.ui.components.glassBackground
+import com.facetlauncher.app.ui.components.GlassPanel
 import com.facetlauncher.app.ui.home.HomeMenuMode
 import com.facetlauncher.app.ui.theme.launcherSystemBarInsets
 import kotlin.math.roundToInt
@@ -68,19 +68,25 @@ internal fun HomePortraitContent(frame: HomeFrame) {
         }
         Spacer(modifier = Modifier.height(16.dp))
         if (frame.state.dock.items.isNotEmpty()) {
-            Row(
+            GlassPanel(
+                style = frame.state.dock.glass,
+                shape = MaterialTheme.shapes.large,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = 12.dp, bottom = 4.dp)
-                    .then(if (frame.state.dock.glass != GlassStyle.OFF) Modifier.padding(horizontal = 12.dp) else Modifier)
-                    .glassBackground(frame.state.dock.glass, MaterialTheme.shapes.large, sampleWallpaper = true)
-                    // Even space inside the panel; text tiles already carry 14dp above and below.
-                    .then(if (frame.state.dock.glass == GlassStyle.OFF) Modifier else if (frame.state.dock.displayMode == DockDisplayMode.TEXT) Modifier.padding(horizontal = 10.dp) else Modifier.padding(12.dp))
-                    .testTag(homeTag("home_dock_row")),
-                // Inside a glass panel the outer icons sit the same distance from its edge as from its top and bottom.
-                horizontalArrangement = if (frame.state.dock.glass != GlassStyle.OFF) Arrangement.SpaceBetween else Arrangement.SpaceEvenly,
+                    .then(if (frame.state.dock.glass != GlassStyle.OFF) Modifier.padding(horizontal = 12.dp) else Modifier),
             ) {
-                HomeDockItems(frame, frame.state.dock.displayMode)
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        // Even space inside the panel; text tiles already carry 14dp above and below.
+                        .then(if (frame.state.dock.glass == GlassStyle.OFF) Modifier else if (frame.state.dock.displayMode == DockDisplayMode.TEXT) Modifier.padding(horizontal = 10.dp) else Modifier.padding(12.dp))
+                        .testTag(homeTag("home_dock_row")),
+                    // Inside a glass panel the outer icons sit the same distance from its edge as from its top and bottom.
+                    horizontalArrangement = if (frame.state.dock.glass != GlassStyle.OFF) Arrangement.SpaceBetween else Arrangement.SpaceEvenly,
+                ) {
+                    HomeDockItems(frame, frame.state.dock.displayMode)
+                }
             }
         }
     }

@@ -4,6 +4,7 @@ import androidx.lifecycle.SavedStateHandle
 import com.facetlauncher.app.data.ClockStackRepository
 import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.SettingsRepository
+import com.facetlauncher.app.data.model.GlassStyle
 import com.facetlauncher.app.data.model.ClockColorOption
 import com.facetlauncher.app.data.model.ClockDateStyle
 import com.facetlauncher.app.data.model.ClockFontOption
@@ -96,6 +97,7 @@ class ClockStyleGalleryViewModelTest {
     @Test
     fun `changing the date style stores it on the clock`() = runTest {
         assertStored(ClockWidgetConfig(dateStyle = ClockDateStyle.CONDENSED)) { setClockDateStyle(ClockDateStyle.CONDENSED) }
+        assertStored(ClockWidgetConfig(glass = GlassStyle.CLEAR_GLASS)) { setClockGlass(GlassStyle.CLEAR_GLASS) }
     }
 
     @Test

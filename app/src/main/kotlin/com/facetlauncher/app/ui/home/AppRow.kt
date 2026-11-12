@@ -27,6 +27,7 @@ import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.onClick
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.facetlauncher.app.data.model.AppInfo
@@ -184,12 +185,13 @@ internal fun CenteredWithBadge(badge: @Composable () -> Unit, modifier: Modifier
         val badgePlaceable = measurables.getOrNull(1)?.measure(constraints.copy(minWidth = 0))
         val badgeSpace = badgePlaceable?.let { it.width + gap } ?: 0
         // Reserve the badge's room on both sides so a long label stays centered and the badge still fits.
-        val contentPlaceable = measurables[0].measure(
-            constraints.copy(minWidth = 0, maxWidth = (constraints.maxWidth - 2 * badgeSpace).coerceAtLeast(0)),
-        )
+        // An unbounded width (a parent asking for the natural width) has no centre to hold: the row is then as wide as the content and its badge room.
+        val contentMax = if (constraints.hasBoundedWidth) (constraints.maxWidth - 2 * badgeSpace).coerceAtLeast(0) else Constraints.Infinity
+        val contentPlaceable = measurables[0].measure(constraints.copy(minWidth = 0, maxWidth = contentMax))
         val height = maxOf(contentPlaceable.height, badgePlaceable?.height ?: 0)
-        layout(constraints.maxWidth, height) {
-            val contentX = (constraints.maxWidth - contentPlaceable.width) / 2
+        val width = if (constraints.hasBoundedWidth) constraints.maxWidth else contentPlaceable.width + 2 * badgeSpace
+        layout(width, height) {
+            val contentX = (width - contentPlaceable.width) / 2
             contentPlaceable.placeRelative(contentX, (height - contentPlaceable.height) / 2)
             badgePlaceable?.placeRelative(contentX + contentPlaceable.width + gap, (height - badgePlaceable.height) / 2)
         }

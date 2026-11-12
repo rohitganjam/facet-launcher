@@ -45,14 +45,12 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.facetlauncher.app.R
-import com.facetlauncher.app.data.model.GlassStyle
 import com.facetlauncher.app.data.model.CalendarDisplayOptions
 import com.facetlauncher.app.data.model.CalendarInfo
 import com.facetlauncher.app.ui.components.calendarSubtitle
 import com.facetlauncher.app.ui.components.calendarTitle
 import com.facetlauncher.app.ui.components.workCalendarPosition
 import com.facetlauncher.app.ui.components.CardDivider
-import com.facetlauncher.app.ui.components.GlassBackgroundRow
 import com.facetlauncher.app.ui.components.LabeledDropdownRow
 import com.facetlauncher.app.ui.components.dashedBorder
 import com.facetlauncher.app.ui.components.LocalSettingsRowInset
@@ -100,7 +98,6 @@ fun CalendarSettingsSheet(
             uiState = uiState,
             onShowAllDayEventsChange = viewModel::setShowAllDayEvents,
             onShowCalendarIndicatorChange = viewModel::setShowCalendarIndicator,
-            onGlassChange = viewModel::setCalendarGlass,
             onItemsToShowChange = viewModel::setCalendarItemsToShow,
             onTurnOnClick = { requestPermission.launch(Manifest.permission.READ_CALENDAR) },
             onCalendarToggle = viewModel::setCalendarSelected,
@@ -114,7 +111,6 @@ private fun CalendarSettingsContent(
     uiState: CalendarSettingsUiState,
     onShowAllDayEventsChange: (Boolean) -> Unit,
     onShowCalendarIndicatorChange: (Boolean) -> Unit,
-    onGlassChange: (GlassStyle) -> Unit,
     onItemsToShowChange: (Int) -> Unit,
     onTurnOnClick: () -> Unit,
     onCalendarToggle: (String, Boolean) -> Unit,
@@ -136,7 +132,7 @@ private fun CalendarSettingsContent(
                 modifier = Modifier.padding(bottom = 16.dp),
             )
         }
-        item { DisplayOptionsCard(uiState, true, onShowAllDayEventsChange, onShowCalendarIndicatorChange, onGlassChange, onItemsToShowChange) }
+        item { DisplayOptionsCard(uiState, true, onShowAllDayEventsChange, onShowCalendarIndicatorChange, onItemsToShowChange) }
         item { Spacer(modifier = Modifier.height(16.dp)) }
         item { CalendarsCard(uiState, onSelectAllCalendarsChange, onCalendarToggle, onTurnOnClick) }
     }
@@ -149,7 +145,6 @@ private fun DisplayOptionsCard(
     controlsEnabled: Boolean,
     onShowAllDayEventsChange: (Boolean) -> Unit,
     onShowCalendarIndicatorChange: (Boolean) -> Unit,
-    onGlassChange: (GlassStyle) -> Unit,
     onItemsToShowChange: (Int) -> Unit,
 ) {
     SettingsCard {
@@ -186,14 +181,6 @@ private fun DisplayOptionsCard(
                 modifier = Modifier.testTag("show_calendar_indicator_toggle"),
             )
         }
-        CardDivider()
-        GlassBackgroundRow(
-            title = stringResource(R.string.calendar_background),
-            selected = uiState.calendarDisplay.glass,
-            onSelect = onGlassChange,
-            enabled = controlsEnabled,
-            testTag = "calendar_glass_row",
-        )
         CardDivider()
         LabeledDropdownRow(
             title = stringResource(R.string.calendar_settings_items_to_display),
@@ -329,7 +316,6 @@ private fun CalendarSettingsContentPreview() {
             uiState = CalendarSettingsUiState(),
             onShowAllDayEventsChange = {},
             onShowCalendarIndicatorChange = {},
-            onGlassChange = {},
             onItemsToShowChange = {},
             onTurnOnClick = {},
             onCalendarToggle = { _, _ -> },

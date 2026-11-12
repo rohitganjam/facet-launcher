@@ -118,6 +118,7 @@ fun ResolvedFacetStyle.toHomeScreenState(
         accentColorOption = clock.accentColorOption,
         showMeridiem = clock.showMeridiem,
         dateStyle = clock.dateStyle,
+        glass = clock.glass,
         launcherFontOption = settings.launcherFontOption,
         placement = clockPlacement.of(landscape).withPageAlignment(shownClockPages(live).let { it.getOrNull(it.visibleIndex(live.visibleClockItemId)) }, landscape),
         placementFacetId = live.placementFacetId,

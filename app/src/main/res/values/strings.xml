@@ -1225,7 +1225,7 @@
     </plurals>
     <string name="dock_background">Dock background</string>
     <string name="list_item_background">List item background</string>
-    <string name="calendar_background">Calendar background</string>
+    <string name="clock_background">Background</string>
     <string name="media_player_background">Media player background</string>
     <string name="glass_style_off">Off</string>
     <string name="glass_style_frost">Light frost</string>

@@ -1,5 +1,16 @@
 package com.facetlauncher.app.ui.home
 
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.foundation.layout.BoxScope
+import com.kyant.backdrop.backdrops.rememberLayerBackdrop
+import com.kyant.backdrop.backdrops.layerBackdrop
+import com.facetlauncher.app.ui.components.LocalWallpaperBackdrop
+import com.facetlauncher.app.ui.components.LocalIconGlassSamplesWallpaper
+import com.facetlauncher.app.ui.components.LocalBackdropTint
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.foundation.Image
+import android.os.Build
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
@@ -73,8 +84,9 @@ internal fun ScaledHomeScreen(
         )
     }
 
+    val copy = remember(homeWallpaper) { (homeWallpaper as? HomeWallpaper.Image)?.takeIf { Build.VERSION.SDK_INT >= PREVIEW_BACKDROP_MIN_SDK }?.bitmap?.asImageBitmap() }
     BoxWithConstraints(modifier = modifier) {
-        WallpaperBackground(homeWallpaper, Modifier.matchParentSize())
+        if (copy == null) WallpaperBackground(homeWallpaper, Modifier.matchParentSize())
         val scale = minOf(maxWidth / windowWidth, maxHeight / windowHeight)
         Box(modifier = Modifier.fillMaxSize()) {
             Box(
@@ -87,7 +99,7 @@ internal fun ScaledHomeScreen(
                         transformOrigin = TransformOrigin(0f, 0f)
                     },
             ) {
-                CompositionLocalProvider(LocalHomeTagPrefix provides tagPrefix) {
+                PreviewGlassScope(copy, tagPrefix) {
                     HomeScreen(state = state, actions = actions, layoutMode = mode, landscapeSpace = space)
                 }
             }
@@ -127,3 +139,24 @@ private fun previewMediaPlayer(): MediaPlayerState {
         )
     }
 }
+
+/**
+ * What a preview's [content] draws glass against: the preview's own saved wallpaper, laid out at the window's size so it lines up under the
+ * shrink; with no copy to sample the glass is the plain tint, never the activity's layer, which sits in another place and scale.
+ */
+@Composable
+private fun BoxScope.PreviewGlassScope(copy: ImageBitmap?, tagPrefix: String, content: @Composable () -> Unit) {
+    val backdrop = rememberLayerBackdrop()
+    if (copy != null) {
+        Image(bitmap = copy, contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.matchParentSize().layerBackdrop(backdrop))
+    }
+    CompositionLocalProvider(
+        LocalHomeTagPrefix provides tagPrefix,
+        LocalWallpaperBackdrop provides backdrop.takeIf { copy != null },
+        LocalIconGlassSamplesWallpaper provides (copy != null),
+        LocalBackdropTint provides null,
+    ) { content() }
+}
+
+/** Blur needs RenderEffect, which starts at API 31; below that a preview's glass stays the tint. */
+private const val PREVIEW_BACKDROP_MIN_SDK = Build.VERSION_CODES.S

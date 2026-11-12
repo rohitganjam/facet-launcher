@@ -202,6 +202,8 @@ private fun ClockPage(frame: HomeFrame, page: ClockPageSpec, scaleOriginY: Float
     }
 }
 
+// A long list of what the clock block takes, one line each.
+@Suppress("LongMethod")
 @Composable
 private fun ClockPageContent(frame: HomeFrame, page: ClockPageSpec, scaleOriginY: Float, scaledFootprint: Boolean) {
     val state = frame.state
@@ -231,6 +233,7 @@ private fun ClockPageContent(frame: HomeFrame, page: ClockPageSpec, scaleOriginY
         accentColorOption = clock.accentColorOption,
         showMeridiem = clock.showMeridiem,
         dateStyle = clock.dateStyle,
+        glass = clock.glass,
         clockAlignment = page.alignment,
         clockScale = frame.geometry.effectiveScale,
         clockScaleOriginY = scaleOriginY,

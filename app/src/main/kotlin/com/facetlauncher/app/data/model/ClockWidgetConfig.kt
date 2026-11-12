@@ -19,6 +19,8 @@ data class ClockWidgetConfig(
     /** Where this clock shows the weather for; `null` follows Weather settings. */
     val weatherLocation: WidgetWeatherLocation? = null,
     val calendar: ClockCalendarConfig = ClockCalendarConfig(),
+    /** The one panel behind the clock and its events together; [GlassStyle.OFF] draws none. */
+    val glass: GlassStyle = GlassStyle.OFF,
 )
 
 /** The events under a clock: [calendarIds] `null` is "all calendars" (see [selectsCalendar]), so a calendar added later shows too. */
@@ -27,8 +29,6 @@ data class ClockCalendarConfig(
     val itemsToShow: Int = CalendarDisplayOptions.MAX_ITEMS,
     val showAllDay: Boolean = true,
     val calendarIds: Set<String>? = null,
-    /** The frosted-glass panel behind the events. */
-    val glass: GlassStyle = GlassStyle.OFF,
 )
 
 /** The settings stored on this facet's clock page, or `null` when it has none (yet) or no clock. */

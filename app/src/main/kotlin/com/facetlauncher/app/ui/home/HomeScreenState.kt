@@ -62,6 +62,8 @@ data class HomeClockState(
     val accentColorOption: ClockColorOption = ClockColorOption.ACCENT_PRIMARY,
     val showMeridiem: Boolean = false,
     val dateStyle: ClockDateStyle = ClockDateStyle.FULL,
+    /** The one panel behind the clock and its events. */
+    val glass: GlassStyle = GlassStyle.OFF,
     val launcherFontOption: LauncherFontOption = LauncherFontOption.SYSTEM,
     val placement: ClockPlacement = ClockPlacement(ClockAlignment.LEFT, zoneHeightDp = null, scale = 0.8f),
     /** The facet whose clock override governs the placement now (`null`: the launcher-wide default), and its name for the menu badge. */

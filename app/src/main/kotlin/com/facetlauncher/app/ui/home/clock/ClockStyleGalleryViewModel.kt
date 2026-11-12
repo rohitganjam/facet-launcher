@@ -16,6 +16,7 @@ import com.facetlauncher.app.data.model.ClockColorOption
 import com.facetlauncher.app.data.model.ClockDateStyle
 import com.facetlauncher.app.data.model.ClockFontOption
 import com.facetlauncher.app.data.model.ClockTemplateId
+import com.facetlauncher.app.data.model.GlassStyle
 import com.facetlauncher.app.data.model.LauncherFontOption
 import com.facetlauncher.app.data.model.NO_ACTIVE_FACET_ID
 import com.facetlauncher.app.data.model.WeatherIconStyle
@@ -43,6 +44,8 @@ data class ClockStyleGalleryUiState(
     val use24HourTime: Boolean get() = clock.use24HourTime
     val showMeridiem: Boolean get() = clock.showMeridiem
     val dateStyle: ClockDateStyle get() = clock.dateStyle
+    /** The one panel behind the clock and its events. */
+    val glass: GlassStyle get() = clock.glass
     val showWeather: Boolean get() = clock.showWeather
     val weatherIconStyle: WeatherIconStyle get() = clock.weatherIconStyle
     /** Home clock's horizontal placement, in the same Clock+Calendar design bundle as [templateId]; it also positions the calendar events strip. */
@@ -87,6 +90,8 @@ class ClockStyleGalleryViewModel @Inject constructor(
     fun setClockShowMeridiem(enabled: Boolean) = change { it.copy(showMeridiem = enabled) }
 
     fun setClockDateStyle(dateStyle: ClockDateStyle) = change { it.copy(dateStyle = dateStyle) }
+
+    fun setClockGlass(glass: GlassStyle) = change { it.copy(glass = glass) }
 
     /**
      * "Reset clock position": this facet stops owning its placement and goes back to the launcher's fallback (zone

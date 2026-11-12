@@ -9,7 +9,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.BoxWithConstraints
 import kotlinx.coroutines.delay
 import com.facetlauncher.app.ui.components.longPressReorderClickable
-import com.facetlauncher.app.ui.components.glassBackground
+import com.facetlauncher.app.ui.components.GlassPanel
 import com.facetlauncher.app.ui.components.gridCellBounds
 import com.facetlauncher.app.ui.components.LocalGridDrag
 import com.facetlauncher.app.ui.components.GridDragState
@@ -41,6 +41,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -184,32 +185,34 @@ internal fun HomeAppListColumn(
             onReorder = { onReorder?.invoke(it) },
         ) { shown ->
         shown.forEach { item -> key(item.stableKey()) {
-            val rowModifier = Modifier.testTag("home_app_row_${item.stableKey()}").fillMaxWidth().then(if (cellIndexOf != null) Modifier.gridCellBounds(cellIndexOf(item)) else Modifier)
+            val panelModifier = Modifier.testTag("home_app_row_${item.stableKey()}").fillMaxWidth().then(if (cellIndexOf != null) Modifier.gridCellBounds(cellIndexOf(item)) else Modifier)
                 .then(if (content.glass != GlassStyle.OFF) Modifier.padding(vertical = 2.dp) else Modifier)
-                .glassBackground(content.glass, sampleWallpaper = true)
-                // The row's own 8dp side padding plus this equals its vertical padding, so the content sits evenly inside the panel.
+            // The row's own 8dp side padding plus this equals its vertical padding, so the content sits evenly inside the panel.
+            val rowModifier = Modifier.fillMaxWidth()
                 .then(if (content.glass != GlassStyle.OFF) Modifier.padding(horizontal = (verticalPadding - 8.dp).coerceAtLeast(0.dp)) else Modifier)
-            when (item) {
-                is PlacedItem.SingleApp -> AppRow(
-                    app = item.app,
-                    actions = actions,
-                    style = content.style,
-                    modifier = rowModifier,
-                    position = position,
-                    presentation = appRowPresentation,
-                    verticalPadding = verticalPadding,
-                    iconSize = iconSize,
-                )
-                is PlacedItem.FolderItem -> FolderRow(
-                    folder = item.folder,
-                    actions = actions,
-                    style = content.style,
-                    modifier = rowModifier,
-                    position = position,
-                    presentation = appRowPresentation,
-                    verticalPadding = verticalPadding,
-                    iconSize = iconSize,
-                )
+            GlassPanel(content.glass, MaterialTheme.shapes.medium, panelModifier) {
+                when (item) {
+                    is PlacedItem.SingleApp -> AppRow(
+                        app = item.app,
+                        actions = actions,
+                        style = content.style,
+                        modifier = rowModifier,
+                        position = position,
+                        presentation = appRowPresentation,
+                        verticalPadding = verticalPadding,
+                        iconSize = iconSize,
+                    )
+                    is PlacedItem.FolderItem -> FolderRow(
+                        folder = item.folder,
+                        actions = actions,
+                        style = content.style,
+                        modifier = rowModifier,
+                        position = position,
+                        presentation = appRowPresentation,
+                        verticalPadding = verticalPadding,
+                        iconSize = iconSize,
+                    )
+                }
             }
         } }
         }
@@ -299,10 +302,13 @@ internal fun HomeAppGrid(
                     val cell = cellAtIndex(index, width)
                     val item = keyAtCell[cell]?.let(itemByKey::get)
                     val tileModifier = Modifier.height(cellHeight).gridCellBounds(index)
-                    val glassTile = if (item != null) tileModifier.glassBackground(content.glass, sampleWallpaper = true) else tileModifier
                     when (item) {
-                        is PlacedItem.SingleApp -> HomeAppGridTile(item.app, displayMode, actions, content.style, glassTile, item.gridKey())
-                        is PlacedItem.FolderItem -> HomeFolderGridTile(item.folder, displayMode, actions, content.style, glassTile, item.gridKey())
+                        is PlacedItem.SingleApp -> GlassPanel(content.glass, MaterialTheme.shapes.medium, tileModifier) {
+                            HomeAppGridTile(item.app, displayMode, actions, content.style, Modifier.fillMaxSize(), item.gridKey())
+                        }
+                        is PlacedItem.FolderItem -> GlassPanel(content.glass, MaterialTheme.shapes.medium, tileModifier) {
+                            HomeFolderGridTile(item.folder, displayMode, actions, content.style, Modifier.fillMaxSize(), item.gridKey())
+                        }
                         null -> GridEmptyCell(guide = drag.liftedKey != null, isTarget = drag.targetIndex == index, modifier = tileModifier)
                     }
                 }

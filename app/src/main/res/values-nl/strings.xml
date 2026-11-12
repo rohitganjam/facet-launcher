@@ -1078,7 +1078,7 @@
     </plurals>
     <string name="dock_background">Dock-achtergrond</string>
     <string name="list_item_background">Achtergrond van lijstitems</string>
-    <string name="calendar_background">Agenda-achtergrond</string>
+    <string name="clock_background">Achtergrond</string>
     <string name="media_player_background">Achtergrond van mediaspeler</string>
     <string name="glass_style_off">Uit</string>
     <string name="glass_style_frost">Lichte vorst</string>

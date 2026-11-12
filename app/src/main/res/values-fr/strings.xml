@@ -1148,7 +1148,7 @@
     </plurals>
     <string name="dock_background">Arrière-plan du dock</string>
     <string name="list_item_background">Arrière-plan des éléments de la liste</string>
-    <string name="calendar_background">Arrière-plan du calendrier</string>
+    <string name="clock_background">Arrière-plan</string>
     <string name="media_player_background">Arrière-plan du lecteur</string>
     <string name="glass_style_off">Désactivé</string>
     <string name="glass_style_frost">Givre clair</string>

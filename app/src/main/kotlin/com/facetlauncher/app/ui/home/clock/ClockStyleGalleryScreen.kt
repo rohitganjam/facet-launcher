@@ -60,9 +60,11 @@ import com.facetlauncher.app.data.model.ClockColorOption
 import com.facetlauncher.app.data.model.ClockDateStyle
 import com.facetlauncher.app.data.model.ClockFontOption
 import com.facetlauncher.app.data.model.ClockTemplateId
+import com.facetlauncher.app.data.model.GlassStyle
 import com.facetlauncher.app.data.model.LauncherFontOption
 import com.facetlauncher.app.ui.components.BackButton
 import com.facetlauncher.app.ui.components.CardDivider
+import com.facetlauncher.app.ui.components.GlassBackgroundRow
 import com.facetlauncher.app.ui.components.LabeledDropdownRow
 import com.facetlauncher.app.ui.components.LocalSettingsRowInset
 import com.facetlauncher.app.ui.components.SettingsCard
@@ -107,6 +109,7 @@ fun ClockStyleGalleryRoute(
             onUse24HourTimeChange = viewModel::setUse24HourTime,
             onShowMeridiemChange = viewModel::setClockShowMeridiem,
             onDateStyleChange = viewModel::setClockDateStyle,
+            onGlassChange = viewModel::setClockGlass,
             onResetClockPosition = viewModel::resetClockPosition,
             onOpenClockAccessories = onOpenClockAccessories,
         ),
@@ -123,6 +126,7 @@ internal class ClockStyleGalleryActions(
     val onUse24HourTimeChange: (Boolean) -> Unit = {},
     val onShowMeridiemChange: (Boolean) -> Unit = {},
     val onDateStyleChange: (ClockDateStyle) -> Unit = {},
+    val onGlassChange: (GlassStyle) -> Unit = {},
     val onResetClockPosition: () -> Unit = {},
     val onOpenClockAccessories: () -> Unit = {},
 )
@@ -242,6 +246,15 @@ private fun ClockStyleCard(uiState: ClockStyleGalleryUiState, controlsEnabled: B
             onSelect = actions.onDateStyleChange,
             enabled = controlsEnabled,
             testTag = "clock_date_style_row",
+        )
+        CardDivider()
+        GlassBackgroundRow(
+            title = stringResource(R.string.clock_background),
+            selected = uiState.glass,
+            onSelect = actions.onGlassChange,
+            enabled = controlsEnabled,
+            testTag = "clock_glass_row",
+            includeSolid = true,
         )
     }
 }

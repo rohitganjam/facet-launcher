@@ -93,8 +93,10 @@ class WallpaperViewModel @Inject constructor(
     fun refresh() {
         viewModelScope.launch {
             val systemWallpaper = wallpaperRepository.currentHomeWallpaper()
-            val offer = shouldOfferCopy(local.value.pickerBaseline)
-            local.update { it.copy(systemWallpaper = systemWallpaper, checks = it.checks + 1, pickerBaseline = null, offerCopy = it.offerCopy || offer) }
+            val checked = local.value.pickerBaseline
+            val offer = shouldOfferCopy(checked)
+            // Only the starting point just checked is used up: the picker may have opened again while this was in flight.
+            local.update { it.copy(systemWallpaper = systemWallpaper, checks = it.checks + 1, pickerBaseline = it.pickerBaseline.takeUnless { current -> current == checked }, offerCopy = it.offerCopy || offer) }
         }
     }
 

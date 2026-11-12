@@ -915,4 +915,40 @@ class ClockBlockTest {
         assertEquals(hour.top.value, minute.top.value, 1f)
         assertEquals(hour.bottom.value, minute.bottom.value, 1f)
     }
+
+    @Test
+    fun aBackgroundIsOnePanelAroundTheClockAndItsEventsThatHugsThem() {
+        // Given a clock with an upcoming event and a background, in a 400dp wide slot
+        val fixedClock = Clock.fixed(Instant.parse("2026-08-27T09:05:00Z"), ZoneOffset.UTC)
+        val event = CalendarEvent(
+            id = 1, calendarId = "1", title = "Team standup",
+            startTimeMillis = fixedClock.millis() + 3_600_000, endTimeMillis = fixedClock.millis() + 5_400_000, isAllDay = false,
+        )
+        composeRule.setContent {
+            FacetLauncherTheme {
+                androidx.compose.foundation.layout.Box(modifier = androidx.compose.ui.Modifier.width(400.dp)) {
+                    ClockBlock(clock = fixedClock, locale = Locale.US, glass = com.facetlauncher.app.data.model.GlassStyle.FROST, events = persistentListOf(event))
+                }
+            }
+        }
+        composeRule.waitForIdle()
+
+        // Then the clock and the events are both inside one panel, and the panel is narrower than the slot
+        val panel = composeRule.onNodeWithTag("clock_glass_panel").getUnclippedBoundsInRoot()
+        val time = composeRule.onNodeWithText("9:05").getUnclippedBoundsInRoot()
+        val events = composeRule.onNodeWithTag("clock_event_rows").getUnclippedBoundsInRoot()
+        assertTrue("time outside the panel", time.left >= panel.left && time.right <= panel.right && time.top >= panel.top)
+        assertTrue("events outside the panel", events.left >= panel.left && events.right <= panel.right && events.bottom <= panel.bottom)
+        assertTrue("panel fills the slot (${panel.dpRectWidth})", panel.dpRectWidth < 400.dp)
+    }
+
+    @Test
+    fun noBackgroundDrawsNoPanel() {
+        // Given a clock with no background
+        val fixedClock = Clock.fixed(Instant.parse("2026-08-27T09:05:00Z"), ZoneOffset.UTC)
+        composeRule.setContent { FacetLauncherTheme { ClockBlock(clock = fixedClock, locale = Locale.US) } }
+
+        // Then there is no panel
+        composeRule.onNodeWithTag("clock_glass_panel").assertDoesNotExist()
+    }
 }

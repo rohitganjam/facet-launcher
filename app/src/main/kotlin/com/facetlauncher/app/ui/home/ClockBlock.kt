@@ -1,5 +1,9 @@
 package com.facetlauncher.app.ui.home
 
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.foundation.layout.padding
+import com.facetlauncher.app.ui.components.GlassPanel
+import com.facetlauncher.app.data.model.GlassStyle
 import android.appwidget.AppWidgetHostView
 import android.content.Context
 import android.content.res.Configuration
@@ -15,11 +19,13 @@ import com.facetlauncher.app.ui.nativewidget.NativeWidget
 import com.facetlauncher.app.ui.nativewidget.longPressFallback
 import com.facetlauncher.app.ui.nativewidget.NativeWidgetPage
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.layout.Layout
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -57,6 +63,8 @@ import kotlinx.collections.immutable.persistentMapOf
  * original shipped look (Light stack, system font, Ink) so nothing changes for a fresh install
  * before any setting is ever touched.
  */
+// The clock and its events, with or without the shared panel: the parameter list is most of it.
+@Suppress("LongMethod")
 @Composable
 fun ClockBlock(
     modifier: Modifier = Modifier,
@@ -85,6 +93,8 @@ fun ClockBlock(
     accentColorOption: ClockColorOption = ClockColorOption.ACCENT_PRIMARY,
     showMeridiem: Boolean = false,
     dateStyle: ClockDateStyle = ClockDateStyle.FULL,
+    /** One panel behind the clock and its events together; the clock then sizes to what it draws, as in landscape. */
+    glass: GlassStyle = GlassStyle.OFF,
     events: ImmutableList<CalendarEvent> = persistentListOf(),
     calendarColors: ImmutableMap<String, String> = persistentMapOf(),
     calendarDisplay: CalendarDisplayOptions = CalendarDisplayOptions(),
@@ -147,14 +157,15 @@ fun ClockBlock(
     onClockWidgetNestedScrollStop: () -> Unit = {},
     onClockWidgetLeftoverFling: (velocityXPx: Float, velocityYPx: Float) -> Unit = { _, _ -> },
 ) {
-    Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+    // The panel is for the built-in clock only: a hosted or native widget page draws its own look.
+    val panelOn = glass != GlassStyle.OFF && clockWidgetAppWidgetId == null && nativeWidget == null
+    val clockBox: @Composable (Modifier) -> Unit = { alignModifier ->
         Box(
-            modifier = Modifier
-                .align(clockAlignment.resolve())
+            modifier = alignModifier
                 // Measure the clock at its natural width even when the column is narrower (a narrow
                 // landscape pane): otherwise the box size, which the resize maths relies on, is clamped.
                 .wrapContentWidth(align = clockAlignment.resolve(), unbounded = true)
-                .scaledFootprint(scaledFootprint && clockWidgetAppWidgetId == null, clockScale, clockScaleOriginY)
+                .scaledFootprint((scaledFootprint || panelOn) && clockWidgetAppWidgetId == null, clockScale, clockScaleOriginY)
                 .then(clockBoxModifier),
         ) {
             ClockOrWidgetContent(
@@ -193,6 +204,8 @@ fun ClockBlock(
                 clockContentModifier = clockContentModifier,
             )
         }
+    }
+    val eventsBlock: @Composable (Modifier) -> Unit = { alignModifier ->
         if (clockWidgetAppWidgetId == null) { // only the built-in clock carries the events list
             CalendarEventsBlock(
                 events = events, clock = clock, locale = locale,
@@ -203,8 +216,53 @@ fun ClockBlock(
                 alignment = clockAlignment,
                 display = calendarDisplay,
                 onEventClick = onEventClick,
-                modifier = Modifier.align(clockAlignment.resolve()).longPressFallback(onCalendarLongPress),
+                modifier = alignModifier.longPressFallback(onCalendarLongPress),
             )
+        }
+    }
+    if (panelOn) {
+        // The outer column keeps the block's full width; the panel hugs the wider of the clock and its events.
+        Column(modifier = modifier.fillMaxWidth()) {
+            GlassPanel(style = glass, shape = MaterialTheme.shapes.large, modifier = Modifier.align(clockAlignment.resolve()).testTag("clock_glass_panel")) {
+                HuggingColumn(alignment = clockAlignment, spacing = CLOCK_PANEL_GAP, modifier = Modifier.padding(CLOCK_PANEL_PADDING)) {
+                    clockBox(Modifier)
+                    eventsBlock(Modifier)
+                }
+            }
+        }
+    } else {
+        Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            clockBox(Modifier.align(clockAlignment.resolve()))
+            eventsBlock(Modifier.align(clockAlignment.resolve()))
+        }
+    }
+}
+
+private val CLOCK_PANEL_PADDING = 12.dp
+private val CLOCK_PANEL_GAP = 10.dp
+
+/**
+ * A column as wide as its widest child, each child placed by [alignment] inside that width: what a panel behind the clock and its events needs,
+ * since the events are aligned against the clock's width and not the screen's. Measured without intrinsics, which the clock's own layouts do not offer.
+ */
+@Composable
+private fun HuggingColumn(alignment: ClockAlignment, spacing: Dp, modifier: Modifier = Modifier, content: @Composable () -> Unit) {
+    Layout(content = content, modifier = modifier) { measurables, constraints ->
+        val gap = spacing.roundToPx()
+        val placeables = measurables.map { it.measure(constraints.copy(minWidth = 0, minHeight = 0)) }.filter { it.width > 0 || it.height > 0 }
+        val width = (placeables.maxOfOrNull { it.width } ?: 0).coerceIn(constraints.minWidth, constraints.maxWidth)
+        val height = placeables.sumOf { it.height } + gap * (placeables.size - 1).coerceAtLeast(0)
+        layout(width, height.coerceIn(constraints.minHeight, constraints.maxHeight)) {
+            var y = 0
+            placeables.forEach { placeable ->
+                val x = when (alignment) {
+                    ClockAlignment.LEFT -> 0
+                    ClockAlignment.CENTER -> (width - placeable.width) / 2
+                    ClockAlignment.RIGHT -> width - placeable.width
+                }
+                placeable.placeRelative(x, y)
+                y += placeable.height + gap
+            }
         }
     }
 }

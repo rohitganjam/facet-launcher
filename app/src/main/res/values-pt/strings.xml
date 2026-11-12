@@ -1148,7 +1148,7 @@
     </plurals>
     <string name="dock_background">Fundo do dock</string>
     <string name="list_item_background">Fundo dos itens da lista</string>
-    <string name="calendar_background">Fundo do calendário</string>
+    <string name="clock_background">Fundo</string>
     <string name="media_player_background">Fundo do reprodutor</string>
     <string name="glass_style_off">Desativado</string>
     <string name="glass_style_frost">Geada clara</string>

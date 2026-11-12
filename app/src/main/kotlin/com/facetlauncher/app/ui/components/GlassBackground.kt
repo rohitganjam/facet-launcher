@@ -8,6 +8,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.foundation.shape.CornerBasedShape
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.dp
@@ -15,7 +18,10 @@ import com.facetlauncher.app.data.model.GlassStyle
 import com.facetlauncher.app.ui.theme.Hairline
 import com.facetlauncher.app.ui.theme.Ink
 import com.facetlauncher.app.ui.theme.Surface
-import com.kyant.backdrop.backdrops.LayerBackdrop
+import com.kyant.backdrop.Backdrop
+import com.kyant.backdrop.backdrops.layerBackdrop
+import com.kyant.backdrop.backdrops.rememberCombinedBackdrop
+import com.kyant.backdrop.backdrops.rememberLayerBackdrop
 import com.kyant.backdrop.drawBackdrop
 import com.kyant.backdrop.effects.blur
 import com.kyant.backdrop.effects.colorControls
@@ -56,9 +62,33 @@ fun Modifier.glassBackground(style: GlassStyle, shape: Shape = MaterialTheme.sha
 /** How opaque the Theme and Theme inverted fills are: the widget backing before glass existed, so the wallpaper still shows through. */
 private const val THEME_FILL_ALPHA = 0.6f
 
+/**
+ * A glass panel with [content] on top that can itself carry glass (an icon on a dock, a row's icon): the panel records its own glass into a
+ * layer, and [content] blurs the wallpaper and that layer together, so a glass icon sits on the dock's frost rather than on the bare wallpaper.
+ * The glass is a layer behind [content], not a modifier on it, so what it records never includes [content]. With no wallpaper copy, or for
+ * [GlassStyle.OFF], it is the plain tint behind (or no panel), which already stacks.
+ */
+@Composable
+fun GlassPanel(style: GlassStyle, shape: Shape, modifier: Modifier = Modifier, content: @Composable BoxScope.() -> Unit) {
+    val parent = LocalWallpaperBackdrop.current
+    val layer = rememberLayerBackdrop()
+    val nested = if (parent != null && style != GlassStyle.OFF) rememberCombinedBackdrop(parent, layer) else parent
+    Box(modifier = modifier) {
+        if (style != GlassStyle.OFF) {
+            Box(
+                modifier = Modifier
+                    .matchParentSize()
+                    .then(if (parent != null) Modifier.layerBackdrop(layer) else Modifier)
+                    .glassBackground(style, shape, sampleWallpaper = true),
+            )
+        }
+        CompositionLocalProvider(LocalWallpaperBackdrop provides nested) { content() }
+    }
+}
+
 private fun Modifier.solidPanel(shape: Shape, color: Color, edge: Color): Modifier = clip(shape).background(color).border(1.dp, edge, shape)
 
-private fun Modifier.glassPanel(shape: Shape, fill: Brush, edge: Brush, backdrop: LayerBackdrop?, look: BackdropLook, backdropTint: Color? = null): Modifier =
+private fun Modifier.glassPanel(shape: Shape, fill: Brush, edge: Brush, backdrop: Backdrop?, look: BackdropLook, backdropTint: Color? = null): Modifier =
     if (backdrop == null) {
         clip(shape).background(fill).border(1.dp, edge, shape)
     } else {

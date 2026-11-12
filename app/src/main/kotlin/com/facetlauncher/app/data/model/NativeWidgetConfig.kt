@@ -64,7 +64,9 @@ private data class StoredClock(
     val calendarItems: Int = CalendarDisplayOptions.MAX_ITEMS,
     val calendarAllDay: Boolean = true,
     val calendarIds: List<String>? = null,
+    /** Read only: the events' own background from before it was shared with the clock; it becomes [glass] when that is unset. */
     val calendarGlass: String? = null,
+    val glass: String? = null,
 )
 
 /** A weather location: [city] unset means the phone's position, otherwise the chosen city. */
@@ -94,7 +96,7 @@ private fun ClockWidgetConfig.toStored() = StoredClock(
     use24Hour = use24HourTime, meridiem = showMeridiem, dateStyle = dateStyle.name, alarm = showAlarm, battery = showBattery,
     weather = showWeather, weatherIcons = weatherIconStyle.name, weatherLocation = weatherLocation?.toStored(),
     calendarIndicator = calendar.showIndicator, calendarItems = calendar.itemsToShow, calendarAllDay = calendar.showAllDay,
-    calendarIds = calendar.calendarIds?.sorted(), calendarGlass = calendar.glass.name,
+    calendarIds = calendar.calendarIds?.sorted(), glass = glass.name,
 )
 
 private inline fun <reified E : Enum<E>> String?.enumOr(default: E): E = this?.let { name -> enumValues<E>().firstOrNull { it.name == name } } ?: default
@@ -107,7 +109,8 @@ private fun StoredClock.toConfig(): ClockWidgetConfig {
         use24HourTime = use24Hour, showMeridiem = meridiem, dateStyle = dateStyle.enumOr(defaults.dateStyle),
         showAlarm = alarm, showBattery = battery, showWeather = weather, weatherIconStyle = weatherIcons.enumOr(defaults.weatherIconStyle),
         weatherLocation = weatherLocation?.toLocation(),
-        calendar = ClockCalendarConfig(calendarIndicator, calendarItems, calendarAllDay, calendarIds?.toSet(), calendarGlass.enumOr(GlassStyle.OFF)),
+        calendar = ClockCalendarConfig(calendarIndicator, calendarItems, calendarAllDay, calendarIds?.toSet()),
+        glass = (glass ?: calendarGlass).enumOr(GlassStyle.OFF),
     )
 }
 

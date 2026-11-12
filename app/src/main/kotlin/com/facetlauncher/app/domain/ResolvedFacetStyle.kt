@@ -98,7 +98,7 @@ fun resolveFacetStyle(facet: Facet?, settings: LauncherSettings): ResolvedFacetS
     dockDisplayMode = facet?.dockDisplayMode ?: settings.dockDisplayMode,
     dockGlass = facet?.dockGlass ?: GlassStyle.OFF,
     appsListGlass = facet?.appsListGlass ?: GlassStyle.OFF,
-    calendarDisplay = effectiveClockConfig(facet, settings).calendar.let { CalendarDisplayOptions(it.showIndicator, it.itemsToShow, it.glass) },
+    calendarDisplay = effectiveClockConfig(facet, settings).calendar.let { CalendarDisplayOptions(it.showIndicator, it.itemsToShow) },
     clockPlacement = resolveClockPlacement(facet, settings),
     listAlignment = resolveListAlignment(facet, settings),
     // No facet (a launcher-wide preview) draws the launcher clock alone.
