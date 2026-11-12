@@ -225,12 +225,11 @@
     <string name="wallpaper_preview_description">Voorbeeld van de achtergrond</string>
     <string name="wallpaper_status_none">Glaspanelen gebruiken een gewone tint. Kies een afbeelding om je achtergrond erachter te vervagen en te buigen.</string>
     <string name="wallpaper_status_on">Glas staat aan. Facet tekent deze kopie achter je panelen.</string>
-    <string name="wallpaper_choose_image_title">Kies een afbeelding voor Facet</string>
+    <string name="wallpaper_choose_image_title">Kies een achtergrond voor Facet</string>
     <string name="wallpaper_choose_image_subtitle">Stelt hem in als je achtergrond en zet glas aan</string>
     <string name="wallpaper_system_title">Een systeemachtergrond instellen</string>
     <string name="wallpaper_system_subtitle">Opent de achtergrondkiezer van Android. Glas blijft een tint.</string>
     <string name="wallpaper_remove_title">De kopie verwijderen</string>
-    <string name="wallpaper_remove_subtitle">Glas wordt weer een tint. Je achtergrond blijft zoals hij is.</string>
     <string name="wallpaper_stale_title">Je achtergrond is veranderd</string>
     <string name="wallpaper_stale_body">De glaskopie komt er niet meer mee overeen. Kies opnieuw een afbeelding of verwijder de kopie.</string>
     <string name="wallpaper_failed">Dat is niet gelukt. Probeer een andere afbeelding.</string>
@@ -246,7 +245,9 @@
     <string name="wallpaper_fit_home_lock">Start- en vergrendelscherm</string>
     <string name="wallpaper_fit_set">Achtergrond instellen</string>
     <string name="wallpaper_fit_cancel">Annuleren</string>
-    <string name="wallpaper_screenshot_link">Mijn huidige achtergrond gebruiken</string>
+    <string name="wallpaper_screenshot_link">Facet mijn huidige achtergrond laten gebruiken</string>
+    <string name="wallpaper_current_subtitle">Maak een screenshot zodat glas het kan vervagen. Je achtergrond blijft zoals hij is.</string>
+    <string name="wallpaper_current_in_use">Al in gebruik. Tik om een nieuwe screenshot te gebruiken.</string>
     <string name="wallpaper_screenshot_title">Een screenshot gebruiken</string>
     <string name="wallpaper_screenshot_body">Android laat Facet je achtergrond niet zien. Facet toont hem op een leeg scherm zodat je een screenshot kunt maken, die je hier kiest. Je achtergrond blijft zoals hij is.</string>
     <string name="wallpaper_screenshot_confirm">Screenshot maken</string>

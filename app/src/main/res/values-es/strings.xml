@@ -222,12 +222,11 @@
     <string name="wallpaper_preview_description">Vista previa del fondo de pantalla</string>
     <string name="wallpaper_status_none">Los paneles de cristal usan un tinte simple. Elige una imagen para desenfocar y curvar tu fondo detrás de ellos.</string>
     <string name="wallpaper_status_on">El cristal está activado. Facet dibuja esta copia detrás de tus paneles.</string>
-    <string name="wallpaper_choose_image_title">Elegir una imagen para Facet</string>
+    <string name="wallpaper_choose_image_title">Elegir un fondo para Facet</string>
     <string name="wallpaper_choose_image_subtitle">La establece como tu fondo y activa el cristal</string>
     <string name="wallpaper_system_title">Establecer un fondo del sistema</string>
     <string name="wallpaper_system_subtitle">Abre el selector de fondos de Android. El cristal sigue siendo un tinte.</string>
     <string name="wallpaper_remove_title">Quitar la copia</string>
-    <string name="wallpaper_remove_subtitle">El cristal vuelve a ser un tinte. Tu fondo se queda como está.</string>
     <string name="wallpaper_stale_title">Tu fondo ha cambiado</string>
     <string name="wallpaper_stale_body">La copia del cristal ya no coincide. Elige una imagen otra vez o quita la copia.</string>
     <string name="wallpaper_failed">No ha funcionado. Prueba con otra imagen.</string>
@@ -243,7 +242,9 @@
     <string name="wallpaper_fit_home_lock">Pantalla de inicio y de bloqueo</string>
     <string name="wallpaper_fit_set">Establecer fondo</string>
     <string name="wallpaper_fit_cancel">Cancelar</string>
-    <string name="wallpaper_screenshot_link">Usar mi fondo actual</string>
+    <string name="wallpaper_screenshot_link">Que Facet use mi fondo actual</string>
+    <string name="wallpaper_current_subtitle">Haz una captura para que el cristal pueda desenfocarlo. Tu fondo no cambia.</string>
+    <string name="wallpaper_current_in_use">Ya en uso. Toca para usar una captura nueva.</string>
     <string name="wallpaper_screenshot_title">Usar una captura</string>
     <string name="wallpaper_screenshot_body">Android no deja que Facet vea tu fondo de pantalla. Facet lo mostrará en una pantalla limpia para que hagas una captura y luego la eliges aquí. Tu fondo no cambia.</string>
     <string name="wallpaper_screenshot_confirm">Hacer captura</string>

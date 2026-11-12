@@ -261,12 +261,11 @@
     <string name="wallpaper_preview_description">Wallpaper preview</string>
     <string name="wallpaper_status_none">Glass panels use a plain tint. Choose an image to blur and bend your wallpaper behind them.</string>
     <string name="wallpaper_status_on">Glass is on. Facet draws this copy behind your panels.</string>
-    <string name="wallpaper_choose_image_title">Choose an image for Facet</string>
+    <string name="wallpaper_choose_image_title">Choose a wallpaper for Facet</string>
     <string name="wallpaper_choose_image_subtitle">Sets it as your wallpaper and turns glass on</string>
     <string name="wallpaper_system_title">Set a system wallpaper</string>
     <string name="wallpaper_system_subtitle">Opens Android\'s wallpaper picker. Glass stays a tint.</string>
     <string name="wallpaper_remove_title">Remove the copy</string>
-    <string name="wallpaper_remove_subtitle">Glass goes back to a tint. Your wallpaper stays as it is.</string>
     <string name="wallpaper_stale_title">Your wallpaper changed</string>
     <string name="wallpaper_stale_body">The glass copy no longer matches it. Choose an image again, or remove the copy.</string>
     <string name="wallpaper_failed">That didn\'t work. Try another image.</string>
@@ -282,7 +281,9 @@
     <string name="wallpaper_fit_home_lock">Home and lock screen</string>
     <string name="wallpaper_fit_set">Set wallpaper</string>
     <string name="wallpaper_fit_cancel">Cancel</string>
-    <string name="wallpaper_screenshot_link">Use my current wallpaper</string>
+    <string name="wallpaper_screenshot_link">Let Facet use my current wallpaper</string>
+    <string name="wallpaper_current_subtitle">Take a screenshot of it so glass can blur it. Your wallpaper stays as it is.</string>
+    <string name="wallpaper_current_in_use">Already in use. Tap to use a new screenshot.</string>
     <string name="wallpaper_screenshot_title">Use a screenshot</string>
     <string name="wallpaper_screenshot_body">Android doesn\'t let Facet see your wallpaper. Facet will show it on a clear screen so you can take a screenshot, then you choose it here. Your wallpaper stays as it is.</string>
     <string name="wallpaper_screenshot_confirm">Take screenshot</string>

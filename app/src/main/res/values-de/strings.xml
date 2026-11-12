@@ -221,12 +221,11 @@
     <string name="wallpaper_preview_description">Vorschau des Hintergrundbilds</string>
     <string name="wallpaper_status_none">Glas-Flächen nutzen eine einfache Tönung. Wähle ein Bild, um dein Hintergrundbild dahinter zu verwischen und zu verzerren.</string>
     <string name="wallpaper_status_on">Glas ist an. Facet zeichnet diese Kopie hinter deine Flächen.</string>
-    <string name="wallpaper_choose_image_title">Bild für Facet wählen</string>
+    <string name="wallpaper_choose_image_title">Hintergrund für Facet wählen</string>
     <string name="wallpaper_choose_image_subtitle">Legt es als Hintergrundbild fest und schaltet Glas ein</string>
     <string name="wallpaper_system_title">Systemhintergrund festlegen</string>
     <string name="wallpaper_system_subtitle">Öffnet die Hintergrundauswahl von Android. Glas bleibt eine Tönung.</string>
     <string name="wallpaper_remove_title">Kopie entfernen</string>
-    <string name="wallpaper_remove_subtitle">Glas wird wieder zur Tönung. Dein Hintergrundbild bleibt, wie es ist.</string>
     <string name="wallpaper_stale_title">Dein Hintergrundbild hat sich geändert</string>
     <string name="wallpaper_stale_body">Die Glas-Kopie passt nicht mehr dazu. Wähle erneut ein Bild oder entferne die Kopie.</string>
     <string name="wallpaper_failed">Das hat nicht geklappt. Versuche ein anderes Bild.</string>
@@ -242,7 +241,9 @@
     <string name="wallpaper_fit_home_lock">Start- und Sperrbildschirm</string>
     <string name="wallpaper_fit_set">Hintergrund festlegen</string>
     <string name="wallpaper_fit_cancel">Abbrechen</string>
-    <string name="wallpaper_screenshot_link">Mein aktuelles Hintergrundbild verwenden</string>
+    <string name="wallpaper_screenshot_link">Facet mein aktuelles Hintergrundbild verwenden lassen</string>
+    <string name="wallpaper_current_subtitle">Mach einen Screenshot, damit Glas ihn weichzeichnen kann. Dein Hintergrundbild bleibt unverändert.</string>
+    <string name="wallpaper_current_in_use">Bereits in Verwendung. Tippe, um einen neuen Screenshot zu verwenden.</string>
     <string name="wallpaper_screenshot_title">Screenshot verwenden</string>
     <string name="wallpaper_screenshot_body">Android lässt Facet dein Hintergrundbild nicht sehen. Facet zeigt es auf einem leeren Bildschirm, damit du einen Screenshot machen kannst, den du dann hier auswählst. Dein Hintergrundbild bleibt unverändert.</string>
     <string name="wallpaper_screenshot_confirm">Screenshot machen</string>

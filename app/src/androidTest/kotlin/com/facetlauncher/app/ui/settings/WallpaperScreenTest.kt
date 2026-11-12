@@ -111,12 +111,22 @@ class WallpaperScreenTest {
     }
 
     @Test
-    fun `with a copy there is no screenshot link`() {
+    fun `with a matching copy the current wallpaper card stays and says it is in use`() {
         // Given a matching copy
         setContent(WallpaperUiState(copy = bitmap(10, 20)), Calls())
 
-        // Then the link is absent
-        composeRule.onNodeWithTag("wallpaper_screenshot_link").assertDoesNotExist()
+        // Then the card is still there and marks itself as already in use
+        composeRule.onNodeWithTag("wallpaper_screenshot_link").assertIsDisplayed()
+        composeRule.onNodeWithTag("wallpaper_screenshot_link").assertTextContains("Already in use", substring = true)
+    }
+
+    @Test
+    fun `with no copy or a stale one the current wallpaper card is not marked in use`() {
+        // Given a stale copy
+        setContent(WallpaperUiState(copy = bitmap(10, 20), stale = true), Calls())
+
+        // Then the card offers the screenshot instead
+        composeRule.onNodeWithTag("wallpaper_screenshot_link").assertTextContains("Take a screenshot", substring = true)
     }
 
     @Test

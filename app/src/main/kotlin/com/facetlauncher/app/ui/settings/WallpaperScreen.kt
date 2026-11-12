@@ -25,8 +25,9 @@ import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.DeleteOutline
+import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.Image
+import androidx.compose.material.icons.outlined.Screenshot
 import androidx.compose.material.icons.outlined.Wallpaper
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
@@ -175,8 +176,8 @@ internal fun WallpaperContent(
                 if (uiState.offerCopy) item { CopyOffer(onAcceptOffer, onDeclineOffer) }
                 item { WallpaperStatus(uiState) }
                 item { ChoiceRows(onChooseImage, onSetSystemWallpaper) }
-                if (uiState.copy == null || uiState.stale) item { ScreenshotLink(onTakeScreenshot, onUseScreenshot) }
-                if (uiState.copy != null) item { RemoveRow(onRemoveCopy) }
+                item { CurrentWallpaperCard(inUse = uiState.copy != null && !uiState.stale, onTakeScreenshot, onUseScreenshot) }
+                if (uiState.copy != null) item { RemoveLink(onRemoveCopy) }
             }
         },
     )
@@ -254,11 +255,19 @@ private fun ChoiceRows(onChooseImage: () -> Unit, onSetSystemWallpaper: () -> Un
     }
 }
 
-/** A smaller way in for someone who likes their wallpaper: Facet cannot read it, so they screenshot it and choose the screenshot. */
+/** For someone who likes their wallpaper: Facet cannot read it, so they screenshot it and choose the screenshot. Always shown; once a copy is in use it says so, and can still be redone. */
 @Composable
-private fun ScreenshotLink(onTakeScreenshot: () -> Unit, onUseScreenshot: () -> Unit) {
+private fun CurrentWallpaperCard(inUse: Boolean, onTakeScreenshot: () -> Unit, onUseScreenshot: () -> Unit) {
     var showHelp by remember { mutableStateOf(false) }
-    TextActionButton(text = stringResource(R.string.wallpaper_screenshot_link), onClick = { showHelp = true }, modifier = Modifier.testTag("wallpaper_screenshot_link"))
+    SettingsCard(fullBleedRows = true) {
+        ClickableRow(
+            title = stringResource(R.string.wallpaper_screenshot_link),
+            subtitle = stringResource(if (inUse) R.string.wallpaper_current_in_use else R.string.wallpaper_current_subtitle),
+            onClick = { showHelp = true },
+            testTag = "wallpaper_screenshot_link",
+            leadingIcon = iconBadge(if (inUse) Icons.Outlined.CheckCircle else Icons.Outlined.Screenshot, SettingsSectionHue.APPEARANCE),
+        )
+    }
     if (showHelp) {
         AlertDialog(
             onDismissRequest = { showHelp = false },
@@ -292,17 +301,10 @@ private fun ScreenshotLink(onTakeScreenshot: () -> Unit, onUseScreenshot: () -> 
     }
 }
 
+/** Plain text, not a card: removing the copy is the least common thing to do here. */
 @Composable
-private fun RemoveRow(onRemoveCopy: () -> Unit) {
-    SettingsCard(fullBleedRows = true) {
-        ClickableRow(
-            title = stringResource(R.string.wallpaper_remove_title),
-            subtitle = stringResource(R.string.wallpaper_remove_subtitle),
-            onClick = onRemoveCopy,
-            testTag = "wallpaper_remove_row",
-            leadingIcon = iconBadge(Icons.Outlined.DeleteOutline, SettingsSectionHue.APPEARANCE),
-        )
-    }
+private fun RemoveLink(onRemoveCopy: () -> Unit) {
+    TextActionButton(text = stringResource(R.string.wallpaper_remove_title), onClick = onRemoveCopy, modifier = Modifier.testTag("wallpaper_remove_row"))
 }
 
 /**

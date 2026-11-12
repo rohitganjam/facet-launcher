@@ -222,12 +222,11 @@
     <string name="wallpaper_preview_description">Pré-visualização do papel de parede</string>
     <string name="wallpaper_status_none">Os painéis de vidro usam uma tonalidade simples. Escolha uma imagem para desfocar e curvar o papel de parede atrás deles.</string>
     <string name="wallpaper_status_on">O vidro está ativado. O Facet desenha esta cópia atrás dos seus painéis.</string>
-    <string name="wallpaper_choose_image_title">Escolher uma imagem para o Facet</string>
+    <string name="wallpaper_choose_image_title">Escolher um papel de parede para o Facet</string>
     <string name="wallpaper_choose_image_subtitle">Define-a como papel de parede e ativa o vidro</string>
     <string name="wallpaper_system_title">Definir um papel de parede do sistema</string>
     <string name="wallpaper_system_subtitle">Abre o seletor de papéis de parede do Android. O vidro continua a ser uma tonalidade.</string>
     <string name="wallpaper_remove_title">Remover a cópia</string>
-    <string name="wallpaper_remove_subtitle">O vidro volta a ser uma tonalidade. O seu papel de parede fica como está.</string>
     <string name="wallpaper_stale_title">O seu papel de parede mudou</string>
     <string name="wallpaper_stale_body">A cópia do vidro já não corresponde. Escolha uma imagem de novo ou remova a cópia.</string>
     <string name="wallpaper_failed">Não funcionou. Tente outra imagem.</string>
@@ -243,7 +242,9 @@
     <string name="wallpaper_fit_home_lock">Ecrã inicial e de bloqueio</string>
     <string name="wallpaper_fit_set">Definir papel de parede</string>
     <string name="wallpaper_fit_cancel">Cancelar</string>
-    <string name="wallpaper_screenshot_link">Usar meu papel de parede atual</string>
+    <string name="wallpaper_screenshot_link">Deixar o Facet usar meu papel de parede atual</string>
+    <string name="wallpaper_current_subtitle">Tire uma captura para o vidro poder desfocá-lo. Seu papel de parede continua igual.</string>
+    <string name="wallpaper_current_in_use">Já em uso. Toque para usar uma nova captura.</string>
     <string name="wallpaper_screenshot_title">Usar uma captura de tela</string>
     <string name="wallpaper_screenshot_body">O Android não deixa o Facet ver seu papel de parede. O Facet o mostra numa tela limpa para você tirar uma captura e depois escolhê-la aqui. Seu papel de parede continua igual.</string>
     <string name="wallpaper_screenshot_confirm">Tirar captura</string>
