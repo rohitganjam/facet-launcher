@@ -1,50 +1,47 @@
-# Facet Launcher 0.1.41
+# Facet Launcher 0.1.42
 
 ## New Features
-- Drag and rearrange items on the Home grid: press and hold to pick one up, then drop it on an empty spot to move it or on another item to swap. The grid scrolls automatically near the edges while you drag.
-- Press and hold a Home list row, Dock icon, or open-folder row to pick it up and reorder it. Home swipes pause while you hold an item.
-- Swipe between tabs and see the next tab slide in beside the current one. Works in the Drawer, the app picker, and the widget picker.
-- New "Adjust widget size & position" option in the Home sheet for the widget currently showing.
-- "Switch facet" option in the Home sheet.
-- Each facet now has its own Dock and Favorites, and its own "Allow landscape mode" setting.
-- New "Set up your app drawer" step in onboarding, with a drawer preview and a "Folders in drawer" option.
-- Folder screen in Settings has a three-dot menu with rename, Dock/Favorites, and delete options.
-- Gesture options for left, right, and down swipes, plus a swap-left-and-right option.
-- Favorites and Apps can now show up to 20 items.
-- Your Home grid layout is now included in backups and restored on import.
+- Glass backgrounds: the dock, apps list items, the clock's calendar and the media player row can each sit on a frosted panel. Choose from Light frost, Smoked, Bright, Clear glass or Accent in each one's settings.
+- Real glass with your wallpaper: Facet can keep its own copy of your wallpaper. Pick a photo, pan and zoom to fit it, and set it as your wallpaper. Glass panels then show your wallpaper through them, with real blur on the dock, lists, grid tiles, calendar, media row and widgets.
+- New Dark frost and Dark glass styles.
+- Glass icon backgrounds: icons can sit on five glass backgrounds (light frost, smoked, bright, clear glass and accent), alongside the existing tile and reversed tile options.
+- The Weather, Agenda and Now playing widgets each have a Background choice in their settings. Now playing now has its own settings on Home and the Hub.
+- "Use my current wallpaper": take a screenshot of your wallpaper on a clean capture screen with simple step-by-step instructions, or pick an image you already have.
+- Copy from facet: the Dock, Apps list and Widgets screens can copy their content and settings from another facet in one step.
 
 ## Fixes
-- Fixed a facet's landscape row position showing as stuck on the left instead of "same as portrait".
+- Wallpaper previews showed the phone's factory wallpaper instead of yours. When your wallpaper can't be read, previews now show a soft wash of its colours.
+- The clock sometimes showed a 0% battery reading. It now hides the battery until a real reading arrives.
+- Fixed a crash when fitting a photo that already matches the screen size.
 
 ## Improvements
-- Home fades out smoothly as you pull down the notification shade, and stays hidden until the shade covers the screen.
-- Weather locations are more precise, and your current location now shows your neighbourhood and city.
-- The drawer preview in onboarding and App drawer settings now shows your real installed apps and icons.
-- Onboarding's home step is now titled "Set up your first facet".
-- New facets start with your device's default apps in the Dock, an empty Favorites list, and a clock. The Add facet card now describes this.
-- The Home grid now spans the full screen like the Dock, with matching column spacing, and its row height matches the App Drawer.
-- Dock icons are evenly spaced to line up with the Home grid columns.
-- A full Favorites or Dock now shows a "limit reached" row.
-- New items are placed in the first free spot on the grid.
-- Dragging in the two-column list works across both columns, with sliding rows and automatic scrolling. The item you're holding stays visible past the list edge.
-- Layout options on the Apps list screen now sit together at the top of the list content card.
-- Dock style and apps list look now live on the Dock and Apps list screens, replacing the separate Dock & Apps layout page.
-- The App Drawer grid now defaults to Regular density.
-- "Allow landscape mode" now lives with each facet's Apps list settings instead of one setting for the whole launcher.
-- Removed the shared launcher-wide Default Dock, Default Apps list, and Favorites reset screens, since every facet now manages its own.
+- After you change your wallpaper, or the first time you choose a glass background, Facet offers to make a wallpaper copy. If you choose "Not now", it remembers.
+- Glass icon backgrounds on Home now show your wallpaper through them.
+- Every preview background uses your saved wallpaper copy when it matches your current wallpaper.
+- If the wallpaper copy is missing or out of date, glass falls back to a tint.
+- Wallpaper images are now chosen through your gallery app.
+- Clearer title on the glass backgrounds prompt.
+- The Agenda widget now shows a full week of events. Days after Today and Tomorrow are labelled with their date (e.g. "14th Nov, Sat"), with more space between days.
+- Even spacing above and below the media player row.
+- Landscape settings are combined into one card, with clearer names: "Apps list alignment" and "Apps list position".
+- Long setting titles now wrap instead of crowding the switch or dropdown.
+- The facet shortcut label is now translated.
+- Backups now include your glass background choices.
 
 ## Internal
-- Reset last-release.json to 0.1.40 so 0.1.41 can be rebuilt; bump to 0.1.41 with release notes.
-- Room migrations: 47 adds nullable portrait/landscape grid cells on placements; 47->48 deletes shared Dock/Favorites rows; 48->49 adds Facet.allowLandscape, seeded from the old DataStore key.
-- Removed LauncherSettings.allowLandscape and the Settings card; LauncherViewModel follows the active facet; BackupFacet carries the flag.
-- Removed launcher-scope Apps list route and Copy to facets; HomeAppsListSettingsScreen is facet-only; PlacementTarget has no global list.
-- Added SeedFacetDefaultsUseCase; removed launcher-wide seed and defaultsSeeded; onboarding pickers edit the first facet's lists.
-- Fixed Converters.toAppRowPosition(null) returning LEFT; covered by a real-Room test.
-- Backups no longer write or restore the shared Dock/Favorites; added BackupGridCells for Favorites apps and folder placements.
-- Placement repository: observeGridCells/saveGridCells per orientation; reorderItems keeps saved cells; grid drags save cells only, list keeps its own order.
-- Added pure HomeGridPlacement logic and HomeAppGrid fixed-height cell layout; QuickPlacementAction.Full; dropped unused compact and reading-order helpers.
-- SwipeTabs component; Home list/grid drag popup rendering and edge auto-scroll.
-- Stopped tracking graphify-out (post-commit hook rebuilds it; tracked files left the tree dirty and blocked scripts/release.sh).
-- Fixed lint errors (NonObservableLocale, unremembered state, VM-in-composable); drag-left HomeDrawerRouteTest now starts on screen; removed picker maxFavorites no-op.
-- Weather coordinates use WeatherPlace.COORDINATE_DECIMALS (3) for places and MET requests; reverse lookup returns "subLocality, city"; city picker search keeps plain city name.
-- Updated menu tests for removed scope badge; added scroll tests; docs, plans, and test registry updated; knowledge graph updated.
+- IconRenderMode now carries style, colour and background directly (30 new stored values, existing unchanged); removed its unused display strings
+- GlassStyle.RIM_LIGHT renamed to CLEAR_GLASS (unreleased, no migration)
+- Room v50: facets.dockGlass and appsListGlass (TEXT NOT NULL DEFAULT 'OFF'); calendar glass in clock JSON config, media row glass in DataStore
+- NativeWidgetConfig gains a per-widget GlassStyle (default Light frost, replacing the fixed 60% surface)
+- Agenda uses its own 7-day calendar query instead of the clock's window
+- Battery repository emits nothing for broadcasts without level/scale; ClockAccessoryState.batteryPercent nullable
+- Dropped the builtInDrawable fallback for wallpaper previews
+- Removed leftover icon_render_system_default translation that failed release lint
+- Lint fixes: added plural "many" to es, fr, pt, pt-rPT, es-419; DockSettingsScreen modifier parameter order; IconsScreen uses String.toUri
+- Settings screens use collectAsStateWithLifecycle; ObserveHomeScreenStateUseCase and ObserveHubStateUseCase are @ViewModelScoped; ObservePlacedItemsUseCase indexes installed apps once per emission
+- Removed unused strings from every locale; architecture docs updated
+- Fixed stale instrumented tests (ScaledHomeScreenTest, HomeScreenTest, FavoritesPickerScreenTest, AppContextMenuScalingTest)
+- Added wallpaper-backed glass plan to IMPLEMENTATION_PLAN.md
+- Docs: Pro launch and device verification marked done; stacks listed as a Pro feature
+- Refreshed 0.1.41 release notes and last-release record
+- Updated Play Store listing for 0.1.41
