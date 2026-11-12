@@ -235,7 +235,7 @@
     <string name="wallpaper_offer_body">Facet ne peut pas voir les fonds d\'écran choisis dans le sélecteur d\'Android, donc le verre reste une simple teinte. Choisissez ici la même image et Facet la floutera derrière vos panneaux.</string>
     <string name="wallpaper_offer_accept">Choisir une image</string>
     <string name="wallpaper_offer_decline">Pas maintenant</string>
-    <string name="glass_prompt_title">Le verre a besoin d\'une copie de votre fond d\'écran</string>
+    <string name="glass_prompt_title">Les fonds en verre nécessitent une copie de votre fond d\'écran</string>
     <string name="glass_prompt_body">Android ne laisse pas Facet voir votre fond d\'écran, donc ce fond est pour l\'instant une simple teinte. Choisissez une image ici et Facet la définira comme fond d\'écran et la floutera derrière vos panneaux.</string>
     <string name="wallpaper_fit_title">Positionne ton fond d\'écran</string>
     <string name="wallpaper_fit_hint">Glisse pour déplacer, pince pour zoomer, touche deux fois pour réinitialiser.</string>

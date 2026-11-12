@@ -235,7 +235,7 @@
     <string name="wallpaper_offer_body">Facet no puede ver los fondos que se eligen en el selector de Android, así que el cristal es un simple tinte. Elige aquí la misma imagen y Facet la desenfocará tras tus paneles.</string>
     <string name="wallpaper_offer_accept">Elegir una imagen</string>
     <string name="wallpaper_offer_decline">Ahora no</string>
-    <string name="glass_prompt_title">El cristal necesita una copia de tu fondo</string>
+    <string name="glass_prompt_title">Los fondos de cristal necesitan una copia de tu fondo de pantalla</string>
     <string name="glass_prompt_body">Android no deja que Facet vea tu fondo de pantalla, así que este fondo es por ahora un simple tinte. Elige una imagen aquí y Facet la pondrá como fondo y la desenfocará tras tus paneles.</string>
     <string name="wallpaper_fit_title">Coloca tu fondo</string>
     <string name="wallpaper_fit_hint">Arrastra para mover, pellizca para ampliar y toca dos veces para restablecer.</string>

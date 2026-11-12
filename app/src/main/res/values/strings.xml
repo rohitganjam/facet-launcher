@@ -274,7 +274,7 @@
     <string name="wallpaper_offer_body">Facet can\'t see wallpapers set in Android\'s picker, so glass is a plain tint. Choose the same image here and Facet blurs it behind your panels.</string>
     <string name="wallpaper_offer_accept">Choose an image</string>
     <string name="wallpaper_offer_decline">Not now</string>
-    <string name="glass_prompt_title">Glass needs a copy of your wallpaper</string>
+    <string name="glass_prompt_title">Glass backgrounds require a copy of your wallpaper</string>
     <string name="glass_prompt_body">Android doesn\'t let Facet see your wallpaper, so this background is a plain tint for now. Choose an image here and Facet sets it as your wallpaper and blurs it behind your panels.</string>
     <string name="wallpaper_fit_title">Position your wallpaper</string>
     <string name="wallpaper_fit_hint">Drag to move, pinch to zoom, double-tap to reset.</string>

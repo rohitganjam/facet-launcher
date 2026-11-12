@@ -238,7 +238,7 @@
     <string name="wallpaper_offer_body">Facet kan achtergronden uit de Android-kiezer niet zien, dus glas blijft een gewone tint. Kies hier dezelfde afbeelding en Facet vervaagt die achter je panelen.</string>
     <string name="wallpaper_offer_accept">Afbeelding kiezen</string>
     <string name="wallpaper_offer_decline">Niet nu</string>
-    <string name="glass_prompt_title">Glas heeft een kopie van je achtergrond nodig</string>
+    <string name="glass_prompt_title">Glazen achtergronden hebben een kopie van je achtergrond nodig</string>
     <string name="glass_prompt_body">Android laat Facet je achtergrond niet zien, dus deze achtergrond is voorlopig een gewone tint. Kies hier een afbeelding en Facet stelt die in als achtergrond en vervaagt hem achter je panelen.</string>
     <string name="wallpaper_fit_title">Plaats je achtergrond</string>
     <string name="wallpaper_fit_hint">Sleep om te verplaatsen, knijp om te zoomen, tik twee keer om te herstellen.</string>
