@@ -22,13 +22,15 @@ class WallpaperBackdropViewModel @Inject constructor(
     private val wallpaperCopyRepository: WallpaperCopyRepository,
     settingsRepository: SettingsRepository,
 ) : ViewModel() {
-    private val systemWallpaperId = MutableStateFlow(wallpaperCopyRepository.currentSystemWallpaperId())
+    /** Bumped by [onResumed] so the check reads the system wallpaper's id again; it is also read whenever the copy or its recorded id changes. */
+    private val resumes = MutableStateFlow(0)
 
-    val copy: StateFlow<Bitmap?> = combine(wallpaperCopyRepository.copy, settingsRepository.settings, systemWallpaperId) { copy, settings, systemId ->
+    val copy: StateFlow<Bitmap?> = combine(wallpaperCopyRepository.copy, settingsRepository.settings, resumes) { copy, settings, _ ->
         val storedId = settings.wallpaperCopySystemId
+        val systemId = wallpaperCopyRepository.currentSystemWallpaperId()
         copy.takeUnless { storedId != WallpaperCopyRepository.NO_WALLPAPER_ID && storedId != systemId }
     }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
     /** Re-reads the system wallpaper id, since it can change while the launcher is in the background. */
-    fun onResumed() { systemWallpaperId.value = wallpaperCopyRepository.currentSystemWallpaperId() }
+    fun onResumed() { resumes.value++ }
 }

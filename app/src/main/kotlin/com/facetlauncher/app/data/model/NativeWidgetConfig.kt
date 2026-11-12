@@ -24,8 +24,10 @@ data class NativeWidgetConfig(
     val clock: ClockWidgetConfig? = null,
     /** The panel behind the widget; `null` is the default, [DEFAULT_GLASS]. */
     val glass: GlassStyle? = null,
+    /** Which text colours the widget uses; `null` follows the launcher's theme, like [WidgetTextTheme.AUTO]. */
+    val textTheme: WidgetTextTheme? = null,
 ) {
-    val followsLauncher: Boolean get() = calendarIds == null && showAllDayEvents == null && weatherLocation == null && clock == null && glass == null
+    val followsLauncher: Boolean get() = calendarIds == null && showAllDayEvents == null && weatherLocation == null && clock == null && glass == null && textTheme == null
 
     companion object {
         val DEFAULT_GLASS = GlassStyle.FROST
@@ -40,6 +42,7 @@ private data class StoredConfig(
     val weather: StoredWeather? = null,
     val clock: StoredClock? = null,
     val glass: String? = null,
+    val textTheme: String? = null,
 )
 
 /** A clock's settings, every enum by name; a name this version does not know reads as that field's default. */
@@ -78,7 +81,7 @@ private val configJson = Json { ignoreUnknownKeys = true }
 /** The stored form: JSON, or `null` when the widget follows the launcher. */
 fun NativeWidgetConfig.encode(): String? {
     if (followsLauncher) return null
-    return configJson.encodeToString(StoredConfig(calendarIds?.sorted(), showAllDayEvents, weatherLocation?.toStored(), clock?.toStored(), glass?.name))
+    return configJson.encodeToString(StoredConfig(calendarIds?.sorted(), showAllDayEvents, weatherLocation?.toStored(), clock?.toStored(), glass?.name, textTheme?.name))
 }
 
 private fun WidgetWeatherLocation.toStored(): StoredWeather = when (this) {
@@ -118,6 +121,7 @@ fun decodeNativeWidgetConfig(encoded: String?): NativeWidgetConfig {
         weatherLocation = stored.weather?.toLocation(),
         clock = stored.clock?.toConfig(),
         glass = stored.glass?.let { name -> GlassStyle.entries.firstOrNull { it.name == name } },
+        textTheme = stored.textTheme?.let { name -> WidgetTextTheme.entries.firstOrNull { it.name == name } },
     )
 }
 

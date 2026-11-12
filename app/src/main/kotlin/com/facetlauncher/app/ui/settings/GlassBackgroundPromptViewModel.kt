@@ -22,16 +22,18 @@ class GlassBackgroundPromptViewModel @Inject constructor(
     private val wallpaperCopyRepository: WallpaperCopyRepository,
     private val settingsRepository: SettingsRepository,
 ) : ViewModel() {
-    private val systemWallpaperId = MutableStateFlow(wallpaperCopyRepository.currentSystemWallpaperId())
+    /** Bumped by [onResumed] so the check reads the system wallpaper's id again; it is also read whenever the copy or its recorded id changes. */
+    private val resumes = MutableStateFlow(0)
 
-    val needsCopy: StateFlow<Boolean> = combine(wallpaperCopyRepository.copy, settingsRepository.settings, systemWallpaperId) { copy, settings, systemId ->
+    val needsCopy: StateFlow<Boolean> = combine(wallpaperCopyRepository.copy, settingsRepository.settings, resumes) { copy, settings, _ ->
         val storedId = settings.wallpaperCopySystemId
+        val systemId = wallpaperCopyRepository.currentSystemWallpaperId()
         val usable = copy != null && (storedId == WallpaperCopyRepository.NO_WALLPAPER_ID || storedId == systemId)
         !usable && !settings.wallpaperPromptDismissed
     }.stateIn(viewModelScope, SharingStarted.Eagerly, false)
 
     /** Re-reads the system wallpaper id; call when the launcher comes back, since the wallpaper can change meanwhile. */
-    fun onResumed() { systemWallpaperId.value = wallpaperCopyRepository.currentSystemWallpaperId() }
+    fun onResumed() { resumes.value++ }
 
     /** "Not now": remembered, so the prompt is not shown again. */
     fun decline() {

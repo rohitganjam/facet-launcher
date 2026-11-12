@@ -838,6 +838,10 @@
     <string name="widget_sheet_agenda_settings_subtitle">Qué calendarios y eventos se muestran</string>
     <string name="widget_sheet_now_playing_settings_subtitle">Cómo se ve</string>
     <string name="native_widget_background">Fondo</string>
+    <string name="native_widget_text">Texto</string>
+    <string name="widget_text_auto">Seguir el tema</string>
+    <string name="widget_text_light">Texto claro</string>
+    <string name="widget_text_dark">Texto oscuro</string>
     <string name="hub_grid_configure_widget">Configurar widget</string>
     <string name="clock_adjust_alignment_heading">Alineación</string>
     <string name="clock_adjust_align_left">Alinear a la izquierda</string>
@@ -1152,4 +1156,6 @@
     <string name="glass_style_clear_glass">Cristal transparente</string>
     <string name="glass_style_dark_glass">Cristal oscuro</string>
     <string name="glass_style_accent">Acento</string>
+    <string name="glass_style_theme">Tema</string>
+    <string name="glass_style_theme_inverted">Tema invertido</string>
 </resources>

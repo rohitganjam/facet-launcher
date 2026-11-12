@@ -12,6 +12,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
@@ -21,6 +22,12 @@ import com.kyant.backdrop.backdrops.rememberLayerBackdrop
 
 /** The wallpaper copy glass panels sample, or `null` when there is none (they then draw their plain tint). */
 val LocalWallpaperBackdrop = staticCompositionLocalOf<LayerBackdrop?> { null }
+
+/**
+ * A flat colour a screen draws over the wallpaper (the Hub's dim), which glass panels on it add to what they blur so the blur matches what the
+ * screen shows. `null` where nothing is drawn over the wallpaper.
+ */
+val LocalBackdropTint = staticCompositionLocalOf<Color?> { null }
 
 /** `true` inside the live Home screen, where an icon's glass background samples the wallpaper copy; elsewhere (settings, previews, pickers) it stays a tint. */
 val LocalIconGlassSamplesWallpaper = staticCompositionLocalOf { false }

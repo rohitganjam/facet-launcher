@@ -86,6 +86,24 @@ class WallpaperBackdropViewModelTest {
     }
 
     @Test
+    fun `a copy stored for a wallpaper that was just set keeps showing before the launcher resumes`() = runTest {
+        // Given a copy for wallpaper 1 being shown
+        val copies = FakeCopies(MutableStateFlow(Bitmap.createBitmap(10, 20, Bitmap.Config.ARGB_8888)))
+        val settings = settings().also { it.setWallpaperCopySystemId(1) }
+        val viewModel = WallpaperBackdropViewModel(copies, settings)
+        viewModel.observe(this)
+        assertNotNull(viewModel.copy.first { it != null })
+
+        // When Facet sets a new wallpaper and stores the copy for it, with no resume in between
+        copies.systemId = 2
+        settings.setWallpaperCopySystemId(2)
+        settings.settings.first { it.wallpaperCopySystemId == 2 }
+
+        // Then the copy is still shown
+        assertNotNull(viewModel.copy.value)
+    }
+
+    @Test
     fun `a copy is dropped once the system wallpaper has changed since it was stored`() = runTest {
         // Given a copy stored when the system id was 1
         val copies = FakeCopies(MutableStateFlow(Bitmap.createBitmap(10, 20, Bitmap.Config.ARGB_8888)))

@@ -921,6 +921,10 @@
     <string name="widget_sheet_agenda_settings_subtitle">Which calendars and events show</string>
     <string name="widget_sheet_now_playing_settings_subtitle">How it looks</string>
     <string name="native_widget_background">Background</string>
+    <string name="native_widget_text">Text</string>
+    <string name="widget_text_auto">Match theme</string>
+    <string name="widget_text_light">Light text</string>
+    <string name="widget_text_dark">Dark text</string>
     <string name="hub_grid_configure_widget">Configure widget</string>
     <string name="clock_adjust_alignment_heading">Alignment</string>
     <string name="clock_adjust_align_left">Align left</string>
@@ -1229,4 +1233,6 @@
     <string name="glass_style_clear_glass">Clear glass</string>
     <string name="glass_style_dark_glass">Dark glass</string>
     <string name="glass_style_accent">Accent</string>
+    <string name="glass_style_theme">Theme</string>
+    <string name="glass_style_theme_inverted">Theme inverted</string>
 </resources>

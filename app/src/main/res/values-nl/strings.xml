@@ -811,6 +811,10 @@
     <string name="widget_sheet_agenda_settings_subtitle">Welke agenda\'s en afspraken worden getoond</string>
     <string name="widget_sheet_now_playing_settings_subtitle">Hoe het eruitziet</string>
     <string name="native_widget_background">Achtergrond</string>
+    <string name="native_widget_text">Tekst</string>
+    <string name="widget_text_auto">Thema volgen</string>
+    <string name="widget_text_light">Lichte tekst</string>
+    <string name="widget_text_dark">Donkere tekst</string>
     <string name="hub_grid_configure_widget">Widget configureren</string>
     <string name="clock_adjust_alignment_heading">Uitlijning</string>
     <string name="clock_adjust_align_left">Links uitlijnen</string>
@@ -1082,4 +1086,6 @@
     <string name="glass_style_clear_glass">Helder glas</string>
     <string name="glass_style_dark_glass">Donker glas</string>
     <string name="glass_style_accent">Accent</string>
+    <string name="glass_style_theme">Thema</string>
+    <string name="glass_style_theme_inverted">Thema omgekeerd</string>
 </resources>

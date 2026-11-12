@@ -60,6 +60,34 @@ class NativeWidgetConfigTest {
     }
 
     @Test
+    fun `a widget's text colours round trip and are kept apart from following the launcher`() {
+        // Given a widget with only light text chosen
+        val config = NativeWidgetConfig(textTheme = WidgetTextTheme.LIGHT_TEXT)
+
+        // When encoded and decoded
+        val decoded = decodeNativeWidgetConfig(config.encode())
+
+        // Then it is kept, the widget no longer follows the launcher, and a name this version does not know reads as unset
+        assertEquals(WidgetTextTheme.LIGHT_TEXT, decoded.textTheme)
+        assertTrue(!decoded.followsLauncher)
+        assertNull(decodeNativeWidgetConfig("{\"textTheme\":\"NOT_A_THEME\"}").textTheme)
+    }
+
+    @Test
+    fun `the solid theme backgrounds round trip and only widgets are meant to offer them`() {
+        // When each solid background is encoded and decoded
+        val solid = listOf(GlassStyle.THEME, GlassStyle.THEME_INVERTED)
+
+        // Then it is kept, flagged solid, and left out of the glass-only list the other pickers use
+        solid.forEach { style ->
+            assertEquals(style, decodeNativeWidgetConfig(NativeWidgetConfig(glass = style).encode()).glass)
+            assertTrue(style.isSolid)
+            assertTrue(style !in GlassStyle.glassOnly)
+        }
+        assertTrue(GlassStyle.entries.filterNot { it.isSolid }.all { it in GlassStyle.glassOnly })
+    }
+
+    @Test
     fun `no calendars chosen is kept apart from following the launcher`() {
         // Given an explicitly empty selection
         val decoded = decodeNativeWidgetConfig(NativeWidgetConfig(calendarIds = emptySet()).encode())

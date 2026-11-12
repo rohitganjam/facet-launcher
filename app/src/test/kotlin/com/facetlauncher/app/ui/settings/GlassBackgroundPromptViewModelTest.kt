@@ -98,6 +98,25 @@ class GlassBackgroundPromptViewModelTest {
     }
 
     @Test
+    fun `a copy stored for a wallpaper that was just set is not stale before the launcher resumes`() = runTest {
+        // Given a copy for wallpaper 1 and a view model that has already read that
+        val copies = FakeCopies(MutableStateFlow(bitmap))
+        val settings = settings().also { it.setWallpaperCopySystemId(1) }
+        val viewModel = GlassBackgroundPromptViewModel(copies, settings)
+        viewModel.observe(this)
+        settings.settings.first { it.wallpaperCopySystemId == 1 }
+        assertFalse(viewModel.needsCopy.value)
+
+        // When Facet sets a new wallpaper (the system id changes) and stores the copy for it, with no resume in between
+        copies.systemId = 2
+        settings.setWallpaperCopySystemId(2)
+        settings.settings.first { it.wallpaperCopySystemId == 2 }
+
+        // Then the new copy counts as current, so there is still nothing to ask for
+        assertFalse(viewModel.needsCopy.value)
+    }
+
+    @Test
     fun `declining is remembered`() = runTest {
         // Given a prompt that is needed
         val settings = settings()

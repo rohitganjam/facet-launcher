@@ -33,17 +33,19 @@ fun GlassBackgroundRow(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     testTag: String? = null,
+    /** Also offer the solid Theme and Theme inverted fills, which only widgets do. */
+    includeSolid: Boolean = false,
 ) {
     val prompt = LocalGlassBackgroundPrompt.current
     var showPrompt by remember { mutableStateOf(false) }
     LabeledDropdownRow(
         title = title,
-        options = GlassStyle.entries,
+        options = if (includeSolid) GlassStyle.entries else GlassStyle.glassOnly,
         selected = selected,
         label = { stringResource(it.displayNameRes) },
         onSelect = {
             onSelect(it)
-            if (it != GlassStyle.OFF && prompt?.needsCopy == true) showPrompt = true
+            if (it != GlassStyle.OFF && !it.isSolid && prompt?.needsCopy == true) showPrompt = true
         },
         modifier = modifier,
         enabled = enabled,

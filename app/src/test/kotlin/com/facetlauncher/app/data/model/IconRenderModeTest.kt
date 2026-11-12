@@ -43,8 +43,8 @@ class IconRenderModeTest {
         // Given the glass backgrounds
         val glass = IconBackground.entries.filter { it.glass != null }
 
-        // Then they cover every panel style except Off, once each
-        assertEquals(GlassStyle.entries - GlassStyle.OFF, glass.map { it.glass })
+        // Then they cover every glass style except Off, once each (the solid widget fills are not icon backgrounds)
+        assertEquals(GlassStyle.glassOnly - GlassStyle.OFF, glass.map { it.glass })
 
         // And each is reachable from a style and colour, keeping both
         assertEquals(IconRenderMode.GLYPH_GLASS_DARK_FROST_ACCENT, IconRenderMode.of(IconStyle.GLYPH, IconColour.ACCENT, IconBackground.GLASS_DARK_FROST))

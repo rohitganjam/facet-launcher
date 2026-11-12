@@ -23,11 +23,11 @@ class GlassBackgroundRowTest {
         var declined = 0
     }
 
-    private fun setContent(needsCopy: Boolean, calls: Calls, selected: GlassStyle = GlassStyle.OFF) {
+    private fun setContent(needsCopy: Boolean, calls: Calls, selected: GlassStyle = GlassStyle.OFF, includeSolid: Boolean = false) {
         composeRule.setContent {
             FacetLauncherTheme {
                 CompositionLocalProvider(LocalGlassBackgroundPrompt provides GlassBackgroundPrompt(needsCopy, { calls.chose++ }, { calls.declined++ })) {
-                    GlassBackgroundRow(title = "Dock background", selected = selected, onSelect = { calls.selected = it }, testTag = "row")
+                    GlassBackgroundRow(title = "Dock background", selected = selected, onSelect = { calls.selected = it }, testTag = "row", includeSolid = includeSolid)
                 }
             }
         }
@@ -90,6 +90,31 @@ class GlassBackgroundRowTest {
         composeRule.onNodeWithText("Off").performClick()
 
         // Then there is no prompt
+        composeRule.onNodeWithTag("glass_prompt").assertDoesNotExist()
+    }
+
+    @Test
+    fun `the solid theme backgrounds are only offered when asked for`() {
+        // Given a picker that offers glass only
+        setContent(needsCopy = false, Calls())
+        composeRule.onNodeWithTag("row").performClick()
+
+        // Then Theme inverted is not in the menu
+        composeRule.onNodeWithText("Theme inverted").assertDoesNotExist()
+    }
+
+    @Test
+    fun `a picker that includes the solid fills offers them and applies them without a prompt`() {
+        // Given a widget-style picker and no copy
+        val calls = Calls()
+        setContent(needsCopy = true, calls, includeSolid = true)
+
+        // When Theme inverted is picked
+        composeRule.onNodeWithTag("row").performClick()
+        composeRule.onNodeWithText("Theme inverted").performClick()
+
+        // Then it is applied, and since it is not glass there is no prompt about a wallpaper copy
+        assertEquals(GlassStyle.THEME_INVERTED, calls.selected)
         composeRule.onNodeWithTag("glass_prompt").assertDoesNotExist()
     }
 }

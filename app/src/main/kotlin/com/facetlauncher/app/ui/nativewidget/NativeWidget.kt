@@ -1,5 +1,8 @@
 package com.facetlauncher.app.ui.nativewidget
 
+import com.facetlauncher.app.ui.theme.LocalIsDarkTheme
+import com.facetlauncher.app.data.model.WidgetTextTheme
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.annotation.StringRes
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.layout.Box
@@ -19,6 +22,7 @@ import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.facetlauncher.app.R
+import com.facetlauncher.app.data.model.GlassStyle
 import com.facetlauncher.app.data.model.NativeWidgetConfig
 import com.facetlauncher.app.data.model.NativeWidgetRef
 import com.facetlauncher.app.data.model.NativeWidgetType
@@ -59,15 +63,25 @@ fun NativeWidget(
     val shownState = state.withOverride(ref?.let { state.overrides[it] })
     val openWeather = { actions.onOpenWeather(ref) }
     val glass = ref?.let { state.overrides[it]?.glass } ?: NativeWidgetConfig.DEFAULT_GLASS
+    // The text colours follow the theme's light or dark; a widget can force either without touching the panel behind it.
+    val themeIsDark = LocalIsDarkTheme.current
+    val isDarkTheme = when (ref?.let { state.overrides[it]?.textTheme }) {
+        WidgetTextTheme.LIGHT_TEXT -> true
+        WidgetTextTheme.DARK_TEXT -> false
+        // The inverted fill is the theme's text colour, so on it the text flips to stay readable.
+        else -> if (glass == GlassStyle.THEME_INVERTED) !themeIsDark else themeIsDark
+    }
     Box(
         modifier = modifier
             .size(size)
             .glassBackground(glass, MaterialTheme.shapes.large, sampleWallpaper = true)
             .testTag("native_widget_${type.name}"),
     ) {
-        Crossfade(targetState = tier, modifier = Modifier.fillMaxSize().padding(CONTENT_INSET), label = "nativeWidgetTier") { shown ->
-            Box(modifier = Modifier.fillMaxSize().testTag("native_widget_tier_${shown.name}")) {
-                NativeWidgetContent(type, shown, size, shownState, actions, openWeather)
+        CompositionLocalProvider(LocalIsDarkTheme provides isDarkTheme) {
+            Crossfade(targetState = tier, modifier = Modifier.fillMaxSize().padding(CONTENT_INSET), label = "nativeWidgetTier") { shown ->
+                Box(modifier = Modifier.fillMaxSize().testTag("native_widget_tier_${shown.name}")) {
+                    NativeWidgetContent(type, shown, size, shownState, actions, openWeather)
+                }
             }
         }
     }

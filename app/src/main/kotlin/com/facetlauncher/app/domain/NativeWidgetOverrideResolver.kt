@@ -10,6 +10,7 @@ import com.facetlauncher.app.data.model.NativeWidgetConfig
 import com.facetlauncher.app.data.model.NativeWidgetType
 import com.facetlauncher.app.data.model.WeatherLocationMode
 import com.facetlauncher.app.data.model.WeatherPlace
+import com.facetlauncher.app.data.model.WidgetTextTheme
 import com.facetlauncher.app.data.model.WidgetWeatherLocation
 import com.facetlauncher.app.data.model.decodeNativeWidgetConfig
 import com.facetlauncher.app.data.weather.WeatherRepository
@@ -29,6 +30,8 @@ data class NativeWidgetOverride(
     val locationMissing: Boolean = false,
     /** The widget's own background; `null` is the default. */
     val glass: GlassStyle? = null,
+    /** The widget's own text colours; `null` follows the launcher's theme. */
+    val textTheme: WidgetTextTheme? = null,
 )
 
 /** One native widget's own setting, as stored: [key] says which widget, [encodedConfig] is what `NativeWidgetConfig` encodes. */
@@ -36,7 +39,7 @@ data class NativeWidgetSetting<K>(val key: K, val type: NativeWidgetType?, val e
 
 /**
  * Works out what the widgets Facet draws itself show where they are set to their own calendars or location: the calendar's
- * events, or a forecast shared by place, or its own background. A widget that follows the launcher has no entry in the result.
+ * events, or a forecast shared by place, or its own background or text colours. A widget that follows the launcher has no entry in the result.
  */
 class NativeWidgetOverrideResolver @Inject constructor(
     private val calendarRepository: CalendarRepository,
@@ -50,7 +53,8 @@ class NativeWidgetOverrideResolver @Inject constructor(
     suspend fun <K> resolve(widgets: List<NativeWidgetSetting<K>>, settings: LauncherSettings): Map<K, NativeWidgetOverride> =
         widgets.mapNotNull { setting ->
             val config = decodeNativeWidgetConfig(setting.encodedConfig)
-            val override = overrideFor(setting.type, config, settings)?.copy(glass = config.glass) ?: config.glass?.let { NativeWidgetOverride(glass = it) }
+            val override = overrideFor(setting.type, config, settings)?.copy(glass = config.glass, textTheme = config.textTheme)
+                ?: NativeWidgetOverride(glass = config.glass, textTheme = config.textTheme).takeIf { config.glass != null || config.textTheme != null }
             override?.let { setting.key to it }
         }.toMap()
 

@@ -1,5 +1,7 @@
 package com.facetlauncher.app.ui.hub
 
+import com.facetlauncher.app.ui.components.LocalBackdropTint
+import androidx.compose.runtime.CompositionLocalProvider
 import com.facetlauncher.app.ui.nativewidget.NativeWidgetEnvironment
 import android.appwidget.AppWidgetHostView
 import android.content.Context
@@ -37,25 +39,28 @@ fun HubScreen(
     nativeWidgets: NativeWidgetEnvironment = NativeWidgetEnvironment(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    HubContent(
-        uiState = uiState,
-        isLandscape = rememberHomeLayoutMode() == HomeLayoutMode.LANDSCAPE,
-        onLandscapeRowsChange = viewModel::onLandscapeRowsChange,
-        onLandscapeWidgetDrop = viewModel::onLandscapeWidgetDrop,
-        onLandscapeWidgetResize = viewModel::onLandscapeWidgetResize,
-        createHostView = viewModel::createHostView,
-        onWidgetSizeChange = viewModel::updateWidgetSize,
-        onAddClick = onAddClick,
-        onManageClick = onManageClick,
-        onRemoveOrphan = viewModel::onRemoveOrphan,
-        onKeepOrphanSpace = { viewModel.onKeepOrphanSpace() },
-        onWidgetDrop = viewModel::onWidgetDrop,
-        onWidgetDroppedOnTrash = viewModel::onWidgetDroppedOnTrash,
-        onWidgetResize = viewModel::onWidgetResize,
-        opacity = opacity,
-        modifier = modifier,
-        nativeWidgets = nativeWidgets,
-    )
+    // The panel dims the wallpaper behind it, so a widget's glass adds the same tint to what it blurs.
+    CompositionLocalProvider(LocalBackdropTint provides SurfaceContainer.copy(alpha = opacity)) {
+        HubContent(
+            uiState = uiState,
+            isLandscape = rememberHomeLayoutMode() == HomeLayoutMode.LANDSCAPE,
+            onLandscapeRowsChange = viewModel::onLandscapeRowsChange,
+            onLandscapeWidgetDrop = viewModel::onLandscapeWidgetDrop,
+            onLandscapeWidgetResize = viewModel::onLandscapeWidgetResize,
+            createHostView = viewModel::createHostView,
+            onWidgetSizeChange = viewModel::updateWidgetSize,
+            onAddClick = onAddClick,
+            onManageClick = onManageClick,
+            onRemoveOrphan = viewModel::onRemoveOrphan,
+            onKeepOrphanSpace = { viewModel.onKeepOrphanSpace() },
+            onWidgetDrop = viewModel::onWidgetDrop,
+            onWidgetDroppedOnTrash = viewModel::onWidgetDroppedOnTrash,
+            onWidgetResize = viewModel::onWidgetResize,
+            opacity = opacity,
+            modifier = modifier,
+            nativeWidgets = nativeWidgets,
+        )
+    }
 }
 
 @Composable

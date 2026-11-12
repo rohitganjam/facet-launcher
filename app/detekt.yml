@@ -43,6 +43,7 @@ Compose:
       - LocalWallpaperBackdrop
       - LocalIconGlassSamplesWallpaper
       - LocalGlassBackgroundPrompt
+      - LocalBackdropTint
       - LocalCustomAccentSwatch
   CompositionLocalNaming: { active: true }
   ConditionHoist: { active: true }

@@ -20,6 +20,7 @@ import com.facetlauncher.app.data.model.WeatherCity
 import com.facetlauncher.app.data.model.WeatherHour
 import com.facetlauncher.app.data.model.WeatherLocationMode
 import com.facetlauncher.app.data.model.WeatherPlace
+import com.facetlauncher.app.data.model.WidgetTextTheme
 import com.facetlauncher.app.data.model.WidgetWeatherLocation
 import com.facetlauncher.app.data.model.encode
 import com.facetlauncher.app.data.weather.WeatherFetchState
@@ -117,6 +118,26 @@ class ObserveNativeWidgetOverridesUseCaseTest {
         // Then the choices are carried, and the widget that chose nothing has no entry
         assertEquals(GlassStyle.BRIGHT, overrides[NativeWidgetRef.Hub(-1)]?.glass)
         assertEquals(GlassStyle.OFF, overrides[NativeWidgetRef.Hub(-2)]?.glass)
+        assertNull(overrides[NativeWidgetRef.Hub(-3)])
+    }
+
+    @Test
+    fun `a widget with only text colours chosen gets an override carrying them`() = runTest {
+        // Given a weather widget that chose dark text, an agenda that chose both text and a background, and one that chose nothing
+        given(
+            native(-1, NativeWidgetType.WEATHER, NativeWidgetConfig(textTheme = WidgetTextTheme.DARK_TEXT)),
+            native(-2, NativeWidgetType.AGENDA, NativeWidgetConfig(textTheme = WidgetTextTheme.LIGHT_TEXT, glass = GlassStyle.DARK_GLASS)),
+            native(-3, NativeWidgetType.NOW_PLAYING, NativeWidgetConfig()),
+        )
+        `when`(calendarPermission.isGranted()).thenReturn(true)
+
+        // When observing
+        val overrides = useCase()().first()
+
+        // Then each carries its own choices, and the one that chose nothing has no entry
+        assertEquals(WidgetTextTheme.DARK_TEXT, overrides[NativeWidgetRef.Hub(-1)]?.textTheme)
+        assertEquals(WidgetTextTheme.LIGHT_TEXT, overrides[NativeWidgetRef.Hub(-2)]?.textTheme)
+        assertEquals(GlassStyle.DARK_GLASS, overrides[NativeWidgetRef.Hub(-2)]?.glass)
         assertNull(overrides[NativeWidgetRef.Hub(-3)])
     }
 

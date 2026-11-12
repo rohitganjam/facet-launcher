@@ -24,4 +24,19 @@ enum class GlassStyle(@param:StringRes val displayNameRes: Int) {
 
     /** The launcher accent colour as the wash. */
     ACCENT(R.string.glass_style_accent),
+
+    /** Not glass: the theme's own surface at 60% opacity. Offered by widgets only. */
+    THEME(R.string.glass_style_theme),
+
+    /** Not glass: the theme's text colour as the fill at 60% opacity, so light in a dark theme and dark in a light one. Offered by widgets only. */
+    THEME_INVERTED(R.string.glass_style_theme_inverted),
+    ;
+
+    /** `true` for the two solid, non-glass fills, which only widgets offer. */
+    val isSolid: Boolean get() = this == THEME || this == THEME_INVERTED
+
+    companion object {
+        /** What every glass picker offers: all but the solid fills. */
+        val glassOnly: List<GlassStyle> = entries.filterNot { it.isSolid }
+    }
 }
