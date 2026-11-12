@@ -87,7 +87,7 @@ fun MediaPlayerRow(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .glassBackground(glass)
+            .glassBackground(glass, sampleWallpaper = true)
             .then(if (glass != GlassStyle.OFF) Modifier.padding(10.dp) else Modifier)
             .height(IntrinsicSize.Min)
             .testTag(homeTag("home_media_player")),

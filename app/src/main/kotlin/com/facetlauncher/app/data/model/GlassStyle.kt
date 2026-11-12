@@ -10,14 +10,17 @@ enum class GlassStyle(@param:StringRes val displayNameRes: Int) {
     /** A soft white wash, brighter at the top, with a hairline edge. */
     FROST(R.string.glass_style_frost),
 
-    /** A dark tint with a faint rim; the best contrast for text on any wallpaper. */
-    SMOKED(R.string.glass_style_smoked),
-
-    /** A strong white fill with an inner highlight along the top. */
-    BRIGHT(R.string.glass_style_bright),
+    /** A blurred dark tint with a faint rim; the best contrast for text on any wallpaper. */
+    DARK_FROST(R.string.glass_style_dark_frost),
 
     /** An almost clear fill with a bright diagonal edge. */
     CLEAR_GLASS(R.string.glass_style_clear_glass),
+
+    /** Clear glass under a dark wash: the wallpaper stays sharp, darker. */
+    DARK_GLASS(R.string.glass_style_dark_glass),
+
+    /** A strong white fill with an inner highlight along the top. */
+    BRIGHT(R.string.glass_style_bright),
 
     /** The launcher accent colour as the wash. */
     ACCENT(R.string.glass_style_accent),

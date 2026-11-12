@@ -203,7 +203,7 @@ four sections, each a card of icon-badge rows:
   - Facet automation → `FacetAutomationScreen` (rules that switch facets by schedule or device
     trigger; one card with an icon, a message and an "Add rule" row when empty)
 - **Appearance**
-  - Change wallpaper → `ACTION_SET_WALLPAPER` system picker
+  - Change wallpaper → the wallpaper screen: *Choose an image for Facet* (Photo Picker, pan and zoom fit step, set as the system wallpaper and kept as the copy glass panels sample) or *Set a system wallpaper* (`ACTION_SET_WALLPAPER`, as before); see `docs/architecture/21-flow-wallpaper-glass.md`
   - Appearance → `AppearanceSettingsScreen` (Dock & home → "Dock & Apps appearance" → `DockAppsAppearanceScreen`
     (dock style, app list layout, position, presentation, alignment; both scopes; live preview);
     Notifications section with a "Notifications and media" row → `NotificationSettingsScreen`

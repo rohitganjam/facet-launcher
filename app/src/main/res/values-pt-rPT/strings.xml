@@ -28,7 +28,7 @@
     <string name="settings_active_facet_title">Definições de %1$s</string>
     <string name="settings_active_facet_subtitle">Definições específicas de %1$s, a sua faceta atual</string>
     <string name="settings_change_wallpaper_title">Alterar imagem de fundo</string>
-    <string name="settings_change_wallpaper_subtitle">Altere a imagem de fundo do sistema</string>
+    <string name="settings_change_wallpaper_subtitle">Escolha uma imagem ou abra o seletor do sistema</string>
     <string name="settings_calendars_title">Calendários a mostrar</string>
     <string name="settings_show_as">Mostrar como %1$s</string>
     <string name="settings_contact_search">Pesquisa de contactos %1$s</string>

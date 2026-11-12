@@ -265,7 +265,7 @@ internal fun AccentColorSection(
 }
 
 @Composable
-private fun PillOption(label: String, selected: Boolean, onClick: () -> Unit, testTag: String, modifier: Modifier = Modifier) {
+internal fun PillOption(label: String, selected: Boolean, onClick: () -> Unit, testTag: String, modifier: Modifier = Modifier) {
     Column(
         modifier = modifier
             .testTag(testTag)

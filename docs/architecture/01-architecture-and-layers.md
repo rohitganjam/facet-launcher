@@ -107,7 +107,7 @@ flowchart TB
             ENM["EntitlementModule\n@Binds PlayEntitlementRepository\n+ 2 @BindsOptionalOf hooks"]
             WTM["WeatherModule\n@Binds MetWeatherApi to WeatherApi\n@Binds RoomWeatherStore to WeatherStore\n@Binds AndroidPlaceGeocoder to PlaceGeocoder\n@Binds ObserveNativeWidgetOverridesUseCase to NativeWidgetOverrides"]
         end
-        REPOS["55 @Singleton data classes (47 repositories)\n@Singleton class X @Inject constructor(...)\n(no module — constructor injection)"]
+        REPOS["56 @Singleton data classes (48 repositories)\n@Singleton class X @Inject constructor(...)\n(no module — constructor injection)"]
         MODS --> REPOS
     end
 
@@ -173,6 +173,6 @@ fine) rather than via Hilt test modules — see [06-testing.md](06-testing.md).
 - keeps `SyncFacetShortcutsUseCase` and `RunFacetAutomationUseCase` collecting for the process lifetime (dynamic shortcuts; automation rules);
 - clears `isLoading` after a 3 s timeout so a slow first app scan can't leave the screen blank.
 
-`FacetNavHost` owns 33 string-route destinations (`FacetDestinations`); `Home ⇄ Drawer` is *not* a
+`FacetNavHost` owns 34 string-route destinations (`FacetDestinations`); `Home ⇄ Drawer` is *not* a
 nav transition — `HomeDrawerRoute` handles it as a follow-finger gesture inside the `HOME`
 destination, while `Hub`/`Facets`/settings screens are ordinary destinations.

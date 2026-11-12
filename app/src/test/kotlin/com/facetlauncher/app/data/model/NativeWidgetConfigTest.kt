@@ -48,13 +48,13 @@ class NativeWidgetConfigTest {
     @Test
     fun `a widget's background round trips and is kept apart from following the launcher`() {
         // Given a widget with only a background chosen
-        val config = NativeWidgetConfig(glass = GlassStyle.SMOKED)
+        val config = NativeWidgetConfig(glass = GlassStyle.DARK_FROST)
 
         // When encoded and decoded
         val decoded = decodeNativeWidgetConfig(config.encode())
 
         // Then it is kept and the widget no longer counts as following the launcher
-        assertEquals(GlassStyle.SMOKED, decoded.glass)
+        assertEquals(GlassStyle.DARK_FROST, decoded.glass)
         assertTrue(!decoded.followsLauncher)
         assertNull(decodeNativeWidgetConfig("{\"glass\":\"NOT_A_STYLE\"}").glass)
     }

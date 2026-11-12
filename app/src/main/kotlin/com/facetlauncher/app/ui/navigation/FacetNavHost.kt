@@ -53,6 +53,7 @@ import com.facetlauncher.app.ui.settings.WeatherLocationScreen
 import com.facetlauncher.app.ui.settings.PermissionsScreen
 import com.facetlauncher.app.ui.settings.SettingsScreen
 import com.facetlauncher.app.ui.settings.UsageAccessExplanationScreen
+import com.facetlauncher.app.ui.settings.WallpaperScreen
 import com.facetlauncher.app.ui.settings.WhatsNewScreen
 import com.facetlauncher.app.ui.settings.automation.FacetAutomationScreen
 import com.facetlauncher.app.ui.settings.backup.BackupRestoreScreen
@@ -89,6 +90,7 @@ object FacetDestinations {
     const val THEMES_AND_COLORS = "themesAndColors"
     const val FONTS = "fonts"
     const val ICONS = "icons"
+    const val WALLPAPER = "wallpaper"
     const val DOCK_SETTINGS = "dockSettings?facetId={facetId}"
     const val HOME_APPS_LIST_SETTINGS = "homeAppsListSettings?facetId={facetId}"
     const val APP_DRAWER_SETTINGS = "appDrawerSettings"
@@ -215,6 +217,7 @@ fun FacetNavHost(
                 onViewActiveFacetSettings = { facetId -> navController.navigate(FacetDestinations.facetSettings(facetId)) },
                 onViewFacetPro = { navController.navigate(FacetDestinations.facetPro(ProReason.ABOUT)) },
                 onNavigateToAppearance = { navController.navigate(FacetDestinations.APPEARANCE_SETTINGS) },
+                onNavigateToWallpaper = { navController.navigate(FacetDestinations.WALLPAPER) },
                 onNavigateToAppDrawerSettings = { navController.navigate(FacetDestinations.APP_DRAWER_SETTINGS) },
                 onNavigateToNotificationSettings = { navController.navigate(FacetDestinations.NOTIFICATION_SETTINGS) },
                 onNavigateToFolders = { navController.navigate(FacetDestinations.FOLDERS_SETTINGS) },
@@ -225,6 +228,9 @@ fun FacetNavHost(
                 onNavigateToWhatsNew = { navController.navigate(FacetDestinations.WHATS_NEW) },
                 onNavigateToLicenses = { navController.navigate(FacetDestinations.LICENSES) },
             )
+        }
+        settingsComposable(FacetDestinations.WALLPAPER) {
+            WallpaperScreen(onBack = { navController.popBackStackSafely() })
         }
         settingsComposable(FacetDestinations.LICENSES) {
             LicensesScreen(

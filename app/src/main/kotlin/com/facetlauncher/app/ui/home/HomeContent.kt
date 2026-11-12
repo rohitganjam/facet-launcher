@@ -73,7 +73,7 @@ internal fun HomePortraitContent(frame: HomeFrame) {
                     .fillMaxWidth()
                     .padding(top = 12.dp, bottom = 4.dp)
                     .then(if (frame.state.dock.glass != GlassStyle.OFF) Modifier.padding(horizontal = 12.dp) else Modifier)
-                    .glassBackground(frame.state.dock.glass, MaterialTheme.shapes.large)
+                    .glassBackground(frame.state.dock.glass, MaterialTheme.shapes.large, sampleWallpaper = true)
                     // Even space inside the panel; text tiles already carry 14dp above and below.
                     .then(if (frame.state.dock.glass == GlassStyle.OFF) Modifier else if (frame.state.dock.displayMode == DockDisplayMode.TEXT) Modifier.padding(horizontal = 10.dp) else Modifier.padding(12.dp))
                     .testTag(homeTag("home_dock_row")),

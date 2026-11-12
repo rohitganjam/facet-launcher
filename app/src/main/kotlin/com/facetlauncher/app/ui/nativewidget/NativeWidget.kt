@@ -62,7 +62,7 @@ fun NativeWidget(
     Box(
         modifier = modifier
             .size(size)
-            .glassBackground(glass, MaterialTheme.shapes.large)
+            .glassBackground(glass, MaterialTheme.shapes.large, sampleWallpaper = true)
             .testTag("native_widget_${type.name}"),
     ) {
         Crossfade(targetState = tier, modifier = Modifier.fillMaxSize().padding(CONTENT_INSET), label = "nativeWidgetTier") { shown ->

@@ -316,12 +316,12 @@ class FacetRepositoryTest {
         assertEquals(GlassStyle.OFF, first.appsListGlass)
 
         // When the first gives the dock a style, and the second the apps list another
-        repository.setDockGlass(first.id, GlassStyle.SMOKED)
+        repository.setDockGlass(first.id, GlassStyle.DARK_FROST)
         repository.setAppsListGlass(second.id, GlassStyle.CLEAR_GLASS)
 
         // Then each facet holds only its own styles
         val stored = repository.observeFacets().first().associateBy { it.id }
-        assertEquals(GlassStyle.SMOKED, stored.getValue(first.id).dockGlass)
+        assertEquals(GlassStyle.DARK_FROST, stored.getValue(first.id).dockGlass)
         assertEquals(GlassStyle.OFF, stored.getValue(first.id).appsListGlass)
         assertEquals(GlassStyle.OFF, stored.getValue(second.id).dockGlass)
         assertEquals(GlassStyle.CLEAR_GLASS, stored.getValue(second.id).appsListGlass)

@@ -183,7 +183,7 @@ internal fun HomeAppListColumn(
         shown.forEach { item -> key(item.stableKey()) {
             val rowModifier = Modifier.fillMaxWidth(rowWidthFraction).then(if (cellIndexOf != null) Modifier.gridCellBounds(cellIndexOf(item)) else Modifier)
                 .then(if (content.glass != GlassStyle.OFF) Modifier.padding(vertical = 2.dp) else Modifier)
-                .glassBackground(content.glass)
+                .glassBackground(content.glass, sampleWallpaper = true)
                 // The row's own 8dp side padding plus this equals its vertical padding, so the content sits evenly inside the panel.
                 .then(if (content.glass != GlassStyle.OFF) Modifier.padding(horizontal = (verticalPadding - 8.dp).coerceAtLeast(0.dp)) else Modifier)
             when (item) {
@@ -276,7 +276,7 @@ internal fun HomeAppGrid(
                     val cell = cellAtIndex(index, width)
                     val item = keyAtCell[cell]?.let(itemByKey::get)
                     val tileModifier = Modifier.height(cellHeight).gridCellBounds(index)
-                    val glassTile = if (item != null) tileModifier.glassBackground(content.glass) else tileModifier
+                    val glassTile = if (item != null) tileModifier.glassBackground(content.glass, sampleWallpaper = true) else tileModifier
                     when (item) {
                         is PlacedItem.SingleApp -> HomeAppGridTile(item.app, displayMode, actions, content.style, glassTile, item.gridKey())
                         is PlacedItem.FolderItem -> HomeFolderGridTile(item.folder, displayMode, actions, content.style, glassTile, item.gridKey())

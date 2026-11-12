@@ -257,6 +257,10 @@ data class LauncherSettings(
     val showMediaSkipButtons: Boolean = true,
     /** The frosted-glass panel behind the media player row. */
     val mediaPlayerGlass: GlassStyle = GlassStyle.OFF,
+    /** The system wallpaper's id when the glass copy was stored; a different current id means the copy is stale. -1 is none. Not in backups. */
+    val wallpaperCopySystemId: Int = -1,
+    /** The user chose "Not now" on the wallpaper-copy prompt, so it is not offered again unprompted. Not in backups. */
+    val wallpaperPromptDismissed: Boolean = false,
     /** Lists an app's notifications in its long-press menu. Also needs notification access. */
     val showNotificationsInAppMenu: Boolean = true,
     val showDrawerIcons: Boolean = true,

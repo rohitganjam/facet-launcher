@@ -5,7 +5,7 @@
 | Store | Location | What it holds | Written by | Survives |
 |---|---|---|---|---|
 | Room `FacetDatabase` | `facet.db` (schema **v50**, `exportSchema = true` → `app/schemas/…/1.json … 50.json`) | Facets + every *placement*: favorites, dock, folders, folder membership, widget grid positions, plus the facet automation rules (`automation_rules`) the weather cache (`weather_hours`, `weather_meta`) and each facet's clock stack (`clock_stack_items`) | 7 repositories (§2): `FacetRepository`, `PlacementRepository`, `FolderRepository`, `WidgetPlacementRepository`, `AutomationRuleRepository`, `WeatherRepository` (through `RoomWeatherStore`), `ClockStackRepository` | Reinstall-over-upgrade (migrations); **not** downgrade (dropped) |
-| `DataStore<Preferences>` | `facet_settings` (`datastore/facet_settings.preferences_pb`) | **All launcher-wide settings and defaults** — clock/app-list/dock design defaults (the calendar events strip has no design defaults of its own — see below), theme, drawer, search, permission-prompt flags, onboarding/seed/coach-mark flags, active facet id, the clock accessory switches, weather units and location, the icon pack and size — 80 keys (§5) | `SettingsRepository` only | Any upgrade (missing keys fall back to `LauncherSettings()` defaults) |
+| `DataStore<Preferences>` | `facet_settings` (`datastore/facet_settings.preferences_pb`) | **All launcher-wide settings and defaults** — clock/app-list/dock design defaults (the calendar events strip has no design defaults of its own — see below), theme, drawer, search, permission-prompt flags, onboarding/seed/coach-mark flags, active facet id, the clock accessory switches, weather units and location, the icon pack and size — 82 keys (§5) | `SettingsRepository` only | Any upgrade (missing keys fall back to `LauncherSettings()` defaults) |
 | `DataStore<Preferences>` | `facet_entitlement` (`datastore/facet_entitlement.preferences_pb`) | The cached Pro state (`pro_purchased`; excluded from Android backups and device transfer by `res/xml/data_extraction_rules.xml`), so Pro works offline and at cold start; debug builds also keep `debug_entitlement_mode` here | `PlayEntitlementRepository`, only from an explicit Google Play answer | Same as `facet_settings`; **not** in the backup file, so a restore can never grant Pro |
 | `DataStore<Preferences>` | `facet_automation` (`datastore/facet_automation.preferences_pb`) | Facet-automation bookkeeping: the baseline facet, the ordered active rule ids, the suppressed rule ids (§5.7) | `AutomationStateRepository` (via `ActivateFacetByIdUseCase`) | Same as `facet_settings`; **not** in the backup file |
 | System `AppWidgetService` | Android framework, keyed by `HUB_APP_WIDGET_HOST_ID = 1024` | Which `appWidgetId`s are bound to which providers for this host | `LauncherAppWidgetHost` via `AppWidgetRepository` (allocate/bind/delete) | App data clear **does not** clear it → orphan detection in `ObserveHubStateUseCase` |
@@ -476,6 +476,8 @@ erDiagram
         boolean show_media_player_on_home "default false"
         boolean show_media_skip_buttons "default true"
         string media_player_glass_style "GlassStyle, default OFF"
+        int wallpaper_copy_system_id "default -1, not in backups"
+        boolean wallpaper_prompt_dismissed "default false, not in backups"
         boolean show_notifications_in_app_menu "default true"
         boolean calendar_permission_requested "default false"
         boolean contacts_permission_requested "default false"
@@ -495,7 +497,7 @@ erDiagram
 Keys with **no** facet counterpart (always global): `home_apps_font_weight`,
 `app_label_color_option`, `launcher_font_option` (all three of which the calendar events strip
 reads directly — see §0), `calendar_colors`, everything under Theme, Drawer, Search,
-Notifications, Permission bookkeeping, and First-run.
+Notifications, Wallpaper copy, Permission bookkeeping, and First-run.
 
 **The Home look keys follow the same rule.** `appRowPosition`/`appRowPresentation`/`appListVerticalAlignment`/
 `appListLayout`/`appListColumnAlignment`/`appListGridColumns`/`appListGridDisplayMode`/
@@ -607,6 +609,8 @@ DataStore serialises writes and is main-safe; callers `viewModelScope.launch { }
 | `setShowMediaPlayerOnHome(Boolean)` | `show_media_player_on_home` | set | `NotificationSettingsViewModel` |
 | `setShowMediaSkipButtons(Boolean)` | `show_media_skip_buttons` | set | `NotificationSettingsViewModel` |
 | `setMediaPlayerGlass(GlassStyle)` | `media_player_glass_style` | set | `NotificationSettingsViewModel` |
+| `setWallpaperCopySystemId(Int)` | `wallpaper_copy_system_id` | set (-1 clears it) | `SetWallpaperFromPhotoUseCase`, `RemoveWallpaperCopyUseCase` |
+| `setWallpaperPromptDismissed(Boolean)` | `wallpaper_prompt_dismissed` | set | none yet (the "Not now" choice of the first-use prompt, not built) |
 | `setShowNotificationsInAppMenu(Boolean)` | `show_notifications_in_app_menu` | set | `NotificationSettingsViewModel` |
 | `setCalendarPermissionRequested(Boolean)` | `calendar_permission_requested` | set | `PermissionsViewModel` |
 | `setContactsPermissionRequested(Boolean)` | `contacts_permission_requested` | set | `PermissionsViewModel` |
@@ -622,7 +626,7 @@ DataStore level either.
 
 ### 5.4 Key registry by section
 
-The same 80 keys, grouped the way Settings screens present them, with the `LauncherSettings` field
+The same 82 keys, grouped the way Settings screens present them, with the `LauncherSettings` field
 each maps to. Defaults are `LauncherSettings()`'s constructor defaults.
 
 #### Clock (a clock holds its own style, accessories and calendar in `ClockWidgetConfig`; only these launcher-wide keys remain)
@@ -758,6 +762,13 @@ accessibility grant, and the pair is small enough to set again after a restore.
 | `media_player_glass_style` | String (`GlassStyle`) | `mediaPlayerGlass` | `OFF` — the glass panel behind the media row |
 | `show_notifications_in_app_menu` | Boolean | `showNotificationsInAppMenu` | `true` — lists an app's notifications in its long-press menu; also needs notification access. In `BackupSettings` (defaulted, no version bump) |
 
+#### Wallpaper copy (not in backups: the copy is an image in `filesDir`, see §5.5)
+
+| Key | Type | Field | Default | Notes |
+|---|---|---|---|---|
+| `wallpaper_copy_system_id` | Int | `wallpaperCopySystemId` | `-1` | The system wallpaper's `getWallpaperId()` when the glass copy was stored; a different current id means the copy is stale. -1 is none |
+| `wallpaper_prompt_dismissed` | Boolean | `wallpaperPromptDismissed` | `false` | The user chose "Not now" on the wallpaper-copy prompt, so it is not offered again unprompted |
+
 #### Permission-prompt bookkeeping
 
 | Key | Type | Field | Default | Notes |
@@ -777,7 +788,7 @@ accessibility grant, and the pair is small enough to set again after a restore.
 ### 5.5 What is deliberately *not* in DataStore
 
 Anything per-facet (Room `facets`), anything per-app placement (Room), permission *grants* (read
-live from the OS on every check), the installed-app list, and notification counts (in-memory).
+live from the OS on every check), the installed-app list, and notification counts (in-memory). The glass wallpaper copy itself is a PNG, `wallpaper_copy.png` in `filesDir`, owned by `WallpaperCopyRepository` and left out of backups.
 
 ### 5.6 Adding a key — the checklist
 

@@ -26,7 +26,9 @@ import com.facetlauncher.app.ui.components.LocalHomeSwipeGate
 import com.facetlauncher.app.ui.home.LocalAllowLandscape
 import com.facetlauncher.app.ui.home.homeRequestedOrientation
 import com.facetlauncher.app.ui.launcher.LauncherViewModel
+import com.facetlauncher.app.ui.launcher.WallpaperBackdropViewModel
 import com.facetlauncher.app.ui.launcher.LocalHomePressedEvent
+import com.facetlauncher.app.ui.components.WallpaperBackdropHost
 import com.facetlauncher.app.ui.components.WarmStyledIcons
 import com.facetlauncher.app.ui.navigation.FacetNavHost
 import com.facetlauncher.app.ui.onboarding.OnboardingScreen
@@ -48,6 +50,7 @@ import kotlinx.coroutines.launch
 class LauncherActivity : ComponentActivity() {
 
     private val viewModel: LauncherViewModel by viewModels()
+    private val wallpaperBackdropViewModel: WallpaperBackdropViewModel by viewModels()
 
     @Inject lateinit var launcherApps: LauncherApps
 
@@ -69,6 +72,7 @@ class LauncherActivity : ComponentActivity() {
 
         setContent {
             val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+            val wallpaperCopy by wallpaperBackdropViewModel.copy.collectAsStateWithLifecycle()
             val homeSwipeGate = remember { HomeSwipeGate() }
             val systemBarsState = remember { SystemBarsState() }
             // Locked to portrait when landscape is off, free otherwise. Applied once settings have loaded, so a
@@ -117,11 +121,13 @@ class LauncherActivity : ComponentActivity() {
                                 OnboardingScreen(onFinish = viewModel::completeOnboarding)
                             }
                             else -> {
-                                FacetNavHost(
-                                    apps = uiState.apps,
-                                    onAppClick = { app -> launchApp(app) },
-                                    launcherViewModel = viewModel,
-                                )
+                                WallpaperBackdropHost(wallpaperCopy) {
+                                    FacetNavHost(
+                                        apps = uiState.apps,
+                                        onAppClick = { app -> launchApp(app) },
+                                        launcherViewModel = viewModel,
+                                    )
+                                }
                             }
                         }
                     }
@@ -145,6 +151,7 @@ class LauncherActivity : ComponentActivity() {
         // A refund, a purchase on another device or a redeemed code shows up here without a restart.
         lifecycleScope.launch { entitlementRepository.refresh() }
         viewModel.onResumed()
+        wallpaperBackdropViewModel.onResumed()
     }
 
     override fun onNewIntent(intent: Intent) {

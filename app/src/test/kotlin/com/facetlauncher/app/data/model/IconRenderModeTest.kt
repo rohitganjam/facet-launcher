@@ -47,8 +47,8 @@ class IconRenderModeTest {
         assertEquals(GlassStyle.entries - GlassStyle.OFF, glass.map { it.glass })
 
         // And each is reachable from a style and colour, keeping both
-        assertEquals(IconRenderMode.GLYPH_GLASS_SMOKED_ACCENT, IconRenderMode.of(IconStyle.GLYPH, IconColour.ACCENT, IconBackground.GLASS_SMOKED))
-        assertEquals(IconRenderMode.OUTLINE_GLASS_CLEAR_INVERTED, IconRenderMode.of(IconStyle.OUTLINE, IconColour.THEME_INVERTED, IconBackground.GLASS_CLEAR))
+        assertEquals(IconRenderMode.GLYPH_GLASS_DARK_FROST_ACCENT, IconRenderMode.of(IconStyle.GLYPH, IconColour.ACCENT, IconBackground.GLASS_DARK_FROST))
+        assertEquals(IconRenderMode.OUTLINE_GLASS_DARK_GLASS_INVERTED, IconRenderMode.of(IconStyle.OUTLINE, IconColour.THEME_INVERTED, IconBackground.GLASS_DARK_GLASS))
         assertEquals(IconBackground.GLASS_FROST, IconRenderMode.GLYPH_GLASS_FROST_INK.background)
     }
 

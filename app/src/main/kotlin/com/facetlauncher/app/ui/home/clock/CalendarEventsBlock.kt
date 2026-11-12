@@ -105,7 +105,7 @@ fun CalendarEventsBlock(
 
     Column(
         modifier = modifier.testTag("clock_event_rows").padding(top = 10.dp)
-            .glassBackground(display.glass).then(if (display.glass != GlassStyle.OFF) Modifier.padding(12.dp) else Modifier),
+            .glassBackground(display.glass, sampleWallpaper = true).then(if (display.glass != GlassStyle.OFF) Modifier.padding(12.dp) else Modifier),
         verticalArrangement = Arrangement.spacedBy(9.dp),
         horizontalAlignment = alignment.resolve(),
     ) {

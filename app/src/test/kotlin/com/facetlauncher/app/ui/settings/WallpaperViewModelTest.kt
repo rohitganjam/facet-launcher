@@ -1,0 +1,211 @@
+package com.facetlauncher.app.ui.settings
+
+import android.app.WallpaperManager
+import android.graphics.Bitmap
+import android.graphics.RectF
+import android.net.Uri
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.PreferenceDataStoreFactory
+import androidx.datastore.preferences.core.Preferences
+import com.facetlauncher.app.data.SettingsRepository
+import com.facetlauncher.app.data.WallpaperCopyRepository
+import com.facetlauncher.app.data.WallpaperRepository
+import com.facetlauncher.app.data.model.HomeWallpaper
+import com.facetlauncher.app.domain.RemoveWallpaperCopyUseCase
+import com.facetlauncher.app.domain.SetWallpaperFromPhotoUseCase
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.setMain
+import org.junit.After
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
+import org.junit.Before
+import org.junit.Rule
+import org.junit.Test
+import org.junit.rules.TemporaryFolder
+import org.junit.runner.RunWith
+import org.mockito.Mockito.mock
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.RuntimeEnvironment
+
+@OptIn(ExperimentalCoroutinesApi::class)
+@RunWith(RobolectricTestRunner::class)
+class WallpaperViewModelTest {
+
+    @get:Rule
+    val tempFolder = TemporaryFolder()
+
+    private val dispatcher = UnconfinedTestDispatcher()
+
+    @Before
+    fun setUp() { Dispatchers.setMain(dispatcher) }
+
+    @After
+    fun tearDown() { Dispatchers.resetMain() }
+
+    /** A real (not Mockito) stub of the copy store: a copy the test controls, a system id that can change, and a decode that can fail. */
+    private class FakeCopies : WallpaperCopyRepository(RuntimeEnvironment.getApplication(), mock(WallpaperManager::class.java)) {
+        val stored = MutableStateFlow<Bitmap?>(null)
+        var systemId = 1
+        var decoded: Bitmap? = Bitmap.createBitmap(200, 100, Bitmap.Config.ARGB_8888)
+        var setSucceeds = true
+
+        override val copy: Flow<Bitmap?> get() = stored
+        override fun currentSystemWallpaperId() = systemId
+        override fun portraitScreenSize() = 50 to 100
+        override suspend fun decodePicked(uri: Uri, maxSide: Int) = decoded
+        override suspend fun setSystemWallpaper(bitmap: Bitmap, includeLock: Boolean) = if (setSucceeds) systemId else NO_WALLPAPER_ID
+        override suspend fun save(bitmap: Bitmap): Boolean {
+            stored.value = bitmap
+            return true
+        }
+        override suspend fun remove() { stored.value = null }
+    }
+
+    private fun settings(): SettingsRepository {
+        val dataStore: DataStore<Preferences> = PreferenceDataStoreFactory.create(produceFile = { tempFolder.newFile("t-${System.nanoTime()}.preferences_pb") })
+        return SettingsRepository(dataStore)
+    }
+
+    private fun viewModel(copies: FakeCopies, settings: SettingsRepository): WallpaperViewModel {
+        val wallpaper = object : WallpaperRepository(mock(WallpaperManager::class.java)) {
+            override suspend fun currentHomeWallpaper(): HomeWallpaper = HomeWallpaper.Tones(listOf(1, 2))
+        }
+        return WallpaperViewModel(copies, wallpaper, settings, SetWallpaperFromPhotoUseCase(copies, settings, dispatcher), RemoveWallpaperCopyUseCase(copies, settings))
+    }
+
+    /** Subscribes straight away, so the state flow is live (it only runs while collected). */
+    private fun WallpaperViewModel.observe(scope: kotlinx.coroutines.test.TestScope) =
+        scope.backgroundScope.launch(UnconfinedTestDispatcher(scope.testScheduler)) { uiState.collect { } }
+
+    @Test
+    fun `with no copy there is nothing stale and the system wallpaper is previewed`() = runTest {
+        // Given no copy
+        val viewModel = viewModel(FakeCopies(), settings())
+        viewModel.observe(this)
+
+        // When the preview of the system wallpaper has loaded
+        val state = viewModel.uiState.first { it.systemWallpaper != HomeWallpaper.Unavailable }
+
+        // Then it is not stale and the tones show
+        assertNull(state.copy)
+        assertFalse(state.stale)
+        assertEquals(HomeWallpaper.Tones(listOf(1, 2)), state.systemWallpaper)
+    }
+
+    @Test
+    fun `a copy whose recorded id differs from the system's is stale`() = runTest {
+        // Given a copy stored when the system id was 1, and the system now at 2
+        val copies = FakeCopies().apply { stored.value = Bitmap.createBitmap(5, 5, Bitmap.Config.ARGB_8888) }
+        val settings = settings().also { it.setWallpaperCopySystemId(1) }
+        copies.systemId = 2
+        val viewModel = viewModel(copies, settings)
+        viewModel.observe(this)
+
+        // When the screen checks again
+        viewModel.refresh()
+
+        // Then the copy is stale
+        assertTrue(viewModel.uiState.first { it.copy != null && it.stale }.stale)
+    }
+
+    @Test
+    fun `a copy whose id still matches is not stale`() = runTest {
+        // Given a copy recorded at the system's current id
+        val copies = FakeCopies().apply { stored.value = Bitmap.createBitmap(5, 5, Bitmap.Config.ARGB_8888) }
+        val settings = settings().also { it.setWallpaperCopySystemId(1) }
+        val viewModel = viewModel(copies, settings)
+        viewModel.observe(this)
+
+        // Then, once it has loaded, it is not stale
+        assertFalse(viewModel.uiState.first { it.copy != null }.stale)
+    }
+
+    @Test
+    fun `picking a photo shows it for framing, and an unreadable one is a failure`() = runTest {
+        // Given a readable photo
+        val copies = FakeCopies()
+        val viewModel = viewModel(copies, settings())
+        viewModel.observe(this)
+
+        // When one is picked
+        viewModel.onPicked(Uri.parse("content://photo/1"))
+
+        // Then it is there to frame
+        val framing = viewModel.uiState.first { it.picked != null }
+        assertFalse(framing.failed)
+
+        // And when the next one cannot be read, it fails and nothing is kept for framing
+        viewModel.cancelFit()
+        viewModel.uiState.first { it.picked == null }
+        copies.decoded = null
+        viewModel.onPicked(Uri.parse("content://photo/2"))
+        val failed = viewModel.uiState.first { it.failed }
+        assertNull(failed.picked)
+    }
+
+    @Test
+    fun `confirming the fit stores the copy, clears the framing and records the id`() = runTest {
+        // Given a photo being framed
+        val copies = FakeCopies().apply { systemId = 4 }
+        val settings = settings()
+        val viewModel = viewModel(copies, settings)
+        viewModel.observe(this)
+        viewModel.onPicked(Uri.parse("content://photo/1"))
+        viewModel.uiState.first { it.picked != null }
+
+        // When confirmed
+        viewModel.confirmFit(RectF(0f, 0f, 50f, 100f), includeLock = false)
+
+        // Then the copy is stored and framing is over, the id recorded, and it is not stale
+        val state = viewModel.uiState.first { it.copy != null && it.picked == null && !it.isWorking }
+        assertFalse(state.failed)
+        assertFalse(state.stale)
+        assertEquals(4, settings.settings.first { it.wallpaperCopySystemId == 4 }.wallpaperCopySystemId)
+    }
+
+    @Test
+    fun `a refused wallpaper keeps the photo for another try and reports failure`() = runTest {
+        // Given the system refuses to set it
+        val copies = FakeCopies().apply { setSucceeds = false }
+        val viewModel = viewModel(copies, settings())
+        viewModel.observe(this)
+        viewModel.onPicked(Uri.parse("content://photo/1"))
+        viewModel.uiState.first { it.picked != null }
+
+        // When confirmed
+        viewModel.confirmFit(RectF(0f, 0f, 50f, 100f), includeLock = true)
+
+        // Then it failed, no copy exists, and the photo is still there to frame again
+        val state = viewModel.uiState.first { it.failed }
+        assertNull(state.copy)
+        assertNotNull(state.picked)
+    }
+
+    @Test
+    fun `removing the copy clears it and its id`() = runTest {
+        // Given a stored copy
+        val copies = FakeCopies().apply { stored.value = Bitmap.createBitmap(5, 5, Bitmap.Config.ARGB_8888) }
+        val settings = settings().also { it.setWallpaperCopySystemId(1) }
+        val viewModel = viewModel(copies, settings)
+        viewModel.observe(this)
+        viewModel.uiState.first { it.copy != null }
+
+        // When removed
+        viewModel.removeCopy()
+
+        // Then there is no copy and no id
+        viewModel.uiState.first { it.copy == null }
+        assertEquals(-1, settings.settings.first { it.wallpaperCopySystemId == -1 }.wallpaperCopySystemId)
+    }
+}

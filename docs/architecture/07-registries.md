@@ -4,7 +4,7 @@ Complete inventories of the two injectable layers, generated from constructor si
 `@Inject` sites in `app/src/main`. If a class is not in these tables it does not exist; if a
 dependency is not listed the class does not have it.
 
-## 1. Repositories and data singletons (56: the 55 `@Singleton` classes in `data/` plus the `EntitlementRepository` interface) — all constructor-injected; `EntitlementRepository` and the weather seams (`WeatherApi`, `WeatherStore`, `PlaceGeocoder`) are the only interfaces
+## 1. Repositories and data singletons (57: the 56 `@Singleton` classes in `data/` plus the `EntitlementRepository` interface) — all constructor-injected; `EntitlementRepository` and the weather seams (`WeatherApi`, `WeatherStore`, `PlaceGeocoder`) are the only interfaces
 
 | Repository | Wraps (source of truth) | Injects | Public API shape | Injected by |
 |---|---|---|---|---|
@@ -48,13 +48,14 @@ dependency is not listed the class does not have it.
 | `NotificationShadeRepository` | `StatusBarManager.expandNotificationsPanel` (reflection, `EXPAND_STATUS_BAR`) | `Context` | `expand()` | `HomeViewModel` |
 | `PrivateSpaceRepository` | `UserManager` quiet-mode + `ACTION_PROFILE_*` broadcasts | `UserManager`, `AppRepository`, `Context` | `observePrivateSpaceState(): Flow<PrivateSpaceState>`, `observePrivateSpaceApps()`, `requestUnlock()` | `DrawerViewModel`, `PrivateSpaceViewModel` |
 | `SecureFolderRepository` | `PackageManager.getLaunchIntentForPackage(Samsung Secure Folder)` | `Context` | `launchIntent(): Intent?` | `DrawerViewModel` |
-| `SettingsRepository` | `DataStore<Preferences>` `facet_settings` | `DataStore<Preferences>` | `settings: Flow<LauncherSettings>`, 82 `suspend fun set*/reset*/mark*/update*/choose*/remove*` writers | 25 use cases, 29 ViewModels, `IconPackRepository` |
+| `SettingsRepository` | `DataStore<Preferences>` `facet_settings` | `DataStore<Preferences>` | `settings: Flow<LauncherSettings>`, 84 `suspend fun set*/reset*/mark*/update*/choose*/remove*` writers | 25 use cases, 29 ViewModels, `IconPackRepository` |
 | `SystemSettingsRepository` | Static catalogue of `Settings.ACTION_*` intents + keyword aliases | `Context` | `search(query)` (IO) | `DrawerViewModel` |
 | `UsageAccessRepository` | `AppOpsManager.unsafeCheckOpNoThrow(GET_USAGE_STATS)` | `AppOpsManager`, `Context` | `isGranted()` | `ObserveHomeScreenStateUseCase`, `ObserveFacetPreviewsUseCase`, `PermissionsViewModel`, `UsageAccessExplanationViewModel`, `DrawerViewModel`, `DockAppPickerViewModel`, `FavoritesPickerViewModel`, `FolderAppPickerViewModel` |
 | `UsageStatsRepository` | `UsageStatsManager.queryUsageStats` | `UsageStatsManager`, `AppRepository` | `getRecentApps(limit)`, `getMostUsedApps(limit)` | `ObserveHomeScreenStateUseCase`, `ObserveFacetPreviewsUseCase`, `DrawerViewModel`, `SortAppsForPickerUseCase` |
 | `WifiRepository` | `ConnectivityManager` Wi-Fi network callbacks (location info only for a named-network rule) + `WifiManager.scanResults` | `Context` | `observeWifiState(includeSsid): Flow<WifiState>`, `suspend nearbyNetworkNames(current)` (IO) | `DeviceStateRepository`, `RuleEditorViewModel` |
 | `WakeEventsRepository` | System broadcasts `ACTION_SCREEN_ON`, `ACTION_USER_PRESENT`, `ACTION_TIME_CHANGED`, `ACTION_TIMEZONE_CHANGED` (`RECEIVER_NOT_EXPORTED`) | `Context` | `observeWakeEvents(): Flow<Unit>` | `RunFacetAutomationUseCase` |
 | `WallpaperRepository` (`open`) | `WallpaperManager.peekDrawable` / `getWallpaperColors` | `WallpaperManager` | `currentHomeWallpaper(): HomeWallpaper` (`Image` (rare: `peekDrawable` needs storage access) / `Tones` (the primary colour, washing toward a 40% blend of the secondary; brightness is set per theme in `WallpaperBackground`) / `Unavailable`, downscaled to 1080px) | `FacetCarouselViewModel`, `AppearanceSettingsViewModel`, `AppDrawerSettingsViewModel`, `DockSettingsViewModel`, `HomeAppsListSettingsViewModel`, `NotificationSettingsViewModel` |
+| `WallpaperCopyRepository` (`open`) | the glass wallpaper copy: `wallpaper_copy.png` in `filesDir`; the system wallpaper through `WallpaperManager` (`setBitmap`, `getWallpaperId`) | `Context`, `WallpaperManager`, `@IoDispatcher` | `copy: Flow<Bitmap?>` (read once, on first collection), `save(bitmap)` (a temp file, then renamed), `remove()`, `decodePicked(uri, maxSide)` (`ImageDecoder`, upright, shrunk), `setSystemWallpaper(bitmap, includeLock): Int` (the new id or `NO_WALLPAPER_ID`), `currentSystemWallpaperId()`, `portraitScreenSize()` | `WallpaperBackdropViewModel`, `WallpaperViewModel`, `SetWallpaperFromPhotoUseCase`, `RemoveWallpaperCopyUseCase` |
 | `AndroidPlaceGeocoder` (`data/places`, bound as `PlaceGeocoder`) | `android.location.Geocoder` (the listener API from Android 13, the blocking one before); empty answers when it is missing or fails | `Context`, `@IoDispatcher` | `reverse(lat, lon, locale)`, `search(query, locale, max)` | `ResolvePlaceUseCase`, `SearchPlacesUseCase` |
 | `WeatherRepository` (`data/weather`) | The forecast: stored hourly rows and the fetch state, refreshed from MET Norway | `WeatherApi`, `WeatherStore`, `Clock` | `observeHours()`, `observeState()`, `refresh(place): RefreshOutcome` (one refresh at a time, through `WeatherRefreshPolicy`: never before `Expires`, never twice within 10 minutes, nothing while a 429 is being waited out; nothing is retried) | `RefreshWeatherUseCase`, `ObserveWeatherUseCase`, `NativeWidgetOverrideResolver`, `WeatherLocationViewModel` |
 | `ClockStackRepository` (`data/`) | A facet's clock stack: the native clock and up to 5 hosted widgets in swipe order; per-item size and alignment, portrait and landscape | `FacetDatabase`, `ClockStackItemDao` | `observe(facetId)`, `getAll`, `setConfig(itemId, NativeWidgetConfig)`, `addWidget`, `addClock` (once, `false` when full), `replaceWithWidget(itemId, id)` and `replaceWithClock(itemId)` (in place, keep the position and alignment, reset the sizes, return a `ReplacedItem` with the id to release), `remove(itemId)` (returns the widget id to release), `clear(facetId)`, `appendCopy(facetId, page, appWidgetId, limit)` (a page with its size, alignment and settings, for Copy from facet), `reorder`, `setSize`, `setLandscapeSize`, `setAlignment`, `setLandscapeAlignment` | `ReplaceClockStackItemUseCase`, `ClockWidgetFacetController`, `AddClockStackItemUseCase`, `ClockStackViewModel`, `CopyFacetWidgetsUseCase`, `ImportBackupUseCase`, `ObserveNativeWidgetOverridesUseCase`, `ObserveNativeWidgetSettingsUseCase`, `RemoveClockStackItemUseCase`, `SetNativeWidgetConfigUseCase`, `UpdateClockConfigUseCase` |
@@ -89,7 +90,7 @@ Every other repository depends only on framework services, DAOs, or `DataStore`.
 cycles; `AppRepository` is the root of everything else here, and itself reads only the applied icon
 pack (`IconPackRepository`, which reads that choice from `SettingsRepository`).
 
-## 2. Use cases (69) — unscoped, constructor-injected unless noted
+## 2. Use cases (71) — unscoped, constructor-injected unless noted
 
 | Use case | Kind | Injects | Injected by |
 |---|---|---|---|
@@ -144,6 +145,8 @@ pack (`IconPackRepository`, which reads that choice from `SettingsRepository`).
 | `CopyFacetWidgetsUseCase` | write: *Copy from facet* for the widget stack in three steps: `prepare` clears the target stack (releasing its host ids), copies the clock placement and returns the source pages capped to the plan's limit; `appendNative` and `appendHosted` add one page each (hosted pages with the id the caller just bound) | `ClockStackRepository`, `FacetRepository`, `AppWidgetRepository`, `EntitlementRepository` | `ClockStackViewModel` |
 | `RefreshWeatherUseCase` | write: one refresh of the weather for the current location (read, with a 5 km hysteresis, then named) or the chosen city, through the repository's gate; returns `WeatherRefreshResult` | `SettingsRepository`, `LocationRepository`, `WeatherRepository`, `ResolvePlaceUseCase` | `WeatherViewModel` (Home resume and the sheet's button) |
 | `TurnOffWeatherUseCase` | write: weather off for the launcher default and every facet that shows it | `SettingsRepository`, `FacetRepository`, `UpdateClockConfigUseCase` | `WeatherLocationViewModel` (the leave-without-a-city dialog) |
+| `SetWallpaperFromPhotoUseCase` | write: crops the framed part of a photo to the screen's size, sets it as the system wallpaper (the lock screen too when asked), stores it as the copy and records the system id; stores nothing unless the system accepted it | `WallpaperCopyRepository`, `SettingsRepository`, `@DefaultDispatcher` | `WallpaperViewModel` |
+| `RemoveWallpaperCopyUseCase` | write: deletes the copy and clears the recorded id (the system wallpaper stays) | `WallpaperCopyRepository`, `SettingsRepository` | `WallpaperViewModel` |
 | `ResolvePlaceUseCase` | read: name a position (`Geocoder`, else the nearest listed city as an offline "Near X") and find its timezone | `PlaceGeocoder`, `CityRepository` | `RefreshWeatherUseCase`, `NativeWidgetOverrideResolver` |
 | `RefreshAutomationStateUseCase` | samples every rule against the clock and persists the evaluator's state, without switching | `AutomationRuleRepository`, `AutomationStateRepository`, `SelectableFacetsUseCase`, `SettingsRepository`, `EvaluateFacetAutomationUseCase`, `DeviceStateRepository`, `AutomationPermissionRepository`, `EntitlementRepository`, `CanUseTriggerUseCase`, `Clock` | `ApplyFacetAutomationUseCase`, `ActivateFacetByIdUseCase` |
 | `RepairOrphanedProfileRowsUseCase` | one-shot write, at startup and after every backup import | `AppRepository`, `PlacementRepository`, `FolderRepository` | `LauncherViewModel`, `ImportBackupUseCase` |
@@ -167,7 +170,7 @@ Non-use-case files in `domain/`: `FlowCombine.kt` (6/7-ary `combine`), `HubGridC
 (`HUB_COLUMNS`, `HUB_MAX_ROWS`, `HUB_MAX_WIDGETS`, `calculateHubCellWidth(context)` — see F4),
 `BackupMapping.kt` (entity ⇄ `Backup*` DTO extension functions).
 
-## 3. ViewModels (44) — `@HiltViewModel`, one per screen
+## 3. ViewModels (46) — `@HiltViewModel`, one per screen
 
 | ViewModel | Screen / surface | Nav arg (`SavedStateHandle`) |
 |---|---|---|
@@ -196,6 +199,8 @@ Non-use-case files in `domain/`: `FlowCombine.kt` (6/7-ary `combine`), `HubGridC
 | `FacetProViewModel` | `FacetProScreen` (Settings → Facet Pro, and every Pro limit): Buy, Restore, the Play price and messages | — (`FacetNavHost` reads the route's `reason` and passes a `ProReason` to the screen) |
 | `AppearanceSettingsViewModel` | `AppearanceSettingsScreen`, `ThemesAndColorsScreen`, `FontsScreen`, `IconsScreen` (global) — one instance per back-stack entry | `facetId?` (read, but none of the four routes declares it, so it is always absent: F20 in `05`) |
 | `IconsViewModel` | `IconsScreen`'s built-in style and icon pack cards (alongside `AppearanceSettingsViewModel`, which keeps the preview and shape) | — |
+| `WallpaperViewModel` | `WallpaperScreen` (the copy, the Photo Picker and fit step, remove, the stale check) | — |
+| `WallpaperBackdropViewModel` | `LauncherActivity` (the stored copy it draws behind the app, for real glass) | — |
 | `AppDrawerSettingsViewModel` | `AppDrawerSettingsScreen` (settings, plus the wallpaper and installed apps behind its preview) | — |
 | `DockSettingsViewModel` | `DockSettingsScreen` | `facetId?` |
 | `HomeAppsListSettingsViewModel` | `HomeAppsListSettingsScreen` | `facetId` |

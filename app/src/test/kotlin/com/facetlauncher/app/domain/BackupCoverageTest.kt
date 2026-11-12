@@ -49,6 +49,7 @@ class BackupCoverageTest {
             "calendarPermissionRequested", "contactsPermissionRequested", "bluetoothPermissionRequested", "locationPermissionRequested",
             "onboardingCompleted", "coachMarksSeen", // this install's first-run progress
             "hideStatusBar", // a per-device choice
+            "wallpaperCopySystemId", "wallpaperPromptDismissed", // tied to this device's wallpaper copy, an image that is not in a backup
         )
         // drawerGridDensity is stored as drawerGridSize, and the landscape group as flat landscape* fields
         val renamed = mapOf("drawerGridDensity" to "drawerGridSize")

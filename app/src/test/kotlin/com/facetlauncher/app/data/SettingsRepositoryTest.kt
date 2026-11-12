@@ -294,7 +294,7 @@ class SettingsRepositoryTest {
         repository.setNotificationBadgeStyle(NotificationBadgeStyle.COUNT)
         repository.setShowMediaPlayerOnHome(true)
         repository.setShowMediaSkipButtons(false)
-        repository.setMediaPlayerGlass(GlassStyle.SMOKED)
+        repository.setMediaPlayerGlass(GlassStyle.DARK_FROST)
         repository.setShowNotificationsInAppMenu(false)
         repository.setShowDrawerIcons(false)
         repository.setShowDrawerLabels(false)
@@ -333,7 +333,7 @@ class SettingsRepositoryTest {
         assertEquals(NotificationBadgeStyle.COUNT, settings.notificationBadgeStyle)
         assertEquals(true, settings.showMediaPlayerOnHome)
         assertEquals(false, settings.showMediaSkipButtons)
-        assertEquals(GlassStyle.SMOKED, settings.mediaPlayerGlass)
+        assertEquals(GlassStyle.DARK_FROST, settings.mediaPlayerGlass)
         assertEquals(false, settings.showNotificationsInAppMenu)
         assertEquals(false, settings.showDrawerIcons)
         assertEquals(false, settings.showDrawerLabels)
@@ -635,5 +635,27 @@ class SettingsRepositoryTest {
         repository.setSwapSwipeSides(true)
 
         assertTrue(repository.settings.first().swapSwipeSides)
+    }
+
+    @Test
+    fun `the wallpaper copy id and the dismissed prompt start unset and persist`() = runTest {
+        // Given a fresh repository
+        val repository = createRepository()
+        val fresh = repository.settings.first()
+        assertEquals(-1, fresh.wallpaperCopySystemId)
+        assertFalse(fresh.wallpaperPromptDismissed)
+
+        // When both are set
+        repository.setWallpaperCopySystemId(42)
+        repository.setWallpaperPromptDismissed(true)
+
+        // Then they read back
+        val set = repository.settings.first()
+        assertEquals(42, set.wallpaperCopySystemId)
+        assertTrue(set.wallpaperPromptDismissed)
+
+        // And clearing the id returns it to none
+        repository.setWallpaperCopySystemId(-1)
+        assertEquals(-1, repository.settings.first().wallpaperCopySystemId)
     }
 }

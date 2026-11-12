@@ -90,6 +90,9 @@
          fails the build if this line is removed or overridden. -->
     <uses-permission android:name="android.permission.INTERNET" />
 
+    <!-- Normal permission, granted at install: lets the wallpaper screen set the photo the user picked as the system wallpaper. -->
+    <uses-permission android:name="android.permission.SET_WALLPAPER" />
+
     <application
         android:name=".FacetApplication"
         android:allowBackup="true"

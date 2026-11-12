@@ -148,6 +148,8 @@ dependencies {
     implementation("androidx.compose.foundation:foundation")
     // Overrides the BOM's 1.4.0 for the wavy progress indicator (1.5 only) — drop once a BOM pins a stable 1.5.
     implementation("androidx.compose.material3:material3:1.5.0-beta01")
+    // SPIKE: blur and refraction of a wallpaper layer behind Home (glass-wallpaper-spike).
+    implementation("io.github.kyant0:backdrop:2.0.1")
     implementation("androidx.compose.material:material-icons-core")
     implementation("androidx.compose.material:material-icons-extended")
 

@@ -13,7 +13,7 @@ checked against source, not against planning docs; where the code diverges from
 | [05-findings.md](05-findings.md) | Architect's review: 12 open findings (layering, cleanup, performance, test gaps) with concrete fixes, plus what's working well |
 | [06-testing.md](06-testing.md) | How tests are done: tiers, harnesses, fixtures, conventions, run commands, coverage gaps |
 | [TEST_REGISTRY.md](TEST_REGISTRY.md) | **Generated** — every test class and case (344 classes / 3134 cases), regenerate with `scripts/gen-test-registry.py` |
-| [07-registries.md](07-registries.md) | Complete inventories: 56 repositories and data singletons (deps, source wrapped, API, consumers), 69 use cases, 44 ViewModels |
+| [07-registries.md](07-registries.md) | Complete inventories: 57 repositories and data singletons (deps, source wrapped, API, consumers), 71 use cases, 46 ViewModels |
 | [08-flow-placements.md](08-flow-placements.md) | Flow: favorites/dock/folder add, remove, reorder (all in `app_placements` / `folder_placements`); override routing; uninstall cleanup, profile sweep, orphan repair, dock seeding |
 | [09-flow-backup-restore.md](09-flow-backup-restore.md) | Flow: export, destructive import, widget re-bind state machine, versioning |
 | [10-flow-hub-widgets.md](10-flow-hub-widgets.md) | Flow: widget host lifecycle, add (bind/configure/place), move/resize/compact, delete, orphans |
@@ -26,6 +26,7 @@ checked against source, not against planning docs; where the code diverges from
 | [17-flow-home-layout.md](17-flow-home-layout.md) | Flow: how `HomeScreen` picks portrait or landscape from the window shape, what each layout contains, and how landscape adjust mode works |
 | [19-flow-icon-packs.md](19-flow-icon-packs.md) | Flow: finding installed icon packs, reading `appfilter.xml` (text scan or resource), lookup and fallback theming, calendar icons, drawing, the Icons screen, backup |
 | [20-flow-native-widgets.md](20-flow-native-widgets.md) | Flow: widgets Facet draws itself (weather, agenda, now playing) on the Hub and Home's stack — storage, one size-driven layout contract, data, add/replace, backup |
+| [21-flow-wallpaper-glass.md](21-flow-wallpaper-glass.md) | The wallpaper copy behind real glass: the wallpaper screen, the fit step, what decides real glass, and what is not built yet |
 | [18-flow-weather.md](18-flow-weather.md) | Flow: the clock's weather accessory and sheet — MET Norway forecast, refresh gate, location and place names, cached hourly rows, settings |
 
 ## Stack at a glance
@@ -51,6 +52,6 @@ The change→doc routing table lives in `CLAUDE.md` ("Living architecture docs")
 - Add a Room entity / column / DAO method → `02` (ER diagram, DAO matrix, migration table).
 - Add a DataStore key → `02 §5` (diagram, writer table, section table) — the `§5.6` checklist.
 - Add a Hilt module or change a scope → `01`; add a repository / use case / ViewModel → `07` + `01` counts.
-- Add or change a user-visible flow → the matching `08`–`20` doc, or a new `21-flow-….md` + a row above.
+- Add or change a user-visible flow → the matching `08`–`21` doc, or a new `22-flow-….md` + a row above.
 - Add/rename/remove a test → `python3 scripts/gen-test-registry.py`; change how tests are done → `06`.
 - Resolve a finding in `05` → delete it rather than marking it done.
