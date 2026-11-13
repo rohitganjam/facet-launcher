@@ -1414,7 +1414,7 @@ How to read: one section per tier, one table per package (mirrors `app/src/main`
 | [ObserveQuickAddStateUseCaseTest](app/src/test/kotlin/com/facetlauncher/app/domain/ObserveQuickAddStateUseCaseTest.kt) | `app/src/main/kotlin/com/facetlauncher/app/domain/ObserveQuickAddStateUseCase.kt` | 10 | Robolectric |
 | [ObserveWeatherUseCaseTest](app/src/test/kotlin/com/facetlauncher/app/domain/ObserveWeatherUseCaseTest.kt) | `app/src/main/kotlin/com/facetlauncher/app/domain/ObserveWeatherUseCase.kt` | 13 | runTest |
 | [PlaceWidgetUseCaseTest](app/src/test/kotlin/com/facetlauncher/app/domain/PlaceWidgetUseCaseTest.kt) | `app/src/main/kotlin/com/facetlauncher/app/domain/PlaceWidgetUseCase.kt` | 9 |  |
-| [PortraitCentreCropTest](app/src/test/kotlin/com/facetlauncher/app/domain/PortraitCentreCropTest.kt) | `app/src/main/kotlin/com/facetlauncher/app/domain/PortraitCentreCrop.kt` | 7 |  |
+| [PortraitCentreCropTest](app/src/test/kotlin/com/facetlauncher/app/domain/PortraitCentreCropTest.kt) |  | 7 |  |
 | [RainSummaryTest](app/src/test/kotlin/com/facetlauncher/app/domain/RainSummaryTest.kt) | `app/src/main/kotlin/com/facetlauncher/app/domain/RainSummary.kt` | 11 |  |
 | [RecentlyChangedAppsUseCaseTest](app/src/test/kotlin/com/facetlauncher/app/domain/RecentlyChangedAppsUseCaseTest.kt) | `app/src/main/kotlin/com/facetlauncher/app/domain/RecentlyChangedAppsUseCase.kt` | 3 | Robolectric |
 | [RecentlyInstalledAppsUseCaseTest](app/src/test/kotlin/com/facetlauncher/app/domain/RecentlyInstalledAppsUseCaseTest.kt) | `app/src/main/kotlin/com/facetlauncher/app/domain/RecentlyInstalledAppsUseCase.kt` | 5 | Robolectric |
@@ -5402,10 +5402,10 @@ How to read: one section per tier, one table per package (mirrors `app/src/main`
 - a failed download says so
 - at the foot there is a way to choose your own image
 - the own image option is there even when no photos could be loaded
-- with the daily wallpaper off only its switch shows, and turning it on reports
+- with the daily wallpaper off only its switch shows and turning it on reports
 - without pro the switch carries a pro pill
 - with pro the switch has no pro pill
-- with the daily wallpaper on its source, screens, Wi-Fi only and status show
+- with the daily wallpaper on its source and screens and Wi-Fi only and status show
 - a paused daily wallpaper can be resumed
 - the tile of the current daily wallpaper is marked
 - on mobile data the turn on sheet offers mobile data once

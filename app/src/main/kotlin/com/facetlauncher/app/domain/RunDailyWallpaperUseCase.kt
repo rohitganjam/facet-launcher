@@ -1,5 +1,6 @@
 package com.facetlauncher.app.domain
 
+import android.graphics.Bitmap
 import com.facetlauncher.app.data.DeviceConditionsRepository
 import com.facetlauncher.app.data.EntitlementRepository
 import com.facetlauncher.app.data.WallpaperCopyRepository
@@ -63,9 +64,12 @@ class RunDailyWallpaperUseCase @Inject constructor(
 
         // Photos saved on an earlier day are not today's: treat the refresh as failed, so a later resume tries again.
         val photos = (dailyPhotoRepository.photos(state.source) as? DailyPhotoFeed.Photos)?.takeUnless { it.savedEarlier }?.photos
-            ?: return failed(DailyWallpaperProblem.SOURCE_UNAVAILABLE)
-        val candidates = candidates(photos, state)
-        return if (candidates.isEmpty()) nothingNew(today, problem = null) else prepare(candidates, today)
+        val candidates = photos?.let { candidates(it, state) }
+        return when {
+            candidates == null -> failed(DailyWallpaperProblem.SOURCE_UNAVAILABLE)
+            candidates.isEmpty() -> nothingNew(today, problem = null)
+            else -> prepare(candidates, today)
+        }
     }
 
     /**
@@ -105,29 +109,40 @@ class RunDailyWallpaperUseCase @Inject constructor(
     private suspend fun prepare(candidates: List<DailyPhoto>, today: LocalDate): DailyRunOutcome {
         val (screenWidth, screenHeight) = wallpaperCopyRepository.portraitScreenSize()
         val skipped = mutableListOf<String>()
-        for (photo in candidates.take(MAX_CANDIDATES)) {
-            val bytes = dailyPhotoRepository.originalBytes(photo) ?: return failed(DailyWallpaperProblem.DOWNLOAD_FAILED)
-            val crop = wallpaperCopyRepository.imageSize(bytes)?.let { (width, height) -> portraitCentreCrop(width, height, screenWidth, screenHeight) }
-            val strip = crop?.let { wallpaperCopyRepository.decodeRegion(bytes, it.region, it.sampleSize) }
-            if (strip == null) {
-                skipped += photo.imageUrl
-                continue
+        val outcome = candidates.take(MAX_CANDIDATES).firstNotNullOfOrNull { photo ->
+            val bytes = dailyPhotoRepository.originalBytes(photo)
+            val strip = bytes?.let { decodeStrip(it, screenWidth, screenHeight) }
+            when {
+                bytes == null -> failed(DailyWallpaperProblem.DOWNLOAD_FAILED)
+                strip == null -> null.also { skipped += photo.imageUrl }
+                else -> store(photo, strip, skipped, today)
             }
-            val saved = dailyWallpaperRepository.savePending(strip)
-            strip.recycle()
-            if (!saved) return failed(DailyWallpaperProblem.DOWNLOAD_FAILED)
-            dailyWallpaperRepository.update {
-                it.copy(
-                    pending = DailyWallpaperPhoto(photo.imageUrl, photo.title, photo.credit),
-                    checkedDay = today,
-                    history = (skipped + it.history).distinct(),
-                    problem = if (skipped.isEmpty()) null else DailyWallpaperProblem.TOO_SMALL,
-                )
-            }
-            return DailyRunOutcome.READY
         }
-        dailyWallpaperRepository.update { it.copy(history = (skipped + it.history).distinct()) }
-        return nothingNew(today, DailyWallpaperProblem.TOO_SMALL)
+        return outcome ?: run {
+            dailyWallpaperRepository.update { it.copy(history = (skipped + it.history).distinct()) }
+            nothingNew(today, DailyWallpaperProblem.TOO_SMALL)
+        }
+    }
+
+    /** The photo's centre strip in the screen's shape, or `null` when it is too small to look sharp. */
+    private suspend fun decodeStrip(bytes: ByteArray, screenWidth: Int, screenHeight: Int): Bitmap? {
+        val crop = wallpaperCopyRepository.imageSize(bytes)?.let { (width, height) -> portraitCentreCrop(width, height, screenWidth, screenHeight) }
+        return crop?.let { wallpaperCopyRepository.decodeRegion(bytes, it.region, it.sampleSize) }
+    }
+
+    private suspend fun store(photo: DailyPhoto, strip: Bitmap, skipped: List<String>, today: LocalDate): DailyRunOutcome {
+        val saved = dailyWallpaperRepository.savePending(strip)
+        strip.recycle()
+        if (!saved) return failed(DailyWallpaperProblem.DOWNLOAD_FAILED)
+        dailyWallpaperRepository.update {
+            it.copy(
+                pending = DailyWallpaperPhoto(photo.imageUrl, photo.title, photo.credit),
+                checkedDay = today,
+                history = (skipped + it.history).distinct(),
+                problem = if (skipped.isEmpty()) null else DailyWallpaperProblem.TOO_SMALL,
+            )
+        }
+        return DailyRunOutcome.READY
     }
 
     private fun waitingFor(state: DailyWallpaperState, useMobileData: Boolean): DailyWallpaperProblem? {

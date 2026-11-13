@@ -8,11 +8,14 @@ import com.facetlauncher.app.data.dailyphotos.DailyPhotoFeed
 import com.facetlauncher.app.data.model.DailyPhotoSource
 import com.facetlauncher.app.data.model.DailyWallpaperPhoto
 import java.io.File
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -35,13 +38,20 @@ class DailyWallpaperCoordinatorTest {
     private lateinit var daily: FakeDailyWallpaperRepository
     private lateinit var photos: FakeDailyPhotos
 
+    // Not backgroundScope: advanceUntilIdle() doesn't wait for background work.
+    private val workJob = SupervisorJob()
+
+    @After
+    fun tearDown() = workJob.cancel()
+
     private fun TestScope.coordinator(): DailyWallpaperCoordinator {
-        daily = FakeDailyWallpaperRepository(tempFolder.root)
+        val work = CoroutineScope(workJob + StandardTestDispatcher(testScheduler))
+        daily = FakeDailyWallpaperRepository(tempFolder.root, work)
         photos = FakeDailyPhotos(tempFolder.newFolder(), copies)
         photos.feeds[DailyPhotoSource.BING] = DailyPhotoFeed.Photos(listOf(dailyPhoto("a", "2026-11-13")), savedEarlier = false)
         photos.originals["https://img.peapix.com/a.jpg"] = byteArrayOf(1)
         copies.sizes[1.toByte()] = 400 to 200
-        val settings = SettingsRepository(PreferenceDataStoreFactory.create(produceFile = { File(tempFolder.root, "s-${System.nanoTime()}.preferences_pb") }))
+        val settings = SettingsRepository(PreferenceDataStoreFactory.create(scope = work, produceFile = { File(tempFolder.root, "s-${System.nanoTime()}.preferences_pb") }))
         val dispatcher = StandardTestDispatcher(testScheduler)
         return DailyWallpaperCoordinator(
             runDailyWallpaper = RunDailyWallpaperUseCase(daily, photos, copies, conditions, dailyTestClock, FakeEntitlementRepository()),
@@ -49,7 +59,7 @@ class DailyWallpaperCoordinatorTest {
             dailyWallpaperRepository = daily,
             wallpaperCopyRepository = copies,
             deviceConditions = conditions,
-            scope = backgroundScope,
+            scope = work,
             ioDispatcher = dispatcher,
         )
     }

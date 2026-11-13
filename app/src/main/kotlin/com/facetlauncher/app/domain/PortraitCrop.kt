@@ -14,7 +14,7 @@ internal const val MAX_DAILY_UPSCALE = 1.35
  * that still leaves the part at least screen-sized, so a large photo is not decoded at full size.
  */
 fun portraitCentreCrop(imageWidth: Int, imageHeight: Int, screenWidth: Int, screenHeight: Int): PortraitCrop? {
-    if (imageWidth <= 0 || imageHeight <= 0 || screenWidth <= 0 || screenHeight <= 0) return null
+    if (minOf(imageWidth, imageHeight, screenWidth, screenHeight) <= 0) return null
     val screenAspect = screenWidth.toDouble() / screenHeight
     val wider = imageWidth.toDouble() / imageHeight > screenAspect
     val width = if (wider) (imageHeight * screenAspect).toInt() else imageWidth

@@ -4,6 +4,7 @@ import android.graphics.RectF
 import com.facetlauncher.app.data.EntitlementRepository
 import com.facetlauncher.app.data.WallpaperCopyRepository
 import com.facetlauncher.app.data.dailyphotos.DailyWallpaperRepository
+import com.facetlauncher.app.data.model.DailyWallpaperPhoto
 import com.facetlauncher.app.data.model.DailyWallpaperProblem
 import java.time.Clock
 import javax.inject.Inject
@@ -24,16 +25,22 @@ class ApplyPendingWallpaperUseCase @Inject constructor(
         val photo = state.pending
         entitlementRepository.awaitLoaded()
         if (!state.enabled || state.paused || !entitlementRepository.isPro.value) return false
-        if (photo == null) {
-            // An interrupted change whose photo is gone: take what is set now as the baseline, so it isn't mistaken for the user's change.
-            if (state.applying) adoptCurrentIds()
-            return false
+        return when {
+            photo == null -> {
+                // An interrupted change whose photo is gone: take what is set now as the baseline, so it isn't mistaken for the user's change.
+                if (state.applying) adoptCurrentIds()
+                false
+            }
+            state.changedElsewhere(wallpaperCopyRepository.currentSystemWallpaperId(), wallpaperCopyRepository.currentLockWallpaperId()) -> {
+                dailyWallpaperRepository.deletePending()
+                dailyWallpaperRepository.update { it.copy(paused = true, pending = null, problem = null) }
+                false
+            }
+            else -> apply(photo, state.includeLock)
         }
-        if (state.changedElsewhere(wallpaperCopyRepository.currentSystemWallpaperId(), wallpaperCopyRepository.currentLockWallpaperId())) {
-            dailyWallpaperRepository.deletePending()
-            dailyWallpaperRepository.update { it.copy(paused = true, pending = null, problem = null) }
-            return false
-        }
+    }
+
+    private suspend fun apply(photo: DailyWallpaperPhoto, includeLock: Boolean): Boolean {
         val bitmap = dailyWallpaperRepository.readPending()
         if (bitmap == null) {
             // The cache was cleared: prepare again on the next resume.
@@ -41,12 +48,17 @@ class ApplyPendingWallpaperUseCase @Inject constructor(
             return false
         }
         dailyWallpaperRepository.update { it.copy(applying = true) }
-        val set = setWallpaperFromPhoto(bitmap, RectF(0f, 0f, bitmap.width.toFloat(), bitmap.height.toFloat()), state.includeLock)
-        if (!set) {
-            dailyWallpaperRepository.deletePending()
-            dailyWallpaperRepository.update { it.copy(enabled = false, pending = null, applying = false, problem = DailyWallpaperProblem.REFUSED) }
-            return false
-        }
+        val set = setWallpaperFromPhoto(bitmap, RectF(0f, 0f, bitmap.width.toFloat(), bitmap.height.toFloat()), includeLock)
+        if (set) recordSet(photo) else markRefused()
+        return set
+    }
+
+    private suspend fun markRefused() {
+        dailyWallpaperRepository.deletePending()
+        dailyWallpaperRepository.update { it.copy(enabled = false, pending = null, applying = false, problem = DailyWallpaperProblem.REFUSED) }
+    }
+
+    private suspend fun recordSet(photo: DailyWallpaperPhoto) {
         val systemId = wallpaperCopyRepository.currentSystemWallpaperId()
         val lockId = wallpaperCopyRepository.currentLockWallpaperId()
         dailyWallpaperRepository.update {
@@ -62,7 +74,6 @@ class ApplyPendingWallpaperUseCase @Inject constructor(
             )
         }
         dailyWallpaperRepository.deletePending()
-        return true
     }
 
     private suspend fun adoptCurrentIds() {

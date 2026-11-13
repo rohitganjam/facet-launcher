@@ -16,10 +16,12 @@ import com.facetlauncher.app.domain.DailyWallpaperCoordinator
 import com.facetlauncher.app.domain.FakeConditions
 import com.facetlauncher.app.domain.FakeDailyWallpaperRepository
 import com.facetlauncher.app.domain.dailyTestClock
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -86,8 +88,9 @@ class DailyPhotosViewModelTest {
     private var dailyRepository: FakeDailyWallpaperRepository? = null
     private val entitlement = FakeEntitlementRepository()
 
-    private fun viewModel(repository: DailyPhotoRepository): DailyPhotosViewModel {
-        val daily = FakeDailyWallpaperRepository(tempFolder.newFolder()).also { dailyRepository = it }
+    private fun TestScope.viewModel(repository: DailyPhotoRepository): DailyPhotosViewModel {
+        val dataStoreScope = CoroutineScope(backgroundScope.coroutineContext + UnconfinedTestDispatcher(testScheduler))
+        val daily = FakeDailyWallpaperRepository(tempFolder.newFolder(), dataStoreScope).also { dailyRepository = it }
         return DailyPhotosViewModel(repository, daily, coordinator, conditions, dailyTestClock, entitlement)
     }
 

@@ -36,19 +36,6 @@ import com.facetlauncher.app.ui.theme.Muted
 import com.facetlauncher.app.ui.theme.SurfaceContainer
 import java.util.Date
 
-/** What the daily wallpaper card and its sheet can ask for; every action defaults to nothing, for previews and tests. */
-class DailyWallpaperActions(
-    val onSwitch: (Boolean) -> Unit = {},
-    val onSource: (DailyPhotoSource) -> Unit = {},
-    val onIncludeLock: (Boolean) -> Unit = {},
-    val onWifiOnly: (Boolean) -> Unit = {},
-    val onResume: () -> Unit = {},
-    val onSheetSource: (DailyPhotoSource) -> Unit = {},
-    val onSheetIncludeLock: (Boolean) -> Unit = {},
-    val onTurnOn: (useMobileData: Boolean) -> Unit = {},
-    val onDismissSheet: () -> Unit = {},
-)
-
 /** The daily wallpaper settings above the photo grid: the switch (with a Pro pill without Pro), and with it on, the source, the screens, Wi-Fi only and the status line. */
 @Composable
 internal fun DailyWallpaperCard(state: DailyWallpaperUiState, actions: DailyWallpaperActions, modifier: Modifier = Modifier) {

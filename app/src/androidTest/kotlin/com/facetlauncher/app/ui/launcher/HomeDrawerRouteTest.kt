@@ -4,6 +4,7 @@ import com.facetlauncher.app.ui.drawer.openSearchSheet
 import com.facetlauncher.app.data.AppVersion
 import com.facetlauncher.app.data.ReleaseNotesRepository
 import com.facetlauncher.app.domain.GroupAppsByLetterUseCase
+import com.facetlauncher.app.domain.DailyWallpaperCoordinator
 import com.facetlauncher.app.domain.ClockWeather
 import com.facetlauncher.app.domain.ObserveClockWeatherUseCase
 import com.facetlauncher.app.domain.RefreshWeatherUseCase
@@ -357,6 +358,7 @@ class HomeDrawerRouteTest {
                     settingsRepository,
                     facetRepository,
                     WorkProfileRepository(context.getSystemService(UserManager::class.java), appRepository, context),
+                    mock(DailyWallpaperCoordinator::class.java),
                 )
             }
             val privateSpaceRepository = remember {
@@ -691,8 +693,10 @@ class HomeDrawerRouteTest {
                 composeRule.onAllNodesWithTag("native_widget_AGENDA", useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
         }
         val rootWidth = composeRule.onRoot().fetchSemanticsNode().boundsInRoot.right
-        val agenda = composeRule.onNodeWithTag("native_widget_AGENDA", useUnmergedTree = true).fetchSemanticsNode().boundsInRoot
-        assertTrue(agenda.center.x in 0f..rootWidth)
+        // Another, offscreen copy of the Agenda can be composed too: only the one on screen counts.
+        fun onScreenAgendas() = composeRule.onAllNodesWithTag("native_widget_AGENDA", useUnmergedTree = true).fetchSemanticsNodes()
+            .map { it.boundsInRoot }.filter { it.center.x in 0f..rootWidth }
+        val agenda = onScreenAgendas().single()
 
         // When swiping left starting on the Agenda itself
         composeRule.onRoot().performTouchInput {
@@ -706,9 +710,7 @@ class HomeDrawerRouteTest {
         settleAnimation()
 
         // Then the Agenda slid out to the left, and the facet carousel did not open
-        composeRule.waitUntil(timeoutMillis = 5_000) {
-            composeRule.onAllNodesWithTag("native_widget_AGENDA", useUnmergedTree = true).fetchSemanticsNodes().all { it.boundsInRoot.right <= 0f }
-        }
+        composeRule.waitUntil(timeoutMillis = 5_000) { onScreenAgendas().isEmpty() }
         composeRule.onNodeWithTag("facet_carousel_screen").assertIsNotDisplayed()
     }
 

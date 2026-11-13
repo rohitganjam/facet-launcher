@@ -148,7 +148,7 @@ class DailyPhotosScreenTest {
     }
 
     @Test
-    fun `with the daily wallpaper off only its switch shows, and turning it on reports`() {
+    fun `with the daily wallpaper off only its switch shows and turning it on reports`() {
         // Given the daily wallpaper off
         var switched: Boolean? = null
         setContent(DailyPhotosUiState(photos = photos, loading = false), Calls(), dailyActions = DailyWallpaperActions(onSwitch = { switched = it }))
@@ -184,7 +184,7 @@ class DailyPhotosScreenTest {
     }
 
     @Test
-    fun `with the daily wallpaper on its source, screens, Wi-Fi only and status show`() {
+    fun `with the daily wallpaper on its source and screens and Wi-Fi only and status show`() {
         // Given the daily wallpaper on, with a photo set
         var wifiOnly: Boolean? = null
         setContent(

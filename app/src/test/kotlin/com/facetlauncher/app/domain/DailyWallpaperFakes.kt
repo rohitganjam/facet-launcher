@@ -18,7 +18,9 @@ import java.io.File
 import java.time.Clock
 import java.time.Instant
 import java.time.ZoneOffset
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import org.mockito.Mockito.mock
@@ -30,8 +32,12 @@ internal val dailyTestClock: Clock = Clock.fixed(Instant.parse("2026-11-13T08:00
 internal fun dailyPhoto(name: String, date: String? = null) =
     DailyPhoto(title = name, credit = "© $name", thumbUrl = "https://img.peapix.com/${name}_640.jpg", imageUrl = "https://img.peapix.com/$name.jpg", date = date)
 
-internal class FakeDailyWallpaperRepository(folder: File) : DailyWallpaperRepository(
-    dataStore = PreferenceDataStoreFactory.create(produceFile = { File(folder, "daily-${System.nanoTime()}.preferences_pb") }),
+/** [scope] runs the DataStore; pass a test scope when a test reads state it doesn't await itself. */
+internal class FakeDailyWallpaperRepository(
+    folder: File,
+    scope: CoroutineScope = CoroutineScope(Dispatchers.IO + SupervisorJob()),
+) : DailyWallpaperRepository(
+    dataStore = PreferenceDataStoreFactory.create(scope = scope, produceFile = { File(folder, "daily-${System.nanoTime()}.preferences_pb") }),
     context = RuntimeEnvironment.getApplication(),
     ioDispatcher = Dispatchers.Unconfined,
 ) {

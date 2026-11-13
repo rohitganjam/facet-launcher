@@ -53,6 +53,19 @@ data class DailyPhotosUiState(
 @Immutable
 data class DailyWallpaperSheet(val source: DailyPhotoSource, val includeLock: Boolean, val onMobileData: Boolean)
 
+/** What the daily wallpaper card and its sheet can ask for; every action defaults to nothing, for previews and tests. */
+class DailyWallpaperActions(
+    val onSwitch: (Boolean) -> Unit = {},
+    val onSource: (DailyPhotoSource) -> Unit = {},
+    val onIncludeLock: (Boolean) -> Unit = {},
+    val onWifiOnly: (Boolean) -> Unit = {},
+    val onResume: () -> Unit = {},
+    val onSheetSource: (DailyPhotoSource) -> Unit = {},
+    val onSheetIncludeLock: (Boolean) -> Unit = {},
+    val onTurnOn: (useMobileData: Boolean) -> Unit = {},
+    val onDismissSheet: () -> Unit = {},
+)
+
 /**
  * The daily wallpaper settings above the grid. [currentImageUrl] is the photo it last set, marked in the grid. It is a Pro feature: without
  * Pro it shows as off, and [openPro] asks the screen to open Facet Pro once.

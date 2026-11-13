@@ -78,7 +78,7 @@ Conventions:
 - Test class name mirrors the class under test: `AppRepository` → `AppRepositoryTest`.
 - Test method names describe behavior, not implementation: `` `swipe down at top closes drawer`() `` not `testSwipeDown()`.
 - Given/When/Then structure (as comments or blank-line sections) inside each test body.
-- Backtick test names in `androidTest` (instrumented) must not contain `'` `.` `;` `[` `]` `/` `<` `>` `:` — the test APK then fails to dex ("cannot be represented in dex format") and *no* test in that run executes. If a run reports surprising counts, check the build actually succeeded. (JVM unit tests under `src/test` don't have this limit.)
+- Backtick test names in `androidTest` (instrumented) must not contain `'` `,` `.` `;` `[` `]` `/` `<` `>` `:` — the test APK then fails to dex ("cannot be represented in dex format") and *no* test in that run executes. If a run reports surprising counts, check the build actually succeeded. (JVM unit tests under `src/test` don't have this limit.)
 - A task's "deliverable" in the implementation plan is not complete until its paired test(s) exist and pass — don't check off a box on green-code-with-no-tests.
 
 Run tests:

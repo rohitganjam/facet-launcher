@@ -62,7 +62,7 @@ fun WallpaperBackdropHost(copy: Bitmap?, modifier: Modifier = Modifier, content:
 
 /** [image] scaled to cover this scope and centred, as [androidx.compose.ui.layout.ContentScale.Crop] would draw it. */
 private fun DrawScope.drawImageCropped(image: ImageBitmap) {
-    if (image.width <= 0 || image.height <= 0 || size.width <= 0f || size.height <= 0f) return
+    if (image.width <= 0 || image.height <= 0 || size.isEmpty()) return
     val scale = max(size.width / image.width, size.height / image.height)
     val srcWidth = (size.width / scale).roundToInt().coerceIn(1, image.width)
     val srcHeight = (size.height / scale).roundToInt().coerceIn(1, image.height)

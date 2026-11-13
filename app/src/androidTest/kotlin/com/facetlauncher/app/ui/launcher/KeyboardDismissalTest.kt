@@ -4,6 +4,7 @@ import com.facetlauncher.app.ui.drawer.openSearchSheet
 import com.facetlauncher.app.data.AppVersion
 import com.facetlauncher.app.data.ReleaseNotesRepository
 import com.facetlauncher.app.domain.GroupAppsByLetterUseCase
+import com.facetlauncher.app.domain.DailyWallpaperCoordinator
 import com.facetlauncher.app.domain.ClockWeather
 import com.facetlauncher.app.domain.ObserveClockWeatherUseCase
 import com.facetlauncher.app.domain.RefreshWeatherUseCase
@@ -228,6 +229,7 @@ class KeyboardDismissalTest {
                     settingsRepository,
                     facetRepository,
                     WorkProfileRepository(context.getSystemService(UserManager::class.java), appRepository, context),
+                    mock(DailyWallpaperCoordinator::class.java),
                 )
             }
             val drawerViewModel = remember {
