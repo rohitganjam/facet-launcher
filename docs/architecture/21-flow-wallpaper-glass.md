@@ -73,7 +73,7 @@ An icon's glass background samples the copy only inside live Home (`LocalIconGla
 
 ## Daily wallpaper
 
-A switch at the top of the Daily photos screen sets a new Bing or Spotlight photo as the wallpaper once a day. It runs only after the user opens Facet: nothing is scheduled and nothing happens while Facet is unused.
+A switch at the top of the Daily photos screen sets a new Bing or Spotlight photo as the wallpaper once a day. It runs only after the user opens Facet: nothing is scheduled and nothing happens while Facet is unused. It is a Pro feature (see [16 §4](16-flow-billing.md#4-when-pro-is-lost)): without Pro the switch opens Facet Pro, and a run or apply does nothing while the settings stay saved.
 
 ```mermaid
 sequenceDiagram

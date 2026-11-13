@@ -65,6 +65,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.facetlauncher.app.R
+import com.facetlauncher.app.data.model.ProReason
 import com.facetlauncher.app.ui.components.BlockingProgressOverlay
 import com.facetlauncher.app.ui.components.CardDivider
 import com.facetlauncher.app.ui.components.PillTabPair
@@ -93,6 +94,7 @@ fun WallpaperScreen(
     onOpenCapture: () -> Unit,
     pickScreenshotRequested: Boolean,
     onPickScreenshotConsume: () -> Unit,
+    onOpenFacetPro: (ProReason) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: WallpaperViewModel = hiltViewModel(),
 ) {
@@ -124,6 +126,7 @@ fun WallpaperScreen(
                 viewModel.onPickStarted(copyOnly = false)
                 picker.launch("image/*")
             },
+            onOpenFacetPro = onOpenFacetPro,
             modifier = modifier,
         )
         return

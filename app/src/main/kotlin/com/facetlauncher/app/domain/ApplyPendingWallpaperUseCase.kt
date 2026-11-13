@@ -1,6 +1,7 @@
 package com.facetlauncher.app.domain
 
 import android.graphics.RectF
+import com.facetlauncher.app.data.EntitlementRepository
 import com.facetlauncher.app.data.WallpaperCopyRepository
 import com.facetlauncher.app.data.dailyphotos.DailyWallpaperRepository
 import com.facetlauncher.app.data.model.DailyWallpaperProblem
@@ -16,11 +17,13 @@ class ApplyPendingWallpaperUseCase @Inject constructor(
     private val wallpaperCopyRepository: WallpaperCopyRepository,
     private val setWallpaperFromPhoto: SetWallpaperFromPhotoUseCase,
     private val clock: Clock,
+    private val entitlementRepository: EntitlementRepository,
 ) {
     suspend operator fun invoke(): Boolean {
         val state = dailyWallpaperRepository.get()
         val photo = state.pending
-        if (!state.enabled || state.paused) return false
+        entitlementRepository.awaitLoaded()
+        if (!state.enabled || state.paused || !entitlementRepository.isPro.value) return false
         if (photo == null) {
             // An interrupted change whose photo is gone: take what is set now as the baseline, so it isn't mistaken for the user's change.
             if (state.applying) adoptCurrentIds()

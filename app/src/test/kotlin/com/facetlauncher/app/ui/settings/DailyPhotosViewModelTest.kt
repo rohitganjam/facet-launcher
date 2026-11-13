@@ -2,6 +2,7 @@ package com.facetlauncher.app.ui.settings
 
 import android.app.WallpaperManager
 import android.graphics.Bitmap
+import com.facetlauncher.app.data.FakeEntitlementRepository
 import com.facetlauncher.app.data.WallpaperCopyRepository
 import com.facetlauncher.app.data.dailyphotos.DailyPhotoApi
 import com.facetlauncher.app.data.dailyphotos.DailyPhotoCache
@@ -15,11 +16,10 @@ import com.facetlauncher.app.domain.DailyWallpaperCoordinator
 import com.facetlauncher.app.domain.FakeConditions
 import com.facetlauncher.app.domain.FakeDailyWallpaperRepository
 import com.facetlauncher.app.domain.dailyTestClock
-import kotlinx.coroutines.launch
-import org.mockito.Mockito.verify
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -37,6 +37,8 @@ import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import org.junit.runner.RunWith
 import org.mockito.Mockito.mock
+import org.mockito.Mockito.never
+import org.mockito.Mockito.verify
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 
@@ -82,10 +84,11 @@ class DailyPhotosViewModelTest {
     private val coordinator: DailyWallpaperCoordinator = mock(DailyWallpaperCoordinator::class.java)
     private val conditions = FakeConditions()
     private var dailyRepository: FakeDailyWallpaperRepository? = null
+    private val entitlement = FakeEntitlementRepository()
 
     private fun viewModel(repository: DailyPhotoRepository): DailyPhotosViewModel {
         val daily = FakeDailyWallpaperRepository(tempFolder.newFolder()).also { dailyRepository = it }
-        return DailyPhotosViewModel(repository, daily, coordinator, conditions, dailyTestClock)
+        return DailyPhotosViewModel(repository, daily, coordinator, conditions, dailyTestClock, entitlement)
     }
 
     /** Subscribes to the daily wallpaper state, which only runs while collected. */
@@ -105,6 +108,42 @@ class DailyPhotosViewModelTest {
 
         // Then the sheet shows Spotlight, Home only, with no mobile data warning
         assertEquals(DailyWallpaperSheet(DailyPhotoSource.SPOTLIGHT, includeLock = false, onMobileData = false), viewModel.dailyWallpaper.value.sheet)
+    }
+
+    @Test
+    fun `without pro the switch opens facet pro instead of the sheet`() = runTest {
+        // Given a free user
+        entitlement.proFlow.value = false
+        val viewModel = viewModel(repository())
+        viewModel.observeDaily(this)
+
+        // When the switch is turned on
+        viewModel.onDailyWallpaperSwitch(true)
+
+        // Then Facet Pro is asked for once, with no sheet and nothing turned on
+        assertTrue(viewModel.dailyWallpaper.value.openPro)
+        assertNull(viewModel.dailyWallpaper.value.sheet)
+        verify(coordinator, never()).turnOn(DailyPhotoSource.BING, false, false)
+        viewModel.consumeOpenPro()
+        assertFalse(viewModel.dailyWallpaper.value.openPro)
+    }
+
+    @Test
+    fun `without pro a stored daily wallpaper shows as off`() = runTest {
+        // Given the daily wallpaper was turned on, and Pro is gone
+        entitlement.proFlow.value = false
+        val viewModel = viewModel(repository())
+        viewModel.observeDaily(this)
+
+        // When it is stored as on
+        dailyRepository!!.update { it.copy(enabled = true, current = DailyWallpaperPhoto("u", "t", "c")) }
+
+        // Then the card shows it off, with the Pro pill and no marked photo
+        val state = viewModel.dailyWallpaper.value
+        assertFalse(state.enabled)
+        assertFalse(state.isPro)
+        assertEquals(DailyWallpaperStatus.Off, state.status)
+        assertNull(state.currentImageUrl)
     }
 
     @Test

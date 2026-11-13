@@ -639,6 +639,8 @@
     <string name="pro_feature_triggers_body">Join the office network or connect to the car, and the facet changes.</string>
     <string name="pro_feature_widgets_title">Custom Widgets on home screen</string>
     <string name="pro_feature_widgets_body">Replace the clock with any widget on your phone. Free includes the launcher\'s own clocks.</string>
+    <string name="pro_feature_daily_wallpaper_title">Daily wallpaper</string>
+    <string name="pro_feature_daily_wallpaper_body">A new Bing or Spotlight photo on your Home screen every day.</string>
     <string name="pro_feature_future_title">Future Pro features included</string>
     <string name="pro_feature_future_body">Anything added to Pro later is yours.</string>
     <string name="pro_unlock">Unlock Lifetime Pro</string>
@@ -676,6 +678,7 @@
     <string name="pro_upgrade_facet_locked">This facet is paused on the free plan. Delete a facet to get back to 3, or go Pro to use up to 10.</string>
     <string name="facet_locked_content_description">Disabled on the free plan</string>
     <string name="pro_upgrade_widget_stack">Putting more than one clock or widget on Home is a Pro feature. The free plan has one.</string>
+    <string name="pro_upgrade_daily_wallpaper">A new Bing or Spotlight photo as your wallpaper each day is part of Pro.</string>
     <string name="pro_upgrade_about">One purchase unlocks more facets and every automation trigger. No subscription.</string>
     <string name="pro_message_unavailable">Google Play isn\'t available right now. Try again later.</string>
     <string name="pro_message_no_purchase">No Pro purchase found for this Google account.</string>

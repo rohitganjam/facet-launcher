@@ -1,6 +1,7 @@
 package com.facetlauncher.app.domain
 
 import com.facetlauncher.app.data.DeviceConditionsRepository
+import com.facetlauncher.app.data.EntitlementRepository
 import com.facetlauncher.app.data.WallpaperCopyRepository
 import com.facetlauncher.app.data.dailyphotos.DailyPhotoFeed
 import com.facetlauncher.app.data.dailyphotos.DailyPhotoRepository
@@ -16,6 +17,7 @@ import javax.inject.Inject
 
 /** How a run of the daily change ended. */
 enum class DailyRunOutcome {
+    /** Turned off, or the user doesn't have Pro. */
     OFF,
     PAUSED,
 
@@ -49,9 +51,11 @@ class RunDailyWallpaperUseCase @Inject constructor(
     private val wallpaperCopyRepository: WallpaperCopyRepository,
     private val deviceConditions: DeviceConditionsRepository,
     private val clock: Clock,
+    private val entitlementRepository: EntitlementRepository,
 ) {
     /** [useMobileData] lets this one run use a metered network although Wi-Fi only is on (the user asked for it when turning the change on). */
     suspend operator fun invoke(useMobileData: Boolean = false): DailyRunOutcome {
+        entitlementRepository.awaitLoaded()
         val today = LocalDate.now(clock)
         val state = settleInterruptedChange(dailyWallpaperRepository.get())
         gate(state, today, useMobileData)?.let { return it }
@@ -79,7 +83,8 @@ class RunDailyWallpaperUseCase @Inject constructor(
     /** Why this run stops before touching the network, or `null` to go on. */
     private suspend fun gate(state: DailyWallpaperState, today: LocalDate, useMobileData: Boolean): DailyRunOutcome? {
         val outcome = when {
-            !state.enabled -> DailyRunOutcome.OFF
+            // Without Pro the settings are kept, so buying or restoring it picks up where it was.
+            !state.enabled || !entitlementRepository.isPro.value -> DailyRunOutcome.OFF
             state.paused -> DailyRunOutcome.PAUSED
             state.changedElsewhere(wallpaperCopyRepository.currentSystemWallpaperId(), wallpaperCopyRepository.currentLockWallpaperId()) -> {
                 dailyWallpaperRepository.update { it.copy(paused = true, problem = null) }

@@ -24,6 +24,7 @@ import com.facetlauncher.app.data.model.DailyWallpaperProblem
 import com.facetlauncher.app.ui.components.CardDivider
 import com.facetlauncher.app.ui.components.LabeledDropdownRow
 import com.facetlauncher.app.ui.components.PrimaryButton
+import com.facetlauncher.app.ui.components.ProPill
 import com.facetlauncher.app.ui.components.SettingsCard
 import com.facetlauncher.app.ui.components.SettingsToggleRow
 import com.facetlauncher.app.ui.components.TextActionButton
@@ -48,7 +49,7 @@ class DailyWallpaperActions(
     val onDismissSheet: () -> Unit = {},
 )
 
-/** The daily wallpaper settings above the photo grid: the switch, and with it on, the source, the screens, Wi-Fi only and the status line. */
+/** The daily wallpaper settings above the photo grid: the switch (with a Pro pill without Pro), and with it on, the source, the screens, Wi-Fi only and the status line. */
 @Composable
 internal fun DailyWallpaperCard(state: DailyWallpaperUiState, actions: DailyWallpaperActions, modifier: Modifier = Modifier) {
     SettingsCard(modifier = modifier.testTag("daily_wallpaper_card")) {
@@ -58,6 +59,7 @@ internal fun DailyWallpaperCard(state: DailyWallpaperUiState, actions: DailyWall
             checked = state.enabled,
             onCheckedChange = actions.onSwitch,
             testTag = "daily_wallpaper_switch",
+            titleBadge = if (state.isPro) null else { { ProPill(Modifier.testTag("daily_wallpaper_pro")) } },
         )
         if (state.enabled) {
             CardDivider()

@@ -17,6 +17,9 @@ enum class ProReason {
     /** The user tried to add a second page to the clock stack on the free plan. */
     WIDGET_STACK,
 
+    /** The user tried to turn on the daily wallpaper on the free plan. */
+    DAILY_WALLPAPER,
+
     /** The user opened Facet Pro from Settings, not from a limit. */
     ABOUT,
 }

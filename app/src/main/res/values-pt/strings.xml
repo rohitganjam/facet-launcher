@@ -585,6 +585,8 @@
     <string name="pro_feature_triggers_body">Entre na rede do escritório ou conecte-se ao carro, e a faceta muda.</string>
     <string name="pro_feature_widgets_title">Widgets personalizados na tela inicial</string>
     <string name="pro_feature_widgets_body">Substitua o relógio por qualquer widget do seu telefone. O plano gratuito inclui os relógios do launcher.</string>
+    <string name="pro_feature_daily_wallpaper_title">Plano de fundo diário</string>
+    <string name="pro_feature_daily_wallpaper_body">Uma nova foto do Bing ou Spotlight na sua tela inicial todos os dias.</string>
     <string name="pro_feature_future_title">Recursos Pro futuros incluídos</string>
     <string name="pro_feature_future_body">Tudo o que for adicionado ao Pro depois é seu.</string>
     <string name="pro_unlock">Desbloquear Pro vitalício</string>
@@ -624,6 +626,7 @@
     <string name="pro_upgrade_facet_locked">Esta faceta está pausada no plano gratuito. Exclua uma faceta para voltar a 3, ou use o Pro para ter até 10.</string>
     <string name="facet_locked_content_description">Desativada no plano gratuito</string>
     <string name="pro_upgrade_widget_stack">Colocar mais de um relógio ou widget na tela inicial é um recurso Pro. O plano gratuito inclui um.</string>
+    <string name="pro_upgrade_daily_wallpaper">Uma nova foto do Bing ou Spotlight como plano de fundo todos os dias faz parte do Pro.</string>
     <string name="pro_upgrade_about">Uma compra desbloqueia mais facetas e todos os gatilhos de automação. Sem assinatura.</string>
     <string name="pro_message_unavailable">O Google Play não está disponível agora. Tente novamente mais tarde.</string>
     <string name="pro_message_no_purchase">Nenhuma compra do Pro encontrada para esta conta do Google.</string>

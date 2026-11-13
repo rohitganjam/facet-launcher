@@ -2,6 +2,7 @@ package com.facetlauncher.app.domain
 
 import android.graphics.Bitmap
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
+import com.facetlauncher.app.data.FakeEntitlementRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.dailyphotos.DailyPhotoFeed
 import com.facetlauncher.app.data.model.DailyPhotoSource
@@ -43,8 +44,8 @@ class DailyWallpaperCoordinatorTest {
         val settings = SettingsRepository(PreferenceDataStoreFactory.create(produceFile = { File(tempFolder.root, "s-${System.nanoTime()}.preferences_pb") }))
         val dispatcher = StandardTestDispatcher(testScheduler)
         return DailyWallpaperCoordinator(
-            runDailyWallpaper = RunDailyWallpaperUseCase(daily, photos, copies, conditions, dailyTestClock),
-            applyPendingWallpaper = ApplyPendingWallpaperUseCase(daily, copies, SetWallpaperFromPhotoUseCase(copies, settings, UnconfinedTestDispatcher(testScheduler)), dailyTestClock),
+            runDailyWallpaper = RunDailyWallpaperUseCase(daily, photos, copies, conditions, dailyTestClock, FakeEntitlementRepository()),
+            applyPendingWallpaper = ApplyPendingWallpaperUseCase(daily, copies, SetWallpaperFromPhotoUseCase(copies, settings, UnconfinedTestDispatcher(testScheduler)), dailyTestClock, FakeEntitlementRepository()),
             dailyWallpaperRepository = daily,
             wallpaperCopyRepository = copies,
             deviceConditions = conditions,

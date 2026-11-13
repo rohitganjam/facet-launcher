@@ -578,6 +578,8 @@
     <string name="pro_feature_triggers_body">Maak verbinding met het kantoornetwerk of de auto, en het facet wisselt.</string>
     <string name="pro_feature_widgets_title">Eigen widgets op het startscherm</string>
     <string name="pro_feature_widgets_body">Vervang de klok door een willekeurige widget op je telefoon. Gratis bevat de eigen klokken van de launcher.</string>
+    <string name="pro_feature_daily_wallpaper_title">Dagelijkse achtergrond</string>
+    <string name="pro_feature_daily_wallpaper_body">Elke dag een nieuwe Bing- of Spotlight-foto op je beginscherm.</string>
     <string name="pro_feature_future_title">Toekomstige Pro-functies inbegrepen</string>
     <string name="pro_feature_future_body">Alles wat later aan Pro wordt toegevoegd, is van jou.</string>
     <string name="pro_unlock">Levenslang Pro ontgrendelen</string>
@@ -615,6 +617,7 @@
     <string name="pro_upgrade_facet_locked">Dit facet is gepauzeerd in het gratis abonnement. Verwijder een facet om terug te gaan naar 3, of ga Pro om er tot 10 te gebruiken.</string>
     <string name="facet_locked_content_description">Uitgeschakeld in het gratis abonnement</string>
     <string name="pro_upgrade_widget_stack">Meer dan één klok of widget op Home is een Pro-functie. Het gratis abonnement heeft er één.</string>
+    <string name="pro_upgrade_daily_wallpaper">Elke dag een nieuwe Bing- of Spotlight-foto als achtergrond is onderdeel van Pro.</string>
     <string name="pro_upgrade_about">Eén aankoop ontgrendelt meer facets en elke automatiseringstrigger. Geen abonnement.</string>
     <string name="pro_message_unavailable">Google Play is nu niet beschikbaar. Probeer het later opnieuw.</string>
     <string name="pro_message_no_purchase">Geen Pro-aankoop gevonden voor dit Google-account.</string>

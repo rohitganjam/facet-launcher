@@ -2,6 +2,7 @@ package com.facetlauncher.app.domain
 
 import android.graphics.Bitmap
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
+import com.facetlauncher.app.data.FakeEntitlementRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.model.DailyWallpaperPhoto
 import com.facetlauncher.app.data.model.DailyWallpaperProblem
@@ -29,15 +30,31 @@ class ApplyPendingWallpaperUseCaseTest {
     private val photo = DailyWallpaperPhoto("https://img.peapix.com/a.jpg", "Arches", "© someone")
 
     private fun daily() = FakeDailyWallpaperRepository(tempFolder.root)
+    private val entitlement = FakeEntitlementRepository()
 
     private fun useCase(daily: FakeDailyWallpaperRepository): ApplyPendingWallpaperUseCase {
         val settings = SettingsRepository(PreferenceDataStoreFactory.create(produceFile = { File(tempFolder.root, "s-${System.nanoTime()}.preferences_pb") }))
-        return ApplyPendingWallpaperUseCase(daily, copies, SetWallpaperFromPhotoUseCase(copies, settings, UnconfinedTestDispatcher()), dailyTestClock)
+        return ApplyPendingWallpaperUseCase(daily, copies, SetWallpaperFromPhotoUseCase(copies, settings, UnconfinedTestDispatcher()), dailyTestClock, entitlement)
     }
 
     private suspend fun FakeDailyWallpaperRepository.givenPending(includeLock: Boolean = false) {
         pendingBitmap = Bitmap.createBitmap(100, 200, Bitmap.Config.ARGB_8888)
         update { it.copy(enabled = true, includeLock = includeLock, pending = photo) }
+    }
+
+    @Test
+    fun `nothing is set without pro`() = runTest {
+        // Given a prepared photo, and a free user
+        val daily = daily().apply { givenPending() }
+        entitlement.proFlow.value = false
+
+        // When the screen turns off
+        val set = useCase(daily)()
+
+        // Then the wallpaper wasn't touched and the photo still waits
+        assertFalse(set)
+        assertEquals(0, copies.setCount)
+        assertEquals(photo, daily.get().pending)
     }
 
     @Test

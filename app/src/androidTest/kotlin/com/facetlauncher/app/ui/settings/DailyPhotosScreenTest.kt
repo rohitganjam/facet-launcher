@@ -166,6 +166,24 @@ class DailyPhotosScreenTest {
     }
 
     @Test
+    fun `without pro the switch carries a pro pill`() {
+        // Given a free user
+        setContent(DailyPhotosUiState(photos = photos, loading = false), Calls(), daily = DailyWallpaperUiState(isPro = false))
+
+        // Then the switch is marked Pro
+        composeRule.onNodeWithTag("daily_wallpaper_pro", useUnmergedTree = true).assertIsDisplayed()
+    }
+
+    @Test
+    fun `with pro the switch has no pro pill`() {
+        // Given a Pro user
+        setContent(DailyPhotosUiState(photos = photos, loading = false), Calls(), daily = DailyWallpaperUiState(isPro = true))
+
+        // Then there is no Pro pill
+        composeRule.onAllNodesWithTag("daily_wallpaper_pro", useUnmergedTree = true).assertCountEquals(0)
+    }
+
+    @Test
     fun `with the daily wallpaper on its source, screens, Wi-Fi only and status show`() {
         // Given the daily wallpaper on, with a photo set
         var wifiOnly: Boolean? = null

@@ -51,6 +51,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.facetlauncher.app.R
 import com.facetlauncher.app.data.model.DailyPhoto
 import com.facetlauncher.app.data.model.DailyPhotoSource
+import com.facetlauncher.app.data.model.ProReason
 import com.facetlauncher.app.ui.components.BlockingProgressOverlay
 import com.facetlauncher.app.ui.components.PillTabPair
 import com.facetlauncher.app.ui.components.SettingsCard
@@ -74,6 +75,7 @@ fun DailyPhotosScreen(
     onBack: () -> Unit,
     onUsePhoto: (Bitmap, String) -> Unit,
     onChooseImage: () -> Unit,
+    onOpenFacetPro: (ProReason) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: DailyPhotosViewModel = hiltViewModel(),
 ) {
@@ -85,6 +87,13 @@ fun DailyPhotosScreen(
         uiState.picked?.let {
             currentOnUsePhoto(it.bitmap, it.credit)
             viewModel.consumePicked()
+        }
+    }
+    val currentOnOpenFacetPro by rememberUpdatedState(onOpenFacetPro)
+    LaunchedEffect(dailyWallpaper.openPro) {
+        if (dailyWallpaper.openPro) {
+            viewModel.consumeOpenPro()
+            currentOnOpenFacetPro(ProReason.DAILY_WALLPAPER)
         }
     }
     DailyPhotosContent(

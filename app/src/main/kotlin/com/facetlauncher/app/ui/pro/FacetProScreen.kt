@@ -23,6 +23,7 @@ import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Bluetooth
 import androidx.compose.material.icons.filled.Layers
 import androidx.compose.material.icons.filled.Sensors
+import androidx.compose.material.icons.filled.Wallpaper
 import androidx.compose.material.icons.filled.Widgets
 import androidx.compose.material.icons.filled.Wifi
 import androidx.compose.material3.Icon
@@ -125,6 +126,7 @@ private fun UpgradeScreen(
                 FeatureRow(Icons.Default.Layers, R.string.pro_feature_facets_title, R.string.pro_feature_facets_body)
                 FeatureRow(Icons.Default.Sensors, R.string.pro_feature_triggers_title, R.string.pro_feature_triggers_body)
                 FeatureRow(Icons.Default.Widgets, R.string.pro_feature_widgets_title, R.string.pro_feature_widgets_body)
+                FeatureRow(Icons.Default.Wallpaper, R.string.pro_feature_daily_wallpaper_title, R.string.pro_feature_daily_wallpaper_body)
                 FeatureRow(Icons.Default.AutoAwesome, R.string.pro_feature_future_title, R.string.pro_feature_future_body)
             }
         }
@@ -242,6 +244,7 @@ private fun ProReason.noteRes(): Int = when (this) {
     ProReason.FACET_LIMIT -> R.string.pro_upgrade_facet_limit
     ProReason.FACET_LOCKED -> R.string.pro_upgrade_facet_locked
     ProReason.WIDGET_STACK -> R.string.pro_upgrade_widget_stack
+    ProReason.DAILY_WALLPAPER -> R.string.pro_upgrade_daily_wallpaper
     ProReason.ABOUT -> R.string.pro_upgrade_about
 }
 

@@ -1,5 +1,6 @@
 package com.facetlauncher.app.domain
 
+import com.facetlauncher.app.data.FakeEntitlementRepository
 import com.facetlauncher.app.data.dailyphotos.DailyPhotoFeed
 import com.facetlauncher.app.data.model.DailyPhotoSource
 import com.facetlauncher.app.data.model.DailyWallpaperPhoto
@@ -29,11 +30,12 @@ class RunDailyWallpaperUseCaseTest {
     private val copies = FakeDailyCopies()
     private lateinit var photos: FakeDailyPhotos
     private val conditions = FakeConditions()
+    private val entitlement = FakeEntitlementRepository()
 
     private fun useCase(): RunDailyWallpaperUseCase {
         daily = if (::daily.isInitialized) daily else FakeDailyWallpaperRepository(tempFolder.root)
         photos = if (::photos.isInitialized) photos else FakeDailyPhotos(tempFolder.newFolder(), copies)
-        return RunDailyWallpaperUseCase(daily, photos, copies, conditions, dailyTestClock)
+        return RunDailyWallpaperUseCase(daily, photos, copies, conditions, dailyTestClock, entitlement)
     }
 
     /** Bing's week with [names] newest first, each downloadable as a 4000 x 2000 landscape photo. */
@@ -65,6 +67,23 @@ class RunDailyWallpaperUseCaseTest {
         // Then nothing was fetched
         assertEquals(DailyRunOutcome.OFF, outcome)
         assertEquals(0, photos.feedRequests)
+    }
+
+    @Test
+    fun `nothing runs without pro and the settings are kept`() = runTest {
+        // Given the daily wallpaper on, and a free user
+        givenBing("a")
+        turnOn()
+        entitlement.proFlow.value = false
+
+        // When a run starts
+        val outcome = useCase()()
+
+        // Then nothing was fetched, no attempt counted, and it is still on for when Pro comes back
+        assertEquals(DailyRunOutcome.OFF, outcome)
+        assertEquals(0, photos.feedRequests)
+        assertEquals(0, daily.get().attempts)
+        assertTrue(daily.get().enabled)
     }
 
     @Test

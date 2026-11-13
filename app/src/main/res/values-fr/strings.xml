@@ -585,6 +585,8 @@
     <string name="pro_feature_triggers_body">Rejoignez le réseau du bureau ou connectez-vous à la voiture, et la facette change.</string>
     <string name="pro_feature_widgets_title">Widgets personnalisés sur l\'écran d\'accueil</string>
     <string name="pro_feature_widgets_body">Remplacez l\'horloge par n\'importe quel widget de votre téléphone. L\'offre gratuite inclut les horloges du lanceur.</string>
+    <string name="pro_feature_daily_wallpaper_title">Fond d\'écran quotidien</string>
+    <string name="pro_feature_daily_wallpaper_body">Une nouvelle photo Bing ou Spotlight sur votre écran d\'accueil chaque jour.</string>
     <string name="pro_feature_future_title">Futures fonctions Pro incluses</string>
     <string name="pro_feature_future_body">Tout ce qui sera ajouté à Pro plus tard est à vous.</string>
     <string name="pro_unlock">Débloquer Pro à vie</string>
@@ -624,6 +626,7 @@
     <string name="pro_upgrade_facet_locked">Cette facette est en pause dans l\'offre gratuite. Supprimez une facette pour revenir à 3, ou passez à Pro pour en utiliser jusqu\'à 10.</string>
     <string name="facet_locked_content_description">Désactivée dans l\'offre gratuite</string>
     <string name="pro_upgrade_widget_stack">Mettre plusieurs horloges ou widgets sur l\'accueil est une fonction Pro. L\'offre gratuite en inclut un.</string>
+    <string name="pro_upgrade_daily_wallpaper">Une nouvelle photo Bing ou Spotlight en fond d\'écran chaque jour fait partie de Pro.</string>
     <string name="pro_upgrade_about">Un seul achat débloque plus de facettes et tous les déclencheurs d\'automatisation. Sans abonnement.</string>
     <string name="pro_message_unavailable">Google Play n\'est pas disponible pour le moment. Réessayez plus tard.</string>
     <string name="pro_message_no_purchase">Aucun achat Pro trouvé pour ce compte Google.</string>
