@@ -30,7 +30,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearWavyProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.material3.WavyProgressIndicatorDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -62,6 +61,7 @@ import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import com.facetlauncher.app.ui.theme.HomeAppTextColor
 import com.facetlauncher.app.ui.theme.homeAppLabelShadow
 import kotlinx.coroutines.delay
+import com.facetlauncher.app.ui.components.HomeText
 
 /** How often the progress line re-reads the clock while playing — a bar this thin needs no more. */
 private const val PROGRESS_TICK_MS = 500L
@@ -174,9 +174,9 @@ private fun MediaText(
     onOpen: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val shadow = homeAppLabelShadow(color)
+    val shadow = homeAppLabelShadow()
     Column(modifier = modifier.clickable(onClick = onOpen)) {
-        Text(
+        HomeText(
             text = state.title,
             style = MaterialTheme.typography.bodyLarge.copy(shadow = shadow, fontWeight = fontWeight),
             color = color,
@@ -185,7 +185,7 @@ private fun MediaText(
             modifier = Modifier.testTag(homeTag("home_media_title")).basicMarquee(iterations = Int.MAX_VALUE),
         )
         state.artist?.let {
-            Text(
+            HomeText(
                 text = it,
                 style = MaterialTheme.typography.bodyMedium.copy(shadow = shadow),
                 color = color.copy(alpha = 0.7f),

@@ -51,7 +51,6 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
@@ -92,6 +91,7 @@ import com.facetlauncher.app.ui.home.FolderTileGlyph
 import com.facetlauncher.app.ui.home.stableKey
 import com.facetlauncher.app.ui.theme.homeAppLabelShadow
 import kotlinx.coroutines.flow.map
+import com.facetlauncher.app.ui.components.HomeText
 
 internal fun Modifier.dashedBorder(color: Color, cornerRadius: Dp, strokeWidth: Dp = 1.dp): Modifier = drawBehind {
     drawRoundRect(
@@ -400,9 +400,9 @@ internal fun HomeAppGridTile(
 @Composable
 private fun AppGridTileBody(app: AppInfo, displayMode: AppListGridDisplayMode, style: HomeItemStyle) {
     if (displayMode == AppListGridDisplayMode.TEXT) {
-        Text(
+        HomeText(
             text = app.label,
-            style = MaterialTheme.typography.labelLarge.copy(shadow = homeAppLabelShadow(style.labelColor), fontWeight = style.labelFontWeight),
+            style = MaterialTheme.typography.labelLarge.copy(shadow = homeAppLabelShadow(), fontWeight = style.labelFontWeight),
             color = style.labelColor,
             textAlign = TextAlign.Center,
             maxLines = 2,
@@ -437,9 +437,9 @@ internal fun HomeTileLabel(
     modifier: Modifier = Modifier,
     maxWidth: Dp = AppIconSize.scaled(AppIconSize.GRID_LABEL_WIDTH),
 ) {
-    Text(
+    HomeText(
         text = text,
-        style = MaterialTheme.typography.labelLarge.copy(shadow = homeAppLabelShadow(style.labelColor), fontWeight = style.labelFontWeight),
+        style = MaterialTheme.typography.labelLarge.copy(shadow = homeAppLabelShadow(), fontWeight = style.labelFontWeight),
         color = style.labelColor,
         textAlign = TextAlign.Center,
         maxLines = 1,
@@ -484,9 +484,9 @@ internal fun HomeFolderGridTile(
 @Composable
 private fun FolderGridTileBody(folder: Folder, displayMode: AppListGridDisplayMode, style: HomeItemStyle) {
     if (displayMode == AppListGridDisplayMode.TEXT) {
-        Text(
+        HomeText(
             text = folder.name,
-            style = MaterialTheme.typography.labelLarge.copy(shadow = homeAppLabelShadow(style.labelColor), fontWeight = style.labelFontWeight),
+            style = MaterialTheme.typography.labelLarge.copy(shadow = homeAppLabelShadow(), fontWeight = style.labelFontWeight),
             color = style.labelColor,
             textAlign = TextAlign.Center,
             maxLines = 2,

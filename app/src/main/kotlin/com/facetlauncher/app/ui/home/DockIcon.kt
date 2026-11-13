@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -30,6 +29,7 @@ import com.facetlauncher.app.data.model.Folder
 import com.facetlauncher.app.data.model.PlacedItem
 import com.facetlauncher.app.ui.components.AppIcon
 import com.facetlauncher.app.ui.components.AppIconSize
+import com.facetlauncher.app.ui.components.HomeText
 import com.facetlauncher.app.ui.components.NotificationBadge
 import com.facetlauncher.app.ui.components.longPressReorderClickable
 import com.facetlauncher.app.ui.components.reorderItemLayer
@@ -87,9 +87,9 @@ private fun SingleAppDockIcon(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
             ) {
-                Text(
+                HomeText(
                     text = app.label,
-                    style = MaterialTheme.typography.bodyMedium.copy(shadow = homeAppLabelShadow(style.labelColor), fontWeight = style.labelFontWeight),
+                    style = MaterialTheme.typography.bodyMedium.copy(shadow = homeAppLabelShadow(), fontWeight = style.labelFontWeight),
                     color = style.labelColor,
                 )
                 // Text mode has no icon to anchor the badge to, so it trails the label.
@@ -130,9 +130,9 @@ private fun FolderDockIcon(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
             ) {
-                Text(
+                HomeText(
                     text = folder.name,
-                    style = MaterialTheme.typography.bodyMedium.copy(shadow = homeAppLabelShadow(style.labelColor), fontWeight = style.labelFontWeight),
+                    style = MaterialTheme.typography.bodyMedium.copy(shadow = homeAppLabelShadow(), fontWeight = style.labelFontWeight),
                     color = style.labelColor,
                 )
             }

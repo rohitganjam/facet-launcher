@@ -5,7 +5,6 @@ import com.facetlauncher.app.ui.nativewidget.longPressFallback
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.compositionLocalOf
@@ -29,6 +28,7 @@ import com.facetlauncher.app.ui.home.weather.WeatherIcon
 import com.facetlauncher.app.ui.home.weather.WeatherIconKind
 import com.facetlauncher.app.ui.theme.homeIconShadow
 import com.facetlauncher.app.ui.theme.homeTextShadow
+import com.facetlauncher.app.ui.components.HomeText
 
 /**
  * The weather item of the clock's accessory row: a picture and the temperature, nothing else. [contentDescription] is the whole
@@ -79,9 +79,9 @@ fun WeatherAccessoryContent(
         iconAtEnd = iconAtEnd,
         icon = { WeatherIcon(weather.iconKind, color, Modifier.size(WeatherIconBoxSize).homeIconShadow(color).clearAndSetSemantics { }, weather.iconStyle) },
         text = {
-            Text(
+            HomeText(
                 text = weather.temperatureText,
-                style = TextStyle(fontFamily = family, fontWeight = fontWeight, fontSize = fontSize, shadow = homeTextShadow(color)),
+                style = TextStyle(fontFamily = family, fontWeight = fontWeight, fontSize = fontSize, shadow = homeTextShadow()),
                 color = color,
                 modifier = Modifier.clearAndSetSemantics { testTag = "clock_weather_text" },
             )

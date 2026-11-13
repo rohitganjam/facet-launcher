@@ -5,7 +5,6 @@ import com.facetlauncher.app.ui.nativewidget.longPressFallback
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.ui.Alignment
@@ -22,6 +21,7 @@ import androidx.compose.ui.unit.sp
 import com.facetlauncher.app.R
 import com.facetlauncher.app.ui.theme.homeIconShadow
 import com.facetlauncher.app.ui.theme.homeTextShadow
+import com.facetlauncher.app.ui.components.HomeText
 
 /**
  * The next-alarm accessory item: [AlarmClockIcon] plus its time, in [color]. Renders nothing when
@@ -43,7 +43,7 @@ fun AlarmAccessoryContent(
         modifier = modifier,
         iconAtEnd = iconAtEnd,
         icon = { AlarmClockIcon(tint = color, modifier = Modifier.size(ClockAccessoryIconSize).homeIconShadow(color)) },
-        text = { Text(text = text, style = TextStyle(fontFamily = family, fontWeight = fontWeight, fontSize = fontSize, shadow = homeTextShadow(color)), color = color) },
+        text = { HomeText(text = text, style = TextStyle(fontFamily = family, fontWeight = fontWeight, fontSize = fontSize, shadow = homeTextShadow()), color = color) },
     )
 }
 
@@ -92,7 +92,7 @@ fun BatteryAccessoryContent(
         modifier = modifier.longPressFallback(LocalAccessoryLongPress.current).clickable(role = Role.Button, onClick = LocalBatteryClick.current),
         iconAtEnd = iconAtEnd,
         icon = { BatteryIcon(tint = mutedColor, state = batteryIconState(percent, isCharging), modifier = Modifier.size(BatteryIconSize).homeIconShadow(mutedColor)) },
-        text = { Text(text = stringResource(R.string.percent_format, percent), style = TextStyle(fontFamily = family, fontWeight = fontWeight, fontSize = fontSize, shadow = homeTextShadow(mutedColor)), color = mutedColor) },
+        text = { HomeText(text = stringResource(R.string.percent_format, percent), style = TextStyle(fontFamily = family, fontWeight = fontWeight, fontSize = fontSize, shadow = homeTextShadow()), color = mutedColor) },
     )
 }
 
@@ -131,5 +131,5 @@ fun ClockAccessoryRow(
 
 @Composable
 private fun AccessoryDot(family: FontFamily, fontWeight: FontWeight, fontSize: TextUnit, color: Color) {
-    Text(text = stringResource(R.string.clock_accessory_separator_dot), style = TextStyle(fontFamily = family, fontWeight = fontWeight, fontSize = fontSize, shadow = homeTextShadow(color)), color = color)
+    HomeText(text = stringResource(R.string.clock_accessory_separator_dot), style = TextStyle(fontFamily = family, fontWeight = fontWeight, fontSize = fontSize, shadow = homeTextShadow()), color = color)
 }

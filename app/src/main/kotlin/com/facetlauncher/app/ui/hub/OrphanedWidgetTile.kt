@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -27,6 +26,7 @@ import com.facetlauncher.app.ui.theme.Surface
 import com.facetlauncher.app.ui.theme.HomeAppTextColorFaint
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import com.facetlauncher.app.ui.theme.homeAppLabelShadow
+import com.facetlauncher.app.ui.components.HomeText
 
 private const val ORPHANED_TILE_BACKGROUND_ALPHA = 0.6f
 
@@ -57,31 +57,31 @@ fun OrphanedWidgetTile(providerLabel: String?, onRemove: () -> Unit, onKeepSpace
         // — worst case on a very short tile, this text visually clips, which is far better than an
         // orphaned widget the user can never get rid of.
         Column(modifier = Modifier.weight(1f, fill = false)) {
-            Text(
+            HomeText(
                 text = stringResource(R.string.hub_orphaned_widget_unavailable, providerLabel ?: stringResource(R.string.hub_orphaned_fallback_label)),
-                style = MaterialTheme.typography.labelMedium.copy(shadow = homeAppLabelShadow(HomeAppTextColor)),
+                style = MaterialTheme.typography.labelMedium.copy(shadow = homeAppLabelShadow()),
                 color = HomeAppTextColor,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
             )
-            Text(
+            HomeText(
                 text = stringResource(R.string.hub_orphaned_app_uninstalled),
-                style = MaterialTheme.typography.labelSmall.copy(shadow = homeAppLabelShadow(HomeAppTextColorFaint)),
+                style = MaterialTheme.typography.labelSmall.copy(shadow = homeAppLabelShadow()),
                 color = HomeAppTextColorFaint,
                 modifier = Modifier.padding(top = 2.dp),
             )
         }
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text(
+            HomeText(
                 text = stringResource(R.string.hub_orphaned_remove),
-                style = MaterialTheme.typography.labelSmall.copy(shadow = homeAppLabelShadow(ErrorColor)),
+                style = MaterialTheme.typography.labelSmall.copy(shadow = homeAppLabelShadow()),
                 color = ErrorColor,
                 modifier = Modifier.testTag("hub_orphaned_remove").clip(CircleShape).clickable(onClick = onRemove),
             )
             if (onKeepSpace != null) {
-                Text(
+                HomeText(
                     text = stringResource(R.string.hub_orphaned_keep_space),
-                    style = MaterialTheme.typography.labelSmall.copy(shadow = homeAppLabelShadow(HomeAppTextColorFaint)),
+                    style = MaterialTheme.typography.labelSmall.copy(shadow = homeAppLabelShadow()),
                     color = HomeAppTextColorFaint,
                     modifier = Modifier.testTag("hub_orphaned_keep_space").clip(CircleShape).clickable(onClick = onKeepSpace),
                 )

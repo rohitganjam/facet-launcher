@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -26,6 +25,7 @@ import com.facetlauncher.app.ui.theme.HomeAppTextColorFaint
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import com.facetlauncher.app.ui.theme.Muted
 import com.facetlauncher.app.ui.theme.homeAppLabelShadow
+import com.facetlauncher.app.ui.components.HomeText
 
 /** README `4b` — the add affordance is the content, not a caption under a blank grid. */
 @Composable
@@ -42,25 +42,25 @@ fun HubEmptyState(onAddClick: () -> Unit, modifier: Modifier = Modifier) {
                 .dashedBorder(color = HomeAppTextColorFaint, cornerRadius = 12.dp),
             contentAlignment = Alignment.Center,
         ) {
-            Text(
+            HomeText(
                 text = stringResource(R.string.facet_carousel_add_glyph),
                 style = MaterialTheme.typography.headlineMedium.copy(
                     fontWeight = FontWeight.Light,
-                    shadow = homeAppLabelShadow(HomeAppTextColorFaint),
+                    shadow = homeAppLabelShadow(),
                 ),
                 color = HomeAppTextColorFaint,
                 modifier = Modifier.padding(vertical = 22.dp),
             )
         }
-        Text(
+        HomeText(
             text = stringResource(R.string.hub_empty_state_title),
-            style = MaterialTheme.typography.titleMedium.copy(shadow = homeAppLabelShadow(HomeAppTextColor)),
+            style = MaterialTheme.typography.titleMedium.copy(shadow = homeAppLabelShadow()),
             color = HomeAppTextColor,
             modifier = Modifier.padding(top = 22.dp),
         )
-        Text(
+        HomeText(
             text = stringResource(R.string.hub_empty_state_subtitle),
-            style = MaterialTheme.typography.bodyMedium.copy(shadow = homeAppLabelShadow(HomeAppTextColorFaint)),
+            style = MaterialTheme.typography.bodyMedium.copy(shadow = homeAppLabelShadow()),
             color = Muted,
             textAlign = TextAlign.Center,
             modifier = Modifier.padding(top = 8.dp).width(250.dp),

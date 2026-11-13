@@ -17,7 +17,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Folder as FolderIcon
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -53,6 +52,7 @@ import com.facetlauncher.app.ui.theme.FolderGlyphBackground
 import com.facetlauncher.app.ui.theme.Muted
 import com.facetlauncher.app.ui.theme.homeAppLabelShadow
 import kotlinx.coroutines.flow.map
+import com.facetlauncher.app.ui.components.HomeText
 
 /**
  * A [size]d, `medium`/12dp-shaped tile showing up to 4 of the folder's app icons — a 1x2 row for 1-2 apps, a 2x2 grid for 3-4.
@@ -208,9 +208,9 @@ private fun FolderRowContent(
         }
         val label: @Composable () -> Unit = {
             if (showLabel) {
-                Text(
+                HomeText(
                     text = folder.name,
-                    style = MaterialTheme.typography.titleMedium.copy(shadow = homeAppLabelShadow(style.labelColor), fontWeight = style.labelFontWeight),
+                    style = MaterialTheme.typography.titleMedium.copy(shadow = homeAppLabelShadow(), fontWeight = style.labelFontWeight),
                     color = style.labelColor,
                 )
             }

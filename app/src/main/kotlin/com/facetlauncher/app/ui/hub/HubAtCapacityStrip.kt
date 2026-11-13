@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -23,6 +22,7 @@ import com.facetlauncher.app.ui.theme.Accent
 import com.facetlauncher.app.ui.theme.HomeAppTextColorFaint
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import com.facetlauncher.app.ui.theme.homeAppLabelShadow
+import com.facetlauncher.app.ui.components.HomeText
 
 /** README `4d` — shown once the Hub hits its 20-widget cap; the header's own Add greys out alongside this. */
 @Composable
@@ -36,15 +36,15 @@ fun HubAtCapacityStrip(onManageClick: () -> Unit, modifier: Modifier = Modifier)
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(
+        HomeText(
             text = stringResource(R.string.hub_at_capacity_message),
-            style = MaterialTheme.typography.bodyMedium.copy(shadow = homeAppLabelShadow(HomeAppTextColorFaint)),
+            style = MaterialTheme.typography.bodyMedium.copy(shadow = homeAppLabelShadow()),
             color = HomeAppTextColorFaint,
             modifier = Modifier.weight(1f),
         )
-        Text(
+        HomeText(
             text = stringResource(R.string.hub_at_capacity_manage),
-            style = MaterialTheme.typography.bodyMedium.copy(shadow = homeAppLabelShadow(Accent)),
+            style = MaterialTheme.typography.bodyMedium.copy(shadow = homeAppLabelShadow()),
             color = Accent,
             modifier = Modifier.clip(CircleShape).clickable(onClick = onManageClick),
         )

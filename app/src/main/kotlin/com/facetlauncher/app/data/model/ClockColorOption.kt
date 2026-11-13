@@ -26,9 +26,8 @@ import com.facetlauncher.app.R
  * [ACCENT_SECONDARY] is deliberately the *other* tonal extreme, kept available as its own pickable
  * option for a user who prefers that specific tone regardless of theme (see chat history — an
  * earlier version pinned both options to a fixed light/dark tone rather than tracking the theme).
- * Whichever option is picked overall, `homeTextShadow()`'s existing luminance-based flip
- * automatically shadows it with the tone that contrasts correctly, since that's resolved from the
- * text color's own luminance.
+ * Whichever option is picked, the text gets `homeTextShadow()`'s dark shadow, plus a light edge when it is dark and neutral
+ * (`homeTextOutlined`).
  */
 enum class ClockColorOption(@param:StringRes val displayNameRes: Int) {
     THEME(R.string.clock_color_theme),

@@ -20,7 +20,9 @@ import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.dp
 import com.facetlauncher.app.data.model.WallpaperAccentRole
+import com.facetlauncher.app.ui.components.LocalOnSolidFill
 import kotlin.math.cos
 import kotlin.math.sin
 
@@ -231,13 +233,30 @@ const val SMALL_TEXT_SHADOW_BLUR_RADIUS = 4f
 
 private const val HOME_SHADOW_ALPHA = 0.5f
 
-/** Drop shadow tinted against [textColor]'s luminance, so dark text gets a light shadow. [blurRadius] is in dp. */
+/** The near-black every Home text and icon shadow uses, whatever the content's color: a light shadow read as a halo. */
+private val HomeShadowTone = InkLight
+
+/** The light edge [homeTextOutlined] content gets, so dark text stays readable over a dark patch of wallpaper. */
+val HomeOutlineColor = InkDark.copy(alpha = 0.6f)
+
+/** The width of that edge outside the glyph. */
+val HomeOutlineWidth = 1.dp
+
+private const val NEUTRAL_MAX_CHROMA = 0.2f
+
+/** Visibly darker than mid-grey (relative luminance ~0.2 looks half-way to the eye). */
+private const val DARK_MAX_LUMINANCE = 0.25f
+
+/** Dark, uncoloured content (black or dark grey ink): the only Home content outlined in [HomeOutlineColor]. Accents never are. */
+fun homeTextOutlined(color: Color): Boolean =
+    color.luminance() < DARK_MAX_LUMINANCE && maxOf(color.red, color.green, color.blue) - minOf(color.red, color.green, color.blue) < NEUTRAL_MAX_CHROMA
+
+/** Drop shadow for Home content, always [HomeShadowTone]. [blurRadius] is in dp. */
 @Composable
-private fun homeShadow(textColor: Color, blurRadius: Float): Shadow {
+private fun homeShadow(blurRadius: Float): Shadow {
     val density = LocalDensity.current.density
-    val tone = if (textColor.luminance() > 0.5f) InkLight else InkDark
     return Shadow(
-        color = tone.copy(alpha = HOME_SHADOW_ALPHA),
+        color = HomeShadowTone.copy(alpha = HOME_SHADOW_ALPHA),
         offset = Offset(blurRadius / 4f * density, blurRadius / 2f * density),
         blurRadius = blurRadius * density,
     )
@@ -245,33 +264,41 @@ private fun homeShadow(textColor: Color, blurRadius: Float): Shadow {
 
 /** Clock, calendar and accessory text. For app-list and dock labels use [homeAppLabelShadow]. */
 @Composable
-fun homeTextShadow(textColor: Color, blurRadius: Float = CLOCK_SHADOW_BLUR_RADIUS): Shadow =
-    homeShadow(textColor, blurRadius)
+fun homeTextShadow(blurRadius: Float = CLOCK_SHADOW_BLUR_RADIUS): Shadow = homeShadow(blurRadius)
 
 private const val ICON_SHADOW_SAMPLES = 8
 private const val ICON_SHADOW_SAMPLE_ALPHA = 0.14f
 
+private fun tintPaint(color: Color, alpha: Float = 1f) = Paint().apply {
+    colorFilter = ColorFilter.tint(color.copy(alpha = 1f), BlendMode.SrcIn)
+    this.alpha = alpha
+}
+
 /**
- * [homeTextShadow]'s drop shadow for an icon: the glyph is drawn again in the shadow tone, offset like the text's shadow
- * and spread over a ring of samples to soften it, since a canvas has no blur for arbitrary shapes. Use it on clock,
- * calendar and accessory icons so they read on the wallpaper the way the text beside them does.
+ * [homeTextShadow]'s drop shadow for an icon, plus [HomeOutlineColor]'s edge when [contentColor] is [homeTextOutlined]. A canvas can't
+ * blur an arbitrary shape, so the shadow is the glyph redrawn in a ring of offset samples; the edge is a tighter ring, unblurred.
  */
 @Composable
 fun Modifier.homeIconShadow(contentColor: Color, blurRadius: Float = CLOCK_SHADOW_BLUR_RADIUS): Modifier {
-    val shadow = homeShadow(contentColor, blurRadius)
-    val tint = remember(shadow.color) {
-        Paint().apply {
-            colorFilter = ColorFilter.tint(shadow.color.copy(alpha = 1f), BlendMode.SrcIn)
-            alpha = ICON_SHADOW_SAMPLE_ALPHA * shadow.color.alpha / HOME_SHADOW_ALPHA
-        }
-    }
+    if (LocalOnSolidFill.current) return this
+    val shadow = homeShadow(blurRadius)
+    val outlineWidth = with(LocalDensity.current) { HomeOutlineWidth.toPx() }
+    val outlined = homeTextOutlined(contentColor)
+    val shadowTint = remember { tintPaint(HomeShadowTone, ICON_SHADOW_SAMPLE_ALPHA) }
+    val outlineTint = remember { tintPaint(HomeOutlineColor) }
+    val outlineLayer = remember { Paint().apply { alpha = HomeOutlineColor.alpha } }
     return drawWithContent {
-        val spread = shadow.blurRadius / 2f
         val bounds = Rect(-shadow.blurRadius, -shadow.blurRadius, size.width + shadow.blurRadius, size.height + shadow.blurRadius)
-        repeat(ICON_SHADOW_SAMPLES) { index ->
+        fun ring(radius: Float, dx: Float, dy: Float, paint: Paint) = repeat(ICON_SHADOW_SAMPLES) { index ->
             val angle = 2.0 * Math.PI * index / ICON_SHADOW_SAMPLES
-            drawIntoCanvas { it.saveLayer(bounds, tint) }
-            translate(shadow.offset.x + spread * cos(angle).toFloat(), shadow.offset.y + spread * sin(angle).toFloat()) { this@drawWithContent.drawContent() }
+            drawIntoCanvas { it.saveLayer(bounds, paint) }
+            translate(dx + radius * cos(angle).toFloat(), dy + radius * sin(angle).toFloat()) { this@drawWithContent.drawContent() }
+            drawIntoCanvas { it.restore() }
+        }
+        ring(shadow.blurRadius / 2f, shadow.offset.x, shadow.offset.y, shadowTint)
+        if (outlined) {
+            drawIntoCanvas { it.saveLayer(bounds, outlineLayer) }
+            ring(outlineWidth, 0f, 0f, outlineTint)
             drawIntoCanvas { it.restore() }
         }
         drawContent()
@@ -292,7 +319,7 @@ fun contentColorFor(background: Color): Color = if (background.luminance() > 0.5
 
 /** Home's app-list labels and dock text. */
 @Composable
-fun homeAppLabelShadow(textColor: Color): Shadow = homeShadow(textColor, SMALL_TEXT_SHADOW_BLUR_RADIUS)
+fun homeAppLabelShadow(): Shadow = homeShadow(SMALL_TEXT_SHADOW_BLUR_RADIUS)
 
 /**
  * App Drawer text colors — independent knobs from Home's, even though [DrawerAppTextColor]

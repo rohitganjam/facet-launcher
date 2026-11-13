@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -46,6 +45,7 @@ import java.util.Locale
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.ImmutableMap
 import kotlinx.collections.immutable.persistentMapOf
+import com.facetlauncher.app.ui.components.HomeText
 
 /**
  * Upcoming calendar events (F1; midnight today to noon tomorrow), deliberately independent of [com.facetlauncher.app.ui.home.ClockBlock]/
@@ -155,17 +155,17 @@ private fun EventRow(
         ) {}
     }
     val timeText: @Composable () -> Unit = {
-        Text(
+        HomeText(
             text = time,
-            style = TextStyle(fontFamily = fontFamily, fontWeight = fontWeight, fontSize = MaterialTheme.typography.bodyLarge.fontSize, shadow = homeTextShadow(textColor, blurRadius = SMALL_TEXT_SHADOW_BLUR_RADIUS)),
+            style = TextStyle(fontFamily = fontFamily, fontWeight = fontWeight, fontSize = MaterialTheme.typography.bodyLarge.fontSize, shadow = homeTextShadow(blurRadius = SMALL_TEXT_SHADOW_BLUR_RADIUS)),
             color = textColor,
             modifier = Modifier.widthIn(min = 48.dp),
         )
     }
     val titleText: @Composable () -> Unit = {
-        Text(
+        HomeText(
             text = event.title,
-            style = TextStyle(fontFamily = fontFamily, fontWeight = fontWeight, fontSize = MaterialTheme.typography.bodyLarge.fontSize, shadow = homeTextShadow(textColor, blurRadius = SMALL_TEXT_SHADOW_BLUR_RADIUS)),
+            style = TextStyle(fontFamily = fontFamily, fontWeight = fontWeight, fontSize = MaterialTheme.typography.bodyLarge.fontSize, shadow = homeTextShadow(blurRadius = SMALL_TEXT_SHADOW_BLUR_RADIUS)),
             color = textColor,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,

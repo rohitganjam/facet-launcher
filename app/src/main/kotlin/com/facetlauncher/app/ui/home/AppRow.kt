@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -41,6 +40,7 @@ import com.facetlauncher.app.ui.components.longPressReorderClickable
 import com.facetlauncher.app.ui.components.LiftableCell
 import com.facetlauncher.app.ui.home.AppRow
 import com.facetlauncher.app.ui.theme.homeAppLabelShadow
+import com.facetlauncher.app.ui.components.HomeText
 
 /**
  * One Home app-list row: icon, label and notification badge, packed by [position]. A tap calls [onClick] (the
@@ -169,9 +169,9 @@ private fun AppRowIcon(app: AppInfo, size: Dp, iconBadgeCount: Int?, showLabel: 
 
 @Composable
 private fun AppRowLabel(app: AppInfo, style: HomeItemStyle, testTagPrefix: String) {
-    Text(
+    HomeText(
         text = app.label,
-        style = MaterialTheme.typography.titleMedium.copy(shadow = homeAppLabelShadow(style.labelColor), fontWeight = style.labelFontWeight),
+        style = MaterialTheme.typography.titleMedium.copy(shadow = homeAppLabelShadow(), fontWeight = style.labelFontWeight),
         color = style.labelColor,
         modifier = Modifier.testTag(homeTag("${testTagPrefix}app_label_${app.packageName}")),
     )

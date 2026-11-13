@@ -210,6 +210,11 @@ drawn in code in the clock's accessory colour (`WeatherIcon`), or coloured, one 
 weather, following the switches and the icon style as they change. The Icons card also carries `WeatherIconsPreviewRow`:
 all nine weather pictures in the selected style. The alarm, battery and weather icons carry the same
 drop shadow as the accessory text (`homeIconShadow`: the glyph redrawn in the shadow tone over a ring of offsets).
+Every Home text and icon shadow is near-black, whatever the content's colour, so a light shadow never haloes an accent.
+Dark neutral content (black or dark grey ink, `homeTextOutlined`) also gets a crisp light 1dp edge
+(`HomeOutlineColor`): text through `HomeText` (`ui/components/HomeText.kt`, a `Text` that draws the edge over the shadow and
+outside the glyph), icons through a tighter unblurred ring in `homeIconShadow`. Content inside a filled clock pill or block is
+wrapped in `OnSolidFill` and gets neither, since it isn't on the wallpaper.
 `ScaledHomeScreen` (the Appearance card and the facet carousel cards) feeds Home a sample alarm, battery and weather
 (`PreviewAccessorySamples.kt`) when the content has none, so the accessory row shows in those previews, still following the
 facet's three switches.
