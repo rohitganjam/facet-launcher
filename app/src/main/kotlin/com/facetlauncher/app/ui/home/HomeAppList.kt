@@ -101,6 +101,12 @@ internal fun Modifier.dashedBorder(color: Color, cornerRadius: Dp, strokeWidth: 
     )
 }
 
+/** The gap between glass rows: each row pads half of it above and below, and two columns sit a whole gap apart. */
+internal val GlassRowGap = 4.dp
+
+/** The gap between the two columns: [GlassRowGap] with glass on, matching the gap between rows; none without, as rows have none. */
+internal fun glassColumnGap(glass: GlassStyle): Dp = if (glass != GlassStyle.OFF) GlassRowGap else 0.dp
+
 /**
  * [AppListLayout.TWO_COLUMN]: the list split interleaved by original order (0, 2, 4… left, 1, 3, 5… right)
  * into two equal [HomeAppListColumn]s. [AppRowPosition] LEFT and RIGHT already pack a row to its own
@@ -138,7 +144,7 @@ internal fun HomeAppTwoColumnList(
     }
     CompositionLocalProvider(LocalGridDrag provides drag.takeIf { enabled }) {
         Row(modifier = modifier.fillMaxWidth()) {
-            columns.zip(listOf(leftPosition, rightPosition)).forEach { (column, position) ->
+            columns.zip(listOf(leftPosition, rightPosition)).forEachIndexed { columnIndex, (column, position) ->
                 // The column holding the lifted row is drawn over the other, so the row is not hidden when it crosses.
                 val holdsLifted = drag.liftedKey != null && column.items.any { it.stableKey() == drag.liftedKey }
                 HomeAppListColumn(
@@ -150,6 +156,9 @@ internal fun HomeAppTwoColumnList(
                     iconSize = iconSize,
                     modifier = Modifier.weight(1f).zIndex(if (holdsLifted) 1f else 0f),
                     cellIndexOf = if (enabled) { item -> items.indexOf(item) } else null,
+                    // Half the gap on each column's inner side, inside its drop bounds, so a drag over the gap still lands.
+                    innerSidePadding = glassColumnGap(content.glass) / 2,
+                    innerSideIsEnd = columnIndex == 0,
                 )
             }
         }
@@ -175,7 +184,11 @@ internal fun HomeAppListColumn(
     onReorder: ((List<PlacedItem>) -> Unit)? = null,
     /** Two-column list only: a row's place in the whole list, so a drag can tell which cell it is over. */
     cellIndexOf: ((PlacedItem) -> Int)? = null,
+    /** Two-column list only: padding on the side facing the other column, and whether that side is the end. */
+    innerSidePadding: Dp = 0.dp,
+    innerSideIsEnd: Boolean = true,
 ) {
+    val innerSide = if (innerSideIsEnd) PaddingValues(end = innerSidePadding) else PaddingValues(start = innerSidePadding)
     val rows: @Composable ColumnScope.() -> Unit = {
         PickUpReorderHost(
             items = content.items,
@@ -186,9 +199,9 @@ internal fun HomeAppListColumn(
         ) { shown ->
         shown.forEach { item -> key(item.stableKey()) {
             val panelModifier = Modifier.testTag("home_app_row_${item.stableKey()}").fillMaxWidth().then(if (cellIndexOf != null) Modifier.gridCellBounds(cellIndexOf(item)) else Modifier)
-                .then(if (content.glass != GlassStyle.OFF) Modifier.padding(vertical = 2.dp) else Modifier)
+                .then(if (content.glass != GlassStyle.OFF) Modifier.padding(vertical = GlassRowGap / 2).padding(innerSide) else Modifier)
             // The row's own 8dp side padding plus this equals its vertical padding, so the content sits evenly inside the panel.
-            val rowModifier = Modifier.fillMaxWidth()
+            val rowModifier = Modifier.testTag("home_app_row_content_${item.stableKey()}").fillMaxWidth()
                 .then(if (content.glass != GlassStyle.OFF) Modifier.padding(horizontal = (verticalPadding - 8.dp).coerceAtLeast(0.dp)) else Modifier)
             GlassPanel(content.glass, MaterialTheme.shapes.medium, panelModifier) {
                 when (item) {
