@@ -19,6 +19,7 @@ import com.facetlauncher.app.data.model.WallpaperAccentRole
 import com.facetlauncher.app.data.model.parseFacetIdFromDeepLink
 import com.facetlauncher.app.domain.ActivateFacetByIdUseCase
 import com.facetlauncher.app.domain.CleanUpUninstalledAppsUseCase
+import com.facetlauncher.app.domain.DailyWallpaperCoordinator
 import com.facetlauncher.app.domain.EnsureActiveFacetUseCase
 import com.facetlauncher.app.domain.GetInstalledAppsUseCase
 import com.facetlauncher.app.domain.RepairOrphanedProfileRowsUseCase
@@ -109,6 +110,7 @@ class LauncherViewModel @Inject constructor(
     private val settingsRepository: SettingsRepository,
     private val facetRepository: FacetRepository,
     private val workProfileRepository: WorkProfileRepository,
+    private val dailyWallpaperCoordinator: DailyWallpaperCoordinator,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(LauncherUiState())
@@ -141,6 +143,7 @@ class LauncherViewModel @Inject constructor(
     /** The launcher came back to the front: midnight may have passed while the screen was off. */
     fun onResumed() {
         getInstalledApps.recheckDate()
+        dailyWallpaperCoordinator.onLauncherResumed()
     }
 
     /** Called once, from the final onboarding step ("Set as default" or "Later") — see [com.facetlauncher.app.LauncherActivity]. */
@@ -198,6 +201,8 @@ class LauncherViewModel @Inject constructor(
         // Runs for the app's whole lifetime, applying automation rules whenever Home is about to be
         // seen — see RunFacetAutomationUseCase.
         viewModelScope.launch { runFacetAutomation(homePressedEvent) }
+        // Sets a prepared daily wallpaper at screen-off; runs in the application's scope.
+        dailyWallpaperCoordinator.start()
 
         viewModelScope.launch {
             delay(LOADING_TIMEOUT_MS)

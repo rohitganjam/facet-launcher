@@ -35,7 +35,12 @@ class DailyPhotosScreenTest {
         DailyPhoto("Braided glacial rivers", "© Someone", "https://img.peapix.com/b_640.jpg", "https://img.peapix.com/b.jpg"),
     )
 
-    private fun setContent(state: DailyPhotosUiState, calls: Calls) {
+    private fun setContent(
+        state: DailyPhotosUiState,
+        calls: Calls,
+        daily: DailyWallpaperUiState = DailyWallpaperUiState(),
+        dailyActions: DailyWallpaperActions = DailyWallpaperActions(),
+    ) {
         composeRule.setContent {
             FacetLauncherTheme {
                 DailyPhotosContent(
@@ -46,6 +51,8 @@ class DailyPhotosScreenTest {
                     onRetry = { calls.retried++ },
                     onPick = { calls.picked = it },
                     onChooseImage = { calls.ownImage++ },
+                    dailyWallpaper = daily,
+                    dailyActions = dailyActions,
                 )
             }
         }
@@ -138,5 +145,128 @@ class DailyPhotosScreenTest {
         // Then choosing your own image still works
         composeRule.onNodeWithTag("daily_own_image_row").performClick()
         assertEquals(1, calls.ownImage)
+    }
+
+    @Test
+    fun `with the daily wallpaper off only its switch shows, and turning it on reports`() {
+        // Given the daily wallpaper off
+        var switched: Boolean? = null
+        setContent(DailyPhotosUiState(photos = photos, loading = false), Calls(), dailyActions = DailyWallpaperActions(onSwitch = { switched = it }))
+
+        // Then only the switch shows
+        composeRule.onNodeWithTag("daily_wallpaper_switch").assertIsDisplayed()
+        composeRule.onAllNodesWithTag("daily_wallpaper_source").assertCountEquals(0)
+        composeRule.onAllNodesWithTag("daily_wallpaper_wifi_only").assertCountEquals(0)
+
+        // When it is turned on
+        composeRule.onNodeWithTag("daily_wallpaper_switch").performClick()
+
+        // Then that is reported
+        assertEquals(true, switched)
+    }
+
+    @Test
+    fun `without pro the switch carries a pro pill`() {
+        // Given a free user
+        setContent(DailyPhotosUiState(photos = photos, loading = false), Calls(), daily = DailyWallpaperUiState(isPro = false))
+
+        // Then the switch is marked Pro
+        composeRule.onNodeWithTag("daily_wallpaper_pro", useUnmergedTree = true).assertIsDisplayed()
+    }
+
+    @Test
+    fun `with pro the switch has no pro pill`() {
+        // Given a Pro user
+        setContent(DailyPhotosUiState(photos = photos, loading = false), Calls(), daily = DailyWallpaperUiState(isPro = true))
+
+        // Then there is no Pro pill
+        composeRule.onAllNodesWithTag("daily_wallpaper_pro", useUnmergedTree = true).assertCountEquals(0)
+    }
+
+    @Test
+    fun `with the daily wallpaper on its source, screens, Wi-Fi only and status show`() {
+        // Given the daily wallpaper on, with a photo set
+        var wifiOnly: Boolean? = null
+        setContent(
+            DailyPhotosUiState(photos = photos, loading = false),
+            Calls(),
+            daily = DailyWallpaperUiState(enabled = true, status = DailyWallpaperStatus.Current("North Window", "© lightphoto", null, today = false)),
+            dailyActions = DailyWallpaperActions(onWifiOnly = { wifiOnly = it }),
+        )
+
+        // Then every row shows, with the credit
+        composeRule.onNodeWithTag("daily_wallpaper_source").assertIsDisplayed()
+        composeRule.onNodeWithTag("daily_wallpaper_screens").assertIsDisplayed()
+        composeRule.onNodeWithTag("daily_wallpaper_status").assertIsDisplayed()
+        composeRule.onNodeWithTag("daily_wallpaper_credit").assertIsDisplayed()
+
+        // When Wi-Fi only is turned off
+        composeRule.onNodeWithTag("daily_wallpaper_wifi_only").performClick()
+
+        // Then that is reported
+        assertEquals(false, wifiOnly)
+    }
+
+    @Test
+    fun `a paused daily wallpaper can be resumed`() {
+        // Given a pause
+        var resumed = 0
+        setContent(
+            DailyPhotosUiState(photos = photos, loading = false),
+            Calls(),
+            daily = DailyWallpaperUiState(enabled = true, status = DailyWallpaperStatus.Paused),
+            dailyActions = DailyWallpaperActions(onResume = { resumed++ }),
+        )
+
+        // When Resume is tapped
+        composeRule.onNodeWithTag("daily_wallpaper_resume").performClick()
+
+        // Then it reports once
+        assertEquals(1, resumed)
+    }
+
+    @Test
+    fun `the tile of the current daily wallpaper is marked`() {
+        // Given the first photo is the wallpaper
+        setContent(DailyPhotosUiState(photos = photos, loading = false), Calls(), daily = DailyWallpaperUiState(enabled = true, currentImageUrl = "https://img.peapix.com/a.jpg"))
+
+        // Then exactly one tile is marked
+        composeRule.onAllNodesWithTag("daily_photo_current", useUnmergedTree = true).assertCountEquals(1)
+    }
+
+    @Test
+    fun `on mobile data the turn on sheet offers mobile data once`() {
+        // Given the sheet on mobile data
+        var turnedOn: Boolean? = null
+        setContent(
+            DailyPhotosUiState(photos = photos, loading = false),
+            Calls(),
+            daily = DailyWallpaperUiState(sheet = DailyWallpaperSheet(DailyPhotoSource.BING, includeLock = false, onMobileData = true)),
+            dailyActions = DailyWallpaperActions(onTurnOn = { turnedOn = it }),
+        )
+
+        // Then it warns, and the one-time choice turns it on with mobile data
+        composeRule.onNodeWithTag("daily_wallpaper_sheet_mobile_data").assertIsDisplayed()
+        composeRule.onNodeWithTag("daily_wallpaper_use_mobile_data").performClick()
+        assertEquals(true, turnedOn)
+    }
+
+    @Test
+    fun `on Wi-Fi the turn on sheet turns it on without mobile data`() {
+        // Given the sheet on Wi-Fi
+        var turnedOn: Boolean? = null
+        setContent(
+            DailyPhotosUiState(photos = photos, loading = false),
+            Calls(),
+            daily = DailyWallpaperUiState(sheet = DailyWallpaperSheet(DailyPhotoSource.BING, includeLock = false, onMobileData = false)),
+            dailyActions = DailyWallpaperActions(onTurnOn = { turnedOn = it }),
+        )
+
+        // When Turn on is tapped
+        composeRule.onAllNodesWithTag("daily_wallpaper_use_mobile_data").assertCountEquals(0)
+        composeRule.onNodeWithTag("daily_wallpaper_turn_on").performClick()
+
+        // Then it is turned on without mobile data
+        assertEquals(false, turnedOn)
     }
 }

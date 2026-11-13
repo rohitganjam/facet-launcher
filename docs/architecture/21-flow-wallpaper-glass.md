@@ -67,9 +67,42 @@ An icon's glass background samples the copy only inside live Home (`LocalIconGla
 *Set a wallpaper with Facet* is one flow: its row on the wallpaper screen opens `DailyPhotosScreen`, a grid of a week's photos under a *Bing* and a *Spotlight* tab (Peapix feeds, seven photos each however many are asked for), and at the foot of the grid *Choose your own image* opens the picker (`GetContent`), as the row used to. Picking a photo, from either, replaces the screen with the fit step (`WallpaperScreen` drops the list when a photo is being framed, so Back from the fit step lands on the wallpaper screen). Tapping a daily photo downloads its original (usually above 1080p; the 640 px thumbnails are only for the grid), `WallpaperViewModel.onPickedBitmap(photo, credit)` hands it to the same fit step and set-and-store path as a chosen image, and the feed's copyright text is shown exactly as given as a small footer on the photo while it is framed (`WallpaperUiState.credit`; never part of the saved crop). The other two ways, the screenshot and Android's own picker, are separate rows on the wallpaper screen as before.
 
 - **Caching:** `DailyPhotoCache` keeps each feed's JSON (keyed by source and, for Bing, the device country) and its thumbnails under the app's cache folder for the rest of the calendar day it was fetched on, so reopening the screen costs nothing. The first open of a new day fetches again; if that fails, the last cache is shown with a note. An original is never cached.
-- **Network:** this is the app's second network use (after weather). Only the opened tab is fetched, never in the background; addresses must be https on `peapix.com` hosts (`isAllowedImageUrl`). The site's privacy policy and the Play data safety answers cover it.
+- **Network:** this is the app's second network use (after weather). Only the opened tab is fetched, never in the background (the daily wallpaper's run, below, starts only when Facet is opened); addresses must be https on `peapix.com` hosts (`isAllowedImageUrl`). The site's privacy policy and the Play data safety answers cover it.
 - **Progress:** setting a wallpaper (or storing a copy, or reading a large photo, or downloading a daily photo) takes a few seconds, so `BlockingProgressOverlay` covers the screen with a spinner and a message (*Setting your wallpaper…*, *Saving…*, *Opening the photo…*, *Downloading the photo…*) and takes every touch and the Back button until it is done.
 - **Fit step gestures:** the pan and zoom handler keeps the latest frame in a holder updated by every event (`LatestFit`) and is not keyed on the frame, because touch events can arrive faster than recompositions and a stale frame lost all but the last of them.
+
+## Daily wallpaper
+
+A switch at the top of the Daily photos screen sets a new Bing or Spotlight photo as the wallpaper once a day. It runs only after the user opens Facet: nothing is scheduled and nothing happens while Facet is unused. It is a Pro feature (see [16 §4](16-flow-billing.md#4-when-pro-is-lost)): without Pro the switch opens Facet Pro, and a run or apply does nothing while the settings stay saved.
+
+```mermaid
+sequenceDiagram
+    participant Act as LauncherActivity.onResume
+    participant C as DailyWallpaperCoordinator
+    participant Run as RunDailyWallpaperUseCase
+    participant Apply as ApplyPendingWallpaperUseCase
+    participant Set as SetWallpaperFromPhotoUseCase
+    Act->>C: onLauncherResumed()
+    C->>Run: one run at a time, in the application scope
+    Run->>Run: gates - off, paused, changed elsewhere, done today, 3 attempts, Battery Saver, network
+    Run->>Run: feed (day cache), newest unset photo, download, centre strip, pending.jpg
+    Note over C: the user may already be in another app
+    C->>Apply: next ACTION_SCREEN_OFF (or at once if the screen is already off)
+    Apply->>Set: pending photo, whole frame, Home or Home and lock
+    Set-->>Apply: wallpaper set, glass copy saved, id recorded
+```
+
+- **Trigger.** `LauncherViewModel.onResumed` → `DailyWallpaperCoordinator.onLauncherResumed()` on every resume; after the day's work is done (`checkedDay` is today) a resume costs one DataStore read. Turning the switch on, choosing another source, turning Wi-Fi only off and *Resume* also start a run.
+- **Network.** `DeviceConditionsRepository.network()` at that moment. Wi-Fi only (the default) needs an unmetered network; with it off, any network but roaming. The turn-on sheet offers *Use mobile data once* when the phone is on mobile data. At most 3 network attempts a day, counted in `facet_daily_wallpaper`.
+- **Which photo.** Bing: the newest by date, unless it is the one already set (then nothing is new today). Spotlight has no dates: the first photo not among the last 30 set. A run that finds a photo already prepared does nothing more.
+- **Crop.** No fit step. `portraitCentreCrop` takes the centre of the photo in the screen's shape (full height for a landscape photo) and refuses it when that part would have to be enlarged more than 1.35 times to fill the screen's width; the run then tries the next newest, up to 3. Only that part is decoded (`WallpaperCopyRepository.decodeRegion`, `BitmapRegionDecoder`, sampled down while still screen-sized), so a 4K photo is never decoded whole.
+- **No disruption.** No progress UI, no notification; network and decoding off the main thread; the run lives in `@ApplicationScope`, so leaving Home or switching apps doesn't cancel it. The wallpaper changes only at screen-off, so neither Home's swap nor another app restarting for the new wallpaper colours is seen.
+- **Glass.** The change goes through `SetWallpaperFromPhotoUseCase`, so the copy is the same image and its id is recorded; Home's glass follows through `WallpaperCopyRepository.copy` as for any change.
+- **Changed elsewhere.** The ids right after each change are recorded (`systemId`, and `lockId` with the lock screen included). A different id at a later run or apply pauses the change (*Paused*, with *Resume*). An interrupted change of its own (`applying` still set) is finished, not taken for the user's.
+- **Manual picks.** In the fit step, a Bing or Spotlight photo keeps the change on and counts as today's; the user's own image turns it off, and the fit step says so first (`NoteManualWallpaperUseCase`). Android's own picker counts as a change elsewhere.
+- **Refused.** If Android refuses the wallpaper, the change turns itself off and the status line says why.
+- **Status line.** `dailyWallpaperStatus(state)`: paused, ready (set at the next screen-off), a problem (waiting for Wi-Fi, no connection, Battery Saver, photos unreachable, download failed, too small, refused), or the photo last set with its credit and time. The grid marks the tile of the photo set.
+- **Storage.** Settings and progress in `facet_daily_wallpaper` (02 §5.8, not in backups); the prepared photo in `cacheDir/daily_photos/pending.jpg` until it is set. Originals are never kept.
 
 ## Not built yet
 
@@ -79,4 +112,4 @@ An icon's glass background samples the copy only inside live Home (`LocalIconGla
 ## Tests
 
 `WallpaperCopyRepositoryTest`, `SetWallpaperFromPhotoUseCaseTest`, `WallpaperViewModelTest`, `WallpaperBackdropViewModelTest`, `GlassBackgroundPromptViewModelTest`, `UseScreenshotAsWallpaperCopyUseCaseTest`, `WallpaperFitTest` (JVM);
-`DailyPhotosViewModelTest`, `DailyPhotoRepositoryTest`, `PeapixFeedTest` (JVM); `DailyPhotosScreenTest`, `WallpaperScreenTest`, `WallpaperCaptureScreenTest`, `GlassBackgroundRowTest`, `WallpaperBackdropHostTest` (emulator). `ImageDecoder` and the blur and lens effects are not covered on the JVM; they were checked on the API 36 emulator.
+`DailyPhotosViewModelTest`, `DailyPhotoRepositoryTest`, `PeapixFeedTest`, `DailyWallpaperRepositoryTest`, `RunDailyWallpaperUseCaseTest`, `ApplyPendingWallpaperUseCaseTest`, `NoteManualWallpaperUseCaseTest`, `DailyWallpaperCoordinatorTest`, `PortraitCentreCropTest`, `DailyWallpaperStatusTest` (JVM); `DailyPhotosScreenTest`, `WallpaperScreenTest`, `WallpaperCaptureScreenTest`, `GlassBackgroundRowTest`, `WallpaperBackdropHostTest` (emulator). `ImageDecoder` and the blur and lens effects are not covered on the JVM; they were checked on the API 36 emulator.

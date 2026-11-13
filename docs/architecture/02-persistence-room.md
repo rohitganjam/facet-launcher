@@ -8,6 +8,8 @@
 | `DataStore<Preferences>` | `facet_settings` (`datastore/facet_settings.preferences_pb`) | **All launcher-wide settings and defaults** — clock/app-list/dock design defaults (the calendar events strip has no design defaults of its own — see below), theme, drawer, search, permission-prompt flags, onboarding/seed/coach-mark flags, active facet id, the clock accessory switches, weather units and location, the icon pack and size — 82 keys (§5) | `SettingsRepository` only | Any upgrade (missing keys fall back to `LauncherSettings()` defaults) |
 | `DataStore<Preferences>` | `facet_entitlement` (`datastore/facet_entitlement.preferences_pb`) | The cached Pro state (`pro_purchased`; excluded from Android backups and device transfer by `res/xml/data_extraction_rules.xml`), so Pro works offline and at cold start; debug builds also keep `debug_entitlement_mode` here | `PlayEntitlementRepository`, only from an explicit Google Play answer | Same as `facet_settings`; **not** in the backup file, so a restore can never grant Pro |
 | `DataStore<Preferences>` | `facet_automation` (`datastore/facet_automation.preferences_pb`) | Facet-automation bookkeeping: the baseline facet, the ordered active rule ids, the suppressed rule ids (§5.7) | `AutomationStateRepository` (via `ActivateFacetByIdUseCase`) | Same as `facet_settings`; **not** in the backup file |
+| `DataStore<Preferences>` | `facet_daily_wallpaper` (`datastore/facet_daily_wallpaper.preferences_pb`) | The daily wallpaper's settings and progress: on/off, source, Wi-Fi only, Home or Home and lock, the day's check and attempts, the prepared and current photo, the recorded wallpaper ids, the last 30 photos set (§5.8) | `DailyWallpaperRepository` (through `DailyWallpaperCoordinator` and the daily wallpaper use cases) | Same as `facet_settings`; **not** in the backup file |
+| Cache file | `cacheDir/daily_photos/pending.jpg` | The one daily photo prepared and waiting for screen-off, already cut to the screen's shape | `DailyWallpaperRepository` | Until it is set; the system may clear it, which only means it is prepared again |
 | System `AppWidgetService` | Android framework, keyed by `HUB_APP_WIDGET_HOST_ID = 1024` | Which `appWidgetId`s are bound to which providers for this host | `LauncherAppWidgetHost` via `AppWidgetRepository` (allocate/bind/delete) | App data clear **does not** clear it → orphan detection in `ObserveHubStateUseCase` |
 | Backup file | User-picked SAF `Uri` (`CreateDocument`/`OpenDocument`), JSON via `kotlinx-serialization` | `BackupBundle` v6: settings + facets + placements + folders + widget placements (raw rows, unhydrated) | `BackupRepository` (`ExportBackupUseCase` / `ImportBackupUseCase`) | Whatever the user does with the file — Facet keeps no copy |
 | In-memory only | `NotificationBadgeRepository.badgeCounts` (`MutableStateFlow`) | Per-package non-silent notification counts | `FacetNotificationListenerService` | Process lifetime only |
@@ -815,6 +817,28 @@ Written by `ActivateFacetByIdUseCase` on every manual switch (`AutomationState.a
 by the automation evaluator once it is wired in (see `IMPLEMENTATION_PLAN.md`, "Facet automation rules").
 Stale ids are tolerated: the evaluator drops rule ids that no longer exist and falls back when the
 baseline facet was deleted.
+
+### 5.8 `facet_daily_wallpaper` (`DailyWallpaperRepository`)
+
+A separate DataStore file under the `@DailyWallpaperDataStore` qualifier, out of `LauncherSettings` and `BackupBundle` (settings and
+progress are this device's, and the recorded wallpaper ids mean nothing elsewhere). Read through `state: Flow<DailyWallpaperState>`;
+written only through `update { }`, an atomic read-modify-write. See [21](21-flow-wallpaper-glass.md), *Daily wallpaper*.
+
+| Key | Type | `DailyWallpaperState` field | Meaning |
+|---|---|---|---|
+| `enabled` | Boolean | `enabled` | The daily change is on |
+| `source` | String (`DailyPhotoSource`) | `source` | Bing or Spotlight |
+| `wifi_only` | Boolean (default true) | `wifiOnly` | Download only on an unmetered network |
+| `include_lock` | Boolean | `includeLock` | Set the lock screen too |
+| `paused` | Boolean | `paused` | The wallpaper was changed outside Facet |
+| `checked_day` | String (`yyyy-MM-dd`) | `checkedDay` | The day a run finished its work; no run starts again that day |
+| `attempts_day`, `attempts` | String, Int | `attemptsDay`, `attempts` | Network attempts made that day (at most 3) |
+| `pending` | String (address, title, credit) | `pending` | The prepared photo waiting for screen-off |
+| `applying` | Boolean | `applying` | Set while a change is being made, so an interrupted one is finished rather than taken for the user's |
+| `current`, `current_set_at` | String, Long | `current`, `currentSetAtMillis` | The photo last set, and when |
+| `system_id`, `lock_id` | Int | `systemId`, `lockId` | The wallpaper ids right after the last change; a different id later means it was changed elsewhere |
+| `history` | String (newline-separated, 30 at most) | `history` | Photos set or skipped recently, so Spotlight doesn't repeat one |
+| `problem` | String (`DailyWallpaperProblem`) | `problem` | Why the last run didn't change the wallpaper |
 
 ## 6. Backup file format (`BackupBundle`, `data/model/BackupBundle.kt`)
 

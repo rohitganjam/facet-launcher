@@ -5,9 +5,15 @@ import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.facetlauncher.app.data.dailyphotos.DailyPhotoFeed
+import com.facetlauncher.app.data.DeviceConditionsRepository
+import com.facetlauncher.app.data.EntitlementRepository
 import com.facetlauncher.app.data.dailyphotos.DailyPhotoRepository
+import com.facetlauncher.app.data.dailyphotos.DailyWallpaperRepository
 import com.facetlauncher.app.data.model.DailyPhoto
 import com.facetlauncher.app.data.model.DailyPhotoSource
+import com.facetlauncher.app.domain.DailyWallpaperCoordinator
+import java.time.Clock
+import java.time.LocalDate
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.collections.immutable.ImmutableList
@@ -16,7 +22,10 @@ import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -40,15 +49,58 @@ data class DailyPhotosUiState(
     val picked: PickedDailyPhoto? = null,
 )
 
-/** The daily photos screen: a week of photos from one source at a time, and downloading the one the user picks. */
+/** The sheet that turns the daily wallpaper on: its two choices, and whether the phone is on mobile data with Wi-Fi only on. */
+@Immutable
+data class DailyWallpaperSheet(val source: DailyPhotoSource, val includeLock: Boolean, val onMobileData: Boolean)
+
+/**
+ * The daily wallpaper settings above the grid. [currentImageUrl] is the photo it last set, marked in the grid. It is a Pro feature: without
+ * Pro it shows as off, and [openPro] asks the screen to open Facet Pro once.
+ */
+@Immutable
+data class DailyWallpaperUiState(
+    val enabled: Boolean = false,
+    val source: DailyPhotoSource = DailyPhotoSource.BING,
+    val wifiOnly: Boolean = true,
+    val includeLock: Boolean = false,
+    val status: DailyWallpaperStatus = DailyWallpaperStatus.Off,
+    val currentImageUrl: String? = null,
+    val sheet: DailyWallpaperSheet? = null,
+    val isPro: Boolean = true,
+    val openPro: Boolean = false,
+)
+
+/** The daily photos screen: a week of photos from one source at a time, downloading the one the user picks, and the daily wallpaper settings. */
 @HiltViewModel
 class DailyPhotosViewModel @Inject constructor(
     private val repository: DailyPhotoRepository,
+    dailyWallpaperRepository: DailyWallpaperRepository,
+    private val dailyWallpaperCoordinator: DailyWallpaperCoordinator,
+    private val deviceConditions: DeviceConditionsRepository,
+    private val clock: Clock,
+    private val entitlementRepository: EntitlementRepository,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(DailyPhotosUiState())
     val uiState: StateFlow<DailyPhotosUiState> = _uiState.asStateFlow()
     private var loadJob: Job? = null
+    private val sheet = MutableStateFlow<DailyWallpaperSheet?>(null)
+    private val openPro = MutableStateFlow(false)
+
+    val dailyWallpaper: StateFlow<DailyWallpaperUiState> = combine(dailyWallpaperRepository.state, sheet, entitlementRepository.isPro, openPro) { state, sheet, isPro, openPro ->
+        val on = state.enabled && isPro
+        DailyWallpaperUiState(
+            enabled = on,
+            source = state.source,
+            wifiOnly = state.wifiOnly,
+            includeLock = state.includeLock,
+            status = if (isPro) dailyWallpaperStatus(state, LocalDate.now(clock), clock.zone) else DailyWallpaperStatus.Off,
+            currentImageUrl = state.current?.imageUrl?.takeIf { on },
+            sheet = sheet,
+            isPro = isPro,
+            openPro = openPro,
+        )
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), DailyWallpaperUiState())
 
     init {
         load(DailyPhotoSource.BING)
@@ -91,6 +143,54 @@ class DailyPhotosViewModel @Inject constructor(
     /** The picked photo has been handed on. */
     fun consumePicked() = _uiState.update { it.copy(picked = null) }
 
+    /** The daily wallpaper switch: on opens the sheet (preset to the tab on screen), or Facet Pro without Pro; off turns it off straight away. */
+    fun onDailyWallpaperSwitch(on: Boolean) {
+        if (on && !entitlementRepository.isPro.value) {
+            openPro.value = true
+            return
+        }
+        if (!on) {
+            sheet.value = null
+            dailyWallpaperCoordinator.turnOff()
+            return
+        }
+        val network = deviceConditions.network()
+        val onMobileData = dailyWallpaper.value.wifiOnly && network.connected && !network.unmetered
+        sheet.value = DailyWallpaperSheet(source = _uiState.value.source, includeLock = dailyWallpaper.value.includeLock, onMobileData = onMobileData)
+    }
+
+    fun onSheetSource(source: DailyPhotoSource) = sheet.update { it?.copy(source = source) }
+
+    fun onSheetIncludeLock(includeLock: Boolean) = sheet.update { it?.copy(includeLock = includeLock) }
+
+    /** Facet Pro has been opened. */
+    fun consumeOpenPro() {
+        openPro.value = false
+    }
+
+    fun dismissSheet() {
+        sheet.value = null
+    }
+
+    /** "Turn on" on the sheet; [useMobileData] downloads today's photo now although the phone is on mobile data. */
+    fun confirmTurnOn(useMobileData: Boolean) {
+        val choice = sheet.value ?: return
+        sheet.value = null
+        dailyWallpaperCoordinator.turnOn(choice.source, choice.includeLock, useMobileData)
+    }
+
+    fun setDailySource(source: DailyPhotoSource) = dailyWallpaperCoordinator.setSource(source)
+
+    fun setDailyIncludeLock(includeLock: Boolean) = dailyWallpaperCoordinator.setIncludeLock(includeLock)
+
+    fun setDailyWifiOnly(wifiOnly: Boolean) = dailyWallpaperCoordinator.setWifiOnly(wifiOnly)
+
+    fun resumeDailyWallpaper() = dailyWallpaperCoordinator.resume()
+
     /** The preview of [photo] from the source on screen. */
     suspend fun thumbnail(photo: DailyPhoto): Bitmap? = repository.thumbnail(_uiState.value.source, photo)
+
+    private companion object {
+        const val STOP_TIMEOUT_MS = 5_000L
+    }
 }

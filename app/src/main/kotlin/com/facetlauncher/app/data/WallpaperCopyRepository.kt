@@ -4,10 +4,13 @@ import android.app.WallpaperManager
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.BitmapRegionDecoder
+import android.graphics.Rect
 import android.graphics.ImageDecoder
 import android.net.Uri
 import android.view.WindowManager
 import com.facetlauncher.app.data.di.IoDispatcher
+import com.facetlauncher.app.data.model.ImageRegion
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.File
 import java.nio.ByteBuffer
@@ -85,6 +88,33 @@ open class WallpaperCopyRepository @Inject constructor(
 
     /** The id of the system wallpaper now; it changes whenever anyone sets a new one, so it tells a stale copy. */
     open fun currentSystemWallpaperId(): Int = runCatching { wallpaperManager.getWallpaperId(WallpaperManager.FLAG_SYSTEM) }.getOrDefault(NO_WALLPAPER_ID)
+
+    /** The lock screen wallpaper's id, or [NO_WALLPAPER_ID] when the lock screen shows the Home wallpaper. */
+    open fun currentLockWallpaperId(): Int = runCatching { wallpaperManager.getWallpaperId(WallpaperManager.FLAG_LOCK) }.getOrDefault(NO_WALLPAPER_ID)
+
+    /** The width and height of the encoded image in [bytes], read from its header; `null` when it is not an image. */
+    open suspend fun imageSize(bytes: ByteArray): Pair<Int, Int>? = withContext(ioDispatcher) {
+        val options = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        BitmapFactory.decodeByteArray(bytes, 0, bytes.size, options)
+        (options.outWidth to options.outHeight).takeIf { it.first > 0 && it.second > 0 }
+    }
+
+    /** Only [region] of the image in [bytes], at 1/[sampleSize] of its size, so a large photo is never decoded whole; `null` when it cannot be read. */
+    open suspend fun decodeRegion(bytes: ByteArray, region: ImageRegion, sampleSize: Int): Bitmap? = withContext(ioDispatcher) {
+        runCatching {
+            @Suppress("DEPRECATION") // The non-deprecated overload needs API 31; minSdk is 30.
+            val decoder = BitmapRegionDecoder.newInstance(bytes, 0, bytes.size, false) ?: return@runCatching null
+            try {
+                val options = BitmapFactory.Options().apply {
+                    inSampleSize = sampleSize
+                    inPreferredConfig = Bitmap.Config.ARGB_8888
+                }
+                decoder.decodeRegion(Rect(region.left, region.top, region.right, region.bottom), options)
+            } finally {
+                decoder.recycle()
+            }
+        }.getOrNull()
+    }
 
     /**
      * Sets [bitmap] as the system wallpaper, for the lock screen too when [includeLock], and returns the id it now has

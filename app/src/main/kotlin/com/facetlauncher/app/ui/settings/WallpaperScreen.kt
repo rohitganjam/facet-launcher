@@ -65,6 +65,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.facetlauncher.app.R
+import com.facetlauncher.app.data.model.ProReason
 import com.facetlauncher.app.ui.components.BlockingProgressOverlay
 import com.facetlauncher.app.ui.components.CardDivider
 import com.facetlauncher.app.ui.components.PillTabPair
@@ -93,6 +94,7 @@ fun WallpaperScreen(
     onOpenCapture: () -> Unit,
     pickScreenshotRequested: Boolean,
     onPickScreenshotConsume: () -> Unit,
+    onOpenFacetPro: (ProReason) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: WallpaperViewModel = hiltViewModel(),
 ) {
@@ -124,6 +126,7 @@ fun WallpaperScreen(
                 viewModel.onPickStarted(copyOnly = false)
                 picker.launch("image/*")
             },
+            onOpenFacetPro = onOpenFacetPro,
             modifier = modifier,
         )
         return
@@ -172,7 +175,7 @@ internal fun WallpaperContent(
     val photo = uiState.picked
     Box(modifier = modifier.fillMaxSize()) {
         if (photo != null) {
-            WallpaperFitStep(photo, uiState.isWorking, uiState.failed, uiState.copyOnly, uiState.credit, onCancelFit, onConfirmFit, Modifier)
+            WallpaperFitStep(photo, uiState.isWorking, uiState.failed, uiState.copyOnly, uiState.credit, onCancelFit, onConfirmFit, Modifier, uiState.turnsOffDailyWallpaper)
         } else {
         StickyHeaderLayout(
             header = { AppearanceSettingsHeader(title = stringResource(R.string.wallpaper_title), onBack = onBack) },
@@ -348,6 +351,7 @@ internal fun WallpaperFitStep(
     onCancel: () -> Unit,
     onConfirm: (RectF, Boolean) -> Unit,
     modifier: Modifier = Modifier,
+    turnsOffDailyWallpaper: Boolean = false,
 ) {
     BackHandler(onBack = onCancel)
     val window = LocalWindowInfo.current.containerSize
@@ -389,6 +393,9 @@ internal fun WallpaperFitStep(
                 startTag = "wallpaper_fit_home",
                 endTag = "wallpaper_fit_home_lock",
             )
+        }
+        if (turnsOffDailyWallpaper) {
+            Text(text = stringResource(R.string.daily_wallpaper_turns_off), style = MaterialTheme.typography.bodyMedium, color = Muted, modifier = Modifier.testTag("wallpaper_fit_turns_off_daily"))
         }
         if (failed) {
             Text(text = stringResource(R.string.wallpaper_failed), style = MaterialTheme.typography.bodyMedium, color = ErrorColor, modifier = Modifier.testTag("wallpaper_failed"))

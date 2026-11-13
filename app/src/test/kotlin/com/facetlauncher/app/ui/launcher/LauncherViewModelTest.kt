@@ -9,6 +9,7 @@ import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.domain.ActivateFacetByIdUseCase
 import com.facetlauncher.app.domain.RunFacetAutomationUseCase
 import com.facetlauncher.app.domain.CleanUpUninstalledAppsUseCase
+import com.facetlauncher.app.domain.DailyWallpaperCoordinator
 import com.facetlauncher.app.domain.EnsureActiveFacetUseCase
 import com.facetlauncher.app.domain.GetInstalledAppsUseCase
 import com.facetlauncher.app.domain.RepairOrphanedProfileRowsUseCase
@@ -83,6 +84,7 @@ class LauncherViewModelTest {
             settingsRepository,
             facetRepository(),
             fakeWorkProfileRepository(),
+            mock(DailyWallpaperCoordinator::class.java),
         )
 
         // Then immediately after construction it's still loading (the fetch coroutine hasn't run yet)
@@ -121,6 +123,7 @@ class LauncherViewModelTest {
             settingsRepository,
             facetRepository(),
             fakeWorkProfileRepository(),
+            mock(DailyWallpaperCoordinator::class.java),
         )
 
         // Then it's still loading well before the timeout
@@ -157,6 +160,7 @@ class LauncherViewModelTest {
             settingsRepository,
             facetRepository(),
             fakeWorkProfileRepository(),
+            mock(DailyWallpaperCoordinator::class.java),
         )
 
         // Then before settings answer it is unknown, not false
@@ -194,6 +198,7 @@ class LauncherViewModelTest {
             settingsRepository,
             facetRepository(),
             fakeWorkProfileRepository(),
+            mock(DailyWallpaperCoordinator::class.java),
         )
         testDispatcher.scheduler.advanceUntilIdle()
 
@@ -232,6 +237,7 @@ class LauncherViewModelTest {
             settingsRepository,
             facetRepository(),
             fakeWorkProfileRepository(listOf(workProfile)),
+            mock(DailyWallpaperCoordinator::class.java),
         )
         testDispatcher.scheduler.advanceUntilIdle()
 
@@ -264,6 +270,7 @@ class LauncherViewModelTest {
             settingsRepository,
             facetRepository(),
             fakeWorkProfileRepository(),
+            mock(DailyWallpaperCoordinator::class.java),
         )
         testDispatcher.scheduler.advanceUntilIdle()
 
@@ -296,6 +303,7 @@ class LauncherViewModelTest {
             settingsRepository,
             facetRepository(),
             fakeWorkProfileRepository(),
+            mock(DailyWallpaperCoordinator::class.java),
         )
         testDispatcher.scheduler.advanceUntilIdle()
 
@@ -326,6 +334,7 @@ class LauncherViewModelTest {
             settingsRepository,
             facetRepository(),
             fakeWorkProfileRepository(),
+            mock(DailyWallpaperCoordinator::class.java),
         )
 
         // When a valid facet deep link arrives
@@ -359,6 +368,7 @@ class LauncherViewModelTest {
             settingsRepository,
             facetRepository(),
             fakeWorkProfileRepository(),
+            mock(DailyWallpaperCoordinator::class.java),
         )
 
         // When an unrelated uri (e.g. Intent.ACTION_MAIN with no data) arrives
@@ -386,6 +396,7 @@ class LauncherViewModelTest {
             settingsRepository,
             facetRepository(listOf(com.facetlauncher.app.data.model.Facet(id = 7, name = "Car", position = 0, allowLandscape = false), com.facetlauncher.app.data.model.Facet(id = 8, name = "Home", position = 1))),
             fakeWorkProfileRepository(),
+            mock(DailyWallpaperCoordinator::class.java),
         )
         testDispatcher.scheduler.advanceUntilIdle()
 
@@ -409,6 +420,7 @@ class LauncherViewModelTest {
             settingsRepository,
             facetRepository(),
             fakeWorkProfileRepository(),
+            mock(DailyWallpaperCoordinator::class.java),
         )
         testDispatcher.scheduler.advanceUntilIdle()
 

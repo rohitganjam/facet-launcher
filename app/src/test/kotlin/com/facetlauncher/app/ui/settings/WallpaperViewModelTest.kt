@@ -11,7 +11,10 @@ import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.WallpaperCopyRepository
 import com.facetlauncher.app.data.WallpaperRepository
 import com.facetlauncher.app.data.model.HomeWallpaper
+import com.facetlauncher.app.domain.FakeDailyWallpaperRepository
+import com.facetlauncher.app.domain.NoteManualWallpaperUseCase
 import com.facetlauncher.app.domain.RemoveWallpaperCopyUseCase
+import com.facetlauncher.app.domain.dailyTestClock
 import com.facetlauncher.app.domain.SetWallpaperFromPhotoUseCase
 import com.facetlauncher.app.domain.UseScreenshotAsWallpaperCopyUseCase
 import kotlinx.coroutines.Dispatchers
@@ -78,11 +81,17 @@ class WallpaperViewModelTest {
         return SettingsRepository(dataStore)
     }
 
+    private var dailyRepository: FakeDailyWallpaperRepository? = null
+
     private fun viewModel(copies: FakeCopies, settings: SettingsRepository): WallpaperViewModel {
         val wallpaper = object : WallpaperRepository(mock(WallpaperManager::class.java)) {
             override suspend fun currentHomeWallpaper(): HomeWallpaper = HomeWallpaper.Tones(listOf(1, 2))
         }
-        return WallpaperViewModel(copies, wallpaper, settings, SetWallpaperFromPhotoUseCase(copies, settings, dispatcher), RemoveWallpaperCopyUseCase(copies, settings), UseScreenshotAsWallpaperCopyUseCase(copies, settings, dispatcher))
+        val daily = dailyRepository ?: FakeDailyWallpaperRepository(tempFolder.newFolder()).also { dailyRepository = it }
+        return WallpaperViewModel(
+            copies, wallpaper, settings, SetWallpaperFromPhotoUseCase(copies, settings, dispatcher), RemoveWallpaperCopyUseCase(copies, settings),
+            UseScreenshotAsWallpaperCopyUseCase(copies, settings, dispatcher), daily, NoteManualWallpaperUseCase(daily, copies, dailyTestClock),
+        )
     }
 
     /** Subscribes straight away, so the state flow is live (it only runs while collected). */
@@ -321,5 +330,41 @@ class WallpaperViewModelTest {
         // Then the credit is gone with the framing
         val done = viewModel.uiState.first { it.picked == null && !it.isWorking && it.copy != null }
         assertNull(done.credit)
+    }
+
+    @Test
+    fun `framing your own image with the daily wallpaper on warns that it turns it off`() = runTest {
+        // Given the daily wallpaper on
+        val copies = FakeCopies()
+        val viewModel = viewModel(copies, settings())
+        viewModel.observe(this)
+        dailyRepository!!.update { it.copy(enabled = true) }
+
+        // When an image of the user's own is picked
+        viewModel.onPicked(android.net.Uri.parse("content://photo/1"))
+
+        // Then the fit step says so, and setting it turns the daily change off
+        assertTrue(viewModel.uiState.first { it.picked != null }.turnsOffDailyWallpaper)
+        viewModel.confirmFit(android.graphics.RectF(0f, 0f, 100f, 100f), includeLock = false)
+        assertFalse(dailyRepository!!.state.first { !it.enabled }.enabled)
+    }
+
+    @Test
+    fun `framing a daily photo keeps the daily wallpaper on`() = runTest {
+        // Given the daily wallpaper on
+        val copies = FakeCopies()
+        val viewModel = viewModel(copies, settings())
+        viewModel.observe(this)
+        dailyRepository!!.update { it.copy(enabled = true) }
+
+        // When a daily photo is picked and set
+        viewModel.onPickedBitmap(Bitmap.createBitmap(200, 100, Bitmap.Config.ARGB_8888), "© someone")
+        assertFalse(viewModel.uiState.first { it.picked != null }.turnsOffDailyWallpaper)
+        viewModel.confirmFit(android.graphics.RectF(0f, 0f, 100f, 100f), includeLock = false)
+        viewModel.uiState.first { it.picked == null && !it.isWorking }
+
+        // Then it stays on, with today counted as done
+        val daily = dailyRepository!!.state.first { it.checkedDay != null }
+        assertTrue(daily.enabled)
     }
 }
