@@ -52,6 +52,7 @@ import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -387,6 +388,8 @@ fun HomeDrawerRoute(
             isPro = homeUiState.isPro,
         ),
     )
+    // Read by the swipe detector when a touch comes down, so it must not restart that detector.
+    val clockWidgetIsNative by rememberUpdatedState(styledHomeScreenState.widget?.nativeType != null)
     val homeScreenState = styledHomeScreenState.copy(nativeWidgets = styledHomeScreenState.nativeWidgets.copy(access = widgetAccess.access, overrides = widgetAccess.overrides))
     val openWeatherSheet: (NativeWidgetRef?) -> Unit = { ref ->
         overlays.weatherSheetRef = ref
@@ -478,17 +481,13 @@ fun HomeDrawerRoute(
                         }
                         if (homeMenuMode != HomeMenuMode.NONE) return@pointerInput
 
+                        val claimAt = { position: Offset ->
+                            homeTouchClaim(position, clockWidgetBoundsInHomeRoot, clockWidgetIsNative, appListBoundsInHomeRoot, clockPaneBoundsInHomeRoot)
+                        }
                         detectHomeSwipeGestures(
                             isBlocked = { homeSwipeGate?.isBlocked == true },
-                            shouldClaim = { position ->
-                                clockWidgetBoundsInHomeRoot?.contains(position) != true &&
-                                    appListBoundsInHomeRoot?.contains(position) != true &&
-                                    clockPaneBoundsInHomeRoot?.contains(position) != true
-                            },
-                            // App list and landscape clock pane: vertical drags belong to their own scroll, horizontal ones to Hub/carousel.
-                            claimHorizontalOnly = { position ->
-                                appListBoundsInHomeRoot?.contains(position) == true || clockPaneBoundsInHomeRoot?.contains(position) == true
-                            },
+                            shouldClaim = { claimAt(it) == HomeTouchClaim.ALL },
+                            claimHorizontalOnly = { claimAt(it) == HomeTouchClaim.HORIZONTAL_ONLY },
                             onDragStart = swipe::onPointerDragStart,
                             onDragEnd = swipe::onPointerDragEnd,
                             onDragCancel = swipe::cancel,

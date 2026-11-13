@@ -8,6 +8,7 @@ import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.PointerInputChange
 import androidx.compose.ui.input.pointer.PointerInputScope
@@ -107,6 +108,24 @@ internal fun swipeSettleTarget(dragStartProgress: Float, currentProgress: Float,
         traveled <= -COMMIT_TRAVEL_FRACTION -> 0f
         dragStartProgress > 0.5f -> 1f
         else -> 0f
+    }
+}
+
+/** How much of a touch Home's swipe detector takes, by where it came down. */
+internal enum class HomeTouchClaim { ALL, HORIZONTAL_ONLY, NONE }
+
+/**
+ * The app list, the landscape clock pane and a Facet widget page (the Agenda's list) scroll vertically themselves, so Home
+ * takes only horizontal drags there, which still turn the clock stack. A hosted widget is left alone: `ClockWidgetTouchGate`
+ * hands its unclaimed drags over itself.
+ */
+internal fun homeTouchClaim(position: Offset, clockWidget: Rect?, clockWidgetIsNative: Boolean, appList: Rect?, clockPane: Rect?): HomeTouchClaim {
+    val inWidget = clockWidget?.contains(position) == true
+    return when {
+        appList?.contains(position) == true || clockPane?.contains(position) == true -> HomeTouchClaim.HORIZONTAL_ONLY
+        inWidget && clockWidgetIsNative -> HomeTouchClaim.HORIZONTAL_ONLY
+        inWidget -> HomeTouchClaim.NONE
+        else -> HomeTouchClaim.ALL
     }
 }
 
