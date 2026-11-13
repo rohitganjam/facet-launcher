@@ -14,6 +14,7 @@ import javax.inject.Singleton
 private val Context.settingsDataStore: DataStore<Preferences> by preferencesDataStore(name = "facet_settings")
 private val Context.automationDataStore: DataStore<Preferences> by preferencesDataStore(name = "facet_automation")
 private val Context.entitlementDataStore: DataStore<Preferences> by preferencesDataStore(name = "facet_entitlement")
+private val Context.dailyWallpaperDataStore: DataStore<Preferences> by preferencesDataStore(name = "facet_daily_wallpaper")
 
 @Module
 @InstallIn(SingletonComponent::class)
@@ -35,4 +36,10 @@ object DataStoreModule {
     @EntitlementDataStore
     fun provideEntitlementDataStore(@ApplicationContext context: Context): DataStore<Preferences> =
         context.entitlementDataStore
+
+    @Provides
+    @Singleton
+    @DailyWallpaperDataStore
+    fun provideDailyWallpaperDataStore(@ApplicationContext context: Context): DataStore<Preferences> =
+        context.dailyWallpaperDataStore
 }

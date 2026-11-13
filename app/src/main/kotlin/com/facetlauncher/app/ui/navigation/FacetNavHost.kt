@@ -260,6 +260,7 @@ fun FacetNavHost(
                     onOpenCapture = { navController.navigate(FacetDestinations.WALLPAPER_CAPTURE) },
                     pickScreenshotRequested = pickScreenshot,
                     onPickScreenshotConsume = { entry.savedStateHandle[PICK_SCREENSHOT_KEY] = false },
+                    onOpenFacetPro = { reason -> navController.navigate(FacetDestinations.facetPro(reason)) },
                 )
             }
             // Not a settings screen: no background of its own, so the window's wallpaper shows through.

@@ -60,9 +60,12 @@ open class DailyPhotoRepository @Inject constructor(
         }
     }
 
+    /** The original of [photo] as downloaded, not decoded; `null` when it cannot be downloaded. */
+    open suspend fun originalBytes(photo: DailyPhoto): ByteArray? = api.download(photo.imageUrl, MAX_ORIGINAL_BYTES)
+
     /** The original of [photo], upright and shrunk to [maxSide] on its long side; `null` when it cannot be downloaded or read. */
     open suspend fun original(photo: DailyPhoto, maxSide: Int): Bitmap? {
-        val bytes = api.download(photo.imageUrl, MAX_ORIGINAL_BYTES) ?: return null
+        val bytes = originalBytes(photo) ?: return null
         return wallpaperCopyRepository.decodeBytes(bytes, maxSide)
     }
 

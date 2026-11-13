@@ -28,6 +28,8 @@ fun SettingsToggleRow(
     subtitle: String? = null,
     /** `false` dims the row and ignores the switch, for a row whose value cannot be edited here. */
     enabled: Boolean = true,
+    /** Shown after the title, such as a [ProPill]. */
+    titleBadge: (@Composable () -> Unit)? = null,
 ) {
     Row(
         modifier = modifier.fillMaxWidth().padding(vertical = 13.dp).alpha(if (enabled) 1f else DISABLED_ALPHA),
@@ -37,7 +39,14 @@ fun SettingsToggleRow(
         // Constrains the label/subtitle to the space left of the Switch so a long subtitle wraps
         // onto a second line instead of pushing the Switch out past the card's own edge.
         Column(modifier = Modifier.weight(1f)) {
-            Text(text = title, style = MaterialTheme.typography.bodyLarge, color = Ink)
+            if (titleBadge == null) {
+                Text(text = title, style = MaterialTheme.typography.bodyLarge, color = Ink)
+            } else {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Text(text = title, style = MaterialTheme.typography.bodyLarge, color = Ink, modifier = Modifier.weight(1f, fill = false))
+                    titleBadge()
+                }
+            }
             if (subtitle != null) {
                 Text(text = subtitle, style = MaterialTheme.typography.bodyMedium, color = Muted)
             }
