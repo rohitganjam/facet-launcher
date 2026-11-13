@@ -51,6 +51,8 @@ import com.facetlauncher.app.ui.home.AppRow
 import com.facetlauncher.app.ui.home.DockIcon
 import com.facetlauncher.app.ui.home.FolderRow
 import com.facetlauncher.app.ui.home.FolderTileGlyph
+import com.facetlauncher.app.ui.home.GlassRowGap
+import com.facetlauncher.app.ui.home.glassColumnGap
 import com.facetlauncher.app.ui.home.HomeItemActions
 import com.facetlauncher.app.ui.home.HomeItemStyle
 import com.facetlauncher.app.ui.home.stableKey
@@ -189,7 +191,7 @@ private fun HomeSurfacePreviewTwoColumns(
     glass: GlassStyle,
 ) {
     val (leftPosition, rightPosition) = columnAlignment.toColumnPositions()
-    Row(modifier = Modifier.fillMaxWidth()) {
+    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(glassColumnGap(glass))) {
         listOf(
             items.filterIndexed { index, _ -> index % 2 == 0 } to leftPosition,
             items.filterIndexed { index, _ -> index % 2 == 1 } to rightPosition,
@@ -235,7 +237,7 @@ private fun previewItemStyle(
 
 @Composable
 private fun glassRowModifier(glass: GlassStyle): Modifier =
-    if (glass != GlassStyle.OFF) Modifier.padding(vertical = 2.dp).glassBackground(glass) else Modifier
+    if (glass != GlassStyle.OFF) Modifier.padding(vertical = GlassRowGap / 2).glassBackground(glass) else Modifier
 
 /** [HomeSurfacePreview]'s single/two-column row dispatch — identical [AppRow]/[FolderRow] call either layout needs, just with a different [position] and item subset. */
 @Composable
