@@ -6,6 +6,7 @@ import android.graphics.Bitmap
 import android.graphics.Color
 import android.graphics.drawable.BitmapDrawable
 import com.facetlauncher.app.data.model.HomeWallpaper
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -163,5 +164,25 @@ class WallpaperRepositoryTest {
 
         // Then the stale copy is not used
         assertEquals(HomeWallpaper.Unavailable, result)
+    }
+
+    @Test
+    fun `a newly stored wallpaper copy is emitted again`() = runTest {
+        // Given Facet's stored copy, which a new wallpaper replaces
+        val first = Bitmap.createBitmap(10, 20, Bitmap.Config.ARGB_8888)
+        val second = Bitmap.createBitmap(10, 20, Bitmap.Config.ARGB_8888)
+        val stored = kotlinx.coroutines.flow.MutableStateFlow<Bitmap?>(first)
+        val copies = object : WallpaperCopyRepository(org.robolectric.RuntimeEnvironment.getApplication(), wallpaperManager) {
+            override val copy = stored
+        }
+        val following = WallpaperRepository(wallpaperManager, kotlinx.coroutines.Dispatchers.Unconfined, copies)
+        val seen = mutableListOf<HomeWallpaper>()
+        backgroundScope.launch(kotlinx.coroutines.test.UnconfinedTestDispatcher(testScheduler)) { following.homeWallpaper.collect { seen += it } }
+
+        // When a new wallpaper is set and its copy stored
+        stored.value = second
+
+        // Then the stream showed the old wallpaper, then the new one
+        assertEquals(listOf<HomeWallpaper>(HomeWallpaper.Image(first), HomeWallpaper.Image(second)), seen)
     }
 }

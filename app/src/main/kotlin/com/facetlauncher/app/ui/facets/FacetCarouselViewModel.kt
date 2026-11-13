@@ -34,7 +34,7 @@ import com.facetlauncher.app.domain.ResolvedFacetStyle
 import com.facetlauncher.app.domain.resolveFacetStyle
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
-import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -47,7 +47,7 @@ data class FacetCarouselUiState(
     val previewsByFacetId: Map<Long, FacetPreviewData> = emptyMap(),
     val globalSettings: LauncherSettings = LauncherSettings(),
     // The live system wallpaper, rendered behind each preview card (Home's own window-level
-    // wallpaper compositing can't reach a card). Loaded once when the carousel opens.
+    // wallpaper compositing can't reach a card). Follows wallpaper changes while the carousel stays alive.
     val homeWallpaper: HomeWallpaper = HomeWallpaper.Unavailable,
     /** False for a free user: facets past the third are disabled and the add page opens the upgrade sheet. */
     val isPro: Boolean = true,
@@ -77,7 +77,8 @@ class FacetCarouselViewModel @Inject constructor(
     entitlementRepository: EntitlementRepository,
 ) : ViewModel() {
 
-    private val homeWallpaper = MutableStateFlow<HomeWallpaper>(HomeWallpaper.Unavailable)
+    // Follows the wallpaper: this view model outlives a wallpaper change made while Home is open.
+    private val homeWallpaper = wallpaperRepository.homeWallpaper.onStart { emit(HomeWallpaper.Unavailable) }
 
     val uiState: StateFlow<FacetCarouselUiState> = combine(
         facetRepository.observeFacets(),
@@ -95,10 +96,6 @@ class FacetCarouselViewModel @Inject constructor(
             isPro = isPro,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), FacetCarouselUiState())
-
-    init {
-        viewModelScope.launch { homeWallpaper.value = wallpaperRepository.currentHomeWallpaper() }
-    }
 
     /** Applies the given facet as active — the carousel's browse position never persists on its own. */
     fun selectFacet(facetId: Long) {

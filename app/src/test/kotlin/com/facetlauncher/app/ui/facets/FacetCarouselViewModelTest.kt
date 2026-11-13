@@ -20,6 +20,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -57,7 +58,7 @@ class FacetCarouselViewModelTest {
             `when`(it.settings).thenReturn(MutableStateFlow(LauncherSettings()))
         }
         val wallpaperRepository = mock(WallpaperRepository::class.java).also {
-            `when`(it.currentHomeWallpaper()).thenReturn(HomeWallpaper.Unavailable)
+            `when`(it.homeWallpaper).thenReturn(flowOf(HomeWallpaper.Unavailable))
         }
         val observeFacetPreviews = mock(ObserveFacetPreviewsUseCase::class.java).also {
             `when`(it()).thenReturn(flowOf(emptyMap()))
@@ -85,5 +86,41 @@ class FacetCarouselViewModelTest {
         verify(settingsRepository).setActiveFacetId(second.id)
         assertEquals(second.id, automationState.get().baselineFacetId)
         assertEquals(setOf(10L), automationState.get().suppressedRuleIds)
+    }
+
+    @Test
+    fun `the carousel shows a wallpaper set while it stays alive`() = runTest(dispatcher) {
+        // Given a carousel open over the old wallpaper
+        val facetRepository = mock(FacetRepository::class.java).also {
+            `when`(it.observeFacets()).thenReturn(flowOf(listOf(Facet(id = 1L, name = "Home", position = 0))))
+        }
+        val settingsRepository = mock(SettingsRepository::class.java).also {
+            `when`(it.settings).thenReturn(MutableStateFlow(LauncherSettings()))
+        }
+        val old = HomeWallpaper.Tones(listOf(1, 2))
+        val wallpaper = MutableStateFlow<HomeWallpaper>(old)
+        val wallpaperRepository = mock(WallpaperRepository::class.java).also { `when`(it.homeWallpaper).thenReturn(wallpaper) }
+        val observeFacetPreviews = mock(ObserveFacetPreviewsUseCase::class.java).also { `when`(it()).thenReturn(flowOf(emptyMap())) }
+        val viewModel = FacetCarouselViewModel(
+            facetRepository,
+            settingsRepository,
+            wallpaperRepository,
+            DeleteFacetUseCase(facetRepository, mock(com.facetlauncher.app.data.widget.AppWidgetRepository::class.java)),
+            observeFacetPreviews,
+            mock(ActivateFacetByIdUseCase::class.java),
+            AddFacetUseCase(facetRepository, FakeEntitlementRepository(), mock(ApplyFacetDefaultsUseCase::class.java)),
+            FakeEntitlementRepository(),
+        )
+        backgroundScope.launch { viewModel.uiState.collect { } }
+        dispatcher.scheduler.advanceUntilIdle()
+        assertEquals(old, viewModel.uiState.value.homeWallpaper)
+
+        // When a new wallpaper is set
+        val new = HomeWallpaper.Tones(listOf(3, 4))
+        wallpaper.value = new
+        dispatcher.scheduler.advanceUntilIdle()
+
+        // Then the carousel shows it, without being recreated
+        assertEquals(new, viewModel.uiState.value.homeWallpaper)
     }
 }

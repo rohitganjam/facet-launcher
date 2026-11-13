@@ -25,7 +25,7 @@ flowchart TB
         OFP --> P1["favorites: the facet's own"]
         OFP --> P2["dockApps: the facet's own"]
         OFP --> P3["calendarEvents: the clock's own selection\n(gated by calendar permission)"]
-        WP["WallpaperRepository.currentHomeWallpaper()"] --> CAR
+        WP["WallpaperRepository.homeWallpaper\n(re-read on each new wallpaper)"] --> CAR
     end
     subgraph OWN["Destination screens — each edits the facet's own values (no Inherit/Override switch)"]
         C1["ClockStyleGalleryScreen, ClockAccessoriesScreen\nUpdateClockConfigUseCase(facet, change) — the clock's own settings"]

@@ -52,7 +52,7 @@ system wallpaper shows through as before.
 
 ## Previews
 
-`WallpaperRepository.currentHomeWallpaper()`, the one source of every preview's background (facet carousel cards, the Appearance, dock, list, drawer and notification previews), returns the saved copy first when it still matches the system wallpaper, then falls back to what Android lets it read.
+`WallpaperRepository.currentHomeWallpaper()`, the one source of every preview's background (facet carousel cards, the Appearance, dock, list, drawer and notification previews), returns the saved copy first when it still matches the system wallpaper, then falls back to what Android lets it read. The settings previews read it when they open; the facet carousel, which stays alive behind Home, follows `WallpaperRepository.homeWallpaper`, which reads it again whenever Facet stores a new copy, so a wallpaper set from Daily photos or your own image shows on its cards.
 
 ## Screens that dim the wallpaper
 

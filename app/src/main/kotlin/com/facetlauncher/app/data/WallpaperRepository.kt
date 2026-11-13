@@ -14,7 +14,12 @@ import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 
 /** Largest side of the bitmap handed to the UI — wallpapers are often 2× screen for parallax
@@ -63,6 +68,17 @@ open class WallpaperRepository @Inject constructor(
 
         HomeWallpaper.Unavailable
     }
+
+    /**
+     * [currentHomeWallpaper], read again whenever Facet stores a new wallpaper copy or records a new system wallpaper: what a screen that
+     * stays alive while the wallpaper changes (the facet carousel) follows, instead of reading it once.
+     */
+    open val homeWallpaper: Flow<HomeWallpaper>
+        get() {
+            val copies = wallpaperCopies?.copy ?: flowOf(null)
+            val ids = settingsRepository?.settings?.map { it.wallpaperCopySystemId }?.distinctUntilChanged() ?: flowOf(null)
+            return combine(copies, ids) { _, _ -> }.map { currentHomeWallpaper() }
+        }
 
     /** The saved glass copy, unless the system wallpaper has changed since it was stored. */
     private suspend fun savedCopy(): Bitmap? {
