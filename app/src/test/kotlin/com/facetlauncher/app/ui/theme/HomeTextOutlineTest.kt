@@ -1,6 +1,9 @@
 package com.facetlauncher.app.ui.theme
 
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -39,5 +42,15 @@ class HomeTextOutlineTest {
 
         // Then none is outlined, so no accent ever gets a light edge
         listOf(blue, navy, maroon, purple).forEach { assertFalse(it.toString(), homeTextOutlined(it)) }
+    }
+
+    @Test
+    fun `clock digits get a wider edge than labels`() {
+        // Given label-sized and clock-sized text
+        // Then labels get the hairline and digits the wider edge
+        assertEquals(0.5.dp, homeOutlineWidth(15.sp))
+        assertEquals(0.5.dp, homeOutlineWidth(22.sp))
+        assertEquals(0.75.dp, homeOutlineWidth(24.sp))
+        assertEquals(0.75.dp, homeOutlineWidth(96.sp))
     }
 }

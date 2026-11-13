@@ -32,8 +32,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.TextUnit
+import androidx.compose.ui.unit.takeOrElse
 import com.facetlauncher.app.ui.theme.HomeOutlineColor
-import com.facetlauncher.app.ui.theme.HomeOutlineWidth
+import com.facetlauncher.app.ui.theme.homeOutlineWidth
 import com.facetlauncher.app.ui.theme.homeTextOutlined
 
 /** `true` inside a solid fill on Home (a clock pill or block): content there isn't on the wallpaper, so it gets no shadow or outline. */
@@ -72,7 +73,7 @@ fun HomeText(
     val textColor = color.takeOrElse { shown.color.takeOrElse { LocalContentColor.current } }
     val outlined = shown.shadow != null && shown.drawStyle !is Stroke && homeTextOutlined(textColor)
     var layout by remember { mutableStateOf<TextLayoutResult?>(null) }
-    val outlineWidth = with(LocalDensity.current) { HomeOutlineWidth.toPx() }
+    val outlineWidth = with(LocalDensity.current) { homeOutlineWidth(fontSize.takeOrElse { shown.fontSize }).toPx() }
     val outline = if (!outlined) Modifier else Modifier.drawWithContent {
         drawContent()
         val result = layout ?: return@drawWithContent

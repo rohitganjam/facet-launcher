@@ -20,6 +20,8 @@ import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import com.facetlauncher.app.data.model.WallpaperAccentRole
 import com.facetlauncher.app.ui.components.LocalOnSolidFill
@@ -239,8 +241,17 @@ private val HomeShadowTone = InkLight
 /** The light edge [homeTextOutlined] content gets, so dark text stays readable over a dark patch of wallpaper. */
 val HomeOutlineColor = InkDark.copy(alpha = 0.6f)
 
-/** The width of that edge outside the glyph. */
-val HomeOutlineWidth = 1.dp
+/** The width of that edge outside the glyph for labels, small text and icons: a hairline. */
+val HomeOutlineWidth = 0.5.dp
+
+/** The edge for large text (the clock's digits), a little wider so it stays in proportion to the stroke. */
+val HomeOutlineWidthLarge = 0.75.dp
+
+private const val LARGE_TEXT_MIN_SP = 24f
+
+/** The edge width for text of [fontSize]: [HomeOutlineWidthLarge] from 24sp up, [HomeOutlineWidth] below. */
+fun homeOutlineWidth(fontSize: TextUnit): Dp =
+    if (fontSize.isSp && fontSize.value >= LARGE_TEXT_MIN_SP) HomeOutlineWidthLarge else HomeOutlineWidth
 
 private const val NEUTRAL_MAX_CHROMA = 0.2f
 
