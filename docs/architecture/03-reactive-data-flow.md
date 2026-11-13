@@ -226,6 +226,7 @@ sequenceDiagram
     LVM->>UC: RepairOrphanedProfileRowsUseCase()   (one pass: userId = -1 rows)
     LVM->>UC: SyncFacetShortcutsUseCase()   (collects for process lifetime, publishes dynamic shortcuts, see 14)
     LVM->>UC: RunFacetAutomationUseCase(homePressedEvent)   (collects for process lifetime, see 15)
+    LVM->>UC: DailyWallpaperCoordinator.start()   (screen-off collector in the application scope, see 21)
     Act->>Act: setContent — uiState.isLoading → empty Box
     Repos-->>LVM: first LauncherUiState (apps + theme + onboardingCompleted)
     alt onboarding not completed
@@ -251,6 +252,8 @@ sequenceDiagram
 | Device state | `DeviceStateRepository.deviceState` — `combine` of battery, headphones, Wi-Fi and Bluetooth, shared with `stateIn(WhileSubscribed)`; each source is subscribed only while an enabled rule reads it | `RefreshAutomationStateUseCase` (via `current()`), `RunFacetAutomationUseCase` |
 | Pro entitlement | `EntitlementRepository.isPro` — a `StateFlow<Boolean>` fed by `PlayEntitlementRepository` (the cached value first, then `BillingRepository.queryPro()` at startup and every resume, with a debug-only `EntitlementOverride` applied on top, plus the `BillingRepository.updates` flow for purchases that finish while running). Everything else gets "everyone is Pro" from the base class (tests, previews) | `RunFacetAutomationUseCase` (a pass on change), `ObserveFacetAutomationUseCase`, `RuleEditorViewModel`; `RefreshAutomationStateUseCase` reads `.value` |
 | Wake events | `WakeEventsRepository.observeWakeEvents()` — `callbackFlow` over `ACTION_SCREEN_ON`, `ACTION_USER_PRESENT`, `ACTION_TIME_CHANGED`, `ACTION_TIMEZONE_CHANGED` | `RunFacetAutomationUseCase` (see [15](15-flow-facet-automation.md)) |
+| Screen off | `DeviceConditionsRepository.screenOffEvents()` — `callbackFlow` over `ACTION_SCREEN_OFF` (`RECEIVER_NOT_EXPORTED`), collected in `@ApplicationScope` from `DailyWallpaperCoordinator.start()` | `DailyWallpaperCoordinator` (sets the prepared daily wallpaper, see [21](21-flow-wallpaper-glass.md)) |
+| Daily wallpaper state | `DailyWallpaperRepository.state` — `facet_daily_wallpaper` DataStore | `DailyPhotosViewModel` (the card, status line, check mark), `WallpaperViewModel` (the fit step's note) |
 | Next alarm | `callbackFlow` over `ACTION_NEXT_ALARM_CLOCK_CHANGED` + injected `Clock` | `ObserveClockAccessoriesUseCase` |
 | Calendar icons (icon packs) | `AppRepository.observeDayOfMonth()` — `callbackFlow` over `ACTION_DATE_CHANGED`, `ACTION_TIME_CHANGED`, `ACTION_TIMEZONE_CHANGED`, plus `recheckDate()` (`LauncherActivity.onResume` → `LauncherViewModel.onResumed`, for a midnight passed asleep), read through the injected `Clock` in the current zone; subscribed only while the applied pack dates an installed app (`flatMapLatest` after each scan). A new day redraws just the dated apps' icons from the last scan, no re-list | `installedApps` (`03 §1`) |
 | Widget host | `LauncherAppWidgetHost.providerChanges: SharedFlow<Int>` merged with a `refreshTrigger` in `ObserveHubStateUseCase` | `HubViewModel` |

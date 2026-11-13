@@ -9,7 +9,9 @@ import androidx.lifecycle.viewModelScope
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.WallpaperCopyRepository
 import com.facetlauncher.app.data.WallpaperRepository
+import com.facetlauncher.app.data.dailyphotos.DailyWallpaperRepository
 import com.facetlauncher.app.data.model.HomeWallpaper
+import com.facetlauncher.app.domain.NoteManualWallpaperUseCase
 import com.facetlauncher.app.domain.RemoveWallpaperCopyUseCase
 import com.facetlauncher.app.domain.SetWallpaperFromPhotoUseCase
 import com.facetlauncher.app.domain.UseScreenshotAsWallpaperCopyUseCase
@@ -45,6 +47,8 @@ data class WallpaperUiState(
     val credit: String? = null,
     /** `true` while the photo being framed is a screenshot of the current wallpaper: it is stored as the copy only, not set as the wallpaper. */
     val copyOnly: Boolean = false,
+    /** `true` while framing the user's own image with the daily wallpaper on: setting it turns the daily change off, and the fit step says so. */
+    val turnsOffDailyWallpaper: Boolean = false,
 )
 
 /** The wallpaper screen: the glass copy, the picker and fit step that make one, and removing it. */
@@ -56,6 +60,8 @@ class WallpaperViewModel @Inject constructor(
     private val setWallpaperFromPhoto: SetWallpaperFromPhotoUseCase,
     private val removeWallpaperCopy: RemoveWallpaperCopyUseCase,
     private val useScreenshotAsCopy: UseScreenshotAsWallpaperCopyUseCase,
+    dailyWallpaperRepository: DailyWallpaperRepository,
+    private val noteManualWallpaper: NoteManualWallpaperUseCase,
 ) : ViewModel() {
 
     private data class Local(
@@ -68,13 +74,15 @@ class WallpaperViewModel @Inject constructor(
         val offerCopy: Boolean = false,
         val credit: String? = null,
         val copyOnly: Boolean = false,
+        /** The photo being framed is one of the daily photos, not the user's own image. */
+        val fromDailyPhoto: Boolean = false,
         /** Bumped by [refresh] so the stale check reads the system wallpaper's id again. */
         val checks: Int = 0,
     )
 
     private val local = MutableStateFlow(Local())
 
-    val uiState: StateFlow<WallpaperUiState> = combine(wallpaperCopyRepository.copy, settingsRepository.settings, local) { copy, settings, state ->
+    val uiState: StateFlow<WallpaperUiState> = combine(wallpaperCopyRepository.copy, settingsRepository.settings, local, dailyWallpaperRepository.state) { copy, settings, state, daily ->
         val storedId = settings.wallpaperCopySystemId
         WallpaperUiState(
             copy = copy,
@@ -86,6 +94,7 @@ class WallpaperViewModel @Inject constructor(
             offerCopy = state.offerCopy,
             credit = state.credit,
             copyOnly = state.copyOnly,
+            turnsOffDailyWallpaper = daily.enabled && state.picked != null && !state.copyOnly && !state.fromDailyPhoto,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), WallpaperUiState())
 
@@ -131,12 +140,12 @@ class WallpaperViewModel @Inject constructor(
         viewModelScope.launch {
             local.update { it.copy(working = true, failed = false) }
             val photo = wallpaperCopyRepository.decodePicked(uri, MAX_PICKED_SIDE)
-            local.update { it.copy(picked = photo, credit = null, working = false, failed = photo == null) }
+            local.update { it.copy(picked = photo, credit = null, fromDailyPhoto = false, working = false, failed = photo == null) }
         }
     }
 
     /** A daily photo was downloaded: frame it, with its [credit] shown on it. */
-    fun onPickedBitmap(photo: Bitmap, credit: String) = local.update { it.copy(picked = photo, credit = credit.ifBlank { null }, copyOnly = false, failed = false) }
+    fun onPickedBitmap(photo: Bitmap, credit: String) = local.update { it.copy(picked = photo, credit = credit.ifBlank { null }, copyOnly = false, fromDailyPhoto = true, failed = false) }
 
     fun cancelFit() = local.update { it.copy(picked = null, credit = null, failed = false) }
 
@@ -145,7 +154,9 @@ class WallpaperViewModel @Inject constructor(
         val photo = local.value.picked ?: return
         viewModelScope.launch {
             local.update { it.copy(working = true, failed = false) }
-            val done = if (local.value.copyOnly) useScreenshotAsCopy(photo, visible) else setWallpaperFromPhoto(photo, visible, includeLock)
+            val copyOnly = local.value.copyOnly
+            val done = if (copyOnly) useScreenshotAsCopy(photo, visible) else setWallpaperFromPhoto(photo, visible, includeLock)
+            if (done && !copyOnly) noteManualWallpaper(fromDailyPhoto = local.value.fromDailyPhoto)
             local.update { it.copy(picked = if (done) null else it.picked, credit = if (done) null else it.credit, working = false, failed = !done) }
         }
     }

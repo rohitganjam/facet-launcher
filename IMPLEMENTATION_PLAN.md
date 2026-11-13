@@ -4838,3 +4838,17 @@ Play data safety: mirror the weather answer (approximate location to MET Norway,
 - Needs periodic background work, which the weather design rules out today (no `WorkManager`, no background network). That would be another explicit decision, with Wi-Fi-only and battery constraints, and a clear off switch.
 - Each rotation would go through the same set-and-store path, so glass would follow the new wallpaper and the stale-copy check would stay right.
 - Questions to settle: what the source is, how it is chosen (in order, random), whether the lock screen follows, what happens offline, whether it is a Pro feature, and how a rotation shows in the wallpaper screen.
+
+## Daily wallpaper (Bing or Spotlight)
+
+A switch at the top of Daily photos changes the wallpaper once a day to the newest Bing or Spotlight photo. Decisions: no background start (a run starts only when the launcher comes to the front on a new day, then may continue while the user is in other apps), Wi-Fi only on by default, Battery Saver waits, at most 3 attempts a day, the photo is set at the next screen-off so nothing changes under the user. Free, Home screen by default. Picking a daily photo keeps it on; choosing your own image turns it off (the fit step says so); a wallpaper changed outside Facet pauses it, with Resume. See `docs/architecture/21-flow-wallpaper-glass.md` (Daily wallpaper).
+
+### Steps
+- [x] `DailyWallpaperState` in its own DataStore (`facet_daily_wallpaper`, not backed up), `DailyWallpaperRepository` (state, the pending photo file), `DeviceConditionsRepository` (network, Battery Saver, screen on and screen-off events). Tests: the repository round trip and pending file.
+- [x] `portraitCentreCrop` (centre strip in the screen's shape, at most 1.35x upscale, power-of-two sampling) and `WallpaperCopyRepository.imageSize`/`decodeRegion`. Tests: `PortraitCentreCropTest`.
+- [x] `RunDailyWallpaperUseCase` (gates, candidates, too-small skip, attempts), `ApplyPendingWallpaperUseCase` (set at screen-off through `SetWallpaperFromPhotoUseCase`, pause on a change made elsewhere, interrupted changes), `NoteManualWallpaperUseCase`, `DailyWallpaperCoordinator` (application scope, one run at a time). Tests for each.
+- [x] Launcher resume and screen-off hook in `LauncherViewModel`.
+- [x] UI: the card, the turn-on sheet (mobile data for today), status line, the check mark on the current photo, the fit-step note. Tests: `DailyPhotosViewModelTest`, `WallpaperViewModelTest`, `DailyWallpaperStatusTest`, `DailyPhotosScreenTest`, `WallpaperScreenTest`.
+- [x] Strings in en, de, es, fr, nl and pt.
+- [x] Docs: `01`, `02`, `03`, `04`, `07`, `21`, README, `CLAUDE.md`.
+- [ ] Privacy policy sentence in `../facet-launcher-site/build.py`: "If you turn on Daily wallpaper, the first time you open Facet each day it makes the same request to Peapix and downloads one photo, over Wi-Fi only unless you allow mobile data."

@@ -101,13 +101,13 @@ flowchart TB
         subgraph MODS["@Module @InstallIn(SingletonComponent) — data/di/"]
             AM["AppModule\nClock, LauncherApps, UserManager,\nUsageStatsManager, AppOpsManager,\nWallpaperManager, ContentResolver,\n@ApplicationScope CoroutineScope\n(all @Singleton)"]
             DBM["DatabaseModule\nFacetDatabase @Singleton\n+ 8 DAO @Provides (unscoped)"]
-            DSM["DataStoreModule\n3 x DataStore of Preferences @Singleton\n('facet_settings', 'facet_automation' via @AutomationDataStore, 'facet_entitlement' via @EntitlementDataStore)"]
+            DSM["DataStoreModule\n4 x DataStore of Preferences @Singleton\n('facet_settings', 'facet_automation' via @AutomationDataStore, 'facet_entitlement' via @EntitlementDataStore, 'facet_daily_wallpaper' via @DailyWallpaperDataStore)"]
             WM["WidgetModule\nAppWidgetManager, LauncherAppWidgetHost\n(@Singleton)"]
             DPM["DispatcherModule\n@IoDispatcher, @DefaultDispatcher\n(CoroutineDispatcher)"]
             ENM["EntitlementModule\n@Binds PlayEntitlementRepository\n+ 2 @BindsOptionalOf hooks"]
             WTM["WeatherModule\n@Binds MetWeatherApi to WeatherApi\n@Binds RoomWeatherStore to WeatherStore\n@Binds AndroidPlaceGeocoder to PlaceGeocoder\n@Binds ObserveNativeWidgetOverridesUseCase to NativeWidgetOverrides"]
         end
-        REPOS["56 @Singleton data classes (48 repositories)\n@Singleton class X @Inject constructor(...)\n(no module — constructor injection)"]
+        REPOS["58 @Singleton data classes (50 repositories)\n@Singleton class X @Inject constructor(...)\n(no module — constructor injection)"]
         MODS --> REPOS
     end
 
@@ -140,7 +140,7 @@ flowchart TB
 | `java.time.Clock` | `@Singleton` | `AppModule.provideClock()` | Time-dependent logic (`NextAlarmRepository`) is testable with a fixed clock. |
 | `FacetDatabase` | `@Singleton` | `DatabaseModule` — `Room.databaseBuilder(..., "facet.db").addMigrations(*Migrations.ALL).fallbackToDestructiveMigrationOnDowngrade(true)` | One DB instance; **no** destructive fallback on upgrade (a missing migration crashes loudly by design). |
 | DAOs (8) | unscoped | `@Provides fun provideXDao(db) = db.xDao()` | Room caches DAO instances internally, so unscoped is free. |
-| `DataStore<Preferences>` (3) | `@Singleton` | `DataStoreModule` via `preferencesDataStore(name = "facet_settings")` (unqualified) and `preferencesDataStore(name = "facet_automation")` (`@AutomationDataStore`) and `preferencesDataStore(name = "facet_entitlement")` (`@EntitlementDataStore`) delegates | DataStore requires exactly one instance per file. Automation state lives in its own file so it stays out of `LauncherSettings` re-emissions and backups. |
+| `DataStore<Preferences>` (4) | `@Singleton` | `DataStoreModule` via `preferencesDataStore(name = "facet_settings")` (unqualified), `preferencesDataStore(name = "facet_automation")` (`@AutomationDataStore`), `preferencesDataStore(name = "facet_entitlement")` (`@EntitlementDataStore`) and `preferencesDataStore(name = "facet_daily_wallpaper")` (`@DailyWallpaperDataStore`) delegates | DataStore requires exactly one instance per file. Automation state and the daily wallpaper live in their own files so they stay out of `LauncherSettings` re-emissions and backups. |
 | `StyledIconCache` | `@Singleton` | Constructor injection; `LauncherActivity` injects it and provides it as `LocalStyledIconCache` | Makes the glyph-only and outline icon pictures, on demand or ahead of it (`WarmStyledIcons` at the root warms every app's while a glyph or outline style is on, so the drawer finds them ready), and keeps only the applied picture (glyph or outline, not both) for each, held weakly, keyed by the icon bitmap, so a rescan that decodes fresh icons recomputes only what is on screen. A bare instance is the local's default, for previews and tests. |
 | `EntitlementRepository` | `@Singleton` | `EntitlementModule` `@Binds` `PlayEntitlementRepository`; two `@BindsOptionalOf` hooks (`EntitlementOverride`, `DebugSettingsEntry`) | The debug source set (`DebugBindingsModule`) fills the optional hooks; a release build leaves them empty, so the override and its Settings row exist only in debug. The benchmark source set provides an `EntitlementOverride` that always forces Pro (a measurement build, never shipped). |
 | `WeatherApi`, `WeatherStore`, `PlaceGeocoder` | `@Singleton` | `WeatherModule` `@Binds` `MetWeatherApi`, `RoomWeatherStore` and `AndroidPlaceGeocoder` | The seams the weather code is tested through: tests pass a fake API, an in-memory store and a fake geocoder, so no test touches the network. |
@@ -171,6 +171,7 @@ fine) rather than via Hilt test modules — see [06-testing.md](06-testing.md).
 - keeps `CleanUpUninstalledAppsUseCase` collecting for the process lifetime (deletes placement rows on real uninstall broadcasts);
 - runs `RepairOrphanedProfileRowsUseCase` once (backfills `userId = -1` rows left by pre-profile schemas);
 - keeps `SyncFacetShortcutsUseCase` and `RunFacetAutomationUseCase` collecting for the process lifetime (dynamic shortcuts; automation rules);
+- starts `DailyWallpaperCoordinator` (listens for screen-off in `@ApplicationScope` to set a prepared daily wallpaper); `onResumed()` also asks it for the day's run, see [21](21-flow-wallpaper-glass.md);
 - clears `isLoading` after a 3 s timeout so a slow first app scan can't leave the screen blank.
 
 `FacetNavHost` owns 34 string-route destinations (`FacetDestinations`); `Home ⇄ Drawer` is *not* a

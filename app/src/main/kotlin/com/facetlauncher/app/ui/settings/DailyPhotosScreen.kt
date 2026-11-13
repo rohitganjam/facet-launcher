@@ -14,6 +14,8 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -21,7 +23,9 @@ import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.outlined.Image
+import androidx.compose.material3.Icon
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -74,6 +78,7 @@ fun DailyPhotosScreen(
     viewModel: DailyPhotosViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val dailyWallpaper by viewModel.dailyWallpaper.collectAsStateWithLifecycle()
     BackHandler(onBack = onBack)
     val currentOnUsePhoto by rememberUpdatedState(onUsePhoto)
     LaunchedEffect(uiState.picked) {
@@ -91,6 +96,18 @@ fun DailyPhotosScreen(
         onPick = viewModel::pick,
         onChooseImage = onChooseImage,
         modifier = modifier,
+        dailyWallpaper = dailyWallpaper,
+        dailyActions = DailyWallpaperActions(
+            onSwitch = viewModel::onDailyWallpaperSwitch,
+            onSource = viewModel::setDailySource,
+            onIncludeLock = viewModel::setDailyIncludeLock,
+            onWifiOnly = viewModel::setDailyWifiOnly,
+            onResume = viewModel::resumeDailyWallpaper,
+            onSheetSource = viewModel::onSheetSource,
+            onSheetIncludeLock = viewModel::onSheetIncludeLock,
+            onTurnOn = viewModel::confirmTurnOn,
+            onDismissSheet = viewModel::dismissSheet,
+        ),
     )
 }
 
@@ -104,6 +121,8 @@ internal fun DailyPhotosContent(
     onPick: (DailyPhoto) -> Unit,
     onChooseImage: () -> Unit,
     modifier: Modifier = Modifier,
+    dailyWallpaper: DailyWallpaperUiState = DailyWallpaperUiState(),
+    dailyActions: DailyWallpaperActions = DailyWallpaperActions(),
 ) {
     Box(modifier = modifier.fillMaxSize()) {
         StickyHeaderLayout(
@@ -121,15 +140,23 @@ internal fun DailyPhotosContent(
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
+                    item(span = { GridItemSpan(maxLineSpan) }) { DailyWallpaperCard(dailyWallpaper, dailyActions) }
                     item(span = { GridItemSpan(maxLineSpan) }) { SourceTabs(uiState.source, onSelectSource) }
                     gridStatus(uiState, onRetry)
                     items(uiState.photos, key = { it.imageUrl }) { photo ->
-                        PhotoTile(photo = photo, today = LocalDate.now(), loadThumbnail = loadThumbnail, onClick = { onPick(photo) })
+                        PhotoTile(
+                            photo = photo,
+                            today = LocalDate.now(),
+                            isWallpaper = photo.imageUrl == dailyWallpaper.currentImageUrl,
+                            loadThumbnail = loadThumbnail,
+                            onClick = { onPick(photo) },
+                        )
                     }
                     item(span = { GridItemSpan(maxLineSpan) }) { OwnImageRow(onChooseImage) }
                 }
             },
         )
+        dailyWallpaper.sheet?.let { DailyWallpaperTurnOnSheet(it, dailyActions) }
         if (uiState.downloading) BlockingProgressOverlay(stringResource(R.string.daily_downloading), Modifier.testTag("daily_downloading"))
     }
 }
@@ -187,7 +214,7 @@ private fun SourceTabs(selected: DailyPhotoSource, onSelect: (DailyPhotoSource) 
 
 /** A photo's preview with its title and, for Bing, its date over the foot of it. */
 @Composable
-private fun PhotoTile(photo: DailyPhoto, today: LocalDate, loadThumbnail: suspend (DailyPhoto) -> Bitmap?, onClick: () -> Unit) {
+private fun PhotoTile(photo: DailyPhoto, today: LocalDate, isWallpaper: Boolean, loadThumbnail: suspend (DailyPhoto) -> Bitmap?, onClick: () -> Unit) {
     val currentLoad by rememberUpdatedState(loadThumbnail)
     val thumbnail by produceState<Bitmap?>(initialValue = null, photo.thumbUrl) { value = currentLoad(photo) }
     Box(
@@ -201,6 +228,21 @@ private fun PhotoTile(photo: DailyPhoto, today: LocalDate, loadThumbnail: suspen
             .testTag("daily_photo_tile"),
     ) {
         thumbnail?.let { Image(bitmap = it.asImageBitmap(), contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize()) }
+        if (isWallpaper) {
+            // The photo the daily wallpaper last set.
+            Icon(
+                imageVector = Icons.Filled.Check,
+                contentDescription = stringResource(R.string.daily_wallpaper_current_description),
+                tint = Color.White,
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(8.dp)
+                    .size(24.dp)
+                    .background(Color.Black.copy(alpha = SCRIM_ALPHA), CircleShape)
+                    .padding(4.dp)
+                    .testTag("daily_photo_current"),
+            )
+        }
         Column(
             modifier = Modifier
                 .align(Alignment.BottomStart)

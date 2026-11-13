@@ -152,6 +152,24 @@ class WallpaperScreenTest {
     }
 
     @Test
+    fun `the fit step warns when setting your own image turns the daily wallpaper off`() {
+        // Given an own image framed while the daily wallpaper is on
+        setContent(WallpaperUiState(picked = bitmap(200, 400), turnsOffDailyWallpaper = true), Calls())
+
+        // Then the note shows
+        composeRule.onNodeWithTag("wallpaper_fit_turns_off_daily").assertIsDisplayed()
+    }
+
+    @Test
+    fun `the fit step has no daily wallpaper note otherwise`() {
+        // Given an image framed with the daily wallpaper off
+        setContent(WallpaperUiState(picked = bitmap(200, 400)), Calls())
+
+        // Then there is no note
+        composeRule.onNodeWithTag("wallpaper_fit_turns_off_daily").assertDoesNotExist()
+    }
+
+    @Test
     fun `the offer after the system picker can be accepted or declined`() {
         // Given the offer is showing
         val calls = Calls()

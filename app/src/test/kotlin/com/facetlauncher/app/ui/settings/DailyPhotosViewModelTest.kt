@@ -9,6 +9,14 @@ import com.facetlauncher.app.data.dailyphotos.DailyPhotoFeed
 import com.facetlauncher.app.data.dailyphotos.DailyPhotoRepository
 import com.facetlauncher.app.data.model.DailyPhoto
 import com.facetlauncher.app.data.model.DailyPhotoSource
+import com.facetlauncher.app.data.model.DailyWallpaperPhoto
+import com.facetlauncher.app.data.model.NetworkConditions
+import com.facetlauncher.app.domain.DailyWallpaperCoordinator
+import com.facetlauncher.app.domain.FakeConditions
+import com.facetlauncher.app.domain.FakeDailyWallpaperRepository
+import com.facetlauncher.app.domain.dailyTestClock
+import kotlinx.coroutines.launch
+import org.mockito.Mockito.verify
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
@@ -71,13 +79,96 @@ class DailyPhotosViewModelTest {
         return FakeRepository(api, cache, WallpaperCopyRepository(RuntimeEnvironment.getApplication(), mock(WallpaperManager::class.java)))
     }
 
+    private val coordinator: DailyWallpaperCoordinator = mock(DailyWallpaperCoordinator::class.java)
+    private val conditions = FakeConditions()
+    private var dailyRepository: FakeDailyWallpaperRepository? = null
+
+    private fun viewModel(repository: DailyPhotoRepository): DailyPhotosViewModel {
+        val daily = FakeDailyWallpaperRepository(tempFolder.newFolder()).also { dailyRepository = it }
+        return DailyPhotosViewModel(repository, daily, coordinator, conditions, dailyTestClock)
+    }
+
+    /** Subscribes to the daily wallpaper state, which only runs while collected. */
+    private fun DailyPhotosViewModel.observeDaily(scope: kotlinx.coroutines.test.TestScope) =
+        scope.backgroundScope.launch(UnconfinedTestDispatcher(scope.testScheduler)) { dailyWallpaper.collect { } }
+
+    @Test
+    fun `turning the daily wallpaper on opens the sheet preset to the tab on screen`() = runTest {
+        // Given the Spotlight tab is on screen, on Wi-Fi
+        val repository = repository()
+        val viewModel = viewModel(repository)
+        viewModel.observeDaily(this)
+        viewModel.selectSource(DailyPhotoSource.SPOTLIGHT)
+
+        // When the switch is turned on
+        viewModel.onDailyWallpaperSwitch(true)
+
+        // Then the sheet shows Spotlight, Home only, with no mobile data warning
+        assertEquals(DailyWallpaperSheet(DailyPhotoSource.SPOTLIGHT, includeLock = false, onMobileData = false), viewModel.dailyWallpaper.value.sheet)
+    }
+
+    @Test
+    fun `on mobile data the sheet offers to use it once`() = runTest {
+        // Given a metered network
+        val viewModel = viewModel(repository())
+        viewModel.observeDaily(this)
+        conditions.network = NetworkConditions(connected = true, unmetered = false, roaming = false)
+
+        // When the switch is turned on
+        viewModel.onDailyWallpaperSwitch(true)
+
+        // Then the sheet says so
+        assertTrue(viewModel.dailyWallpaper.value.sheet!!.onMobileData)
+    }
+
+    @Test
+    fun `turn on passes the sheet's choices and closes it`() = runTest {
+        // Given the sheet with Spotlight and Home and lock chosen
+        val viewModel = viewModel(repository())
+        viewModel.observeDaily(this)
+        viewModel.onDailyWallpaperSwitch(true)
+        viewModel.onSheetSource(DailyPhotoSource.SPOTLIGHT)
+        viewModel.onSheetIncludeLock(true)
+
+        // When "Use mobile data once" is tapped
+        viewModel.confirmTurnOn(useMobileData = true)
+
+        // Then the daily change is turned on with them, and the sheet is gone
+        verify(coordinator).turnOn(DailyPhotoSource.SPOTLIGHT, true, true)
+        assertNull(viewModel.dailyWallpaper.value.sheet)
+    }
+
+    @Test
+    fun `turning the switch off turns the daily change off without a sheet`() = runTest {
+        // Given the view model
+        val viewModel = viewModel(repository())
+
+        // When the switch is turned off
+        viewModel.onDailyWallpaperSwitch(false)
+
+        // Then it is off
+        verify(coordinator).turnOff()
+    }
+
+    @Test
+    fun `the photo the daily change set is marked while it is on`() = runTest {
+        // Given the daily change on, having set photo a
+        val viewModel = viewModel(repository())
+        viewModel.observeDaily(this)
+        dailyRepository!!.update { it.copy(enabled = true, current = DailyWallpaperPhoto("https://img.peapix.com/a.jpg", "a", "")) }
+
+        // Then the screen knows which tile it is
+        val state = viewModel.dailyWallpaper.first { it.enabled }
+        assertEquals("https://img.peapix.com/a.jpg", state.currentImageUrl)
+    }
+
     @Test
     fun `it opens on bing's photos`() = runTest {
         // Given bing has two photos
         val repository = repository().apply { feeds[DailyPhotoSource.BING] = DailyPhotoFeed.Photos(listOf(photo("a"), photo("b")), savedEarlier = false) }
 
         // When the screen's view model starts
-        val state = DailyPhotosViewModel(repository).uiState.value
+        val state = viewModel(repository).uiState.value
 
         // Then it shows them, not loading and not failed
         assertEquals(DailyPhotoSource.BING, state.source)
@@ -93,7 +184,7 @@ class DailyPhotosViewModelTest {
             feeds[DailyPhotoSource.BING] = DailyPhotoFeed.Photos(listOf(photo("a")), false)
             feeds[DailyPhotoSource.SPOTLIGHT] = DailyPhotoFeed.Photos(listOf(photo("s1"), photo("s2")), false)
         }
-        val viewModel = DailyPhotosViewModel(repository)
+        val viewModel = viewModel(repository)
 
         // When Spotlight is chosen, and then chosen again
         viewModel.selectSource(DailyPhotoSource.SPOTLIGHT)
@@ -108,7 +199,7 @@ class DailyPhotosViewModelTest {
     fun `photos saved earlier are marked, and a source with nothing fails and can be retried`() = runTest {
         // Given bing offline with yesterday's photos, and Spotlight with nothing
         val repository = repository().apply { feeds[DailyPhotoSource.BING] = DailyPhotoFeed.Photos(listOf(photo("a")), savedEarlier = true) }
-        val viewModel = DailyPhotosViewModel(repository)
+        val viewModel = viewModel(repository)
         assertTrue(viewModel.uiState.value.savedEarlier)
 
         // When Spotlight is chosen
@@ -133,7 +224,7 @@ class DailyPhotosViewModelTest {
             feeds[DailyPhotoSource.BING] = DailyPhotoFeed.Photos(listOf(photo("a")), false)
             original = bitmap
         }
-        val viewModel = DailyPhotosViewModel(repository)
+        val viewModel = viewModel(repository)
 
         // When it is picked
         viewModel.pick(photo("a"))
@@ -157,7 +248,7 @@ class DailyPhotosViewModelTest {
             feeds[DailyPhotoSource.BING] = DailyPhotoFeed.Photos(listOf(photo("a")), false)
             original = null
         }
-        val viewModel = DailyPhotosViewModel(repository)
+        val viewModel = viewModel(repository)
 
         // When it is picked
         viewModel.pick(photo("a"))
