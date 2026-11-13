@@ -1,47 +1,28 @@
-# Facet Launcher 0.1.42
+# Facet Launcher 0.1.43
 
 ## New Features
-- Glass backgrounds: the dock, apps list items, the clock's calendar and the media player row can each sit on a frosted panel. Choose from Light frost, Smoked, Bright, Clear glass or Accent in each one's settings.
-- Real glass with your wallpaper: Facet can keep its own copy of your wallpaper. Pick a photo, pan and zoom to fit it, and set it as your wallpaper. Glass panels then show your wallpaper through them, with real blur on the dock, lists, grid tiles, calendar, media row and widgets.
-- New Dark frost and Dark glass styles.
-- Glass icon backgrounds: icons can sit on five glass backgrounds (light frost, smoked, bright, clear glass and accent), alongside the existing tile and reversed tile options.
-- The Weather, Agenda and Now playing widgets each have a Background choice in their settings. Now playing now has its own settings on Home and the Hub.
-- "Use my current wallpaper": take a screenshot of your wallpaper on a clean capture screen with simple step-by-step instructions, or pick an image you already have.
-- Copy from facet: the Dock, Apps list and Widgets screens can copy their content and settings from another facet in one step.
+- You can now choose a text colour for the Weather, Agenda and Now Playing widgets: match the theme, always light, or always dark.
+- Widgets have two new background options, Theme and Theme inverted. Both are slightly see-through solid backgrounds that follow your light or dark theme. With Theme inverted, the text colour flips to stay readable.
 
 ## Fixes
-- Wallpaper previews showed the phone's factory wallpaper instead of yours. When your wallpaper can't be read, previews now show a soft wash of its colours.
-- The clock sometimes showed a 0% battery reading. It now hides the battery until a real reading arrives.
-- Fixed a crash when fitting a photo that already matches the screen size.
+- Fixed a crash with centred app rows in the single-column app list.
+- Fixed the launcher sometimes forgetting your wallpaper after a refresh, which could make the wallpaper offer appear when it shouldn't.
+- Fixed the wallpaper popup appearing right after you set a wallpaper in Facet. Glass effects also no longer switch off until you leave and come back.
 
 ## Improvements
-- After you change your wallpaper, or the first time you choose a glass background, Facet offers to make a wallpaper copy. If you choose "Not now", it remembers.
-- Glass icon backgrounds on Home now show your wallpaper through them.
-- Every preview background uses your saved wallpaper copy when it matches your current wallpaper.
-- If the wallpaper copy is missing or out of date, glass falls back to a tint.
-- Wallpaper images are now chosen through your gallery app.
-- Clearer title on the glass backgrounds prompt.
-- The Agenda widget now shows a full week of events. Days after Today and Tomorrow are labelled with their date (e.g. "14th Nov, Sat"), with more space between days.
-- Even spacing above and below the media player row.
-- Landscape settings are combined into one card, with clearer names: "Apps list alignment" and "Apps list position".
-- Long setting titles now wrap instead of crowding the switch or dropdown.
-- The facet shortcut label is now translated.
-- Backups now include your glass background choices.
+- Glass icons on the dock, list rows and grid tiles now blur the frosted panel behind them too, so layered glass looks more natural.
+- The clock now has a single Background setting in Clock Style that covers both the time and its events. Your old calendar background choice carries over.
+- Previews now show glass effects using your saved wallpaper, so they match what you'll actually see.
+- Glass on the Hub now includes the Hub's dimming, so the blur matches what's on screen.
+- The lens effect now works with every glass style.
+- In the single-column app list, all rows are now the same width as the widest item and take up at least half the list.
+- The wallpaper screen is clearer. "Let Facet use my current wallpaper" is now its own card that's always shown, with a check mark and "Already in use" once it's set. "Remove the copy" is now a simple text button.
 
 ## Internal
-- IconRenderMode now carries style, colour and background directly (30 new stored values, existing unchanged); removed its unused display strings
-- GlassStyle.RIM_LIGHT renamed to CLEAR_GLASS (unreleased, no migration)
-- Room v50: facets.dockGlass and appsListGlass (TEXT NOT NULL DEFAULT 'OFF'); calendar glass in clock JSON config, media row glass in DataStore
-- NativeWidgetConfig gains a per-widget GlassStyle (default Light frost, replacing the fixed 60% surface)
-- Agenda uses its own 7-day calendar query instead of the clock's window
-- Battery repository emits nothing for broadcasts without level/scale; ClockAccessoryState.batteryPercent nullable
-- Dropped the builtInDrawable fallback for wallpaper previews
-- Removed leftover icon_render_system_default translation that failed release lint
-- Lint fixes: added plural "many" to es, fr, pt, pt-rPT, es-419; DockSettingsScreen modifier parameter order; IconsScreen uses String.toUri
-- Settings screens use collectAsStateWithLifecycle; ObserveHomeScreenStateUseCase and ObserveHubStateUseCase are @ViewModelScoped; ObservePlacedItemsUseCase indexes installed apps once per emission
-- Removed unused strings from every locale; architecture docs updated
-- Fixed stale instrumented tests (ScaledHomeScreenTest, HomeScreenTest, FavoritesPickerScreenTest, AppContextMenuScalingTest)
-- Added wallpaper-backed glass plan to IMPLEMENTATION_PLAN.md
-- Docs: Pro launch and device verification marked done; stacks listed as a Pro feature
-- Refreshed 0.1.41 release notes and last-release record
-- Updated Play Store listing for 0.1.41
+- GlassPanel records its own layer so nested glass icons sample the panel's frost.
+- Calendar background setting removed and migrated into the shared Clock Style background.
+- Previews sample their own saved wallpaper instead of the activity's layer.
+- Widget text option forced through LocalIsDarkTheme, applied to widget content only.
+- Wallpaper-copy staleness check now reads the system wallpaper id fresh.
+- Lens depth weight set to 0.8.
+- Release 0.1.42 version bump.
