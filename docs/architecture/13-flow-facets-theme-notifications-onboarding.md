@@ -211,7 +211,7 @@ weather, following the switches and the icon style as they change. The Icons car
 all nine weather pictures in the selected style. The alarm, battery and weather icons carry the same
 drop shadow as the accessory text (`homeIconShadow`: the glyph redrawn in the shadow tone over a ring of offsets).
 Every Home text and icon shadow is near-black, whatever the content's colour, so a light shadow never haloes an accent.
-Dark neutral content (black or dark grey ink, `homeTextOutlined`) also gets a crisp light 1dp edge
+Dark neutral content (black or dark grey ink, `homeTextOutlined`) also gets a crisp light edge (0.5dp, 0.75dp from 24sp up: `homeOutlineWidth`)
 (`HomeOutlineColor`): text through `HomeText` (`ui/components/HomeText.kt`, a `Text` that draws the edge over the shadow and
 outside the glyph), icons through a tighter unblurred ring in `homeIconShadow`. Content inside a filled clock pill or block is
 wrapped in `OnSolidFill` and gets neither, since it isn't on the wallpaper.
