@@ -6,11 +6,18 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.swipe
+import androidx.compose.ui.test.pinch
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.doubleClick
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollToNode
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Rule
@@ -22,9 +29,9 @@ class WallpaperScreenTest {
     val composeRule = createComposeRule()
 
     private class Calls {
-        var choseImage = 0
         var setSystem = 0
         var accepted = 0
+        var chose = 0
         var screenshot = 0
         var takeScreenshot = 0
         var declined = 0
@@ -34,6 +41,9 @@ class WallpaperScreenTest {
         var confirmedLock: Boolean? = null
     }
 
+    /** The screen is a list; what is below the first rows needs scrolling to before it can be touched. */
+    private fun scrollTo(tag: String) = composeRule.onNodeWithTag("wallpaper_screen").performScrollToNode(androidx.compose.ui.test.hasTestTag(tag))
+
     private fun bitmap(width: Int, height: Int) = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
 
     private fun setContent(state: WallpaperUiState, calls: Calls) {
@@ -42,7 +52,7 @@ class WallpaperScreenTest {
                 WallpaperContent(
                     uiState = state,
                     onBack = {},
-                    onChooseImage = { calls.choseImage++ },
+                    onChooseWallpaper = { calls.chose++ },
                     onSetSystemWallpaper = { calls.setSystem++ },
                     onUseScreenshot = { calls.screenshot++ },
                     onTakeScreenshot = { calls.takeScreenshot++ },
@@ -73,7 +83,7 @@ class WallpaperScreenTest {
         composeRule.onNodeWithTag("wallpaper_system_row").performClick()
 
         // Then each reports once
-        assertEquals(1, calls.choseImage)
+        assertEquals(1, calls.chose)
         assertEquals(1, calls.setSystem)
     }
 
@@ -116,6 +126,7 @@ class WallpaperScreenTest {
         setContent(WallpaperUiState(copy = bitmap(10, 20)), Calls())
 
         // Then the card is still there and marks itself as already in use
+        scrollTo("wallpaper_screenshot_link")
         composeRule.onNodeWithTag("wallpaper_screenshot_link").assertIsDisplayed()
         composeRule.onNodeWithTag("wallpaper_screenshot_link").assertTextContains("Already in use", substring = true)
     }
@@ -126,6 +137,7 @@ class WallpaperScreenTest {
         setContent(WallpaperUiState(copy = bitmap(10, 20), stale = true), Calls())
 
         // Then the card offers the screenshot instead
+        scrollTo("wallpaper_screenshot_link")
         composeRule.onNodeWithTag("wallpaper_screenshot_link").assertTextContains("Take a screenshot", substring = true)
     }
 
@@ -173,6 +185,7 @@ class WallpaperScreenTest {
         composeRule.onNodeWithTag("wallpaper_status").assertTextContains("Glass is on", substring = true)
 
         // When the copy is removed
+        scrollTo("wallpaper_remove_row")
         composeRule.onNodeWithTag("wallpaper_remove_row").performClick()
 
         // Then removal is reported
@@ -229,5 +242,109 @@ class WallpaperScreenTest {
         // Then it is reported and nothing was confirmed
         assertEquals(1, calls.cancelled)
         assertNull(calls.confirmedLock)
+    }
+
+    /** A landscape photo framed in the screen-shaped window: it can be moved sideways and zoomed. */
+    private fun fitStep(calls: Calls) = setContent(WallpaperUiState(picked = bitmap(1200, 600)), calls)
+
+    private fun confirm() = composeRule.onNodeWithTag("wallpaper_fit_set").performClick()
+
+    @Test
+    fun `a long drag moves the framed part by the whole distance`() {
+        // Given a photo wider than the window, framed at its centre
+        val calls = Calls()
+        fitStep(calls)
+
+        // When it is dragged left across most of the window in one continuous gesture
+        composeRule.onNodeWithTag("wallpaper_fit_window").performTouchInput {
+            swipe(start = Offset(width * 0.8f, centerY), end = Offset(width * 0.2f, centerY), durationMillis = 800)
+        }
+        confirm()
+
+        // Then the framed part moved right by about 60% of its own width, not just the first step of the drag
+        val rect = calls.confirmedRect!!
+        val centredLeft = (1200f - rect.width()) / 2f
+        val expected = 0.6f * rect.width()
+        assertTrue("moved ${rect.left - centredLeft} of about $expected", rect.left - centredLeft in (expected * 0.85f)..(expected * 1.15f))
+    }
+
+    @Test
+    fun `pinching apart zooms in and double tap resets it`() {
+        // Given a photo framed to cover the window, which shows all of its height
+        val calls = Calls()
+        fitStep(calls)
+
+        // When two fingers spread apart
+        composeRule.onNodeWithTag("wallpaper_fit_window").performTouchInput {
+            pinch(
+                start0 = Offset(width * 0.4f, centerY), end0 = Offset(width * 0.2f, centerY),
+                start1 = Offset(width * 0.6f, centerY), end1 = Offset(width * 0.8f, centerY),
+                durationMillis = 600,
+            )
+        }
+        confirm()
+
+        // Then a smaller part of the photo is shown
+        assertTrue("height ${calls.confirmedRect!!.height()}", calls.confirmedRect!!.height() < 300f)
+
+        // And a double tap shows the whole height again
+        composeRule.onNodeWithTag("wallpaper_fit_window").performTouchInput { doubleClick() }
+        confirm()
+        assertEquals(600f, calls.confirmedRect!!.height(), 1f)
+    }
+
+    @Test
+    fun `the credit of a daily photo shows on the framed photo exactly as given`() {
+        // Given a daily photo with a credit being framed
+        setContent(WallpaperUiState(picked = bitmap(1200, 600), credit = "© lightphoto/Getty Image"), Calls())
+
+        // Then the credit shows as given
+        composeRule.onNodeWithTag("wallpaper_fit_credit").assertIsDisplayed()
+        composeRule.onNodeWithTag("wallpaper_fit_credit").assertTextContains("© lightphoto/Getty Image")
+    }
+
+    @Test
+    fun `a photo the user chose has no credit footer`() {
+        // Given a chosen photo with no credit
+        setContent(WallpaperUiState(picked = bitmap(1200, 600)), Calls())
+
+        // Then there is no footer
+        composeRule.onNodeWithTag("wallpaper_fit_credit").assertDoesNotExist()
+    }
+
+    @Test
+    fun `a loader covers the screen while the wallpaper is being set`() {
+        // Given a photo being set as the wallpaper
+        setContent(WallpaperUiState(picked = bitmap(1200, 600), isWorking = true), Calls())
+
+        // Then the loader shows with its message
+        composeRule.onNodeWithTag("wallpaper_working").assertIsDisplayed()
+        composeRule.onNodeWithText("Setting your wallpaper…").assertIsDisplayed()
+    }
+
+    @Test
+    fun `the loader says saving when only a copy is being stored`() {
+        // Given a screenshot being stored
+        setContent(WallpaperUiState(picked = bitmap(1200, 600), isWorking = true, copyOnly = true), Calls())
+        composeRule.onNodeWithText("Saving…").assertIsDisplayed()
+    }
+
+    @Test
+    fun `the loader says opening while a chosen photo is being read`() {
+        // Given a photo being read, before there is one to frame
+        setContent(WallpaperUiState(isWorking = true), Calls())
+
+        // Then the loader shows with its own message
+        composeRule.onNodeWithTag("wallpaper_working").assertIsDisplayed()
+        composeRule.onNodeWithText("Opening the photo…").assertIsDisplayed()
+    }
+
+    @Test
+    fun `there is no loader when nothing is being done`() {
+        // Given a photo being framed and nothing running
+        setContent(WallpaperUiState(picked = bitmap(1200, 600)), Calls())
+
+        // Then no loader shows
+        composeRule.onNodeWithTag("wallpaper_working").assertDoesNotExist()
     }
 }

@@ -46,7 +46,7 @@ interface WeatherApi {
 /**
  * MET Norway Locationforecast 2.0 `compact`. Identifies itself with a `User-Agent` as MET requires, sends the
  * coordinates rounded to three decimals (MET accepts four), and uses a conditional request when it has a
- * `Last-Modified` from the previous answer. The only code that opens a network connection in the app.
+ * `Last-Modified` from the previous answer. With [com.facetlauncher.app.data.dailyphotos.PeapixApi], the only code that opens a network connection in the app.
  */
 @Singleton
 class MetWeatherApi @Inject constructor(

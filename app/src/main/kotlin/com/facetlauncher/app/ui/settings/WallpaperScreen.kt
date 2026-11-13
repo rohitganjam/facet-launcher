@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBars
@@ -26,7 +27,7 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.CheckCircle
-import androidx.compose.material.icons.outlined.Image
+import androidx.compose.material.icons.outlined.PhotoLibrary
 import androidx.compose.material.icons.outlined.Screenshot
 import androidx.compose.material.icons.outlined.Wallpaper
 import androidx.compose.material3.AlertDialog
@@ -34,11 +35,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberUpdatedState
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -63,7 +65,9 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.facetlauncher.app.R
+import com.facetlauncher.app.ui.components.BlockingProgressOverlay
 import com.facetlauncher.app.ui.components.CardDivider
+import com.facetlauncher.app.ui.components.PillTabPair
 import com.facetlauncher.app.ui.components.PrimaryButton
 import com.facetlauncher.app.ui.components.SettingsCard
 import com.facetlauncher.app.ui.components.SettingsIconBadgeInset
@@ -93,6 +97,7 @@ fun WallpaperScreen(
     viewModel: WallpaperViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    var showDaily by rememberSaveable { mutableStateOf(false) }
     val context = LocalContext.current
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri -> if (uri != null) viewModel.onPicked(uri) }
     // Coming back from the system picker: the wallpaper may have changed, which can leave the copy stale.
@@ -109,13 +114,24 @@ fun WallpaperScreen(
             currentConsume()
         }
     }
+    // A photo to frame, from a daily photo or from the picker, takes over from the list of photos.
+    LaunchedEffect(uiState.picked != null) { if (uiState.picked != null) showDaily = false }
+    if (showDaily) {
+        DailyPhotosScreen(
+            onBack = { showDaily = false },
+            onUsePhoto = { photo, credit -> viewModel.onPickedBitmap(photo, credit) },
+            onChooseImage = {
+                viewModel.onPickStarted(copyOnly = false)
+                picker.launch("image/*")
+            },
+            modifier = modifier,
+        )
+        return
+    }
     WallpaperContent(
         uiState = uiState,
         onBack = onBack,
-        onChooseImage = {
-            viewModel.onPickStarted(copyOnly = false)
-            picker.launch("image/*")
-        },
+        onChooseWallpaper = { showDaily = true },
         onTakeScreenshot = onOpenCapture,
         onUseScreenshot = {
             viewModel.onPickStarted(copyOnly = true)
@@ -142,7 +158,7 @@ fun WallpaperScreen(
 internal fun WallpaperContent(
     uiState: WallpaperUiState,
     onBack: () -> Unit,
-    onChooseImage: () -> Unit,
+    onChooseWallpaper: () -> Unit,
     onUseScreenshot: () -> Unit,
     onTakeScreenshot: () -> Unit,
     onSetSystemWallpaper: () -> Unit,
@@ -154,33 +170,44 @@ internal fun WallpaperContent(
     modifier: Modifier = Modifier,
 ) {
     val photo = uiState.picked
-    if (photo != null) {
-        WallpaperFitStep(photo, uiState.isWorking, uiState.failed, uiState.copyOnly, onCancelFit, onConfirmFit, modifier)
-        return
-    }
-    StickyHeaderLayout(
-        modifier = modifier,
-        header = { AppearanceSettingsHeader(title = stringResource(R.string.wallpaper_title), onBack = onBack) },
-        content = { headerHeight ->
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(SurfaceContainer)
-                    .testTag("wallpaper_screen")
-                    .windowInsetsPadding(WindowInsets.systemBars)
-                    .padding(horizontal = 24.dp),
-                contentPadding = PaddingValues(top = headerHeight, bottom = 24.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-            ) {
-                item { WallpaperPreview(uiState) }
-                if (uiState.offerCopy) item { CopyOffer(onAcceptOffer, onDeclineOffer) }
-                item { WallpaperStatus(uiState) }
-                item { ChoiceRows(onChooseImage, onSetSystemWallpaper) }
-                item { CurrentWallpaperCard(inUse = uiState.copy != null && !uiState.stale, onTakeScreenshot, onUseScreenshot) }
-                if (uiState.copy != null) item { RemoveLink(onRemoveCopy) }
+    Box(modifier = modifier.fillMaxSize()) {
+        if (photo != null) {
+            WallpaperFitStep(photo, uiState.isWorking, uiState.failed, uiState.copyOnly, uiState.credit, onCancelFit, onConfirmFit, Modifier)
+        } else {
+        StickyHeaderLayout(
+            header = { AppearanceSettingsHeader(title = stringResource(R.string.wallpaper_title), onBack = onBack) },
+            content = { headerHeight ->
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(SurfaceContainer)
+                        .testTag("wallpaper_screen")
+                        .windowInsetsPadding(WindowInsets.systemBars)
+                        .padding(horizontal = 24.dp),
+                    contentPadding = PaddingValues(top = headerHeight, bottom = 24.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                ) {
+                    item { WallpaperPreview(uiState) }
+                    if (uiState.offerCopy) item { CopyOffer(onAcceptOffer, onDeclineOffer) }
+                    item { WallpaperStatus(uiState) }
+                    item { ChoiceRows(onChooseWallpaper, onSetSystemWallpaper) }
+                    item { CurrentWallpaperCard(inUse = uiState.copy != null && !uiState.stale, onTakeScreenshot, onUseScreenshot) }
+                    if (uiState.copy != null) item { RemoveLink(onRemoveCopy) }
+                }
+            },
+        )
+        }
+        // Setting the wallpaper (or opening a large photo) takes a few seconds: say so, and take the touches until it is done.
+        if (uiState.isWorking) {
+            val message = when {
+                photo == null -> R.string.wallpaper_working_open
+                uiState.copyOnly -> R.string.wallpaper_working_save
+                else -> R.string.wallpaper_working_set
             }
-        },
-    )
+            BlockingProgressOverlay(stringResource(message), Modifier.testTag("wallpaper_working"))
+        }
+    }
+
 }
 
 /** The copy when there is one, otherwise a stand-in for the system wallpaper (which Android won't let us read). */
@@ -235,14 +262,14 @@ private fun WallpaperStatus(uiState: WallpaperUiState) {
 }
 
 @Composable
-private fun ChoiceRows(onChooseImage: () -> Unit, onSetSystemWallpaper: () -> Unit) {
+private fun ChoiceRows(onChooseWallpaper: () -> Unit, onSetSystemWallpaper: () -> Unit) {
     SettingsCard(fullBleedRows = true) {
         ClickableRow(
             title = stringResource(R.string.wallpaper_choose_image_title),
             subtitle = stringResource(R.string.wallpaper_choose_image_subtitle),
-            onClick = onChooseImage,
+            onClick = onChooseWallpaper,
             testTag = "wallpaper_choose_image_row",
-            leadingIcon = iconBadge(Icons.Outlined.Image, SettingsSectionHue.APPEARANCE),
+            leadingIcon = iconBadge(Icons.Outlined.PhotoLibrary, SettingsSectionHue.APPEARANCE),
         )
         CardDivider(startInset = SettingsIconBadgeInset)
         ClickableRow(
@@ -317,6 +344,7 @@ internal fun WallpaperFitStep(
     isWorking: Boolean,
     failed: Boolean,
     copyOnly: Boolean,
+    credit: String?,
     onCancel: () -> Unit,
     onConfirm: (RectF, Boolean) -> Unit,
     modifier: Modifier = Modifier,
@@ -347,13 +375,20 @@ internal fun WallpaperFitStep(
                 geometry = geometry,
                 fit = currentFit,
                 aspect = screenAspect,
+                credit = credit,
                 onSizeChange = { boxSize = it },
                 onFitChange = { fit = it },
             )
         }
-        if (!copyOnly) Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
-            PillOption(stringResource(R.string.wallpaper_fit_home), selected = !includeLock, onClick = { includeLock = false }, testTag = "wallpaper_fit_home", modifier = Modifier.weight(1f))
-            PillOption(stringResource(R.string.wallpaper_fit_home_lock), selected = includeLock, onClick = { includeLock = true }, testTag = "wallpaper_fit_home_lock", modifier = Modifier.weight(1f))
+        if (!copyOnly) {
+            PillTabPair(
+                startLabel = stringResource(R.string.wallpaper_fit_home),
+                endLabel = stringResource(R.string.wallpaper_fit_home_lock),
+                endSelected = includeLock,
+                onSelect = { includeLock = it },
+                startTag = "wallpaper_fit_home",
+                endTag = "wallpaper_fit_home_lock",
+            )
         }
         if (failed) {
             Text(text = stringResource(R.string.wallpaper_failed), style = MaterialTheme.typography.bodyMedium, color = ErrorColor, modifier = Modifier.testTag("wallpaper_failed"))
@@ -370,6 +405,9 @@ internal fun WallpaperFitStep(
     }
 }
 
+/** The frame as the gestures last left it, ahead of the composition that shows it. */
+private class LatestFit(var value: WallpaperFit? = null)
+
 /** The screen-shaped window onto the photo, with the gestures that move it. */
 @Composable
 private fun FitWindow(
@@ -377,19 +415,31 @@ private fun FitWindow(
     geometry: FitGeometry?,
     fit: WallpaperFit?,
     aspect: Float,
+    credit: String?,
     onSizeChange: (IntSize) -> Unit,
     onFitChange: (WallpaperFit) -> Unit,
 ) {
     val image = remember(photo) { photo.asImageBitmap() }
+    // Not a pointer-input key, which would restart the detector on every step. And updated at once by each step rather than only on the next
+    // recomposition: touch events can arrive faster than frames, and each must build on the one before it, or all but the last are lost.
+    val latest = remember { LatestFit() }
+    latest.value = fit
+    val currentOnFitChange by rememberUpdatedState(onFitChange)
     Box(
         modifier = Modifier
             .aspectRatio(aspect, matchHeightConstraintsFirst = true)
             .clip(MaterialTheme.shapes.large)
             .onSizeChanged(onSizeChange)
             .testTag("wallpaper_fit_window")
-            .pointerInput(geometry, fit) {
-                if (geometry != null && fit != null) {
-                    detectTransformGestures { centroid, pan, zoom, _ -> onFitChange(fit.zoomed(zoom, centroid.x, centroid.y, geometry).panned(pan.x, pan.y, geometry)) }
+            .pointerInput(geometry) {
+                if (geometry != null) {
+                    detectTransformGestures { centroid, pan, zoom, _ ->
+                        latest.value?.let { current ->
+                            val next = current.zoomed(zoom, centroid.x, centroid.y, geometry).panned(pan.x, pan.y, geometry)
+                            latest.value = next
+                            currentOnFitChange(next)
+                        }
+                    }
                 }
             }
             .pointerInput(geometry) {
@@ -408,6 +458,21 @@ private fun FitWindow(
             )
         }
         HomeLayoutHint(modifier = Modifier.fillMaxSize().alpha(HINT_ALPHA))
+        if (!credit.isNullOrBlank()) {
+            // The photo's credit as it was given, small, over its foot; it is only on screen and never in what is saved.
+            Text(
+                text = credit,
+                style = MaterialTheme.typography.labelSmall,
+                color = Color.White,
+                maxLines = 2,
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth()
+                    .background(Color.Black.copy(alpha = CREDIT_SCRIM_ALPHA))
+                    .padding(horizontal = 8.dp, vertical = 4.dp)
+                    .testTag("wallpaper_fit_credit"),
+            )
+        }
     }
 }
 
@@ -424,3 +489,4 @@ private fun HomeLayoutHint(modifier: Modifier = Modifier) {
 private const val PREVIEW_WIDTH_FRACTION = 0.5f
 private const val PREVIEW_ASPECT = 9f / 19.5f
 private const val HINT_ALPHA = 0.28f
+private const val CREDIT_SCRIM_ALPHA = 0.45f

@@ -25,7 +25,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 /** The longest side a picked photo is decoded at: enough to zoom in on, without holding a huge bitmap. */
-private const val MAX_PICKED_SIDE = 3072
+internal const val MAX_PICKED_SIDE = 3072
 
 /**
  * What the wallpaper screen shows. [copy] is the stored glass copy; [stale] is `true` when the system wallpaper has changed since it was
@@ -41,6 +41,8 @@ data class WallpaperUiState(
     val failed: Boolean = false,
     /** `true` after returning from Android's wallpaper picker with a new wallpaper and no matching copy: offer to add one. */
     val offerCopy: Boolean = false,
+    /** The credit of the daily photo being framed, shown as it was given; `null` for a photo the user chose. */
+    val credit: String? = null,
     /** `true` while the photo being framed is a screenshot of the current wallpaper: it is stored as the copy only, not set as the wallpaper. */
     val copyOnly: Boolean = false,
 )
@@ -64,6 +66,7 @@ class WallpaperViewModel @Inject constructor(
         /** The system wallpaper's id when Android's picker was opened; `null` when it wasn't. */
         val pickerBaseline: Int? = null,
         val offerCopy: Boolean = false,
+        val credit: String? = null,
         val copyOnly: Boolean = false,
         /** Bumped by [refresh] so the stale check reads the system wallpaper's id again. */
         val checks: Int = 0,
@@ -81,6 +84,7 @@ class WallpaperViewModel @Inject constructor(
             isWorking = state.working,
             failed = state.failed,
             offerCopy = state.offerCopy,
+            credit = state.credit,
             copyOnly = state.copyOnly,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), WallpaperUiState())
@@ -127,11 +131,14 @@ class WallpaperViewModel @Inject constructor(
         viewModelScope.launch {
             local.update { it.copy(working = true, failed = false) }
             val photo = wallpaperCopyRepository.decodePicked(uri, MAX_PICKED_SIDE)
-            local.update { it.copy(picked = photo, working = false, failed = photo == null) }
+            local.update { it.copy(picked = photo, credit = null, working = false, failed = photo == null) }
         }
     }
 
-    fun cancelFit() = local.update { it.copy(picked = null, failed = false) }
+    /** A daily photo was downloaded: frame it, with its [credit] shown on it. */
+    fun onPickedBitmap(photo: Bitmap, credit: String) = local.update { it.copy(picked = photo, credit = credit.ifBlank { null }, copyOnly = false, failed = false) }
+
+    fun cancelFit() = local.update { it.copy(picked = null, credit = null, failed = false) }
 
     /** The user framed [visible] of the picked photo: set it as the wallpaper and store it as the glass copy. */
     fun confirmFit(visible: RectF, includeLock: Boolean) {
@@ -139,7 +146,7 @@ class WallpaperViewModel @Inject constructor(
         viewModelScope.launch {
             local.update { it.copy(working = true, failed = false) }
             val done = if (local.value.copyOnly) useScreenshotAsCopy(photo, visible) else setWallpaperFromPhoto(photo, visible, includeLock)
-            local.update { it.copy(picked = if (done) null else it.picked, working = false, failed = !done) }
+            local.update { it.copy(picked = if (done) null else it.picked, credit = if (done) null else it.credit, working = false, failed = !done) }
         }
     }
 

@@ -285,4 +285,41 @@ class WallpaperViewModelTest {
         assertFalse(state.stale)
         assertEquals(7, settings.settings.first { it.wallpaperCopySystemId == 7 }.wallpaperCopySystemId)
     }
+
+    @Test
+    fun `a daily photo is framed with its credit, which goes when framing ends`() = runTest {
+        // Given a view model on the wallpaper screen
+        val viewModel = viewModel(FakeCopies(), settings())
+        viewModel.observe(this)
+
+        // When a daily photo comes in
+        viewModel.onPickedBitmap(Bitmap.createBitmap(200, 100, Bitmap.Config.ARGB_8888), "© Someone/Getty Image")
+
+        // Then it is being framed with the credit exactly as given, and is not a screenshot
+        val framing = viewModel.uiState.first { it.picked != null }
+        assertEquals("© Someone/Getty Image", framing.credit)
+        assertFalse(framing.copyOnly)
+
+        // And cancelling clears both
+        viewModel.cancelFit()
+        val cleared = viewModel.uiState.first { it.picked == null }
+        assertNull(cleared.credit)
+    }
+
+    @Test
+    fun `a blank credit is not shown and confirming the fit clears the credit`() = runTest {
+        // Given a daily photo with no credit
+        val viewModel = viewModel(FakeCopies().apply { systemId = 4 }, settings())
+        viewModel.observe(this)
+        viewModel.onPickedBitmap(Bitmap.createBitmap(200, 100, Bitmap.Config.ARGB_8888), "  ")
+        assertNull(viewModel.uiState.first { it.picked != null }.credit)
+
+        // When a daily photo with a credit is confirmed
+        viewModel.onPickedBitmap(Bitmap.createBitmap(200, 100, Bitmap.Config.ARGB_8888), "© X")
+        viewModel.confirmFit(RectF(0f, 0f, 50f, 100f), includeLock = false)
+
+        // Then the credit is gone with the framing
+        val done = viewModel.uiState.first { it.picked == null && !it.isWorking && it.copy != null }
+        assertNull(done.credit)
+    }
 }

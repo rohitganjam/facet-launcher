@@ -10,6 +10,7 @@ import android.view.WindowManager
 import com.facetlauncher.app.data.di.IoDispatcher
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.File
+import java.nio.ByteBuffer
 import kotlin.math.max
 import kotlin.math.min
 import javax.inject.Inject
@@ -66,6 +67,16 @@ open class WallpaperCopyRepository @Inject constructor(
     open suspend fun decodePicked(uri: Uri, maxSide: Int): Bitmap? = withContext(ioDispatcher) {
         runCatching {
             ImageDecoder.decodeBitmap(ImageDecoder.createSource(context.contentResolver, uri)) { decoder, info, _ ->
+                decoder.allocator = ImageDecoder.ALLOCATOR_SOFTWARE
+                shrunkSize(info.size.width, info.size.height, maxSide)?.let { (width, height) -> decoder.setTargetSize(width, height) }
+            }
+        }.getOrNull()
+    }
+
+    /** Like [decodePicked], for an image already in memory: upright, shrunk to [maxSide] on its long side, software; `null` when it cannot be read. */
+    open suspend fun decodeBytes(bytes: ByteArray, maxSide: Int): Bitmap? = withContext(ioDispatcher) {
+        runCatching {
+            ImageDecoder.decodeBitmap(ImageDecoder.createSource(ByteBuffer.wrap(bytes))) { decoder, info, _ ->
                 decoder.allocator = ImageDecoder.ALLOCATOR_SOFTWARE
                 shrunkSize(info.size.width, info.size.height, maxSide)?.let { (width, height) -> decoder.setTargetSize(width, height) }
             }

@@ -4783,3 +4783,58 @@ Every background style is a tint today (Compose cannot blur the system wallpaper
 - Always on once a copy exists, or a per-component toggle (leaning always on).
 - Parallax or scrolling alignment of the stored image with the system wallpaper.
 - How the Backdrop library behaves on live wallpapers and below API 31 (the stored image does not depend on the live wallpaper, but the match to what is behind the window does).
+
+## Daily photos in the wallpaper flow (draft)
+
+Goal: a third way to choose a wallpaper, next to *Choose a wallpaper for Facet* and *Let Facet use my current wallpaper*: browse a week of daily photos, pick one, frame it in the existing pan and zoom step, and set it (and store the copy for glass) exactly as a chosen image is. Source: the Peapix feeds.
+
+### Findings (checked against the live feeds, 13 Nov 2026)
+- `GET https://peapix.com/bing/feed?country=<cc>&n=<n>` (Bing's photo of the day) and `GET https://peapix.com/spotlight/feed?n=<n>` (Windows Spotlight). No key, no account.
+- **Both return at most 7 items** however high `n` is (`n=50` and `n=8` both gave 7), so the feed is a week of photos and `n` only trims it.
+- Fields: `title`, `copyright` (the credit, for example `© lightphoto/Getty Image`, sometimes cut short), `thumbUrl` (640 px, about 40 KB), `fullUrl` (1920 px, about 300 to 450 KB), `imageUrl` (the original, about 2.5 to 3.7 MB, usually above 1080p), `pageUrl`, and `date` on Bing only.
+- Bing takes `country` (au, br, ca, cn, de, fr, in, it, jp, es, gb, us) and localises titles and the photo of the day; Spotlight has no country and no date.
+- Peapix states the images are "for wallpaper use only"; it publishes no licence, attribution rule, rate limit (responses are cached for 30 minutes) or service guarantee.
+- The photos are landscape. A portrait crop of `fullUrl` is about 500 px wide, which is soft on a 1080 px wide screen, so the original `imageUrl` is the one to frame.
+
+### Decisions (proposed, to confirm before building)
+- **Both feeds, as two tabs** (decided): *Bing* (`bing/feed`, `country` from the device locale when it is one of the twelve and `us` otherwise; dated, so its first tile says Today) and *Spotlight* (`spotlight/feed`, no country, no date). Only the tab on screen is fetched.
+- **Count: `n=7`** per feed, the whole week. Asking for more returns the same 7.
+- **Cache for the day** (decided): each feed's response (keyed by source and country) and its 7 thumbnails are kept in the app's cache folder and reused for the rest of that calendar day, so reopening the screen costs nothing; they are fetched again the first time the screen opens on a new day. If the refresh fails (offline) the previous day's cache is shown instead of an error. The system may clear the cache folder at any time, which only means one more fetch. Peapix itself caches for 30 minutes, so there is nothing to gain from refreshing sooner.
+- **Original only on tap** (decided): the full image (2.5 to 3.7 MB) is downloaded only when a photo is tapped, held in memory for the fit step, and not cached: once it is set it is the stored copy.
+- **Data use:** the first open of the day costs a feed (a few KB) and 7 thumbnails (about 300 KB) for the tab shown; every later open that day costs nothing. Nothing in the background, nothing when the screen is not opened.
+- **Quality:** frame `imageUrl`, decoded at the same 3072 px cap as a chosen image.
+- **Credit:** the `copyright` text exactly as given, as a small footer on the photo while it is shown in the fit step (never part of the saved crop). The title shows on its tile.
+- **Failure:** offline, a feed that does not parse, and a download that fails each show a message with Retry; choosing an image or a screenshot is unaffected.
+
+### Network and privacy (this is a second network use, so it needs the same explicit decision weather had)
+- `CLAUDE.md` says only weather uses the network. That line, and `WeatherApi`'s "the only code that opens a connection" comment, change to cover this.
+- The marketing site's privacy policy (`../facet-launcher-site/build.py`) says the app makes no requests with weather off and sends nothing else. It needs a section: opening Daily photos contacts Peapix, which sees the phone's IP address and the country code; nothing else is sent.
+- Play data safety answers change to match.
+- `INTERNET` is already declared; `verifyInternetPermission` stays as it is.
+- Image URLs from the feed are only fetched over https and only from `peapix.com` hosts.
+
+### Flow (revised)
+One flow, not a new row: *Set a wallpaper with Facet* opens the Bing and Spotlight grid, and a *Choose your own image* option at its foot opens the picker. The first row on the wallpaper screen is renamed to match; the separate Daily photos row is gone.
+
+### Design
+`data/dailyphotos/` holds `DailyPhotoApi` (an interface, like `WeatherApi`) and `PeapixApi` (`HttpURLConnection`, the same `User-Agent` as weather, a 15 second timeout, a size cap on downloads). `DailyPhotoRepository` keeps the day's cache described above (`DailyPhotoCache`, files under the cache folder, the day taken from the clock so it can be tested) and an in-memory thumbnail layer over it. `DailyPhotosViewModel` and `DailyPhotosScreen` (a Bing and Spotlight tab over a grid of tiles) sit inside `WallpaperScreen` the way the fit step does; picking a photo downloads the original and hands the bitmap and credit to `WallpaperViewModel`, which shows the fit step as it does for a chosen image. The entry is a *Daily photos* row in the first card on the wallpaper screen.
+
+### Steps
+- [x] Fit step: pan and zoom lost most of a drag. Touch events arrive faster than recompositions, and each step built on the frame the last recomposition had seen (and the frame was also a pointer-input key, restarting the handler); it now keeps the latest frame in a holder that every step updates (`LatestFit`). Tests drive a long drag, a pinch and a double tap and read the framed rectangle (`WallpaperScreenTest`).
+- [x] `DailyPhoto` model and `DailyPhotoSource`, `PeapixApi` with the feed parser and the https and host check, `DailyPhotoCache` (a day's feed and thumbnails on disk), `DailyPhotoRepository` (country mapping, the day's cache with an offline fall back to the last one, original download and decode). Tests: parser, host check, country mapping, the cache across a day change and offline.
+- [x] `DailyPhotosViewModel` (load, retry, pick and download) and `DailyPhotosScreen`; the *Daily photos* row; `WallpaperViewModel.onPickedBitmap(photo, credit)`. Tests: the view model with a fake repository, the screen's states.
+- [x] The credit footer in the fit step (`WallpaperUiState.credit`). Test: shown with a credit, absent without.
+- [x] Strings in en, de, es, fr, nl and pt.
+- [x] Docs: `21` (new section), `07` (registries), `CLAUDE.md` (the network line), this file.
+- [ ] Privacy policy and Play data safety (the site is a sibling repo, not edited from here): the draft below, to go into `../facet-launcher-site/build.py` and the Play console before the release that ships this.
+
+### Privacy policy and Play drafts
+Policy section: *Daily photos.* Daily photos on the wallpaper screen is optional. When you open it, Facet asks Peapix (peapix.com) for the day's Bing and Windows Spotlight photo lists and their preview images, at most once a day, and downloads a full-size photo only when you tap it. Peapix receives your phone's IP address and, for Bing, a two-letter country code taken from your phone's region. Nothing else is sent: no account, no device or advertising identifiers, nothing about your apps or settings. The lists and previews are kept in the app's cache on your phone for the day. Photos belong to their photographers and agencies and are shown with their credit; Peapix's own terms apply to its service. The "no requests with weather off" sentences change to "no requests unless you turn on weather or open Daily photos".
+
+Play data safety: mirror the weather answer (approximate location to MET Norway, for app functionality) and add the IP address and country code sent to Peapix, for app functionality, not shared for advertising, not required to use the app.
+
+### Later: auto-rotate wallpaper (to explore, not planned yet)
+- A rotation that sets a new wallpaper on a schedule (daily, or at an interval), from Peapix's photos or from the user's own chosen images, for Home or Home and lock.
+- Needs periodic background work, which the weather design rules out today (no `WorkManager`, no background network). That would be another explicit decision, with Wi-Fi-only and battery constraints, and a clear off switch.
+- Each rotation would go through the same set-and-store path, so glass would follow the new wallpaper and the stale-copy check would stay right.
+- Questions to settle: what the source is, how it is chosen (in order, random), whether the lock screen follows, what happens offline, whether it is a Pro feature, and how a rotation shows in the wallpaper screen.

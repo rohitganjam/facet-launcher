@@ -4,8 +4,11 @@ import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -26,6 +29,7 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import com.facetlauncher.app.ui.theme.Accent
@@ -77,7 +81,8 @@ fun PillTabPair(
                     .background(Accent),
             )
         }
-        Row(modifier = Modifier.selectableGroup()) {
+        // Equal height, so a label that wraps in one tab does not leave the other's text off-centre against the indicator.
+        Row(modifier = Modifier.selectableGroup().height(IntrinsicSize.Min)) {
             PillTab(startLabel, selected = !endSelected, tag = startTag, onClick = { onSelect(false) }, modifier = Modifier.weight(1f))
             PillTab(endLabel, selected = endSelected, tag = endTag, onClick = { onSelect(true) }, modifier = Modifier.weight(1f))
         }
@@ -90,9 +95,10 @@ private fun PillTab(label: String, selected: Boolean, tag: String, onClick: () -
         modifier = modifier
             .selectable(selected = selected, role = Role.Tab, onClick = onClick)
             .testTag(tag)
-            .padding(vertical = 8.dp),
+            .fillMaxHeight()
+            .padding(horizontal = 8.dp, vertical = 8.dp),
         contentAlignment = Alignment.Center,
     ) {
-        Text(text = label, style = MaterialTheme.typography.bodyMedium, color = if (selected) Surface else Ink)
+        Text(text = label, style = MaterialTheme.typography.bodyMedium, color = if (selected) Surface else Ink, textAlign = TextAlign.Center)
     }
 }
