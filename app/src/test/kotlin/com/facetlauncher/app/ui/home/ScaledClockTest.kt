@@ -1,5 +1,6 @@
 package com.facetlauncher.app.ui.home
 
+import com.facetlauncher.app.data.model.ClockAlignment
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -36,6 +37,16 @@ class ScaledClockTest {
     fun `a clock scaled up from its bottom edge is drawn above its box`() {
         assertEquals(-500, scaledClockTop(naturalHeight = 500, scale = 2f, originY = 1f))
         assertEquals(1000, scaledClockHeight(naturalHeight = 500, scale = 2f))
+    }
+
+    @Test
+    fun `a clock scaled up grows away from the edge it is aligned to`() {
+        // Given a 600px wide clock drawn at 1.5x
+        // Then left aligned it starts at its box's left, right aligned it overhangs to the left, centred it overhangs both sides
+        assertEquals(0, scaledClockTop(naturalHeight = 600, scale = 1.5f, originY = scaleOriginX(ClockAlignment.LEFT)))
+        assertEquals(-300, scaledClockTop(naturalHeight = 600, scale = 1.5f, originY = scaleOriginX(ClockAlignment.RIGHT)))
+        assertEquals(-150, scaledClockTop(naturalHeight = 600, scale = 1.5f, originY = scaleOriginX(ClockAlignment.CENTER)))
+        assertEquals(900, scaledClockHeight(naturalHeight = 600, scale = 1.5f))
     }
 
     @Test

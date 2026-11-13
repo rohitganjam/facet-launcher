@@ -943,6 +943,54 @@ class ClockBlockTest {
     }
 
     @Test
+    fun aBackgroundHugsAClockResizedUpAndDown() = assertBackgroundHugsResizedClock(withEvents = false)
+
+    @Test
+    fun aBackgroundHugsAClockAndItsEventsResizedUpAndDown() = assertBackgroundHugsResizedClock(withEvents = true)
+
+    /** The accent hour clock with a background, resized through larger, natural and smaller and back: the panel keeps hugging it (and its events). */
+    private fun assertBackgroundHugsResizedClock(withEvents: Boolean) {
+        // Given the accent hour clock with a background, with or without two upcoming events
+        val fixedClock = Clock.fixed(Instant.parse("2026-08-27T09:34:00Z"), ZoneOffset.UTC)
+        val events = if (!withEvents) persistentListOf() else persistentListOf(
+            CalendarEvent(id = 1, calendarId = "1", title = "Team standup", startTimeMillis = fixedClock.millis() + 3_600_000, endTimeMillis = fixedClock.millis() + 5_400_000, isAllDay = false),
+            CalendarEvent(id = 2, calendarId = "1", title = "Quarterly planning review with design", startTimeMillis = fixedClock.millis() + 7_200_000, endTimeMillis = fixedClock.millis() + 9_000_000, isAllDay = false),
+        )
+        var scale by mutableStateOf(1f)
+        composeRule.setContent {
+            FacetLauncherTheme {
+                ClockBlock(
+                    clock = fixedClock, locale = Locale.US, templateId = ClockTemplateId.ACCENT_CONTRAST,
+                    glass = com.facetlauncher.app.data.model.GlassStyle.FROST, clockScale = scale, events = events,
+                )
+            }
+        }
+        val maxSlack = with(composeRule.density) { 24.dp.toPx() }
+
+        listOf(1.4f, 1f, 0.6f, 1.2f).forEach { value ->
+            // When the clock is resized to that scale
+            scale = value
+            composeRule.waitForIdle()
+
+            // Then the time, the date and the events are inside the panel, and the panel ends close to the widest of them
+            // (drawn bounds, which include the scale layer; unclipped bounds don't)
+            val panel = composeRule.onNodeWithTag("clock_glass_panel").fetchSemanticsNode().boundsInRoot
+            val minutes = composeRule.onNodeWithText(":34").fetchSemanticsNode().boundsInRoot
+            val date = composeRule.onNodeWithText("THURSDAY", substring = true).fetchSemanticsNode().boundsInRoot
+            assertTrue("time outside the panel at $value", minutes.left >= panel.left && minutes.right <= panel.right && minutes.top >= panel.top)
+            assertTrue("date outside the panel at $value", date.right <= panel.right && date.bottom <= panel.bottom)
+            var right = maxOf(minutes.right, date.right)
+            if (withEvents) {
+                val rows = composeRule.onNodeWithTag("clock_event_rows").fetchSemanticsNode().boundsInRoot
+                assertTrue("events outside the panel at $value", rows.left >= panel.left && rows.right <= panel.right && rows.bottom <= panel.bottom)
+                assertTrue("events overlap the date at $value", rows.top >= date.bottom)
+                right = maxOf(right, rows.right)
+            }
+            assertTrue("panel overhangs by ${panel.right - right}px at $value", panel.right - right < maxSlack)
+        }
+    }
+
+    @Test
     fun noBackgroundDrawsNoPanel() {
         // Given a clock with no background
         val fixedClock = Clock.fixed(Instant.parse("2026-08-27T09:05:00Z"), ZoneOffset.UTC)

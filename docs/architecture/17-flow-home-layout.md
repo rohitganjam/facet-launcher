@@ -134,9 +134,10 @@ narrow pane), because the resize maths relies on that size; clamping it let the 
 The clock's scale is draw-only, so in portrait it keeps its natural height and the calendar sits below that.
 Landscape clamps the scale to the pane, which would leave the calendar far below a clock drawn smaller than
 its box, and off the bottom in a short window. So landscape passes `scaledFootprint = true`: the clock box
-reports the *drawn* height (`scaledClockHeight`) and shifts up by the empty space above it
-(`scaledClockTop`), so the calendar follows the clock. The box inside still measures the natural size, which
-the resize maths and `landscapeVisualClockRect` rely on.
+reports the *drawn* size (`scaledClockHeight`, applied to both width and height) and shifts by the empty space
+before it (`scaledClockTop`, about `scaleOriginX` horizontally), so the calendar follows the clock. A clock with
+a glass background always uses the drawn size too, so the panel hugs what is drawn at any scale. The box inside
+still measures the natural size, which the resize maths and `landscapeVisualClockRect` rely on.
 
 The clock pane (`ClockPane` in `HomeLandscapeLayout`) is the whole left pane and scrolls vertically, only
 when the clock and calendar are taller than it. Its bounds go to `HomeDrawerRoute`, which leaves vertical

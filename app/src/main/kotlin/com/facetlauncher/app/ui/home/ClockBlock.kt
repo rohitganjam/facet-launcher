@@ -165,7 +165,7 @@ fun ClockBlock(
                 // Measure the clock at its natural width even when the column is narrower (a narrow
                 // landscape pane): otherwise the box size, which the resize maths relies on, is clamped.
                 .wrapContentWidth(align = clockAlignment.resolve(), unbounded = true)
-                .scaledFootprint((scaledFootprint || panelOn) && clockWidgetAppWidgetId == null, clockScale, clockScaleOriginY)
+                .scaledFootprint((scaledFootprint || panelOn) && clockWidgetAppWidgetId == null, clockScale, clockAlignment, clockScaleOriginY)
                 .then(clockBoxModifier),
         ) {
             ClockOrWidgetContent(
@@ -416,11 +416,7 @@ private fun Modifier.uniformScale(
         placeable.placeWithLayer(0, 0) {
             scaleX = scale
             scaleY = scale
-            transformOrigin = when (alignment) {
-                ClockAlignment.LEFT -> TransformOrigin(0f, originY)
-                ClockAlignment.RIGHT -> TransformOrigin(1f, originY)
-                ClockAlignment.CENTER -> TransformOrigin(0.5f, originY)
-            }
+            transformOrigin = TransformOrigin(scaleOriginX(alignment), originY)
         }
     }
 }
@@ -433,16 +429,24 @@ internal fun scaledClockTop(naturalHeight: Int, scale: Float, originY: Float): I
 internal fun scaledClockHeight(naturalHeight: Int, scale: Float): Int =
     (naturalHeight * scale).roundToInt().coerceAtLeast(0)
 
+/** [uniformScale]'s horizontal origin for [alignment]: the clock grows away from the edge it is aligned to. */
+internal fun scaleOriginX(alignment: ClockAlignment): Float = when (alignment) {
+    ClockAlignment.LEFT -> 0f
+    ClockAlignment.RIGHT -> 1f
+    ClockAlignment.CENTER -> 0.5f
+}
+
 /**
- * Makes the wrapped box occupy exactly the rectangle the scaled clock is drawn in: its height is the drawn height and it is
- * shifted up by the empty space above the drawn clock. What sits below then follows the clock, and no blank space is left above it.
- * Measurements taken inside this modifier still see the natural box.
+ * Makes the wrapped box occupy exactly the rectangle the scaled clock is drawn in, both ways, so what sits below follows the clock
+ * and a glass panel around it hugs what is drawn. Measurements taken inside this modifier still see the natural box.
  */
-private fun Modifier.scaledFootprint(enabled: Boolean, scale: Float, originY: Float) =
+private fun Modifier.scaledFootprint(enabled: Boolean, scale: Float, alignment: ClockAlignment, originY: Float) =
     if (!enabled) this else this.layout { measurable, constraints ->
         val placeable = measurable.measure(constraints)
+        // The same arithmetic as for the height: the drawn edge's offset into the natural box along that axis.
+        val left = scaledClockTop(placeable.width, scale, scaleOriginX(alignment))
         val top = scaledClockTop(placeable.height, scale, originY)
-        layout(placeable.width, scaledClockHeight(placeable.height, scale)) { placeable.place(0, -top) }
+        layout(scaledClockHeight(placeable.width, scale), scaledClockHeight(placeable.height, scale)) { placeable.place(-left, -top) }
     }
 
 @Preview(showBackground = true)
