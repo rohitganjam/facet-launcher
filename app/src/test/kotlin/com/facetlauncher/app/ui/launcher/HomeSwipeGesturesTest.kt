@@ -1,5 +1,7 @@
 package com.facetlauncher.app.ui.launcher
 
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import org.junit.Assert.assertEquals
@@ -86,5 +88,58 @@ class HomeSwipeGesturesTest {
 
         assertEquals(0f, axis.progress.value, 0f)
         assertFalse(axis.progress.isRunning)
+    }
+
+    @Test
+    fun `a touch on a Facet widget page is claimed only for horizontal drags so the stack still turns`() {
+        // Given an Agenda page in the clock zone
+        val widget = Rect(0f, 100f, 400f, 400f)
+
+        // When a touch comes down on it
+        val claim = homeTouchClaim(Offset(200f, 250f), widget, clockWidgetIsNative = true, appList = null, clockPane = null)
+
+        // Then Home takes a horizontal drag and leaves a vertical one to the widget's own list
+        assertEquals(HomeTouchClaim.HORIZONTAL_ONLY, claim)
+    }
+
+    @Test
+    fun `a touch on a hosted widget page is left to the widget`() {
+        // Given a hosted widget page in the clock zone
+        val widget = Rect(0f, 100f, 400f, 400f)
+
+        // When a touch comes down on it
+        val claim = homeTouchClaim(Offset(200f, 250f), widget, clockWidgetIsNative = false, appList = null, clockPane = null)
+
+        // Then Home does not watch it: the widget's touch gate hands over what it does not use
+        assertEquals(HomeTouchClaim.NONE, claim)
+    }
+
+    @Test
+    fun `a touch on the app list or the landscape clock pane is claimed only for horizontal drags`() {
+        // Given the app list and a clock pane, with a hosted widget inside the pane
+        val appList = Rect(0f, 500f, 400f, 900f)
+        val pane = Rect(400f, 0f, 800f, 400f)
+        val widget = Rect(450f, 50f, 750f, 350f)
+
+        // When touches come down on the list and on the widget in the pane
+        val onList = homeTouchClaim(Offset(200f, 700f), widget, clockWidgetIsNative = false, appList = appList, clockPane = pane)
+        val onPaneWidget = homeTouchClaim(Offset(600f, 200f), widget, clockWidgetIsNative = false, appList = appList, clockPane = pane)
+
+        // Then both are horizontal-only
+        assertEquals(HomeTouchClaim.HORIZONTAL_ONLY, onList)
+        assertEquals(HomeTouchClaim.HORIZONTAL_ONLY, onPaneWidget)
+    }
+
+    @Test
+    fun `a touch on free space is claimed for every direction`() {
+        // Given a widget page and the app list, neither under the touch
+        val widget = Rect(0f, 100f, 400f, 400f)
+        val appList = Rect(0f, 500f, 400f, 900f)
+
+        // When a touch comes down between them
+        val claim = homeTouchClaim(Offset(200f, 450f), widget, clockWidgetIsNative = true, appList = appList, clockPane = null)
+
+        // Then Home takes the drag whichever way it goes
+        assertEquals(HomeTouchClaim.ALL, claim)
     }
 }

@@ -86,6 +86,7 @@ import com.facetlauncher.app.data.local.FacetDatabase
 import com.facetlauncher.app.data.local.WidgetPlacementEntity
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.AppProfile
+import com.facetlauncher.app.data.model.NativeWidgetType
 import com.facetlauncher.app.data.model.NotificationInfo
 import com.facetlauncher.app.data.model.ProReason
 import com.facetlauncher.app.data.widget.AppWidgetRepository
@@ -147,6 +148,7 @@ import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.mockito.Mockito.`when`
@@ -176,6 +178,9 @@ class HomeDrawerRouteTest {
 
     /** The route's own clock stack and facets, so a test can seed pages for the active facet. */
     private lateinit var seedClockStack: suspend (appWidgetId: Int) -> Unit
+
+    /** Turns the active facet's clock page into an Agenda and adds the clock after it. */
+    private lateinit var seedAgendaThenClock: suspend () -> Unit
 
     /** One snapshot shared by Home and the Drawer, so a test can seed notifications the long-press sheet then lists. */
     private val notificationBadges = NotificationBadgeRepository()
@@ -234,6 +239,13 @@ class HomeDrawerRouteTest {
                 clockStackRepository.addWidget(facetId, appWidgetId)
                 // A widget with no provider has no default size, and the clock block only draws a widget that has one.
                 clockStackRepository.setSize(clockStackRepository.getAll(facetId).last().id, widthDp = 160, heightDp = 90)
+            }
+            seedAgendaThenClock = {
+                val facetId = facetRepository.observeFacets().first { it.isNotEmpty() }.first().id
+                val first = clockStackRepository.getAll(facetId).first().id
+                clockStackRepository.replaceWithNativeWidget(first, NativeWidgetType.AGENDA)
+                clockStackRepository.setSize(first, widthDp = 300, heightDp = 160)
+                clockStackRepository.addClock(facetId)
             }
             // A real AppRepository here would hit the actual on-device LauncherApps service —
             // AppRepositoryTest already covers that integration (mapping/sorting/icon-flatten/
@@ -667,6 +679,37 @@ class HomeDrawerRouteTest {
 
         // Then the Hub opened: there was no page to the right
         composeRule.onNodeWithTag("hub_screen").assertIsDisplayed()
+    }
+
+    @Test
+    fun swipingLeftOnAnAgendaPageTurnsTheClockStackToItsNextPage() {
+        // Given a stack whose first page is the Agenda, then the clock
+        setContent()
+        runBlocking { seedAgendaThenClock() }
+        composeRule.waitUntil(timeoutMillis = 10_000) {
+            composeRule.onAllNodesWithTag("clock_page_dots").fetchSemanticsNodes().isNotEmpty() &&
+                composeRule.onAllNodesWithTag("native_widget_AGENDA", useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
+        }
+        val rootWidth = composeRule.onRoot().fetchSemanticsNode().boundsInRoot.right
+        val agenda = composeRule.onNodeWithTag("native_widget_AGENDA", useUnmergedTree = true).fetchSemanticsNode().boundsInRoot
+        assertTrue(agenda.center.x in 0f..rootWidth)
+
+        // When swiping left starting on the Agenda itself
+        composeRule.onRoot().performTouchInput {
+            swipeWithVelocity(
+                start = Offset(agenda.right - 8f, agenda.center.y),
+                end = Offset(width * 0.05f, agenda.center.y),
+                endVelocity = 200f,
+                durationMillis = 300,
+            )
+        }
+        settleAnimation()
+
+        // Then the Agenda slid out to the left, and the facet carousel did not open
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithTag("native_widget_AGENDA", useUnmergedTree = true).fetchSemanticsNodes().all { it.boundsInRoot.right <= 0f }
+        }
+        composeRule.onNodeWithTag("facet_carousel_screen").assertIsNotDisplayed()
     }
 
     private fun settleAnimation() {
