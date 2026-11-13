@@ -1,28 +1,32 @@
-# Facet Launcher 0.1.43
+# Facet Launcher 0.1.44
 
 ## New Features
-- You can now choose a text colour for the Weather, Agenda and Now Playing widgets: match the theme, always light, or always dark.
-- Widgets have two new background options, Theme and Theme inverted. Both are slightly see-through solid backgrounds that follow your light or dark theme. With Theme inverted, the text colour flips to stay readable.
+- **Daily wallpaper:** Facet can now change your wallpaper once a day using a photo from Bing or Windows Spotlight. Turn it on from the switch in Daily photos. It only checks for a new photo when you return to the home screen. It follows your Wi-Fi-only and Battery Saver settings, and it swaps in the new photo the next time your screen turns off so the change doesn't interrupt you.
+- Daily wallpaper is a Facet Pro feature. Without Pro, the switch shows a Pro badge and opens Facet Pro. If your Pro subscription ends, your daily wallpaper settings are kept, but the wallpaper stops changing until you renew.
+- **Browse daily photos when setting a wallpaper:** "Set a wallpaper with Facet" now opens a grid of this week's Bing and Spotlight photos, 7 from each. You can still use "Choose your own image" at the bottom. While you position a photo, the photographer's credit appears.
 
 ## Fixes
-- Fixed a crash with centred app rows in the single-column app list.
-- Fixed the launcher sometimes forgetting your wallpaper after a refresh, which could make the wallpaper offer appear when it shouldn't.
-- Fixed the wallpaper popup appearing right after you set a wallpaper in Facet. Glass effects also no longer switch off until you leave and come back.
+- On the clock stack, swiping left or right on one of Facet's own widgets, such as the Agenda, now moves to the next page. The Agenda still scrolls up and down as before.
+- With the glass effect on, the image Facet used to create the blur could cover your real wallpaper. This happened if that image was a screenshot or one you picked with "I have an image already". Your actual wallpaper now always shows, and glass panels still blur correctly.
+- Dragging to pan and zoom a wallpaper while positioning it now follows your finger smoothly. Before, it missed much of the movement.
 
 ## Improvements
-- Glass icons on the dock, list rows and grid tiles now blur the frosted panel behind them too, so layered glass looks more natural.
-- The clock now has a single Background setting in Clock Style that covers both the time and its events. Your old calendar background choice carries over.
-- Previews now show glass effects using your saved wallpaper, so they match what you'll actually see.
-- Glass on the Hub now includes the Hub's dimming, so the blur matches what's on screen.
-- The lens effect now works with every glass style.
-- In the single-column app list, all rows are now the same width as the widest item and take up at least half the list.
-- The wallpaper screen is clearer. "Let Facet use my current wallpaper" is now its own card that's always shown, with a check mark and "Already in use" once it's set. "Remove the copy" is now a simple text button.
+- In the two-column Home list with glass, there is now the same small gap between the columns as between the rows. Dragging an app onto the gap still drops it in the right place, and the Appearance preview shows the new spacing.
+- A progress indicator now shows while a wallpaper is being set, saved or opened.
+- The tabs for choosing a photo source and for choosing Home or Home & Lock are now the same height, and longer labels stay centred.
 
 ## Internal
-- GlassPanel records its own layer so nested glass icons sample the panel's frost.
-- Calendar background setting removed and migrated into the shared Clock Style background.
-- Previews sample their own saved wallpaper instead of the activity's layer.
-- Widget text option forced through LocalIsDarkTheme, applied to widget content only.
-- Wallpaper-copy staleness check now reads the system wallpaper id fresh.
-- Lens depth weight set to 0.8.
-- Release 0.1.42 version bump.
+- Fixed master after merging the daily wallpaper and agenda swipe PRs:
+  - Daily wallpaper unit tests now run the coordinator and the fake DataStores on a test scope that `advanceUntilIdle()` waits for, instead of `backgroundScope` or real IO.
+  - Detekt: split `ApplyPendingWallpaperUseCase` and `RunDailyWallpaperUseCase` (ReturnCount), simplified two conditions, renamed `PortraitCentreCrop.kt` to `PortraitCrop.kt`, and moved `DailyWallpaperActions` next to its UiState.
+  - Instrumented tests now pass `DailyWallpaperCoordinator` to `LauncherViewModel`. Removed commas from two test names because they fail to dex.
+  - The Agenda swipe test now counts only the on-screen Agenda, since an offscreen copy is also composed.
+  - CLAUDE.md now notes that commas also break androidTest names.
+- Home's swipe detector now claims horizontal drags inside Facet's own widget pages, the same way the app list does. Hosted widgets still rely on their touch gate.
+- Daily wallpaper is gated on Pro entitlement. After a lapse, settings are kept, but runs and applies are skipped.
+- Daily wallpaper runs are triggered when the launcher comes to the foreground and applied on screen-off.
+- Glass: the wallpaper copy is recorded only into the backdrop layer and is no longer drawn full screen behind Home.
+- Wallpaper picker uses Peapix feeds for Bing and Spotlight, cached for the calendar day. The original image is downloaded on tap.
+- Pan and zoom in the fit step keeps the latest frame for each touch event, because touch events were arriving faster than recomposition.
+- `PillTabPair` is now used for the source tabs and the Home / Home & Lock selector. Its tabs share a height and centre wrapped text.
+- Documented the second network use (the photo feeds) in CLAUDE.md and the architecture docs.
