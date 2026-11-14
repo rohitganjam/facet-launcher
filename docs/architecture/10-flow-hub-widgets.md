@@ -118,6 +118,14 @@ flowchart TB
     TILE["HubWidgetTile onSizeChanged"] -- "updateWidgetSize(id, wDp, hDp)" --> OPT["AppWidgetManager.updateAppWidgetOptions\nOPTION_APPWIDGET_MIN/MAX_WIDTH/HEIGHT"]
 ```
 
+- **While a resize handle is dragged** the widget's box and its handles follow the finger exactly
+  (`HubResizeGrid.freeRect` in `HubResizeGeometry.kt`: never below the widget's smallest size or past the
+  grid), and an outline (`hub_resize_target_preview`) shows the cells it will take (`snappedSpan`, each
+  dragged edge to its nearest cell boundary). The provider is only told the snapped size, so it redraws
+  once per boundary, not every frame. On release the box glides from where the finger left it into those
+  cells (`RESIZE_SETTLE_SPEC`, no bounce) and holds them until the saved row changes, or for
+  `RESIZE_SAVE_GRACE_MS` if nothing was saved, so it never flashes back to the old size first. Landscape
+  does the same with its right and bottom handles.
 - A drop or resize that can't be resolved (`null` from the use case) is silently rejected — the
   tile snaps back; nothing is written.
 - Every successful mutation ends with `CompactWidgetsUseCase` so the grid never keeps a gap

@@ -55,6 +55,7 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.round
 import com.facetlauncher.app.R
 import com.facetlauncher.app.domain.HUB_MAX_ROWS
 import com.facetlauncher.app.ui.components.ThemedDropdownMenu
@@ -62,6 +63,7 @@ import com.facetlauncher.app.ui.components.ThemedDropdownMenuItem
 import com.facetlauncher.app.ui.theme.Accent
 import kotlin.math.roundToInt
 import kotlinx.collections.immutable.ImmutableList
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 internal val HUB_GRID_GAP = 4.dp
@@ -83,8 +85,8 @@ internal const val GRAB_SCALE = 1.08f
 internal val AUTO_SCROLL_EDGE_ZONE = 48.dp
 internal const val AUTO_SCROLL_SPEED_PX_PER_FRAME = 14f
 
-/** Which side of a widget a resize handle is anchored to — START (left/top) moves that edge, and with it row/col; END (right/bottom) only grows/shrinks span. */
-private enum class ResizeEdge { START, END }
+/** A resize released on [to] while the widget was saved on [from]; shown until the saved cells change. */
+private data class CommittedResize(val appWidgetId: Int, val from: HubSpan, val to: HubSpan)
 
 /**
  * Hand-rolled absolute-positioned grid, **not** `LazyVerticalGrid` — `GridCells`' own `span` API
@@ -141,6 +143,12 @@ fun HubGrid(
     // every widget tile (see below) rather than inside each widget's own composition scope.
     var horizontalResizeEdge by remember { mutableStateOf<ResizeEdge?>(null) }
     var verticalResizeEdge by remember { mutableStateOf<ResizeEdge?>(null) }
+    // The resizing widget's drawn box: it follows the finger while a handle is dragged, then glides into its cells.
+    val resizeRectPx = remember { Animatable(Rect.Zero, Rect.VectorConverter) }
+    // The widget whose box is drawn from resizeRectPx (set once that holds its rect), kept until it settles after resize mode ends.
+    var resizeVisualId by remember { mutableStateOf<Int?>(null) }
+    var committedResize by remember { mutableStateOf<CommittedResize?>(null) }
+    val resizeScope = rememberCoroutineScope()
     var grabbedTileCenterInRoot by remember { mutableStateOf<Offset?>(null) }
     // Live preview of where a grabbed widget would land if released right now.
     var dropTargetRow by remember { mutableStateOf<Int?>(null) }
@@ -193,6 +201,59 @@ fun HubGrid(
         val cellWidthPx = with(density) { cellWidth.toPx() }
         val rowHeightPx = with(density) { rowHeight.toPx() }
         val maxRow = widgets.maxOfOrNull { it.row + it.rowSpan } ?: 0
+        val resizeGrid = HubResizeGrid(cellWidthPx, rowHeightPx, HUB_GRID_GAP.toPx(density), columns, HUB_MAX_ROWS)
+        val resizingWidget = widgets.find { it.appWidgetId == resizingAppWidgetId }
+        val isDraggingHandle = horizontalResizeEdge != null || verticalResizeEdge != null
+        val resizingFreeRect = resizingWidget?.takeIf { isDraggingHandle }?.let {
+            resizeGrid.freeRect(it.span, horizontalResizeEdge, verticalResizeEdge, resizeDeltaPx, it.minColSpan, it.minRowSpan)
+        }
+        // The cells the resizing widget takes: under the finger while dragging, then the released cells until they're saved.
+        val resizingSpan = resizingWidget?.let { widget ->
+            when {
+                isDraggingHandle -> resizeGrid.snappedSpan(widget.span, horizontalResizeEdge, verticalResizeEdge, resizeDeltaPx, widget.minColSpan, widget.minRowSpan)
+                else -> committedResize?.takeIf { it.appWidgetId == widget.appWidgetId }?.to ?: widget.span
+            }
+        }
+        val visualWidget = widgets.find { it.appWidgetId == resizeVisualId }
+        val visualTargetRect = visualWidget?.let { widget ->
+            resizeGrid.rectOf(committedResize?.takeIf { it.appWidgetId == widget.appWidgetId }?.to ?: widget.span)
+        }
+        // At rest the box eases to the cells it's shown on: the released ones, then the saved ones (which compaction may move).
+        LaunchedEffect(resizeVisualId, resizingAppWidgetId, visualTargetRect, isDraggingHandle) {
+            if (visualTargetRect != null && !isDraggingHandle) {
+                resizeRectPx.animateTo(visualTargetRect, RESIZE_SETTLE_SPEC)
+                if (resizingAppWidgetId == null) resizeVisualId = null
+            }
+        }
+        // The released cells give way to the saved ones once those change, or after a grace period if the resize saved nothing.
+        val committedSavedSpan = committedResize?.let { committed -> widgets.find { it.appWidgetId == committed.appWidgetId }?.span }
+        LaunchedEffect(committedResize, committedSavedSpan) {
+            val committed = committedResize ?: return@LaunchedEffect
+            if (committedSavedSpan != committed.from) {
+                committedResize = null
+            } else {
+                delay(RESIZE_SAVE_GRACE_MS)
+                committedResize = null
+            }
+        }
+        // Ends a handle drag: saves the snapped cells, and the box glides there from where the finger left it.
+        val endResizeDrag: () -> Unit = {
+            val widget = resizingWidget
+            if (widget != null && (horizontalResizeEdge != null || verticalResizeEdge != null)) {
+                val free = resizeGrid.freeRect(widget.span, horizontalResizeEdge, verticalResizeEdge, resizeDeltaPx, widget.minColSpan, widget.minRowSpan)
+                val target = resizeGrid.snappedSpan(widget.span, horizontalResizeEdge, verticalResizeEdge, resizeDeltaPx, widget.minColSpan, widget.minRowSpan)
+                currentOnWidgetResized.value(widget.appWidgetId, target.row, target.col, target.colSpan, target.rowSpan)
+                resizeScope.launch {
+                    resizeRectPx.snapTo(free)
+                    committedResize = CommittedResize(widget.appWidgetId, from = widget.span, to = target)
+                    // Resize mode stays on so another handle can be grabbed; only this drag's state resets.
+                    resizeDeltaPx = Offset.Zero
+                    horizontalResizeEdge = null
+                    verticalResizeEdge = null
+                    autoScrollDirection = 0
+                }
+            }
+        }
         // While a widget is grabbed OR being resized, the scroll range extends all the way to the
         // grid's own row cap — not just as far as existing widgets reach — so there's always room
         // to auto-scroll into. In normal scroll mode, we always ensure there's at least one
@@ -258,46 +319,21 @@ fun HubGrid(
                         val isMenuOpen = widget.appWidgetId == showContextMenuForAppWidgetId
                         val baseColSpan = widget.colSpan
                         val baseRowSpan = widget.rowSpan
-                        val minColSpan = widget.nativeWidgetType?.minSpan()?.cols ?: 1
-                        val minRowSpan = widget.nativeWidgetType?.minSpan()?.rows ?: 1
-
-                        val liveColSpan = if (isResizing) {
-                            when (horizontalResizeEdge) {
-                                ResizeEdge.END -> resizedSpan(baseColSpan, resizeDeltaPx.x, cellWidthPx, minColSpan)
-                                ResizeEdge.START -> resizedSpan(baseColSpan, -resizeDeltaPx.x, cellWidthPx, minColSpan)
-                                null -> baseColSpan
-                            }
-                        } else {
-                            baseColSpan
-                        }
-                        val liveRowSpan = if (isResizing) {
-                            when (verticalResizeEdge) {
-                                ResizeEdge.END -> resizedSpan(baseRowSpan, resizeDeltaPx.y, rowHeightPx, minRowSpan)
-                                ResizeEdge.START -> resizedSpan(baseRowSpan, -resizeDeltaPx.y, rowHeightPx, minRowSpan)
-                                null -> baseRowSpan
-                            }
-                        } else {
-                            baseRowSpan
-                        }
-                        // A left/top drag keeps the opposite edge fixed by shrinking/growing the
-                        // anchor cell by exactly however much the span itself shrank/grew.
-                        val liveCol = if (isResizing && horizontalResizeEdge == ResizeEdge.START) {
-                            widget.col + baseColSpan - liveColSpan
-                        } else {
-                            widget.col
-                        }
-                        val liveRow = if (isResizing && verticalResizeEdge == ResizeEdge.START) {
-                            widget.row + baseRowSpan - liveRowSpan
-                        } else {
-                            widget.row
-                        }
-
-                        val tileWidth = cellWidth * liveColSpan + HUB_GRID_GAP * (liveColSpan - 1)
-                        val tileHeight = rowHeight * liveRowSpan + HUB_GRID_GAP * (liveRowSpan - 1)
+                        // The size the widget is told: whole cells, so its app only redraws when a cell boundary is crossed.
+                        val liveSpan = if (isResizing && resizingSpan != null) resizingSpan else widget.span
+                        val tileWidth = cellWidth * liveSpan.colSpan + HUB_GRID_GAP * (liveSpan.colSpan - 1)
+                        val tileHeight = rowHeight * liveSpan.rowSpan + HUB_GRID_GAP * (liveSpan.rowSpan - 1)
                         val baseOffsetX = (cellWidth + HUB_GRID_GAP) * widget.col
                         val baseOffsetY = (rowHeight + HUB_GRID_GAP) * widget.row
-                        val resizeOffsetX = (cellWidth + HUB_GRID_GAP) * liveCol
-                        val resizeOffsetY = (rowHeight + HUB_GRID_GAP) * liveRow
+                        // The box drawn while resizing or settling from a resize, in px; null draws the saved cells.
+                        val resizeBox: Rect? = when {
+                            isGrabbed -> null
+                            isResizing && resizingFreeRect != null -> resizingFreeRect
+                            widget.appWidgetId == resizeVisualId -> resizeRectPx.value
+                            else -> null
+                        }
+                        val boxWidth = resizeBox?.let { with(density) { it.width.toDp() } } ?: tileWidth
+                        val boxHeight = resizeBox?.let { with(density) { it.height.toDp() } } ?: tileHeight
 
                         // Animates a non-grabbed, non-resizing widget's own position whenever its
                         // (row, col) changes — most notably when ResolveWidgetDropUseCase
@@ -327,11 +363,11 @@ fun HubGrid(
                                             (baseOffsetX.toPx(density) + dragOffsetPx.x).roundToInt(),
                                             (baseOffsetY.toPx(density) + dragOffsetPx.y).roundToInt(),
                                         )
-                                        isResizing -> IntOffset(resizeOffsetX.toPx(density).roundToInt(), resizeOffsetY.toPx(density).roundToInt())
+                                        resizeBox != null -> resizeBox.topLeft.round()
                                         else -> IntOffset(animatedOffsetPx.value.x.roundToInt(), animatedOffsetPx.value.y.roundToInt())
                                     }
                                 }
-                                .size(width = tileWidth, height = tileHeight)
+                                .size(width = boxWidth, height = boxHeight)
                                 .testTag("hub_widget_tile_${widget.appWidgetId}")
                                 // Resize mode's own footprint indicator — otherwise the exact cell
                                 // bounds a resize is currently claiming aren't visible against the
@@ -372,6 +408,8 @@ fun HubGrid(
                                             // simultaneously active (see chat history).
                                             haptics.performHapticFeedback(HapticFeedbackType.LongPress)
                                             resizingAppWidgetId = null
+                                            resizeVisualId = null
+                                            committedResize = null
                                             resizeDeltaPx = Offset.Zero
                                             horizontalResizeEdge = null
                                             verticalResizeEdge = null
@@ -443,7 +481,7 @@ fun HubGrid(
                             if (widget.nativeWidgetType != null) {
                                 NativeWidget(
                                     type = widget.nativeWidgetType,
-                                    size = DpSize(tileWidth, tileHeight),
+                                    size = DpSize(boxWidth, boxHeight),
                                     state = nativeWidgets.state,
                                     actions = nativeWidgets.actions,
                                     ref = NativeWidgetRef.Hub(widget.appWidgetId),
@@ -518,6 +556,11 @@ fun HubGrid(
                                         resizeDeltaPx = Offset.Zero
                                         horizontalResizeEdge = null
                                         verticalResizeEdge = null
+                                        val start = resizeGrid.rectOf(widget.span)
+                                        resizeScope.launch {
+                                            resizeRectPx.snapTo(start)
+                                            resizeVisualId = widget.appWidgetId
+                                        }
                                     },
                                     enabled = !widget.isOrphaned,
                                 )
@@ -534,106 +577,50 @@ fun HubGrid(
                     }
                 }
 
-                // Resize handles — rendered in a single overlay *after* every widget tile (not
-                // inside each tile's own composition scope, as a previous version of this code
-                // did) so they always win hit-testing over whichever widget happens to sit above
-                // or below the one being resized: same-parent siblings hit-test in composition
-                // order, last-composed wins, and the handles' touch target
-                // (WIDGET_RESIZE_HANDLE_TOUCH_TARGET_SIZE) is wider than the 8dp row gap, so it
-                // routinely overlaps the tile bounds of whichever widget sits in the next row (see
-                // chat history — a touch meant for the handle was landing on that neighbor
-                // instead). Only one widget can be resizing at a time, so this is a single lookup,
-                // not a per-widget block.
-                val resizingWidget = widgets.find { it.appWidgetId == resizingAppWidgetId }
+                // Resize handles, in one overlay after every tile so they win hit-testing over neighbouring widgets
+                // (their touch target is wider than the gap between rows). They sit on the box the widget is drawn in,
+                // so they stay under the finger; the outline shows the cells the widget will take on release.
                 if (resizingWidget != null) {
-                    val baseColSpan = resizingWidget.colSpan
-                    val baseRowSpan = resizingWidget.rowSpan
-                    val minColSpan = resizingWidget.nativeWidgetType?.minSpan()?.cols ?: 1
-                    val minRowSpan = resizingWidget.nativeWidgetType?.minSpan()?.rows ?: 1
-                    val liveColSpan = when (horizontalResizeEdge) {
-                        ResizeEdge.END -> resizedSpan(baseColSpan, resizeDeltaPx.x, cellWidthPx, minColSpan)
-                        ResizeEdge.START -> resizedSpan(baseColSpan, -resizeDeltaPx.x, cellWidthPx, minColSpan)
-                        null -> baseColSpan
+                    val handleBox = resizingFreeRect
+                        ?: resizeRectPx.value.takeIf { resizeVisualId == resizingWidget.appWidgetId }
+                        ?: resizeGrid.rectOf(resizingSpan ?: resizingWidget.span)
+                    if (isDraggingHandle && resizingSpan != null) {
+                        val target = resizeGrid.rectOf(resizingSpan)
+                        Box(
+                            modifier = Modifier
+                                .offset { target.topLeft.round() }
+                                .size(width = with(density) { target.width.toDp() }, height = with(density) { target.height.toDp() })
+                                .testTag("hub_resize_target_preview")
+                                .background(Accent.copy(alpha = 0.18f), RoundedCornerShape(12.dp))
+                                .border(1.dp, Accent, RoundedCornerShape(12.dp)),
+                        )
                     }
-                    val liveRowSpan = when (verticalResizeEdge) {
-                        ResizeEdge.END -> resizedSpan(baseRowSpan, resizeDeltaPx.y, rowHeightPx, minRowSpan)
-                        ResizeEdge.START -> resizedSpan(baseRowSpan, -resizeDeltaPx.y, rowHeightPx, minRowSpan)
-                        null -> baseRowSpan
-                    }
-                    val liveCol = if (horizontalResizeEdge == ResizeEdge.START) {
-                        resizingWidget.col + baseColSpan - liveColSpan
-                    } else {
-                        resizingWidget.col
-                    }
-                    val liveRow = if (verticalResizeEdge == ResizeEdge.START) {
-                        resizingWidget.row + baseRowSpan - liveRowSpan
-                    } else {
-                        resizingWidget.row
-                    }
-                    val tileWidth = cellWidth * liveColSpan + HUB_GRID_GAP * (liveColSpan - 1)
-                    val tileHeight = rowHeight * liveRowSpan + HUB_GRID_GAP * (liveRowSpan - 1)
-                    val resizeOffsetX = (cellWidth + HUB_GRID_GAP) * liveCol
-                    val resizeOffsetY = (rowHeight + HUB_GRID_GAP) * liveRow
 
-                    // The top handle's *exterior* reach (above the widget, toward the header) is
-                    // clamped to whatever viewport room actually exists — see its own call site
-                    // below — but its *interior* reach (into the widget's own top edge) must stay
-                    // fixed at the standard half-touch-target regardless: sliding the handle's full
-                    // untouched 44dp box down to compensate for a clamped exterior would instead
-                    // grow the interior reach up to the full 44dp, which for a widget only ~1 cell
-                    // tall eats most of its own long-press-to-regrab surface (see chat history —
-                    // this broke re-grabbing a resized widget by long-press). So the handle's own
-                    // *height* shrinks together with the offset, keeping interior reach constant.
+                    // The top handle's reach above the widget is clamped to the room in the viewport (the sticky header
+                    // above it wins touches there); its reach into the widget stays half the target, so a short widget
+                    // can still be long-pressed to regrab it.
                     val topHandleInteriorPx = (WIDGET_RESIZE_HANDLE_TOUCH_TARGET_SIZE / 2).toPx(density)
                     val topHandleOverhangPx = topHandleInteriorPx
-                        .coerceAtMost((resizeOffsetY.toPx(density) - scrollState.value).coerceAtLeast(0f))
+                        .coerceAtMost((handleBox.top - scrollState.value).coerceAtLeast(0f))
                     val topHandleHeightDp = with(density) { (topHandleOverhangPx + topHandleInteriorPx).toDp() }
                     val topHandleOffsetDp = with(density) { topHandleOverhangPx.toDp() }
 
                     Box(
                         modifier = Modifier
-                            .offset { IntOffset(resizeOffsetX.toPx(density).roundToInt(), resizeOffsetY.toPx(density).roundToInt()) }
-                            .size(width = tileWidth, height = tileHeight),
+                            .offset { handleBox.topLeft.round() }
+                            .size(width = with(density) { handleBox.width.toDp() }, height = with(density) { handleBox.height.toDp() }),
                     ) {
-                        // One handle per edge, each straddling its own edge half-on-half-off
-                        // rather than sitting flush inside the widget. Right/bottom only change
-                        // span (top-left cell fixed); left/top also shift that edge's row/col so
-                        // the OPPOSITE edge stays fixed — see liveCol/liveRow above.
+                        // One handle per edge, straddling it. Right/bottom change the span; left/top also move that
+                        // edge's col/row so the opposite edge stays put.
                         WidgetResizeHandle(
                             onDrag = { delta -> horizontalResizeEdge = ResizeEdge.END; resizeDeltaPx += Offset(delta.x, 0f) },
-                            // WidgetResizeHandle's own pointerInput is Unit-keyed so a live drag is
-                            // never interrupted by recomposition — which also means this lambda is
-                            // captured exactly once and never gets a fresh closure. Read
-                            // resizeDeltaPx (a State, live through the stale closure) and recompute
-                            // the final rect here rather than closing over liveColSpan/liveRowSpan
-                            // (plain vals, frozen at that one capture).
-                            onDragEnd = {
-                                val finalColSpan = resizedSpan(baseColSpan, resizeDeltaPx.x, cellWidthPx, minColSpan)
-                                currentOnWidgetResized.value(resizingWidget.appWidgetId, resizingWidget.row, resizingWidget.col, finalColSpan, baseRowSpan)
-                                // Resize mode itself stays active (resizingAppWidgetId is left
-                                // untouched) so the user can immediately grab another handle —
-                                // only the "tap away" detector above ends it. Only this drag's own
-                                // transient state resets, so the next resize starts fresh off the
-                                // just-committed span instead of layering a new delta on a stale one.
-                                resizeDeltaPx = Offset.Zero
-                                horizontalResizeEdge = null
-                                verticalResizeEdge = null
-                            },
+                            onDragEnd = endResizeDrag,
                             testTag = "hub_resize_handle_right",
                             modifier = Modifier.align(Alignment.CenterEnd).offset(x = WIDGET_RESIZE_HANDLE_TOUCH_TARGET_SIZE / 2),
                         )
                         WidgetResizeHandle(
                             onDrag = { delta -> horizontalResizeEdge = ResizeEdge.START; resizeDeltaPx += Offset(delta.x, 0f) },
-                            onDragEnd = {
-                                val finalColSpan = resizedSpan(baseColSpan, -resizeDeltaPx.x, cellWidthPx, minColSpan)
-                                val finalCol = resizingWidget.col + baseColSpan - finalColSpan
-                                currentOnWidgetResized.value(resizingWidget.appWidgetId, resizingWidget.row, finalCol, finalColSpan, baseRowSpan)
-                                // See the right handle's onDragEnd above — resize mode stays
-                                // active; only this drag's own transient state resets.
-                                resizeDeltaPx = Offset.Zero
-                                horizontalResizeEdge = null
-                                verticalResizeEdge = null
-                            },
+                            onDragEnd = endResizeDrag,
                             testTag = "hub_resize_handle_left",
                             modifier = Modifier.align(Alignment.CenterStart).offset(x = -WIDGET_RESIZE_HANDLE_TOUCH_TARGET_SIZE / 2),
                         )
@@ -641,26 +628,12 @@ fun HubGrid(
                             onDrag = { delta ->
                                 verticalResizeEdge = ResizeEdge.END
                                 resizeDeltaPx += Offset(0f, delta.y)
-                                // Same edge-zone auto-scroll as a grab-move (see the LaunchedEffect
-                                // above), triggered by the LIVE growing bottom edge instead of a
-                                // drag position — resizeDeltaPx is read fresh here (a State),
-                                // unlike tileHeight/resizeOffsetY which are safe to read stale
-                                // since row/col/rowHeight don't change mid-resize.
-                                val liveSpan = resizedSpan(baseRowSpan, resizeDeltaPx.y, rowHeightPx, minRowSpan)
-                                val contentBottomPx = resizeOffsetY.toPx(density) + (rowHeight * liveSpan + HUB_GRID_GAP * (liveSpan - 1)).toPx(density)
+                                // A bottom edge near the viewport's bottom scrolls the grid, as a grab-move does.
+                                val bottomPx = resizeGrid.freeRect(resizingWidget.span, null, ResizeEdge.END, resizeDeltaPx, resizingWidget.minColSpan, resizingWidget.minRowSpan).bottom
                                 val viewportBottomPx = scrollState.value.toFloat() + viewportHeightPx
-                                autoScrollDirection = if (contentBottomPx > viewportBottomPx - autoScrollEdgeZonePx && scrollState.value < scrollState.maxValue) 1 else 0
+                                autoScrollDirection = if (bottomPx > viewportBottomPx - autoScrollEdgeZonePx && scrollState.value < scrollState.maxValue) 1 else 0
                             },
-                            onDragEnd = {
-                                val finalRowSpan = resizedSpan(baseRowSpan, resizeDeltaPx.y, rowHeightPx, minRowSpan)
-                                currentOnWidgetResized.value(resizingWidget.appWidgetId, resizingWidget.row, resizingWidget.col, baseColSpan, finalRowSpan)
-                                // See the right handle's onDragEnd above — resize mode stays
-                                // active; only this drag's own transient state resets.
-                                resizeDeltaPx = Offset.Zero
-                                horizontalResizeEdge = null
-                                verticalResizeEdge = null
-                                autoScrollDirection = 0
-                            },
+                            onDragEnd = endResizeDrag,
                             testTag = "hub_resize_handle_bottom",
                             modifier = Modifier.align(Alignment.BottomCenter).offset(y = WIDGET_RESIZE_HANDLE_TOUCH_TARGET_SIZE / 2),
                         )
@@ -668,35 +641,11 @@ fun HubGrid(
                             onDrag = { delta ->
                                 verticalResizeEdge = ResizeEdge.START
                                 resizeDeltaPx += Offset(0f, delta.y)
-                                val liveSpan = resizedSpan(baseRowSpan, -resizeDeltaPx.y, rowHeightPx, minRowSpan)
-                                val liveRowForAutoScroll = resizingWidget.row + baseRowSpan - liveSpan
-                                val contentTopPx = (liveRowForAutoScroll * (rowHeightPx + HUB_GRID_GAP.toPx(density)))
-                                val viewportTopPx = scrollState.value.toFloat()
-                                autoScrollDirection = if (contentTopPx < viewportTopPx + autoScrollEdgeZonePx && scrollState.value > 0) -1 else 0
+                                val topPx = resizeGrid.freeRect(resizingWidget.span, null, ResizeEdge.START, resizeDeltaPx, resizingWidget.minColSpan, resizingWidget.minRowSpan).top
+                                autoScrollDirection = if (topPx < scrollState.value + autoScrollEdgeZonePx && scrollState.value > 0) -1 else 0
                             },
-                            onDragEnd = {
-                                val finalRowSpan = resizedSpan(baseRowSpan, -resizeDeltaPx.y, rowHeightPx, minRowSpan)
-                                val finalRow = resizingWidget.row + baseRowSpan - finalRowSpan
-                                currentOnWidgetResized.value(resizingWidget.appWidgetId, finalRow, resizingWidget.col, baseColSpan, finalRowSpan)
-                                // See the right handle's onDragEnd above — resize mode stays
-                                // active; only this drag's own transient state resets.
-                                resizeDeltaPx = Offset.Zero
-                                horizontalResizeEdge = null
-                                verticalResizeEdge = null
-                                autoScrollDirection = 0
-                            },
+                            onDragEnd = endResizeDrag,
                             testTag = "hub_resize_handle_top",
-                            // Unlike the other three edges, the top handle's upward overhang is
-                            // clamped to whatever room actually exists above the widget in the
-                            // *viewport* — for a widget scrolled near the top, that room can be
-                            // less than the full touch target, and HubScreen's sticky header
-                            // (StickyHeaderLayout) sits immediately above the viewport's own top
-                            // edge and always wins hit-testing there (it's composed after its own
-                            // content — see StickyHeaderLayout's doc comment), so an unclamped
-                            // overhang would silently steal touches meant for this handle (see
-                            // chat history — this made the topmost widget's top handle unusable).
-                            // The handle's own height shrinks to match (see topHandleHeightDp
-                            // above) rather than staying full-size and ballooning inward.
                             touchTargetHeight = topHandleHeightDp,
                             modifier = Modifier.align(Alignment.TopCenter).offset(y = -topHandleOffsetDp),
                         )
@@ -730,8 +679,8 @@ fun HubGrid(
     }
 }
 
-private fun Dp.toPx(density: Density): Float = with(density) { this@toPx.toPx() }
+private val HubWidgetUi.span get() = HubSpan(row, col, colSpan, rowSpan)
+private val HubWidgetUi.minColSpan get() = nativeWidgetType?.minSpan()?.cols ?: 1
+private val HubWidgetUi.minRowSpan get() = nativeWidgetType?.minSpan()?.rows ?: 1
 
-/** Grows/shrinks by whole cells only, floored at [minSpan] (1 unless the widget has a larger smallest layout) — matches how the commit-time span is computed. */
-internal fun resizedSpan(baseSpan: Int, deltaPx: Float, cellSizePx: Float, minSpan: Int = 1): Int =
-    (baseSpan + (deltaPx / cellSizePx).roundToInt()).coerceAtLeast(minSpan)
+private fun Dp.toPx(density: Density): Float = with(density) { this@toPx.toPx() }

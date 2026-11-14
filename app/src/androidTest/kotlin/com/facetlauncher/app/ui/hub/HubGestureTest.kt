@@ -35,7 +35,9 @@ import org.junit.Assert.assertEquals
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.runBlocking
+import kotlin.math.abs
 import org.junit.Rule
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.mockito.ArgumentMatchers.eq
 import org.mockito.Mockito.mock
@@ -236,6 +238,32 @@ class HubGestureTest {
         }
 
         awaitPlacement(10) { it?.colSpan == 2 && it.rowSpan == 1 }
+    }
+
+    @Test
+    fun resizeBoxFollowsTheFingerBetweenCellsAndOutlinesTheCellsItWillTake() {
+        // Given a one-cell widget in resize mode
+        setContent(listOf(placement(id = 10, row = 0, col = 0)), resolvable = setOf(10))
+        val cellWidth = cellWidthPxOf(10)
+        longPress("hub_widget_tile_10")
+        composeRule.onNodeWithTag("hub_widget_tile_10").performTouchInput { up() }
+        composeRule.onNodeWithText("Resize widget").performClick()
+
+        // When the right handle is held a third of a cell past the edge
+        composeRule.onNodeWithTag("hub_resize_handle_right").performTouchInput {
+            down(center)
+            stepMoveBy(Offset(cellWidth / 3, 0f))
+        }
+        composeRule.waitForIdle()
+
+        // Then the widget is that much wider, not stepped, and the outline still covers one cell
+        val width = cellWidthPxOf(10)
+        assertTrue("width $width should be about ${cellWidth * 4 / 3}", abs(width - cellWidth * 4 / 3) < 3f)
+        val outline = composeRule.onNodeWithTag("hub_resize_target_preview").fetchSemanticsNode().size.width.toFloat()
+        assertTrue("outline $outline should be one cell, $cellWidth", abs(outline - cellWidth) < 2f)
+
+        composeRule.onNodeWithTag("hub_resize_handle_right").performTouchInput { up() }
+        awaitPlacement(10) { it?.colSpan == 1 }
     }
 
     @Test
