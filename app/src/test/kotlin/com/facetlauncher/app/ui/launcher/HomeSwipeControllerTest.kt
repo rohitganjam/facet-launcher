@@ -594,7 +594,8 @@ class HomeSwipeControllerTest {
         assertEquals(0f, swipe.shade.progress.value, 0f)
 
         // And after it closes, a swipe up brings it from below again
-        swipe.settle(velocity = 0f)
+        swipe.settle(velocity = -(VELOCITY_THRESHOLD_PX + 1f))
+        assertEquals(0f, swipe.drawer.progress.value, 0f)
         swipe.start()
         swipe.drag(dx = 0f, dy = -400f)
         assertEquals(SwipeDirection.UP, swipe.drawerDirection)

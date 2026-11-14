@@ -107,18 +107,7 @@ private fun GesturesContent(
         modifier = modifier,
     ) {
         SettingsSectionHeader(stringResource(R.string.gestures_section_swipes))
-        SettingsCard(fullBleedRows = true) {
-            SwipeDirection.entries.forEachIndexed { index, direction ->
-                if (index > 0) CardDivider()
-                ClickableRow(
-                    title = stringResource(direction.titleRes),
-                    subtitle = stringResource(uiState.swipeActions.actionFor(direction).labelRes),
-                    onClick = { editing = direction },
-                    testTag = "gesture_swipe_${direction.tagName}",
-                    leadingIcon = iconBadge(direction.icon, SettingsSectionHue.HOME_APPS),
-                )
-            }
-        }
+        SwipesCard(uiState.swipeActions, onSwipeClick = { editing = it })
 
         SettingsSectionHeader(stringResource(R.string.gestures_section_built_in))
         SettingsCard {
@@ -148,25 +137,56 @@ private fun GesturesContent(
         }
     }
 
-    // An action another swipe already has is confirmed first.
+    SwipeActionPicker(
+        editing = editing,
+        actions = uiState.swipeActions,
+        onSwipeActionChange = onSwipeActionChange,
+        onClose = { editing = null },
+    )
+}
+
+@Composable
+private fun SwipesCard(actions: SwipeActions, onSwipeClick: (SwipeDirection) -> Unit) {
+    SettingsCard(fullBleedRows = true) {
+        SwipeDirection.entries.forEachIndexed { index, direction ->
+            if (index > 0) CardDivider()
+            ClickableRow(
+                title = stringResource(direction.titleRes),
+                subtitle = stringResource(actions.actionFor(direction).labelRes),
+                onClick = { onSwipeClick(direction) },
+                testTag = "gesture_swipe_${direction.tagName}",
+                leadingIcon = iconBadge(direction.icon, SettingsSectionHue.HOME_APPS),
+            )
+        }
+    }
+}
+
+/** The action sheet for [editing]; an action another swipe already has is confirmed first. */
+@Composable
+private fun SwipeActionPicker(
+    editing: SwipeDirection?,
+    actions: SwipeActions,
+    onSwipeActionChange: (SwipeDirection, SwipeAction) -> Unit,
+    onClose: () -> Unit,
+) {
     var pendingDuplicate by remember { mutableStateOf<Pair<SwipeDirection, SwipeAction>?>(null) }
     editing?.let { direction ->
         SwipeActionSheet(
             direction = direction,
-            actions = uiState.swipeActions,
+            actions = actions,
             onPick = { action ->
-                editing = null
-                if (uiState.swipeActions.otherSwipesWith(action, direction).isEmpty()) {
+                onClose()
+                if (actions.otherSwipesWith(action, direction).isEmpty()) {
                     onSwipeActionChange(direction, action)
                 } else {
                     pendingDuplicate = direction to action
                 }
             },
-            onDismiss = { editing = null },
+            onDismiss = onClose,
         )
     }
     pendingDuplicate?.let { (direction, action) ->
-        val holder = uiState.swipeActions.otherSwipesWith(action, direction).firstOrNull()
+        val holder = actions.otherSwipesWith(action, direction).firstOrNull()
         if (holder != null) {
             ConfirmDialog(
                 title = stringResource(R.string.gesture_duplicate_title),

@@ -272,10 +272,15 @@ internal fun panelCloseNestedScroll(panel: SwipeAxisState, direction: SwipeDirec
 
         override fun onPostScroll(consumed: Offset, available: Offset, source: NestedScrollSource): Offset {
             val amount = along(available)
-            val closes = amount * direction.fingerSign < 0f
-            if (source != NestedScrollSource.Drag || !closes || panel.progress.value == 0f || blocked()) return Offset.Zero
+            if (!closesOpenPanel(amount, source)) return Offset.Zero
             panel.dragBy(amount * direction.fingerSign)
             return offsetOf(amount)
+        }
+
+        /** A finger drag back the way the panel came, while it shows and nothing holds the finger. */
+        private fun closesOpenPanel(amount: Float, source: NestedScrollSource): Boolean {
+            val dragsBack = source == NestedScrollSource.Drag && amount * direction.fingerSign < 0f
+            return dragsBack && panel.progress.value > 0f && !blocked()
         }
 
         override suspend fun onPreFling(available: Velocity): Velocity {

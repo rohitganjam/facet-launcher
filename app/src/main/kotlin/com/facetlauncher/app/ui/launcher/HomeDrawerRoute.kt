@@ -551,6 +551,12 @@ fun HomeDrawerRoute(
             HubWidgetPickerScreen(onDone = { overlays.showWidgetPicker = false }, viewModel = widgetPickerViewModel, onConfigureNewWidget = { overlays.configureRef = it })
         }
         val facetDirection = swipe.facetDirection
+        // A carousel that came in from a side is dismissed by its pager's edge page; one from above or below by its surface.
+        val facetPagerDismissEdge = when (facetDirection) {
+            SwipeDirection.LEFT -> PagerDismissEdge.FIRST
+            SwipeDirection.RIGHT -> PagerDismissEdge.LAST
+            else -> null
+        }
         HomeFacetCarouselOverlay(swipe.facet, facetDirection, containerWidthPx, containerHeightPx, isOpen = isFacetOpen) {
             FacetCarouselScreen(
                 isOpen = isFacetOpen,
@@ -559,12 +565,7 @@ fun HomeDrawerRoute(
                 onReorderFacets = onNavigateToManageFacets,
                 onNavigateToSettings = onNavigateToSettings,
                 onOpenFacetPro = onNavigateToFacetPro,
-                // A carousel that came in from a side is dismissed by its pager's edge page; one from above or below by its surface.
-                pagerDismissEdge = when (facetDirection) {
-                    SwipeDirection.LEFT -> PagerDismissEdge.FIRST
-                    SwipeDirection.RIGHT -> PagerDismissEdge.LAST
-                    else -> null
-                },
+                pagerDismissEdge = facetPagerDismissEdge,
                 onDismissDrag = { deltaPx -> swipe.facet.dragBy(deltaPx * facetDirection.fingerSign) },
                 onDismissDragEnd = { swipe.facet.settle() },
                 modifier = Modifier.fillMaxSize(),
