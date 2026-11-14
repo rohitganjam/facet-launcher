@@ -2,6 +2,8 @@ package com.facetlauncher.app.ui.hub
 
 import android.appwidget.AppWidgetHostView
 import android.appwidget.AppWidgetProviderInfo
+import android.view.ViewConfiguration
+import androidx.test.platform.app.InstrumentationRegistry
 import androidx.compose.runtime.remember
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.platform.LocalContext
@@ -256,9 +258,11 @@ class HubGestureTest {
         }
         composeRule.waitForIdle()
 
-        // Then the widget is that much wider, not stepped, and the outline still covers one cell
+        // Then the widget is that much wider (less the drag's touch slop), not stepped, and the outline still covers one cell
+        val touchSlop = ViewConfiguration.get(InstrumentationRegistry.getInstrumentation().targetContext).scaledTouchSlop
+        val expected = cellWidth * 4 / 3 - touchSlop
         val width = cellWidthPxOf(10)
-        assertTrue("width $width should be about ${cellWidth * 4 / 3}", abs(width - cellWidth * 4 / 3) < 3f)
+        assertTrue("width $width should be about $expected", abs(width - expected) < 3f)
         val outline = composeRule.onNodeWithTag("hub_resize_target_preview").fetchSemanticsNode().size.width.toFloat()
         assertTrue("outline $outline should be one cell, $cellWidth", abs(outline - cellWidth) < 2f)
 
