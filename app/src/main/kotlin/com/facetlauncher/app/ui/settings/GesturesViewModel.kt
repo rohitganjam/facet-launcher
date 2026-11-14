@@ -4,6 +4,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.facetlauncher.app.data.AccessibilityAccessRepository
 import com.facetlauncher.app.data.SettingsRepository
+import com.facetlauncher.app.data.model.SwipeAction
+import com.facetlauncher.app.data.model.SwipeActions
+import com.facetlauncher.app.data.model.SwipeDirection
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -15,10 +18,7 @@ import kotlinx.coroutines.launch
 
 data class GesturesUiState(
     val homeOpensSearch: Boolean = false,
-    val swipeLeftEnabled: Boolean = true,
-    val swipeRightEnabled: Boolean = true,
-    val swipeDownEnabled: Boolean = true,
-    val swapSwipeSides: Boolean = false,
+    val swipeActions: SwipeActions = SwipeActions(),
     /** The stored preference and the accessibility service both on: the switch never reads on without the real grant behind it. */
     val doubleTapToLock: Boolean = false,
     val isAccessibilityGranted: Boolean = false,
@@ -39,10 +39,7 @@ class GesturesViewModel @Inject constructor(
     val uiState: StateFlow<GesturesUiState> = combine(settingsRepository.settings, isAccessibilityGranted) { settings, granted ->
         GesturesUiState(
             homeOpensSearch = settings.homeOpensSearch,
-            swipeLeftEnabled = settings.swipeLeftEnabled,
-            swipeRightEnabled = settings.swipeRightEnabled,
-            swipeDownEnabled = settings.swipeDownEnabled,
-            swapSwipeSides = settings.swapSwipeSides,
+            swipeActions = settings.swipeActions,
             doubleTapToLock = settings.doubleTapToLock && granted,
             isAccessibilityGranted = granted,
         )
@@ -52,20 +49,8 @@ class GesturesViewModel @Inject constructor(
         isAccessibilityGranted.value = accessibilityAccessRepository.isGranted()
     }
 
-    fun setSwapSwipeSides(enabled: Boolean) {
-        viewModelScope.launch { settingsRepository.setSwapSwipeSides(enabled) }
-    }
-
-    fun setSwipeLeftEnabled(enabled: Boolean) {
-        viewModelScope.launch { settingsRepository.setSwipeLeftEnabled(enabled) }
-    }
-
-    fun setSwipeRightEnabled(enabled: Boolean) {
-        viewModelScope.launch { settingsRepository.setSwipeRightEnabled(enabled) }
-    }
-
-    fun setSwipeDownEnabled(enabled: Boolean) {
-        viewModelScope.launch { settingsRepository.setSwipeDownEnabled(enabled) }
+    fun setSwipeAction(direction: SwipeDirection, action: SwipeAction) {
+        viewModelScope.launch { settingsRepository.setSwipeAction(direction, action) }
     }
 
     fun setHomeOpensSearch(enabled: Boolean) {

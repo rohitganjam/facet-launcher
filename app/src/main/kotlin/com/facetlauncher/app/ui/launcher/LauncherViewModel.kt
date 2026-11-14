@@ -1,5 +1,6 @@
 package com.facetlauncher.app.ui.launcher
 
+import com.facetlauncher.app.data.model.SwipeActions
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -79,10 +80,7 @@ data class LauncherUiState(
     val hideStatusBar: Boolean = false,
     /** `LauncherSettings.homeOpensSearch`: a Home press on bare Home opens the Drawer with search focused. */
     val homeOpensSearch: Boolean = false,
-    val swipeLeftEnabled: Boolean = true,
-    val swipeRightEnabled: Boolean = true,
-    val swipeDownEnabled: Boolean = true,
-    val swapSwipeSides: Boolean = false,
+    val swipeActions: SwipeActions = SwipeActions(),
     /**
      * Gates [com.facetlauncher.app.LauncherActivity]'s onboarding branch — see [LauncherSettings.onboardingCompleted][com.facetlauncher.app.data.model.LauncherSettings.onboardingCompleted].
      * `null` until DataStore has answered, so onboarding never shows on a default.
@@ -174,10 +172,7 @@ class LauncherViewModel @Inject constructor(
                 allowLandscape = facets.firstOrNull { it.id == settings.activeFacetId }?.allowLandscape ?: true,
                 hideStatusBar = settings.hideStatusBar,
                 homeOpensSearch = settings.homeOpensSearch,
-                swipeLeftEnabled = settings.swipeLeftEnabled,
-                swipeRightEnabled = settings.swipeRightEnabled,
-                swipeDownEnabled = settings.swipeDownEnabled,
-                swapSwipeSides = settings.swapSwipeSides,
+                swipeActions = settings.swipeActions,
                 workProfiles = workProfiles.toImmutableList(),
             )
         }.onEach { combined -> _uiState.update { combined.copy(onboardingCompleted = it.onboardingCompleted) } }.launchIn(viewModelScope)

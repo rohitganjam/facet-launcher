@@ -53,6 +53,8 @@ import com.facetlauncher.app.data.model.WeatherLocationMode
 import com.facetlauncher.app.data.model.WindSpeedUnit
 import com.facetlauncher.app.data.model.WeatherCity
 import com.facetlauncher.app.data.model.weatherCityOrNull
+import com.facetlauncher.app.data.model.SwipeActions
+import com.facetlauncher.app.data.model.SwipeDirection
 import javax.inject.Inject
 import com.facetlauncher.app.data.PlacementRepository
 import com.facetlauncher.app.data.model.PlacementTarget
@@ -186,10 +188,7 @@ class ImportBackupUseCase @Inject constructor(
             setShowNotificationsInAppMenu(settings.showNotificationsInAppMenu)
             setHomeOpensSearch(settings.homeOpensSearch)
             setDoubleTapToLock(settings.doubleTapToLock)
-            setSwipeLeftEnabled(settings.swipeLeftEnabled)
-            setSwipeRightEnabled(settings.swipeRightEnabled)
-            setSwipeDownEnabled(settings.swipeDownEnabled)
-            setSwapSwipeSides(settings.swapSwipeSides)
+            setSwipeActions(settings.swipeActions())
             setShowDrawerIcons(settings.showDrawerIcons)
             setShowDrawerLabels(settings.showDrawerLabels)
             setSearchBarPosition(settings.searchBarPosition.toEnumOrDefault(SearchBarPosition.TOP))
@@ -260,4 +259,18 @@ class ImportBackupUseCase @Inject constructor(
             }
         }
     }
+}
+
+/** The backup's per-swipe actions; a backup from before them is read through its on/off switches and "Swap left and right". */
+internal fun BackupSettings.swipeActions(): SwipeActions {
+    val stored = listOf(swipeUpAction, swipeDownAction, swipeLeftAction, swipeRightAction)
+    if (stored.all { it == null }) return SwipeActions.fromLegacy(swipeLeftEnabled, swipeRightEnabled, swipeDownEnabled, swapSwipeSides)
+    val defaults = SwipeActions()
+    fun read(name: String?, direction: SwipeDirection) = SwipeActions.parse(name) ?: defaults.actionFor(direction)
+    return SwipeActions(
+        up = read(swipeUpAction, SwipeDirection.UP),
+        down = read(swipeDownAction, SwipeDirection.DOWN),
+        left = read(swipeLeftAction, SwipeDirection.LEFT),
+        right = read(swipeRightAction, SwipeDirection.RIGHT),
+    )
 }
