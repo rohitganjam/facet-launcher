@@ -48,7 +48,10 @@ internal data class HubResizeGrid(
         val minHeight = spanSize(minRowSpan, cellHeightPx)
         val maxRight = pitchX * columns - gapPx
         val maxBottom = pitchY * maxRows - gapPx
-        var (left, top, right, bottom) = rect
+        var left = rect.left
+        var top = rect.top
+        var right = rect.right
+        var bottom = rect.bottom
         when (horizontal) {
             ResizeEdge.END -> right = (right + deltaPx.x).coerceIn(left + minWidth, maxOf(left + minWidth, maxRight))
             ResizeEdge.START -> left = (left + deltaPx.x).coerceIn(minOf(0f, right - minWidth), right - minWidth)
@@ -93,8 +96,3 @@ internal data class HubResizeGrid(
         return span
     }
 }
-
-private operator fun Rect.component1() = left
-private operator fun Rect.component2() = top
-private operator fun Rect.component3() = right
-private operator fun Rect.component4() = bottom
