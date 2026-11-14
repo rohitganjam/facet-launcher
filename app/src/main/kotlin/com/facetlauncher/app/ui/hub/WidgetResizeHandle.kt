@@ -86,8 +86,10 @@ fun WidgetResizeHandle(
                     // starts under the finger instead of trailing it by the slop.
                     currentOnDrag.value(start.position - down.position)
                     drag(start.id) { change ->
+                        // Read before consume(): positionChange() is zero for a consumed change.
+                        val delta = change.positionChange()
                         change.consume()
-                        currentOnDrag.value(change.positionChange())
+                        currentOnDrag.value(delta)
                     }
                     currentOnDragEnd.value()
                 }
