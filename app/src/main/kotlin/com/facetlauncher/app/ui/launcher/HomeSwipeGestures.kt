@@ -6,9 +6,18 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.Velocity
+import com.facetlauncher.app.data.model.SwipeDirection
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.PointerInputChange
 import androidx.compose.ui.input.pointer.PointerInputScope
@@ -217,3 +226,62 @@ internal suspend fun PointerInputScope.detectHomeSwipeGestures(
         }
     }
 }
+
+/** +1 when finger movement toward +x or +y (right or down) is movement in this direction, -1 otherwise. */
+internal val SwipeDirection.fingerSign: Float get() = if (this == SwipeDirection.DOWN || this == SwipeDirection.RIGHT) 1f else -1f
+
+/** Where a panel opened by a swipe in [direction] sits at [progress]: off the edge the swipe pulls it from at 0, flush with the screen at 1. */
+internal fun panelOffset(direction: SwipeDirection, progress: Float, widthPx: Float, heightPx: Float): IntOffset {
+    val hidden = 1f - progress
+    return when (direction) {
+        SwipeDirection.UP -> IntOffset(0, (hidden * heightPx).toInt())
+        SwipeDirection.DOWN -> IntOffset(0, (-hidden * heightPx).toInt())
+        SwipeDirection.LEFT -> IntOffset((hidden * widthPx).toInt(), 0)
+        SwipeDirection.RIGHT -> IntOffset((-hidden * widthPx).toInt(), 0)
+    }
+}
+
+/** A drag on an open panel's own surface along [direction]'s axis: back the way it came closes it, the other way reopens it. */
+internal fun Modifier.panelSurfaceDrag(panel: SwipeAxisState, direction: SwipeDirection): Modifier = pointerInput(panel, direction) {
+    val onDrag = { change: PointerInputChange, amount: Float ->
+        panel.dragBy(amount * direction.fingerSign)
+        change.consume()
+    }
+    if (direction.isVertical) {
+        detectVerticalDragGestures(onDragEnd = { panel.settle() }, onDragCancel = { panel.settle() }, onVerticalDrag = onDrag)
+    } else {
+        detectHorizontalDragGestures(onDragEnd = { panel.settle() }, onDragCancel = { panel.settle() }, onHorizontalDrag = onDrag)
+    }
+}
+
+/**
+ * A panel's scrolling content closes it once it can scroll no further back the way the panel came (a drawer that slid
+ * up closes from its list's top), and keeps driving the panel for the rest of that drag. A fling settles it. Only drags
+ * along [direction]'s axis count; [blocked] stands it down (a long-press sheet holds the finger).
+ */
+internal fun panelCloseNestedScroll(panel: SwipeAxisState, direction: SwipeDirection, blocked: () -> Boolean = { false }): NestedScrollConnection =
+    object : NestedScrollConnection {
+        private fun along(offset: Offset) = if (direction.isVertical) offset.y else offset.x
+        private fun offsetOf(amount: Float) = if (direction.isVertical) Offset(0f, amount) else Offset(amount, 0f)
+
+        override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
+            if (source != NestedScrollSource.Drag || !panel.dragActive) return Offset.Zero
+            panel.dragBy(along(available) * direction.fingerSign)
+            return offsetOf(along(available))
+        }
+
+        override fun onPostScroll(consumed: Offset, available: Offset, source: NestedScrollSource): Offset {
+            val amount = along(available)
+            val closes = amount * direction.fingerSign < 0f
+            if (source != NestedScrollSource.Drag || !closes || panel.progress.value == 0f || blocked()) return Offset.Zero
+            panel.dragBy(amount * direction.fingerSign)
+            return offsetOf(amount)
+        }
+
+        override suspend fun onPreFling(available: Velocity): Velocity {
+            if (!panel.dragActive) return Velocity.Zero
+            val velocity = if (direction.isVertical) available.y else available.x
+            panel.settle(velocity * direction.fingerSign)
+            return if (direction.isVertical) Velocity(0f, available.y) else Velocity(available.x, 0f)
+        }
+    }

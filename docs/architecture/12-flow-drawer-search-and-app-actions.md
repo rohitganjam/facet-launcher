@@ -263,17 +263,26 @@ nested-scroll bridges (a hosted clock widget through `WidgetScrollBridge`, and t
 scroll). `swipeSettleTarget` is the pure open/closed decision. `HomeSwipeControllerTest` and
 `HomeSwipeGesturesTest` cover it:
 
+Settings → Gestures assigns an action to each swipe (`LauncherSettings.swipeActions`, a `SwipeActions` of `SwipeAction` per
+`SwipeDirection`): Open app drawer, Open the Hub, Switch facets, Open notification shade or None. The defaults:
+
 | Drag on Home | Opens | Reverse gesture closes |
 |---|---|---|
 | up | Drawer | drag down on the drawer's list, only once scrolled to the top |
+| down | notification shade | (system) |
 | right | Hub | drag left on the Hub |
 | left | Facet carousel | drag right on the carousel (empty space or first card) |
 
-Settings → Gestures can turn the left, right and down swipes off (`swipeLeftEnabled`, `swipeRightEnabled`,
-`swipeDownEnabled`, by finger direction; up always opens the Drawer) and swap the sides (`swapSwipeSides`). Swapped, a
-left swipe opens the Hub and a right swipe the carousel; `HomeHubOverlay` and `HomeFacetCarouselOverlay` mirror where
-they slide in from and which drag closes them, and the carousel then dismisses on a leftward drag from its last page
-(`dismissToLeft`). `LauncherViewModel` feeds the four flags to `HomeSwipeController`. The carousel can also be opened
+An action may sit on more than one swipe (the picker warns first), and the app drawer always keeps at least one
+(`SwipeActions.canAssign`). `LauncherViewModel` feeds the mapping to `HomeSwipeController.actions`. A drag engages the
+first direction along its axis that has an action and drives that action for the whole gesture. Each panel slides in
+from the side its swipe pulls it from (`panelOffset`): the controller's `drawerDirection` / `hubDirection` /
+`facetDirection` are the swipe that last opened the panel, reset to its first swipe when the mapping drops that one. The
+reverse drag closes it: on its surface (`panelSurfaceDrag`), or through its scrolling content once that can scroll no
+further back (`panelCloseNestedScroll`; the drawer coming up keeps `drawerNestedScroll`). A carousel from a side is also
+dismissed by a drag past its pager's edge page (`PagerDismissEdge`); from above or below only by its surface. The shade
+fades Home the same way whichever swipe opens it.
+The carousel can also be opened
 from the Home sheet's *Switch facet* row (`HomeClockActions.onOpenFacetCarousel`), and it returns to the active facet
 whenever it is closed.
 
@@ -302,7 +311,7 @@ list's own scroll, which hands leftover drag back via `appListNestedScrollConnec
 
 Commit happens when the drag has travelled `COMMIT_TRAVEL_FRACTION` (20%) of the container *from where
 that drag started*, or released above `VELOCITY_THRESHOLD_PX` (1500 px/s); anything short springs back.
-A downward drag from a closed drawer expands the notification shade on the same terms
+A shade swipe from closed Home (no panel showing) expands the notification shade on the same terms
 (`SWIPE_DOWN_SHADE_FRACTION`, 20% of the height). The drag follows the finger: `HomeSwipeController.shade` fills 0 to 1 over that distance and feeds the same Home fade as the Drawer (`homeLayerFade`), so Home is fully transparent when releasing would open the shade, It animates back on release or cancel, or after `SHADE_OPEN_HOLD_MS` once the shade has been asked to open (so Home does not reappear before the system shade covers it). With "Hide status bar" on and the bar hidden, that swipe reveals
 the bar instead (`SystemBarsState.revealStatusBar`) and the next one opens the shade; see [13](13-flow-facets-theme-notifications-onboarding.md) §2a.
 
@@ -354,8 +363,9 @@ lock lambda that the connected `FacetAccessibilityService` attaches (`performGlo
 biometric unlock working); with no service connected it is a no-op. The service requests no events and reads no screen content, and
 is enabled from system Accessibility settings after `AccessibilityAccessExplanationScreen`, checked by
 `AccessibilityAccessRepository.isGranted()`. Settings → Gestures (`GesturesScreen` / `GesturesViewModel`) lists every Home gesture
-(the four swipes and the empty-space long-press as read-only rows) with a *Swipes* card (a switch per left, right and down, and
-*Swap left and right*) and switches for the two opt-in ones; the lock switch reads
+with a *Swipes* card (a row per swipe showing its action; tapping it opens a `ThemedModalBottomSheet` of the actions,
+where one another swipe already has asks first through `ConfirmDialog`), the empty-space long-press as a read-only row,
+and switches for the two opt-in ones; the lock switch reads
 on only while the service is enabled, and turning it on without access routes through the explanation screen. The Permissions
 screen has a matching Accessibility access row. `HomeViewModelTest`, `LockScreenControllerTest`, `GesturesViewModelTest`,
 `GesturesScreenTest`, `HomeScreenTest` and `HomeDrawerRouteTest` cover it.

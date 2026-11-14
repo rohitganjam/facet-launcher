@@ -31,7 +31,6 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.Velocity
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.facetlauncher.app.data.PrivateSpaceState
@@ -45,6 +44,7 @@ import com.facetlauncher.app.data.model.Folder
 import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.data.model.RecentlyInstalledPosition
 import com.facetlauncher.app.data.model.SettingsSearchEntry
+import com.facetlauncher.app.data.model.SwipeDirection
 import com.facetlauncher.app.ui.components.AppMenuNotifications
 import com.facetlauncher.app.ui.components.LocalHomeSwipeGate
 import com.facetlauncher.app.ui.drawer.AppDrawerScreen
@@ -123,7 +123,7 @@ internal fun homeDrawerActions(viewModel: DrawerViewModel) = HomeDrawerActions(
 )
 
 /**
- * The app drawer, which slides up over Home as [drawer] opens. When it closes it resets: the
+ * The app drawer, which slides over Home from the edge its swipe pulls it from ([direction]) as [drawer] opens. When it closes it resets: the
  * query, the scroll position and Private Space. [itemActions] are Home's own, except the app click.
  */
 @Composable
@@ -134,6 +134,8 @@ internal fun HomeAppDrawerOverlay(
     drawer: SwipeAxisState,
     containerHeightPx: Float,
     isDrawerOpen: Boolean,
+    direction: SwipeDirection = SwipeDirection.UP,
+    containerWidthPx: Float = 0f,
     overlays: HomeOverlayState,
     onNavigateToSettings: () -> Unit,
     onNavigateToUsageAccessExplanation: () -> Unit = {},
@@ -158,8 +160,13 @@ internal fun HomeAppDrawerOverlay(
     }
     val isSearching = query.isNotBlank()
     val swipeGate = LocalHomeSwipeGate.current
-    val scrollConnection = remember(listState, gridState, searchListState, state.settings.drawerPresentation, isSearching, swipeGate) {
-        drawerNestedScroll(drawer, state.settings.drawerPresentation, isSearching, listState, gridState, searchListState) { swipeGate?.isBlocked == true }
+    val scrollConnection = remember(listState, gridState, searchListState, state.settings.drawerPresentation, isSearching, swipeGate, direction) {
+        val blocked = { swipeGate?.isBlocked == true }
+        if (direction == SwipeDirection.UP) {
+            drawerNestedScroll(drawer, state.settings.drawerPresentation, isSearching, listState, gridState, searchListState, blocked)
+        } else {
+            panelCloseNestedScroll(drawer, direction, blocked)
+        }
     }
 
     HomeDrawerScreen(
@@ -182,8 +189,10 @@ internal fun HomeAppDrawerOverlay(
         searchFocusRequest = searchFocusRequest,
         modifier = Modifier
             .fillMaxSize()
-            .offset { IntOffset(0, ((1f - drawer.progress.value) * containerHeightPx).toInt()) }
-            .nestedScroll(scrollConnection),
+            .offset { panelOffset(direction, drawer.progress.value, containerWidthPx, containerHeightPx) }
+            .nestedScroll(scrollConnection)
+            // From any other side, a drag on the drawer's own surface (not its list) closes it too.
+            .then(if (direction == SwipeDirection.UP) Modifier else Modifier.panelSurfaceDrag(drawer, direction)),
     )
 }
 

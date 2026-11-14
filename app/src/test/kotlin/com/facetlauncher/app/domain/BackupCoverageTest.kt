@@ -59,14 +59,18 @@ class BackupCoverageTest {
         )
         // the chosen weather city is saved as four flat fields (the current location never is)
         val weatherCityGroup = setOf("weatherCityName", "weatherCityLatitude", "weatherCityLongitude", "weatherCityTimezone")
-        val expected = (fieldNames(LauncherSettings::class.java) - notBackedUp - "landscape" - "weatherCity")
-            .map { renamed[it] ?: it }.toSet() + landscapeGroup + weatherCityGroup
+        // the per-swipe actions are saved as four flat fields
+        val swipeActionGroup = setOf("swipeUpAction", "swipeDownAction", "swipeLeftAction", "swipeRightAction")
+        val expected = (fieldNames(LauncherSettings::class.java) - notBackedUp - "landscape" - "weatherCity" - "swipeActions")
+            .map { renamed[it] ?: it }.toSet() + landscapeGroup + weatherCityGroup + swipeActionGroup
         // The launcher-wide clock look and accessories of version 4 and older are still read, to give an older backup's clocks their settings, but not written
         val legacyClockFields = setOf(
             "clockTemplateId", "clockFontOption", "clockColorOption", "clockAccentColorOption", "clockShowMeridiem", "clockDateStyle",
             "showNextAlarm", "showBatteryPercentage", "showCalendarIndicator", "calendarItemsToShow",
         )
-        val exported = fieldNames(BackupSettings::class.java) - "activeFacetIndex" - legacyClockFields
+        // The swipe switches of older versions are still written for them and read from older backups
+        val legacySwipeFields = setOf("swipeLeftEnabled", "swipeRightEnabled", "swipeDownEnabled", "swapSwipeSides")
+        val exported = fieldNames(BackupSettings::class.java) - "activeFacetIndex" - legacyClockFields - legacySwipeFields
 
         // Then the backup holds exactly those
         assertEquals(expected, exported)

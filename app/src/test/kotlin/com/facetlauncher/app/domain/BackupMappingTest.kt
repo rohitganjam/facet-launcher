@@ -28,6 +28,8 @@ import com.facetlauncher.app.data.local.FolderPlacementEntity
 import com.facetlauncher.app.data.model.BackupAppEntry
 import com.facetlauncher.app.data.model.BackupGridCells
 import com.facetlauncher.app.data.model.PlacementList
+import com.facetlauncher.app.data.model.SwipeAction
+import com.facetlauncher.app.data.model.SwipeActions
 import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -199,5 +201,31 @@ class BackupMappingTest {
 
         assertEquals(BackupGridCells(landscapeRow = 2, landscapeColumn = 0), placement.toBackupPlacement(mapOf(7L to 0))?.gridCells)
         assertNull(Json.decodeFromString<BackupAppEntry>("""{"packageName":"a","activityName":".A","position":0}""").gridCells)
+    }
+
+    @Test
+    fun `a backup's swipe actions are restored as stored`() {
+        // Given a backup with the drawer on two swipes and swipe left set to none
+        val settings = com.facetlauncher.app.data.minimalBackupSettings().copy(
+            swipeUpAction = "APP_DRAWER", swipeDownAction = "APP_DRAWER", swipeLeftAction = "NONE", swipeRightAction = "HUB",
+        )
+
+        // Then they come back as stored
+        assertEquals(
+            SwipeActions(up = SwipeAction.APP_DRAWER, down = SwipeAction.APP_DRAWER, left = SwipeAction.NONE, right = SwipeAction.HUB),
+            settings.swipeActions(),
+        )
+    }
+
+    @Test
+    fun `a backup from before swipe actions is read through its old switches`() {
+        // Given an older backup with swipe down off and the sides swapped
+        val settings = com.facetlauncher.app.data.minimalBackupSettings().copy(swipeDownEnabled = false, swapSwipeSides = true)
+
+        // Then the mapping matches what it did
+        assertEquals(
+            SwipeActions(up = SwipeAction.APP_DRAWER, down = SwipeAction.NONE, left = SwipeAction.HUB, right = SwipeAction.SWITCH_FACETS),
+            settings.swipeActions(),
+        )
     }
 }

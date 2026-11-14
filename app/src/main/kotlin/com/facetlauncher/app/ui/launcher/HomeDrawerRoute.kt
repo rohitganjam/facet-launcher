@@ -1,5 +1,7 @@
 package com.facetlauncher.app.ui.launcher
 
+import com.facetlauncher.app.data.model.SwipeDirection
+import com.facetlauncher.app.ui.facets.PagerDismissEdge
 import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.WindowInsetsSides
@@ -223,12 +225,7 @@ fun HomeDrawerRoute(
             isInClockZone = { position -> clockZoneBoundsInHomeRoot?.contains(position) == true || clockPaneBoundsInHomeRoot?.contains(position) == true },
         )
     }
-    LaunchedEffect(launcherUiState.swipeLeftEnabled, launcherUiState.swipeRightEnabled, launcherUiState.swipeDownEnabled, launcherUiState.swapSwipeSides) {
-        swipe.swipeLeftEnabled = launcherUiState.swipeLeftEnabled
-        swipe.swipeRightEnabled = launcherUiState.swipeRightEnabled
-        swipe.swipeDownEnabled = launcherUiState.swipeDownEnabled
-        swipe.swapSides = launcherUiState.swapSwipeSides
-    }
+    LaunchedEffect(launcherUiState.swipeActions) { swipe.actions = launcherUiState.swipeActions }
     // What's behind the system bars: wallpaper, except while an opaque picker or the always-dark Private Space covers it.
     SystemBarsBackdropEffect(
         when {
@@ -499,8 +496,9 @@ fun HomeDrawerRoute(
 
         HomeHubOverlay(
             hub = swipe.hub,
-            mirrored = launcherUiState.swapSwipeSides,
+            direction = swipe.hubDirection,
             containerWidthPx = containerWidthPx,
+            containerHeightPx = containerHeightPx,
             isHubOpen = isHubOpen,
             clockWidgetNeedsListening = clockWidgetNeedsListening,
             overlays = overlays,
@@ -530,6 +528,8 @@ fun HomeDrawerRoute(
             actions = drawerActions,
             itemActions = itemActions,
             drawer = swipe.drawer,
+            direction = swipe.drawerDirection,
+            containerWidthPx = containerWidthPx,
             containerHeightPx = containerHeightPx,
             isDrawerOpen = isDrawerOpen,
             overlays = overlays,
@@ -550,7 +550,8 @@ fun HomeDrawerRoute(
         HomeWidgetPickerOverlay(overlays, onReset = widgetPickerViewModel::reset) {
             HubWidgetPickerScreen(onDone = { overlays.showWidgetPicker = false }, viewModel = widgetPickerViewModel, onConfigureNewWidget = { overlays.configureRef = it })
         }
-        HomeFacetCarouselOverlay(swipe.facet, containerWidthPx, isOpen = isFacetOpen, mirrored = launcherUiState.swapSwipeSides) {
+        val facetDirection = swipe.facetDirection
+        HomeFacetCarouselOverlay(swipe.facet, facetDirection, containerWidthPx, containerHeightPx, isOpen = isFacetOpen) {
             FacetCarouselScreen(
                 isOpen = isFacetOpen,
                 onFacetApply = { coroutineScope.launch { swipe.facet.close() } },
@@ -558,8 +559,13 @@ fun HomeDrawerRoute(
                 onReorderFacets = onNavigateToManageFacets,
                 onNavigateToSettings = onNavigateToSettings,
                 onOpenFacetPro = onNavigateToFacetPro,
-                dismissToLeft = launcherUiState.swapSwipeSides,
-                onDismissDrag = { deltaPx -> swipe.facet.dragBy(if (launcherUiState.swapSwipeSides) deltaPx else -deltaPx) },
+                // A carousel that came in from a side is dismissed by its pager's edge page; one from above or below by its surface.
+                pagerDismissEdge = when (facetDirection) {
+                    SwipeDirection.LEFT -> PagerDismissEdge.FIRST
+                    SwipeDirection.RIGHT -> PagerDismissEdge.LAST
+                    else -> null
+                },
+                onDismissDrag = { deltaPx -> swipe.facet.dragBy(deltaPx * facetDirection.fingerSign) },
                 onDismissDragEnd = { swipe.facet.settle() },
                 modifier = Modifier.fillMaxSize(),
                 viewModel = facetViewModel,
