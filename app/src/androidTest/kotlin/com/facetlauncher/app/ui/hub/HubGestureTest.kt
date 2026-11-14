@@ -170,7 +170,7 @@ class HubGestureTest {
     }
 
     @Test
-    fun theContextMenuOffersConfigureOnlyForAWidgetWithSettingsAndItOpensThem() {
+    fun theContextMenuOffersConfigureForAWidgetFacetDrawsAndNotForAHostedOne() {
         // Given an Agenda, a Now playing widget and a hosted widget on the Hub
         var configured: NativeWidgetRef? = null
         val environment = NativeWidgetEnvironment(actions = NativeWidgetActions(onConfigure = { configured = it }))
@@ -189,13 +189,18 @@ class HubGestureTest {
         composeRule.onNodeWithTag("hub_widget_tile_-5").performTouchInput { up() }
 
         // Then it offers Configure, which opens its settings
-        composeRule.onNodeWithText("Configure widget").assertExists()
         composeRule.onNodeWithText("Configure widget").performClick()
         assertEquals(NativeWidgetRef.Hub(-5), configured)
 
-        // And the Now playing widget and the hosted one do not offer it
+        // And so does Now playing (every widget Facet draws has a background setting)
         longPress("hub_widget_tile_-6")
         composeRule.onNodeWithTag("hub_widget_tile_-6").performTouchInput { up() }
+        composeRule.onNodeWithText("Configure widget").performClick()
+        assertEquals(NativeWidgetRef.Hub(-6), configured)
+
+        // But the hosted widget does not
+        longPress("hub_widget_tile_10")
+        composeRule.onNodeWithTag("hub_widget_tile_10").performTouchInput { up() }
         composeRule.onNodeWithText("Resize widget").assertExists()
         composeRule.onNodeWithText("Configure widget").assertDoesNotExist()
     }
