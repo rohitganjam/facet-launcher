@@ -127,26 +127,18 @@ private val ADD_FACET_FULL_CONTENT_HEIGHT = 130.dp
 /** The carousel sits over Home as a translucent overlay — Home (and the wallpaper) show through. */
 private const val CAROUSEL_SCRIM_ALPHA = 0.6f
 
-/**
- * Switch Facets carousel (`3a`, `4n`, `4o`): a follow-finger panel to Home's right (see
- * [com.facetlauncher.app.ui.launcher.HomeDrawerRoute] — this screen is never a `NavHost`
- * destination, it's always composed and just offset off-screen when closed, exactly like the
- * Hub). Tapping a card applies it and returns Home ([onFacetApply]); [onReorderFacets]
- * opens the standalone Manage Facets screen.
- *
- * This screen doesn't own opening/closing itself — its host does, via
- * [com.facetlauncher.app.ui.launcher.HomeDrawerRoute]'s own `facetAxis` — except for one
- * gesture it's uniquely positioned to detect: a rightward swipe
- * that lands *on the pager* while it's settled on the first facet's page. There's no previous
- * facet to browse to there, so without this, the pager would just eat the drag as a dead
- * overscroll before the host's own empty-space detector ever saw it. [onDismissDrag] forwards
- * that drag's raw signed pixel deltas to the host (which feeds them into the same `facetAxis`
- * a swipe in empty space would), and [onDismissDragEnd] tells it the gesture ended so it can
- * settle open/closed. Swiping right from any *other* page still just browses backward.
- */
+/** Which pager page dismisses the carousel on a drag past it. */
+enum class PagerDismissEdge { FIRST, LAST }
+
 /** How dim a facet card that is disabled on the free plan is drawn. */
 private const val LOCKED_CARD_ALPHA = 0.5f
 
+/**
+ * Switch Facets carousel (`3a`, `4n`, `4o`): a follow-finger panel over Home, always composed and offset off-screen
+ * while closed (see [com.facetlauncher.app.ui.launcher.HomeDrawerRoute]). Tapping a card applies it ([onFacetApply]).
+ * Its host opens and closes it, except for a drag past the [pagerDismissEdge] page back the way the carousel came,
+ * which the pager would otherwise eat as overscroll: [onDismissDrag] forwards its deltas and [onDismissDragEnd] its end.
+ */
 @Composable
 fun FacetCarouselScreen(
     onFacetApply: () -> Unit,
@@ -159,8 +151,8 @@ fun FacetCarouselScreen(
     modifier: Modifier = Modifier,
     /** False while the overlay is off screen: the pager is then put back on the active facet, ready for the next open. */
     isOpen: Boolean = true,
-    /** Mirrored sides: the carousel came in from the left, so the dismiss drag is leftward from the last page. */
-    dismissToLeft: Boolean = false,
+    /** The pager page a drag past dismisses the carousel from: the first when it came in from the right, the last from the left, none from above or below. */
+    pagerDismissEdge: PagerDismissEdge? = PagerDismissEdge.FIRST,
     viewModel: FacetCarouselViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -177,7 +169,7 @@ fun FacetCarouselScreen(
         onDismissDragEnd = onDismissDragEnd,
         modifier = modifier,
         isOpen = isOpen,
-        dismissToLeft = dismissToLeft,
+        pagerDismissEdge = pagerDismissEdge,
     )
 }
 
@@ -195,7 +187,7 @@ private fun FacetCarouselContent(
     onDismissDragEnd: () -> Unit,
     modifier: Modifier = Modifier,
     isOpen: Boolean = true,
-    dismissToLeft: Boolean = false,
+    pagerDismissEdge: PagerDismissEdge? = PagerDismissEdge.FIRST,
 ) {
     val facets = uiState.facets
     if (facets.isEmpty()) {
@@ -229,13 +221,14 @@ private fun FacetCarouselContent(
     // duration, even once it reaches page 0, so flinging back through the first page doesn't turn
     // into a close. Empty-space drags never reach here at all — the pager is the only scrollable
     // in this screen, so nothing else dispatches into this connection.
-    val dismissOnSwipeBack = remember(pagerState, dismissToLeft) {
+    val dismissOnSwipeBack = remember(pagerState, pagerDismissEdge) {
         object : NestedScrollConnection {
             var gestureMovedPager = false
             var didDismissDrag = false
 
             override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
-                if (source != NestedScrollSource.Drag) return Offset.Zero
+                if (source != NestedScrollSource.Drag || pagerDismissEdge == null) return Offset.Zero
+                val dismissToLeft = pagerDismissEdge == PagerDismissEdge.LAST
                 val settledOnEdge = pagerState.currentPage == (if (dismissToLeft) pagerState.pageCount - 1 else 0) &&
                     abs(pagerState.currentPageOffsetFraction) < 0.0001f
                 if (!settledOnEdge) gestureMovedPager = true
