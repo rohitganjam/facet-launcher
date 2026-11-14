@@ -3,6 +3,9 @@ package com.facetlauncher.app.ui.settings
 import com.facetlauncher.app.data.AccessibilityAccessRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.model.LauncherSettings
+import com.facetlauncher.app.data.model.SwipeAction
+import com.facetlauncher.app.data.model.SwipeActions
+import com.facetlauncher.app.data.model.SwipeDirection
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -12,6 +15,7 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -121,34 +125,23 @@ class GesturesViewModelTest {
     }
 
     @Test
-    fun `the swipe switches read from settings and write back through the repository`() = runTest {
-        // Given swipe left stored off
-        settings.value = LauncherSettings(swipeLeftEnabled = false)
+    fun `swipe actions read from settings and a pick writes back through the repository`() = runTest {
+        // Given swipe left stored as None
+        val stored = SwipeActions(left = SwipeAction.NONE)
+        settings.value = LauncherSettings(swipeActions = stored)
         val repository = mock(SettingsRepository::class.java)
         val viewModel = createViewModel(accessGranted = false, settingsRepository = repository)
         backgroundScope.launch { viewModel.uiState.collect {} }
         testDispatcher.scheduler.advanceUntilIdle()
 
-        // Then only that switch reads off
-        val state = viewModel.uiState.value
-        assertFalse(state.swipeLeftEnabled)
-        assertTrue(state.swipeRightEnabled)
-        assertTrue(state.swipeDownEnabled)
+        // Then the state shows it
+        assertEquals(stored, viewModel.uiState.value.swipeActions)
 
-        // When the switches are changed
-        viewModel.setSwipeLeftEnabled(true)
-        viewModel.setSwipeRightEnabled(false)
-        viewModel.setSwipeDownEnabled(false)
+        // When swipe down is set to the hub
+        viewModel.setSwipeAction(SwipeDirection.DOWN, SwipeAction.HUB)
         testDispatcher.scheduler.advanceUntilIdle()
 
-        // Then each reaches the repository
-        verify(repository).setSwipeLeftEnabled(true)
-        verify(repository).setSwipeRightEnabled(false)
-        verify(repository).setSwipeDownEnabled(false)
-
-        // And the swap switch does too
-        viewModel.setSwapSwipeSides(true)
-        testDispatcher.scheduler.advanceUntilIdle()
-        verify(repository).setSwapSwipeSides(true)
+        // Then it reaches the repository
+        verify(repository).setSwipeAction(SwipeDirection.DOWN, SwipeAction.HUB)
     }
 }

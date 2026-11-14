@@ -301,7 +301,7 @@
     <string name="weather_location_limit">Pode manter até %1$d cidades. Remova uma para adicionar outra.</string>
     <string name="weather_leave_message">O tempo precisa de uma cidade. O que quer fazer?</string>
 
-    <string name="gesture_swipe_down_subtitle">Abrir o painel de notificações</string>
+    <string name="swipe_action_notification_shade">Abrir o painel de notificações</string>
     <string name="gesture_long_press_title">Manter premido um espaço vazio</string>
     <string name="gesture_long_press_subtitle">Abrir o menu do relógio e do esquema</string>
     <string name="gesture_home_opens_search_title">O botão Início abre a pesquisa</string>

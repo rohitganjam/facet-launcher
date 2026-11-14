@@ -90,10 +90,16 @@ data class BackupSettings(
     val showNotificationsInAppMenu: Boolean = true,
     val homeOpensSearch: Boolean = false,
     val doubleTapToLock: Boolean = false,
+    /** Older app versions' swipe switches: still written (approximated) for them, and read when the per-swipe actions below are absent. */
     val swipeLeftEnabled: Boolean = true,
     val swipeRightEnabled: Boolean = true,
     val swipeDownEnabled: Boolean = true,
     val swapSwipeSides: Boolean = false,
+    /** [SwipeAction] names per swipe; `null` in backups made before per-swipe actions. Additive, so no version bump. */
+    val swipeUpAction: String? = null,
+    val swipeDownAction: String? = null,
+    val swipeLeftAction: String? = null,
+    val swipeRightAction: String? = null,
     val showDrawerIcons: Boolean,
     val showDrawerLabels: Boolean,
     val searchBarPosition: String,

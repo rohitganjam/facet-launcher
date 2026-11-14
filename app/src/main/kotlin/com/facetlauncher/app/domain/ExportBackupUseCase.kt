@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.first
 import com.facetlauncher.app.data.PlacementRepository
 import com.facetlauncher.app.data.model.PlacementTarget
 import com.facetlauncher.app.data.model.PlacementList
+import com.facetlauncher.app.data.model.SwipeAction
 
 /**
  * F14 Backup & Restore export — composes every settings/data `Repository` into one [BackupBundle]
@@ -83,10 +84,14 @@ private fun LauncherSettings.toBackupSettings(activeFacetIndex: Int?): BackupSet
     showNotificationsInAppMenu = showNotificationsInAppMenu,
     homeOpensSearch = homeOpensSearch,
     doubleTapToLock = doubleTapToLock,
-    swipeLeftEnabled = swipeLeftEnabled,
-    swipeRightEnabled = swipeRightEnabled,
-    swipeDownEnabled = swipeDownEnabled,
-    swapSwipeSides = swapSwipeSides,
+    swipeLeftEnabled = swipeActions.left != SwipeAction.NONE,
+    swipeRightEnabled = swipeActions.right != SwipeAction.NONE,
+    swipeDownEnabled = swipeActions.down != SwipeAction.NONE,
+    swapSwipeSides = swipeActions.left == SwipeAction.HUB || swipeActions.right == SwipeAction.SWITCH_FACETS,
+    swipeUpAction = swipeActions.up.name,
+    swipeDownAction = swipeActions.down.name,
+    swipeLeftAction = swipeActions.left.name,
+    swipeRightAction = swipeActions.right.name,
     showDrawerIcons = showDrawerIcons,
     showDrawerLabels = showDrawerLabels,
     searchBarPosition = searchBarPosition.name,

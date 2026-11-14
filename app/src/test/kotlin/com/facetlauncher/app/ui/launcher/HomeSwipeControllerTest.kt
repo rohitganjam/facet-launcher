@@ -6,6 +6,10 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.input.pointer.PointerId
 import androidx.compose.ui.input.pointer.PointerInputChange
 import androidx.compose.ui.input.pointer.PointerType
+import androidx.compose.ui.unit.IntOffset
+import com.facetlauncher.app.data.model.SwipeAction
+import com.facetlauncher.app.data.model.SwipeActions
+import com.facetlauncher.app.data.model.SwipeDirection
 import com.facetlauncher.app.ui.home.ClockPagerState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.test.TestCoroutineScheduler
@@ -200,8 +204,8 @@ class HomeSwipeControllerTest {
     }
 
     @Test
-    fun `a downward drag does not pull the shade when swipe down is off or the drawer started open`() {
-        val off = controller(height = 2000f).also { it.swipeDownEnabled = false }
+    fun `a downward drag does not pull the shade when swipe down is none or the drawer started open`() {
+        val off = controller(height = 2000f).also { it.actions = SwipeActions(down = SwipeAction.NONE) }
         off.start()
         off.drag(dx = 0f, dy = 300f)
 
@@ -491,80 +495,159 @@ class HomeSwipeControllerTest {
     }
 
     @Test
-    fun `a swipe left with swipe left off opens nothing but swipe right still opens the hub`() {
-        val swipe = controller().also { it.swipeLeftEnabled = false }
+    fun `a swipe set to none opens nothing but the other side still works`() {
+        // Given swipe left set to None
+        val actions = SwipeActions(left = SwipeAction.NONE)
+        val swipe = controller().also { it.actions = actions }
 
+        // When swiping left
         swipe.start()
         swipe.drag(dx = -300f, dy = 10f)
+
+        // Then nothing moves
         assertEquals(0f, swipe.facet.progress.value, 0f)
         assertEquals(0f, swipe.hub.progress.value, 0f)
 
-        val other = controller().also { it.swipeLeftEnabled = false }
+        // And swiping right still opens the hub
+        val other = controller().also { it.actions = actions }
         other.start()
         other.drag(dx = 300f, dy = 10f)
         assertEquals(0.3f, other.hub.progress.value, 0.0001f)
     }
 
     @Test
-    fun `with the sides swapped a swipe left opens the hub and a swipe right opens the carousel`() {
-        // Given swapped sides
-        val left = controller().also { it.swapSides = true }
+    fun `a drag first toward a none swipe engages the other direction once it reverses`() {
+        // Given swipe left set to None
+        val swipe = controller().also { it.actions = SwipeActions(left = SwipeAction.NONE) }
 
-        // When swiping left
-        left.start()
-        left.drag(dx = -300f, dy = 10f)
+        // When the drag goes left first, then right
+        swipe.start()
+        swipe.drag(dx = -100f, dy = 0f)
+        swipe.drag(dx = 300f, dy = 0f)
 
-        // Then the hub follows the finger and the carousel stays shut
-        assertEquals(0.3f, left.hub.progress.value, 0.0001f)
-        assertEquals(0f, left.facet.progress.value, 0f)
-
-        // And swiping right opens the carousel instead
-        val right = controller().also { it.swapSides = true }
-        right.start()
-        right.drag(dx = 300f, dy = 10f)
-        assertEquals(0.3f, right.facet.progress.value, 0.0001f)
-        assertEquals(0f, right.hub.progress.value, 0f)
+        // Then the hub follows the rightward part
+        assertEquals(0.3f, swipe.hub.progress.value, 0.0001f)
     }
 
     @Test
-    fun `with the sides swapped the on-off switches still follow the finger direction`() {
-        // Given swipe left off, which now would have opened the hub
-        val swipe = controller().also { it.swapSides = true; it.swipeLeftEnabled = false }
+    fun `the app drawer on swipe left slides in from the right and opens on release`() {
+        // Given the drawer on swipe left
+        val swipe = controller(width = 1000f).also { it.actions = SwipeActions(up = SwipeAction.NONE, left = SwipeAction.APP_DRAWER) }
 
+        // When swiping left far enough
         swipe.start()
-        swipe.drag(dx = -300f, dy = 10f)
+        swipe.drag(dx = -400f, dy = 0f)
+        val during = swipe.drawer.progress.value
+        swipe.settle(velocity = 0f)
 
-        assertEquals(0f, swipe.hub.progress.value, 0f)
+        // Then the drawer follows the finger by the screen's width, comes from the left swipe's side, and opens
+        assertEquals(0.4f, during, 0.0001f)
+        assertEquals(SwipeDirection.LEFT, swipe.drawerDirection)
+        assertEquals(1f, swipe.drawer.progress.value, 0f)
         assertEquals(0f, swipe.facet.progress.value, 0f)
     }
 
     @Test
-    fun `a swipe right with swipe right off opens nothing but swipe left still opens the carousel`() {
-        val swipe = controller().also { it.swipeRightEnabled = false }
+    fun `the hub on swipe up opens from below and swipe up no longer opens the drawer`() {
+        // Given the hub on swipe up and the drawer on swipe right
+        val swipe = controller(height = 2000f).also { it.actions = SwipeActions(up = SwipeAction.HUB, right = SwipeAction.APP_DRAWER) }
 
+        // When swiping up
         swipe.start()
-        swipe.drag(dx = 300f, dy = 10f)
-        assertEquals(0f, swipe.hub.progress.value, 0f)
-        assertEquals(0f, swipe.facet.progress.value, 0f)
+        swipe.drag(dx = 0f, dy = -400f)
 
-        val other = controller().also { it.swipeRightEnabled = false }
-        other.start()
-        other.drag(dx = -300f, dy = 10f)
-        assertEquals(0.3f, other.facet.progress.value, 0.0001f)
+        // Then the hub follows by the screen's height and the drawer stays shut
+        assertEquals(0.2f, swipe.hub.progress.value, 0.0001f)
+        assertEquals(SwipeDirection.UP, swipe.hubDirection)
+        assertEquals(0f, swipe.drawer.progress.value, 0f)
     }
 
     @Test
-    fun `a long swipe down opens the shade unless swipe down is off`() {
+    fun `the shade on swipe up expands after a long upward drag`() {
+        // Given the shade on swipe up and the drawer on swipe down
+        val swipe = controller(height = 2000f).also {
+            it.actions = SwipeActions(up = SwipeAction.NOTIFICATION_SHADE, down = SwipeAction.APP_DRAWER)
+        }
+
+        // When swiping up past the shade distance
+        swipe.start()
+        swipe.drag(dx = 0f, dy = -500f)
+        swipe.settle(velocity = 0f)
+
+        // Then the shade expands and the drawer stays shut
+        assertEquals(1, shadeExpanded)
+        assertEquals(0f, swipe.drawer.progress.value, 0f)
+    }
+
+    @Test
+    fun `an action on two swipes slides in from whichever one opened it`() {
+        // Given the drawer on both swipe up and swipe down
+        val swipe = controller(height = 2000f).also { it.actions = SwipeActions(down = SwipeAction.APP_DRAWER) }
+
+        // When swiping down
+        swipe.start()
+        swipe.drag(dx = 0f, dy = 400f)
+
+        // Then the drawer comes from above
+        assertEquals(SwipeDirection.DOWN, swipe.drawerDirection)
+        assertEquals(0.2f, swipe.drawer.progress.value, 0.0001f)
+        assertEquals(0f, swipe.shade.progress.value, 0f)
+
+        // And after it closes, a swipe up brings it from below again
+        swipe.settle(velocity = -(VELOCITY_THRESHOLD_PX + 1f))
+        assertEquals(0f, swipe.drawer.progress.value, 0f)
+        swipe.start()
+        swipe.drag(dx = 0f, dy = -400f)
+        assertEquals(SwipeDirection.UP, swipe.drawerDirection)
+    }
+
+    @Test
+    fun `a panel whose swipe is reassigned goes back to its first remaining swipe`() {
+        // Given the drawer last opened from swipe down
+        val swipe = controller().also { it.actions = SwipeActions(down = SwipeAction.APP_DRAWER) }
+        swipe.start()
+        swipe.drag(dx = 0f, dy = 400f)
+        swipe.settle(velocity = 0f)
+
+        // When swipe down becomes the shade again
+        swipe.actions = SwipeActions()
+
+        // Then the drawer slides from below again
+        assertEquals(SwipeDirection.UP, swipe.drawerDirection)
+    }
+
+    @Test
+    fun `a fast horizontal fling opens the hub even over a short drag`() {
+        val swipe = controller()
+
+        swipe.start()
+        swipe.drag(dx = 50f, dy = 0f)
+        swipe.settle(velocity = VELOCITY_THRESHOLD_PX + 1f)
+
+        assertEquals(1f, swipe.hub.progress.value, 0f)
+    }
+
+    @Test
+    fun `a long swipe down opens the shade unless swipe down is none`() {
         val on = controller()
         on.start()
         on.drag(dx = 0f, dy = 500f)
         on.settle(velocity = 0f)
 
-        val off = controller().also { it.swipeDownEnabled = false }
+        val off = controller().also { it.actions = SwipeActions(down = SwipeAction.NONE) }
         off.start()
         off.drag(dx = 0f, dy = 500f)
         off.settle(velocity = 0f)
 
         assertEquals(1, shadeExpanded)
+    }
+
+    @Test
+    fun `panel offsets put each panel off the edge its swipe pulls it from`() {
+        assertEquals(IntOffset(0, 2000), panelOffset(SwipeDirection.UP, 0f, 1000f, 2000f))
+        assertEquals(IntOffset(0, -1000), panelOffset(SwipeDirection.DOWN, 0.5f, 1000f, 2000f))
+        assertEquals(IntOffset(1000, 0), panelOffset(SwipeDirection.LEFT, 0f, 1000f, 2000f))
+        assertEquals(IntOffset(-500, 0), panelOffset(SwipeDirection.RIGHT, 0.5f, 1000f, 2000f))
+        assertEquals(IntOffset(0, 0), panelOffset(SwipeDirection.RIGHT, 1f, 1000f, 2000f))
     }
 }

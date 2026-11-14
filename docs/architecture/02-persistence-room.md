@@ -470,10 +470,14 @@ erDiagram
         boolean notification_dots_enabled "default true"
         boolean home_opens_search "default false"
         boolean double_tap_to_lock "default false"
-        boolean swipe_left_enabled "default true"
-        boolean swipe_right_enabled "default true"
-        boolean swipe_down_enabled "default true"
-        boolean swap_swipe_sides "default false"
+        boolean swipe_left_enabled "legacy, read until swipe actions are stored"
+        boolean swipe_right_enabled "legacy, read until swipe actions are stored"
+        boolean swipe_down_enabled "legacy, read until swipe actions are stored"
+        boolean swap_swipe_sides "legacy, read until swipe actions are stored"
+        string swipe_up_action "SwipeAction, default APP_DRAWER"
+        string swipe_down_action "SwipeAction, default NOTIFICATION_SHADE"
+        string swipe_left_action "SwipeAction, default SWITCH_FACETS"
+        string swipe_right_action "SwipeAction, default HUB"
         string notification_badge_style "NotificationBadgeStyle, default DOT"
         boolean show_media_player_on_home "default false"
         boolean show_media_skip_buttons "default true"
@@ -603,10 +607,8 @@ DataStore serialises writes and is main-safe; callers `viewModelScope.launch { }
 | `setNotificationDotsEnabled(Boolean)` | `notification_dots_enabled` | set | `NotificationSettingsViewModel`, `NotificationAccessExplanationViewModel` |
 | `setHomeOpensSearch(Boolean)` | `home_opens_search` | set | `GesturesViewModel` |
 | `setDoubleTapToLock(Boolean)` | `double_tap_to_lock` | set | `GesturesViewModel` |
-| `setSwipeLeftEnabled(Boolean)` | `swipe_left_enabled` | set | `GesturesViewModel` |
-| `setSwipeRightEnabled(Boolean)` | `swipe_right_enabled` | set | `GesturesViewModel` |
-| `setSwipeDownEnabled(Boolean)` | `swipe_down_enabled` | set | `GesturesViewModel` |
-| `setSwapSwipeSides(Boolean)` | `swap_swipe_sides` | set | `GesturesViewModel` |
+| `setSwipeAction(SwipeDirection, SwipeAction)` | `swipe_up_action`, `swipe_down_action`, `swipe_left_action`, `swipe_right_action` | set all four (read-modify-write in one `edit`; refused if it takes the app drawer off its only swipe) | `GesturesViewModel` |
+| `setSwipeActions(SwipeActions)` | the same four | set all four (`normalized()`) | `ImportBackupUseCase` |
 | `setNotificationBadgeStyle(NotificationBadgeStyle)` | `notification_badge_style` | set | `NotificationSettingsViewModel` |
 | `setShowMediaPlayerOnHome(Boolean)` | `show_media_player_on_home` | set | `NotificationSettingsViewModel` |
 | `setShowMediaSkipButtons(Boolean)` | `show_media_skip_buttons` | set | `NotificationSettingsViewModel` |
@@ -748,10 +750,8 @@ accessibility grant, and the pair is small enough to set again after a restore.
 |---|---|---|---|
 | `home_opens_search` | Boolean | `homeOpensSearch` | `false` — a Home press on bare Home opens the Drawer with search focused. In `BackupSettings` (defaulted, no version bump) |
 | `double_tap_to_lock` | Boolean | `doubleTapToLock` | `false` — the switch only reads on while the accessibility service is also enabled. In `BackupSettings` (defaulted, no version bump) |
-| `swipe_left_enabled` | Boolean | `swipeLeftEnabled` | `true`. In `BackupSettings` (defaulted, no version bump) |
-| `swipe_right_enabled` | Boolean | `swipeRightEnabled` | `true`. In `BackupSettings` (defaulted, no version bump) |
-| `swipe_down_enabled` | Boolean | `swipeDownEnabled` | `true`. In `BackupSettings` (defaulted, no version bump) |
-| `swap_swipe_sides` | Boolean | `swapSwipeSides` | `false`. In `BackupSettings` (defaulted, no version bump) |
+| `swipe_up_action`, `swipe_down_action`, `swipe_left_action`, `swipe_right_action` | String (`SwipeAction`) | `swipeActions` | Drawer up, shade down, facets left, Hub right. While none is stored, read from the legacy keys below (`SwipeActions.fromLegacy`); the first write stores all four. In `BackupSettings` as `swipe*Action` (nullable, no version bump) |
+| `swipe_left_enabled`, `swipe_right_enabled`, `swipe_down_enabled`, `swap_swipe_sides` | Boolean | (legacy) | Older versions' switches: read only to derive `swipeActions`, never written. `BackupSettings` still carries them, approximated from the actions on export |
 
 #### Notifications
 

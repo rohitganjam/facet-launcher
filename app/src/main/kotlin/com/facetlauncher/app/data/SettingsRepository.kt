@@ -48,6 +48,9 @@ import com.facetlauncher.app.data.model.PressureUnit
 import com.facetlauncher.app.data.model.RainUnit
 import com.facetlauncher.app.data.model.RecentlyInstalledPosition
 import com.facetlauncher.app.data.model.SearchBarPosition
+import com.facetlauncher.app.data.model.SwipeAction
+import com.facetlauncher.app.data.model.SwipeActions
+import com.facetlauncher.app.data.model.SwipeDirection
 import com.facetlauncher.app.data.model.SystemBarIconStyle
 import com.facetlauncher.app.data.model.TemperatureUnit
 import com.facetlauncher.app.data.model.ThemeMode
@@ -81,6 +84,10 @@ private object Keys {
     val SWIPE_RIGHT_ENABLED = booleanPreferencesKey("swipe_right_enabled")
     val SWIPE_DOWN_ENABLED = booleanPreferencesKey("swipe_down_enabled")
     val SWAP_SWIPE_SIDES = booleanPreferencesKey("swap_swipe_sides")
+    val SWIPE_UP_ACTION = stringPreferencesKey("swipe_up_action")
+    val SWIPE_DOWN_ACTION = stringPreferencesKey("swipe_down_action")
+    val SWIPE_LEFT_ACTION = stringPreferencesKey("swipe_left_action")
+    val SWIPE_RIGHT_ACTION = stringPreferencesKey("swipe_right_action")
     val NOTIFICATION_BADGE_STYLE = stringPreferencesKey("notification_badge_style")
     val SHOW_MEDIA_PLAYER_ON_HOME = booleanPreferencesKey("show_media_player_on_home")
     val SHOW_MEDIA_SKIP_BUTTONS = booleanPreferencesKey("show_media_skip_buttons")
@@ -173,10 +180,7 @@ class SettingsRepository @Inject constructor(
             notificationDotsEnabled = preferences[Keys.NOTIFICATION_DOTS_ENABLED] ?: defaults.notificationDotsEnabled,
             homeOpensSearch = preferences[Keys.HOME_OPENS_SEARCH] ?: defaults.homeOpensSearch,
             doubleTapToLock = preferences[Keys.DOUBLE_TAP_TO_LOCK] ?: defaults.doubleTapToLock,
-            swipeLeftEnabled = preferences[Keys.SWIPE_LEFT_ENABLED] ?: defaults.swipeLeftEnabled,
-            swipeRightEnabled = preferences[Keys.SWIPE_RIGHT_ENABLED] ?: defaults.swipeRightEnabled,
-            swipeDownEnabled = preferences[Keys.SWIPE_DOWN_ENABLED] ?: defaults.swipeDownEnabled,
-            swapSwipeSides = preferences[Keys.SWAP_SWIPE_SIDES] ?: defaults.swapSwipeSides,
+            swipeActions = preferences.swipeActions(),
             notificationBadgeStyle = preferences[Keys.NOTIFICATION_BADGE_STYLE]?.let {
                 runCatching { NotificationBadgeStyle.valueOf(it) }.getOrNull()
             } ?: defaults.notificationBadgeStyle,
@@ -317,20 +321,14 @@ class SettingsRepository @Inject constructor(
         dataStore.edit { it[Keys.NOTIFICATION_DOTS_ENABLED] = enabled }
     }
 
-    suspend fun setSwipeLeftEnabled(enabled: Boolean) {
-        dataStore.edit { it[Keys.SWIPE_LEFT_ENABLED] = enabled }
+    /** [direction] now triggers [action]; refused if it would leave the app drawer without a swipe. */
+    suspend fun setSwipeAction(direction: SwipeDirection, action: SwipeAction) {
+        dataStore.edit { it.putSwipeActions(it.swipeActions().assign(direction, action)) }
     }
 
-    suspend fun setSwipeRightEnabled(enabled: Boolean) {
-        dataStore.edit { it[Keys.SWIPE_RIGHT_ENABLED] = enabled }
-    }
-
-    suspend fun setSwipeDownEnabled(enabled: Boolean) {
-        dataStore.edit { it[Keys.SWIPE_DOWN_ENABLED] = enabled }
-    }
-
-    suspend fun setSwapSwipeSides(enabled: Boolean) {
-        dataStore.edit { it[Keys.SWAP_SWIPE_SIDES] = enabled }
+    /** Backup import: the whole mapping at once, repaired if it drops the app drawer. */
+    suspend fun setSwipeActions(actions: SwipeActions) {
+        dataStore.edit { it.putSwipeActions(actions.normalized()) }
     }
 
     suspend fun setHomeOpensSearch(enabled: Boolean) {
@@ -700,4 +698,30 @@ private fun MutablePreferences.writeLandscape(overrides: LandscapeOverrides) {
 
 private fun <T> MutablePreferences.setOrRemove(key: Preferences.Key<T>, value: T?) {
     if (value == null) remove(key) else this[key] = value
+}
+
+private val SWIPE_ACTION_KEYS = mapOf(
+    SwipeDirection.UP to Keys.SWIPE_UP_ACTION,
+    SwipeDirection.DOWN to Keys.SWIPE_DOWN_ACTION,
+    SwipeDirection.LEFT to Keys.SWIPE_LEFT_ACTION,
+    SwipeDirection.RIGHT to Keys.SWIPE_RIGHT_ACTION,
+)
+
+/** The stored per-swipe actions; before any was stored, the mapping the old on/off switches and "Swap left and right" described. */
+private fun Preferences.swipeActions(): SwipeActions {
+    if (SWIPE_ACTION_KEYS.values.none { contains(it) }) {
+        return SwipeActions.fromLegacy(
+            leftEnabled = this[Keys.SWIPE_LEFT_ENABLED] ?: true,
+            rightEnabled = this[Keys.SWIPE_RIGHT_ENABLED] ?: true,
+            downEnabled = this[Keys.SWIPE_DOWN_ENABLED] ?: true,
+            swapSides = this[Keys.SWAP_SWIPE_SIDES] ?: false,
+        )
+    }
+    val defaults = SwipeActions()
+    fun read(direction: SwipeDirection) = SwipeActions.parse(this[SWIPE_ACTION_KEYS.getValue(direction)]) ?: defaults.actionFor(direction)
+    return SwipeActions(read(SwipeDirection.UP), read(SwipeDirection.DOWN), read(SwipeDirection.LEFT), read(SwipeDirection.RIGHT)).normalized()
+}
+
+private fun MutablePreferences.putSwipeActions(actions: SwipeActions) {
+    SWIPE_ACTION_KEYS.forEach { (direction, key) -> this[key] = actions.actionFor(direction).name }
 }

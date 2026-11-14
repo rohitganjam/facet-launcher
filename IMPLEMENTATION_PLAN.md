@@ -4853,3 +4853,13 @@ A switch at the top of Daily photos changes the wallpaper once a day to the newe
 - [x] Strings in en, de, es, fr, nl and pt (the Pro strings in pt-PT too).
 - [x] Docs: `01`, `02`, `03`, `04`, `07`, `16`, `21`, README, `CLAUDE.md`.
 - [ ] Privacy policy sentence in `../facet-launcher-site/build.py`: "If you turn on Daily wallpaper, the first time you open Facet each day it makes the same request to Peapix and downloads one photo, over Wi-Fi only unless you allow mobile data."
+
+## Per-swipe gesture actions (direct request)
+
+Settings → Gestures: each of the four Home swipes is a row you tap to pick its action (Open app drawer, Open the Hub, Switch facets, Open notification shade, None), replacing the on/off switches and "Swap left and right". Decisions: an action may go on two swipes, after a warning; the app drawer always keeps a swipe; panels slide in from the side they were swiped from and close with the reverse swipe; long-press is unchanged. See `docs/architecture/12-flow-drawer-search-and-app-actions.md`.
+
+### Steps
+- [x] `SwipeActions` / `SwipeAction` / `SwipeDirection` model; four DataStore keys, read from the old switches until first written; backup fields (old backups read through the switches, which export still writes for older versions). Tests: `SwipeActionsTest`, `SettingsRepositoryTest`, `BackupMappingTest`, `BackupCoverageTest`.
+- [x] Gestures screen: tappable swipe rows, the action sheet, the duplicate warning, the drawer guard; strings in en, de, es, fr, nl, pt. Tests: `GesturesViewModelTest`, `GesturesScreenTest`.
+- [x] `HomeSwipeController` routes each swipe by its action; drawer, Hub and carousel slide from their swipe's side (`panelOffset`) and close by the reverse drag (`panelSurfaceDrag`, `panelCloseNestedScroll`, `PagerDismissEdge`). Tests: `HomeSwipeControllerTest`.
+- [ ] Verified on the emulator (build, unit tests, `GesturesScreenTest`, `HomeDrawerRouteTest`, manual pass of each panel from each side).

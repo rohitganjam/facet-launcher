@@ -1,5 +1,9 @@
 package com.facetlauncher.app.data
 
+import com.facetlauncher.app.data.model.SwipeDirection
+import com.facetlauncher.app.data.model.SwipeActions
+import com.facetlauncher.app.data.model.SwipeAction
+import androidx.datastore.preferences.core.booleanPreferencesKey
 import com.facetlauncher.app.BuildConfig
 import com.facetlauncher.app.data.model.GlassStyle
 import com.facetlauncher.app.data.model.LandscapeOverrides
@@ -606,35 +610,81 @@ class SettingsRepositoryTest {
     }
 
     @Test
-    fun `every Home swipe is on by default and each switch persists independently`() = runTest {
-        // Given a fresh repository
+    fun `swipes default to drawer up shade down facets left and hub right`() = runTest {
         val repository = createRepository()
-        val fresh = repository.settings.first()
-        assertTrue(fresh.swipeLeftEnabled && fresh.swipeRightEnabled && fresh.swipeDownEnabled)
 
-        // When only swipe left is turned off
-        repository.setSwipeLeftEnabled(false)
-
-        // Then right and down stay on
-        val afterLeft = repository.settings.first()
-        assertFalse(afterLeft.swipeLeftEnabled)
-        assertTrue(afterLeft.swipeRightEnabled && afterLeft.swipeDownEnabled)
-
-        // And turning off the others leaves each of them off
-        repository.setSwipeRightEnabled(false)
-        repository.setSwipeDownEnabled(false)
-        val afterAll = repository.settings.first()
-        assertFalse(afterAll.swipeLeftEnabled || afterAll.swipeRightEnabled || afterAll.swipeDownEnabled)
+        assertEquals(SwipeActions(), repository.settings.first().swipeActions)
+        assertEquals(SwipeAction.APP_DRAWER, SwipeActions().up)
+        assertEquals(SwipeAction.HUB, SwipeActions().right)
     }
 
     @Test
-    fun `swapping the swipe sides is off by default and persists`() = runTest {
+    fun `each swipe action persists and an action can sit on two swipes`() = runTest {
+        // Given a fresh repository
         val repository = createRepository()
-        assertFalse(repository.settings.first().swapSwipeSides)
 
-        repository.setSwapSwipeSides(true)
+        // When swipe down also opens the drawer and swipe left does nothing
+        repository.setSwipeAction(SwipeDirection.DOWN, SwipeAction.APP_DRAWER)
+        repository.setSwipeAction(SwipeDirection.LEFT, SwipeAction.NONE)
 
-        assertTrue(repository.settings.first().swapSwipeSides)
+        // Then both are stored and the rest keep their defaults
+        assertEquals(
+            SwipeActions(up = SwipeAction.APP_DRAWER, down = SwipeAction.APP_DRAWER, left = SwipeAction.NONE, right = SwipeAction.HUB),
+            repository.settings.first().swipeActions,
+        )
+    }
+
+    @Test
+    fun `taking the app drawer off its only swipe is refused`() = runTest {
+        // Given the drawer on swipe up only
+        val repository = createRepository()
+
+        // When swipe up is set to the hub
+        repository.setSwipeAction(SwipeDirection.UP, SwipeAction.HUB)
+
+        // Then swipe up still opens the drawer
+        assertEquals(SwipeAction.APP_DRAWER, repository.settings.first().swipeActions.up)
+    }
+
+    @Test
+    fun `the old swipe switches and swap setting carry over as swipe actions`() = runTest {
+        // Given an older version's stored switches: left off, down off, sides swapped
+        val dataStore: DataStore<Preferences> = PreferenceDataStoreFactory.create(
+            produceFile = { tempFolder.newFile("legacy-swipes-${System.nanoTime()}.preferences_pb") },
+        )
+        dataStore.edit {
+            it[booleanPreferencesKey("swipe_left_enabled")] = false
+            it[booleanPreferencesKey("swipe_down_enabled")] = false
+            it[booleanPreferencesKey("swap_swipe_sides")] = true
+        }
+
+        // When the settings are read
+        val actions = SettingsRepository(dataStore).settings.first().swipeActions
+
+        // Then left (the hub, when swapped) is None, right opens facets, and down is None
+        assertEquals(
+            SwipeActions(up = SwipeAction.APP_DRAWER, down = SwipeAction.NONE, left = SwipeAction.NONE, right = SwipeAction.SWITCH_FACETS),
+            actions,
+        )
+    }
+
+    @Test
+    fun `a first change after upgrading keeps the rest of the old setup`() = runTest {
+        // Given the old swap setting on
+        val dataStore: DataStore<Preferences> = PreferenceDataStoreFactory.create(
+            produceFile = { tempFolder.newFile("legacy-swap-${System.nanoTime()}.preferences_pb") },
+        )
+        dataStore.edit { it[booleanPreferencesKey("swap_swipe_sides")] = true }
+        val repository = SettingsRepository(dataStore)
+
+        // When swipe down is changed
+        repository.setSwipeAction(SwipeDirection.DOWN, SwipeAction.NONE)
+
+        // Then left and right stay swapped
+        val actions = repository.settings.first().swipeActions
+        assertEquals(SwipeAction.HUB, actions.left)
+        assertEquals(SwipeAction.SWITCH_FACETS, actions.right)
+        assertEquals(SwipeAction.NONE, actions.down)
     }
 
     @Test

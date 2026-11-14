@@ -16,7 +16,7 @@ app/src/main/kotlin/com/facetlauncher/app/
 │   ├── local/                     (24)  Room: FacetDatabase, 10 entities in 9 files (WeatherEntities.kt holds two), 8 DAOs, Converters, Migrations (+ ClockConfigMigration and FacetDefaultsMigration, the DataStore reads three migrations need), FacetMapping, PlacementCells
 │   ├── places/                    (4)   Place names and cities: CityRepository over the bundled CityList (assets/cities.tsv), PlaceGeocoder + AndroidPlaceGeocoder (the device Geocoder), GeoDistance
 │   ├── weather/                   (7)   The weather forecast: MetWeatherApi (the only network code), MetForecastParser, WeatherRefreshPolicy (the refresh gate), WeatherRepository, WidgetWeatherRepository (a Weather widget's own forecast), WeatherStore + RoomWeatherStore (see 18)
-│   ├── model/                     (55)  Immutable value types & enums shared by every layer
+│   ├── model/                     (60)  Immutable value types & enums shared by every layer
 │   │                                    (AppInfo, PlacedItem, PlacementList, PlacementTarget, LauncherSettings, AppProfile, Clock*Option,
 │   │                                    FacetDeepLink's build/parse pair, …)
 │   ├── widget/                    (3)   AppWidgetRepository + LauncherAppWidgetHost (AppWidgetHost subclass) + WidgetConfigureActivity (invisible trampoline that opens a widget's configure activity)
@@ -95,7 +95,7 @@ app/src/test/kotlin/com/facetlauncher/app/          JVM (JUnit4 + Robolectric + 
 │   ├── icon/       3   IconMasksTest, IconStylerTest (JVM, no Android), StyledIconCacheTest (Robolectric)
 │   ├── iconpack/   2   AppFilterTest (pull parser and text scan must agree), IconPackRepositoryTest (pack discovery, clearing an uninstalled pack)
 │   ├── local/      8   Converters, entities, DAO-level behaviour via in-memory Room (AppPlacementDaoTest, FolderPlacementDaoTest, FolderDaoTest, FacetDaoTest, AutomationRuleDaoTest, …)
-│   ├── model/     18   FacetLimitsTest, FacetDeepLinkTest (build/parse round-trip + rejection cases), AutomationStateTest, AutomationTriggerTest (schedule windows and battery levels), AutomationRuleValidationTest, AutomationLimitsTest, DeviceStateTest (every trigger's truth)
+│   ├── model/     19   FacetLimitsTest, FacetDeepLinkTest (build/parse round-trip + rejection cases), AutomationStateTest, AutomationTriggerTest (schedule windows and battery levels), AutomationRuleValidationTest, AutomationLimitsTest, DeviceStateTest (every trigger's truth)
 │   ├── places/     3
 │   ├── weather/    6
 │   └── widget/     2
