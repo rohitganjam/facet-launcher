@@ -45,6 +45,7 @@ import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedback
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -62,6 +63,7 @@ import com.facetlauncher.app.ui.components.ThemedDropdownMenu
 import com.facetlauncher.app.ui.components.ThemedDropdownMenuItem
 import com.facetlauncher.app.ui.theme.Accent
 import kotlinx.collections.immutable.ImmutableList
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 private val HUB_LANDSCAPE_VERTICAL_PADDING = 8.dp
@@ -90,6 +92,9 @@ private class LandscapeGeometry(
     val viewportWidthPx: Float,
     val edgeZonePx: Float,
 ) {
+    /** The grid a resize works on: square cells, as many rows as show, and room to grow to the right. */
+    val resizeGrid: HubResizeGrid get() = HubResizeGrid(pitchPx - gapPx, pitchPx - gapPx, gapPx, LANDSCAPE_RESIZE_MAX_COLUMNS, rows)
+
     /** The cell a widget dragged by [dragOffsetPx] would drop onto. */
     fun dropCellFor(widget: HubLandscapeWidgetUi, dragOffsetPx: Offset): HubCell =
         hubLandscapeDropCell(widget.row, widget.col, widget.rowSpan, dragOffsetPx.x, dragOffsetPx.y, pitchPx, pitchPx, rows)
@@ -106,6 +111,16 @@ private class LandscapeGeometry(
     }
 }
 
+/** Landscape resizes have no right edge: the grid grows sideways. */
+private const val LANDSCAPE_RESIZE_MAX_COLUMNS = 1000
+
+/** A resize released on [colSpan] × [rowSpan] while the widget was saved on [from]. */
+private data class CommittedLandscapeResize(val appWidgetId: Int, val from: HubSpan, val colSpan: Int, val rowSpan: Int)
+
+private val HubLandscapeWidgetUi.span get() = HubSpan(row, col, colSpan, rowSpan)
+private val HubLandscapeWidgetUi.minColSpan get() = nativeWidgetType?.minSpan()?.cols ?: 1
+private val HubLandscapeWidgetUi.minRowSpan get() = nativeWidgetType?.minSpan()?.rows ?: 1
+
 /** Everything the landscape grid is doing right now (a grab, a resize, an open menu), and the rules for changing it. */
 @Stable
 private class LandscapeGridState(val scrollState: ScrollState) {
@@ -121,18 +136,49 @@ private class LandscapeGridState(val scrollState: ScrollState) {
 
     val isBusy: Boolean get() = grabbedId != null || resizingId != null
 
-    fun liveColSpan(widget: HubLandscapeWidgetUi, geometry: LandscapeGeometry): Int =
-        if (widget.appWidgetId == resizingId) resizedSpan(widget.colSpan, resizeDeltaPx.x, geometry.pitchPx, widget.nativeWidgetType?.minSpan()?.cols ?: 1) else widget.colSpan
+    /** Whether a resize handle is being dragged right now. */
+    var resizeDragging by mutableStateOf(false)
 
-    fun liveRowSpan(widget: HubLandscapeWidgetUi, geometry: LandscapeGeometry): Int =
-        if (widget.appWidgetId == resizingId) {
-            resizedSpan(widget.rowSpan, resizeDeltaPx.y, geometry.pitchPx, widget.nativeWidgetType?.minSpan()?.rows ?: 1).coerceAtMost((geometry.rows - widget.row).coerceAtLeast(1))
+    /** The resizing widget's drawn box: it follows the finger while a handle is dragged, then glides into its cells. */
+    val resizeRectPx = Animatable(Rect.Zero, Rect.VectorConverter)
+
+    /** The widget drawn from [resizeRectPx] (set once that holds its rect), kept until it settles after resize mode ends. */
+    var resizeVisualId by mutableStateOf<Int?>(null)
+
+    /** The size a resize was released on, shown until the saved size changes or [RESIZE_SAVE_GRACE_MS] passes. */
+    var committedResize by mutableStateOf<CommittedLandscapeResize?>(null)
+
+    /** The cells the widget takes: under the finger while dragging, then the released size until it's saved. */
+    fun liveSpan(widget: HubLandscapeWidgetUi, geometry: LandscapeGeometry): HubSpan = when {
+        widget.appWidgetId != resizingId && widget.appWidgetId != resizeVisualId -> widget.span
+        resizeDragging && widget.appWidgetId == resizingId ->
+            geometry.resizeGrid.snappedSpan(widget.span, ResizeEdge.END, ResizeEdge.END, resizeDeltaPx, widget.minColSpan, widget.minRowSpan)
+        else -> committedResize?.takeIf { it.appWidgetId == widget.appWidgetId }
+            ?.let { widget.span.copy(colSpan = it.colSpan, rowSpan = it.rowSpan.coerceAtMost(maxOf(1, geometry.rows - widget.row))) }
+            ?: widget.span
+    }
+
+    fun liveColSpan(widget: HubLandscapeWidgetUi, geometry: LandscapeGeometry): Int = liveSpan(widget, geometry).colSpan
+
+    fun liveRowSpan(widget: HubLandscapeWidgetUi, geometry: LandscapeGeometry): Int = liveSpan(widget, geometry).rowSpan
+
+    /** The box under the finger while a handle is dragged, `null` otherwise. */
+    fun freeRect(widget: HubLandscapeWidgetUi, geometry: LandscapeGeometry): Rect? =
+        if (resizeDragging && widget.appWidgetId == resizingId) {
+            geometry.resizeGrid.freeRect(widget.span, ResizeEdge.END, ResizeEdge.END, resizeDeltaPx, widget.minColSpan, widget.minRowSpan)
         } else {
-            widget.rowSpan
+            null
         }
+
+    /** The box a widget is drawn in while resizing or settling from a resize, in px; `null` draws its cells. */
+    fun resizeBox(widget: HubLandscapeWidgetUi, geometry: LandscapeGeometry): Rect? =
+        freeRect(widget, geometry) ?: resizeRectPx.value.takeIf { widget.appWidgetId == resizeVisualId && grabbedId != widget.appWidgetId }
 
     fun grab(id: Int) {
         resizingId = null
+        resizeVisualId = null
+        committedResize = null
+        resizeDragging = false
         resizeDeltaPx = Offset.Zero
         grabbedId = id
         dragOffsetPx = Offset.Zero
@@ -159,10 +205,13 @@ private class LandscapeGridState(val scrollState: ScrollState) {
         menuForId = id
     }
 
-    fun startResize(id: Int) {
+    /** Starts resize mode once the drawn box holds the widget's rect, so it never shows a stale one. */
+    suspend fun startResize(widget: HubLandscapeWidgetUi, geometry: LandscapeGeometry) {
         menuForId = null
-        resizingId = id
+        resizingId = widget.appWidgetId
         resizeDeltaPx = Offset.Zero
+        resizeRectPx.snapTo(geometry.resizeGrid.rectOf(widget.span))
+        resizeVisualId = widget.appWidgetId
     }
 
     fun cancelResize() {
@@ -171,13 +220,23 @@ private class LandscapeGridState(val scrollState: ScrollState) {
 
     /** One resize drag step; a growing right edge near the viewport edge scrolls the grid. */
     fun resizeBy(delta: Offset, widget: HubLandscapeWidgetUi, geometry: LandscapeGeometry) {
+        resizeDragging = true
         resizeDeltaPx += delta
         if (delta.x == 0f) return
-        val right = geometry.pitchPx * (widget.col + liveColSpan(widget, geometry)) - geometry.gapPx
+        val right = freeRect(widget, geometry)?.right ?: return
         autoScrollDirection = geometry.edgeScrollDirection(scrollState, null, right)
     }
 
-    fun endResizeDrag() {
+    /** Ends a handle drag on the cells under the finger ([onCommit]); the box glides there from where the finger left it. */
+    suspend fun endResizeDrag(widget: HubLandscapeWidgetUi, geometry: LandscapeGeometry, onCommit: (colSpan: Int, rowSpan: Int) -> Unit) {
+        val free = freeRect(widget, geometry)
+        if (free != null) {
+            val target = liveSpan(widget, geometry)
+            onCommit(target.colSpan, target.rowSpan)
+            resizeRectPx.snapTo(free)
+            committedResize = CommittedLandscapeResize(widget.appWidgetId, from = widget.span, colSpan = target.colSpan, rowSpan = target.rowSpan)
+        }
+        resizeDragging = false
         resizeDeltaPx = Offset.Zero
         autoScrollDirection = 0
     }
@@ -293,12 +352,55 @@ private fun LandscapeGridContent(
             // clears the resizing widget mid-gesture, which must not detach this detector (as in HubGrid).
             .pointerInput(Unit) { detectTapGestures(onTap = { state.cancelResize() }) },
     ) {
+        LandscapeResizeSettleEffects(widgets, geometry, state)
         widgets.items.forEach { widget ->
             key(widget.appWidgetId) { LandscapeTile(widget, geometry, state, callbacks) }
         }
+        LandscapeResizeTarget(widgets.items.find { it.appWidgetId == state.resizingId }, geometry, state)
         LandscapeResizeHandles(widgets.items.find { it.appWidgetId == state.resizingId }, geometry, state, callbacks)
         LandscapeDropPreview(widgets.items.find { it.appWidgetId == state.grabbedId }, state)
     }
+}
+
+/** Eases a resized widget's box into its cells once released, and lets the released size go when the saved one changes. */
+@Composable
+private fun LandscapeResizeSettleEffects(widgets: LandscapeWidgets, geometry: LandscapeGeometry, state: LandscapeGridState) {
+    val visual = widgets.items.find { it.appWidgetId == state.resizeVisualId }
+    val target = visual?.let { geometry.resizeGrid.rectOf(state.liveSpan(it, geometry)) }
+    LaunchedEffect(state.resizeVisualId, state.resizingId, target, state.resizeDragging) {
+        if (target != null && !state.resizeDragging) {
+            state.resizeRectPx.animateTo(target, RESIZE_SETTLE_SPEC)
+            if (state.resizingId == null) state.resizeVisualId = null
+        }
+    }
+    val committed = state.committedResize
+    val saved = committed?.let { c -> widgets.items.find { it.appWidgetId == c.appWidgetId } }?.let { it.colSpan to it.rowSpan }
+    LaunchedEffect(committed, saved) {
+        if (committed == null) return@LaunchedEffect
+        if (saved != committed.from.colSpan to committed.from.rowSpan) {
+            state.committedResize = null
+        } else {
+            delay(RESIZE_SAVE_GRACE_MS)
+            state.committedResize = null
+        }
+    }
+}
+
+/** While a handle is dragged, the cells the widget will take on release. */
+@Composable
+private fun LandscapeResizeTarget(widget: HubLandscapeWidgetUi?, geometry: LandscapeGeometry, state: LandscapeGridState) {
+    if (widget == null || !state.resizeDragging) return
+    val density = LocalDensity.current
+    val rect = geometry.resizeGrid.rectOf(state.liveSpan(widget, geometry))
+    val shape = RoundedCornerShape(12.dp)
+    Box(
+        modifier = Modifier
+            .offset { rect.topLeft.round() }
+            .size(width = with(density) { rect.width.toDp() }, height = with(density) { rect.height.toDp() })
+            .testTag("hub_resize_target_preview")
+            .background(Accent.copy(alpha = 0.18f), shape)
+            .border(1.dp, Accent, shape),
+    )
 }
 
 @Composable
@@ -313,6 +415,10 @@ private fun LandscapeTile(
     val tileWidth = hubLandscapeSpanSize(state.liveColSpan(widget, geometry), gap = HUB_GRID_GAP)
     val tileHeight = hubLandscapeSpanSize(state.liveRowSpan(widget, geometry), gap = HUB_GRID_GAP)
     val origin = Offset(geometry.pitchPx * widget.col, geometry.pitchPx * widget.row)
+    val resizeBox = state.resizeBox(widget, geometry)
+    val density = LocalDensity.current
+    val boxWidth = resizeBox?.let { with(density) { it.width.toDp() } } ?: tileWidth
+    val boxHeight = resizeBox?.let { with(density) { it.height.toDp() } } ?: tileHeight
 
     // A resting widget eases to its place when the flow changes, so after a drop it glides to its new cell.
     val animatedOrigin = remember { Animatable(origin, Offset.VectorConverter) }
@@ -326,8 +432,14 @@ private fun LandscapeTile(
 
     Box(
         modifier = Modifier
-            .offset { (if (isGrabbed) origin + state.dragOffsetPx else animatedOrigin.value).round() }
-            .size(width = tileWidth, height = tileHeight)
+            .offset {
+                when {
+                    isGrabbed -> origin + state.dragOffsetPx
+                    resizeBox != null -> resizeBox.topLeft
+                    else -> animatedOrigin.value
+                }.round()
+            }
+            .size(width = boxWidth, height = boxHeight)
             .testTag("hub_widget_tile_${widget.appWidgetId}")
             .then(if (isResizing || widget.appWidgetId == state.menuForId) Modifier.border(1.dp, Accent) else Modifier)
             .then(if (isGrabbed) Modifier.liftedLook() else Modifier)
@@ -341,7 +453,7 @@ private fun LandscapeTile(
                 onSettleAt = { visibleAt -> scope.launch { animatedOrigin.snapTo(visibleAt) } },
             ),
     ) {
-        LandscapeTileContent(widget, tileWidth, tileHeight, state, callbacks)
+        LandscapeTileContent(widget, tileWidth, tileHeight, DpSize(boxWidth, boxHeight), geometry, state, callbacks)
     }
 }
 
@@ -390,6 +502,8 @@ private fun LandscapeTileContent(
     widget: HubLandscapeWidgetUi,
     tileWidth: Dp,
     tileHeight: Dp,
+    boxSize: DpSize,
+    geometry: LandscapeGeometry,
     state: LandscapeGridState,
     callbacks: LandscapeCallbacks,
 ) {
@@ -397,7 +511,7 @@ private fun LandscapeTileContent(
     if (widget.nativeWidgetType != null) {
         NativeWidget(
             type = widget.nativeWidgetType,
-            size = DpSize(tileWidth, tileHeight),
+            size = boxSize,
             state = callbacks.nativeWidgets.state,
             actions = callbacks.nativeWidgets.actions,
             ref = NativeWidgetRef.Hub(widget.appWidgetId),
@@ -428,16 +542,18 @@ private fun LandscapeTileContent(
         )
     }
 
-    LandscapeWidgetMenu(widget, state, callbacks)
+    LandscapeWidgetMenu(widget, geometry, state, callbacks)
 }
 
 /** The long-press menu of one landscape tile. */
 @Composable
 private fun LandscapeWidgetMenu(
     widget: HubLandscapeWidgetUi,
+    geometry: LandscapeGeometry,
     state: LandscapeGridState,
     callbacks: LandscapeCallbacks,
 ) {
+    val scope = rememberCoroutineScope()
     ThemedDropdownMenu(
         expanded = widget.appWidgetId == state.menuForId,
         onDismissRequest = { state.menuForId = null },
@@ -454,7 +570,7 @@ private fun LandscapeWidgetMenu(
         }
         ThemedDropdownMenuItem(
             label = stringResource(R.string.hub_grid_resize_widget),
-            onClick = { state.startResize(widget.appWidgetId) },
+            onClick = { scope.launch { state.startResize(widget, geometry) } },
             enabled = !widget.isOrphaned,
         )
         ThemedDropdownMenuItem(
@@ -478,32 +594,27 @@ private fun LandscapeResizeHandles(
 ) {
     if (widget == null) return
     val density = LocalDensity.current
-    val originX = hubLandscapeCellOrigin(widget.col, gap = HUB_GRID_GAP)
-    val originY = hubLandscapeCellOrigin(widget.row, gap = HUB_GRID_GAP)
+    val scope = rememberCoroutineScope()
+    // On the box the widget is drawn in, so the handles stay under the finger.
+    val box = state.resizeBox(widget, geometry) ?: geometry.resizeGrid.rectOf(state.liveSpan(widget, geometry))
+    val endDrag: () -> Unit = {
+        scope.launch { state.endResizeDrag(widget, geometry) { colSpan, rowSpan -> callbacks.onWidgetResize(widget.appWidgetId, colSpan, rowSpan) } }
+    }
     Box(
         modifier = Modifier
-            .offset { IntOffset(with(density) { originX.roundToPx() }, with(density) { originY.roundToPx() }) }
-            .size(
-                width = hubLandscapeSpanSize(state.liveColSpan(widget, geometry), gap = HUB_GRID_GAP),
-                height = hubLandscapeSpanSize(state.liveRowSpan(widget, geometry), gap = HUB_GRID_GAP),
-            ),
+            .offset { box.topLeft.round() }
+            .size(width = with(density) { box.width.toDp() }, height = with(density) { box.height.toDp() }),
     ) {
-        // The handles' gestures are launched once, so each reads the live delta from state when it ends.
+        // The handles' gestures are launched once; WidgetResizeHandle keeps their callbacks current.
         WidgetResizeHandle(
             onDrag = { delta -> state.resizeBy(Offset(delta.x, 0f), widget, geometry) },
-            onDragEnd = {
-                callbacks.onWidgetResize(widget.appWidgetId, state.liveColSpan(widget, geometry), widget.rowSpan)
-                state.endResizeDrag()
-            },
+            onDragEnd = endDrag,
             testTag = "hub_resize_handle_right",
             modifier = Modifier.align(Alignment.CenterEnd).offset(x = WIDGET_RESIZE_HANDLE_TOUCH_TARGET_SIZE / 2),
         )
         WidgetResizeHandle(
             onDrag = { delta -> state.resizeBy(Offset(0f, delta.y), widget, geometry) },
-            onDragEnd = {
-                callbacks.onWidgetResize(widget.appWidgetId, widget.colSpan, state.liveRowSpan(widget, geometry))
-                state.endResizeDrag()
-            },
+            onDragEnd = endDrag,
             testTag = "hub_resize_handle_bottom",
             modifier = Modifier.align(Alignment.BottomCenter).offset(y = WIDGET_RESIZE_HANDLE_TOUCH_TARGET_SIZE / 2),
         )

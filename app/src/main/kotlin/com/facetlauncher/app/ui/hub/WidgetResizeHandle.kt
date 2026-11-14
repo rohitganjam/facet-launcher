@@ -2,7 +2,10 @@ package com.facetlauncher.app.ui.hub
 
 import android.content.res.Configuration
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.awaitTouchSlopOrCancellation
+import androidx.compose.foundation.gestures.drag
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -13,6 +16,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.positionChange
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
@@ -75,12 +79,19 @@ fun WidgetResizeHandle(
             // so grabbing it near the screen edge doesn't trigger navigation.
             .systemGestureExclusion()
             .pointerInput(Unit) {
-                detectDragGestures(
-                    onDragEnd = { currentOnDragEnd.value() },
-                    onDragCancel = { currentOnDragEnd.value() },
-                ) { change, dragAmount ->
-                    change.consume()
-                    currentOnDrag.value(dragAmount)
+                awaitEachGesture {
+                    val down = awaitFirstDown(requireUnconsumed = false)
+                    val start = awaitTouchSlopOrCancellation(down.id) { change, _ -> change.consume() } ?: return@awaitEachGesture
+                    // The handle stays put until the slop is passed, so this is the finger's whole travel: the edge
+                    // starts under the finger instead of trailing it by the slop.
+                    currentOnDrag.value(start.position - down.position)
+                    drag(start.id) { change ->
+                        // Read before consume(): positionChange() is zero for a consumed change.
+                        val delta = change.positionChange()
+                        change.consume()
+                        currentOnDrag.value(delta)
+                    }
+                    currentOnDragEnd.value()
                 }
             },
         contentAlignment = Alignment.Center,

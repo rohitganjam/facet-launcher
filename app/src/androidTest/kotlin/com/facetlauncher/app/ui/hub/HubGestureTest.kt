@@ -35,7 +35,9 @@ import org.junit.Assert.assertEquals
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.runBlocking
+import kotlin.math.abs
 import org.junit.Rule
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.mockito.ArgumentMatchers.eq
 import org.mockito.Mockito.mock
@@ -168,7 +170,7 @@ class HubGestureTest {
     }
 
     @Test
-    fun theContextMenuOffersConfigureOnlyForAWidgetWithSettingsAndItOpensThem() {
+    fun theContextMenuOffersConfigureForAWidgetFacetDrawsAndNotForAHostedOne() {
         // Given an Agenda, a Now playing widget and a hosted widget on the Hub
         var configured: NativeWidgetRef? = null
         val environment = NativeWidgetEnvironment(actions = NativeWidgetActions(onConfigure = { configured = it }))
@@ -187,13 +189,18 @@ class HubGestureTest {
         composeRule.onNodeWithTag("hub_widget_tile_-5").performTouchInput { up() }
 
         // Then it offers Configure, which opens its settings
-        composeRule.onNodeWithText("Configure widget").assertExists()
         composeRule.onNodeWithText("Configure widget").performClick()
         assertEquals(NativeWidgetRef.Hub(-5), configured)
 
-        // And the Now playing widget and the hosted one do not offer it
+        // And so does Now playing (every widget Facet draws has a background setting)
         longPress("hub_widget_tile_-6")
         composeRule.onNodeWithTag("hub_widget_tile_-6").performTouchInput { up() }
+        composeRule.onNodeWithText("Configure widget").performClick()
+        assertEquals(NativeWidgetRef.Hub(-6), configured)
+
+        // But the hosted widget does not
+        longPress("hub_widget_tile_10")
+        composeRule.onNodeWithTag("hub_widget_tile_10").performTouchInput { up() }
         composeRule.onNodeWithText("Resize widget").assertExists()
         composeRule.onNodeWithText("Configure widget").assertDoesNotExist()
     }
@@ -236,6 +243,32 @@ class HubGestureTest {
         }
 
         awaitPlacement(10) { it?.colSpan == 2 && it.rowSpan == 1 }
+    }
+
+    @Test
+    fun resizeBoxFollowsTheFingerBetweenCellsAndOutlinesTheCellsItWillTake() {
+        // Given a one-cell widget in resize mode
+        setContent(listOf(placement(id = 10, row = 0, col = 0)), resolvable = setOf(10))
+        val cellWidth = cellWidthPxOf(10)
+        longPress("hub_widget_tile_10")
+        composeRule.onNodeWithTag("hub_widget_tile_10").performTouchInput { up() }
+        composeRule.onNodeWithText("Resize widget").performClick()
+
+        // When the right handle is held a third of a cell past the edge
+        composeRule.onNodeWithTag("hub_resize_handle_right").performTouchInput {
+            down(center)
+            stepMoveBy(Offset(cellWidth / 3, 0f))
+        }
+        composeRule.waitForIdle()
+
+        // Then the widget is that much wider, not stepped, and the outline still covers one cell
+        val width = cellWidthPxOf(10)
+        assertTrue("width $width should be about ${cellWidth * 4 / 3}", abs(width - cellWidth * 4 / 3) < 3f)
+        val outline = composeRule.onNodeWithTag("hub_resize_target_preview").fetchSemanticsNode().size.width.toFloat()
+        assertTrue("outline $outline should be one cell, $cellWidth", abs(outline - cellWidth) < 2f)
+
+        composeRule.onNodeWithTag("hub_resize_handle_right").performTouchInput { up() }
+        awaitPlacement(10) { it?.colSpan == 1 }
     }
 
     @Test
