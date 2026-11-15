@@ -68,18 +68,24 @@ internal class ResourceIconPack(
         return out
     }
 
-    private fun drawable(name: String): Drawable? = runCatching {
-        // getIdentifier is the only way to look a pack's drawable up by the name its appfilter gives.
-        @Suppress("DiscouragedApi")
-        val id = resources.getIdentifier(name, "drawable", packPackageName).takeIf { it != 0 }
-            ?: return null
-        ResourcesCompat.getDrawable(resources, id, null)
-    }.getOrNull()
+    private fun drawable(name: String): Drawable? = resources.packDrawable(packPackageName, name)
 
-    private fun render(drawable: Drawable): Bitmap? = runCatching {
-        val width = drawable.intrinsicWidth.takeIf { it > 0 }?.coerceAtMost(PACK_ICON_SIZE) ?: PACK_ICON_SIZE
-        val height = drawable.intrinsicHeight.takeIf { it > 0 }?.coerceAtMost(PACK_ICON_SIZE) ?: PACK_ICON_SIZE
-        val side = maxOf(width, height)
-        drawable.toBitmap(side, side)
-    }.getOrNull()
+    private fun render(drawable: Drawable): Bitmap? = renderPackDrawable(drawable)
 }
+
+/** The pack's drawable called [name], or null when it has none. */
+internal fun Resources.packDrawable(packPackageName: String, name: String): Drawable? = runCatching {
+    // getIdentifier is the only way to look a pack's drawable up by the name its appfilter gives.
+    @Suppress("DiscouragedApi")
+    val id = getIdentifier(name, "drawable", packPackageName).takeIf { it != 0 }
+        ?: return null
+    ResourcesCompat.getDrawable(this, id, null)
+}.getOrNull()
+
+/** [drawable] as a square bitmap at most [maxSize] pixels a side. */
+internal fun renderPackDrawable(drawable: Drawable, maxSize: Int = PACK_ICON_SIZE): Bitmap? = runCatching {
+    val width = drawable.intrinsicWidth.takeIf { it > 0 }?.coerceAtMost(maxSize) ?: maxSize
+    val height = drawable.intrinsicHeight.takeIf { it > 0 }?.coerceAtMost(maxSize) ?: maxSize
+    val side = maxOf(width, height)
+    drawable.toBitmap(side, side)
+}.getOrNull()

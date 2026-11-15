@@ -200,7 +200,8 @@ flowchart LR
 
 | Action | Path | Notes |
 |---|---|---|
-| Launch | `onAppClick` → `LauncherActivity.launchApp` | other-profile apps via `LauncherApps.startMainActivity`; also fired by tapping the sheet header's icon or name (`onOpenApp`, sheet closes first) |
+| Launch | `onAppClick` → `LauncherActivity.launchApp` | other-profile apps via `LauncherApps.startMainActivity`; also fired by tapping the sheet header's name (`onOpenApp`, sheet closes first), and its icon only when no `LocalAppIconEditor` is provided (previews, tests) |
+| Change icon | the header icon, with a pencil badge, opens the Change icon page (`AppMenuPage.ChangeIcon`), and from it Browse (`AppMenuPage.BrowsePack`), inside the same sheet; `LocalAppIconEditor` → `AppIconEditorViewModel` | see [22](22-flow-custom-icons.md); Back steps back a page, and Home press closes the whole sheet like the Folders page |
 | Notifications zone | `DrawerViewModel.observeAppNotifications(app)` → `ObserveAppNotificationsUseCase` (setting `show_notifications_in_app_menu` + `NotificationAccessRepository.isGranted()` + `NotificationBadgeRepository.notificationsFor(pkg, handle)`) → `AppNotificationsState(notifications, needsAccess)` | live while the sheet is open; only this app in this profile; see below |
 | Open / dismiss a notification | `DrawerViewModel.openNotification(n)` → `NotificationOpener.open(contentIntent)`, then `NotificationActionController.dismiss` if the notification asked for `autoCancel`; swipe and "Clear all" → `dismissNotifications(keys)` → the listener's `cancelNotifications` | a dismiss with no connected listener is a no-op that returns false |
 | Add/remove to Favorites / Dock | `QuickAddState` from `ObserveQuickAddStateUseCase` decides which action is offered; `DrawerViewModel.onFavoritesAction / onDockAction` (and `onFolderFavoritesAction / onFolderDockAction` for a folder) → `applyPlacement` → `AddToActiveListUseCase` / `RemoveFromActiveListUseCase` | routing in [08 §1](08-flow-placements.md) |
@@ -212,7 +213,7 @@ flowchart LR
 App shortcuts (`LauncherApps.getShortcuts`) are no longer shown in the menu.
 
 **Sheet layout.** `AppContextMenu` is one scrolling page with three zones, each behind a 1dp
-`CardDivider`: a header (icon and name, one tap target that opens the app, and App info and
+`CardDivider`: a header (icon and name, one tap target that opens the app, or with an icon editor the icon opens Change icon and the name opens the app; then App info and
 Uninstall as 48dp icon buttons), the notifications zone (left out only when the setting is off), and the
 placement actions. It opens at its full
 content height (`skipPartiallyExpanded`) and scrolls when the zones don't fit.

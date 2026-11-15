@@ -2,7 +2,8 @@
 
 Third-party icon packs (packs made for Nova, ADW, Apex, GO and the like), applied launcher-wide from Settings →
 Appearance → Icons. Free, not Pro. One pack at a time, for the whole launcher; while one is applied it stands in for
-the built-in icon style.
+the built-in icon style. One app's icon can be changed on its own from its long-press menu, which wins over the
+applied pack: see [22](22-flow-custom-icons.md).
 
 ## 1. Finding packs
 

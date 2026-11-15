@@ -116,6 +116,7 @@ private const val WEB_ICON_PACK_SEARCH = "https://play.google.com/store/search?q
 fun IconsScreen(
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
+    onOpenCustomIcons: () -> Unit = {},
     viewModel: AppearanceSettingsViewModel = hiltViewModel(),
     iconsViewModel: IconsViewModel = hiltViewModel(),
 ) {
@@ -124,6 +125,7 @@ fun IconsScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val homeWallpaper by viewModel.homeWallpaper.collectAsStateWithLifecycle()
     val picker by iconsViewModel.picker.collectAsStateWithLifecycle()
+    val customIconCount by iconsViewModel.customIconCount.collectAsStateWithLifecycle()
     IconsContent(
         settings = settings,
         uiState = uiState,
@@ -140,11 +142,13 @@ fun IconsScreen(
         onForceIconShapeChange = iconsViewModel::setForceIconShape,
         onIconScaleChange = viewModel::setIconScalePercent,
         modifier = modifier,
+        customIconCount = customIconCount,
+        onOpenCustomIcons = onOpenCustomIcons,
     )
 }
 
 /** The Play Store's icon pack search, or the same search on the web where there is no Play Store. */
-private fun openIconPackSearch(context: Context) {
+internal fun openIconPackSearch(context: Context) {
     val opened = runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, PLAY_STORE_ICON_PACK_SEARCH.toUri())) }.isSuccess
     if (!opened) runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, WEB_ICON_PACK_SEARCH.toUri())) }
 }
@@ -166,6 +170,9 @@ internal fun IconsContent(
     onForceIconShapeChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
     onIconScaleChange: (Int) -> Unit = {},
+    /** Apps with a custom icon; the Custom icons row shows only when there is one. */
+    customIconCount: Int = 0,
+    onOpenCustomIcons: () -> Unit = {},
 ) {
     val homeSamples = remember(uiState.favorites, uiState.dockItems) {
         (uiState.favorites + uiState.dockItems).sampleApps()
@@ -213,6 +220,19 @@ internal fun IconsContent(
                         onFindPacks = onFindPacks,
                         onForceIconShapeChange = onForceIconShapeChange,
                     )
+                }
+                if (customIconCount > 0) {
+                    item { SettingsSectionHeader(stringResource(R.string.custom_icons_title)) }
+                    item {
+                        SettingsCard(fullBleedRows = true) {
+                            ClickableRow(
+                                title = stringResource(R.string.custom_icons_title),
+                                subtitle = pluralStringResource(R.plurals.custom_icons_app_count, customIconCount, customIconCount),
+                                onClick = onOpenCustomIcons,
+                                testTag = "icons_custom_icons_row",
+                            )
+                        }
+                    }
                 }
             }
         },

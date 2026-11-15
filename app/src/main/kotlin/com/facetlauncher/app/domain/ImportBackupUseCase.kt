@@ -93,6 +93,8 @@ class ImportBackupUseCase @Inject constructor(
     private val repairOrphanedProfileRows: RepairOrphanedProfileRowsUseCase,
     private val clockStackRepository: ClockStackRepository,
     private val widgetPlacementRepository: WidgetPlacementRepository,
+    // Defaulted so tests that don't cover custom icons needn't build one; Hilt always supplies it.
+    private val iconOverrideBackup: IconOverrideBackupUseCase? = null,
 ) {
     suspend operator fun invoke(uri: Uri): ImportBackupResult {
         val read = backupRepository.readBackup(uri) ?: return ImportBackupResult.InvalidFile
@@ -117,6 +119,7 @@ class ImportBackupUseCase @Inject constructor(
         activeFacetId?.let { settingsRepository.setActiveFacetId(it) }
 
         val hostedPlacements = restoreNativeHubWidgets(bundle.widgetPlacements)
+        iconOverrideBackup?.restore(bundle.iconOverrides)
 
         // BackupAppEntry has no portable userId (see BackupBundle's own doc comment), so every
         // restored row lands at the -1 orphaned sentinel and won't hydrate against installed apps

@@ -27,6 +27,7 @@ checked against source, not against planning docs; where the code diverges from
 | [19-flow-icon-packs.md](19-flow-icon-packs.md) | Flow: finding installed icon packs, reading `appfilter.xml` (text scan or resource), lookup and fallback theming, calendar icons, drawing, the Icons screen, backup |
 | [20-flow-native-widgets.md](20-flow-native-widgets.md) | Flow: widgets Facet draws itself (weather, agenda, now playing) on the Hub and Home's stack — storage, one size-driven layout contract, data, add/replace, backup |
 | [21-flow-wallpaper-glass.md](21-flow-wallpaper-glass.md) | The wallpaper copy behind real glass: the wallpaper screen, the fit step, what decides real glass, and what is not built yet |
+| [22-flow-custom-icons.md](22-flow-custom-icons.md) | Flow: one app's custom icon from its long-press menu — storage and snapshots, drawing over the scan, the Change icon and Browse pages, the Custom icons reset list, cleanup and backup |
 | [18-flow-weather.md](18-flow-weather.md) | Flow: the clock's weather accessory and sheet — MET Norway forecast, refresh gate, location and place names, cached hourly rows, settings |
 
 ## Stack at a glance
@@ -37,7 +38,7 @@ checked against source, not against planning docs; where the code diverges from
 | Module layout | `:app` (`minSdk 30`, `targetSdk 36`, `compileSdk 37`), plus `:detekt-rules` (custom Detekt rules) and `:benchmark` (Macrobenchmark tests against `:app`'s `benchmark` build type) |
 | DI | Hilt `2.60.1` via KSP — `@HiltAndroidApp` / `@AndroidEntryPoint` / `@HiltViewModel` |
 | Navigation | `navigation-compose 2.10.2` + `hilt-navigation-compose` — one `NavHost` (`FacetNavHost`) |
-| Persistence | Room `2.8.5` (`facet.db`, v50, schema export on) + `datastore-preferences 1.2.1` (`facet_settings`, `facet_automation`, `facet_entitlement`) |
+| Persistence | Room `2.8.5` (`facet.db`, v52, schema export on) + `datastore-preferences 1.2.1` (`facet_settings`, `facet_automation`, `facet_entitlement`) |
 | Collections in UI state | `kotlinx-collections-immutable` `0.5.2`: composable parameters and UI state carry `ImmutableList`/`ImmutableMap`/`ImmutableSet`, so Compose can skip on them (detekt's `UnstableCollections`) |
 | Async | Coroutines + `Flow`/`StateFlow` only; `collectAsStateWithLifecycle()` in Compose; no `LiveData` |
 | Serialization | `kotlinx-serialization-json` (backup bundle only) |

@@ -3,6 +3,7 @@ package com.facetlauncher.app.domain
 import android.os.UserHandle
 import com.facetlauncher.app.data.AppRepository
 import com.facetlauncher.app.data.FolderRepository
+import com.facetlauncher.app.data.IconOverrideRepository
 import com.facetlauncher.app.data.LaunchHistoryRepository
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
@@ -28,6 +29,7 @@ class CleanUpUninstalledAppsUseCaseTest {
         val placementRepository: PlacementRepository = mock(PlacementRepository::class.java)
         val folderRepository: FolderRepository = mock(FolderRepository::class.java)
         val launchHistoryRepository: LaunchHistoryRepository = mock(LaunchHistoryRepository::class.java)
+        val iconOverrideRepository: IconOverrideRepository = mock(IconOverrideRepository::class.java)
 
         init {
             `when`(appRepository.observeUninstalledPackages()).thenReturn(uninstalls)
@@ -35,12 +37,12 @@ class CleanUpUninstalledAppsUseCaseTest {
         }
 
         fun useCase() = CleanUpUninstalledAppsUseCase(
-            appRepository, placementRepository, folderRepository, launchHistoryRepository,
+            appRepository, placementRepository, folderRepository, launchHistoryRepository, iconOverrideRepository,
         )
     }
 
     @Test
-    fun `deletes the uninstalled package's dock, favorite, folder-membership and launch-history rows outright, scoped to its real userId`() = runTest {
+    fun `deletes the uninstalled package's dock, favorite, folder-membership, launch-history and custom-icon rows outright, scoped to its real userId`() = runTest {
         // Given a live uninstall-event stream and mocked Dock/Favorite/Folder repositories
         val fixture = Fixture()
         val useCase = fixture.useCase()
@@ -58,6 +60,7 @@ class CleanUpUninstalledAppsUseCaseTest {
         verify(fixture.placementRepository).removeByPackage("com.example.removed", 10)
         verify(fixture.folderRepository).removeByPackage("com.example.removed", 10)
         verify(fixture.launchHistoryRepository).removeByPackage("com.example.removed", 10)
+        verify(fixture.iconOverrideRepository).removeByPackage("com.example.removed", 10)
         job.cancel()
     }
 
@@ -77,6 +80,7 @@ class CleanUpUninstalledAppsUseCaseTest {
         verify(fixture.placementRepository).removeByUserId(removedHandle.hashCode())
         verify(fixture.folderRepository).removeByUserId(removedHandle.hashCode())
         verify(fixture.launchHistoryRepository).removeByUserId(removedHandle.hashCode())
+        verify(fixture.iconOverrideRepository).removeByUserId(removedHandle.hashCode())
         job.cancel()
     }
 }

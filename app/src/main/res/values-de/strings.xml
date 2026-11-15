@@ -1186,4 +1186,34 @@
     <string name="glass_style_theme">Design</string>
     <string name="glass_style_theme_inverted">Design invertiert</string>
     <string name="home_usage_list_empty">Apps, die du über Facet öffnest, erscheinen hier.</string>
+    <!-- Custom app icons -->
+    <string name="app_context_menu_change_icon">Symbol für %1$s ändern</string>
+    <string name="change_icon_title">Symbol ändern</string>
+    <string name="change_icon_source_default">Standardsymbol</string>
+    <string name="change_icon_source_own">Eigenes Symbol der App</string>
+    <string name="change_icon_source_pack">Aus %1$s</string>
+    <string name="change_icon_in_your_packs">Diese App in deinen Symbolpaketen</string>
+    <string name="change_icon_own_option">Eigenes</string>
+    <string name="change_icon_more_choices">Weitere Optionen</string>
+    <string name="change_icon_browse_pack">%1$s durchsuchen</string>
+    <string name="change_icon_browse_pack_summary">Alle Symbole dieses Pakets</string>
+    <string name="change_icon_reset">Auf Standard zurücksetzen</string>
+    <string name="change_icon_no_packs">Installiere ein Symbolpaket, um aus seinen Symbolen zu wählen.</string>
+    <string name="browse_pack_search">Symbole suchen</string>
+    <string name="browse_pack_all">Alle</string>
+    <string name="browse_pack_best_match">Beste Treffer für %1$s</string>
+    <string name="browse_pack_no_results">Keine Symbole für „%1$s“</string>
+    <string name="browse_pack_empty">Dieses Paket hat keine Symbole zum Durchsuchen.</string>
+    <string name="custom_icons_title">Eigene Symbole</string>
+    <string name="custom_icons_reset">Zurücksetzen</string>
+    <string name="custom_icons_reset_app">Symbol für %1$s zurücksetzen</string>
+    <string name="custom_icons_reset_all">Alle eigenen Symbole zurücksetzen</string>
+    <string name="custom_icons_reset_all_title">Alle eigenen Symbole zurücksetzen?</string>
+    <string name="custom_icons_reset_all_message">Jede App erhält wieder das Symbol aus deinem Symbolstil oder Symbolpaket.</string>
+    <string name="custom_icons_reset_all_confirm">Alle zurücksetzen</string>
+    <string name="custom_icons_empty">Keine eigenen Symbole. Halte eine App gedrückt und tippe auf ihr Symbol, um es zu ändern.</string>
+    <plurals name="custom_icons_app_count">
+        <item quantity="one">%d App</item>
+        <item quantity="other">%d Apps</item>
+    </plurals>
 </resources>

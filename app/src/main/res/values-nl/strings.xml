@@ -1130,4 +1130,34 @@
     <string name="glass_style_theme">Thema</string>
     <string name="glass_style_theme_inverted">Thema omgekeerd</string>
     <string name="home_usage_list_empty">Apps die je via Facet opent, verschijnen hier.</string>
+    <!-- Custom app icons -->
+    <string name="app_context_menu_change_icon">Pictogram van %1$s wijzigen</string>
+    <string name="change_icon_title">Pictogram wijzigen</string>
+    <string name="change_icon_source_default">Standaardpictogram</string>
+    <string name="change_icon_source_own">Eigen pictogram van de app</string>
+    <string name="change_icon_source_pack">Uit %1$s</string>
+    <string name="change_icon_in_your_packs">Deze app in je pictogrampakketten</string>
+    <string name="change_icon_own_option">Eigen</string>
+    <string name="change_icon_more_choices">Meer keuzes</string>
+    <string name="change_icon_browse_pack">%1$s doorbladeren</string>
+    <string name="change_icon_browse_pack_summary">Alle pictogrammen in dit pakket</string>
+    <string name="change_icon_reset">Standaard herstellen</string>
+    <string name="change_icon_no_packs">Installeer een pictogrampakket om uit de pictogrammen te kiezen.</string>
+    <string name="browse_pack_search">Pictogrammen zoeken</string>
+    <string name="browse_pack_all">Alle</string>
+    <string name="browse_pack_best_match">Beste overeenkomst voor %1$s</string>
+    <string name="browse_pack_no_results">Geen pictogrammen voor ‘%1$s’</string>
+    <string name="browse_pack_empty">Dit pakket heeft geen pictogrammen om te doorbladeren.</string>
+    <string name="custom_icons_title">Aangepaste pictogrammen</string>
+    <string name="custom_icons_reset">Herstellen</string>
+    <string name="custom_icons_reset_app">Pictogram van %1$s herstellen</string>
+    <string name="custom_icons_reset_all">Alle aangepaste pictogrammen herstellen</string>
+    <string name="custom_icons_reset_all_title">Alle aangepaste pictogrammen herstellen?</string>
+    <string name="custom_icons_reset_all_message">Elke app krijgt weer het pictogram van je pictogramstijl of -pakket.</string>
+    <string name="custom_icons_reset_all_confirm">Alles herstellen</string>
+    <string name="custom_icons_empty">Geen aangepaste pictogrammen. Houd een app ingedrukt en tik op het pictogram om het te wijzigen.</string>
+    <plurals name="custom_icons_app_count">
+        <item quantity="one">%d app</item>
+        <item quantity="other">%d apps</item>
+    </plurals>
 </resources>

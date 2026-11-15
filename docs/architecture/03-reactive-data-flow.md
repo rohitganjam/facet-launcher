@@ -25,6 +25,11 @@ appfilter entries are kept), and a pack that is no longer installed is unapplied
 entries date an app's icon: the drawable is the entry's prefix plus today's day of the month (falling back to the
 app's plain `<item>`, then its own icon), and a new day redraws only those apps (see §5, "Calendar icons").
 
+Custom icons go on after the scan, not in it: the scanned list is combined with `IconOverrideRepository.overrides`
+and each app with a row gets its own icon (`OWN`) or the row's pack icon, live from the pack or else its snapshot
+(`PACK`, `iconFromPack`, no `monochromeIcon`). Changing one icon re-runs only this overlay over the last scan, and a
+row with a `calendarPrefix` subscribes to the day like a pack's calendar icons. See [22](22-flow-custom-icons.md).
+
 ```mermaid
 sequenceDiagram
     autonumber
@@ -78,7 +83,7 @@ Key properties of this flow:
 | Property | Value | Consequence |
 |---|---|---|
 | Source of truth | `LauncherApps.getActivityList()` per `UserManager.userProfiles` handle | Work Profile / Private Space / OEM clone apps arrive in the same list, tagged by `AppInfo.profile` + `userHandle`. Each `AppInfo` also carries `firstInstallTime` (`LauncherActivityInfo.getFirstInstallTime()`, cross-profile safe) and a best-effort `lastUpdateTime` (`PackageManager.getPackageInfo(...).lastUpdateTime`, which only resolves the calling user's own packages — falls back to `firstInstallTime` for a Work Profile app) — feeds the app picker screens' "Installed Date"/"Last updated" sorts (see `SortAppsForPickerUseCase`). |
-| Trigger | `LauncherApps.Callback` (5 package events) + 4 `ACTION_MANAGED_PROFILE_*` broadcasts + 4 generic `ACTION_PROFILE_*` broadcasts (the actions Android 15+ Private Space uses, added/removed/available/unavailable) + one initial `refresh()`, combined with `IconPackRepository.selection` | Installs, uninstalls, updates and any profile appearing/disappearing/pausing/resuming (Work Profile or Private Space) all propagate without a restart, and so does applying, clearing or changing an icon pack. Scans run through `mapLatest`, so a newer trigger cancels a scan still running. |
+| Trigger | `LauncherApps.Callback` (5 package events) + 4 `ACTION_MANAGED_PROFILE_*` broadcasts + 4 generic `ACTION_PROFILE_*` broadcasts (the actions Android 15+ Private Space uses, added/removed/available/unavailable) + one initial `refresh()`, combined with `IconPackRepository.selection` (custom icons are an overlay after the scan, not a trigger) | Installs, uninstalls, updates and any profile appearing/disappearing/pausing/resuming (Work Profile or Private Space) all propagate without a restart, and so does applying, clearing or changing an icon pack. Scans run through `mapLatest`, so a newer trigger cancels a scan still running. |
 | Work per emission | One full re-list + parallel icon decode of every app, **shared** across every collector | O(apps) per event, but exactly once app-wide, not once per collector. |
 | Sharing | `shareIn(@ApplicationScope, SharingStarted.WhileSubscribed(stopTimeoutMillis = 5_000), replay = 1)` | One `LauncherApps` registration for the whole app; survives brief gaps (a Home↔Drawer transition) without re-registering; torn down 5s after the last collector goes away. `replay = 1` gives every new collector (a freshly opened screen) the current list immediately. |
 | Profile classification | `profileFor(handle)` via `getLauncherUserInfo().userType` (API 35+), `OTHER` below | Single source of truth reused by `WorkProfileRepository`, `PrivateSpaceRepository`, `AppWidgetRepository`. |

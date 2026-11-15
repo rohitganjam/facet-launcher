@@ -1275,4 +1275,34 @@
     <string name="glass_style_theme">Theme</string>
     <string name="glass_style_theme_inverted">Theme inverted</string>
     <string name="home_usage_list_empty">Apps you open from Facet show up here.</string>
+    <!-- Custom app icons -->
+    <string name="app_context_menu_change_icon">Change icon for %1$s</string>
+    <string name="change_icon_title">Change icon</string>
+    <string name="change_icon_source_default">Default icon</string>
+    <string name="change_icon_source_own">App\'s own icon</string>
+    <string name="change_icon_source_pack">From %1$s</string>
+    <string name="change_icon_in_your_packs">This app in your packs</string>
+    <string name="change_icon_own_option">App\'s own</string>
+    <string name="change_icon_more_choices">More choices</string>
+    <string name="change_icon_browse_pack">Browse %1$s</string>
+    <string name="change_icon_browse_pack_summary">Every icon in this pack</string>
+    <string name="change_icon_reset">Reset to default</string>
+    <string name="change_icon_no_packs">Install an icon pack to pick from its icons.</string>
+    <string name="browse_pack_search">Search icons</string>
+    <string name="browse_pack_all">All</string>
+    <string name="browse_pack_best_match">Best match for %1$s</string>
+    <string name="browse_pack_no_results">No icons match “%1$s”</string>
+    <string name="browse_pack_empty">This pack has no icons to browse.</string>
+    <string name="custom_icons_title">Custom icons</string>
+    <string name="custom_icons_reset">Reset</string>
+    <string name="custom_icons_reset_app">Reset icon for %1$s</string>
+    <string name="custom_icons_reset_all">Reset all custom icons</string>
+    <string name="custom_icons_reset_all_title">Reset all custom icons?</string>
+    <string name="custom_icons_reset_all_message">Every app goes back to the icon your icon style or pack gives it.</string>
+    <string name="custom_icons_reset_all_confirm">Reset all</string>
+    <string name="custom_icons_empty">No custom icons. To change one, long-press an app and tap its icon.</string>
+    <plurals name="custom_icons_app_count">
+        <item quantity="one">%d app</item>
+        <item quantity="other">%d apps</item>
+    </plurals>
 </resources>

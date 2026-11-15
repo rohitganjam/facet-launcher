@@ -77,6 +77,22 @@ import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import com.facetlauncher.app.ui.theme.Faint
 import com.facetlauncher.app.ui.theme.Ink
 import com.facetlauncher.app.ui.theme.Muted
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.outlined.Edit
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import com.facetlauncher.app.data.model.IconPackInfo
+import com.facetlauncher.app.data.model.PackIconMatch
+import com.facetlauncher.app.domain.AppIconChoices
+import com.facetlauncher.app.domain.IconChoiceKey
+import com.facetlauncher.app.ui.appicon.AppIconEditor
+import com.facetlauncher.app.ui.appicon.BrowsePackPage
+import com.facetlauncher.app.ui.appicon.ChangeIconPage
+import com.facetlauncher.app.ui.appicon.LocalAppIconEditor
+import com.facetlauncher.app.ui.appicon.PackCatalogState
+import com.facetlauncher.app.ui.theme.Surface
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
@@ -94,6 +110,8 @@ private val BASE_HEADER_ICON_SIZE = 24.dp
 
 /** M3's minimum touch target. */
 private val MIN_TAP_TARGET = 48.dp
+
+private val EDIT_BADGE_SIZE = 18.dp
 
 /**
  * F12's long-press context menu (`4i`) — a bottom sheet rather than a floating popup (decided
@@ -196,14 +214,63 @@ private fun AppMenuPages(
     val context = LocalContext.current
     val notificationsFlow = remember(app.packageName, app.userHandle, appMenuNotifications) { appMenuNotifications.observe(app) }
     val notificationsState by notificationsFlow.collectAsStateWithLifecycle(initialValue = AppNotificationsState(enabled = false))
+    val iconEditor = LocalAppIconEditor.current
+    // Read only once Change icon has been opened, since it reads every installed pack. Kept until the sheet closes, so the
+    // header shows a newly picked icon.
+    val iconChoicesFlow = remember(app.listKey, iconEditor, menu.iconEditing) { iconEditor?.takeIf { menu.iconEditing }?.observeChoices?.invoke(app) }
+    val iconChoices = iconChoicesFlow?.collectAsStateWithLifecycle(initialValue = AppIconChoices(app))?.value
+    val shownApp = iconChoices?.app ?: app
     AnimatedContent(
-        targetState = menu.addingToFolder,
-        transitionSpec = { appMenuPageTransition(slidingToFolderPage = targetState) },
+        targetState = menu.page,
+        transitionSpec = { appMenuPageTransition(forward = targetState.depth > initialState.depth) },
         label = "app_context_menu_page",
-    ) { onFolderPage ->
-        if (!onFolderPage) {
-            AppMenuMainPage(
-                app = app,
+    ) { page ->
+        when (page) {
+            AppMenuPage.ChangeIcon -> if (iconEditor != null && iconChoices != null) {
+                ChangeIconPage(
+                    choices = iconChoices,
+                    onBack = { menu.iconPage = null },
+                    onUseOwnIcon = {
+                        iconEditor.onUseOwnIcon(app)
+                        menu.iconPage = null
+                    },
+                    onUsePackIcon = { choice ->
+                        iconEditor.onUsePackIcon(app, choice.match)
+                        menu.iconPage = null
+                    },
+                    onBrowsePack = { pack -> menu.iconPage = AppMenuPage.BrowsePack(pack) },
+                    onReset = {
+                        iconEditor.onReset(app)
+                        menu.iconPage = null
+                    },
+                    onFindPacks = {
+                        onDismissRequest()
+                        iconEditor.onFindPacks()
+                    },
+                )
+            }
+            is AppMenuPage.BrowsePack -> if (iconEditor != null && iconChoices != null) {
+                BrowsePackRoute(
+                    editor = iconEditor,
+                    pack = page.pack,
+                    choices = iconChoices,
+                    onBack = { menu.iconPage = AppMenuPage.ChangeIcon },
+                    onPick = { drawable ->
+                        iconEditor.onUsePackIcon(app, PackIconMatch(page.pack.packageName, drawable, calendarPrefix = null))
+                        menu.iconPage = null
+                    },
+                )
+            }
+            AppMenuPage.Folders -> AppMenuFolderPage(
+                onBack = { menu.addingToFolder = false },
+                onCreateFolder = { menu.showCreateFolderDialog = true },
+            ) {
+                folderCandidates.orEmpty().forEach { folder ->
+                    FolderCandidateRow(folder = folder, onClick = { menu.previewingFolder = folder })
+                }
+            }
+            AppMenuPage.Main -> AppMenuMainPage(
+                app = shownApp,
                 notifications = notificationsState,
                 placementActions = placementActions,
                 onOpenApp = {
@@ -227,18 +294,37 @@ private fun AppMenuPages(
                     onDismissRequest()
                     appMenuNotifications.onEnableAccess()
                 },
+                onChangeIcon = if (iconEditor != null) {
+                    {
+                        menu.iconEditing = true
+                        menu.iconPage = AppMenuPage.ChangeIcon
+                    }
+                } else {
+                    null
+                },
             )
-        } else {
-            AppMenuFolderPage(
-                onBack = { menu.addingToFolder = false },
-                onCreateFolder = { menu.showCreateFolderDialog = true },
-            ) {
-                folderCandidates.orEmpty().forEach { folder ->
-                    FolderCandidateRow(folder = folder, onClick = { menu.previewingFolder = folder })
-                }
-            }
         }
     }
+}
+
+/** The Browse page with its pack's icons loaded and the app's current drawable in this pack ringed. */
+@Composable
+private fun BrowsePackRoute(editor: AppIconEditor, pack: IconPackInfo, choices: AppIconChoices, onBack: () -> Unit, onPick: (String) -> Unit) {
+    val catalogFlow = remember(pack.packageName, editor) { editor.observeCatalog(pack.packageName) }
+    val catalog by catalogFlow.collectAsStateWithLifecycle(initialValue = PackCatalogState())
+    val match = choices.packChoices.firstOrNull { it.pack.packageName == pack.packageName }?.match
+    val selected = (choices.selected as? IconChoiceKey.Pack)?.takeIf { it.packPackage == pack.packageName }?.drawableName
+    BrowsePackPage(
+        pack = pack,
+        appLabel = choices.app.label,
+        state = catalog,
+        bestMatch = match?.drawableName,
+        selectedDrawable = selected,
+        loadThumbnail = { name -> editor.loadThumbnail(pack.packageName, name) },
+        onBack = onBack,
+        onPick = onPick,
+        modifier = Modifier.fillMaxHeight(),
+    )
 }
 
 /** The create-folder dialog and the folder preview, shown over the sheet. */
@@ -283,6 +369,22 @@ private class AppMenuState {
     var addingToFolder by mutableStateOf(false)
     var showCreateFolderDialog by mutableStateOf(false)
     var previewingFolder by mutableStateOf<Folder?>(null)
+
+    /** The Change icon or Browse page, over everything else; null for the main or folder page. */
+    var iconPage by mutableStateOf<AppMenuPage?>(null)
+
+    /** Change icon was opened since the sheet opened. */
+    var iconEditing by mutableStateOf(false)
+
+    val page: AppMenuPage get() = iconPage ?: if (addingToFolder) AppMenuPage.Folders else AppMenuPage.Main
+}
+
+/** The sheet's pages; a deeper page slides in from the right. */
+private sealed class AppMenuPage(val depth: Int) {
+    data object Main : AppMenuPage(0)
+    data object Folders : AppMenuPage(1)
+    data object ChangeIcon : AppMenuPage(1)
+    data class BrowsePack(val pack: IconPackInfo) : AppMenuPage(2)
 }
 
 @Composable
@@ -302,6 +404,8 @@ private fun rememberAppMenuState(
     // Every fresh open starts back on the main page, regardless of where a previous open left off.
     LaunchedEffect(expanded) {
         if (!expanded) {
+            menu.iconPage = null
+            menu.iconEditing = false
             menu.addingToFolder = false
             menu.showCreateFolderDialog = false
             menu.previewingFolder = null
@@ -310,14 +414,16 @@ private fun rememberAppMenuState(
 
     // System back dismisses the whole sheet from the main page, or returns to it from the folder
     // page — mutually exclusive via `enabled` so which one fires never depends on registration order.
-    BackHandler(enabled = expanded && !menu.addingToFolder, onBack = onDismissRequest)
-    BackHandler(enabled = expanded && menu.addingToFolder) { menu.addingToFolder = false }
+    BackHandler(enabled = expanded && menu.page == AppMenuPage.Main, onBack = onDismissRequest)
+    BackHandler(enabled = expanded && menu.page == AppMenuPage.Folders) { menu.addingToFolder = false }
+    BackHandler(enabled = expanded && menu.page == AppMenuPage.ChangeIcon) { menu.iconPage = null }
+    BackHandler(enabled = expanded && menu.page is AppMenuPage.BrowsePack) { menu.iconPage = AppMenuPage.ChangeIcon }
     return menu
 }
 
-/** The main page slides out to the left as the folder page slides in from the right, and back the other way. */
-private fun appMenuPageTransition(slidingToFolderPage: Boolean): ContentTransform {
-    val direction = if (slidingToFolderPage) 1 else -1
+/** The current page slides out to the left as a deeper page slides in from the right, and back the other way. */
+private fun appMenuPageTransition(forward: Boolean): ContentTransform {
+    val direction = if (forward) 1 else -1
     return (slideInHorizontally(animationSpec = tween(280)) { it * direction } + fadeIn())
         .togetherWith(slideOutHorizontally(animationSpec = tween(280)) { -it * direction } + fadeOut())
 }
@@ -436,21 +542,17 @@ private fun quickPlacementTile(
     onClick = onClick,
 )
 
-/** The app's icon and name (one tap target that opens it), then the App info and Uninstall actions. */
+/**
+ * The app's icon and name, then the App info and Uninstall actions. With [onChangeIcon] the icon carries a pencil and
+ * opens the Change icon page, and only the name opens the app; without it both open the app.
+ */
 @Composable
-private fun AppMenuHeader(app: AppInfo, onOpenApp: () -> Unit, onAppInfo: () -> Unit, onUninstall: () -> Unit) {
+private fun AppMenuHeader(app: AppInfo, onOpenApp: () -> Unit, onAppInfo: () -> Unit, onUninstall: () -> Unit, onChangeIcon: (() -> Unit)?) {
     Row(
         modifier = Modifier.fillMaxWidth().padding(start = MENU_SIDE_PADDING, end = MENU_SIDE_PADDING - 12.dp, top = 8.dp, bottom = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Row(
-            modifier = Modifier
-                .weight(1f)
-                .clip(MaterialTheme.shapes.medium)
-                .clickable(role = Role.Button, onClick = onOpenApp)
-                .testTag("app_context_menu_open"),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
+        val icon: @Composable () -> Unit = {
             AppIcon(
                 icon = app.icon,
                 monochromeIcon = app.monochromeIcon,
@@ -460,14 +562,51 @@ private fun AppMenuHeader(app: AppInfo, onOpenApp: () -> Unit, onAppInfo: () -> 
                 isWorkApp = app.profile == AppProfile.WORK,
                 isOtherProfileApp = app.profile == AppProfile.OTHER,
             )
+        }
+        val name: @Composable (Modifier) -> Unit = { modifier ->
             Text(
                 text = app.label,
                 style = MaterialTheme.typography.titleLarge,
                 color = Ink,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.weight(1f).padding(horizontal = 16.dp).testTag("app_context_menu_name"),
+                modifier = modifier.testTag("app_context_menu_name"),
             )
+        }
+        if (onChangeIcon != null) {
+            val changeIconLabel = stringResource(R.string.app_context_menu_change_icon, app.label)
+            Box(
+                modifier = Modifier
+                    .clip(MaterialTheme.shapes.medium)
+                    .clickable(role = Role.Button, onClickLabel = changeIconLabel, onClick = onChangeIcon)
+                    .semantics { contentDescription = changeIconLabel }
+                    .padding(4.dp)
+                    .testTag("app_context_menu_change_icon"),
+            ) {
+                icon()
+                EditIconBadge(modifier = Modifier.align(Alignment.TopEnd).offset(x = 6.dp, y = (-6).dp))
+            }
+            name(
+                Modifier
+                    .weight(1f)
+                    .padding(start = 8.dp, end = 4.dp)
+                    .clip(MaterialTheme.shapes.medium)
+                    .clickable(role = Role.Button, onClick = onOpenApp)
+                    .padding(horizontal = 8.dp, vertical = 6.dp)
+                    .testTag("app_context_menu_open"),
+            )
+        } else {
+            Row(
+                modifier = Modifier
+                    .weight(1f)
+                    .clip(MaterialTheme.shapes.medium)
+                    .clickable(role = Role.Button, onClick = onOpenApp)
+                    .testTag("app_context_menu_open"),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                icon()
+                name(Modifier.weight(1f).padding(horizontal = 16.dp))
+            }
         }
         MenuIconButton(
             icon = Icons.Outlined.Info,
@@ -499,10 +638,12 @@ internal fun AppMenuMainPage(
     onDismissNotifications: (List<String>) -> Boolean,
     onEnableNotificationAccess: () -> Unit,
     modifier: Modifier = Modifier,
+    /** Opens the Change icon page from the header's icon; null keeps the icon opening the app. */
+    onChangeIcon: (() -> Unit)? = null,
 ) {
     // Scrolls when the zones don't fit, as at the largest text sizes on a small screen.
     Column(modifier = modifier.fillMaxWidth().verticalScroll(rememberScrollState())) {
-        AppMenuHeader(app = app, onOpenApp = onOpenApp, onAppInfo = onAppInfo, onUninstall = onUninstall)
+        AppMenuHeader(app = app, onOpenApp = onOpenApp, onAppInfo = onAppInfo, onUninstall = onUninstall, onChangeIcon = onChangeIcon)
         if (notifications.hasZone) {
             CardDivider()
             AppNotificationsSection(
@@ -520,6 +661,22 @@ internal fun AppMenuMainPage(
                 modifier = Modifier.padding(horizontal = MENU_SIDE_PADDING, vertical = 16.dp),
             )
         }
+    }
+}
+
+/** The pencil on the header's icon, saying it can be changed. */
+@Composable
+private fun EditIconBadge(modifier: Modifier = Modifier) {
+    Box(
+        modifier = modifier
+            .size(EDIT_BADGE_SIZE)
+            .background(Surface, CircleShape)
+            .padding(2.dp)
+            .background(Accent, CircleShape)
+            .testTag("app_context_menu_change_icon_badge"),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(imageVector = Icons.Outlined.Edit, contentDescription = null, tint = Surface, modifier = Modifier.size(10.dp))
     }
 }
 

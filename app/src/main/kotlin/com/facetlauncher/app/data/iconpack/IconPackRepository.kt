@@ -12,6 +12,7 @@ import com.facetlauncher.app.data.flattenIcon
 import com.facetlauncher.app.data.model.FACET_LAUNCHER_PACKAGE_NAME
 import com.facetlauncher.app.data.model.IconPackInfo
 import com.facetlauncher.app.data.model.IconPackSelection
+import com.facetlauncher.app.data.model.PackIconMatch
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.text.Collator
 import javax.inject.Inject
@@ -100,6 +101,57 @@ open class IconPackRepository @Inject constructor(
             return null
         }
         return load(selection.packageName, installedPackages)
+    }
+
+    /**
+     * [packageName]'s own entry in pack [packPackage], read for that one app outside the parsed-pack cache so it never
+     * evicts the applied pack. Null when the pack isn't installed or doesn't list the app.
+     */
+    open suspend fun matchFor(packPackage: String, packageName: String, className: String): PackIconMatch? = withContext(ioDispatcher) {
+        runCatching {
+            val resources = packageManager.getResourcesForApplication(packPackage)
+            val filter = readAppFilter(resources, packPackage) { it == packageName } ?: return@runCatching null
+            val calendarPrefix = filter.calendarPrefixFor(packageName, className)
+            val drawableName = filter.drawableFor(packageName, className)
+            if (drawableName == null && calendarPrefix == null) null else PackIconMatch(packPackage, drawableName, calendarPrefix)
+        }.getOrNull()
+    }
+
+    /** Every icon pack [packPackage] offers for browsing, or null when it isn't installed or lists none. */
+    open suspend fun catalog(packPackage: String): PackCatalog? = withContext(ioDispatcher) {
+        val updated = runCatching { packageManager.getPackageInfo(packPackage, 0).lastUpdateTime }.getOrNull() ?: return@withContext null
+        loadMutex.withLock {
+            cachedCatalog?.takeIf { it.first == "$packPackage@$updated" }?.let { return@withLock it.second }
+            val catalog = runCatching { readCatalog(packPackage) }.getOrNull()?.takeIf { it.allDrawables.isNotEmpty() }
+            cachedCatalog = "$packPackage@$updated" to catalog
+            catalog
+        }
+    }
+
+    /** Pack [packPackage]'s drawable [drawableName] at most [maxSize] pixels square, or null when either is missing. */
+    open suspend fun drawIcon(packPackage: String, drawableName: String, maxSize: Int = PACK_ICON_SIZE): Bitmap? = withContext(ioDispatcher) {
+        runCatching {
+            val resources = packageManager.getResourcesForApplication(packPackage)
+            resources.packDrawable(packPackage, drawableName)?.let { renderPackDrawable(it, maxSize) }
+        }.getOrNull()
+    }
+
+    /** When pack [packPackage] was last updated, or null when it isn't installed. */
+    open suspend fun packUpdatedAt(packPackage: String): Long? = withContext(ioDispatcher) {
+        runCatching { packageManager.getPackageInfo(packPackage, 0).lastUpdateTime }.getOrNull()
+    }
+
+    private var cachedCatalog: Pair<String, PackCatalog?>? = null
+
+    private fun readCatalog(packPackage: String): PackCatalog? {
+        val resources = packageManager.getResourcesForApplication(packPackage)
+        runCatching { resources.assets.open("drawable.xml") }.getOrNull()?.use { stream ->
+            return PackCatalog.parse(stream.readBytes().decodeToString())
+        }
+        @Suppress("DiscouragedApi")
+        val id = resources.getIdentifier("drawable", "xml", packPackage)
+        if (id != 0) return resources.getXml(id).use { PackCatalog.parse(it) }
+        return readAppFilter(resources, packPackage) { true }?.let(PackCatalog::fromAppFilter)
     }
 
     /** Opens the pack's own app, where it has one. */

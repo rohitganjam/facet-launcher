@@ -28,7 +28,10 @@ import com.facetlauncher.app.data.iconpack.IconPackIcons
 import com.facetlauncher.app.data.iconpack.IconPackRepository
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.AppProfile
+import com.facetlauncher.app.data.model.IconOverride
+import com.facetlauncher.app.data.model.IconOverrideSource
 import com.facetlauncher.app.data.model.IconPackFallback
+import com.facetlauncher.app.data.model.matchApps
 import com.facetlauncher.app.data.model.IconPackSelection
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.text.Collator
@@ -145,6 +148,8 @@ class AppRepository @Inject constructor(
     private val iconPackRepository: IconPackRepository? = null,
     /** Dates an icon pack's calendar icons. */
     private val clock: Clock = Clock.systemDefaultZone(),
+    // Defaulted like the ones above; null draws no custom icons.
+    private val iconOverrideRepository: IconOverrideRepository? = null,
 ) {
 
     /**
@@ -216,7 +221,10 @@ class AppRepository @Inject constructor(
      * sum of all of them (see chat history: this was invisible before Home started gating its own
      * first paint on this list, since default content rendered over it in the meantime).
      */
-    suspend fun getInstalledApps(): List<AppInfo> = scanInstalledApps(iconPackRepository?.selection?.first())
+    suspend fun getInstalledApps(): List<AppInfo> {
+        val apps = scanInstalledApps(iconPackRepository?.selection?.first())
+        return withOverrides(apps, iconOverrideRepository?.getAll().orEmpty(), dayOfMonth())
+    }
 
     private fun List<Pair<LauncherActivityInfo, UserHandle>>.installedPackages(): Set<String> =
         mapNotNullTo(HashSet()) { (info, _) -> runCatching { info.applicationInfo.packageName }.getOrNull() }
@@ -369,12 +377,46 @@ class AppRepository @Inject constructor(
     private val installedApps: SharedFlow<List<AppInfo>> = observeInstalledAppsUncached()
         .shareIn(applicationScope, SharingStarted.WhileSubscribed(stopTimeoutMillis = SHARE_STOP_TIMEOUT_MILLIS), replay = 1)
 
-    /** A rescan per package or profile change and per icon pack change; a newer one cancels a scan still running, so a stale pack never lands last. */
+    /**
+     * A rescan per package or profile change and per icon pack change; a newer one cancels a scan still running, so a stale
+     * pack never lands last. Custom icons go on top of the scan, so changing one redraws only that app.
+     */
     @OptIn(ExperimentalCoroutinesApi::class)
-    private fun observeInstalledAppsUncached(): Flow<List<AppInfo>> =
-        combine(observePackageChanges(), iconPackRepository?.selection ?: flowOf(null)) { _, selection -> selection }
+    private fun observeInstalledAppsUncached(): Flow<List<AppInfo>> {
+        val scanned = combine(observePackageChanges(), iconPackRepository?.selection ?: flowOf(null)) { _, selection -> selection }
             .mapLatest(::scan)
             .flatMapLatest(::withCurrentDate)
+        val overrides = iconOverrideRepository?.overrides ?: return scanned
+        return combine(scanned, overrides) { apps, appOverrides -> apps to appOverrides }
+            .flatMapLatest { (apps, appOverrides) ->
+                // Only a dated custom icon needs to hear about a new day.
+                val days = if (appOverrides.any { it.calendarPrefix != null }) observeDayOfMonth() else flowOf(dayOfMonth())
+                days.map { day -> Triple(apps, appOverrides, day) }
+            }
+            .mapLatest { (apps, appOverrides, day) -> withOverrides(apps, appOverrides, day) }
+    }
+
+    /** [apps] with their custom icons: a pack icon drawn unclipped like the applied pack's, or the app's own icon back. */
+    private suspend fun withOverrides(apps: List<AppInfo>, overrides: List<IconOverride>, day: Int): List<AppInfo> {
+        val repository = iconOverrideRepository ?: return apps
+        val matched = overrides.matchApps(apps)
+        if (matched.isEmpty()) return apps
+        return withContext(defaultDispatcher) {
+            apps.map { app ->
+                val override = matched[app.listKey] ?: return@map async { app }
+                async {
+                    runCatching {
+                        when (override.source) {
+                            IconOverrideSource.OWN -> withOwnIcon(app)
+                            IconOverrideSource.PACK -> repository.drawPackIcon(override, day)
+                                ?.let { app.copy(icon = it.asImageBitmap(), monochromeIcon = null, iconFromPack = true) }
+                                ?: app
+                        }
+                    }.getOrDefault(app)
+                }
+            }.awaitAll()
+        }
+    }
 
     private fun observePackageChanges(): Flow<Unit> = callbackFlow {
         val refresh: () -> Unit = { trySend(Unit) }
