@@ -78,9 +78,12 @@ import com.facetlauncher.app.ui.theme.Faint
 import com.facetlauncher.app.ui.theme.Ink
 import com.facetlauncher.app.ui.theme.Muted
 import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.LocalIndication
+import androidx.compose.foundation.indication
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.material.icons.outlined.Edit
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import com.facetlauncher.app.data.model.IconPackInfo
@@ -110,8 +113,6 @@ private val BASE_HEADER_ICON_SIZE = 24.dp
 
 /** M3's minimum touch target. */
 private val MIN_TAP_TARGET = 48.dp
-
-private val EDIT_BADGE_SIZE = 18.dp
 
 /**
  * F12's long-press context menu (`4i`) — a bottom sheet rather than a floating popup (decided
@@ -592,18 +593,7 @@ private fun AppMenuHeader(app: AppInfo, onOpenApp: () -> Unit, onAppInfo: () -> 
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (onChangeIcon != null) {
-            val changeIconLabel = stringResource(R.string.app_context_menu_change_icon, app.label)
-            Box(
-                modifier = Modifier
-                    .clip(MaterialTheme.shapes.medium)
-                    .clickable(role = Role.Button, onClickLabel = changeIconLabel, onClick = onChangeIcon)
-                    .semantics { contentDescription = changeIconLabel }
-                    .padding(4.dp)
-                    .testTag("app_context_menu_change_icon"),
-            ) {
-                AppMenuHeaderIcon(app)
-                EditIconBadge(modifier = Modifier.align(Alignment.TopEnd).offset(x = 6.dp, y = (-6).dp))
-            }
+            ChangeableHeaderIcon(app, onChangeIcon)
             AppMenuHeaderName(
                 app,
                 Modifier
@@ -641,6 +631,30 @@ private fun AppMenuHeader(app: AppInfo, onOpenApp: () -> Unit, onAppInfo: () -> 
             onClick = onUninstall,
             modifier = Modifier.testTag("app_context_menu_uninstall"),
         )
+    }
+}
+
+/** The header icon with its pencil badge, opening the Change icon page. */
+@Composable
+private fun ChangeableHeaderIcon(app: AppInfo, onChangeIcon: () -> Unit) {
+    val changeIconLabel = stringResource(R.string.app_context_menu_change_icon, app.label)
+    val interactionSource = remember { MutableInteractionSource() }
+    // The badge sits outside the clipped press highlight, as a notification badge does, but still takes the tap.
+    BadgedBox(
+        badge = { EditIconBadge() },
+        modifier = Modifier
+            .clickable(interactionSource = interactionSource, indication = null, role = Role.Button, onClickLabel = changeIconLabel, onClick = onChangeIcon)
+            .semantics { contentDescription = changeIconLabel }
+            .testTag("app_context_menu_change_icon"),
+    ) {
+        Box(
+            modifier = Modifier
+                .clip(MaterialTheme.shapes.medium)
+                .indication(interactionSource, LocalIndication.current)
+                .padding(4.dp),
+        ) {
+            AppMenuHeaderIcon(app)
+        }
     }
 }
 
@@ -710,17 +724,9 @@ internal fun AppMenuMainPage(
 
 /** The pencil on the header's icon, saying it can be changed. */
 @Composable
-private fun EditIconBadge(modifier: Modifier = Modifier) {
-    Box(
-        modifier = modifier
-            .size(EDIT_BADGE_SIZE)
-            .background(Surface, CircleShape)
-            .padding(2.dp)
-            .background(Accent, CircleShape)
-            .testTag("app_context_menu_change_icon_badge"),
-        contentAlignment = Alignment.Center,
-    ) {
-        Icon(imageVector = Icons.Outlined.Edit, contentDescription = null, tint = Surface, modifier = Modifier.size(10.dp))
+private fun EditIconBadge() {
+    Badge(containerColor = Accent, contentColor = Surface, modifier = Modifier.testTag("app_context_menu_change_icon_badge")) {
+        Icon(imageVector = Icons.Outlined.Edit, contentDescription = null, modifier = Modifier.size(10.dp))
     }
 }
 
