@@ -4566,7 +4566,7 @@ Widgets the app draws itself, on the Hub grid and on Home's widget stack, behavi
 
 ## Search sheet
 
-- [x] Tapping the drawer's search bar (or Home press with "Home button opens search") opens a search sheet from the bar's edge. Empty query: grids of recently installed or updated, frequently used and last used apps (usage sections need Usage Access, else one prompt strip). Typing: today's results, always a grid at the drawer's grid density (Compact when the drawer is a list). Back, scrim and Home close it back to the drawer. Tests: `RecentlyChangedAppsUseCaseTest`, `DrawerViewModelTest` (usage suggestions), `AppDrawerScreenTest`, `KeyboardDismissalTest`, `HomeDrawerRouteTest`.
+- [x] Tapping the drawer's search bar (or Home press with "Home button opens search") opens a search sheet from the bar's edge. Empty query: grids of recently installed or updated, frequently used and last used apps (usage sections need Usage Access, else one prompt strip). Typing: today's results, always a grid at the drawer's grid density (Compact when the drawer is a list). Back and scrim close it back to the drawer; Home closes the drawer, the sheet sliding out with it and resetting off screen. Tests: `RecentlyChangedAppsUseCaseTest`, `DrawerViewModelTest` (usage suggestions), `AppDrawerScreenTest`, `KeyboardDismissalTest`, `HomeDrawerRouteTest`.
 - [x] Settings and contact results are grid tiles like the app results, in the user's icon shape. Contacts show their photo when they have one (else their initial); each searchable setting has its own icon (`SETTING_ICONS`). Tests: `SettingsSearchIconTest`, `ContactRepositoryTest`, `AppDrawerScreenTest`.
 - [ ] Native review of the four new `drawer_search_*` strings in de, es, es-419, fr, nl, pt, pt-PT (machine-translated).
 
@@ -4875,3 +4875,12 @@ When a drawer search matches nothing at all, the empty screen offers **Search Pl
 - [x] Docs: `01`, `04`, `07`, `12`, README, design spec `4q`.
 - [x] Privacy policy sentence in `../facet-launcher-site/build.py`.
 - [x] Verified on the emulator (unit tests, `AppDrawerScreenTest` 60/60, manual pass on device).
+
+## Smooth drawer close on Home press (direct request)
+
+With the search sheet open, Home closed the sheet and the drawer at once, and the two motions fought. Now the sheet (and the contact connections sheet over it) stays as it is and slides out with the drawer, resetting once the drawer is closed; the sheet holds the keyboard's padding on that press so its field doesn't drop as the keyboard hides.
+
+### Steps
+- [x] `DrawerSearchSheet` and the connections sheet no longer close on Home; the drawer closing resets them. Tests: `AppDrawerScreenTest`, `HomeDrawerRouteTest`, `KeyboardDismissalTest`.
+- [x] Docs: `12` (§2a, §4).
+- [x] Verified on the emulator (`AppDrawerScreenTest` 60/60, `HomeDrawerRouteTest` 62/62, `KeyboardDismissalTest` 3/3, manual Home press with the sheet open). Found and fixed on the way: the sheet's own slide out ran after the drawer closed and brought it back into view.

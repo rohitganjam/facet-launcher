@@ -9,6 +9,7 @@ import android.provider.ContactsContract
 import androidx.activity.compose.BackHandler
 import androidx.annotation.StringRes
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -133,7 +134,6 @@ import com.facetlauncher.app.ui.components.AppIcon
 import com.facetlauncher.app.ui.components.AppIconSize
 import com.facetlauncher.app.ui.components.AppMenuNotifications
 import com.facetlauncher.app.ui.components.BlockHomeSwipesWhileShown
-import com.facetlauncher.app.ui.components.DismissOnHomePress
 import com.facetlauncher.app.ui.components.FolderContentsSheet
 import com.facetlauncher.app.ui.components.FolderSheetHeaderAction
 import com.facetlauncher.app.ui.components.FolderTileContextMenu
@@ -279,6 +279,7 @@ fun AppDrawerScreen(
         DrawerSearchSheet(
             visible = search.isOpen,
             onClose = search.close,
+            exitInstantly = search.closedOffScreen,
             query = query,
             onQueryChange = onQueryChange,
             barPosition = searchBar.position,
@@ -295,23 +296,26 @@ fun AppDrawerScreen(
             onContactClick = { focusManager.clearFocus(); connectionsSheet.open(it) },
         )
 
-        ContactConnectionsOverlay(connectionsSheet.contact, connectionsSheet.connections, connectionsSheet.dismiss)
+        ContactConnectionsOverlay(connectionsSheet.contact, connectionsSheet.connections, connectionsSheet.dismiss, connectionsSheet.closedOffScreen)
     }
 }
 
 /** Whether the search sheet is open and how to open or close it; closing also clears the query. */
 @Stable
-private class SearchSheetState(val isOpen: Boolean, val show: () -> Unit, val close: () -> Unit)
+private class SearchSheetState(val isOpen: Boolean, val closedOffScreen: Boolean, val show: () -> Unit, val close: () -> Unit)
 
 @Composable
 private fun rememberSearchSheet(focusRequest: Int, isDrawerOpen: Boolean, onQueryChange: (String) -> Unit): SearchSheetState {
     var open by remember { mutableStateOf(false) }
+    // Closed because the drawer closed: the sheet is off screen, and its own slide out would bring it back into view.
+    var closedOffScreen by remember { mutableStateOf(false) }
     val clearQuery by rememberUpdatedState(onQueryChange)
     val close = { open = false; clearQuery("") }
-    LaunchedEffect(focusRequest) { if (focusRequest > 0) open = true }
+    val show = { closedOffScreen = false; open = true }
+    LaunchedEffect(focusRequest) { if (focusRequest > 0) show() }
     // The screen stays composed while the drawer is closed, so reset the sheet then.
-    LaunchedEffect(isDrawerOpen) { if (!isDrawerOpen) close() }
-    return SearchSheetState(open, { open = true }, close)
+    LaunchedEffect(isDrawerOpen) { if (!isDrawerOpen) { closedOffScreen = true; close() } }
+    return SearchSheetState(open, closedOffScreen, show, close)
 }
 
 /** The connections sheet's state: the contact it is open for and that contact's ways to reach them. */
@@ -321,11 +325,13 @@ private class ConnectionsSheet(
     val connections: ImmutableList<ContactConnection>,
     val open: (ContactInfo) -> Unit,
     val dismiss: () -> Unit,
+    val closedOffScreen: Boolean,
 )
 
 /**
  * Hoisted to the screen (not down in the results) so the sheet can overlay the whole drawer. The screen never leaves composition
- * when the drawer closes (it is only translated off-screen), so it is reset once the drawer is closed or Home is pressed.
+ * when the drawer closes (it is only translated off-screen), so it is reset once the drawer is closed. Home closes the drawer
+ * around it, so the sheet slides out with the drawer rather than on its own.
  */
 @Composable
 private fun rememberConnectionsSheet(onRequestConnections: suspend (ContactInfo) -> List<ContactConnection>, isDrawerOpen: Boolean): ConnectionsSheet {
@@ -336,11 +342,11 @@ private fun rememberConnectionsSheet(onRequestConnections: suspend (ContactInfo)
         val selected = contact
         connections = if (selected != null) currentOnRequestConnections(selected).toImmutableList() else persistentListOf()
     }
+    var closedOffScreen by remember { mutableStateOf(false) }
     LaunchedEffect(isDrawerOpen) {
-        if (!isDrawerOpen) contact = null
+        if (!isDrawerOpen) { closedOffScreen = true; contact = null }
     }
-    DismissOnHomePress(enabled = contact != null) { contact = null }
-    return ConnectionsSheet(contact, connections, open = { contact = it }, dismiss = { contact = null })
+    return ConnectionsSheet(contact, connections, open = { closedOffScreen = false; contact = it }, dismiss = { contact = null }, closedOffScreen)
 }
 
 /** Browse mode: the app list or grid with the alphabet rail beside it, the left-edge jump zone and the rail's selection popup. */
@@ -461,13 +467,18 @@ private fun RailSelectionIndicator(selection: RailSelection, modifier: Modifier 
 
 /** Phase 9's connections sheet — a scrim and a slide-up-from-bottom sheet over the whole drawer while [contact] is set. */
 @Composable
-private fun BoxScope.ContactConnectionsOverlay(contact: ContactInfo?, connections: ImmutableList<ContactConnection>, onDismiss: () -> Unit) {
+private fun BoxScope.ContactConnectionsOverlay(
+    contact: ContactInfo?,
+    connections: ImmutableList<ContactConnection>,
+    onDismiss: () -> Unit,
+    exitInstantly: Boolean,
+) {
     // Drags on the sheet belong to its own list; without this the drawer's pull-to-close takes a downward drag before the list can scroll back up.
     if (contact != null) BlockHomeSwipesWhileShown()
     AnimatedVisibility(
         visible = contact != null,
         enter = fadeIn(animationSpec = tween(240)),
-        exit = fadeOut(animationSpec = tween(240)),
+        exit = if (exitInstantly) ExitTransition.None else fadeOut(animationSpec = tween(240)),
     ) {
         Box(
             modifier = Modifier
@@ -480,7 +491,11 @@ private fun BoxScope.ContactConnectionsOverlay(contact: ContactInfo?, connection
     AnimatedVisibility(
         visible = contact != null,
         enter = slideInVertically(initialOffsetY = { it }, animationSpec = tween(FACET_TRANSITION_DURATION_MS, easing = FacetTransitionEasing)),
-        exit = slideOutVertically(targetOffsetY = { it }, animationSpec = tween(FACET_TRANSITION_DURATION_MS, easing = FacetTransitionEasing)),
+        exit = if (exitInstantly) {
+            ExitTransition.None
+        } else {
+            slideOutVertically(targetOffsetY = { it }, animationSpec = tween(FACET_TRANSITION_DURATION_MS, easing = FacetTransitionEasing))
+        },
         modifier = Modifier.align(Alignment.BottomCenter),
     ) {
         contact?.let { shown ->
