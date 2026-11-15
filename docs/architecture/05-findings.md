@@ -12,13 +12,13 @@ error; see this doc's own rule in `CLAUDE.md`'s "Living architecture docs" secti
 | # | Finding | Severity | Effort |
 |---|---|---|---|
 | F4 | `domain/` imports `android.*` in 5 files | Low–Medium | Small |
-| F5 | `AppRepository` is still a fan-in for five repositories (`FolderRepository`, `UsageStatsRepository`, `WorkProfileRepository`, `PrivateSpaceRepository`, `AppWidgetRepository`) | Low (design) | Medium |
+| F5 | `AppRepository` is still a fan-in for five repositories (`FolderRepository`, `LaunchHistoryRepository`, `WorkProfileRepository`, `PrivateSpaceRepository`, `AppWidgetRepository`) | Low (design) | Medium |
 | F7 | `HomeViewModel` and `LauncherViewModel` collect for their whole lifetime (`launchIn(viewModelScope)`, not `stateIn(WhileSubscribed)`) | Low | Small |
 | F10 | Recents / Most-used / calendar are one-shot reads behind a manual `refreshTrigger` | Low (UX) | Medium |
 | F12 | `DrawerViewModel` exposes ~8 separate `StateFlow`s instead of one `DrawerUiState` | Low (convention) | Small |
 | F15 | The drawer ranks, groups and filters its app list during composition, on the main thread | Medium (layering + performance) | Small–Medium |
 | F16 | `SettingsRepository.settings` and `FacetRepository.observeFacets()` are cold and unshared | Medium (performance) | Small |
-| F17 | Any settings write restarts Home's whole state graph, including the usage-stats and calendar reads | Medium (performance) | Small |
+| F17 | Any settings write restarts Home's whole state graph, including the launch-history and calendar reads | Medium (performance) | Small |
 | F18 | Every package event re-lists and re-decodes every app's icon | Medium (performance) | Medium |
 | F19 | `HomeBoundsReporting` reports measured clock bounds from a `SideEffect` | Low–Medium (correctness) | Small |
 | F20 | Leftover code: unused facet-less scope, a disabled gesture, a dead setting, unused converters | Low (cleanup) | Small |
@@ -42,7 +42,7 @@ error; see this doc's own rule in `CLAUDE.md`'s "Living architecture docs" secti
 ```mermaid
 flowchart LR
     FOR[FolderRepository] --> AR[AppRepository]
-    USR[UsageStatsRepository] --> AR
+    LHR[LaunchHistoryRepository] --> AR
     WPR2[WorkProfileRepository] --> AR
     PSR[PrivateSpaceRepository] --> AR
     AWR[AppWidgetRepository] --> AR
@@ -67,15 +67,15 @@ Most ViewModels expose `stateIn(viewModelScope, SharingStarted.WhileSubscribed(5
 lifetime. For the launcher's Home and the app-lifetime orchestrator that is arguably desired
 (instant return, no re-subscribe on every resume), and `AppRepository.observeInstalledApps()`'s own
 `shareIn` means a ViewModel that stopped collecting would not remove the shared `LauncherApps`
-registration anyway. Worth revisiting only if Home's extra subscriptions (calendar, usage stats,
+registration anyway. Worth revisiting only if Home's extra subscriptions (calendar, launch history,
 badges) ever show up in a profile while another screen is on top.
 
 ## F10 — One-shot reads on Home (Low, UX)
 
-Recents / Most-used (`UsageStatsRepository`) and today's calendar events (`CalendarRepository`)
+Recents / Most-used (`LaunchHistoryRepository`) and today's calendar events (`CalendarRepository`)
 are `flow { emit(...) }` one-shots re-run only when `HomeViewModel.refresh()` fires on
-`ON_RESUME` or the active facet/settings change. Usage stats have no change callback, so polling
-on resume is reasonable; calendar *does* have one (`ContentResolver.registerContentObserver` on
+`ON_RESUME` or the active facet/settings change. Launches only happen while Home is left, so reading
+them on resume is deliberate (a live list would reorder under the launch animation); calendar *does* have one (`ContentResolver.registerContentObserver` on
 `CalendarContract.Events.CONTENT_URI`), so an event added while Home is visible won't appear until
 the next resume. `CalendarRepository.observeCalendarChanges()` already is that `callbackFlow` (it drives
 `EnsureCalendarColorsUseCase`); Home's events only need to be re-read when it emits.
@@ -99,8 +99,9 @@ the next resume. `CalendarRepository.observeCalendarChanges()` already is that `
   thing a composable talks to. `PrivateSpaceViewModel` already does the same ranking in the
   ViewModel, so the two drawers disagree.
 - **Main thread.** `GroupAppsByLetterUseCase` builds a new ICU `AlphabeticIndex` on every call and
-  buckets every app, and the search filter and sort run on every keystroke, all on the main thread
-  during composition, at the moment the drawer opens or the query changes.
+  buckets every app, and the search ranking runs on every keystroke, all on the main thread
+  during composition, at the moment the drawer opens or the query changes. (The ranking caches each
+  label's normalized form, so a keystroke costs a match per app, not a re-normalization.)
 
 Fix: compute `browseApps`, `groupedItems`, `recentlyInstalledApps` and `searchResults` in
 `DrawerViewModel` from `apps`, `query`, the tab and the settings, on `@DefaultDispatcher`, and expose
@@ -123,10 +124,10 @@ repositories directly, so the scope needs the same defaulted constructor paramet
 In `ObserveHomeScreenStateUseCase`, `activeFacet` is `combine(settings, facets) { … }` with no
 `distinctUntilChanged()`, and it feeds five `flatMapLatest` branches; the calendar branch also
 combines `settings` directly. So every DataStore write, whatever the key, cancels and restarts the
-dock, favorites, grid-cell and app-list flows and re-runs both one-shots: the `UsageStatsManager`
+dock, favorites, grid-cell and app-list flows and re-runs both one-shots: the launch history
 query (Recents / Most used) and the calendar provider query. Because `HomeViewModel` collects for
 its whole lifetime (F7), this happens while the user is in Settings: dragging the icon-size or font
-slider re-queries usage stats and the calendar on each step. Fix: `distinctUntilChanged()` on
+slider re-queries launch history and the calendar on each step. Fix: `distinctUntilChanged()` on
 `activeFacet`, and key each branch on only what it reads (the placement target; `listContentMode` and
 `appsToShowCount`; the resolved calendar config). In `FAVORITES` mode `appListItems` can reuse
 `favoriteItems` rather than hydrating the same list twice. Sharing the sources (F16) removes the six

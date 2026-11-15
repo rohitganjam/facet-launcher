@@ -127,7 +127,6 @@
     <string name="permission_calendar_subtitle">Mostra os eventos de hoje no relógio.</string>
     <string name="permission_contacts_title">Contactos</string>
     <string name="permission_contacts_subtitle">Permite que a pesquisa da gaveta mostre contactos correspondentes com ações rápidas de chamada/mensagem/WhatsApp.</string>
-    <string name="permission_usage_access_title">Acesso à utilização</string>
     <string name="permission_notification_access_subtitle">Mostra um emblema de ponto ou número em apps com notificações ativas.</string>
     <string name="permission_bluetooth_subtitle">Permite que as regras de automatização de facetas reajam a um dispositivo Bluetooth emparelhado, como o carro, e lista os dispositivos emparelhados ao configurar uma regra.</string>
     <string name="permission_location_subtitle">O Android exige esta permissão para ler o nome da rede Wi-Fi em regras de uma rede específica e para obter o tempo onde está quando escolhe Usar a localização atual. O Facet não a usa para mais nada.</string>
@@ -205,8 +204,6 @@
     <string name="calendar_settings_items_to_display">Itens a mostrar</string>
 
     <string name="open_settings">Abrir definições</string>
-    <string name="usage_access_explanation_headline">Recentes e Mais usados mostram apps com base na forma como realmente usa o seu telemóvel.</string>
-    <string name="usage_access_explanation_body">Isto requer acesso à utilização, uma permissão especial concedida nas definições do sistema — o Facet não a pode solicitar diretamente. Apenas lê que apps abre e durante quanto tempo; nada sai do seu dispositivo.</string>
     <string name="notification_access_explanation_headline">Os emblemas de notificação mostram um ponto ou número nas apps com algo à sua espera, e o reprodutor multimédia mostra o que está a tocar.</string>
     <string name="notification_access_explanation_body">Isto requer acesso às notificações, uma permissão especial concedida nas definições do sistema — o Facet não a pode solicitar diretamente. Apenas lê que apps têm notificações ativas e se estão silenciosas, além do título, do artista e da capa dos conteúdos multimédia em reprodução; nada sai do seu dispositivo.</string>
 
@@ -245,7 +242,6 @@
     <string name="drawer_search_section_recent_changes">INSTALADAS OU ATUALIZADAS RECENTEMENTE</string>
     <string name="drawer_search_section_frequent">UTILIZADAS COM FREQUÊNCIA</string>
     <string name="drawer_search_section_last_used">ÚLTIMAS UTILIZADAS</string>
-    <string name="drawer_search_usage_access_needed">As aplicações mais e últimas utilizadas precisam de acesso de utilização nas definições do sistema.</string>
     <string name="drawer_contacts_access_needed">A pesquisa de contactos precisa de acesso através das definições do sistema.</string>
     <string name="drawer_contacts_search_off">A pesquisa de contactos está desativada nas definições da Gaveta de apps.</string>
     <string name="drawer_search_clear">Limpar pesquisa</string>
@@ -264,7 +260,6 @@
     <string name="manage_facets_delete_message">Esta ação não pode ser anulada. Os favoritos dela também serão removidos.</string>
     <string name="manage_facets_header_title">Gerir facetas</string>
     <string name="facet_settings_dock_settings_title">Apps do dock</string>
-    <string name="home_usage_access_needed">\"Mais usados\" precisa de acesso à utilização através das definições do sistema.</string>
 
     <string name="clock_adjust_align_bottom">Alinhar em baixo</string>
     <string name="hub_widget_picker_search">Pesquisar widgets</string>
@@ -329,4 +324,5 @@
     <string name="settings_appearance_title">Aspeto do launcher</string>
     <string name="settings_appearance_subtitle">Temas, tipos de letra e ícones</string>
     <string name="appearance_header_title">Aspeto do launcher</string>
+    <string name="home_usage_list_empty">As apps que abrir a partir do Facet aparecem aqui.</string>
 </resources>

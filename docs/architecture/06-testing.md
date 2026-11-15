@@ -182,8 +182,8 @@ Real gaps — no test class references the type at all:
 Indirect-only coverage (exercised through other tests but without a mirrored test class — acceptable for the trivial
 permission repositories, worth adding for the ViewModels, the use cases and the Billing seam):
 `IconsViewModel`, `NotificationSettingsViewModel`, `ObserveActiveFacetItemsUseCase`, `ObserveIconPickerUseCase`,
-`ObserveSettingsScreenStateUseCase`, `RankBySearchRelevanceUseCase`, `RefreshAutomationStateUseCase`,
-`WorkProfileRepository`, `SecureFolderRepository`, `AccessibilityAccessRepository`, `UsageAccessRepository`,
+`ObserveSettingsScreenStateUseCase`, `RefreshAutomationStateUseCase`,
+`WorkProfileRepository`, `SecureFolderRepository`, `AccessibilityAccessRepository`,
 `CalendarPermissionRepository`, `ContactPermissionRepository`, `NotificationAccessRepository`, `BillingRepository`,
 `EntitlementRepository` (the open base class; `PlayEntitlementRepositoryTest` covers the real one).
 

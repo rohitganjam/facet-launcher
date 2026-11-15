@@ -5,10 +5,9 @@ import com.facetlauncher.app.data.CalendarRepository
 import com.facetlauncher.app.data.NotificationAccessRepository
 import com.facetlauncher.app.data.NotificationBadgeRepository
 import com.facetlauncher.app.data.FacetRepository
+import com.facetlauncher.app.data.LaunchHistoryRepository
 import com.facetlauncher.app.data.MediaSessionRepository
 import com.facetlauncher.app.data.SettingsRepository
-import com.facetlauncher.app.data.UsageAccessRepository
-import com.facetlauncher.app.data.UsageStatsRepository
 import com.facetlauncher.app.data.model.Facet
 import com.facetlauncher.app.data.model.CalendarDisplayOptions
 import com.facetlauncher.app.data.model.CalendarEvent
@@ -43,8 +42,6 @@ data class HomeScreenState(
     /** Where the active facet's Favorites sit on the grid layout, once moved there. */
     val favoriteCells: SavedGridCells = SavedGridCells(),
     val facets: List<Facet>,
-    /** Only meaningful when the active facet's `listContentMode` isn't `FAVORITES`. */
-    val usageAccessGranted: Boolean,
     /** Upcoming events (midnight today to noon tomorrow) for the active facet's effective calendar settings — empty when ungranted or none selected. */
     val calendarEvents: List<CalendarEvent>,
     /** The active facet's effective calendar indicator / item-count settings. */
@@ -58,7 +55,7 @@ data class HomeScreenState(
 )
 
 /**
- * Combines [SettingsRepository], [ObservePlacedItemsUseCase], [UsageStatsRepository]
+ * Combines [SettingsRepository], [ObservePlacedItemsUseCase], [LaunchHistoryRepository]
  * (scoped to the active facet's [ListContentMode]), [CalendarRepository], and [FacetRepository]
  * into the Home screen's state — spans more than one repository, so it's a UseCase rather than
  * being called directly from [com.facetlauncher.app.ui.home.HomeViewModel].
@@ -68,8 +65,7 @@ class ObserveHomeScreenStateUseCase @Inject constructor(
     private val settingsRepository: SettingsRepository,
     private val observePlacedItems: ObservePlacedItemsUseCase,
     private val facetRepository: FacetRepository,
-    private val usageStatsRepository: UsageStatsRepository,
-    private val usageAccessRepository: UsageAccessRepository,
+    private val launchHistoryRepository: LaunchHistoryRepository,
     private val calendarPermissionRepository: CalendarPermissionRepository,
     private val calendarRepository: CalendarRepository,
     private val notificationBadgeRepository: NotificationBadgeRepository,
@@ -77,9 +73,7 @@ class ObserveHomeScreenStateUseCase @Inject constructor(
     private val observeClockAccessories: ObserveClockAccessoriesUseCase,
     private val mediaSessionRepository: MediaSessionRepository,
 ) {
-    // PACKAGE_USAGE_STATS/READ_CALENDAR have no grant-change callback — the only way to grant
-    // either is a system redirect/dialog, so callers (Home, on resume) call refresh() to force
-    // re-evaluation; neither facet nor settings changing wouldn't otherwise re-trigger below.
+    // Home calls refresh() on resume: READ_CALENDAR has no grant-change callback, and Recents/Most used change while you're in other apps.
     private val refreshTrigger = MutableSharedFlow<Unit>(replay = 1).apply { tryEmit(Unit) }
 
     fun refresh() {
@@ -156,7 +150,6 @@ class ObserveHomeScreenStateUseCase @Inject constructor(
                 favoriteItems = favoriteItems,
                 favoriteCells = favoriteCells,
                 facets = facets,
-                usageAccessGranted = usageAccessRepository.isGranted(),
                 calendarEvents = events,
                 calendarDisplay = display,
                 badgeCounts = badges,
@@ -172,9 +165,8 @@ class ObserveHomeScreenStateUseCase @Inject constructor(
         val appsToShowCount = facet.appsToShowCount
         return when {
             mode == ListContentMode.FAVORITES -> observePlacedItems.items(facet.placementTarget(PlacementList.FAVORITES))
-            !usageAccessRepository.isGranted() -> flowOf(emptyList())
-            mode == ListContentMode.RECENTS -> flow { emit(usageStatsRepository.getRecentApps(appsToShowCount).map { PlacedItem.SingleApp(it) }) }
-            else -> flow { emit(usageStatsRepository.getMostUsedApps(appsToShowCount).map { PlacedItem.SingleApp(it) }) }
+            mode == ListContentMode.RECENTS -> flow { emit(launchHistoryRepository.getRecentApps(appsToShowCount).map { PlacedItem.SingleApp(it) }) }
+            else -> flow { emit(launchHistoryRepository.getMostUsedApps(appsToShowCount).map { PlacedItem.SingleApp(it) }) }
         }
     }
 

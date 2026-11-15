@@ -24,6 +24,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToNode
+import androidx.compose.ui.test.performImeAction
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.test.performTouchInput
@@ -273,25 +274,45 @@ class AppDrawerScreenTest {
     }
 
     @Test
-    fun theSheetPromptsForUsageAccessWhenItIsNotGranted() {
-        // Given usage access is missing
+    fun pressingEnterOpensTheTopSearchResult() {
+        // Given the search sheet with "ap" typed, which every app matches at a word start (A App first)
+        var opened: AppInfo? = null
+        var query by mutableStateOf("")
         composeRule.setContent {
             FacetLauncherTheme {
-                AppDrawerScreen(
-                    apps = apps.toImmutableList(),
-                    actions = DrawerItemActions(onAppClick = {}),
-                    searchSources = DrawerSearchSources(onRequestUsageSuggestions = { UsageSuggestions(accessGranted = false) }),
-                )
+                AppDrawerScreen(apps = apps.toImmutableList(), actions = DrawerItemActions(onAppClick = { opened = it }), query = query, onQueryChange = { query = it })
             }
         }
+        composeRule.openSearchSheet()
+        composeRule.onNodeWithTag("drawer_search_field").performTextInput("ap")
 
-        // When the sheet opens
-        composeRule.onNodeWithTag("drawer_search_open").performClick()
+        // When the keyboard's Go key is pressed
+        composeRule.onNodeWithTag("drawer_search_field").performImeAction()
 
-        // Then the usage access strip shows
-        composeRule.waitUntil(timeoutMillis = 5_000) {
-            composeRule.onAllNodesWithTag("drawer_search_usage_access_strip").fetchSemanticsNodes().isNotEmpty()
+        // Then the top-ranked app opens
+        composeRule.waitUntil(timeoutMillis = 3_000) { opened != null }
+        assertEquals("com.example.A", opened?.packageName)
+    }
+
+    @Test
+    fun pressingEnterWithNoMatchingAppOpensNothing() {
+        // Given a query no app matches
+        var opened: AppInfo? = null
+        var query by mutableStateOf("")
+        composeRule.setContent {
+            FacetLauncherTheme {
+                AppDrawerScreen(apps = apps.toImmutableList(), actions = DrawerItemActions(onAppClick = { opened = it }), query = query, onQueryChange = { query = it })
+            }
         }
+        composeRule.openSearchSheet()
+        composeRule.onNodeWithTag("drawer_search_field").performTextInput("zqx")
+
+        // When Go is pressed
+        composeRule.onNodeWithTag("drawer_search_field").performImeAction()
+        composeRule.waitForIdle()
+
+        // Then nothing opens
+        assertEquals(null, opened)
     }
 
     @Test

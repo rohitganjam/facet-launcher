@@ -3,8 +3,7 @@ package com.facetlauncher.app.ui.dock
 import androidx.lifecycle.SavedStateHandle
 import com.facetlauncher.app.data.AppRepository
 import com.facetlauncher.app.data.FolderRepository
-import com.facetlauncher.app.data.UsageAccessRepository
-import com.facetlauncher.app.data.UsageStatsRepository
+import com.facetlauncher.app.data.LaunchHistoryRepository
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.AppSortOption
 import com.facetlauncher.app.data.model.PlacedItem
@@ -33,7 +32,7 @@ import com.facetlauncher.app.data.PlacementRepository
 import com.facetlauncher.app.domain.ObservePlacedItemsUseCase
 
 /**
- * Focused on the sort control + Usage Access gating added on top of the Dock picker —
+ * Focused on the sort control added on top of the Dock picker —
  * capacity/placement behavior itself is exercised end-to-end by [DockAppRepositoryTest] and the
  * instrumented `DockAppPickerScreenTest`.
  */
@@ -65,7 +64,6 @@ class DockAppPickerViewModelTest {
     private suspend fun createViewModel(
         installed: List<AppInfo>,
         dockApps: List<AppInfo>,
-        usageAccessGranted: Boolean = false,
         viaRoute: Boolean = true,
     ): DockAppPickerViewModel {
         val appRepository = mock(AppRepository::class.java)
@@ -79,12 +77,9 @@ class DockAppPickerViewModelTest {
 
         val folderRepository = mock(FolderRepository::class.java)
         `when`(folderRepository.observeFolders()).thenReturn(flowOf(emptyList()))
-
-        val usageAccessRepository = mock(UsageAccessRepository::class.java)
-        `when`(usageAccessRepository.isGranted()).thenReturn(usageAccessGranted)
-        val usageStatsRepository = mock(UsageStatsRepository::class.java)
-        `when`(usageStatsRepository.getLastUsedTimestamps()).thenReturn(emptyMap())
-        val sortAppsForPicker = SortAppsForPickerUseCase(usageStatsRepository)
+        val launchHistoryRepository = mock(LaunchHistoryRepository::class.java)
+        `when`(launchHistoryRepository.getLastUsedTimestamps()).thenReturn(emptyMap())
+        val sortAppsForPicker = SortAppsForPickerUseCase(launchHistoryRepository)
 
         return DockAppPickerViewModel(
             SavedStateHandle(if (viaRoute) mapOf("facetId" to 5L) else emptyMap()),
@@ -93,7 +88,6 @@ class DockAppPickerViewModelTest {
             observePlacedItems,
             folderRepository,
             sortAppsForPicker,
-            usageAccessRepository,
         )
     }
 
@@ -133,22 +127,9 @@ class DockAppPickerViewModelTest {
     }
 
     @Test
-    fun `onSortOptionChange to LAST_USED is a no-op without Usage Access granted`() = runTest {
+    fun `onSortOptionChange to LAST_USED applies with no permission needed`() = runTest {
         val a = appInfo('a')
-        val viewModel = createViewModel(installed = listOf(a), dockApps = emptyList(), usageAccessGranted = false)
-        backgroundScope.launch { viewModel.uiState.collect {} }
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        viewModel.onSortOptionChange(AppSortOption.LAST_USED)
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        assertEquals(AppSortOption.ALPHABETICAL, viewModel.uiState.value.sortOption)
-    }
-
-    @Test
-    fun `onSortOptionChange to LAST_USED applies once Usage Access is granted`() = runTest {
-        val a = appInfo('a')
-        val viewModel = createViewModel(installed = listOf(a), dockApps = emptyList(), usageAccessGranted = true)
+        val viewModel = createViewModel(installed = listOf(a), dockApps = emptyList())
         backgroundScope.launch { viewModel.uiState.collect {} }
         testDispatcher.scheduler.advanceUntilIdle()
 

@@ -4,7 +4,6 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.facetlauncher.app.data.FolderRepository
-import com.facetlauncher.app.data.UsageAccessRepository
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.AppSortOption
 import com.facetlauncher.app.data.model.SortDirection
@@ -12,6 +11,7 @@ import com.facetlauncher.app.domain.GetInstalledAppsUseCase
 import com.facetlauncher.app.domain.SortAppsForPickerUseCase
 import com.facetlauncher.app.domain.combine
 import dagger.hilt.android.lifecycle.HiltViewModel
+import com.facetlauncher.app.domain.matchesSearch
 import javax.inject.Inject
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.ImmutableSet
@@ -22,7 +22,6 @@ import kotlinx.collections.immutable.toImmutableSet
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import com.facetlauncher.app.data.model.AppListLimits
@@ -53,7 +52,6 @@ class FolderAppPickerViewModel @Inject constructor(
     private val getInstalledApps: GetInstalledAppsUseCase,
     private val folderRepository: FolderRepository,
     private val sortAppsForPicker: SortAppsForPickerUseCase,
-    private val usageAccessRepository: UsageAccessRepository,
 ) : ViewModel() {
 
     private val folderId: Long = checkNotNull(savedStateHandle["folderId"])
@@ -61,10 +59,6 @@ class FolderAppPickerViewModel @Inject constructor(
     private val installedApps = MutableStateFlow<List<AppInfo>>(emptyList())
     private val sortOption = MutableStateFlow(AppSortOption.ALPHABETICAL)
     private val sortDirection = MutableStateFlow(SortDirection.ASCENDING)
-
-    private val _usageAccessGranted = MutableStateFlow(usageAccessRepository.isGranted())
-    /** `PACKAGE_USAGE_STATS` has no grant-change callback — re-checked via [refreshUsageAccessGranted] on this screen's resume. */
-    val usageAccessGranted: StateFlow<Boolean> = _usageAccessGranted.asStateFlow()
 
     /** Latched from the folder's live membership order the first time it's observed; never updated after — see [FolderAppPickerUiState.selectedResults]. */
     private val loadOrder = MutableStateFlow<List<String>?>(null)
@@ -82,7 +76,7 @@ class FolderAppPickerViewModel @Inject constructor(
         if (frozenOrder == null) loadOrder.value = liveOrder
         val order = frozenOrder ?: liveOrder
 
-        val filtered = installed.filter { it.label.contains(query, ignoreCase = true) }
+        val filtered = installed.filter { matchesSearch(it.label, query) }
         val (selected, other) = filtered.partition { it.listKey in order }
         FolderAppPickerUiState(
             folderName = folder?.name.orEmpty(),
@@ -103,21 +97,12 @@ class FolderAppPickerViewModel @Inject constructor(
         query.value = newQuery
     }
 
-    /** No-ops for [AppSortOption.LAST_USED] without Usage Access — the calling screen is expected
-     * to route to the permission explanation instead of calling this in that case, but this stays
-     * the actual source of truth so [FolderAppPickerUiState.sortOption] never silently ends up at
-     * [AppSortOption.LAST_USED] without it. */
     fun onSortOptionChange(option: AppSortOption) {
-        if (option == AppSortOption.LAST_USED && !usageAccessRepository.isGranted()) return
         sortOption.value = option
     }
 
     fun onSortDirectionToggle() {
         sortDirection.value = if (sortDirection.value == SortDirection.ASCENDING) SortDirection.DESCENDING else SortDirection.ASCENDING
-    }
-
-    fun refreshUsageAccessGranted() {
-        _usageAccessGranted.value = usageAccessRepository.isGranted()
     }
 
     fun toggleApp(app: AppInfo) {

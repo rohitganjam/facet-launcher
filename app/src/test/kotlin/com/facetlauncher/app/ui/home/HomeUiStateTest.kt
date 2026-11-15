@@ -1,5 +1,7 @@
 package com.facetlauncher.app.ui.home
 
+import android.os.UserHandle
+import org.mockito.Mockito.mock
 import com.facetlauncher.app.data.clockItem
 import com.facetlauncher.app.data.clockItemWith
 import com.facetlauncher.app.data.model.ClockWidgetConfig
@@ -19,6 +21,8 @@ import com.facetlauncher.app.data.model.ClockFontOption
 import com.facetlauncher.app.data.model.FontWeightOption
 import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.data.model.ListContentMode
+import com.facetlauncher.app.data.model.PlacedItem
+import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.ui.components.HOME_GESTURES_COACH_MARK_ID
 import com.facetlauncher.app.ui.components.HOME_SET_DEFAULT_PROMPT_ID
 import org.junit.Assert.assertEquals
@@ -70,49 +74,39 @@ class HomeUiStateTest {
     }
 
     @Test
-    fun `usage access prompt is hidden for favorites mode regardless of grant state`() {
+    fun `usage list hint is hidden for favorites mode even when empty`() {
         val state = HomeUiState(
             settings = LauncherSettings(activeFacetId = 1L),
             facets = listOf(Facet(id = 1L, name = "P1", position = 0, listContentMode = ListContentMode.FAVORITES)),
-            usageAccessGranted = false,
+            appListItems = emptyList(),
         )
 
-        assertEquals(false, state.showUsageAccessPrompt)
+        assertEquals(false, state.showUsageListHint)
     }
 
     @Test
-    fun `usage access prompt shows for recents mode when access isn't granted`() {
+    fun `usage list hint shows for recents mode before any app is opened from Facet`() {
         val state = HomeUiState(
             settings = LauncherSettings(activeFacetId = 1L),
             facets = listOf(Facet(id = 1L, name = "P1", position = 0, listContentMode = ListContentMode.RECENTS)),
-            usageAccessGranted = false,
+            appListItems = emptyList(),
         )
 
-        assertEquals(true, state.showUsageAccessPrompt)
+        assertEquals(true, state.showUsageListHint)
     }
 
     @Test
-    fun `usage access prompt is hidden for most used mode once access is granted`() {
+    fun `usage list hint is hidden for most used mode once it has apps`() {
         val state = HomeUiState(
             settings = LauncherSettings(activeFacetId = 1L),
             facets = listOf(Facet(id = 1L, name = "P1", position = 0, listContentMode = ListContentMode.MOST_USED)),
-            usageAccessGranted = true,
+            appListItems = listOf(PlacedItem.SingleApp(hintApp)),
         )
 
-        assertEquals(false, state.showUsageAccessPrompt)
+        assertEquals(false, state.showUsageListHint)
     }
 
-    @Test
-    fun `usage access prompt stays hidden once dismissed even though access still isn't granted`() {
-        val state = HomeUiState(
-            settings = LauncherSettings(activeFacetId = 1L),
-            facets = listOf(Facet(id = 1L, name = "P1", position = 0, listContentMode = ListContentMode.RECENTS)),
-            usageAccessGranted = false,
-            usageAccessPromptDismissed = true,
-        )
-
-        assertEquals(false, state.showUsageAccessPrompt)
-    }
+    private val hintApp = AppInfo(packageName = "com.example.a", activityName = "com.example.a.Main", label = "A", icon = null, userHandle = mock(UserHandle::class.java))
 
     @Test
     fun `active app row position is the active facet's own, not the launcher's`() {

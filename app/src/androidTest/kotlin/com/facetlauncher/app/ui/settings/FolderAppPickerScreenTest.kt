@@ -1,7 +1,5 @@
 package com.facetlauncher.app.ui.settings
 
-import android.app.AppOpsManager
-import android.app.usage.UsageStatsManager
 import android.content.pm.LauncherApps
 import android.os.UserManager
 import androidx.compose.runtime.remember
@@ -16,10 +14,9 @@ import androidx.compose.ui.test.performTextInput
 import androidx.lifecycle.SavedStateHandle
 import androidx.room.Room
 import com.facetlauncher.app.data.AppRepository
+import com.facetlauncher.app.data.testLaunchHistoryRepository
 import com.facetlauncher.app.data.getTestableApps
 import com.facetlauncher.app.data.FolderRepository
-import com.facetlauncher.app.data.UsageAccessRepository
-import com.facetlauncher.app.data.UsageStatsRepository
 import com.facetlauncher.app.data.local.FacetDatabase
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.AppSortOption
@@ -58,18 +55,16 @@ class FolderAppPickerScreenTest {
                     seed(appRepository, folderRepository, id)
                     id
                 }
-                val usageStatsRepository = UsageStatsRepository(context.getSystemService(UsageStatsManager::class.java), appRepository)
-                val usageAccessRepository = UsageAccessRepository(context.getSystemService(AppOpsManager::class.java), context)
+                val launchHistoryRepository = testLaunchHistoryRepository(context, appRepository)
                 FolderAppPickerViewModel(
                     SavedStateHandle(mapOf("folderId" to folderId)),
                     GetInstalledAppsUseCase(appRepository),
                     folderRepository,
-                    SortAppsForPickerUseCase(usageStatsRepository),
-                    usageAccessRepository,
+                    SortAppsForPickerUseCase(launchHistoryRepository),
                 ).also { lastViewModel = it }
             }
             FacetLauncherTheme {
-                FolderAppPickerScreen(onDone = onDone, onNavigateToUsageAccessExplanation = {}, viewModel = viewModel)
+                FolderAppPickerScreen(onDone = onDone, viewModel = viewModel)
             }
         }
         composeRule.waitForIdle()

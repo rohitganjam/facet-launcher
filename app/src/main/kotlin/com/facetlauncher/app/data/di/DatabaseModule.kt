@@ -10,6 +10,7 @@ import com.facetlauncher.app.data.local.FacetDatabase
 import com.facetlauncher.app.data.local.Migrations
 import com.facetlauncher.app.data.local.FacetDao
 import com.facetlauncher.app.data.local.FolderDao
+import com.facetlauncher.app.data.local.LaunchHistoryDao
 import com.facetlauncher.app.data.local.WeatherDao
 import com.facetlauncher.app.data.local.WidgetPlacementDao
 import androidx.datastore.core.DataStore
@@ -67,6 +68,9 @@ object DatabaseModule {
             // back destructively.
             .fallbackToDestructiveMigrationOnDowngrade(dropAllTables = true)
             .build()
+
+    @Provides
+    fun provideLaunchHistoryDao(database: FacetDatabase): LaunchHistoryDao = database.launchHistoryDao()
 
     @Provides
     fun provideFacetDao(database: FacetDatabase): FacetDao = database.facetDao()

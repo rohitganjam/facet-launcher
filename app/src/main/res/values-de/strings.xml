@@ -173,7 +173,6 @@
     <string name="app_picker_tab_apps">Apps</string>
     <string name="app_picker_tab_folders">Ordner</string>
 
-
     <!-- GestureHintOverlay -->
     <string name="gesture_hint_switch_facets">Facetten wechseln</string>
     <string name="gesture_hint_arrow_left">←</string>
@@ -518,8 +517,6 @@
     <string name="permission_calendar_subtitle">Zeigt die heutigen Termine auf der Uhr.</string>
     <string name="permission_contacts_title">Kontakte</string>
     <string name="permission_contacts_subtitle">Ermöglicht es der Drawer-Suche, passende Kontakte mit schnellen Anruf-/Nachrichten-/WhatsApp-Aktionen anzuzeigen.</string>
-    <string name="permission_usage_access_title">Nutzungszugriff</string>
-    <string name="permission_usage_access_subtitle">Ermöglicht die Listen „Zuletzt verwendet“ und „Meistgenutzt“.</string>
     <string name="permission_notification_access_title">Benachrichtigungszugriff</string>
     <string name="permission_notification_access_subtitle">Zeigt ein Punkt- oder Zahlenabzeichen bei Apps mit aktiven Benachrichtigungen.</string>
     <string name="permission_bluetooth_title">Bluetooth</string>
@@ -711,10 +708,6 @@
     <!-- Shared -->
     <string name="open_settings">Einstellungen öffnen</string>
 
-    <!-- UsageAccessExplanationScreen -->
-    <string name="usage_access_explanation_headline">„Zuletzt verwendet“ und „Meistgenutzt“ zeigen Apps basierend darauf, wie du dein Telefon tatsächlich nutzt.</string>
-    <string name="usage_access_explanation_body">Dafür ist Nutzungszugriff nötig, eine besondere Berechtigung, die in den Systemeinstellungen erteilt wird — Facet kann sie nicht direkt anfordern. Es wird nur gelesen, welche Apps du öffnest und wie lange; nichts verlässt dein Gerät.</string>
-
     <!-- NotificationAccessExplanationScreen -->
     <string name="notification_access_explanation_headline">Benachrichtigungsabzeichen zeigen einen Punkt oder eine Zahl bei Apps, bei denen etwas auf dich wartet, und der Medienplayer zeigt, was gerade läuft.</string>
     <string name="notification_access_explanation_body">Dafür ist Benachrichtigungszugriff nötig, eine besondere Berechtigung, die in den Systemeinstellungen erteilt wird — Facet kann sie nicht direkt anfordern. Es wird nur gelesen, welche Apps aktive Benachrichtigungen haben und ob sie stumm sind, dazu Titel, Interpret und Cover der laufenden Medien; nichts verlässt dein Gerät.</string>
@@ -793,7 +786,6 @@
     <string name="drawer_search_section_recent_changes">ZULETZT INSTALLIERT ODER AKTUALISIERT</string>
     <string name="drawer_search_section_frequent">HÄUFIG VERWENDET</string>
     <string name="drawer_search_section_last_used">ZULETZT VERWENDET</string>
-    <string name="drawer_search_usage_access_needed">Häufig und zuletzt verwendete Apps benötigen Zugriff auf die Nutzungsdaten in den Systemeinstellungen.</string>
     <string name="drawer_contacts_access_needed">Kontaktsuche benötigt Zugriff über die Systemeinstellungen.</string>
     <string name="drawer_contacts_search_off">Kontaktsuche ist in den App-Drawer-Einstellungen deaktiviert.</string>
     <string name="drawer_search_no_matches">Keine Treffer für „%1$s“</string>
@@ -852,9 +844,6 @@
     </plurals>
     <string name="facet_settings_dock_settings_title">Dock-Apps</string>
     <string name="facet_settings_rename_explanation">Benenne diese Facette um.</string>
-
-    <!-- HomeScreen -->
-    <string name="home_usage_access_needed">„Meistgenutzt“ benötigt Nutzungszugriff über die Systemeinstellungen.</string>
 
     <!-- ClockStyleGalleryScreen -->
     <string name="clock_style_font_label">Schriftart</string>
@@ -1197,4 +1186,5 @@
     <string name="glass_style_accent">Akzent</string>
     <string name="glass_style_theme">Design</string>
     <string name="glass_style_theme_inverted">Design invertiert</string>
+    <string name="home_usage_list_empty">Apps, die du über Facet öffnest, erscheinen hier.</string>
 </resources>

@@ -8,21 +8,17 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.facetlauncher.app.R
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.facetlauncher.app.data.model.AppSortOption
 import com.facetlauncher.app.ui.components.AppPickerScreen
 
 /**
  * Dock app picker (`4k`): also doubles as one facet's own dock picker — see
  * [DockAppPickerViewModel]. Thin wrapper around the shared [AppPickerScreen] (search, sort
  * control, checkbox rows, optional Apps/Folders tab) — this file only supplies the Dock's own
- * title, min/max capacity rule, and repository calls via [viewModel]. Picking "Last used" sort
- * while Usage Access isn't granted routes to [onNavigateToUsageAccessExplanation] instead of
- * applying it — see [FavoritesPickerScreen]'s matching doc for the full rationale.
+ * title, min/max capacity rule, and repository calls via [viewModel].
  */
 @Composable
 fun DockAppPickerScreen(
     onDone: () -> Unit,
-    onNavigateToUsageAccessExplanation: () -> Unit,
     modifier: Modifier = Modifier,
     // False during onboarding — no folder can exist yet that early (they're only ever created
     // via the Drawer/Search's own "Add to folder" long-press flow, which isn't reachable from
@@ -34,7 +30,6 @@ fun DockAppPickerScreen(
 ) {
     LaunchedEffect(facetId) { facetId?.let(viewModel::useFacet) }
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val usageAccessGranted by viewModel.usageAccessGranted.collectAsStateWithLifecycle()
     AppPickerScreen(
         title = stringResource(R.string.settings_dock_title),
         query = uiState.query,
@@ -49,13 +44,7 @@ fun DockAppPickerScreen(
         screenTestTag = "dock_app_picker_screen",
         tagPrefix = "dock_picker",
         onQueryChange = viewModel::onQueryChange,
-        onSortOptionChange = { option ->
-            if (option == AppSortOption.LAST_USED && !usageAccessGranted) {
-                onNavigateToUsageAccessExplanation()
-            } else {
-                viewModel.onSortOptionChange(option)
-            }
-        },
+        onSortOptionChange = viewModel::onSortOptionChange,
         onSortDirectionToggle = viewModel::onSortDirectionToggle,
         onToggleApp = viewModel::toggleDockApp,
         onDone = onDone,
@@ -64,6 +53,5 @@ fun DockAppPickerScreen(
         placedFolderIds = uiState.placedFolderIds,
         showFoldersTab = showFoldersTab,
         onToggleFolder = viewModel::toggleFolder,
-        onResume = viewModel::refreshUsageAccessGranted,
     )
 }

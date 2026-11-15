@@ -4,6 +4,7 @@ import android.content.Intent
 import com.facetlauncher.app.data.model.NativeWidgetRef
 import com.facetlauncher.app.data.model.AppProfile
 import com.facetlauncher.app.data.model.WidgetProviderOption
+import com.facetlauncher.app.domain.matchesSearch
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 
@@ -32,10 +33,10 @@ fun pickerState(options: List<WidgetProviderOption>, query: String, tab: WidgetP
     val shownTab = tab.takeIf { it in tabs } ?: WidgetPickerTab.PERSONAL
     val inTab = if (tabs.isEmpty()) options else options.filter { it.pickerTab() == shownTab }
     // Search only by app name, not widget name, per user request.
-    val matching = if (query.isBlank()) inTab else inTab.filter { it.appLabel.contains(query, ignoreCase = true) }
+    val matching = if (query.isBlank()) inTab else inTab.filter { matchesSearch(it.appLabel, query) }
     // Each tab's own list, so a swipe can show the next one beside the current.
     val byTab = tabs.associateWith { other ->
-        options.filter { it.pickerTab() == other && (query.isBlank() || it.appLabel.contains(query, ignoreCase = true)) }.toSortedGroups()
+        options.filter { it.pickerTab() == other && matchesSearch(it.appLabel, query) }.toSortedGroups()
     }
     return HubWidgetPickerUiState(query = query, groups = matching.toSortedGroups(), remaining = remaining, tabs = tabs, tab = shownTab, groupsByTab = byTab)
 }

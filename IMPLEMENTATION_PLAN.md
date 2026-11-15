@@ -4875,3 +4875,17 @@ When a drawer search matches nothing at all, the empty screen offers **Search Pl
 - [x] Docs: `01`, `04`, `07`, `12`, README, design spec `4q`.
 - [x] Privacy policy sentence in `../facet-launcher-site/build.py`.
 - [x] Verified on the emulator (unit tests, `AppDrawerScreenTest` 60/60, manual pass on device).
+
+## Smarter search, release 1 (Rohit approved the design 2026-11-15)
+
+One search model for every search surface (drawer apps, contacts and settings, Private Space, the pickers, the widget picker), plus Facet's own launch history in place of Usage Access. Decisions: learning is always on with no "Clear search history" control (it is all local); picks and launch counts stay out of backups; Enter opens the top app result and does nothing when no app matches; Usage Access (`PACKAGE_USAGE_STATS`) is dropped entirely, so Recents, Most used, the drawer's Frequent/Last used and the pickers' Last used sort count only apps opened from Facet and start empty. Release 2 (app shortcuts, typo tolerance) is separate. See `docs/architecture/12-flow-drawer-search-and-app-actions.md` §2.
+
+### Steps
+- [x] `RankBySearchRelevanceUseCase` rewritten as the shared model: normalization (accents, case, punctuation), tiers exact → prefix → word start → initials → substring, camel humps, space-free matching ("wifi" → Wi-Fi), multi-word queries, learned picks (2+ for the same query) and 30-day launches for drawer apps; `matchesSearch` for the pickers and widget picker. Tests: `RankBySearchRelevanceUseCaseTest`.
+- [x] Launch history in Room (v51, auto-migration): `app_launches`, `app_launch_days`, `search_picks`; `LaunchHistoryDao`, `LaunchHistoryRepository` (Private Space and Facet itself never recorded; uninstall and profile removal clear rows). Tests: `LaunchHistoryDaoTest`, `LaunchHistoryRepositoryTest`, `CleanUpUninstalledAppsUseCaseTest`, `FacetDatabaseMigrationTest.migration50To51AddsEmptyLaunchHistoryAndKeepsFacets`.
+- [x] Usage Access removed: `UsageStatsRepository`, `UsageAccessRepository`, the explanation screen and route, the Permissions row, the Home and drawer prompts, the manifest permission. Home shows "Apps you open from Facet show up here." for an empty Recents or Most used list. Tests: `ObserveHomeScreenStateUseCaseTest`, `ObserveFacetPreviewsUseCaseTest`, `HomeUiStateTest`, `HomeScreenTest`, `PermissionsViewModelTest`, `PermissionsScreenTest`, the three picker ViewModel and screen tests.
+- [x] Launches recorded from `LauncherActivity.launchApp`, search picks from the drawer. Tests: `LauncherViewModelTest`, `DrawerViewModelTest`.
+- [x] Drawer: Enter (Go) opens the top app; contacts fetch 50 candidates then rank and keep 5; settings ranked on label and keywords (`SystemSettingsRepository.availableEntries`). Tests: `AppDrawerScreenTest`, `DrawerViewModelTest`, `SystemSettingsRepositoryTest`.
+- [x] Docs: `01`, `02`, `03`, `04`, `05`, `06`, `07`, `08`, `11`, `12`, README, PRD and design spec.
+- [x] Privacy policy in `../facet-launcher-site/build.py`: Usage Access removed, local launch history described.
+- [ ] Verified on the emulator (build, `./gradlew test`, `check`, the changed instrumented tests, manual pass).

@@ -3,9 +3,8 @@ package com.facetlauncher.app.domain
 import com.facetlauncher.app.data.CalendarPermissionRepository
 import com.facetlauncher.app.data.CalendarRepository
 import com.facetlauncher.app.data.FacetRepository
+import com.facetlauncher.app.data.LaunchHistoryRepository
 import com.facetlauncher.app.data.SettingsRepository
-import com.facetlauncher.app.data.UsageAccessRepository
-import com.facetlauncher.app.data.UsageStatsRepository
 import com.facetlauncher.app.data.model.Facet
 import com.facetlauncher.app.data.model.CalendarEvent
 import com.facetlauncher.app.data.model.LauncherSettings
@@ -20,7 +19,6 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
-import com.facetlauncher.app.data.model.PlacementTarget
 import com.facetlauncher.app.data.model.PlacementList
 
 /** A single facet's effective preview content — everything the carousel's own preview card needs beyond the clock. */
@@ -37,7 +35,7 @@ data class FacetPreviewData(
  * and favorites, its own dock, and calendar events from the facet's clock's own calendar choices, as
  * [ObserveHomeScreenStateUseCase.observeCalendarEvents] reads them. Spans [FacetRepository],
  * [SettingsRepository], [ObservePlacedItemsUseCase],
- * [UsageStatsRepository], [UsageAccessRepository], [CalendarPermissionRepository] and
+ * [LaunchHistoryRepository], [CalendarPermissionRepository] and
  * [CalendarRepository], so it's a use case rather than something either the ViewModel or a
  * composable computes directly. Unlike [ObserveHomeScreenStateUseCase], which resolves state for
  * only the single *active* facet, this fans out to every facet at once — the carousel's
@@ -48,8 +46,7 @@ class ObserveFacetPreviewsUseCase @Inject constructor(
     private val facetRepository: FacetRepository,
     private val settingsRepository: SettingsRepository,
     private val observePlacedItems: ObservePlacedItemsUseCase,
-    private val usageStatsRepository: UsageStatsRepository,
-    private val usageAccessRepository: UsageAccessRepository,
+    private val launchHistoryRepository: LaunchHistoryRepository,
     private val calendarPermissionRepository: CalendarPermissionRepository,
     private val calendarRepository: CalendarRepository,
 ) {
@@ -88,9 +85,8 @@ class ObserveFacetPreviewsUseCase @Inject constructor(
         val appsToShowCount = facet.appsToShowCount
         return when {
             mode == ListContentMode.FAVORITES -> flow { emit(facetFavorites) }
-            !usageAccessRepository.isGranted() -> flow { emit(emptyList()) }
-            mode == ListContentMode.RECENTS -> flow { emit(usageStatsRepository.getRecentApps(appsToShowCount).map { PlacedItem.SingleApp(it) }) }
-            else -> flow { emit(usageStatsRepository.getMostUsedApps(appsToShowCount).map { PlacedItem.SingleApp(it) }) }
+            mode == ListContentMode.RECENTS -> flow { emit(launchHistoryRepository.getRecentApps(appsToShowCount).map { PlacedItem.SingleApp(it) }) }
+            else -> flow { emit(launchHistoryRepository.getMostUsedApps(appsToShowCount).map { PlacedItem.SingleApp(it) }) }
         }
     }
 

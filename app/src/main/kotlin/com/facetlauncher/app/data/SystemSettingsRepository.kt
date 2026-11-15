@@ -52,14 +52,14 @@ class SystemSettingsRepository @Inject constructor(
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) {
 
-    /** Catalog entries whose label/keywords contain [query], filtered to those this device can actually resolve — some OEMs drop or rename standard Settings screens (same [android.content.pm.PackageManager.resolveActivity] guard [ContactRepository] uses for its own dynamic connections). */
-    suspend fun search(query: String): List<SettingsSearchEntry> = withContext(ioDispatcher) {
-        if (query.isBlank()) return@withContext emptyList()
-
+    /**
+     * Every catalog entry this device can open, with its keywords; search matches them with the shared model. Some OEMs drop or rename
+     * standard Settings screens, so each is checked with [android.content.pm.PackageManager.resolveActivity].
+     */
+    suspend fun availableEntries(): List<SettingsSearchEntry> = withContext(ioDispatcher) {
         val packageManager = context.packageManager
         SETTINGS_CATALOG
-            .filter { entry -> entry.keywords.any { it.contains(query, ignoreCase = true) } }
             .filter { entry -> packageManager.resolveActivity(Intent(entry.action), 0) != null }
-            .map { entry -> SettingsSearchEntry(id = entry.id, label = context.getString(entry.labelRes), action = entry.action) }
+            .map { entry -> SettingsSearchEntry(id = entry.id, label = context.getString(entry.labelRes), action = entry.action, keywords = entry.keywords) }
     }
 }

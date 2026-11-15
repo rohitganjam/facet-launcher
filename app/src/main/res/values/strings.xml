@@ -207,7 +207,6 @@
     <string name="app_picker_tab_apps">Apps</string>
     <string name="app_picker_tab_folders">Folders</string>
 
-
     <!-- GestureHintOverlay -->
     <string name="gesture_hint_switch_facets">Switch facets</string>
     <string name="gesture_hint_arrow_left">←</string>
@@ -577,8 +576,6 @@
     <string name="permission_calendar_subtitle">Shows today\'s events on the clock.</string>
     <string name="permission_contacts_title">Contacts</string>
     <string name="permission_contacts_subtitle">Lets Drawer search show matching contacts with quick call/message/WhatsApp actions.</string>
-    <string name="permission_usage_access_title">Usage access</string>
-    <string name="permission_usage_access_subtitle">Powers the Recents and Most used app lists.</string>
     <string name="permission_notification_access_title">Notification access</string>
     <string name="permission_notification_access_subtitle">Shows a dot or count badge on apps with active notifications.</string>
     <string name="permission_bluetooth_title">Bluetooth</string>
@@ -772,12 +769,8 @@
     <string name="whats_new_section_improved">Improved</string>
     <string name="whats_new_empty">Release notes aren\'t available yet.</string>
 
-    <!-- Shared by UsageAccessExplanationScreen/NotificationAccessExplanationScreen -->
+    <!-- Shared by NotificationAccessExplanationScreen and others -->
     <string name="open_settings">Open settings</string>
-
-    <!-- UsageAccessExplanationScreen (header reuses permission_usage_access_title) -->
-    <string name="usage_access_explanation_headline">Recents and Most used show apps based on how you actually use your phone.</string>
-    <string name="usage_access_explanation_body">This needs usage access, a special permission granted from system Settings — Facet can\'t request it directly. It only reads which apps you open and for how long; nothing leaves your device.</string>
 
     <!-- NotificationAccessExplanationScreen (header reuses permission_notification_access_title) -->
     <string name="notification_access_explanation_headline">Notification badges show a dot or count on apps with something waiting for you, and the media player shows what\'s playing.</string>
@@ -869,7 +862,6 @@
     <string name="drawer_search_section_recent_changes">RECENTLY INSTALLED OR UPDATED</string>
     <string name="drawer_search_section_frequent">FREQUENTLY USED</string>
     <string name="drawer_search_section_last_used">LAST USED</string>
-    <string name="drawer_search_usage_access_needed">Frequently and last used apps need usage access from system settings.</string>
     <string name="drawer_contacts_access_needed">Contact search needs access from system settings.</string>
     <string name="drawer_contacts_search_off">Contact search is off in App Drawer settings.</string>
     <string name="drawer_search_no_matches">No matches found for “%1$s”</string>
@@ -942,9 +934,6 @@
     <string name="facet_settings_appearance_home_icon_and_text">Home icon &amp; text</string>
     <string name="facet_settings_appearance_home_text_only">Home text only</string>
     <string name="facet_settings_rename_explanation">Rename this facet.</string>
-
-    <!-- HomeScreen ("Open settings" reuses open_settings) -->
-    <string name="home_usage_access_needed">Most used needs usage access from system settings.</string>
 
     <!-- ClockStyleGalleryScreen ("Accent color" reuses appearance_accent_color; "24-hour time"
          reuses settings_time_format_24h; header reuses settings_clock_calendar_title) -->
@@ -1286,4 +1275,5 @@
     <string name="glass_style_accent">Accent</string>
     <string name="glass_style_theme">Theme</string>
     <string name="glass_style_theme_inverted">Theme inverted</string>
+    <string name="home_usage_list_empty">Apps you open from Facet show up here.</string>
 </resources>

@@ -91,13 +91,14 @@ flowchart LR
     OS2["ACTION_MANAGED_PROFILE_REMOVED\n→ AppRepository.observeProfileRemoved(): UserHandle"] --> A
     A -- "removeByPackage(pkg, userId) on PlacementRepository and FolderRepository" --> T1[(app_placements, folder_apps)]
     A -- "removeByUserId(handle.hashCode()) on the same two" --> T1
+    A -- "removeByPackage / removeByUserId on LaunchHistoryRepository" --> T2[(app_launches, app_launch_days, search_picks)]
     B -- "getOrphanedRows() WHERE userId = -1\n→ backfillUserId(entity, handlesFor(profile).singleOrNull().hashCode())" --> T1
 ```
 
 | Process | Trigger | Effect | Why it exists |
 |---|---|---|---|
-| **Uninstall cleanup** | Per-package `onPackageRemoved` (not `onPackagesUnavailable` — a paused Work Profile must keep its rows) | Deletes the matching rows from `app_placements` (every list of every facet in one statement: `AppPlacementDao.deleteByPackage(pkg, userId)`) and from `folder_apps` (`FolderDao.deleteFolderAppsByPackage`) for that `(pkg, userId)` | Hydration already *hides* missing apps; this makes the removal permanent so the slot frees up and backups don't carry ghosts |
-| **Profile removal sweep** | `ACTION_MANAGED_PROFILE_REMOVED` with `EXTRA_USER` | `removeByUserId` for that exact handle only (`AppPlacementDao.deleteByUserId`, `FolderDao.deleteFolderAppsByUserId`) | Unenrolling a Work Profile doesn't reliably fire per-package events; scoped to the handle so a clone profile in the same `AppProfile` category survives |
+| **Uninstall cleanup** | Per-package `onPackageRemoved` (not `onPackagesUnavailable` — a paused Work Profile must keep its rows) | Deletes the matching rows from `app_placements` (every list of every facet in one statement: `AppPlacementDao.deleteByPackage(pkg, userId)`) and from `folder_apps` (`FolderDao.deleteFolderAppsByPackage`) for that `(pkg, userId)`; also its launch history and search picks (`LaunchHistoryDao.removeByPackage`) | Hydration already *hides* missing apps; this makes the removal permanent so the slot frees up and backups don't carry ghosts |
+| **Profile removal sweep** | `ACTION_MANAGED_PROFILE_REMOVED` with `EXTRA_USER` | `removeByUserId` for that exact handle only (`AppPlacementDao.deleteByUserId`, `FolderDao.deleteFolderAppsByUserId`, `LaunchHistoryDao.removeByUserId`) | Unenrolling a Work Profile doesn't reliably fire per-package events; scoped to the handle so a clone profile in the same `AppProfile` category survives |
 | **Orphan repair** | Once, at startup | Rows written before schema v20 have `userId = -1`; resolved from their `profile` if exactly one live handle matches that category | Without it, pre-v20 rows never join against the live list and vanish from Home |
 | **Facet dock seed** | When a facet is created (`ApplyFacetDefaultsUseCase.applyAll`), and on the Dock's "Reset to default" (`replace = true`) | `SeedFacetDefaultsUseCase` fills the facet's empty Dock with the OS-resolved browser/SMS/camera/mail/phone apps that are installed (at most `MAX_DOCK_APPS`); Favorites start empty | A fresh install and onboarding show a usable dock immediately, independent of the onboarding UI; each facet then owns its list |
 

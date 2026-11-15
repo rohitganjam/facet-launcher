@@ -1431,6 +1431,34 @@ class FacetDatabaseMigrationTest {
     }
 
     @Test
+    fun migration50To51AddsEmptyLaunchHistoryAndKeepsFacets() {
+        // Given a v50 database with a facet
+        val db50 = helper.createDatabase(TEST_DB, 50)
+        db50.execSQL(
+            "INSERT INTO facets (id, name, position, clockPlacementOwn, clockAlignment, appRowPosition, appRowPresentation, listContentMode, " +
+                "appsToShowCount, appListVerticalAlignment, appListLayout, appListColumnAlignment, appListGridColumns, appListGridDisplayMode, " +
+                "appListShrinkToFit, dockDisplayMode, dockGlass, appsListGlass, allowLandscape) VALUES (1, 'Facet', 1, 0, 'LEFT', 'LEFT', " +
+                "'ICON_AND_TEXT', 'RECENTS', 6, 'BOTTOM', 'SINGLE_COLUMN', 'BOTH_LEFT', 'FOUR', 'ICONS', 'OFF', 'ICONS', 'OFF', 'OFF', 0)",
+        )
+        db50.close()
+
+        // When migrating to v51 (Room also validates the result against the exported v51 schema)
+        val db51 = helper.runMigrationsAndValidate(TEST_DB, 51, true)
+
+        // Then the facet is kept and the three launch history tables start empty
+        db51.query("SELECT listContentMode FROM facets WHERE id = 1").use {
+            assertTrue(it.moveToFirst())
+            assertEquals("RECENTS", it.getString(0))
+        }
+        for (table in listOf("app_launches", "app_launch_days", "search_picks")) {
+            db51.query("SELECT COUNT(*) FROM $table").use {
+                assertTrue(it.moveToFirst())
+                assertEquals(0, it.getInt(0))
+            }
+        }
+    }
+
+    @Test
     fun migration44To45HandlesAnEmptyLauncherDock() {
         // Given an inheriting facet with a stale own dock row and no launcher dock
         val db44 = helper.createDatabase(TEST_DB, 44)

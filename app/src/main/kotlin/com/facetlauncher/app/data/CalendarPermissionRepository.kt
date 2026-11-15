@@ -9,8 +9,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * F1's `READ_CALENDAR` grant check — a normal runtime permission (unlike F2's special-access
- * `PACKAGE_USAGE_STATS`), so this *does* surface via `checkSelfPermission`/a real system dialog.
+ * F1's `READ_CALENDAR` grant check — a normal runtime permission, so it surfaces via `checkSelfPermission`/a real system dialog.
  *
  * `open` so instrumented tests can substitute a fake reporting a fixed granted/ungranted value
  * (mirrors [CalendarRepository]'s existing `open`-for-`FakeCalendarRepository` pattern) — testing

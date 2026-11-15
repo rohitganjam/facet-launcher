@@ -14,7 +14,6 @@ import com.facetlauncher.app.data.model.isWidget
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.ClockAlignment
 import com.facetlauncher.app.data.model.Facet
-import com.facetlauncher.app.data.model.LandscapeOverrides
 import com.facetlauncher.app.data.model.Folder
 import com.facetlauncher.app.data.model.ClockStackItemKind
 import com.facetlauncher.app.domain.ClockPlacement
@@ -65,7 +64,6 @@ class HomeViewModel @Inject constructor(
     private val lockScreenController: LockScreenController,
 ) : ViewModel() {
 
-    private val usageAccessPromptDismissed = MutableStateFlow(false)
     private val isDefaultLauncher = MutableStateFlow<Boolean?>(null)
 
     /** The clock stack page each facet last showed (by item id), kept while Home lives so switching facets and back resumes there. */
@@ -76,8 +74,8 @@ class HomeViewModel @Inject constructor(
 
     init {
         combine(
-            observeHomeScreenState(), usageAccessPromptDismissed, isDefaultLauncher, visibleClockItemByFacet, entitlementRepository.isPro,
-        ) { screenState, dismissed, isDefault, visibleClockItems, isPro ->
+            observeHomeScreenState(), isDefaultLauncher, visibleClockItemByFacet, entitlementRepository.isPro,
+        ) { screenState, isDefault, visibleClockItems, isPro ->
             HomeUiState(
                 settings = screenState.settings,
                 isLoading = false,
@@ -86,13 +84,11 @@ class HomeViewModel @Inject constructor(
                 favoriteItems = screenState.favoriteItems,
                 favoriteCells = screenState.favoriteCells,
                 facets = screenState.facets,
-                usageAccessGranted = screenState.usageAccessGranted,
                 calendarEvents = screenState.calendarEvents,
                 calendarDisplay = screenState.calendarDisplay,
                 badgeCounts = screenState.badgeCounts,
                 clockAccessories = screenState.clockAccessories,
                 mediaPlayer = screenState.mediaPlayer,
-                usageAccessPromptDismissed = dismissed,
                 isDefaultLauncher = isDefault,
                 visibleClockItemId = visibleClockItems[screenState.settings.activeFacetId],
                 isPro = isPro,
@@ -127,14 +123,9 @@ class HomeViewModel @Inject constructor(
         viewModelScope.launch { settingsRepository.markCoachMarkSeen(HOME_SET_DEFAULT_PROMPT_ID) }
     }
 
-    /** `PACKAGE_USAGE_STATS` has no grant-change callback — call this from `onResume` so a grant made via Settings takes effect without waiting for an unrelated facet change. */
+    /** Called on resume: Recents and Most used change while you're in other apps, and a calendar grant has no callback. */
     fun refresh() {
         observeHomeScreenState.refresh()
-    }
-
-    /** Called the moment the usage-access prompt's own button is tapped — hides it for the rest of this ViewModel's lifetime regardless of whether the permission actually ends up granted (see chat history). */
-    fun dismissUsageAccessPrompt() {
-        usageAccessPromptDismissed.value = true
     }
 
     /** First gesture on Home after onboarding, or a "Got it" tap — see [HomeUiState.showGestureHint]. */

@@ -174,7 +174,6 @@
     <string name="app_picker_tab_apps">Apps</string>
     <string name="app_picker_tab_folders">Pastas</string>
 
-
     <!-- GestureHintOverlay -->
     <string name="gesture_hint_switch_facets">Trocar de faceta</string>
     <string name="gesture_hint_arrow_left">←</string>
@@ -522,8 +521,6 @@
     <string name="permission_calendar_subtitle">Exibe os eventos de hoje no relógio.</string>
     <string name="permission_contacts_title">Contatos</string>
     <string name="permission_contacts_subtitle">Permite que a busca da gaveta exiba contatos correspondentes com ações rápidas de ligação/mensagem/WhatsApp.</string>
-    <string name="permission_usage_access_title">Acesso de uso</string>
-    <string name="permission_usage_access_subtitle">Alimenta as listas de Recentes e Mais usados.</string>
     <string name="permission_notification_access_title">Acesso a notificações</string>
     <string name="permission_notification_access_subtitle">Exibe um selo de ponto ou número em apps com notificações ativas.</string>
     <string name="permission_bluetooth_title">Bluetooth</string>
@@ -718,10 +715,6 @@
     <!-- Shared -->
     <string name="open_settings">Abrir configurações</string>
 
-    <!-- UsageAccessExplanationScreen -->
-    <string name="usage_access_explanation_headline">Recentes e Mais usados exibem apps com base em como você realmente usa seu celular.</string>
-    <string name="usage_access_explanation_body">Isso requer acesso de uso, uma permissão especial concedida nas configurações do sistema — o Facet não pode solicitá-la diretamente. Ele só lê quais apps você abre e por quanto tempo; nada sai do seu dispositivo.</string>
-
     <!-- NotificationAccessExplanationScreen -->
     <string name="notification_access_explanation_headline">Os selos de notificação exibem um ponto ou número nos apps com algo esperando por você, e o reprodutor de mídia mostra o que está tocando.</string>
     <string name="notification_access_explanation_body">Isso requer acesso a notificações, uma permissão especial concedida nas configurações do sistema — o Facet não pode solicitá-la diretamente. Ele só lê quais apps têm notificações ativas e se estão silenciosas, além do título, do artista e da capa da mídia que está tocando; nada sai do seu dispositivo.</string>
@@ -800,7 +793,6 @@
     <string name="drawer_search_section_recent_changes">INSTALADOS OU ATUALIZADOS RECENTEMENTE</string>
     <string name="drawer_search_section_frequent">USADOS COM FREQUÊNCIA</string>
     <string name="drawer_search_section_last_used">ÚLTIMOS USADOS</string>
-    <string name="drawer_search_usage_access_needed">Os apps mais e últimos usados precisam de acesso de uso nas configurações do sistema.</string>
     <string name="drawer_contacts_access_needed">A busca de contatos precisa de acesso pelas configurações do sistema.</string>
     <string name="drawer_contacts_search_off">A busca de contatos está desativada nas configurações da Gaveta de apps.</string>
     <string name="drawer_search_no_matches">Nenhum resultado para “%1$s”</string>
@@ -861,9 +853,6 @@
     </plurals>
     <string name="facet_settings_dock_settings_title">Apps do dock</string>
     <string name="facet_settings_rename_explanation">Renomeie esta faceta.</string>
-
-    <!-- HomeScreen -->
-    <string name="home_usage_access_needed">\"Mais usados\" precisa de acesso de uso pelas configurações do sistema.</string>
 
     <!-- ClockStyleGalleryScreen -->
     <string name="clock_style_font_label">Fonte</string>
@@ -1209,4 +1198,5 @@
     <string name="glass_style_accent">Destaque</string>
     <string name="glass_style_theme">Tema</string>
     <string name="glass_style_theme_inverted">Tema invertido</string>
+    <string name="home_usage_list_empty">Os apps que você abrir pelo Facet aparecem aqui.</string>
 </resources>

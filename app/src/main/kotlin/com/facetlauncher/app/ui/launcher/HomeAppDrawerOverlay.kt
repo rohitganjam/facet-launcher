@@ -44,6 +44,7 @@ import com.facetlauncher.app.data.model.DrawerPresentation
 import com.facetlauncher.app.data.model.Folder
 import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.data.model.RecentlyInstalledPosition
+import com.facetlauncher.app.data.model.SearchSignals
 import com.facetlauncher.app.data.model.SettingsSearchEntry
 import com.facetlauncher.app.data.model.SwipeDirection
 import com.facetlauncher.app.ui.components.AppMenuNotifications
@@ -84,6 +85,7 @@ internal data class HomeDrawerState(
     val secureFolderIntent: Intent?,
     val appMenuNotifications: AppMenuNotifications,
     val listUseCases: DrawerListUseCases,
+    val searchSignals: SearchSignals = SearchSignals.EMPTY,
 )
 
 /** What the drawer asks of its view model, beyond the item actions it shares with Home. */
@@ -96,6 +98,8 @@ internal data class HomeDrawerActions(
     val onEnableContactSearch: () -> Unit,
     val onRequestUsageSuggestions: suspend () -> UsageSuggestions,
     val appStoreSearchIntent: (AppStore, String) -> Intent,
+    /** An app was opened from the search results for this query. */
+    val onSearchPick: (AppInfo, String) -> Unit = { _, _ -> },
 )
 
 /** The drawer's own state from its view model. The lists Home already holds (apps, work profiles, folders) are added by the caller with `copy`. */
@@ -115,6 +119,7 @@ internal fun rememberHomeDrawerState(viewModel: DrawerViewModel, appMenuNotifica
     secureFolderIntent = viewModel.secureFolderIntent,
     appMenuNotifications = appMenuNotifications,
     listUseCases = viewModel.listUseCases,
+    searchSignals = viewModel.searchSignals.collectAsStateWithLifecycle().value,
 )
 
 internal fun homeDrawerActions(viewModel: DrawerViewModel) = HomeDrawerActions(
@@ -125,6 +130,7 @@ internal fun homeDrawerActions(viewModel: DrawerViewModel) = HomeDrawerActions(
     onEnableContactSearch = viewModel::enableContactSearch,
     onRequestUsageSuggestions = viewModel::loadUsageSuggestions,
     appStoreSearchIntent = viewModel::appStoreSearchIntent,
+    onSearchPick = viewModel::onSearchPick,
 )
 
 /**
@@ -143,7 +149,6 @@ internal fun HomeAppDrawerOverlay(
     containerWidthPx: Float,
     overlays: HomeOverlayState,
     onNavigateToSettings: () -> Unit,
-    onNavigateToUsageAccessExplanation: () -> Unit = {},
     searchFocusRequest: Int = 0,
 ) {
     val listState = rememberLazyListState()
@@ -180,6 +185,7 @@ internal fun HomeAppDrawerOverlay(
         itemActions = itemActions.copy(
             onAppClick = { app ->
                 focusManager.clearFocus()
+                if (isSearching) actions.onSearchPick(app, query)
                 itemActions.onAppClick(app)
                 coroutineScope.launch { drawer.close() }
             },
@@ -189,7 +195,6 @@ internal fun HomeAppDrawerOverlay(
         onQueryChange = { query = it; actions.onQueryChange(it) },
         onOpenPrivateSpace = { overlays.showPrivateSpace = true },
         onNavigateToSettings = onNavigateToSettings,
-        onNavigateToUsageAccessExplanation = onNavigateToUsageAccessExplanation,
         isDrawerOpen = isDrawerOpen,
         searchFocusRequest = searchFocusRequest,
         modifier = Modifier
@@ -226,7 +231,6 @@ private fun HomeDrawerScreen(
     onQueryChange: (String) -> Unit,
     onOpenPrivateSpace: () -> Unit,
     onNavigateToSettings: () -> Unit,
-    onNavigateToUsageAccessExplanation: () -> Unit,
     isDrawerOpen: Boolean,
     searchFocusRequest: Int,
     modifier: Modifier = Modifier,
@@ -265,7 +269,7 @@ private fun HomeDrawerScreen(
             settingsEntries = state.settingsEntries,
             onSettingsEntryClick = { entry -> runCatching { context.startActivity(Intent(entry.action)) } },
             onRequestUsageSuggestions = actions.onRequestUsageSuggestions,
-            onUsageAccessClick = onNavigateToUsageAccessExplanation,
+            searchSignals = state.searchSignals,
             appStore = state.appStore,
             onAppStoreSearchClick = { store, q -> runCatching { context.startActivity(actions.appStoreSearchIntent(store, q)) } },
         ),

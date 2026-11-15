@@ -161,7 +161,7 @@ Dropdown and switch rows are deliberately **control-only**: only the value or th
 | **Facets** (blue) | **Facets** → the **Manage Facets** list (`3b`) — reorder, add/remove, reach per-facet settings. (The swipeable **Switch Facets** carousel opens on a left swipe on Home instead.) **Facet automation** → rules that switch facets by schedule or device trigger (`fa1`–`fa9`). |
 | **Appearance** (violet) | **Change wallpaper** → the system picker. **Launcher Appearance** → the Appearance screen: **Dock & home** (one **Dock & Apps appearance** row → a screen with dock display style, app list layout, position, presentation and alignment), a global-only **Notifications** card (a **Notifications and media** row → the Notifications page), and a global-only **General** card (one **Fonts, themes and icons** row → a screen with theme, system bar icons, accent colour, icon style, **icon shape** — Squircle / Rounded / Circle / Square, the selected one drawn with a 2px accent ring and a 2px gap — launcher font, font colour, size and weight), above a live preview card. Both detail screens repeat the live preview card above their controls. |
 | **Apps and folders** (teal) | **Dock** → pick apps and reorder. **Home Apps List** → content mode (Favorites / Recents / Most used), apps to show, default favorites. **App Drawer** → presentation (List / Grid), grid or list size, show icons / labels, search, search bar position, drawer opacity. **Folders** → create, rename, reorder, delete. |
-| **System** (slate) | **Permissions** → per-permission status with a **Turn on** row for Calendar, Contacts, Usage access, Notification access, Bluetooth and Location. **Backup & restore** → export or import a settings file. **Set as default launcher**, a Work profile status row when one exists, and **About**. |
+| **System** (slate) | **Permissions** → per-permission status with a **Turn on** row for Calendar, Contacts, Notification access, Bluetooth and Location. **Backup & restore** → export or import a settings file. **Set as default launcher**, a Work profile status row when one exists, and **About**. |
 
 ### Per-facet settings (`3d`)
 
@@ -234,7 +234,7 @@ Strip: `padding: 11px 13px`, `1px dashed rgba(2,8,23,.16)`, `border-radius: 10px
 | Context | Message | Action |
 |---|---|---|
 | Clock, calendar denied | Calendar access off — events hidden. | Turn on |
-| Home list, usage access missing | Most used needs usage access from system settings. | Open settings |
+| Home list, Recents or Most used empty | Apps you open from Facet show up here. | — |
 | Fresh facet, no favorites | Nothing here yet — pick up to 8 apps. | Add apps |
 | Search, contacts denied | Contact results need contacts access. | Turn on |
 | Facet automation, no rules | Add a rule to switch facets automatically. | Add rule |

@@ -3,13 +3,11 @@ package com.facetlauncher.app.ui.drawer
 import android.content.Intent
 import android.content.res.Configuration
 import android.provider.Settings
-import android.os.UserHandle
 import android.net.Uri
 import android.provider.ContactsContract
 import androidx.activity.compose.BackHandler
 import androidx.annotation.StringRes
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -33,11 +31,9 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -63,8 +59,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
@@ -89,20 +83,15 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.IntSize
-import androidx.compose.ui.unit.sp
 import com.facetlauncher.app.R
 import com.facetlauncher.app.data.WorkProfileInfo
 import com.facetlauncher.app.data.model.AppInfo
@@ -114,20 +103,15 @@ import com.facetlauncher.app.data.model.ContactInfo
 import com.facetlauncher.app.data.model.DrawerFolderDisplayMode
 import com.facetlauncher.app.data.model.DrawerItem
 import com.facetlauncher.app.data.model.Folder
-import com.facetlauncher.app.data.model.DrawerGridDensity
 import com.facetlauncher.app.data.model.DrawerListItemSize
 import com.facetlauncher.app.data.model.DrawerPresentation
-import com.facetlauncher.app.data.model.NotificationBadgeStyle
 import com.facetlauncher.app.data.model.RecentlyInstalledPosition
 import com.facetlauncher.app.data.model.SearchBarPosition
-import com.facetlauncher.app.data.model.SettingsSearchEntry
 import com.facetlauncher.app.domain.GroupAppsByLetterUseCase
 import com.facetlauncher.app.domain.RankBySearchRelevanceUseCase
 import com.facetlauncher.app.domain.RecentlyChangedAppsUseCase
 import com.facetlauncher.app.domain.RecentlyInstalledAppsUseCase
 import com.facetlauncher.app.domain.GroupedItems
-import com.facetlauncher.app.domain.QuickAddState
-import com.facetlauncher.app.domain.QuickPlacementAction
 import com.facetlauncher.app.ui.components.AppContextMenu
 import com.facetlauncher.app.ui.components.AppIcon
 import com.facetlauncher.app.ui.components.AppIconSize
@@ -151,8 +135,6 @@ import com.facetlauncher.app.ui.home.FolderTileGlyph
 import com.facetlauncher.app.ui.theme.Accent
 import com.facetlauncher.app.ui.theme.DrawerAppTextColor
 import com.facetlauncher.app.ui.theme.DrawerHeaderTextColor
-import com.facetlauncher.app.ui.theme.DrawerOverlay
-import com.facetlauncher.app.ui.theme.IconTile
 import com.facetlauncher.app.ui.theme.Ink
 import com.facetlauncher.app.ui.theme.InkInverted
 import com.facetlauncher.app.ui.theme.FACET_TRANSITION_DURATION_MS
@@ -164,9 +146,7 @@ import com.facetlauncher.app.ui.theme.Surface
 import com.facetlauncher.app.ui.theme.SurfaceContainer
 import com.facetlauncher.app.ui.theme.launcherSystemBarInsets
 import kotlinx.collections.immutable.ImmutableList
-import kotlinx.collections.immutable.ImmutableMap
 import kotlinx.collections.immutable.persistentListOf
-import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.launch
 
@@ -234,6 +214,7 @@ fun AppDrawerScreen(
         folderDisplayMode = appearance.folderDisplayMode,
         recentlyInstalledPosition = appearance.recentlyInstalledPosition,
         listUseCases = listUseCases,
+        searchSignals = searchSources.searchSignals,
     )
     val focusManager = LocalFocusManager.current
     val connectionsSheet = rememberConnectionsSheet(searchSources.onRequestConnections, isDrawerOpen)
@@ -814,9 +795,8 @@ internal fun SearchAppsGrid(
 }
 
 /**
- * Same dashed-strip styling as Home's usage-access prompt (`HomeScreen.kt`'s `UsageAccessStrip`) —
- * duplicated locally rather than shared, since the two screens' surrounding chrome/color tokens
- * differ (`Ink`/`Muted`/`Accent` here are the Drawer's own theme values, not Home's). Shown in
+ * Same dashed-strip styling as Home's empty Recents hint (`HomeSlots.kt`'s `UsageListHint`), drawn with the Drawer's own
+ * `Ink`/`Muted`/`Accent`. Shown in
  * place of contacts search results while `READ_CONTACTS` isn't granted (see
  * `DrawerViewModel.showContactsPermissionPrompt`'s doc for the exact condition).
  */

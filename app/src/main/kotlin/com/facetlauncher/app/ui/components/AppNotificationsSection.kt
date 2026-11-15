@@ -280,7 +280,7 @@ private fun NotificationCardBody(notification: NotificationInfo, onOpen: () -> U
     }
 }
 
-/** The same dashed strip the app uses for other missing permissions (contacts, usage access): what is needed, and where to go. */
+/** The same dashed strip the app uses for other missing permissions (contacts): what is needed, and where to go. */
 @Composable
 private fun EnableNotificationsRow(onClick: () -> Unit, modifier: Modifier = Modifier) {
     Row(
