@@ -32,6 +32,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import com.facetlauncher.app.data.AutomationRuleRepository
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.never
 import org.mockito.Mockito.verify
@@ -56,11 +57,13 @@ class WeatherBackupTest {
 
     private val export = ExportBackupUseCase(
         settingsRepository, facetRepository, placementRepository, widgetPlacementRepository, folderRepository, backupRepository,
+        mock(AutomationRuleRepository::class.java).also { runBlocking { `when`(it.getRules()).thenReturn(emptyList()) } },
     )
 
     private val importUseCase = ImportBackupUseCase(
         backupRepository, settingsRepository, facetRepository, placementRepository, folderRepository,
         mock(RepairOrphanedProfileRowsUseCase::class.java), mock(ClockStackRepository::class.java), widgetPlacementRepository,
+        noAutomationRestore(),
     )
 
     @Test

@@ -71,6 +71,8 @@ data class BackupBundle(
     val dockFolderPlacements: List<BackupFolderPlacement> = emptyList(),
     /** Legacy: a folder placed in the launcher-wide Favorites of older backups — mirrors [defaultFavoriteApps]. Never written. */
     val defaultFavoriteFolderPlacements: List<BackupFolderPlacement> = emptyList(),
+    /** Facet automation rules in list order, which is also their tie-break order. `null` in a backup from before rules were backed up. */
+    val automationRules: List<BackupAutomationRule>? = null,
 )
 
 @Serializable
@@ -195,6 +197,8 @@ data class BackupSettings(
 data class BackupFacet(
     val name: String,
     val position: Int,
+    /** The facet's permanent id, kept on restore; what [BackupAutomationRule] points at. `null` in a backup from before facets had one. */
+    val uuid: String? = null,
     /** Legacy (version 4 and older): the facet-level clock and calendar fields below are only read, to give an older backup's clock its settings. */
     val overrideClock: Boolean = false,
     val clockTemplateId: String = ClockTemplateId.LIGHT_STACK.name,
@@ -360,3 +364,33 @@ data class BackupNativeStackPage(
 /** A saved weather city in a backup file. */
 @Serializable
 data class BackupWeatherCity(val name: String, val latitude: Double, val longitude: Double, val timezone: String)
+
+/**
+ * One facet automation rule. Facets are referenced by [BackupFacet.uuid]; a rule whose target or "switch to"
+ * facet isn't in the backup is skipped on restore. Type strings are read leniently: an unknown [triggerType]
+ * (from a newer app) skips the rule rather than failing the import.
+ */
+@Serializable
+data class BackupAutomationRule(
+    val enabled: Boolean = true,
+    val targetFacetUuid: String,
+    /** `RETURN_TO_BASELINE`, `SWITCH_TO` (with [endFacetUuid]) or `STAY`. */
+    val endBehavior: String,
+    val endFacetUuid: String? = null,
+    /** `SCHEDULE`, `BLUETOOTH`, `WIFI`, `HEADPHONES` or `BATTERY`; only that trigger's fields below are read. */
+    val triggerType: String,
+    /** Bluetooth, Wi-Fi and headphones: "while not". */
+    val negated: Boolean = false,
+    /** Schedule: `DayOfWeek` names. */
+    val scheduleDays: List<String> = emptyList(),
+    val scheduleStartMinute: Int = 0,
+    val scheduleEndMinute: Int = 0,
+    val bluetoothAddress: String? = null,
+    val bluetoothName: String? = null,
+    /** Wi-Fi: `null` means any network. */
+    val wifiSsid: String? = null,
+    val batteryWhileCharging: Boolean = false,
+    /** Battery: `BELOW` or `ABOVE`. */
+    val batteryDirection: String? = null,
+    val batteryThreshold: Int? = null,
+)

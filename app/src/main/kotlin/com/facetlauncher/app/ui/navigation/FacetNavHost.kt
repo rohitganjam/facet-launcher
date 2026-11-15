@@ -286,7 +286,10 @@ fun FacetNavHost(
                 LicenseTextScreen(onBack = { navController.popBackStackSafely() })
             }
             settingsComposable(FacetDestinations.BACKUP_RESTORE) {
-                BackupRestoreScreen(onBack = { navController.popBackStackSafely() })
+                BackupRestoreScreen(
+                    onBack = { navController.popBackStackSafely() },
+                    onOpenFacetAutomation = { navController.navigate(FacetDestinations.FACET_AUTOMATION) },
+                )
             }
             settingsComposable(FacetDestinations.WHATS_NEW) {
                 WhatsNewScreen(onBack = { navController.popBackStackSafely() })

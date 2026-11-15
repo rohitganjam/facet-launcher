@@ -33,6 +33,8 @@ import com.facetlauncher.app.data.model.SwipeActions
 import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
+import org.junit.Assert.assertNotEquals
 import org.junit.Test
 
 class BackupMappingTest {
@@ -227,5 +229,23 @@ class BackupMappingTest {
             SwipeActions(up = SwipeAction.APP_DRAWER, down = SwipeAction.NONE, left = SwipeAction.HUB, right = SwipeAction.SWITCH_FACETS),
             settings.swipeActions(),
         )
+    }
+
+    @Test
+    fun `a facet's UUID survives a backup round trip`() {
+        val restored = facet.copy(uuid = "work-uuid").toBackupFacet(favorites = emptyList(), dockApps = emptyList()).toFacet()
+
+        assertEquals("work-uuid", restored.uuid)
+    }
+
+    @Test
+    fun `a facet from a backup made before facets had a UUID gets a fresh one`() {
+        val old = facet.toBackupFacet(favorites = emptyList(), dockApps = emptyList()).copy(uuid = null)
+
+        val first = old.toFacet()
+        val second = old.toFacet()
+
+        assertTrue(first.uuid.isNotBlank())
+        assertNotEquals(first.uuid, second.uuid)
     }
 }

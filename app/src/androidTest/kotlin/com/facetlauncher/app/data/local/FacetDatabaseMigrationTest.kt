@@ -1431,6 +1431,37 @@ class FacetDatabaseMigrationTest {
     }
 
     @Test
+    fun migration50To51GivesEveryFacetItsOwnUuid() {
+        // Given a v50 database with two facets and a rule on one of them
+        val db50 = helper.createDatabase(TEST_DB, 50)
+        for (id in 1..2) {
+            db50.execSQL(
+                "INSERT INTO facets (id, name, position, clockPlacementOwn, clockAlignment, appRowPosition, appRowPresentation, listContentMode, " +
+                    "appsToShowCount, appListVerticalAlignment, appListLayout, appListColumnAlignment, appListGridColumns, appListGridDisplayMode, " +
+                    "appListShrinkToFit, dockDisplayMode, dockGlass, appsListGlass, allowLandscape) VALUES ($id, 'Facet $id', $id, 0, 'LEFT', 'LEFT', " +
+                    "'ICON_AND_TEXT', 'FAVORITES', 6, 'BOTTOM', 'SINGLE_COLUMN', 'BOTH_LEFT', 'FOUR', 'ICONS', 'OFF', 'ICONS', 'OFF', 'OFF', 1)",
+            )
+        }
+        db50.execSQL("INSERT INTO automation_rules (id, position, enabled, targetFacetId, endBehavior, triggerType, negated, scheduleDays, scheduleStartMinute, scheduleEndMinute) VALUES (1, 0, 1, 2, 'STAY', 'HEADPHONES', 0, 0, 0, 0)")
+        db50.close()
+
+        // When migrating to v51 (Room also validates the result against the exported v51 schema, unique index included)
+        val db51 = helper.runMigrationsAndValidate(TEST_DB, 51, true, Migrations.MIGRATION_50_51)
+
+        // Then each facet has a UUID of its own, and the rule is untouched
+        val uuids = db51.query("SELECT uuid FROM facets ORDER BY id").use { cursor ->
+            buildList { while (cursor.moveToNext()) add(cursor.getString(0)) }
+        }
+        assertEquals(2, uuids.size)
+        assertEquals(2, uuids.toSet().size)
+        uuids.forEach { java.util.UUID.fromString(it) }
+        db51.query("SELECT targetFacetId FROM automation_rules").use {
+            it.moveToFirst()
+            assertEquals(2L, it.getLong(0))
+        }
+    }
+
+    @Test
     fun migration44To45HandlesAnEmptyLauncherDock() {
         // Given an inheriting facet with a stale own dock row and no launcher dock
         val db44 = helper.createDatabase(TEST_DB, 44)

@@ -1,5 +1,11 @@
 package com.facetlauncher.app.ui.settings.backup
 
+import com.facetlauncher.app.data.model.AutomationTrigger
+import com.facetlauncher.app.domain.AutomationRestoreSummary
+import com.facetlauncher.app.domain.RestoredRule
+import com.facetlauncher.app.domain.SkippedRuleReason
+import com.facetlauncher.app.ui.components.TextActionButton
+import com.facetlauncher.app.ui.settings.automation.titleText
 import android.app.Activity
 import android.content.res.Configuration
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -79,6 +85,7 @@ import kotlinx.coroutines.delay
 fun BackupRestoreScreen(
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
+    onOpenFacetAutomation: () -> Unit = {},
     viewModel: BackupRestoreViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -136,6 +143,7 @@ fun BackupRestoreScreen(
         onImportClick = { showImportConfirm = true },
         onReimportWidget = viewModel::onReimportWidget,
         onSkipWidget = viewModel::onSkipWidget,
+        onOpenFacetAutomation = onOpenFacetAutomation,
         modifier = modifier,
     )
 }
@@ -149,6 +157,7 @@ private fun BackupRestoreContent(
     onReimportWidget: (Int) -> Unit,
     onSkipWidget: (Int) -> Unit,
     modifier: Modifier = Modifier,
+    onOpenFacetAutomation: () -> Unit = {},
 ) {
     StickyHeaderLayout(
         modifier = modifier,
@@ -200,6 +209,9 @@ private fun BackupRestoreContent(
                     }
                 }
 
+                uiState.automationReview?.let { summary ->
+                    item { AutomationReviewSection(summary, onOpenFacetAutomation) }
+                }
                 pendingWidgetsItems(uiState, onReimportWidget, onSkipWidget)
             }
         },
@@ -246,17 +258,13 @@ private fun MessageBanner(message: BackupRestoreMessage, modifier: Modifier = Mo
         BackupRestoreMessage.ExportSucceeded -> stringResource(R.string.backup_restore_export_succeeded) to false
         BackupRestoreMessage.ExportFailed -> stringResource(R.string.backup_restore_export_failed) to true
         is BackupRestoreMessage.ImportSucceeded -> {
-            val facetsPart = pluralStringResource(R.plurals.backup_restored_facets_count, message.facetCount, message.facetCount)
-            val text = if (message.pendingWidgetCount > 0) {
-                stringResource(
-                    R.string.dot_join_2,
-                    facetsPart,
-                    pluralStringResource(R.plurals.backup_widgets_need_readding_count, message.pendingWidgetCount, message.pendingWidgetCount),
-                )
-            } else {
-                facetsPart
-            }
-            text to false
+            val parts = listOfNotNull(
+                pluralStringResource(R.plurals.backup_restored_facets_count, message.facetCount, message.facetCount),
+                message.automationRuleCount.takeIf { it > 0 }?.let { pluralStringResource(R.plurals.backup_restored_rules_count, it, it) },
+                message.pendingWidgetCount.takeIf { it > 0 }?.let { pluralStringResource(R.plurals.backup_widgets_need_readding_count, it, it) },
+            )
+            val dotJoin = stringResource(R.string.dot_join_2)
+            parts.reduce { joined, part -> dotJoin.format(joined, part) } to false
         }
         BackupRestoreMessage.ImportFailedInvalidFile -> stringResource(R.string.backup_restore_import_failed_invalid_file) to true
         is BackupRestoreMessage.ImportFailedUnsupportedVersion -> stringResource(R.string.backup_restore_import_failed_unsupported_version) to true
@@ -270,6 +278,61 @@ private fun MessageBanner(message: BackupRestoreMessage, modifier: Modifier = Mo
             .fillMaxWidth()
             .padding(top = 16.dp, bottom = 8.dp),
     )
+}
+
+/** What a restore did with the backup's automation rules: skipped ones by reason (with their triggers), then paused or waiting ones. */
+@Composable
+private fun AutomationReviewSection(summary: AutomationRestoreSummary, onOpenFacetAutomation: () -> Unit, modifier: Modifier = Modifier) {
+    Column(modifier = modifier.testTag("automation_review")) {
+        Text(
+            text = stringResource(R.string.backup_restore_rules_header),
+            style = MaterialTheme.typography.labelMedium,
+            color = Muted,
+            modifier = Modifier.padding(top = 24.dp, bottom = 8.dp),
+        )
+        SettingsCard {
+            Column(modifier = Modifier.padding(vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                if (!summary.inBackup) ReviewLine(stringResource(R.string.backup_rules_not_in_backup))
+                SkippedRulesLines(summary.skipped)
+                if (summary.needsPermissionCount > 0) {
+                    ReviewLine(pluralStringResource(R.plurals.backup_rules_need_permission, summary.needsPermissionCount, summary.needsPermissionCount))
+                }
+                if (summary.pausedCount > 0) {
+                    ReviewLine(pluralStringResource(R.plurals.backup_rules_paused, summary.pausedCount, summary.pausedCount))
+                }
+                if (summary.restoredCount > 0) {
+                    TextActionButton(
+                        text = stringResource(R.string.backup_rules_open_automation),
+                        onClick = onOpenFacetAutomation,
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.testTag("open_facet_automation_button"),
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SkippedRulesLines(skipped: List<RestoredRule.Skipped>) {
+    val reasons = listOf(
+        SkippedRuleReason.FACET_MISSING to R.plurals.backup_rules_skipped_facet_missing,
+        SkippedRuleReason.UNSUPPORTED to R.plurals.backup_rules_skipped_unsupported,
+        SkippedRuleReason.INVALID to R.plurals.backup_rules_skipped_invalid,
+    )
+    reasons.forEach { (reason, plural) ->
+        val rules = skipped.filter { it.reason == reason }
+        if (rules.isEmpty()) return@forEach
+        ReviewLine(pluralStringResource(plural, rules.size, rules.size))
+        rules.mapNotNull { it.trigger }.forEach { trigger ->
+            Text(text = trigger.titleText(), style = MaterialTheme.typography.bodySmall, color = Muted, modifier = Modifier.padding(start = 12.dp))
+        }
+    }
+}
+
+@Composable
+private fun ReviewLine(text: String) {
+    Text(text = text, style = MaterialTheme.typography.bodyMedium, color = Ink)
 }
 
 @Composable
@@ -348,6 +411,30 @@ private fun BackupRestoreHeader(onBack: () -> Unit, modifier: Modifier = Modifie
     ) {
         BackButton(onClick = onBack)
         Text(text = stringResource(R.string.settings_backup_restore_title), style = MaterialTheme.typography.headlineSmall, color = Ink)
+    }
+}
+
+@Preview(showBackground = true, widthDp = 390, heightDp = 844)
+@Preview(name = "Dark", showBackground = true, widthDp = 390, heightDp = 844, uiMode = Configuration.UI_MODE_NIGHT_YES)
+@Composable
+private fun BackupRestoreAutomationReviewPreview() {
+    FacetLauncherTheme {
+        BackupRestoreContent(
+            uiState = BackupRestoreUiState(
+                automationReview = AutomationRestoreSummary(
+                    inBackup = true,
+                    restoredCount = 4,
+                    skipped = listOf(RestoredRule.Skipped(SkippedRuleReason.FACET_MISSING, AutomationTrigger.Wifi(ssid = "Home"))),
+                    pausedCount = 2,
+                    needsPermissionCount = 1,
+                ),
+            ),
+            onBack = {},
+            onExportClick = {},
+            onImportClick = {},
+            onReimportWidget = {},
+            onSkipWidget = {},
+        )
     }
 }
 

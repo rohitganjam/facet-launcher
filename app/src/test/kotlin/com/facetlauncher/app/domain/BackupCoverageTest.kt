@@ -7,6 +7,8 @@ import com.facetlauncher.app.data.model.LauncherSettings
 import java.lang.reflect.Modifier
 import org.junit.Assert.assertEquals
 import org.junit.Test
+import com.facetlauncher.app.data.local.AutomationRuleEntity
+import com.facetlauncher.app.data.model.BackupAutomationRule
 
 /**
  * Fails when a field is added to [Facet] or [LauncherSettings] without either exporting it in the
@@ -71,6 +73,26 @@ class BackupCoverageTest {
         // The swipe switches of older versions are still written for them and read from older backups
         val legacySwipeFields = setOf("swipeLeftEnabled", "swipeRightEnabled", "swipeDownEnabled", "swapSwipeSides")
         val exported = fieldNames(BackupSettings::class.java) - "activeFacetIndex" - legacyClockFields - legacySwipeFields
+
+        // Then the backup holds exactly those
+        assertEquals(expected, exported)
+    }
+
+    @Test
+    fun `every automation rule column is exported or deliberately left out`() {
+        // Given the columns a rule row holds, minus those a backup cannot or should not carry
+        val notBackedUp = setOf(
+            "id", // a Room row id is not portable
+            "position", // the backup's list order is the rule order
+        )
+        // Facets are referenced by UUID, not row id, and the device fields carry the trigger's name
+        val renamed = mapOf(
+            "targetFacetId" to "targetFacetUuid", "endFacetId" to "endFacetUuid",
+            "deviceAddress" to "bluetoothAddress", "deviceName" to "bluetoothName",
+        )
+        val expected = (fieldNames(AutomationRuleEntity::class.java) - notBackedUp).map { renamed[it] ?: it }.toSet()
+        // A battery rule's charging state is stored in the row's negated column; the backup names it
+        val exported = fieldNames(BackupAutomationRule::class.java) - "batteryWhileCharging"
 
         // Then the backup holds exactly those
         assertEquals(expected, exported)
