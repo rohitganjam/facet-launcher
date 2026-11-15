@@ -4888,4 +4888,4 @@ One search model for every search surface (drawer apps, contacts and settings, P
 - [x] Drawer: Enter (Go) opens the top app; contacts fetch 50 candidates then rank and keep 5; settings ranked on label and keywords (`SystemSettingsRepository.availableEntries`). Tests: `AppDrawerScreenTest`, `DrawerViewModelTest`, `SystemSettingsRepositoryTest`.
 - [x] Docs: `01`, `02`, `03`, `04`, `05`, `06`, `07`, `08`, `11`, `12`, README, PRD and design spec.
 - [x] Privacy policy in `../facet-launcher-site/build.py`: Usage Access removed, local launch history described.
-- [ ] Verified on the emulator (build, `./gradlew test`, `check`, the changed instrumented tests, manual pass).
+- [x] Verified on the emulator (build, 2,271 unit tests, `check`, the 12 changed instrumented classes, manual pass of ranking, Enter, recorded launches and picks, Recents and the Permissions screen).
