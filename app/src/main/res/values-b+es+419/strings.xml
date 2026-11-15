@@ -47,11 +47,9 @@
     <string name="automation_no_paired_devices">No hay dispositivos vinculados. Vincula uno primero en la configuración de Bluetooth.</string>
     <string name="pro_hero_trigger_car">Auto</string>
     <string name="pro_add_facet">Agregar una faceta</string>
-    <string name="pro_feature_triggers_title">Disparadores de Wi-Fi, Bluetooth, audífonos y batería</string>
-    <string name="pro_feature_triggers_body">Conéctate a la red de la oficina o al auto y la faceta cambia.</string>
+    <string name="pro_feature_automation_body">Cambia de faceta con Wi-Fi, Bluetooth, audífonos o batería, no solo con un horario. El plan gratuito incluye 2 reglas de horario.</string>
+    <string name="pro_owned_automation_body">Wi-Fi, Bluetooth, audífonos y batería</string>
     <string name="pro_feature_future_body">Todo lo que se agregue a Pro más adelante es tuyo.</string>
-    <string name="pro_owned_more_title">Disparadores de audífonos y batería</string>
-    <string name="pro_owned_more_body">Cambia al conectar o cargar</string>
     <string name="pro_upgrade_trigger">Las reglas que reaccionan al Bluetooth, al Wi-Fi, a los audífonos o a la batería forman parte de Pro.</string>
     <string name="pro_upgrade_rule_limit">El plan gratuito incluye 2 reglas. Con Pro puedes agregar más.</string>
     <string name="pro_upgrade_facet_locked">Esta faceta está en pausa en el plan gratuito. Elimina una faceta para volver a 3, o actualiza a Pro para usar hasta 10.</string>

@@ -4884,3 +4884,12 @@ With the search sheet open, Home closed the sheet and the drawer at once, and th
 - [x] `DrawerSearchSheet` and the connections sheet no longer close on Home; the drawer closing resets them. Tests: `AppDrawerScreenTest`, `HomeDrawerRouteTest`, `KeyboardDismissalTest`.
 - [x] Docs: `12` (§2a, §4).
 - [x] Verified on the emulator (`AppDrawerScreenTest` 60/60, `HomeDrawerRouteTest` 62/62, `KeyboardDismissalTest` 3/3, manual Home press with the sheet open). Found and fixed on the way: the sheet's own slide out ran after the drawer closed and brought it back into view.
+
+## Pro screen lists every Pro feature (direct request)
+
+The Facet Pro screens had drifted from what Pro gates: neither listed the rule limit, the upgrade screen called a free feature (replacing the clock with a widget) Pro, and the unlocked screen left out widget stacks and the daily wallpaper. Both now draw their rows from one `ProFeature` list. Decisions: the Settings Pro card is unchanged; triggers and rules share one row; the unlocked facets row shows the live count. See `docs/architecture/16-flow-billing.md` §5.
+
+### Steps
+- [x] `ProFeature` (facets, automation, widget stacks, daily wallpaper) and `ProReason.feature`; `UpgradeScreen` and `UnlockedScreen` render from it; `FacetProUiState.facetCount` from `FacetRepository`. Strings in en, de, es (+419), fr, nl, pt (+PT). Tests: `ProFeatureTest`, `FacetProViewModelTest`, `FacetProContentTest`.
+- [x] Docs: `04`, `07`, `16`, design spec 12b/12c.
+- [x] Verified on the emulator (`ui.pro` unit tests 15/15, lint and detekt clean, `FacetProContentTest` 14/14, screenshots of both screens).
