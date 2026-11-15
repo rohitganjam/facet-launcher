@@ -4896,5 +4896,5 @@ A restore used to delete every automation rule (the facets go first, and rules c
 - [x] Backup screen: rule count in the result line, an "Automation rules" card when something needs a look, link to Facet automation; confirmation text mentions rules. Tests: `BackupRestoreScreenTest`.
 - [x] Docs: `02` (facets, DAO matrix, migration table, §5.7, §6), `04`, `07`, `09`, `15`, README.
 - [ ] Native review of the new backup rule strings (machine-translated into de, es, fr, nl, pt, pt-PT; es-419 falls back to es).
-- [ ] Verified on the emulator.
+- [x] Verified on the emulator (unit tests 2277, `FacetDatabaseMigrationTest` 43/43 with the older 49→50 test fixed, `BackupRestoreScreenTest` 6/6).
 
