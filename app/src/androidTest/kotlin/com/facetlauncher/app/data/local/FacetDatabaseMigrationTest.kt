@@ -1414,8 +1414,8 @@ class FacetDatabaseMigrationTest {
         db49.execSQL(
             "INSERT INTO facets (id, name, position, clockPlacementOwn, clockAlignment, appRowPosition, appRowPresentation, listContentMode, " +
                 "appsToShowCount, appListVerticalAlignment, appListLayout, appListColumnAlignment, appListGridColumns, appListGridDisplayMode, " +
-                "appListShrinkToFit, dockDisplayMode) VALUES (1, 'Facet', 1, 0, 'LEFT', 'LEFT', 'ICON_AND_TEXT', 'FAVORITES', 6, 'BOTTOM', " +
-                "'SINGLE_COLUMN', 'BOTH_LEFT', 'FOUR', 'ICONS', 'OFF', 'ICONS')",
+                "appListShrinkToFit, dockDisplayMode, allowLandscape) VALUES (1, 'Facet', 1, 0, 'LEFT', 'LEFT', 'ICON_AND_TEXT', 'FAVORITES', 6, " +
+                "'BOTTOM', 'SINGLE_COLUMN', 'BOTH_LEFT', 'FOUR', 'ICONS', 'OFF', 'ICONS', 1)",
         )
         db49.close()
 
