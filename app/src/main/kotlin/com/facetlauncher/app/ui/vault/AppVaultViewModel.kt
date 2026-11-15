@@ -91,6 +91,7 @@ private data class Core(
 )
 
 /** The App Vault: PIN entry, the hidden apps, and adding to them. The PIN's digits are held here only while typed. */
+@Suppress("TooManyFunctions")
 @HiltViewModel
 class AppVaultViewModel @Inject constructor(
     private val vaultRepository: AppVaultRepository,
@@ -167,7 +168,8 @@ class AppVaultViewModel @Inject constructor(
 
     fun onDigit(digit: Int) {
         val state = core.value
-        if (busy || state.stage !in PIN_STAGES || state.feedback == PinFeedback.LOCKED_OUT || entered.length >= VAULT_PIN_LENGTH) return
+        val acceptsDigits = state.stage in PIN_STAGES && state.feedback != PinFeedback.LOCKED_OUT
+        if (busy || !acceptsDigits || entered.length >= VAULT_PIN_LENGTH) return
         entered.append(digit)
         core.update { it.copy(digits = entered.length, feedback = PinFeedback.NONE) }
         if (entered.length == VAULT_PIN_LENGTH) submit()

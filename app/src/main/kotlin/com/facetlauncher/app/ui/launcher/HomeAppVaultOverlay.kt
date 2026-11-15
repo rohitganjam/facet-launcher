@@ -25,6 +25,7 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.testTag
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
@@ -44,6 +45,7 @@ import kotlinx.coroutines.launch
  * closing takes it with it), launching an app from it, or the launcher going to the background. While it shows, the window is
  * [WindowManager.LayoutParams.FLAG_SECURE], so screenshots and the Recents thumbnail show nothing.
  */
+@Suppress("LongMethod")
 @Composable
 internal fun HomeAppVaultOverlay(
     overlays: HomeOverlayState,
@@ -53,6 +55,7 @@ internal fun HomeAppVaultOverlay(
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val visible = overlays.showAppVault
     val context = LocalContext.current
+    val resources = LocalResources.current
     val activity = LocalActivity.current
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -77,8 +80,8 @@ internal fun HomeAppVaultOverlay(
                 is AppVaultUiEvent.AppRemoved -> scope.launch {
                     snackbarHostState.currentSnackbarData?.dismiss()
                     val result = snackbarHostState.showSnackbar(
-                        message = context.getString(R.string.vault_removed, event.app.label),
-                        actionLabel = context.getString(R.string.vault_undo),
+                        message = resources.getString(R.string.vault_removed, event.app.label),
+                        actionLabel = resources.getString(R.string.vault_undo),
                         duration = SnackbarDuration.Short,
                     )
                     if (result == SnackbarResult.ActionPerformed) viewModel.onUndoRemove(event.app)
@@ -88,7 +91,7 @@ internal fun HomeAppVaultOverlay(
         }
     }
 
-    val callbacks = remember(viewModel, keyguard) {
+    val callbacks = remember(viewModel, keyguard, resources) {
         AppVaultCallbacks(
             onBack = { if (!viewModel.onBack()) overlays.showAppVault = false },
             onClose = { overlays.showAppVault = false },
@@ -97,8 +100,8 @@ internal fun HomeAppVaultOverlay(
             onBackspace = viewModel::onBackspace,
             onForgotPin = {
                 val intent = keyguard.createConfirmDeviceCredentialIntent(
-                    context.getString(R.string.vault_confirm_credential_title),
-                    context.getString(R.string.vault_confirm_credential_message),
+                    resources.getString(R.string.vault_confirm_credential_title),
+                    resources.getString(R.string.vault_confirm_credential_message),
                 )
                 if (intent == null) {
                     viewModel.onRequestReset()

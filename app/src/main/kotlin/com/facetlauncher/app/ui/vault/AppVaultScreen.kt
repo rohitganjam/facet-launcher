@@ -74,31 +74,6 @@ import java.util.Locale
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentSetOf
 
-/** What the vault screens ask of their view model and of the launcher around them. */
-class AppVaultCallbacks(
-    val onBack: () -> Unit = {},
-    val onClose: () -> Unit = {},
-    val onStartSetPin: () -> Unit = {},
-    val onDigit: (Int) -> Unit = {},
-    val onBackspace: () -> Unit = {},
-    val onForgotPin: () -> Unit = {},
-    val onAppClick: (AppInfo) -> Unit = {},
-    val onAppInfo: (AppInfo) -> Unit = {},
-    val onRemove: (AppInfo) -> Unit = {},
-    val onAddApps: () -> Unit = {},
-    val onChangePin: () -> Unit = {},
-    val onTurnOff: () -> Unit = {},
-    val onPickerQueryChange: (String) -> Unit = {},
-    val onPickerSortOptionChange: (AppSortOption) -> Unit = {},
-    val onPickerSortDirectionToggle: () -> Unit = {},
-    val onPickerToggle: (AppInfo) -> Unit = {},
-    val onPickerDone: () -> Unit = {},
-    val onConfirmMove: () -> Unit = {},
-    val onConfirmTurnOff: () -> Unit = {},
-    val onConfirmReset: () -> Unit = {},
-    val onDismissConfirm: () -> Unit = {},
-)
-
 /** The App Vault, stateless: the page for [AppVaultUiState.stage], over its own background. */
 @Composable
 fun AppVaultScreen(
@@ -259,7 +234,7 @@ private fun VaultPinPage(state: AppVaultUiState, callbacks: AppVaultCallbacks) {
             showForgot = state.stage == VaultStage.UNLOCK,
             onDigit = callbacks.onDigit,
             onBackspace = callbacks.onBackspace,
-            onForgot = callbacks.onForgotPin,
+            onRecover = callbacks.onForgotPin,
         )
     }
 }
@@ -285,22 +260,27 @@ private fun PinDots(entered: Int, error: Boolean) {
 }
 
 @Composable
-private fun PinPad(enabled: Boolean, showForgot: Boolean, onDigit: (Int) -> Unit, onBackspace: () -> Unit, onForgot: () -> Unit) {
+private fun PinPad(enabled: Boolean, showForgot: Boolean, onDigit: (Int) -> Unit, onBackspace: () -> Unit, onRecover: () -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(14.dp), horizontalAlignment = Alignment.CenterHorizontally) {
         listOf(listOf(1, 2, 3), listOf(4, 5, 6), listOf(7, 8, 9)).forEach { row ->
             Row(horizontalArrangement = Arrangement.spacedBy(28.dp)) { row.forEach { PinKey(it, enabled, onDigit) } }
         }
-        Row(horizontalArrangement = Arrangement.spacedBy(28.dp)) {
-            Box(modifier = Modifier.size(KEY_SIZE), contentAlignment = Alignment.Center) {
-                if (showForgot) {
-                    TextActionButton(text = stringResource(R.string.vault_forgot_pin), onClick = onForgot, style = MaterialTheme.typography.labelMedium, modifier = Modifier.testTag("app_vault_forgot_pin"))
-                }
+        PinPadBottomRow(enabled, showForgot, onDigit, onBackspace, onRecover)
+    }
+}
+
+@Composable
+private fun PinPadBottomRow(enabled: Boolean, showForgot: Boolean, onDigit: (Int) -> Unit, onBackspace: () -> Unit, onRecover: () -> Unit) {
+    Row(horizontalArrangement = Arrangement.spacedBy(28.dp)) {
+        Box(modifier = Modifier.size(KEY_SIZE), contentAlignment = Alignment.Center) {
+            if (showForgot) {
+                TextActionButton(text = stringResource(R.string.vault_forgot_pin), onClick = onRecover, style = MaterialTheme.typography.labelMedium, modifier = Modifier.testTag("app_vault_forgot_pin"))
             }
-            PinKey(0, enabled, onDigit)
-            Box(modifier = Modifier.size(KEY_SIZE), contentAlignment = Alignment.Center) {
-                IconButton(onClick = onBackspace, enabled = enabled, modifier = Modifier.testTag("app_vault_key_backspace")) {
-                    Icon(Icons.AutoMirrored.Filled.Backspace, contentDescription = stringResource(R.string.vault_backspace), tint = if (enabled) Muted else Muted.copy(alpha = 0.4f))
-                }
+        }
+        PinKey(0, enabled, onDigit)
+        Box(modifier = Modifier.size(KEY_SIZE), contentAlignment = Alignment.Center) {
+            IconButton(onClick = onBackspace, enabled = enabled, modifier = Modifier.testTag("app_vault_key_backspace")) {
+                Icon(Icons.AutoMirrored.Filled.Backspace, contentDescription = stringResource(R.string.vault_backspace), tint = if (enabled) Muted else Muted.copy(alpha = 0.4f))
             }
         }
     }
@@ -323,6 +303,7 @@ private fun PinKey(digit: Int, enabled: Boolean, onDigit: (Int) -> Unit) {
     }
 }
 
+@Suppress("LongMethod")
 @Composable
 private fun VaultListPage(state: AppVaultUiState, callbacks: AppVaultCallbacks) {
     var menuExpanded by remember { mutableStateOf(false) }
