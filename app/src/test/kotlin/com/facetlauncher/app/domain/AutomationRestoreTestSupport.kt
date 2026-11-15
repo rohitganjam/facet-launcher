@@ -14,7 +14,7 @@ fun noAutomationRestore(calls: MutableList<List<Any?>> = mutableListOf()): Resto
     mock(
         RestoreAutomationRulesUseCase::class.java,
         Answer { invocation ->
-            calls += invocation.arguments.dropLast(1) // the last argument is the coroutine continuation
+            calls += invocation.arguments.toList() // Mockito already leaves out a suspend call's continuation
             EMPTY_AUTOMATION_RESTORE
         },
     )

@@ -293,7 +293,7 @@ private fun AutomationReviewSection(summary: AutomationRestoreSummary, onOpenFac
         SettingsCard {
             Column(modifier = Modifier.padding(vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 if (!summary.inBackup) ReviewLine(stringResource(R.string.backup_rules_not_in_backup))
-                SkippedRulesLines(summary.skipped)
+                SkippedRulesLines(summary)
                 if (summary.needsPermissionCount > 0) {
                     ReviewLine(pluralStringResource(R.plurals.backup_rules_need_permission, summary.needsPermissionCount, summary.needsPermissionCount))
                 }
@@ -314,14 +314,14 @@ private fun AutomationReviewSection(summary: AutomationRestoreSummary, onOpenFac
 }
 
 @Composable
-private fun SkippedRulesLines(skipped: List<RestoredRule.Skipped>) {
+private fun SkippedRulesLines(summary: AutomationRestoreSummary) {
     val reasons = listOf(
         SkippedRuleReason.FACET_MISSING to R.plurals.backup_rules_skipped_facet_missing,
         SkippedRuleReason.UNSUPPORTED to R.plurals.backup_rules_skipped_unsupported,
         SkippedRuleReason.INVALID to R.plurals.backup_rules_skipped_invalid,
     )
     reasons.forEach { (reason, plural) ->
-        val rules = skipped.filter { it.reason == reason }
+        val rules = summary.skipped.filter { it.reason == reason }
         if (rules.isEmpty()) return@forEach
         ReviewLine(pluralStringResource(plural, rules.size, rules.size))
         rules.mapNotNull { it.trigger }.forEach { trigger ->
