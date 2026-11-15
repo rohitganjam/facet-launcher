@@ -29,11 +29,11 @@ private fun FacetProMessagePreview() = ProPreview(FacetProUiState(price = "$9.99
 @Preview(showBackground = true, widthDp = 390, heightDp = 844)
 @Preview(name = "Dark", showBackground = true, widthDp = 390, heightDp = 844, uiMode = Configuration.UI_MODE_NIGHT_YES)
 @Composable
-private fun FacetProOwnedPreview() = ProPreview(FacetProUiState(isPro = true), ProReason.ABOUT)
+private fun FacetProOwnedPreview() = ProPreview(FacetProUiState(isPro = true, facetCount = 4), ProReason.ABOUT)
 
 @Preview(showBackground = true, widthDp = 390, heightDp = 844)
 @Composable
-private fun FacetProOwnedRestoredPreview() = ProPreview(FacetProUiState(isPro = true, message = FacetProMessage.RESTORED), ProReason.ABOUT)
+private fun FacetProOwnedRestoredPreview() = ProPreview(FacetProUiState(isPro = true, facetCount = 1, message = FacetProMessage.RESTORED), ProReason.ABOUT)
 
 @Preview(showBackground = true, widthDp = 390, heightDp = 300)
 @Preview(name = "Dark", showBackground = true, widthDp = 390, heightDp = 300, uiMode = Configuration.UI_MODE_NIGHT_YES)

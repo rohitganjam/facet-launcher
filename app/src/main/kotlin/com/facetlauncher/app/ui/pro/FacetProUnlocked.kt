@@ -14,11 +14,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Bluetooth
-import androidx.compose.material.icons.filled.Layers
-import androidx.compose.material.icons.filled.Sensors
-import androidx.compose.material.icons.filled.Wifi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -29,6 +24,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
@@ -78,10 +74,11 @@ internal fun UnlockedScreen(state: FacetProUiState, onBack: () -> Unit, onRestor
                 )
             }
             Column(modifier = Modifier.padding(start = 24.dp, end = 24.dp, top = 20.dp, bottom = 16.dp)) {
-                UnlockedRow(Icons.Default.Layers, R.string.pro_owned_facets_title, R.string.pro_owned_facets_body)
-                UnlockedRow(Icons.Default.Wifi, R.string.pro_owned_wifi_title, R.string.pro_owned_wifi_body)
-                UnlockedRow(Icons.Default.Bluetooth, R.string.pro_owned_bluetooth_title, R.string.pro_owned_bluetooth_body)
-                UnlockedRow(Icons.Default.Sensors, R.string.pro_owned_more_title, R.string.pro_owned_more_body)
+                ProFeature.entries.forEach { feature ->
+                    val body = feature.ownedBody?.let { stringResource(it) }
+                        ?: pluralStringResource(R.plurals.pro_owned_facets_count, state.facetCount, state.facetCount)
+                    UnlockedRow(feature.icon, stringResource(feature.title), body)
+                }
             }
             UnlockedActions(state, onRestore, onAddFacet)
         }
@@ -119,7 +116,7 @@ private fun UnlockedActions(state: FacetProUiState, onRestore: (() -> Unit)?, on
 }
 
 @Composable
-private fun UnlockedRow(icon: ImageVector, titleRes: Int, bodyRes: Int) {
+private fun UnlockedRow(icon: ImageVector, title: String, body: String) {
     val accent = Accent
     val tint = lerp(Color.White, accent, 0.45f)
     Column {
@@ -127,8 +124,8 @@ private fun UnlockedRow(icon: ImageVector, titleRes: Int, bodyRes: Int) {
         Row(modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(13.dp)) {
             Icon(icon, contentDescription = null, tint = tint, modifier = Modifier.size(20.dp))
             Column(modifier = Modifier.weight(1f)) {
-                Text(text = stringResource(titleRes), color = Color.White, fontSize = 14.sp)
-                Text(text = stringResource(bodyRes), color = Color.White.copy(alpha = 0.55f), fontSize = 11.5.sp, modifier = Modifier.padding(top = 1.dp))
+                Text(text = title, color = Color.White, fontSize = 14.sp)
+                Text(text = body, color = Color.White.copy(alpha = 0.55f), fontSize = 11.5.sp, modifier = Modifier.padding(top = 1.dp))
             }
             Text(
                 text = stringResource(R.string.pro_unlocked),
