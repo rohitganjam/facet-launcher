@@ -4892,4 +4892,4 @@ The Facet Pro screens had drifted from what Pro gates: neither listed the rule l
 ### Steps
 - [x] `ProFeature` (facets, automation, widget stacks, daily wallpaper) and `ProReason.feature`; `UpgradeScreen` and `UnlockedScreen` render from it; `FacetProUiState.facetCount` from `FacetRepository`. Strings in en, de, es (+419), fr, nl, pt (+PT). Tests: `ProFeatureTest`, `FacetProViewModelTest`, `FacetProContentTest`.
 - [x] Docs: `04`, `07`, `16`, design spec 12b/12c.
-- [ ] Verified on the emulator (unit tests, `FacetProContentTest`, manual look at both screens).
+- [x] Verified on the emulator (`ui.pro` unit tests 15/15, lint and detekt clean, `FacetProContentTest` 14/14, screenshots of both screens).
