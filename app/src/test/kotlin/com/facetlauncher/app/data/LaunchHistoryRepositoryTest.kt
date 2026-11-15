@@ -19,12 +19,10 @@ import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Test
-import org.mockito.ArgumentMatchers.anyInt
-import org.mockito.ArgumentMatchers.anyLong
-import org.mockito.ArgumentMatchers.anyString
 import org.mockito.Mockito.mock
-import org.mockito.Mockito.never
 import org.mockito.Mockito.verify
+import org.mockito.Mockito.verifyNoInteractions
+import org.mockito.Mockito.verifyNoMoreInteractions
 import org.mockito.Mockito.`when`
 
 class LaunchHistoryRepositoryTest {
@@ -74,8 +72,7 @@ class LaunchHistoryRepositoryTest {
         repository.recordSearchPick("sec", app("secret", profile = AppProfile.PRIVATE))
 
         // Then nothing is written
-        verify(dao, never()).recordLaunch(anyString(), anyString(), anyInt(), anyLong(), anyLong(), anyLong())
-        verify(dao, never()).recordPick(anyString(), anyString(), anyString(), anyInt(), anyLong(), anyInt())
+        verifyNoInteractions(dao)
     }
 
     @Test
@@ -88,7 +85,7 @@ class LaunchHistoryRepositoryTest {
 
         // Then only the "ch" pick is written
         verify(dao).recordPick("ch", chat.packageName, chat.activityName, userId, now.toEpochMilli(), LaunchHistoryRepository.MAX_SEARCH_PICKS)
-        verify(dao, never()).recordPick(org.mockito.ArgumentMatchers.eq(" "), anyString(), anyString(), anyInt(), anyLong(), anyInt())
+        verifyNoMoreInteractions(dao)
     }
 
     @Test

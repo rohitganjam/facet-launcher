@@ -119,10 +119,14 @@ private fun tierOf(text: SearchableText, query: String, queryTokens: List<String
         text.words.any { it.startsWith(query) } || tokensStartWordsInOrder(text.words, queryTokens) -> RankBySearchRelevanceUseCase.Tier.WORD_PREFIX
         // One letter only matches the start of the label or a word; "m" shouldn't list every app with an m in it.
         query.length < 2 -> null
-        ' ' !in query && text.words.size > 1 && text.initials.contains(query) -> RankBySearchRelevanceUseCase.Tier.INITIALS
-        text.normalized.contains(query) || text.compact.contains(compactQuery) -> RankBySearchRelevanceUseCase.Tier.SUBSTRING
-        else -> null
+        else -> innerTierOf(text, query, compactQuery)
     }
+}
+
+private fun innerTierOf(text: SearchableText, query: String, compactQuery: String): RankBySearchRelevanceUseCase.Tier? = when {
+    ' ' !in query && text.words.size > 1 && text.initials.contains(query) -> RankBySearchRelevanceUseCase.Tier.INITIALS
+    text.normalized.contains(query) || text.compact.contains(compactQuery) -> RankBySearchRelevanceUseCase.Tier.SUBSTRING
+    else -> null
 }
 
 /** "goo ma" matches Google Maps: each query word starts a later word of the label than the one before. */
