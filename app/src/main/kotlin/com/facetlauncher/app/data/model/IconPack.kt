@@ -25,3 +25,12 @@ enum class IconPackFallback(@param:StringRes val displayNameRes: Int, @param:Str
 
 /** The icon pack applied launcher-wide, as stored in settings. */
 data class IconPackSelection(val packageName: String, val fallback: IconPackFallback)
+
+/**
+ * One app's entry in an icon pack: its plain [drawableName] and, for a calendar app, the day-of-month [calendarPrefix].
+ * At least one is set.
+ */
+data class PackIconMatch(val packPackage: String, val drawableName: String?, val calendarPrefix: String?) {
+    /** The drawable to draw on [dayOfMonth]. */
+    fun drawableFor(dayOfMonth: Int): String = calendarPrefix?.let { "$it$dayOfMonth" } ?: drawableName.orEmpty()
+}

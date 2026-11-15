@@ -1,5 +1,10 @@
 package com.facetlauncher.app.data
 
+import com.facetlauncher.app.data.local.IconOverrideDao
+import com.facetlauncher.app.data.model.IconOverride
+import com.facetlauncher.app.data.model.IconOverrideSource
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import android.app.Application
 import android.content.Context
 import android.content.pm.ApplicationInfo
@@ -746,6 +751,77 @@ class AppRepositoryTest {
         // Then it's the app's own, no longer marked as the pack's
         assertEquals(Color.GREEN, result.centerColor())
         assertFalse(result.iconFromPack)
+    }
+
+    /** Custom icons from [rows]; a pack icon draws as solid [packColor]. */
+    private class FakeIconOverrideRepository(
+        context: Context,
+        settings: SettingsRepository,
+        rows: List<IconOverride>,
+        private val packColor: Int = Color.YELLOW,
+    ) : IconOverrideRepository(context, mock(IconOverrideDao::class.java), IconPackRepository(context, settings), Clock.systemUTC()) {
+        val state = MutableStateFlow(rows)
+        override val overrides: Flow<List<IconOverride>> get() = state
+        override suspend fun getAll(): List<IconOverride> = state.value
+        override suspend fun drawPackIcon(override: IconOverride, dayOfMonth: Int): Bitmap =
+            Bitmap.createBitmap(PACK_ICON_SIZE, PACK_ICON_SIZE, Bitmap.Config.ARGB_8888).apply { eraseColor(packColor) }
+    }
+
+    private fun overrideFor(app: AppInfo, source: IconOverrideSource) = IconOverride(
+        app.packageName, app.activityName, app.userHandle.hashCode(), app.profile, source,
+        packPackage = if (source == IconOverrideSource.PACK) "com.example.other" else null,
+        drawableName = if (source == IconOverrideSource.PACK) "other" else null,
+    )
+
+    @Test
+    fun `custom icons replace the pack's, and the app's own icon comes back under a pack`() = runTest {
+        // Given a pack applied, the covered app set to its own icon and the missed app to another pack's icon
+        val settings = settingsRepository().apply { setIconPack("com.example.pack") }
+        val plain = AppRepository(launcherAppsWithTwoApps(), personalOnlyUserManager(), context).getInstalledApps().associateBy { it.packageName }
+        val launcherApps = launcherAppsWithTwoApps()
+        val ownActivity = fakeActivity("com.example.covered", ".Main", "Covered")
+        `when`(ownActivity.getIcon(0)).thenReturn(AdaptiveIconDrawable(ColorDrawable(Color.GREEN), ColorDrawable(Color.GREEN)))
+        `when`(launcherApps.resolveActivity(any(), any())).thenReturn(ownActivity)
+        val overrides = FakeIconOverrideRepository(
+            context, settings,
+            listOf(overrideFor(plain.getValue("com.example.covered"), IconOverrideSource.OWN), overrideFor(plain.getValue("com.example.missed"), IconOverrideSource.PACK)),
+        )
+        val repository = AppRepository(
+            launcherApps, personalOnlyUserManager(), context,
+            iconPackRepository = FakeIconPackRepository(context, settings, FakePackIcons()), iconOverrideRepository = overrides,
+        )
+
+        // When fetching installed apps
+        val apps = repository.getInstalledApps().associateBy { it.packageName }
+
+        // Then the covered app shows its own green icon, clipped, and the missed app the picked pack icon, unclipped
+        assertEquals(Color.GREEN, apps.getValue("com.example.covered").centerColor())
+        assertFalse(apps.getValue("com.example.covered").iconFromPack)
+        assertEquals(Color.YELLOW, apps.getValue("com.example.missed").centerColor())
+        assertTrue(apps.getValue("com.example.missed").iconFromPack)
+    }
+
+    @Test
+    fun `setting a custom icon redraws the live list without rescanning`() = runTest {
+        // Given the live list with no custom icons
+        val settings = settingsRepository()
+        val launcherApps = launcherAppsWithTwoApps()
+        val overrides = FakeIconOverrideRepository(context, settings, emptyList())
+        val repository = AppRepository(launcherApps, personalOnlyUserManager(), context, backgroundScope, iconOverrideRepository = overrides)
+        val emissions = Channel<List<AppInfo>>(Channel.UNLIMITED)
+        val collectJob = launch { repository.observeInstalledApps().collect { emissions.send(it) } }
+        val first = emissions.receive().associateBy { it.packageName }
+        assertEquals(Color.GREEN, first.getValue("com.example.missed").centerColor())
+
+        // When the missed app gets a pack icon
+        overrides.state.value = listOf(overrideFor(first.getValue("com.example.missed"), IconOverrideSource.PACK))
+
+        // Then only that app changes, and the device's apps were listed once
+        val next = emissions.receive().associateBy { it.packageName }
+        assertEquals(Color.YELLOW, next.getValue("com.example.missed").centerColor())
+        assertTrue(next.getValue("com.example.covered").icon === first.getValue("com.example.covered").icon)
+        verify(launcherApps).getActivityList(eq(null), any())
+        collectJob.cancel()
     }
 }
 

@@ -21,7 +21,12 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToNode
+import androidx.room.Room
 import com.facetlauncher.app.data.DefaultAppRepository
+import com.facetlauncher.app.data.IconOverrideRepository
+import com.facetlauncher.app.data.local.FacetDatabase
+import com.facetlauncher.app.domain.ObserveCustomIconsUseCase
+import java.time.Clock
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.iconpack.IconPackRepository
 import com.facetlauncher.app.data.model.HomeWallpaper
@@ -69,11 +74,24 @@ class IconsScreenTest {
             DefaultAppRepository(context),
             SelectIconSamplesUseCase(SelectPreviewAppsUseCase()),
         )
-        return IconsViewModel(observeIconPicker, host.settingsRepository, iconPacks)
+        val overrides = IconOverrideRepository(
+            context,
+            Room.inMemoryDatabaseBuilder(context, FacetDatabase::class.java).allowMainThreadQueries().build().iconOverrideDao(),
+            iconPacks,
+            Clock.systemUTC(),
+        )
+        return IconsViewModel(observeIconPicker, ObserveCustomIconsUseCase(host.appRepository, overrides, iconPacks), host.settingsRepository, iconPacks)
     }
 
     /** The screen's content alone, over [picker] — packs can't be installed on the emulator, so their cards are tested this way. */
-    private fun setPackContent(settings: LauncherSettings, picker: IconPickerState, onSelectPack: (String) -> Unit = {}, onForceIconShapeChange: (Boolean) -> Unit = {}) {
+    private fun setPackContent(
+        settings: LauncherSettings,
+        picker: IconPickerState,
+        onSelectPack: (String) -> Unit = {},
+        onForceIconShapeChange: (Boolean) -> Unit = {},
+        customIconCount: Int = 0,
+        onOpenCustomIcons: () -> Unit = {},
+    ) {
         composeRule.setContent {
             CompositionLocalProvider(LocalAllowLandscape provides false) {
                 FacetLauncherTheme {
@@ -91,6 +109,8 @@ class IconsScreenTest {
                         onFindPacks = {},
                         onIconShapeChange = {},
                         onForceIconShapeChange = onForceIconShapeChange,
+                        customIconCount = customIconCount,
+                        onOpenCustomIcons = onOpenCustomIcons,
                     )
                 }
             }
@@ -156,6 +176,30 @@ class IconsScreenTest {
         // Then the pack is cleared and the style stored
         settingsRepository.awaitMode(IconRenderMode.GLYPH_ACCENT)
         composeRule.waitUntil(timeoutMillis = 3_000) { runBlocking { settingsRepository.settings.first().iconPackPackage == null } }
+    }
+
+    @Test
+    fun theCustomIconsRowShowsItsCountAndOpensTheList() {
+        // Given three apps with a custom icon
+        var opened = false
+        setPackContent(LauncherSettings(), twoPacks, customIconCount = 3, onOpenCustomIcons = { opened = true })
+
+        // When scrolling to the row and tapping it
+        composeRule.onNodeWithTag("icons_screen").performScrollToNode(hasTestTag("icons_custom_icons_row"))
+        composeRule.onNodeWithText("3 apps").assertExists()
+        composeRule.onNodeWithTag("icons_custom_icons_row").performClick()
+
+        // Then the Custom icons list is asked for
+        assert(opened)
+    }
+
+    @Test
+    fun theCustomIconsRowIsHiddenWithoutCustomIcons() {
+        // Given no app with a custom icon
+        setPackContent(LauncherSettings(), twoPacks, customIconCount = 0)
+
+        // Then there is no Custom icons row
+        composeRule.onNodeWithTag("icons_custom_icons_row").assertDoesNotExist()
     }
 
     @Test

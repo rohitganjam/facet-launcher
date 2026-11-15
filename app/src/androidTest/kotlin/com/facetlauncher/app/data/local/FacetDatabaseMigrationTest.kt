@@ -1459,6 +1459,35 @@ class FacetDatabaseMigrationTest {
     }
 
     @Test
+    fun migration51To52AddsEmptyIconOverridesAndKeepsLaunchHistory() {
+        // Given a v51 database with a recorded launch
+        val db51 = helper.createDatabase(TEST_DB, 51)
+        db51.execSQL("INSERT INTO app_launches (packageName, activityName, userId, lastLaunchedAt) VALUES ('com.example', 'com.example.Main', 0, 42)")
+        db51.close()
+
+        // When migrating to v52 (Room also validates the result against the exported v52 schema)
+        val db52 = helper.runMigrationsAndValidate(TEST_DB, 52, true)
+
+        // Then the launch is kept, icon_overrides starts empty and takes a row
+        db52.query("SELECT lastLaunchedAt FROM app_launches WHERE packageName = 'com.example'").use {
+            assertTrue(it.moveToFirst())
+            assertEquals(42L, it.getLong(0))
+        }
+        db52.query("SELECT COUNT(*) FROM icon_overrides").use {
+            assertTrue(it.moveToFirst())
+            assertEquals(0, it.getInt(0))
+        }
+        db52.execSQL(
+            "INSERT INTO icon_overrides (packageName, activityName, userId, profile, source, packPackage, drawableName, calendarPrefix, " +
+                "snapshotFile, updatedAt) VALUES ('com.example', 'com.example.Main', 0, 'PERSONAL', 'PACK', 'com.pack', 'example', NULL, 'a.png', 1)",
+        )
+        db52.query("SELECT drawableName FROM icon_overrides").use {
+            assertTrue(it.moveToFirst())
+            assertEquals("example", it.getString(0))
+        }
+    }
+
+    @Test
     fun migration44To45HandlesAnEmptyLauncherDock() {
         // Given an inheriting facet with a stale own dock row and no launcher dock
         val db44 = helper.createDatabase(TEST_DB, 44)

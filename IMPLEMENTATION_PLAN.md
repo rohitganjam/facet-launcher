@@ -4907,3 +4907,18 @@ One search model for every search surface (drawer apps, contacts and settings, P
 - [x] Docs: `01`, `02`, `03`, `04`, `05`, `06`, `07`, `08`, `11`, `12`, README, PRD and design spec.
 - [x] Privacy policy in `../facet-launcher-site/build.py`: Usage Access removed, local launch history described.
 - [x] Verified on the emulator (build, 2,271 unit tests, `check`, the 12 changed instrumented classes, manual pass of ranking, Enter, recorded launches and picks, Recents and the Permissions screen).
+
+## Custom app icons (Rohit approved the design 2026-11-15)
+
+Change one app's icon from its long-press menu. Decisions: free, not Pro; launcher-wide, not per facet; the menu header's icon carries a pencil and opens Change icon, and the name still opens the app; choices are the app's own icon, its entry in every installed pack, and Browse a pack (search and categories); no photo option; icons change only from the app menu, and Settings → Appearance → Icons → Custom icons only resets (per app and Reset all); a custom icon is drawn as picked, so no built-in style recolours it. See `docs/architecture/22-flow-custom-icons.md`.
+
+### Steps
+- [x] Storage: `icon_overrides` (Room v52, auto-migration), `IconOverrideDao`, `IconOverrideRepository` with PNG snapshots in `filesDir/icon_overrides/`; uninstall and profile removal clear rows. Tests: `IconOverrideRepositoryTest`, `IconOverrideTest`, `CleanUpUninstalledAppsUseCaseTest`, `FacetDatabaseMigrationTest.migration51To52AddsEmptyIconOverridesAndKeepsLaunchHistory`.
+- [x] Icon packs: one app's entry in a pack (`matchFor`), a pack's catalog from `drawable.xml` or appfilter (`PackCatalog`), drawing one drawable. Tests: `PackCatalogTest`.
+- [x] `AppRepository` draws custom icons over the scan, without a rescan on change. Tests: `AppRepositoryTest`.
+- [x] App menu: pencil on the header icon, Change icon and Browse pages (`ChangeIconPage`, `BrowsePackPage`, `AppIconEditor` through `LocalAppIconEditor`), `ObserveAppIconChoicesUseCase`, `ChangeAppIconUseCase`. Tests: `AppContextMenuTest`, `ChangeAppIconUseCaseTest`.
+- [x] Settings → Icons: Custom icons row and `CustomIconsScreen`. Tests: `IconsScreenTest`, `CustomIconsScreenTest`.
+- [x] Backup: `BackupBundle.iconOverrides` with base64 snapshots, restored rows kept for apps not yet installed. Tests: `IconOverrideBackupUseCaseTest`.
+- [x] Strings in en, de, es, fr, nl, pt.
+- [x] Docs: `01`, `02`, `03`, `04`, `07`, `09`, `12`, `19`, new `22`, README.
+- [ ] Verified on the emulator (build, unit tests, `check`, the changed instrumented classes, `52.json` schema committed).

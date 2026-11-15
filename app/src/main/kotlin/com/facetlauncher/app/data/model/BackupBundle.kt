@@ -71,6 +71,8 @@ data class BackupBundle(
     val dockFolderPlacements: List<BackupFolderPlacement> = emptyList(),
     /** Legacy: a folder placed in the launcher-wide Favorites of older backups — mirrors [defaultFavoriteApps]. Never written. */
     val defaultFavoriteFolderPlacements: List<BackupFolderPlacement> = emptyList(),
+    /** Per-app custom icons. Additive: a backup without it restores none. */
+    val iconOverrides: List<BackupIconOverride> = emptyList(),
 )
 
 @Serializable
@@ -360,3 +362,19 @@ data class BackupNativeStackPage(
 /** A saved weather city in a backup file. */
 @Serializable
 data class BackupWeatherCity(val name: String, val latitude: Double, val longitude: Double, val timezone: String)
+
+/**
+ * One app's custom icon. Keyed by package, activity and [profile] like [BackupAppEntry], since a `userId` isn't portable.
+ * [snapshotPng] is the picked icon as base64 PNG, drawn when its pack isn't installed.
+ */
+@Serializable
+data class BackupIconOverride(
+    val packageName: String,
+    val activityName: String,
+    val profile: String = "PERSONAL",
+    val source: String,
+    val packPackage: String? = null,
+    val drawableName: String? = null,
+    val calendarPrefix: String? = null,
+    val snapshotPng: String? = null,
+)

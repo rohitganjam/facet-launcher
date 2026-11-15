@@ -30,6 +30,8 @@ class ExportBackupUseCase @Inject constructor(
     private val widgetPlacementRepository: WidgetPlacementRepository,
     private val folderRepository: FolderRepository,
     private val backupRepository: BackupRepository,
+    // Defaulted so tests that don't cover custom icons needn't build one; Hilt always supplies it.
+    private val iconOverrideBackup: IconOverrideBackupUseCase? = null,
 ) {
     /** Returns the bundle it wrote — mainly so callers (and tests) can inspect exactly what got exported without re-deriving it. */
     suspend operator fun invoke(uri: Uri): BackupBundle {
@@ -61,6 +63,7 @@ class ExportBackupUseCase @Inject constructor(
             facets = backupFacets,
             widgetPlacements = widgetPlacementRepository.observeAll().first().map { it.toBackupPlacement() },
             folders = backupFolders,
+            iconOverrides = iconOverrideBackup?.export().orEmpty(),
         )
         backupRepository.writeBackup(uri, bundle)
         return bundle
