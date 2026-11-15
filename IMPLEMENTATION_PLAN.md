@@ -4883,4 +4883,4 @@ With the search sheet open, Home closed the sheet and the drawer at once, and th
 ### Steps
 - [x] `DrawerSearchSheet` and the connections sheet no longer close on Home; the drawer closing resets them. Tests: `AppDrawerScreenTest`, `HomeDrawerRouteTest`, `KeyboardDismissalTest`.
 - [x] Docs: `12` (§2a, §4).
-- [ ] Verified on the emulator (`AppDrawerScreenTest`, `HomeDrawerRouteTest`, `KeyboardDismissalTest`, manual Home press with the sheet open, bar at top and bottom).
+- [x] Verified on the emulator (`AppDrawerScreenTest` 60/60, `HomeDrawerRouteTest` 62/62, `KeyboardDismissalTest` 3/3, manual Home press with the sheet open). Found and fixed on the way: the sheet's own slide out ran after the drawer closed and brought it back into view.
