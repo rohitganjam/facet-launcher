@@ -946,9 +946,10 @@ class AppDrawerScreenTest {
     }
 
     @Test
-    fun homePressedEventClosesTheContactConnectionsSheet() {
+    fun homePressLeavesTheSearchAndConnectionsSheetsForTheDrawerToCloseAround() {
         // Given the connections sheet is open for a contact
         var query by mutableStateOf("")
+        var isDrawerOpen by mutableStateOf(true)
         val homePressedEvent = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
         val contact = ContactInfo(id = "1", displayName = "Jane Doe", phoneNumber = "555-1234")
         val callConnection = ContactConnection(
@@ -969,6 +970,7 @@ class AppDrawerScreenTest {
                             contacts = listOf(contact).toImmutableList(),
                             onRequestConnections = { listOf(callConnection) },
                         ),
+                        isDrawerOpen = isDrawerOpen,
                     )
                 }
             }
@@ -982,11 +984,22 @@ class AppDrawerScreenTest {
 
         // When Home is pressed
         homePressedEvent.tryEmit(Unit)
+        composeRule.waitForIdle()
 
-        // Then the sheet closes
+        // Then both sheets stay as they are, to slide out with the drawer
+        composeRule.onNodeWithTag("contact_connections_sheet").assertIsDisplayed()
+        composeRule.onNodeWithTag("drawer_search_sheet").assertExists()
+        assertEquals("Jane", query)
+
+        // And once the drawer is closed, both are reset
+        isDrawerOpen = false
         composeRule.waitUntil(timeoutMillis = 3_000) {
-            runCatching { composeRule.onNodeWithTag("contact_connections_sheet").assertDoesNotExist() }.isSuccess
+            runCatching {
+                composeRule.onNodeWithTag("contact_connections_sheet").assertDoesNotExist()
+                composeRule.onNodeWithTag("drawer_search_sheet").assertDoesNotExist()
+            }.isSuccess
         }
+        assertEquals("", query)
     }
 
     @Test

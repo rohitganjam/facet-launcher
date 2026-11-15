@@ -133,7 +133,6 @@ import com.facetlauncher.app.ui.components.AppIcon
 import com.facetlauncher.app.ui.components.AppIconSize
 import com.facetlauncher.app.ui.components.AppMenuNotifications
 import com.facetlauncher.app.ui.components.BlockHomeSwipesWhileShown
-import com.facetlauncher.app.ui.components.DismissOnHomePress
 import com.facetlauncher.app.ui.components.FolderContentsSheet
 import com.facetlauncher.app.ui.components.FolderSheetHeaderAction
 import com.facetlauncher.app.ui.components.FolderTileContextMenu
@@ -325,7 +324,8 @@ private class ConnectionsSheet(
 
 /**
  * Hoisted to the screen (not down in the results) so the sheet can overlay the whole drawer. The screen never leaves composition
- * when the drawer closes (it is only translated off-screen), so it is reset once the drawer is closed or Home is pressed.
+ * when the drawer closes (it is only translated off-screen), so it is reset once the drawer is closed. Home closes the drawer
+ * around it, so the sheet slides out with the drawer rather than on its own.
  */
 @Composable
 private fun rememberConnectionsSheet(onRequestConnections: suspend (ContactInfo) -> List<ContactConnection>, isDrawerOpen: Boolean): ConnectionsSheet {
@@ -339,7 +339,6 @@ private fun rememberConnectionsSheet(onRequestConnections: suspend (ContactInfo)
     LaunchedEffect(isDrawerOpen) {
         if (!isDrawerOpen) contact = null
     }
-    DismissOnHomePress(enabled = contact != null) { contact = null }
     return ConnectionsSheet(contact, connections, open = { contact = it }, dismiss = { contact = null })
 }
 

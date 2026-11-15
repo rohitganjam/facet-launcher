@@ -16,7 +16,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -46,6 +47,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
@@ -83,7 +85,8 @@ private const val SUGGESTION_ROWS = 2
 /**
  * The search sheet: slides in from the edge the search bar is on, over a scrim. Before anything is typed it suggests
  * recently installed or updated, frequently used and last used apps as a grid; once typing, it shows the search results,
- * always as a grid at the drawer's grid density (Regular when the drawer is a list). Back, the scrim and the Home button close it, returning to the drawer.
+ * always as a grid at the drawer's grid density (Regular when the drawer is a list). Back and the scrim close it, returning to the drawer.
+ * Home leaves it open so it slides out with the drawer, which resets it once off screen.
  */
 @Composable
 internal fun DrawerSearchSheet(
@@ -110,7 +113,13 @@ internal fun DrawerSearchSheet(
         onClose()
     }
     BackHandler(enabled = visible, onBack = close)
-    DismissOnHomePress(enabled = visible, onDismiss = close)
+    // Home closes the drawer around the sheet: hold the keyboard's padding so the field rides out with it instead of dropping.
+    var heldImeBottomPx by remember { mutableStateOf<Int?>(null) }
+    val ime = WindowInsets.ime
+    val density = LocalDensity.current
+    DismissOnHomePress(enabled = visible) { heldImeBottomPx = ime.getBottom(density) }
+    LaunchedEffect(visible) { if (!visible) heldImeBottomPx = null }
+    val imeInsets = heldImeBottomPx?.let { WindowInsets(bottom = it) } ?: ime
     if (visible) BlockHomeSwipesWhileShown()
 
     val atBottom = barPosition == SearchBarPosition.BOTTOM
@@ -136,7 +145,7 @@ internal fun DrawerSearchSheet(
                     .background(SurfaceContainer)
                     .pointerInput(Unit) { detectTapGestures { } }
                     .windowInsetsPadding(launcherSystemBarInsets())
-                    .imePadding()
+                    .windowInsetsPadding(imeInsets)
                     .testTag("drawer_search_sheet"),
             ) {
                 val field = @Composable { SheetSearchField(query, onQueryChange, close) }

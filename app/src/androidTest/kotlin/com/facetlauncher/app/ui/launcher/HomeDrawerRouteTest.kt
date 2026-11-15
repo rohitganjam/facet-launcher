@@ -826,6 +826,34 @@ class HomeDrawerRouteTest {
     }
 
     @Test
+    fun homePressWithTheSearchSheetOpenSlidesItOutWithTheDrawerThenResetsIt() {
+        // Given the drawer is open with the search sheet showing a query
+        setContent()
+        composeRule.onRoot().performTouchInput { swipeUp() }
+        settleAnimation()
+        composeRule.openSearchSheet()
+        composeRule.onNodeWithTag("drawer_search_field").performTextInput("TestQuery")
+
+        // When Home is pressed, partway through the drawer's close
+        composeRule.mainClock.autoAdvance = false
+        composeRule.runOnUiThread { launcherViewModel.onHomePressed(whileResumed = true) }
+        composeRule.mainClock.advanceTimeBy(100)
+
+        // Then the sheet is still up with its query, riding out with the drawer
+        composeRule.onNodeWithTag("drawer_search_sheet").assertExists()
+        composeRule.onNodeWithTag("drawer_search_field").assertTextContains("TestQuery")
+
+        // And once the drawer is closed the sheet is reset
+        composeRule.mainClock.autoAdvance = true
+        settleAnimation()
+        composeRule.onNodeWithTag("alphabet_rail").assertIsNotDisplayed()
+        composeRule.onRoot().performTouchInput { swipeUp() }
+        settleAnimation()
+        composeRule.onNodeWithTag("drawer_search_sheet").assertDoesNotExist()
+        composeRule.onNodeWithText("TestQuery").assertDoesNotExist()
+    }
+
+    @Test
     fun swipingUpPastHalfwayCommitsTheDrawerOpen() {
         // Given the launcher starts on Home
         setContent()
