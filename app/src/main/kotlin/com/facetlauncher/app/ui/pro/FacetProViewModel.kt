@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.facetlauncher.app.data.BillingRepository
 import com.facetlauncher.app.data.EntitlementRepository
+import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.PurchaseLaunch
 import com.facetlauncher.app.data.model.ProQueryResult
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -13,6 +14,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -28,6 +30,8 @@ data class FacetProUiState(
     /** A Buy or Restore request is in flight. */
     val busy: Boolean = false,
     val message: FacetProMessage? = null,
+    /** How many facets the user has, for the unlocked screen. */
+    val facetCount: Int = 0,
 )
 
 private data class Progress(val price: String? = null, val busy: Boolean = false, val message: FacetProMessage? = null)
@@ -40,12 +44,13 @@ private data class Progress(val price: String? = null, val busy: Boolean = false
 class FacetProViewModel @Inject constructor(
     private val billingRepository: BillingRepository,
     private val entitlementRepository: EntitlementRepository,
+    facetRepository: FacetRepository,
 ) : ViewModel() {
 
     private val progress = MutableStateFlow(Progress())
 
-    val uiState: StateFlow<FacetProUiState> = combine(entitlementRepository.isPro, progress) { isPro, progress ->
-        FacetProUiState(isPro = isPro, price = progress.price, busy = progress.busy, message = progress.message)
+    val uiState: StateFlow<FacetProUiState> = combine(entitlementRepository.isPro, progress, facetRepository.observeFacets().map { it.size }) { isPro, progress, facetCount ->
+        FacetProUiState(isPro = isPro, price = progress.price, busy = progress.busy, message = progress.message, facetCount = facetCount)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), FacetProUiState())
 
     init {
