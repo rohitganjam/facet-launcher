@@ -1,8 +1,10 @@
 package com.facetlauncher.app.ui.drawer
 
+import android.content.Intent
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.facetlauncher.app.data.AppRepository
+import com.facetlauncher.app.data.AppStoreRepository
 import com.facetlauncher.app.data.ContactPermissionRepository
 import com.facetlauncher.app.data.ContactRepository
 import com.facetlauncher.app.data.FolderRepository
@@ -18,6 +20,7 @@ import com.facetlauncher.app.data.SystemSettingsRepository
 import com.facetlauncher.app.data.UsageAccessRepository
 import com.facetlauncher.app.data.UsageStatsRepository
 import com.facetlauncher.app.data.model.AppInfo
+import com.facetlauncher.app.data.model.AppStore
 import com.facetlauncher.app.data.model.ContactConnection
 import com.facetlauncher.app.data.model.ContactInfo
 import com.facetlauncher.app.data.model.Folder
@@ -48,6 +51,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
@@ -71,6 +76,7 @@ class DrawerViewModel @Inject constructor(
     private val contactPermissionRepository: ContactPermissionRepository,
     private val contactRepository: ContactRepository,
     private val systemSettingsRepository: SystemSettingsRepository,
+    private val appStoreRepository: AppStoreRepository,
     private val notificationBadgeRepository: NotificationBadgeRepository,
     private val notificationAccessRepository: NotificationAccessRepository,
     private val rankBySearchRelevance: RankBySearchRelevanceUseCase,
@@ -167,6 +173,13 @@ class DrawerViewModel @Inject constructor(
             }
         }
     }.map { it.toImmutableList() }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), persistentListOf())
+
+    /** The store the no-results screen offers, looked up again each time a search starts so a store installed or disabled meanwhile is picked up. */
+    val appStore: StateFlow<AppStore?> = searchQuery.map { it.isNotBlank() }.distinctUntilChanged().filter { it }
+        .map { appStoreRepository.availableStore() }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+
+    fun appStoreSearchIntent(store: AppStore, query: String): Intent = appStoreRepository.searchIntent(store, query)
 
     private val contactsPermissionPromptDismissed = MutableStateFlow(false)
 

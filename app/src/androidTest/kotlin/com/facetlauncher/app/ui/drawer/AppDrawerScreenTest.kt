@@ -33,6 +33,7 @@ import androidx.compose.ui.test.up
 import com.facetlauncher.app.data.WorkProfileInfo
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.AppProfile
+import com.facetlauncher.app.data.model.AppStore
 import com.facetlauncher.app.data.model.ConnectionDetail
 import com.facetlauncher.app.data.model.ContactConnection
 import com.facetlauncher.app.data.model.ContactConnectionType
@@ -437,6 +438,90 @@ class AppDrawerScreenTest {
         composeRule.onNodeWithTag("drawer_search_results").assertDoesNotExist()
         closeSearchSheet()
         composeRule.onNodeWithTag("header_A").assertExists()
+    }
+
+    @Test
+    fun emptySearchOffersAPlayStoreSearchForTheQuery() {
+        // Given a device with the Play Store and a query that matches nothing
+        var searched: Pair<AppStore, String>? = null
+        var query by mutableStateOf("")
+        composeRule.setContent {
+            FacetLauncherTheme {
+                AppDrawerScreen(
+                    apps = apps.toImmutableList(),
+                    actions = DrawerItemActions(onAppClick = {}),
+                    query = query,
+                    onQueryChange = { query = it },
+                    searchSources = DrawerSearchSources(appStore = AppStore.PLAY_STORE, onAppStoreSearchClick = { store, q -> searched = store to q }),
+                )
+            }
+        }
+        composeRule.openSearchSheet()
+        composeRule.onNodeWithTag("drawer_search_field").performTextInput("duolingo")
+
+        // When tapping Search Play Store
+        composeRule.onNodeWithText("Search Play Store").assertExists().performClick()
+
+        // Then the Play Store is asked to search for the query
+        assertEquals(AppStore.PLAY_STORE to "duolingo", searched)
+    }
+
+    @Test
+    fun emptySearchLabelsTheButtonForTheWebWhenThereIsNoStore() {
+        // Given a device with no store but a browser
+        var query by mutableStateOf("")
+        composeRule.setContent {
+            FacetLauncherTheme {
+                AppDrawerScreen(apps = apps.toImmutableList(), actions = DrawerItemActions(onAppClick = {}), query = query, onQueryChange = { query = it }, searchSources = DrawerSearchSources(appStore = AppStore.WEB))
+            }
+        }
+        composeRule.openSearchSheet()
+        composeRule.onNodeWithTag("drawer_search_field").performTextInput("zqx")
+
+        // Then the button says it searches the web
+        composeRule.onNodeWithText("Search Play Store on the web").assertExists()
+    }
+
+    @Test
+    fun emptySearchHasNoStoreButtonWhenNothingCanSearchForApps() {
+        // Given a device with neither a store nor a browser
+        var query by mutableStateOf("")
+        composeRule.setContent {
+            FacetLauncherTheme {
+                AppDrawerScreen(apps = apps.toImmutableList(), actions = DrawerItemActions(onAppClick = {}), query = query, onQueryChange = { query = it }, searchSources = DrawerSearchSources(appStore = null))
+            }
+        }
+        composeRule.openSearchSheet()
+        composeRule.onNodeWithTag("drawer_search_field").performTextInput("zqx")
+
+        // Then only Clear search is offered
+        composeRule.onNodeWithText("No matches found for “zqx”").assertExists()
+        composeRule.onNodeWithTag("drawer_search_app_store").assertDoesNotExist()
+        composeRule.onNodeWithTag("drawer_search_clear").assertExists()
+    }
+
+    @Test
+    fun noStoreButtonWhenASettingMatchesEvenWithoutApps() {
+        // Given a query that matches no app but does match a system setting
+        val wifi = SettingsSearchEntry(id = "wifi", label = "Wi-Fi", action = "android.settings.WIFI_SETTINGS")
+        var query by mutableStateOf("")
+        composeRule.setContent {
+            FacetLauncherTheme {
+                AppDrawerScreen(
+                    apps = apps.toImmutableList(),
+                    actions = DrawerItemActions(onAppClick = {}),
+                    query = query,
+                    onQueryChange = { query = it },
+                    searchSources = DrawerSearchSources(settingsEntries = persistentListOf(wifi), appStore = AppStore.PLAY_STORE),
+                )
+            }
+        }
+        composeRule.openSearchSheet()
+        composeRule.onNodeWithTag("drawer_search_field").performTextInput("wifi")
+
+        // Then the setting shows and the store search does not
+        composeRule.onNodeWithText("Wi-Fi").assertExists()
+        composeRule.onNodeWithTag("drawer_search_app_store").assertDoesNotExist()
     }
 
     private fun closeSearchSheet() {

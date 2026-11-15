@@ -8,6 +8,7 @@ import android.app.PendingIntent
 import android.content.Intent
 import android.os.UserHandle
 import com.facetlauncher.app.data.AppRepository
+import com.facetlauncher.app.data.AppStoreRepository
 import com.facetlauncher.app.data.ContactPermissionRepository
 import com.facetlauncher.app.data.ContactRepository
 import com.facetlauncher.app.data.FolderRepository
@@ -23,6 +24,7 @@ import com.facetlauncher.app.data.SystemSettingsRepository
 import com.facetlauncher.app.data.UsageAccessRepository
 import com.facetlauncher.app.data.UsageStatsRepository
 import com.facetlauncher.app.data.model.AppInfo
+import com.facetlauncher.app.data.model.AppStore
 import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.data.model.NotificationInfo
 import com.facetlauncher.app.data.model.SettingsSearchEntry
@@ -44,6 +46,8 @@ import org.junit.Before
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.mockito.Mockito.mock
+import org.mockito.Mockito.never
+import org.mockito.Mockito.times
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.verifyNoInteractions
 import org.mockito.Mockito.`when`
@@ -81,6 +85,7 @@ class DrawerViewModelTest {
         contactsPermissionGranted: Boolean = false,
         searchSettingsEnabled: Boolean = false,
         systemSettingsRepository: SystemSettingsRepository = mock(SystemSettingsRepository::class.java),
+        appStoreRepository: AppStoreRepository = mock(AppStoreRepository::class.java),
         // Exposed so a test can hand in its own mock and verify a write against it afterward
         // (see `enableContactSearch turns the search-contacts setting on`).
         settingsRepository: SettingsRepository = mock(SettingsRepository::class.java).also {
@@ -120,6 +125,7 @@ class DrawerViewModelTest {
             contactPermissionRepository = contactPermissionRepository,
             contactRepository = mock(ContactRepository::class.java),
             systemSettingsRepository = systemSettingsRepository,
+            appStoreRepository = appStoreRepository,
             notificationBadgeRepository = notificationBadgeRepository,
             notificationAccessRepository = mock(NotificationAccessRepository::class.java),
             rankBySearchRelevance = RankBySearchRelevanceUseCase(),
@@ -429,6 +435,58 @@ class DrawerViewModelTest {
         testDispatcher.scheduler.advanceUntilIdle()
 
         assertEquals(listOf(entry), viewModel.settingsResults.value)
+    }
+
+    @Test
+    fun `no store is looked up before anything is typed`() = runTest {
+        // Given a drawer with an empty query
+        val appStoreRepository = mock(AppStoreRepository::class.java)
+        val viewModel = drawerViewModel(appStoreRepository = appStoreRepository)
+        backgroundScope.launch { viewModel.appStore.collect {} }
+
+        // When nothing is typed
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Then there is no store and no lookup
+        assertEquals(null, viewModel.appStore.value)
+        verify(appStoreRepository, never()).availableStore()
+    }
+
+    @Test
+    fun `the store is looked up once per search not once per keystroke`() = runTest {
+        // Given a device with the Play Store
+        val appStoreRepository = mock(AppStoreRepository::class.java)
+        `when`(appStoreRepository.availableStore()).thenReturn(AppStore.PLAY_STORE)
+        val viewModel = drawerViewModel(appStoreRepository = appStoreRepository)
+        backgroundScope.launch { viewModel.appStore.collect {} }
+
+        // When typing a query letter by letter
+        listOf("d", "du", "duo").forEach { viewModel.onQueryChange(it); testDispatcher.scheduler.advanceUntilIdle() }
+
+        // Then the store is known after a single lookup
+        assertEquals(AppStore.PLAY_STORE, viewModel.appStore.value)
+        verify(appStoreRepository, times(1)).availableStore()
+    }
+
+    @Test
+    fun `a new search looks the store up again`() = runTest {
+        // Given a search that found the Play Store, after which it was disabled
+        val appStoreRepository = mock(AppStoreRepository::class.java)
+        `when`(appStoreRepository.availableStore()).thenReturn(AppStore.PLAY_STORE, AppStore.WEB)
+        val viewModel = drawerViewModel(appStoreRepository = appStoreRepository)
+        backgroundScope.launch { viewModel.appStore.collect {} }
+        viewModel.onQueryChange("duo")
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // When the query is cleared and a new search starts
+        viewModel.onQueryChange("")
+        testDispatcher.scheduler.advanceUntilIdle()
+        viewModel.onQueryChange("maps")
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Then the store is looked up again
+        assertEquals(AppStore.WEB, viewModel.appStore.value)
+        verify(appStoreRepository, times(2)).availableStore()
     }
 
     @Test

@@ -798,6 +798,9 @@
     <string name="drawer_contacts_search_off">Kontaktsuche ist in den App-Drawer-Einstellungen deaktiviert.</string>
     <string name="drawer_search_no_matches">Keine Treffer für „%1$s“</string>
     <string name="drawer_search_clear">Suche löschen</string>
+    <string name="drawer_search_play_store">Im Play Store suchen</string>
+    <string name="drawer_search_app_store">Im App-Store suchen</string>
+    <string name="drawer_search_play_store_web">Im Play Store im Web suchen</string>
 
     <!-- ContactConnectionsSheet -->
     <string name="contact_connections_view_contact">Kontakt anzeigen</string>

@@ -37,6 +37,17 @@
         <intent>
             <action android:name="com.dlto.atom.launcher.THEME" />
         </intent>
+        <!-- Drawer search's no-results store search (AppStoreRepository): the Play Store, other stores, then a browser. -->
+        <package android:name="com.android.vending" />
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="market" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <category android:name="android.intent.category.BROWSABLE" />
+            <data android:scheme="https" />
+        </intent>
     </queries>
 
     <!-- F2 Recents/Most Used — special-access permission, granted via system Settings (ACTION_USAGE_ACCESS_SETTINGS),

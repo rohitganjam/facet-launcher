@@ -874,6 +874,9 @@
     <string name="drawer_contacts_search_off">Contact search is off in App Drawer settings.</string>
     <string name="drawer_search_no_matches">No matches found for “%1$s”</string>
     <string name="drawer_search_clear">Clear search</string>
+    <string name="drawer_search_play_store">Search Play Store</string>
+    <string name="drawer_search_app_store">Search app store</string>
+    <string name="drawer_search_play_store_web">Search Play Store on the web</string>
 
     <!-- ContactConnectionsSheet ("Back" reuses content_description_back; the "value · type"
          subtitle format reuses dot_join_2) -->

@@ -805,6 +805,9 @@
     <string name="drawer_contacts_search_off">A busca de contatos está desativada nas configurações da Gaveta de apps.</string>
     <string name="drawer_search_no_matches">Nenhum resultado para “%1$s”</string>
     <string name="drawer_search_clear">Limpar busca</string>
+    <string name="drawer_search_play_store">Pesquisar na Play Store</string>
+    <string name="drawer_search_app_store">Pesquisar na loja de apps</string>
+    <string name="drawer_search_play_store_web">Pesquisar na Play Store na web</string>
 
     <!-- ContactConnectionsSheet -->
     <string name="contact_connections_view_contact">Ver contato</string>

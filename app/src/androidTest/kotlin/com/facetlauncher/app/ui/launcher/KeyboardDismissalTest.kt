@@ -57,6 +57,7 @@ import com.facetlauncher.app.data.PrivateSpaceRepository
 import com.facetlauncher.app.data.SecureFolderRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.SystemSettingsRepository
+import com.facetlauncher.app.data.AppStoreRepository
 import com.facetlauncher.app.data.UsageAccessRepository
 import com.facetlauncher.app.data.UsageStatsRepository
 import com.facetlauncher.app.data.WallpaperRepository
@@ -252,6 +253,7 @@ class KeyboardDismissalTest {
                     ContactPermissionRepository(context),
                     ContactRepository(context.contentResolver, context),
                     SystemSettingsRepository(context),
+                    AppStoreRepository(context),
                     notificationBadgeRepository,
                     notificationAccessRepository,
                     RankBySearchRelevanceUseCase(),

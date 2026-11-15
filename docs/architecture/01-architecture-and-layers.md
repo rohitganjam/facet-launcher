@@ -107,7 +107,7 @@ flowchart TB
             ENM["EntitlementModule\n@Binds PlayEntitlementRepository\n+ 2 @BindsOptionalOf hooks"]
             WTM["WeatherModule\n@Binds MetWeatherApi to WeatherApi\n@Binds RoomWeatherStore to WeatherStore\n@Binds AndroidPlaceGeocoder to PlaceGeocoder\n@Binds ObserveNativeWidgetOverridesUseCase to NativeWidgetOverrides"]
         end
-        REPOS["58 @Singleton data classes (50 repositories)\n@Singleton class X @Inject constructor(...)\n(no module — constructor injection)"]
+        REPOS["59 @Singleton data classes (51 repositories)\n@Singleton class X @Inject constructor(...)\n(no module — constructor injection)"]
         MODS --> REPOS
     end
 

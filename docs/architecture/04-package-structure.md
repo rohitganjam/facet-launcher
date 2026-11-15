@@ -8,7 +8,7 @@ app/src/main/kotlin/com/facetlauncher/app/
 ├── FacetApplication.kt            @HiltAndroidApp
 ├── LauncherActivity.kt            @AndroidEntryPoint — the only Activity; composition root
 │
-├── data/                          (59)  @Singleton Repositories — the only layer that touches
+├── data/                          (60)  @Singleton Repositories — the only layer that touches
 │   │                                    Room, DataStore, or Android framework services
 │   ├── di/                        (9)   Hilt modules: AppModule (also the @ApplicationScope qualifier), DatabaseModule, DataStoreModule, DispatcherModule (@IoDispatcher / @DefaultDispatcher), WidgetModule, EntitlementModule, WeatherModule + the @AutomationDataStore and @EntitlementDataStore qualifiers
 │   ├── icon/                      (4)   The glyph-only and outline icon pictures: IconMasks and IconStyler (pure pixel code), IconLayers (reads an app's themed monochrome layer), StyledIconCache (makes them on demand, off the main thread)
@@ -16,7 +16,7 @@ app/src/main/kotlin/com/facetlauncher/app/
 │   ├── local/                     (24)  Room: FacetDatabase, 10 entities in 9 files (WeatherEntities.kt holds two), 8 DAOs, Converters, Migrations (+ ClockConfigMigration and FacetDefaultsMigration, the DataStore reads three migrations need), FacetMapping, PlacementCells
 │   ├── places/                    (4)   Place names and cities: CityRepository over the bundled CityList (assets/cities.tsv), PlaceGeocoder + AndroidPlaceGeocoder (the device Geocoder), GeoDistance
 │   ├── weather/                   (7)   The weather forecast: MetWeatherApi (the only network code), MetForecastParser, WeatherRefreshPolicy (the refresh gate), WeatherRepository, WidgetWeatherRepository (a Weather widget's own forecast), WeatherStore + RoomWeatherStore (see 18)
-│   ├── model/                     (61)  Immutable value types & enums shared by every layer
+│   ├── model/                     (63)  Immutable value types & enums shared by every layer
 │   │                                    (AppInfo, PlacedItem, PlacementList, PlacementTarget, LauncherSettings, AppProfile, Clock*Option,
 │   │                                    FacetDeepLink's build/parse pair, …)
 │   ├── widget/                    (3)   AppWidgetRepository + LauncherAppWidgetHost (AppWidgetHost subclass) + WidgetConfigureActivity (invisible trampoline that opens a widget's configure activity)
@@ -91,7 +91,7 @@ Both test source sets mirror `main`'s packages; the class under test and its tes
 
 ```
 app/src/test/kotlin/com/facetlauncher/app/          JVM (JUnit4 + Robolectric + coroutines-test)
-├── data/          50   one *RepositoryTest for most repositories (45 test classes) + shared fakes (FolderTestFakes.kt — FakeFolderDao, FakeAppPlacementDao, FakeFolderPlacementDao, …)
+├── data/          51   one *RepositoryTest for most repositories (46 test classes) + shared fakes (FolderTestFakes.kt — FakeFolderDao, FakeAppPlacementDao, FakeFolderPlacementDao, …)
 │   ├── icon/       3   IconMasksTest, IconStylerTest (JVM, no Android), StyledIconCacheTest (Robolectric)
 │   ├── iconpack/   2   AppFilterTest (pull parser and text scan must agree), IconPackRepositoryTest (pack discovery, clearing an uninstalled pack)
 │   ├── local/      8   Converters, entities, DAO-level behaviour via in-memory Room (AppPlacementDaoTest, FolderPlacementDaoTest, FolderDaoTest, FacetDaoTest, AutomationRuleDaoTest, …)

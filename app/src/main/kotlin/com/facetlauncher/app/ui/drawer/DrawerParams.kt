@@ -3,6 +3,7 @@ package com.facetlauncher.app.ui.drawer
 import android.content.Intent
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.text.font.FontWeight
+import com.facetlauncher.app.data.model.AppStore
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.ContactConnection
 import com.facetlauncher.app.data.model.ContactInfo
@@ -97,4 +98,7 @@ data class DrawerSearchSources(
     /** The search sheet's frequently used and last used apps, asked for each time it opens. */
     val onRequestUsageSuggestions: suspend () -> UsageSuggestions = { UsageSuggestions() },
     val onUsageAccessClick: () -> Unit = {},
+    /** The store the no-results screen offers to search; `null` hides the button. */
+    val appStore: AppStore? = null,
+    val onAppStoreSearchClick: (AppStore, String) -> Unit = { _, _ -> },
 )

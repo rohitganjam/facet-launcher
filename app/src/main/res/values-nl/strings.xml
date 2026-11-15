@@ -779,6 +779,9 @@
     <string name="drawer_contacts_search_off">Zoeken naar contacten staat uit in de instellingen van de app-lade.</string>
     <string name="drawer_search_no_matches">Geen resultaten voor “%1$s”</string>
     <string name="drawer_search_clear">Zoekopdracht wissen</string>
+    <string name="drawer_search_play_store">Zoeken in Play Store</string>
+    <string name="drawer_search_app_store">Zoeken in app-winkel</string>
+    <string name="drawer_search_play_store_web">Zoeken in Play Store op het web</string>
 
     <string name="contact_connections_view_contact">Contact bekijken</string>
     <string name="contact_connections_multiple_options">Meerdere opties beschikbaar</string>
