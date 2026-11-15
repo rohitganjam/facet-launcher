@@ -1232,4 +1232,35 @@
     <string name="glass_style_theme">Tema</string>
     <string name="glass_style_theme_inverted">Tema invertido</string>
     <string name="home_usage_list_empty">Aquí aparecerán las aplicaciones que abras desde Facet.</string>
+    <!-- Custom app icons -->
+    <string name="app_context_menu_change_icon">Cambiar el icono de %1$s</string>
+    <string name="change_icon_title">Cambiar icono</string>
+    <string name="change_icon_source_default">Icono predeterminado</string>
+    <string name="change_icon_source_own">Icono propio de la app</string>
+    <string name="change_icon_source_pack">De %1$s</string>
+    <string name="change_icon_in_your_packs">Esta app en tus paquetes de iconos</string>
+    <string name="change_icon_own_option">Propio</string>
+    <string name="change_icon_more_choices">Más opciones</string>
+    <string name="change_icon_browse_pack">Explorar %1$s</string>
+    <string name="change_icon_browse_pack_summary">Todos los iconos de este paquete</string>
+    <string name="change_icon_reset">Restablecer</string>
+    <string name="change_icon_no_packs">Instala un paquete de iconos para elegir entre sus iconos.</string>
+    <string name="browse_pack_search">Buscar iconos</string>
+    <string name="browse_pack_all">Todos</string>
+    <string name="browse_pack_best_match">Mejor coincidencia para %1$s</string>
+    <string name="browse_pack_no_results">Ningún icono coincide con «%1$s»</string>
+    <string name="browse_pack_empty">Este paquete no tiene iconos para explorar.</string>
+    <string name="custom_icons_title">Iconos personalizados</string>
+    <string name="custom_icons_reset">Restablecer</string>
+    <string name="custom_icons_reset_app">Restablecer el icono de %1$s</string>
+    <string name="custom_icons_reset_all">Restablecer todos los iconos personalizados</string>
+    <string name="custom_icons_reset_all_title">¿Restablecer todos los iconos personalizados?</string>
+    <string name="custom_icons_reset_all_message">Cada app vuelve al icono que le da tu estilo o paquete de iconos.</string>
+    <string name="custom_icons_reset_all_confirm">Restablecer todo</string>
+    <string name="custom_icons_empty">No hay iconos personalizados. Para cambiar uno, mantén pulsada una app y toca su icono.</string>
+    <plurals name="custom_icons_app_count">
+        <item quantity="one">%d app</item>
+        <item quantity="other">%d apps</item>
+        <item quantity="many">%d de apps</item>
+    </plurals>
 </resources>

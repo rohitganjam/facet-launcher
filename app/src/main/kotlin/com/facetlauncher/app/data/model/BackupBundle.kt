@@ -73,6 +73,8 @@ data class BackupBundle(
     val defaultFavoriteFolderPlacements: List<BackupFolderPlacement> = emptyList(),
     /** Facet automation rules in list order, which is also their tie-break order. `null` in a backup from before rules were backed up. */
     val automationRules: List<BackupAutomationRule>? = null,
+    /** Per-app custom icons. Additive: a backup without it restores none. */
+    val iconOverrides: List<BackupIconOverride> = emptyList(),
 )
 
 @Serializable
@@ -393,4 +395,20 @@ data class BackupAutomationRule(
     /** Battery: `BELOW` or `ABOVE`. */
     val batteryDirection: String? = null,
     val batteryThreshold: Int? = null,
+)
+
+/**
+ * One app's custom icon. Keyed by package, activity and [profile] like [BackupAppEntry], since a `userId` isn't portable.
+ * [snapshotPng] is the picked icon as base64 PNG, drawn when its pack isn't installed.
+ */
+@Serializable
+data class BackupIconOverride(
+    val packageName: String,
+    val activityName: String,
+    val profile: String = "PERSONAL",
+    val source: String,
+    val packPackage: String? = null,
+    val drawableName: String? = null,
+    val calendarPrefix: String? = null,
+    val snapshotPng: String? = null,
 )

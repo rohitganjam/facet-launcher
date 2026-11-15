@@ -46,6 +46,11 @@ import com.facetlauncher.app.ui.settings.AppDrawerSettingsScreen
 import com.facetlauncher.app.ui.settings.AppearanceSettingsScreen
 import com.facetlauncher.app.ui.settings.DockSettingsScreen
 import com.facetlauncher.app.ui.settings.FontsScreen
+import androidx.compose.ui.platform.LocalContext
+import com.facetlauncher.app.ui.appicon.AppIconEditorViewModel
+import com.facetlauncher.app.ui.appicon.CustomIconsScreen
+import com.facetlauncher.app.ui.appicon.LocalAppIconEditor
+import com.facetlauncher.app.ui.settings.openIconPackSearch
 import com.facetlauncher.app.ui.settings.IconsScreen
 import com.facetlauncher.app.ui.settings.ThemesAndColorsScreen
 import com.facetlauncher.app.ui.settings.FolderAppPickerScreen
@@ -97,6 +102,7 @@ object FacetDestinations {
     const val THEMES_AND_COLORS = "themesAndColors"
     const val FONTS = "fonts"
     const val ICONS = "icons"
+    const val CUSTOM_ICONS = "customIcons"
     const val WALLPAPER = "wallpaper"
     const val WALLPAPER_CAPTURE = "wallpaperCapture"
     const val DOCK_SETTINGS = "dockSettings?facetId={facetId}"
@@ -206,24 +212,29 @@ fun FacetNavHost(
             predictivePopExitTransition = { slideOutHorizontally(targetOffsetX = { it }, animationSpec = animationSpec) },
         ) {
             composable(FacetDestinations.HOME) {
-                HomeDrawerRoute(
-                    apps = apps,
-                    onAppClick = onAppClick,
-                    onNavigateToSettings = { navController.navigate(FacetDestinations.SETTINGS) },
-                    onNavigateToFacetSettings = { facetId -> navController.navigate(FacetDestinations.facetSettings(facetId)) },
-                    onNavigateToManageFacets = { navController.navigate(FacetDestinations.FACET_MANAGE) },
-                    onNavigateToFacetPro = { reason -> navController.navigate(FacetDestinations.facetPro(reason)) },
-                    onNavigateToNotificationAccessExplanation = {
-                        navController.navigate(FacetDestinations.NOTIFICATION_ACCESS_EXPLANATION)
-                    },
-                    onNavigateToUnitsAndLocation = { navController.navigate(FacetDestinations.UNITS_AND_LOCATION) },
-                    onNavigateToClockAccessories = { facetId -> navController.navigate(FacetDestinations.clockAccessories(facetId)) },
-                    onNavigateToPermissions = { navController.navigate(FacetDestinations.PERMISSIONS) },
-                    onNavigateToWhatsNew = { navController.navigate(FacetDestinations.WHATS_NEW) },
-                    onNavigateToClockStyle = { facetId -> navController.navigate(FacetDestinations.facetClockStyleGallery(facetId)) },
-                    onNavigateToClockStack = { navController.navigate(FacetDestinations.clockStack()) },
-                    launcherViewModel = launcherViewModel,
-                )
+                val context = LocalContext.current
+                val appIconEditorViewModel: AppIconEditorViewModel = hiltViewModel()
+                val appIconEditor = remember(appIconEditorViewModel) { appIconEditorViewModel.editor(onFindPacks = { openIconPackSearch(context) }) }
+                CompositionLocalProvider(LocalAppIconEditor provides appIconEditor) {
+                    HomeDrawerRoute(
+                        apps = apps,
+                        onAppClick = onAppClick,
+                        onNavigateToSettings = { navController.navigate(FacetDestinations.SETTINGS) },
+                        onNavigateToFacetSettings = { facetId -> navController.navigate(FacetDestinations.facetSettings(facetId)) },
+                        onNavigateToManageFacets = { navController.navigate(FacetDestinations.FACET_MANAGE) },
+                        onNavigateToFacetPro = { reason -> navController.navigate(FacetDestinations.facetPro(reason)) },
+                        onNavigateToNotificationAccessExplanation = {
+                            navController.navigate(FacetDestinations.NOTIFICATION_ACCESS_EXPLANATION)
+                        },
+                        onNavigateToUnitsAndLocation = { navController.navigate(FacetDestinations.UNITS_AND_LOCATION) },
+                        onNavigateToClockAccessories = { facetId -> navController.navigate(FacetDestinations.clockAccessories(facetId)) },
+                        onNavigateToPermissions = { navController.navigate(FacetDestinations.PERMISSIONS) },
+                        onNavigateToWhatsNew = { navController.navigate(FacetDestinations.WHATS_NEW) },
+                        onNavigateToClockStyle = { facetId -> navController.navigate(FacetDestinations.facetClockStyleGallery(facetId)) },
+                        onNavigateToClockStack = { navController.navigate(FacetDestinations.clockStack()) },
+                        launcherViewModel = launcherViewModel,
+                    )
+                }
             }
             settingsComposable(FacetDestinations.SETTINGS) {
                 SettingsScreen(
@@ -328,7 +339,13 @@ fun FacetNavHost(
                 FontsScreen(onBack = { navController.popBackStackSafely() })
             }
             settingsComposable(FacetDestinations.ICONS) {
-                IconsScreen(onBack = { navController.popBackStackSafely() })
+                IconsScreen(
+                    onBack = { navController.popBackStackSafely() },
+                    onOpenCustomIcons = { navController.navigate(FacetDestinations.CUSTOM_ICONS) },
+                )
+            }
+            settingsComposable(FacetDestinations.CUSTOM_ICONS) {
+                CustomIconsScreen(onBack = { navController.popBackStackSafely() })
             }
             settingsComposable(
                 FacetDestinations.DOCK_SETTINGS,

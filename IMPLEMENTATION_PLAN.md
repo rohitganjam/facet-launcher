@@ -4908,12 +4908,27 @@ One search model for every search surface (drawer apps, contacts and settings, P
 - [x] Privacy policy in `../facet-launcher-site/build.py`: Usage Access removed, local launch history described.
 - [x] Verified on the emulator (build, 2,271 unit tests, `check`, the 12 changed instrumented classes, manual pass of ranking, Enter, recorded launches and picks, Recents and the Permissions screen).
 
+## Custom app icons (Rohit approved the design 2026-11-15)
+
+Change one app's icon from its long-press menu. Decisions: free, not Pro; launcher-wide, not per facet; the menu header's icon carries a pencil and opens Change icon, and the name still opens the app; choices are the app's own icon, its entry in every installed pack, and Browse a pack (search and categories); no photo option; icons change only from the app menu, and Settings → Appearance → Icons → Custom icons only resets (per app and Reset all); a custom icon is drawn as picked, so no built-in style recolours it. See `docs/architecture/22-flow-custom-icons.md`.
+
+### Steps
+- [x] Storage: `icon_overrides` (Room v52, auto-migration), `IconOverrideDao`, `IconOverrideRepository` with PNG snapshots in `filesDir/icon_overrides/`; uninstall and profile removal clear rows. Tests: `IconOverrideRepositoryTest`, `IconOverrideTest`, `CleanUpUninstalledAppsUseCaseTest`, `FacetDatabaseMigrationTest.migration51To52AddsEmptyIconOverridesAndKeepsLaunchHistory`.
+- [x] Icon packs: one app's entry in a pack (`matchFor`), a pack's catalog from `drawable.xml` or appfilter (`PackCatalog`), drawing one drawable. Tests: `PackCatalogTest`.
+- [x] `AppRepository` draws custom icons over the scan, without a rescan on change. Tests: `AppRepositoryTest`.
+- [x] App menu: pencil on the header icon, Change icon and Browse pages (`ChangeIconPage`, `BrowsePackPage`, `AppIconEditor` through `LocalAppIconEditor`), `ObserveAppIconChoicesUseCase`, `ChangeAppIconUseCase`. Tests: `AppContextMenuTest`, `ChangeAppIconUseCaseTest`.
+- [x] Settings → Icons: Custom icons row and `CustomIconsScreen`. Tests: `IconsScreenTest`, `CustomIconsScreenTest`.
+- [x] Backup: `BackupBundle.iconOverrides` with base64 snapshots, restored rows kept for apps not yet installed. Tests: `IconOverrideBackupUseCaseTest`.
+- [x] Strings in en, de, es, fr, nl, pt.
+- [x] Docs: `01`, `02`, `03`, `04`, `07`, `09`, `12`, `19`, new `22`, README.
+- [ ] Verified on the emulator (build, unit tests, `check`, the changed instrumented classes, `52.json` schema committed).
+
 ## Automation rules in backups (direct request)
 
 A restore used to delete every automation rule (the facets go first, and rules cascade with them). Now each facet has a permanent UUID, backups carry the rules pointing at those UUIDs, and restore brings back every rule whose target and "switch to" facets are in the backup, skipping and reporting the rest.
 
 ### Steps
-- [x] Facet UUID: `Facet.uuid` / `FacetEntity.uuid` (random on create, unique index), Room v52 with `Migrations.MIGRATION_51_52` giving each existing facet its own; `BackupFacet.uuid` kept on restore (fresh when absent or used twice). Tests: `FacetRepositoryTest`, `BackupMappingTest`, `ImportBackupUseCaseTest`, `FacetDatabaseMigrationTest.migration51To52GivesEveryFacetItsOwnUuid`.
+- [x] Facet UUID: `Facet.uuid` / `FacetEntity.uuid` (random on create, unique index), Room v53 with `Migrations.MIGRATION_52_53` giving each existing facet its own; `BackupFacet.uuid` kept on restore (fresh when absent or used twice). Tests: `FacetRepositoryTest`, `BackupMappingTest`, `ImportBackupUseCaseTest`, `FacetDatabaseMigrationTest.migration51To52GivesEveryFacetItsOwnUuid`.
 - [x] Backup format: `BackupBundle.automationRules` (`BackupAutomationRule`, list order, nullable for older files, no version bump); `AutomationRuleBackupMapping` (lenient: unknown trigger or ending is `UNSUPPORTED`, missing facet `FACET_MISSING`, editor-invalid `INVALID`). Tests: `AutomationRuleBackupMappingTest`, `ExportBackupUseCaseTest`, `BackupCoverageTest` (rule columns).
 - [x] Restore: `RestoreAutomationRulesUseCase` (replace all rules in order with no plan limit, reset `facet_automation` state, record the restored active facet as a manual switch; summary with skipped, paused and permission-waiting counts). Tests: `RestoreAutomationRulesUseCaseTest`.
 - [x] Backup screen: rule count in the result line, an "Automation rules" card when something needs a look, link to Facet automation; confirmation text mentions rules. Tests: `BackupRestoreScreenTest`.

@@ -21,6 +21,7 @@ sequenceDiagram
         UC->>R: placementRepository.getRawApps(Favorites/Dock of facet), getRawFolderPlacements(...)
     end
     UC->>R: widgetPlacementRepository.observeAll().first(), automationRuleRepository.getRules()
+    UC->>R: iconOverrideBackup.export()  (custom icons, snapshots as base64 PNG)
     UC->>UC: BackupMapping — entities to Backup* DTOs, folder/facet refs become list indices
     UC->>BR: writeBackup(uri, BackupBundle(exportedAtEpochMillis, ...))   (backupVersion defaults to CURRENT_BACKUP_VERSION, 6)
     BR->>BR: contentResolver.openFileDescriptor(uri, "wt") truncated to 0, then Json.encodeToString  (Dispatchers.IO)
@@ -63,6 +64,7 @@ sequenceDiagram
     UC->>R: settingsRepository.setActiveFacetId(newIds[activeFacetIndex])
     UC->>R: restoreAutomationRules(bundle.automationRules, uuid→newId, activeFacetId)  — skips rules whose facet is missing, resets automation state
     UC->>R: widgetPlacementRepository.deleteAllNative(), then upsert each native Hub widget under nextNativeId()
+    UC->>R: iconOverrideBackup.restore(iconOverrides)  (replaces every custom icon)
     UC->>R: repairOrphanedProfileRows()  (resolves every restored userId = -1)
     UC-->>VM: ImportBackupResult.Success(facetCount, pendingWidgetPlacements = the hosted widget placements only, automationRules summary)
     VM-->>S: uiState.pendingWidgets = [...]   (widget re-bind UI, §3), automationReview when rules need a look
@@ -95,6 +97,12 @@ sequenceDiagram
   "Automation rules" card (`needsReview`) with a link to Facet automation. A backup with no rule list
   (older than this) restores none and says so.
 - Result type: `ImportBackupResult.Success | InvalidFile | UnsupportedVersion(version)`.
+
+**Custom icons** (`BackupBundle.iconOverrides`, [22](22-flow-custom-icons.md)) replace every row. Each is keyed by
+component and profile name: a profile on this device gives its `userId`, one that isn't keeps `-1` and matches by
+profile later, and a row for an app that isn't installed yet is kept, since apps reinstall for hours after a restore. An
+entry with a source this version doesn't know is skipped, and an unreadable snapshot is dropped (the pack draws the icon
+while it is installed).
 
 Widgets Facet draws itself are not in the queue: `ImportBackupUseCase` restores them directly ([20](20-flow-native-widgets.md) §5), and `pendingWidgetPlacements` holds only hosted ones.
 

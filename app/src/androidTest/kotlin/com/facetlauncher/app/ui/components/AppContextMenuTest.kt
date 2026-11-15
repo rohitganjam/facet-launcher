@@ -30,6 +30,20 @@ import androidx.test.espresso.Espresso
 import androidx.test.espresso.intent.Intents
 import androidx.test.espresso.intent.matcher.IntentMatchers.hasAction
 import androidx.test.espresso.intent.matcher.IntentMatchers.hasData
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.test.assertIsSelected
+import com.facetlauncher.app.data.iconpack.PackCatalog
+import com.facetlauncher.app.data.iconpack.PackCategory
+import com.facetlauncher.app.data.model.IconOverride
+import com.facetlauncher.app.data.model.IconOverrideSource
+import com.facetlauncher.app.data.model.IconPackInfo
+import com.facetlauncher.app.data.model.PackIconMatch
+import com.facetlauncher.app.domain.AppIconChoices
+import com.facetlauncher.app.domain.IconChoiceKey
+import com.facetlauncher.app.domain.PackIconChoice
+import com.facetlauncher.app.ui.appicon.AppIconEditor
+import com.facetlauncher.app.ui.appicon.LocalAppIconEditor
+import com.facetlauncher.app.ui.appicon.PackCatalogState
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.AppProfile
 import com.facetlauncher.app.data.model.Folder
@@ -79,10 +93,11 @@ class AppContextMenuTest {
         appMenuNotifications: AppMenuNotifications = AppMenuNotifications.None,
         onAppInfo: (AppInfo) -> Unit = {},
         onOpenApp: (AppInfo) -> Unit = {},
+        iconEditor: AppIconEditor? = null,
     ) {
         composeRule.setContent {
             FacetLauncherTheme {
-                CompositionLocalProvider(LocalHomePressedEvent provides homePressedEvent) {
+                CompositionLocalProvider(LocalHomePressedEvent provides homePressedEvent, LocalAppIconEditor provides iconEditor) {
                     AppContextMenu(
                         app = app,
                         expanded = true,
@@ -855,5 +870,144 @@ class AppContextMenuTest {
 
         composeRule.onNodeWithTag("app_notifications_clear_all").assertIsNotEnabled()
         composeRule.onNodeWithTag("app_notifications_empty").assertDoesNotExist()
+    }
+
+    private val pack = IconPackInfo(packageName = "com.example.pack", label = "Arcticons", icon = null)
+
+    /** An editor offering [pack]'s "mail" icon and a catalog of two drawables, recording what the menu asks of it. */
+    private class RecordingEditor(choices: AppIconChoices) {
+        val choices = MutableStateFlow(choices)
+        val usedPack = mutableListOf<PackIconMatch>()
+        var usedOwn = 0
+        var resets = 0
+        val editor = AppIconEditor(
+            observeChoices = { this.choices },
+            observeCatalog = { flowOf(PackCatalogState(PackCatalog(listOf(PackCategory("Mail", listOf("mail", "envelope")))), isLoading = false)) },
+            loadThumbnail = { _, _ -> null },
+            onUsePackIcon = { _, match -> usedPack += match },
+            onUseOwnIcon = { usedOwn++ },
+            onReset = { resets++ },
+            onFindPacks = {},
+        )
+    }
+
+    private fun choices(override: IconOverride? = null) = AppIconChoices(
+        app = app,
+        packChoices = listOf(PackIconChoice(pack, PackIconMatch(pack.packageName, "mail", null), ImageBitmap(4, 4))),
+        packs = listOf(pack),
+        override = override,
+        selected = if (override == null) IconChoiceKey.Own else IconChoiceKey.Pack(pack.packageName, "mail"),
+        isLoading = false,
+    )
+
+    @Test
+    fun withoutAnIconEditorTheHeaderHasNoPencil() {
+        // Given a menu with no icon editor, as in previews
+        setContent()
+
+        // Then the icon carries no pencil and offers no Change icon
+        composeRule.onNodeWithTag("app_context_menu_change_icon_badge", useUnmergedTree = true).assertDoesNotExist()
+        composeRule.onNodeWithTag("app_context_menu_change_icon").assertDoesNotExist()
+    }
+
+    @Test
+    fun tappingTheNameStillOpensTheAppWhenTheIconHasAPencil() {
+        // Given a menu with an icon editor
+        val editor = RecordingEditor(choices())
+        var opened: AppInfo? = null
+        setContent(iconEditor = editor.editor, onOpenApp = { opened = it })
+
+        // When the name is tapped
+        composeRule.onNodeWithTag("app_context_menu_change_icon_badge", useUnmergedTree = true).assertExists()
+        composeRule.onNodeWithTag("app_context_menu_open").performClick()
+
+        // Then the app opens
+        composeRule.runOnIdle { assertEquals(app, opened) }
+    }
+
+    @Test
+    fun tappingTheIconOpensTheChangeIconPageNotTheApp() {
+        // Given a menu with an icon editor
+        val editor = RecordingEditor(choices())
+        var opened = false
+        setContent(iconEditor = editor.editor, onOpenApp = { opened = true })
+
+        // When the icon is tapped
+        composeRule.onNodeWithTag("app_context_menu_change_icon").performClick()
+
+        // Then the Change icon page shows, with this pack's icon, and the app did not open
+        composeRule.onNodeWithTag("change_icon_page").assertIsDisplayed()
+        composeRule.onNodeWithTag("change_icon_choice_com.example.pack").assertExists()
+        composeRule.runOnIdle { assertEquals(false, opened) }
+    }
+
+    @Test
+    fun pickingAPackIconUsesItAndReturnsToTheMenu() {
+        // Given the Change icon page
+        val editor = RecordingEditor(choices())
+        setContent(iconEditor = editor.editor)
+        composeRule.onNodeWithTag("app_context_menu_change_icon").performClick()
+
+        // When the pack's icon is picked
+        composeRule.onNodeWithTag("change_icon_choice_com.example.pack").performClick()
+
+        // Then that pack's icon is used and the menu's main page is back
+        composeRule.runOnIdle { assertEquals(listOf(PackIconMatch("com.example.pack", "mail", null)), editor.usedPack) }
+        composeRule.onNodeWithTag("app_context_menu_app_info").assertIsDisplayed()
+        composeRule.onNodeWithTag("change_icon_page").assertDoesNotExist()
+    }
+
+    @Test
+    fun resetToDefaultShowsOnlyForACustomIcon() {
+        // Given an app with no custom icon
+        val editor = RecordingEditor(choices())
+        setContent(iconEditor = editor.editor)
+        composeRule.onNodeWithTag("app_context_menu_change_icon").performClick()
+
+        // Then there is nothing to reset
+        composeRule.onNodeWithTag("change_icon_reset").assertDoesNotExist()
+
+        // When it gets a custom icon
+        editor.choices.value = choices(IconOverride(app.packageName, app.activityName, 0, AppProfile.PERSONAL, IconOverrideSource.PACK, pack.packageName, "mail"))
+
+        // Then the pack's icon is marked current and Reset to default resets it
+        composeRule.onNodeWithTag("change_icon_choice_com.example.pack").assertIsSelected()
+        composeRule.onNodeWithTag("change_icon_page").performScrollToNode(hasTestTag("change_icon_reset"))
+        composeRule.onNodeWithTag("change_icon_reset").performClick()
+        composeRule.runOnIdle { assertEquals(1, editor.resets) }
+    }
+
+    @Test
+    fun browsingAPackPicksAnyOfItsIcons() {
+        // Given the Change icon page
+        val editor = RecordingEditor(choices())
+        setContent(iconEditor = editor.editor)
+        composeRule.onNodeWithTag("app_context_menu_change_icon").performClick()
+
+        // When the pack is browsed and another of its icons picked
+        composeRule.onNodeWithTag("change_icon_page").performScrollToNode(hasTestTag("change_icon_browse_com.example.pack"))
+        composeRule.onNodeWithTag("change_icon_browse_com.example.pack").performClick()
+        composeRule.onNodeWithTag("browse_pack_best_match").assertExists()
+        composeRule.onNodeWithTag("browse_pack_icon_envelope").performClick()
+
+        // Then that icon is used, and the menu's main page is back
+        composeRule.runOnIdle { assertEquals(listOf(PackIconMatch("com.example.pack", "envelope", null)), editor.usedPack) }
+        composeRule.onNodeWithTag("app_context_menu_app_info").assertIsDisplayed()
+    }
+
+    @Test
+    fun backFromBrowseReturnsToChangeIcon() {
+        // Given the Browse page
+        val editor = RecordingEditor(choices())
+        setContent(iconEditor = editor.editor)
+        composeRule.onNodeWithTag("app_context_menu_change_icon").performClick()
+        composeRule.onNodeWithTag("change_icon_page").performScrollToNode(hasTestTag("change_icon_browse_com.example.pack"))
+        composeRule.onNodeWithTag("change_icon_browse_com.example.pack").performClick()
+
+        // When its back arrow is tapped
+        composeRule.onNodeWithTag("browse_pack_back").performClick()
+
+        // Then the Change icon page is back
+        composeRule.onNodeWithTag("change_icon_page").assertIsDisplayed()
     }
 }
