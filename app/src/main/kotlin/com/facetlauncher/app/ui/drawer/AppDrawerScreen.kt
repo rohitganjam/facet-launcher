@@ -253,9 +253,7 @@ fun AppDrawerScreen(
                 modifier = Modifier.weight(1f).then(if (search.isOpen) Modifier.clearAndSetSemantics {} else Modifier),
             )
 
-            if (searchBar.position == SearchBarPosition.BOTTOM) {
-                DrawerSearchBar(searchBar, search.show)
-            }
+            if (searchBar.position == SearchBarPosition.BOTTOM) DrawerSearchBar(searchBar, search.show)
         }
 
         DrawerSearchSheet(
