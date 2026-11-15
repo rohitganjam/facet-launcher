@@ -57,6 +57,11 @@ class MoveToVaultUseCaseTest {
         val chat = app("chat")
         val maps = app("maps")
         val notes = app("notes")
+        // Unstubbed suspend mocks return null, not 0.
+        listOf(chat, maps, notes).forEach {
+            `when`(placements.countByPackage(it.packageName, userId)).thenReturn(0)
+            `when`(folders.countByPackage(it.packageName, userId)).thenReturn(0)
+        }
         `when`(placements.countByPackage(chat.packageName, userId)).thenReturn(2)
         `when`(folders.countByPackage(maps.packageName, userId)).thenReturn(1)
 

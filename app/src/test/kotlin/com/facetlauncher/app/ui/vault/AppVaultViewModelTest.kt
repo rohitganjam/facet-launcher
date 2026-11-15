@@ -21,6 +21,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.resetMain
@@ -79,9 +80,11 @@ class AppVaultViewModelTest {
         `when`(getInstalled.observe()).thenReturn(combine(MutableStateFlow(installed), vault.vaultedKeys) { apps, keys -> apps.filter { it.vaultKey !in keys } })
         val placements = mock(PlacementRepository::class.java)
         val folders = mock(FolderRepository::class.java)
-        installed.forEach {
-            `when`(placements.countByPackage(it.packageName, it.userHandle.hashCode())).thenReturn(0)
-            `when`(folders.countByPackage(it.packageName, it.userHandle.hashCode())).thenReturn(0)
+        runBlocking {
+            installed.forEach {
+                `when`(placements.countByPackage(it.packageName, it.userHandle.hashCode())).thenReturn(0)
+                `when`(folders.countByPackage(it.packageName, it.userHandle.hashCode())).thenReturn(0)
+            }
         }
         val moveToVault = MoveToVaultUseCase(vault, placements, folders, mock(LaunchHistoryRepository::class.java))
         val viewModel = AppVaultViewModel(vault, appRepository, getInstalled, moveToVault, SortAppsForPickerUseCase(mock(LaunchHistoryRepository::class.java)))
@@ -169,6 +172,7 @@ class AppVaultViewModelTest {
         val f = fixture()
         setPinThrough(f)
         f.viewModel.lock()
+        runCurrent()
         assertEquals(VaultStage.LOCKED, f.viewModel.uiState.value.stage)
 
         // When it is opened and the PIN typed
