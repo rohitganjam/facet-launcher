@@ -145,13 +145,15 @@ open class IconPackRepository @Inject constructor(
 
     private fun readCatalog(packPackage: String): PackCatalog? {
         val resources = packageManager.getResourcesForApplication(packPackage)
-        runCatching { resources.assets.open("drawable.xml") }.getOrNull()?.use { stream ->
-            return PackCatalog.parse(stream.readBytes().decodeToString())
-        }
+        val asset = runCatching { resources.assets.open("drawable.xml") }.getOrNull()
+        if (asset != null) return asset.use { PackCatalog.parse(it.readBytes().decodeToString()) }
         @Suppress("DiscouragedApi")
         val id = resources.getIdentifier("drawable", "xml", packPackage)
-        if (id != 0) return resources.getXml(id).use { PackCatalog.parse(it) }
-        return readAppFilter(resources, packPackage) { true }?.let(PackCatalog::fromAppFilter)
+        return if (id != 0) {
+            resources.getXml(id).use { PackCatalog.parse(it) }
+        } else {
+            readAppFilter(resources, packPackage) { true }?.let(PackCatalog::fromAppFilter)
+        }
     }
 
     /** Opens the pack's own app, where it has one. */

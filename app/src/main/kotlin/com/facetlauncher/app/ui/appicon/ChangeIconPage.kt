@@ -170,7 +170,7 @@ private fun CurrentIcon(choices: AppIconChoices) {
     ) {
         AppIcon(app = choices.app, size = PREVIEW_ICON_SIZE, contentDescription = null, modifier = Modifier.testTag("change_icon_preview"))
         Text(
-            text = "${choices.app.label} · $source",
+            text = stringResource(R.string.dot_join_2, choices.app.label, source),
             style = MaterialTheme.typography.bodyMedium,
             color = Muted,
             textAlign = TextAlign.Center,

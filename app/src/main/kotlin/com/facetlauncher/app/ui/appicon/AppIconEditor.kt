@@ -29,4 +29,5 @@ class AppIconEditor(
     val onFindPacks: () -> Unit,
 )
 
+@Suppress("CompositionLocalAllowlist") // Read by every app menu; threading it through each sheet would touch all of them.
 val LocalAppIconEditor = staticCompositionLocalOf<AppIconEditor?> { null }

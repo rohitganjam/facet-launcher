@@ -34,6 +34,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -64,6 +65,8 @@ import com.facetlauncher.app.ui.theme.Hairline
 import com.facetlauncher.app.ui.theme.Ink
 import com.facetlauncher.app.ui.theme.Muted
 import com.facetlauncher.app.ui.theme.Surface
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.toImmutableList
 
 private const val GRID_COLUMNS = 5
 
@@ -94,38 +97,14 @@ fun BrowsePackPage(
             query.isNotBlank() -> catalog.search(query)
             category != null -> catalog.categories.filter { it.title == category }.flatMap { it.drawables }.distinct()
             else -> catalog.allDrawables
-        }
+        }.toImmutableList()
     }
     Column(modifier = modifier.fillMaxSize().imePadding().testTag("browse_pack_page")) {
         PageHeader(title = pack.label, onBack = onBack, backTag = "browse_pack_back")
-        OutlinedTextField(
-            value = query,
-            onValueChange = { query = it },
-            singleLine = true,
-            placeholder = { Text(stringResource(R.string.browse_pack_search), color = Muted) },
-            leadingIcon = { Icon(imageVector = Icons.Outlined.Search, contentDescription = null, tint = Muted) },
-            shape = CircleShape,
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedTextColor = Ink,
-                unfocusedTextColor = Ink,
-                focusedBorderColor = Accent,
-                unfocusedBorderColor = Hairline,
-                cursorColor = Accent,
-                focusedContainerColor = Surface,
-                unfocusedContainerColor = Surface,
-            ),
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp).testTag("browse_pack_search"),
-        )
-        val titles = catalog?.categories?.mapNotNull { it.title }?.distinct().orEmpty()
+        PackSearchField(query = query, onQueryChange = { query = it })
+        val titles = remember(catalog) { catalog?.categories?.mapNotNull { it.title }?.distinct().orEmpty().toImmutableList() }
         if (titles.isNotEmpty() && query.isBlank()) {
-            LazyRow(
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.testTag("browse_pack_categories"),
-            ) {
-                item { CategoryChip(stringResource(R.string.browse_pack_all), selected = category == null, onClick = { category = null }) }
-                items(titles) { title -> CategoryChip(title, selected = category == title, onClick = { category = title }) }
-            }
+            CategoryRow(titles = titles, selected = category, onSelect = { category = it })
         }
         when {
             state.isLoading -> Box(modifier = Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) {
@@ -133,24 +112,80 @@ fun BrowsePackPage(
             }
             catalog == null -> Message(stringResource(R.string.browse_pack_empty))
             drawables.isEmpty() -> Message(stringResource(R.string.browse_pack_no_results, query))
-            else -> LazyVerticalGrid(
-                columns = GridCells.Fixed(GRID_COLUMNS),
-                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 24.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
-                modifier = Modifier.fillMaxSize().testTag("browse_pack_grid"),
-            ) {
-                if (bestMatch != null && query.isBlank() && category == null) {
-                    item(span = { GridItemSpan(maxLineSpan) }) { GridLabel(stringResource(R.string.browse_pack_best_match, appLabel)) }
-                    item(key = "best_$bestMatch") {
-                        PackIconCell(bestMatch, selected = bestMatch == selectedDrawable, loadThumbnail = loadThumbnail, onPick = onPick, tag = "browse_pack_best_match")
-                    }
-                    item(span = { GridItemSpan(maxLineSpan) }) { GridLabel(category ?: stringResource(R.string.browse_pack_all)) }
-                }
-                items(drawables, key = { it }) { name ->
-                    PackIconCell(name, selected = name == selectedDrawable, loadThumbnail = loadThumbnail, onPick = onPick, tag = "browse_pack_icon_$name")
-                }
+            else -> PackIconGrid(
+                drawables = drawables,
+                // The best match leads only the unfiltered list.
+                bestMatch = bestMatch?.takeIf { query.isBlank() && category == null },
+                appLabel = appLabel,
+                selectedDrawable = selectedDrawable,
+                loadThumbnail = loadThumbnail,
+                onPick = onPick,
+            )
+        }
+    }
+}
+
+@Composable
+private fun PackSearchField(query: String, onQueryChange: (String) -> Unit) {
+    OutlinedTextField(
+        value = query,
+        onValueChange = onQueryChange,
+        singleLine = true,
+        placeholder = { Text(stringResource(R.string.browse_pack_search), color = Muted) },
+        leadingIcon = { Icon(imageVector = Icons.Outlined.Search, contentDescription = null, tint = Muted) },
+        shape = CircleShape,
+        colors = OutlinedTextFieldDefaults.colors(
+            focusedTextColor = Ink,
+            unfocusedTextColor = Ink,
+            focusedBorderColor = Accent,
+            unfocusedBorderColor = Hairline,
+            cursorColor = Accent,
+            focusedContainerColor = Surface,
+            unfocusedContainerColor = Surface,
+        ),
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp).testTag("browse_pack_search"),
+    )
+}
+
+@Composable
+private fun CategoryRow(titles: ImmutableList<String>, selected: String?, onSelect: (String?) -> Unit) {
+    LazyRow(
+        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        modifier = Modifier.testTag("browse_pack_categories"),
+    ) {
+        item { CategoryChip(stringResource(R.string.browse_pack_all), selected = selected == null, onClick = { onSelect(null) }) }
+        items(titles) { title -> CategoryChip(title, selected = selected == title, onClick = { onSelect(title) }) }
+    }
+}
+
+@Composable
+private fun PackIconGrid(
+    drawables: ImmutableList<String>,
+    bestMatch: String?,
+    appLabel: String,
+    selectedDrawable: String?,
+    loadThumbnail: suspend (String) -> ImageBitmap?,
+    onPick: (String) -> Unit,
+) {
+    val allLabel = stringResource(R.string.browse_pack_all)
+    val bestMatchLabel = stringResource(R.string.browse_pack_best_match, appLabel)
+    LazyVerticalGrid(
+        columns = GridCells.Fixed(GRID_COLUMNS),
+        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 24.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+        modifier = Modifier.fillMaxSize().testTag("browse_pack_grid"),
+    ) {
+        if (bestMatch != null) {
+            item(span = { GridItemSpan(maxLineSpan) }) { GridLabel(bestMatchLabel) }
+            item(key = "best_$bestMatch") {
+                PackIconCell(bestMatch, selected = bestMatch == selectedDrawable, loadThumbnail = loadThumbnail, onPick = onPick, tag = "browse_pack_best_match")
             }
+            item(span = { GridItemSpan(maxLineSpan) }) { GridLabel(allLabel) }
+        }
+        items(drawables, key = { it }) { name ->
+            PackIconCell(name, selected = name == selectedDrawable, loadThumbnail = loadThumbnail, onPick = onPick, tag = "browse_pack_icon_$name")
         }
     }
 }
@@ -191,7 +226,8 @@ private fun Message(text: String) {
 /** One pack icon, drawn once it scrolls into view; named for TalkBack by its drawable name. */
 @Composable
 private fun PackIconCell(name: String, selected: Boolean, loadThumbnail: suspend (String) -> ImageBitmap?, onPick: (String) -> Unit, tag: String) {
-    val icon by produceState<ImageBitmap?>(null, name) { value = loadThumbnail(name) }
+    val currentLoadThumbnail by rememberUpdatedState(loadThumbnail)
+    val icon by produceState<ImageBitmap?>(null, name) { value = currentLoadThumbnail(name) }
     val spoken = name.replace('_', ' ')
     Box(
         modifier = Modifier

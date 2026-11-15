@@ -211,7 +211,6 @@ private fun AppMenuPages(
     onOpenApp: (AppInfo) -> Unit,
     onAppInfo: (AppInfo) -> Unit,
 ) {
-    val context = LocalContext.current
     val notificationsFlow = remember(app.packageName, app.userHandle, appMenuNotifications) { appMenuNotifications.observe(app) }
     val notificationsState by notificationsFlow.collectAsStateWithLifecycle(initialValue = AppNotificationsState(enabled = false))
     val iconEditor = LocalAppIconEditor.current
@@ -219,47 +218,14 @@ private fun AppMenuPages(
     // header shows a newly picked icon.
     val iconChoicesFlow = remember(app.listKey, iconEditor, menu.iconEditing) { iconEditor?.takeIf { menu.iconEditing }?.observeChoices?.invoke(app) }
     val iconChoices = iconChoicesFlow?.collectAsStateWithLifecycle(initialValue = AppIconChoices(app))?.value
-    val shownApp = iconChoices?.app ?: app
     AnimatedContent(
         targetState = menu.page,
         transitionSpec = { appMenuPageTransition(forward = targetState.depth > initialState.depth) },
         label = "app_context_menu_page",
     ) { page ->
         when (page) {
-            AppMenuPage.ChangeIcon -> if (iconEditor != null && iconChoices != null) {
-                ChangeIconPage(
-                    choices = iconChoices,
-                    onBack = { menu.iconPage = null },
-                    onUseOwnIcon = {
-                        iconEditor.onUseOwnIcon(app)
-                        menu.iconPage = null
-                    },
-                    onUsePackIcon = { choice ->
-                        iconEditor.onUsePackIcon(app, choice.match)
-                        menu.iconPage = null
-                    },
-                    onBrowsePack = { pack -> menu.iconPage = AppMenuPage.BrowsePack(pack) },
-                    onReset = {
-                        iconEditor.onReset(app)
-                        menu.iconPage = null
-                    },
-                    onFindPacks = {
-                        onDismissRequest()
-                        iconEditor.onFindPacks()
-                    },
-                )
-            }
-            is AppMenuPage.BrowsePack -> if (iconEditor != null && iconChoices != null) {
-                BrowsePackRoute(
-                    editor = iconEditor,
-                    pack = page.pack,
-                    choices = iconChoices,
-                    onBack = { menu.iconPage = AppMenuPage.ChangeIcon },
-                    onPick = { drawable ->
-                        iconEditor.onUsePackIcon(app, PackIconMatch(page.pack.packageName, drawable, calendarPrefix = null))
-                        menu.iconPage = null
-                    },
-                )
+            AppMenuPage.ChangeIcon, is AppMenuPage.BrowsePack -> if (iconEditor != null && iconChoices != null) {
+                AppMenuIconPage(page, menu, app, iconEditor, iconChoices, onDismissRequest)
             }
             AppMenuPage.Folders -> AppMenuFolderPage(
                 onBack = { menu.addingToFolder = false },
@@ -269,31 +235,15 @@ private fun AppMenuPages(
                     FolderCandidateRow(folder = folder, onClick = { menu.previewingFolder = folder })
                 }
             }
-            AppMenuPage.Main -> AppMenuMainPage(
-                app = shownApp,
+            AppMenuPage.Main -> AppMenuMainRoute(
+                app = app,
+                shownApp = iconChoices?.app ?: app,
                 notifications = notificationsState,
                 placementActions = placementActions,
-                onOpenApp = {
-                    onDismissRequest()
-                    onOpenApp(app)
-                },
-                onAppInfo = {
-                    onDismissRequest()
-                    onAppInfo(app)
-                },
-                onUninstall = {
-                    onDismissRequest()
-                    context.startUninstall(app)
-                },
-                onOpenNotification = { notification ->
-                    onDismissRequest()
-                    appMenuNotifications.onOpen(notification)
-                },
-                onDismissNotifications = appMenuNotifications.onDismiss,
-                onEnableNotificationAccess = {
-                    onDismissRequest()
-                    appMenuNotifications.onEnableAccess()
-                },
+                appMenuNotifications = appMenuNotifications,
+                onDismissRequest = onDismissRequest,
+                onOpenApp = onOpenApp,
+                onAppInfo = onAppInfo,
                 onChangeIcon = if (iconEditor != null) {
                     {
                         menu.iconEditing = true
@@ -305,6 +255,95 @@ private fun AppMenuPages(
             )
         }
     }
+}
+
+/** The main page wired to the sheet: each action closes it first. [shownApp] carries a newly picked icon. */
+@Composable
+private fun AppMenuMainRoute(
+    app: AppInfo,
+    shownApp: AppInfo,
+    notifications: AppNotificationsState,
+    placementActions: ImmutableList<PlacementActionUi>,
+    appMenuNotifications: AppMenuNotifications,
+    onDismissRequest: () -> Unit,
+    onOpenApp: (AppInfo) -> Unit,
+    onAppInfo: (AppInfo) -> Unit,
+    onChangeIcon: (() -> Unit)?,
+) {
+    val context = LocalContext.current
+    AppMenuMainPage(
+        app = shownApp,
+        notifications = notifications,
+        placementActions = placementActions,
+        onOpenApp = {
+            onDismissRequest()
+            onOpenApp(app)
+        },
+        onAppInfo = {
+            onDismissRequest()
+            onAppInfo(app)
+        },
+        onUninstall = {
+            onDismissRequest()
+            context.startUninstall(app)
+        },
+        onOpenNotification = { notification ->
+            onDismissRequest()
+            appMenuNotifications.onOpen(notification)
+        },
+        onDismissNotifications = appMenuNotifications.onDismiss,
+        onEnableNotificationAccess = {
+            onDismissRequest()
+            appMenuNotifications.onEnableAccess()
+        },
+        onChangeIcon = onChangeIcon,
+    )
+}
+
+/** The Change icon page, or the Browse page for one pack; picking an icon returns to the main page. */
+@Composable
+private fun AppMenuIconPage(
+    page: AppMenuPage,
+    menu: AppMenuState,
+    app: AppInfo,
+    iconEditor: AppIconEditor,
+    iconChoices: AppIconChoices,
+    onDismissRequest: () -> Unit,
+) {
+    if (page is AppMenuPage.BrowsePack) {
+        BrowsePackRoute(
+            editor = iconEditor,
+            pack = page.pack,
+            choices = iconChoices,
+            onBack = { menu.iconPage = AppMenuPage.ChangeIcon },
+            onPick = { drawable ->
+                iconEditor.onUsePackIcon(app, PackIconMatch(page.pack.packageName, drawable, calendarPrefix = null))
+                menu.iconPage = null
+            },
+        )
+        return
+    }
+    ChangeIconPage(
+        choices = iconChoices,
+        onBack = { menu.iconPage = null },
+        onUseOwnIcon = {
+            iconEditor.onUseOwnIcon(app)
+            menu.iconPage = null
+        },
+        onUsePackIcon = { choice ->
+            iconEditor.onUsePackIcon(app, choice.match)
+            menu.iconPage = null
+        },
+        onBrowsePack = { pack -> menu.iconPage = AppMenuPage.BrowsePack(pack) },
+        onReset = {
+            iconEditor.onReset(app)
+            menu.iconPage = null
+        },
+        onFindPacks = {
+            onDismissRequest()
+            iconEditor.onFindPacks()
+        },
+    )
 }
 
 /** The Browse page with its pack's icons loaded and the app's current drawable in this pack ringed. */
@@ -552,27 +591,6 @@ private fun AppMenuHeader(app: AppInfo, onOpenApp: () -> Unit, onAppInfo: () -> 
         modifier = Modifier.fillMaxWidth().padding(start = MENU_SIDE_PADDING, end = MENU_SIDE_PADDING - 12.dp, top = 8.dp, bottom = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        val icon: @Composable () -> Unit = {
-            AppIcon(
-                icon = app.icon,
-                monochromeIcon = app.monochromeIcon,
-                fromIconPack = app.iconFromPack,
-                size = AppIconSize.COMPACT,
-                contentDescription = null,
-                isWorkApp = app.profile == AppProfile.WORK,
-                isOtherProfileApp = app.profile == AppProfile.OTHER,
-            )
-        }
-        val name: @Composable (Modifier) -> Unit = { modifier ->
-            Text(
-                text = app.label,
-                style = MaterialTheme.typography.titleLarge,
-                color = Ink,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-                modifier = modifier.testTag("app_context_menu_name"),
-            )
-        }
         if (onChangeIcon != null) {
             val changeIconLabel = stringResource(R.string.app_context_menu_change_icon, app.label)
             Box(
@@ -583,10 +601,11 @@ private fun AppMenuHeader(app: AppInfo, onOpenApp: () -> Unit, onAppInfo: () -> 
                     .padding(4.dp)
                     .testTag("app_context_menu_change_icon"),
             ) {
-                icon()
+                AppMenuHeaderIcon(app)
                 EditIconBadge(modifier = Modifier.align(Alignment.TopEnd).offset(x = 6.dp, y = (-6).dp))
             }
-            name(
+            AppMenuHeaderName(
+                app,
                 Modifier
                     .weight(1f)
                     .padding(start = 8.dp, end = 4.dp)
@@ -604,8 +623,8 @@ private fun AppMenuHeader(app: AppInfo, onOpenApp: () -> Unit, onAppInfo: () -> 
                     .testTag("app_context_menu_open"),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                icon()
-                name(Modifier.weight(1f).padding(horizontal = 16.dp))
+                AppMenuHeaderIcon(app)
+                AppMenuHeaderName(app, Modifier.weight(1f).padding(horizontal = 16.dp))
             }
         }
         MenuIconButton(
@@ -623,6 +642,31 @@ private fun AppMenuHeader(app: AppInfo, onOpenApp: () -> Unit, onAppInfo: () -> 
             modifier = Modifier.testTag("app_context_menu_uninstall"),
         )
     }
+}
+
+@Composable
+private fun AppMenuHeaderIcon(app: AppInfo) {
+    AppIcon(
+        icon = app.icon,
+        monochromeIcon = app.monochromeIcon,
+        fromIconPack = app.iconFromPack,
+        size = AppIconSize.COMPACT,
+        contentDescription = null,
+        isWorkApp = app.profile == AppProfile.WORK,
+        isOtherProfileApp = app.profile == AppProfile.OTHER,
+    )
+}
+
+@Composable
+private fun AppMenuHeaderName(app: AppInfo, modifier: Modifier = Modifier) {
+    Text(
+        text = app.label,
+        style = MaterialTheme.typography.titleLarge,
+        color = Ink,
+        maxLines = 2,
+        overflow = TextOverflow.Ellipsis,
+        modifier = modifier.testTag("app_context_menu_name"),
+    )
 }
 
 /** The sheet's main page: header, then the notifications zone and the placement actions, each behind a hairline and each left out when empty. */

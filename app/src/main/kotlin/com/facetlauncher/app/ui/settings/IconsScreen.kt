@@ -223,20 +223,23 @@ internal fun IconsContent(
                 }
                 if (customIconCount > 0) {
                     item { SettingsSectionHeader(stringResource(R.string.custom_icons_title)) }
-                    item {
-                        SettingsCard(fullBleedRows = true) {
-                            ClickableRow(
-                                title = stringResource(R.string.custom_icons_title),
-                                subtitle = pluralStringResource(R.plurals.custom_icons_app_count, customIconCount, customIconCount),
-                                onClick = onOpenCustomIcons,
-                                testTag = "icons_custom_icons_row",
-                            )
-                        }
-                    }
+                    item { CustomIconsCard(count = customIconCount, onClick = onOpenCustomIcons) }
                 }
             }
         },
     )
+}
+
+@Composable
+private fun CustomIconsCard(count: Int, onClick: () -> Unit) {
+    SettingsCard(fullBleedRows = true) {
+        ClickableRow(
+            title = stringResource(R.string.custom_icons_title),
+            subtitle = pluralStringResource(R.plurals.custom_icons_app_count, count, count),
+            onClick = onClick,
+            testTag = "icons_custom_icons_row",
+        )
+    }
 }
 
 /** Settings → Icons → Icon size: every app icon on Home, the dock, the drawer and folders, 80–120% in 1% steps. */
