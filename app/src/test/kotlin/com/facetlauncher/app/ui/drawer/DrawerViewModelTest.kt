@@ -21,8 +21,9 @@ import com.facetlauncher.app.data.PrivateSpaceState
 import com.facetlauncher.app.data.SecureFolderRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.SystemSettingsRepository
-import com.facetlauncher.app.data.UsageAccessRepository
-import com.facetlauncher.app.data.UsageStatsRepository
+import com.facetlauncher.app.data.LaunchHistoryRepository
+import com.facetlauncher.app.data.model.ContactInfo
+import com.facetlauncher.app.data.model.SearchSignals
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.AppStore
 import com.facetlauncher.app.data.model.LauncherSettings
@@ -60,8 +61,7 @@ import com.facetlauncher.app.data.model.PlacementList
 import com.facetlauncher.app.data.model.PlacedItem
 
 /**
- * Covers [DrawerViewModel.showContactsPermissionPrompt] — the search-drawer analogue of Home's
- * usage-access prompt (see chat history) — and [DrawerViewModel.settingsResults]'s own
+ * Covers [DrawerViewModel.showContactsPermissionPrompt] and [DrawerViewModel.settingsResults]'s own
  * enabled/query gating. [DrawerViewModel.contactResults] and the other fetch-on-open methods are
  * exercised indirectly through this ViewModel elsewhere/on-device.
  */
@@ -98,8 +98,10 @@ class DrawerViewModelTest {
         notificationActionController: NotificationActionController = NotificationActionController(),
         notificationOpener: NotificationOpener = mock(NotificationOpener::class.java),
         observeAppNotifications: ObserveAppNotificationsUseCase = mock(ObserveAppNotificationsUseCase::class.java),
-        usageStatsRepository: UsageStatsRepository = mock(UsageStatsRepository::class.java),
-        usageAccessRepository: UsageAccessRepository = mock(UsageAccessRepository::class.java),
+        launchHistoryRepository: LaunchHistoryRepository = mock(LaunchHistoryRepository::class.java).also {
+            `when`(it.observeSearchSignals()).thenReturn(flowOf(SearchSignals.EMPTY))
+        },
+        contactRepository: ContactRepository = mock(ContactRepository::class.java),
         addToActiveList: AddToActiveListUseCase = mock(AddToActiveListUseCase::class.java),
         removeFromActiveList: RemoveFromActiveListUseCase = mock(RemoveFromActiveListUseCase::class.java),
         reorderActiveList: ReorderActiveListUseCase = mock(ReorderActiveListUseCase::class.java),
@@ -123,7 +125,7 @@ class DrawerViewModelTest {
             appRepository = mock(AppRepository::class.java),
             settingsRepository = settingsRepository,
             contactPermissionRepository = contactPermissionRepository,
-            contactRepository = mock(ContactRepository::class.java),
+            contactRepository = contactRepository,
             systemSettingsRepository = systemSettingsRepository,
             appStoreRepository = appStoreRepository,
             notificationBadgeRepository = notificationBadgeRepository,
@@ -138,8 +140,7 @@ class DrawerViewModelTest {
             notificationActionController = notificationActionController,
             notificationOpener = notificationOpener,
             observeAppNotificationsUseCase = observeAppNotifications,
-            usageStatsRepository = usageStatsRepository,
-            usageAccessRepository = usageAccessRepository,
+            launchHistoryRepository = launchHistoryRepository,
             listUseCases = DrawerListUseCases(RankBySearchRelevanceUseCase(), GroupAppsByLetterUseCase(), RecentlyInstalledAppsUseCase(), RecentlyChangedAppsUseCase()),
         )
     }
@@ -148,34 +149,53 @@ class DrawerViewModelTest {
     private val message = NotificationInfo(packageName = "com.example.chat", silent = false, key = "k1", title = "Priya", text = "Hi", contentIntent = mock(PendingIntent::class.java))
 
     @Test
-    fun `usage suggestions are empty and flag missing access when usage access is not granted`() = runTest {
-        // Given usage access is not granted
-        val usageAccess = mock(UsageAccessRepository::class.java)
-        `when`(usageAccess.isGranted()).thenReturn(false)
-        val usageStats = mock(UsageStatsRepository::class.java)
+    fun `usage suggestions carry most used and last used apps from Facet's launch history`() = runTest {
+        // Given an app opened from Facet
+        val launchHistory = mock(LaunchHistoryRepository::class.java)
+        `when`(launchHistory.observeSearchSignals()).thenReturn(flowOf(SearchSignals.EMPTY))
+        `when`(launchHistory.getMostUsedApps(12)).thenReturn(listOf(chatApp))
+        `when`(launchHistory.getRecentApps(12)).thenReturn(emptyList())
 
         // When the sheet asks for suggestions
-        val suggestions = drawerViewModel(usageStatsRepository = usageStats, usageAccessRepository = usageAccess).loadUsageSuggestions()
+        val suggestions = drawerViewModel(launchHistoryRepository = launchHistory).loadUsageSuggestions()
 
-        // Then nothing is queried and the access flag is false
-        assertEquals(UsageSuggestions(accessGranted = false), suggestions)
-        verifyNoInteractions(usageStats)
+        // Then they are passed through, with no permission involved
+        assertEquals(UsageSuggestions(frequent = listOf(chatApp), lastUsed = emptyList()), suggestions)
     }
 
     @Test
-    fun `usage suggestions carry most used and last used apps when access is granted`() = runTest {
-        // Given usage access and ranked apps
-        val usageAccess = mock(UsageAccessRepository::class.java)
-        `when`(usageAccess.isGranted()).thenReturn(true)
-        val usageStats = mock(UsageStatsRepository::class.java)
-        `when`(usageStats.getMostUsedApps(12)).thenReturn(listOf(chatApp))
-        `when`(usageStats.getRecentApps(12)).thenReturn(emptyList())
+    fun `a search pick is recorded under the normalized query`() = runTest {
+        // Given the drawer
+        val launchHistory = mock(LaunchHistoryRepository::class.java)
+        `when`(launchHistory.observeSearchSignals()).thenReturn(flowOf(SearchSignals.EMPTY))
+        val viewModel = drawerViewModel(launchHistoryRepository = launchHistory)
 
-        // When the sheet asks for suggestions
-        val suggestions = drawerViewModel(usageStatsRepository = usageStats, usageAccessRepository = usageAccess).loadUsageSuggestions()
+        // When an app is opened from the results for a query with stray case and spaces
+        viewModel.onSearchPick(chatApp, " Chat ")
+        testDispatcher.scheduler.advanceUntilIdle()
 
-        // Then they are passed through
-        assertEquals(UsageSuggestions(frequent = listOf(chatApp), lastUsed = emptyList(), accessGranted = true), suggestions)
+        // Then the pick is stored under the query as search compares it
+        verify(launchHistory).recordSearchPick("chat", chatApp)
+    }
+
+    @Test
+    fun `contact results rank a name starting with the query first even past the provider's alphabetical order`() = runTest {
+        // Given more substring matches than are shown, the best one last alphabetically
+        val contacts = listOf("Allison", "Bryson", "Carson", "Dawson", "Emerson", "Sonia").mapIndexed { i, name ->
+            ContactInfo(id = "$i", displayName = name, phoneNumber = "")
+        }
+        val contactRepository = mock(ContactRepository::class.java)
+        `when`(contactRepository.searchContacts("son", 50)).thenReturn(contacts)
+        val viewModel = drawerViewModel(searchContactsEnabled = true, contactsPermissionGranted = true, contactRepository = contactRepository)
+        backgroundScope.launch { viewModel.contactResults.collect {} }
+
+        // When searching
+        viewModel.onQueryChange("son")
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Then Sonia leads and the list still holds five
+        assertEquals("Sonia", viewModel.contactResults.value.first().displayName)
+        assertEquals(5, viewModel.contactResults.value.size)
     }
 
     @Test
@@ -413,7 +433,7 @@ class DrawerViewModelTest {
     @Test
     fun `settings results stay empty once a query is typed if the setting is off`() = runTest {
         val systemSettingsRepository = mock(SystemSettingsRepository::class.java)
-        `when`(systemSettingsRepository.search("wifi")).thenReturn(listOf(SettingsSearchEntry(id = "wifi", label = "Wi-Fi", action = "android.settings.WIFI_SETTINGS")))
+        `when`(systemSettingsRepository.availableEntries()).thenReturn(listOf(SettingsSearchEntry(id = "wifi", label = "Wi-Fi", action = "android.settings.WIFI_SETTINGS")))
         val viewModel = drawerViewModel(searchSettingsEnabled = false, systemSettingsRepository = systemSettingsRepository)
         backgroundScope.launch { viewModel.settingsResults.collect {} }
 
@@ -426,14 +446,32 @@ class DrawerViewModelTest {
     @Test
     fun `settings results surface matches once a query is typed while enabled`() = runTest {
         val entry = SettingsSearchEntry(id = "wifi", label = "Wi-Fi", action = "android.settings.WIFI_SETTINGS")
+        val sound = SettingsSearchEntry(id = "sound", label = "Sound", action = "android.settings.SOUND_SETTINGS")
         val systemSettingsRepository = mock(SystemSettingsRepository::class.java)
-        `when`(systemSettingsRepository.search("wifi")).thenReturn(listOf(entry))
+        `when`(systemSettingsRepository.availableEntries()).thenReturn(listOf(entry, sound))
         val viewModel = drawerViewModel(searchSettingsEnabled = true, systemSettingsRepository = systemSettingsRepository)
         backgroundScope.launch { viewModel.settingsResults.collect {} }
 
         viewModel.onQueryChange("wifi")
         testDispatcher.scheduler.advanceUntilIdle()
 
+        assertEquals(listOf(entry), viewModel.settingsResults.value)
+    }
+
+    @Test
+    fun `settings results match a keyword alias that is not in the label`() = runTest {
+        // Given Wi-Fi, found by "internet"
+        val entry = SettingsSearchEntry(id = "wifi", label = "Wi-Fi", action = "android.settings.WIFI_SETTINGS", keywords = listOf("wifi", "internet"))
+        val systemSettingsRepository = mock(SystemSettingsRepository::class.java)
+        `when`(systemSettingsRepository.availableEntries()).thenReturn(listOf(entry))
+        val viewModel = drawerViewModel(searchSettingsEnabled = true, systemSettingsRepository = systemSettingsRepository)
+        backgroundScope.launch { viewModel.settingsResults.collect {} }
+
+        // When searching for the alias
+        viewModel.onQueryChange("internet")
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Then the entry is found
         assertEquals(listOf(entry), viewModel.settingsResults.value)
     }
 

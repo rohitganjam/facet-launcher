@@ -1431,31 +1431,59 @@ class FacetDatabaseMigrationTest {
     }
 
     @Test
-    fun migration50To51GivesEveryFacetItsOwnUuid() {
-        // Given a v50 database with two facets and a rule on one of them
+    fun migration50To51AddsEmptyLaunchHistoryAndKeepsFacets() {
+        // Given a v50 database with a facet
         val db50 = helper.createDatabase(TEST_DB, 50)
+        db50.execSQL(
+            "INSERT INTO facets (id, name, position, clockPlacementOwn, clockAlignment, appRowPosition, appRowPresentation, listContentMode, " +
+                "appsToShowCount, appListVerticalAlignment, appListLayout, appListColumnAlignment, appListGridColumns, appListGridDisplayMode, " +
+                "appListShrinkToFit, dockDisplayMode, dockGlass, appsListGlass, allowLandscape) VALUES (1, 'Facet', 1, 0, 'LEFT', 'LEFT', " +
+                "'ICON_AND_TEXT', 'RECENTS', 6, 'BOTTOM', 'SINGLE_COLUMN', 'BOTH_LEFT', 'FOUR', 'ICONS', 'OFF', 'ICONS', 'OFF', 'OFF', 0)",
+        )
+        db50.close()
+
+        // When migrating to v51 (Room also validates the result against the exported v51 schema)
+        val db51 = helper.runMigrationsAndValidate(TEST_DB, 51, true)
+
+        // Then the facet is kept and the three launch history tables start empty
+        db51.query("SELECT listContentMode FROM facets WHERE id = 1").use {
+            assertTrue(it.moveToFirst())
+            assertEquals("RECENTS", it.getString(0))
+        }
+        for (table in listOf("app_launches", "app_launch_days", "search_picks")) {
+            db51.query("SELECT COUNT(*) FROM $table").use {
+                assertTrue(it.moveToFirst())
+                assertEquals(0, it.getInt(0))
+            }
+        }
+    }
+
+    @Test
+    fun migration51To52GivesEveryFacetItsOwnUuid() {
+        // Given a v51 database with two facets and a rule on one of them
+        val db51 = helper.createDatabase(TEST_DB, 51)
         for (id in 1..2) {
-            db50.execSQL(
+            db51.execSQL(
                 "INSERT INTO facets (id, name, position, clockPlacementOwn, clockAlignment, appRowPosition, appRowPresentation, listContentMode, " +
                     "appsToShowCount, appListVerticalAlignment, appListLayout, appListColumnAlignment, appListGridColumns, appListGridDisplayMode, " +
                     "appListShrinkToFit, dockDisplayMode, dockGlass, appsListGlass, allowLandscape) VALUES ($id, 'Facet $id', $id, 0, 'LEFT', 'LEFT', " +
                     "'ICON_AND_TEXT', 'FAVORITES', 6, 'BOTTOM', 'SINGLE_COLUMN', 'BOTH_LEFT', 'FOUR', 'ICONS', 'OFF', 'ICONS', 'OFF', 'OFF', 1)",
             )
         }
-        db50.execSQL("INSERT INTO automation_rules (id, position, enabled, targetFacetId, endBehavior, triggerType, negated, scheduleDays, scheduleStartMinute, scheduleEndMinute) VALUES (1, 0, 1, 2, 'STAY', 'HEADPHONES', 0, 0, 0, 0)")
-        db50.close()
+        db51.execSQL("INSERT INTO automation_rules (id, position, enabled, targetFacetId, endBehavior, triggerType, negated, scheduleDays, scheduleStartMinute, scheduleEndMinute) VALUES (1, 0, 1, 2, 'STAY', 'HEADPHONES', 0, 0, 0, 0)")
+        db51.close()
 
-        // When migrating to v51 (Room also validates the result against the exported v51 schema, unique index included)
-        val db51 = helper.runMigrationsAndValidate(TEST_DB, 51, true, Migrations.MIGRATION_50_51)
+        // When migrating to v52 (Room also validates the result against the exported v52 schema, unique index included)
+        val db52 = helper.runMigrationsAndValidate(TEST_DB, 52, true, Migrations.MIGRATION_51_52)
 
         // Then each facet has a UUID of its own, and the rule is untouched
-        val uuids = db51.query("SELECT uuid FROM facets ORDER BY id").use { cursor ->
+        val uuids = db52.query("SELECT uuid FROM facets ORDER BY id").use { cursor ->
             buildList { while (cursor.moveToNext()) add(cursor.getString(0)) }
         }
         assertEquals(2, uuids.size)
         assertEquals(2, uuids.toSet().size)
         uuids.forEach { java.util.UUID.fromString(it) }
-        db51.query("SELECT targetFacetId FROM automation_rules").use {
+        db52.query("SELECT targetFacetId FROM automation_rules").use {
             it.moveToFirst()
             assertEquals(2L, it.getLong(0))
         }

@@ -2,22 +2,16 @@
   "formatVersion": 1,
   "database": {
     "version": 51,
-    "identityHash": "0ffe4b7eec9616c75aaeb36da6fd9add",
+    "identityHash": "5651df660d1086666936fe12774522d3",
     "entities": [
       {
         "tableName": "facets",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `uuid` TEXT NOT NULL, `name` TEXT NOT NULL, `position` INTEGER NOT NULL, `clockPlacementOwn` INTEGER NOT NULL, `clockAlignment` TEXT NOT NULL, `clockZoneHeightDp` REAL, `landscapeClockAlignment` TEXT, `landscapeClockZoneHeightDp` REAL, `appRowPosition` TEXT NOT NULL, `landscapeAppRowPosition` TEXT, `landscapeAppListVerticalAlignment` TEXT, `landscapeAppListColumnAlignment` TEXT, `allowLandscape` INTEGER NOT NULL, `appRowPresentation` TEXT NOT NULL, `listContentMode` TEXT NOT NULL, `appsToShowCount` INTEGER NOT NULL, `appListVerticalAlignment` TEXT NOT NULL, `appListLayout` TEXT NOT NULL, `appListColumnAlignment` TEXT NOT NULL, `appListGridColumns` TEXT NOT NULL, `appListGridDisplayMode` TEXT NOT NULL, `appListShrinkToFit` TEXT NOT NULL, `dockDisplayMode` TEXT NOT NULL, `dockGlass` TEXT NOT NULL, `appsListGlass` TEXT NOT NULL)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL, `position` INTEGER NOT NULL, `clockPlacementOwn` INTEGER NOT NULL, `clockAlignment` TEXT NOT NULL, `clockZoneHeightDp` REAL, `landscapeClockAlignment` TEXT, `landscapeClockZoneHeightDp` REAL, `appRowPosition` TEXT NOT NULL, `landscapeAppRowPosition` TEXT, `landscapeAppListVerticalAlignment` TEXT, `landscapeAppListColumnAlignment` TEXT, `allowLandscape` INTEGER NOT NULL, `appRowPresentation` TEXT NOT NULL, `listContentMode` TEXT NOT NULL, `appsToShowCount` INTEGER NOT NULL, `appListVerticalAlignment` TEXT NOT NULL, `appListLayout` TEXT NOT NULL, `appListColumnAlignment` TEXT NOT NULL, `appListGridColumns` TEXT NOT NULL, `appListGridDisplayMode` TEXT NOT NULL, `appListShrinkToFit` TEXT NOT NULL, `dockDisplayMode` TEXT NOT NULL, `dockGlass` TEXT NOT NULL, `appsListGlass` TEXT NOT NULL)",
         "fields": [
           {
             "fieldPath": "id",
             "columnName": "id",
             "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "uuid",
-            "columnName": "uuid",
-            "affinity": "TEXT",
             "notNull": true
           },
           {
@@ -164,18 +158,7 @@
           "columnNames": [
             "id"
           ]
-        },
-        "indices": [
-          {
-            "name": "index_facets_uuid",
-            "unique": true,
-            "columnNames": [
-              "uuid"
-            ],
-            "orders": [],
-            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_facets_uuid` ON `${TABLE_NAME}` (`uuid`)"
-          }
-        ]
+        }
       },
       {
         "tableName": "app_placements",
@@ -985,11 +968,167 @@
             ]
           }
         ]
+      },
+      {
+        "tableName": "app_launches",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`packageName` TEXT NOT NULL, `activityName` TEXT NOT NULL, `userId` INTEGER NOT NULL, `lastLaunchedAt` INTEGER NOT NULL, PRIMARY KEY(`packageName`, `activityName`, `userId`))",
+        "fields": [
+          {
+            "fieldPath": "packageName",
+            "columnName": "packageName",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "activityName",
+            "columnName": "activityName",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "userId",
+            "columnName": "userId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastLaunchedAt",
+            "columnName": "lastLaunchedAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "packageName",
+            "activityName",
+            "userId"
+          ]
+        }
+      },
+      {
+        "tableName": "app_launch_days",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`packageName` TEXT NOT NULL, `activityName` TEXT NOT NULL, `userId` INTEGER NOT NULL, `epochDay` INTEGER NOT NULL, `count` INTEGER NOT NULL, PRIMARY KEY(`packageName`, `activityName`, `userId`, `epochDay`))",
+        "fields": [
+          {
+            "fieldPath": "packageName",
+            "columnName": "packageName",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "activityName",
+            "columnName": "activityName",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "userId",
+            "columnName": "userId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "epochDay",
+            "columnName": "epochDay",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "count",
+            "columnName": "count",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "packageName",
+            "activityName",
+            "userId",
+            "epochDay"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_app_launch_days_epochDay",
+            "unique": false,
+            "columnNames": [
+              "epochDay"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_app_launch_days_epochDay` ON `${TABLE_NAME}` (`epochDay`)"
+          }
+        ]
+      },
+      {
+        "tableName": "search_picks",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`query` TEXT NOT NULL, `packageName` TEXT NOT NULL, `activityName` TEXT NOT NULL, `userId` INTEGER NOT NULL, `count` INTEGER NOT NULL, `lastPickedAt` INTEGER NOT NULL, PRIMARY KEY(`query`, `packageName`, `activityName`, `userId`))",
+        "fields": [
+          {
+            "fieldPath": "query",
+            "columnName": "query",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "packageName",
+            "columnName": "packageName",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "activityName",
+            "columnName": "activityName",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "userId",
+            "columnName": "userId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "count",
+            "columnName": "count",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastPickedAt",
+            "columnName": "lastPickedAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "query",
+            "packageName",
+            "activityName",
+            "userId"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_search_picks_lastPickedAt",
+            "unique": false,
+            "columnNames": [
+              "lastPickedAt"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_search_picks_lastPickedAt` ON `${TABLE_NAME}` (`lastPickedAt`)"
+          }
+        ]
       }
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '0ffe4b7eec9616c75aaeb36da6fd9add')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '5651df660d1086666936fe12774522d3')"
     ]
   }
 }

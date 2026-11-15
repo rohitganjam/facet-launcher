@@ -14,6 +14,7 @@ import com.facetlauncher.app.data.model.DrawerItem
 import com.facetlauncher.app.data.model.DrawerPresentation
 import com.facetlauncher.app.data.model.Folder
 import com.facetlauncher.app.data.model.RecentlyInstalledPosition
+import com.facetlauncher.app.data.model.SearchSignals
 import com.facetlauncher.app.domain.GroupedItems
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
@@ -56,6 +57,7 @@ internal fun rememberDrawerBrowseModel(
     listUseCases: DrawerListUseCases,
     /** A tab to draw instead of the selected one, for the neighbouring tab that shows while swiping; it never changes the selection. */
     fixedTab: DrawerTab? = null,
+    searchSignals: SearchSignals = SearchSignals.EMPTY,
 ): DrawerBrowseModel {
     val tabs = remember(workProfiles) { drawerTabsFor(workProfiles) }
     var pickedTab by remember { mutableStateOf<DrawerTab>(DrawerTab.Personal) }
@@ -70,7 +72,8 @@ internal fun rememberDrawerBrowseModel(
     }
     val rankBySearchRelevance = listUseCases.rank
     val browseApps = remember(tabScopedApps) { rankBySearchRelevance(tabScopedApps, "") { it.label } }
-    val searchResults = remember(apps, query) { rankBySearchRelevance(apps, query) { it.label } }
+    // Each label is prepared once and matching is a few string checks, so ranking a few hundred apps stays well under a millisecond.
+    val searchResults = remember(apps, query, searchSignals) { rankBySearchRelevance.apps(apps, query, searchSignals) }
     val sortedFolders = remember(folderCandidates) { folderCandidates.orEmpty().sortedBy { it.name } }
     val pinnedFolders = remember(sortedFolders, folderDisplayMode) { pinnedFoldersFor(sortedFolders, folderDisplayMode) }
     // Scoped to tabScopedApps, not the raw apps param — unlike pinnedFolders, deliberately NOT tab-filtered.

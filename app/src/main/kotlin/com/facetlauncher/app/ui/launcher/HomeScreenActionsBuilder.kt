@@ -23,7 +23,6 @@ internal class HomeNavigation(
     val toSettings: () -> Unit,
     val toFacetSettings: (facetId: Long) -> Unit,
     val toFacetPro: (ProReason) -> Unit,
-    val toUsageAccessExplanation: () -> Unit,
     /** One facet's clock style options. */
     val toClockStyle: (facetId: Long) -> Unit,
     val toClockStack: () -> Unit,
@@ -70,10 +69,6 @@ internal fun homeScreenActions(
         onNext = viewModel::onMediaNext,
         onOpen = viewModel::onMediaOpen,
     ),
-    onUsageAccessPromptClick = {
-        viewModel.dismissUsageAccessPrompt()
-        navigation.toUsageAccessExplanation()
-    },
     onEmptySpaceDoubleTap = viewModel::onEmptySpaceDoubleTap,
     onAppListBoundsChange = hooks.setAppListBounds,
     onClockPaneBoundsChange = hooks.setClockPaneBounds,

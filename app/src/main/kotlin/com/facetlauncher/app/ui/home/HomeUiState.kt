@@ -20,8 +20,6 @@ import com.facetlauncher.app.data.model.ClockDateStyle
 import com.facetlauncher.app.data.model.ClockFontOption
 import com.facetlauncher.app.data.model.ClockTemplateId
 import com.facetlauncher.app.data.model.DockDisplayMode
-import com.facetlauncher.app.data.model.FontWeightOption
-import com.facetlauncher.app.data.model.LandscapeOverrides
 import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.data.model.ListContentMode
 import com.facetlauncher.app.data.model.MediaPlayerState
@@ -47,7 +45,6 @@ data class HomeUiState(
     /** The saved grid cells of [favoriteItems], per orientation. */
     val favoriteCells: SavedGridCells = SavedGridCells(),
     val facets: List<Facet> = emptyList(),
-    val usageAccessGranted: Boolean = false,
     val calendarEvents: List<CalendarEvent> = emptyList(),
     val calendarDisplay: CalendarDisplayOptions = CalendarDisplayOptions(),
     val badgeCounts: Map<String, Int> = emptyMap(),
@@ -55,11 +52,6 @@ data class HomeUiState(
     val clockAccessories: ClockAccessoryState = ClockAccessoryState(nextAlarmMillis = null, batteryPercent = null, isCharging = false),
     /** The media row under the clock — `null` hides it (setting off, no access, or nothing playing/paused). */
     val mediaPlayer: MediaPlayerState? = null,
-    /** Set once the user taps the usage-access prompt's own button — the prompt then stays hidden
-     *  for the rest of this ViewModel's lifetime regardless of whether they actually grant the
-     *  permission afterward, rather than reappearing every recomposition until [usageAccessGranted]
-     *  catches up (see chat history). */
-    val usageAccessPromptDismissed: Boolean = false,
     /**
      * Whether Facet currently holds the `HOME` role — see [com.facetlauncher.app.data.DefaultLauncherRepository.isDefaultLauncher].
      * `null` until that async check resolves; [showSetDefaultPrompt] and [showGestureHint] both wait for it, so an
@@ -103,9 +95,9 @@ data class HomeUiState(
     val activeAppRowPosition: AppRowPosition get() = style.appList.rowPosition
     val activeAppRowPresentation: AppRowPresentation get() = style.appList.rowPresentation
 
-    /** True when the active facet's mode needs `PACKAGE_USAGE_STATS`, it isn't granted yet, and the user hasn't already dismissed this prompt by tapping its button. */
-    val showUsageAccessPrompt: Boolean
-        get() = activeListContentMode != ListContentMode.FAVORITES && !usageAccessGranted && !usageAccessPromptDismissed
+    /** Recents or Most used has nothing to show yet: no app has been opened from Facet. */
+    val showUsageListHint: Boolean
+        get() = activeListContentMode != ListContentMode.FAVORITES && appListItems.isEmpty()
 
     val clockAlignment: ClockAlignment get() = style.clockPlacement.portrait.alignment
     val clockZoneHeightDp: Float? get() = style.clockPlacement.portrait.zoneHeightDp

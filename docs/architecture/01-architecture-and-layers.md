@@ -29,7 +29,7 @@ flowchart TB
     subgraph SRC["Sources"]
         DAO["data/local — Room DAOs\nFacetDatabase v49"]
         DS["DataStore of Preferences\nfacet_settings, facet_automation, facet_entitlement"]
-        FW["Framework services\nLauncherApps, UserManager, AppWidgetManager,\nContentResolver, UsageStatsManager, WallpaperManager ..."]
+        FW["Framework services\nLauncherApps, UserManager, AppWidgetManager,\nContentResolver, WallpaperManager ..."]
     end
 
     SCR -- "events: onAppClick, onReorder, ..." --> VMS
@@ -99,15 +99,15 @@ flowchart TB
     subgraph SC["SingletonComponent — lives with FacetApplication (@HiltAndroidApp)"]
         direction TB
         subgraph MODS["@Module @InstallIn(SingletonComponent) — data/di/"]
-            AM["AppModule\nClock, LauncherApps, UserManager,\nUsageStatsManager, AppOpsManager,\nWallpaperManager, ContentResolver,\n@ApplicationScope CoroutineScope\n(all @Singleton)"]
-            DBM["DatabaseModule\nFacetDatabase @Singleton\n+ 8 DAO @Provides (unscoped)"]
+            AM["AppModule\nClock, LauncherApps, UserManager,\nWallpaperManager, ContentResolver,\n@ApplicationScope CoroutineScope\n(all @Singleton)"]
+            DBM["DatabaseModule\nFacetDatabase @Singleton\n+ 9 DAO @Provides (unscoped)"]
             DSM["DataStoreModule\n4 x DataStore of Preferences @Singleton\n('facet_settings', 'facet_automation' via @AutomationDataStore, 'facet_entitlement' via @EntitlementDataStore, 'facet_daily_wallpaper' via @DailyWallpaperDataStore)"]
             WM["WidgetModule\nAppWidgetManager, LauncherAppWidgetHost\n(@Singleton)"]
             DPM["DispatcherModule\n@IoDispatcher, @DefaultDispatcher\n(CoroutineDispatcher)"]
             ENM["EntitlementModule\n@Binds PlayEntitlementRepository\n+ 2 @BindsOptionalOf hooks"]
             WTM["WeatherModule\n@Binds MetWeatherApi to WeatherApi\n@Binds RoomWeatherStore to WeatherStore\n@Binds AndroidPlaceGeocoder to PlaceGeocoder\n@Binds ObserveNativeWidgetOverridesUseCase to NativeWidgetOverrides"]
         end
-        REPOS["59 @Singleton data classes (51 repositories)\n@Singleton class X @Inject constructor(...)\n(no module — constructor injection)"]
+        REPOS["58 @Singleton data classes (50 repositories)\n@Singleton class X @Inject constructor(...)\n(no module — constructor injection)"]
         MODS --> REPOS
     end
 

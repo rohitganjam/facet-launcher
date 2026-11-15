@@ -1,6 +1,7 @@
 package com.facetlauncher.app.ui.launcher
 
 import com.facetlauncher.app.data.AppRepository
+import com.facetlauncher.app.data.LaunchHistoryRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.WorkProfileInfo
 import com.facetlauncher.app.data.WorkProfileRepository
@@ -29,6 +30,7 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.mockito.Mockito.mock
+import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
 import org.robolectric.RobolectricTestRunner
 
@@ -85,6 +87,7 @@ class LauncherViewModelTest {
             facetRepository(),
             fakeWorkProfileRepository(),
             mock(DailyWallpaperCoordinator::class.java),
+            mock(LaunchHistoryRepository::class.java),
         )
 
         // Then immediately after construction it's still loading (the fetch coroutine hasn't run yet)
@@ -124,6 +127,7 @@ class LauncherViewModelTest {
             facetRepository(),
             fakeWorkProfileRepository(),
             mock(DailyWallpaperCoordinator::class.java),
+            mock(LaunchHistoryRepository::class.java),
         )
 
         // Then it's still loading well before the timeout
@@ -161,6 +165,7 @@ class LauncherViewModelTest {
             facetRepository(),
             fakeWorkProfileRepository(),
             mock(DailyWallpaperCoordinator::class.java),
+            mock(LaunchHistoryRepository::class.java),
         )
 
         // Then before settings answer it is unknown, not false
@@ -199,6 +204,7 @@ class LauncherViewModelTest {
             facetRepository(),
             fakeWorkProfileRepository(),
             mock(DailyWallpaperCoordinator::class.java),
+            mock(LaunchHistoryRepository::class.java),
         )
         testDispatcher.scheduler.advanceUntilIdle()
 
@@ -238,6 +244,7 @@ class LauncherViewModelTest {
             facetRepository(),
             fakeWorkProfileRepository(listOf(workProfile)),
             mock(DailyWallpaperCoordinator::class.java),
+            mock(LaunchHistoryRepository::class.java),
         )
         testDispatcher.scheduler.advanceUntilIdle()
 
@@ -271,6 +278,7 @@ class LauncherViewModelTest {
             facetRepository(),
             fakeWorkProfileRepository(),
             mock(DailyWallpaperCoordinator::class.java),
+            mock(LaunchHistoryRepository::class.java),
         )
         testDispatcher.scheduler.advanceUntilIdle()
 
@@ -304,6 +312,7 @@ class LauncherViewModelTest {
             facetRepository(),
             fakeWorkProfileRepository(),
             mock(DailyWallpaperCoordinator::class.java),
+            mock(LaunchHistoryRepository::class.java),
         )
         testDispatcher.scheduler.advanceUntilIdle()
 
@@ -335,6 +344,7 @@ class LauncherViewModelTest {
             facetRepository(),
             fakeWorkProfileRepository(),
             mock(DailyWallpaperCoordinator::class.java),
+            mock(LaunchHistoryRepository::class.java),
         )
 
         // When a valid facet deep link arrives
@@ -369,6 +379,7 @@ class LauncherViewModelTest {
             facetRepository(),
             fakeWorkProfileRepository(),
             mock(DailyWallpaperCoordinator::class.java),
+            mock(LaunchHistoryRepository::class.java),
         )
 
         // When an unrelated uri (e.g. Intent.ACTION_MAIN with no data) arrives
@@ -397,6 +408,7 @@ class LauncherViewModelTest {
             facetRepository(listOf(com.facetlauncher.app.data.model.Facet(id = 7, name = "Car", position = 0, allowLandscape = false), com.facetlauncher.app.data.model.Facet(id = 8, name = "Home", position = 1))),
             fakeWorkProfileRepository(),
             mock(DailyWallpaperCoordinator::class.java),
+            mock(LaunchHistoryRepository::class.java),
         )
         testDispatcher.scheduler.advanceUntilIdle()
 
@@ -421,9 +433,42 @@ class LauncherViewModelTest {
             facetRepository(),
             fakeWorkProfileRepository(),
             mock(DailyWallpaperCoordinator::class.java),
+            mock(LaunchHistoryRepository::class.java),
         )
         testDispatcher.scheduler.advanceUntilIdle()
 
         assertEquals(true, viewModel.uiState.value.hideStatusBar)
+    }
+
+    @Test
+    fun `an app opened from Facet is recorded in its launch history`() = runTest {
+        // Given the launcher
+        val repository = mock(AppRepository::class.java)
+        `when`(repository.observeInstalledApps()).thenReturn(flowOf(emptyList()))
+        val settingsRepository = mock(SettingsRepository::class.java)
+        `when`(settingsRepository.settings).thenReturn(flowOf(LauncherSettings(onboardingCompleted = true)))
+        val launchHistoryRepository = mock(LaunchHistoryRepository::class.java)
+        val viewModel = LauncherViewModel(
+            GetInstalledAppsUseCase(repository),
+            mock(EnsureActiveFacetUseCase::class.java),
+            mock(CleanUpUninstalledAppsUseCase::class.java),
+            mock(RepairOrphanedProfileRowsUseCase::class.java),
+            mock(SyncFacetShortcutsUseCase::class.java),
+            mock(ActivateFacetByIdUseCase::class.java),
+            mock(RunFacetAutomationUseCase::class.java),
+            settingsRepository,
+            facetRepository(),
+            fakeWorkProfileRepository(),
+            mock(DailyWallpaperCoordinator::class.java),
+            launchHistoryRepository,
+        )
+        val app = AppInfo("com.example.maps", ".Main", "Maps", null)
+
+        // When it opens an app
+        viewModel.onAppLaunched(app)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Then the launch is recorded for Recents, Most used and search
+        verify(launchHistoryRepository).recordLaunch(app)
     }
 }

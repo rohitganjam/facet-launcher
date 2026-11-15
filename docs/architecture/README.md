@@ -1,19 +1,19 @@
 # Facet Launcher — Living Blueprint
 
-An architecture reference derived from the code at app `0.1.41` (Room schema v51, 537 Kotlin files under `app/src/main`). Every claim below was
+An architecture reference derived from the code at app `0.1.41` (Room schema v52, 537 Kotlin files under `app/src/main`). Every claim below was
 checked against source, not against planning docs; where the code diverges from
 `CLAUDE.md`'s stated conventions, [05-findings.md](05-findings.md) says so.
 
 | Doc | What it covers |
 |---|---|
 | [01-architecture-and-layers.md](01-architecture-and-layers.md) | Layer boundaries, unidirectional data flow, Hilt components/scopes/modules, entry points |
-| [02-persistence-room.md](02-persistence-room.md) | **Everything persisted**: storage map, Room ER diagram (10 tables: placements are two tables, `app_placements` and `folder_placements`), DAO method matrix, DAO→Repository→Flow, converters, migrations v10→v51, the complete DataStore key registry (80 keys, read/write paths, every writer), backup file format |
+| [02-persistence-room.md](02-persistence-room.md) | **Everything persisted**: storage map, Room ER diagram (13 tables: placements are two tables, `app_placements` and `folder_placements`), DAO method matrix, DAO→Repository→Flow, converters, migrations v10→v52, the complete DataStore key registry (80 keys, read/write paths, every writer), backup file format |
 | [03-reactive-data-flow.md](03-reactive-data-flow.md) | The four core reactive flows: live installed-app list, placement hydration, Home state graph, startup |
 | [04-package-structure.md](04-package-structure.md) | Package map with the "where does this file go" rules and the test-tree mirror |
 | [05-findings.md](05-findings.md) | Architect's review: 12 open findings (layering, cleanup, performance, test gaps) with concrete fixes, plus what's working well |
 | [06-testing.md](06-testing.md) | How tests are done: tiers, harnesses, fixtures, conventions, run commands, coverage gaps |
 | [TEST_REGISTRY.md](TEST_REGISTRY.md) | **Generated** — every test class and case (344 classes / 3134 cases), regenerate with `scripts/gen-test-registry.py` |
-| [07-registries.md](07-registries.md) | Complete inventories: 60 repositories and data singletons (deps, source wrapped, API, consumers), 76 use cases (with `DailyWallpaperCoordinator`), 47 ViewModels |
+| [07-registries.md](07-registries.md) | Complete inventories: 59 repositories and data singletons (deps, source wrapped, API, consumers), 76 use cases (with `DailyWallpaperCoordinator`), 47 ViewModels |
 | [08-flow-placements.md](08-flow-placements.md) | Flow: favorites/dock/folder add, remove, reorder (all in `app_placements` / `folder_placements`); override routing; uninstall cleanup, profile sweep, orphan repair, dock seeding |
 | [09-flow-backup-restore.md](09-flow-backup-restore.md) | Flow: export, destructive import, widget re-bind state machine, versioning |
 | [10-flow-hub-widgets.md](10-flow-hub-widgets.md) | Flow: widget host lifecycle, add (bind/configure/place), move/resize/compact, delete, orphans |
@@ -37,7 +37,7 @@ checked against source, not against planning docs; where the code diverges from
 | Module layout | `:app` (`minSdk 30`, `targetSdk 36`, `compileSdk 37`), plus `:detekt-rules` (custom Detekt rules) and `:benchmark` (Macrobenchmark tests against `:app`'s `benchmark` build type) |
 | DI | Hilt `2.60.1` via KSP — `@HiltAndroidApp` / `@AndroidEntryPoint` / `@HiltViewModel` |
 | Navigation | `navigation-compose 2.10.2` + `hilt-navigation-compose` — one `NavHost` (`FacetNavHost`) |
-| Persistence | Room `2.8.5` (`facet.db`, v51, schema export on) + `datastore-preferences 1.2.1` (`facet_settings`, `facet_automation`, `facet_entitlement`) |
+| Persistence | Room `2.8.5` (`facet.db`, v52, schema export on) + `datastore-preferences 1.2.1` (`facet_settings`, `facet_automation`, `facet_entitlement`) |
 | Collections in UI state | `kotlinx-collections-immutable` `0.5.2`: composable parameters and UI state carry `ImmutableList`/`ImmutableMap`/`ImmutableSet`, so Compose can skip on them (detekt's `UnstableCollections`) |
 | Async | Coroutines + `Flow`/`StateFlow` only; `collectAsStateWithLifecycle()` in Compose; no `LiveData` |
 | Serialization | `kotlinx-serialization-json` (backup bundle only) |

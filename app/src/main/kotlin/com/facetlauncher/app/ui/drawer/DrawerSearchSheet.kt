@@ -9,9 +9,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -30,10 +28,11 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -52,6 +51,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import com.facetlauncher.app.R
 import com.facetlauncher.app.data.model.AppInfo
@@ -71,7 +71,6 @@ import com.facetlauncher.app.ui.theme.Surface
 import com.facetlauncher.app.ui.theme.SurfaceContainer
 import com.facetlauncher.app.ui.theme.launcherSystemBarInsets
 import kotlinx.collections.immutable.ImmutableList
-import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
 
 /** The sheet is always a grid: the drawer's own density when the drawer is a grid, else Regular. */
@@ -151,7 +150,9 @@ internal fun DrawerSearchSheet(
                     .windowInsetsPadding(imeInsets)
                     .testTag("drawer_search_sheet"),
             ) {
-                val field = @Composable { SheetSearchField(query, onQueryChange, close) }
+                // Enter opens the top app result, the one shown first.
+                val openTopResult: () -> Unit = { if (query.isNotBlank()) searchResultApps.firstOrNull()?.let(actions.onAppClick) }
+                val field = @Composable { SheetSearchField(query, onQueryChange, close, onSubmit = { openTopResult() }) }
                 if (!atBottom) field()
                 SheetBody(
                     query, onQueryChange, apps, searchResultApps, searchListState, appearance, actions, sources,
@@ -212,7 +213,7 @@ private fun SheetScrim(onClose: () -> Unit) {
     )
 }
 
-/** The three suggestion sections, as grids. Usage-based ones load when the sheet shows; without Usage Access they give way to one prompt. */
+/** The three suggestion sections, as grids. Usage-based ones load from Facet's launch history when the sheet shows. */
 @Composable
 private fun SearchSuggestions(
     apps: ImmutableList<AppInfo>,
@@ -225,10 +226,10 @@ private fun SearchSuggestions(
     listState: LazyListState,
 ) {
     val requestUsage by rememberUpdatedState(sources.onRequestUsageSuggestions)
-    var usage by remember { mutableStateOf(UsageSuggestions(accessGranted = true)) }
+    var usage by remember { mutableStateOf(UsageSuggestions()) }
     LaunchedEffect(Unit) { usage = requestUsage() }
 
-    // Usage lookups know packages, not profiles: keep only entries the drawer itself lists.
+    // Keep only entries the drawer itself lists (not a vaulted or Private Space app).
     val listed = remember(apps) { apps.mapTo(HashSet()) { it.listKey } }
     val recentChanges = remember(apps) { listUseCases.recentlyChanged(apps).toImmutableList() }
     val frequent = remember(usage, listed) { usage.frequent.filter { it.listKey in listed }.toImmutableList() }
@@ -237,12 +238,8 @@ private fun SearchSuggestions(
 
     LazyColumn(state = listState, modifier = Modifier.fillMaxSize().padding(horizontal = 24.dp).testTag("drawer_search_suggestions")) {
         suggestionSection(R.string.drawer_search_section_recent_changes, recentChanges, gridAppearance, actions, appMenuNotifications, folderCandidates)
-        if (usage.accessGranted) {
-            suggestionSection(R.string.drawer_search_section_frequent, frequent, gridAppearance, actions, appMenuNotifications, folderCandidates)
-            suggestionSection(R.string.drawer_search_section_last_used, lastUsed, gridAppearance, actions, appMenuNotifications, folderCandidates)
-        } else {
-            item { UsageAccessStrip(onClick = sources.onUsageAccessClick, modifier = Modifier.padding(top = 14.dp)) }
-        }
+        suggestionSection(R.string.drawer_search_section_frequent, frequent, gridAppearance, actions, appMenuNotifications, folderCandidates)
+        suggestionSection(R.string.drawer_search_section_last_used, lastUsed, gridAppearance, actions, appMenuNotifications, folderCandidates)
     }
 }
 
@@ -268,31 +265,9 @@ private fun androidx.compose.foundation.lazy.LazyListScope.suggestionSection(
     }
 }
 
+/** The sheet's own field: focused as it opens, a back arrow to close, a clear button once something is typed, and Enter to [onSubmit]. */
 @Composable
-private fun UsageAccessStrip(onClick: () -> Unit, modifier: Modifier = Modifier) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .testTag("drawer_search_usage_access_strip")
-            .drawerDashedBorder(color = com.facetlauncher.app.ui.theme.Ink.copy(alpha = 0.16f), cornerRadius = 10.dp)
-            .padding(horizontal = 13.dp, vertical = 11.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(
-            text = stringResource(R.string.drawer_search_usage_access_needed),
-            style = MaterialTheme.typography.bodyMedium,
-            color = Muted,
-            modifier = Modifier.weight(1f),
-        )
-        Text(text = stringResource(R.string.open_settings), style = MaterialTheme.typography.bodyMedium, color = Accent)
-    }
-}
-
-/** The sheet's own field: focused as it opens, a back arrow to close, and a clear button once something is typed. */
-@Composable
-private fun SheetSearchField(query: String, onQueryChange: (String) -> Unit, onClose: () -> Unit) {
+private fun SheetSearchField(query: String, onQueryChange: (String) -> Unit, onClose: () -> Unit, onSubmit: () -> Unit) {
     val focusRequester = remember { FocusRequester() }
     LaunchedEffect(Unit) { focusRequester.requestFocus() }
     Row(
@@ -311,6 +286,8 @@ private fun SheetSearchField(query: String, onQueryChange: (String) -> Unit, onC
             onValueChange = onQueryChange,
             placeholder = { Text(stringResource(R.string.app_picker_search_apps)) },
             singleLine = true,
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Go),
+            keyboardActions = KeyboardActions(onGo = { onSubmit() }),
             colors = TextFieldDefaults.colors(
                 unfocusedContainerColor = Surface,
                 focusedContainerColor = Surface,

@@ -38,7 +38,7 @@ data class AppInfo(
  * app like any other, but one that would never make sense to show in its own app lists (Home's
  * Recents/Most Used, the App Drawer): launching yourself from within yourself is meaningless.
  * A plain compile-time constant rather than reading it from `Context.packageName` — the
- * `data/`/`domain/` classes that need it ([UsageStatsRepository], [GetInstalledAppsUseCase])
+ * `data/`/`domain/` classes that need it ([LaunchHistoryRepository], [GetInstalledAppsUseCase])
  * would otherwise need `Context` injected purely to exclude one known, fixed string, and
  * [GetInstalledAppsUseCase] specifically isn't supposed to touch Android framework APIs at all.
  */

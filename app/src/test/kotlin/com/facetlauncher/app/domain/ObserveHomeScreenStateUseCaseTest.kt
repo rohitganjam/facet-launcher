@@ -5,10 +5,9 @@ import com.facetlauncher.app.data.CalendarRepository
 import com.facetlauncher.app.data.NotificationAccessRepository
 import com.facetlauncher.app.data.NotificationBadgeRepository
 import com.facetlauncher.app.data.FacetRepository
+import com.facetlauncher.app.data.LaunchHistoryRepository
 import com.facetlauncher.app.data.MediaSessionRepository
 import com.facetlauncher.app.data.SettingsRepository
-import com.facetlauncher.app.data.UsageAccessRepository
-import com.facetlauncher.app.data.UsageStatsRepository
 import com.facetlauncher.app.data.clockItemWith
 import com.facetlauncher.app.data.model.ClockCalendarConfig
 import com.facetlauncher.app.data.model.ClockWidgetConfig
@@ -22,6 +21,8 @@ import com.facetlauncher.app.data.model.PlacedItem
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -51,8 +52,7 @@ class ObserveHomeScreenStateUseCaseTest {
         }
         val facetsFlow = MutableStateFlow<List<Facet>>(emptyList())
         val facetRepository = mock(FacetRepository::class.java).also { `when`(it.observeFacets()).thenReturn(facetsFlow) }
-        val usageStatsRepository = mock(UsageStatsRepository::class.java)
-        val usageAccessRepository = mock(UsageAccessRepository::class.java).also { `when`(it.isGranted()).thenReturn(true) }
+        val launchHistoryRepository = mock(LaunchHistoryRepository::class.java)
         val calendarPermissionRepository = mock(CalendarPermissionRepository::class.java).also { `when`(it.isGranted()).thenReturn(false) }
         val calendarRepository = mock(CalendarRepository::class.java)
         val notificationBadgeRepository = mock(NotificationBadgeRepository::class.java)
@@ -69,8 +69,7 @@ class ObserveHomeScreenStateUseCaseTest {
             settingsRepository,
             observePlacedItems,
             facetRepository,
-            usageStatsRepository,
-            usageAccessRepository,
+            launchHistoryRepository,
             calendarPermissionRepository,
             calendarRepository,
             notificationBadgeRepository,
@@ -121,7 +120,7 @@ class ObserveHomeScreenStateUseCaseTest {
         fixture.facetsFlow.value = listOf(
             Facet(id = 1L, name = "P1", position = 0, listContentMode = ListContentMode.RECENTS, appsToShowCount = 6),
         )
-        `when`(fixture.usageStatsRepository.getRecentApps(6)).thenReturn(emptyList())
+        `when`(fixture.launchHistoryRepository.getRecentApps(6)).thenReturn(emptyList())
         `when`(fixture.observePlacedItems.items(PlacementTarget(PlacementList.FAVORITES, 1L))).thenReturn(flowOf(listOf(PlacedItem.SingleApp(appInfo('f')))))
 
         // When observing home screen state
@@ -135,30 +134,29 @@ class ObserveHomeScreenStateUseCaseTest {
     }
 
     @Test
-    fun `recents mode reads from UsageStatsRepository when usage access is granted`() = runTest {
-        // Given a facet set to Recents, usage access granted
+    fun `recents mode reads Facet's own launch history`() = runTest {
+        // Given a facet set to Recents
         val fixture = Fixture()
         fixture.facetsFlow.value = listOf(
             Facet(id = 1L, name = "P1", position = 0, listContentMode = ListContentMode.RECENTS, appsToShowCount = 6),
         )
-        `when`(fixture.usageStatsRepository.getRecentApps(6)).thenReturn(listOf(appInfo('r')))
+        `when`(fixture.launchHistoryRepository.getRecentApps(6)).thenReturn(listOf(appInfo('r')))
 
         // When observing home screen state
         val result = fixture.useCase().first()
 
         // Then it exposes the ranked recents, not favorites
         assertEquals(listOf(PlacedItem.SingleApp(appInfo('r'))), result.appListItems)
-        assertEquals(true, result.usageAccessGranted)
     }
 
     @Test
-    fun `most used mode reads from UsageStatsRepository when usage access is granted`() = runTest {
-        // Given a facet set to Most Used, usage access granted
+    fun `most used mode reads Facet's own launch history`() = runTest {
+        // Given a facet set to Most Used
         val fixture = Fixture()
         fixture.facetsFlow.value = listOf(
             Facet(id = 1L, name = "P1", position = 0, listContentMode = ListContentMode.MOST_USED, appsToShowCount = 4),
         )
-        `when`(fixture.usageStatsRepository.getMostUsedApps(4)).thenReturn(listOf(appInfo('m')))
+        `when`(fixture.launchHistoryRepository.getMostUsedApps(4)).thenReturn(listOf(appInfo('m')))
 
         // When observing home screen state
         val result = fixture.useCase().first()
@@ -168,20 +166,23 @@ class ObserveHomeScreenStateUseCaseTest {
     }
 
     @Test
-    fun `recents mode without usage access yields an empty list and reports ungranted`() = runTest {
-        // Given a facet set to Recents, usage access NOT granted
+    fun `recents mode re-reads launch history on refresh`() = runTest {
+        // Given a facet set to Recents with nothing opened yet
         val fixture = Fixture()
-        `when`(fixture.usageAccessRepository.isGranted()).thenReturn(false)
         fixture.facetsFlow.value = listOf(
-            Facet(id = 1L, name = "P1", position = 0, listContentMode = ListContentMode.RECENTS),
+            Facet(id = 1L, name = "P1", position = 0, listContentMode = ListContentMode.RECENTS, appsToShowCount = 6),
         )
+        `when`(fixture.launchHistoryRepository.getRecentApps(6)).thenReturn(emptyList(), listOf(appInfo('r')))
+        val lists = mutableListOf<List<PlacedItem>>()
+        val collecting = launch(UnconfinedTestDispatcher(testScheduler)) { fixture.useCase().collect { lists += it.appListItems } }
 
-        // When observing home screen state
-        val result = fixture.useCase().first()
+        // When an app is opened and Home resumes
+        fixture.useCase.refresh()
+        collecting.cancel()
 
-        // Then the list is empty (never a broken partial list) and the ungranted state is surfaced
-        assertEquals(emptyList<PlacedItem>(), result.appListItems)
-        assertEquals(false, result.usageAccessGranted)
+        // Then the list picks the app up
+        assertEquals(emptyList<PlacedItem>(), lists.first())
+        assertEquals(listOf(PlacedItem.SingleApp(appInfo('r'))), lists.last())
     }
 
     @Test

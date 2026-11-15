@@ -12,7 +12,7 @@ import androidx.room.TypeConverters
         FacetEntity::class, AppPlacementEntity::class, WidgetPlacementEntity::class,
         FolderEntity::class, FolderAppEntity::class, FolderPlacementEntity::class,
         AutomationRuleEntity::class, WeatherHourEntity::class, WeatherMetaEntity::class,
-        ClockStackItemEntity::class,
+        ClockStackItemEntity::class, AppLaunchEntity::class, AppLaunchDayEntity::class, SearchPickEntity::class,
     ],
     version = FacetDatabase.VERSION,
     exportSchema = true,
@@ -20,6 +20,8 @@ import androidx.room.TypeConverters
         AutoMigration(from = 43, to = 44, spec = DropFacetClockColumns::class),
         AutoMigration(from = 45, to = 46, spec = DropFacetOverrideFlags::class),
         AutoMigration(from = 46, to = 47),
+        // 50→51: Facet's own launch history and search picks, which replace Usage Access.
+        AutoMigration(from = 50, to = 51),
     ],
 )
 @TypeConverters(Converters::class)
@@ -34,11 +36,12 @@ abstract class FacetDatabase : RoomDatabase() {
     abstract fun automationRuleDao(): AutomationRuleDao
     abstract fun weatherDao(): WeatherDao
     abstract fun clockStackItemDao(): ClockStackItemDao
+    abstract fun launchHistoryDao(): LaunchHistoryDao
 
     companion object {
         // A named constant, not a magic number scattered across DatabaseModule/Migrations/tests —
         // see Migrations.kt for what bumping this requires from here on.
-        const val VERSION = 51
+        const val VERSION = 52
     }
 }
 

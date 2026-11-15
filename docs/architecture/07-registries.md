@@ -4,7 +4,7 @@ Complete inventories of the two injectable layers, generated from constructor si
 `@Inject` sites in `app/src/main`. If a class is not in these tables it does not exist; if a
 dependency is not listed the class does not have it.
 
-## 1. Repositories and data singletons (59: the 58 `@Singleton` classes in `data/` plus the `EntitlementRepository` interface) — all constructor-injected; `EntitlementRepository` and the weather seams (`WeatherApi`, `WeatherStore`, `PlaceGeocoder`) are the only interfaces
+## 1. Repositories and data singletons (58: the 57 `@Singleton` classes in `data/` plus the `EntitlementRepository` interface) — all constructor-injected; `EntitlementRepository` and the weather seams (`WeatherApi`, `WeatherStore`, `PlaceGeocoder`) are the only interfaces
 
 | Repository | Wraps (source of truth) | Injects | Public API shape | Injected by |
 |---|---|---|---|---|
@@ -50,9 +50,8 @@ dependency is not listed the class does not have it.
 | `SecureFolderRepository` | `PackageManager.getLaunchIntentForPackage(Samsung Secure Folder)` | `Context` | `launchIntent(): Intent?` | `DrawerViewModel` |
 | `SettingsRepository` | `DataStore<Preferences>` `facet_settings` | `DataStore<Preferences>` | `settings: Flow<LauncherSettings>`, 84 `suspend fun set*/reset*/mark*/update*/choose*/remove*` writers | 25 use cases, 29 ViewModels, `IconPackRepository` |
 | `AppStoreRepository` | `PackageManager.resolveActivity` for the Play Store (`com.android.vending`), any `market://` handler, then a browser for play.google.com (`<queries>` in the manifest) | `Context`, `@IoDispatcher` | `availableStore(): AppStore?` (IO), `searchIntent(store, query)` | `DrawerViewModel` |
-| `SystemSettingsRepository` | Static catalogue of `Settings.ACTION_*` intents + keyword aliases | `Context` | `search(query)` (IO) | `DrawerViewModel` |
-| `UsageAccessRepository` | `AppOpsManager.unsafeCheckOpNoThrow(GET_USAGE_STATS)` | `AppOpsManager`, `Context` | `isGranted()` | `ObserveHomeScreenStateUseCase`, `ObserveFacetPreviewsUseCase`, `PermissionsViewModel`, `UsageAccessExplanationViewModel`, `DrawerViewModel`, `DockAppPickerViewModel`, `FavoritesPickerViewModel`, `FolderAppPickerViewModel` |
-| `UsageStatsRepository` | `UsageStatsManager.queryUsageStats` | `UsageStatsManager`, `AppRepository` | `getRecentApps(limit)`, `getMostUsedApps(limit)` | `ObserveHomeScreenStateUseCase`, `ObserveFacetPreviewsUseCase`, `DrawerViewModel`, `SortAppsForPickerUseCase` |
+| `SystemSettingsRepository` | Static catalogue of `Settings.ACTION_*` intents + keyword aliases | `Context`, `@IoDispatcher` | `availableEntries()` (IO: the entries this device resolves, with keywords; ranked by `RankBySearchRelevanceUseCase`) | `DrawerViewModel` |
+| `LaunchHistoryRepository` | Room `app_launches`, `app_launch_days`, `search_picks`: apps opened from Facet (not Private Space, not Facet itself) and search picks | `LaunchHistoryDao`, `AppRepository`, `Clock`, `@DefaultDispatcher` | `recordLaunch(app)`, `recordSearchPick(normalizedQuery, app)`, `getRecentApps(limit)`, `getMostUsedApps(limit)` (30 days), `getLastUsedTimestamps()`, `observeSearchSignals(): Flow<SearchSignals>`, `removeByPackage/UserId` | `ObserveHomeScreenStateUseCase`, `ObserveFacetPreviewsUseCase`, `SortAppsForPickerUseCase`, `CleanUpUninstalledAppsUseCase`, `DrawerViewModel`, `LauncherViewModel` |
 | `WifiRepository` | `ConnectivityManager` Wi-Fi network callbacks (location info only for a named-network rule) + `WifiManager.scanResults` | `Context` | `observeWifiState(includeSsid): Flow<WifiState>`, `suspend nearbyNetworkNames(current)` (IO) | `DeviceStateRepository`, `RuleEditorViewModel` |
 | `WakeEventsRepository` | System broadcasts `ACTION_SCREEN_ON`, `ACTION_USER_PRESENT`, `ACTION_TIME_CHANGED`, `ACTION_TIMEZONE_CHANGED` (`RECEIVER_NOT_EXPORTED`) | `Context` | `observeWakeEvents(): Flow<Unit>` | `RunFacetAutomationUseCase` |
 | `WallpaperRepository` (`open`) | `WallpaperManager.peekDrawable` / `getWallpaperColors` | `WallpaperManager` | `currentHomeWallpaper(): HomeWallpaper` (`Image` (rare: `peekDrawable` needs storage access) / `Tones` (the primary colour, washing toward a 40% blend of the secondary; brightness is set per theme in `WallpaperBackground`) / `Unavailable`, downscaled to 1080px); `homeWallpaper: Flow<HomeWallpaper>` reads it again whenever a new copy is stored or a new system wallpaper id is recorded (the carousel follows it) | `FacetCarouselViewModel`, `AppearanceSettingsViewModel`, `AppDrawerSettingsViewModel`, `DockSettingsViewModel`, `HomeAppsListSettingsViewModel`, `NotificationSettingsViewModel` |
@@ -84,7 +83,7 @@ constructed over a hand-written DAO fake or mocked with Mockito 5 on the JVM.
 flowchart LR
     AR[AppRepository]
     FOR[FolderRepository] --> AR
-    USR[UsageStatsRepository] --> AR
+    LHR[LaunchHistoryRepository] --> AR
     WPR[WorkProfileRepository] --> AR
     PSR[PrivateSpaceRepository] --> AR
     AWR[AppWidgetRepository] --> AR
@@ -108,7 +107,7 @@ pack (`IconPackRepository`, which reads that choice from `SettingsRepository`).
 | `AssignCalendarColorsUseCase` | pure | — | `CalendarSettingsViewModel`, `EnsureCalendarColorsUseCase` |
 | `EnsureCalendarColorsUseCase` (`@Singleton`, holds a mutex) | write + long-running collector: gives every calendar on the device, Work Profile ones included, its stable bar colour; `keepAssigned()` observes only while calendar access is granted, re-running on each `observeCalendarChanges()`, and on revoke unregisters the observer and clears the stored colours (`recheckAccess()` re-evaluates on each activity resume, since access has no grant-change callback); a failed assignment is skipped and a failed observation retried with a back-off, so neither ends it | `CalendarPermissionRepository`, `CalendarRepository`, `SettingsRepository`, `AssignCalendarColorsUseCase` | `FacetApplication` (collector for the app's life, and `recheckAccess()` from an `ActivityLifecycleCallbacks` resume) , `NativeWidgetConfigViewModel` |
 | `UpdateClockConfigUseCase` | write: applies a change to a facet's clock settings in force (so a clock with none stored yet keeps what it shows) and stores the result on its clock page; no-op for a facet with no clock | `SettingsRepository`, `FacetRepository`, `ClockStackRepository` | `ClockStyleGalleryViewModel`, `ClockAccessoriesViewModel`, `CalendarSettingsViewModel`, `TurnOffWeatherUseCase` |
-| `CleanUpUninstalledAppsUseCase` | long-running collector | `AppRepository`, `PlacementRepository`, `FolderRepository` | `LauncherViewModel` |
+| `CleanUpUninstalledAppsUseCase` | long-running collector | `AppRepository`, `PlacementRepository`, `FolderRepository`, `LaunchHistoryRepository` | `LauncherViewModel` |
 | `CompactWidgetsUseCase` | pure grid | — | `HubViewModel` |
 | `DeleteFacetUseCase` | write (releases every widget id in the facet's clock stack first) | `FacetRepository`, `AppWidgetRepository` | `ManageFacetsViewModel`, `FacetCarouselViewModel` |
 | `DeleteWidgetUseCase` | write | `WidgetPlacementRepository`, `AppWidgetRepository` | `HubViewModel` |
@@ -125,10 +124,10 @@ pack (`IconPackRepository`, which reads that choice from `SettingsRepository`).
 | `ObserveFacetAutomationUseCase` | observe (`Flow<FacetAutomationScreenState>`: rule rows with facet names, "why Home looks like this" status, permission and Pro availability, `canAddRule`, `isPro`). Takes a refresh tick that re-reads permission grants | `AutomationRuleRepository`, `AutomationStateRepository`, `FacetRepository`, `SettingsRepository`, `AutomationPermissionRepository`, `EntitlementRepository`, `CanUseTriggerUseCase` | `FacetAutomationViewModel` |
 | `ObserveActiveFacetItemsUseCase` | observe: the active facet's own Dock or Favorites, for a screen not tied to one facet (previews, sample apps) | `SettingsRepository`, `ObservePlacedItemsUseCase` | `ObserveIconPickerUseCase`, `AppearanceSettingsViewModel`, `NotificationSettingsViewModel` |
 | `ObserveIconPickerUseCase` | observe (`Flow<IconPickerState>`): the built-in style cards' samples (own icons via `AppRepository.withOwnIcon`) and each installed pack by its own app icon; only the applied pack is read, for its coverage (emitted loading first) | `ObserveActiveFacetItemsUseCase`, `GetInstalledAppsUseCase`, `AppRepository`, `IconPackRepository`, `DefaultAppRepository`, `SelectIconSamplesUseCase` | `IconsViewModel` |
-| `ObserveFacetPreviewsUseCase` | observe (`Flow<Map<Long, FacetPreviewData>>`) | `FacetRepository`, `SettingsRepository`, `ObservePlacedItemsUseCase`, `UsageStatsRepository`, `UsageAccessRepository`, `CalendarPermissionRepository`, `CalendarRepository` | `FacetCarouselViewModel` |
+| `ObserveFacetPreviewsUseCase` | observe (`Flow<Map<Long, FacetPreviewData>>`) | `FacetRepository`, `SettingsRepository`, `ObservePlacedItemsUseCase`, `LaunchHistoryRepository`, `CalendarPermissionRepository`, `CalendarRepository` | `FacetCarouselViewModel` |
 | `ObserveClockWeatherUseCase` | observe (`Flow<ClockWeather>`): the launcher-wide forecast, or the active facet's own place (`ClockWidgetConfig.weatherLocation`, resolved through `NativeWidgetOverrideResolver` like a widget's) with why there is none; `refreshOwn()` looks it up again | `SettingsRepository`, `FacetRepository`, `ObserveWeatherUseCase`, `NativeWidgetOverrideResolver` | `WeatherViewModel` |
 | `ObserveWeatherUseCase` | observe (`Flow<WeatherState?>`): stored hours + fetch state + settings + a five-minute tick → now, the next 24 hourly points, local days from today, the rain summary, the place name and zone | `SettingsRepository`, `WeatherRepository`, `Clock` | `ObserveClockWeatherUseCase` (`WeatherViewModel` reads the forecast through it) |
-| `ObserveHomeScreenStateUseCase` (`@ViewModelScoped`) | observe (holds `refreshTrigger`) | 9 repositories + `ObservePlacedItemsUseCase` + `ObserveClockAccessoriesUseCase` | `HomeViewModel` |
+| `ObserveHomeScreenStateUseCase` (`@ViewModelScoped`) | observe (holds `refreshTrigger`) | 8 repositories + `ObservePlacedItemsUseCase` + `ObserveClockAccessoriesUseCase` | `HomeViewModel` |
 | `ObserveHubStateUseCase` (`@ViewModelScoped`) | observe (holds `refreshTrigger`) | `WidgetPlacementRepository`, `AppWidgetRepository` | `HubViewModel` |
 | `ObserveNativeWidgetOverridesUseCase` (bound as `NativeWidgetOverrides`) | observe (`Flow<Map<NativeWidgetRef, NativeWidgetOverride>>`, five-minute tick): each Hub or Home Agenda or Weather widget's own events or forecast | `WidgetPlacementRepository`, `ClockStackRepository`, `SettingsRepository`, `NativeWidgetOverrideResolver` (which uses `CalendarRepository`, `CalendarPermissionRepository`, `WidgetWeatherRepository`, `WeatherRepository`, `LocationRepository`, `ResolvePlaceUseCase`, `Clock`) | `NativeWidgetAccessViewModel` |
 | `ObserveNativeWidgetSettingsUseCase` | observe (`Flow<NativeWidgetSettings?>`): what a Hub or Home widget is and is set to | `WidgetPlacementRepository`, `ClockStackRepository`, `SettingsRepository` | `NativeWidgetConfigViewModel` |
@@ -142,7 +141,7 @@ pack (`IconPackRepository`, which reads that choice from `SettingsRepository`).
 | `OrderWidgetsForLandscapeUseCase` | pure (saved landscape order first, the rest in portrait reading order) | — | `LandscapeHubUseCase` |
 | `PlaceWidgetUseCase` | pure grid (`Placed` / `HubFull`) | — | `HubWidgetPickerViewModel`, `BackupRestoreViewModel` |
 | `ReorderLandscapeWidgetUseCase` | pure (moves one widget in the order, renumbers all) | — | `LandscapeHubUseCase` |
-| `RankBySearchRelevanceUseCase` | pure | — | `DrawerViewModel`, `PrivateSpaceViewModel` (+ `AppDrawerScreen` via `DrawerListUseCases`) |
+| `RankBySearchRelevanceUseCase` | pure: the one search model (normalize, tiers, learned picks and launches for drawer apps; top-level `matchesSearch` for filters), see [12 §2](12-flow-drawer-search-and-app-actions.md) | — | `DrawerViewModel`, `PrivateSpaceViewModel` (+ `AppDrawerScreen` via `DrawerListUseCases`); `matchesSearch` in the Dock, Favorites and folder pickers and `HubWidgetPickerUiState` |
 | `RecentlyInstalledAppsUseCase` | pure (filters `firstInstallTime` within 72h) | — | `DrawerListUseCases` (called from `rememberDrawerBrowseModel`, in composition: F15 in `05`), `PrivateSpaceViewModel` |
 | `RecentlyChangedAppsUseCase` | pure (installed or updated within 72h, newest change first) | — | `AppDrawerScreen` search sheet (via `DrawerListUseCases`) |
 | `RemoveFromActiveListUseCase` | write: removes an app or folder from a list for the active facet | `ResolveActivePlacementTargetUseCase`, `PlacementRepository` | `DrawerViewModel`, `FolderDetailViewModel` |
@@ -171,7 +170,7 @@ pack (`IconPackRepository`, which reads that choice from `SettingsRepository`).
 | `SelectIconSamplesUseCase` | pure: Home apps, then defaults, then the drawer, narrowed by an `accept` filter | `SelectPreviewAppsUseCase` | `ObserveIconPickerUseCase` |
 | `SelectPreviewAppsUseCase` | pure | — | `HomeAppsListSettingsViewModel`, `SelectIconSamplesUseCase`, `NotificationSettingsViewModel` |
 | `SelectableFacetsUseCase` | the facets the user may switch to: all for Pro, the first 3 in list order for free (`FacetLimits.selectableIds`); `invoke()` ids and `observe()` entities | `FacetRepository`, `EntitlementRepository` | `ActivateFacetByIdUseCase`, `EnsureActiveFacetUseCase`, `RefreshAutomationStateUseCase`, `SyncFacetShortcutsUseCase` |
-| `SortAppsForPickerUseCase` | pure + read (`LAST_USED` only) | `UsageStatsRepository` | `FavoritesPickerViewModel`, `DockAppPickerViewModel`, `FolderAppPickerViewModel` |
+| `SortAppsForPickerUseCase` | pure + read (`LAST_USED` only, from Facet's own launches) | `LaunchHistoryRepository` | `FavoritesPickerViewModel`, `DockAppPickerViewModel`, `FolderAppPickerViewModel` |
 | `SyncFacetShortcutsUseCase` | long-running collector; publishes shortcuts only for selectable facets | `SelectableFacetsUseCase`, `FacetShortcutRepository` | `LauncherViewModel` (see [14](14-flow-deep-links-and-shortcuts.md)) |
 | `AddClockStackItemUseCase` | write: appends the clock or a widget within the plan's limit (1 Free, 5 Pro, one clock); `hasRoom(facetId)` is the Add upsell check; returns `AddClockStackItemResult` | `ClockStackRepository`, `EntitlementRepository` | `ClockStackViewModel`, `ClockWidgetPickerViewModel` |
 | `RemoveClockStackItemUseCase` | write: removes a page and releases the widget id it held | `ClockStackRepository`, `AppWidgetRepository` | `ClockStackViewModel`, `ClockWidgetFacetController` |
@@ -182,7 +181,7 @@ Non-use-case files in `domain/`: `FlowCombine.kt` (6/7-ary `combine`), `HubGridC
 (`HUB_COLUMNS`, `HUB_MAX_ROWS`, `HUB_MAX_WIDGETS`, `calculateHubCellWidth(context)` — see F4),
 `BackupMapping.kt` (entity ⇄ `Backup*` DTO extension functions).
 
-## 3. ViewModels (46) — `@HiltViewModel`, one per screen
+## 3. ViewModels (47) — `@HiltViewModel`, one per screen
 
 | ViewModel | Screen / surface | Nav arg (`SavedStateHandle`) |
 |---|---|---|
@@ -223,7 +222,6 @@ Non-use-case files in `domain/`: `FlowCombine.kt` (6/7-ary `combine`), `HubGridC
 | `NotificationAccessExplanationViewModel` | `NotificationAccessExplanationScreen` | — |
 | `GesturesViewModel` | `GesturesScreen` (Settings → Gestures: the built-in gestures and the two opt-in switches) | — |
 | `AccessibilityAccessExplanationViewModel` | `AccessibilityAccessExplanationScreen` | — |
-| `UsageAccessExplanationViewModel` | `UsageAccessExplanationScreen` | — |
 | `PermissionsViewModel` | `PermissionsScreen` | — |
 | `FoldersSettingsViewModel` | `FoldersSettingsScreen` | — |
 | `FolderDetailViewModel` | `FolderDetailScreen` | `folderId` |

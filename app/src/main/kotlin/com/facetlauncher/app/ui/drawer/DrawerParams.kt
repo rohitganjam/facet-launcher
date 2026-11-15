@@ -12,6 +12,7 @@ import com.facetlauncher.app.data.model.DrawerGridDensity
 import com.facetlauncher.app.data.model.DrawerListItemSize
 import com.facetlauncher.app.data.model.DrawerPresentation
 import com.facetlauncher.app.data.model.Folder
+import com.facetlauncher.app.data.model.SearchSignals
 import com.facetlauncher.app.data.model.NotificationBadgeStyle
 import com.facetlauncher.app.data.model.RecentlyInstalledPosition
 import com.facetlauncher.app.data.model.SearchBarPosition
@@ -73,12 +74,11 @@ data class DrawerSearchBarConfig(
     val focusRequest: Int = 0,
 )
 
-/** The apps the search sheet suggests from Usage Access: most used and last used, and whether that access is granted. */
+/** The apps the search sheet suggests from Facet's launch history: most used and last used. */
 @Immutable
 data class UsageSuggestions(
     val frequent: List<AppInfo> = emptyList(),
     val lastUsed: List<AppInfo> = emptyList(),
-    val accessGranted: Boolean = true,
 )
 
 /** The contacts and system Settings sections of the search results, and the prompts that ask for what they need. */
@@ -97,7 +97,8 @@ data class DrawerSearchSources(
     val onSettingsEntryClick: (SettingsSearchEntry) -> Unit = {},
     /** The search sheet's frequently used and last used apps, asked for each time it opens. */
     val onRequestUsageSuggestions: suspend () -> UsageSuggestions = { UsageSuggestions() },
-    val onUsageAccessClick: () -> Unit = {},
+    /** What search has learned from use, for ranking app results. */
+    val searchSignals: SearchSignals = SearchSignals.EMPTY,
     /** The store the no-results screen offers to search; `null` hides the button. */
     val appStore: AppStore? = null,
     val onAppStoreSearchClick: (AppStore, String) -> Unit = { _, _ -> },

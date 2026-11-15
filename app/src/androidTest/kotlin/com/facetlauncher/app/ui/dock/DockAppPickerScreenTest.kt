@@ -1,7 +1,5 @@
 package com.facetlauncher.app.ui.dock
 
-import android.app.AppOpsManager
-import android.app.usage.UsageStatsManager
 import android.content.pm.LauncherApps
 import android.os.UserManager
 import androidx.compose.runtime.remember
@@ -19,10 +17,9 @@ import androidx.compose.ui.test.performTextInput
 import androidx.lifecycle.SavedStateHandle
 import androidx.room.Room
 import com.facetlauncher.app.data.AppRepository
+import com.facetlauncher.app.data.testLaunchHistoryRepository
 import com.facetlauncher.app.data.getTestableApps
 import com.facetlauncher.app.data.FolderRepository
-import com.facetlauncher.app.data.UsageAccessRepository
-import com.facetlauncher.app.data.UsageStatsRepository
 import com.facetlauncher.app.data.local.FacetDatabase
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.AppSortOption
@@ -67,20 +64,18 @@ class DockAppPickerScreenTest {
                     runBlocking { database.facetDao().insert(com.facetlauncher.app.data.local.FacetEntity(id = facetId, name = "P", position = 0)) }
                 }
                 seed(appRepository, placementRepository, folderRepository)
-                val usageStatsRepository = UsageStatsRepository(context.getSystemService(UsageStatsManager::class.java), appRepository)
-                val usageAccessRepository = UsageAccessRepository(context.getSystemService(AppOpsManager::class.java), context)
+                val launchHistoryRepository = testLaunchHistoryRepository(context, appRepository)
                 DockAppPickerViewModel(
                     SavedStateHandle(facetId?.let { mapOf("facetId" to it) } ?: emptyMap()),
                     GetInstalledAppsUseCase(appRepository),
                     placementRepository,
                     observePlacedItems,
                     folderRepository,
-                    SortAppsForPickerUseCase(usageStatsRepository),
-                    usageAccessRepository,
+                    SortAppsForPickerUseCase(launchHistoryRepository),
                 ).also { lastViewModel = it }
             }
             FacetLauncherTheme {
-                DockAppPickerScreen(onDone = onDone, onNavigateToUsageAccessExplanation = {}, viewModel = viewModel)
+                DockAppPickerScreen(onDone = onDone, viewModel = viewModel)
             }
         }
         composeRule.waitForIdle()
@@ -313,44 +308,15 @@ class DockAppPickerScreenTest {
     }
 
     @Test
-    fun selectingLastUsedSortNavigatesToUsageAccessExplanationInsteadOfApplyingItWhenUngranted() {
-        // Given the picker with Usage Access not granted (this test environment's default)
-        var navigated = false
-        composeRule.setContent {
-            val context = LocalContext.current
-            val viewModel = remember {
-                val database = Room.inMemoryDatabaseBuilder(context, FacetDatabase::class.java).allowMainThreadQueries().build()
-                val launcherApps = context.getSystemService(LauncherApps::class.java)
-                val appRepository = AppRepository(launcherApps, context.getSystemService(UserManager::class.java), context)
-                val folderRepository = FolderRepository(database.folderDao(), appRepository)
-                val placementRepository = PlacementRepository(database.appPlacementDao(), database.folderPlacementDao())
-                val observePlacedItems = ObservePlacedItemsUseCase(placementRepository, folderRepository, appRepository)
-                val usageStatsRepository = UsageStatsRepository(context.getSystemService(UsageStatsManager::class.java), appRepository)
-                val usageAccessRepository = UsageAccessRepository(context.getSystemService(AppOpsManager::class.java), context)
-                DockAppPickerViewModel(
-                    SavedStateHandle(mapOf("facetId" to 7L)),
-                    GetInstalledAppsUseCase(appRepository),
-                    placementRepository,
-                    observePlacedItems,
-                    folderRepository,
-                    SortAppsForPickerUseCase(usageStatsRepository),
-                    usageAccessRepository,
-                )
-            }
-            FacetLauncherTheme {
-                DockAppPickerScreen(onDone = {}, onNavigateToUsageAccessExplanation = { navigated = true }, viewModel = viewModel)
-            }
-        }
-        composeRule.waitForIdle()
+    fun selectingLastUsedSortAppliesItWithNoPermissionNeeded() {
+        // Given the picker (Last used now comes from Facet's own launch history)
+        setContent()
 
         // When picking "Last used" from the sort dropdown
         composeRule.onNodeWithTag("dock_picker_sort_menu_button").performClick()
-        composeRule.onNodeWithTag("dock_picker_sort_option_LAST_USED").performClick()
-        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("dock_picker_sort_option_${AppSortOption.LAST_USED.name}").performClick()
 
-        // Then it routes to the permission explanation instead of applying the sort — the
-        // dropdown still shows the previous (default) selection
-        assert(navigated)
-        composeRule.onNodeWithText("Alphabetical").assertExists()
+        // Then the sort applies straight away, with no permission screen in between
+        composeRule.waitUntil(timeoutMillis = 3_000) { lastViewModel.uiState.value.sortOption == AppSortOption.LAST_USED }
     }
 }

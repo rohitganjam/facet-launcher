@@ -50,12 +50,6 @@
         </intent>
     </queries>
 
-    <!-- F2 Recents/Most Used — special-access permission, granted via system Settings (ACTION_USAGE_ACCESS_SETTINGS),
-         never through a normal runtime dialog. Declaring it is still required for AppOpsManager's check to resolve. -->
-    <uses-permission
-        android:name="android.permission.PACKAGE_USAGE_STATS"
-        tools:ignore="ProtectedPermissions" />
-
     <!-- F1 Calendar integration — normal runtime permission, requested from CalendarSettingsScreen's "Turn on" action. -->
     <uses-permission android:name="android.permission.READ_CALENDAR" />
 

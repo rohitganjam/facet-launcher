@@ -18,7 +18,6 @@ import com.facetlauncher.app.ui.home.HomeScreenContent
 import com.facetlauncher.app.ui.home.HomeWidgetSizing
 import com.facetlauncher.app.data.model.ClockStackItemKind
 import com.facetlauncher.app.data.model.NativeWidgetRef
-import com.facetlauncher.app.ui.nativewidget.NativeWidgetAccess
 import com.facetlauncher.app.ui.nativewidget.NativeWidgetAccessControls
 import com.facetlauncher.app.ui.nativewidget.NativeWidgetActions
 import com.facetlauncher.app.ui.nativewidget.NativeWidgetEnvironment
@@ -30,7 +29,6 @@ import com.facetlauncher.app.ui.home.WhatsNewPillHost
 import com.facetlauncher.app.ui.home.WhatsNewPillViewModel
 import com.facetlauncher.app.ui.home.toHomeScreenState
 import com.facetlauncher.app.ui.home.visibleIndex
-import android.provider.Settings
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.Animatable
 import androidx.compose.foundation.layout.Box
@@ -124,7 +122,6 @@ fun HomeDrawerRoute(
     onNavigateToFacetSettings: (facetId: Long) -> Unit,
     onNavigateToManageFacets: () -> Unit,
     onNavigateToFacetPro: (ProReason) -> Unit,
-    onNavigateToUsageAccessExplanation: () -> Unit,
     /** Opens one facet's clock style options, and the calendar settings of its clock. */
     onNavigateToClockStyle: (facetId: Long) -> Unit = { _ -> },
     onNavigateToClockStack: () -> Unit = {},
@@ -172,8 +169,7 @@ fun HomeDrawerRoute(
         return
     }
 
-    // PACKAGE_USAGE_STATS has no grant-change callback — re-check whenever the user returns to
-    // Home (e.g. from the usage-access Settings redirect) rather than only on facet changes.
+    // Recents and Most used change while you're in other apps, so Home re-reads them whenever it resumes.
     val lifecycleOwner = LocalLifecycleOwner.current
     // Counts resumes so the orphaned-widget check re-runs: the app can be uninstalled while Home is away.
     var resumeCount by remember { mutableIntStateOf(0) }
@@ -366,7 +362,7 @@ fun HomeDrawerRoute(
             badgeCounts = homeUiState.badgeCounts,
             appMenuNotifications = appMenuNotifications,
             folderCandidates = folders,
-            showUsageAccessPrompt = homeUiState.showUsageAccessPrompt,
+            showUsageListHint = homeUiState.showUsageListHint,
             clockAccessories = homeUiState.clockAccessories,
             mediaPlayer = homeUiState.mediaPlayer,
             weather = weatherUiState.weather,
@@ -419,7 +415,6 @@ fun HomeDrawerRoute(
             toSettings = onNavigateToSettings,
             toFacetSettings = onNavigateToFacetSettings,
             toFacetPro = onNavigateToFacetPro,
-            toUsageAccessExplanation = onNavigateToUsageAccessExplanation,
             toClockStyle = onNavigateToClockStyle,
             toClockStack = onNavigateToClockStack,
         ),
@@ -534,7 +529,6 @@ fun HomeDrawerRoute(
             isDrawerOpen = isDrawerOpen,
             overlays = overlays,
             onNavigateToSettings = onNavigateToSettings,
-            onNavigateToUsageAccessExplanation = onNavigateToUsageAccessExplanation,
             searchFocusRequest = searchFocusRequest,
         )
         HomePrivateSpaceOverlay(

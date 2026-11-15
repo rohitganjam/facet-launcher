@@ -61,7 +61,6 @@
     <string name="calendar_settings_header_title">Configuración del calendario</string>
     <string name="folder_detail_no_apps_yet">Aún no hay apps en esta carpeta. Toca \"Agregar a carpeta\" para agregar algunas.</string>
     <string name="open_settings">Abrir configuración</string>
-    <string name="usage_access_explanation_body">Esto necesita acceso de uso, un permiso especial que se concede desde la configuración del sistema; Facet no puede solicitarlo directamente. Solo lee qué apps abres y por cuánto tiempo; nada sale de tu dispositivo.</string>
     <string name="notification_access_explanation_body">Esto necesita acceso a notificaciones, un permiso especial que se concede desde la configuración del sistema; Facet no puede solicitarlo directamente. Solo lee qué apps tienen notificaciones activas y si son silenciosas, además del título, el artista y la carátula de lo que suena; nada sale de tu dispositivo.</string>
     <string name="onboarding_clear_dock_message">Quita todas las apps del dock predeterminado. Puedes volver a agregarlas en cualquier momento.</string>
     <string name="onboarding_clear_favorites_message">Quita todas las apps de tus favoritos predeterminados. Puedes volver a agregarlas en cualquier momento.</string>
@@ -73,7 +72,6 @@
     <string name="drawer_search_section_recent_changes">INSTALADAS O ACTUALIZADAS RECIENTEMENTE</string>
     <string name="drawer_search_section_frequent">USADAS CON FRECUENCIA</string>
     <string name="drawer_search_section_last_used">ÚLTIMAS USADAS</string>
-    <string name="drawer_search_usage_access_needed">Las apps más y últimas usadas necesitan acceso de uso desde la configuración del sistema.</string>
     <string name="drawer_contacts_access_needed">La búsqueda de contactos necesita acceso desde la configuración del sistema.</string>
     <string name="drawer_contacts_search_off">La búsqueda de contactos está desactivada en la configuración del cajón de apps.</string>
     <string name="facet_carousel_launcher_settings">Configuración del launcher</string>
@@ -81,7 +79,6 @@
     <string name="facet_carousel_facet_settings">Configuración de faceta</string>
     <string name="facet_carousel_add_facet">Agregar faceta</string>
     <string name="facet_settings_dock_settings_title">Apps del dock</string>
-    <string name="home_usage_access_needed">Más usadas necesita acceso de uso desde la configuración del sistema.</string>
 
     <string name="clock_style_long_press_hint">Mantén presionado el reloj en la pantalla de inicio para ajustar su tamaño y su posición.</string>
     <string name="home_sheet_facet_settings_subtitle">Widgets, lista de apps y dock específicos de la faceta</string>
@@ -132,4 +129,5 @@
 
     <string name="reset_dock_subtitle">Reemplaza este dock por las apps predeterminadas del dispositivo</string>
     <string name="reset_dock_confirm_message">Esto reemplaza el dock de esta faceta por las apps predeterminadas del dispositivo. Las apps que colocaste aquí se perderán.</string>
+    <string name="home_usage_list_empty">Aquí aparecerán las apps que abras desde Facet.</string>
 </resources>

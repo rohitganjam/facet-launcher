@@ -2,9 +2,7 @@ package com.facetlauncher.app.ui.onboarding
 
 import android.Manifest
 import android.app.Activity
-import android.content.Intent
 import android.os.Build
-import android.provider.Settings
 import android.view.WindowManager
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -35,7 +33,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.testTag
@@ -144,14 +141,8 @@ fun OnboardingScreen(
 
     val density = LocalDensity.current
     val swipeCommitPx = with(density) { SWIPE_COMMIT_DISTANCE.toPx() }
-    val context = LocalContext.current
     val requestContactsPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
         viewModel.setSearchContactsEnabled(granted)
-    }
-    // Onboarding has no navigation stack of its own to reach the real UsageAccessExplanationScreen
-    // from — this jumps straight to the system Settings redirect it would otherwise lead to.
-    val onNavigateToUsageAccessExplanation: () -> Unit = {
-        runCatching { context.startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)) }
     }
 
     // Blurs the real wallpaper compositing behind the window (windowShowWallpaper in themes.xml)
@@ -269,7 +260,6 @@ fun OnboardingScreen(
                 DockAppPickerScreen(
                     onDone = { subScreen = null },
                     showFoldersTab = false,
-                    onNavigateToUsageAccessExplanation = onNavigateToUsageAccessExplanation,
                     facetId = uiState.facetId,
                     viewModel = dockPickerViewModel,
                 )
@@ -277,7 +267,6 @@ fun OnboardingScreen(
                 DockAppPickerScreen(
                     onDone = { subScreen = null },
                     showFoldersTab = false,
-                    onNavigateToUsageAccessExplanation = onNavigateToUsageAccessExplanation,
                     facetId = uiState.facetId,
                 )
             }
@@ -285,7 +274,6 @@ fun OnboardingScreen(
                 FavoritesPickerScreen(
                     onDone = { subScreen = null },
                     showFoldersTab = false,
-                    onNavigateToUsageAccessExplanation = onNavigateToUsageAccessExplanation,
                     facetId = uiState.facetId,
                     viewModel = favoritesPickerViewModel,
                 )
@@ -293,7 +281,6 @@ fun OnboardingScreen(
                 FavoritesPickerScreen(
                     onDone = { subScreen = null },
                     showFoldersTab = false,
-                    onNavigateToUsageAccessExplanation = onNavigateToUsageAccessExplanation,
                     facetId = uiState.facetId,
                 )
             }

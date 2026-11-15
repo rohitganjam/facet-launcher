@@ -57,8 +57,7 @@ Not in scope for this version, but researched and worth preserving rather than l
 ### F2. Home screen — Favorites / Recents / Most Used
 - User chooses which "mode" populates the home list: Favorites (manually curated), Recents (top 3–5), or Most Used.
 - **Favorites:** user explicitly adds/removes/orders apps.
-- **Recents [decided]:** backed by system-wide usage stats via `UsageStatsManager` (not self-tracked launch events) — same data source and permission requirement as Most Used below.
-- **Most Used:** requires `PACKAGE_USAGE_STATS` special-access permission, which cannot be requested via a normal runtime dialog — user must be sent to system Settings (`ACTION_USAGE_ACCESS_SETTINGS`). Needs an onboarding explanation screen and a graceful "not yet granted" empty state. **This permission is now required for both Recents and Most Used**, since both are usage-stats-backed.
+- **Recents and Most Used [decided 2026-11-15, replaces the earlier usage-stats decision]:** backed by Facet's own launch history, the apps opened from Facet, stored on the device. No `PACKAGE_USAGE_STATS` / Usage access permission. Most Used counts the last 30 days. Accepted cost: opens from notifications, recents or links aren't counted, and both lists start empty, with an empty-state hint ("Apps you open from Facet show up here.").
 - Behavior when a favorited/pinned app is uninstalled: auto-remove and collapse the list (no dead entries or placeholder tiles), across favorites, dock, and all facets.
 
 ### F3. Dock
@@ -216,7 +215,6 @@ Consolidated so overlapping swipe directions across screens don't get implemente
 | Permission | Type | Used for | Requested when | Note |
 |---|---|---|---|---|
 | `READ_CALENDAR` | Runtime | F1 calendar integration | User enables calendar integration | Needs denial fallback UI |
-| `PACKAGE_USAGE_STATS` | Special access (Settings redirect) | F2 Recents **and** Most Used (both usage-stats-backed) | User selects either "Recents" or "Most Used" as the home list mode | Cannot be requested via normal dialog; needs an explanation screen before the Settings redirect |
 | `READ_CONTACTS` | Runtime | F6 contextual search actions (call/message/WhatsApp) | User first triggers a contact-matched search result, or toggles the capability on if it's user-configurable | Must degrade gracefully to app-only search results if denied |
 | `QUERY_ALL_PACKAGES` / `<queries>` manifest element | Manifest declaration | App list (drawer, favorites picker) | N/A — build-time manifest declaration, not a runtime prompt | Required on Android 11+ or app list returns empty/partial |
 | Notification listener access | Special access (Settings redirect) | F13 notification badges | User enables badges in settings | Broad grant — listener sees notification metadata for all apps, not just counts; expect more user hesitation than other permissions here |

@@ -2,6 +2,7 @@ package com.facetlauncher.app.ui.launcher
 
 import com.facetlauncher.app.ui.drawer.openSearchSheet
 import com.facetlauncher.app.data.AppVersion
+import com.facetlauncher.app.data.testLaunchHistoryRepository
 import com.facetlauncher.app.data.ReleaseNotesRepository
 import com.facetlauncher.app.domain.GroupAppsByLetterUseCase
 import com.facetlauncher.app.domain.DailyWallpaperCoordinator
@@ -9,8 +10,6 @@ import com.facetlauncher.app.domain.ClockWeather
 import com.facetlauncher.app.domain.ObserveClockWeatherUseCase
 import com.facetlauncher.app.domain.RefreshWeatherUseCase
 import com.facetlauncher.app.ui.drawer.DrawerListUseCases
-import android.app.AppOpsManager
-import android.app.usage.UsageStatsManager
 import android.appwidget.AppWidgetManager
 import android.content.pm.LauncherApps
 import android.os.UserManager
@@ -58,8 +57,6 @@ import com.facetlauncher.app.data.SecureFolderRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.SystemSettingsRepository
 import com.facetlauncher.app.data.AppStoreRepository
-import com.facetlauncher.app.data.UsageAccessRepository
-import com.facetlauncher.app.data.UsageStatsRepository
 import com.facetlauncher.app.data.WallpaperRepository
 import com.facetlauncher.app.data.WidgetPlacementRepository
 import com.facetlauncher.app.data.WorkProfileRepository
@@ -154,11 +151,7 @@ class KeyboardDismissalTest {
                 val observePlacedItems = ObservePlacedItemsUseCase(placementRepository, FolderRepository(database.folderDao(), appRepository), appRepository)
                 val facetRepository = FacetRepository(database.facetDao(), database.clockStackItemDao())
                 val clockStackRepository = ClockStackRepository(database, database.clockStackItemDao())
-                val usageStatsRepository = UsageStatsRepository(
-                    context.getSystemService(UsageStatsManager::class.java),
-                    appRepository,
-                )
-                val usageAccessRepository = UsageAccessRepository(context.getSystemService(AppOpsManager::class.java), context)
+                val launchHistoryRepository = testLaunchHistoryRepository(context, appRepository)
                 val notificationBadgeRepository = NotificationBadgeRepository()
                 val notificationAccessRepository = NotificationAccessRepository(context)
                 val appWidgetRepository = AppWidgetRepository(
@@ -173,8 +166,7 @@ class KeyboardDismissalTest {
                         settingsRepository,
                         observePlacedItems,
                         facetRepository,
-                        usageStatsRepository,
-                        usageAccessRepository,
+                        launchHistoryRepository,
                         CalendarPermissionRepository(context),
                         CalendarRepository(context.contentResolver),
                         notificationBadgeRepository,
@@ -219,6 +211,7 @@ class KeyboardDismissalTest {
                     CleanUpUninstalledAppsUseCase(
                         appRepository, placementRepository,
                         FolderRepository(database.folderDao(), appRepository),
+                        testLaunchHistoryRepository(context, appRepository),
                     ),
                     RepairOrphanedProfileRowsUseCase(
                         appRepository, placementRepository,
@@ -231,6 +224,7 @@ class KeyboardDismissalTest {
                     facetRepository,
                     WorkProfileRepository(context.getSystemService(UserManager::class.java), appRepository, context),
                     mock(DailyWallpaperCoordinator::class.java),
+                    testLaunchHistoryRepository(context, appRepository),
                 )
             }
             val drawerViewModel = remember {
@@ -266,8 +260,7 @@ class KeyboardDismissalTest {
                     NotificationActionController(),
                     NotificationOpener(context),
                     ObserveAppNotificationsUseCase(settingsRepository, notificationBadgeRepository, notificationAccessRepository),
-                    UsageStatsRepository(context.getSystemService(UsageStatsManager::class.java), appRepository),
-                    UsageAccessRepository(context.getSystemService(AppOpsManager::class.java), context),
+                    testLaunchHistoryRepository(context, appRepository),
                     DrawerListUseCases(RankBySearchRelevanceUseCase(), GroupAppsByLetterUseCase(), RecentlyInstalledAppsUseCase(), RecentlyChangedAppsUseCase()),
                 )
             }
@@ -371,8 +364,7 @@ class KeyboardDismissalTest {
                         facetRepository,
                         settingsRepository,
                         observePlacedItems,
-                        UsageStatsRepository(context.getSystemService(UsageStatsManager::class.java), appRepository),
-                        UsageAccessRepository(context.getSystemService(AppOpsManager::class.java), context),
+                        testLaunchHistoryRepository(context, appRepository),
                         CalendarPermissionRepository(context),
                         CalendarRepository(context.contentResolver),
                     ),
@@ -401,7 +393,6 @@ class KeyboardDismissalTest {
                     onNavigateToFacetSettings = {},
                     onNavigateToManageFacets = {},
                     onNavigateToFacetPro = {},
-                    onNavigateToUsageAccessExplanation = {},
                     homeViewModel = homeViewModel,
                     weatherViewModel = weatherViewModel,
                         widgetAccess = NativeWidgetAccessControls(NativeWidgetAccess(), {}, {}),

@@ -159,7 +159,7 @@ data class HomeListState(
     val rowPresentation: AppRowPresentation = AppRowPresentation.ICON_AND_TEXT,
     val gridColumns: AppListGridColumns = AppListGridColumns.FOUR,
     val gridDisplayMode: AppListGridDisplayMode = AppListGridDisplayMode.ICONS,
-    val showUsageAccessPrompt: Boolean = false,
+    val showUsageListHint: Boolean = false,
     /** True for a manual (Favorites) list; Recents and Most used have no order of their own to change. */
     val reorderable: Boolean = false,
     /** Where the grid layout draws each item, once it has been moved there; the rest follow the list order. */
@@ -266,7 +266,6 @@ data class HomeScreenActions(
     val clock: HomeClockActions = HomeClockActions(),
     val widget: HomeClockWidgetActions = HomeClockWidgetActions(),
     val media: HomeMediaActions = HomeMediaActions(),
-    val onUsageAccessPromptClick: () -> Unit = {},
     /** A double-tap on empty space; the view model decides whether it locks the screen. */
     val onEmptySpaceDoubleTap: () -> Unit = {},
     val onAppListBoundsChange: (Rect?) -> Unit = {},

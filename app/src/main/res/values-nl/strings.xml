@@ -184,7 +184,6 @@
     <string name="app_picker_tab_apps">Apps</string>
     <string name="app_picker_tab_folders">Mappen</string>
 
-
     <string name="gesture_hint_switch_facets">Van facet wisselen</string>
     <string name="gesture_hint_arrow_left">←</string>
     <string name="gesture_hint_arrow_right">→</string>
@@ -544,8 +543,6 @@
     <string name="permission_calendar_subtitle">Toont de evenementen van vandaag op de klok.</string>
     <string name="permission_contacts_title">Contacten</string>
     <string name="permission_contacts_subtitle">Laat het zoeken in de lade passende contacten tonen met snelle bel-, bericht- en WhatsApp-acties.</string>
-    <string name="permission_usage_access_title">Gebruikstoegang</string>
-    <string name="permission_usage_access_subtitle">Voedt de lijsten Recent en Meest gebruikt.</string>
     <string name="permission_notification_access_title">Toegang tot meldingen</string>
     <string name="permission_notification_access_subtitle">Toont een stip of aantalbadge op apps met actieve meldingen.</string>
     <string name="permission_bluetooth_title">Bluetooth</string>
@@ -729,9 +726,6 @@
 
     <string name="open_settings">Instellingen openen</string>
 
-    <string name="usage_access_explanation_headline">Recent en Meest gebruikt tonen apps op basis van hoe je je telefoon echt gebruikt.</string>
-    <string name="usage_access_explanation_body">Hiervoor is gebruikstoegang nodig, een speciale machtiging die je via de systeeminstellingen geeft — Facet kan die niet zelf aanvragen. Het leest alleen welke apps je opent en hoe lang; er verlaat niets je apparaat.</string>
-
     <string name="notification_access_explanation_headline">Meldingsbadges tonen een stip of aantal op apps waar iets op je wacht, en de mediaspeler toont wat er wordt afgespeeld.</string>
     <string name="notification_access_explanation_body">Hiervoor is toegang tot meldingen nodig, een speciale machtiging die je via de systeeminstellingen geeft — Facet kan die niet zelf aanvragen. Het leest alleen welke apps actieve meldingen hebben en of die stil zijn, plus de titel, artiest en hoes van de media die wordt afgespeeld; er verlaat niets je apparaat.</string>
 
@@ -800,7 +794,6 @@
     <string name="drawer_search_section_recent_changes">RECENT GEÏNSTALLEERD OF BIJGEWERKT</string>
     <string name="drawer_search_section_frequent">VAAK GEBRUIKT</string>
     <string name="drawer_search_section_last_used">LAATST GEBRUIKT</string>
-    <string name="drawer_search_usage_access_needed">Vaak en laatst gebruikte apps hebben toegang tot gebruiksgegevens nodig in de systeeminstellingen.</string>
     <string name="drawer_contacts_access_needed">Voor het zoeken naar contacten is toegang nodig via de systeeminstellingen.</string>
     <string name="drawer_contacts_search_off">Zoeken naar contacten staat uit in de instellingen van de app-lade.</string>
     <string name="drawer_search_no_matches">Geen resultaten voor “%1$s”</string>
@@ -863,8 +856,6 @@
     <string name="facet_settings_appearance_home_icon_and_text">Home pictogram en tekst</string>
     <string name="facet_settings_appearance_home_text_only">Home alleen tekst</string>
     <string name="facet_settings_rename_explanation">Geef dit facet een nieuwe naam.</string>
-
-    <string name="home_usage_access_needed">Voor Meest gebruikt is gebruikstoegang nodig via de systeeminstellingen.</string>
 
     <string name="clock_style_font_label">Lettertype</string>
     <string name="clock_style_clock_section">KLOK</string>
@@ -1165,4 +1156,5 @@
     <string name="glass_style_accent">Accent</string>
     <string name="glass_style_theme">Thema</string>
     <string name="glass_style_theme_inverted">Thema omgekeerd</string>
+    <string name="home_usage_list_empty">Apps die je via Facet opent, verschijnen hier.</string>
 </resources>

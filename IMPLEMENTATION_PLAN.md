@@ -4894,12 +4894,26 @@ The Facet Pro screens had drifted from what Pro gates: neither listed the rule l
 - [x] Docs: `04`, `07`, `16`, design spec 12b/12c.
 - [x] Verified on the emulator (`ui.pro` unit tests 15/15, lint and detekt clean, `FacetProContentTest` 14/14, screenshots of both screens).
 
+## Smarter search, release 1 (Rohit approved the design 2026-11-15)
+
+One search model for every search surface (drawer apps, contacts and settings, Private Space, the pickers, the widget picker), plus Facet's own launch history in place of Usage Access. Decisions: learning is always on with no "Clear search history" control (it is all local); picks and launch counts stay out of backups; Enter opens the top app result and does nothing when no app matches; Usage Access (`PACKAGE_USAGE_STATS`) is dropped entirely, so Recents, Most used, the drawer's Frequent/Last used and the pickers' Last used sort count only apps opened from Facet and start empty. Release 2 (app shortcuts, typo tolerance) is separate. See `docs/architecture/12-flow-drawer-search-and-app-actions.md` §2.
+
+### Steps
+- [x] `RankBySearchRelevanceUseCase` rewritten as the shared model: normalization (accents, case, punctuation), tiers exact → prefix → word start → initials → substring, camel humps, space-free matching ("wifi" → Wi-Fi), multi-word queries, learned picks (2+ for the same query) and 30-day launches for drawer apps; `matchesSearch` for the pickers and widget picker. Tests: `RankBySearchRelevanceUseCaseTest`.
+- [x] Launch history in Room (v51, auto-migration): `app_launches`, `app_launch_days`, `search_picks`; `LaunchHistoryDao`, `LaunchHistoryRepository` (Private Space and Facet itself never recorded; uninstall and profile removal clear rows). Tests: `LaunchHistoryDaoTest`, `LaunchHistoryRepositoryTest`, `CleanUpUninstalledAppsUseCaseTest`, `FacetDatabaseMigrationTest.migration50To51AddsEmptyLaunchHistoryAndKeepsFacets`.
+- [x] Usage Access removed: `UsageStatsRepository`, `UsageAccessRepository`, the explanation screen and route, the Permissions row, the Home and drawer prompts, the manifest permission. Home shows "Apps you open from Facet show up here." for an empty Recents or Most used list. Tests: `ObserveHomeScreenStateUseCaseTest`, `ObserveFacetPreviewsUseCaseTest`, `HomeUiStateTest`, `HomeScreenTest`, `PermissionsViewModelTest`, `PermissionsScreenTest`, the three picker ViewModel and screen tests.
+- [x] Launches recorded from `LauncherActivity.launchApp`, search picks from the drawer. Tests: `LauncherViewModelTest`, `DrawerViewModelTest`.
+- [x] Drawer: Enter (Go) opens the top app; contacts fetch 50 candidates then rank and keep 5; settings ranked on label and keywords (`SystemSettingsRepository.availableEntries`). Tests: `AppDrawerScreenTest`, `DrawerViewModelTest`, `SystemSettingsRepositoryTest`.
+- [x] Docs: `01`, `02`, `03`, `04`, `05`, `06`, `07`, `08`, `11`, `12`, README, PRD and design spec.
+- [x] Privacy policy in `../facet-launcher-site/build.py`: Usage Access removed, local launch history described.
+- [x] Verified on the emulator (build, 2,271 unit tests, `check`, the 12 changed instrumented classes, manual pass of ranking, Enter, recorded launches and picks, Recents and the Permissions screen).
+
 ## Automation rules in backups (direct request)
 
 A restore used to delete every automation rule (the facets go first, and rules cascade with them). Now each facet has a permanent UUID, backups carry the rules pointing at those UUIDs, and restore brings back every rule whose target and "switch to" facets are in the backup, skipping and reporting the rest.
 
 ### Steps
-- [x] Facet UUID: `Facet.uuid` / `FacetEntity.uuid` (random on create, unique index), Room v51 with `Migrations.MIGRATION_50_51` giving each existing facet its own; `BackupFacet.uuid` kept on restore (fresh when absent or used twice). Tests: `FacetRepositoryTest`, `BackupMappingTest`, `ImportBackupUseCaseTest`, `FacetDatabaseMigrationTest.migration50To51GivesEveryFacetItsOwnUuid`.
+- [x] Facet UUID: `Facet.uuid` / `FacetEntity.uuid` (random on create, unique index), Room v52 with `Migrations.MIGRATION_51_52` giving each existing facet its own; `BackupFacet.uuid` kept on restore (fresh when absent or used twice). Tests: `FacetRepositoryTest`, `BackupMappingTest`, `ImportBackupUseCaseTest`, `FacetDatabaseMigrationTest.migration51To52GivesEveryFacetItsOwnUuid`.
 - [x] Backup format: `BackupBundle.automationRules` (`BackupAutomationRule`, list order, nullable for older files, no version bump); `AutomationRuleBackupMapping` (lenient: unknown trigger or ending is `UNSUPPORTED`, missing facet `FACET_MISSING`, editor-invalid `INVALID`). Tests: `AutomationRuleBackupMappingTest`, `ExportBackupUseCaseTest`, `BackupCoverageTest` (rule columns).
 - [x] Restore: `RestoreAutomationRulesUseCase` (replace all rules in order with no plan limit, reset `facet_automation` state, record the restored active facet as a manual switch; summary with skipped, paused and permission-waiting counts). Tests: `RestoreAutomationRulesUseCaseTest`.
 - [x] Backup screen: rule count in the result line, an "Automation rules" card when something needs a look, link to Facet automation; confirmation text mentions rules. Tests: `BackupRestoreScreenTest`.

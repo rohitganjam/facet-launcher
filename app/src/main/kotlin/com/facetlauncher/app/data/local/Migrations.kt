@@ -755,8 +755,8 @@ object Migrations {
         }
     }
 
-    /** 50→51: every facet gets a permanent UUID (backed-up automation rules point at it), one per existing row, kept unique by an index. */
-    val MIGRATION_50_51: Migration = object : Migration(50, 51) {
+    /** 51→52: every facet gets a permanent UUID (backed-up automation rules point at it), one per existing row, kept unique by an index. */
+    val MIGRATION_51_52: Migration = object : Migration(51, 52) {
         override fun migrate(db: SupportSQLiteDatabase) {
             db.execSQL("ALTER TABLE facets ADD COLUMN uuid TEXT NOT NULL DEFAULT ''")
             val ids = db.query("SELECT id FROM facets").use { cursor ->
@@ -787,6 +787,6 @@ object Migrations {
         MIGRATION_41_42,
         MIGRATION_47_48,
         MIGRATION_49_50,
-        MIGRATION_50_51,
+        MIGRATION_51_52,
     )
 }
