@@ -946,7 +946,7 @@ class AppDrawerScreenTest {
     }
 
     @Test
-    fun homePressLeavesTheSearchAndConnectionsSheetsForTheDrawerToCloseAround() {
+    fun homePressLeavesTheSheetsForTheDrawerToCloseAroundThenRemovesThemOnceClosed() {
         // Given the connections sheet is open for a contact
         var query by mutableStateOf("")
         var isDrawerOpen by mutableStateOf(true)
@@ -991,14 +991,13 @@ class AppDrawerScreenTest {
         composeRule.onNodeWithTag("drawer_search_sheet").assertExists()
         assertEquals("Jane", query)
 
-        // And once the drawer is closed, both are reset
+        // And once the drawer is closed, both are removed at once, with no slide out that could bring them back into view
+        composeRule.mainClock.autoAdvance = false
         isDrawerOpen = false
-        composeRule.waitUntil(timeoutMillis = 3_000) {
-            runCatching {
-                composeRule.onNodeWithTag("contact_connections_sheet").assertDoesNotExist()
-                composeRule.onNodeWithTag("drawer_search_sheet").assertDoesNotExist()
-            }.isSuccess
-        }
+        repeat(3) { composeRule.mainClock.advanceTimeByFrame() }
+        composeRule.onNodeWithTag("contact_connections_sheet").assertDoesNotExist()
+        composeRule.onNodeWithTag("drawer_search_sheet").assertDoesNotExist()
+        composeRule.mainClock.autoAdvance = true
         assertEquals("", query)
     }
 

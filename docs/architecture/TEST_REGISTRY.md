@@ -4460,7 +4460,7 @@ How to read: one section per tier, one table per package (mirrors `app/src/main`
 - contactsPermissionBannerShowsWhileSearchingAndDismissesOnItsOwnClick
 - contactsSettingOffBannerShowsWhileSearchingAndDismissesOnItsOwnClick
 - tappingAContactTileOpensTheConnectionsSheetForThem
-- homePressLeavesTheSearchAndConnectionsSheetsForTheDrawerToCloseAround
+- homePressLeavesTheSheetsForTheDrawerToCloseAroundThenRemovesThemOnceClosed
 - settingsSectionIsOmittedEntirelyWhenThereAreNoMatches
 - tappingASettingsResultTileFiresItsOwnClickCallback
 - settingsAndContactResultsSitSideBySideAsGridTiles

@@ -2,6 +2,7 @@ package com.facetlauncher.app.ui.drawer
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -106,6 +107,8 @@ internal fun DrawerSearchSheet(
     listUseCases: DrawerListUseCases,
     onContactClick: (ContactInfo) -> Unit,
     modifier: Modifier = Modifier,
+    /** No slide out: set when the drawer has already carried the sheet off screen. */
+    exitInstantly: Boolean = false,
 ) {
     val focusManager = LocalFocusManager.current
     val close = {
@@ -125,11 +128,11 @@ internal fun DrawerSearchSheet(
     val atBottom = barPosition == SearchBarPosition.BOTTOM
     val spec = tween<androidx.compose.ui.unit.IntOffset>(FACET_TRANSITION_DURATION_MS, easing = FacetTransitionEasing)
     Box(modifier = modifier.fillMaxSize()) {
-        AnimatedVisibility(visible = visible, enter = fadeIn(), exit = fadeOut()) { SheetScrim(close) }
+        AnimatedVisibility(visible = visible, enter = fadeIn(), exit = if (exitInstantly) ExitTransition.None else fadeOut()) { SheetScrim(close) }
         AnimatedVisibility(
             visible = visible,
             enter = slideInVertically(spec) { if (atBottom) it else -it },
-            exit = slideOutVertically(spec) { if (atBottom) it else -it },
+            exit = if (exitInstantly) ExitTransition.None else slideOutVertically(spec) { if (atBottom) it else -it },
             modifier = Modifier.align(if (atBottom) Alignment.BottomCenter else Alignment.TopCenter),
         ) {
             val shape = if (atBottom) {
