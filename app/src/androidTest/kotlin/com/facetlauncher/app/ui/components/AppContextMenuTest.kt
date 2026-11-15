@@ -906,7 +906,7 @@ class AppContextMenuTest {
         setContent()
 
         // Then the icon carries no pencil and offers no Change icon
-        composeRule.onNodeWithTag("app_context_menu_change_icon_badge").assertDoesNotExist()
+        composeRule.onNodeWithTag("app_context_menu_change_icon_badge", useUnmergedTree = true).assertDoesNotExist()
         composeRule.onNodeWithTag("app_context_menu_change_icon").assertDoesNotExist()
     }
 
@@ -918,7 +918,7 @@ class AppContextMenuTest {
         setContent(iconEditor = editor.editor, onOpenApp = { opened = it })
 
         // When the name is tapped
-        composeRule.onNodeWithTag("app_context_menu_change_icon_badge").assertExists()
+        composeRule.onNodeWithTag("app_context_menu_change_icon_badge", useUnmergedTree = true).assertExists()
         composeRule.onNodeWithTag("app_context_menu_open").performClick()
 
         // Then the app opens
