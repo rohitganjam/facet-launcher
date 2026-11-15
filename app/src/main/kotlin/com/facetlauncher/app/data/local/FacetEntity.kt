@@ -1,6 +1,7 @@
 package com.facetlauncher.app.data.local
 
 import androidx.room.Entity
+import androidx.room.Index
 import androidx.room.PrimaryKey
 import com.facetlauncher.app.data.model.AppListColumnAlignment
 import com.facetlauncher.app.data.model.AppListGridColumns
@@ -21,10 +22,12 @@ import com.facetlauncher.app.data.model.DockDisplayMode
 import com.facetlauncher.app.data.model.GlassStyle
 import com.facetlauncher.app.data.model.ListContentMode
 import com.facetlauncher.app.data.model.WeatherIconStyle
+import com.facetlauncher.app.data.model.newFacetUuid
 
-@Entity(tableName = "facets")
+@Entity(tableName = "facets", indices = [Index(value = ["uuid"], unique = true)])
 data class FacetEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val uuid: String = newFacetUuid(),
     val name: String,
     val position: Int,
 

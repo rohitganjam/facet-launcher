@@ -5,6 +5,7 @@ import com.facetlauncher.app.data.model.Facet
 
 internal fun FacetEntity.toFacet(clockStack: List<ClockStackItem> = emptyList()): Facet = Facet(
     id = id,
+    uuid = uuid,
     name = name,
     position = position,
     clockPlacementOwn = clockPlacementOwn,
@@ -34,6 +35,7 @@ internal fun FacetEntity.toFacet(clockStack: List<ClockStackItem> = emptyList())
 
 internal fun Facet.toEntity(): FacetEntity = FacetEntity(
     id = id,
+    uuid = uuid,
     name = name,
     position = position,
     clockPlacementOwn = clockPlacementOwn,

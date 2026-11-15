@@ -34,6 +34,7 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
+import org.junit.Assert.assertNotEquals
 import org.junit.Test
 
 /** In-memory fake — simpler than mocking every [FacetDao] method for this repository's needs. */
@@ -403,6 +404,31 @@ class FacetRepositoryTest {
         assertEquals(listOf(ClockStackItemKind.CLOCK), added.clockStack.map { it.kind })
         assertEquals(listOf(ClockStackItemKind.CLOCK), repository.getById(added.id)!!.clockStack.map { it.kind })
         assertEquals(added.id, repository.getById(added.id)!!.clockStack.single().facetId)
+    }
+
+    @Test
+    fun `each new facet gets its own UUID, which a rename keeps`() = runTest {
+        // Given two new facets
+        val repository = FacetRepository(FakeFacetDao(), FakeClockStackItemDao())
+        val first = repository.addFacet()
+        val second = repository.addFacet()
+
+        // When the first is renamed
+        repository.renameFacet(first.id, "Work")
+
+        // Then both have a UUID, they differ, and the rename kept the first one's
+        assertTrue(first.uuid.isNotBlank())
+        assertNotEquals(first.uuid, second.uuid)
+        assertEquals(first.uuid, repository.getById(first.id)!!.uuid)
+    }
+
+    @Test
+    fun `a restored facet keeps the UUID it was backed up with`() = runTest {
+        val repository = FacetRepository(FakeFacetDao(), FakeClockStackItemDao())
+
+        val id = repository.restoreFacet(Facet(uuid = "work-uuid", name = "Restored", position = 0))
+
+        assertEquals("work-uuid", repository.getById(id)!!.uuid)
     }
 
     @Test

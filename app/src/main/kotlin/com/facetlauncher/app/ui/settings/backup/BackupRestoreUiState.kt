@@ -1,5 +1,6 @@
 package com.facetlauncher.app.ui.settings.backup
 
+import com.facetlauncher.app.domain.AutomationRestoreSummary
 import android.content.Intent
 import com.facetlauncher.app.data.model.BackupWidgetPlacement
 
@@ -22,13 +23,19 @@ data class BackupRestoreUiState(
     val isBusy: Boolean = false,
     val message: BackupRestoreMessage? = null,
     val pendingWidgets: List<PendingWidgetUi> = emptyList(),
+    /** Set after a restore when its automation rules need a look: some skipped, paused or waiting on a permission, or none in the backup. */
+    val automationReview: AutomationRestoreSummary? = null,
 )
+
+/** Whether the restore's rules are worth a card of their own, beyond the count in the result line. */
+val AutomationRestoreSummary.needsReview: Boolean
+    get() = !inBackup || skipped.isNotEmpty() || pausedCount > 0 || needsPermissionCount > 0
 
 /** A one-off result banner — shown until [BackupRestoreViewModel.dismissMessage] (or the next export/import) clears it. */
 sealed interface BackupRestoreMessage {
     data object ExportSucceeded : BackupRestoreMessage
     data object ExportFailed : BackupRestoreMessage
-    data class ImportSucceeded(val facetCount: Int, val pendingWidgetCount: Int) : BackupRestoreMessage
+    data class ImportSucceeded(val facetCount: Int, val pendingWidgetCount: Int, val automationRuleCount: Int = 0) : BackupRestoreMessage
     data object ImportFailedInvalidFile : BackupRestoreMessage
     data class ImportFailedUnsupportedVersion(val backupVersion: Int) : BackupRestoreMessage
 }

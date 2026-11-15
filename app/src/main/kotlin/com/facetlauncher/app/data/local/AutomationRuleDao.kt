@@ -29,4 +29,10 @@ interface AutomationRuleDao {
 
     @Query("DELETE FROM automation_rules WHERE id = :id")
     suspend fun deleteById(id: Long)
+
+    @Query("DELETE FROM automation_rules")
+    suspend fun deleteAll()
+
+    @Insert
+    suspend fun insertAll(rules: List<AutomationRuleEntity>)
 }

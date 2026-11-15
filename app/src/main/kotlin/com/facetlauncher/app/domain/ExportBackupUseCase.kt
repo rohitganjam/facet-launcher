@@ -1,6 +1,7 @@
 package com.facetlauncher.app.domain
 
 import android.net.Uri
+import com.facetlauncher.app.data.AutomationRuleRepository
 import com.facetlauncher.app.data.BackupRepository
 import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.FolderRepository
@@ -30,6 +31,7 @@ class ExportBackupUseCase @Inject constructor(
     private val widgetPlacementRepository: WidgetPlacementRepository,
     private val folderRepository: FolderRepository,
     private val backupRepository: BackupRepository,
+    private val automationRuleRepository: AutomationRuleRepository,
     // Defaulted so tests that don't cover custom icons needn't build one; Hilt always supplies it.
     private val iconOverrideBackup: IconOverrideBackupUseCase? = null,
 ) {
@@ -45,6 +47,7 @@ class ExportBackupUseCase @Inject constructor(
         val folderIndexById = rawFolders.mapIndexed { index, it -> it.folder.id to index }.toMap()
         val backupFolders = rawFolders.map { it.toBackupFolder() }
 
+        val uuidByFacetId = facets.associate { it.id to it.uuid }
         val backupFacets = facets.map { facet ->
             val favoritesTarget = PlacementTarget(PlacementList.FAVORITES, facet.id)
             val dockTarget = PlacementTarget(PlacementList.DOCK, facet.id)
@@ -63,6 +66,7 @@ class ExportBackupUseCase @Inject constructor(
             facets = backupFacets,
             widgetPlacements = widgetPlacementRepository.observeAll().first().map { it.toBackupPlacement() },
             folders = backupFolders,
+            automationRules = automationRuleRepository.getRules().mapNotNull { it.toBackupRule(uuidByFacetId) },
             iconOverrides = iconOverrideBackup?.export().orEmpty(),
         )
         backupRepository.writeBackup(uri, bundle)

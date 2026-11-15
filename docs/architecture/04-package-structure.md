@@ -22,7 +22,7 @@ app/src/main/kotlin/com/facetlauncher/app/
 │   ├── widget/                    (3)   AppWidgetRepository + LauncherAppWidgetHost (AppWidgetHost subclass) + WidgetConfigureActivity (invisible trampoline that opens a widget's configure activity)
 │   └── FacetNotificationListenerService.kt   @AndroidEntryPoint service feeding NotificationBadgeRepository (its component is also what MediaSessionRepository reads sessions through)
 │
-├── domain/                        (92)  78 *UseCase classes in 76 files (NativeWidgetConfigUseCases.kt and LandscapeWidgetOrder.kt hold two each) + 16 helper files: FlowCombine, HubGridConstants, NativeWidgetSizing, NativeWidgetOverrideResolver, BackupMapping, BackupUpgrade, ClockConfigResolution, ResolvedFacetStyle, HomePlacement, HomeGridPlacement, WeatherUnits, WeatherDay, WeatherCondition, RainSummary, PortraitCrop, DailyWallpaperCoordinator
+├── domain/                        (94)  79 *UseCase classes in 77 files (NativeWidgetConfigUseCases.kt and LandscapeWidgetOrder.kt hold two each) + 17 helper files: FlowCombine, HubGridConstants, NativeWidgetSizing, NativeWidgetOverrideResolver, BackupMapping, BackupUpgrade, AutomationRuleBackupMapping, ClockConfigResolution, ResolvedFacetStyle, HomePlacement, HomeGridPlacement, WeatherUnits, WeatherDay, WeatherCondition, RainSummary, PortraitCrop, DailyWallpaperCoordinator
 │                                        Composes ≥1 repositories, or pure logic (grid placement, ranking, grouping)
 │
 └── ui/

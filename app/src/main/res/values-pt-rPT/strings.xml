@@ -107,7 +107,7 @@
     <string name="clock_style_long_press_hint">Mantenha premido o relógio no ecrã inicial para ajustar o tamanho e a posição.</string>
     <string name="clock_style_reset_position">Repor posição do widget do relógio</string>
 
-    <string name="backup_restore_confirm_message">Importar substitui cada faceta, o dock e os favoritos predefinidos pelo conteúdo do ficheiro da cópia de segurança. Esta ação não pode ser anulada.</string>
+    <string name="backup_restore_confirm_message">Importar substitui cada faceta, o dock, os favoritos predefinidos e as regras de automatização pelo conteúdo do ficheiro da cópia de segurança. Esta ação não pode ser anulada.</string>
     <string name="backup_restore_export_title">Exportar cópia de segurança</string>
     <string name="backup_restore_export_subtitle">Guarde cada faceta, o dock, favoritos e definições como ficheiro</string>
     <string name="backup_restore_import_title">Importar cópia de segurança</string>
@@ -120,6 +120,39 @@
         <item quantity="other">%d widgets têm de ser adicionados novamente abaixo</item>
         <item quantity="many">%d de widgets têm de ser adicionados novamente abaixo</item>
     </plurals>
+    <plurals name="backup_restored_rules_count">
+        <item quantity="one">%d regra de automatização</item>
+        <item quantity="other">%d regras de automatização</item>
+        <item quantity="many">%d de regras de automatização</item>
+    </plurals>
+    <string name="backup_restore_rules_header">REGRAS DE AUTOMATIZAÇÃO</string>
+    <plurals name="backup_rules_skipped_facet_missing">
+        <item quantity="one">%d regra ignorada: a respetiva faceta não está nesta cópia de segurança</item>
+        <item quantity="other">%d regras ignoradas: a respetiva faceta não está nesta cópia de segurança</item>
+        <item quantity="many">%d de regras ignoradas: a respetiva faceta não está nesta cópia de segurança</item>
+    </plurals>
+    <plurals name="backup_rules_skipped_unsupported">
+        <item quantity="one">%d regra ignorada: precisa de uma versão mais recente do Facet</item>
+        <item quantity="other">%d regras ignoradas: precisam de uma versão mais recente do Facet</item>
+        <item quantity="many">%d de regras ignoradas: precisam de uma versão mais recente do Facet</item>
+    </plurals>
+    <plurals name="backup_rules_skipped_invalid">
+        <item quantity="one">%d regra ignorada: não foi possível lê-la</item>
+        <item quantity="other">%d regras ignoradas: não foi possível lê-las</item>
+        <item quantity="many">%d de regras ignoradas: não foi possível lê-las</item>
+    </plurals>
+    <plurals name="backup_rules_need_permission">
+        <item quantity="one">%d regra precisa de autorização de Bluetooth ou localização</item>
+        <item quantity="other">%d regras precisam de autorização de Bluetooth ou localização</item>
+        <item quantity="many">%d de regras precisam de autorização de Bluetooth ou localização</item>
+    </plurals>
+    <plurals name="backup_rules_paused">
+        <item quantity="one">%d regra está em pausa no plano gratuito</item>
+        <item quantity="other">%d regras estão em pausa no plano gratuito</item>
+        <item quantity="many">%d de regras estão em pausa no plano gratuito</item>
+    </plurals>
+    <string name="backup_rules_not_in_backup">Esta cópia de segurança não tem regras de automatização: foi criada antes de o Facet as incluir.</string>
+    <string name="backup_rules_open_automation">Abrir Automatização de facetas</string>
     <string name="backup_restore_import_failed_invalid_file">Esse ficheiro não é uma cópia de segurança válida do Facet</string>
     <string name="backup_restore_import_failed_unsupported_version">Essa cópia de segurança foi feita por uma versão mais recente do Facet</string>
     <string name="backup_restore_skip">Saltar</string>

@@ -4,7 +4,7 @@
 
 | Store | Location | What it holds | Written by | Survives |
 |---|---|---|---|---|
-| Room `FacetDatabase` | `facet.db` (schema **v52**, `exportSchema = true` → `app/schemas/…/1.json … 52.json`) | Facets + every *placement*: favorites, dock, folders, folder membership, widget grid positions, plus the facet automation rules (`automation_rules`) the weather cache (`weather_hours`, `weather_meta`), each facet's clock stack (`clock_stack_items`) and the launch history (`app_launches`, `app_launch_days`, `search_picks`: which apps were opened from Facet and picked from search; not in backups) and per-app custom icons (`icon_overrides`, with PNG snapshots in `filesDir/icon_overrides/`) | 9 repositories (§2): `FacetRepository`, `PlacementRepository`, `FolderRepository`, `WidgetPlacementRepository`, `AutomationRuleRepository`, `WeatherRepository` (through `RoomWeatherStore`), `ClockStackRepository`, `LaunchHistoryRepository`, `IconOverrideRepository` | Reinstall-over-upgrade (migrations); **not** downgrade (dropped) |
+| Room `FacetDatabase` | `facet.db` (schema **v53**, `exportSchema = true` → `app/schemas/…/1.json … 53.json`) | Facets + every *placement*: favorites, dock, folders, folder membership, widget grid positions, plus the facet automation rules (`automation_rules`) the weather cache (`weather_hours`, `weather_meta`), each facet's clock stack (`clock_stack_items`) and the launch history (`app_launches`, `app_launch_days`, `search_picks`: which apps were opened from Facet and picked from search; not in backups) and per-app custom icons (`icon_overrides`, with PNG snapshots in `filesDir/icon_overrides/`) | 9 repositories (§2): `FacetRepository`, `PlacementRepository`, `FolderRepository`, `WidgetPlacementRepository`, `AutomationRuleRepository`, `WeatherRepository` (through `RoomWeatherStore`), `ClockStackRepository`, `LaunchHistoryRepository`, `IconOverrideRepository` | Reinstall-over-upgrade (migrations); **not** downgrade (dropped) |
 | `DataStore<Preferences>` | `facet_settings` (`datastore/facet_settings.preferences_pb`) | **All launcher-wide settings and defaults** — clock/app-list/dock design defaults (the calendar events strip has no design defaults of its own — see below), theme, drawer, search, permission-prompt flags, onboarding/seed/coach-mark flags, active facet id, the clock accessory switches, weather units and location, the icon pack and size — 82 keys (§5) | `SettingsRepository` only | Any upgrade (missing keys fall back to `LauncherSettings()` defaults) |
 | `DataStore<Preferences>` | `facet_entitlement` (`datastore/facet_entitlement.preferences_pb`) | The cached Pro state (`pro_purchased`; excluded from Android backups and device transfer by `res/xml/data_extraction_rules.xml`), so Pro works offline and at cold start; debug builds also keep `debug_entitlement_mode` here | `PlayEntitlementRepository`, only from an explicit Google Play answer | Same as `facet_settings`; **not** in the backup file, so a restore can never grant Pro |
 | `DataStore<Preferences>` | `facet_automation` (`datastore/facet_automation.preferences_pb`) | Facet-automation bookkeeping: the baseline facet, the ordered active rule ids, the suppressed rule ids (§5.7) | `AutomationStateRepository` (via `ActivateFacetByIdUseCase`) | Same as `facet_settings`; **not** in the backup file |
@@ -40,6 +40,7 @@ What is **not** persisted: the installed-app list. Room rows reference apps only
 erDiagram
     facets {
         long id PK "autoGenerate"
+        string uuid UK "random, set once on create, kept through backup and restore"
         string name
         int position
         boolean clockPlacementOwn "false until first adjusted on Home: then alignment, zone height, scale and their landscape twins are the facet's own"
@@ -340,7 +341,7 @@ Every DAO follows the same shape, which is what makes the reactive layer uniform
 | `AppPlacementDao` | `observe(list, ownerKey)` | `upsert(entity): Long` (REPLACE) | `deleteByComponent(list, ownerKey, pkg, activity, userId)`, `deleteByPackage(pkg, userId)` and `deleteByUserId(userId)` (both across every list and owner), `deleteAllForOwner(list, ownerKey)` | `getOrphaned()` (`userId = -1`) |
 | `FolderPlacementDao` | `observe(list, ownerKey)` | `upsert` (REPLACE) | `deleteByFolderId(list, ownerKey, folderId)`, `deleteAllForOwner(list, ownerKey)` | — |
 | `FolderDao` | `observeAllWithApps()` (`@Transaction`, `FolderWithApps`) | `insertFolder(folder): Long`, `renameFolder(id, name)`, `upsertFolderApp(app): Long` | `deleteFolder(id)`, `deleteAllFolders()`, `deleteFolderApp(folderId, pkg, activity, userId)`, `deleteFolderAppsByPackage(pkg, userId)`, `deleteFolderAppsByUserId(userId)` | `getOrphanedFolderApps()` |
-| `AutomationRuleDao` | `observeAll()` (`ORDER BY position ASC, id ASC`) | `insert(rule): Long`, `update(rule)`, `setEnabled(id, enabled)` | `deleteById(id)` | `getById(id)`, `maxPosition()` (`-1` when empty) |
+| `AutomationRuleDao` | `observeAll()` (`ORDER BY position ASC, id ASC`) | `insert(rule): Long`, `insertAll(rules)`, `update(rule)`, `setEnabled(id, enabled)` | `deleteById(id)`, `deleteAll()` | `getById(id)`, `maxPosition()` (`-1` when empty) |
 | `ClockStackItemDao` | `observe(facetId)`, `observeAll()` (`ORDER BY position, id`) | `insert` | `delete(id)`, `deleteAll(facetId)` | `getAll(facetId)`, `getById(id)`; updates `clearClockBoxes(facetId)` (a facet's clock pages only, both orientations), `replace` (swaps the kind, widget id and native type, resets the sizes), `setPosition`, `setSize`, `setLandscapeSize`, `setAlignment`, `setLandscapeAlignment`, `updateConfig(id, config)` (a native widget page's own settings). `ClockStackRepository` wraps add (clock, hosted widget, native widget), replace, remove, reorder, clear and a backup's `restoreNativeWidgets` in `database.withTransaction`, caps a stack at `MAX_CLOCK_STACK_ITEMS` (5) and allows one `CLOCK` item |
 | `WeatherDao` | `observeHours()` (`ORDER BY timeEpochSecond ASC`), `observeMeta()` (the one row, or `null`) | `insertHours(list)` (REPLACE), `upsertMeta(meta)` (REPLACE) | `clearHours()` | `getHours()`, `getMeta()`. `RoomWeatherStore.replaceHours` clears and inserts inside `database.withTransaction`, so a reader never sees half a forecast; `writeState` stores `placeName` and `placeNameSource` with the rest of the fetch state, and `WeatherRepository` drops them when the place changes |
 | `LaunchHistoryDao` | `observeLaunchCountsSince(epochDay)`, `observeSearchPicks()` | `setLastLaunched` (REPLACE), `incrementDay`, `incrementPick` (`INSERT … ON CONFLICT DO UPDATE`, SQLite 3.24+, fine on minSdk 30); `@Transaction` `recordLaunch` (last launch + today's count + `pruneDaysBefore`) and `recordPick` (count + `trimPicks(keep)`, by `lastPickedAt`) | `removeByPackage(pkg, userId)`, `removeByUserId(userId)` (`@Transaction` over the three tables' `delete…` queries), `pruneDaysBefore(epochDay)` | `lastLaunches()` (`ORDER BY lastLaunchedAt DESC`), `launchCountsSince(epochDay)` (`SUM(count)` per component, as `AppLaunchCount`) |
@@ -377,7 +378,7 @@ Exceptions to the common shape, all deliberate:
 (`data/model/Facet.kt`) with `FacetMapping.kt`, so ViewModels, use cases and composables never see the
 entity: `observeFacets()` and `getById()` return `Facet`, and `restoreFacet()` takes one. `Facet` has the
 same fields as the row plus `clockStack` (the facet's `clock_stack_items`, joined in by `FacetRepository`;
-calendar selection now lives in each clock's own config, not on the facet). The helpers (`resolveLandscape`,
+calendar selection now lives in each clock's own config, not on the facet). `uuid` is the facet's permanent id: random, set once by `Facet`'s default (`newFacetUuid()`), never changed by an update, and kept by `restoreFacet()`. The helpers (`resolveLandscape`,
 `landscape`, `placementTarget`, …) are extensions on `Facet`.
 
 Every facet write takes a facet id (`setClockPlacement(facetId, …)`). The repository re-reads the row and
@@ -458,6 +459,7 @@ Room.databaseBuilder(context, FacetDatabase::class.java, "facet.db")
 | 49→50 | **Manual** (`Migrations.MIGRATION_49_50`): `facets` gains `dockGlass` and `appsListGlass`, `TEXT NOT NULL DEFAULT 'OFF'` (a `GlassStyle` name, through `Converters`). The calendar's style lives in the clock's JSON config (`ClockCalendarConfig.glass`) and the media row's in the DataStore, so neither needs a column. `FacetDatabaseMigrationTest.migration49To50AddsGlassStylesThatStartOff`. |
 | 50→51 | **Auto-migration** (`@AutoMigration(from = 50, to = 51)`): adds the empty launch history tables `app_launches`, `app_launch_days` (index on `epochDay`) and `search_picks` (index on `lastPickedAt`). Nothing else changes; Recents and Most used start empty because Usage Access is gone. `FacetDatabaseMigrationTest.migration50To51AddsEmptyLaunchHistoryAndKeepsFacets`. |
 | 51→52 | **Auto-migration** (`@AutoMigration(from = 51, to = 52)`): adds the empty `icon_overrides` table (per-app custom icons). Nothing else changes. `FacetDatabaseMigrationTest.migration51To52AddsEmptyIconOverridesAndKeepsLaunchHistory`. |
+| 52→53 | **Manual** (`Migrations.MIGRATION_52_53`): `facets` gains `uuid TEXT NOT NULL`, each existing row gets its own random UUID, then a unique index (`index_facets_uuid`). New facets get one from `Facet`'s default; backed-up automation rules point at it. `FacetDatabaseMigrationTest.migration52To53GivesEveryFacetItsOwnUuid`. |
 
 The landscape twins are handled as one `LandscapeOverrides` group (clock alignment, divider, row position, vertical and column alignment; every field nullable). Settings hold it as `LauncherSettings.landscape`, read from the five `landscape_*` keys and written only through `updateLandscape`. A facet keeps the flat columns above (so the schema is unchanged) and exposes the group as `FacetEntity.landscape` / `withLandscape(...)`, written through `FacetRepository.updateLandscape`. `resolveLandscape` is the one resolution rule (see [17](17-flow-home-layout.md) §1.0).
 
@@ -868,7 +870,7 @@ is not part of `LauncherSettings` (so its writes don't re-emit every settings co
 | `active_rule_ids` | String (`"10,11"`, activation order) | `activeRuleIds` | The last evaluated set of true rules; the last one wins |
 | `suppressed_rule_ids` | Set<String> | `suppressedRuleIds` | Active rules the user overrode; ignored until they stop being true |
 
-Written by `ActivateFacetByIdUseCase` on every manual switch (`AutomationState.afterManualSwitch`), and
+Written by `ActivateFacetByIdUseCase` on every manual switch (`AutomationState.afterManualSwitch`), reset by a backup restore (`RestoreAutomationRulesUseCase`, which then records the restored active facet as a manual switch), and
 by the automation evaluator once it is wired in (see `IMPLEMENTATION_PLAN.md`, "Facet automation rules").
 Stale ids are tolerated: the evaluator drops rule ids that no longer exist and falls back when the
 baseline facet was deleted.
@@ -917,13 +919,15 @@ Then
 `defaultFavoriteFolderPlacements`, and `widgetPlacements` (never auto-restored — re-bound
 one-by-one through the picker flow, see [09-flow-backup-restore.md](09-flow-backup-restore.md)).
 Folder references are by *index into `folders`*, facet references by *index into `facets`*, because
-Room ids are regenerated on restore.
+Room ids are regenerated on restore. Each `BackupFacet` also carries its `uuid` (null in older files, which then get a fresh one), and restore keeps it.
 `iconOverrides` (a defaulted additive field, no version bump) carries each custom icon by component and profile name,
 with its snapshot as base64 PNG; a restore replaces every row ([22](22-flow-custom-icons.md)).
 Their landscape twins `landscapeAppRowPosition` and `landscapeAppListColumnAlignment` are exported too, in both, as optional additive fields (absent means "same as portrait", no version bump). The portrait clock placement isn't backed up, so landscape's isn't either.
 
-**Automation rules are not exported.** `automation_rules` has no field in `BackupBundle`, and import
-calls `deleteAllFacets()` first, so the foreign-key cascade deletes every rule on restore. The
-`facet_automation` state is not exported either ([§5.7](#57-facet_automation-automationstaterepository));
-it holds stale ids after a restore, which the evaluator tolerates. Backing rules up would need
-`BackupBundle` fields (facet references by index, like placements) and a version decision.
+**Automation rules** go out as `automationRules: List<BackupAutomationRule>?` in list order (null in a file
+from before they were backed up; additive, no version bump). A rule names its facets by `targetFacetUuid` /
+`endFacetUuid`, its trigger and ending as strings, days as `DayOfWeek` names. Import deletes all facets first (the
+cascade removes the current rules), recreates them with their UUIDs, then `RestoreAutomationRulesUseCase` writes
+the rules it can resolve (`AutomationRuleRepository.replaceAll`, no plan limit), skips the rest by reason
+(`FACET_MISSING`, `UNSUPPORTED`, `INVALID`), and resets the `facet_automation` state ([§5.7](#57-facet_automation-automationstaterepository)),
+which is never exported. `BackupCoverageTest` fails when a rule column is neither exported nor listed as left out.

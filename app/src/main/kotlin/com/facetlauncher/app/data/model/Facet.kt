@@ -1,5 +1,10 @@
 package com.facetlauncher.app.data.model
 
+import java.util.UUID
+
+/** A fresh random id for a new facet. */
+fun newFacetUuid(): String = UUID.randomUUID().toString()
+
 /** The scale a clock without a saved box draws at; the saved size is the box on its page. */
 const val DEFAULT_CLOCK_SCALE = 0.8f
 
@@ -10,6 +15,8 @@ const val DEFAULT_CLOCK_SCALE = 0.8f
  */
 data class Facet(
     val id: Long = 0,
+    /** Set once when the facet is created and kept through backup and restore; what a backup's automation rules point at. */
+    val uuid: String = newFacetUuid(),
     val name: String,
     val position: Int,
 

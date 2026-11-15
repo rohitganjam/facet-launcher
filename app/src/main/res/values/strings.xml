@@ -540,7 +540,7 @@
     <!-- BackupRestoreScreen (header reuses settings_backup_restore_title — same text as the
          Settings row that navigates here) -->
     <string name="backup_restore_confirm_title">Replace everything on this device?</string>
-    <string name="backup_restore_confirm_message">Importing replaces every facet, the dock, and default favorites with what\'s in the backup file. This can\'t be undone.</string>
+    <string name="backup_restore_confirm_message">Importing replaces every facet, the dock, default favorites, and automation rules with what\'s in the backup file. This can\'t be undone.</string>
     <string name="backup_restore_confirm_replace">Replace</string>
     <string name="backup_restore_export_title">Export backup</string>
     <string name="backup_restore_export_subtitle">Save every facet, dock, favorite, and setting as a file</string>
@@ -558,6 +558,33 @@
         <item quantity="one">%d widget needs re-adding below</item>
         <item quantity="other">%d widgets need re-adding below</item>
     </plurals>
+    <plurals name="backup_restored_rules_count">
+        <item quantity="one">%d automation rule</item>
+        <item quantity="other">%d automation rules</item>
+    </plurals>
+    <string name="backup_restore_rules_header">AUTOMATION RULES</string>
+    <plurals name="backup_rules_skipped_facet_missing">
+        <item quantity="one">%d rule skipped: its facet isn\'t in this backup</item>
+        <item quantity="other">%d rules skipped: their facet isn\'t in this backup</item>
+    </plurals>
+    <plurals name="backup_rules_skipped_unsupported">
+        <item quantity="one">%d rule skipped: it needs a newer version of Facet</item>
+        <item quantity="other">%d rules skipped: they need a newer version of Facet</item>
+    </plurals>
+    <plurals name="backup_rules_skipped_invalid">
+        <item quantity="one">%d rule skipped: it couldn\'t be read</item>
+        <item quantity="other">%d rules skipped: they couldn\'t be read</item>
+    </plurals>
+    <plurals name="backup_rules_need_permission">
+        <item quantity="one">%d rule needs Bluetooth or location permission</item>
+        <item quantity="other">%d rules need Bluetooth or location permission</item>
+    </plurals>
+    <plurals name="backup_rules_paused">
+        <item quantity="one">%d rule is paused on the free plan</item>
+        <item quantity="other">%d rules are paused on the free plan</item>
+    </plurals>
+    <string name="backup_rules_not_in_backup">This backup has no automation rules: it was made before Facet backed them up.</string>
+    <string name="backup_rules_open_automation">Open Facet automation</string>
     <string name="backup_restore_import_failed_invalid_file">That file isn\'t a valid Facet backup</string>
     <string name="backup_restore_import_failed_unsupported_version">That backup was made by a newer version of Facet</string>
     <string name="backup_restore_app_not_installed">App not installed</string>
