@@ -161,8 +161,9 @@ Rules live in the Room table `automation_rules` ([02 §1](02-persistence-room.md
 - **Two foreign keys to `facets`.** `targetFacetId` is `CASCADE`: deleting a facet deletes the rules
   that target it. `endFacetId` is `SET NULL`: deleting a "switch to" facet leaves the rule and the
   mapper degrades it to `ReturnToBaseline`.
-- **Not in backups.** Import deletes all facets first, so the cascade removes every rule on restore;
-  see [02 §6](02-persistence-room.md).
+- **In backups.** Rules are exported in order and point at facets by their permanent UUID. Import
+  recreates the facets with their UUIDs, then restores every rule whose facets are there and skips the
+  rest; see [09 §2](09-flow-backup-restore.md) and [02 §6](02-persistence-room.md).
 
 ## 3b. Schedule semantics and validation (built)
 

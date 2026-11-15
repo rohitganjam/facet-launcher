@@ -486,7 +486,7 @@
 
     <!-- BackupRestoreScreen -->
     <string name="backup_restore_confirm_title">Tout remplacer sur cet appareil ?</string>
-    <string name="backup_restore_confirm_message">L\'import remplace toutes les facettes, le dock et les favoris par défaut par ceux du fichier de sauvegarde. Cette action est irréversible.</string>
+    <string name="backup_restore_confirm_message">L\'import remplace toutes les facettes, le dock, les favoris par défaut et les règles d\'automatisation par ceux du fichier de sauvegarde. Cette action est irréversible.</string>
     <string name="backup_restore_confirm_replace">Remplacer</string>
     <string name="backup_restore_export_title">Exporter la sauvegarde</string>
     <string name="backup_restore_export_subtitle">Enregistrez toutes les facettes, le dock, les favoris et les réglages dans un fichier</string>
@@ -506,6 +506,39 @@
         <item quantity="other">%d widgets doivent être réajoutés ci-dessous</item>
         <item quantity="many">%d de widgets doivent être réajoutés ci-dessous</item>
     </plurals>
+    <plurals name="backup_restored_rules_count">
+        <item quantity="one">%d règle d\'automatisation</item>
+        <item quantity="other">%d règles d\'automatisation</item>
+        <item quantity="many">%d de règles d\'automatisation</item>
+    </plurals>
+    <string name="backup_restore_rules_header">RÈGLES D\'AUTOMATISATION</string>
+    <plurals name="backup_rules_skipped_facet_missing">
+        <item quantity="one">%d règle ignorée : sa facette n\'est pas dans cette sauvegarde</item>
+        <item quantity="other">%d règles ignorées : leur facette n\'est pas dans cette sauvegarde</item>
+        <item quantity="many">%d de règles ignorées : leur facette n\'est pas dans cette sauvegarde</item>
+    </plurals>
+    <plurals name="backup_rules_skipped_unsupported">
+        <item quantity="one">%d règle ignorée : elle nécessite une version plus récente de Facet</item>
+        <item quantity="other">%d règles ignorées : elles nécessitent une version plus récente de Facet</item>
+        <item quantity="many">%d de règles ignorées : elles nécessitent une version plus récente de Facet</item>
+    </plurals>
+    <plurals name="backup_rules_skipped_invalid">
+        <item quantity="one">%d règle ignorée : elle n\'a pas pu être lue</item>
+        <item quantity="other">%d règles ignorées : elles n\'ont pas pu être lues</item>
+        <item quantity="many">%d de règles ignorées : elles n\'ont pas pu être lues</item>
+    </plurals>
+    <plurals name="backup_rules_need_permission">
+        <item quantity="one">%d règle nécessite l\'autorisation Bluetooth ou de localisation</item>
+        <item quantity="other">%d règles nécessitent l\'autorisation Bluetooth ou de localisation</item>
+        <item quantity="many">%d de règles nécessitent l\'autorisation Bluetooth ou de localisation</item>
+    </plurals>
+    <plurals name="backup_rules_paused">
+        <item quantity="one">%d règle est en pause avec l\'offre gratuite</item>
+        <item quantity="other">%d règles sont en pause avec l\'offre gratuite</item>
+        <item quantity="many">%d de règles sont en pause avec l\'offre gratuite</item>
+    </plurals>
+    <string name="backup_rules_not_in_backup">Cette sauvegarde ne contient aucune règle d\'automatisation : elle a été créée avant que Facet ne les sauvegarde.</string>
+    <string name="backup_rules_open_automation">Ouvrir Automatisation des facettes</string>
     <string name="backup_restore_import_failed_invalid_file">Ce fichier n\'est pas une sauvegarde Facet valide</string>
     <string name="backup_restore_import_failed_unsupported_version">Cette sauvegarde a été créée par une version plus récente de Facet</string>
     <string name="backup_restore_app_not_installed">App non installée</string>

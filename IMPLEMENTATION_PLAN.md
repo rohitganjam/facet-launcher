@@ -3644,7 +3644,7 @@ white), the big rail letter-indicator's font/pill fixed, and the on/off toggle e
   `AppearanceSettingsScreenTest` (picker persists; hidden when facet-scoped). `TEST_REGISTRY.md` regenerated.
 - [x] **Docs**: `02` (ER, writer, key table, counts), `09` (backup field), `13 §2` (theme locals), `README.md` counts.
 
-## 🚧 In progress — Facet automation rules (all eight phases built; backup/restore of rules deferred)
+## 🚧 In progress — Facet automation rules (all eight phases built; rules are backed up since "Automation rules in backups" below)
 
 Built-in rules that switch the active facet automatically. Entry point: **Settings → Facets → "Facet automation"**, a row under "Manage facets". The screen lists rules and carries a card explaining that the per-facet "Switch to <name>" shortcuts work in Samsung Modes & Routines / Tasker for anything more advanced. Builds on `ActivateFacetByIdUseCase` and the shortcut/deep-link work above.
 
@@ -4884,3 +4884,17 @@ With the search sheet open, Home closed the sheet and the drawer at once, and th
 - [x] `DrawerSearchSheet` and the connections sheet no longer close on Home; the drawer closing resets them. Tests: `AppDrawerScreenTest`, `HomeDrawerRouteTest`, `KeyboardDismissalTest`.
 - [x] Docs: `12` (§2a, §4).
 - [x] Verified on the emulator (`AppDrawerScreenTest` 60/60, `HomeDrawerRouteTest` 62/62, `KeyboardDismissalTest` 3/3, manual Home press with the sheet open). Found and fixed on the way: the sheet's own slide out ran after the drawer closed and brought it back into view.
+
+## Automation rules in backups (direct request)
+
+A restore used to delete every automation rule (the facets go first, and rules cascade with them). Now each facet has a permanent UUID, backups carry the rules pointing at those UUIDs, and restore brings back every rule whose target and "switch to" facets are in the backup, skipping and reporting the rest.
+
+### Steps
+- [x] Facet UUID: `Facet.uuid` / `FacetEntity.uuid` (random on create, unique index), Room v51 with `Migrations.MIGRATION_50_51` giving each existing facet its own; `BackupFacet.uuid` kept on restore (fresh when absent or used twice). Tests: `FacetRepositoryTest`, `BackupMappingTest`, `ImportBackupUseCaseTest`, `FacetDatabaseMigrationTest.migration50To51GivesEveryFacetItsOwnUuid`.
+- [x] Backup format: `BackupBundle.automationRules` (`BackupAutomationRule`, list order, nullable for older files, no version bump); `AutomationRuleBackupMapping` (lenient: unknown trigger or ending is `UNSUPPORTED`, missing facet `FACET_MISSING`, editor-invalid `INVALID`). Tests: `AutomationRuleBackupMappingTest`, `ExportBackupUseCaseTest`, `BackupCoverageTest` (rule columns).
+- [x] Restore: `RestoreAutomationRulesUseCase` (replace all rules in order with no plan limit, reset `facet_automation` state, record the restored active facet as a manual switch; summary with skipped, paused and permission-waiting counts). Tests: `RestoreAutomationRulesUseCaseTest`.
+- [x] Backup screen: rule count in the result line, an "Automation rules" card when something needs a look, link to Facet automation; confirmation text mentions rules. Tests: `BackupRestoreScreenTest`.
+- [x] Docs: `02` (facets, DAO matrix, migration table, §5.7, §6), `04`, `07`, `09`, `15`, README.
+- [ ] Native review of the new backup rule strings (machine-translated into de, es, fr, nl, pt, pt-PT; es-419 falls back to es).
+- [ ] Verified on the emulator.
+

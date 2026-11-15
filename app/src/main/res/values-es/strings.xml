@@ -486,7 +486,7 @@
 
     <!-- BackupRestoreScreen -->
     <string name="backup_restore_confirm_title">¿Reemplazar todo en este dispositivo?</string>
-    <string name="backup_restore_confirm_message">Importar reemplaza todas las facetas, el dock y los favoritos predeterminados con lo que hay en el archivo de copia de seguridad. Esto no se puede deshacer.</string>
+    <string name="backup_restore_confirm_message">Importar reemplaza todas las facetas, el dock, los favoritos predeterminados y las reglas de automatización con lo que hay en el archivo de copia de seguridad. Esto no se puede deshacer.</string>
     <string name="backup_restore_confirm_replace">Reemplazar</string>
     <string name="backup_restore_export_title">Exportar copia de seguridad</string>
     <string name="backup_restore_export_subtitle">Guarda todas las facetas, el dock, los favoritos y los ajustes como archivo</string>
@@ -506,6 +506,39 @@
         <item quantity="other">%d widgets necesitan añadirse de nuevo abajo</item>
         <item quantity="many">%d de widgets necesitan añadirse de nuevo abajo</item>
     </plurals>
+    <plurals name="backup_restored_rules_count">
+        <item quantity="one">%d regla de automatización</item>
+        <item quantity="other">%d reglas de automatización</item>
+        <item quantity="many">%d de reglas de automatización</item>
+    </plurals>
+    <string name="backup_restore_rules_header">REGLAS DE AUTOMATIZACIÓN</string>
+    <plurals name="backup_rules_skipped_facet_missing">
+        <item quantity="one">%d regla omitida: su faceta no está en esta copia de seguridad</item>
+        <item quantity="other">%d reglas omitidas: su faceta no está en esta copia de seguridad</item>
+        <item quantity="many">%d de reglas omitidas: su faceta no está en esta copia de seguridad</item>
+    </plurals>
+    <plurals name="backup_rules_skipped_unsupported">
+        <item quantity="one">%d regla omitida: necesita una versión más reciente de Facet</item>
+        <item quantity="other">%d reglas omitidas: necesitan una versión más reciente de Facet</item>
+        <item quantity="many">%d de reglas omitidas: necesitan una versión más reciente de Facet</item>
+    </plurals>
+    <plurals name="backup_rules_skipped_invalid">
+        <item quantity="one">%d regla omitida: no se pudo leer</item>
+        <item quantity="other">%d reglas omitidas: no se pudieron leer</item>
+        <item quantity="many">%d de reglas omitidas: no se pudieron leer</item>
+    </plurals>
+    <plurals name="backup_rules_need_permission">
+        <item quantity="one">%d regla necesita permiso de Bluetooth o ubicación</item>
+        <item quantity="other">%d reglas necesitan permiso de Bluetooth o ubicación</item>
+        <item quantity="many">%d de reglas necesitan permiso de Bluetooth o ubicación</item>
+    </plurals>
+    <plurals name="backup_rules_paused">
+        <item quantity="one">%d regla está en pausa en el plan gratuito</item>
+        <item quantity="other">%d reglas están en pausa en el plan gratuito</item>
+        <item quantity="many">%d de reglas están en pausa en el plan gratuito</item>
+    </plurals>
+    <string name="backup_rules_not_in_backup">Esta copia de seguridad no tiene reglas de automatización: se hizo antes de que Facet las incluyera.</string>
+    <string name="backup_rules_open_automation">Abrir Automatización de facetas</string>
     <string name="backup_restore_import_failed_invalid_file">Ese archivo no es una copia de seguridad válida de Facet</string>
     <string name="backup_restore_import_failed_unsupported_version">Esa copia de seguridad se creó con una versión más reciente de Facet</string>
     <string name="backup_restore_app_not_installed">App no instalada</string>

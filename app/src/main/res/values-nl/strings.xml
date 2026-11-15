@@ -485,7 +485,7 @@
     <string name="appearance_basic_colors">Basiskleuren</string>
 
     <string name="backup_restore_confirm_title">Alles op dit apparaat vervangen?</string>
-    <string name="backup_restore_confirm_message">Importeren vervangt alle facets, de dock en de standaardfavorieten door de inhoud van het back-upbestand. Dit kan niet ongedaan worden gemaakt.</string>
+    <string name="backup_restore_confirm_message">Importeren vervangt alle facets, de dock, de standaardfavorieten en de automatiseringsregels door de inhoud van het back-upbestand. Dit kan niet ongedaan worden gemaakt.</string>
     <string name="backup_restore_confirm_replace">Vervangen</string>
     <string name="backup_restore_export_title">Back-up exporteren</string>
     <string name="backup_restore_export_subtitle">Sla alle facets, de dock, favorieten en instellingen op als bestand</string>
@@ -503,6 +503,33 @@
         <item quantity="one">%d widget moet hieronder opnieuw worden toegevoegd</item>
         <item quantity="other">%d widgets moeten hieronder opnieuw worden toegevoegd</item>
     </plurals>
+    <plurals name="backup_restored_rules_count">
+        <item quantity="one">%d automatiseringsregel</item>
+        <item quantity="other">%d automatiseringsregels</item>
+    </plurals>
+    <string name="backup_restore_rules_header">AUTOMATISERINGSREGELS</string>
+    <plurals name="backup_rules_skipped_facet_missing">
+        <item quantity="one">%d regel overgeslagen: de facet staat niet in deze back-up</item>
+        <item quantity="other">%d regels overgeslagen: de facet staat niet in deze back-up</item>
+    </plurals>
+    <plurals name="backup_rules_skipped_unsupported">
+        <item quantity="one">%d regel overgeslagen: vereist een nieuwere versie van Facet</item>
+        <item quantity="other">%d regels overgeslagen: vereisen een nieuwere versie van Facet</item>
+    </plurals>
+    <plurals name="backup_rules_skipped_invalid">
+        <item quantity="one">%d regel overgeslagen: kon niet worden gelezen</item>
+        <item quantity="other">%d regels overgeslagen: konden niet worden gelezen</item>
+    </plurals>
+    <plurals name="backup_rules_need_permission">
+        <item quantity="one">%d regel heeft toestemming voor bluetooth of locatie nodig</item>
+        <item quantity="other">%d regels hebben toestemming voor bluetooth of locatie nodig</item>
+    </plurals>
+    <plurals name="backup_rules_paused">
+        <item quantity="one">%d regel is gepauzeerd in het gratis abonnement</item>
+        <item quantity="other">%d regels zijn gepauzeerd in het gratis abonnement</item>
+    </plurals>
+    <string name="backup_rules_not_in_backup">Deze back-up bevat geen automatiseringsregels: hij is gemaakt voordat Facet ze meenam.</string>
+    <string name="backup_rules_open_automation">Facetautomatisering openen</string>
     <string name="backup_restore_import_failed_invalid_file">Dat bestand is geen geldige Facet-back-up</string>
     <string name="backup_restore_import_failed_unsupported_version">Die back-up is gemaakt met een nieuwere versie van Facet</string>
     <string name="backup_restore_app_not_installed">App niet geïnstalleerd</string>

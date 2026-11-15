@@ -484,7 +484,7 @@
 
     <!-- BackupRestoreScreen -->
     <string name="backup_restore_confirm_title">Alles auf diesem Gerät ersetzen?</string>
-    <string name="backup_restore_confirm_message">Der Import ersetzt jede Facette, das Dock und die Standardfavoriten durch den Inhalt der Sicherungsdatei. Dies kann nicht rückgängig gemacht werden.</string>
+    <string name="backup_restore_confirm_message">Der Import ersetzt jede Facette, das Dock, die Standardfavoriten und die Automatisierungsregeln durch den Inhalt der Sicherungsdatei. Dies kann nicht rückgängig gemacht werden.</string>
     <string name="backup_restore_confirm_replace">Ersetzen</string>
     <string name="backup_restore_export_title">Sicherung exportieren</string>
     <string name="backup_restore_export_subtitle">Speichere jede Facette, das Dock, Favoriten und Einstellungen als Datei</string>
@@ -502,6 +502,33 @@
         <item quantity="one">%d Widget muss unten erneut hinzugefügt werden</item>
         <item quantity="other">%d Widgets müssen unten erneut hinzugefügt werden</item>
     </plurals>
+    <plurals name="backup_restored_rules_count">
+        <item quantity="one">%d Automatisierungsregel</item>
+        <item quantity="other">%d Automatisierungsregeln</item>
+    </plurals>
+    <string name="backup_restore_rules_header">AUTOMATISIERUNGSREGELN</string>
+    <plurals name="backup_rules_skipped_facet_missing">
+        <item quantity="one">%d Regel übersprungen: ihre Facette ist nicht in dieser Sicherung</item>
+        <item quantity="other">%d Regeln übersprungen: ihre Facette ist nicht in dieser Sicherung</item>
+    </plurals>
+    <plurals name="backup_rules_skipped_unsupported">
+        <item quantity="one">%d Regel übersprungen: sie erfordert eine neuere Version von Facet</item>
+        <item quantity="other">%d Regeln übersprungen: sie erfordern eine neuere Version von Facet</item>
+    </plurals>
+    <plurals name="backup_rules_skipped_invalid">
+        <item quantity="one">%d Regel übersprungen: sie konnte nicht gelesen werden</item>
+        <item quantity="other">%d Regeln übersprungen: sie konnten nicht gelesen werden</item>
+    </plurals>
+    <plurals name="backup_rules_need_permission">
+        <item quantity="one">%d Regel benötigt die Bluetooth- oder Standortberechtigung</item>
+        <item quantity="other">%d Regeln benötigen die Bluetooth- oder Standortberechtigung</item>
+    </plurals>
+    <plurals name="backup_rules_paused">
+        <item quantity="one">%d Regel ist im kostenlosen Tarif pausiert</item>
+        <item quantity="other">%d Regeln sind im kostenlosen Tarif pausiert</item>
+    </plurals>
+    <string name="backup_rules_not_in_backup">Diese Sicherung enthält keine Automatisierungsregeln: sie wurde erstellt, bevor Facet sie gesichert hat.</string>
+    <string name="backup_rules_open_automation">Facetten-Automatisierung öffnen</string>
     <string name="backup_restore_import_failed_invalid_file">Diese Datei ist keine gültige Facet-Sicherung</string>
     <string name="backup_restore_import_failed_unsupported_version">Diese Sicherung wurde mit einer neueren Version von Facet erstellt</string>
     <string name="backup_restore_app_not_installed">App nicht installiert</string>

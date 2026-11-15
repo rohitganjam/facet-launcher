@@ -20,7 +20,7 @@ sequenceDiagram
     loop each facet
         UC->>R: placementRepository.getRawApps(Favorites/Dock of facet), getRawFolderPlacements(...)
     end
-    UC->>R: widgetPlacementRepository.observeAll().first()
+    UC->>R: widgetPlacementRepository.observeAll().first(), automationRuleRepository.getRules()
     UC->>UC: BackupMapping — entities to Backup* DTOs, folder/facet refs become list indices
     UC->>BR: writeBackup(uri, BackupBundle(exportedAtEpochMillis, ...))   (backupVersion defaults to CURRENT_BACKUP_VERSION, 6)
     BR->>BR: contentResolver.openFileDescriptor(uri, "wt") truncated to 0, then Json.encodeToString  (Dispatchers.IO)
@@ -30,8 +30,11 @@ sequenceDiagram
 
 - **Raw, not hydrated.** Export reads `getRaw*()` (DAO `.first()`), so a placement whose app is
   currently uninstalled is still exported. Nothing is filtered against `LauncherApps`.
-- **Ids are not exported.** Facets and folders are referenced by their index in the bundle's
+- **Ids are not exported.** Folders are referenced by their index in the bundle's
   lists; `active_facet_id` becomes `activeFacetIndex`. Room ids are regenerated on import.
+- **Facets carry their UUID, and rules point at it.** Each `BackupFacet.uuid` is the facet's permanent id;
+  `automationRules` (`BackupAutomationRule`, list order) name their target and "switch to" facets by it
+  (`AutomationRuleBackupMapping.toBackupRule`).
 - What is *not* in the file: see [02 §6](02-persistence-room.md) (calendar selection/colors, the hosted
   clock stack's hosted widget pages (a restored facet starts with the launcher clock, then its native widget pages, see [20](20-flow-native-widgets.md) §5; the facet's `clockPlacementOwn` and `allowLandscape` flags are exported, an old backup reading it as `overrideClock`), permission and coach-mark flags). `BackupCoverageTest` enforces the list.
 
@@ -53,15 +56,16 @@ sequenceDiagram
     UC->>R: folderRepository.deleteAllFolders(), then restoreFolder(...) per folder → index→newId map
     UC->>R: facetRepository.deleteAllFacets()   (FK CASCADE clears every per-facet placement)
     loop each BackupFacet
-        UC->>R: facetRepository.restoreFacet(backupFacet.toFacet()) → newId
+        UC->>R: facetRepository.restoreFacet(backupFacet.toFacet()) → newId, keeping its uuid (fresh when absent or already used)
         UC->>R: clockStackRepository.restoreClock(newId, clockConfig, sizes) and restoreNativeWidgets(newId, nativeStackPages)
         UC->>R: placementRepository.restoreApp / restoreFolderPlacement (AppPlacementEntity / PlacementTarget with list + newId, folderIndex→newId)
     end
     UC->>R: settingsRepository.setActiveFacetId(newIds[activeFacetIndex])
+    UC->>R: restoreAutomationRules(bundle.automationRules, uuid→newId, activeFacetId)  — skips rules whose facet is missing, resets automation state
     UC->>R: widgetPlacementRepository.deleteAllNative(), then upsert each native Hub widget under nextNativeId()
     UC->>R: repairOrphanedProfileRows()  (resolves every restored userId = -1)
-    UC-->>VM: ImportBackupResult.Success(facetCount, pendingWidgetPlacements = the hosted widget placements only)
-    VM-->>S: uiState.pendingWidgets = [...]   (widget re-bind UI, §3)
+    UC-->>VM: ImportBackupResult.Success(facetCount, pendingWidgetPlacements = the hosted widget placements only, automationRules summary)
+    VM-->>S: uiState.pendingWidgets = [...]   (widget re-bind UI, §3), automationReview when rules need a look
 ```
 
 - **Not transactional.** The use case's own doc says so: a failure mid-way leaves a partially
@@ -80,6 +84,16 @@ sequenceDiagram
   folder FK cascade and `deleteAllFacets` clears every per-facet row through the facet FK cascade, so nothing else is wiped.
   Exports no longer write the launcher-wide lists (`BackupBundle.dockApps`, `defaultFavoriteApps` and the two folder-placement lists are
   legacy: read from older files by `upgradedToCurrent`, never written, never restored by themselves).
+- **Automation rules.** `RestoreAutomationRulesUseCase` maps each `BackupAutomationRule` through
+  `toRestoredRule(facetIdByUuid)`: a rule whose target or "switch to" facet isn't in the backup is
+  skipped (`FACET_MISSING`), an unknown trigger or ending from a newer app is `UNSUPPORTED`, and one the
+  rule editor would refuse is `INVALID`. The rest replace every rule in order with no plan limit (the
+  free plan pauses extras, never deletes them). The `facet_automation` state is reset and the restored
+  active facet recorded as a manual switch (`ActivateFacetByIdUseCase`), so a rule already true waits
+  for its next start. The summary counts restored, skipped (with their triggers), paused and
+  permission-waiting rules; `BackupRestoreScreen` shows the count in the result line and an
+  "Automation rules" card (`needsReview`) with a link to Facet automation. A backup with no rule list
+  (older than this) restores none and says so.
 - Result type: `ImportBackupResult.Success | InvalidFile | UnsupportedVersion(version)`.
 
 Widgets Facet draws itself are not in the queue: `ImportBackupUseCase` restores them directly ([20](20-flow-native-widgets.md) §5), and `pendingWidgetPlacements` holds only hosted ones.
