@@ -35,5 +35,8 @@ internal class HomeOverlayState {
     /** Private Space, over the app drawer. */
     var showPrivateSpace by mutableStateOf(false)
 
-    val anyOpen: Boolean get() = showWidgetPicker || showClockWidgetPicker || showPrivateSpace
+    /** The App Vault, over the app drawer. */
+    var showAppVault by mutableStateOf(false)
+
+    val anyOpen: Boolean get() = showWidgetPicker || showClockWidgetPicker || showPrivateSpace || showAppVault
 }

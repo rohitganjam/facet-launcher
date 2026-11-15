@@ -13,7 +13,7 @@ checked against source, not against planning docs; where the code diverges from
 | [05-findings.md](05-findings.md) | Architect's review: 12 open findings (layering, cleanup, performance, test gaps) with concrete fixes, plus what's working well |
 | [06-testing.md](06-testing.md) | How tests are done: tiers, harnesses, fixtures, conventions, run commands, coverage gaps |
 | [TEST_REGISTRY.md](TEST_REGISTRY.md) | **Generated** — every test class and case (344 classes / 3134 cases), regenerate with `scripts/gen-test-registry.py` |
-| [07-registries.md](07-registries.md) | Complete inventories: 59 repositories and data singletons (deps, source wrapped, API, consumers), 76 use cases (with `DailyWallpaperCoordinator`), 47 ViewModels |
+| [07-registries.md](07-registries.md) | Complete inventories: 60 repositories and data singletons (deps, source wrapped, API, consumers), 77 use cases (with `DailyWallpaperCoordinator`), 48 ViewModels |
 | [08-flow-placements.md](08-flow-placements.md) | Flow: favorites/dock/folder add, remove, reorder (all in `app_placements` / `folder_placements`); override routing; uninstall cleanup, profile sweep, orphan repair, dock seeding |
 | [09-flow-backup-restore.md](09-flow-backup-restore.md) | Flow: export, destructive import, widget re-bind state machine, versioning |
 | [10-flow-hub-widgets.md](10-flow-hub-widgets.md) | Flow: widget host lifecycle, add (bind/configure/place), move/resize/compact, delete, orphans |
@@ -27,6 +27,7 @@ checked against source, not against planning docs; where the code diverges from
 | [19-flow-icon-packs.md](19-flow-icon-packs.md) | Flow: finding installed icon packs, reading `appfilter.xml` (text scan or resource), lookup and fallback theming, calendar icons, drawing, the Icons screen, backup |
 | [20-flow-native-widgets.md](20-flow-native-widgets.md) | Flow: widgets Facet draws itself (weather, agenda, now playing) on the Hub and Home's stack — storage, one size-driven layout contract, data, add/replace, backup |
 | [21-flow-wallpaper-glass.md](21-flow-wallpaper-glass.md) | The wallpaper copy behind real glass: the wallpaper screen, the fit step, what decides real glass, and what is not built yet |
+| [23-flow-app-vault.md](23-flow-app-vault.md) | Flow: the PIN-locked App Vault — the `facet_vault` store, Keystore PIN hash and lockout, how vaulted apps are hidden from every list, moving apps in and out, the overlay and its locking, Forgot PIN, why it is not in backups |
 | [22-flow-custom-icons.md](22-flow-custom-icons.md) | Flow: one app's custom icon from its long-press menu — storage and snapshots, drawing over the scan, the Change icon and Browse pages, the Custom icons reset list, cleanup and backup |
 | [18-flow-weather.md](18-flow-weather.md) | Flow: the clock's weather accessory and sheet — MET Norway forecast, refresh gate, location and place names, cached hourly rows, settings |
 

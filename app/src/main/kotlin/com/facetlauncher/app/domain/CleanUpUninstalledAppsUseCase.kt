@@ -1,6 +1,7 @@
 package com.facetlauncher.app.domain
 
 import com.facetlauncher.app.data.AppRepository
+import com.facetlauncher.app.data.AppVaultRepository
 import com.facetlauncher.app.data.FolderRepository
 import com.facetlauncher.app.data.IconOverrideRepository
 import com.facetlauncher.app.data.LaunchHistoryRepository
@@ -37,6 +38,8 @@ class CleanUpUninstalledAppsUseCase @Inject constructor(
     private val launchHistoryRepository: LaunchHistoryRepository,
     // Defaulted so tests that don't cover custom icons needn't build one; Hilt always supplies it.
     private val iconOverrideRepository: IconOverrideRepository? = null,
+    // A vaulted app that is uninstalled stays vaulted, so a reinstall stays hidden; only a removed profile clears its entries.
+    private val appVaultRepository: AppVaultRepository? = null,
 ) {
     suspend operator fun invoke() = coroutineScope {
         launch {
@@ -54,6 +57,7 @@ class CleanUpUninstalledAppsUseCase @Inject constructor(
                 folderRepository.removeByUserId(userId)
                 launchHistoryRepository.removeByUserId(userId)
                 iconOverrideRepository?.removeByUserId(userId)
+                appVaultRepository?.removeByUserId(userId)
             }
         }
     }

@@ -81,6 +81,9 @@ class PlacementRepository @Inject constructor(
         appPlacementDao.deleteByPackage(packageName, userId)
     }
 
+    /** How many Favorites and Dock entries, in every facet, hold [packageName] for [userId]. */
+    suspend fun countByPackage(packageName: String, userId: Int): Int = appPlacementDao.countByPackage(packageName, userId)
+
     /** Bulk cleanup for a whole profile vanishing (e.g. Work Profile unenrollment) — see [AppRepository.observeProfileRemoved]. */
     suspend fun removeByUserId(userId: Int) {
         appPlacementDao.deleteByUserId(userId)

@@ -47,6 +47,10 @@ interface FolderDao {
     @Query("DELETE FROM folder_apps WHERE packageName = :packageName AND userId = :userId")
     suspend fun deleteFolderAppsByPackage(packageName: String, userId: Int)
 
+    /** How many folders hold [packageName] for [userId]. */
+    @Query("SELECT COUNT(*) FROM folder_apps WHERE packageName = :packageName AND userId = :userId")
+    suspend fun countFolderAppsByPackage(packageName: String, userId: Int): Int
+
     /** Bulk cleanup for a whole profile vanishing (e.g. Work Profile unenrollment). */
     @Query("DELETE FROM folder_apps WHERE userId = :userId")
     suspend fun deleteFolderAppsByUserId(userId: Int)

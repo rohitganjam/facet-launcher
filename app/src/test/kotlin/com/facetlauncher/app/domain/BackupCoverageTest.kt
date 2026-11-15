@@ -1,5 +1,6 @@
 package com.facetlauncher.app.domain
 
+import com.facetlauncher.app.data.model.BackupBundle
 import com.facetlauncher.app.data.model.BackupFacet
 import com.facetlauncher.app.data.model.BackupSettings
 import com.facetlauncher.app.data.model.Facet
@@ -18,6 +19,17 @@ class BackupCoverageTest {
 
     private fun fieldNames(type: Class<*>): Set<String> =
         type.declaredFields.filterNot { it.isSynthetic || Modifier.isStatic(it.modifiers) }.map { it.name }.toSet()
+
+    @Test
+    fun `the App Vault is never part of a backup`() {
+        // Given every class a backup file is made of
+        val backupClasses = listOf(BackupBundle::class.java, BackupSettings::class.java, BackupFacet::class.java)
+
+        // Then none of them carries a vault field (the vault stays on the phone, in the excluded facet_vault store)
+        backupClasses.forEach { type ->
+            assertEquals(type.simpleName, emptySet<String>(), fieldNames(type).filter { it.contains("vault", ignoreCase = true) }.toSet())
+        }
+    }
 
     @Test
     fun `every facet field is exported or deliberately left out`() {

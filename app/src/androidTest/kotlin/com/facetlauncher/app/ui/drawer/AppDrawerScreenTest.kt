@@ -14,6 +14,7 @@ import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.center
 import androidx.compose.ui.test.down
 import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.getBoundsInRoot
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.longClick
 import androidx.compose.ui.test.moveTo
@@ -580,6 +581,39 @@ class AppDrawerScreenTest {
 
         // Then a System settings row is offered
         composeRule.onNodeWithTag("drawer_search_overflow_system_settings").assertExists()
+    }
+
+    @Test
+    fun overflowMenuOffersTheAppVaultAsItsLastRow() {
+        // Given the drawer with the App Vault available
+        var opened = false
+        composeRule.setContent {
+            FacetLauncherTheme {
+                AppDrawerScreen(apps = apps.toImmutableList(), actions = DrawerItemActions(onAppClick = {}), searchBar = DrawerSearchBarConfig(onOpenAppVault = { opened = true }))
+            }
+        }
+
+        // When opening the overflow menu
+        composeRule.onNodeWithTag("drawer_search_overflow").performClick()
+
+        // Then the vault row sits below every other row, and tapping it opens the vault
+        val vaultTop = composeRule.onNodeWithTag("drawer_search_overflow_app_vault").getBoundsInRoot().top
+        val systemSettingsTop = composeRule.onNodeWithTag("drawer_search_overflow_system_settings").getBoundsInRoot().top
+        val settingsTop = composeRule.onNodeWithTag("drawer_search_overflow_settings").getBoundsInRoot().top
+        assertTrue(vaultTop > systemSettingsTop && vaultTop > settingsTop)
+        composeRule.onNodeWithTag("drawer_search_overflow_app_vault").performClick()
+        assertEquals(true, opened)
+    }
+
+    @Test
+    fun overflowMenuHasNoAppVaultRowWhenItIsNotWiredUp() {
+        composeRule.setContent {
+            FacetLauncherTheme { AppDrawerScreen(apps = apps.toImmutableList(), actions = DrawerItemActions(onAppClick = {})) }
+        }
+
+        composeRule.onNodeWithTag("drawer_search_overflow").performClick()
+
+        composeRule.onNodeWithTag("drawer_search_overflow_app_vault").assertDoesNotExist()
     }
 
     @Test

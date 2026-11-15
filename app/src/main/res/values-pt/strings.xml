@@ -1263,4 +1263,52 @@
         <item quantity="other">%d apps</item>
         <item quantity="many">%d de apps</item>
     </plurals>
+    <string name="drawer_search_app_vault">Cofre de apps</string>
+    <string name="vault_title">Cofre de apps</string>
+    <string name="vault_intro_hide">Oculte apps da gaveta, da tela inicial, do dock, das pastas e da pesquisa, em todos os facets.</string>
+    <string name="vault_intro_hide_sub">Abra-os aqui com um PIN de 4 dígitos.</string>
+    <string name="vault_intro_limits">Os apps ocultos continuam aparecendo nas configurações do sistema, na Play Store e em suas notificações.</string>
+    <string name="vault_intro_private_space">Para apps também bloqueados e pausados, use o Espaço privado ou a Pasta segura, se o seu celular tiver uma.</string>
+    <string name="vault_intro_no_screen_lock">Este celular não tem bloqueio de tela, então um PIN esquecido só pode ser resolvido desativando o cofre.</string>
+    <string name="vault_set_pin">Definir PIN</string>
+    <string name="vault_create_pin_title">Crie um PIN</string>
+    <string name="vault_create_pin_sub">Escolha 4 dígitos para abrir o cofre.</string>
+    <string name="vault_confirm_pin_title">Confirme seu PIN</string>
+    <string name="vault_confirm_pin_sub">Digite-o mais uma vez.</string>
+    <string name="vault_pins_mismatch">Os PINs não coincidem. Digite um novo PIN.</string>
+    <string name="vault_enter_pin">Digite seu PIN</string>
+    <string name="vault_locked_out">Muitas tentativas. Tente novamente em %1$s</string>
+    <string name="vault_forgot_pin">Esqueceu o PIN?</string>
+    <string name="vault_backspace">Apagar o último dígito</string>
+    <string name="vault_add_apps">Adicionar apps</string>
+    <string name="vault_add_to_vault_title">Adicionar ao cofre</string>
+    <string name="vault_picker_chosen">Escolhidos</string>
+    <string name="vault_empty">Nenhum app oculto ainda</string>
+    <string name="vault_empty_hint">Os apps que você adicionar aqui somem da gaveta, da tela inicial e da pesquisa.</string>
+    <string name="vault_more_options">Mais opções</string>
+    <string name="vault_app_menu">Opções de %1$s</string>
+    <string name="vault_app_info">Informações do app</string>
+    <string name="vault_remove">Remover do cofre</string>
+    <string name="vault_removed">%1$s voltou para a sua gaveta</string>
+    <string name="vault_undo">Desfazer</string>
+    <string name="vault_change_pin">Alterar PIN</string>
+    <string name="vault_turn_off">Desativar o cofre de apps</string>
+    <string name="vault_turn_off_title">Desativar o cofre de apps?</string>
+    <string name="vault_turn_off_message">Todos os apps ocultos voltam para a sua gaveta e o PIN é apagado.</string>
+    <string name="vault_turn_off_confirm">Desativar</string>
+    <string name="vault_reset_title">Redefinir o cofre de apps?</string>
+    <string name="vault_reset_message">Este celular não tem bloqueio de tela para confirmar que é você, então um PIN esquecido só pode ser apagado desativando o cofre. Todos os apps ocultos voltam para a sua gaveta.</string>
+    <string name="vault_reset_confirm">Redefinir</string>
+    <string name="vault_move_title">Mover para o cofre?</string>
+    <string name="vault_move_confirm">Mover para o cofre</string>
+    <string name="vault_confirm_credential_title">Confirme que é você</string>
+    <string name="vault_confirm_credential_message">Use o bloqueio de tela do celular para escolher um novo PIN do cofre.</string>
+    <plurals name="vault_wrong_pin">
+        <item quantity="one">PIN incorreto. Resta %1$d tentativa antes de uma pausa.</item>
+        <item quantity="other">PIN incorreto. Restam %1$d tentativas antes de uma pausa.</item>
+    </plurals>
+    <plurals name="vault_move_message">
+        <item quantity="one">%1$d dos apps escolhidos está na tela inicial ou em uma pasta. Ele será removido dos Favoritos, do dock e das pastas em todos os facets.</item>
+        <item quantity="other">%1$d dos apps escolhidos estão na tela inicial ou em pastas. Eles serão removidos dos Favoritos, do dock e das pastas em todos os facets.</item>
+    </plurals>
 </resources>

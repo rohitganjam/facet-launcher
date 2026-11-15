@@ -1187,4 +1187,52 @@
         <item quantity="one">%d app</item>
         <item quantity="other">%d apps</item>
     </plurals>
+    <string name="drawer_search_app_vault">App-kluis</string>
+    <string name="vault_title">App-kluis</string>
+    <string name="vault_intro_hide">Verberg apps uit je appoverzicht, startscherm, dock, mappen en zoekopdrachten, in elke facet.</string>
+    <string name="vault_intro_hide_sub">Open ze hier met een pincode van 4 cijfers.</string>
+    <string name="vault_intro_limits">Verborgen apps zijn nog te zien in de systeeminstellingen, de Play Store en hun meldingen.</string>
+    <string name="vault_intro_private_space">Voor apps die ook vergrendeld en gepauzeerd zijn, gebruik je Privéruimte of Beveiligde map als je telefoon die heeft.</string>
+    <string name="vault_intro_no_screen_lock">Deze telefoon heeft geen schermvergrendeling, dus een vergeten pincode los je alleen op door de kluis uit te zetten.</string>
+    <string name="vault_set_pin">Pincode instellen</string>
+    <string name="vault_create_pin_title">Maak een pincode</string>
+    <string name="vault_create_pin_sub">Kies 4 cijfers om de kluis te openen.</string>
+    <string name="vault_confirm_pin_title">Bevestig je pincode</string>
+    <string name="vault_confirm_pin_sub">Voer hem nog een keer in.</string>
+    <string name="vault_pins_mismatch">De pincodes komen niet overeen. Voer een nieuwe pincode in.</string>
+    <string name="vault_enter_pin">Voer je pincode in</string>
+    <string name="vault_locked_out">Te veel pogingen. Probeer het over %1$s opnieuw</string>
+    <string name="vault_forgot_pin">Pincode vergeten?</string>
+    <string name="vault_backspace">Laatste cijfer wissen</string>
+    <string name="vault_add_apps">Apps toevoegen</string>
+    <string name="vault_add_to_vault_title">Toevoegen aan kluis</string>
+    <string name="vault_picker_chosen">Gekozen</string>
+    <string name="vault_empty">Nog geen verborgen apps</string>
+    <string name="vault_empty_hint">Apps die je hier toevoegt, verdwijnen uit je appoverzicht, startscherm en zoekopdrachten.</string>
+    <string name="vault_more_options">Meer opties</string>
+    <string name="vault_app_menu">Opties voor %1$s</string>
+    <string name="vault_app_info">App-info</string>
+    <string name="vault_remove">Uit kluis halen</string>
+    <string name="vault_removed">%1$s staat weer in je appoverzicht</string>
+    <string name="vault_undo">Ongedaan maken</string>
+    <string name="vault_change_pin">Pincode wijzigen</string>
+    <string name="vault_turn_off">App-kluis uitzetten</string>
+    <string name="vault_turn_off_title">App-kluis uitzetten?</string>
+    <string name="vault_turn_off_message">Alle verborgen apps komen terug in je appoverzicht en de pincode wordt verwijderd.</string>
+    <string name="vault_turn_off_confirm">Uitzetten</string>
+    <string name="vault_reset_title">App-kluis resetten?</string>
+    <string name="vault_reset_message">Deze telefoon heeft geen schermvergrendeling om te bevestigen dat jij het bent, dus een vergeten pincode kun je alleen wissen door de kluis uit te zetten. Alle verborgen apps komen terug in je appoverzicht.</string>
+    <string name="vault_reset_confirm">Resetten</string>
+    <string name="vault_move_title">Naar de kluis verplaatsen?</string>
+    <string name="vault_move_confirm">Naar kluis</string>
+    <string name="vault_confirm_credential_title">Bevestig dat jij het bent</string>
+    <string name="vault_confirm_credential_message">Gebruik de schermvergrendeling van je telefoon om een nieuwe kluispincode te kiezen.</string>
+    <plurals name="vault_wrong_pin">
+        <item quantity="one">Onjuiste pincode. Nog %1$d poging voor een pauze.</item>
+        <item quantity="other">Onjuiste pincode. Nog %1$d pogingen voor een pauze.</item>
+    </plurals>
+    <plurals name="vault_move_message">
+        <item quantity="one">%1$d van de gekozen apps staat op het startscherm of in een map. Hij wordt in elke facet verwijderd uit Favorieten, de dock en mappen.</item>
+        <item quantity="other">%1$d van de gekozen apps staan op het startscherm of in mappen. Ze worden in elke facet verwijderd uit Favorieten, de dock en mappen.</item>
+    </plurals>
 </resources>

@@ -69,6 +69,9 @@ class FolderRepository @Inject constructor(
         folderDao.deleteFolderAppsByPackage(packageName, userId)
     }
 
+    /** How many folders hold [packageName] for [userId]. */
+    suspend fun countByPackage(packageName: String, userId: Int): Int = folderDao.countFolderAppsByPackage(packageName, userId)
+
     /** Bulk cleanup for a whole profile vanishing (e.g. Work Profile unenrollment) — see [AppRepository.observeProfileRemoved]. */
     suspend fun removeByUserId(userId: Int) {
         folderDao.deleteFolderAppsByUserId(userId)

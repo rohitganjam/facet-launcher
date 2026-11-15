@@ -30,6 +30,10 @@ interface AppPlacementDao {
     @Query("DELETE FROM app_placements WHERE packageName = :packageName AND userId = :userId")
     suspend fun deleteByPackage(packageName: String, userId: Int)
 
+    /** How many Favorites and Dock entries, across every list and owner, hold [packageName] for [userId]. */
+    @Query("SELECT COUNT(*) FROM app_placements WHERE packageName = :packageName AND userId = :userId")
+    suspend fun countByPackage(packageName: String, userId: Int): Int
+
     /** Bulk cleanup for a whole profile vanishing (e.g. Work Profile unenrollment), across every list and owner. */
     @Query("DELETE FROM app_placements WHERE userId = :userId")
     suspend fun deleteByUserId(userId: Int)

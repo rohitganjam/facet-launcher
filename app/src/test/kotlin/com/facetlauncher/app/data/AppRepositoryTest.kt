@@ -823,6 +823,42 @@ class AppRepositoryTest {
         verify(launcherApps).getActivityList(eq(null), any())
         collectJob.cancel()
     }
+
+    @Test
+    fun `vaulted apps are left out of every list but the vault's own`() = runTest {
+        // Given two installed apps and the covered one in the vault
+        val launcherApps = launcherAppsWithTwoApps()
+        val keys = MutableStateFlow(setOf("com.example.covered|${Process.myUserHandle().hashCode()}"))
+        val vault = mock(AppVaultRepository::class.java)
+        `when`(vault.vaultedKeys).thenReturn(keys)
+        val repository = AppRepository(launcherApps, personalOnlyUserManager(), context, backgroundScope, appVaultRepository = vault)
+
+        // Then the one-shot and live lists hide it, and only the vault's views keep it
+        assertEquals(listOf("com.example.missed"), repository.getInstalledApps().map { it.packageName })
+        assertEquals(listOf("com.example.missed"), repository.observeInstalledApps().first().map { it.packageName })
+        assertEquals(setOf("com.example.covered", "com.example.missed"), repository.getAllInstalledApps().map { it.packageName }.toSet())
+        assertEquals(listOf("com.example.covered"), repository.observeVaultedApps().first().map { it.packageName })
+    }
+
+    @Test
+    fun `taking an app out of the vault puts it straight back in the live list`() = runTest {
+        // Given the covered app vaulted
+        val launcherApps = launcherAppsWithTwoApps()
+        val keys = MutableStateFlow(setOf("com.example.covered|${Process.myUserHandle().hashCode()}"))
+        val vault = mock(AppVaultRepository::class.java)
+        `when`(vault.vaultedKeys).thenReturn(keys)
+        val repository = AppRepository(launcherApps, personalOnlyUserManager(), context, backgroundScope, appVaultRepository = vault)
+        val emissions = Channel<List<AppInfo>>(Channel.UNLIMITED)
+        val collectJob = launch { repository.observeInstalledApps().collect { emissions.send(it) } }
+        assertEquals(1, emissions.receive().size)
+
+        // When it is removed from the vault
+        keys.value = emptySet()
+
+        // Then the list has both apps again
+        assertEquals(2, emissions.receive().size)
+        collectJob.cancel()
+    }
 }
 
 private fun <T> eq(value: T): T = org.mockito.Mockito.eq(value) ?: value

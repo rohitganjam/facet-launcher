@@ -624,6 +624,7 @@ private fun DrawerSearchBar(
                 onOpenSecureFolder = config.onOpenSecureFolder,
                 showPrivateSpaceRow = config.showPrivateSpaceRow,
                 onPrivateSpaceRowClick = config.onPrivateSpaceRowClick,
+                onOpenAppVault = config.onOpenAppVault,
             )
         }
     }
@@ -638,6 +639,7 @@ private fun DrawerSearchOverflowMenu(
     onOpenSecureFolder: (Intent) -> Unit,
     showPrivateSpaceRow: Boolean,
     onPrivateSpaceRowClick: () -> Unit,
+    onOpenAppVault: (() -> Unit)?,
 ) {
     val context = LocalContext.current
     ThemedDropdownMenu(expanded = expanded, onDismissRequest = onDismiss) {
@@ -666,6 +668,13 @@ private fun DrawerSearchOverflowMenu(
                 label = stringResource(R.string.drawer_search_private_space),
                 onClick = { onDismiss(); onPrivateSpaceRowClick() },
                 modifier = Modifier.testTag("drawer_search_overflow_private_space"),
+            )
+        }
+        if (onOpenAppVault != null) {
+            ThemedDropdownMenuItem(
+                label = stringResource(R.string.drawer_search_app_vault),
+                onClick = { onDismiss(); onOpenAppVault() },
+                modifier = Modifier.testTag("drawer_search_overflow_app_vault"),
             )
         }
     }

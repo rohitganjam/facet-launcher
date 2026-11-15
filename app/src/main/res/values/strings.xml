@@ -1332,4 +1332,53 @@
         <item quantity="one">%d app</item>
         <item quantity="other">%d apps</item>
     </plurals>
+    <!-- App Vault -->
+    <string name="drawer_search_app_vault">App Vault</string>
+    <string name="vault_title">App Vault</string>
+    <string name="vault_intro_hide">Hide apps from your drawer, Home, Dock, folders and search, in every facet.</string>
+    <string name="vault_intro_hide_sub">Open them here with a 4-digit PIN.</string>
+    <string name="vault_intro_limits">Hidden apps still show in system Settings, the Play Store and their notifications.</string>
+    <string name="vault_intro_private_space">For apps that are locked and paused too, use Private Space or Secure Folder if your phone has one.</string>
+    <string name="vault_intro_no_screen_lock">This phone has no screen lock, so a forgotten PIN can only be fixed by turning the vault off.</string>
+    <string name="vault_set_pin">Set PIN</string>
+    <string name="vault_create_pin_title">Create a PIN</string>
+    <string name="vault_create_pin_sub">Choose 4 digits to open the vault.</string>
+    <string name="vault_confirm_pin_title">Confirm your PIN</string>
+    <string name="vault_confirm_pin_sub">Enter it once more.</string>
+    <string name="vault_pins_mismatch">PINs didn\'t match. Enter a new PIN.</string>
+    <string name="vault_enter_pin">Enter your PIN</string>
+    <string name="vault_locked_out">Too many attempts. Try again in %1$s</string>
+    <string name="vault_forgot_pin">Forgot PIN?</string>
+    <string name="vault_backspace">Delete last digit</string>
+    <string name="vault_add_apps">Add apps</string>
+    <string name="vault_add_to_vault_title">Add to vault</string>
+    <string name="vault_picker_chosen">Chosen</string>
+    <string name="vault_empty">No hidden apps yet</string>
+    <string name="vault_empty_hint">Apps you add here disappear from your drawer, Home and search.</string>
+    <string name="vault_more_options">More options</string>
+    <string name="vault_app_menu">Options for %1$s</string>
+    <string name="vault_app_info">App info</string>
+    <string name="vault_remove">Remove from vault</string>
+    <string name="vault_removed">%1$s is back in your drawer</string>
+    <string name="vault_undo">Undo</string>
+    <string name="vault_change_pin">Change PIN</string>
+    <string name="vault_turn_off">Turn off App Vault</string>
+    <string name="vault_turn_off_title">Turn off the App Vault?</string>
+    <string name="vault_turn_off_message">Every hidden app returns to your drawer and the PIN is deleted.</string>
+    <string name="vault_turn_off_confirm">Turn off</string>
+    <string name="vault_reset_title">Reset the App Vault?</string>
+    <string name="vault_reset_message">This phone has no screen lock to confirm it\'s you, so a forgotten PIN can only be cleared by turning the vault off. Every hidden app returns to your drawer.</string>
+    <string name="vault_reset_confirm">Reset</string>
+    <string name="vault_move_title">Move to the vault?</string>
+    <string name="vault_move_confirm">Move to vault</string>
+    <string name="vault_confirm_credential_title">Confirm it\'s you</string>
+    <string name="vault_confirm_credential_message">Use your phone\'s screen lock to choose a new vault PIN.</string>
+    <plurals name="vault_wrong_pin">
+        <item quantity="one">Wrong PIN. %1$d try left before a pause.</item>
+        <item quantity="other">Wrong PIN. %1$d tries left before a pause.</item>
+    </plurals>
+    <plurals name="vault_move_message">
+        <item quantity="one">%1$d of the chosen apps is on Home or in a folder. It will be removed from Favorites, Dock and folders in every facet.</item>
+        <item quantity="other">%1$d of the chosen apps are on Home or in folders. They will be removed from Favorites, Dock and folders in every facet.</item>
+    </plurals>
 </resources>

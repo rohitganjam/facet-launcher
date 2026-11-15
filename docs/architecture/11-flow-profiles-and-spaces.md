@@ -71,6 +71,8 @@ stateDiagram-v2
 | Exclusion | `GetInstalledAppsUseCase` filters `profile == PRIVATE` out of both `invoke()` and `observe()` (`observe()` also drops Facet's own package) | Private apps never appear in the main drawer, pickers, favorites or dock — by design (Android's own launcher contract) |
 | Persistence | none — Private Space apps can't be placed, so no rows carry `profile = PRIVATE`; `LaunchHistoryRepository` doesn't record their launches or search picks either | Recents, Most used and search learning never reveal a private app |
 
+Not to be confused with the **App Vault** ([23](23-flow-app-vault.md)): that hides any apps in any profile behind a PIN, inside Facet only, and is not a profile.
+
 ## 4. Samsung Secure Folder
 
 Not a profile Facet can enumerate (Samsung hides it from `LauncherApps`). `SecureFolderRepository`

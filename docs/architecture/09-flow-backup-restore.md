@@ -106,6 +106,8 @@ while it is installed).
 
 Widgets Facet draws itself are not in the queue: `ImportBackupUseCase` restores them directly ([20](20-flow-native-widgets.md) §5), and `pendingWidgetPlacements` holds only hosted ones.
 
+The App Vault is deliberately **not** exported or imported: no `BackupBundle` field, its DataStore is excluded from Android backup too ([23](23-flow-app-vault.md)). On import, `ImportBackupUseCase` leaves the phone's vault alone and, after the orphan repair, removes the restored Favorites, Dock and folder rows of any app vaulted on this phone, so a restore never puts a hidden app back on Home.
+
 ## 3. Widget re-bind after import
 
 Widget ids are allocated by the system `AppWidgetHost` and are meaningless on another device (or

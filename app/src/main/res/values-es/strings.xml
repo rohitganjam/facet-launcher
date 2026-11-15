@@ -1263,4 +1263,52 @@
         <item quantity="other">%d apps</item>
         <item quantity="many">%d de apps</item>
     </plurals>
+    <string name="drawer_search_app_vault">Bóveda de apps</string>
+    <string name="vault_title">Bóveda de apps</string>
+    <string name="vault_intro_hide">Oculta apps del cajón, el inicio, el dock, las carpetas y la búsqueda, en todos los facets.</string>
+    <string name="vault_intro_hide_sub">Ábrelas aquí con un PIN de 4 dígitos.</string>
+    <string name="vault_intro_limits">Las apps ocultas siguen apareciendo en los ajustes del sistema, en Play Store y en sus notificaciones.</string>
+    <string name="vault_intro_private_space">Para apps bloqueadas y en pausa, usa el Espacio privado o la Carpeta segura si tu teléfono la tiene.</string>
+    <string name="vault_intro_no_screen_lock">Este teléfono no tiene bloqueo de pantalla, así que un PIN olvidado solo se puede resolver desactivando la bóveda.</string>
+    <string name="vault_set_pin">Crear PIN</string>
+    <string name="vault_create_pin_title">Crea un PIN</string>
+    <string name="vault_create_pin_sub">Elige 4 dígitos para abrir la bóveda.</string>
+    <string name="vault_confirm_pin_title">Confirma tu PIN</string>
+    <string name="vault_confirm_pin_sub">Introdúcelo una vez más.</string>
+    <string name="vault_pins_mismatch">Los PIN no coinciden. Introduce un PIN nuevo.</string>
+    <string name="vault_enter_pin">Introduce tu PIN</string>
+    <string name="vault_locked_out">Demasiados intentos. Inténtalo de nuevo en %1$s</string>
+    <string name="vault_forgot_pin">¿Olvidaste el PIN?</string>
+    <string name="vault_backspace">Borrar el último dígito</string>
+    <string name="vault_add_apps">Añadir apps</string>
+    <string name="vault_add_to_vault_title">Añadir a la bóveda</string>
+    <string name="vault_picker_chosen">Elegidas</string>
+    <string name="vault_empty">Aún no hay apps ocultas</string>
+    <string name="vault_empty_hint">Las apps que añadas aquí desaparecen del cajón, del inicio y de la búsqueda.</string>
+    <string name="vault_more_options">Más opciones</string>
+    <string name="vault_app_menu">Opciones de %1$s</string>
+    <string name="vault_app_info">Información de la app</string>
+    <string name="vault_remove">Quitar de la bóveda</string>
+    <string name="vault_removed">%1$s vuelve a estar en tu cajón</string>
+    <string name="vault_undo">Deshacer</string>
+    <string name="vault_change_pin">Cambiar PIN</string>
+    <string name="vault_turn_off">Desactivar la bóveda de apps</string>
+    <string name="vault_turn_off_title">¿Desactivar la bóveda de apps?</string>
+    <string name="vault_turn_off_message">Todas las apps ocultas vuelven a tu cajón y se borra el PIN.</string>
+    <string name="vault_turn_off_confirm">Desactivar</string>
+    <string name="vault_reset_title">¿Restablecer la bóveda de apps?</string>
+    <string name="vault_reset_message">Este teléfono no tiene bloqueo de pantalla para confirmar que eres tú, así que un PIN olvidado solo se puede borrar desactivando la bóveda. Todas las apps ocultas vuelven a tu cajón.</string>
+    <string name="vault_reset_confirm">Restablecer</string>
+    <string name="vault_move_title">¿Mover a la bóveda?</string>
+    <string name="vault_move_confirm">Mover a la bóveda</string>
+    <string name="vault_confirm_credential_title">Confirma que eres tú</string>
+    <string name="vault_confirm_credential_message">Usa el bloqueo de pantalla del teléfono para elegir un PIN nuevo para la bóveda.</string>
+    <plurals name="vault_wrong_pin">
+        <item quantity="one">PIN incorrecto. Te queda %1$d intento antes de una pausa.</item>
+        <item quantity="other">PIN incorrecto. Te quedan %1$d intentos antes de una pausa.</item>
+    </plurals>
+    <plurals name="vault_move_message">
+        <item quantity="one">%1$d de las apps elegidas está en el inicio o en una carpeta. Se quitará de Favoritos, del dock y de las carpetas en todos los facets.</item>
+        <item quantity="other">%1$d de las apps elegidas están en el inicio o en carpetas. Se quitarán de Favoritos, del dock y de las carpetas en todos los facets.</item>
+    </plurals>
 </resources>
