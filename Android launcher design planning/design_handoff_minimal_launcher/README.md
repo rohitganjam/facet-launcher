@@ -107,7 +107,7 @@ App names are invented. No real products are depicted.
 
 **Search results order (`1j`).** Apps → contacts → contact actions. Contact rows use a 32px circular avatar with initials. Action chips `padding: 7px 15px`, `border-radius: 8px` — primary filled, others `1px` outline. WhatsApp is hidden when not installed. Contacts section is omitted entirely when access is denied — never shown empty.
 
-**No results (`4q`).** `400 16px` "Nothing matches "zqx"", explanatory line at `400 12.5px/1.6`, then a tonal **Search Play Store** pill (store icon) and a Clear search text button. The store button opens the Play Store's app search for the query; with no Play Store it reads "Search app store" (another `market://` store) or "Search Play Store on the web" (play.google.com in the browser), and it is hidden when none can open. It shows only when nothing at all matches.
+**No results (`4q`).** `400 16px` "Nothing matches "zqx"", explanatory line at `400 12.5px/1.6`, then a tonal **Search Play Store** pill (text only) and a Clear search text button. The store button opens the Play Store's app search for the query; with no Play Store it reads "Search app store" (another `market://` store) or "Search Play Store on the web" (play.google.com in the browser), and it is hidden when none can open. It shows only when nothing at all matches.
 
 ### Long-press sheet (`2a`) — removed
 

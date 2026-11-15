@@ -58,7 +58,6 @@ import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.outlined.Folder as FolderIcon
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.SearchOff
-import androidx.compose.material.icons.filled.Shop
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -900,7 +899,6 @@ private fun DrawerSearchEmptyState(
             TonalButton(
                 text = stringResource(appStore.searchLabelRes()),
                 onClick = { onAppStoreSearch(appStore) },
-                leadingIcon = Icons.Default.Shop,
                 modifier = Modifier.testTag("drawer_search_app_store"),
             )
             Spacer(modifier = Modifier.height(6.dp))
