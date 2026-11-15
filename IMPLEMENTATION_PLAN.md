@@ -4873,5 +4873,5 @@ When a drawer search matches nothing at all, the empty screen offers **Search Pl
 - [x] `DrawerViewModel.appStore` (looked up once per search) and `appStoreSearchIntent`. Tests: `DrawerViewModelTest`.
 - [x] Empty state: tonal store button and Clear search text button; strings in en, de, es, fr, nl, pt. Tests: `AppDrawerScreenTest`.
 - [x] Docs: `01`, `04`, `07`, `12`, README, design spec `4q`.
-- [ ] Privacy policy sentence in `../facet-launcher-site/build.py`.
-- [ ] Verified on the emulator (unit tests, `AppDrawerScreenTest`, manual pass with and without the Play Store).
+- [x] Privacy policy sentence in `../facet-launcher-site/build.py`.
+- [x] Verified on the emulator (unit tests, `AppDrawerScreenTest` 60/60, manual pass on device).
