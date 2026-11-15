@@ -805,6 +805,9 @@
     <string name="drawer_contacts_search_off">La búsqueda de contactos está desactivada en los ajustes del cajón de apps.</string>
     <string name="drawer_search_no_matches">No se encontraron resultados para «%1$s»</string>
     <string name="drawer_search_clear">Borrar búsqueda</string>
+    <string name="drawer_search_play_store">Buscar en Play Store</string>
+    <string name="drawer_search_app_store">Buscar en la tienda de apps</string>
+    <string name="drawer_search_play_store_web">Buscar en Play Store en la web</string>
 
     <!-- ContactConnectionsSheet -->
     <string name="contact_connections_view_contact">Ver contacto</string>

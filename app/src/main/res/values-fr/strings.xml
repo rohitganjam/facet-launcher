@@ -805,6 +805,9 @@
     <string name="drawer_contacts_search_off">La recherche de contacts est désactivée dans les réglages du tiroir d\'apps.</string>
     <string name="drawer_search_no_matches">Aucun résultat pour « %1$s »</string>
     <string name="drawer_search_clear">Effacer la recherche</string>
+    <string name="drawer_search_play_store">Rechercher sur le Play Store</string>
+    <string name="drawer_search_app_store">Rechercher dans la boutique d’applis</string>
+    <string name="drawer_search_play_store_web">Rechercher sur le Play Store en ligne</string>
 
     <!-- ContactConnectionsSheet -->
     <string name="contact_connections_view_contact">Voir le contact</string>

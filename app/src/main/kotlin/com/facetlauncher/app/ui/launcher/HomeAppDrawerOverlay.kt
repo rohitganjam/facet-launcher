@@ -35,6 +35,7 @@ import androidx.compose.ui.unit.Velocity
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.facetlauncher.app.data.PrivateSpaceState
 import com.facetlauncher.app.data.WorkProfileInfo
+import com.facetlauncher.app.data.model.AppStore
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.ContactConnection
 import com.facetlauncher.app.data.model.ContactInfo
@@ -76,6 +77,7 @@ internal data class HomeDrawerState(
     val badgeCounts: ImmutableMap<String, Int>,
     val contacts: ImmutableList<ContactInfo>,
     val settingsEntries: ImmutableList<SettingsSearchEntry>,
+    val appStore: AppStore?,
     val showContactsPermissionPrompt: Boolean,
     val showContactsSettingPrompt: Boolean,
     val privateSpaceState: PrivateSpaceState,
@@ -93,6 +95,7 @@ internal data class HomeDrawerActions(
     val onDismissContactsPermissionPrompt: () -> Unit,
     val onEnableContactSearch: () -> Unit,
     val onRequestUsageSuggestions: suspend () -> UsageSuggestions,
+    val appStoreSearchIntent: (AppStore, String) -> Intent,
 )
 
 /** The drawer's own state from its view model. The lists Home already holds (apps, work profiles, folders) are added by the caller with `copy`. */
@@ -105,6 +108,7 @@ internal fun rememberHomeDrawerState(viewModel: DrawerViewModel, appMenuNotifica
     badgeCounts = viewModel.badgeCounts.collectAsStateWithLifecycle().value,
     contacts = viewModel.contactResults.collectAsStateWithLifecycle().value,
     settingsEntries = viewModel.settingsResults.collectAsStateWithLifecycle().value,
+    appStore = viewModel.appStore.collectAsStateWithLifecycle().value,
     showContactsPermissionPrompt = viewModel.showContactsPermissionPrompt.collectAsStateWithLifecycle().value,
     showContactsSettingPrompt = viewModel.showContactsSettingPrompt.collectAsStateWithLifecycle().value,
     privateSpaceState = viewModel.privateSpaceState.collectAsStateWithLifecycle().value,
@@ -120,6 +124,7 @@ internal fun homeDrawerActions(viewModel: DrawerViewModel) = HomeDrawerActions(
     onDismissContactsPermissionPrompt = viewModel::dismissContactsPermissionPrompt,
     onEnableContactSearch = viewModel::enableContactSearch,
     onRequestUsageSuggestions = viewModel::loadUsageSuggestions,
+    appStoreSearchIntent = viewModel::appStoreSearchIntent,
 )
 
 /**
@@ -261,6 +266,8 @@ private fun HomeDrawerScreen(
             onSettingsEntryClick = { entry -> runCatching { context.startActivity(Intent(entry.action)) } },
             onRequestUsageSuggestions = actions.onRequestUsageSuggestions,
             onUsageAccessClick = onNavigateToUsageAccessExplanation,
+            appStore = state.appStore,
+            onAppStoreSearchClick = { store, q -> runCatching { context.startActivity(actions.appStoreSearchIntent(store, q)) } },
         ),
         appMenuNotifications = state.appMenuNotifications,
         folderCandidates = state.folders,

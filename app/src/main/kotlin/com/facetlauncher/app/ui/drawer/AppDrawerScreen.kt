@@ -17,7 +17,6 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.awaitEachGesture
@@ -34,7 +33,6 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
@@ -60,6 +58,7 @@ import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.outlined.Folder as FolderIcon
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.SearchOff
+import androidx.compose.material.icons.filled.Shop
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -110,6 +109,7 @@ import com.facetlauncher.app.data.WorkProfileInfo
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.AppListGridDisplayMode
 import com.facetlauncher.app.data.model.AppProfile
+import com.facetlauncher.app.data.model.AppStore
 import com.facetlauncher.app.data.model.ContactConnection
 import com.facetlauncher.app.data.model.ContactInfo
 import com.facetlauncher.app.data.model.DrawerFolderDisplayMode
@@ -142,6 +142,8 @@ import com.facetlauncher.app.ui.components.NotificationBadge
 import com.facetlauncher.app.ui.components.ProfileTab
 import com.facetlauncher.app.ui.components.ProfileTabRow
 import com.facetlauncher.app.ui.components.SwipeTabs
+import com.facetlauncher.app.ui.components.TextActionButton
+import com.facetlauncher.app.ui.components.TonalButton
 import com.facetlauncher.app.ui.components.RecencyIcon
 import com.facetlauncher.app.ui.components.ThemedDropdownMenu
 import com.facetlauncher.app.ui.components.ThemedDropdownMenuItem
@@ -704,7 +706,16 @@ internal fun DrawerSearchResults(
     val focusManager = LocalFocusManager.current
     val hasContactsSection = sources.contacts.isNotEmpty() || sources.showContactsPermissionPrompt || sources.showContactsSettingPrompt
     if (apps.isEmpty() && sources.settingsEntries.isEmpty() && !hasContactsSection) {
-        DrawerSearchEmptyState(query = query, onClearSearch = onClearSearch, modifier = modifier)
+        DrawerSearchEmptyState(
+            query = query,
+            appStore = sources.appStore,
+            onAppStoreSearch = { store ->
+                focusManager.clearFocus()
+                sources.onAppStoreSearchClick(store, query)
+            },
+            onClearSearch = onClearSearch,
+            modifier = modifier,
+        )
         return
     }
     LazyColumn(state = listState, modifier = modifier.padding(horizontal = 24.dp)) {
@@ -868,9 +879,15 @@ internal fun Modifier.drawerDashedBorder(color: Color, cornerRadius: androidx.co
     )
 }
 
-/** `4q` — shown when a search matches nothing at all (apps and contacts both empty). No web fallback. */
+/** `4q` — shown when a search matches nothing at all: offers to search [appStore] for the query, then to clear it. */
 @Composable
-private fun DrawerSearchEmptyState(query: String, onClearSearch: () -> Unit, modifier: Modifier = Modifier) {
+private fun DrawerSearchEmptyState(
+    query: String,
+    appStore: AppStore?,
+    onAppStoreSearch: (AppStore) -> Unit,
+    onClearSearch: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     Column(
         modifier = modifier.fillMaxSize().padding(horizontal = 24.dp, vertical = 40.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -879,21 +896,29 @@ private fun DrawerSearchEmptyState(query: String, onClearSearch: () -> Unit, mod
         Spacer(modifier = Modifier.height(12.dp))
         Text(text = stringResource(R.string.drawer_search_no_matches, query), style = MaterialTheme.typography.bodyMedium, color = Muted, textAlign = TextAlign.Center)
         Spacer(modifier = Modifier.height(18.dp))
-        Box(
-            modifier = Modifier
-                .clip(CircleShape)
-                .border(1.dp, Ink.copy(alpha = 0.14f), CircleShape)
-                .clickable(onClick = onClearSearch)
-                .testTag("drawer_search_clear")
-                // defaultMinSize before padding so the 48dp Android touch-target minimum wins
-                // even though bodyMedium + this row's own padding alone falls short (~38dp).
-                .defaultMinSize(minHeight = 48.dp)
-                .padding(horizontal = 16.dp, vertical = 9.dp),
-            contentAlignment = Alignment.Center,
-        ) {
-            Text(text = stringResource(R.string.drawer_search_clear), style = MaterialTheme.typography.bodyMedium, color = Ink)
+        if (appStore != null) {
+            TonalButton(
+                text = stringResource(appStore.searchLabelRes()),
+                onClick = { onAppStoreSearch(appStore) },
+                leadingIcon = Icons.Default.Shop,
+                modifier = Modifier.testTag("drawer_search_app_store"),
+            )
+            Spacer(modifier = Modifier.height(6.dp))
         }
+        TextActionButton(
+            text = stringResource(R.string.drawer_search_clear),
+            onClick = onClearSearch,
+            style = MaterialTheme.typography.bodyMedium,
+            modifier = Modifier.testTag("drawer_search_clear"),
+        )
     }
+}
+
+@StringRes
+private fun AppStore.searchLabelRes(): Int = when (this) {
+    AppStore.PLAY_STORE -> R.string.drawer_search_play_store
+    AppStore.OTHER_STORE -> R.string.drawer_search_app_store
+    AppStore.WEB -> R.string.drawer_search_play_store_web
 }
 
 /**
@@ -1585,5 +1610,14 @@ private fun AppDrawerScreenGridPreview() {
             }.toImmutableList(),
             appearance = DrawerAppearance(presentation = DrawerPresentation.GRID),
         )
+    }
+}
+
+@Preview(showBackground = true, widthDp = 390, heightDp = 400)
+@Preview(name = "Dark", showBackground = true, widthDp = 390, heightDp = 400, uiMode = Configuration.UI_MODE_NIGHT_YES)
+@Composable
+private fun DrawerSearchEmptyStatePreview() {
+    FacetLauncherTheme {
+        DrawerSearchEmptyState(query = "duolingo", appStore = AppStore.PLAY_STORE, onAppStoreSearch = {}, onClearSearch = {})
     }
 }

@@ -4863,3 +4863,15 @@ Settings → Gestures: each of the four Home swipes is a row you tap to pick its
 - [x] Gestures screen: tappable swipe rows, the action sheet, the duplicate warning, the drawer guard; strings in en, de, es, fr, nl, pt. Tests: `GesturesViewModelTest`, `GesturesScreenTest`.
 - [x] `HomeSwipeController` routes each swipe by its action; drawer, Hub and carousel slide from their swipe's side (`panelOffset`) and close by the reverse drag (`panelSurfaceDrag`, `panelCloseNestedScroll`, `PagerDismissEdge`). Tests: `HomeSwipeControllerTest`.
 - [ ] Verified on the emulator (build, unit tests, `GesturesScreenTest`, `HomeDrawerRouteTest`, manual pass of each panel from each side).
+
+## Play Store search when search finds nothing (direct request)
+
+When a drawer search matches nothing at all, the empty screen offers **Search Play Store** above Clear search. Decisions: only when nothing matches (a contact, contacts prompt or setting hides it); no setting to turn it off; the Play Store is opened by package so another store never shows a chooser over it, with "Search app store" for another `market://` store and "Search Play Store on the web" as the fallback, and no button when nothing can open; Private Space search is left alone. Facet makes no request itself. See `docs/architecture/12-flow-drawer-search-and-app-actions.md` (§2a).
+
+### Steps
+- [x] `AppStore` model, `AppStoreRepository` (store lookup, search intent), `<queries>` for the Play Store, `market://` and https. Tests: `AppStoreRepositoryTest`.
+- [x] `DrawerViewModel.appStore` (looked up once per search) and `appStoreSearchIntent`. Tests: `DrawerViewModelTest`.
+- [x] Empty state: tonal store button and Clear search text button; strings in en, de, es, fr, nl, pt. Tests: `AppDrawerScreenTest`.
+- [x] Docs: `01`, `04`, `07`, `12`, README, design spec `4q`.
+- [ ] Privacy policy sentence in `../facet-launcher-site/build.py`.
+- [ ] Verified on the emulator (unit tests, `AppDrawerScreenTest`, manual pass with and without the Play Store).
