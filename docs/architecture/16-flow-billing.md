@@ -4,7 +4,7 @@ How a user becomes Pro, how the app remembers it, and what changes when they are
 non-consumable product, `facet_pro`, bought once through Google Play. No subscription and no backend; billing
 needs no `INTERNET` of its own (the weather feature declares it, see §6). The price is never in the code: it is a Play Console setting and the app shows what
 Play returns. What Pro unlocks is in [13 §1a](13-flow-facets-theme-notifications-onboarding.md) (10 facets
-instead of 3), [15](15-flow-facet-automation.md) (device triggers, more than 2 rules) and the clock widget stack (up to 5 pages instead of 1, see §4).
+instead of 3), [15](15-flow-facet-automation.md) (device triggers, more than 2 rules), the clock widget stack (up to 5 pages instead of 1) and the daily wallpaper ([21](21-flow-wallpaper-glass.md#daily-wallpaper)); see §4.
 
 ## 1. Layers
 
@@ -119,8 +119,8 @@ A lapse is only a refund, a revocation or a different Google account; it cannot 
 | Entry | Where it goes |
 |---|---|
 | Settings `ProSettingsCard` | Free: the dark upsell card ("You're on the Free plan", Upgrade to Pro). Pro: one "Pro is active" row with a live summary. Both open `facetPro/ABOUT`. |
-| A Pro limit (add facet at 3, locked facet, device trigger, third rule) | `facetPro/{reason}`; the screen shows a reason line. Every limit goes straight to the screen; there is no intermediate sheet. |
-| `FacetProScreen` | Free: `UpgradeScreen` (hero, feature rows, bottom bar with price, Unlock and Restore purchases). Pro: `UnlockedScreen` with a gradient Add a facet button (opens Manage facets) and Restore purchases under it, both at the end of the scrolling content rather than pinned, so a Pro user can re-check with Play. Automation is linked from the card at the top of Manage facets. |
+| A Pro limit (add facet at 3, locked facet, device trigger, third rule, second widget stack page, daily wallpaper) | `facetPro/{reason}`; the screen shows a reason line. Every limit goes straight to the screen; there is no intermediate sheet. |
+| `FacetProScreen` | Both states list one row per `ProFeature` (facets, every trigger and unlimited rules, widget stacks, daily wallpaper); each `ProReason` maps to one of them (`ProReason.feature`, an exhaustive `when`). Free: `UpgradeScreen` (hero, those rows plus Future Pro features, bottom bar with price, Unlock and Restore purchases). Pro: `UnlockedScreen`, the same rows marked Unlocked with the facets row showing the live count (`FacetProUiState.facetCount`), then a gradient Add a facet button (opens Manage facets) and Restore purchases under it, both at the end of the scrolling content rather than pinned, so a Pro user can re-check with Play. Automation is linked from the card at the top of Manage facets. |
 
 Buttons are pills like every other button in the app (`ProGradientButton`, the Settings card's Upgrade chip); `TriggerPill` is a chip, so it uses M3's small shape (8dp). The Settings `ProSettingsCard` uses the 28dp extra-large shape, matching the `SettingsCard`s below it.
 

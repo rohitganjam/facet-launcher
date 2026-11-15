@@ -2,12 +2,15 @@ package com.facetlauncher.app.ui.pro
 
 import android.app.Activity
 import com.facetlauncher.app.data.BillingRepository
+import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.FakeEntitlementRepository
 import com.facetlauncher.app.data.PurchaseLaunch
+import com.facetlauncher.app.data.model.Facet
 import com.facetlauncher.app.data.model.ProQueryResult
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -34,6 +37,8 @@ class FacetProViewModelTest {
 
     private val updates = MutableSharedFlow<ProQueryResult>(extraBufferCapacity = 4)
     private val activity: Activity = mock(Activity::class.java)
+    private val facets = MutableStateFlow(listOf(Facet(id = 1L, name = "Home", position = 0)))
+    private val facetRepository: FacetRepository = mock(FacetRepository::class.java).also { `when`(it.observeFacets()).thenReturn(facets) }
 
     private class Entitlement(initial: Boolean, private val restoreResult: ProQueryResult) : FakeEntitlementRepository(initial) {
         override suspend fun refresh(): ProQueryResult = restoreResult
@@ -48,7 +53,7 @@ class FacetProViewModelTest {
     }
 
     private fun TestScope.viewModel(entitlement: FakeEntitlementRepository = FakeEntitlementRepository(false), billing: BillingRepository = billing()): FacetProViewModel =
-        FacetProViewModel(billing, entitlement).also { vm ->
+        FacetProViewModel(billing, entitlement, facetRepository).also { vm ->
             backgroundScope.launch { vm.uiState.collect {} }
             dispatcher.scheduler.advanceUntilIdle()
         }
@@ -168,5 +173,19 @@ class FacetProViewModelTest {
         dispatcher.scheduler.advanceUntilIdle()
 
         assertNull(vm.uiState.value.message)
+    }
+
+    @Test
+    fun `the facet count follows the users facets`() = runTest(dispatcher) {
+        // Given one facet
+        val vm = viewModel(FakeEntitlementRepository(true))
+        assertEquals(1, vm.uiState.value.facetCount)
+
+        // When two more are added
+        facets.value = facets.value + Facet(id = 2L, name = "Work", position = 1) + Facet(id = 3L, name = "Drive", position = 2)
+        dispatcher.scheduler.advanceUntilIdle()
+
+        // Then the count follows
+        assertEquals(3, vm.uiState.value.facetCount)
     }
 }

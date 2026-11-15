@@ -51,9 +51,9 @@ class FacetProContentTest {
         composeRule.onNodeWithTag("facet_pro_screen").assertExists()
         composeRule.onNodeWithText("More facets, more automation, more customization").assertExists()
         composeRule.onNodeWithTag("facet_pro_reason").assertExists()
-        composeRule.onNodeWithText("Free includes 3. Pro goes up to 10", substring = true).assertExists()
-        composeRule.onNodeWithText("Wi-Fi, Bluetooth, headphones and battery triggers").assertExists()
-        composeRule.onNodeWithText("Future Pro features included").assertExists()
+        composeRule.onNodeWithText("Up to 10 facets").assertExists()
+        composeRule.onNodeWithText("Every trigger, unlimited rules").assertExists()
+        composeRule.onNodeWithText("Future Pro features included").performScrollTo().assertExists()
     }
 
     @Test
@@ -86,10 +86,14 @@ class FacetProContentTest {
     }
 
     @Test
-    fun theFeatureListNamesCustomWidgets() {
+    fun theFeatureListNamesTheRuleLimitWidgetStacksAndDailyWallpaper() {
         show(state = FacetProUiState())
 
-        composeRule.onNodeWithText("Custom Widgets on home screen").assertExists()
+        composeRule.onNodeWithText("Free includes 2 schedule rules", substring = true).assertExists()
+        composeRule.onNodeWithText("Widget stacks").performScrollTo().assertExists()
+        composeRule.onNodeWithText("Stack up to 5 clocks and widgets", substring = true).assertExists()
+        composeRule.onNodeWithText("Daily wallpaper").performScrollTo().assertExists()
+        composeRule.onNodeWithText("Custom Widgets on home screen").assertDoesNotExist()
     }
 
     @Test
@@ -144,12 +148,14 @@ class FacetProContentTest {
 
     @Test
     fun aProUserSeesTheThankYouAndWhatIsUnlockedAndNoPriceOrUnlock() {
-        show(state = FacetProUiState(isPro = true))
+        show(state = FacetProUiState(isPro = true, facetCount = 4))
 
         composeRule.onNodeWithTag("facet_pro_owned").assertExists()
         composeRule.onNodeWithText("Unlocked on every phone signed in to this Google account.").assertExists()
-        composeRule.onNodeWithText("Wi-Fi triggers").performScrollTo().assertExists()
-        composeRule.onNodeWithText("Headphones and battery triggers").performScrollTo().assertExists()
+        composeRule.onNodeWithText("You have 4 facets").performScrollTo().assertExists()
+        composeRule.onNodeWithText("Every trigger, unlimited rules").performScrollTo().assertExists()
+        composeRule.onNodeWithText("Widget stacks").performScrollTo().assertExists()
+        composeRule.onNodeWithText("Daily wallpaper").performScrollTo().assertExists()
         composeRule.onNodeWithTag("facet_pro_buy").assertDoesNotExist()
         composeRule.onNodeWithTag("facet_pro_reason").assertDoesNotExist()
     }

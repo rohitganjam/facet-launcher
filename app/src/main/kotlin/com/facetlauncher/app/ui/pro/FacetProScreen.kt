@@ -21,10 +21,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Bluetooth
-import androidx.compose.material.icons.filled.Layers
-import androidx.compose.material.icons.filled.Sensors
-import androidx.compose.material.icons.filled.Wallpaper
-import androidx.compose.material.icons.filled.Widgets
 import androidx.compose.material.icons.filled.Wifi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -63,8 +59,8 @@ import com.facetlauncher.app.ui.theme.SystemBarsBackdrop
 import com.facetlauncher.app.ui.theme.SystemBarsBackdropEffect
 
 /**
- * Settings → Facet Pro, and where every Pro limit lands. A dark hero with three example facets, the three
- * things Pro gives, and Unlock pinned at the bottom; once bought, the same hero lit up with what is unlocked. See `docs/architecture/16-flow-billing.md` and design turn 12.
+ * Settings → Facet Pro, and where every Pro limit lands. A dark hero, a row per [ProFeature] and Unlock pinned at the
+ * bottom; once bought, the same hero lit up with what is unlocked. See `docs/architecture/16-flow-billing.md`.
  */
 @Composable
 fun FacetProScreen(
@@ -123,10 +119,7 @@ private fun UpgradeScreen(
         Column(modifier = Modifier.weight(1f).verticalScroll(rememberScrollState())) {
             UpgradeHero(reason, state, onBack)
             Column(modifier = Modifier.padding(horizontal = 24.dp).padding(top = 6.dp, bottom = 16.dp)) {
-                FeatureRow(Icons.Default.Layers, R.string.pro_feature_facets_title, R.string.pro_feature_facets_body)
-                FeatureRow(Icons.Default.Sensors, R.string.pro_feature_triggers_title, R.string.pro_feature_triggers_body)
-                FeatureRow(Icons.Default.Widgets, R.string.pro_feature_widgets_title, R.string.pro_feature_widgets_body)
-                FeatureRow(Icons.Default.Wallpaper, R.string.pro_feature_daily_wallpaper_title, R.string.pro_feature_daily_wallpaper_body)
+                ProFeature.entries.forEach { FeatureRow(it.icon, it.title, it.body) }
                 FeatureRow(Icons.Default.AutoAwesome, R.string.pro_feature_future_title, R.string.pro_feature_future_body)
             }
         }
