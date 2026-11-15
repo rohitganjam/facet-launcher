@@ -68,7 +68,6 @@ import kotlinx.collections.immutable.persistentListOf
 @Composable
 fun PermissionsScreen(
     onBack: () -> Unit,
-    onNavigateToUsageAccessExplanation: () -> Unit,
     onNavigateToNotificationAccessExplanation: () -> Unit,
     onNavigateToAccessibilityAccessExplanation: () -> Unit,
     modifier: Modifier = Modifier,
@@ -106,7 +105,7 @@ fun PermissionsScreen(
         viewModel.markLocationPermissionRequested()
     }
 
-    // The rows backed by a real runtime-permission dialog; usage and notification access use special-access screens.
+    // The rows backed by a real runtime-permission dialog; notification access uses a special-access screen.
     val runtimePermissions = mapOf(
         PermissionKind.CALENDAR to RuntimePermissionRequest(Manifest.permission.READ_CALENDAR) { requestCalendarPermission.launch(it) },
         PermissionKind.CONTACTS to RuntimePermissionRequest(Manifest.permission.READ_CONTACTS) { requestContactsPermission.launch(it) },
@@ -124,7 +123,6 @@ fun PermissionsScreen(
      */
     fun onTurnOnClick(permission: PermissionRowState) {
         when (permission.kind) {
-            PermissionKind.USAGE_ACCESS -> onNavigateToUsageAccessExplanation()
             PermissionKind.NOTIFICATION_ACCESS -> onNavigateToNotificationAccessExplanation()
             PermissionKind.ACCESSIBILITY_ACCESS -> onNavigateToAccessibilityAccessExplanation()
             else -> runtimePermissions[permission.kind]?.let { request ->
@@ -251,12 +249,6 @@ private fun PermissionsScreenPreview() {
                     kind = PermissionKind.CONTACTS,
                     title = stringResource(R.string.permission_contacts_title),
                     subtitle = stringResource(R.string.permission_contacts_subtitle),
-                    isGranted = false,
-                ),
-                PermissionRowState(
-                    kind = PermissionKind.USAGE_ACCESS,
-                    title = stringResource(R.string.permission_usage_access_title),
-                    subtitle = stringResource(R.string.permission_usage_access_subtitle),
                     isGranted = false,
                 ),
                 PermissionRowState(

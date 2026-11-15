@@ -155,23 +155,31 @@ list), `consumeWindowInsets(systemBars)` stops the drawer padding for the status
 
 The drawer's search bar (`DrawerSearchBar`) is a button: tapping it, or a Home press on bare Home with "Home button opens search" on (`DrawerSearchBarConfig.focusRequest`), opens `DrawerSearchSheet` (`ui/drawer/DrawerSearchSheet.kt`) inside `AppDrawerScreen`'s root `Box`. The sheet slides in from the bar's edge (bottom for `SearchBarPosition.BOTTOM`, else top; `FacetTransitionEasing`) over a 40% scrim, with its own focused field at that edge, a back arrow and a clear button. While it is open the browse list is hidden from semantics (`clearAndSetSemantics`).
 
-- **Start view (empty query):** `SearchSuggestions`, grid sections capped at two rows each: *Recently installed or updated* (`RecentlyChangedAppsUseCase`, first install or last update within 72h, over the drawer's `apps`), *Frequently used* and *Last used* (`DrawerViewModel.loadUsageSuggestions()` → `UsageStatsRepository.getMostUsedApps` / `getRecentApps`, asked for each time the sheet opens, filtered to apps the drawer lists by `AppInfo.listKey`). Without Usage Access the two usage sections give way to one strip (`onUsageAccessClick` → the Usage Access explanation route).
+- **Start view (empty query):** `SearchSuggestions`, grid sections capped at two rows each: *Recently installed or updated* (`RecentlyChangedAppsUseCase`, first install or last update within 72h, over the drawer's `apps`), *Frequently used* and *Last used* (`DrawerViewModel.loadUsageSuggestions()` → `LaunchHistoryRepository.getMostUsedApps` / `getRecentApps`, asked for each time the sheet opens, filtered to apps the drawer lists by `AppInfo.listKey`). Both come from Facet's own launch history, so they need no permission and are empty until apps are opened from Facet.
+- **Enter:** the field's IME action is Go; it opens the top app result (`searchResultApps.firstOrNull()`) through the same click path as a tap, and does nothing when no app matches.
 - **Typing:** `DrawerSearchResults` unchanged (apps, contacts, settings) but always a grid: `DrawerAppearance.forSearchSheet()` uses the drawer's grid density when the drawer is a grid, else Regular. All three sections are tiles in `SearchTileGrid` (`ui/drawer/SearchResultTiles.kt`, the app grid's column count): apps as `DrawerGridTile`, contacts as `ContactGridTile` (the contact's thumbnail, `ContactInfo.photo`, loaded by `ContactRepository.searchContacts` from `PHOTO_THUMBNAIL_URI`, else their initial) and settings as `SettingsGridTile`. Contact and settings tiles are clipped to the user's icon shape (`LocalIconShape`), the label under them. Each settings entry has its own glyph, `SettingsSearchEntry.icon()` keyed by catalog id (`SETTING_ICONS`), the generic cog for an id with none.
 - **No results:** when no app, contact (or contacts prompt) or setting matches, `DrawerSearchEmptyState` shows the query, a **Search Play Store** `TonalButton` and **Clear search**. The button follows `DrawerViewModel.appStore`, which `AppStoreRepository.availableStore()` fills each time a search starts (blank to non-blank): the Play Store by package if installed and enabled, else any `market://` store ("Search app store"), else Google Play on the web ("Search Play Store on the web"), else no button. A tap hides the keyboard and starts `searchIntent(store, trimmed query)` (`market://search?q=…&c=apps` or `https://play.google.com/store/search?q=…&c=apps`). Nothing shows while any section has a result, and Private Space search has no button. Facet makes no request itself.
 - **Closing:** Back, the back arrow and the scrim close the sheet and clear the query, leaving the drawer open (`BackHandler`). The Home button closes the drawer instead: the sheet keeps its query and slides out with the drawer, and the drawer reaching closed (`isDrawerOpen` false) closes it and clears the query off screen, with no exit transition (`exitInstantly`): its own slide out would carry it back into view past the drawer's edge. On that press its `DismissOnHomePress` only holds the keyboard's bottom padding at its last value, so the field doesn't drop while the keyboard hides. While open it calls `BlockHomeSwipesWhileShown()` so a drag on it never pulls the drawer shut.
 
 ## 2. Search pipeline
 
+Every search surface shares one model, `RankBySearchRelevanceUseCase` (`domain/`): the drawer's apps, contacts and settings, Private Space, the Dock/Favorites/folder pickers and the widget picker (the pickers filter with its top-level `matchesSearch` and keep their own sort).
+
+- **Normalization** (`normalizeForSearch`): NFD with Latin combining accents (U+0300–036F) stripped, lowercase (`Locale.ROOT`), every run of non-letter/digit/mark characters turned into one space, trimmed. "café", "Cafe" and "CAFE " compare equal; a query that normalizes to nothing matches nothing.
+- **Tiers**, best first: `EXACT`, `PREFIX`, `WORD_PREFIX` (a word of the label starts with the query, or each query word starts a later label word in order, "goo ma" → Google Maps), `INITIALS` ("gm" → Google Maps; a lowercase-to-uppercase step starts a word, so "wa" → WhatsApp) and `SUBSTRING`. Each tier also matches on the space-free form, so "wifi" finds Wi-Fi. A one-letter query matches only the first three tiers.
+- **Order:** an app picked at least twice for this exact normalized query goes first (more picks higher), then tier, then (drawer apps only) launches in the last 30 days, then alphabetical. Learned picks and launch counts come from `LaunchHistoryRepository.observeSearchSignals()` as `DrawerViewModel.searchSignals`; `HomeAppDrawerOverlay` records a pick (`onSearchPick`, keyed by `normalize(query)`) whenever an app is opened while a query is typed.
+- Ranking runs in composition (`DrawerBrowseModel`, `remember(apps, query, searchSignals)`); each label's prepared form is cached in the use case (cleared past 4096 labels), so a keystroke re-matches but doesn't re-normalize.
+
 ```mermaid
 flowchart LR
     Q["searchQuery: MutableStateFlow&lt;String&gt;\n(onQueryChange)"]
-    Q --> A["Apps: filtered in the composable\nRankBySearchRelevanceUseCase(apps, query) { label }\nprefix match ranks above substring"]
+    Q --> A["Apps: ranked in the composable\nrankBySearchRelevance.apps(apps, query, searchSignals)"]
     Q --> C{"settings.searchContactsEnabled\n&amp;&amp; ContactPermissionRepository.isGranted()"}
-    C -- yes --> CR["ContactRepository.searchContacts(query, MAX_CONTACT_RESULTS)\nContactsContract via ContentResolver, Dispatchers.IO\n→ rankBySearchRelevance { displayName }"]
+    C -- yes --> CR["ContactRepository.searchContacts(query, 50)\nContactsContract via ContentResolver, Dispatchers.IO\n→ rankBySearchRelevance { displayName } → top 5"]
     C -- "enabled but not granted" --> P1["showContactsPermissionPrompt"]
     C -- "granted but disabled" --> P2["showContactsSettingPrompt → enableContactSearch()"]
     Q --> SS{"settings.searchSettingsEnabled"}
-    SS -- yes --> SR["SystemSettingsRepository.search(query)\nstatic catalogue of Settings.ACTION_* entries\nwith keyword aliases (no relevance re-rank: alias hits keep catalogue order)"]
+    SS -- yes --> SR["SystemSettingsRepository.availableEntries()\nresolvable Settings.ACTION_* catalogue\n→ rankBySearchRelevance.rank(label + keywords) → top 5"]
     CR --> OUT["contactResults: StateFlow"]
     SR --> OUT2["settingsResults: StateFlow"]
     A --> S[AppDrawerScreen sections: Apps / Contacts / Settings]
@@ -180,7 +188,8 @@ flowchart LR
 ```
 
 - Contacts and settings searches are `flatMapLatest` over `(query, enabled)` — a new keystroke
-  cancels the in-flight `ContentResolver` query.
+  cancels the in-flight `ContentResolver` query. Contacts fetch 50 candidates before ranking, so a
+  better match isn't cut by the provider's own order.
 - Both prompts are gated by a `MutableStateFlow` "dismissed" flag so they show once per drawer
   session; `contacts_permission_requested` in DataStore records that the system dialog was
   shown at least once.

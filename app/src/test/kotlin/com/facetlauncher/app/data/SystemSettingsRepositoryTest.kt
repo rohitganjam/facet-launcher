@@ -6,13 +6,13 @@ import android.content.pm.ActivityInfo
 import android.content.pm.ResolveInfo
 import android.provider.Settings
 import androidx.test.core.app.ApplicationProvider
-import com.facetlauncher.app.data.model.SettingsSearchEntry
 import kotlinx.coroutines.async
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -44,59 +44,46 @@ class SystemSettingsRepositoryTest {
     }
 
     @Test
-    fun `search runs on the injected IO dispatcher`() = runTest {
+    fun `available entries load on the injected IO dispatcher`() = runTest {
         // Given a repository whose IO dispatcher is the test scheduler's
         registerAllCatalogActions()
         val testDispatcher = StandardTestDispatcher(testScheduler)
         val injected = SystemSettingsRepository(context, testDispatcher)
 
-        // When search starts, nothing runs until the scheduler is advanced
-        val result = async(testDispatcher) { injected.search("wi-f") }
+        // When loading starts, nothing runs until the scheduler is advanced
+        val result = async(testDispatcher) { injected.availableEntries() }
         assertFalse(result.isCompleted)
         advanceUntilIdle()
 
         // Then it completes deterministically on that dispatcher
-        assertEquals(1, result.await().size)
+        assertEquals(3, result.await().size)
     }
 
     @Test
-    fun `blank query returns no results`() = runTest {
+    fun `each available entry carries its label, action and alias keywords`() = runTest {
+        // Given a device that resolves Wi-Fi, Bluetooth and Display settings
         registerAllCatalogActions()
 
-        assertEquals(emptyList<SettingsSearchEntry>(), repository.search(""))
+        // When the available entries load
+        val wifi = repository.availableEntries().single { it.id == "wifi" }
+
+        // Then Wi-Fi keeps the aliases search matches on, like "internet"
+        assertEquals("Wi-Fi", wifi.label)
+        assertEquals(Settings.ACTION_WIFI_SETTINGS, wifi.action)
+        assertTrue("internet" in wifi.keywords)
     }
 
     @Test
-    fun `matches by label`() = runTest {
-        registerAllCatalogActions()
+    fun `an entry the device can't actually resolve is omitted`() = runTest {
+        // Given only Bluetooth resolvable: this ROM doesn't expose Settings.ACTION_WIFI_SETTINGS
+        shadowOf(context.packageManager).addResolveInfoForIntent(
+            Intent(Settings.ACTION_BLUETOOTH_SETTINGS), resolveInfoFor("com.android.settings"),
+        )
 
-        val result = repository.search("wi-f")
+        // When the available entries load
+        val ids = repository.availableEntries().map { it.id }
 
-        assertEquals(listOf(SettingsSearchEntry(id = "wifi", label = "Wi-Fi", action = Settings.ACTION_WIFI_SETTINGS)), result)
-    }
-
-    @Test
-    fun `matches by an alias keyword not in the label`() = runTest {
-        registerAllCatalogActions()
-
-        // "internet" isn't in the "Wi-Fi" label itself, only in its keyword list
-        val result = repository.search("internet")
-
-        assertEquals(listOf(SettingsSearchEntry(id = "wifi", label = "Wi-Fi", action = Settings.ACTION_WIFI_SETTINGS)), result)
-    }
-
-    @Test
-    fun `an entry the device can't actually resolve is omitted even if its keywords match`() = runTest {
-        // Given nothing registered at all — this device/ROM doesn't expose Settings.ACTION_WIFI_SETTINGS
-        val result = repository.search("wifi")
-
-        assertEquals(emptyList<SettingsSearchEntry>(), result)
-    }
-
-    @Test
-    fun `no catalog entry matches an unrelated query`() = runTest {
-        registerAllCatalogActions()
-
-        assertEquals(emptyList<SettingsSearchEntry>(), repository.search("xyzzy"))
+        // Then only Bluetooth is offered
+        assertEquals(listOf("bluetooth"), ids)
     }
 }

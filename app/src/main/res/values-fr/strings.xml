@@ -174,7 +174,6 @@
     <string name="app_picker_tab_apps">Apps</string>
     <string name="app_picker_tab_folders">Dossiers</string>
 
-
     <!-- GestureHintOverlay -->
     <string name="gesture_hint_switch_facets">Changer de facette</string>
     <string name="gesture_hint_arrow_left">←</string>
@@ -522,8 +521,6 @@
     <string name="permission_calendar_subtitle">Affiche les événements du jour sur l\'horloge.</string>
     <string name="permission_contacts_title">Contacts</string>
     <string name="permission_contacts_subtitle">Permet à la recherche du tiroir d\'afficher les contacts correspondants avec des actions rapides d\'appel, de message ou WhatsApp.</string>
-    <string name="permission_usage_access_title">Accès à l\'utilisation</string>
-    <string name="permission_usage_access_subtitle">Alimente les listes d\'apps Récentes et Les plus utilisées.</string>
     <string name="permission_notification_access_title">Accès aux notifications</string>
     <string name="permission_notification_access_subtitle">Affiche un point ou un nombre sur les apps ayant des notifications actives.</string>
     <string name="permission_bluetooth_title">Bluetooth</string>
@@ -718,10 +715,6 @@
     <!-- Shared -->
     <string name="open_settings">Ouvrir les réglages</string>
 
-    <!-- UsageAccessExplanationScreen -->
-    <string name="usage_access_explanation_headline">Récentes et Les plus utilisées affichent des apps selon votre usage réel du téléphone.</string>
-    <string name="usage_access_explanation_body">Cela nécessite l\'accès à l\'utilisation, une autorisation spéciale accordée depuis les réglages système — Facet ne peut pas la demander directement. Elle ne fait que lire quelles apps vous ouvrez et pendant combien de temps ; rien ne quitte votre appareil.</string>
-
     <!-- NotificationAccessExplanationScreen -->
     <string name="notification_access_explanation_headline">Les badges de notification affichent un point ou un nombre sur les apps qui ont quelque chose pour vous, et le lecteur multimédia affiche ce qui est en cours de lecture.</string>
     <string name="notification_access_explanation_body">Cela nécessite l\'accès aux notifications, une autorisation spéciale accordée depuis les réglages système — Facet ne peut pas la demander directement. Elle ne fait que lire quelles apps ont des notifications actives et si elles sont silencieuses, ainsi que le titre, l\'artiste et la pochette du média en cours ; rien ne quitte votre appareil.</string>
@@ -800,7 +793,6 @@
     <string name="drawer_search_section_recent_changes">INSTALLÉES OU MISES À JOUR RÉCEMMENT</string>
     <string name="drawer_search_section_frequent">UTILISÉES SOUVENT</string>
     <string name="drawer_search_section_last_used">DERNIÈRES UTILISÉES</string>
-    <string name="drawer_search_usage_access_needed">Les applis fréquentes et récentes nécessitent l’accès aux données d’utilisation dans les réglages du système.</string>
     <string name="drawer_contacts_access_needed">La recherche de contacts nécessite un accès depuis les réglages système.</string>
     <string name="drawer_contacts_search_off">La recherche de contacts est désactivée dans les réglages du tiroir d\'apps.</string>
     <string name="drawer_search_no_matches">Aucun résultat pour « %1$s »</string>
@@ -861,9 +853,6 @@
     </plurals>
     <string name="facet_settings_dock_settings_title">Apps du dock</string>
     <string name="facet_settings_rename_explanation">Renommez cette facette.</string>
-
-    <!-- HomeScreen -->
-    <string name="home_usage_access_needed">Les plus utilisées nécessite l\'accès à l\'utilisation depuis les réglages système.</string>
 
     <!-- ClockStyleGalleryScreen -->
     <string name="clock_style_font_label">Police</string>
@@ -1209,4 +1198,5 @@
     <string name="glass_style_accent">Accent</string>
     <string name="glass_style_theme">Thème</string>
     <string name="glass_style_theme_inverted">Thème inversé</string>
+    <string name="home_usage_list_empty">Les applis que vous ouvrez depuis Facet s\'afficheront ici.</string>
 </resources>

@@ -510,28 +510,17 @@ class HomeScreenTest {
     }
 
     @Test
-    fun usageAccessPromptReplacesTheListAndFiresItsCallbackOnTap() {
-        // Given Recents mode with usage access not yet granted
-        var clicked = false
+    fun anEmptyRecentsListShowsAHintInsteadOfBlankSpace() {
+        // Given Recents mode before any app has been opened from Facet
         composeRule.setContent {
             FacetLauncherTheme {
-                FlatHomeScreen(
-                    appListItems = apps(3).map { PlacedItem.SingleApp(it) },
-                    dockApps = emptyList(),
-                    onAppClick = {},
-                    showUsageAccessPrompt = true,
-                    onUsageAccessPromptClick = { clicked = true },
-                )
+                FlatHomeScreen(appListItems = emptyList(), dockApps = emptyList(), onAppClick = {}, showUsageListHint = true)
             }
         }
 
-        // Then the strip renders instead of any app rows
-        composeRule.onNodeWithTag("home_usage_access_strip").assertExists()
-        composeRule.onNodeWithText("App 1").assertDoesNotExist()
-
-        // And tapping it fires the callback
-        composeRule.onNodeWithTag("home_usage_access_strip").performClick()
-        assertEquals(true, clicked)
+        // Then the hint explains how the list fills
+        composeRule.onNodeWithTag("home_usage_list_hint").assertExists()
+        composeRule.onNodeWithText("Apps you open from Facet show up here.").assertExists()
     }
 
     @Test

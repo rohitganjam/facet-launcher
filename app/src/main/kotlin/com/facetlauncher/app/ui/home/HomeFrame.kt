@@ -280,11 +280,11 @@ private fun rememberListAppearAlpha(state: HomeScreenState, layout: HomeScreenLa
     // AppInfo.icon has no structural equality, so the raw list "changes" on every relist; its stable keys don't.
     val listKey = state.list.items.map { it.stableKey() }
     val presentation = state.list.rowPresentation
-    val usagePrompt = state.list.showUsageAccessPrompt
+    val usageHint = state.list.showUsageListHint
     val shrinkToFit = state.list.shrinkToFit
-    var revealed by remember(listKey, presentation, usagePrompt, shrinkToFit) { mutableStateOf(false) }
+    var revealed by remember(listKey, presentation, usageHint, shrinkToFit) { mutableStateOf(false) }
     val hasMedia = state.media.player != null
-    LaunchedEffect(listKey, presentation, usagePrompt, shrinkToFit, state.clock.placement.zoneHeightDp, hasMedia, layout.mediaRowHeightPx) {
+    LaunchedEffect(listKey, presentation, usageHint, shrinkToFit, state.clock.placement.zoneHeightDp, hasMedia, layout.mediaRowHeightPx) {
         layout.useCompactAppSpacing = false
         if (!shrinkToFit) {
             revealed = true

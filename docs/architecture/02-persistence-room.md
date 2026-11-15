@@ -4,7 +4,7 @@
 
 | Store | Location | What it holds | Written by | Survives |
 |---|---|---|---|---|
-| Room `FacetDatabase` | `facet.db` (schema **v50**, `exportSchema = true` → `app/schemas/…/1.json … 50.json`) | Facets + every *placement*: favorites, dock, folders, folder membership, widget grid positions, plus the facet automation rules (`automation_rules`) the weather cache (`weather_hours`, `weather_meta`) and each facet's clock stack (`clock_stack_items`) | 7 repositories (§2): `FacetRepository`, `PlacementRepository`, `FolderRepository`, `WidgetPlacementRepository`, `AutomationRuleRepository`, `WeatherRepository` (through `RoomWeatherStore`), `ClockStackRepository` | Reinstall-over-upgrade (migrations); **not** downgrade (dropped) |
+| Room `FacetDatabase` | `facet.db` (schema **v51**, `exportSchema = true` → `app/schemas/…/1.json … 51.json`) | Facets + every *placement*: favorites, dock, folders, folder membership, widget grid positions, plus the facet automation rules (`automation_rules`) the weather cache (`weather_hours`, `weather_meta`), each facet's clock stack (`clock_stack_items`) and the launch history (`app_launches`, `app_launch_days`, `search_picks`: which apps were opened from Facet and picked from search; not in backups) | 8 repositories (§2): `FacetRepository`, `PlacementRepository`, `FolderRepository`, `WidgetPlacementRepository`, `AutomationRuleRepository`, `WeatherRepository` (through `RoomWeatherStore`), `ClockStackRepository`, `LaunchHistoryRepository` | Reinstall-over-upgrade (migrations); **not** downgrade (dropped) |
 | `DataStore<Preferences>` | `facet_settings` (`datastore/facet_settings.preferences_pb`) | **All launcher-wide settings and defaults** — clock/app-list/dock design defaults (the calendar events strip has no design defaults of its own — see below), theme, drawer, search, permission-prompt flags, onboarding/seed/coach-mark flags, active facet id, the clock accessory switches, weather units and location, the icon pack and size — 82 keys (§5) | `SettingsRepository` only | Any upgrade (missing keys fall back to `LauncherSettings()` defaults) |
 | `DataStore<Preferences>` | `facet_entitlement` (`datastore/facet_entitlement.preferences_pb`) | The cached Pro state (`pro_purchased`; excluded from Android backups and device transfer by `res/xml/data_extraction_rules.xml`), so Pro works offline and at cold start; debug builds also keep `debug_entitlement_mode` here | `PlayEntitlementRepository`, only from an explicit Google Play answer | Same as `facet_settings`; **not** in the backup file, so a restore can never grant Pro |
 | `DataStore<Preferences>` | `facet_automation` (`datastore/facet_automation.preferences_pb`) | Facet-automation bookkeeping: the baseline facet, the ordered active rule ids, the suppressed rule ids (§5.7) | `AutomationStateRepository` (via `ActivateFacetByIdUseCase`) | Same as `facet_settings`; **not** in the backup file |
@@ -187,6 +187,30 @@ erDiagram
         string batteryDirection "nullable"
     }
 
+    app_launches {
+        string packageName PK
+        string activityName PK
+        int userId PK
+        long lastLaunchedAt
+    }
+
+    app_launch_days {
+        string packageName PK
+        string activityName PK
+        int userId PK
+        long epochDay PK "indexed, pruned past 30 days"
+        int count
+    }
+
+    search_picks {
+        string query PK "normalized query"
+        string packageName PK
+        string activityName PK
+        int userId PK
+        int count
+        long lastPickedAt "indexed, newest 500 kept"
+    }
+
     facets ||--o{ automation_rules : "rule target (CASCADE)"
     facets |o--o{ automation_rules : "switch-to end facet (SET NULL)"
     facets |o--o{ app_placements : "per-facet dock and favorites"
@@ -219,6 +243,9 @@ erDiagram
   v20 that `RepairOrphanedProfileRowsUseCase` backfills once at startup (`getOrphaned()` DAO queries).
 - **Cascades.** Deleting a facet or folder removes all its placement rows in SQLite; the
   repositories never have to clean up children manually.
+- **Launch history stands alone.** `app_launches`, `app_launch_days` and `search_picks` have no foreign keys; they are keyed by
+  component and `userId` like the placements, and `CleanUpUninstalledAppsUseCase` clears them on uninstall or profile removal. They
+  are left out of the backup file. Private Space apps and Facet itself are never recorded (`LaunchHistoryRepository.isRecorded`).
 
 ## 2. DAO → Repository → Flow mapping
 
@@ -233,6 +260,7 @@ flowchart LR
         ARD[AutomationRuleDao]
         WTD[WeatherDao]
         CSD[ClockStackItemDao]
+        LHD[LaunchHistoryDao]
     end
 
     subgraph REPO["data/ repositories"]
@@ -243,6 +271,7 @@ flowchart LR
         ARR["AutomationRuleRepository\n(maps rows to AutomationRule)"]
         WTR["WeatherRepository\n(via RoomWeatherStore, plus the MET API)"]
         CSR["ClockStackRepository\n(a facet's clock stack)"]
+        LHR["LaunchHistoryRepository\n(launches and search picks)"]
         AR["AppRepository\n(LauncherApps, not Room)"]
     end
 
@@ -254,6 +283,7 @@ flowchart LR
     ARD --> ARR
     WTD --> WTR
     CSD --> CSR
+    LHD --> LHR
     FD -. "facet exists check on save" .-> ARR
 
     AR -. "observeInstalledApps()" .-> FOR
@@ -267,6 +297,8 @@ flowchart LR
     WPR -- "Flow of List WidgetPlacementEntity" --> OUT
     ARR -- "Flow of List AutomationRule" --> OUT
     WTR -- "Flow of List WeatherHour, Flow of WeatherFetchState" --> OUT
+    LHR -- "Flow of SearchSignals, one-shot recents and most used" --> OUT
+    AR -. "getInstalledApps()" .-> LHR
 ```
 
 ### The DAO contract
@@ -292,6 +324,7 @@ Every DAO follows the same shape, which is what makes the reactive layer uniform
 | `AutomationRuleDao` | `observeAll()` (`ORDER BY position ASC, id ASC`) | `insert(rule): Long`, `update(rule)`, `setEnabled(id, enabled)` | `deleteById(id)` | `getById(id)`, `maxPosition()` (`-1` when empty) |
 | `ClockStackItemDao` | `observe(facetId)`, `observeAll()` (`ORDER BY position, id`) | `insert` | `delete(id)`, `deleteAll(facetId)` | `getAll(facetId)`, `getById(id)`; updates `clearClockBoxes(facetId)` (a facet's clock pages only, both orientations), `replace` (swaps the kind, widget id and native type, resets the sizes), `setPosition`, `setSize`, `setLandscapeSize`, `setAlignment`, `setLandscapeAlignment`, `updateConfig(id, config)` (a native widget page's own settings). `ClockStackRepository` wraps add (clock, hosted widget, native widget), replace, remove, reorder, clear and a backup's `restoreNativeWidgets` in `database.withTransaction`, caps a stack at `MAX_CLOCK_STACK_ITEMS` (5) and allows one `CLOCK` item |
 | `WeatherDao` | `observeHours()` (`ORDER BY timeEpochSecond ASC`), `observeMeta()` (the one row, or `null`) | `insertHours(list)` (REPLACE), `upsertMeta(meta)` (REPLACE) | `clearHours()` | `getHours()`, `getMeta()`. `RoomWeatherStore.replaceHours` clears and inserts inside `database.withTransaction`, so a reader never sees half a forecast; `writeState` stores `placeName` and `placeNameSource` with the rest of the fetch state, and `WeatherRepository` drops them when the place changes |
+| `LaunchHistoryDao` | `observeLaunchCountsSince(epochDay)`, `observeSearchPicks()` | `setLastLaunched` (REPLACE), `incrementDay`, `incrementPick` (`INSERT … ON CONFLICT DO UPDATE`, SQLite 3.24+, fine on minSdk 30); `@Transaction` `recordLaunch` (last launch + today's count + `pruneDaysBefore`) and `recordPick` (count + `trimPicks(keep)`, by `lastPickedAt`) | `removeByPackage(pkg, userId)`, `removeByUserId(userId)` (`@Transaction` over the three tables' `delete…` queries), `pruneDaysBefore(epochDay)` | `lastLaunches()` (`ORDER BY lastLaunchedAt DESC`), `launchCountsSince(epochDay)` (`SUM(count)` per component, as `AppLaunchCount`) |
 | `WidgetPlacementDao` | `observeAll()` (no ORDER BY — grid position is `row`/`col`, not `position`) | `upsert(placement)` (REPLACE on `appWidgetId`), `updateConfig(appWidgetId, config)` (a native widget's own settings, `nativeWidgetConfig`) | `deleteById(appWidgetId)`, `delete(placement)`, `deleteAllNative()` (every row with a `nativeWidgetType`) | `getById(appWidgetId)`, `minAppWidgetId()` (`null` when empty; `WidgetPlacementRepository.nextNativeId()` gives a native widget one below the lowest, always negative, so it never meets a host-issued id) |
 
 Exceptions to the common shape, all deliberate:
@@ -357,7 +390,7 @@ Room.databaseBuilder(context, FacetDatabase::class.java, "facet.db")
   process documented in `Migrations.kt` is: bump `FacetDatabase.VERSION` → add
   `MIGRATION_<old>_<new>` to `ALL` → add a `FacetDatabaseMigrationTest` case
   (`app/src/androidTest/.../data/local/FacetDatabaseMigrationTest.kt`, built on `MigrationTestHelper`).
-- Three steps are Room auto-migrations declared on `@Database` (43→44 and 45→46 with a column-drop spec, 46→47), not entries in `ALL`.
+- Four steps are Room auto-migrations declared on `@Database` (43→44 and 45→46 with a column-drop spec, 46→47, 50→51), not entries in `ALL`.
 - **Downgrade** drops all tables (dev-only scenario).
 - Versions 1–9 have exported schemas but no shipped migrations — they predate any production install.
 
@@ -403,6 +436,7 @@ Room.databaseBuilder(context, FacetDatabase::class.java, "facet.db")
 | 47→48 | **Manual, no schema change** (`Migrations.MIGRATION_47_48`): deletes every `app_placements` and `folder_placements` row with a null `facetId`, the launcher-wide Dock and Favorites that no longer exist (a facet has held its own copy since 44→45). The columns stay nullable. `FacetDatabaseMigrationTest.migration47To48DeletesTheLauncherWideListsAndKeepsFacetLists`. |
 | 48→49 | **Manual** (`Migrations.migration48To49`, reading the old key through `legacyAllowLandscape` in `FacetDefaultsMigration.kt`): `facets` gains `allowLandscape INTEGER NOT NULL DEFAULT 1`, and every facet is set to the launcher-wide `allow_landscape` the DataStore held, read through a supplier like 44→45, so nothing changes on screen. The DataStore key is no longer written or read after this. `FacetDatabaseMigrationTest.migration48To49GivesEveryFacetTheLauncherWideLandscapeChoice`. |
 | 49→50 | **Manual** (`Migrations.MIGRATION_49_50`): `facets` gains `dockGlass` and `appsListGlass`, `TEXT NOT NULL DEFAULT 'OFF'` (a `GlassStyle` name, through `Converters`). The calendar's style lives in the clock's JSON config (`ClockCalendarConfig.glass`) and the media row's in the DataStore, so neither needs a column. `FacetDatabaseMigrationTest.migration49To50AddsGlassStylesThatStartOff`. |
+| 50→51 | **Auto-migration** (`@AutoMigration(from = 50, to = 51)`): adds the empty launch history tables `app_launches`, `app_launch_days` (index on `epochDay`) and `search_picks` (index on `lastPickedAt`). Nothing else changes; Recents and Most used start empty because Usage Access is gone. `FacetDatabaseMigrationTest.migration50To51AddsEmptyLaunchHistoryAndKeepsFacets`. |
 
 The landscape twins are handled as one `LandscapeOverrides` group (clock alignment, divider, row position, vertical and column alignment; every field nullable). Settings hold it as `LauncherSettings.landscape`, read from the five `landscape_*` keys and written only through `updateLandscape`. A facet keeps the flat columns above (so the schema is unchanged) and exposes the group as `FacetEntity.landscape` / `withLandscape(...)`, written through `FacetRepository.updateLandscape`. `resolveLandscape` is the one resolution rule (see [17](17-flow-home-layout.md) §1.0).
 

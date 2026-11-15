@@ -26,6 +26,7 @@ import androidx.compose.ui.test.performTouchInput
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.room.Room
 import com.facetlauncher.app.data.AppRepository
+import com.facetlauncher.app.data.testLaunchHistoryRepository
 import com.facetlauncher.app.data.getTestableApps
 import com.facetlauncher.app.data.EntitlementRepository
 import com.facetlauncher.app.data.FacetRepository
@@ -99,14 +100,7 @@ class FacetCarouselScreenTest {
                 val appRepository = AppRepository(launcherApps, context.getSystemService(UserManager::class.java), context)
                 val placementRepository = PlacementRepository(database.appPlacementDao(), database.folderPlacementDao())
                 val observePlacedItems = ObservePlacedItemsUseCase(placementRepository, FolderRepository(database.folderDao(), appRepository), appRepository)
-                val usageStatsRepository = com.facetlauncher.app.data.UsageStatsRepository(
-                    context.getSystemService(android.app.usage.UsageStatsManager::class.java),
-                    appRepository
-                )
-                val usageAccessRepository = com.facetlauncher.app.data.UsageAccessRepository(
-                    context.getSystemService(android.app.AppOpsManager::class.java),
-                    context
-                )
+                val launchHistoryRepository = testLaunchHistoryRepository(context, appRepository)
                 val calendarPermissionRepository = com.facetlauncher.app.data.CalendarPermissionRepository(context)
                 val calendarRepository = com.facetlauncher.app.data.CalendarRepository(context.contentResolver)
                 val wallpaperRepository = com.facetlauncher.app.data.WallpaperRepository(
@@ -132,8 +126,7 @@ class FacetCarouselScreenTest {
                         facetRepository,
                         settingsRepository,
                         observePlacedItems,
-                        usageStatsRepository,
-                        usageAccessRepository,
+                        launchHistoryRepository,
                         calendarPermissionRepository,
                         calendarRepository,
                     ),

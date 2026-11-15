@@ -3,8 +3,7 @@ package com.facetlauncher.app.ui.facets
 import androidx.lifecycle.SavedStateHandle
 import com.facetlauncher.app.data.AppRepository
 import com.facetlauncher.app.data.FolderRepository
-import com.facetlauncher.app.data.UsageAccessRepository
-import com.facetlauncher.app.data.UsageStatsRepository
+import com.facetlauncher.app.data.LaunchHistoryRepository
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.AppSortOption
 import com.facetlauncher.app.data.model.PlacedItem
@@ -34,7 +33,7 @@ import com.facetlauncher.app.data.PlacementRepository
 import com.facetlauncher.app.domain.ObservePlacedItemsUseCase
 
 /**
- * Focused on the sort control + Usage Access gating added on top of the Favorites picker —
+ * Focused on the sort control added on top of the Favorites picker —
  * capacity/placement behavior itself is exercised end-to-end by [FavoriteAppRepositoryTest] and
  * the instrumented `FavoritesPickerScreenTest`.
  */
@@ -67,7 +66,6 @@ class FavoritesPickerViewModelTest {
         facetId: Long,
         installed: List<AppInfo>,
         favorites: List<AppInfo>,
-        usageAccessGranted: Boolean = false,
     ): FavoritesPickerViewModel {
         val appRepository = mock(AppRepository::class.java)
         `when`(appRepository.getInstalledApps()).thenReturn(installed)
@@ -80,12 +78,9 @@ class FavoritesPickerViewModelTest {
 
         val folderRepository = mock(FolderRepository::class.java)
         `when`(folderRepository.observeFolders()).thenReturn(flowOf(emptyList()))
-
-        val usageAccessRepository = mock(UsageAccessRepository::class.java)
-        `when`(usageAccessRepository.isGranted()).thenReturn(usageAccessGranted)
-        val usageStatsRepository = mock(UsageStatsRepository::class.java)
-        `when`(usageStatsRepository.getLastUsedTimestamps()).thenReturn(emptyMap())
-        val sortAppsForPicker = SortAppsForPickerUseCase(usageStatsRepository)
+        val launchHistoryRepository = mock(LaunchHistoryRepository::class.java)
+        `when`(launchHistoryRepository.getLastUsedTimestamps()).thenReturn(emptyMap())
+        val sortAppsForPicker = SortAppsForPickerUseCase(launchHistoryRepository)
 
         return FavoritesPickerViewModel(
             SavedStateHandle(mapOf("facetId" to facetId)),
@@ -94,7 +89,6 @@ class FavoritesPickerViewModelTest {
             observePlacedItems,
             folderRepository,
             sortAppsForPicker,
-            usageAccessRepository,
         )
     }
 
@@ -133,22 +127,9 @@ class FavoritesPickerViewModelTest {
     }
 
     @Test
-    fun `onSortOptionChange to LAST_USED is a no-op without Usage Access granted`() = runTest {
+    fun `onSortOptionChange to LAST_USED applies with no permission needed`() = runTest {
         val a = appInfo('a')
-        val viewModel = createViewModel(facetId = 1L, installed = listOf(a), favorites = emptyList(), usageAccessGranted = false)
-        backgroundScope.launch { viewModel.uiState.collect {} }
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        viewModel.onSortOptionChange(AppSortOption.LAST_USED)
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        assertEquals(AppSortOption.ALPHABETICAL, viewModel.uiState.value.sortOption)
-    }
-
-    @Test
-    fun `onSortOptionChange to LAST_USED applies once Usage Access is granted`() = runTest {
-        val a = appInfo('a')
-        val viewModel = createViewModel(facetId = 1L, installed = listOf(a), favorites = emptyList(), usageAccessGranted = true)
+        val viewModel = createViewModel(facetId = 1L, installed = listOf(a), favorites = emptyList())
         backgroundScope.launch { viewModel.uiState.collect {} }
         testDispatcher.scheduler.advanceUntilIdle()
 
@@ -156,37 +137,6 @@ class FavoritesPickerViewModelTest {
         testDispatcher.scheduler.advanceUntilIdle()
 
         assertEquals(AppSortOption.LAST_USED, viewModel.uiState.value.sortOption)
-    }
-
-    @Test
-    fun `refreshUsageAccessGranted re-checks the permission, since it has no grant-change callback`() = runTest {
-        val a = appInfo('a')
-        val appRepository = mock(AppRepository::class.java)
-        `when`(appRepository.getInstalledApps()).thenReturn(listOf(a))
-        val placementRepository = mock(PlacementRepository::class.java)
-        val observePlacedItems = mock(ObservePlacedItemsUseCase::class.java)
-        `when`(observePlacedItems.items(PlacementTarget(PlacementList.FAVORITES, 1L))).thenReturn(flowOf(emptyList()))
-        val folderRepository = mock(FolderRepository::class.java)
-        `when`(folderRepository.observeFolders()).thenReturn(flowOf(emptyList()))
-        // False when the ViewModel is constructed (before the user leaves for system Settings),
-        // true on every check after — simulates granting access and returning to this screen.
-        val usageAccessRepository = mock(UsageAccessRepository::class.java)
-        `when`(usageAccessRepository.isGranted()).thenReturn(false, true)
-
-        val viewModel = FavoritesPickerViewModel(
-            SavedStateHandle(mapOf("facetId" to 1L)),
-            GetInstalledAppsUseCase(appRepository),
-            placementRepository,
-            observePlacedItems,
-            folderRepository,
-            SortAppsForPickerUseCase(mock(UsageStatsRepository::class.java)),
-            usageAccessRepository,
-        )
-        assertEquals(false, viewModel.usageAccessGranted.value)
-
-        viewModel.refreshUsageAccessGranted()
-
-        assertEquals(true, viewModel.usageAccessGranted.value)
     }
 
     @Test

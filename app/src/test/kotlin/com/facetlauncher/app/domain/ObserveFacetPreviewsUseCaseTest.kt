@@ -3,9 +3,8 @@ package com.facetlauncher.app.domain
 import com.facetlauncher.app.data.CalendarPermissionRepository
 import com.facetlauncher.app.data.CalendarRepository
 import com.facetlauncher.app.data.FacetRepository
+import com.facetlauncher.app.data.LaunchHistoryRepository
 import com.facetlauncher.app.data.SettingsRepository
-import com.facetlauncher.app.data.UsageAccessRepository
-import com.facetlauncher.app.data.UsageStatsRepository
 import com.facetlauncher.app.data.clockItemWith
 import com.facetlauncher.app.data.model.ClockCalendarConfig
 import com.facetlauncher.app.data.model.ClockWidgetConfig
@@ -25,7 +24,6 @@ import org.mockito.Mockito.mock
 import org.mockito.Mockito.`when`
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
-import com.facetlauncher.app.data.model.PlacementTarget
 import com.facetlauncher.app.domain.ObservePlacedItemsUseCase
 import com.facetlauncher.app.data.model.PlacementList
 
@@ -48,8 +46,7 @@ class ObserveFacetPreviewsUseCaseTest {
         }
         val facetsFlow = MutableStateFlow<List<Facet>>(emptyList())
         val facetRepository = mock(FacetRepository::class.java).also { `when`(it.observeFacets()).thenReturn(facetsFlow) }
-        val usageStatsRepository = mock(UsageStatsRepository::class.java)
-        val usageAccessRepository = mock(UsageAccessRepository::class.java).also { `when`(it.isGranted()).thenReturn(true) }
+        val launchHistoryRepository = mock(LaunchHistoryRepository::class.java)
         val calendarPermissionRepository = mock(CalendarPermissionRepository::class.java).also { `when`(it.isGranted()).thenReturn(false) }
         val calendarRepository = mock(CalendarRepository::class.java)
 
@@ -57,8 +54,7 @@ class ObserveFacetPreviewsUseCaseTest {
             facetRepository,
             settingsRepository,
             observePlacedItems,
-            usageStatsRepository,
-            usageAccessRepository,
+            launchHistoryRepository,
             calendarPermissionRepository,
             calendarRepository,
         )
@@ -103,19 +99,19 @@ class ObserveFacetPreviewsUseCaseTest {
     }
 
     @Test
-    fun `recents mode without usage access yields an empty favorites list for that facet`() = runTest {
-        // Given a facet set to Recents, usage access not granted
+    fun `recents mode previews the apps last opened from Facet`() = runTest {
+        // Given a facet set to Recents, and an app opened from Facet
         val fixture = Fixture()
-        `when`(fixture.usageAccessRepository.isGranted()).thenReturn(false)
         fixture.facetsFlow.value = listOf(
-            Facet(id = 1L, name = "P1", position = 0, listContentMode = ListContentMode.RECENTS),
+            Facet(id = 1L, name = "P1", position = 0, listContentMode = ListContentMode.RECENTS, appsToShowCount = 6),
         )
+        `when`(fixture.launchHistoryRepository.getRecentApps(6)).thenReturn(listOf(appInfo('r')))
 
         // When observing previews
         val result = fixture.useCase().first()
 
-        // Then the list is empty rather than a broken partial one
-        assertEquals(emptyList<PlacedItem>(), result.getValue(1L).favorites)
+        // Then the preview lists it, with no permission involved
+        assertEquals(listOf(PlacedItem.SingleApp(appInfo('r'))), result.getValue(1L).favorites)
     }
 
     @Test

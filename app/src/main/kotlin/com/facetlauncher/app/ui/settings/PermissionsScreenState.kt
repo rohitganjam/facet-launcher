@@ -7,7 +7,6 @@ import kotlinx.collections.immutable.persistentListOf
 enum class PermissionKind {
     CALENDAR,
     CONTACTS,
-    USAGE_ACCESS,
     NOTIFICATION_ACCESS,
     ACCESSIBILITY_ACCESS,
     BLUETOOTH,

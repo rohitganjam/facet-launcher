@@ -1,8 +1,6 @@
 package com.facetlauncher.app.data.di
 
-import android.app.AppOpsManager
 import android.app.WallpaperManager
-import android.app.usage.UsageStatsManager
 import android.content.Context
 import android.content.pm.LauncherApps
 import android.os.UserManager
@@ -53,18 +51,6 @@ object AppModule {
     fun provideUserManager(@ApplicationContext context: Context): UserManager =
         context.getSystemService(UserManager::class.java)
             ?: error("UserManager service unavailable on this device")
-
-    @Provides
-    @Singleton
-    fun provideUsageStatsManager(@ApplicationContext context: Context): UsageStatsManager =
-        context.getSystemService(UsageStatsManager::class.java)
-            ?: error("UsageStatsManager service unavailable on this device")
-
-    @Provides
-    @Singleton
-    fun provideAppOpsManager(@ApplicationContext context: Context): AppOpsManager =
-        context.getSystemService(AppOpsManager::class.java)
-            ?: error("AppOpsManager service unavailable on this device")
 
     @Provides
     @Singleton

@@ -1,6 +1,6 @@
 package com.facetlauncher.app.domain
 
-import com.facetlauncher.app.data.UsageStatsRepository
+import com.facetlauncher.app.data.LaunchHistoryRepository
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.AppSortOption
 import com.facetlauncher.app.data.model.SortDirection
@@ -14,7 +14,7 @@ import javax.inject.Inject
  * the comparable value (A→Z, oldest first); [SortDirection.DESCENDING] reverses it, so the same
  * toggle works no matter which field is selected.
  */
-class SortAppsForPickerUseCase @Inject constructor(private val usageStatsRepository: UsageStatsRepository) {
+class SortAppsForPickerUseCase @Inject constructor(private val launchHistoryRepository: LaunchHistoryRepository) {
     // Not a singleton: one instance per picker ViewModel, so this is loaded once per screen visit.
     private var cachedLastUsed: Map<String, Long>? = null
 
@@ -31,10 +31,9 @@ class SortAppsForPickerUseCase @Inject constructor(private val usageStatsReposit
         return if (direction == SortDirection.ASCENDING) ascending else ascending.reversed()
     }
 
-    // The full-history usage query takes seconds, and this runs on every search keystroke (the query
-    // and the sort share one combined state) — uncached, the search field lagged and dropped typing.
+    // Runs on every search keystroke (the query and the sort share one combined state), so it's read once per screen.
     private suspend fun lastUsedTimestamps(): Map<String, Long> {
-        return cachedLastUsed ?: usageStatsRepository.getLastUsedTimestamps().also { cachedLastUsed = it }
+        return cachedLastUsed ?: launchHistoryRepository.getLastUsedTimestamps().also { cachedLastUsed = it }
     }
 
     private suspend fun sortByLastUsed(apps: List<AppInfo>, direction: SortDirection): List<AppInfo> {

@@ -11,7 +11,6 @@ import com.facetlauncher.app.data.DeviceStateRepository
 import com.facetlauncher.app.data.AccessibilityAccessRepository
 import com.facetlauncher.app.data.NotificationAccessRepository
 import com.facetlauncher.app.data.SettingsRepository
-import com.facetlauncher.app.data.UsageAccessRepository
 import com.facetlauncher.app.data.model.AutomationPermission
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -25,11 +24,8 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 /**
- * Every permission Facet uses, in one list — none of them have a grant-change callback
- * ([CalendarPermissionRepository]/[ContactPermissionRepository] are normal runtime permissions
- * that could change from outside the app via system Settings; [UsageAccessRepository] is a
- * special-access permission with no runtime dialog at all), so [refresh] is called on every
- * `onResume`, the same pattern [UsageAccessExplanationViewModel] already established.
+ * Every permission Facet uses, in one list. None of them has a grant-change callback (each can change from outside the app in system
+ * Settings), so [refresh] is called on every `onResume`.
  */
 @HiltViewModel
 class PermissionsViewModel @Inject constructor(
@@ -37,7 +33,6 @@ class PermissionsViewModel @Inject constructor(
     private val settingsRepository: SettingsRepository,
     private val calendarPermissionRepository: CalendarPermissionRepository,
     private val contactPermissionRepository: ContactPermissionRepository,
-    private val usageAccessRepository: UsageAccessRepository,
     private val notificationAccessRepository: NotificationAccessRepository,
     private val accessibilityAccessRepository: AccessibilityAccessRepository,
     private val automationPermissionRepository: AutomationPermissionRepository,
@@ -65,12 +60,6 @@ class PermissionsViewModel @Inject constructor(
                     subtitle = context.getString(R.string.permission_contacts_subtitle),
                     isGranted = contactPermissionRepository.isGranted(),
                     hasRequestedBefore = settings.contactsPermissionRequested,
-                ),
-                PermissionRowState(
-                    kind = PermissionKind.USAGE_ACCESS,
-                    title = context.getString(R.string.permission_usage_access_title),
-                    subtitle = context.getString(R.string.permission_usage_access_subtitle),
-                    isGranted = usageAccessRepository.isGranted(),
                 ),
                 PermissionRowState(
                     kind = PermissionKind.NOTIFICATION_ACCESS,

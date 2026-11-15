@@ -8,7 +8,6 @@ import com.facetlauncher.app.data.ContactPermissionRepository
 import com.facetlauncher.app.data.DeviceStateRepository
 import com.facetlauncher.app.data.NotificationAccessRepository
 import com.facetlauncher.app.data.SettingsRepository
-import com.facetlauncher.app.data.UsageAccessRepository
 import com.facetlauncher.app.data.model.AutomationPermission
 import com.facetlauncher.app.data.model.LauncherSettings
 import kotlinx.coroutines.Dispatchers
@@ -53,7 +52,6 @@ class PermissionsViewModelTest {
         settingsRepository: SettingsRepository = mock(SettingsRepository::class.java),
         calendarPermissionRepository: CalendarPermissionRepository = mock(CalendarPermissionRepository::class.java),
         contactPermissionRepository: ContactPermissionRepository = mock(ContactPermissionRepository::class.java),
-        usageAccessRepository: UsageAccessRepository = mock(UsageAccessRepository::class.java),
         notificationAccessRepository: NotificationAccessRepository = mock(NotificationAccessRepository::class.java),
         accessibilityAccessRepository: AccessibilityAccessRepository = mock(AccessibilityAccessRepository::class.java),
         automationPermissionRepository: AutomationPermissionRepository = mock(AutomationPermissionRepository::class.java),
@@ -70,7 +68,6 @@ class PermissionsViewModelTest {
             settingsRepository,
             calendarPermissionRepository,
             contactPermissionRepository,
-            usageAccessRepository,
             notificationAccessRepository,
             accessibilityAccessRepository,
             automationPermissionRepository,
@@ -84,8 +81,6 @@ class PermissionsViewModelTest {
         `when`(calendarPermissionRepository.isGranted()).thenReturn(true)
         val contactPermissionRepository = mock(ContactPermissionRepository::class.java)
         `when`(contactPermissionRepository.isGranted()).thenReturn(false)
-        val usageAccessRepository = mock(UsageAccessRepository::class.java)
-        `when`(usageAccessRepository.isGranted()).thenReturn(false)
         val notificationAccessRepository = mock(NotificationAccessRepository::class.java)
         `when`(notificationAccessRepository.isGranted()).thenReturn(true)
         val accessibilityAccessRepository = mock(AccessibilityAccessRepository::class.java)
@@ -102,7 +97,6 @@ class PermissionsViewModelTest {
             ),
             calendarPermissionRepository = calendarPermissionRepository,
             contactPermissionRepository = contactPermissionRepository,
-            usageAccessRepository = usageAccessRepository,
             notificationAccessRepository = notificationAccessRepository,
             accessibilityAccessRepository = accessibilityAccessRepository,
             automationPermissionRepository = automationPermissionRepository,
@@ -111,7 +105,7 @@ class PermissionsViewModelTest {
         testDispatcher.scheduler.advanceUntilIdle()
 
         val permissions = viewModel.uiState.value.permissions
-        assertEquals(6, permissions.size)
+        assertEquals(5, permissions.size)
 
         val calendar = permissions.single { it.kind == PermissionKind.CALENDAR }
         assertTrue(calendar.isGranted)
@@ -120,9 +114,6 @@ class PermissionsViewModelTest {
         val contacts = permissions.single { it.kind == PermissionKind.CONTACTS }
         assertFalse(contacts.isGranted)
         assertFalse(contacts.hasRequestedBefore)
-
-        val usageAccess = permissions.single { it.kind == PermissionKind.USAGE_ACCESS }
-        assertFalse(usageAccess.isGranted)
 
         val notificationAccess = permissions.single { it.kind == PermissionKind.NOTIFICATION_ACCESS }
         assertTrue(notificationAccess.isGranted)
@@ -139,7 +130,7 @@ class PermissionsViewModelTest {
     }
 
     @Test
-    fun `the bluetooth and location rows come after the existing four`() = runTest {
+    fun `the bluetooth and location rows come after the existing three`() = runTest {
         val viewModel = createViewModel()
         backgroundScope.launch { viewModel.uiState.collect {} }
         testDispatcher.scheduler.advanceUntilIdle()
@@ -148,7 +139,6 @@ class PermissionsViewModelTest {
             listOf(
                 PermissionKind.CALENDAR,
                 PermissionKind.CONTACTS,
-                PermissionKind.USAGE_ACCESS,
                 PermissionKind.NOTIFICATION_ACCESS,
                 PermissionKind.BLUETOOTH,
                 PermissionKind.LOCATION,

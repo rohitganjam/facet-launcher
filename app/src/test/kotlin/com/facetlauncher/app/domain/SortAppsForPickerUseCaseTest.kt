@@ -1,6 +1,6 @@
 package com.facetlauncher.app.domain
 
-import com.facetlauncher.app.data.UsageStatsRepository
+import com.facetlauncher.app.data.LaunchHistoryRepository
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.AppSortOption
 import com.facetlauncher.app.data.model.SortDirection
@@ -28,9 +28,9 @@ class SortAppsForPickerUseCaseTest {
     )
 
     private suspend fun useCase(lastUsed: Map<String, Long> = emptyMap()): SortAppsForPickerUseCase {
-        val usageStatsRepository = mock(UsageStatsRepository::class.java)
-        `when`(usageStatsRepository.getLastUsedTimestamps()).thenReturn(lastUsed)
-        return SortAppsForPickerUseCase(usageStatsRepository)
+        val launchHistoryRepository = mock(LaunchHistoryRepository::class.java)
+        `when`(launchHistoryRepository.getLastUsedTimestamps()).thenReturn(lastUsed)
+        return SortAppsForPickerUseCase(launchHistoryRepository)
     }
 
     @Test
@@ -90,7 +90,7 @@ class SortAppsForPickerUseCaseTest {
     }
 
     @Test
-    fun `LAST_USED with no usage data at all (Usage Access not granted) falls back to input order`() = runTest {
+    fun `LAST_USED with no usage data at all (nothing opened from Facet yet) falls back to input order`() = runTest {
         val a = appInfo('a')
         val b = appInfo('b')
 
@@ -100,16 +100,16 @@ class SortAppsForPickerUseCaseTest {
     }
 
     @Test
-    fun `LAST_USED queries usage stats once across repeated sorts, so each search keystroke stays fast`() = runTest {
-        val usageStatsRepository = mock(UsageStatsRepository::class.java)
-        `when`(usageStatsRepository.getLastUsedTimestamps()).thenReturn(emptyMap())
-        val useCase = SortAppsForPickerUseCase(usageStatsRepository)
+    fun `LAST_USED reads launch history once across repeated sorts, so each search keystroke stays fast`() = runTest {
+        val launchHistoryRepository = mock(LaunchHistoryRepository::class.java)
+        `when`(launchHistoryRepository.getLastUsedTimestamps()).thenReturn(emptyMap())
+        val useCase = SortAppsForPickerUseCase(launchHistoryRepository)
         val apps = listOf(appInfo('a'))
 
         useCase(apps, AppSortOption.LAST_USED, SortDirection.ASCENDING)
         useCase(apps, AppSortOption.LAST_USED, SortDirection.DESCENDING)
         useCase(apps, AppSortOption.LAST_USED, SortDirection.ASCENDING)
 
-        verify(usageStatsRepository, times(1)).getLastUsedTimestamps()
+        verify(launchHistoryRepository, times(1)).getLastUsedTimestamps()
     }
 }

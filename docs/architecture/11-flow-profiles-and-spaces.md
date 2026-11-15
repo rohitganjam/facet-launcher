@@ -69,7 +69,7 @@ stateDiagram-v2
 | Entry point | Drawer bottom row (`showPrivateSpaceRow = state !is NotConfigured`) in `HomeDrawerRoute` | `Unlocked` → opens `PrivateSpaceScreen`; `Locked` → `drawerViewModel.requestUnlockPrivateSpace()` → `userManager.requestQuietModeEnabled(false, handle)` (system shows the lock UI); state flips to `Unlocked` on the resulting broadcast |
 | App list | `PrivateSpaceRepository.observePrivateSpaceApps()` = `appRepository.observeAppsForProfile(PRIVATE)`; `PrivateSpaceViewModel` + `RankBySearchRelevanceUseCase` + `RecentlyInstalledAppsUseCase` + `SettingsRepository` | own screen with its own search and `PrivateSpaceTheme`; also gets its own independent "Recently installed" category, same global `recentlyInstalledPosition` setting as the main Drawer's (including `SHOW_LAST` placement) — see [12-flow-drawer-search-and-app-actions.md §1b](12-flow-drawer-search-and-app-actions.md) |
 | Exclusion | `GetInstalledAppsUseCase` filters `profile == PRIVATE` out of both `invoke()` and `observe()` (`observe()` also drops Facet's own package) | Private apps never appear in the main drawer, pickers, favorites or dock — by design (Android's own launcher contract) |
-| Persistence | none — Private Space apps can't be placed, so no rows carry `profile = PRIVATE` | |
+| Persistence | none — Private Space apps can't be placed, so no rows carry `profile = PRIVATE`; `LaunchHistoryRepository` doesn't record their launches or search picks either | Recents, Most used and search learning never reveal a private app |
 
 ## 4. Samsung Secure Folder
 

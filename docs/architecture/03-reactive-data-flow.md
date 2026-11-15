@@ -138,8 +138,7 @@ flowchart TB
     RT["refreshTrigger\nMutableSharedFlow(replay=1)"] --> ALI
     ALI{{"flatMapLatest → observeAppListItems(facet)"}}
     ALI -- "FAVORITES" --> FAV["ObservePlacedItemsUseCase.items(facet.placementTarget(FAVORITES))\n(the facet's own list)"]
-    ALI -- "RECENTS / MOST_USED\n(one-shot flow { emit(...) })" --> US["UsageStatsRepository\ngetRecentApps / getMostUsedApps"]
-    ALI -- "usage access not granted" --> EMPTY["flowOf(emptyList())"]
+    ALI -- "RECENTS / MOST_USED\n(one-shot flow { emit(...) })" --> US["LaunchHistoryRepository\ngetRecentApps / getMostUsedApps\n(Facet's own launches, Room)"]
 
     AF --> DK{{"flatMapLatest → dock"}}
     DK --> GDK["ObservePlacedItemsUseCase.items(facet.placementTarget(DOCK))\n(the facet's own list)"]
@@ -172,7 +171,7 @@ flowchart TB
     MP --> OUT
     S --> OUT
     F --> OUT
-    OUT{{"combine(7 flows) → HomeScreenState"}} --> HVM["HomeViewModel\ncombine(+ usageAccessPromptDismissed, isDefaultLauncher,\nvisibleClockItemByFacet, entitlement isPro)\n→ HomeUiState"]
+    OUT{{"combine(7 flows) → HomeScreenState"}} --> HVM["HomeViewModel\ncombine(+ isDefaultLauncher,\nvisibleClockItemByFacet, entitlement isPro)\n→ HomeUiState"]
     HVM --> HS["HomeScreen"]
 ```
 
@@ -184,13 +183,16 @@ Notes:
   `dockAndFavoriteItems`, `appListItems`, `facets`, `eventsAndDisplay`, `badgeCountsAndAccessories`, `mediaPlayer`.
 - `activeFacet` is a cold `combine` with no `distinctUntilChanged()`, collected once per branch (six times),
   and `S` and `F` are themselves unshared. Any DataStore write therefore re-emits it and restarts every
-  `flatMapLatest` branch, re-running the usage-stats and calendar one-shots (findings F16 and F17 in `05`).
+  `flatMapLatest` branch, re-running the launch-history and calendar one-shots (findings F16 and F17 in `05`).
 - In `FAVORITES` mode `appListItems` and `favoriteItems` observe the same placement target, so that list is
   hydrated twice.
 - `refreshTrigger` exists because Recents/Most-used and calendar events are **one-shot** reads
-  (`flow { emit(...) }`), not live streams; `HomeViewModel` re-emits the trigger on resume. It also
+  (`flow { emit(...) }`), not live streams; `HomeViewModel` re-emits the trigger on resume. The trigger also
   re-evaluates the notification-access grant that gates `mediaPlayer`, re-subscribing to
   `MediaSessionRepository.observe()` once access has been granted in system Settings.
+- Launch history is in Room and could be observed, but a live list would reorder under the launch animation,
+  so Recents and Most used deliberately refresh on return to Home. An empty Recents or Most used list
+  shows `UsageListHint` (`HomeUiState.showUsageListHint`).
 - The facets in `F` already carry each facet's `clockStack` (hydrated in `FacetRepository` from `clock_stack_items`), so a
   stack change re-emits the facets and Home with it. `visibleClockItemByFacet` is in-memory only (the page last shown per facet, not
   saved across a restart) and `isPro` limits the shown pages (`ResolvedFacetStyle.limitedTo`). Whether a widget page is orphaned is not
@@ -246,6 +248,7 @@ sequenceDiagram
 | Media session | `MediaSessionRepository.observe()` — `callbackFlow` over `MediaSessionManager.OnActiveSessionsChangedListener` plus a `MediaController.Callback` per session (main-thread handler), gated on `NotificationBadgeRepository.mediaNotificationPackages` (a session only counts while its app has a media notification posted), cold: only subscribed while Home collects and the setting is on and access is granted | `ObserveHomeScreenStateUseCase` (`mediaPlayer`), transport calls via `HomeViewModel` |
 | Calendars | `CalendarRepository.observeCalendarChanges()` — `callbackFlow` over a `ContentObserver` on the calendar provider (and, best effort, the Work Profile's), started once from `FacetApplication`, and only while `READ_CALENDAR` is granted: on revoke (found at start or on an activity resume) the observer is unregistered and the stored calendar colours are cleared | `EnsureCalendarColorsUseCase.keepAssigned()`: a calendar added on the phone gets its colour at once |
 | Battery | `callbackFlow` over `ACTION_BATTERY_CHANGED` sticky broadcast | `ObserveClockAccessoriesUseCase` |
+| Search signals | `LaunchHistoryRepository.observeSearchSignals()` — Room flows over `search_picks` and `app_launch_days` (launch counts since 30 days ago, the window fixed at subscription), combined into `SearchSignals` | `DrawerViewModel.searchSignals` (`stateIn`, `WhileSubscribed`) → drawer app ranking ([12 §2](12-flow-drawer-search-and-app-actions.md)) |
 | Wallpaper colours | `WallpaperPaletteRepository.systemColorChanges` — `callbackFlow` over `WallpaperManager.OnColorsChangedListener` (Home wallpaper only) | `WallpaperBackdropViewModel.palette` |
 | Headphones | `HeadphonesRepository.observeHeadphonesPluggedIn()` — `callbackFlow` over `AudioDeviceCallback` | `DeviceStateRepository` |
 | Wi-Fi | `WifiRepository.observeWifiState(includeSsid)` — synchronous read of current networks, then `ConnectivityManager` network callbacks; the location-info flag is only set when `includeSsid` (a named-network rule) | `DeviceStateRepository` |

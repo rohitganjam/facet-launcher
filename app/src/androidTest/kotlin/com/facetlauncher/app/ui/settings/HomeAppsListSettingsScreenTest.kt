@@ -1,7 +1,6 @@
 package com.facetlauncher.app.ui.settings
 
 import android.app.WallpaperManager
-import android.app.usage.UsageStatsManager
 import android.content.pm.LauncherApps
 import android.os.UserManager
 import androidx.compose.runtime.remember

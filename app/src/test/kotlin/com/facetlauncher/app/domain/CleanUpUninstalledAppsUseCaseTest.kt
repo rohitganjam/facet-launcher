@@ -3,6 +3,7 @@ package com.facetlauncher.app.domain
 import android.os.UserHandle
 import com.facetlauncher.app.data.AppRepository
 import com.facetlauncher.app.data.FolderRepository
+import com.facetlauncher.app.data.LaunchHistoryRepository
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runTest
@@ -26,6 +27,7 @@ class CleanUpUninstalledAppsUseCaseTest {
         val profileRemovals = MutableSharedFlow<UserHandle>(replay = 1)
         val placementRepository: PlacementRepository = mock(PlacementRepository::class.java)
         val folderRepository: FolderRepository = mock(FolderRepository::class.java)
+        val launchHistoryRepository: LaunchHistoryRepository = mock(LaunchHistoryRepository::class.java)
 
         init {
             `when`(appRepository.observeUninstalledPackages()).thenReturn(uninstalls)
@@ -33,12 +35,12 @@ class CleanUpUninstalledAppsUseCaseTest {
         }
 
         fun useCase() = CleanUpUninstalledAppsUseCase(
-            appRepository, placementRepository, folderRepository,
+            appRepository, placementRepository, folderRepository, launchHistoryRepository,
         )
     }
 
     @Test
-    fun `deletes the uninstalled package's dock, favorite, and folder-membership rows outright, scoped to its real userId`() = runTest {
+    fun `deletes the uninstalled package's dock, favorite, folder-membership and launch-history rows outright, scoped to its real userId`() = runTest {
         // Given a live uninstall-event stream and mocked Dock/Favorite/Folder repositories
         val fixture = Fixture()
         val useCase = fixture.useCase()
@@ -55,6 +57,7 @@ class CleanUpUninstalledAppsUseCaseTest {
         // second profile sharing the same display category (e.g. a clone profile also OTHER).
         verify(fixture.placementRepository).removeByPackage("com.example.removed", 10)
         verify(fixture.folderRepository).removeByPackage("com.example.removed", 10)
+        verify(fixture.launchHistoryRepository).removeByPackage("com.example.removed", 10)
         job.cancel()
     }
 
@@ -73,6 +76,7 @@ class CleanUpUninstalledAppsUseCaseTest {
         // Then every repository bulk-drops rows for exactly that handle's userId directly
         verify(fixture.placementRepository).removeByUserId(removedHandle.hashCode())
         verify(fixture.folderRepository).removeByUserId(removedHandle.hashCode())
+        verify(fixture.launchHistoryRepository).removeByUserId(removedHandle.hashCode())
         job.cancel()
     }
 }

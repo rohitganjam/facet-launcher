@@ -61,7 +61,6 @@ import com.facetlauncher.app.ui.settings.UnitsAndLocationScreen
 import com.facetlauncher.app.ui.settings.WeatherLocationScreen
 import com.facetlauncher.app.ui.settings.PermissionsScreen
 import com.facetlauncher.app.ui.settings.SettingsScreen
-import com.facetlauncher.app.ui.settings.UsageAccessExplanationScreen
 import com.facetlauncher.app.ui.settings.WallpaperScreen
 import com.facetlauncher.app.ui.settings.WhatsNewScreen
 import com.facetlauncher.app.ui.settings.automation.FacetAutomationScreen
@@ -81,7 +80,6 @@ object FacetDestinations {
     const val FACET_PRO = "facetPro/{reason}"
     const val FACET_SETTINGS = "facetSettings/{facetId}"
     const val FAVORITES_PICKER = "favoritesPicker?facetId={facetId}"
-    const val USAGE_ACCESS_EXPLANATION = "usageAccessExplanation"
     const val PERMISSIONS = "permissions"
     const val GESTURES = "gestures"
     const val ACCESSIBILITY_ACCESS_EXPLANATION = "accessibilityAccessExplanation"
@@ -215,9 +213,6 @@ fun FacetNavHost(
                     onNavigateToFacetSettings = { facetId -> navController.navigate(FacetDestinations.facetSettings(facetId)) },
                     onNavigateToManageFacets = { navController.navigate(FacetDestinations.FACET_MANAGE) },
                     onNavigateToFacetPro = { reason -> navController.navigate(FacetDestinations.facetPro(reason)) },
-                    onNavigateToUsageAccessExplanation = {
-                        navController.navigate(FacetDestinations.USAGE_ACCESS_EXPLANATION)
-                    },
                     onNavigateToNotificationAccessExplanation = {
                         navController.navigate(FacetDestinations.NOTIFICATION_ACCESS_EXPLANATION)
                     },
@@ -229,9 +224,6 @@ fun FacetNavHost(
                     onNavigateToClockStack = { navController.navigate(FacetDestinations.clockStack()) },
                     launcherViewModel = launcherViewModel,
                 )
-            }
-            settingsComposable(FacetDestinations.USAGE_ACCESS_EXPLANATION) {
-                UsageAccessExplanationScreen(onBack = { navController.popBackStackSafely() })
             }
             settingsComposable(FacetDestinations.SETTINGS) {
                 SettingsScreen(
@@ -371,7 +363,6 @@ fun FacetNavHost(
             settingsComposable(FacetDestinations.PERMISSIONS) {
                 PermissionsScreen(
                     onBack = { navController.popBackStackSafely() },
-                    onNavigateToUsageAccessExplanation = { navController.navigate(FacetDestinations.USAGE_ACCESS_EXPLANATION) },
                     onNavigateToNotificationAccessExplanation = {
                         navController.navigate(FacetDestinations.NOTIFICATION_ACCESS_EXPLANATION)
                     },
@@ -424,7 +415,6 @@ fun FacetNavHost(
             ) {
                 FolderAppPickerScreen(
                     onDone = { navController.popBackStackSafely() },
-                    onNavigateToUsageAccessExplanation = { navController.navigate(FacetDestinations.USAGE_ACCESS_EXPLANATION) },
                 )
             }
             settingsComposable(
@@ -433,7 +423,6 @@ fun FacetNavHost(
             ) {
                 DockAppPickerScreen(
                     onDone = { navController.popBackStackSafely() },
-                    onNavigateToUsageAccessExplanation = { navController.navigate(FacetDestinations.USAGE_ACCESS_EXPLANATION) },
                 )
             }
             settingsComposable(FacetDestinations.FACET_AUTOMATION) {
@@ -492,7 +481,6 @@ fun FacetNavHost(
             ) {
                 FavoritesPickerScreen(
                     onDone = { navController.popBackStackSafely() },
-                    onNavigateToUsageAccessExplanation = { navController.navigate(FacetDestinations.USAGE_ACCESS_EXPLANATION) },
                 )
             }
         }
