@@ -171,6 +171,34 @@ class ThemesAndColorsScreenTest {
     }
 
     @Test
+    fun facetsOwnWallpaperPaletteDrivesTheAccentAndThePickerOnAnyAndroidVersion() {
+        // Given Facet's own palette for its wallpaper copy, Wallpaper colors with the tertiary role, light theme
+        val palette = com.facetlauncher.app.data.model.WallpaperPalette(
+            light = com.facetlauncher.app.data.model.WallpaperPalette.Roles(primary = 0xFF1E50D2.toInt(), secondary = 0xFF55606E.toInt(), tertiary = 0xFF8E3D7A.toInt()),
+            dark = com.facetlauncher.app.data.model.WallpaperPalette.Roles(primary = 0xFFB3C5FF.toInt(), secondary = 0xFFBDC7DC.toInt(), tertiary = 0xFFFFADE6.toInt()),
+        )
+        var accent = androidx.compose.ui.graphics.Color.Unspecified
+        composeRule.setContent {
+            FacetLauncherTheme(themeMode = com.facetlauncher.app.data.model.ThemeMode.LIGHT, wallpaperAccentRole = WallpaperAccentRole.TERTIARY, wallpaperPalette = palette) {
+                accent = com.facetlauncher.app.ui.theme.Accent
+                AccentColorSection(
+                    accentFromSystem = true,
+                    customAccentSwatch = null,
+                    wallpaperAccentRole = WallpaperAccentRole.TERTIARY,
+                    onAccentFromSystemChange = {},
+                    onCustomAccentSwatchChange = {},
+                    onWallpaperAccentRoleChange = {},
+                )
+            }
+        }
+
+        // Then the accent is the palette's light tertiary, and the picker offers the wallpaper's colours (no API gate)
+        assertEquals(androidx.compose.ui.graphics.Color(0xFF8E3D7A.toInt()), accent)
+        composeRule.onNodeWithTag("accent_source_wallpaper").assertIsDisplayed()
+        composeRule.onNodeWithTag("wallpaper_accent_role_grid").assertIsDisplayed()
+    }
+
+    @Test
     fun withSourceTabsBothTabsShow() {
         // Given the accent section as Android 12+ shows it
         composeRule.setContent {

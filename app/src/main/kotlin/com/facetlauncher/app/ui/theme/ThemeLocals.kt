@@ -6,6 +6,7 @@ import com.facetlauncher.app.data.icon.StyledIconCache
 import com.facetlauncher.app.data.model.IconRenderMode
 import com.facetlauncher.app.data.model.IconShape
 import com.facetlauncher.app.data.model.WallpaperAccentRole
+import com.facetlauncher.app.data.model.WallpaperPalette
 
 /**
  * Whether the app is currently rendering dark — resolved once by [FacetLauncherTheme] from
@@ -37,6 +38,9 @@ val LocalWallpaperAccentRole = staticCompositionLocalOf { WallpaperAccentRole.PR
  * chat history).
  */
 val LocalDynamicColorRefreshSignal = staticCompositionLocalOf { 0 }
+
+/** Facet's own Material You palette for the wallpaper (see `WallpaperPaletteRepository`); `null` falls back to the system's. */
+val LocalWallpaperPalette = staticCompositionLocalOf<WallpaperPalette?> { null }
 
 /**
  * F11's global icon-rendering mode, provided once at the root by [FacetLauncherTheme] so

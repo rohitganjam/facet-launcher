@@ -25,8 +25,8 @@ android {
         applicationId = "com.facetlauncher.app"
         minSdk = 30
         targetSdk = 36
-        versionCode = 46
-        versionName = "0.2.0"
+        versionCode = 47
+        versionName = "0.2.1"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -189,6 +189,9 @@ dependencies {
 
     // Google Play Billing for the one-time Facet Pro purchase (docs/architecture/16-flow-billing.md)
     implementation("com.android.billingclient:billing-ktx:9.1.0")
+
+    // Material You colours from Facet's own wallpaper copy, on every API level (MaterialKolor's build of Google's material-color-utilities)
+    implementation("com.materialkolor:material-color-utilities:6.0.0")
 
     debugImplementation("androidx.compose.ui:ui-tooling")
 

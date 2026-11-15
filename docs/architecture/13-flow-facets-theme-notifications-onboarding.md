@@ -225,23 +225,30 @@ facet's three switches.
 flowchart LR
     DS["DataStore: theme_mode, accent_from_system,\ncustom_accent_swatch, wallpaper_accent_role,\nicon_render_mode, icon_pack_package, icon_shape, icon_scale_percent,\nlauncher_font_option, home_apps_font_weight, font_scale_option"] --> LVM["LauncherViewModel → LauncherUiState\n(iconRenderMode = effectiveIconRenderMode)"]
     LVM --> ACT["LauncherActivity.setContent"]
-    ACT --> T["FacetLauncherTheme(themeMode, accentFromSystem, customAccentSwatch,\nwallpaperAccentRole, iconRenderMode, iconShape, forceIconShape, iconScale, launcherFontOption,\nhomeAppsFontWeight, fontScaleOption)"]
+    WBV["WallpaperBackdropViewModel.palette\n(WallpaperPaletteRepository: copy, colour changes)"] --> ACT
+    ACT --> T["FacetLauncherTheme(themeMode, accentFromSystem, customAccentSwatch,\nwallpaperAccentRole, wallpaperPalette, iconRenderMode, iconShape, forceIconShape, iconScale, launcherFontOption,\nhomeAppsFontWeight, fontScaleOption)"]
     T --> DARK{"themeMode"}
     DARK -- LIGHT --> L[light]
     DARK -- DARK --> D[dark]
     DARK -- SYSTEM --> SYS["isSystemInDarkTheme()"]
     T --> ACC{"accentFromSystem?"}
-    ACC -- "true (Android 12+ only)" --> DYN["dynamicLightColorScheme / dynamicDarkColorScheme(context)\nrole picked by wallpaperAccentRole\n(PRIMARY / SECONDARY / TERTIARY)"]
-    ACC -- "false, or Android 11" --> SW["AccentSwatch.valueOf(customAccentSwatch)\nfixed palette"]
+    ACC -- "true" --> DYN["wallpaperRoleTones(): Facet's wallpaperPalette (any API),\nelse dynamicLight/DarkColorScheme (Android 12+)\nrole picked by wallpaperAccentRole\n(PRIMARY / SECONDARY / TERTIARY)"]
+    ACC -- "false, or no wallpaper colours" --> SW["AccentSwatch.valueOf(customAccentSwatch)\nfixed palette"]
     DYN --> CS["facetColorScheme(isDark)\nlightColorScheme / darkColorScheme with primary = Accent"]
     SW --> CS
     T --> TYPO["facetTypography(launcherFontOption.fontFamily,\nhomeAppsFontWeight.resolve(), fontScaleOption.scale)"]
     CS --> MT["MaterialTheme(colorScheme, typography, shapes = M3 defaults)"]
-    T --> LOCALS["CompositionLocals: LocalAccentFromSystem, LocalCustomAccentSwatch,\nLocalWallpaperAccentRole, LocalDynamicColorRefreshSignal, LocalIconRenderMode, LocalIconShape,\nLocalIconScale (LocalStyledIconCache is provided by LauncherActivity)"]
+    T --> LOCALS["CompositionLocals: LocalAccentFromSystem, LocalCustomAccentSwatch,\nLocalWallpaperAccentRole, LocalWallpaperPalette, LocalDynamicColorRefreshSignal, LocalIconRenderMode, LocalIconShape,\nLocalIconScale (LocalStyledIconCache is provided by LauncherActivity)"]
     MT --> APP[every screen]
     LOCALS --> APP
 ```
 
+- **Wallpaper colours come from Facet first.** `WallpaperPaletteRepository` runs Google's Material You engine
+  (MaterialKolor's `material-color-utilities`) on Facet's wallpaper copy: it samples the copy at 128px, quantizes and scores
+  it for a seed, and builds the Tonal Spot scheme's primary, secondary and tertiary for light and dark. With no copy it returns
+  `null` on Android 12+, so the system's Material You (and a style picked in Wallpaper & style) still applies, and on Android 11
+  it seeds from `WallpaperManager.getWallpaperColors`. `WallpaperBackdropViewModel.palette` recomputes it when the valid copy
+  changes or Android reports new wallpaper colours; the "Wallpaper colors" source tabs show whenever `wallpaperColorsAvailable()`.
 - The Activity renders an empty `Box` until `LauncherUiState.isLoading` clears, precisely so the
   first frame is never painted with default theme values that then flip.
 - **Icon packs replace the icon style.** While `icon_pack_package` is set, `LauncherSettings.effectiveIconRenderMode`

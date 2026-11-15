@@ -23,6 +23,7 @@ import com.facetlauncher.app.data.model.IconShape
 import com.facetlauncher.app.data.model.LauncherFontOption
 import com.facetlauncher.app.data.model.ThemeMode
 import com.facetlauncher.app.data.model.WallpaperAccentRole
+import com.facetlauncher.app.data.model.WallpaperPalette
 
 /**
  * App-wide ripple, stronger than Material3's own faint default (see chat history — the default
@@ -74,6 +75,7 @@ private fun facetColorScheme(isDark: Boolean) = if (isDark) {
  * (default), [customAccentSwatch]'s fixed pick when `false`.
  * @param wallpaperAccentRole Only meaningful when [accentFromSystem] is `true` — which of the
  * wallpaper's three Material You tonal roles backs the accent color.
+ * @param wallpaperPalette Facet's own Material You palette for its wallpaper copy; `null` uses the system's.
  * @param launcherFontOption Settings → Appearance → "Font" — the base font for every text role
  * app-wide (via [facetTypography]) except the clock/calendar, which resolve their own font
  * independently (see `ClockFontOption.resolveFontFamily`).
@@ -87,6 +89,7 @@ fun FacetLauncherTheme(
     accentFromSystem: Boolean = true,
     customAccentSwatch: AccentSwatch? = null,
     wallpaperAccentRole: WallpaperAccentRole = WallpaperAccentRole.PRIMARY,
+    wallpaperPalette: WallpaperPalette? = null,
     iconRenderMode: IconRenderMode = IconRenderMode.SYSTEM_DEFAULT,
     iconShape: IconShape = IconShape.SQUIRCLE,
     forceIconShape: Boolean = false,
@@ -120,6 +123,7 @@ fun FacetLauncherTheme(
         LocalAccentFromSystem provides accentFromSystem,
         LocalCustomAccentSwatch provides customAccentSwatch,
         LocalWallpaperAccentRole provides wallpaperAccentRole,
+        LocalWallpaperPalette provides wallpaperPalette,
         LocalDynamicColorRefreshSignal provides dynamicColorRefreshSignal,
         LocalIconRenderMode provides iconRenderMode,
         LocalIconShape provides remember(iconShape, forceIconShape) { IconOutline(iconShape, forceIconShape) },

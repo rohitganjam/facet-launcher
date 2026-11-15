@@ -96,6 +96,7 @@ class LauncherActivity : ComponentActivity() {
                     accentFromSystem = uiState.accentFromSystem,
                     customAccentSwatch = uiState.customAccentSwatch?.let { runCatching { AccentSwatch.valueOf(it) }.getOrNull() },
                     wallpaperAccentRole = uiState.wallpaperAccentRole,
+                    wallpaperPalette = wallpaperBackdropViewModel.palette.collectAsStateWithLifecycle().value,
                     iconRenderMode = uiState.iconRenderMode,
                     iconShape = uiState.iconShape,
                     forceIconShape = uiState.forceIconShape,

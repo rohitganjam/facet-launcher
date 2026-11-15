@@ -1,6 +1,5 @@
 package com.facetlauncher.app.ui.settings
 
-import android.annotation.SuppressLint
 import android.content.res.Configuration
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -27,16 +26,12 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.dynamicDarkColorScheme
-import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -57,12 +52,11 @@ import com.facetlauncher.app.ui.components.StickyHeaderLayout
 import com.facetlauncher.app.ui.theme.Accent
 import com.facetlauncher.app.ui.theme.AccentSwatch
 import com.facetlauncher.app.ui.theme.Ink
-import com.facetlauncher.app.ui.theme.LocalDynamicColorRefreshSignal
+import com.facetlauncher.app.ui.theme.wallpaperColorsAvailable
+import com.facetlauncher.app.ui.theme.wallpaperRoleTones
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import com.facetlauncher.app.ui.theme.Surface
 import com.facetlauncher.app.ui.theme.SurfaceContainer
-import com.facetlauncher.app.ui.theme.dynamicColorSupported
-import com.facetlauncher.app.ui.theme.toneOf
 
 /**
  * Settings → Appearance → Look & Feel → General settings — theme, status bar icons and accent color. Global only: a facet has no override
@@ -230,12 +224,12 @@ internal fun AccentColorSection(
     onCustomAccentSwatchChange: (AccentSwatch) -> Unit,
     onWallpaperAccentRoleChange: (WallpaperAccentRole) -> Unit,
     modifier: Modifier = Modifier,
-    showSourceTabs: Boolean = dynamicColorSupported,
+    showSourceTabs: Boolean = wallpaperColorsAvailable(),
 ) {
     Column(modifier = modifier.padding(vertical = 8.dp)) {
         Text(text = stringResource(R.string.appearance_accent_color), style = MaterialTheme.typography.bodyLarge, color = Ink, modifier = Modifier.padding(bottom = 10.dp))
         if (!showSourceTabs) {
-            // Pre-Android 12 has no wallpaper colours: presets only, with blue as the implicit default.
+            // No wallpaper colours to offer (Android 11 with none reported): presets only, blue by default.
             AccentSwatchGrid(selected = customAccentSwatch, onSelect = onCustomAccentSwatchChange)
             return@Column
         }
@@ -361,27 +355,13 @@ private fun SplitColorCircle(
 }
 
 /**
- * The wallpaper-derived counterpart to [AccentSwatchGrid] — instead of a fixed preset palette,
- * shows the wallpaper's own three Material You tonal roles ([WallpaperAccentRole.entries]) as
- * tappable swatches, each with a real light/dark pair read live off the OS's dynamic color scheme
- * (same [dynamicLightColorScheme]/[dynamicDarkColorScheme] + resume-signal-keyed `remember` +
- * defensive fallback pattern as `ui/theme/Color.kt`'s own `accentTonalExtremes()` — see that
- * function's doc for why the resume signal matters for a launcher specifically). No text labels,
- * unlike the named Basic-colors presets — these are algorithmically derived, unnamed hues; the
- * swatch itself is the only identifier a user needs to tell them apart.
+ * The wallpaper-derived counterpart to [AccentSwatchGrid]: the wallpaper's three Material You roles ([wallpaperRoleTones]) as
+ * tappable light/dark swatches. No labels; the swatch itself tells them apart.
  */
-// Only shown when dynamicColorSupported (Android 12+), and each call is wrapped in runCatching anyway.
-@SuppressLint("NewApi")
 @Composable
 private fun WallpaperAccentRoleGrid(selected: WallpaperAccentRole, onSelect: (WallpaperAccentRole) -> Unit, modifier: Modifier = Modifier) {
-    val context = LocalContext.current
-    val refreshSignal = LocalDynamicColorRefreshSignal.current
-    val tones = remember(context, refreshSignal) {
-        WallpaperAccentRole.entries.associateWith { role ->
-            runCatching { role.toneOf(dynamicLightColorScheme(context)) }.getOrDefault(AccentSwatch.BLUE.light) to
-                runCatching { role.toneOf(dynamicDarkColorScheme(context)) }.getOrDefault(AccentSwatch.BLUE.dark)
-        }
-    }
+    val fallback = AccentSwatch.BLUE.light to AccentSwatch.BLUE.dark
+    val tones = wallpaperRoleTones() ?: WallpaperAccentRole.entries.associateWith { fallback }
     Row(modifier = modifier.testTag("wallpaper_accent_role_grid"), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
         WallpaperAccentRole.entries.forEach { role ->
             val (light, dark) = tones.getValue(role)

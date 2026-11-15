@@ -41,6 +41,7 @@ checked against source, not against planning docs; where the code diverges from
 | Collections in UI state | `kotlinx-collections-immutable` `0.5.2`: composable parameters and UI state carry `ImmutableList`/`ImmutableMap`/`ImmutableSet`, so Compose can skip on them (detekt's `UnstableCollections`) |
 | Async | Coroutines + `Flow`/`StateFlow` only; `collectAsStateWithLifecycle()` in Compose; no `LiveData` |
 | Serialization | `kotlinx-serialization-json` (backup bundle only) |
+| Wallpaper colours | MaterialKolor's `material-color-utilities 6.0.0` (Google's Material You engine): quantizes Facet's wallpaper copy and builds the accent palette on every API level (`WallpaperPaletteRepository`, [13](13-flow-facets-theme-notifications-onboarding.md)) |
 | Billing | Google Play Billing `billing-ktx 9.1.0` for the one-time `facet_pro` purchase ([16](16-flow-billing.md)); the library also merges in `INTERNET`, which the manifest now declares for weather ([18](18-flow-weather.md)) |
 | Networking | Weather only — one `HttpURLConnection` request to MET Norway ([18](18-flow-weather.md)); no Retrofit/OkHttp dependency, and nothing is sent while weather is off |
 | Tests | JUnit4 + Robolectric `4.17` + `kotlinx-coroutines-test` (JVM); Compose UI tests + `room-testing` + Orchestrator (instrumented) |
