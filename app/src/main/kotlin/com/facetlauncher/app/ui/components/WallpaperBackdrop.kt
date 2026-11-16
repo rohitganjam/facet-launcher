@@ -42,7 +42,7 @@ private const val MIN_BACKDROP_SDK = Build.VERSION_CODES.S
 
 /**
  * Records the wallpaper [copy] as the backdrop glass panels in [content] sample, without drawing it: the system wallpaper stays what
- * shows, so a copy from a screenshot never stands in for it. Only in portrait on API 31 and up: the copy is the size of a portrait
+ * shows, so a copy from a screenshot never stands in for it. Only in portrait on API 31 and up: the copy is usually a portrait
  * screen, and below 31 the blur does not exist. Without a backdrop it is just a [Box].
  */
 @Composable

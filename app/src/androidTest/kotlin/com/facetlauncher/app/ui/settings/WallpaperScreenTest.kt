@@ -15,6 +15,8 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToNode
+import androidx.compose.ui.platform.LocalWindowInfo
+import androidx.compose.ui.unit.IntSize
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -46,8 +48,9 @@ class WallpaperScreenTest {
 
     private fun bitmap(width: Int, height: Int) = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
 
-    private fun setContent(state: WallpaperUiState, calls: Calls) {
+    private fun setContent(state: WallpaperUiState, calls: Calls, onWindow: (IntSize) -> Unit = {}) {
         composeRule.setContent {
+            onWindow(LocalWindowInfo.current.containerSize)
             FacetLauncherTheme {
                 WallpaperContent(
                     uiState = state,
@@ -85,6 +88,19 @@ class WallpaperScreenTest {
         // Then each reports once
         assertEquals(1, calls.chose)
         assertEquals(1, calls.setSystem)
+    }
+
+    @Test
+    fun `the preview takes the shape of the screen`() {
+        // Given the screen, with the window's size noted
+        var window = IntSize.Zero
+        setContent(WallpaperUiState(), Calls()) { window = it }
+
+        // When the preview is laid out
+        val preview = composeRule.onNodeWithTag("wallpaper_preview").fetchSemanticsNode().size
+
+        // Then it has the window's shape, not a fixed phone shape
+        assertEquals(window.width.toFloat() / window.height, preview.width.toFloat() / preview.height, 0.003f)
     }
 
     @Test
