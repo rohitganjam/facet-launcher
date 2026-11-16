@@ -1268,7 +1268,7 @@
     <string name="vault_intro_hide">Oculte apps da gaveta, da tela inicial, do dock, das pastas e da pesquisa, em todos os facets.</string>
     <string name="vault_intro_hide_sub">Abra-os aqui com um PIN de 4 dígitos.</string>
     <string name="vault_intro_limits">Os apps ocultos continuam aparecendo nas configurações do sistema, na Play Store e em suas notificações.</string>
-    <string name="vault_intro_private_space">Para também ocultar e pausar apps e as notificações deles, use o Espaço privado ou a Pasta segura, se o seu celular tiver uma.</string>
+    <string name="vault_intro_private_space">Para ocultar e pausar apps e notificações, use o Espaço privado ou a Pasta segura, se o seu celular tiver uma.</string>
     <string name="vault_intro_no_screen_lock">Este celular não tem bloqueio de tela, então um PIN esquecido só pode ser resolvido desativando o cofre.</string>
     <string name="vault_set_pin">Definir PIN</string>
     <string name="vault_create_pin_title">Crie um PIN</string>
