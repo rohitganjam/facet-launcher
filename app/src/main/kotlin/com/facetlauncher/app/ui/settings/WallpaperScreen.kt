@@ -218,7 +218,10 @@ internal fun WallpaperContent(
 private fun WallpaperPreview(uiState: WallpaperUiState, modifier: Modifier = Modifier) {
     Box(modifier = modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
         val shape = MaterialTheme.shapes.large
-        val previewModifier = Modifier.fillMaxWidth(PREVIEW_WIDTH_FRACTION).aspectRatio(PREVIEW_ASPECT).clip(shape).testTag("wallpaper_preview")
+        // The screen's own shape, so an unfolded or rotated screen gets a matching preview.
+        val window = LocalWindowInfo.current.containerSize
+        val aspect = if (window.width > 0 && window.height > 0) window.width.toFloat() / window.height else PREVIEW_ASPECT
+        val previewModifier = Modifier.fillMaxWidth(PREVIEW_WIDTH_FRACTION).aspectRatio(aspect).clip(shape).testTag("wallpaper_preview")
         val copy = uiState.copy
         if (copy != null) {
             Image(
@@ -494,6 +497,7 @@ private fun HomeLayoutHint(modifier: Modifier = Modifier) {
 }
 
 private const val PREVIEW_WIDTH_FRACTION = 0.5f
+/** Until the window has been measured. */
 private const val PREVIEW_ASPECT = 9f / 19.5f
 private const val HINT_ALPHA = 0.28f
 private const val CREDIT_SCRIM_ALPHA = 0.45f

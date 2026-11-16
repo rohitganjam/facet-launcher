@@ -64,6 +64,19 @@ class UseScreenshotAsWallpaperCopyUseCaseTest {
     }
 
     @Test
+    fun `a screenshot framed on a wide screen is stored wide and not stretched`() = runTest {
+        // Given a portrait screen of 50 x 100 that is now unfolded or turned
+        val copies = FakeCopies()
+
+        // When a wide part of the screenshot is framed
+        UseScreenshotAsWallpaperCopyUseCase(copies, settings(), UnconfinedTestDispatcher())(screenshot(), RectF(0f, 0f, 200f, 100f))
+
+        // Then the copy is the screen turned on its side
+        assertEquals(100, copies.saved?.width)
+        assertEquals(50, copies.saved?.height)
+    }
+
+    @Test
     fun `when the copy cannot be stored nothing is recorded`() = runTest {
         // Given storing fails
         val copies = FakeCopies(saves = false)

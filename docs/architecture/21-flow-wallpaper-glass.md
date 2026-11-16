@@ -9,8 +9,8 @@ lens (API 33+).
 
 | Piece | Where | Role |
 |---|---|---|
-| `WallpaperCopyRepository` | `data/` | Owns `wallpaper_copy.png` (screen size, `filesDir`, not in backups). Reads it once, saves through a temp file, removes it. Decodes a picked photo with `ImageDecoder`, sets the system wallpaper with `WallpaperManager.setBitmap`, and reports the screen size (portrait) and the system wallpaper id. |
-| `SetWallpaperFromPhotoUseCase` | `domain/` | Crops the framed part to the screen size, sets it as the system wallpaper (Home, or Home and lock), stores it as the copy, records the id. Stores nothing unless the system accepted the wallpaper. |
+| `WallpaperCopyRepository` | `data/` | Owns `wallpaper_copy.png` (screen size, `filesDir`, not in backups). Reads it once, saves through a temp file, removes it. Decodes a picked photo with `ImageDecoder`, sets the system wallpaper with `WallpaperManager.setBitmap`, and reports the screen size (as a portrait pair) and the system wallpaper id. |
+| `SetWallpaperFromPhotoUseCase` | `domain/` | Crops the framed part to the screen size (turned wide when the frame is wide, `orientedLike`, so it is never stretched), sets it as the system wallpaper (Home, or Home and lock), stores it as the copy, records the id. Stores nothing unless the system accepted the wallpaper. |
 | `RemoveWallpaperCopyUseCase` | `domain/` | Deletes the copy and the recorded id. The system wallpaper stays. |
 | `WallpaperBackdropViewModel` | `ui/launcher/` | The stored copy as a `StateFlow<Bitmap?>`, loaded as the app starts. |
 | `WallpaperBackdropHost` + `LocalWallpaperBackdrop` | `ui/components/WallpaperBackdrop.kt` | Around `FacetNavHost` in `LauncherActivity`. Records the copy into the Backdrop library's layer (through `rememberLayerBackdrop`'s `onDraw`, on an empty box) without drawing it, so the system wallpaper is always what shows, and provides it to the panels. A screenshot copy never stands in for the wallpaper. |
@@ -21,7 +21,7 @@ lens (API 33+).
 
 ## The screen
 
-*Change wallpaper* opens `WallpaperScreen`, which shows the copy (or a stand-in for the system wallpaper) and a status line, then two equal choices:
+*Change wallpaper* opens `WallpaperScreen`, which shows the copy (or a stand-in for the system wallpaper) in the window's shape, so an unfolded or turned screen gets a wide preview, and a status line, then two equal choices:
 
 1. **Choose an image for Facet.** The gallery app, through `GetContent("image/*")` (no permission; a chooser when several apps answer) → the **fit step**: the photo in a screen-shaped window, drag to move, pinch to zoom
    (1× to 5× of the zoom that just covers the screen), double-tap to reset, a faint outline of the clock and dock, and a choice of *Home screen* or *Home and lock
@@ -34,7 +34,7 @@ With a copy, the screen also offers *Remove the copy*. When the screen resumes i
 ## What decides whether glass is real
 
 `WallpaperBackdropHost` provides a backdrop only when all of these hold: a copy exists, the device is on API 31 or later (below that `RenderEffect` blur does not
-exist and the unblurred copy would show inside the panel), and the window is portrait (the copy is a portrait screen). Otherwise panels draw their tint and the
+exist and the unblurred copy would show inside the panel), and the window is portrait (the copy is usually a portrait screen; one framed on a wide screen is wide, and is centre-cropped to cover). Otherwise panels draw their tint and the
 system wallpaper shows through as before.
 
 | API | Behaviour |

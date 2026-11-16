@@ -83,6 +83,19 @@ class SetWallpaperFromPhotoUseCaseTest {
     }
 
     @Test
+    fun `a photo framed on a wide screen is set wide and not stretched`() = runTest {
+        // Given a portrait screen of 50 x 100 that is now unfolded or turned
+        val copies = FakeCopies()
+
+        // When a wide part of the photo is framed
+        useCase(copies, settingsRepository())(photo(), RectF(0f, 0f, 200f, 100f), includeLock = false)
+
+        // Then the wallpaper is the screen turned on its side
+        assertEquals(100, copies.setBitmap!!.width)
+        assertEquals(50, copies.setBitmap!!.height)
+    }
+
+    @Test
     fun `the lock screen is set too when asked`() = runTest {
         // Given a photo
         val copies = FakeCopies()

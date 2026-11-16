@@ -19,6 +19,9 @@ internal fun Bitmap.croppedTo(visible: RectF, width: Int, height: Int): Bitmap {
     return if (cropWidth == width && cropHeight == height) cropped else Bitmap.createScaledBitmap(cropped, width, height, true)
 }
 
+/** This portrait (width, height) turned to match [visible]: wide when the user framed it on a wide screen, so the crop is never stretched. */
+internal fun Pair<Int, Int>.orientedLike(visible: RectF): Pair<Int, Int> = if (visible.width() > visible.height()) second to first else this
+
 /**
  * Turns the part of a picked photo the user framed into the wallpaper: crops it to the screen's size, sets it as the system wallpaper
  * (the lock screen too when asked), stores it as the copy glass panels sample, and records the system wallpaper's id so a later change
@@ -31,7 +34,7 @@ class SetWallpaperFromPhotoUseCase @Inject constructor(
 ) {
     /** `true` when the wallpaper was set and the copy stored. */
     suspend operator fun invoke(photo: Bitmap, visible: RectF, includeLock: Boolean): Boolean {
-        val (width, height) = wallpaperCopyRepository.portraitScreenSize()
+        val (width, height) = wallpaperCopyRepository.portraitScreenSize().orientedLike(visible)
         val cropped = withContext(defaultDispatcher) { photo.croppedTo(visible, width, height) }
         val systemId = wallpaperCopyRepository.setSystemWallpaper(cropped, includeLock)
         val stored = systemId != WallpaperCopyRepository.NO_WALLPAPER_ID && wallpaperCopyRepository.save(cropped)
