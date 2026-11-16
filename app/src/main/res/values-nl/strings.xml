@@ -1192,7 +1192,7 @@
     <string name="vault_intro_hide">Verberg apps uit je appoverzicht, startscherm, dock, mappen en zoekopdrachten, in elke facet.</string>
     <string name="vault_intro_hide_sub">Open ze hier met een pincode van 4 cijfers.</string>
     <string name="vault_intro_limits">Verborgen apps zijn nog te zien in de systeeminstellingen, de Play Store en hun meldingen.</string>
-    <string name="vault_intro_private_space">Om apps en hun meldingen ook te verbergen en te pauzeren, gebruik je Privéruimte of Beveiligde map als je telefoon die heeft.</string>
+    <string name="vault_intro_private_space">Om apps en meldingen te verbergen en te pauzeren, gebruik je Privéruimte of Beveiligde map als je telefoon die heeft.</string>
     <string name="vault_intro_no_screen_lock">Deze telefoon heeft geen schermvergrendeling, dus een vergeten pincode los je alleen op door de kluis uit te zetten.</string>
     <string name="vault_set_pin">Pincode instellen</string>
     <string name="vault_create_pin_title">Maak een pincode</string>

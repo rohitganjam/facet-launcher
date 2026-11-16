@@ -1268,7 +1268,7 @@
     <string name="vault_intro_hide">Masquez des applis du tiroir, de l\'accueil, du dock, des dossiers et de la recherche, dans tous les facets.</string>
     <string name="vault_intro_hide_sub">Ouvrez-les ici avec un code PIN à 4 chiffres.</string>
     <string name="vault_intro_limits">Les applis masquées restent visibles dans les paramètres système, le Play Store et leurs notifications.</string>
-    <string name="vault_intro_private_space">Pour aussi masquer et suspendre des applis et leurs notifications, utilisez l\'Espace privé ou le Dossier sécurisé si votre téléphone en a un.</string>
+    <string name="vault_intro_private_space">Pour masquer et suspendre des applis et des notifications, utilisez l\'Espace privé ou le Dossier sécurisé si votre téléphone en a un.</string>
     <string name="vault_intro_no_screen_lock">Ce téléphone n\'a pas de verrouillage d\'écran : un PIN oublié ne peut être résolu qu\'en désactivant le coffre.</string>
     <string name="vault_set_pin">Définir le PIN</string>
     <string name="vault_create_pin_title">Créez un PIN</string>
