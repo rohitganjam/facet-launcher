@@ -191,7 +191,7 @@ private fun VaultIntroPage(screenLockAvailable: Boolean, callbacks: AppVaultCall
 private fun IntroPoint(text: String, subtext: String?, tag: String = "") {
     Column(modifier = Modifier.fillMaxWidth().padding(top = 18.dp).then(if (tag.isEmpty()) Modifier else Modifier.testTag(tag))) {
         Text(text = text, style = MaterialTheme.typography.bodyMedium, color = Ink)
-        if (subtext != null) Text(text = subtext, style = MaterialTheme.typography.bodySmall, color = Muted, modifier = Modifier.padding(top = 2.dp))
+        if (subtext != null) Text(text = subtext, style = MaterialTheme.typography.bodyMedium, color = Ink)
     }
 }
 
