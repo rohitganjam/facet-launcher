@@ -1268,7 +1268,7 @@
     <string name="vault_intro_hide">Oculta apps del cajón, el inicio, el dock, las carpetas y la búsqueda, en todos los facets.</string>
     <string name="vault_intro_hide_sub">Ábrelas aquí con un PIN de 4 dígitos.</string>
     <string name="vault_intro_limits">Las apps ocultas siguen apareciendo en los ajustes del sistema, en Play Store y en sus notificaciones.</string>
-    <string name="vault_intro_private_space">Para bloquear y pausar también las apps, usa el Espacio privado o la Carpeta segura si tu teléfono la tiene.</string>
+    <string name="vault_intro_private_space">Para ocultar y pausar además las apps y sus notificaciones, usa el Espacio privado o la Carpeta segura si tu teléfono la tiene.</string>
     <string name="vault_intro_no_screen_lock">Este teléfono no tiene bloqueo de pantalla, así que un PIN olvidado solo se puede resolver desactivando la bóveda.</string>
     <string name="vault_set_pin">Crear PIN</string>
     <string name="vault_create_pin_title">Crea un PIN</string>

@@ -1248,7 +1248,7 @@
     <string name="vault_intro_hide">Blende Apps in App-Übersicht, Startbildschirm, Dock, Ordnern und Suche aus, in jedem Facet.</string>
     <string name="vault_intro_hide_sub">Öffne sie hier mit einer 4-stelligen PIN.</string>
     <string name="vault_intro_limits">Versteckte Apps erscheinen weiterhin in den Systemeinstellungen, im Play Store und mit ihren Benachrichtigungen.</string>
-    <string name="vault_intro_private_space">Um Apps zusätzlich zu sperren und zu pausieren, nutze den Privaten Bereich oder den Sicheren Ordner, falls dein Telefon einen hat.</string>
+    <string name="vault_intro_private_space">Um Apps und ihre Benachrichtigungen zusätzlich zu verbergen und zu pausieren, nutze den Privaten Bereich oder den Sicheren Ordner, falls dein Telefon einen hat.</string>
     <string name="vault_intro_no_screen_lock">Dieses Telefon hat keine Displaysperre, deshalb lässt sich eine vergessene PIN nur beheben, indem du den Tresor ausschaltest.</string>
     <string name="vault_set_pin">PIN festlegen</string>
     <string name="vault_create_pin_title">PIN erstellen</string>
