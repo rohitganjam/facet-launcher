@@ -13,6 +13,7 @@ import com.facetlauncher.app.data.model.AppListVerticalAlignment
 import com.facetlauncher.app.data.model.ClockAlignment
 import com.facetlauncher.app.data.model.LandscapeOverrides
 import android.net.Uri
+import com.facetlauncher.app.data.AppVaultRepository
 import com.facetlauncher.app.data.BackupRepository
 import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.FolderRepository
@@ -55,6 +56,7 @@ class ImportBackupUseCaseTest {
     private val widgetPlacementRepository = mock(WidgetPlacementRepository::class.java)
     private val restoreCalls = mutableListOf<List<Any?>>()
     private val restoreAutomationRules = noAutomationRestore(restoreCalls)
+    private val appVaultRepository = mock(AppVaultRepository::class.java)
 
     private val useCase = ImportBackupUseCase(
         backupRepository,
@@ -66,6 +68,7 @@ class ImportBackupUseCaseTest {
         clockStackRepository,
         widgetPlacementRepository,
         restoreAutomationRules,
+        appVaultRepository = appVaultRepository,
     )
 
     private fun backupFacet(name: String, position: Int, uuid: String) = BackupFacet(
@@ -211,6 +214,28 @@ class ImportBackupUseCaseTest {
         assertEquals(1, result.pendingWidgetPlacements.size)
         assertEquals("com.example.widgets", result.pendingWidgetPlacements[0].providerPackageName)
         assertEquals(4, result.pendingWidgetPlacements[0].landscapeOrder)
+    }
+
+    @Test
+    fun `restoring leaves the vault alone and skips placements of apps vaulted on this phone`() = runTest {
+        // Given a vault on this phone holding one app, and a backup that has no vault
+        `when`(appVaultRepository.vaultedKeys).thenReturn(kotlinx.coroutines.flow.flowOf(setOf("com.example.secret|0")))
+        val uri = mock(Uri::class.java)
+        val bundle = BackupBundle(
+            exportedAtEpochMillis = 0L, settings = minimalSettings(), facets = emptyList(),
+            dockApps = listOf(BackupAppEntry(packageName = "com.example.secret", activityName = ".Main", position = 0)),
+            defaultFavoriteApps = emptyList(), widgetPlacements = emptyList(),
+        )
+        `when`(backupRepository.readBackup(uri)).thenReturn(bundle)
+
+        // When importing
+        useCase(uri)
+
+        // Then the restored placements of the vaulted app are removed again, and the vault itself is never written
+        verify(placementRepository).removeByPackage("com.example.secret", 0)
+        verify(folderRepository).removeByPackage("com.example.secret", 0)
+        verify(appVaultRepository, org.mockito.Mockito.never()).add(org.mockito.ArgumentMatchers.anyCollection())
+        verify(appVaultRepository, org.mockito.Mockito.never()).reset()
     }
 
     @Test

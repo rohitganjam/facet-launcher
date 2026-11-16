@@ -76,6 +76,21 @@ class LaunchHistoryRepositoryTest {
     }
 
     @Test
+    fun `vaulted apps leave no launch or search history`() = runTest {
+        // Given chat is in the App Vault
+        val vault = mock(AppVaultRepository::class.java)
+        `when`(vault.vaultedKeys).thenReturn(flowOf(setOf("com.example.chat|$userId")))
+        val repository = LaunchHistoryRepository(dao, appRepository, Clock.fixed(now, ZoneOffset.UTC), StandardTestDispatcher(testScheduler), vault)
+
+        // When it is opened and picked from search
+        repository.recordLaunch(chat)
+        repository.recordSearchPick("ch", chat)
+
+        // Then nothing is written
+        verifyNoInteractions(dao)
+    }
+
+    @Test
     fun `a search pick is recorded under its query and trimmed to the cap, a blank query is ignored`() = runTest {
         val repository = repository()
 

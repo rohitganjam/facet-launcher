@@ -101,13 +101,14 @@ flowchart TB
         subgraph MODS["@Module @InstallIn(SingletonComponent) — data/di/"]
             AM["AppModule\nClock, LauncherApps, UserManager,\nWallpaperManager, ContentResolver,\n@ApplicationScope CoroutineScope\n(all @Singleton)"]
             DBM["DatabaseModule\nFacetDatabase @Singleton\n+ 9 DAO @Provides (unscoped)"]
-            DSM["DataStoreModule\n4 x DataStore of Preferences @Singleton\n('facet_settings', 'facet_automation' via @AutomationDataStore, 'facet_entitlement' via @EntitlementDataStore, 'facet_daily_wallpaper' via @DailyWallpaperDataStore)"]
+            DSM["DataStoreModule\n5 x DataStore of Preferences @Singleton\n('facet_settings', 'facet_automation' via @AutomationDataStore, 'facet_entitlement' via @EntitlementDataStore, 'facet_daily_wallpaper' via @DailyWallpaperDataStore, 'facet_vault' via @VaultDataStore)"]
             WM["WidgetModule\nAppWidgetManager, LauncherAppWidgetHost\n(@Singleton)"]
             DPM["DispatcherModule\n@IoDispatcher, @DefaultDispatcher\n(CoroutineDispatcher)"]
             ENM["EntitlementModule\n@Binds PlayEntitlementRepository\n+ 2 @BindsOptionalOf hooks"]
+            VLM["VaultModule\n@Binds KeystorePinHasher to PinHasher"]
             WTM["WeatherModule\n@Binds MetWeatherApi to WeatherApi\n@Binds RoomWeatherStore to WeatherStore\n@Binds AndroidPlaceGeocoder to PlaceGeocoder\n@Binds ObserveNativeWidgetOverridesUseCase to NativeWidgetOverrides"]
         end
-        REPOS["59 @Singleton data classes (51 repositories)\n@Singleton class X @Inject constructor(...)\n(no module — constructor injection)"]
+        REPOS["60 @Singleton data classes (52 repositories)\n@Singleton class X @Inject constructor(...)\n(no module — constructor injection)"]
         MODS --> REPOS
     end
 
@@ -140,7 +141,7 @@ flowchart TB
 | `java.time.Clock` | `@Singleton` | `AppModule.provideClock()` | Time-dependent logic (`NextAlarmRepository`) is testable with a fixed clock. |
 | `FacetDatabase` | `@Singleton` | `DatabaseModule` — `Room.databaseBuilder(..., "facet.db").addMigrations(*Migrations.ALL).fallbackToDestructiveMigrationOnDowngrade(true)` | One DB instance; **no** destructive fallback on upgrade (a missing migration crashes loudly by design). |
 | DAOs (10) | unscoped | `@Provides fun provideXDao(db) = db.xDao()` | Room caches DAO instances internally, so unscoped is free. |
-| `DataStore<Preferences>` (4) | `@Singleton` | `DataStoreModule` via `preferencesDataStore(name = "facet_settings")` (unqualified), `preferencesDataStore(name = "facet_automation")` (`@AutomationDataStore`), `preferencesDataStore(name = "facet_entitlement")` (`@EntitlementDataStore`) and `preferencesDataStore(name = "facet_daily_wallpaper")` (`@DailyWallpaperDataStore`) delegates | DataStore requires exactly one instance per file. Automation state and the daily wallpaper live in their own files so they stay out of `LauncherSettings` re-emissions and backups. |
+| `DataStore<Preferences>` (5) | `@Singleton` | `DataStoreModule` via `preferencesDataStore(name = "facet_settings")` (unqualified), `preferencesDataStore(name = "facet_automation")` (`@AutomationDataStore`), `preferencesDataStore(name = "facet_entitlement")` (`@EntitlementDataStore`) and `preferencesDataStore(name = "facet_daily_wallpaper")` (`@DailyWallpaperDataStore`) and `preferencesDataStore(name = "facet_vault")` (`@VaultDataStore`) delegates | DataStore requires exactly one instance per file. Automation state, the daily wallpaper and the App Vault live in their own files so they stay out of `LauncherSettings` re-emissions and backups. |
 | `StyledIconCache` | `@Singleton` | Constructor injection; `LauncherActivity` injects it and provides it as `LocalStyledIconCache` | Makes the glyph-only and outline icon pictures, on demand or ahead of it (`WarmStyledIcons` at the root warms every app's while a glyph or outline style is on, so the drawer finds them ready), and keeps only the applied picture (glyph or outline, not both) for each, held weakly, keyed by the icon bitmap, so a rescan that decodes fresh icons recomputes only what is on screen. A bare instance is the local's default, for previews and tests. |
 | `EntitlementRepository` | `@Singleton` | `EntitlementModule` `@Binds` `PlayEntitlementRepository`; two `@BindsOptionalOf` hooks (`EntitlementOverride`, `DebugSettingsEntry`) | The debug source set (`DebugBindingsModule`) fills the optional hooks; a release build leaves them empty, so the override and its Settings row exist only in debug. The benchmark source set provides an `EntitlementOverride` that always forces Pro (a measurement build, never shipped). |
 | `WeatherApi`, `WeatherStore`, `PlaceGeocoder` | `@Singleton` | `WeatherModule` `@Binds` `MetWeatherApi`, `RoomWeatherStore` and `AndroidPlaceGeocoder` | The seams the weather code is tested through: tests pass a fake API, an in-memory store and a fake geocoder, so no test touches the network. |
@@ -150,7 +151,7 @@ flowchart TB
 | Use cases | unscoped | Constructor injection | Stateless by convention. `ObserveHomeScreenStateUseCase` and `ObserveHubStateUseCase` hold a `refreshTrigger` `MutableSharedFlow`, so they are `@ViewModelScoped`: the ViewModel that injects one gets a single instance, and `refresh()` reaches the flow it collects. `EnsureCalendarColorsUseCase` is the other: `@Singleton` (it holds a `Mutex`), and `FacetApplication.onCreate` injects it and collects `keepAssigned()` on the `@ApplicationScope` scope for the app's life, so calendar colours are assigned as calendars appear. |
 | ViewModels (49) | `ViewModelComponent` | `@HiltViewModel`, resolved by `hiltViewModel()` per `NavHost` destination or `by viewModels()` in the Activity | Nav-arg-driven screens (`FacetSettingsViewModel`, `FolderDetailViewModel`, ...) read ids from `SavedStateHandle`. |
 
-Apart from `EntitlementModule` and `WeatherModule`, there are **no interface-to-implementation `@Binds` modules**: every other repository is a concrete
+Apart from `EntitlementModule`, `WeatherModule` and `VaultModule` (`@Binds KeystorePinHasher` to `PinHasher`, the seam the App Vault's PIN hashing is tested through), there are **no interface-to-implementation `@Binds` modules**: every other repository is a concrete
 `@Singleton class`, and tests substitute them with hand-written DAO fakes (`FolderTestFakes.kt`)
 or Mockito 5 mocks of the concrete repository (inline mock maker, so `final` Kotlin classes mock
 fine) rather than via Hilt test modules — see [06-testing.md](06-testing.md).

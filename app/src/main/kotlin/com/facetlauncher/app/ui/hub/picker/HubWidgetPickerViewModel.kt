@@ -2,6 +2,8 @@ package com.facetlauncher.app.ui.hub.picker
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.facetlauncher.app.data.AppVaultRepository
+import com.facetlauncher.app.data.model.withoutVaulted
 import com.facetlauncher.app.data.WidgetPlacementRepository
 import com.facetlauncher.app.data.local.WidgetPlacementEntity
 import com.facetlauncher.app.data.model.NativeWidgetRef
@@ -39,6 +41,8 @@ class HubWidgetPickerViewModel @Inject constructor(
     private val appWidgetRepository: AppWidgetRepository,
     private val widgetPlacementRepository: WidgetPlacementRepository,
     private val placeWidget: PlaceWidgetUseCase,
+    // Defaulted so tests that don't cover the vault needn't build one; Hilt always supplies it.
+    private val appVaultRepository: AppVaultRepository? = null,
 ) : ViewModel() {
 
     private val query = MutableStateFlow("")
@@ -57,7 +61,9 @@ class HubWidgetPickerViewModel @Inject constructor(
         widgetPlacementRepository.observeAll(),
         allOptions,
     ) { currentQuery, currentTab, placements, options ->
-        val currentOptions = options ?: appWidgetRepository.getWidgetProviderOptions().also { allOptions.value = it }
+        val currentOptions = options ?: appWidgetRepository.getWidgetProviderOptions()
+            .withoutVaulted(appVaultRepository?.vaultedKeys?.first().orEmpty())
+            .also { allOptions.value = it }
         pickerState(currentOptions, currentQuery, currentTab, remaining = (HUB_MAX_WIDGETS - placements.size).coerceAtLeast(0))
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), HubWidgetPickerUiState())
 

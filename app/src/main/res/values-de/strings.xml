@@ -1243,4 +1243,52 @@
         <item quantity="one">%d App</item>
         <item quantity="other">%d Apps</item>
     </plurals>
+    <string name="drawer_search_app_vault">App-Tresor</string>
+    <string name="vault_title">App-Tresor</string>
+    <string name="vault_intro_hide">Blende Apps in App-Übersicht, Startbildschirm, Dock, Ordnern und Suche aus, in jedem Facet.</string>
+    <string name="vault_intro_hide_sub">Öffne sie hier mit einer 4-stelligen PIN.</string>
+    <string name="vault_intro_limits">Versteckte Apps erscheinen weiterhin in den Systemeinstellungen, im Play Store und mit ihren Benachrichtigungen.</string>
+    <string name="vault_intro_private_space">Um Apps und ihre Benachrichtigungen zusätzlich zu verbergen und zu pausieren, nutze den Privaten Bereich oder den Sicheren Ordner, falls dein Telefon einen hat.</string>
+    <string name="vault_intro_no_screen_lock">Dieses Telefon hat keine Displaysperre, deshalb lässt sich eine vergessene PIN nur beheben, indem du den Tresor ausschaltest.</string>
+    <string name="vault_set_pin">PIN festlegen</string>
+    <string name="vault_create_pin_title">PIN erstellen</string>
+    <string name="vault_create_pin_sub">Wähle 4 Ziffern, um den Tresor zu öffnen.</string>
+    <string name="vault_confirm_pin_title">PIN bestätigen</string>
+    <string name="vault_confirm_pin_sub">Gib sie noch einmal ein.</string>
+    <string name="vault_pins_mismatch">Die PINs stimmen nicht überein. Gib eine neue PIN ein.</string>
+    <string name="vault_enter_pin">PIN eingeben</string>
+    <string name="vault_locked_out">Zu viele Versuche. Versuche es in %1$s erneut</string>
+    <string name="vault_forgot_pin">PIN vergessen?</string>
+    <string name="vault_backspace">Letzte Ziffer löschen</string>
+    <string name="vault_add_apps">Apps hinzufügen</string>
+    <string name="vault_add_to_vault_title">Zum Tresor hinzufügen</string>
+    <string name="vault_picker_chosen">Ausgewählt</string>
+    <string name="vault_empty">Noch keine versteckten Apps</string>
+    <string name="vault_empty_hint">Apps, die du hier hinzufügst, verschwinden aus App-Übersicht, Startbildschirm und Suche.</string>
+    <string name="vault_more_options">Weitere Optionen</string>
+    <string name="vault_app_menu">Optionen für %1$s</string>
+    <string name="vault_app_info">App-Info</string>
+    <string name="vault_remove">Aus dem Tresor entfernen</string>
+    <string name="vault_removed">%1$s ist wieder in deiner App-Übersicht</string>
+    <string name="vault_undo">Rückgängig</string>
+    <string name="vault_change_pin">PIN ändern</string>
+    <string name="vault_turn_off">App-Tresor ausschalten</string>
+    <string name="vault_turn_off_title">App-Tresor ausschalten?</string>
+    <string name="vault_turn_off_message">Alle versteckten Apps kehren in deine App-Übersicht zurück und die PIN wird gelöscht.</string>
+    <string name="vault_turn_off_confirm">Ausschalten</string>
+    <string name="vault_reset_title">App-Tresor zurücksetzen?</string>
+    <string name="vault_reset_message">Dieses Telefon hat keine Displaysperre, um zu bestätigen, dass du es bist. Eine vergessene PIN lässt sich nur löschen, indem du den Tresor ausschaltest. Alle versteckten Apps kehren in deine App-Übersicht zurück.</string>
+    <string name="vault_reset_confirm">Zurücksetzen</string>
+    <string name="vault_move_title">In den Tresor verschieben?</string>
+    <string name="vault_move_confirm">In den Tresor</string>
+    <string name="vault_confirm_credential_title">Bestätige, dass du es bist</string>
+    <string name="vault_confirm_credential_message">Nutze die Displaysperre deines Telefons, um eine neue Tresor-PIN zu wählen.</string>
+    <plurals name="vault_wrong_pin">
+        <item quantity="one">Falsche PIN. Noch %1$d Versuch bis zu einer Pause.</item>
+        <item quantity="other">Falsche PIN. Noch %1$d Versuche bis zu einer Pause.</item>
+    </plurals>
+    <plurals name="vault_move_message">
+        <item quantity="one">%1$d der gewählten Apps ist auf dem Startbildschirm oder in einem Ordner. Sie wird in jedem Facet aus Favoriten, Dock und Ordnern entfernt.</item>
+        <item quantity="other">%1$d der gewählten Apps sind auf dem Startbildschirm oder in Ordnern. Sie werden in jedem Facet aus Favoriten, Dock und Ordnern entfernt.</item>
+    </plurals>
 </resources>

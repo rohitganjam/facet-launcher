@@ -56,7 +56,10 @@ import com.facetlauncher.app.data.model.WeatherCity
 import com.facetlauncher.app.data.model.weatherCityOrNull
 import com.facetlauncher.app.data.model.SwipeActions
 import com.facetlauncher.app.data.model.SwipeDirection
+import com.facetlauncher.app.data.AppVaultRepository
+import com.facetlauncher.app.data.model.parseVaultKey
 import javax.inject.Inject
+import kotlinx.coroutines.flow.first
 import com.facetlauncher.app.data.PlacementRepository
 import com.facetlauncher.app.data.model.PlacementTarget
 
@@ -98,6 +101,8 @@ class ImportBackupUseCase @Inject constructor(
     private val restoreAutomationRules: RestoreAutomationRulesUseCase,
     // Defaulted so tests that don't cover custom icons needn't build one; Hilt always supplies it.
     private val iconOverrideBackup: IconOverrideBackupUseCase? = null,
+    // The vault is never in a backup, but a restored placement of an app vaulted on this phone must not come back to Home.
+    private val appVaultRepository: AppVaultRepository? = null,
 ) {
     suspend operator fun invoke(uri: Uri): ImportBackupResult {
         val read = backupRepository.readBackup(uri) ?: return ImportBackupResult.InvalidFile
@@ -135,6 +140,10 @@ class ImportBackupUseCase @Inject constructor(
         // until resolved — same repair LauncherViewModel.init runs once per app launch, but run
         // here too so restored apps/folders show up immediately instead of needing a restart.
         repairOrphanedProfileRows()
+        appVaultRepository?.vaultedKeys?.first()?.mapNotNull(::parseVaultKey)?.forEach { (packageName, userId) ->
+            placementRepository.removeByPackage(packageName, userId)
+            folderRepository.removeByPackage(packageName, userId)
+        }
 
         return ImportBackupResult.Success(
             facetCount = bundle.facets.size,

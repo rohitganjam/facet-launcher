@@ -166,6 +166,7 @@ internal fun HomeAppDrawerOverlay(
             gridState.scrollToItem(0)
             searchListState.scrollToItem(0)
             overlays.showPrivateSpace = false
+            overlays.showAppVault = false
         }
     }
     val isSearching = query.isNotBlank()
@@ -194,6 +195,7 @@ internal fun HomeAppDrawerOverlay(
         query = query,
         onQueryChange = { query = it; actions.onQueryChange(it) },
         onOpenPrivateSpace = { overlays.showPrivateSpace = true },
+        onOpenAppVault = { overlays.showAppVault = true },
         onNavigateToSettings = onNavigateToSettings,
         isDrawerOpen = isDrawerOpen,
         searchFocusRequest = searchFocusRequest,
@@ -230,6 +232,7 @@ private fun HomeDrawerScreen(
     query: String,
     onQueryChange: (String) -> Unit,
     onOpenPrivateSpace: () -> Unit,
+    onOpenAppVault: () -> Unit,
     onNavigateToSettings: () -> Unit,
     isDrawerOpen: Boolean,
     searchFocusRequest: Int,
@@ -254,6 +257,7 @@ private fun HomeDrawerScreen(
             onOpenSecureFolder = { intent -> runCatching { context.startActivity(intent) } },
             showPrivateSpaceRow = state.privateSpaceState !is PrivateSpaceState.NotConfigured,
             onPrivateSpaceRowClick = { state.privateSpaceState.onRowClick(onOpenPrivateSpace, actions.onRequestUnlockPrivateSpace) },
+            onOpenAppVault = onOpenAppVault,
             focusRequest = searchFocusRequest,
         ),
         searchSources = DrawerSearchSources(

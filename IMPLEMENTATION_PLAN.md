@@ -4936,3 +4936,17 @@ A restore used to delete every automation rule (the facets go first, and rules c
 - [ ] Native review of the new backup rule strings (machine-translated into de, es, fr, nl, pt, pt-PT; es-419 falls back to es).
 - [x] Verified on the emulator (unit tests 2277, `FacetDatabaseMigrationTest` 43/43 with the older 49→50 test fixed, `BackupRestoreScreenTest` 6/6).
 
+
+## App Vault (Rohit approved the design and said start 2026-11-15)
+
+PIN-locked hidden apps. Decisions: one global vault, free and unlimited, not Pro; entry is the last row of the drawer 3-dot menu (no vault action in the app long-press menu); 4-digit PIN set with confirmation; the vault opens a separate always-list drawer whose rows have App info and Remove from vault; apps enter only through Add apps inside the vault; vaulting takes an app off Favorites, Dock and folders in every facet; the vault keeps uninstalled apps; PIN only (no fingerprint); the vault is not in backups at all. See `docs/architecture/23-flow-app-vault.md`.
+
+### Steps
+- [x] Storage: `facet_vault` DataStore (`AppVaultRepository`, `PinHasher`/`KeystorePinHasher`), lockout ladder, excluded from backup and device transfer (`data_extraction_rules.xml`, `backup_rules.xml`). Tests: `AppVaultRepositoryTest`, `EntitlementBackupRulesTest`, `BackupCoverageTest`.
+- [x] Hiding: `AppRepository` filters vaulted apps from every list; widget pickers, launch history, uninstall cleanup and import skip. Tests: `AppRepositoryTest`, `LaunchHistoryRepositoryTest`, `CleanUpUninstalledAppsUseCaseTest`, `ImportBackupUseCaseTest`.
+- [x] `MoveToVaultUseCase`. Tests: `MoveToVaultUseCaseTest`.
+- [x] Screens: `AppVaultScreen` (intro, PIN pad, list, Add apps picker), `AppVaultViewModel`, `HomeAppVaultOverlay` (re-locks on close, Home press and ON_STOP, FLAG_SECURE), Forgot PIN through the screen lock. Tests: `AppVaultViewModelTest`, `AppVaultScreenTest`, `AppDrawerScreenTest`.
+- [x] Strings in en, de, es, fr, nl, pt.
+- [x] Docs: `01`, `02`, `04`, `07`, `09`, `11`, `12`, new `23`, README.
+- [ ] Verified on the emulator (build, unit tests, `check`, `AppVaultScreenTest`, `AppDrawerScreenTest`, manual pass).
+- [ ] Native review of the vault strings (machine-translated; es-419 and pt-PT fall back).

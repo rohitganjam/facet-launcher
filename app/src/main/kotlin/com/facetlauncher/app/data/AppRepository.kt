@@ -28,6 +28,7 @@ import com.facetlauncher.app.data.iconpack.IconPackIcons
 import com.facetlauncher.app.data.iconpack.IconPackRepository
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.AppProfile
+import com.facetlauncher.app.data.model.vaultKey
 import com.facetlauncher.app.data.model.IconOverride
 import com.facetlauncher.app.data.model.IconOverrideSource
 import com.facetlauncher.app.data.model.IconPackFallback
@@ -150,6 +151,8 @@ class AppRepository @Inject constructor(
     private val clock: Clock = Clock.systemDefaultZone(),
     // Defaulted like the ones above; null draws no custom icons.
     private val iconOverrideRepository: IconOverrideRepository? = null,
+    // Defaulted like the ones above; null hides nothing.
+    private val appVaultRepository: AppVaultRepository? = null,
 ) {
 
     /**
@@ -222,6 +225,13 @@ class AppRepository @Inject constructor(
      * first paint on this list, since default content rendered over it in the meantime).
      */
     suspend fun getInstalledApps(): List<AppInfo> {
+        val vaulted = appVaultRepository?.vaultedKeys?.first().orEmpty()
+        val apps = getAllInstalledApps()
+        return if (vaulted.isEmpty()) apps else apps.filterNot { it.vaultKey in vaulted }
+    }
+
+    /** [getInstalledApps] with the App Vault's apps included: only the vault itself should read this. */
+    suspend fun getAllInstalledApps(): List<AppInfo> {
         val apps = scanInstalledApps(iconPackRepository?.selection?.first())
         return withOverrides(apps, iconOverrideRepository?.getAll().orEmpty(), dayOfMonth())
     }
@@ -372,7 +382,18 @@ class AppRepository @Inject constructor(
      * (surviving brief gaps like a Home↔Drawer transition), and tears it down again once nothing
      * is listening — never a leak, never a duplicate scan.
      */
-    fun observeInstalledApps(): Flow<List<AppInfo>> = installedApps
+    fun observeInstalledApps(): Flow<List<AppInfo>> {
+        val vault = appVaultRepository ?: return installedApps
+        return combine(installedApps, vault.vaultedKeys) { apps, vaulted ->
+            if (vaulted.isEmpty()) apps else apps.filterNot { it.vaultKey in vaulted }
+        }
+    }
+
+    /** Only the App Vault's own apps, for the vault screen; everything else reads [observeInstalledApps], which leaves them out. */
+    fun observeVaultedApps(): Flow<List<AppInfo>> {
+        val vault = appVaultRepository ?: return flowOf(emptyList())
+        return combine(installedApps, vault.vaultedKeys) { apps, vaulted -> apps.filter { it.vaultKey in vaulted } }
+    }
 
     private val installedApps: SharedFlow<List<AppInfo>> = observeInstalledAppsUncached()
         .shareIn(applicationScope, SharingStarted.WhileSubscribed(stopTimeoutMillis = SHARE_STOP_TIMEOUT_MILLIS), replay = 1)

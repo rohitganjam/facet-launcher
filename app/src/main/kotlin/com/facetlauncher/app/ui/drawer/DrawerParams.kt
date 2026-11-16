@@ -70,6 +70,8 @@ data class DrawerSearchBarConfig(
     /** Shown for [com.facetlauncher.app.data.PrivateSpaceState.Locked]/`.Unlocked`, hidden for `.NotConfigured`. */
     val showPrivateSpaceRow: Boolean = false,
     val onPrivateSpaceRowClick: () -> Unit = {},
+    /** Opens the App Vault; `null` leaves its row out of the menu. */
+    val onOpenAppVault: (() -> Unit)? = null,
     /** Each increase focuses the search field, as if tapped. */
     val focusRequest: Int = 0,
 )

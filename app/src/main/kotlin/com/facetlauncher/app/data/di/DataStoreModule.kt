@@ -15,6 +15,7 @@ private val Context.settingsDataStore: DataStore<Preferences> by preferencesData
 private val Context.automationDataStore: DataStore<Preferences> by preferencesDataStore(name = "facet_automation")
 private val Context.entitlementDataStore: DataStore<Preferences> by preferencesDataStore(name = "facet_entitlement")
 private val Context.dailyWallpaperDataStore: DataStore<Preferences> by preferencesDataStore(name = "facet_daily_wallpaper")
+private val Context.vaultDataStore: DataStore<Preferences> by preferencesDataStore(name = "facet_vault")
 
 @Module
 @InstallIn(SingletonComponent::class)
@@ -42,4 +43,10 @@ object DataStoreModule {
     @DailyWallpaperDataStore
     fun provideDailyWallpaperDataStore(@ApplicationContext context: Context): DataStore<Preferences> =
         context.dailyWallpaperDataStore
+
+    @Provides
+    @Singleton
+    @VaultDataStore
+    fun provideVaultDataStore(@ApplicationContext context: Context): DataStore<Preferences> =
+        context.vaultDataStore
 }

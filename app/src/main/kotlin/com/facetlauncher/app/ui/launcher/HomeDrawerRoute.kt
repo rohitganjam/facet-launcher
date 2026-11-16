@@ -74,6 +74,7 @@ import com.facetlauncher.app.ui.components.LocalHomeSwipeGate
 import com.facetlauncher.app.ui.components.LocalIconGlassSamplesWallpaper
 import com.facetlauncher.app.ui.drawer.DrawerViewModel
 import com.facetlauncher.app.ui.drawer.PrivateSpaceViewModel
+import com.facetlauncher.app.ui.vault.AppVaultViewModel
 import com.facetlauncher.app.ui.facets.FacetCarouselScreen
 import com.facetlauncher.app.ui.facets.FacetCarouselViewModel
 import com.facetlauncher.app.ui.home.HomeMenuMode
@@ -139,6 +140,7 @@ fun HomeDrawerRoute(
     weatherViewModel: WeatherViewModel = hiltViewModel(),
     drawerViewModel: DrawerViewModel = hiltViewModel(),
     privateSpaceViewModel: PrivateSpaceViewModel = hiltViewModel(),
+    appVaultViewModel: AppVaultViewModel = hiltViewModel(),
     hubViewModel: HubViewModel = hiltViewModel(),
     widgetAccess: NativeWidgetAccessControls = rememberNativeWidgetAccess(),
     widgetPickerViewModel: HubWidgetPickerViewModel = hiltViewModel(),
@@ -226,7 +228,7 @@ fun HomeDrawerRoute(
     SystemBarsBackdropEffect(
         when {
             overlays.showPrivateSpace -> SystemBarsBackdrop.DARK_SURFACE
-            overlays.showWidgetPicker || overlays.showClockWidgetPicker -> SystemBarsBackdrop.THEME_SURFACE
+            overlays.showWidgetPicker || overlays.showClockWidgetPicker || overlays.showAppVault -> SystemBarsBackdrop.THEME_SURFACE
             else -> SystemBarsBackdrop.WALLPAPER
         },
     )
@@ -238,7 +240,7 @@ fun HomeDrawerRoute(
                 homeSwipeGate?.isBlocked != true &&
                 swipe.drawer.progress.value == 0f && swipe.hub.progress.value == 0f && swipe.facet.progress.value == 0f &&
                 homeMenuMode == HomeMenuMode.NONE && !overlays.showWidgetPicker &&
-                !overlays.showClockWidgetPicker && !overlays.showPrivateSpace
+                !overlays.showClockWidgetPicker && !overlays.showPrivateSpace && !overlays.showAppVault
             focusManager.clearFocus()
             homeMenuMode = HomeMenuMode.NONE
             overlays.showClockWidgetPicker = false
@@ -287,11 +289,12 @@ fun HomeDrawerRoute(
         }
     }
 
-    BackHandler(enabled = isDrawerOpen || isHubOpen || isFacetOpen || overlays.showWidgetPicker || overlays.showClockWidgetPicker || overlays.showPrivateSpace) {
+    BackHandler(enabled = isDrawerOpen || isHubOpen || isFacetOpen || overlays.showWidgetPicker || overlays.showClockWidgetPicker || overlays.showPrivateSpace || overlays.showAppVault) {
         focusManager.clearFocus()
         when {
             overlays.showClockWidgetPicker -> overlays.showClockWidgetPicker = false
             overlays.showWidgetPicker -> overlays.showWidgetPicker = false
+            overlays.showAppVault -> if (!appVaultViewModel.onBack()) overlays.showAppVault = false
             overlays.showPrivateSpace -> overlays.showPrivateSpace = false
             isDrawerOpen -> coroutineScope.launch { swipe.drawer.close() }
             isHubOpen -> coroutineScope.launch { swipe.hub.close() }
@@ -538,6 +541,15 @@ fun HomeDrawerRoute(
             onAppClick = { app ->
                 onAppClick(app)
                 overlays.showPrivateSpace = false
+                coroutineScope.launch { swipe.drawer.close() }
+            },
+        )
+        HomeAppVaultOverlay(
+            overlays = overlays,
+            viewModel = appVaultViewModel,
+            onAppClick = { app ->
+                onAppClick(app)
+                overlays.showAppVault = false
                 coroutineScope.launch { swipe.drawer.close() }
             },
         )

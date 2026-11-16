@@ -19,3 +19,7 @@ data class WidgetProviderOption(
     /** The real handle this provider was enumerated from — used to bind/rebind, never re-derived from [profile]. */
     val userHandle: UserHandle = Process.myUserHandle(),
 )
+
+/** [this] without the providers of apps in the App Vault, whose [vaultedKeys] are given. */
+fun List<WidgetProviderOption>.withoutVaulted(vaultedKeys: Set<String>): List<WidgetProviderOption> =
+    if (vaultedKeys.isEmpty()) this else filterNot { vaultKey(it.provider.packageName, it.userHandle.hashCode()) in vaultedKeys }

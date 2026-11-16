@@ -2,6 +2,7 @@ package com.facetlauncher.app.domain
 
 import android.os.UserHandle
 import com.facetlauncher.app.data.AppRepository
+import com.facetlauncher.app.data.AppVaultRepository
 import com.facetlauncher.app.data.FolderRepository
 import com.facetlauncher.app.data.IconOverrideRepository
 import com.facetlauncher.app.data.LaunchHistoryRepository
@@ -12,6 +13,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.verify
+import org.mockito.Mockito.verifyNoInteractions
 import org.mockito.Mockito.`when`
 import org.robolectric.RobolectricTestRunner
 import com.facetlauncher.app.data.PlacementRepository
@@ -30,6 +32,7 @@ class CleanUpUninstalledAppsUseCaseTest {
         val folderRepository: FolderRepository = mock(FolderRepository::class.java)
         val launchHistoryRepository: LaunchHistoryRepository = mock(LaunchHistoryRepository::class.java)
         val iconOverrideRepository: IconOverrideRepository = mock(IconOverrideRepository::class.java)
+        val appVaultRepository: AppVaultRepository = mock(AppVaultRepository::class.java)
 
         init {
             `when`(appRepository.observeUninstalledPackages()).thenReturn(uninstalls)
@@ -37,7 +40,7 @@ class CleanUpUninstalledAppsUseCaseTest {
         }
 
         fun useCase() = CleanUpUninstalledAppsUseCase(
-            appRepository, placementRepository, folderRepository, launchHistoryRepository, iconOverrideRepository,
+            appRepository, placementRepository, folderRepository, launchHistoryRepository, iconOverrideRepository, appVaultRepository,
         )
     }
 
@@ -81,6 +84,34 @@ class CleanUpUninstalledAppsUseCaseTest {
         verify(fixture.folderRepository).removeByUserId(removedHandle.hashCode())
         verify(fixture.launchHistoryRepository).removeByUserId(removedHandle.hashCode())
         verify(fixture.iconOverrideRepository).removeByUserId(removedHandle.hashCode())
+        job.cancel()
+    }
+
+    @Test
+    fun `an uninstalled app stays in the vault so a reinstall stays hidden`() = runTest {
+        // Given the use case running
+        val fixture = Fixture()
+        val job = launch { fixture.useCase()() }
+
+        // When a package is uninstalled
+        fixture.uninstalls.emit("com.example.secret" to 0)
+        testScheduler.advanceUntilIdle()
+
+        // Then the vault is not touched
+        verifyNoInteractions(fixture.appVaultRepository)
+        job.cancel()
+    }
+
+    @Test
+    fun `a removed profile drops its vaulted apps`() = runTest {
+        val fixture = Fixture()
+        val job = launch { fixture.useCase()() }
+        val removedHandle = mock(UserHandle::class.java)
+
+        fixture.profileRemovals.emit(removedHandle)
+        testScheduler.advanceUntilIdle()
+
+        verify(fixture.appVaultRepository).removeByUserId(removedHandle.hashCode())
         job.cancel()
     }
 }

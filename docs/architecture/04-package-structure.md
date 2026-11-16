@@ -48,6 +48,7 @@ app/src/main/kotlin/com/facetlauncher/app/
     │   ├── weather/               (11)  The weather sheet over Home: WeatherSheet (+ WeatherSheetParts, RainSummaryText), WeatherViewModel, ClockWeatherAccessoryState, and the formatting and icon helpers (WeatherFormat, WeatherConditionText, WeatherIconKind, WeatherIconColors, WeatherCompass, WindArrow)
     │   ├── stack/                 (2)   ClockStackScreen / ClockStackViewModel (the clock stack: reorder, Add, remove, per-page size)
     │   └── widget/                (3)   ClockWidgetPickerScreen / ClockWidgetPickerViewModel / ClockWidgetPickerTarget (custom clock widget bind flow; Replace a page or Add one)
+    ├── vault/                     (2)   AppVaultScreen (stateless: intro, PIN pad, list, Add apps picker), AppVaultViewModel — the App Vault; its overlay is `launcher/HomeAppVaultOverlay`
     ├── drawer/                    (14)  AppDrawerScreen / DrawerViewModel, AlphabetRail, ContactConnectionsSheet,
     │                                    PrivateSpaceScreen / PrivateSpaceViewModel; the drawer's own parts: DrawerBrowseModel (the browse list,
     │                                    built in composition), DrawerListUseCases (the use cases it is handed), DrawerParams, DrawerTab,

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Android 11's auto backup (data_extraction_rules.xml covers Android 12 and later): the same two exclusions. -->
+<full-backup-content>
+    <exclude domain="file" path="datastore/facet_entitlement.preferences_pb" />
+    <exclude domain="file" path="datastore/facet_vault.preferences_pb" />
+</full-backup-content>

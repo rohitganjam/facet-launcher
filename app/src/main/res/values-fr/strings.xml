@@ -1263,4 +1263,52 @@
         <item quantity="other">%d apps</item>
         <item quantity="many">%d d\'apps</item>
     </plurals>
+    <string name="drawer_search_app_vault">Coffre d\'applis</string>
+    <string name="vault_title">Coffre d\'applis</string>
+    <string name="vault_intro_hide">Masquez des applis du tiroir, de l\'accueil, du dock, des dossiers et de la recherche, dans tous les facets.</string>
+    <string name="vault_intro_hide_sub">Ouvrez-les ici avec un code PIN à 4 chiffres.</string>
+    <string name="vault_intro_limits">Les applis masquées restent visibles dans les paramètres système, le Play Store et leurs notifications.</string>
+    <string name="vault_intro_private_space">Pour aussi masquer et suspendre des applis et leurs notifications, utilisez l\'Espace privé ou le Dossier sécurisé si votre téléphone en a un.</string>
+    <string name="vault_intro_no_screen_lock">Ce téléphone n\'a pas de verrouillage d\'écran : un PIN oublié ne peut être résolu qu\'en désactivant le coffre.</string>
+    <string name="vault_set_pin">Définir le PIN</string>
+    <string name="vault_create_pin_title">Créez un PIN</string>
+    <string name="vault_create_pin_sub">Choisissez 4 chiffres pour ouvrir le coffre.</string>
+    <string name="vault_confirm_pin_title">Confirmez votre PIN</string>
+    <string name="vault_confirm_pin_sub">Saisissez-le encore une fois.</string>
+    <string name="vault_pins_mismatch">Les PIN ne correspondent pas. Saisissez un nouveau PIN.</string>
+    <string name="vault_enter_pin">Saisissez votre PIN</string>
+    <string name="vault_locked_out">Trop de tentatives. Réessayez dans %1$s</string>
+    <string name="vault_forgot_pin">PIN oublié ?</string>
+    <string name="vault_backspace">Supprimer le dernier chiffre</string>
+    <string name="vault_add_apps">Ajouter des applis</string>
+    <string name="vault_add_to_vault_title">Ajouter au coffre</string>
+    <string name="vault_picker_chosen">Choisies</string>
+    <string name="vault_empty">Aucune appli masquée pour l\'instant</string>
+    <string name="vault_empty_hint">Les applis ajoutées ici disparaissent du tiroir, de l\'accueil et de la recherche.</string>
+    <string name="vault_more_options">Plus d\'options</string>
+    <string name="vault_app_menu">Options pour %1$s</string>
+    <string name="vault_app_info">Infos sur l\'appli</string>
+    <string name="vault_remove">Retirer du coffre</string>
+    <string name="vault_removed">%1$s est de retour dans votre tiroir</string>
+    <string name="vault_undo">Annuler</string>
+    <string name="vault_change_pin">Changer le PIN</string>
+    <string name="vault_turn_off">Désactiver le coffre d\'applis</string>
+    <string name="vault_turn_off_title">Désactiver le coffre d\'applis ?</string>
+    <string name="vault_turn_off_message">Toutes les applis masquées reviennent dans votre tiroir et le PIN est supprimé.</string>
+    <string name="vault_turn_off_confirm">Désactiver</string>
+    <string name="vault_reset_title">Réinitialiser le coffre d\'applis ?</string>
+    <string name="vault_reset_message">Ce téléphone n\'a pas de verrouillage d\'écran pour confirmer votre identité : un PIN oublié ne peut être effacé qu\'en désactivant le coffre. Toutes les applis masquées reviennent dans votre tiroir.</string>
+    <string name="vault_reset_confirm">Réinitialiser</string>
+    <string name="vault_move_title">Déplacer dans le coffre ?</string>
+    <string name="vault_move_confirm">Déplacer dans le coffre</string>
+    <string name="vault_confirm_credential_title">Confirmez votre identité</string>
+    <string name="vault_confirm_credential_message">Utilisez le verrouillage d\'écran du téléphone pour choisir un nouveau PIN du coffre.</string>
+    <plurals name="vault_wrong_pin">
+        <item quantity="one">PIN incorrect. Il reste %1$d essai avant une pause.</item>
+        <item quantity="other">PIN incorrect. Il reste %1$d essais avant une pause.</item>
+    </plurals>
+    <plurals name="vault_move_message">
+        <item quantity="one">%1$d des applis choisies est sur l\'accueil ou dans un dossier. Elle sera retirée des favoris, du dock et des dossiers dans tous les facets.</item>
+        <item quantity="other">%1$d des applis choisies sont sur l\'accueil ou dans des dossiers. Elles seront retirées des favoris, du dock et des dossiers dans tous les facets.</item>
+    </plurals>
 </resources>
