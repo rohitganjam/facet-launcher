@@ -1338,7 +1338,7 @@
     <string name="vault_intro_hide">Hide apps from your drawer, Home, Dock, folders and search, in every facet.</string>
     <string name="vault_intro_hide_sub">Open them here with a 4-digit PIN.</string>
     <string name="vault_intro_limits">Hidden apps still show in system Settings, the Play Store and their notifications.</string>
-    <string name="vault_intro_private_space">For apps that are locked and paused too, use Private Space or Secure Folder if your phone has one.</string>
+    <string name="vault_intro_private_space">To also lock and pause apps, use Private Space or Secure Folder if your phone has one.</string>
     <string name="vault_intro_no_screen_lock">This phone has no screen lock, so a forgotten PIN can only be fixed by turning the vault off.</string>
     <string name="vault_set_pin">Set PIN</string>
     <string name="vault_create_pin_title">Create a PIN</string>
