@@ -47,11 +47,9 @@
     <string name="automation_no_paired_devices">No hay dispositivos vinculados. Vincula uno primero en la configuración de Bluetooth.</string>
     <string name="pro_hero_trigger_car">Auto</string>
     <string name="pro_add_facet">Agregar una faceta</string>
-    <string name="pro_feature_triggers_title">Disparadores de Wi-Fi, Bluetooth, audífonos y batería</string>
-    <string name="pro_feature_triggers_body">Conéctate a la red de la oficina o al auto y la faceta cambia.</string>
+    <string name="pro_feature_automation_body">Cambia de faceta con Wi-Fi, Bluetooth, audífonos o batería, no solo con un horario. El plan gratuito incluye 2 reglas de horario.</string>
+    <string name="pro_owned_automation_body">Wi-Fi, Bluetooth, audífonos y batería</string>
     <string name="pro_feature_future_body">Todo lo que se agregue a Pro más adelante es tuyo.</string>
-    <string name="pro_owned_more_title">Disparadores de audífonos y batería</string>
-    <string name="pro_owned_more_body">Cambia al conectar o cargar</string>
     <string name="pro_upgrade_trigger">Las reglas que reaccionan al Bluetooth, al Wi-Fi, a los audífonos o a la batería forman parte de Pro.</string>
     <string name="pro_upgrade_rule_limit">El plan gratuito incluye 2 reglas. Con Pro puedes agregar más.</string>
     <string name="pro_upgrade_facet_locked">Esta faceta está en pausa en el plan gratuito. Elimina una faceta para volver a 3, o actualiza a Pro para usar hasta 10.</string>
@@ -63,7 +61,6 @@
     <string name="calendar_settings_header_title">Configuración del calendario</string>
     <string name="folder_detail_no_apps_yet">Aún no hay apps en esta carpeta. Toca \"Agregar a carpeta\" para agregar algunas.</string>
     <string name="open_settings">Abrir configuración</string>
-    <string name="usage_access_explanation_body">Esto necesita acceso de uso, un permiso especial que se concede desde la configuración del sistema; Facet no puede solicitarlo directamente. Solo lee qué apps abres y por cuánto tiempo; nada sale de tu dispositivo.</string>
     <string name="notification_access_explanation_body">Esto necesita acceso a notificaciones, un permiso especial que se concede desde la configuración del sistema; Facet no puede solicitarlo directamente. Solo lee qué apps tienen notificaciones activas y si son silenciosas, además del título, el artista y la carátula de lo que suena; nada sale de tu dispositivo.</string>
     <string name="onboarding_clear_dock_message">Quita todas las apps del dock predeterminado. Puedes volver a agregarlas en cualquier momento.</string>
     <string name="onboarding_clear_favorites_message">Quita todas las apps de tus favoritos predeterminados. Puedes volver a agregarlas en cualquier momento.</string>
@@ -75,7 +72,6 @@
     <string name="drawer_search_section_recent_changes">INSTALADAS O ACTUALIZADAS RECIENTEMENTE</string>
     <string name="drawer_search_section_frequent">USADAS CON FRECUENCIA</string>
     <string name="drawer_search_section_last_used">ÚLTIMAS USADAS</string>
-    <string name="drawer_search_usage_access_needed">Las apps más y últimas usadas necesitan acceso de uso desde la configuración del sistema.</string>
     <string name="drawer_contacts_access_needed">La búsqueda de contactos necesita acceso desde la configuración del sistema.</string>
     <string name="drawer_contacts_search_off">La búsqueda de contactos está desactivada en la configuración del cajón de apps.</string>
     <string name="facet_carousel_launcher_settings">Configuración del launcher</string>
@@ -83,7 +79,6 @@
     <string name="facet_carousel_facet_settings">Configuración de faceta</string>
     <string name="facet_carousel_add_facet">Agregar faceta</string>
     <string name="facet_settings_dock_settings_title">Apps del dock</string>
-    <string name="home_usage_access_needed">Más usadas necesita acceso de uso desde la configuración del sistema.</string>
 
     <string name="clock_style_long_press_hint">Mantén presionado el reloj en la pantalla de inicio para ajustar su tamaño y su posición.</string>
     <string name="home_sheet_facet_settings_subtitle">Widgets, lista de apps y dock específicos de la faceta</string>
@@ -134,4 +129,5 @@
 
     <string name="reset_dock_subtitle">Reemplaza este dock por las apps predeterminadas del dispositivo</string>
     <string name="reset_dock_confirm_message">Esto reemplaza el dock de esta faceta por las apps predeterminadas del dispositivo. Las apps que colocaste aquí se perderán.</string>
+    <string name="home_usage_list_empty">Aquí aparecerán las apps que abras desde Facet.</string>
 </resources>

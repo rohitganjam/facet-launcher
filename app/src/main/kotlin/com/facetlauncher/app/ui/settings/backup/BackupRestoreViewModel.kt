@@ -74,7 +74,7 @@ class BackupRestoreViewModel @Inject constructor(
     fun onImportFileChosen(uri: Uri?) {
         if (uri == null) return
         viewModelScope.launch {
-            _uiState.update { it.copy(isBusy = true, message = null) }
+            _uiState.update { it.copy(isBusy = true, message = null, automationReview = null) }
             when (val result = importBackup(uri)) {
                 is ImportBackupResult.Success -> {
                     val options = appWidgetRepository.getWidgetProviderOptions()
@@ -89,11 +89,13 @@ class BackupRestoreViewModel @Inject constructor(
                             widgetLabel = match?.widgetLabel,
                         )
                     }
+                    val rules = result.automationRules
                     _uiState.update {
                         it.copy(
                             isBusy = false,
-                            message = BackupRestoreMessage.ImportSucceeded(result.facetCount, pending.count { p -> !p.done }),
+                            message = BackupRestoreMessage.ImportSucceeded(result.facetCount, pending.count { p -> !p.done }, rules.restoredCount),
                             pendingWidgets = pending,
+                            automationReview = rules.takeIf { r -> r.needsReview },
                         )
                     }
                 }

@@ -184,7 +184,6 @@
     <string name="app_picker_tab_apps">Apps</string>
     <string name="app_picker_tab_folders">Mappen</string>
 
-
     <string name="gesture_hint_switch_facets">Van facet wisselen</string>
     <string name="gesture_hint_arrow_left">←</string>
     <string name="gesture_hint_arrow_right">→</string>
@@ -506,7 +505,7 @@
     <string name="appearance_basic_colors">Basiskleuren</string>
 
     <string name="backup_restore_confirm_title">Alles op dit apparaat vervangen?</string>
-    <string name="backup_restore_confirm_message">Importeren vervangt alle facets, de dock en de standaardfavorieten door de inhoud van het back-upbestand. Dit kan niet ongedaan worden gemaakt.</string>
+    <string name="backup_restore_confirm_message">Importeren vervangt alle facets, de dock, de standaardfavorieten en de automatiseringsregels door de inhoud van het back-upbestand. Dit kan niet ongedaan worden gemaakt.</string>
     <string name="backup_restore_confirm_replace">Vervangen</string>
     <string name="backup_restore_export_title">Back-up exporteren</string>
     <string name="backup_restore_export_subtitle">Sla alle facets, de dock, favorieten en instellingen op als bestand</string>
@@ -524,6 +523,33 @@
         <item quantity="one">%d widget moet hieronder opnieuw worden toegevoegd</item>
         <item quantity="other">%d widgets moeten hieronder opnieuw worden toegevoegd</item>
     </plurals>
+    <plurals name="backup_restored_rules_count">
+        <item quantity="one">%d automatiseringsregel</item>
+        <item quantity="other">%d automatiseringsregels</item>
+    </plurals>
+    <string name="backup_restore_rules_header">AUTOMATISERINGSREGELS</string>
+    <plurals name="backup_rules_skipped_facet_missing">
+        <item quantity="one">%d regel overgeslagen: de facet staat niet in deze back-up</item>
+        <item quantity="other">%d regels overgeslagen: de facet staat niet in deze back-up</item>
+    </plurals>
+    <plurals name="backup_rules_skipped_unsupported">
+        <item quantity="one">%d regel overgeslagen: vereist een nieuwere versie van Facet</item>
+        <item quantity="other">%d regels overgeslagen: vereisen een nieuwere versie van Facet</item>
+    </plurals>
+    <plurals name="backup_rules_skipped_invalid">
+        <item quantity="one">%d regel overgeslagen: kon niet worden gelezen</item>
+        <item quantity="other">%d regels overgeslagen: konden niet worden gelezen</item>
+    </plurals>
+    <plurals name="backup_rules_need_permission">
+        <item quantity="one">%d regel heeft toestemming voor bluetooth of locatie nodig</item>
+        <item quantity="other">%d regels hebben toestemming voor bluetooth of locatie nodig</item>
+    </plurals>
+    <plurals name="backup_rules_paused">
+        <item quantity="one">%d regel is gepauzeerd in het gratis abonnement</item>
+        <item quantity="other">%d regels zijn gepauzeerd in het gratis abonnement</item>
+    </plurals>
+    <string name="backup_rules_not_in_backup">Deze back-up bevat geen automatiseringsregels: hij is gemaakt voordat Facet ze meenam.</string>
+    <string name="backup_rules_open_automation">Facetautomatisering openen</string>
     <string name="backup_restore_import_failed_invalid_file">Dat bestand is geen geldige Facet-back-up</string>
     <string name="backup_restore_import_failed_unsupported_version">Die back-up is gemaakt met een nieuwere versie van Facet</string>
     <string name="backup_restore_app_not_installed">App niet geïnstalleerd</string>
@@ -538,8 +564,6 @@
     <string name="permission_calendar_subtitle">Toont de evenementen van vandaag op de klok.</string>
     <string name="permission_contacts_title">Contacten</string>
     <string name="permission_contacts_subtitle">Laat het zoeken in de lade passende contacten tonen met snelle bel-, bericht- en WhatsApp-acties.</string>
-    <string name="permission_usage_access_title">Gebruikstoegang</string>
-    <string name="permission_usage_access_subtitle">Voedt de lijsten Recent en Meest gebruikt.</string>
     <string name="permission_notification_access_title">Toegang tot meldingen</string>
     <string name="permission_notification_access_subtitle">Toont een stip of aantalbadge op apps met actieve meldingen.</string>
     <string name="permission_bluetooth_title">Bluetooth</string>
@@ -593,12 +617,19 @@
     <string name="pro_hero_trigger_drive">Rijden</string>
     <string name="pro_add_facet">Een facet toevoegen</string>
     <string name="pro_restore">Aankopen herstellen</string>
-    <string name="pro_feature_facets_title">Meer facets</string>
-    <string name="pro_feature_facets_body">Gratis bevat er 3. Pro gaat tot 10. Elk krijgt eigen startschermapps en een eigen klok.</string>
-    <string name="pro_feature_triggers_title">Triggers voor wifi, Bluetooth, koptelefoon en batterij</string>
-    <string name="pro_feature_triggers_body">Maak verbinding met het kantoornetwerk of de auto, en het facet wisselt.</string>
-    <string name="pro_feature_widgets_title">Eigen widgets op het startscherm</string>
-    <string name="pro_feature_widgets_body">Vervang de klok door een willekeurige widget op je telefoon. Gratis bevat de eigen klokken van de launcher.</string>
+    <string name="pro_feature_facets_title">Tot 10 facets</string>
+    <string name="pro_feature_facets_body">Gratis bevat er 3. Elk facet heeft eigen startschermapps, een eigen dock, klok en look.</string>
+    <string name="pro_feature_automation_title">Alle triggers, onbeperkt regels</string>
+    <string name="pro_feature_automation_body">Wissel van facet bij wifi, Bluetooth, koptelefoon of batterij, niet alleen op schema. Gratis bevat 2 schemaregels.</string>
+    <string name="pro_feature_widget_stacks_title">Widgetstapels</string>
+    <string name="pro_feature_widget_stacks_body">Stapel tot 5 klokken en widgets op elk startscherm en swipe ertussen. Gratis heeft er één.</string>
+    <string name="pro_owned_automation_body">Wifi, Bluetooth, koptelefoon en batterij</string>
+    <string name="pro_owned_widget_stacks_body">Tot 5 per facet</string>
+    <string name="pro_owned_daily_wallpaper_body">Zet het aan bij Achtergrond</string>
+    <plurals name="pro_owned_facets_count">
+        <item quantity="one">Je hebt %d facet</item>
+        <item quantity="other">Je hebt %d facets</item>
+    </plurals>
     <string name="pro_feature_daily_wallpaper_title">Dagelijkse achtergrond</string>
     <string name="pro_feature_daily_wallpaper_body">Elke dag een nieuwe Bing- of Spotlight-foto op je beginscherm.</string>
     <string name="pro_feature_future_title">Toekomstige Pro-functies inbegrepen</string>
@@ -608,14 +639,6 @@
     <string name="pro_on_pro_title">Je hebt Pro</string>
     <string name="pro_on_pro_body">Ontgrendeld op elke telefoon die is aangemeld bij dit Google-account.</string>
     <string name="pro_unlocked">ONTGRENDELD</string>
-    <string name="pro_owned_facets_title">Meer facets</string>
-    <string name="pro_owned_facets_body">Tot 10 facets</string>
-    <string name="pro_owned_wifi_title">Wifitriggers</string>
-    <string name="pro_owned_wifi_body">Wisselen op een netwerk</string>
-    <string name="pro_owned_bluetooth_title">Bluetooth-triggers</string>
-    <string name="pro_owned_bluetooth_body">Wisselen op een apparaat</string>
-    <string name="pro_owned_more_title">Triggers voor koptelefoon en batterij</string>
-    <string name="pro_owned_more_body">Wisselen bij aansluiten of opladen</string>
     <string name="pro_card_headline">De complete Facet-ervaring, volledig ontgrendeld.</string>
     <string name="settings_pro_free_plan">Je hebt het gratis abonnement</string>
     <string name="pro_upgrade_to_pro">Upgraden naar Pro</string>
@@ -724,9 +747,6 @@
 
     <string name="open_settings">Instellingen openen</string>
 
-    <string name="usage_access_explanation_headline">Recent en Meest gebruikt tonen apps op basis van hoe je je telefoon echt gebruikt.</string>
-    <string name="usage_access_explanation_body">Hiervoor is gebruikstoegang nodig, een speciale machtiging die je via de systeeminstellingen geeft — Facet kan die niet zelf aanvragen. Het leest alleen welke apps je opent en hoe lang; er verlaat niets je apparaat.</string>
-
     <string name="notification_access_explanation_headline">Meldingsbadges tonen een stip of aantal op apps waar iets op je wacht, en de mediaspeler toont wat er wordt afgespeeld.</string>
     <string name="notification_access_explanation_body">Hiervoor is toegang tot meldingen nodig, een speciale machtiging die je via de systeeminstellingen geeft — Facet kan die niet zelf aanvragen. Het leest alleen welke apps actieve meldingen hebben en of die stil zijn, plus de titel, artiest en hoes van de media die wordt afgespeeld; er verlaat niets je apparaat.</string>
 
@@ -795,7 +815,6 @@
     <string name="drawer_search_section_recent_changes">RECENT GEÏNSTALLEERD OF BIJGEWERKT</string>
     <string name="drawer_search_section_frequent">VAAK GEBRUIKT</string>
     <string name="drawer_search_section_last_used">LAATST GEBRUIKT</string>
-    <string name="drawer_search_usage_access_needed">Vaak en laatst gebruikte apps hebben toegang tot gebruiksgegevens nodig in de systeeminstellingen.</string>
     <string name="drawer_contacts_access_needed">Voor het zoeken naar contacten is toegang nodig via de systeeminstellingen.</string>
     <string name="drawer_contacts_search_off">Zoeken naar contacten staat uit in de instellingen van de app-lade.</string>
     <string name="drawer_search_no_matches">Geen resultaten voor “%1$s”</string>
@@ -858,8 +877,6 @@
     <string name="facet_settings_appearance_home_icon_and_text">Home pictogram en tekst</string>
     <string name="facet_settings_appearance_home_text_only">Home alleen tekst</string>
     <string name="facet_settings_rename_explanation">Geef dit facet een nieuwe naam.</string>
-
-    <string name="home_usage_access_needed">Voor Meest gebruikt is gebruikstoegang nodig via de systeeminstellingen.</string>
 
     <string name="clock_style_font_label">Lettertype</string>
     <string name="clock_style_clock_section">KLOK</string>
@@ -1160,4 +1177,83 @@
     <string name="glass_style_accent">Accent</string>
     <string name="glass_style_theme">Thema</string>
     <string name="glass_style_theme_inverted">Thema omgekeerd</string>
+    <string name="home_usage_list_empty">Apps die je via Facet opent, verschijnen hier.</string>
+    <!-- Custom app icons -->
+    <string name="app_context_menu_change_icon">Pictogram van %1$s wijzigen</string>
+    <string name="change_icon_title">Pictogram wijzigen</string>
+    <string name="change_icon_source_default">Standaardpictogram</string>
+    <string name="change_icon_source_own">Eigen pictogram van de app</string>
+    <string name="change_icon_source_pack">Uit %1$s</string>
+    <string name="change_icon_in_your_packs">Deze app in je pictogrampakketten</string>
+    <string name="change_icon_own_option">Eigen</string>
+    <string name="change_icon_more_choices">Meer keuzes</string>
+    <string name="change_icon_browse_pack">%1$s doorbladeren</string>
+    <string name="change_icon_browse_pack_summary">Alle pictogrammen in dit pakket</string>
+    <string name="change_icon_reset">Standaard herstellen</string>
+    <string name="change_icon_no_packs">Installeer een pictogrampakket om uit de pictogrammen te kiezen.</string>
+    <string name="browse_pack_search">Pictogrammen zoeken</string>
+    <string name="browse_pack_all">Alle</string>
+    <string name="browse_pack_best_match">Beste overeenkomst voor %1$s</string>
+    <string name="browse_pack_no_results">Geen pictogrammen voor ‘%1$s’</string>
+    <string name="browse_pack_empty">Dit pakket heeft geen pictogrammen om te doorbladeren.</string>
+    <string name="custom_icons_title">Aangepaste pictogrammen</string>
+    <string name="custom_icons_reset">Herstellen</string>
+    <string name="custom_icons_reset_app">Pictogram van %1$s herstellen</string>
+    <string name="custom_icons_reset_all">Alle aangepaste pictogrammen herstellen</string>
+    <string name="custom_icons_reset_all_title">Alle aangepaste pictogrammen herstellen?</string>
+    <string name="custom_icons_reset_all_message">Elke app krijgt weer het pictogram van je pictogramstijl of -pakket.</string>
+    <string name="custom_icons_reset_all_confirm">Alles herstellen</string>
+    <string name="custom_icons_empty">Geen aangepaste pictogrammen. Houd een app ingedrukt en tik op het pictogram om het te wijzigen.</string>
+    <plurals name="custom_icons_app_count">
+        <item quantity="one">%d app</item>
+        <item quantity="other">%d apps</item>
+    </plurals>
+    <string name="drawer_search_app_vault">App-kluis</string>
+    <string name="vault_title">App-kluis</string>
+    <string name="vault_intro_hide">Verberg apps uit je appoverzicht, startscherm, dock, mappen en zoekopdrachten, in elke facet.</string>
+    <string name="vault_intro_hide_sub">Open ze hier met een pincode van 4 cijfers.</string>
+    <string name="vault_intro_limits">Verborgen apps zijn nog te zien in de systeeminstellingen, de Play Store en hun meldingen.</string>
+    <string name="vault_intro_private_space">Om apps en meldingen te verbergen en te pauzeren, gebruik je Privéruimte of Beveiligde map als je telefoon die heeft.</string>
+    <string name="vault_intro_no_screen_lock">Deze telefoon heeft geen schermvergrendeling, dus een vergeten pincode los je alleen op door de kluis uit te zetten.</string>
+    <string name="vault_set_pin">Pincode instellen</string>
+    <string name="vault_create_pin_title">Maak een pincode</string>
+    <string name="vault_create_pin_sub">Kies 4 cijfers om de kluis te openen.</string>
+    <string name="vault_confirm_pin_title">Bevestig je pincode</string>
+    <string name="vault_confirm_pin_sub">Voer hem nog een keer in.</string>
+    <string name="vault_pins_mismatch">De pincodes komen niet overeen. Voer een nieuwe pincode in.</string>
+    <string name="vault_enter_pin">Voer je pincode in</string>
+    <string name="vault_locked_out">Te veel pogingen. Probeer het over %1$s opnieuw</string>
+    <string name="vault_forgot_pin">Pincode vergeten?</string>
+    <string name="vault_backspace">Laatste cijfer wissen</string>
+    <string name="vault_add_apps">Apps toevoegen</string>
+    <string name="vault_add_to_vault_title">Toevoegen aan kluis</string>
+    <string name="vault_picker_chosen">Gekozen</string>
+    <string name="vault_empty">Nog geen verborgen apps</string>
+    <string name="vault_empty_hint">Apps die je hier toevoegt, verdwijnen uit je appoverzicht, startscherm en zoekopdrachten.</string>
+    <string name="vault_more_options">Meer opties</string>
+    <string name="vault_app_menu">Opties voor %1$s</string>
+    <string name="vault_app_info">App-info</string>
+    <string name="vault_remove">Uit kluis halen</string>
+    <string name="vault_removed">%1$s staat weer in je appoverzicht</string>
+    <string name="vault_undo">Ongedaan maken</string>
+    <string name="vault_change_pin">Pincode wijzigen</string>
+    <string name="vault_turn_off">App-kluis uitzetten</string>
+    <string name="vault_turn_off_title">App-kluis uitzetten?</string>
+    <string name="vault_turn_off_message">Alle verborgen apps komen terug in je appoverzicht en de pincode wordt verwijderd.</string>
+    <string name="vault_turn_off_confirm">Uitzetten</string>
+    <string name="vault_reset_title">App-kluis resetten?</string>
+    <string name="vault_reset_message">Deze telefoon heeft geen schermvergrendeling om te bevestigen dat jij het bent, dus een vergeten pincode kun je alleen wissen door de kluis uit te zetten. Alle verborgen apps komen terug in je appoverzicht.</string>
+    <string name="vault_reset_confirm">Resetten</string>
+    <string name="vault_move_title">Naar de kluis verplaatsen?</string>
+    <string name="vault_move_confirm">Naar kluis</string>
+    <string name="vault_confirm_credential_title">Bevestig dat jij het bent</string>
+    <string name="vault_confirm_credential_message">Gebruik de schermvergrendeling van je telefoon om een nieuwe kluispincode te kiezen.</string>
+    <plurals name="vault_wrong_pin">
+        <item quantity="one">Onjuiste pincode. Nog %1$d poging voor een pauze.</item>
+        <item quantity="other">Onjuiste pincode. Nog %1$d pogingen voor een pauze.</item>
+    </plurals>
+    <plurals name="vault_move_message">
+        <item quantity="one">%1$d van de gekozen apps staat op het startscherm of in een map. Hij wordt in elke facet verwijderd uit Favorieten, de dock en mappen.</item>
+        <item quantity="other">%1$d van de gekozen apps staan op het startscherm of in mappen. Ze worden in elke facet verwijderd uit Favorieten, de dock en mappen.</item>
+    </plurals>
 </resources>

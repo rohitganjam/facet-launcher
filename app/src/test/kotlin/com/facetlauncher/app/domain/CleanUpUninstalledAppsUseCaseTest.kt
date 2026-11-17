@@ -2,7 +2,10 @@ package com.facetlauncher.app.domain
 
 import android.os.UserHandle
 import com.facetlauncher.app.data.AppRepository
+import com.facetlauncher.app.data.AppVaultRepository
 import com.facetlauncher.app.data.FolderRepository
+import com.facetlauncher.app.data.IconOverrideRepository
+import com.facetlauncher.app.data.LaunchHistoryRepository
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runTest
@@ -10,6 +13,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.verify
+import org.mockito.Mockito.verifyNoInteractions
 import org.mockito.Mockito.`when`
 import org.robolectric.RobolectricTestRunner
 import com.facetlauncher.app.data.PlacementRepository
@@ -26,6 +30,9 @@ class CleanUpUninstalledAppsUseCaseTest {
         val profileRemovals = MutableSharedFlow<UserHandle>(replay = 1)
         val placementRepository: PlacementRepository = mock(PlacementRepository::class.java)
         val folderRepository: FolderRepository = mock(FolderRepository::class.java)
+        val launchHistoryRepository: LaunchHistoryRepository = mock(LaunchHistoryRepository::class.java)
+        val iconOverrideRepository: IconOverrideRepository = mock(IconOverrideRepository::class.java)
+        val appVaultRepository: AppVaultRepository = mock(AppVaultRepository::class.java)
 
         init {
             `when`(appRepository.observeUninstalledPackages()).thenReturn(uninstalls)
@@ -33,12 +40,12 @@ class CleanUpUninstalledAppsUseCaseTest {
         }
 
         fun useCase() = CleanUpUninstalledAppsUseCase(
-            appRepository, placementRepository, folderRepository,
+            appRepository, placementRepository, folderRepository, launchHistoryRepository, iconOverrideRepository, appVaultRepository,
         )
     }
 
     @Test
-    fun `deletes the uninstalled package's dock, favorite, and folder-membership rows outright, scoped to its real userId`() = runTest {
+    fun `deletes the uninstalled package's dock, favorite, folder-membership, launch-history and custom-icon rows outright, scoped to its real userId`() = runTest {
         // Given a live uninstall-event stream and mocked Dock/Favorite/Folder repositories
         val fixture = Fixture()
         val useCase = fixture.useCase()
@@ -55,6 +62,8 @@ class CleanUpUninstalledAppsUseCaseTest {
         // second profile sharing the same display category (e.g. a clone profile also OTHER).
         verify(fixture.placementRepository).removeByPackage("com.example.removed", 10)
         verify(fixture.folderRepository).removeByPackage("com.example.removed", 10)
+        verify(fixture.launchHistoryRepository).removeByPackage("com.example.removed", 10)
+        verify(fixture.iconOverrideRepository).removeByPackage("com.example.removed", 10)
         job.cancel()
     }
 
@@ -73,6 +82,36 @@ class CleanUpUninstalledAppsUseCaseTest {
         // Then every repository bulk-drops rows for exactly that handle's userId directly
         verify(fixture.placementRepository).removeByUserId(removedHandle.hashCode())
         verify(fixture.folderRepository).removeByUserId(removedHandle.hashCode())
+        verify(fixture.launchHistoryRepository).removeByUserId(removedHandle.hashCode())
+        verify(fixture.iconOverrideRepository).removeByUserId(removedHandle.hashCode())
+        job.cancel()
+    }
+
+    @Test
+    fun `an uninstalled app stays in the vault so a reinstall stays hidden`() = runTest {
+        // Given the use case running
+        val fixture = Fixture()
+        val job = launch { fixture.useCase()() }
+
+        // When a package is uninstalled
+        fixture.uninstalls.emit("com.example.secret" to 0)
+        testScheduler.advanceUntilIdle()
+
+        // Then the vault is not touched
+        verifyNoInteractions(fixture.appVaultRepository)
+        job.cancel()
+    }
+
+    @Test
+    fun `a removed profile drops its vaulted apps`() = runTest {
+        val fixture = Fixture()
+        val job = launch { fixture.useCase()() }
+        val removedHandle = mock(UserHandle::class.java)
+
+        fixture.profileRemovals.emit(removedHandle)
+        testScheduler.advanceUntilIdle()
+
+        verify(fixture.appVaultRepository).removeByUserId(removedHandle.hashCode())
         job.cancel()
     }
 }

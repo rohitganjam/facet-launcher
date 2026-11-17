@@ -1,5 +1,6 @@
 package com.facetlauncher.app.domain
 
+import com.facetlauncher.app.data.model.BackupBundle
 import com.facetlauncher.app.data.model.BackupFacet
 import com.facetlauncher.app.data.model.BackupSettings
 import com.facetlauncher.app.data.model.Facet
@@ -7,6 +8,8 @@ import com.facetlauncher.app.data.model.LauncherSettings
 import java.lang.reflect.Modifier
 import org.junit.Assert.assertEquals
 import org.junit.Test
+import com.facetlauncher.app.data.local.AutomationRuleEntity
+import com.facetlauncher.app.data.model.BackupAutomationRule
 
 /**
  * Fails when a field is added to [Facet] or [LauncherSettings] without either exporting it in the
@@ -16,6 +19,17 @@ class BackupCoverageTest {
 
     private fun fieldNames(type: Class<*>): Set<String> =
         type.declaredFields.filterNot { it.isSynthetic || Modifier.isStatic(it.modifiers) }.map { it.name }.toSet()
+
+    @Test
+    fun `the App Vault is never part of a backup`() {
+        // Given every class a backup file is made of
+        val backupClasses = listOf(BackupBundle::class.java, BackupSettings::class.java, BackupFacet::class.java)
+
+        // Then none of them carries a vault field (the vault stays on the phone, in the excluded facet_vault store)
+        backupClasses.forEach { type ->
+            assertEquals(type.simpleName, emptySet<String>(), fieldNames(type).filter { it.contains("vault", ignoreCase = true) }.toSet())
+        }
+    }
 
     @Test
     fun `every facet field is exported or deliberately left out`() {
@@ -71,6 +85,26 @@ class BackupCoverageTest {
         // The swipe switches of older versions are still written for them and read from older backups
         val legacySwipeFields = setOf("swipeLeftEnabled", "swipeRightEnabled", "swipeDownEnabled", "swapSwipeSides")
         val exported = fieldNames(BackupSettings::class.java) - "activeFacetIndex" - legacyClockFields - legacySwipeFields
+
+        // Then the backup holds exactly those
+        assertEquals(expected, exported)
+    }
+
+    @Test
+    fun `every automation rule column is exported or deliberately left out`() {
+        // Given the columns a rule row holds, minus those a backup cannot or should not carry
+        val notBackedUp = setOf(
+            "id", // a Room row id is not portable
+            "position", // the backup's list order is the rule order
+        )
+        // Facets are referenced by UUID, not row id, and the device fields carry the trigger's name
+        val renamed = mapOf(
+            "targetFacetId" to "targetFacetUuid", "endFacetId" to "endFacetUuid",
+            "deviceAddress" to "bluetoothAddress", "deviceName" to "bluetoothName",
+        )
+        val expected = (fieldNames(AutomationRuleEntity::class.java) - notBackedUp).map { renamed[it] ?: it }.toSet()
+        // A battery rule's charging state is stored in the row's negated column; the backup names it
+        val exported = fieldNames(BackupAutomationRule::class.java) - "batteryWhileCharging"
 
         // Then the backup holds exactly those
         assertEquals(expected, exported)

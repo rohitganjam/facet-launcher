@@ -46,6 +46,11 @@ import com.facetlauncher.app.ui.settings.AppDrawerSettingsScreen
 import com.facetlauncher.app.ui.settings.AppearanceSettingsScreen
 import com.facetlauncher.app.ui.settings.DockSettingsScreen
 import com.facetlauncher.app.ui.settings.FontsScreen
+import androidx.compose.ui.platform.LocalContext
+import com.facetlauncher.app.ui.appicon.AppIconEditorViewModel
+import com.facetlauncher.app.ui.appicon.CustomIconsScreen
+import com.facetlauncher.app.ui.appicon.LocalAppIconEditor
+import com.facetlauncher.app.ui.settings.openIconPackSearch
 import com.facetlauncher.app.ui.settings.IconsScreen
 import com.facetlauncher.app.ui.settings.ThemesAndColorsScreen
 import com.facetlauncher.app.ui.settings.FolderAppPickerScreen
@@ -61,7 +66,6 @@ import com.facetlauncher.app.ui.settings.UnitsAndLocationScreen
 import com.facetlauncher.app.ui.settings.WeatherLocationScreen
 import com.facetlauncher.app.ui.settings.PermissionsScreen
 import com.facetlauncher.app.ui.settings.SettingsScreen
-import com.facetlauncher.app.ui.settings.UsageAccessExplanationScreen
 import com.facetlauncher.app.ui.settings.WallpaperScreen
 import com.facetlauncher.app.ui.settings.WhatsNewScreen
 import com.facetlauncher.app.ui.settings.automation.FacetAutomationScreen
@@ -81,7 +85,6 @@ object FacetDestinations {
     const val FACET_PRO = "facetPro/{reason}"
     const val FACET_SETTINGS = "facetSettings/{facetId}"
     const val FAVORITES_PICKER = "favoritesPicker?facetId={facetId}"
-    const val USAGE_ACCESS_EXPLANATION = "usageAccessExplanation"
     const val PERMISSIONS = "permissions"
     const val GESTURES = "gestures"
     const val ACCESSIBILITY_ACCESS_EXPLANATION = "accessibilityAccessExplanation"
@@ -99,6 +102,7 @@ object FacetDestinations {
     const val THEMES_AND_COLORS = "themesAndColors"
     const val FONTS = "fonts"
     const val ICONS = "icons"
+    const val CUSTOM_ICONS = "customIcons"
     const val WALLPAPER = "wallpaper"
     const val WALLPAPER_CAPTURE = "wallpaperCapture"
     const val DOCK_SETTINGS = "dockSettings?facetId={facetId}"
@@ -208,31 +212,30 @@ fun FacetNavHost(
             predictivePopExitTransition = { slideOutHorizontally(targetOffsetX = { it }, animationSpec = animationSpec) },
         ) {
             composable(FacetDestinations.HOME) {
-                HomeDrawerRoute(
-                    apps = apps,
-                    onAppClick = onAppClick,
-                    onNavigateToSettings = { navController.navigate(FacetDestinations.SETTINGS) },
-                    onNavigateToFacetSettings = { facetId -> navController.navigate(FacetDestinations.facetSettings(facetId)) },
-                    onNavigateToManageFacets = { navController.navigate(FacetDestinations.FACET_MANAGE) },
-                    onNavigateToFacetPro = { reason -> navController.navigate(FacetDestinations.facetPro(reason)) },
-                    onNavigateToUsageAccessExplanation = {
-                        navController.navigate(FacetDestinations.USAGE_ACCESS_EXPLANATION)
-                    },
-                    onNavigateToNotificationAccessExplanation = {
-                        navController.navigate(FacetDestinations.NOTIFICATION_ACCESS_EXPLANATION)
-                    },
-                    onNavigateToUnitsAndLocation = { navController.navigate(FacetDestinations.UNITS_AND_LOCATION) },
-                    onNavigateToClockAccessories = { facetId -> navController.navigate(FacetDestinations.clockAccessories(facetId)) },
-                    onNavigateToPermissions = { navController.navigate(FacetDestinations.PERMISSIONS) },
-                    onNavigateToWhatsNew = { navController.navigate(FacetDestinations.WHATS_NEW) },
-                    onNavigateToWallpaper = { navController.navigate(FacetDestinations.WALLPAPER) },
-                    onNavigateToClockStyle = { facetId -> navController.navigate(FacetDestinations.facetClockStyleGallery(facetId)) },
-                    onNavigateToClockStack = { navController.navigate(FacetDestinations.clockStack()) },
-                    launcherViewModel = launcherViewModel,
-                )
-            }
-            settingsComposable(FacetDestinations.USAGE_ACCESS_EXPLANATION) {
-                UsageAccessExplanationScreen(onBack = { navController.popBackStackSafely() })
+                val context = LocalContext.current
+                val appIconEditorViewModel: AppIconEditorViewModel = hiltViewModel()
+                val appIconEditor = remember(appIconEditorViewModel) { appIconEditorViewModel.editor(onFindPacks = { openIconPackSearch(context) }) }
+                CompositionLocalProvider(LocalAppIconEditor provides appIconEditor) {
+                    HomeDrawerRoute(
+                        apps = apps,
+                        onAppClick = onAppClick,
+                        onNavigateToSettings = { navController.navigate(FacetDestinations.SETTINGS) },
+                        onNavigateToFacetSettings = { facetId -> navController.navigate(FacetDestinations.facetSettings(facetId)) },
+                        onNavigateToManageFacets = { navController.navigate(FacetDestinations.FACET_MANAGE) },
+                        onNavigateToFacetPro = { reason -> navController.navigate(FacetDestinations.facetPro(reason)) },
+                        onNavigateToNotificationAccessExplanation = {
+                            navController.navigate(FacetDestinations.NOTIFICATION_ACCESS_EXPLANATION)
+                        },
+                        onNavigateToUnitsAndLocation = { navController.navigate(FacetDestinations.UNITS_AND_LOCATION) },
+                        onNavigateToClockAccessories = { facetId -> navController.navigate(FacetDestinations.clockAccessories(facetId)) },
+                        onNavigateToPermissions = { navController.navigate(FacetDestinations.PERMISSIONS) },
+                        onNavigateToWhatsNew = { navController.navigate(FacetDestinations.WHATS_NEW) },
+                        onNavigateToWallpaper = { navController.navigate(FacetDestinations.WALLPAPER) },
+                        onNavigateToClockStyle = { facetId -> navController.navigate(FacetDestinations.facetClockStyleGallery(facetId)) },
+                        onNavigateToClockStack = { navController.navigate(FacetDestinations.clockStack()) },
+                        launcherViewModel = launcherViewModel,
+                    )
+                }
             }
             settingsComposable(FacetDestinations.SETTINGS) {
                 SettingsScreen(
@@ -288,7 +291,10 @@ fun FacetNavHost(
                 LicenseTextScreen(onBack = { navController.popBackStackSafely() })
             }
             settingsComposable(FacetDestinations.BACKUP_RESTORE) {
-                BackupRestoreScreen(onBack = { navController.popBackStackSafely() })
+                BackupRestoreScreen(
+                    onBack = { navController.popBackStackSafely() },
+                    onOpenFacetAutomation = { navController.navigate(FacetDestinations.FACET_AUTOMATION) },
+                )
             }
             settingsComposable(FacetDestinations.WHATS_NEW) {
                 WhatsNewScreen(onBack = { navController.popBackStackSafely() })
@@ -335,7 +341,13 @@ fun FacetNavHost(
                 FontsScreen(onBack = { navController.popBackStackSafely() })
             }
             settingsComposable(FacetDestinations.ICONS) {
-                IconsScreen(onBack = { navController.popBackStackSafely() })
+                IconsScreen(
+                    onBack = { navController.popBackStackSafely() },
+                    onOpenCustomIcons = { navController.navigate(FacetDestinations.CUSTOM_ICONS) },
+                )
+            }
+            settingsComposable(FacetDestinations.CUSTOM_ICONS) {
+                CustomIconsScreen(onBack = { navController.popBackStackSafely() })
             }
             settingsComposable(
                 FacetDestinations.DOCK_SETTINGS,
@@ -373,7 +385,6 @@ fun FacetNavHost(
             settingsComposable(FacetDestinations.PERMISSIONS) {
                 PermissionsScreen(
                     onBack = { navController.popBackStackSafely() },
-                    onNavigateToUsageAccessExplanation = { navController.navigate(FacetDestinations.USAGE_ACCESS_EXPLANATION) },
                     onNavigateToNotificationAccessExplanation = {
                         navController.navigate(FacetDestinations.NOTIFICATION_ACCESS_EXPLANATION)
                     },
@@ -426,7 +437,6 @@ fun FacetNavHost(
             ) {
                 FolderAppPickerScreen(
                     onDone = { navController.popBackStackSafely() },
-                    onNavigateToUsageAccessExplanation = { navController.navigate(FacetDestinations.USAGE_ACCESS_EXPLANATION) },
                 )
             }
             settingsComposable(
@@ -435,7 +445,6 @@ fun FacetNavHost(
             ) {
                 DockAppPickerScreen(
                     onDone = { navController.popBackStackSafely() },
-                    onNavigateToUsageAccessExplanation = { navController.navigate(FacetDestinations.USAGE_ACCESS_EXPLANATION) },
                 )
             }
             settingsComposable(FacetDestinations.FACET_AUTOMATION) {
@@ -494,7 +503,6 @@ fun FacetNavHost(
             ) {
                 FavoritesPickerScreen(
                     onDone = { navController.popBackStackSafely() },
-                    onNavigateToUsageAccessExplanation = { navController.navigate(FacetDestinations.USAGE_ACCESS_EXPLANATION) },
                 )
             }
         }

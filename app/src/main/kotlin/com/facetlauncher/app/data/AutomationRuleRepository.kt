@@ -61,4 +61,13 @@ class AutomationRuleRepository @Inject constructor(
     suspend fun setEnabled(ruleId: Long, enabled: Boolean) = dao.setEnabled(ruleId, enabled)
 
     suspend fun delete(ruleId: Long) = dao.deleteById(ruleId)
+
+    /**
+     * Backup restore: replaces every rule with [rules], in order. Unlike [save] there is no plan limit here (the free plan
+     * pauses extra rules, never deletes them); the caller has already validated the rules and resolved their facets.
+     */
+    suspend fun replaceAll(rules: List<AutomationRule>) {
+        dao.deleteAll()
+        dao.insertAll(rules.mapIndexed { position, rule -> rule.copy(id = 0).toEntity(position) })
+    }
 }

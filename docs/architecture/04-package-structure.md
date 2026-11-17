@@ -8,27 +8,28 @@ app/src/main/kotlin/com/facetlauncher/app/
 ├── FacetApplication.kt            @HiltAndroidApp
 ├── LauncherActivity.kt            @AndroidEntryPoint — the only Activity; composition root
 │
-├── data/                          (62)  @Singleton Repositories — the only layer that touches
+├── data/                          (63)  @Singleton Repositories — the only layer that touches
 │   │                                    Room, DataStore, or Android framework services
 │   ├── di/                        (9)   Hilt modules: AppModule (also the @ApplicationScope qualifier), DatabaseModule, DataStoreModule, DispatcherModule (@IoDispatcher / @DefaultDispatcher), WidgetModule, EntitlementModule, WeatherModule + the @AutomationDataStore and @EntitlementDataStore qualifiers
 │   ├── icon/                      (4)   The glyph-only and outline icon pictures: IconMasks and IconStyler (pure pixel code), IconLayers (reads an app's themed monochrome layer), StyledIconCache (makes them on demand, off the main thread)
-│   ├── iconpack/                  (3)   Installed icon packs: AppFilter (reads appfilter.xml, asset or resource), IconPackIcons + ResourceIconPack (a pack's icons and its themed fallback, ≤256px), IconPackRepository (finds packs, loads and caches them)
-│   ├── local/                     (24)  Room: FacetDatabase, 10 entities in 9 files (WeatherEntities.kt holds two), 8 DAOs, Converters, Migrations (+ ClockConfigMigration and FacetDefaultsMigration, the DataStore reads three migrations need), FacetMapping, PlacementCells
+│   ├── iconpack/                  (4)   Installed icon packs: AppFilter (reads appfilter.xml, asset or resource), IconPackIcons + ResourceIconPack (a pack's icons and its themed fallback, ≤256px), IconPackRepository (finds packs, loads and caches them, and one app's icon or a pack's catalog for custom icons), PackCatalog (reads drawable.xml for browsing)
+│   ├── local/                     (28)  Room: FacetDatabase, 14 entities in 11 files (WeatherEntities.kt holds two, LaunchHistoryEntities.kt three), 10 DAOs, Converters, Migrations (+ ClockConfigMigration and FacetDefaultsMigration, the DataStore reads three migrations need), FacetMapping, PlacementCells
 │   ├── places/                    (4)   Place names and cities: CityRepository over the bundled CityList (assets/cities.tsv), PlaceGeocoder + AndroidPlaceGeocoder (the device Geocoder), GeoDistance
 │   ├── weather/                   (7)   The weather forecast: MetWeatherApi (the only network code), MetForecastParser, WeatherRefreshPolicy (the refresh gate), WeatherRepository, WidgetWeatherRepository (a Weather widget's own forecast), WeatherStore + RoomWeatherStore (see 18)
-│   ├── model/                     (63)  Immutable value types & enums shared by every layer
+│   ├── model/                     (64)  Immutable value types & enums shared by every layer
 │   │                                    (AppInfo, PlacedItem, PlacementList, PlacementTarget, LauncherSettings, AppProfile, Clock*Option,
 │   │                                    FacetDeepLink's build/parse pair, …)
 │   ├── widget/                    (3)   AppWidgetRepository + LauncherAppWidgetHost (AppWidgetHost subclass) + WidgetConfigureActivity (invisible trampoline that opens a widget's configure activity)
 │   └── FacetNotificationListenerService.kt   @AndroidEntryPoint service feeding NotificationBadgeRepository (its component is also what MediaSessionRepository reads sessions through)
 │
-├── domain/                        (92)  77 *UseCase classes in 75 files (NativeWidgetConfigUseCases.kt and LandscapeWidgetOrder.kt hold two each) + 17 helper files: FlowCombine, ScreenCover, HubGridConstants, NativeWidgetSizing, NativeWidgetOverrideResolver, BackupMapping, BackupUpgrade, ClockConfigResolution, ResolvedFacetStyle, HomePlacement, HomeGridPlacement, WeatherUnits, WeatherDay, WeatherCondition, RainSummary, PortraitCrop, DailyWallpaperCoordinator
+├── domain/                        (98)  82 *UseCase classes in 80 files (NativeWidgetConfigUseCases.kt and LandscapeWidgetOrder.kt hold two each) + 18 helper files: FlowCombine, ScreenCover, HubGridConstants, NativeWidgetSizing, NativeWidgetOverrideResolver, BackupMapping, BackupUpgrade, AutomationRuleBackupMapping, ClockConfigResolution, ResolvedFacetStyle, HomePlacement, HomeGridPlacement, WeatherUnits, WeatherDay, WeatherCondition, RainSummary, PortraitCrop, DailyWallpaperCoordinator
 │                                        Composes ≥1 repositories, or pure logic (grid placement, ranking, grouping)
 │
 └── ui/
     ├── theme/                     (12)  Color, Type, Theme, SettingsTypography, Motion, ClockFonts/Colors, ClockAlignment, AccentSwatch, ThemeLocals,
     │                                    PrivateSpaceTheme, SystemBars (status/nav icon color) — design tokens; FacetLauncherTheme wrapper
-    ├── pro/                       (6)   FacetProScreen (before purchase) / FacetProUnlocked (after) / FacetProViewModel, ProComponents (ink panel, PRO mark, facet fans, trigger pills, gradient button), ProSettingsCard (Settings), previews
+    ├── pro/                       (7)   FacetProScreen (before purchase) / FacetProUnlocked (after) / FacetProViewModel, ProFeature (the rows both screens list), ProComponents (ink panel, PRO mark, facet fans, trigger pills, gradient button), ProSettingsCard (Settings), previews
+    ├── appicon/                   (7)   Custom app icons ([22](22-flow-custom-icons.md)): AppIconEditor (+ LocalAppIconEditor) / AppIconEditorViewModel, ChangeIconPage and BrowsePackPage (pages of the app menu), CustomIconsScreen / CustomIconsViewModel (Settings → Icons → Custom icons)
     ├── components/                (63)  Reusable, screen-agnostic composables (AppIcon, ConfirmDialog,
     │                                    DragReorderState, HomeSurfacePreview, ThemedDropdownMenu, ThemedModalBottomSheet, DismissOnHomePress,
     │                                    AppPickerScreen, FolderContentsSheet, the settings kit — SettingsCard,
@@ -47,6 +48,7 @@ app/src/main/kotlin/com/facetlauncher/app/
     │   ├── weather/               (11)  The weather sheet over Home: WeatherSheet (+ WeatherSheetParts, RainSummaryText), WeatherViewModel, ClockWeatherAccessoryState, and the formatting and icon helpers (WeatherFormat, WeatherConditionText, WeatherIconKind, WeatherIconColors, WeatherCompass, WindArrow)
     │   ├── stack/                 (2)   ClockStackScreen / ClockStackViewModel (the clock stack: reorder, Add, remove, per-page size)
     │   └── widget/                (3)   ClockWidgetPickerScreen / ClockWidgetPickerViewModel / ClockWidgetPickerTarget (custom clock widget bind flow; Replace a page or Add one)
+    ├── vault/                     (2)   AppVaultScreen (stateless: intro, PIN pad, list, Add apps picker), AppVaultViewModel — the App Vault; its overlay is `launcher/HomeAppVaultOverlay`
     ├── drawer/                    (14)  AppDrawerScreen / DrawerViewModel, AlphabetRail, ContactConnectionsSheet,
     │                                    PrivateSpaceScreen / PrivateSpaceViewModel; the drawer's own parts: DrawerBrowseModel (the browse list,
     │                                    built in composition), DrawerListUseCases (the use cases it is handed), DrawerParams, DrawerTab,
@@ -58,7 +60,7 @@ app/src/main/kotlin/com/facetlauncher/app/
     ├── facets/                    (9)   FacetCarousel, FacetSettings, ManageFacets, FavoritesPicker (screen + VM each)
     ├── dock/                      (2)   DockAppPickerScreen / DockAppPickerViewModel
     ├── onboarding/                (10)  OnboardingScreen / ViewModel / UiState + 5 pages (Intro, HomeSetup, DrawerSetup, Facets, Notifications), dots, SetDefaultLauncherSheet
-    └── settings/                  (63)  24 `*Screen.kt` and 22 `*ViewModel.kt` — most settings screens are an `XScreen.kt` + `XViewModel.kt` pair; Appearance is a hub of four screens (`AppearanceSettingsScreen`, `ThemesAndColorsScreen`, `FontsScreen`, `IconsScreen`) sharing `AppearanceSettingsViewModel` (`IconsScreen` adds `IconsViewModel` for its style and icon pack cards) and the `AppearancePreviewCard` wrapper (`AppearancePreview.kt`) over `ui/home/ScaledHomeScreen`
+    └── settings/                  (67)  25 `*Screen.kt` and 23 `*ViewModel.kt` — most settings screens are an `XScreen.kt` + `XViewModel.kt` pair; Appearance is a hub of four screens (`AppearanceSettingsScreen`, `ThemesAndColorsScreen`, `FontsScreen`, `IconsScreen`) sharing `AppearanceSettingsViewModel` (`IconsScreen` adds `IconsViewModel` for its style and icon pack cards) and the `AppearancePreviewCard` wrapper (`AppearancePreview.kt`) over `ui/home/ScaledHomeScreen`
         ├── automation/            (13)  Facet automation: FacetAutomationScreen / ViewModel (rule list), AutomationStrips, RuleEditorSheet / ViewModel / State (draft rule, permission gate), ScheduleFields, TriggerFields, EditorControls, UpgradeSheet, ProPill, PermissionRequest, formatting, previews (`ProPill` lives in `components/`; the Facet Pro screen they open is in `pro/`)
         └── backup/                (3)   BackupRestoreScreen / ViewModel / UiState
 ```
@@ -91,21 +93,21 @@ Both test source sets mirror `main`'s packages; the class under test and its tes
 
 ```
 app/src/test/kotlin/com/facetlauncher/app/          JVM (JUnit4 + Robolectric + coroutines-test)
-├── data/          51   one *RepositoryTest for most repositories (46 test classes) + shared fakes (FolderTestFakes.kt — FakeFolderDao, FakeAppPlacementDao, FakeFolderPlacementDao, …)
+├── data/          52   one *RepositoryTest for most repositories (46 test classes) + shared fakes (FolderTestFakes.kt — FakeFolderDao, FakeAppPlacementDao, FakeFolderPlacementDao, …)
 │   ├── icon/       3   IconMasksTest, IconStylerTest (JVM, no Android), StyledIconCacheTest (Robolectric)
-│   ├── iconpack/   2   AppFilterTest (pull parser and text scan must agree), IconPackRepositoryTest (pack discovery, clearing an uninstalled pack)
+│   ├── iconpack/   3   AppFilterTest (pull parser and text scan must agree), IconPackRepositoryTest (pack discovery, clearing an uninstalled pack), PackCatalogTest (both drawable.xml readers, search, appfilter fallback)
 │   ├── local/      8   Converters, entities, DAO-level behaviour via in-memory Room (AppPlacementDaoTest, FolderPlacementDaoTest, FolderDaoTest, FacetDaoTest, AutomationRuleDaoTest, …)
-│   ├── model/     19   FacetLimitsTest, FacetDeepLinkTest (build/parse round-trip + rejection cases), AutomationStateTest, AutomationTriggerTest (schedule windows and battery levels), AutomationRuleValidationTest, AutomationLimitsTest, DeviceStateTest (every trigger's truth)
+│   ├── model/     20   IconOverrideTest (matching custom icons to apps), FacetLimitsTest, FacetDeepLinkTest (build/parse round-trip + rejection cases), AutomationStateTest, AutomationTriggerTest (schedule windows and battery levels), AutomationRuleValidationTest, AutomationLimitsTest, DeviceStateTest (every trigger's truth)
 │   ├── places/     3
 │   ├── weather/    6
 │   └── widget/     2
 ├── domain/        76   one test class per use case or helper, for most (pure logic — no Android needed for most; the ones without are listed in 06 §5)
-└── ui/            88   ViewModel tests (dock, drawer, facets, home, hub, launcher, onboarding, settings×9, settings/automation, settings/backup, theme) the rule editor state/formatting tests, and `ClockWidgetTouchGateTest` (Robolectric, raw `MotionEvent`s)
+└── ui/            98   ViewModel tests (dock, drawer, facets, home, hub, launcher, onboarding, pro, settings×9, settings/automation, settings/backup, theme) the rule editor state/formatting tests, and `ClockWidgetTouchGateTest` (Robolectric, raw `MotionEvent`s)
 
 app/src/androidTest/kotlin/com/facetlauncher/app/   Instrumented (Compose UI tests, AVD only)
 ├── data/           2   MediaSessionRepositoryTest + InstalledAppsTestSupport
 ├── data/local/     1   FacetDatabaseMigrationTest (MigrationTestHelper over app/schemas)
-└── ui/           104   one *ScreenTest per screen + component/route/theme tests (settings/automation: FacetAutomationScreenTest, RuleEditorSheetTest) and shared fakes
+└── ui/           105   one *ScreenTest per screen (appicon: CustomIconsScreenTest) + component/route/theme tests (settings/automation: FacetAutomationScreenTest, RuleEditorSheetTest) and shared fakes
 ```
 
 Rule of thumb from `CLAUDE.md`, and what the tree shows in practice: everything in `data/` and

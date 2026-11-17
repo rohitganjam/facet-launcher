@@ -571,4 +571,5 @@ private const val PREVIEW_WIDTH_FRACTION = 0.5f
 private const val PREVIEW_WIDE_WIDTH_FRACTION = 0.32f
 private const val PREVIEW_MIN_ASPECT = 0.4f
 private const val PREVIEW_MAX_ASPECT = 2.2f
+private const val HINT_ALPHA = 0.28f
 private const val CREDIT_SCRIM_ALPHA = 0.45f

@@ -8,6 +8,7 @@ import com.facetlauncher.app.data.AppStoreRepository
 import com.facetlauncher.app.data.ContactPermissionRepository
 import com.facetlauncher.app.data.ContactRepository
 import com.facetlauncher.app.data.FolderRepository
+import com.facetlauncher.app.data.LaunchHistoryRepository
 import com.facetlauncher.app.data.SecureFolderRepository
 import com.facetlauncher.app.data.NotificationActionController
 import com.facetlauncher.app.data.NotificationAccessRepository
@@ -17,8 +18,6 @@ import com.facetlauncher.app.data.PrivateSpaceRepository
 import com.facetlauncher.app.data.PrivateSpaceState
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.SystemSettingsRepository
-import com.facetlauncher.app.data.UsageAccessRepository
-import com.facetlauncher.app.data.UsageStatsRepository
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.AppStore
 import com.facetlauncher.app.data.model.ContactConnection
@@ -28,6 +27,7 @@ import com.facetlauncher.app.data.model.LauncherSettings
 import com.facetlauncher.app.data.model.NotificationInfo
 import com.facetlauncher.app.data.model.PlacementList
 import com.facetlauncher.app.data.model.PlacedItem
+import com.facetlauncher.app.data.model.SearchSignals
 import com.facetlauncher.app.data.model.SettingsSearchEntry
 import com.facetlauncher.app.domain.AppNotificationsState
 import com.facetlauncher.app.domain.AddToActiveListUseCase
@@ -63,6 +63,9 @@ import kotlinx.coroutines.launch
 /** F6's per-query contact matches, capped at 5 (see README `1j`/the approved search-results spec). */
 private const val MAX_CONTACT_RESULTS = 5
 
+/** Substring matches asked of the Contacts Provider before ranking, so the best match isn't cut by its alphabetical limit. */
+private const val CONTACT_CANDIDATES = 50
+
 /** Per-query system Settings matches, capped the same as [MAX_CONTACT_RESULTS] — same "small, scannable section" rationale. */
 private const val MAX_SETTINGS_RESULTS = 5
 
@@ -89,8 +92,7 @@ class DrawerViewModel @Inject constructor(
     private val notificationActionController: NotificationActionController,
     private val notificationOpener: NotificationOpener,
     private val observeAppNotificationsUseCase: ObserveAppNotificationsUseCase,
-    private val usageStatsRepository: UsageStatsRepository,
-    private val usageAccessRepository: UsageAccessRepository,
+    private val launchHistoryRepository: LaunchHistoryRepository,
     val listUseCases: DrawerListUseCases,
 ) : ViewModel() {
 
@@ -133,6 +135,15 @@ class DrawerViewModel @Inject constructor(
         searchQuery.value = query
     }
 
+    /** What drawer search has learned from use: picks per query and launch counts, for ranking app results. */
+    val searchSignals: StateFlow<SearchSignals> = launchHistoryRepository.observeSearchSignals()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SearchSignals.EMPTY)
+
+    /** [app] was opened from the search results for [query]; enough picks for one query move the app to the top for it. */
+    fun onSearchPick(app: AppInfo, query: String) {
+        viewModelScope.launch { launchHistoryRepository.recordSearchPick(rankBySearchRelevance.normalize(query), app) }
+    }
+
     @OptIn(ExperimentalCoroutinesApi::class)
     val contactResults: StateFlow<ImmutableList<ContactInfo>> = combine(searchQuery, settingsRepository.settings) { query, settings ->
         query to settings.searchContactsEnabled
@@ -141,12 +152,9 @@ class DrawerViewModel @Inject constructor(
             flowOf(emptyList())
         } else {
             flow {
-                // The Provider's own LIKE-based query already narrows to substring matches on
-                // DISPLAY_NAME; re-rank so a name that *starts with* the query (e.g. "Ann" for
-                // "Anna Lee") outranks one that merely contains it ("Marianna") — same relevance
-                // rule the Drawer's own app search uses (see chat history).
-                val matches = contactRepository.searchContacts(query, MAX_CONTACT_RESULTS)
-                emit(rankBySearchRelevance(matches, query) { it.displayName })
+                // The Provider only does substring LIKE, alphabetically: take plenty, then rank with the shared model.
+                val matches = contactRepository.searchContacts(query.trim(), CONTACT_CANDIDATES)
+                emit(rankBySearchRelevance(matches, query) { it.displayName }.take(MAX_CONTACT_RESULTS))
             }
         }
     }.map { it.toImmutableList() }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), persistentListOf())
@@ -160,16 +168,9 @@ class DrawerViewModel @Inject constructor(
             flowOf(emptyList())
         } else {
             flow {
-                // Not [rankBySearchRelevance]: a match here can come from a keyword alias (e.g.
-                // "internet" for the "Wi-Fi" entry) rather than the label itself, and that use
-                // case's own contains-filter would incorrectly drop an alias-only match since the
-                // label doesn't literally contain the query. The repository already did the real
-                // filtering; this only orders what it returned.
-                val matches = systemSettingsRepository.search(query)
-                val ranked = matches.sortedWith(
-                    compareByDescending<SettingsSearchEntry> { it.label.startsWith(query, ignoreCase = true) }.thenBy { it.label.lowercase() },
-                )
-                emit(ranked.take(MAX_SETTINGS_RESULTS))
+                // A keyword alias counts too ("internet" finds Wi-Fi).
+                val entries = systemSettingsRepository.availableEntries()
+                emit(rankBySearchRelevance.rank(entries, query, keys = { listOf(it.label) + it.keywords }).take(MAX_SETTINGS_RESULTS))
             }
         }
     }.map { it.toImmutableList() }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), persistentListOf())
@@ -317,14 +318,11 @@ class DrawerViewModel @Inject constructor(
     /** Phase 9's connections sheet — fetched fresh per contact, only when their sheet actually opens (fetched on open like the app menu's notifications). */
     suspend fun getConnections(contact: ContactInfo): List<ContactConnection> = contactRepository.getConnections(contact.id)
 
-    /** The search sheet's usage sections, loaded when it opens; empty with [UsageSuggestions.accessGranted] false until Usage Access is granted. */
-    suspend fun loadUsageSuggestions(): UsageSuggestions {
-        if (!usageAccessRepository.isGranted()) return UsageSuggestions(accessGranted = false)
-        return UsageSuggestions(
-            frequent = usageStatsRepository.getMostUsedApps(USAGE_SUGGESTIONS_LIMIT),
-            lastUsed = usageStatsRepository.getRecentApps(USAGE_SUGGESTIONS_LIMIT),
-        )
-    }
+    /** The search sheet's usage sections, loaded when it opens, from Facet's own launch history. */
+    suspend fun loadUsageSuggestions(): UsageSuggestions = UsageSuggestions(
+        frequent = launchHistoryRepository.getMostUsedApps(USAGE_SUGGESTIONS_LIMIT),
+        lastUsed = launchHistoryRepository.getRecentApps(USAGE_SUGGESTIONS_LIMIT),
+    )
 }
 
 /** Enough for a few rows of any grid density; the sheet trims to its own column count. */

@@ -4,6 +4,7 @@ import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.facetlauncher.app.data.model.ClockWidgetConfig
 import com.facetlauncher.app.data.model.LauncherSettings
+import com.facetlauncher.app.data.model.newFacetUuid
 import com.facetlauncher.app.data.model.upgradeLegacyNativeWidgetConfig
 
 /**
@@ -754,6 +755,18 @@ object Migrations {
         }
     }
 
+    /** 52→53: every facet gets a permanent UUID (backed-up automation rules point at it), one per existing row, kept unique by an index. */
+    val MIGRATION_52_53: Migration = object : Migration(52, 53) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("ALTER TABLE facets ADD COLUMN uuid TEXT NOT NULL DEFAULT ''")
+            val ids = db.query("SELECT id FROM facets").use { cursor ->
+                buildList { while (cursor.moveToNext()) add(cursor.getLong(0)) }
+            }
+            ids.forEach { id -> db.execSQL("UPDATE facets SET uuid = ? WHERE id = ?", arrayOf<Any?>(newFacetUuid(), id)) }
+            db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS index_facets_uuid ON facets (uuid)")
+        }
+    }
+
     val ALL: Array<Migration> = arrayOf(
         MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15, MIGRATION_15_16,
         MIGRATION_16_17, MIGRATION_17_18, MIGRATION_18_19, MIGRATION_19_20, MIGRATION_20_21, MIGRATION_21_22,
@@ -774,5 +787,6 @@ object Migrations {
         MIGRATION_41_42,
         MIGRATION_47_48,
         MIGRATION_49_50,
+        MIGRATION_52_53,
     )
 }

@@ -93,7 +93,6 @@ class HomeViewModelTest {
                     appListItems = emptyList(),
                     favoriteItems = favoriteItems,
                     facets = facets,
-                    usageAccessGranted = true,
                     calendarEvents = emptyList(),
                     badgeCounts = emptyMap(),
                     clockAccessories = ClockAccessoryState(nextAlarmMillis = null, batteryPercent = 0, isCharging = false),

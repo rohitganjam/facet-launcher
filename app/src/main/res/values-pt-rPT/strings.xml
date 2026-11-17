@@ -107,7 +107,7 @@
     <string name="clock_style_long_press_hint">Mantenha premido o relógio no ecrã inicial para ajustar o tamanho e a posição.</string>
     <string name="clock_style_reset_position">Repor posição do widget do relógio</string>
 
-    <string name="backup_restore_confirm_message">Importar substitui cada faceta, o dock e os favoritos predefinidos pelo conteúdo do ficheiro da cópia de segurança. Esta ação não pode ser anulada.</string>
+    <string name="backup_restore_confirm_message">Importar substitui cada faceta, o dock, os favoritos predefinidos e as regras de automatização pelo conteúdo do ficheiro da cópia de segurança. Esta ação não pode ser anulada.</string>
     <string name="backup_restore_export_title">Exportar cópia de segurança</string>
     <string name="backup_restore_export_subtitle">Guarde cada faceta, o dock, favoritos e definições como ficheiro</string>
     <string name="backup_restore_import_title">Importar cópia de segurança</string>
@@ -120,6 +120,39 @@
         <item quantity="other">%d widgets têm de ser adicionados novamente abaixo</item>
         <item quantity="many">%d de widgets têm de ser adicionados novamente abaixo</item>
     </plurals>
+    <plurals name="backup_restored_rules_count">
+        <item quantity="one">%d regra de automatização</item>
+        <item quantity="other">%d regras de automatização</item>
+        <item quantity="many">%d de regras de automatização</item>
+    </plurals>
+    <string name="backup_restore_rules_header">REGRAS DE AUTOMATIZAÇÃO</string>
+    <plurals name="backup_rules_skipped_facet_missing">
+        <item quantity="one">%d regra ignorada: a respetiva faceta não está nesta cópia de segurança</item>
+        <item quantity="other">%d regras ignoradas: a respetiva faceta não está nesta cópia de segurança</item>
+        <item quantity="many">%d de regras ignoradas: a respetiva faceta não está nesta cópia de segurança</item>
+    </plurals>
+    <plurals name="backup_rules_skipped_unsupported">
+        <item quantity="one">%d regra ignorada: precisa de uma versão mais recente do Facet</item>
+        <item quantity="other">%d regras ignoradas: precisam de uma versão mais recente do Facet</item>
+        <item quantity="many">%d de regras ignoradas: precisam de uma versão mais recente do Facet</item>
+    </plurals>
+    <plurals name="backup_rules_skipped_invalid">
+        <item quantity="one">%d regra ignorada: não foi possível lê-la</item>
+        <item quantity="other">%d regras ignoradas: não foi possível lê-las</item>
+        <item quantity="many">%d de regras ignoradas: não foi possível lê-las</item>
+    </plurals>
+    <plurals name="backup_rules_need_permission">
+        <item quantity="one">%d regra precisa de autorização de Bluetooth ou localização</item>
+        <item quantity="other">%d regras precisam de autorização de Bluetooth ou localização</item>
+        <item quantity="many">%d de regras precisam de autorização de Bluetooth ou localização</item>
+    </plurals>
+    <plurals name="backup_rules_paused">
+        <item quantity="one">%d regra está em pausa no plano gratuito</item>
+        <item quantity="other">%d regras estão em pausa no plano gratuito</item>
+        <item quantity="many">%d de regras estão em pausa no plano gratuito</item>
+    </plurals>
+    <string name="backup_rules_not_in_backup">Esta cópia de segurança não tem regras de automatização: foi criada antes de o Facet as incluir.</string>
+    <string name="backup_rules_open_automation">Abrir Automatização de facetas</string>
     <string name="backup_restore_import_failed_invalid_file">Esse ficheiro não é uma cópia de segurança válida do Facet</string>
     <string name="backup_restore_import_failed_unsupported_version">Essa cópia de segurança foi feita por uma versão mais recente do Facet</string>
     <string name="backup_restore_skip">Saltar</string>
@@ -127,7 +160,6 @@
     <string name="permission_calendar_subtitle">Mostra os eventos de hoje no relógio.</string>
     <string name="permission_contacts_title">Contactos</string>
     <string name="permission_contacts_subtitle">Permite que a pesquisa da gaveta mostre contactos correspondentes com ações rápidas de chamada/mensagem/WhatsApp.</string>
-    <string name="permission_usage_access_title">Acesso à utilização</string>
     <string name="permission_notification_access_subtitle">Mostra um emblema de ponto ou número em apps com notificações ativas.</string>
     <string name="permission_bluetooth_subtitle">Permite que as regras de automatização de facetas reajam a um dispositivo Bluetooth emparelhado, como o carro, e lista os dispositivos emparelhados ao configurar uma regra.</string>
     <string name="permission_location_subtitle">O Android exige esta permissão para ler o nome da rede Wi-Fi em regras de uma rede específica e para obter o tempo onde está quando escolhe Usar a localização atual. O Facet não a usa para mais nada.</string>
@@ -151,22 +183,21 @@
     <string name="pro_hero_title">Mais facetas, mais automatização, mais personalização</string>
     <string name="pro_hero_trigger_drive">Conduzir</string>
     <string name="pro_hero_label_drive">CONDUZIR</string>
-    <string name="pro_feature_facets_body">O plano gratuito inclui 3. O Pro vai até 10. Cada uma tem as suas próprias apps no ecrã inicial e o seu relógio.</string>
-    <string name="pro_feature_triggers_title">Acionadores de Wi-Fi, Bluetooth, auriculares e bateria</string>
-    <string name="pro_feature_triggers_body">Ligue-se à rede do escritório ou ao carro, e a faceta muda.</string>
-    <string name="pro_feature_widgets_title">Widgets personalizados no ecrã inicial</string>
-    <string name="pro_feature_widgets_body">Substitua o relógio por qualquer widget do seu telemóvel. O plano gratuito inclui os relógios do launcher.</string>
+    <string name="pro_feature_facets_body">O plano gratuito inclui 3. Cada faceta tem as suas próprias apps no ecrã inicial, Dock, relógio e aspeto.</string>
+    <string name="pro_feature_automation_title">Todos os acionadores, regras ilimitadas</string>
+    <string name="pro_feature_automation_body">Mude de faceta com Wi-Fi, Bluetooth, auriculares ou bateria, não só por horário. O plano gratuito inclui 2 regras de horário.</string>
+    <string name="pro_feature_widget_stacks_body">Empilhe até 5 relógios e widgets em cada ecrã inicial e deslize entre eles. O plano gratuito inclui um.</string>
+    <string name="pro_owned_automation_body">Wi-Fi, Bluetooth, auriculares e bateria</string>
+    <plurals name="pro_owned_facets_count">
+        <item quantity="one">Tem %d faceta</item>
+        <item quantity="other">Tem %d facetas</item>
+        <item quantity="many">Tem %d de facetas</item>
+    </plurals>
     <string name="pro_feature_daily_wallpaper_title">Imagem de fundo diária</string>
     <string name="pro_feature_daily_wallpaper_body">Uma nova fotografia do Bing ou Spotlight no seu ecrã inicial todos os dias.</string>
     <string name="pro_feature_future_title">Funcionalidades Pro futuras incluídas</string>
     <string name="pro_on_pro_title">Tem o Pro</string>
     <string name="pro_on_pro_body">Desbloqueado em todos os telemóveis com esta conta Google.</string>
-    <string name="pro_owned_wifi_title">Acionadores de Wi-Fi</string>
-    <string name="pro_owned_wifi_body">Muda ao ligar a uma rede</string>
-    <string name="pro_owned_bluetooth_title">Acionadores de Bluetooth</string>
-    <string name="pro_owned_bluetooth_body">Muda ao ligar um dispositivo</string>
-    <string name="pro_owned_more_title">Acionadores de auriculares e bateria</string>
-    <string name="pro_owned_more_body">Muda ao ligar os auriculares ou ao carregar</string>
     <string name="settings_pro_free_plan">Está no plano gratuito</string>
     <string name="pro_upgrade_to_pro">Mudar para o Pro</string>
     <plurals name="settings_pro_triggers_running">
@@ -205,8 +236,6 @@
     <string name="calendar_settings_items_to_display">Itens a mostrar</string>
 
     <string name="open_settings">Abrir definições</string>
-    <string name="usage_access_explanation_headline">Recentes e Mais usados mostram apps com base na forma como realmente usa o seu telemóvel.</string>
-    <string name="usage_access_explanation_body">Isto requer acesso à utilização, uma permissão especial concedida nas definições do sistema — o Facet não a pode solicitar diretamente. Apenas lê que apps abre e durante quanto tempo; nada sai do seu dispositivo.</string>
     <string name="notification_access_explanation_headline">Os emblemas de notificação mostram um ponto ou número nas apps com algo à sua espera, e o reprodutor multimédia mostra o que está a tocar.</string>
     <string name="notification_access_explanation_body">Isto requer acesso às notificações, uma permissão especial concedida nas definições do sistema — o Facet não a pode solicitar diretamente. Apenas lê que apps têm notificações ativas e se estão silenciosas, além do título, do artista e da capa dos conteúdos multimédia em reprodução; nada sai do seu dispositivo.</string>
 
@@ -245,7 +274,6 @@
     <string name="drawer_search_section_recent_changes">INSTALADAS OU ATUALIZADAS RECENTEMENTE</string>
     <string name="drawer_search_section_frequent">UTILIZADAS COM FREQUÊNCIA</string>
     <string name="drawer_search_section_last_used">ÚLTIMAS UTILIZADAS</string>
-    <string name="drawer_search_usage_access_needed">As aplicações mais e últimas utilizadas precisam de acesso de utilização nas definições do sistema.</string>
     <string name="drawer_contacts_access_needed">A pesquisa de contactos precisa de acesso através das definições do sistema.</string>
     <string name="drawer_contacts_search_off">A pesquisa de contactos está desativada nas definições da Gaveta de apps.</string>
     <string name="drawer_search_clear">Limpar pesquisa</string>
@@ -264,7 +292,6 @@
     <string name="manage_facets_delete_message">Esta ação não pode ser anulada. Os favoritos dela também serão removidos.</string>
     <string name="manage_facets_header_title">Gerir facetas</string>
     <string name="facet_settings_dock_settings_title">Apps do dock</string>
-    <string name="home_usage_access_needed">\"Mais usados\" precisa de acesso à utilização através das definições do sistema.</string>
 
     <string name="clock_adjust_align_bottom">Alinhar em baixo</string>
     <string name="hub_widget_picker_search">Pesquisar widgets</string>
@@ -329,4 +356,5 @@
     <string name="settings_appearance_title">Aspeto do launcher</string>
     <string name="settings_appearance_subtitle">Temas, tipos de letra e ícones</string>
     <string name="appearance_header_title">Aspeto do launcher</string>
+    <string name="home_usage_list_empty">As apps que abrir a partir do Facet aparecem aqui.</string>
 </resources>

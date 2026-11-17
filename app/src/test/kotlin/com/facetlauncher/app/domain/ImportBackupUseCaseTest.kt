@@ -13,6 +13,7 @@ import com.facetlauncher.app.data.model.AppListVerticalAlignment
 import com.facetlauncher.app.data.model.ClockAlignment
 import com.facetlauncher.app.data.model.LandscapeOverrides
 import android.net.Uri
+import com.facetlauncher.app.data.AppVaultRepository
 import com.facetlauncher.app.data.BackupRepository
 import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.FolderRepository
@@ -25,6 +26,7 @@ import com.facetlauncher.app.data.model.AppRowPresentation
 import com.facetlauncher.app.data.model.BackupAppEntry
 import com.facetlauncher.app.data.model.BackupBundle
 import com.facetlauncher.app.data.model.BackupFacet
+import com.facetlauncher.app.data.model.BackupAutomationRule
 import com.facetlauncher.app.data.model.BackupSettings
 import com.facetlauncher.app.data.model.BackupWidgetPlacement
 import com.facetlauncher.app.data.model.CURRENT_BACKUP_VERSION
@@ -52,6 +54,9 @@ class ImportBackupUseCaseTest {
     private val repairOrphanedProfileRows = mock(RepairOrphanedProfileRowsUseCase::class.java)
     private val clockStackRepository = mock(ClockStackRepository::class.java)
     private val widgetPlacementRepository = mock(WidgetPlacementRepository::class.java)
+    private val restoreCalls = mutableListOf<List<Any?>>()
+    private val restoreAutomationRules = noAutomationRestore(restoreCalls)
+    private val appVaultRepository = mock(AppVaultRepository::class.java)
 
     private val useCase = ImportBackupUseCase(
         backupRepository,
@@ -62,6 +67,13 @@ class ImportBackupUseCaseTest {
         repairOrphanedProfileRows,
         clockStackRepository,
         widgetPlacementRepository,
+        restoreAutomationRules,
+        appVaultRepository = appVaultRepository,
+    )
+
+    private fun backupFacet(name: String, position: Int, uuid: String) = BackupFacet(
+        name = name, position = position, uuid = uuid, appRowPosition = "LEFT", appRowPresentation = "ICON_AND_TEXT",
+        listContentMode = "FAVORITES", appsToShowCount = 5, favorites = emptyList(),
     )
 
     private fun minimalSettings(activeFacetIndex: Int? = null) = BackupSettings(
@@ -144,7 +156,7 @@ class ImportBackupUseCaseTest {
             settings = minimalSettings(activeFacetIndex = 0),
             facets = listOf(
                 BackupFacet(
-                    name = "Work", position = 0, overrideClock = false, clockTemplateId = "LIGHT_STACK",
+                    name = "Work", position = 0, uuid = "work-uuid", overrideClock = false, clockTemplateId = "LIGHT_STACK",
                     clockFontOption = "LAUNCHER_DEFAULT", clockColorOption = "THEME", use24HourTime = false,
                     clockShowMeridiem = false, overrideApps = false, appRowPosition = "LEFT",
                     appRowPresentation = "ICON_AND_TEXT", listContentMode = "FAVORITES", appsToShowCount = 5,
@@ -165,7 +177,7 @@ class ImportBackupUseCaseTest {
         // `null` placeholder, which Kotlin's compiler-inserted non-null check on
         // restoreFacet's `facet: Facet` parameter rejects outright.
         val expectedFacetEntity = Facet(
-            id = 0, name = "Work", position = 0,
+            id = 0, uuid = "work-uuid", name = "Work", position = 0,
             appRowPosition = AppRowPosition.LEFT, appRowPresentation = AppRowPresentation.ICON_AND_TEXT,
             listContentMode = ListContentMode.FAVORITES, appsToShowCount = 5,
             dockDisplayMode = com.facetlauncher.app.data.model.DockDisplayMode.TEXT,
@@ -202,6 +214,28 @@ class ImportBackupUseCaseTest {
         assertEquals(1, result.pendingWidgetPlacements.size)
         assertEquals("com.example.widgets", result.pendingWidgetPlacements[0].providerPackageName)
         assertEquals(4, result.pendingWidgetPlacements[0].landscapeOrder)
+    }
+
+    @Test
+    fun `restoring leaves the vault alone and skips placements of apps vaulted on this phone`() = runTest {
+        // Given a vault on this phone holding one app, and a backup that has no vault
+        `when`(appVaultRepository.vaultedKeys).thenReturn(kotlinx.coroutines.flow.flowOf(setOf("com.example.secret|0")))
+        val uri = mock(Uri::class.java)
+        val bundle = BackupBundle(
+            exportedAtEpochMillis = 0L, settings = minimalSettings(), facets = emptyList(),
+            dockApps = listOf(BackupAppEntry(packageName = "com.example.secret", activityName = ".Main", position = 0)),
+            defaultFavoriteApps = emptyList(), widgetPlacements = emptyList(),
+        )
+        `when`(backupRepository.readBackup(uri)).thenReturn(bundle)
+
+        // When importing
+        useCase(uri)
+
+        // Then the restored placements of the vaulted app are removed again, and the vault itself is never written
+        verify(placementRepository).removeByPackage("com.example.secret", 0)
+        verify(folderRepository).removeByPackage("com.example.secret", 0)
+        verify(appVaultRepository, org.mockito.Mockito.never()).add(org.mockito.ArgumentMatchers.anyCollection())
+        verify(appVaultRepository, org.mockito.Mockito.never()).reset()
     }
 
     @Test
@@ -355,7 +389,7 @@ class ImportBackupUseCaseTest {
         // Given a backup with a native weather widget on the Hub and a native agenda page on a facet's stack, next to a hosted widget
         val uri = mock(Uri::class.java)
         val facet = BackupFacet(
-            name = "Work", position = 0, overrideClock = false, clockTemplateId = "LIGHT_STACK",
+            name = "Work", position = 0, uuid = "work-uuid", overrideClock = false, clockTemplateId = "LIGHT_STACK",
             clockFontOption = "LAUNCHER_DEFAULT", clockColorOption = "THEME", use24HourTime = false,
             clockShowMeridiem = false, overrideApps = false, appRowPosition = "LEFT",
             appRowPresentation = "ICON_AND_TEXT", listContentMode = "FAVORITES", appsToShowCount = 5,
@@ -391,5 +425,62 @@ class ImportBackupUseCaseTest {
         )
         // And only the hosted widget is queued for re-adding
         assertEquals(listOf("com.example.widgets"), result.pendingWidgetPlacements.map { it.providerPackageName })
+    }
+
+    @Test
+    fun `restored facets keep their backup UUID and the rules step gets them with the active facet`() = runTest {
+        // Given a backup with two facets, the second active, and one automation rule
+        val uri = mock(Uri::class.java)
+        val work = backupFacet("Work", 0, "work-uuid")
+        val home = backupFacet("Home", 1, "home-uuid")
+        val rule = BackupAutomationRule(targetFacetUuid = "work-uuid", endBehavior = "RETURN_TO_BASELINE", triggerType = "HEADPHONES")
+        val bundle = BackupBundle(
+            exportedAtEpochMillis = 0L, settings = minimalSettings(activeFacetIndex = 1), facets = listOf(work, home),
+            widgetPlacements = emptyList(), automationRules = listOf(rule),
+        )
+        `when`(backupRepository.readBackup(uri)).thenReturn(bundle)
+        `when`(facetRepository.restoreFacet(work.toFacet())).thenReturn(11L)
+        `when`(facetRepository.restoreFacet(home.toFacet())).thenReturn(12L)
+
+        // When importing
+        val result = useCase(uri) as ImportBackupResult.Success
+
+        // Then each facet is restored with its own UUID, and the rules step maps those UUIDs to the new ids
+        assertEquals(listOf(listOf(listOf(rule), mapOf("work-uuid" to 11L, "home-uuid" to 12L), 12L)), restoreCalls)
+        assertEquals(EMPTY_AUTOMATION_RESTORE, result.automationRules)
+    }
+
+    @Test
+    fun `a UUID used twice in a damaged backup goes to the first facet and the second gets a fresh one`() = runTest {
+        // Given two facets claiming the same UUID
+        val uri = mock(Uri::class.java)
+        val first = backupFacet("First", 0, "same")
+        val second = backupFacet("Second", 1, "same")
+        val bundle = BackupBundle(exportedAtEpochMillis = 0L, settings = minimalSettings(), facets = listOf(first, second), widgetPlacements = emptyList())
+        `when`(backupRepository.readBackup(uri)).thenReturn(bundle)
+        val restored = mutableListOf<Facet>()
+        val recordingFacets = mock(FacetRepository::class.java) { invocation ->
+            if (invocation.method.name == "restoreFacet") {
+                restored += invocation.getArgument<Facet>(0)
+                restored.size.toLong()
+            } else {
+                org.mockito.Mockito.RETURNS_DEFAULTS.answer(invocation)
+            }
+        }
+        val useCase = ImportBackupUseCase(
+            backupRepository, settingsRepository, recordingFacets, placementRepository, folderRepository,
+            repairOrphanedProfileRows, clockStackRepository, widgetPlacementRepository, restoreAutomationRules,
+        )
+
+        // When importing
+        useCase(uri)
+
+        // Then the first keeps it, the second gets another, and "same" points at the first
+        assertEquals("same", restored[0].uuid)
+        assertTrue(restored[1].uuid.isNotBlank() && restored[1].uuid != "same")
+        @Suppress("UNCHECKED_CAST")
+        val facetIdByUuid = restoreCalls.single()[1] as Map<String, Long>
+        assertEquals(1L, facetIdByUuid["same"])
+        assertEquals(2, facetIdByUuid.size)
     }
 }

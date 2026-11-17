@@ -1,7 +1,10 @@
 package com.facetlauncher.app.domain
 
 import com.facetlauncher.app.data.AppRepository
+import com.facetlauncher.app.data.AppVaultRepository
 import com.facetlauncher.app.data.FolderRepository
+import com.facetlauncher.app.data.IconOverrideRepository
+import com.facetlauncher.app.data.LaunchHistoryRepository
 import javax.inject.Inject
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.collect
@@ -11,7 +14,7 @@ import com.facetlauncher.app.data.PlacementRepository
 /**
  * Permanently deletes an app's Favorites (every facet, plus the launcher-wide default list),
  * Dock entries (the launcher-wide default dock, plus every facet's own), and folder membership
- * (every folder in the library, whether or not it's currently placed anywhere) the moment it's
+ * (every folder in the library, whether or not it's currently placed anywhere), launch history and custom icon the moment it's
  * genuinely uninstalled — as opposed to
  * [PlacementRepository]/[FolderRepository]'s own runtime filtering, which
  * only hides a missing app from view without touching its stored row, so a later reinstall of the
@@ -32,12 +35,19 @@ class CleanUpUninstalledAppsUseCase @Inject constructor(
     private val appRepository: AppRepository,
     private val placementRepository: PlacementRepository,
     private val folderRepository: FolderRepository,
+    private val launchHistoryRepository: LaunchHistoryRepository,
+    // Defaulted so tests that don't cover custom icons needn't build one; Hilt always supplies it.
+    private val iconOverrideRepository: IconOverrideRepository? = null,
+    // A vaulted app that is uninstalled stays vaulted, so a reinstall stays hidden; only a removed profile clears its entries.
+    private val appVaultRepository: AppVaultRepository? = null,
 ) {
     suspend operator fun invoke() = coroutineScope {
         launch {
             appRepository.observeUninstalledPackages().collect { (packageName, userId) ->
                 placementRepository.removeByPackage(packageName, userId)
                 folderRepository.removeByPackage(packageName, userId)
+                launchHistoryRepository.removeByPackage(packageName, userId)
+                iconOverrideRepository?.removeByPackage(packageName, userId)
             }
         }
         launch {
@@ -45,6 +55,9 @@ class CleanUpUninstalledAppsUseCase @Inject constructor(
                 val userId = handle.hashCode()
                 placementRepository.removeByUserId(userId)
                 folderRepository.removeByUserId(userId)
+                launchHistoryRepository.removeByUserId(userId)
+                iconOverrideRepository?.removeByUserId(userId)
+                appVaultRepository?.removeByUserId(userId)
             }
         }
     }

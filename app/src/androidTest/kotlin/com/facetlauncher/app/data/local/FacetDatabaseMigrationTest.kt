@@ -1414,8 +1414,8 @@ class FacetDatabaseMigrationTest {
         db49.execSQL(
             "INSERT INTO facets (id, name, position, clockPlacementOwn, clockAlignment, appRowPosition, appRowPresentation, listContentMode, " +
                 "appsToShowCount, appListVerticalAlignment, appListLayout, appListColumnAlignment, appListGridColumns, appListGridDisplayMode, " +
-                "appListShrinkToFit, dockDisplayMode) VALUES (1, 'Facet', 1, 0, 'LEFT', 'LEFT', 'ICON_AND_TEXT', 'FAVORITES', 6, 'BOTTOM', " +
-                "'SINGLE_COLUMN', 'BOTH_LEFT', 'FOUR', 'ICONS', 'OFF', 'ICONS')",
+                "appListShrinkToFit, dockDisplayMode, allowLandscape) VALUES (1, 'Facet', 1, 0, 'LEFT', 'LEFT', 'ICON_AND_TEXT', 'FAVORITES', 6, " +
+                "'BOTTOM', 'SINGLE_COLUMN', 'BOTH_LEFT', 'FOUR', 'ICONS', 'OFF', 'ICONS', 1)",
         )
         db49.close()
 
@@ -1427,6 +1427,94 @@ class FacetDatabaseMigrationTest {
             it.moveToFirst()
             assertEquals("OFF", it.getString(0))
             assertEquals("OFF", it.getString(1))
+        }
+    }
+
+    @Test
+    fun migration50To51AddsEmptyLaunchHistoryAndKeepsFacets() {
+        // Given a v50 database with a facet
+        val db50 = helper.createDatabase(TEST_DB, 50)
+        db50.execSQL(
+            "INSERT INTO facets (id, name, position, clockPlacementOwn, clockAlignment, appRowPosition, appRowPresentation, listContentMode, " +
+                "appsToShowCount, appListVerticalAlignment, appListLayout, appListColumnAlignment, appListGridColumns, appListGridDisplayMode, " +
+                "appListShrinkToFit, dockDisplayMode, dockGlass, appsListGlass, allowLandscape) VALUES (1, 'Facet', 1, 0, 'LEFT', 'LEFT', " +
+                "'ICON_AND_TEXT', 'RECENTS', 6, 'BOTTOM', 'SINGLE_COLUMN', 'BOTH_LEFT', 'FOUR', 'ICONS', 'OFF', 'ICONS', 'OFF', 'OFF', 0)",
+        )
+        db50.close()
+
+        // When migrating to v51 (Room also validates the result against the exported v51 schema)
+        val db51 = helper.runMigrationsAndValidate(TEST_DB, 51, true)
+
+        // Then the facet is kept and the three launch history tables start empty
+        db51.query("SELECT listContentMode FROM facets WHERE id = 1").use {
+            assertTrue(it.moveToFirst())
+            assertEquals("RECENTS", it.getString(0))
+        }
+        for (table in listOf("app_launches", "app_launch_days", "search_picks")) {
+            db51.query("SELECT COUNT(*) FROM $table").use {
+                assertTrue(it.moveToFirst())
+                assertEquals(0, it.getInt(0))
+            }
+        }
+    }
+
+    @Test
+    fun migration52To53GivesEveryFacetItsOwnUuid() {
+        // Given a v52 database with two facets and a rule on one of them
+        val db52 = helper.createDatabase(TEST_DB, 52)
+        for (id in 1..2) {
+            db52.execSQL(
+                "INSERT INTO facets (id, name, position, clockPlacementOwn, clockAlignment, appRowPosition, appRowPresentation, listContentMode, " +
+                    "appsToShowCount, appListVerticalAlignment, appListLayout, appListColumnAlignment, appListGridColumns, appListGridDisplayMode, " +
+                    "appListShrinkToFit, dockDisplayMode, dockGlass, appsListGlass, allowLandscape) VALUES ($id, 'Facet $id', $id, 0, 'LEFT', 'LEFT', " +
+                    "'ICON_AND_TEXT', 'FAVORITES', 6, 'BOTTOM', 'SINGLE_COLUMN', 'BOTH_LEFT', 'FOUR', 'ICONS', 'OFF', 'ICONS', 'OFF', 'OFF', 1)",
+            )
+        }
+        db52.execSQL("INSERT INTO automation_rules (id, position, enabled, targetFacetId, endBehavior, triggerType, negated, scheduleDays, scheduleStartMinute, scheduleEndMinute) VALUES (1, 0, 1, 2, 'STAY', 'HEADPHONES', 0, 0, 0, 0)")
+        db52.close()
+
+        // When migrating to v53 (Room also validates the result against the exported v53 schema, unique index included)
+        val db53 = helper.runMigrationsAndValidate(TEST_DB, 53, true, Migrations.MIGRATION_52_53)
+
+        // Then each facet has a UUID of its own, and the rule is untouched
+        val uuids = db53.query("SELECT uuid FROM facets ORDER BY id").use { cursor ->
+            buildList { while (cursor.moveToNext()) add(cursor.getString(0)) }
+        }
+        assertEquals(2, uuids.size)
+        assertEquals(2, uuids.toSet().size)
+        uuids.forEach { java.util.UUID.fromString(it) }
+        db53.query("SELECT targetFacetId FROM automation_rules").use {
+            it.moveToFirst()
+            assertEquals(2L, it.getLong(0))
+        }
+    }
+
+    @Test
+    fun migration51To52AddsEmptyIconOverridesAndKeepsLaunchHistory() {
+        // Given a v51 database with a recorded launch
+        val db51 = helper.createDatabase(TEST_DB, 51)
+        db51.execSQL("INSERT INTO app_launches (packageName, activityName, userId, lastLaunchedAt) VALUES ('com.example', 'com.example.Main', 0, 42)")
+        db51.close()
+
+        // When migrating to v52 (Room also validates the result against the exported v52 schema)
+        val db52 = helper.runMigrationsAndValidate(TEST_DB, 52, true)
+
+        // Then the launch is kept, icon_overrides starts empty and takes a row
+        db52.query("SELECT lastLaunchedAt FROM app_launches WHERE packageName = 'com.example'").use {
+            assertTrue(it.moveToFirst())
+            assertEquals(42L, it.getLong(0))
+        }
+        db52.query("SELECT COUNT(*) FROM icon_overrides").use {
+            assertTrue(it.moveToFirst())
+            assertEquals(0, it.getInt(0))
+        }
+        db52.execSQL(
+            "INSERT INTO icon_overrides (packageName, activityName, userId, profile, source, packPackage, drawableName, calendarPrefix, " +
+                "snapshotFile, updatedAt) VALUES ('com.example', 'com.example.Main', 0, 'PERSONAL', 'PACK', 'com.pack', 'example', NULL, 'a.png', 1)",
+        )
+        db52.query("SELECT drawableName FROM icon_overrides").use {
+            assertTrue(it.moveToFirst())
+            assertEquals("example", it.getString(0))
         }
     }
 

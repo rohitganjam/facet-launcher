@@ -5,6 +5,7 @@ import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.facetlauncher.app.data.FacetRepository
+import com.facetlauncher.app.data.LaunchHistoryRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.WorkProfileInfo
 import com.facetlauncher.app.data.WorkProfileRepository
@@ -109,6 +110,7 @@ class LauncherViewModel @Inject constructor(
     private val facetRepository: FacetRepository,
     private val workProfileRepository: WorkProfileRepository,
     private val dailyWallpaperCoordinator: DailyWallpaperCoordinator,
+    private val launchHistoryRepository: LaunchHistoryRepository,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(LauncherUiState())
@@ -142,6 +144,11 @@ class LauncherViewModel @Inject constructor(
     fun onResumed() {
         getInstalledApps.recheckDate()
         dailyWallpaperCoordinator.onLauncherResumed()
+    }
+
+    /** An app was opened from Facet: feeds Recents, Most used and search ranking. */
+    fun onAppLaunched(app: AppInfo) {
+        viewModelScope.launch { launchHistoryRepository.recordLaunch(app) }
     }
 
     /** Called once, from the final onboarding step ("Set as default" or "Later") — see [com.facetlauncher.app.LauncherActivity]. */

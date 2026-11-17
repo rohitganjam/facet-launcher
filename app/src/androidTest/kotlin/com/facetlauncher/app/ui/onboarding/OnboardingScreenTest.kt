@@ -1,8 +1,6 @@
 package com.facetlauncher.app.ui.onboarding
 
-import android.app.AppOpsManager
 import android.app.WallpaperManager
-import android.app.usage.UsageStatsManager
 import android.content.pm.LauncherApps
 import android.os.UserManager
 import androidx.compose.runtime.remember
@@ -27,12 +25,11 @@ import androidx.test.espresso.intent.Intents
 import androidx.test.espresso.intent.VerificationModes
 import androidx.test.espresso.intent.matcher.IntentMatchers.hasAction
 import com.facetlauncher.app.data.AppRepository
+import com.facetlauncher.app.data.testLaunchHistoryRepository
 import com.facetlauncher.app.data.getTestableApps
 import com.facetlauncher.app.data.DefaultAppRepository
 import com.facetlauncher.app.data.FolderRepository
 import com.facetlauncher.app.data.SettingsRepository
-import com.facetlauncher.app.data.UsageAccessRepository
-import com.facetlauncher.app.data.UsageStatsRepository
 import com.facetlauncher.app.data.WallpaperRepository
 import com.facetlauncher.app.data.local.FacetDatabase
 import com.facetlauncher.app.data.model.AppInfo
@@ -111,8 +108,7 @@ class OnboardingScreenTest {
                     seed(appRepository, placementRepository)
                 }
                 val getInstalledApps = GetInstalledAppsUseCase(appRepository)
-                val sortAppsForPicker = SortAppsForPickerUseCase(UsageStatsRepository(context.getSystemService(UsageStatsManager::class.java), appRepository))
-                val usageAccessRepository = UsageAccessRepository(context.getSystemService(AppOpsManager::class.java), context)
+                val sortAppsForPicker = SortAppsForPickerUseCase(testLaunchHistoryRepository(context, appRepository))
                 OnboardingViewModels(
                     OnboardingViewModel(
                         placementRepository,
@@ -125,8 +121,8 @@ class OnboardingScreenTest {
                     // non-Hilt test host builds them by hand, same pattern as DockAppPickerScreenTest/
                     // FavoritesPickerScreenTest — an empty SavedStateHandle means no facet route, so
                     // OnboardingScreen points them at the first facet.
-                    DockAppPickerViewModel(SavedStateHandle(), getInstalledApps, placementRepository, observePlacedItems, folderRepository, sortAppsForPicker, usageAccessRepository),
-                    FavoritesPickerViewModel(SavedStateHandle(), getInstalledApps, placementRepository, observePlacedItems, folderRepository, sortAppsForPicker, usageAccessRepository),
+                    DockAppPickerViewModel(SavedStateHandle(), getInstalledApps, placementRepository, observePlacedItems, folderRepository, sortAppsForPicker),
+                    FavoritesPickerViewModel(SavedStateHandle(), getInstalledApps, placementRepository, observePlacedItems, folderRepository, sortAppsForPicker),
                     NotificationSettingsViewModel(
                         settingsRepository,
                         FakeNotificationAccessRepository(context, granted = false),

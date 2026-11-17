@@ -65,6 +65,9 @@ internal class FakeFolderDao : FolderDao {
         folderApps.value = folderApps.value.filterNot { it.packageName == packageName && it.userId == userId }
     }
 
+    override suspend fun countFolderAppsByPackage(packageName: String, userId: Int): Int =
+        folderApps.value.count { it.packageName == packageName && it.userId == userId }
+
     override suspend fun deleteFolderAppsByUserId(userId: Int) {
         folderApps.value = folderApps.value.filterNot { it.userId == userId }
     }
@@ -125,6 +128,9 @@ internal class FakeAppPlacementDao : AppPlacementDao {
     override suspend fun deleteByPackage(packageName: String, userId: Int) {
         state.value = state.value.filterNot { it.packageName == packageName && it.userId == userId }
     }
+
+    override suspend fun countByPackage(packageName: String, userId: Int): Int =
+        state.value.count { it.packageName == packageName && it.userId == userId }
 
     override suspend fun deleteByUserId(userId: Int) {
         state.value = state.value.filterNot { it.userId == userId }

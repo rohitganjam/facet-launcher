@@ -7,11 +7,13 @@ import com.facetlauncher.app.data.iconpack.IconPackRepository
 import com.facetlauncher.app.data.model.IconPackFallback
 import com.facetlauncher.app.data.model.IconRenderMode
 import com.facetlauncher.app.domain.IconPickerState
+import com.facetlauncher.app.domain.ObserveCustomIconsUseCase
 import com.facetlauncher.app.domain.ObserveIconPickerUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -19,12 +21,17 @@ import kotlinx.coroutines.launch
 @HiltViewModel
 class IconsViewModel @Inject constructor(
     observeIconPicker: ObserveIconPickerUseCase,
+    observeCustomIcons: ObserveCustomIconsUseCase,
     private val settingsRepository: SettingsRepository,
     private val iconPackRepository: IconPackRepository,
 ) : ViewModel() {
 
     val picker: StateFlow<IconPickerState> = observeIconPicker()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), IconPickerState())
+
+    /** How many installed apps have a custom icon; the Custom icons row shows only when there is one. */
+    val customIconCount: StateFlow<Int> = observeCustomIcons().map { it.size }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0)
 
     /** A built-in style, which also takes over from an applied icon pack. */
     fun selectBuiltIn(mode: IconRenderMode) {

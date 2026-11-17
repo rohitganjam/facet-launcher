@@ -173,7 +173,6 @@
     <string name="app_picker_tab_apps">Apps</string>
     <string name="app_picker_tab_folders">Ordner</string>
 
-
     <!-- GestureHintOverlay -->
     <string name="gesture_hint_switch_facets">Facetten wechseln</string>
     <string name="gesture_hint_arrow_left">←</string>
@@ -505,7 +504,7 @@
 
     <!-- BackupRestoreScreen -->
     <string name="backup_restore_confirm_title">Alles auf diesem Gerät ersetzen?</string>
-    <string name="backup_restore_confirm_message">Der Import ersetzt jede Facette, das Dock und die Standardfavoriten durch den Inhalt der Sicherungsdatei. Dies kann nicht rückgängig gemacht werden.</string>
+    <string name="backup_restore_confirm_message">Der Import ersetzt jede Facette, das Dock, die Standardfavoriten und die Automatisierungsregeln durch den Inhalt der Sicherungsdatei. Dies kann nicht rückgängig gemacht werden.</string>
     <string name="backup_restore_confirm_replace">Ersetzen</string>
     <string name="backup_restore_export_title">Sicherung exportieren</string>
     <string name="backup_restore_export_subtitle">Speichere jede Facette, das Dock, Favoriten und Einstellungen als Datei</string>
@@ -523,6 +522,33 @@
         <item quantity="one">%d Widget muss unten erneut hinzugefügt werden</item>
         <item quantity="other">%d Widgets müssen unten erneut hinzugefügt werden</item>
     </plurals>
+    <plurals name="backup_restored_rules_count">
+        <item quantity="one">%d Automatisierungsregel</item>
+        <item quantity="other">%d Automatisierungsregeln</item>
+    </plurals>
+    <string name="backup_restore_rules_header">AUTOMATISIERUNGSREGELN</string>
+    <plurals name="backup_rules_skipped_facet_missing">
+        <item quantity="one">%d Regel übersprungen: ihre Facette ist nicht in dieser Sicherung</item>
+        <item quantity="other">%d Regeln übersprungen: ihre Facette ist nicht in dieser Sicherung</item>
+    </plurals>
+    <plurals name="backup_rules_skipped_unsupported">
+        <item quantity="one">%d Regel übersprungen: sie erfordert eine neuere Version von Facet</item>
+        <item quantity="other">%d Regeln übersprungen: sie erfordern eine neuere Version von Facet</item>
+    </plurals>
+    <plurals name="backup_rules_skipped_invalid">
+        <item quantity="one">%d Regel übersprungen: sie konnte nicht gelesen werden</item>
+        <item quantity="other">%d Regeln übersprungen: sie konnten nicht gelesen werden</item>
+    </plurals>
+    <plurals name="backup_rules_need_permission">
+        <item quantity="one">%d Regel benötigt die Bluetooth- oder Standortberechtigung</item>
+        <item quantity="other">%d Regeln benötigen die Bluetooth- oder Standortberechtigung</item>
+    </plurals>
+    <plurals name="backup_rules_paused">
+        <item quantity="one">%d Regel ist im kostenlosen Tarif pausiert</item>
+        <item quantity="other">%d Regeln sind im kostenlosen Tarif pausiert</item>
+    </plurals>
+    <string name="backup_rules_not_in_backup">Diese Sicherung enthält keine Automatisierungsregeln: sie wurde erstellt, bevor Facet sie gesichert hat.</string>
+    <string name="backup_rules_open_automation">Facetten-Automatisierung öffnen</string>
     <string name="backup_restore_import_failed_invalid_file">Diese Datei ist keine gültige Facet-Sicherung</string>
     <string name="backup_restore_import_failed_unsupported_version">Diese Sicherung wurde mit einer neueren Version von Facet erstellt</string>
     <string name="backup_restore_app_not_installed">App nicht installiert</string>
@@ -539,8 +565,6 @@
     <string name="permission_calendar_subtitle">Zeigt die heutigen Termine auf der Uhr.</string>
     <string name="permission_contacts_title">Kontakte</string>
     <string name="permission_contacts_subtitle">Ermöglicht es der Drawer-Suche, passende Kontakte mit schnellen Anruf-/Nachrichten-/WhatsApp-Aktionen anzuzeigen.</string>
-    <string name="permission_usage_access_title">Nutzungszugriff</string>
-    <string name="permission_usage_access_subtitle">Ermöglicht die Listen „Zuletzt verwendet“ und „Meistgenutzt“.</string>
     <string name="permission_notification_access_title">Benachrichtigungszugriff</string>
     <string name="permission_notification_access_subtitle">Zeigt ein Punkt- oder Zahlenabzeichen bei Apps mit aktiven Benachrichtigungen.</string>
     <string name="permission_bluetooth_title">Bluetooth</string>
@@ -595,12 +619,19 @@
     <string name="pro_hero_trigger_drive">Fahren</string>
     <string name="pro_add_facet">Facette hinzufügen</string>
     <string name="pro_restore">Käufe wiederherstellen</string>
-    <string name="pro_feature_facets_title">Mehr Facetten</string>
-    <string name="pro_feature_facets_body">Kostenlos sind 3 enthalten. Pro geht bis 10. Jede hat eigene Startbildschirm-Apps und eine eigene Uhr.</string>
-    <string name="pro_feature_triggers_title">Auslöser für WLAN, Bluetooth, Kopfhörer und Akku</string>
-    <string name="pro_feature_triggers_body">Tritt dem Büro-WLAN bei oder verbinde dich mit dem Auto, und die Facette wechselt.</string>
-    <string name="pro_feature_widgets_title">Eigene Widgets auf dem Startbildschirm</string>
-    <string name="pro_feature_widgets_body">Ersetze die Uhr durch ein beliebiges Widget deines Telefons. Kostenlos sind die Uhren des Launchers enthalten.</string>
+    <string name="pro_feature_facets_title">Bis zu 10 Facetten</string>
+    <string name="pro_feature_facets_body">Kostenlos sind 3 enthalten. Jede Facette hat eigene Startbildschirm-Apps, ein eigenes Dock, eine eigene Uhr und einen eigenen Look.</string>
+    <string name="pro_feature_automation_title">Alle Auslöser, unbegrenzte Regeln</string>
+    <string name="pro_feature_automation_body">Wechsle Facetten bei WLAN, Bluetooth, Kopfhörern oder Akku, nicht nur nach Zeitplan. Kostenlos sind 2 Zeitplan-Regeln enthalten.</string>
+    <string name="pro_feature_widget_stacks_title">Widget-Stapel</string>
+    <string name="pro_feature_widget_stacks_body">Staple bis zu 5 Uhren und Widgets auf jedem Startbildschirm und wische zwischen ihnen. Kostenlos ist eines enthalten.</string>
+    <string name="pro_owned_automation_body">WLAN, Bluetooth, Kopfhörer und Akku</string>
+    <string name="pro_owned_widget_stacks_body">Bis zu 5 pro Facette</string>
+    <string name="pro_owned_daily_wallpaper_body">Einschalten unter Hintergrundbild</string>
+    <plurals name="pro_owned_facets_count">
+        <item quantity="one">Du hast %d Facette</item>
+        <item quantity="other">Du hast %d Facetten</item>
+    </plurals>
     <string name="pro_feature_daily_wallpaper_title">Tägliches Hintergrundbild</string>
     <string name="pro_feature_daily_wallpaper_body">Jeden Tag ein neues Bing- oder Spotlight-Foto auf deinem Startbildschirm.</string>
     <string name="pro_feature_future_title">Künftige Pro-Funktionen inklusive</string>
@@ -610,14 +641,6 @@
     <string name="pro_on_pro_title">Du hast Pro</string>
     <string name="pro_on_pro_body">Freigeschaltet auf jedem Handy mit diesem Google-Konto.</string>
     <string name="pro_unlocked">FREIGESCHALTET</string>
-    <string name="pro_owned_facets_title">Mehr Facetten</string>
-    <string name="pro_owned_facets_body">Bis zu 10 Facetten</string>
-    <string name="pro_owned_wifi_title">WLAN-Auslöser</string>
-    <string name="pro_owned_wifi_body">Wechselt beim Verbinden mit einem Netzwerk</string>
-    <string name="pro_owned_bluetooth_title">Bluetooth-Auslöser</string>
-    <string name="pro_owned_bluetooth_body">Wechselt beim Verbinden eines Geräts</string>
-    <string name="pro_owned_more_title">Kopfhörer- und Akku-Auslöser</string>
-    <string name="pro_owned_more_body">Wechselt beim Anschließen oder Laden</string>
     <string name="pro_card_headline">Das komplette Facet-Erlebnis, voll freigeschaltet.</string>
     <string name="settings_pro_free_plan">Du nutzt den kostenlosen Plan</string>
     <string name="pro_upgrade_to_pro">Auf Pro upgraden</string>
@@ -732,10 +755,6 @@
     <!-- Shared -->
     <string name="open_settings">Einstellungen öffnen</string>
 
-    <!-- UsageAccessExplanationScreen -->
-    <string name="usage_access_explanation_headline">„Zuletzt verwendet“ und „Meistgenutzt“ zeigen Apps basierend darauf, wie du dein Telefon tatsächlich nutzt.</string>
-    <string name="usage_access_explanation_body">Dafür ist Nutzungszugriff nötig, eine besondere Berechtigung, die in den Systemeinstellungen erteilt wird — Facet kann sie nicht direkt anfordern. Es wird nur gelesen, welche Apps du öffnest und wie lange; nichts verlässt dein Gerät.</string>
-
     <!-- NotificationAccessExplanationScreen -->
     <string name="notification_access_explanation_headline">Benachrichtigungsabzeichen zeigen einen Punkt oder eine Zahl bei Apps, bei denen etwas auf dich wartet, und der Medienplayer zeigt, was gerade läuft.</string>
     <string name="notification_access_explanation_body">Dafür ist Benachrichtigungszugriff nötig, eine besondere Berechtigung, die in den Systemeinstellungen erteilt wird — Facet kann sie nicht direkt anfordern. Es wird nur gelesen, welche Apps aktive Benachrichtigungen haben und ob sie stumm sind, dazu Titel, Interpret und Cover der laufenden Medien; nichts verlässt dein Gerät.</string>
@@ -814,7 +833,6 @@
     <string name="drawer_search_section_recent_changes">ZULETZT INSTALLIERT ODER AKTUALISIERT</string>
     <string name="drawer_search_section_frequent">HÄUFIG VERWENDET</string>
     <string name="drawer_search_section_last_used">ZULETZT VERWENDET</string>
-    <string name="drawer_search_usage_access_needed">Häufig und zuletzt verwendete Apps benötigen Zugriff auf die Nutzungsdaten in den Systemeinstellungen.</string>
     <string name="drawer_contacts_access_needed">Kontaktsuche benötigt Zugriff über die Systemeinstellungen.</string>
     <string name="drawer_contacts_search_off">Kontaktsuche ist in den App-Drawer-Einstellungen deaktiviert.</string>
     <string name="drawer_search_no_matches">Keine Treffer für „%1$s“</string>
@@ -873,9 +891,6 @@
     </plurals>
     <string name="facet_settings_dock_settings_title">Dock-Apps</string>
     <string name="facet_settings_rename_explanation">Benenne diese Facette um.</string>
-
-    <!-- HomeScreen -->
-    <string name="home_usage_access_needed">„Meistgenutzt“ benötigt Nutzungszugriff über die Systemeinstellungen.</string>
 
     <!-- ClockStyleGalleryScreen -->
     <string name="clock_style_font_label">Schriftart</string>
@@ -1218,4 +1233,83 @@
     <string name="glass_style_accent">Akzent</string>
     <string name="glass_style_theme">Design</string>
     <string name="glass_style_theme_inverted">Design invertiert</string>
+    <string name="home_usage_list_empty">Apps, die du über Facet öffnest, erscheinen hier.</string>
+    <!-- Custom app icons -->
+    <string name="app_context_menu_change_icon">Symbol für %1$s ändern</string>
+    <string name="change_icon_title">Symbol ändern</string>
+    <string name="change_icon_source_default">Standardsymbol</string>
+    <string name="change_icon_source_own">Eigenes Symbol der App</string>
+    <string name="change_icon_source_pack">Aus %1$s</string>
+    <string name="change_icon_in_your_packs">Diese App in deinen Symbolpaketen</string>
+    <string name="change_icon_own_option">Eigenes</string>
+    <string name="change_icon_more_choices">Weitere Optionen</string>
+    <string name="change_icon_browse_pack">%1$s durchsuchen</string>
+    <string name="change_icon_browse_pack_summary">Alle Symbole dieses Pakets</string>
+    <string name="change_icon_reset">Auf Standard zurücksetzen</string>
+    <string name="change_icon_no_packs">Installiere ein Symbolpaket, um aus seinen Symbolen zu wählen.</string>
+    <string name="browse_pack_search">Symbole suchen</string>
+    <string name="browse_pack_all">Alle</string>
+    <string name="browse_pack_best_match">Beste Treffer für %1$s</string>
+    <string name="browse_pack_no_results">Keine Symbole für „%1$s“</string>
+    <string name="browse_pack_empty">Dieses Paket hat keine Symbole zum Durchsuchen.</string>
+    <string name="custom_icons_title">Eigene Symbole</string>
+    <string name="custom_icons_reset">Zurücksetzen</string>
+    <string name="custom_icons_reset_app">Symbol für %1$s zurücksetzen</string>
+    <string name="custom_icons_reset_all">Alle eigenen Symbole zurücksetzen</string>
+    <string name="custom_icons_reset_all_title">Alle eigenen Symbole zurücksetzen?</string>
+    <string name="custom_icons_reset_all_message">Jede App erhält wieder das Symbol aus deinem Symbolstil oder Symbolpaket.</string>
+    <string name="custom_icons_reset_all_confirm">Alle zurücksetzen</string>
+    <string name="custom_icons_empty">Keine eigenen Symbole. Halte eine App gedrückt und tippe auf ihr Symbol, um es zu ändern.</string>
+    <plurals name="custom_icons_app_count">
+        <item quantity="one">%d App</item>
+        <item quantity="other">%d Apps</item>
+    </plurals>
+    <string name="drawer_search_app_vault">App-Tresor</string>
+    <string name="vault_title">App-Tresor</string>
+    <string name="vault_intro_hide">Blende Apps in App-Übersicht, Startbildschirm, Dock, Ordnern und Suche aus, in jedem Facet.</string>
+    <string name="vault_intro_hide_sub">Öffne sie hier mit einer 4-stelligen PIN.</string>
+    <string name="vault_intro_limits">Versteckte Apps erscheinen weiterhin in den Systemeinstellungen, im Play Store und mit ihren Benachrichtigungen.</string>
+    <string name="vault_intro_private_space">Um Apps und Benachrichtigungen zu verbergen und zu pausieren, nutze den Privaten Bereich oder den Sicheren Ordner, falls dein Telefon einen hat.</string>
+    <string name="vault_intro_no_screen_lock">Dieses Telefon hat keine Displaysperre, deshalb lässt sich eine vergessene PIN nur beheben, indem du den Tresor ausschaltest.</string>
+    <string name="vault_set_pin">PIN festlegen</string>
+    <string name="vault_create_pin_title">PIN erstellen</string>
+    <string name="vault_create_pin_sub">Wähle 4 Ziffern, um den Tresor zu öffnen.</string>
+    <string name="vault_confirm_pin_title">PIN bestätigen</string>
+    <string name="vault_confirm_pin_sub">Gib sie noch einmal ein.</string>
+    <string name="vault_pins_mismatch">Die PINs stimmen nicht überein. Gib eine neue PIN ein.</string>
+    <string name="vault_enter_pin">PIN eingeben</string>
+    <string name="vault_locked_out">Zu viele Versuche. Versuche es in %1$s erneut</string>
+    <string name="vault_forgot_pin">PIN vergessen?</string>
+    <string name="vault_backspace">Letzte Ziffer löschen</string>
+    <string name="vault_add_apps">Apps hinzufügen</string>
+    <string name="vault_add_to_vault_title">Zum Tresor hinzufügen</string>
+    <string name="vault_picker_chosen">Ausgewählt</string>
+    <string name="vault_empty">Noch keine versteckten Apps</string>
+    <string name="vault_empty_hint">Apps, die du hier hinzufügst, verschwinden aus App-Übersicht, Startbildschirm und Suche.</string>
+    <string name="vault_more_options">Weitere Optionen</string>
+    <string name="vault_app_menu">Optionen für %1$s</string>
+    <string name="vault_app_info">App-Info</string>
+    <string name="vault_remove">Aus dem Tresor entfernen</string>
+    <string name="vault_removed">%1$s ist wieder in deiner App-Übersicht</string>
+    <string name="vault_undo">Rückgängig</string>
+    <string name="vault_change_pin">PIN ändern</string>
+    <string name="vault_turn_off">App-Tresor ausschalten</string>
+    <string name="vault_turn_off_title">App-Tresor ausschalten?</string>
+    <string name="vault_turn_off_message">Alle versteckten Apps kehren in deine App-Übersicht zurück und die PIN wird gelöscht.</string>
+    <string name="vault_turn_off_confirm">Ausschalten</string>
+    <string name="vault_reset_title">App-Tresor zurücksetzen?</string>
+    <string name="vault_reset_message">Dieses Telefon hat keine Displaysperre, um zu bestätigen, dass du es bist. Eine vergessene PIN lässt sich nur löschen, indem du den Tresor ausschaltest. Alle versteckten Apps kehren in deine App-Übersicht zurück.</string>
+    <string name="vault_reset_confirm">Zurücksetzen</string>
+    <string name="vault_move_title">In den Tresor verschieben?</string>
+    <string name="vault_move_confirm">In den Tresor</string>
+    <string name="vault_confirm_credential_title">Bestätige, dass du es bist</string>
+    <string name="vault_confirm_credential_message">Nutze die Displaysperre deines Telefons, um eine neue Tresor-PIN zu wählen.</string>
+    <plurals name="vault_wrong_pin">
+        <item quantity="one">Falsche PIN. Noch %1$d Versuch bis zu einer Pause.</item>
+        <item quantity="other">Falsche PIN. Noch %1$d Versuche bis zu einer Pause.</item>
+    </plurals>
+    <plurals name="vault_move_message">
+        <item quantity="one">%1$d der gewählten Apps ist auf dem Startbildschirm oder in einem Ordner. Sie wird in jedem Facet aus Favoriten, Dock und Ordnern entfernt.</item>
+        <item quantity="other">%1$d der gewählten Apps sind auf dem Startbildschirm oder in Ordnern. Sie werden in jedem Facet aus Favoriten, Dock und Ordnern entfernt.</item>
+    </plurals>
 </resources>

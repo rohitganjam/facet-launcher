@@ -22,7 +22,7 @@ lens (API 33+).
 
 ## The screen
 
-*Change wallpaper* opens `WallpaperScreen`, which shows the copy (or a stand-in for the system wallpaper) and a status line, then two equal choices:
+*Change wallpaper* opens `WallpaperScreen`, which shows the copy (or a stand-in for the system wallpaper) in the window's shape, so an unfolded or turned screen gets a wide preview, and a status line, then two equal choices:
 
 1. **Choose an image for Facet.** The gallery app, through `GetContent("image/*")` (no permission; a chooser when several apps answer) → the **fit step**: the photo in a window shaped like the largest known screen (the current window when only one is known, and for a screenshot of the current wallpaper), with the other screens outlined and the rest dimmed (`OtherScreenOutlines`, from `ScreenSize.coverRegion`), drag to move, pinch to zoom
    (1× to 5× of the zoom that just covers the screen), double-tap to reset, and a choice of *Home screen* or *Home and lock

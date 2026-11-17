@@ -186,7 +186,7 @@ class LauncherActivity : ComponentActivity() {
             // display AppProfile category, since two distinct real profiles can share that
             // category (see AppProfile's own doc) and a re-derived handle could resolve to the
             // wrong one.
-            runCatching { launcherApps.startMainActivity(component, app.userHandle, null, null) }
+            runCatching { launcherApps.startMainActivity(component, app.userHandle, null, null) }.onSuccess { viewModel.onAppLaunched(app) }
             return
         }
         val intent = Intent(Intent.ACTION_MAIN).apply {
@@ -194,6 +194,6 @@ class LauncherActivity : ComponentActivity() {
             this.component = component
             flags = Intent.FLAG_ACTIVITY_NEW_TASK
         }
-        runCatching { startActivity(intent) }
+        runCatching { startActivity(intent) }.onSuccess { viewModel.onAppLaunched(app) }
     }
 }

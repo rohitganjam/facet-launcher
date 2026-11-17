@@ -1,6 +1,5 @@
 package com.facetlauncher.app.ui.settings
 
-import android.app.AppOpsManager
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.test.assertHasClickAction
@@ -15,7 +14,6 @@ import com.facetlauncher.app.data.CalendarPermissionRepository
 import com.facetlauncher.app.data.ContactPermissionRepository
 import com.facetlauncher.app.data.NotificationAccessRepository
 import com.facetlauncher.app.data.SettingsRepository
-import com.facetlauncher.app.data.UsageAccessRepository
 import com.facetlauncher.app.ui.testDeviceStateRepository
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import java.io.File
@@ -30,7 +28,6 @@ class PermissionsScreenTest {
     val composeRule = createComposeRule()
 
     private fun setContent(
-        onNavigateToUsageAccessExplanation: () -> Unit = {},
         onNavigateToNotificationAccessExplanation: () -> Unit = {},
         onNavigateToAccessibilityAccessExplanation: () -> Unit = {},
     ) {
@@ -47,7 +44,6 @@ class PermissionsScreenTest {
                     settingsRepository,
                     FakeCalendarPermissionRepository(context, granted = false),
                     ContactPermissionRepository(context),
-                    UsageAccessRepository(context.getSystemService(AppOpsManager::class.java), context),
                     NotificationAccessRepository(context),
                     AccessibilityAccessRepository(context),
                     FakeAutomationPermissionRepository(context, granted = false),
@@ -57,7 +53,6 @@ class PermissionsScreenTest {
             FacetLauncherTheme {
                 PermissionsScreen(
                     onBack = {},
-                    onNavigateToUsageAccessExplanation = onNavigateToUsageAccessExplanation,
                     onNavigateToNotificationAccessExplanation = onNavigateToNotificationAccessExplanation,
                     onNavigateToAccessibilityAccessExplanation = onNavigateToAccessibilityAccessExplanation,
                     viewModel = viewModel,
@@ -79,8 +74,8 @@ class PermissionsScreenTest {
     }
 
     @Test
-    fun rendersAllSixPermissionsWithTheirExplanationAndUngrantedTurnOnAction() {
-        // Given none of the six permissions are granted (fake Calendar repository, real
+    fun rendersAllFivePermissionsWithTheirExplanationAndUngrantedTurnOnAction() {
+        // Given none of the five permissions are granted (fake Calendar repository, real
         // ungranted defaults for the other three — a fresh test/emulator instance never has
         // notification listener access granted either)
         setContent()
@@ -98,10 +93,8 @@ class PermissionsScreenTest {
         composeRule.onNodeWithTag("permission_row_CONTACTS").assertHasClickAction()
         composeRule.onNodeWithTag("permission_turn_on_CONTACTS", useUnmergedTree = true).assertExists()
 
-        composeRule.onNodeWithText("Usage access").assertExists()
-        composeRule.onNodeWithText("Powers the Recents and Most used app lists.").assertExists()
-        composeRule.onNodeWithTag("permission_row_USAGE_ACCESS").assertHasClickAction()
-        composeRule.onNodeWithTag("permission_turn_on_USAGE_ACCESS", useUnmergedTree = true).assertExists()
+        // Usage access is gone: Recents and Most used come from Facet's own launch history
+        composeRule.onNodeWithText("Usage access").assertDoesNotExist()
 
         composeRule.onNodeWithText("Notification access").assertExists()
         composeRule.onNodeWithText("Shows a dot or count badge on apps with active notifications.").assertExists()
@@ -122,20 +115,6 @@ class PermissionsScreenTest {
         ).assertExists()
         composeRule.onNodeWithTag("permission_row_LOCATION").assertHasClickAction()
         composeRule.onNodeWithTag("permission_turn_on_LOCATION", useUnmergedTree = true).assertExists()
-    }
-
-    @Test
-    fun tappingTurnOnForUsageAccessNavigatesToItsExplanationScreen() {
-        // Given the permissions screen
-        var navigated = false
-        setContent(onNavigateToUsageAccessExplanation = { navigated = true })
-
-        // When tapping "Turn on" for Usage access — a special-access permission with no runtime
-        // dialog of its own, so this always goes to the existing explanation screen instead
-        composeRule.onNodeWithTag("permission_row_USAGE_ACCESS").performClick()
-
-        // Then it navigates there
-        assertEquals(true, navigated)
     }
 
     @Test
@@ -190,7 +169,6 @@ class PermissionsScreenGrantedTest {
                     settingsRepository,
                     FakeCalendarPermissionRepository(context, granted = true),
                     ContactPermissionRepository(context),
-                    UsageAccessRepository(context.getSystemService(AppOpsManager::class.java), context),
                     NotificationAccessRepository(context),
                     AccessibilityAccessRepository(context),
                     FakeAutomationPermissionRepository(context, granted = true),
@@ -200,7 +178,6 @@ class PermissionsScreenGrantedTest {
             FacetLauncherTheme {
                 PermissionsScreen(
                     onBack = {},
-                    onNavigateToUsageAccessExplanation = {},
                     onNavigateToNotificationAccessExplanation = {},
                     onNavigateToAccessibilityAccessExplanation = {},
                     viewModel = viewModel,

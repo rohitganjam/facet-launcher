@@ -2,6 +2,8 @@ package com.facetlauncher.app.ui.home.widget
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.facetlauncher.app.data.AppVaultRepository
+import com.facetlauncher.app.data.model.withoutVaulted
 import com.facetlauncher.app.data.model.WidgetProviderOption
 import com.facetlauncher.app.data.model.NativeWidgetRef
 import com.facetlauncher.app.data.model.NativeWidgetType
@@ -26,6 +28,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -46,6 +49,8 @@ class ClockWidgetPickerViewModel @Inject constructor(
     private val appWidgetRepository: AppWidgetRepository,
     private val replaceClockStackItem: ReplaceClockStackItemUseCase,
     private val addClockStackItem: AddClockStackItemUseCase,
+    // Defaulted so tests that don't cover the vault needn't build one; Hilt always supplies it.
+    private val appVaultRepository: AppVaultRepository? = null,
 ) : ViewModel() {
 
     private val query = MutableStateFlow("")
@@ -62,7 +67,9 @@ class ClockWidgetPickerViewModel @Inject constructor(
     private val tab = MutableStateFlow(WidgetPickerTab.PERSONAL)
 
     val uiState: StateFlow<HubWidgetPickerUiState> = combine(query, tab, allOptions) { currentQuery, currentTab, options ->
-        val currentOptions = options ?: appWidgetRepository.getWidgetProviderOptions().also { allOptions.value = it }
+        val currentOptions = options ?: appWidgetRepository.getWidgetProviderOptions()
+            .withoutVaulted(appVaultRepository?.vaultedKeys?.first().orEmpty())
+            .also { allOptions.value = it }
         pickerState(currentOptions, currentQuery, currentTab, remaining = null)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), HubWidgetPickerUiState(remaining = null))
 

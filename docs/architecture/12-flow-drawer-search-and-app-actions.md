@@ -151,27 +151,39 @@ ago for the "Recently installed" row). Taps do nothing (an overlay takes them, a
 list), `consumeWindowInsets(systemBars)` stops the drawer padding for the status bar, and
 `clearAndSetSemantics` keeps the sample apps out of the accessibility tree.
 
+### 1f. Vaulted apps
+
+`AppRepository.observeInstalledApps()` already leaves out the App Vault's apps, so the drawer, search, Recents and Most used never list them, with no filter of their own. The drawer's 3-dot menu ends with the App Vault row (`DrawerSearchBarConfig.onOpenAppVault`, tag `drawer_search_overflow_app_vault`), which opens `HomeAppVaultOverlay` over the drawer; the long-press menu has no vault action. See [23](23-flow-app-vault.md).
+
 ## 2a. The search sheet
 
 The drawer's search bar (`DrawerSearchBar`) is a button: tapping it, or a Home press on bare Home with "Home button opens search" on (`DrawerSearchBarConfig.focusRequest`), opens `DrawerSearchSheet` (`ui/drawer/DrawerSearchSheet.kt`) inside `AppDrawerScreen`'s root `Box`. The sheet slides in from the bar's edge (bottom for `SearchBarPosition.BOTTOM`, else top; `FacetTransitionEasing`) over a 40% scrim, with its own focused field at that edge, a back arrow and a clear button. While it is open the browse list is hidden from semantics (`clearAndSetSemantics`).
 
-- **Start view (empty query):** `SearchSuggestions`, grid sections capped at two rows each: *Recently installed or updated* (`RecentlyChangedAppsUseCase`, first install or last update within 72h, over the drawer's `apps`), *Frequently used* and *Last used* (`DrawerViewModel.loadUsageSuggestions()` → `UsageStatsRepository.getMostUsedApps` / `getRecentApps`, asked for each time the sheet opens, filtered to apps the drawer lists by `AppInfo.listKey`). Without Usage Access the two usage sections give way to one strip (`onUsageAccessClick` → the Usage Access explanation route).
+- **Start view (empty query):** `SearchSuggestions`, grid sections capped at two rows each: *Recently installed or updated* (`RecentlyChangedAppsUseCase`, first install or last update within 72h, over the drawer's `apps`), *Frequently used* and *Last used* (`DrawerViewModel.loadUsageSuggestions()` → `LaunchHistoryRepository.getMostUsedApps` / `getRecentApps`, asked for each time the sheet opens, filtered to apps the drawer lists by `AppInfo.listKey`). Both come from Facet's own launch history, so they need no permission and are empty until apps are opened from Facet.
+- **Enter:** the field's IME action is Go; it opens the top app result (`searchResultApps.firstOrNull()`) through the same click path as a tap, and does nothing when no app matches.
 - **Typing:** `DrawerSearchResults` unchanged (apps, contacts, settings) but always a grid: `DrawerAppearance.forSearchSheet()` uses the drawer's grid density when the drawer is a grid, else Regular. All three sections are tiles in `SearchTileGrid` (`ui/drawer/SearchResultTiles.kt`, the app grid's column count): apps as `DrawerGridTile`, contacts as `ContactGridTile` (the contact's thumbnail, `ContactInfo.photo`, loaded by `ContactRepository.searchContacts` from `PHOTO_THUMBNAIL_URI`, else their initial) and settings as `SettingsGridTile`. Contact and settings tiles are clipped to the user's icon shape (`LocalIconShape`), the label under them. Each settings entry has its own glyph, `SettingsSearchEntry.icon()` keyed by catalog id (`SETTING_ICONS`), the generic cog for an id with none.
 - **No results:** when no app, contact (or contacts prompt) or setting matches, `DrawerSearchEmptyState` shows the query, a **Search Play Store** `TonalButton` and **Clear search**. The button follows `DrawerViewModel.appStore`, which `AppStoreRepository.availableStore()` fills each time a search starts (blank to non-blank): the Play Store by package if installed and enabled, else any `market://` store ("Search app store"), else Google Play on the web ("Search Play Store on the web"), else no button. A tap hides the keyboard and starts `searchIntent(store, trimmed query)` (`market://search?q=…&c=apps` or `https://play.google.com/store/search?q=…&c=apps`). Nothing shows while any section has a result, and Private Space search has no button. Facet makes no request itself.
-- **Closing:** Back, the back arrow, the scrim and the Home button close the sheet and clear the query, leaving the drawer open (`BackHandler`, `DismissOnHomePress`). While open it calls `BlockHomeSwipesWhileShown()` so a drag on it never pulls the drawer shut. The drawer closing also closes it.
+- **Closing:** Back, the back arrow and the scrim close the sheet and clear the query, leaving the drawer open (`BackHandler`). The Home button closes the drawer instead: the sheet keeps its query and slides out with the drawer, and the drawer reaching closed (`isDrawerOpen` false) closes it and clears the query off screen, with no exit transition (`exitInstantly`): its own slide out would carry it back into view past the drawer's edge. On that press its `DismissOnHomePress` only holds the keyboard's bottom padding at its last value, so the field doesn't drop while the keyboard hides. While open it calls `BlockHomeSwipesWhileShown()` so a drag on it never pulls the drawer shut.
 
 ## 2. Search pipeline
+
+Every search surface shares one model, `RankBySearchRelevanceUseCase` (`domain/`): the drawer's apps, contacts and settings, Private Space, the Dock/Favorites/folder pickers and the widget picker (the pickers filter with its top-level `matchesSearch` and keep their own sort).
+
+- **Normalization** (`normalizeForSearch`): NFD with Latin combining accents (U+0300–036F) stripped, lowercase (`Locale.ROOT`), every run of non-letter/digit/mark characters turned into one space, trimmed. "café", "Cafe" and "CAFE " compare equal; a query that normalizes to nothing matches nothing.
+- **Tiers**, best first: `EXACT`, `PREFIX`, `WORD_PREFIX` (a word of the label starts with the query, or each query word starts a later label word in order, "goo ma" → Google Maps), `INITIALS` ("gm" → Google Maps; a lowercase-to-uppercase step starts a word, so "wa" → WhatsApp) and `SUBSTRING`. Each tier also matches on the space-free form, so "wifi" finds Wi-Fi. A one-letter query matches only the first three tiers.
+- **Order:** an app picked at least twice for this exact normalized query goes first (more picks higher), then tier, then (drawer apps only) launches in the last 30 days, then alphabetical. Learned picks and launch counts come from `LaunchHistoryRepository.observeSearchSignals()` as `DrawerViewModel.searchSignals`; `HomeAppDrawerOverlay` records a pick (`onSearchPick`, keyed by `normalize(query)`) whenever an app is opened while a query is typed.
+- Ranking runs in composition (`DrawerBrowseModel`, `remember(apps, query, searchSignals)`); each label's prepared form is cached in the use case (cleared past 4096 labels), so a keystroke re-matches but doesn't re-normalize.
 
 ```mermaid
 flowchart LR
     Q["searchQuery: MutableStateFlow&lt;String&gt;\n(onQueryChange)"]
-    Q --> A["Apps: filtered in the composable\nRankBySearchRelevanceUseCase(apps, query) { label }\nprefix match ranks above substring"]
+    Q --> A["Apps: ranked in the composable\nrankBySearchRelevance.apps(apps, query, searchSignals)"]
     Q --> C{"settings.searchContactsEnabled\n&amp;&amp; ContactPermissionRepository.isGranted()"}
-    C -- yes --> CR["ContactRepository.searchContacts(query, MAX_CONTACT_RESULTS)\nContactsContract via ContentResolver, Dispatchers.IO\n→ rankBySearchRelevance { displayName }"]
+    C -- yes --> CR["ContactRepository.searchContacts(query, 50)\nContactsContract via ContentResolver, Dispatchers.IO\n→ rankBySearchRelevance { displayName } → top 5"]
     C -- "enabled but not granted" --> P1["showContactsPermissionPrompt"]
     C -- "granted but disabled" --> P2["showContactsSettingPrompt → enableContactSearch()"]
     Q --> SS{"settings.searchSettingsEnabled"}
-    SS -- yes --> SR["SystemSettingsRepository.search(query)\nstatic catalogue of Settings.ACTION_* entries\nwith keyword aliases (no relevance re-rank: alias hits keep catalogue order)"]
+    SS -- yes --> SR["SystemSettingsRepository.availableEntries()\nresolvable Settings.ACTION_* catalogue\n→ rankBySearchRelevance.rank(label + keywords) → top 5"]
     CR --> OUT["contactResults: StateFlow"]
     SR --> OUT2["settingsResults: StateFlow"]
     A --> S[AppDrawerScreen sections: Apps / Contacts / Settings]
@@ -180,7 +192,8 @@ flowchart LR
 ```
 
 - Contacts and settings searches are `flatMapLatest` over `(query, enabled)` — a new keystroke
-  cancels the in-flight `ContentResolver` query.
+  cancels the in-flight `ContentResolver` query. Contacts fetch 50 candidates before ranking, so a
+  better match isn't cut by the provider's own order.
 - Both prompts are gated by a `MutableStateFlow` "dismissed" flag so they show once per drawer
   session; `contacts_permission_requested` in DataStore records that the system dialog was
   shown at least once.
@@ -191,7 +204,8 @@ flowchart LR
 
 | Action | Path | Notes |
 |---|---|---|
-| Launch | `onAppClick` → `LauncherActivity.launchApp` | other-profile apps via `LauncherApps.startMainActivity`; also fired by tapping the sheet header's icon or name (`onOpenApp`, sheet closes first) |
+| Launch | `onAppClick` → `LauncherActivity.launchApp` | other-profile apps via `LauncherApps.startMainActivity`; also fired by tapping the sheet header's name (`onOpenApp`, sheet closes first), and its icon only when no `LocalAppIconEditor` is provided (previews, tests) |
+| Change icon | the header icon, with a pencil badge, opens the Change icon page (`AppMenuPage.ChangeIcon`), and from it Browse (`AppMenuPage.BrowsePack`), inside the same sheet; `LocalAppIconEditor` → `AppIconEditorViewModel` | see [22](22-flow-custom-icons.md); Back steps back a page, and Home press closes the whole sheet like the Folders page |
 | Notifications zone | `DrawerViewModel.observeAppNotifications(app)` → `ObserveAppNotificationsUseCase` (setting `show_notifications_in_app_menu` + `NotificationAccessRepository.isGranted()` + `NotificationBadgeRepository.notificationsFor(pkg, handle)`) → `AppNotificationsState(notifications, needsAccess)` | live while the sheet is open; only this app in this profile; see below |
 | Open / dismiss a notification | `DrawerViewModel.openNotification(n)` → `NotificationOpener.open(contentIntent)`, then `NotificationActionController.dismiss` if the notification asked for `autoCancel`; swipe and "Clear all" → `dismissNotifications(keys)` → the listener's `cancelNotifications` | a dismiss with no connected listener is a no-op that returns false |
 | Add/remove to Favorites / Dock | `QuickAddState` from `ObserveQuickAddStateUseCase` decides which action is offered; `DrawerViewModel.onFavoritesAction / onDockAction` (and `onFolderFavoritesAction / onFolderDockAction` for a folder) → `applyPlacement` → `AddToActiveListUseCase` / `RemoveFromActiveListUseCase` | routing in [08 §1](08-flow-placements.md) |
@@ -203,7 +217,7 @@ flowchart LR
 App shortcuts (`LauncherApps.getShortcuts`) are no longer shown in the menu.
 
 **Sheet layout.** `AppContextMenu` is one scrolling page with three zones, each behind a 1dp
-`CardDivider`: a header (icon and name, one tap target that opens the app, and App info and
+`CardDivider`: a header (icon and name, one tap target that opens the app, or with an icon editor the icon opens Change icon and the name opens the app; then App info and
 Uninstall as 48dp icon buttons), the notifications zone (left out only when the setting is off), and the
 placement actions. It opens at its full
 content height (`skipPartiallyExpanded`) and scrolls when the zones don't fit.
@@ -352,9 +366,11 @@ axes — each close in its own `launch`, never inline: a drag landing on the sam
 Home silently stopped working until the app restarted (`HomeDrawerRouteTest`). Every sheet, dialog and
 overlay that composes its own state subscribes with `DismissOnHomePress` — `ThemedModalBottomSheet` does it
 for every action menu and for the facet automation rule editor (a settings sheet, so a Home press while it is
-open closes it and drops the draft), and `FolderContentsSheet` and the contact connections sheet call it
-directly; a new one must do the same.
-A Home press while the launcher is already in front and bare (Drawer, Hub, carousel, clock adjust, pickers, Private Space and sheets all closed) instead opens the Drawer and focuses its search field, but only when the opt-in "Home button opens search" setting (`homeOpensSearch`, off by default, Settings → Gestures) is on; `HomeDrawerRoute` reads it from `LauncherUiState.homeOpensSearch` before closing anything. `LauncherActivity.onNewIntent` passes `whileResumed` (true unless the activity was stopped since it last resumed: a Home press on bare Home only pauses it, but returning from another app stops it first; `lifecycle.currentState` can't tell them apart, as both reach `onNewIntent` in STARTED) to `LauncherViewModel.onHomePressed`, which `HomeDrawerRoute`'s collector reads as `homePressedWhileResumed` before it closes anything, then bumps `DrawerSearchBarConfig.focusRequest`. A press from another app, or with anything open, only returns to bare Home (`HomeDrawerRouteTest`).
+open closes it and drops the draft), and `FolderContentsSheet` calls it directly; a new one must do the same.
+The exception is an overlay inside the Drawer (the search sheet, the contact connections sheet): Home closes the
+Drawer around it, so it stays as it is and slides out with the Drawer, then resets once the Drawer is closed
+(`isDrawerOpen` false) with no exit transition. Closing it on its own as well made the two motions fight (`HomeDrawerRouteTest`).
+The App Vault overlay is the same kind of overlay inside the Drawer: the Drawer closing closes it (`HomeAppDrawerOverlay`) and `HomeAppVaultOverlay` then locks it, so the next open asks for the PIN again ([23](23-flow-app-vault.md)). A Home press while the launcher is already in front and bare (Drawer, Hub, carousel, clock adjust, pickers, Private Space, the App Vault and sheets all closed) instead opens the Drawer and focuses its search field, but only when the opt-in "Home button opens search" setting (`homeOpensSearch`, off by default, Settings → Gestures) is on; `HomeDrawerRoute` reads it from `LauncherUiState.homeOpensSearch` before closing anything. `LauncherActivity.onNewIntent` passes `whileResumed` (true unless the activity was stopped since it last resumed: a Home press on bare Home only pauses it, but returning from another app stops it first; `lifecycle.currentState` can't tell them apart, as both reach `onNewIntent` in STARTED) to `LauncherViewModel.onHomePressed`, which `HomeDrawerRoute`'s collector reads as `homePressedWhileResumed` before it closes anything, then bumps `DrawerSearchBarConfig.focusRequest`. A press from another app, or with anything open, only returns to bare Home (`HomeDrawerRouteTest`).
 Samsung's swipe-up gesture injects `KEYCODE_HOME` itself, so it reaches this path exactly like the button.
 
 **Double-tap to lock** (currently disabled: the manifest service, the Gestures switch, the Permissions row and `onEmptySpaceDoubleTap`'s body are commented out until the Play AccessibilityService declaration is approved). `homeEmptySpaceGestures` also reports a double-tap on empty Home (idle clock-adjust mode only; the

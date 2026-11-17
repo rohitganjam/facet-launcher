@@ -1,7 +1,5 @@
 package com.facetlauncher.app.ui.facets
 
-import android.app.AppOpsManager
-import android.app.usage.UsageStatsManager
 import android.content.pm.LauncherApps
 import android.os.UserManager
 import androidx.compose.runtime.remember
@@ -19,10 +17,9 @@ import androidx.compose.ui.test.performTextReplacement
 import androidx.lifecycle.SavedStateHandle
 import androidx.room.Room
 import com.facetlauncher.app.data.AppRepository
+import com.facetlauncher.app.data.testLaunchHistoryRepository
 import com.facetlauncher.app.data.getTestableApps
 import com.facetlauncher.app.data.FolderRepository
-import com.facetlauncher.app.data.UsageAccessRepository
-import com.facetlauncher.app.data.UsageStatsRepository
 import com.facetlauncher.app.data.local.FacetDatabase
 import com.facetlauncher.app.data.model.Facet
 import com.facetlauncher.app.data.model.AppInfo
@@ -68,20 +65,18 @@ class FavoritesPickerScreenTest {
                     facetId = database.facetDao().insert(com.facetlauncher.app.data.local.FacetEntity(name = "Facet 1", position = 0))
                     seed(appRepository, placementRepository, folderRepository)
                 }
-                val usageStatsRepository = UsageStatsRepository(context.getSystemService(UsageStatsManager::class.java), appRepository)
-                val usageAccessRepository = UsageAccessRepository(context.getSystemService(AppOpsManager::class.java), context)
+                val launchHistoryRepository = testLaunchHistoryRepository(context, appRepository)
                 FavoritesPickerViewModel(
                     SavedStateHandle(mapOf("facetId" to facetId)),
                     GetInstalledAppsUseCase(appRepository),
                     placementRepository,
                     observePlacedItems,
                     folderRepository,
-                    SortAppsForPickerUseCase(usageStatsRepository),
-                    usageAccessRepository,
+                    SortAppsForPickerUseCase(launchHistoryRepository),
                 ).also { lastViewModel = it }
             }
             FacetLauncherTheme {
-                FavoritesPickerScreen(onDone = onDone, onNavigateToUsageAccessExplanation = {}, viewModel = viewModel)
+                FavoritesPickerScreen(onDone = onDone, viewModel = viewModel)
             }
         }
         composeRule.waitForIdle()

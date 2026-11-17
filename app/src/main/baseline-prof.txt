@@ -22398,16 +22398,6 @@ SPLcom/facetlauncher/app/data/SourceNeeds;->getWifi()Lcom/facetlauncher/app/data
 Lcom/facetlauncher/app/data/SystemSettingsRepository;
 SPLcom/facetlauncher/app/data/SystemSettingsRepository;-><clinit>()V
 SPLcom/facetlauncher/app/data/SystemSettingsRepository;-><init>(Landroid/content/Context;Lkotlinx/coroutines/CoroutineDispatcher;)V
-Lcom/facetlauncher/app/data/UsageAccessRepository;
-SPLcom/facetlauncher/app/data/UsageAccessRepository;-><clinit>()V
-SPLcom/facetlauncher/app/data/UsageAccessRepository;-><init>(Landroid/app/AppOpsManager;Landroid/content/Context;)V
-SPLcom/facetlauncher/app/data/UsageAccessRepository;->isGranted()Z
-Lcom/facetlauncher/app/data/UsageStatsRepository;
-SPLcom/facetlauncher/app/data/UsageStatsRepository;-><clinit>()V
-SPLcom/facetlauncher/app/data/UsageStatsRepository;-><init>(Landroid/app/usage/UsageStatsManager;Lcom/facetlauncher/app/data/AppRepository;Lkotlinx/coroutines/CoroutineDispatcher;)V
-Lcom/facetlauncher/app/data/UsageStatsRepository$Companion;
-SPLcom/facetlauncher/app/data/UsageStatsRepository$Companion;-><init>()V
-SPLcom/facetlauncher/app/data/UsageStatsRepository$Companion;-><init>(Lkotlin/jvm/internal/DefaultConstructorMarker;)V
 Lcom/facetlauncher/app/data/WakeEventsRepository;
 SPLcom/facetlauncher/app/data/WakeEventsRepository;-><clinit>()V
 SPLcom/facetlauncher/app/data/WakeEventsRepository;-><init>(Landroid/content/Context;)V
@@ -22490,16 +22480,12 @@ SPLcom/facetlauncher/app/data/WorkProfileRepositoryKt;->access$getPROFILE_STATE_
 Lcom/facetlauncher/app/data/di/AppModule;
 SPLcom/facetlauncher/app/data/di/AppModule;-><clinit>()V
 SPLcom/facetlauncher/app/data/di/AppModule;-><init>()V
-SPLcom/facetlauncher/app/data/di/AppModule;->provideAppOpsManager(Landroid/content/Context;)Landroid/app/AppOpsManager;
 SPLcom/facetlauncher/app/data/di/AppModule;->provideApplicationScope(Lkotlinx/coroutines/CoroutineDispatcher;)Lkotlinx/coroutines/CoroutineScope;
 SPLcom/facetlauncher/app/data/di/AppModule;->provideClock()Ljava/time/Clock;
 SPLcom/facetlauncher/app/data/di/AppModule;->provideContentResolver(Landroid/content/Context;)Landroid/content/ContentResolver;
 SPLcom/facetlauncher/app/data/di/AppModule;->provideLauncherApps(Landroid/content/Context;)Landroid/content/pm/LauncherApps;
-SPLcom/facetlauncher/app/data/di/AppModule;->provideUsageStatsManager(Landroid/content/Context;)Landroid/app/usage/UsageStatsManager;
 SPLcom/facetlauncher/app/data/di/AppModule;->provideUserManager(Landroid/content/Context;)Landroid/os/UserManager;
 SPLcom/facetlauncher/app/data/di/AppModule;->provideWallpaperManager(Landroid/content/Context;)Landroid/app/WallpaperManager;
-Lcom/facetlauncher/app/data/di/AppModule_ProvideAppOpsManagerFactory;
-SPLcom/facetlauncher/app/data/di/AppModule_ProvideAppOpsManagerFactory;->provideAppOpsManager(Landroid/content/Context;)Landroid/app/AppOpsManager;
 Lcom/facetlauncher/app/data/di/AppModule_ProvideApplicationScopeFactory;
 SPLcom/facetlauncher/app/data/di/AppModule_ProvideApplicationScopeFactory;->provideApplicationScope(Lkotlinx/coroutines/CoroutineDispatcher;)Lkotlinx/coroutines/CoroutineScope;
 Lcom/facetlauncher/app/data/di/AppModule_ProvideClockFactory;
@@ -22508,8 +22494,6 @@ Lcom/facetlauncher/app/data/di/AppModule_ProvideContentResolverFactory;
 SPLcom/facetlauncher/app/data/di/AppModule_ProvideContentResolverFactory;->provideContentResolver(Landroid/content/Context;)Landroid/content/ContentResolver;
 Lcom/facetlauncher/app/data/di/AppModule_ProvideLauncherAppsFactory;
 SPLcom/facetlauncher/app/data/di/AppModule_ProvideLauncherAppsFactory;->provideLauncherApps(Landroid/content/Context;)Landroid/content/pm/LauncherApps;
-Lcom/facetlauncher/app/data/di/AppModule_ProvideUsageStatsManagerFactory;
-SPLcom/facetlauncher/app/data/di/AppModule_ProvideUsageStatsManagerFactory;->provideUsageStatsManager(Landroid/content/Context;)Landroid/app/usage/UsageStatsManager;
 Lcom/facetlauncher/app/data/di/AppModule_ProvideUserManagerFactory;
 SPLcom/facetlauncher/app/data/di/AppModule_ProvideUserManagerFactory;->provideUserManager(Landroid/content/Context;)Landroid/os/UserManager;
 Lcom/facetlauncher/app/data/di/AppModule_ProvideWallpaperManagerFactory;
@@ -23709,7 +23693,6 @@ SPLcom/facetlauncher/app/domain/HomeScreenState;->getFacets()Ljava/util/List;
 SPLcom/facetlauncher/app/domain/HomeScreenState;->getFavoriteItems()Ljava/util/List;
 SPLcom/facetlauncher/app/domain/HomeScreenState;->getMediaPlayer()Lcom/facetlauncher/app/data/model/MediaPlayerState;
 SPLcom/facetlauncher/app/domain/HomeScreenState;->getSettings()Lcom/facetlauncher/app/data/model/LauncherSettings;
-SPLcom/facetlauncher/app/domain/HomeScreenState;->getUsageAccessGranted()Z
 Lcom/facetlauncher/app/domain/HubDomainState;
 SPLcom/facetlauncher/app/domain/HubDomainState;-><clinit>()V
 SPLcom/facetlauncher/app/domain/HubDomainState;-><init>(Ljava/util/List;)V
@@ -23750,7 +23733,6 @@ SPLcom/facetlauncher/app/domain/ObserveClockAccessoriesUseCase$invoke$1;->invoke
 SPLcom/facetlauncher/app/domain/ObserveClockAccessoriesUseCase$invoke$1;->invokeSuspend(Ljava/lang/Object;)Ljava/lang/Object;
 Lcom/facetlauncher/app/domain/ObserveFacetPreviewsUseCase;
 SPLcom/facetlauncher/app/domain/ObserveFacetPreviewsUseCase;-><clinit>()V
-SPLcom/facetlauncher/app/domain/ObserveFacetPreviewsUseCase;-><init>(Lcom/facetlauncher/app/data/FacetRepository;Lcom/facetlauncher/app/data/SettingsRepository;Lcom/facetlauncher/app/domain/ObservePlacedItemsUseCase;Lcom/facetlauncher/app/data/UsageStatsRepository;Lcom/facetlauncher/app/data/UsageAccessRepository;Lcom/facetlauncher/app/data/CalendarPermissionRepository;Lcom/facetlauncher/app/data/CalendarRepository;)V
 SPLcom/facetlauncher/app/domain/ObserveFacetPreviewsUseCase;->access$getObservePlacedItems$p(Lcom/facetlauncher/app/domain/ObserveFacetPreviewsUseCase;)Lcom/facetlauncher/app/domain/ObservePlacedItemsUseCase;
 SPLcom/facetlauncher/app/domain/ObserveFacetPreviewsUseCase;->access$observeAppListItems(Lcom/facetlauncher/app/domain/ObserveFacetPreviewsUseCase;Lcom/facetlauncher/app/data/model/Facet;Lcom/facetlauncher/app/data/model/LauncherSettings;Ljava/util/List;Ljava/util/List;)Lkotlinx/coroutines/flow/Flow;
 SPLcom/facetlauncher/app/domain/ObserveFacetPreviewsUseCase;->access$observeCalendarEvents(Lcom/facetlauncher/app/domain/ObserveFacetPreviewsUseCase;Lcom/facetlauncher/app/data/model/Facet;Lcom/facetlauncher/app/data/model/LauncherSettings;)Lkotlinx/coroutines/flow/Flow;
@@ -23823,10 +23805,8 @@ SPLcom/facetlauncher/app/domain/ObserveFacetPreviewsUseCase$observeAppListItems$
 SPLcom/facetlauncher/app/domain/ObserveFacetPreviewsUseCase$observeAppListItems$1;->invokeSuspend(Ljava/lang/Object;)Ljava/lang/Object;
 Lcom/facetlauncher/app/domain/ObserveHomeScreenStateUseCase;
 SPLcom/facetlauncher/app/domain/ObserveHomeScreenStateUseCase;-><clinit>()V
-SPLcom/facetlauncher/app/domain/ObserveHomeScreenStateUseCase;-><init>(Lcom/facetlauncher/app/data/SettingsRepository;Lcom/facetlauncher/app/domain/ObservePlacedItemsUseCase;Lcom/facetlauncher/app/data/FacetRepository;Lcom/facetlauncher/app/data/UsageStatsRepository;Lcom/facetlauncher/app/data/UsageAccessRepository;Lcom/facetlauncher/app/data/CalendarPermissionRepository;Lcom/facetlauncher/app/data/CalendarRepository;Lcom/facetlauncher/app/data/NotificationBadgeRepository;Lcom/facetlauncher/app/data/NotificationAccessRepository;Lcom/facetlauncher/app/domain/ObserveClockAccessoriesUseCase;Lcom/facetlauncher/app/data/MediaSessionRepository;)V
 SPLcom/facetlauncher/app/domain/ObserveHomeScreenStateUseCase;->access$getNotificationAccessRepository$p(Lcom/facetlauncher/app/domain/ObserveHomeScreenStateUseCase;)Lcom/facetlauncher/app/data/NotificationAccessRepository;
 SPLcom/facetlauncher/app/domain/ObserveHomeScreenStateUseCase;->access$getObservePlacedItems$p(Lcom/facetlauncher/app/domain/ObserveHomeScreenStateUseCase;)Lcom/facetlauncher/app/domain/ObservePlacedItemsUseCase;
-SPLcom/facetlauncher/app/domain/ObserveHomeScreenStateUseCase;->access$getUsageAccessRepository$p(Lcom/facetlauncher/app/domain/ObserveHomeScreenStateUseCase;)Lcom/facetlauncher/app/data/UsageAccessRepository;
 SPLcom/facetlauncher/app/domain/ObserveHomeScreenStateUseCase;->access$observeAppListItems(Lcom/facetlauncher/app/domain/ObserveHomeScreenStateUseCase;Lcom/facetlauncher/app/data/model/Facet;Lcom/facetlauncher/app/data/model/LauncherSettings;)Lkotlinx/coroutines/flow/Flow;
 SPLcom/facetlauncher/app/domain/ObserveHomeScreenStateUseCase;->access$observeCalendarEvents(Lcom/facetlauncher/app/domain/ObserveHomeScreenStateUseCase;Lcom/facetlauncher/app/data/model/Facet;Lcom/facetlauncher/app/data/model/LauncherSettings;)Lkotlinx/coroutines/flow/Flow;
 SPLcom/facetlauncher/app/domain/ObserveHomeScreenStateUseCase;->invoke()Lkotlinx/coroutines/flow/Flow;
@@ -25779,7 +25759,6 @@ SPLcom/facetlauncher/app/ui/home/HomeListState;->getItems()Ljava/util/List;
 SPLcom/facetlauncher/app/ui/home/HomeListState;->getLayout()Lcom/facetlauncher/app/data/model/AppListLayout;
 SPLcom/facetlauncher/app/ui/home/HomeListState;->getLook()Lcom/facetlauncher/app/ui/home/HomeItemLook;
 SPLcom/facetlauncher/app/ui/home/HomeListState;->getRowPresentation()Lcom/facetlauncher/app/data/model/AppRowPresentation;
-SPLcom/facetlauncher/app/ui/home/HomeListState;->getShowUsageAccessPrompt()Z
 SPLcom/facetlauncher/app/ui/home/HomeListState;->getShrinkToFit()Z
 Lcom/facetlauncher/app/ui/home/HomeLiveState;
 SPLcom/facetlauncher/app/ui/home/HomeLiveState;-><clinit>()V
@@ -25851,7 +25830,6 @@ SPLcom/facetlauncher/app/ui/home/HomeScreenContent;->getDockItems()Ljava/util/Li
 SPLcom/facetlauncher/app/ui/home/HomeScreenContent;->getFolderCandidates()Ljava/util/List;
 SPLcom/facetlauncher/app/ui/home/HomeScreenContent;->getListItems()Ljava/util/List;
 SPLcom/facetlauncher/app/ui/home/HomeScreenContent;->getMediaPlayer()Lcom/facetlauncher/app/data/model/MediaPlayerState;
-SPLcom/facetlauncher/app/ui/home/HomeScreenContent;->getShowUsageAccessPrompt()Z
 SPLcom/facetlauncher/app/ui/home/HomeScreenContent;->getWeather()Lcom/facetlauncher/app/domain/WeatherState;
 Lcom/facetlauncher/app/ui/home/HomeScreenEffectsKt;
 SPLcom/facetlauncher/app/ui/home/HomeScreenEffectsKt;->$r8$lambda$UEV9ZbT2En9f-B1cjRBR9KgAAVY(Lcom/facetlauncher/app/ui/home/HomeScreenLayout;Lcom/facetlauncher/app/ui/home/HomeFrame;Z)Lkotlin/Unit;
@@ -26140,7 +26118,6 @@ SPLcom/facetlauncher/app/ui/home/HomeUiState;->getSetDefaultStepDone()Z
 SPLcom/facetlauncher/app/ui/home/HomeUiState;->getSettings()Lcom/facetlauncher/app/data/model/LauncherSettings;
 SPLcom/facetlauncher/app/ui/home/HomeUiState;->getShowGestureHint()Z
 SPLcom/facetlauncher/app/ui/home/HomeUiState;->getShowSetDefaultPrompt()Z
-SPLcom/facetlauncher/app/ui/home/HomeUiState;->getShowUsageAccessPrompt()Z
 SPLcom/facetlauncher/app/ui/home/HomeUiState;->getStyle$app()Lcom/facetlauncher/app/domain/ResolvedFacetStyle;
 SPLcom/facetlauncher/app/ui/home/HomeUiState;->getVisibleClockItemId()Ljava/lang/Long;
 SPLcom/facetlauncher/app/ui/home/HomeUiState;->isLoading()Z
@@ -27753,12 +27730,6 @@ Lcom/facetlauncher/app/ui/settings/UnitsAndLocationViewModel_HiltModules_BindsMo
 SPLcom/facetlauncher/app/ui/settings/UnitsAndLocationViewModel_HiltModules_BindsModule_Binds_LazyMapKey;-><clinit>()V
 Lcom/facetlauncher/app/ui/settings/UnitsAndLocationViewModel_HiltModules_KeyModule_Provide_LazyMapKey;
 SPLcom/facetlauncher/app/ui/settings/UnitsAndLocationViewModel_HiltModules_KeyModule_Provide_LazyMapKey;-><clinit>()V
-Lcom/facetlauncher/app/ui/settings/UsageAccessExplanationViewModel_HiltModules$KeyModule;
-SPLcom/facetlauncher/app/ui/settings/UsageAccessExplanationViewModel_HiltModules$KeyModule;->provide()Z
-Lcom/facetlauncher/app/ui/settings/UsageAccessExplanationViewModel_HiltModules_BindsModule_Binds_LazyMapKey;
-SPLcom/facetlauncher/app/ui/settings/UsageAccessExplanationViewModel_HiltModules_BindsModule_Binds_LazyMapKey;-><clinit>()V
-Lcom/facetlauncher/app/ui/settings/UsageAccessExplanationViewModel_HiltModules_KeyModule_Provide_LazyMapKey;
-SPLcom/facetlauncher/app/ui/settings/UsageAccessExplanationViewModel_HiltModules_KeyModule_Provide_LazyMapKey;-><clinit>()V
 Lcom/facetlauncher/app/ui/settings/WeatherLocationViewModel_HiltModules$KeyModule;
 SPLcom/facetlauncher/app/ui/settings/WeatherLocationViewModel_HiltModules$KeyModule;->provide()Z
 Lcom/facetlauncher/app/ui/settings/WeatherLocationViewModel_HiltModules_BindsModule_Binds_LazyMapKey;

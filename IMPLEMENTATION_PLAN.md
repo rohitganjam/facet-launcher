@@ -3644,7 +3644,7 @@ white), the big rail letter-indicator's font/pill fixed, and the on/off toggle e
   `AppearanceSettingsScreenTest` (picker persists; hidden when facet-scoped). `TEST_REGISTRY.md` regenerated.
 - [x] **Docs**: `02` (ER, writer, key table, counts), `09` (backup field), `13 §2` (theme locals), `README.md` counts.
 
-## 🚧 In progress — Facet automation rules (all eight phases built; backup/restore of rules deferred)
+## 🚧 In progress — Facet automation rules (all eight phases built; rules are backed up since "Automation rules in backups" below)
 
 Built-in rules that switch the active facet automatically. Entry point: **Settings → Facets → "Facet automation"**, a row under "Manage facets". The screen lists rules and carries a card explaining that the per-facet "Switch to <name>" shortcuts work in Samsung Modes & Routines / Tasker for anything more advanced. Builds on `ActivateFacetByIdUseCase` and the shortcut/deep-link work above.
 
@@ -4566,7 +4566,7 @@ Widgets the app draws itself, on the Hub grid and on Home's widget stack, behavi
 
 ## Search sheet
 
-- [x] Tapping the drawer's search bar (or Home press with "Home button opens search") opens a search sheet from the bar's edge. Empty query: grids of recently installed or updated, frequently used and last used apps (usage sections need Usage Access, else one prompt strip). Typing: today's results, always a grid at the drawer's grid density (Compact when the drawer is a list). Back, scrim and Home close it back to the drawer. Tests: `RecentlyChangedAppsUseCaseTest`, `DrawerViewModelTest` (usage suggestions), `AppDrawerScreenTest`, `KeyboardDismissalTest`, `HomeDrawerRouteTest`.
+- [x] Tapping the drawer's search bar (or Home press with "Home button opens search") opens a search sheet from the bar's edge. Empty query: grids of recently installed or updated, frequently used and last used apps (usage sections need Usage Access, else one prompt strip). Typing: today's results, always a grid at the drawer's grid density (Compact when the drawer is a list). Back and scrim close it back to the drawer; Home closes the drawer, the sheet sliding out with it and resetting off screen. Tests: `RecentlyChangedAppsUseCaseTest`, `DrawerViewModelTest` (usage suggestions), `AppDrawerScreenTest`, `KeyboardDismissalTest`, `HomeDrawerRouteTest`.
 - [x] Settings and contact results are grid tiles like the app results, in the user's icon shape. Contacts show their photo when they have one (else their initial); each searchable setting has its own icon (`SETTING_ICONS`). Tests: `SettingsSearchIconTest`, `ContactRepositoryTest`, `AppDrawerScreenTest`.
 - [ ] Native review of the four new `drawer_search_*` strings in de, es, es-419, fr, nl, pt, pt-PT (machine-translated).
 
@@ -4878,3 +4878,78 @@ When a drawer search matches nothing at all, the empty screen offers **Search Pl
 - [x] Docs: `01`, `04`, `07`, `12`, README, design spec `4q`.
 - [x] Privacy policy sentence in `../facet-launcher-site/build.py`.
 - [x] Verified on the emulator (unit tests, `AppDrawerScreenTest` 60/60, manual pass on device).
+
+## Smooth drawer close on Home press (direct request)
+
+With the search sheet open, Home closed the sheet and the drawer at once, and the two motions fought. Now the sheet (and the contact connections sheet over it) stays as it is and slides out with the drawer, resetting once the drawer is closed; the sheet holds the keyboard's padding on that press so its field doesn't drop as the keyboard hides.
+
+### Steps
+- [x] `DrawerSearchSheet` and the connections sheet no longer close on Home; the drawer closing resets them. Tests: `AppDrawerScreenTest`, `HomeDrawerRouteTest`, `KeyboardDismissalTest`.
+- [x] Docs: `12` (§2a, §4).
+- [x] Verified on the emulator (`AppDrawerScreenTest` 60/60, `HomeDrawerRouteTest` 62/62, `KeyboardDismissalTest` 3/3, manual Home press with the sheet open). Found and fixed on the way: the sheet's own slide out ran after the drawer closed and brought it back into view.
+
+## Pro screen lists every Pro feature (direct request)
+
+The Facet Pro screens had drifted from what Pro gates: neither listed the rule limit, the upgrade screen called a free feature (replacing the clock with a widget) Pro, and the unlocked screen left out widget stacks and the daily wallpaper. Both now draw their rows from one `ProFeature` list. Decisions: the Settings Pro card is unchanged; triggers and rules share one row; the unlocked facets row shows the live count. See `docs/architecture/16-flow-billing.md` §5.
+
+### Steps
+- [x] `ProFeature` (facets, automation, widget stacks, daily wallpaper) and `ProReason.feature`; `UpgradeScreen` and `UnlockedScreen` render from it; `FacetProUiState.facetCount` from `FacetRepository`. Strings in en, de, es (+419), fr, nl, pt (+PT). Tests: `ProFeatureTest`, `FacetProViewModelTest`, `FacetProContentTest`.
+- [x] Docs: `04`, `07`, `16`, design spec 12b/12c.
+- [x] Verified on the emulator (`ui.pro` unit tests 15/15, lint and detekt clean, `FacetProContentTest` 14/14, screenshots of both screens).
+
+## Smarter search, release 1 (Rohit approved the design 2026-11-15)
+
+One search model for every search surface (drawer apps, contacts and settings, Private Space, the pickers, the widget picker), plus Facet's own launch history in place of Usage Access. Decisions: learning is always on with no "Clear search history" control (it is all local); picks and launch counts stay out of backups; Enter opens the top app result and does nothing when no app matches; Usage Access (`PACKAGE_USAGE_STATS`) is dropped entirely, so Recents, Most used, the drawer's Frequent/Last used and the pickers' Last used sort count only apps opened from Facet and start empty. Release 2 (app shortcuts, typo tolerance) is separate. See `docs/architecture/12-flow-drawer-search-and-app-actions.md` §2.
+
+### Steps
+- [x] `RankBySearchRelevanceUseCase` rewritten as the shared model: normalization (accents, case, punctuation), tiers exact → prefix → word start → initials → substring, camel humps, space-free matching ("wifi" → Wi-Fi), multi-word queries, learned picks (2+ for the same query) and 30-day launches for drawer apps; `matchesSearch` for the pickers and widget picker. Tests: `RankBySearchRelevanceUseCaseTest`.
+- [x] Launch history in Room (v51, auto-migration): `app_launches`, `app_launch_days`, `search_picks`; `LaunchHistoryDao`, `LaunchHistoryRepository` (Private Space and Facet itself never recorded; uninstall and profile removal clear rows). Tests: `LaunchHistoryDaoTest`, `LaunchHistoryRepositoryTest`, `CleanUpUninstalledAppsUseCaseTest`, `FacetDatabaseMigrationTest.migration50To51AddsEmptyLaunchHistoryAndKeepsFacets`.
+- [x] Usage Access removed: `UsageStatsRepository`, `UsageAccessRepository`, the explanation screen and route, the Permissions row, the Home and drawer prompts, the manifest permission. Home shows "Apps you open from Facet show up here." for an empty Recents or Most used list. Tests: `ObserveHomeScreenStateUseCaseTest`, `ObserveFacetPreviewsUseCaseTest`, `HomeUiStateTest`, `HomeScreenTest`, `PermissionsViewModelTest`, `PermissionsScreenTest`, the three picker ViewModel and screen tests.
+- [x] Launches recorded from `LauncherActivity.launchApp`, search picks from the drawer. Tests: `LauncherViewModelTest`, `DrawerViewModelTest`.
+- [x] Drawer: Enter (Go) opens the top app; contacts fetch 50 candidates then rank and keep 5; settings ranked on label and keywords (`SystemSettingsRepository.availableEntries`). Tests: `AppDrawerScreenTest`, `DrawerViewModelTest`, `SystemSettingsRepositoryTest`.
+- [x] Docs: `01`, `02`, `03`, `04`, `05`, `06`, `07`, `08`, `11`, `12`, README, PRD and design spec.
+- [x] Privacy policy in `../facet-launcher-site/build.py`: Usage Access removed, local launch history described.
+- [x] Verified on the emulator (build, 2,271 unit tests, `check`, the 12 changed instrumented classes, manual pass of ranking, Enter, recorded launches and picks, Recents and the Permissions screen).
+
+## Custom app icons (Rohit approved the design 2026-11-15)
+
+Change one app's icon from its long-press menu. Decisions: free, not Pro; launcher-wide, not per facet; the menu header's icon carries a pencil and opens Change icon, and the name still opens the app; choices are the app's own icon, its entry in every installed pack, and Browse a pack (search and categories); no photo option; icons change only from the app menu, and Settings → Appearance → Icons → Custom icons only resets (per app and Reset all); a custom icon is drawn as picked, so no built-in style recolours it. See `docs/architecture/22-flow-custom-icons.md`.
+
+### Steps
+- [x] Storage: `icon_overrides` (Room v52, auto-migration), `IconOverrideDao`, `IconOverrideRepository` with PNG snapshots in `filesDir/icon_overrides/`; uninstall and profile removal clear rows. Tests: `IconOverrideRepositoryTest`, `IconOverrideTest`, `CleanUpUninstalledAppsUseCaseTest`, `FacetDatabaseMigrationTest.migration51To52AddsEmptyIconOverridesAndKeepsLaunchHistory`.
+- [x] Icon packs: one app's entry in a pack (`matchFor`), a pack's catalog from `drawable.xml` or appfilter (`PackCatalog`), drawing one drawable. Tests: `PackCatalogTest`.
+- [x] `AppRepository` draws custom icons over the scan, without a rescan on change. Tests: `AppRepositoryTest`.
+- [x] App menu: pencil on the header icon, Change icon and Browse pages (`ChangeIconPage`, `BrowsePackPage`, `AppIconEditor` through `LocalAppIconEditor`), `ObserveAppIconChoicesUseCase`, `ChangeAppIconUseCase`. Tests: `AppContextMenuTest`, `ChangeAppIconUseCaseTest`.
+- [x] Settings → Icons: Custom icons row and `CustomIconsScreen`. Tests: `IconsScreenTest`, `CustomIconsScreenTest`.
+- [x] Backup: `BackupBundle.iconOverrides` with base64 snapshots, restored rows kept for apps not yet installed. Tests: `IconOverrideBackupUseCaseTest`.
+- [x] Strings in en, de, es, fr, nl, pt.
+- [x] Docs: `01`, `02`, `03`, `04`, `07`, `09`, `12`, `19`, new `22`, README.
+- [ ] Verified on the emulator (build, unit tests, `check`, the changed instrumented classes, `52.json` schema committed).
+
+## Automation rules in backups (direct request)
+
+A restore used to delete every automation rule (the facets go first, and rules cascade with them). Now each facet has a permanent UUID, backups carry the rules pointing at those UUIDs, and restore brings back every rule whose target and "switch to" facets are in the backup, skipping and reporting the rest.
+
+### Steps
+- [x] Facet UUID: `Facet.uuid` / `FacetEntity.uuid` (random on create, unique index), Room v53 with `Migrations.MIGRATION_52_53` giving each existing facet its own; `BackupFacet.uuid` kept on restore (fresh when absent or used twice). Tests: `FacetRepositoryTest`, `BackupMappingTest`, `ImportBackupUseCaseTest`, `FacetDatabaseMigrationTest.migration51To52GivesEveryFacetItsOwnUuid`.
+- [x] Backup format: `BackupBundle.automationRules` (`BackupAutomationRule`, list order, nullable for older files, no version bump); `AutomationRuleBackupMapping` (lenient: unknown trigger or ending is `UNSUPPORTED`, missing facet `FACET_MISSING`, editor-invalid `INVALID`). Tests: `AutomationRuleBackupMappingTest`, `ExportBackupUseCaseTest`, `BackupCoverageTest` (rule columns).
+- [x] Restore: `RestoreAutomationRulesUseCase` (replace all rules in order with no plan limit, reset `facet_automation` state, record the restored active facet as a manual switch; summary with skipped, paused and permission-waiting counts). Tests: `RestoreAutomationRulesUseCaseTest`.
+- [x] Backup screen: rule count in the result line, an "Automation rules" card when something needs a look, link to Facet automation; confirmation text mentions rules. Tests: `BackupRestoreScreenTest`.
+- [x] Docs: `02` (facets, DAO matrix, migration table, §5.7, §6), `04`, `07`, `09`, `15`, README.
+- [ ] Native review of the new backup rule strings (machine-translated into de, es, fr, nl, pt, pt-PT; es-419 falls back to es).
+- [x] Verified on the emulator (unit tests 2277, `FacetDatabaseMigrationTest` 43/43 with the older 49→50 test fixed, `BackupRestoreScreenTest` 6/6).
+
+
+## App Vault (Rohit approved the design and said start 2026-11-15)
+
+PIN-locked hidden apps. Decisions: one global vault, free and unlimited, not Pro; entry is the last row of the drawer 3-dot menu (no vault action in the app long-press menu); 4-digit PIN set with confirmation; the vault opens a separate always-list drawer whose rows have App info and Remove from vault; apps enter only through Add apps inside the vault; vaulting takes an app off Favorites, Dock and folders in every facet; the vault keeps uninstalled apps; PIN only (no fingerprint); the vault is not in backups at all. See `docs/architecture/23-flow-app-vault.md`.
+
+### Steps
+- [x] Storage: `facet_vault` DataStore (`AppVaultRepository`, `PinHasher`/`KeystorePinHasher`), lockout ladder, excluded from backup and device transfer (`data_extraction_rules.xml`, `backup_rules.xml`). Tests: `AppVaultRepositoryTest`, `EntitlementBackupRulesTest`, `BackupCoverageTest`.
+- [x] Hiding: `AppRepository` filters vaulted apps from every list; widget pickers, launch history, uninstall cleanup and import skip. Tests: `AppRepositoryTest`, `LaunchHistoryRepositoryTest`, `CleanUpUninstalledAppsUseCaseTest`, `ImportBackupUseCaseTest`.
+- [x] `MoveToVaultUseCase`. Tests: `MoveToVaultUseCaseTest`.
+- [x] Screens: `AppVaultScreen` (intro, PIN pad, list, Add apps picker), `AppVaultViewModel`, `HomeAppVaultOverlay` (re-locks on close, Home press and ON_STOP, FLAG_SECURE), Forgot PIN through the screen lock. Tests: `AppVaultViewModelTest`, `AppVaultScreenTest`, `AppDrawerScreenTest`.
+- [x] Strings in en, de, es, fr, nl, pt.
+- [x] Docs: `01`, `02`, `04`, `07`, `09`, `11`, `12`, new `23`, README.
+- [ ] Verified on the emulator (build, unit tests, `check`, `AppVaultScreenTest`, `AppDrawerScreenTest`, manual pass).
+- [ ] Native review of the vault strings (machine-translated; es-419 and pt-PT fall back).

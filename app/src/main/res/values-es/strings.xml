@@ -174,7 +174,6 @@
     <string name="app_picker_tab_apps">Apps</string>
     <string name="app_picker_tab_folders">Carpetas</string>
 
-
     <!-- GestureHintOverlay -->
     <string name="gesture_hint_switch_facets">Cambiar de faceta</string>
     <string name="gesture_hint_arrow_left">←</string>
@@ -507,7 +506,7 @@
 
     <!-- BackupRestoreScreen -->
     <string name="backup_restore_confirm_title">¿Reemplazar todo en este dispositivo?</string>
-    <string name="backup_restore_confirm_message">Importar reemplaza todas las facetas, el dock y los favoritos predeterminados con lo que hay en el archivo de copia de seguridad. Esto no se puede deshacer.</string>
+    <string name="backup_restore_confirm_message">Importar reemplaza todas las facetas, el dock, los favoritos predeterminados y las reglas de automatización con lo que hay en el archivo de copia de seguridad. Esto no se puede deshacer.</string>
     <string name="backup_restore_confirm_replace">Reemplazar</string>
     <string name="backup_restore_export_title">Exportar copia de seguridad</string>
     <string name="backup_restore_export_subtitle">Guarda todas las facetas, el dock, los favoritos y los ajustes como archivo</string>
@@ -527,6 +526,39 @@
         <item quantity="other">%d widgets necesitan añadirse de nuevo abajo</item>
         <item quantity="many">%d de widgets necesitan añadirse de nuevo abajo</item>
     </plurals>
+    <plurals name="backup_restored_rules_count">
+        <item quantity="one">%d regla de automatización</item>
+        <item quantity="other">%d reglas de automatización</item>
+        <item quantity="many">%d de reglas de automatización</item>
+    </plurals>
+    <string name="backup_restore_rules_header">REGLAS DE AUTOMATIZACIÓN</string>
+    <plurals name="backup_rules_skipped_facet_missing">
+        <item quantity="one">%d regla omitida: su faceta no está en esta copia de seguridad</item>
+        <item quantity="other">%d reglas omitidas: su faceta no está en esta copia de seguridad</item>
+        <item quantity="many">%d de reglas omitidas: su faceta no está en esta copia de seguridad</item>
+    </plurals>
+    <plurals name="backup_rules_skipped_unsupported">
+        <item quantity="one">%d regla omitida: necesita una versión más reciente de Facet</item>
+        <item quantity="other">%d reglas omitidas: necesitan una versión más reciente de Facet</item>
+        <item quantity="many">%d de reglas omitidas: necesitan una versión más reciente de Facet</item>
+    </plurals>
+    <plurals name="backup_rules_skipped_invalid">
+        <item quantity="one">%d regla omitida: no se pudo leer</item>
+        <item quantity="other">%d reglas omitidas: no se pudieron leer</item>
+        <item quantity="many">%d de reglas omitidas: no se pudieron leer</item>
+    </plurals>
+    <plurals name="backup_rules_need_permission">
+        <item quantity="one">%d regla necesita permiso de Bluetooth o ubicación</item>
+        <item quantity="other">%d reglas necesitan permiso de Bluetooth o ubicación</item>
+        <item quantity="many">%d de reglas necesitan permiso de Bluetooth o ubicación</item>
+    </plurals>
+    <plurals name="backup_rules_paused">
+        <item quantity="one">%d regla está en pausa en el plan gratuito</item>
+        <item quantity="other">%d reglas están en pausa en el plan gratuito</item>
+        <item quantity="many">%d de reglas están en pausa en el plan gratuito</item>
+    </plurals>
+    <string name="backup_rules_not_in_backup">Esta copia de seguridad no tiene reglas de automatización: se hizo antes de que Facet las incluyera.</string>
+    <string name="backup_rules_open_automation">Abrir Automatización de facetas</string>
     <string name="backup_restore_import_failed_invalid_file">Ese archivo no es una copia de seguridad válida de Facet</string>
     <string name="backup_restore_import_failed_unsupported_version">Esa copia de seguridad se creó con una versión más reciente de Facet</string>
     <string name="backup_restore_app_not_installed">App no instalada</string>
@@ -543,8 +575,6 @@
     <string name="permission_calendar_subtitle">Muestra los eventos de hoy en el reloj.</string>
     <string name="permission_contacts_title">Contactos</string>
     <string name="permission_contacts_subtitle">Permite que la búsqueda del cajón muestre contactos coincidentes con acciones rápidas de llamada, mensaje o WhatsApp.</string>
-    <string name="permission_usage_access_title">Acceso de uso</string>
-    <string name="permission_usage_access_subtitle">Habilita las listas de apps Recientes y Más usadas.</string>
     <string name="permission_notification_access_title">Acceso a notificaciones</string>
     <string name="permission_notification_access_subtitle">Muestra un punto o número en apps con notificaciones activas.</string>
     <string name="permission_bluetooth_title">Bluetooth</string>
@@ -600,12 +630,20 @@
     <string name="pro_hero_trigger_drive">Conducir</string>
     <string name="pro_add_facet">Añadir una faceta</string>
     <string name="pro_restore">Restaurar compras</string>
-    <string name="pro_feature_facets_title">Más facetas</string>
-    <string name="pro_feature_facets_body">El plan gratuito incluye 3. Pro llega a 10. Cada una tiene sus propias apps de inicio y su reloj.</string>
-    <string name="pro_feature_triggers_title">Disparadores de Wi-Fi, Bluetooth, auriculares y batería</string>
-    <string name="pro_feature_triggers_body">Conéctate a la red de la oficina o al coche y la faceta cambia.</string>
-    <string name="pro_feature_widgets_title">Widgets personalizados en la pantalla de inicio</string>
-    <string name="pro_feature_widgets_body">Sustituye el reloj por cualquier widget de tu teléfono. El plan gratuito incluye los relojes del launcher.</string>
+    <string name="pro_feature_facets_title">Hasta 10 facetas</string>
+    <string name="pro_feature_facets_body">El plan gratuito incluye 3. Cada faceta tiene sus propias apps de inicio, Dock, reloj y estilo.</string>
+    <string name="pro_feature_automation_title">Todos los disparadores, reglas ilimitadas</string>
+    <string name="pro_feature_automation_body">Cambia de faceta con Wi-Fi, Bluetooth, auriculares o batería, no solo con un horario. El plan gratuito incluye 2 reglas de horario.</string>
+    <string name="pro_feature_widget_stacks_title">Pilas de widgets</string>
+    <string name="pro_feature_widget_stacks_body">Apila hasta 5 relojes y widgets en cada Inicio y desliza entre ellos. El plan gratuito incluye uno.</string>
+    <string name="pro_owned_automation_body">Wi-Fi, Bluetooth, auriculares y batería</string>
+    <string name="pro_owned_widget_stacks_body">Hasta 5 por faceta</string>
+    <string name="pro_owned_daily_wallpaper_body">Actívalo en Fondo de pantalla</string>
+    <plurals name="pro_owned_facets_count">
+        <item quantity="one">Tienes %d faceta</item>
+        <item quantity="other">Tienes %d facetas</item>
+        <item quantity="many">Tienes %d de facetas</item>
+    </plurals>
     <string name="pro_feature_daily_wallpaper_title">Fondo de pantalla diario</string>
     <string name="pro_feature_daily_wallpaper_body">Una foto nueva de Bing o Spotlight en tu pantalla de inicio cada día.</string>
     <string name="pro_feature_future_title">Futuras funciones Pro incluidas</string>
@@ -615,14 +653,6 @@
     <string name="pro_on_pro_title">Tienes Pro</string>
     <string name="pro_on_pro_body">Desbloqueado en todos los teléfonos con esta cuenta de Google.</string>
     <string name="pro_unlocked">DESBLOQUEADO</string>
-    <string name="pro_owned_facets_title">Más facetas</string>
-    <string name="pro_owned_facets_body">Hasta 10 facetas</string>
-    <string name="pro_owned_wifi_title">Disparadores de Wi-Fi</string>
-    <string name="pro_owned_wifi_body">Cambia al conectarte a una red</string>
-    <string name="pro_owned_bluetooth_title">Disparadores de Bluetooth</string>
-    <string name="pro_owned_bluetooth_body">Cambia al conectar un dispositivo</string>
-    <string name="pro_owned_more_title">Disparadores de auriculares y batería</string>
-    <string name="pro_owned_more_body">Cambia al enchufar o cargar</string>
     <string name="pro_card_headline">La experiencia completa de Facet, totalmente desbloqueada.</string>
     <string name="settings_pro_free_plan">Estás en el plan gratuito</string>
     <string name="pro_upgrade_to_pro">Pasar a Pro</string>
@@ -739,10 +769,6 @@
     <!-- Shared -->
     <string name="open_settings">Abrir ajustes</string>
 
-    <!-- UsageAccessExplanationScreen -->
-    <string name="usage_access_explanation_headline">Recientes y Más usadas muestran apps según cómo usas realmente tu teléfono.</string>
-    <string name="usage_access_explanation_body">Esto necesita acceso de uso, un permiso especial que se concede desde los Ajustes del sistema; Facet no puede solicitarlo directamente. Solo lee qué apps abres y por cuánto tiempo; nada sale de tu dispositivo.</string>
-
     <!-- NotificationAccessExplanationScreen -->
     <string name="notification_access_explanation_headline">Las insignias de notificación muestran un punto o número en apps con algo esperándote, y el reproductor multimedia muestra lo que suena.</string>
     <string name="notification_access_explanation_body">Esto necesita acceso a notificaciones, un permiso especial que se concede desde los Ajustes del sistema; Facet no puede solicitarlo directamente. Solo lee qué apps tienen notificaciones activas y si son silenciosas, además del título, el artista y la carátula de lo que suena; nada sale de tu dispositivo.</string>
@@ -821,7 +847,6 @@
     <string name="drawer_search_section_recent_changes">INSTALADAS O ACTUALIZADAS RECIENTEMENTE</string>
     <string name="drawer_search_section_frequent">USADAS CON FRECUENCIA</string>
     <string name="drawer_search_section_last_used">USADAS RECIENTEMENTE</string>
-    <string name="drawer_search_usage_access_needed">Las apps más y últimas usadas necesitan acceso de uso desde los ajustes del sistema.</string>
     <string name="drawer_contacts_access_needed">La búsqueda de contactos necesita acceso desde los ajustes del sistema.</string>
     <string name="drawer_contacts_search_off">La búsqueda de contactos está desactivada en los ajustes del cajón de apps.</string>
     <string name="drawer_search_no_matches">No se encontraron resultados para «%1$s»</string>
@@ -882,9 +907,6 @@
     </plurals>
     <string name="facet_settings_dock_settings_title">Apps del dock</string>
     <string name="facet_settings_rename_explanation">Renombra esta faceta.</string>
-
-    <!-- HomeScreen -->
-    <string name="home_usage_access_needed">Más usadas necesita acceso de uso desde los ajustes del sistema.</string>
 
     <!-- ClockStyleGalleryScreen -->
     <string name="clock_style_font_label">Fuente</string>
@@ -1230,4 +1252,84 @@
     <string name="glass_style_accent">Acento</string>
     <string name="glass_style_theme">Tema</string>
     <string name="glass_style_theme_inverted">Tema invertido</string>
+    <string name="home_usage_list_empty">Aquí aparecerán las aplicaciones que abras desde Facet.</string>
+    <!-- Custom app icons -->
+    <string name="app_context_menu_change_icon">Cambiar el icono de %1$s</string>
+    <string name="change_icon_title">Cambiar icono</string>
+    <string name="change_icon_source_default">Icono predeterminado</string>
+    <string name="change_icon_source_own">Icono propio de la app</string>
+    <string name="change_icon_source_pack">De %1$s</string>
+    <string name="change_icon_in_your_packs">Esta app en tus paquetes de iconos</string>
+    <string name="change_icon_own_option">Propio</string>
+    <string name="change_icon_more_choices">Más opciones</string>
+    <string name="change_icon_browse_pack">Explorar %1$s</string>
+    <string name="change_icon_browse_pack_summary">Todos los iconos de este paquete</string>
+    <string name="change_icon_reset">Restablecer</string>
+    <string name="change_icon_no_packs">Instala un paquete de iconos para elegir entre sus iconos.</string>
+    <string name="browse_pack_search">Buscar iconos</string>
+    <string name="browse_pack_all">Todos</string>
+    <string name="browse_pack_best_match">Mejor coincidencia para %1$s</string>
+    <string name="browse_pack_no_results">Ningún icono coincide con «%1$s»</string>
+    <string name="browse_pack_empty">Este paquete no tiene iconos para explorar.</string>
+    <string name="custom_icons_title">Iconos personalizados</string>
+    <string name="custom_icons_reset">Restablecer</string>
+    <string name="custom_icons_reset_app">Restablecer el icono de %1$s</string>
+    <string name="custom_icons_reset_all">Restablecer todos los iconos personalizados</string>
+    <string name="custom_icons_reset_all_title">¿Restablecer todos los iconos personalizados?</string>
+    <string name="custom_icons_reset_all_message">Cada app vuelve al icono que le da tu estilo o paquete de iconos.</string>
+    <string name="custom_icons_reset_all_confirm">Restablecer todo</string>
+    <string name="custom_icons_empty">No hay iconos personalizados. Para cambiar uno, mantén pulsada una app y toca su icono.</string>
+    <plurals name="custom_icons_app_count">
+        <item quantity="one">%d app</item>
+        <item quantity="other">%d apps</item>
+        <item quantity="many">%d de apps</item>
+    </plurals>
+    <string name="drawer_search_app_vault">Bóveda de apps</string>
+    <string name="vault_title">Bóveda de apps</string>
+    <string name="vault_intro_hide">Oculta apps del cajón, el inicio, el dock, las carpetas y la búsqueda, en todos los facets.</string>
+    <string name="vault_intro_hide_sub">Ábrelas aquí con un PIN de 4 dígitos.</string>
+    <string name="vault_intro_limits">Las apps ocultas siguen apareciendo en los ajustes del sistema, en Play Store y en sus notificaciones.</string>
+    <string name="vault_intro_private_space">Para ocultar y pausar apps y notificaciones, usa el Espacio privado o la Carpeta segura si tu teléfono la tiene.</string>
+    <string name="vault_intro_no_screen_lock">Este teléfono no tiene bloqueo de pantalla, así que un PIN olvidado solo se puede resolver desactivando la bóveda.</string>
+    <string name="vault_set_pin">Crear PIN</string>
+    <string name="vault_create_pin_title">Crea un PIN</string>
+    <string name="vault_create_pin_sub">Elige 4 dígitos para abrir la bóveda.</string>
+    <string name="vault_confirm_pin_title">Confirma tu PIN</string>
+    <string name="vault_confirm_pin_sub">Introdúcelo una vez más.</string>
+    <string name="vault_pins_mismatch">Los PIN no coinciden. Introduce un PIN nuevo.</string>
+    <string name="vault_enter_pin">Introduce tu PIN</string>
+    <string name="vault_locked_out">Demasiados intentos. Inténtalo de nuevo en %1$s</string>
+    <string name="vault_forgot_pin">¿Olvidaste el PIN?</string>
+    <string name="vault_backspace">Borrar el último dígito</string>
+    <string name="vault_add_apps">Añadir apps</string>
+    <string name="vault_add_to_vault_title">Añadir a la bóveda</string>
+    <string name="vault_picker_chosen">Elegidas</string>
+    <string name="vault_empty">Aún no hay apps ocultas</string>
+    <string name="vault_empty_hint">Las apps que añadas aquí desaparecen del cajón, del inicio y de la búsqueda.</string>
+    <string name="vault_more_options">Más opciones</string>
+    <string name="vault_app_menu">Opciones de %1$s</string>
+    <string name="vault_app_info">Información de la app</string>
+    <string name="vault_remove">Quitar de la bóveda</string>
+    <string name="vault_removed">%1$s vuelve a estar en tu cajón</string>
+    <string name="vault_undo">Deshacer</string>
+    <string name="vault_change_pin">Cambiar PIN</string>
+    <string name="vault_turn_off">Desactivar la bóveda de apps</string>
+    <string name="vault_turn_off_title">¿Desactivar la bóveda de apps?</string>
+    <string name="vault_turn_off_message">Todas las apps ocultas vuelven a tu cajón y se borra el PIN.</string>
+    <string name="vault_turn_off_confirm">Desactivar</string>
+    <string name="vault_reset_title">¿Restablecer la bóveda de apps?</string>
+    <string name="vault_reset_message">Este teléfono no tiene bloqueo de pantalla para confirmar que eres tú, así que un PIN olvidado solo se puede borrar desactivando la bóveda. Todas las apps ocultas vuelven a tu cajón.</string>
+    <string name="vault_reset_confirm">Restablecer</string>
+    <string name="vault_move_title">¿Mover a la bóveda?</string>
+    <string name="vault_move_confirm">Mover a la bóveda</string>
+    <string name="vault_confirm_credential_title">Confirma que eres tú</string>
+    <string name="vault_confirm_credential_message">Usa el bloqueo de pantalla del teléfono para elegir un PIN nuevo para la bóveda.</string>
+    <plurals name="vault_wrong_pin">
+        <item quantity="one">PIN incorrecto. Te queda %1$d intento antes de una pausa.</item>
+        <item quantity="other">PIN incorrecto. Te quedan %1$d intentos antes de una pausa.</item>
+    </plurals>
+    <plurals name="vault_move_message">
+        <item quantity="one">%1$d de las apps elegidas está en el inicio o en una carpeta. Se quitará de Favoritos, del dock y de las carpetas en todos los facets.</item>
+        <item quantity="other">%1$d de las apps elegidas están en el inicio o en carpetas. Se quitarán de Favoritos, del dock y de las carpetas en todos los facets.</item>
+    </plurals>
 </resources>

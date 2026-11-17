@@ -1,12 +1,9 @@
 package com.facetlauncher.app.ui.home
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.Orientation
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -50,7 +47,6 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.facetlauncher.app.R
@@ -72,7 +68,6 @@ import com.facetlauncher.app.ui.home.MediaPlayerRow
 import com.facetlauncher.app.ui.home.clock.LocalAccessoryLongPress
 import com.facetlauncher.app.ui.home.clock.LocalBatteryClick
 import com.facetlauncher.app.ui.home.weather.rememberClockWeatherAccessory
-import com.facetlauncher.app.ui.theme.Accent
 import com.facetlauncher.app.ui.theme.Ink
 import com.facetlauncher.app.ui.theme.Muted
 
@@ -361,8 +356,8 @@ internal fun HomeAppListRegion(frame: HomeFrame, maxHeight: Dp, modifier: Modifi
                 .onGloballyPositioned { layout.appListNaturalHeightPx = it.size.height.toFloat() }
                 .graphicsLayer { alpha = frame.listAppearAlpha.value },
         ) {
-            if (frame.state.list.showUsageAccessPrompt) {
-                UsageAccessStrip(onClick = frame.actions.onUsageAccessPromptClick)
+            if (frame.state.list.showUsageListHint) {
+                UsageListHint()
             } else {
                 CompositionLocalProvider(LocalListAutoScroll provides autoScroll) { HomeAppListBody(frame, maxHeight) }
             }
@@ -445,27 +440,19 @@ internal fun HomeDockItems(frame: HomeFrame, displayMode: DockDisplayMode) {
     }
 }
 
-/** README `4p`'s shared permission-denied/empty-state strip styling, with a real tap target — shown when the active list content mode needs `PACKAGE_USAGE_STATS` and it isn't granted. */
+/** README `4p`'s empty-state strip styling: Recents or Most used before any app has been opened from Facet. */
 @Composable
-private fun UsageAccessStrip(onClick: () -> Unit, modifier: Modifier = Modifier) {
-    Row(
+private fun UsageListHint(modifier: Modifier = Modifier) {
+    Text(
+        text = stringResource(R.string.home_usage_list_empty),
+        style = MaterialTheme.typography.bodyMedium,
+        color = Muted,
         modifier = modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .testTag(homeTag("home_usage_access_strip"))
+            .testTag(homeTag("home_usage_list_hint"))
             .dashedBorder(color = Ink.copy(alpha = 0.16f), cornerRadius = 10.dp)
             .padding(horizontal = 13.dp, vertical = 11.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(
-            text = stringResource(R.string.home_usage_access_needed),
-            style = MaterialTheme.typography.bodyMedium,
-            color = Muted,
-            modifier = Modifier.weight(1f),
-        )
-        Text(text = stringResource(R.string.open_settings), style = MaterialTheme.typography.bodyMedium, color = Accent)
-    }
+    )
 }
 
 /** Single-column rows share one width: the widest item's, but at least this fraction of the list's width, anchored by the row position. */

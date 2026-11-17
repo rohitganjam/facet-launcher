@@ -28,6 +28,11 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
+import com.facetlauncher.app.data.model.AutomationRule
+import com.facetlauncher.app.data.model.AutomationTrigger
+import com.facetlauncher.app.data.model.BackupAutomationRule
+import com.facetlauncher.app.data.model.RuleEndBehavior
+import com.facetlauncher.app.data.AutomationRuleRepository
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
@@ -44,6 +49,9 @@ class ExportBackupUseCaseTest {
         runBlocking { `when`(it.getRawFolders()).thenReturn(emptyList()) }
     }
     private val backupRepository = mock(BackupRepository::class.java)
+    private val automationRuleRepository = mock(AutomationRuleRepository::class.java).also {
+        runBlocking { `when`(it.getRules()).thenReturn(emptyList()) }
+    }
 
     private val useCase = ExportBackupUseCase(
         settingsRepository,
@@ -52,6 +60,7 @@ class ExportBackupUseCaseTest {
         widgetPlacementRepository,
         folderRepository,
         backupRepository,
+        automationRuleRepository,
     )
 
     @Test
@@ -216,5 +225,37 @@ class ExportBackupUseCaseTest {
         assertEquals("CENTER", exported.landscapeClockAlignment)
         assertEquals(300f, exported.landscapeClockZoneHeightDp)
         assertEquals("BOTTOM", exported.landscapeAppListVerticalAlignment)
+    }
+
+    @Test
+    fun `exports each facet's UUID and the automation rules in order pointing at those UUIDs`() = runTest {
+        // Given two facets and two rules, one switching to the other facet when it ends
+        val work = Facet(id = 7, uuid = "work-uuid", name = "Work", position = 0)
+        val home = Facet(id = 8, uuid = "home-uuid", name = "Home", position = 1)
+        val headphones = AutomationRule(id = 3, targetFacetId = 7, trigger = AutomationTrigger.Headphones(), endBehavior = RuleEndBehavior.SwitchTo(8))
+        val wifi = AutomationRule(id = 1, targetFacetId = 8, trigger = AutomationTrigger.Wifi("Home"), enabled = false)
+        `when`(settingsRepository.settings).thenReturn(flowOf(LauncherSettings()))
+        `when`(facetRepository.observeFacets()).thenReturn(flowOf(listOf(work, home)))
+        `when`(widgetPlacementRepository.observeAll()).thenReturn(flowOf(emptyList()))
+        for (facetId in listOf(7L, 8L)) {
+            for (target in listOf(PlacementTarget(PlacementList.FAVORITES, facetId), PlacementTarget(PlacementList.DOCK, facetId))) {
+                `when`(placementRepository.getRawApps(target)).thenReturn(emptyList())
+                `when`(placementRepository.getRawFolderPlacements(target)).thenReturn(emptyList())
+            }
+        }
+        `when`(automationRuleRepository.getRules()).thenReturn(listOf(headphones, wifi))
+
+        // When exporting
+        val bundle = useCase(mock(Uri::class.java))
+
+        // Then the facets carry their UUIDs, and the rules keep their order and point at them
+        assertEquals(listOf("work-uuid", "home-uuid"), bundle.facets.map { it.uuid })
+        assertEquals(
+            listOf(
+                BackupAutomationRule(targetFacetUuid = "work-uuid", endBehavior = "SWITCH_TO", endFacetUuid = "home-uuid", triggerType = "HEADPHONES"),
+                BackupAutomationRule(enabled = false, targetFacetUuid = "home-uuid", endBehavior = "RETURN_TO_BASELINE", triggerType = "WIFI", wifiSsid = "Home"),
+            ),
+            bundle.automationRules,
+        )
     }
 }

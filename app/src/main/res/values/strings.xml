@@ -207,7 +207,6 @@
     <string name="app_picker_tab_apps">Apps</string>
     <string name="app_picker_tab_folders">Folders</string>
 
-
     <!-- GestureHintOverlay -->
     <string name="gesture_hint_switch_facets">Switch facets</string>
     <string name="gesture_hint_arrow_left">←</string>
@@ -562,7 +561,7 @@
     <!-- BackupRestoreScreen (header reuses settings_backup_restore_title — same text as the
          Settings row that navigates here) -->
     <string name="backup_restore_confirm_title">Replace everything on this device?</string>
-    <string name="backup_restore_confirm_message">Importing replaces every facet, the dock, and default favorites with what\'s in the backup file. This can\'t be undone.</string>
+    <string name="backup_restore_confirm_message">Importing replaces every facet, the dock, default favorites, and automation rules with what\'s in the backup file. This can\'t be undone.</string>
     <string name="backup_restore_confirm_replace">Replace</string>
     <string name="backup_restore_export_title">Export backup</string>
     <string name="backup_restore_export_subtitle">Save every facet, dock, favorite, and setting as a file</string>
@@ -580,6 +579,33 @@
         <item quantity="one">%d widget needs re-adding below</item>
         <item quantity="other">%d widgets need re-adding below</item>
     </plurals>
+    <plurals name="backup_restored_rules_count">
+        <item quantity="one">%d automation rule</item>
+        <item quantity="other">%d automation rules</item>
+    </plurals>
+    <string name="backup_restore_rules_header">AUTOMATION RULES</string>
+    <plurals name="backup_rules_skipped_facet_missing">
+        <item quantity="one">%d rule skipped: its facet isn\'t in this backup</item>
+        <item quantity="other">%d rules skipped: their facet isn\'t in this backup</item>
+    </plurals>
+    <plurals name="backup_rules_skipped_unsupported">
+        <item quantity="one">%d rule skipped: it needs a newer version of Facet</item>
+        <item quantity="other">%d rules skipped: they need a newer version of Facet</item>
+    </plurals>
+    <plurals name="backup_rules_skipped_invalid">
+        <item quantity="one">%d rule skipped: it couldn\'t be read</item>
+        <item quantity="other">%d rules skipped: they couldn\'t be read</item>
+    </plurals>
+    <plurals name="backup_rules_need_permission">
+        <item quantity="one">%d rule needs Bluetooth or location permission</item>
+        <item quantity="other">%d rules need Bluetooth or location permission</item>
+    </plurals>
+    <plurals name="backup_rules_paused">
+        <item quantity="one">%d rule is paused on the free plan</item>
+        <item quantity="other">%d rules are paused on the free plan</item>
+    </plurals>
+    <string name="backup_rules_not_in_backup">This backup has no automation rules: it was made before Facet backed them up.</string>
+    <string name="backup_rules_open_automation">Open Facet automation</string>
     <string name="backup_restore_import_failed_invalid_file">That file isn\'t a valid Facet backup</string>
     <string name="backup_restore_import_failed_unsupported_version">That backup was made by a newer version of Facet</string>
     <string name="backup_restore_app_not_installed">App not installed</string>
@@ -598,8 +624,6 @@
     <string name="permission_calendar_subtitle">Shows today\'s events on the clock.</string>
     <string name="permission_contacts_title">Contacts</string>
     <string name="permission_contacts_subtitle">Lets Drawer search show matching contacts with quick call/message/WhatsApp actions.</string>
-    <string name="permission_usage_access_title">Usage access</string>
-    <string name="permission_usage_access_subtitle">Powers the Recents and Most used app lists.</string>
     <string name="permission_notification_access_title">Notification access</string>
     <string name="permission_notification_access_subtitle">Shows a dot or count badge on apps with active notifications.</string>
     <string name="permission_bluetooth_title">Bluetooth</string>
@@ -654,12 +678,19 @@
     <string name="pro_hero_trigger_drive">Drive</string>
     <string name="pro_add_facet">Add a facet</string>
     <string name="pro_restore">Restore purchases</string>
-    <string name="pro_feature_facets_title">More facets</string>
-    <string name="pro_feature_facets_body">Free includes 3. Pro goes up to 10. Each one gets its own home apps and clock.</string>
-    <string name="pro_feature_triggers_title">Wi-Fi, Bluetooth, headphones and battery triggers</string>
-    <string name="pro_feature_triggers_body">Join the office network or connect to the car, and the facet changes.</string>
-    <string name="pro_feature_widgets_title">Custom Widgets on home screen</string>
-    <string name="pro_feature_widgets_body">Replace the clock with any widget on your phone. Free includes the launcher\'s own clocks.</string>
+    <string name="pro_feature_facets_title">Up to 10 facets</string>
+    <string name="pro_feature_facets_body">Free includes 3. Each facet has its own Home apps, Dock, clock and look.</string>
+    <string name="pro_feature_automation_title">Every trigger, unlimited rules</string>
+    <string name="pro_feature_automation_body">Switch facets on Wi-Fi, Bluetooth, headphones or battery, not just on a schedule. Free includes 2 schedule rules.</string>
+    <string name="pro_feature_widget_stacks_title">Widget stacks</string>
+    <string name="pro_feature_widget_stacks_body">Stack up to 5 clocks and widgets on each Home and swipe between them. Free has one.</string>
+    <string name="pro_owned_automation_body">Wi-Fi, Bluetooth, headphones and battery</string>
+    <string name="pro_owned_widget_stacks_body">Up to 5 per facet</string>
+    <string name="pro_owned_daily_wallpaper_body">Turn it on in Wallpaper settings</string>
+    <plurals name="pro_owned_facets_count">
+        <item quantity="one">You have %d facet</item>
+        <item quantity="other">You have %d facets</item>
+    </plurals>
     <string name="pro_feature_daily_wallpaper_title">Daily wallpaper</string>
     <string name="pro_feature_daily_wallpaper_body">A new Bing or Spotlight photo on your Home screen every day.</string>
     <string name="pro_feature_future_title">Future Pro features included</string>
@@ -669,14 +700,6 @@
     <string name="pro_on_pro_title">You\'re on Pro</string>
     <string name="pro_on_pro_body">Unlocked on every phone signed in to this Google account.</string>
     <string name="pro_unlocked">UNLOCKED</string>
-    <string name="pro_owned_facets_title">More facets</string>
-    <string name="pro_owned_facets_body">Up to 10 facets</string>
-    <string name="pro_owned_wifi_title">Wi-Fi triggers</string>
-    <string name="pro_owned_wifi_body">Switch on a network</string>
-    <string name="pro_owned_bluetooth_title">Bluetooth triggers</string>
-    <string name="pro_owned_bluetooth_body">Switch on a device</string>
-    <string name="pro_owned_more_title">Headphones and battery triggers</string>
-    <string name="pro_owned_more_body">Switch on plugging in or charging</string>
     <string name="pro_card_headline">The complete Facet experience, fully unlocked.</string>
     <string name="settings_pro_free_plan">You\'re on the Free plan</string>
     <string name="pro_upgrade_to_pro">Upgrade to Pro</string>
@@ -793,12 +816,8 @@
     <string name="whats_new_section_improved">Improved</string>
     <string name="whats_new_empty">Release notes aren\'t available yet.</string>
 
-    <!-- Shared by UsageAccessExplanationScreen/NotificationAccessExplanationScreen -->
+    <!-- Shared by NotificationAccessExplanationScreen and others -->
     <string name="open_settings">Open settings</string>
-
-    <!-- UsageAccessExplanationScreen (header reuses permission_usage_access_title) -->
-    <string name="usage_access_explanation_headline">Recents and Most used show apps based on how you actually use your phone.</string>
-    <string name="usage_access_explanation_body">This needs usage access, a special permission granted from system Settings — Facet can\'t request it directly. It only reads which apps you open and for how long; nothing leaves your device.</string>
 
     <!-- NotificationAccessExplanationScreen (header reuses permission_notification_access_title) -->
     <string name="notification_access_explanation_headline">Notification badges show a dot or count on apps with something waiting for you, and the media player shows what\'s playing.</string>
@@ -890,7 +909,6 @@
     <string name="drawer_search_section_recent_changes">RECENTLY INSTALLED OR UPDATED</string>
     <string name="drawer_search_section_frequent">FREQUENTLY USED</string>
     <string name="drawer_search_section_last_used">LAST USED</string>
-    <string name="drawer_search_usage_access_needed">Frequently and last used apps need usage access from system settings.</string>
     <string name="drawer_contacts_access_needed">Contact search needs access from system settings.</string>
     <string name="drawer_contacts_search_off">Contact search is off in App Drawer settings.</string>
     <string name="drawer_search_no_matches">No matches found for “%1$s”</string>
@@ -963,9 +981,6 @@
     <string name="facet_settings_appearance_home_icon_and_text">Home icon &amp; text</string>
     <string name="facet_settings_appearance_home_text_only">Home text only</string>
     <string name="facet_settings_rename_explanation">Rename this facet.</string>
-
-    <!-- HomeScreen ("Open settings" reuses open_settings) -->
-    <string name="home_usage_access_needed">Most used needs usage access from system settings.</string>
 
     <!-- ClockStyleGalleryScreen ("Accent color" reuses appearance_accent_color; "24-hour time"
          reuses settings_time_format_24h; header reuses settings_clock_calendar_title) -->
@@ -1307,4 +1322,84 @@
     <string name="glass_style_accent">Accent</string>
     <string name="glass_style_theme">Theme</string>
     <string name="glass_style_theme_inverted">Theme inverted</string>
+    <string name="home_usage_list_empty">Apps you open from Facet show up here.</string>
+    <!-- Custom app icons -->
+    <string name="app_context_menu_change_icon">Change icon for %1$s</string>
+    <string name="change_icon_title">Change icon</string>
+    <string name="change_icon_source_default">Default icon</string>
+    <string name="change_icon_source_own">App\'s own icon</string>
+    <string name="change_icon_source_pack">From %1$s</string>
+    <string name="change_icon_in_your_packs">This app in your packs</string>
+    <string name="change_icon_own_option">App\'s own</string>
+    <string name="change_icon_more_choices">More choices</string>
+    <string name="change_icon_browse_pack">Browse %1$s</string>
+    <string name="change_icon_browse_pack_summary">Every icon in this pack</string>
+    <string name="change_icon_reset">Reset to default</string>
+    <string name="change_icon_no_packs">Install an icon pack to pick from its icons.</string>
+    <string name="browse_pack_search">Search icons</string>
+    <string name="browse_pack_all">All</string>
+    <string name="browse_pack_best_match">Best match for %1$s</string>
+    <string name="browse_pack_no_results">No icons match “%1$s”</string>
+    <string name="browse_pack_empty">This pack has no icons to browse.</string>
+    <string name="custom_icons_title">Custom icons</string>
+    <string name="custom_icons_reset">Reset</string>
+    <string name="custom_icons_reset_app">Reset icon for %1$s</string>
+    <string name="custom_icons_reset_all">Reset all custom icons</string>
+    <string name="custom_icons_reset_all_title">Reset all custom icons?</string>
+    <string name="custom_icons_reset_all_message">Every app goes back to the icon your icon style or pack gives it.</string>
+    <string name="custom_icons_reset_all_confirm">Reset all</string>
+    <string name="custom_icons_empty">No custom icons. To change one, long-press an app and tap its icon.</string>
+    <plurals name="custom_icons_app_count">
+        <item quantity="one">%d app</item>
+        <item quantity="other">%d apps</item>
+    </plurals>
+    <!-- App Vault -->
+    <string name="drawer_search_app_vault">App Vault</string>
+    <string name="vault_title">App Vault</string>
+    <string name="vault_intro_hide">Hide apps from your drawer, Home, Dock, folders and search, in every facet.</string>
+    <string name="vault_intro_hide_sub">Open them here with a 4-digit PIN.</string>
+    <string name="vault_intro_limits">Hidden apps still show in system Settings, the Play Store and their notifications.</string>
+    <string name="vault_intro_private_space">To hide and pause apps and notifications, use Private Space or Secure Folder if your phone has one.</string>
+    <string name="vault_intro_no_screen_lock">This phone has no screen lock, so a forgotten PIN can only be fixed by turning the vault off.</string>
+    <string name="vault_set_pin">Set PIN</string>
+    <string name="vault_create_pin_title">Create a PIN</string>
+    <string name="vault_create_pin_sub">Choose 4 digits to open the vault.</string>
+    <string name="vault_confirm_pin_title">Confirm your PIN</string>
+    <string name="vault_confirm_pin_sub">Enter it once more.</string>
+    <string name="vault_pins_mismatch">PINs didn\'t match. Enter a new PIN.</string>
+    <string name="vault_enter_pin">Enter your PIN</string>
+    <string name="vault_locked_out">Too many attempts. Try again in %1$s</string>
+    <string name="vault_forgot_pin">Forgot PIN?</string>
+    <string name="vault_backspace">Delete last digit</string>
+    <string name="vault_add_apps">Add apps</string>
+    <string name="vault_add_to_vault_title">Add to vault</string>
+    <string name="vault_picker_chosen">Chosen</string>
+    <string name="vault_empty">No hidden apps yet</string>
+    <string name="vault_empty_hint">Apps you add here disappear from your drawer, Home and search.</string>
+    <string name="vault_more_options">More options</string>
+    <string name="vault_app_menu">Options for %1$s</string>
+    <string name="vault_app_info">App info</string>
+    <string name="vault_remove">Remove from vault</string>
+    <string name="vault_removed">%1$s is back in your drawer</string>
+    <string name="vault_undo">Undo</string>
+    <string name="vault_change_pin">Change PIN</string>
+    <string name="vault_turn_off">Turn off App Vault</string>
+    <string name="vault_turn_off_title">Turn off the App Vault?</string>
+    <string name="vault_turn_off_message">Every hidden app returns to your drawer and the PIN is deleted.</string>
+    <string name="vault_turn_off_confirm">Turn off</string>
+    <string name="vault_reset_title">Reset the App Vault?</string>
+    <string name="vault_reset_message">This phone has no screen lock to confirm it\'s you, so a forgotten PIN can only be cleared by turning the vault off. Every hidden app returns to your drawer.</string>
+    <string name="vault_reset_confirm">Reset</string>
+    <string name="vault_move_title">Move to the vault?</string>
+    <string name="vault_move_confirm">Move to vault</string>
+    <string name="vault_confirm_credential_title">Confirm it\'s you</string>
+    <string name="vault_confirm_credential_message">Use your phone\'s screen lock to choose a new vault PIN.</string>
+    <plurals name="vault_wrong_pin">
+        <item quantity="one">Wrong PIN. %1$d try left before a pause.</item>
+        <item quantity="other">Wrong PIN. %1$d tries left before a pause.</item>
+    </plurals>
+    <plurals name="vault_move_message">
+        <item quantity="one">%1$d of the chosen apps is on Home or in a folder. It will be removed from Favorites, Dock and folders in every facet.</item>
+        <item quantity="other">%1$d of the chosen apps are on Home or in folders. They will be removed from Favorites, Dock and folders in every facet.</item>
+    </plurals>
 </resources>

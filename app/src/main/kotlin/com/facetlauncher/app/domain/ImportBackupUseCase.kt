@@ -1,6 +1,7 @@
 package com.facetlauncher.app.domain
 
 import com.facetlauncher.app.data.model.GlassStyle
+import com.facetlauncher.app.data.model.newFacetUuid
 import com.facetlauncher.app.data.model.BackupFacet
 import com.facetlauncher.app.data.model.NativeWidgetType
 import com.facetlauncher.app.data.WidgetPlacementRepository
@@ -55,7 +56,10 @@ import com.facetlauncher.app.data.model.WeatherCity
 import com.facetlauncher.app.data.model.weatherCityOrNull
 import com.facetlauncher.app.data.model.SwipeActions
 import com.facetlauncher.app.data.model.SwipeDirection
+import com.facetlauncher.app.data.AppVaultRepository
+import com.facetlauncher.app.data.model.parseVaultKey
 import javax.inject.Inject
+import kotlinx.coroutines.flow.first
 import com.facetlauncher.app.data.PlacementRepository
 import com.facetlauncher.app.data.model.PlacementTarget
 
@@ -64,6 +68,7 @@ sealed interface ImportBackupResult {
         val facetCount: Int,
         /** Never auto-restored — see [com.facetlauncher.app.data.model.BackupWidgetPlacement]'s own doc comment. Empty when the backup had none. */
         val pendingWidgetPlacements: List<BackupWidgetPlacement>,
+        val automationRules: AutomationRestoreSummary,
     ) : ImportBackupResult
 
     /** [uri] wasn't valid JSON, or wasn't shaped like a backup at all. */
@@ -74,7 +79,7 @@ sealed interface ImportBackupResult {
 }
 
 /**
- * F14 Backup & Restore import — replaces every current facet/dock/default-favorite with the
+ * F14 Backup & Restore import — replaces every current facet/dock/default-favorite and automation rule with the
  * backup's own (a destructive, full-replace restore, not a merge — the caller must confirm this
  * with the user before invoking; see `BackupRestoreScreen.kt`), then applies every setting field.
  * Widget placements are surfaced back to the caller rather than written automatically — see
@@ -93,6 +98,11 @@ class ImportBackupUseCase @Inject constructor(
     private val repairOrphanedProfileRows: RepairOrphanedProfileRowsUseCase,
     private val clockStackRepository: ClockStackRepository,
     private val widgetPlacementRepository: WidgetPlacementRepository,
+    private val restoreAutomationRules: RestoreAutomationRulesUseCase,
+    // Defaulted so tests that don't cover custom icons needn't build one; Hilt always supplies it.
+    private val iconOverrideBackup: IconOverrideBackupUseCase? = null,
+    // The vault is never in a backup, but a restored placement of an app vaulted on this phone must not come back to Home.
+    private val appVaultRepository: AppVaultRepository? = null,
 ) {
     suspend operator fun invoke(uri: Uri): ImportBackupResult {
         val read = backupRepository.readBackup(uri) ?: return ImportBackupResult.InvalidFile
@@ -108,25 +118,37 @@ class ImportBackupUseCase @Inject constructor(
             index to folderRepository.restoreFolder(backupFolder.toFolderEntity(), backupFolder.apps.map { it.toFolderAppEntity() })
         }.toMap()
 
+        // Deleting the facets also deletes their automation rules (foreign-key cascade); the backup's own come back below.
         facetRepository.deleteAllFacets()
         var activeFacetId: Long? = null
+        val facetIdByUuid = mutableMapOf<String, Long>()
         bundle.facets.forEachIndexed { index, backupFacet ->
-            val newId = restoreFacet(backupFacet, newFolderIdByIndex)
+            // A UUID already taken in this restore (a damaged file) gets a fresh one; rules match the first facet that had it.
+            val uuid = backupFacet.uuid?.takeIf { it.isNotBlank() && it !in facetIdByUuid } ?: newFacetUuid()
+            val newId = restoreFacet(backupFacet.copy(uuid = uuid), newFolderIdByIndex)
+            facetIdByUuid[uuid] = newId
             if (index == bundle.settings.activeFacetIndex) activeFacetId = newId
         }
         activeFacetId?.let { settingsRepository.setActiveFacetId(it) }
+        val automationRules = restoreAutomationRules(bundle.automationRules, facetIdByUuid, activeFacetId)
 
         val hostedPlacements = restoreNativeHubWidgets(bundle.widgetPlacements)
+        iconOverrideBackup?.restore(bundle.iconOverrides)
 
         // BackupAppEntry has no portable userId (see BackupBundle's own doc comment), so every
         // restored row lands at the -1 orphaned sentinel and won't hydrate against installed apps
         // until resolved — same repair LauncherViewModel.init runs once per app launch, but run
         // here too so restored apps/folders show up immediately instead of needing a restart.
         repairOrphanedProfileRows()
+        appVaultRepository?.vaultedKeys?.first()?.mapNotNull(::parseVaultKey)?.forEach { (packageName, userId) ->
+            placementRepository.removeByPackage(packageName, userId)
+            folderRepository.removeByPackage(packageName, userId)
+        }
 
         return ImportBackupResult.Success(
             facetCount = bundle.facets.size,
             pendingWidgetPlacements = hostedPlacements,
+            automationRules = automationRules,
         )
     }
 
