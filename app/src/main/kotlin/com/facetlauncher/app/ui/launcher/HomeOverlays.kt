@@ -39,8 +39,6 @@ import com.facetlauncher.app.ui.theme.FacetTransitionEasing
 internal fun HomeHubOverlay(
     hub: SwipeAxisState,
     direction: SwipeDirection,
-    containerWidthPx: Float,
-    containerHeightPx: Float,
     isHubOpen: Boolean,
     clockWidgetNeedsListening: Boolean,
     overlays: HomeOverlayState,
@@ -63,7 +61,7 @@ internal fun HomeHubOverlay(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .offset { panelOffset(direction, hub.progress.value, containerWidthPx, containerHeightPx) }
+            .panelPlacement(direction) { hub.progress.value }
             .nestedScroll(remember(hub, direction) { panelCloseNestedScroll(hub, direction) })
             .panelSurfaceDrag(hub, direction),
     ) {
@@ -102,15 +100,13 @@ internal fun HomeWidgetPickerOverlay(overlays: HomeOverlayState, onReset: () -> 
 internal fun HomeFacetCarouselOverlay(
     facet: SwipeAxisState,
     direction: SwipeDirection,
-    containerWidthPx: Float,
-    containerHeightPx: Float,
     isOpen: Boolean,
     content: @Composable () -> Unit,
 ) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .offset { panelOffset(direction, facet.progress.value, containerWidthPx, containerHeightPx) }
+            .panelPlacement(direction) { facet.progress.value }
             .then(if (isOpen) Modifier else Modifier.clearAndSetSemantics {})
             .panelSurfaceDrag(facet, direction),
     ) {

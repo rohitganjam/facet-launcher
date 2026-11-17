@@ -14,6 +14,7 @@ import com.facetlauncher.app.data.model.DailyPhoto
 import com.facetlauncher.app.data.model.DailyPhotoSource
 import com.facetlauncher.app.data.model.ImageRegion
 import com.facetlauncher.app.data.model.NetworkConditions
+import com.facetlauncher.app.data.model.ScreenSize
 import java.io.File
 import java.time.Clock
 import java.time.Instant
@@ -64,7 +65,9 @@ internal class FakeDailyCopies : WallpaperCopyRepository(RuntimeEnvironment.getA
     val sizes = mutableMapOf<Byte, Pair<Int, Int>>()
     val decodedRegions = mutableListOf<Pair<ImageRegion, Int>>()
 
-    override fun portraitScreenSize() = 100 to 200
+    override fun screenSize() = 100 to 200
+    override suspend fun knownScreens() = listOf(ScreenSize(100, 200))
+    override suspend fun targetScreen() = ScreenSize(100, 200)
     override fun currentSystemWallpaperId() = systemId
     override fun currentLockWallpaperId() = lockId
     override suspend fun imageSize(bytes: ByteArray): Pair<Int, Int>? = sizes[bytes.first()]
@@ -84,6 +87,7 @@ internal class FakeDailyCopies : WallpaperCopyRepository(RuntimeEnvironment.getA
         saved = bitmap
         return true
     }
+    override suspend fun save(bitmap: Bitmap, size: ScreenSize): Boolean = save(bitmap)
 }
 
 internal class FakeDailyPhotos(folder: File, copies: WallpaperCopyRepository) : DailyPhotoRepository(

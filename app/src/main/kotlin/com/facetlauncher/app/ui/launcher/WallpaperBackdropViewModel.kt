@@ -32,10 +32,10 @@ class WallpaperBackdropViewModel @Inject constructor(
     /** Bumped by [onResumed] so the check reads the system wallpaper's id again; it is also read whenever the copy or its recorded id changes. */
     private val resumes = MutableStateFlow(0)
 
-    val copy: StateFlow<Bitmap?> = combine(wallpaperCopyRepository.copy, settingsRepository.settings, resumes) { copy, settings, _ ->
+    val copy: StateFlow<Bitmap?> = combine(wallpaperCopyRepository.copy, wallpaperCopyRepository.copyIsCurrent, settingsRepository.settings, resumes) { copy, current, settings, _ ->
         val storedId = settings.wallpaperCopySystemId
         val systemId = wallpaperCopyRepository.currentSystemWallpaperId()
-        copy.takeUnless { storedId != WallpaperCopyRepository.NO_WALLPAPER_ID && storedId != systemId }
+        copy.takeIf { current && (storedId == WallpaperCopyRepository.NO_WALLPAPER_ID || storedId == systemId) }
     }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
     /** `null` while there is nothing to compute from: the theme then uses the system's Material You. */
@@ -45,5 +45,8 @@ class WallpaperBackdropViewModel @Inject constructor(
         .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
     /** Re-reads the system wallpaper id, since it can change while the launcher is in the background. */
-    fun onResumed() { resumes.value++ }
+    fun onResumed() {
+        wallpaperCopyRepository.recheck()
+        resumes.value++
+    }
 }

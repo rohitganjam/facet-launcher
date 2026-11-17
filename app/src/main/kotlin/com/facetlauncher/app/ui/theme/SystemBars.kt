@@ -24,6 +24,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.window.DialogWindowProvider
 import androidx.core.view.ViewCompat
@@ -69,9 +70,12 @@ fun useLightNavigationBarIcons(style: SystemBarIconStyle, backdrop: SystemBarsBa
 /** How long a swipe-down reveal keeps a hidden status bar on screen before it hides again. */
 internal const val STATUS_BAR_REVEAL_MILLIS = 3_000L
 
-/** Only the wallpaper screens (Home, Hub, Drawer) hide the status bar, and only until a swipe [revealed] it. */
-internal fun isStatusBarHidden(hideSetting: Boolean, backdrop: SystemBarsBackdrop, revealed: Boolean): Boolean =
-    hideSetting && backdrop == SystemBarsBackdrop.WALLPAPER && !revealed
+/**
+ * Only the wallpaper screens (Home, Hub, Drawer) hide the status bar, and only until a swipe [revealed] it. A screen that [forced] it hidden,
+ * the wallpaper capture, keeps it hidden whatever the setting or backdrop.
+ */
+internal fun isStatusBarHidden(hideSetting: Boolean, backdrop: SystemBarsBackdrop, revealed: Boolean, forced: Boolean = false): Boolean =
+    forced || (hideSetting && backdrop == SystemBarsBackdrop.WALLPAPER && !revealed)
 
 /** The current screen's [SystemBarsBackdrop], written by whichever screen knows what's behind the bars. */
 @Stable
@@ -80,6 +84,10 @@ class SystemBarsState {
 
     /** Mirrors the "hide status bar" setting; written by [ProvideSystemBars]. */
     var hideStatusBar by mutableStateOf(false)
+        internal set
+
+    /** `true` while a screen needs the status bar hidden regardless of the setting; written by [HideStatusBarEffect]. */
+    var statusBarForcedHidden by mutableStateOf(false)
         internal set
 
     /** `true` for [STATUS_BAR_REVEAL_MILLIS] after a swipe-down brought a hidden status bar back. */
@@ -127,6 +135,19 @@ fun MatchStatusBarVisibility() {
     }
 }
 
+/**
+ * Keeps the status bar hidden for as long as this is composed, whatever the setting says. [ProvideSystemBars] re-applies the bar on every
+ * resume and window focus, so a screen hiding it directly would lose to that after Android's dialogs.
+ */
+@Composable
+fun HideStatusBarEffect() {
+    val state = LocalSystemBarsState.current ?: return
+    DisposableEffect(state) {
+        state.statusBarForcedHidden = true
+        onDispose { state.statusBarForcedHidden = false }
+    }
+}
+
 /** Provided by `LauncherActivity`; null (a no-op) in previews and isolated tests. */
 val LocalSystemBarsState = staticCompositionLocalOf<SystemBarsState?> { null }
 
@@ -160,10 +181,12 @@ fun ProvideSystemBars(
 ) {
     val lightIcons = useLightSystemBarIcons(style, state.backdrop, LocalIsDarkTheme.current)
     val lightNavIcons = useLightNavigationBarIcons(style, state.backdrop, LocalIsDarkTheme.current)
-    val statusBarHidden = isStatusBarHidden(hideStatusBar, state.backdrop, state.statusBarRevealed)
+    val statusBarHidden = isStatusBarHidden(hideStatusBar, state.backdrop, state.statusBarRevealed, state.statusBarForcedHidden)
     val view = LocalView.current
-    // The system re-shows bars after an app switch or a dialog, so the hide is re-applied on resume and window focus.
+    // The system re-shows bars after an app switch or a dialog, so the hide is re-applied on resume and window focus, and after a rotation
+    // or fold (the activity is not recreated for those).
     var reapply by remember { mutableIntStateOf(0) }
+    val orientation = LocalConfiguration.current.orientation
     if (!view.isInEditMode) {
         SideEffect {
             val window = view.context.findActivity()?.window ?: return@SideEffect
@@ -181,7 +204,7 @@ fun ProvideSystemBars(
             view.viewTreeObserver.addOnWindowFocusChangeListener(listener)
             onDispose { view.viewTreeObserver.removeOnWindowFocusChangeListener(listener) }
         }
-        LaunchedEffect(statusBarHidden, reapply) {
+        LaunchedEffect(statusBarHidden, reapply, orientation) {
             val window = view.context.findActivity()?.window ?: return@LaunchedEffect
             val controller = WindowCompat.getInsetsController(window, view)
             controller.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE

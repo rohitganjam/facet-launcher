@@ -2,6 +2,7 @@ package com.facetlauncher.app.ui.settings
 
 import android.graphics.Bitmap
 import android.graphics.RectF
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertTextContains
@@ -15,6 +16,10 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToNode
+import com.facetlauncher.app.data.model.OtherScreenPrompt
+import com.facetlauncher.app.data.model.OtherScreenPromptKind
+import com.facetlauncher.app.data.model.ScreenSize
+import kotlinx.collections.immutable.persistentListOf
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -94,6 +99,7 @@ class WallpaperScreenTest {
         setContent(WallpaperUiState(), calls)
 
         // When the link is tapped
+        scrollTo("wallpaper_screenshot_link")
         composeRule.onNodeWithTag("wallpaper_screenshot_link").performClick()
 
         // Then a dialog explains and nothing has happened yet
@@ -111,6 +117,7 @@ class WallpaperScreenTest {
         // Given the dialog is open
         val calls = Calls()
         setContent(WallpaperUiState(), calls)
+        scrollTo("wallpaper_screenshot_link")
         composeRule.onNodeWithTag("wallpaper_screenshot_link").performClick()
 
         // When the second button is tapped
@@ -158,6 +165,103 @@ class WallpaperScreenTest {
 
         // Then the note shows
         composeRule.onNodeWithTag("wallpaper_fit_turns_off_daily").assertIsDisplayed()
+    }
+
+    @Test
+    fun `with another screen known the fit step outlines what it will show`() {
+        // Given a photo framed for a foldable: a larger inner screen and a smaller outer one
+        val screens = persistentListOf(ScreenSize(2208, 1840), ScreenSize(1080, 2092))
+        setContent(WallpaperUiState(picked = bitmap(2208, 1840), fitScreens = screens), Calls())
+
+        // Then the outline and its note show
+        composeRule.onNodeWithTag("wallpaper_fit_outline").assertIsDisplayed()
+        composeRule.onNodeWithTag("wallpaper_fit_other_screen").assertIsDisplayed()
+    }
+
+    @Test
+    fun `with one screen the fit step has no outline`() {
+        // Given a photo framed on a phone
+        setContent(WallpaperUiState(picked = bitmap(200, 400), fitScreens = persistentListOf(ScreenSize(1080, 2400))), Calls())
+
+        // Then there is no outline or note
+        composeRule.onNodeWithTag("wallpaper_fit_outline").assertDoesNotExist()
+        composeRule.onNodeWithTag("wallpaper_fit_other_screen").assertDoesNotExist()
+    }
+
+    @Test
+    fun `a screenshot of the current wallpaper is framed alone even on a foldable`() {
+        // Given a screenshot being framed while two screens are known
+        val screens = persistentListOf(ScreenSize(2208, 1840), ScreenSize(1080, 2092))
+        setContent(WallpaperUiState(picked = bitmap(200, 400), copyOnly = true, fitScreens = screens), Calls())
+
+        // Then it has no outline, since it is a picture of the screen being used
+        composeRule.onNodeWithTag("wallpaper_fit_outline").assertDoesNotExist()
+    }
+
+    @Test
+    fun `a screen without a copy is suggested and can be dismissed`() {
+        // Given a copy on one screen and none on another
+        var dismissed = 0
+        composeRule.setContent {
+            FacetLauncherTheme {
+                WallpaperContent(
+                    uiState = WallpaperUiState(
+                        copy = bitmap(10, 20),
+                        otherScreenPrompt = OtherScreenPrompt(OtherScreenPromptKind.MissingCopy, persistentListOf("screen:2208x1840")),
+                    ),
+                    onBack = {}, onChooseWallpaper = {}, onUseScreenshot = {}, onTakeScreenshot = {}, onSetSystemWallpaper = {},
+                    onAcceptOffer = {}, onDeclineOffer = {}, onRemoveCopy = {}, onCancelFit = {}, onConfirmFit = { _, _ -> },
+                    onDismissOtherScreen = { dismissed++ },
+                )
+            }
+        }
+
+        // Then the card shows, and not now reports once
+        composeRule.onNodeWithTag("wallpaper_other_screen_card").assertIsDisplayed()
+        composeRule.onNodeWithTag("wallpaper_other_screen_dismiss").performClick()
+        assertEquals(1, dismissed)
+    }
+
+    @Test
+    fun `a foldable seen on one screen gets the unfold hint`() {
+        // Given a foldable with one screen seen
+        setContent(WallpaperUiState(copy = bitmap(10, 20), otherScreenPrompt = OtherScreenPrompt(OtherScreenPromptKind.FoldableUnseen, persistentListOf("foldable"))), Calls())
+
+        // Then the hint card shows
+        composeRule.onNodeWithTag("wallpaper_other_screen_card").assertIsDisplayed()
+        composeRule.onNodeWithText("Using a foldable?").assertIsDisplayed()
+    }
+
+    @Test
+    fun `the card offers to capture when the missing screen is the one showing`() {
+        // Given a missing copy on this screen
+        val calls = Calls()
+        setContent(WallpaperUiState(copy = bitmap(10, 20), otherScreenPrompt = OtherScreenPrompt(OtherScreenPromptKind.MissingCopy, persistentListOf("screen:1080x2092"), thisScreen = true)), calls)
+
+        // When the capture button is tapped
+        scrollTo("wallpaper_other_screen_capture")
+        composeRule.onNodeWithTag("wallpaper_other_screen_capture").performClick()
+
+        // Then the capture flow opens
+        assertEquals(1, calls.takeScreenshot)
+    }
+
+    @Test
+    fun `the card has no capture button when the missing screen is another one`() {
+        // Given a missing copy on a screen not showing
+        setContent(WallpaperUiState(copy = bitmap(10, 20), otherScreenPrompt = OtherScreenPrompt(OtherScreenPromptKind.MissingCopy, persistentListOf("screen:2208x1840"))), Calls())
+
+        // Then there is no capture button
+        composeRule.onNodeWithTag("wallpaper_other_screen_capture").assertDoesNotExist()
+    }
+
+    @Test
+    fun `with nothing to suggest there is no other screen card`() {
+        // Given no suggestion
+        setContent(WallpaperUiState(copy = bitmap(10, 20)), Calls())
+
+        // Then there is no card
+        composeRule.onNodeWithTag("wallpaper_other_screen_card").assertDoesNotExist()
     }
 
     @Test
@@ -217,6 +321,17 @@ class WallpaperScreenTest {
 
         // Then nothing offers to remove one
         composeRule.onNodeWithTag("wallpaper_remove_row").assertDoesNotExist()
+    }
+
+    @Test
+    fun `a stale copy is not shown in the preview`() {
+        // Given a stale copy
+        setContent(WallpaperUiState(copy = bitmap(10, 20), stale = true), Calls())
+
+        // Then the preview does not show the old image
+        val description = androidx.test.platform.app.InstrumentationRegistry.getInstrumentation().targetContext.getString(com.facetlauncher.app.R.string.wallpaper_preview_description)
+        composeRule.onNodeWithTag("wallpaper_preview").assertExists()
+        composeRule.onAllNodes(androidx.compose.ui.test.hasContentDescription(description)).assertCountEquals(0)
     }
 
     @Test

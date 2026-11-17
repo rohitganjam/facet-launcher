@@ -327,8 +327,8 @@ The setting is global, in Appearance → Look & Feel → Colors and Themes, and 
 
 **Hide status bar** (`hide_status_bar`, same screen, device-local and not backed up): `ProvideSystemBars` hides
 `statusBars()` on the activity window with `BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE` while the backdrop is `WALLPAPER`
-(Home, Hub, Drawer) and shows it on every other backdrop; `isStatusBarHidden` is the pure rule. It re-applies on
-resume and window focus, and sheet/dialog windows follow `LocalStatusBarHidden` (`MatchStatusBarVisibility`,
+(Home, Hub, Drawer) and shows it on every other backdrop; `isStatusBarHidden` is the pure rule; a screen can force the bar hidden with `HideStatusBarEffect` (`SystemBarsState.statusBarForcedHidden`), as the wallpaper capture screen does. It re-applies on
+resume, window focus and orientation change (`LauncherActivity` declares `configChanges` for orientation, size, density and keyboard, so a rotation or fold changes the configuration in place instead of recreating the activity: Home's portrait and landscape layouts follow `LocalConfiguration` through `rememberHomeLayoutMode`, `HomeLayoutContent` fades each layout in (220 ms) at start and whenever the mode changes, and the window asks for a cross-fade rotation animation), and sheet/dialog windows follow `LocalStatusBarHidden` (`MatchStatusBarVisibility`,
 `SheetDialogWindow`), since a separate window would otherwise bring the bar back. Home, Hub and Drawer pad with
 `launcherSystemBarInsets()`, which with the setting on drops the status bar from the top inset and keeps only the display
 cutout, so the bar overlays the content and nothing moves when it shows. Edge-to-edge is only enforced from Android 15, so `LauncherActivity` calls `setDecorFitsSystemWindows(false)` and the

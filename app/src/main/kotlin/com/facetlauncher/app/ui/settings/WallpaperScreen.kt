@@ -34,6 +34,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberUpdatedState
@@ -43,12 +44,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.CornerRadius
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.RoundRect
+import androidx.compose.ui.graphics.ClipOp
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.input.pointer.pointerInput
@@ -65,6 +69,12 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.facetlauncher.app.R
+import com.facetlauncher.app.data.model.OtherScreenPromptKind
+import com.facetlauncher.app.data.model.ScreenSize
+import com.facetlauncher.app.domain.coverRegion
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toImmutableList
 import com.facetlauncher.app.data.model.ProReason
 import com.facetlauncher.app.ui.components.BlockingProgressOverlay
 import com.facetlauncher.app.ui.components.CardDivider
@@ -146,13 +156,13 @@ fun WallpaperScreen(
         },
         onAcceptOffer = {
             viewModel.clearOffer()
-            viewModel.onPickStarted(copyOnly = false)
-            picker.launch("image/*")
+            onOpenCapture()
         },
         onDeclineOffer = viewModel::declineOffer,
         onRemoveCopy = viewModel::removeCopy,
         onCancelFit = viewModel::cancelFit,
         onConfirmFit = viewModel::confirmFit,
+        onDismissOtherScreen = viewModel::dismissOtherScreenPrompt,
         modifier = modifier,
     )
 }
@@ -171,11 +181,12 @@ internal fun WallpaperContent(
     onCancelFit: () -> Unit,
     onConfirmFit: (RectF, Boolean) -> Unit,
     modifier: Modifier = Modifier,
+    onDismissOtherScreen: () -> Unit = {},
 ) {
     val photo = uiState.picked
     Box(modifier = modifier.fillMaxSize()) {
         if (photo != null) {
-            WallpaperFitStep(photo, uiState.isWorking, uiState.failed, uiState.copyOnly, uiState.credit, onCancelFit, onConfirmFit, Modifier, uiState.turnsOffDailyWallpaper)
+            WallpaperFitStep(photo, uiState.isWorking, uiState.failed, uiState.copyOnly, uiState.credit, onCancelFit, onConfirmFit, Modifier, uiState.turnsOffDailyWallpaper, uiState.fitScreens)
         } else {
         StickyHeaderLayout(
             header = { AppearanceSettingsHeader(title = stringResource(R.string.wallpaper_title), onBack = onBack) },
@@ -193,6 +204,7 @@ internal fun WallpaperContent(
                     item { WallpaperPreview(uiState) }
                     if (uiState.offerCopy) item { CopyOffer(onAcceptOffer, onDeclineOffer) }
                     item { WallpaperStatus(uiState) }
+                    if (uiState.otherScreenPrompt.kind != OtherScreenPromptKind.None) item { OtherScreenCard(uiState.otherScreenPrompt.kind, uiState.otherScreenPrompt.thisScreen, onTakeScreenshot, onDismissOtherScreen) }
                     item { ChoiceRows(onChooseWallpaper, onSetSystemWallpaper) }
                     item { CurrentWallpaperCard(inUse = uiState.copy != null && !uiState.stale, onTakeScreenshot, onUseScreenshot) }
                     if (uiState.copy != null) item { RemoveLink(onRemoveCopy) }
@@ -218,8 +230,12 @@ internal fun WallpaperContent(
 private fun WallpaperPreview(uiState: WallpaperUiState, modifier: Modifier = Modifier) {
     Box(modifier = modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
         val shape = MaterialTheme.shapes.large
-        val previewModifier = Modifier.fillMaxWidth(PREVIEW_WIDTH_FRACTION).aspectRatio(PREVIEW_ASPECT).clip(shape).testTag("wallpaper_preview")
-        val copy = uiState.copy
+        // Shaped like the screen showing it, so a wide screen gets a wide preview instead of a tall narrow one.
+        val window = LocalWindowInfo.current.containerSize
+        val aspect = (window.width.toFloat() / window.height.coerceAtLeast(1)).coerceIn(PREVIEW_MIN_ASPECT, PREVIEW_MAX_ASPECT)
+        val previewModifier = Modifier.fillMaxWidth(if (aspect > 1f) PREVIEW_WIDE_WIDTH_FRACTION else PREVIEW_WIDTH_FRACTION).aspectRatio(aspect).clip(shape).testTag("wallpaper_preview")
+        // An out-of-date copy is not shown: the preview falls back to the wallpaper's own colours until a new copy is made.
+        val copy = uiState.copy?.takeUnless { uiState.stale }
         if (copy != null) {
             Image(
                 bitmap = remember(copy) { copy.asImageBitmap() },
@@ -243,6 +259,30 @@ private fun CopyOffer(onAccept: () -> Unit, onDecline: () -> Unit) {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
                 PrimaryButton(text = stringResource(R.string.wallpaper_offer_accept), onClick = onAccept, modifier = Modifier.testTag("wallpaper_offer_accept"))
                 TextActionButton(text = stringResource(R.string.wallpaper_offer_decline), onClick = onDecline, modifier = Modifier.testTag("wallpaper_offer_decline"))
+            }
+        }
+    }
+}
+
+/** Suggests adding a copy for another screen of a foldable: one that has none, or one Facet has not seen yet. */
+@Composable
+private fun OtherScreenCard(kind: OtherScreenPromptKind, thisScreen: Boolean, onCapture: () -> Unit, onDismiss: () -> Unit) {
+    val missing = kind == OtherScreenPromptKind.MissingCopy
+    SettingsCard {
+        Column(modifier = Modifier.padding(16.dp).testTag("wallpaper_other_screen_card"), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(
+                text = stringResource(if (missing && thisScreen) R.string.wallpaper_this_screen_title else if (missing) R.string.wallpaper_other_screen_title else R.string.wallpaper_foldable_title),
+                style = MaterialTheme.typography.titleMedium,
+                color = Ink,
+            )
+            Text(
+                text = stringResource(if (missing && thisScreen) R.string.wallpaper_this_screen_body else if (missing) R.string.wallpaper_other_screen_body else R.string.wallpaper_foldable_body),
+                style = MaterialTheme.typography.bodyMedium,
+                color = Muted,
+            )
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                if (missing && thisScreen) PrimaryButton(text = stringResource(R.string.wallpaper_screenshot_confirm), onClick = onCapture, modifier = Modifier.testTag("wallpaper_other_screen_capture"))
+                TextActionButton(text = stringResource(R.string.wallpaper_offer_decline), onClick = onDismiss, modifier = Modifier.testTag("wallpaper_other_screen_dismiss"))
             }
         }
     }
@@ -338,8 +378,7 @@ private fun RemoveLink(onRemoveCopy: () -> Unit) {
 }
 
 /**
- * Frames the picked [photo] to the screen's shape: drag to move, pinch to zoom, double-tap to reset, with a faint outline of where Home puts the
- * clock and dock. The user also chooses whether the lock screen gets it too; the result goes to [onConfirm] as the part of the photo in view.
+ * Frames the picked [photo] to the screen's shape: drag to move, pinch to zoom, double-tap to reset. The user also chooses whether the lock screen gets it too; the result goes to [onConfirm] as the part of the photo in view.
  */
 @Composable
 internal fun WallpaperFitStep(
@@ -352,10 +391,11 @@ internal fun WallpaperFitStep(
     onConfirm: (RectF, Boolean) -> Unit,
     modifier: Modifier = Modifier,
     turnsOffDailyWallpaper: Boolean = false,
+    screens: ImmutableList<ScreenSize> = persistentListOf(),
 ) {
     BackHandler(onBack = onCancel)
     val window = LocalWindowInfo.current.containerSize
-    val screenAspect = window.width.toFloat() / window.height.coerceAtLeast(1)
+    val frame = remember(screens, copyOnly, window) { fitFrame(screens, copyOnly, window.width.toFloat() / window.height.coerceAtLeast(1)) }
     var includeLock by remember { mutableStateOf(false) }
     var boxSize by remember { mutableStateOf(IntSize.Zero) }
     var fit by remember(photo) { mutableStateOf<WallpaperFit?>(null) }
@@ -373,12 +413,14 @@ internal fun WallpaperFitStep(
     ) {
         Text(text = stringResource(R.string.wallpaper_fit_title), style = MaterialTheme.typography.headlineSmall, color = Ink)
         Text(text = stringResource(R.string.wallpaper_fit_hint), style = MaterialTheme.typography.bodyMedium, color = Muted)
+        if (frame.others.isNotEmpty()) OtherScreenNote()
         Box(modifier = Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
             FitWindow(
                 photo = photo,
                 geometry = geometry,
                 fit = currentFit,
-                aspect = screenAspect,
+                aspect = frame.aspect,
+                otherScreens = frame.others,
                 credit = credit,
                 onSizeChange = { boxSize = it },
                 onFitChange = { fit = it },
@@ -422,6 +464,7 @@ private fun FitWindow(
     geometry: FitGeometry?,
     fit: WallpaperFit?,
     aspect: Float,
+    otherScreens: ImmutableList<ScreenSize>,
     credit: String?,
     onSizeChange: (IntSize) -> Unit,
     onFitChange: (WallpaperFit) -> Unit,
@@ -464,7 +507,7 @@ private fun FitWindow(
                 filterQuality = FilterQuality.Medium,
             )
         }
-        HomeLayoutHint(modifier = Modifier.fillMaxSize().alpha(HINT_ALPHA))
+        if (otherScreens.isNotEmpty()) OtherScreenOutlines(otherScreens, Modifier.fillMaxSize().testTag("wallpaper_fit_outline"))
         if (!credit.isNullOrBlank()) {
             // The photo's credit as it was given, small, over its foot; it is only on screen and never in what is saved.
             Text(
@@ -483,17 +526,49 @@ private fun FitWindow(
     }
 }
 
-/** A faint outline of the clock and the dock, so the user can see what will sit over the part of the photo they chose. */
+/** The shape the photo is framed in, and the other screens that will show a centred part of it. */
+@Immutable
+private class FitFrame(val aspect: Float, val others: ImmutableList<ScreenSize>)
+
+/**
+ * With more than one screen known the photo is framed for the largest and the others are outlined on it. A screenshot of the current
+ * wallpaper is framed alone, in the shape of the window, as is a photo on a single screen.
+ */
+private fun fitFrame(screens: ImmutableList<ScreenSize>, copyOnly: Boolean, windowAspect: Float): FitFrame =
+    if (screens.size > 1 && !copyOnly) FitFrame(screens.first().aspect, screens.drop(1).toImmutableList()) else FitFrame(windowAspect, persistentListOf())
+
 @Composable
-private fun HomeLayoutHint(modifier: Modifier = Modifier) {
+private fun OtherScreenNote() {
+    Text(
+        text = stringResource(R.string.wallpaper_fit_other_screen),
+        style = MaterialTheme.typography.bodyMedium,
+        color = Muted,
+        modifier = Modifier.testTag("wallpaper_fit_other_screen"),
+    )
+}
+
+/** What each of [screens] will show of the framed photo: everything outside its centred part is dimmed, and the part is outlined. */
+@Composable
+private fun OtherScreenOutlines(screens: ImmutableList<ScreenSize>, modifier: Modifier = Modifier) {
     Canvas(modifier = modifier) {
-        val corner = CornerRadius(12.dp.toPx())
-        drawRoundRect(Color.White, topLeft = Offset(size.width * 0.08f, size.height * 0.12f), size = Size(size.width * 0.5f, size.height * 0.1f), cornerRadius = corner)
-        drawRoundRect(Color.White, topLeft = Offset(size.width * 0.05f, size.height * 0.87f), size = Size(size.width * 0.9f, size.height * 0.09f), cornerRadius = corner)
+        val corner = CornerRadius(OUTLINE_CORNER.toPx())
+        screens.forEach { screen ->
+            val region = screen.coverRegion(size.width.roundToInt(), size.height.roundToInt())
+            val rect = Rect(region.left, region.top, region.right, region.bottom)
+            val hole = Path().apply { addRoundRect(RoundRect(rect, corner)) }
+            clipPath(hole, clipOp = ClipOp.Difference) { drawRect(Color.Black.copy(alpha = OUTLINE_SCRIM_ALPHA)) }
+            drawRoundRect(Color.White, topLeft = rect.topLeft, size = rect.size, cornerRadius = corner, style = Stroke(width = OUTLINE_WIDTH.toPx()))
+        }
     }
 }
 
+private val OUTLINE_CORNER = 12.dp
+private val OUTLINE_WIDTH = 2.dp
+private const val OUTLINE_SCRIM_ALPHA = 0.4f
 private const val PREVIEW_WIDTH_FRACTION = 0.5f
-private const val PREVIEW_ASPECT = 9f / 19.5f
-private const val HINT_ALPHA = 0.28f
+
+/** A wide screen's preview is narrower, since its height follows from the width and would otherwise fill the screen. */
+private const val PREVIEW_WIDE_WIDTH_FRACTION = 0.32f
+private const val PREVIEW_MIN_ASPECT = 0.4f
+private const val PREVIEW_MAX_ASPECT = 2.2f
 private const val CREDIT_SCRIM_ALPHA = 0.45f

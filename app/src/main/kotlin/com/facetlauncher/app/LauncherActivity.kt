@@ -4,6 +4,7 @@ import android.content.ComponentName
 import android.content.Intent
 import android.content.pm.LauncherApps
 import android.os.Bundle
+import android.view.WindowManager
 import android.os.Process
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -65,8 +66,7 @@ class LauncherActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // Android 15+ enforces edge-to-edge; below that the window would resize when the status bar hides or shows.
-        WindowCompat.setDecorFitsSystemWindows(window, false)
+        configureWindow()
 
         handleFacetDeepLink(intent)
 
@@ -161,6 +161,13 @@ class LauncherActivity : ComponentActivity() {
             viewModel.onHomePressed(whileResumed = !stoppedSinceResume)
         }
         handleFacetDeepLink(intent)
+    }
+
+    private fun configureWindow() {
+        // Android 15+ enforces edge-to-edge; below that the window would resize when the status bar hides or shows.
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+        // Rotating or folding blends the old screen into the new one instead of spinning a snapshot over a grey background.
+        window.attributes = window.attributes.also { it.rotationAnimation = WindowManager.LayoutParams.ROTATION_ANIMATION_CROSSFADE }
     }
 
     /** Warm (`onNewIntent`) and cold (`onCreate`) start both funnel a facet deep link/shortcut launch here. */

@@ -83,6 +83,7 @@ open class WallpaperRepository @Inject constructor(
     /** The saved glass copy, unless the system wallpaper has changed since it was stored. */
     private suspend fun savedCopy(): Bitmap? {
         val copy = wallpaperCopies?.copy?.first() ?: return null
+        if (!wallpaperCopies.copyIsCurrent.first()) return null
         val storedId = settingsRepository?.settings?.first()?.wallpaperCopySystemId ?: return copy
         val matches = storedId == WallpaperCopyRepository.NO_WALLPAPER_ID || storedId == wallpaperCopies.currentSystemWallpaperId()
         return copy.takeIf { matches }

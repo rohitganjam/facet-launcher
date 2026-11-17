@@ -137,10 +137,8 @@ internal fun HomeAppDrawerOverlay(
     actions: HomeDrawerActions,
     itemActions: HomeItemActions,
     drawer: SwipeAxisState,
-    containerHeightPx: Float,
     isDrawerOpen: Boolean,
     direction: SwipeDirection,
-    containerWidthPx: Float,
     overlays: HomeOverlayState,
     onNavigateToSettings: () -> Unit,
     onNavigateToUsageAccessExplanation: () -> Unit = {},
@@ -194,7 +192,7 @@ internal fun HomeAppDrawerOverlay(
         searchFocusRequest = searchFocusRequest,
         modifier = Modifier
             .fillMaxSize()
-            .offset { panelOffset(direction, drawer.progress.value, containerWidthPx, containerHeightPx) }
+            .panelPlacement(direction) { drawer.progress.value }
             .nestedScroll(scrollConnection)
             // From any other side, a drag on the drawer's own surface (not its list) closes it too.
             .then(if (direction == SwipeDirection.UP) Modifier else Modifier.panelSurfaceDrag(drawer, direction)),

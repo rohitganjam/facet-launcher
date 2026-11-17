@@ -113,7 +113,7 @@ flowchart TB
 
     subgraph VMC["ViewModelComponent — one per ViewModel instance"]
         UCS["Use cases\nclass X @Inject constructor(...)\nunscoped: new instance per injection"]
-        VMS["47 @HiltViewModel ViewModels\nSavedStateHandle for nav args"]
+        VMS["48 @HiltViewModel ViewModels\nSavedStateHandle for nav args"]
         UCS --> VMS
     end
 
@@ -146,9 +146,9 @@ flowchart TB
 | `WeatherApi`, `WeatherStore`, `PlaceGeocoder` | `@Singleton` | `WeatherModule` `@Binds` `MetWeatherApi`, `RoomWeatherStore` and `AndroidPlaceGeocoder` | The seams the weather code is tested through: tests pass a fake API, an in-memory store and a fake geocoder, so no test touches the network. |
 | `NativeWidgetOverrides` | unscoped | `WeatherModule` `@Binds` `ObserveNativeWidgetOverridesUseCase` | The seam `ui/nativewidget` reads each widget's own events or forecast through. |
 | `@ApplicationScope CoroutineScope` | `@Singleton` | `AppModule.provideApplicationScope` (`SupervisorJob` on `@DefaultDispatcher`) | Outlives any ViewModel: `AppRepository`'s shared app list (`shareIn`) and `EnsureCalendarColorsUseCase.keepAssigned()` run on it. |
-| Repositories (48; with `NotificationOpener`, `NotificationActionController`, `LockScreenController`, `MetWeatherApi`, `RoomWeatherStore`, `AndroidPlaceGeocoder`, `AppVersion` and `StyledIconCache`, 56 `@Singleton` classes in `data/`) | `@Singleton` | Constructor injection, no module | They hold `callbackFlow` registrations and in-memory state (`NotificationBadgeRepository.badgeCounts`); a single instance is required for that state to be shared. |
+| Repositories (49; with `NotificationOpener`, `NotificationActionController`, `LockScreenController`, `MetWeatherApi`, `RoomWeatherStore`, `AndroidPlaceGeocoder`, `AppVersion` and `StyledIconCache`, 57 `@Singleton` classes in `data/`) | `@Singleton` | Constructor injection, no module | They hold `callbackFlow` registrations and in-memory state (`NotificationBadgeRepository.badgeCounts`); a single instance is required for that state to be shared. |
 | Use cases | unscoped | Constructor injection | Stateless by convention. `ObserveHomeScreenStateUseCase` and `ObserveHubStateUseCase` hold a `refreshTrigger` `MutableSharedFlow`, so they are `@ViewModelScoped`: the ViewModel that injects one gets a single instance, and `refresh()` reaches the flow it collects. `EnsureCalendarColorsUseCase` is the other: `@Singleton` (it holds a `Mutex`), and `FacetApplication.onCreate` injects it and collects `keepAssigned()` on the `@ApplicationScope` scope for the app's life, so calendar colours are assigned as calendars appear. |
-| ViewModels (47) | `ViewModelComponent` | `@HiltViewModel`, resolved by `hiltViewModel()` per `NavHost` destination or `by viewModels()` in the Activity | Nav-arg-driven screens (`FacetSettingsViewModel`, `FolderDetailViewModel`, ...) read ids from `SavedStateHandle`. |
+| ViewModels (49) | `ViewModelComponent` | `@HiltViewModel`, resolved by `hiltViewModel()` per `NavHost` destination or `by viewModels()` in the Activity | Nav-arg-driven screens (`FacetSettingsViewModel`, `FolderDetailViewModel`, ...) read ids from `SavedStateHandle`. |
 
 Apart from `EntitlementModule` and `WeatherModule`, there are **no interface-to-implementation `@Binds` modules**: every other repository is a concrete
 `@Singleton class`, and tests substitute them with hand-written DAO fakes (`FolderTestFakes.kt`)

@@ -129,6 +129,7 @@ class WallpaperRepositoryTest {
 
     private class FakeCopies(private val stored: Bitmap?, var systemId: Int = 1) : WallpaperCopyRepository(org.robolectric.RuntimeEnvironment.getApplication(), mock(WallpaperManager::class.java)) {
         override val copy = kotlinx.coroutines.flow.flowOf(stored)
+        override val copyIsCurrent = kotlinx.coroutines.flow.flowOf(true)
         override fun currentSystemWallpaperId() = systemId
     }
 
@@ -174,6 +175,7 @@ class WallpaperRepositoryTest {
         val stored = kotlinx.coroutines.flow.MutableStateFlow<Bitmap?>(first)
         val copies = object : WallpaperCopyRepository(org.robolectric.RuntimeEnvironment.getApplication(), wallpaperManager) {
             override val copy = stored
+            override val copyIsCurrent = kotlinx.coroutines.flow.flowOf(true)
         }
         val following = WallpaperRepository(wallpaperManager, kotlinx.coroutines.Dispatchers.Unconfined, copies)
         val seen = mutableListOf<HomeWallpaper>()

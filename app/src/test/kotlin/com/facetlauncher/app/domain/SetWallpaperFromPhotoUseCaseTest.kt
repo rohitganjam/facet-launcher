@@ -9,6 +9,7 @@ import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.Preferences
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.WallpaperCopyRepository
+import com.facetlauncher.app.data.model.ScreenSize
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
@@ -44,9 +45,13 @@ class SetWallpaperFromPhotoUseCaseTest {
         var setBitmap: Bitmap? = null
         var setIncludeLock: Boolean? = null
         var saved: Bitmap? = null
+        val savedBySize = mutableMapOf<ScreenSize, Bitmap>()
+        var extraScreens: List<ScreenSize> = emptyList()
         var removed = false
 
-        override fun portraitScreenSize() = 50 to 100
+        override suspend fun knownScreens(): List<ScreenSize> = (extraScreens + ScreenSize(50, 100)).sortedByDescending { it.area }
+
+        override fun screenSize() = 50 to 100
         override suspend fun setSystemWallpaper(bitmap: Bitmap, includeLock: Boolean): Int {
             setBitmap = bitmap
             setIncludeLock = includeLock
@@ -55,6 +60,10 @@ class SetWallpaperFromPhotoUseCaseTest {
         override suspend fun save(bitmap: Bitmap): Boolean {
             if (saves) saved = bitmap
             return saves
+        }
+        override suspend fun save(bitmap: Bitmap, size: ScreenSize): Boolean {
+            if (saves) savedBySize[size] = bitmap
+            return save(bitmap).also { if (!saves) savedBySize.remove(size) }
         }
         override suspend fun remove() { removed = true }
     }
@@ -80,6 +89,30 @@ class SetWallpaperFromPhotoUseCaseTest {
         assertSame(copies.setBitmap, copies.saved)
         assertEquals(false, copies.setIncludeLock)
         assertEquals(9, settings.settings.first().wallpaperCopySystemId)
+    }
+
+    @Test
+    fun `with a larger screen known the wallpaper is set for it and the smaller screen gets a centred part`() = runTest {
+        // Given a foldable: the current 50 x 100 screen and a larger 100 x 80 one, and a photo that is red on the left and blue on the right
+        val copies = FakeCopies().apply { extraScreens = listOf(ScreenSize(100, 80)) }
+        val photo = Bitmap.createBitmap(200, 100, Bitmap.Config.ARGB_8888).also { bitmap ->
+            for (x in 0 until 200) for (y in 0 until 100) bitmap.setPixel(x, y, if (x < 100) Color.RED else Color.BLUE)
+        }
+
+        // When setting the whole photo
+        val done = useCase(copies, settingsRepository())(photo, RectF(0f, 0f, 200f, 100f), includeLock = false)
+
+        // Then the system wallpaper has the larger screen's shape, and is that screen's copy
+        assertTrue(done)
+        assertEquals(100, copies.setBitmap!!.width)
+        assertEquals(80, copies.setBitmap!!.height)
+        assertSame(copies.setBitmap, copies.savedBySize[ScreenSize(100, 80)])
+        // And the smaller screen has a copy of its own size, cut from the middle so both halves show
+        val small = copies.savedBySize[ScreenSize(50, 100)]!!
+        assertEquals(50, small.width)
+        assertEquals(100, small.height)
+        assertEquals(Color.RED, small.getPixel(1, 50))
+        assertEquals(Color.BLUE, small.getPixel(48, 50))
     }
 
     @Test

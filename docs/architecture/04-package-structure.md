@@ -8,7 +8,7 @@ app/src/main/kotlin/com/facetlauncher/app/
 ├── FacetApplication.kt            @HiltAndroidApp
 ├── LauncherActivity.kt            @AndroidEntryPoint — the only Activity; composition root
 │
-├── data/                          (60)  @Singleton Repositories — the only layer that touches
+├── data/                          (62)  @Singleton Repositories — the only layer that touches
 │   │                                    Room, DataStore, or Android framework services
 │   ├── di/                        (9)   Hilt modules: AppModule (also the @ApplicationScope qualifier), DatabaseModule, DataStoreModule, DispatcherModule (@IoDispatcher / @DefaultDispatcher), WidgetModule, EntitlementModule, WeatherModule + the @AutomationDataStore and @EntitlementDataStore qualifiers
 │   ├── icon/                      (4)   The glyph-only and outline icon pictures: IconMasks and IconStyler (pure pixel code), IconLayers (reads an app's themed monochrome layer), StyledIconCache (makes them on demand, off the main thread)
@@ -22,7 +22,7 @@ app/src/main/kotlin/com/facetlauncher/app/
 │   ├── widget/                    (3)   AppWidgetRepository + LauncherAppWidgetHost (AppWidgetHost subclass) + WidgetConfigureActivity (invisible trampoline that opens a widget's configure activity)
 │   └── FacetNotificationListenerService.kt   @AndroidEntryPoint service feeding NotificationBadgeRepository (its component is also what MediaSessionRepository reads sessions through)
 │
-├── domain/                        (88)  74 *UseCase classes in 72 files (NativeWidgetConfigUseCases.kt and LandscapeWidgetOrder.kt hold two each) + 16 helper files: FlowCombine, HubGridConstants, NativeWidgetSizing, NativeWidgetOverrideResolver, BackupMapping, BackupUpgrade, ClockConfigResolution, ResolvedFacetStyle, HomePlacement, HomeGridPlacement, WeatherUnits, WeatherDay, WeatherCondition, RainSummary, PortraitCrop, DailyWallpaperCoordinator
+├── domain/                        (92)  77 *UseCase classes in 75 files (NativeWidgetConfigUseCases.kt and LandscapeWidgetOrder.kt hold two each) + 17 helper files: FlowCombine, ScreenCover, HubGridConstants, NativeWidgetSizing, NativeWidgetOverrideResolver, BackupMapping, BackupUpgrade, ClockConfigResolution, ResolvedFacetStyle, HomePlacement, HomeGridPlacement, WeatherUnits, WeatherDay, WeatherCondition, RainSummary, PortraitCrop, DailyWallpaperCoordinator
 │                                        Composes ≥1 repositories, or pure logic (grid placement, ranking, grouping)
 │
 └── ui/
@@ -38,7 +38,7 @@ app/src/main/kotlin/com/facetlauncher/app/
     ├── launcher/                  (11)  CalendarEventOpener, LauncherViewModel (app-lifetime state), HomeDrawerRoute (wires Home and the panels over it), HomeSwipeController +
     │                                    HomeSwipeGestures (the three swipe axes, settle rules, drag detector), HomeOverlays / HomeAppDrawerOverlay / HomeOverlayState
     │                                    (the Hub, drawer, Private Space, pickers, carousel and one-time prompts), HomeScreenActionsBuilder, LauncherLocals
-    ├── home/                      (42)  HomeScreen (thin dispatcher) / HomeFrame / HomeContent / HomeSlots / HomeScreenEffects / HomeClockGeometry / HomeScreenLayout (measurements) / ClockAdjustControls / ClockResizeOverlays / HomeScreenState (its state and action groups) / HomeViewModel / HomeUiState, ClockBlock, clock handles, HomeSheets /
+    ├── home/                      (44)  HomeScreen (thin dispatcher) / HomeFrame / HomeContent / HomeSlots / HomeScreenEffects / HomeClockGeometry / HomeScreenLayout (measurements) / ClockAdjustControls / ClockResizeOverlays / HomeScreenState (its state and action groups) / HomeViewModel / HomeUiState, ClockBlock, clock handles, HomeSheets /
     │                                    ClockAdjustToolbar / `HomeMenuMode`, hosted-clock-widget controllers/tile, `ClockStackPager` (`ClockPagerState` and the page dots), `ClockWidgetHostCache`, TimeTick, MediaPlayerRow, `ScaledHomeScreen` (the real Home scaled down, for previews), `HomeScreenStateBuilder` and `HomeTags`;
     │                                    the list and tiles `HomeAppList` (two-column list, column, grid), `AppRow`, `FolderRow`, `DockIcon`, with `HomeItemSpec`
     │                                    (`HomeItemActions` / `HomeItemStyle` / `HomeAppListContent`, the one parameter group they share);
@@ -99,7 +99,7 @@ app/src/test/kotlin/com/facetlauncher/app/          JVM (JUnit4 + Robolectric + 
 │   ├── places/     3
 │   ├── weather/    6
 │   └── widget/     2
-├── domain/        74   one test class per use case or helper, for most (pure logic — no Android needed for most; the ones without are listed in 06 §5)
+├── domain/        76   one test class per use case or helper, for most (pure logic — no Android needed for most; the ones without are listed in 06 §5)
 └── ui/            88   ViewModel tests (dock, drawer, facets, home, hub, launcher, onboarding, settings×9, settings/automation, settings/backup, theme) the rule editor state/formatting tests, and `ClockWidgetTouchGateTest` (Robolectric, raw `MotionEvent`s)
 
 app/src/androidTest/kotlin/com/facetlauncher/app/   Instrumented (Compose UI tests, AVD only)

@@ -107,7 +107,7 @@ class RunDailyWallpaperUseCase @Inject constructor(
 
     /** Downloads the best candidate, decodes its centre strip and stores it as the pending photo; a photo too small to look sharp is skipped. */
     private suspend fun prepare(candidates: List<DailyPhoto>, today: LocalDate): DailyRunOutcome {
-        val (screenWidth, screenHeight) = wallpaperCopyRepository.portraitScreenSize()
+        val (screenWidth, screenHeight) = wallpaperCopyRepository.targetScreen().let { it.width to it.height }
         val skipped = mutableListOf<String>()
         val outcome = candidates.take(MAX_CANDIDATES).firstNotNullOfOrNull { photo ->
             val bytes = dailyPhotoRepository.originalBytes(photo)

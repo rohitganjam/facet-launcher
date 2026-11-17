@@ -39,7 +39,7 @@ class UseScreenshotAsWallpaperCopyUseCaseTest {
         var saved: Bitmap? = null
         var setCalls = 0
         override fun currentSystemWallpaperId() = 5
-        override fun portraitScreenSize() = 50 to 100
+        override fun screenSize() = 50 to 100
         override suspend fun setSystemWallpaper(bitmap: Bitmap, includeLock: Boolean): Int { setCalls++; return 99 }
         override suspend fun save(bitmap: Bitmap): Boolean { if (saves) saved = bitmap; return saves }
     }
