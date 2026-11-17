@@ -11,8 +11,13 @@ import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.WallpaperCopyRepository
 import com.facetlauncher.app.data.WallpaperRepository
 import com.facetlauncher.app.data.model.HomeWallpaper
+import com.facetlauncher.app.data.model.OtherScreenPromptKind
+import com.facetlauncher.app.data.model.ScreenCopy
+import com.facetlauncher.app.data.model.ScreenSize
+import com.facetlauncher.app.data.model.promptKey
 import com.facetlauncher.app.domain.FakeDailyWallpaperRepository
 import com.facetlauncher.app.domain.NoteManualWallpaperUseCase
+import com.facetlauncher.app.domain.ObserveWallpaperScreensUseCase
 import com.facetlauncher.app.domain.RemoveWallpaperCopyUseCase
 import com.facetlauncher.app.domain.dailyTestClock
 import com.facetlauncher.app.domain.SetWallpaperFromPhotoUseCase
@@ -60,19 +65,26 @@ class WallpaperViewModelTest {
     /** A real (not Mockito) stub of the copy store: a copy the test controls, a system id that can change, and a decode that can fail. */
     private class FakeCopies : WallpaperCopyRepository(RuntimeEnvironment.getApplication(), mock(WallpaperManager::class.java)) {
         val stored = MutableStateFlow<Bitmap?>(null)
+        val screenList = MutableStateFlow(listOf(ScreenCopy(ScreenSize(50, 100), hasCopy = false)))
+        val said = MutableStateFlow(emptySet<String>())
+        override val screens: Flow<List<ScreenCopy>> get() = screenList
+        override val dismissedPrompts: Flow<Set<String>> get() = said
+        override suspend fun dismissPrompt(key: String) { said.value += key }
+        override fun maybeFoldable() = false
         var systemId = 1
         var decoded: Bitmap? = Bitmap.createBitmap(200, 100, Bitmap.Config.ARGB_8888)
         var setSucceeds = true
 
         override val copy: Flow<Bitmap?> get() = stored
         override fun currentSystemWallpaperId() = systemId
-        override fun portraitScreenSize() = 50 to 100
+        override fun screenSize() = 50 to 100
         override suspend fun decodePicked(uri: Uri, maxSide: Int) = decoded
         override suspend fun setSystemWallpaper(bitmap: Bitmap, includeLock: Boolean) = if (setSucceeds) systemId else NO_WALLPAPER_ID
         override suspend fun save(bitmap: Bitmap): Boolean {
             stored.value = bitmap
             return true
         }
+        override suspend fun save(bitmap: Bitmap, size: ScreenSize): Boolean = save(bitmap)
         override suspend fun remove() { stored.value = null }
     }
 
@@ -91,6 +103,7 @@ class WallpaperViewModelTest {
         return WallpaperViewModel(
             copies, wallpaper, settings, SetWallpaperFromPhotoUseCase(copies, settings, dispatcher), RemoveWallpaperCopyUseCase(copies, settings),
             UseScreenshotAsWallpaperCopyUseCase(copies, settings, dispatcher), daily, NoteManualWallpaperUseCase(daily, copies, dailyTestClock),
+            ObserveWallpaperScreensUseCase(copies),
         )
     }
 
@@ -111,6 +124,39 @@ class WallpaperViewModelTest {
         assertNull(state.copy)
         assertFalse(state.stale)
         assertEquals(HomeWallpaper.Tones(listOf(1, 2)), state.systemWallpaper)
+    }
+
+    @Test
+    fun `the fit step is told every screen known, the largest first`() = runTest {
+        // Given a foldable: the inner screen and the outer one are known
+        val inner = ScreenSize(2208, 1840)
+        val outer = ScreenSize(1080, 2092)
+        val copies = FakeCopies().apply { screenList.value = listOf(ScreenCopy(inner, false), ScreenCopy(outer, true)) }
+        val viewModel = viewModel(copies, settings())
+        viewModel.observe(this)
+
+        // When the state is read
+        val state = viewModel.uiState.first { it.fitScreens.size == 2 }
+
+        // Then both are listed, the largest first
+        assertEquals(listOf(inner, outer), state.fitScreens)
+    }
+
+    @Test
+    fun `saying not now to the other screen suggestion remembers it for each screen mentioned`() = runTest {
+        // Given a foldable where the inner screen has no copy
+        val inner = ScreenSize(2208, 1840)
+        val copies = FakeCopies().apply { screenList.value = listOf(ScreenCopy(inner, false), ScreenCopy(ScreenSize(1080, 2092), true)) }
+        val viewModel = viewModel(copies, settings())
+        viewModel.observe(this)
+        viewModel.uiState.first { it.otherScreenPrompt.kind == OtherScreenPromptKind.MissingCopy }
+
+        // When the user says not now
+        viewModel.dismissOtherScreenPrompt()
+
+        // Then the suggestion is remembered and gone
+        assertEquals(setOf(inner.promptKey), copies.said.value)
+        assertEquals(OtherScreenPromptKind.None, viewModel.uiState.first { it.otherScreenPrompt.kind == OtherScreenPromptKind.None }.otherScreenPrompt.kind)
     }
 
     @Test

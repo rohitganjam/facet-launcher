@@ -11,7 +11,12 @@ import com.facetlauncher.app.data.WallpaperCopyRepository
 import com.facetlauncher.app.data.WallpaperRepository
 import com.facetlauncher.app.data.dailyphotos.DailyWallpaperRepository
 import com.facetlauncher.app.data.model.HomeWallpaper
+import com.facetlauncher.app.data.model.OtherScreenPrompt
+import com.facetlauncher.app.data.model.ScreenSize
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
 import com.facetlauncher.app.domain.NoteManualWallpaperUseCase
+import com.facetlauncher.app.domain.ObserveWallpaperScreensUseCase
 import com.facetlauncher.app.domain.RemoveWallpaperCopyUseCase
 import com.facetlauncher.app.domain.SetWallpaperFromPhotoUseCase
 import com.facetlauncher.app.domain.UseScreenshotAsWallpaperCopyUseCase
@@ -49,6 +54,10 @@ data class WallpaperUiState(
     val copyOnly: Boolean = false,
     /** `true` while framing the user's own image with the daily wallpaper on: setting it turns the daily change off, and the fit step says so. */
     val turnsOffDailyWallpaper: Boolean = false,
+    /** Every screen known, the largest first: the fit step frames the first and outlines what the others will show. */
+    val fitScreens: ImmutableList<ScreenSize> = persistentListOf(),
+    /** A suggestion to add a copy for another screen, or none. */
+    val otherScreenPrompt: OtherScreenPrompt = OtherScreenPrompt(),
 )
 
 /** The wallpaper screen: the glass copy, the picker and fit step that make one, and removing it. */
@@ -62,6 +71,7 @@ class WallpaperViewModel @Inject constructor(
     private val useScreenshotAsCopy: UseScreenshotAsWallpaperCopyUseCase,
     dailyWallpaperRepository: DailyWallpaperRepository,
     private val noteManualWallpaper: NoteManualWallpaperUseCase,
+    private val observeScreens: ObserveWallpaperScreensUseCase,
 ) : ViewModel() {
 
     private data class Local(
@@ -82,12 +92,12 @@ class WallpaperViewModel @Inject constructor(
 
     private val local = MutableStateFlow(Local())
 
-    val uiState: StateFlow<WallpaperUiState> = combine(wallpaperCopyRepository.copy, settingsRepository.settings, local, dailyWallpaperRepository.state) { copy, settings, state, daily ->
+    val uiState: StateFlow<WallpaperUiState> = combine(combine(wallpaperCopyRepository.copy, wallpaperCopyRepository.copyIsCurrent) { copy, current -> copy to current }, settingsRepository.settings, local, dailyWallpaperRepository.state, observeScreens()) { (copy, current), settings, state, daily, screens ->
         val storedId = settings.wallpaperCopySystemId
         WallpaperUiState(
             copy = copy,
             systemWallpaper = state.systemWallpaper,
-            stale = copy != null && storedId != WallpaperCopyRepository.NO_WALLPAPER_ID && storedId != wallpaperCopyRepository.currentSystemWallpaperId(),
+            stale = copy != null && (!current || (storedId != WallpaperCopyRepository.NO_WALLPAPER_ID && storedId != wallpaperCopyRepository.currentSystemWallpaperId())),
             picked = state.picked,
             isWorking = state.working,
             failed = state.failed,
@@ -95,6 +105,8 @@ class WallpaperViewModel @Inject constructor(
             credit = state.credit,
             copyOnly = state.copyOnly,
             turnsOffDailyWallpaper = daily.enabled && state.picked != null && !state.copyOnly && !state.fromDailyPhoto,
+            fitScreens = screens.sizes,
+            otherScreenPrompt = screens.prompt,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), WallpaperUiState())
 
@@ -104,6 +116,7 @@ class WallpaperViewModel @Inject constructor(
 
     /** Reads the system wallpaper again (a preview of it, and whether the copy still matches); call when the screen comes back. */
     fun refresh() {
+        wallpaperCopyRepository.recheck()
         viewModelScope.launch {
             val systemWallpaper = wallpaperRepository.currentHomeWallpaper()
             val checked = local.value.pickerBaseline
@@ -122,6 +135,12 @@ class WallpaperViewModel @Inject constructor(
         val settings = settingsRepository.settings.first()
         val copyMatches = wallpaperCopyRepository.copy.first() != null && settings.wallpaperCopySystemId == systemId
         return baseline != null && baseline != systemId && !copyMatches && !settings.wallpaperPromptDismissed
+    }
+
+    /** "Not now" on the suggestion about another screen: remembered, so it is not shown again. */
+    fun dismissOtherScreenPrompt() {
+        val keys = uiState.value.otherScreenPrompt.dismissKeys
+        viewModelScope.launch { keys.forEach { wallpaperCopyRepository.dismissPrompt(it) } }
     }
 
     /** "Not now" on the offer: remembered, so it isn't shown again. */

@@ -2,15 +2,21 @@ package com.facetlauncher.app.ui.home
 
 import com.facetlauncher.app.domain.ListAlignment
 import android.content.res.Configuration
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.testTag
@@ -76,7 +82,7 @@ fun HomeScreen(
             .homeEmptySpaceGestures(clock.adjustMode, actions.clock.onAdjustModeChange, actions.onEmptySpaceDoubleTap)
             .testTag(homeTag("home_screen_root")),
     ) {
-        if (frame.isLandscape) HomeLandscapeContent(frame) else HomePortraitContent(frame)
+        HomeLayoutContent(frame)
         val adjustEnv = ClockAdjustEnv(layout, frame.geometry, frame.metrics, clock, state.widget, actions, frame.widgetMinPx, frame.landscapeDockReserve)
         ClockAdjustOverlays(adjustEnv, landscape = frame.isLandscape)
         ClockAdjustPills(adjustEnv, adjusting = clock.adjustMode == HomeMenuMode.ADJUST, landscape = frame.isLandscape)
@@ -85,6 +91,28 @@ fun HomeScreen(
         if (clock.adjustMode == HomeMenuMode.WIDGET_MENU) WidgetSheet(state.clockStack, state.widget, actions.clock)
     }
 }
+
+/**
+ * Portrait or landscape content. The first layout, and each new one when the screen changes shape (a fold, a resize, a rotation), fades in
+ * instead of appearing at once.
+ */
+@Composable
+private fun HomeLayoutContent(frame: HomeFrame) {
+    val isLandscape = frame.isLandscape
+    var shown by remember { mutableStateOf<Boolean?>(null) }
+    // A layout starts invisible in the composition that first shows it, so it never appears at full strength for a frame first.
+    val fade = remember(isLandscape) { Animatable(if (isLandscape == shown) 1f else 0f) }
+    LaunchedEffect(isLandscape) {
+        shown = isLandscape
+        fade.animateTo(1f, tween(HOME_LAYOUT_FADE_MS))
+    }
+    Box(Modifier.fillMaxSize().graphicsLayer { alpha = fade.value }) {
+        if (isLandscape) HomeLandscapeContent(frame) else HomePortraitContent(frame)
+    }
+}
+
+/** How long a Home layout takes to fade in, at start and after the screen changes shape. */
+private const val HOME_LAYOUT_FADE_MS = 220
 
 /** Minimum gap always kept between the clock+calendar block's bottom edge and its grab handle. */
 internal val HOME_CLOCK_MIN_GAP = 24.dp

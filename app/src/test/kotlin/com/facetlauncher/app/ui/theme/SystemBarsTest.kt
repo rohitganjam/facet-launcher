@@ -17,6 +17,14 @@ class SystemBarsTest {
     }
 
     @Test
+    fun `a screen that forces the status bar hidden keeps it hidden on any backdrop and over a reveal`() {
+        for (backdrop in SystemBarsBackdrop.entries) {
+            assertEquals(true, isStatusBarHidden(hideSetting = false, backdrop = backdrop, revealed = false, forced = true))
+            assertEquals(true, isStatusBarHidden(hideSetting = true, backdrop = backdrop, revealed = true, forced = true))
+        }
+    }
+
+    @Test
     fun `a swipe reveals a hidden status bar once and then leaves the next swipe for the shade`() {
         // Given the setting on over the wallpaper, with the system not showing the bar
         val state = SystemBarsState().apply {

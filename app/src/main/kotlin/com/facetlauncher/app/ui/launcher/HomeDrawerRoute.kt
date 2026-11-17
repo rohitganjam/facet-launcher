@@ -25,6 +25,8 @@ import com.facetlauncher.app.ui.nativewidget.config.NativeWidgetConfigSheet
 import com.facetlauncher.app.ui.settings.CalendarSettingsSheet
 import com.facetlauncher.app.ui.nativewidget.rememberNativeWidgetAccess
 import com.facetlauncher.app.ui.nativewidget.withWeatherOverride
+import com.facetlauncher.app.ui.home.WallpaperCopyPillHost
+import com.facetlauncher.app.ui.home.WallpaperCopyPillViewModel
 import com.facetlauncher.app.ui.home.WhatsNewPillHost
 import com.facetlauncher.app.ui.home.WhatsNewPillViewModel
 import com.facetlauncher.app.ui.home.toHomeScreenState
@@ -134,9 +136,12 @@ fun HomeDrawerRoute(
     onNavigateToPermissions: () -> Unit = {},
     /** Opens What's new, from the pill that announces an update. */
     onNavigateToWhatsNew: () -> Unit = {},
+    /** Opens the wallpaper page, from the pill that says this screen's wallpaper copy is out of date. */
+    onNavigateToWallpaper: () -> Unit = {},
     modifier: Modifier = Modifier,
     homeViewModel: HomeViewModel = hiltViewModel(),
     whatsNewPillViewModel: WhatsNewPillViewModel = hiltViewModel(),
+    wallpaperCopyPillViewModel: WallpaperCopyPillViewModel = hiltViewModel(),
     weatherViewModel: WeatherViewModel = hiltViewModel(),
     drawerViewModel: DrawerViewModel = hiltViewModel(),
     privateSpaceViewModel: PrivateSpaceViewModel = hiltViewModel(),
@@ -151,6 +156,7 @@ fun HomeDrawerRoute(
     val homeUiState by homeViewModel.uiState.collectAsStateWithLifecycle()
     val weatherUiState by weatherViewModel.uiState.collectAsStateWithLifecycle()
     val whatsNewVersion by whatsNewPillViewModel.version.collectAsStateWithLifecycle()
+    val wallpaperCopyScreen by wallpaperCopyPillViewModel.screenKey.collectAsStateWithLifecycle()
     val launcherUiState by launcherViewModel.uiState.collectAsStateWithLifecycle()
     val folders by drawerViewModel.folders.collectAsStateWithLifecycle()
     val currentOnNavigateToNotificationAccess by rememberUpdatedState(onNavigateToNotificationAccessExplanation)
@@ -495,8 +501,6 @@ fun HomeDrawerRoute(
         HomeHubOverlay(
             hub = swipe.hub,
             direction = swipe.hubDirection,
-            containerWidthPx = containerWidthPx,
-            containerHeightPx = containerHeightPx,
             isHubOpen = isHubOpen,
             clockWidgetNeedsListening = clockWidgetNeedsListening,
             overlays = overlays,
@@ -527,8 +531,6 @@ fun HomeDrawerRoute(
             itemActions = itemActions,
             drawer = swipe.drawer,
             direction = swipe.drawerDirection,
-            containerWidthPx = containerWidthPx,
-            containerHeightPx = containerHeightPx,
             isDrawerOpen = isDrawerOpen,
             overlays = overlays,
             onNavigateToSettings = onNavigateToSettings,
@@ -563,7 +565,7 @@ fun HomeDrawerRoute(
             SwipeDirection.RIGHT -> PagerDismissEdge.LAST
             else -> null
         }
-        HomeFacetCarouselOverlay(swipe.facet, facetDirection, containerWidthPx, containerHeightPx, isOpen = isFacetOpen) {
+        HomeFacetCarouselOverlay(swipe.facet, facetDirection, isOpen = isFacetOpen) {
             FacetCarouselScreen(
                 isOpen = isFacetOpen,
                 onFacetApply = { coroutineScope.launch { swipe.facet.close() } },
@@ -633,6 +635,16 @@ fun HomeDrawerRoute(
             ready = homeUiState.firstRunPromptsDone && !isDrawerOpen && !isHubOpen && !isFacetOpen,
             onShow = whatsNewPillViewModel::onShown,
             onOpen = onNavigateToWhatsNew,
+            modifier = Modifier.align(Alignment.TopCenter)
+                .windowInsetsPadding(launcherSystemBarInsets().only(WindowInsetsSides.Top))
+                .padding(top = 12.dp),
+        )
+        // Same spot as the What's new pill, which goes first.
+        WallpaperCopyPillHost(
+            screenKey = wallpaperCopyScreen,
+            ready = homeUiState.firstRunPromptsDone && whatsNewVersion == null && !isDrawerOpen && !isHubOpen && !isFacetOpen,
+            onShow = wallpaperCopyPillViewModel::onShown,
+            onOpen = onNavigateToWallpaper,
             modifier = Modifier.align(Alignment.TopCenter)
                 .windowInsetsPadding(launcherSystemBarInsets().only(WindowInsetsSides.Top))
                 .padding(top = 12.dp),

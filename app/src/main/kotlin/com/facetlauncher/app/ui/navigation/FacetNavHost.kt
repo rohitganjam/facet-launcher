@@ -230,6 +230,7 @@ fun FacetNavHost(
                         onNavigateToClockAccessories = { facetId -> navController.navigate(FacetDestinations.clockAccessories(facetId)) },
                         onNavigateToPermissions = { navController.navigate(FacetDestinations.PERMISSIONS) },
                         onNavigateToWhatsNew = { navController.navigate(FacetDestinations.WHATS_NEW) },
+                        onNavigateToWallpaper = { navController.navigate(FacetDestinations.WALLPAPER) },
                         onNavigateToClockStyle = { facetId -> navController.navigate(FacetDestinations.facetClockStyleGallery(facetId)) },
                         onNavigateToClockStack = { navController.navigate(FacetDestinations.clockStack()) },
                         launcherViewModel = launcherViewModel,
@@ -269,6 +270,7 @@ fun FacetNavHost(
             // Not a settings screen: no background of its own, so the window's wallpaper shows through.
             composable(FacetDestinations.WALLPAPER_CAPTURE) {
                 WallpaperCaptureScreen(
+                    onDone = { navController.popBackStackSafely() },
                     onChooseScreenshot = {
                         navController.previousBackStackEntry?.savedStateHandle?.set(PICK_SCREENSHOT_KEY, true)
                         navController.popBackStackSafely()

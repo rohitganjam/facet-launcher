@@ -42,12 +42,14 @@ private const val MIN_BACKDROP_SDK = Build.VERSION_CODES.S
 
 /**
  * Records the wallpaper [copy] as the backdrop glass panels in [content] sample, without drawing it: the system wallpaper stays what
- * shows, so a copy from a screenshot never stands in for it. Only in portrait on API 31 and up: the copy is usually a portrait
- * screen, and below 31 the blur does not exist. Without a backdrop it is just a [Box].
+ * shows, so a copy from a screenshot never stands in for it. Only when the window is turned the way the copy is (a phone's copy is
+ * portrait, so not rotated; a foldable's inner screen has a landscape one) on API 31 and up, since below 31 the blur does not exist.
+ * Without a backdrop it is just a [Box].
  */
 @Composable
 fun WallpaperBackdropHost(copy: Bitmap?, modifier: Modifier = Modifier, content: @Composable BoxScope.() -> Unit) {
-    val usable = copy != null && Build.VERSION.SDK_INT >= MIN_BACKDROP_SDK && LocalConfiguration.current.orientation == Configuration.ORIENTATION_PORTRAIT
+    val windowLandscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
+    val usable = copy != null && Build.VERSION.SDK_INT >= MIN_BACKDROP_SDK && (copy.width > copy.height) == windowLandscape
     val image = remember(copy) { copy?.asImageBitmap() }
     // The copy goes into the recorded layer only; the empty box under it draws nothing on screen.
     val onDraw: ContentDrawScope.() -> Unit = remember(image) { { image?.let { drawImageCropped(it) } } }

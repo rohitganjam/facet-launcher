@@ -39,7 +39,7 @@ class UseScreenshotAsWallpaperCopyUseCaseTest {
         var saved: Bitmap? = null
         var setCalls = 0
         override fun currentSystemWallpaperId() = 5
-        override fun portraitScreenSize() = 50 to 100
+        override fun screenSize() = 50 to 100
         override suspend fun setSystemWallpaper(bitmap: Bitmap, includeLock: Boolean): Int { setCalls++; return 99 }
         override suspend fun save(bitmap: Bitmap): Boolean { if (saves) saved = bitmap; return saves }
     }
@@ -61,19 +61,6 @@ class UseScreenshotAsWallpaperCopyUseCaseTest {
         assertEquals(100, copies.saved?.height)
         assertEquals(0, copies.setCalls)
         assertEquals(5, settings.settings.first { it.wallpaperCopySystemId == 5 }.wallpaperCopySystemId)
-    }
-
-    @Test
-    fun `a screenshot framed on a wide screen is stored wide and not stretched`() = runTest {
-        // Given a portrait screen of 50 x 100 that is now unfolded or turned
-        val copies = FakeCopies()
-
-        // When a wide part of the screenshot is framed
-        UseScreenshotAsWallpaperCopyUseCase(copies, settings(), UnconfinedTestDispatcher())(screenshot(), RectF(0f, 0f, 200f, 100f))
-
-        // Then the copy is the screen turned on its side
-        assertEquals(100, copies.saved?.width)
-        assertEquals(50, copies.saved?.height)
     }
 
     @Test

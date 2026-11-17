@@ -20,7 +20,7 @@ class UseScreenshotAsWallpaperCopyUseCase @Inject constructor(
 ) {
     /** `true` when the copy was stored. */
     suspend operator fun invoke(screenshot: Bitmap, visible: RectF): Boolean {
-        val (width, height) = wallpaperCopyRepository.portraitScreenSize().orientedLike(visible)
+        val (width, height) = wallpaperCopyRepository.screenSize()
         val cropped = withContext(defaultDispatcher) { screenshot.croppedTo(visible, width, height) }
         val stored = wallpaperCopyRepository.save(cropped)
         if (stored) settingsRepository.setWallpaperCopySystemId(wallpaperCopyRepository.currentSystemWallpaperId())
