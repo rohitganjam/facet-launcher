@@ -467,7 +467,6 @@
     <string name="app_drawer_search_bar_position">Position de la barre de recherche</string>
     <string name="app_drawer_folders_in_drawer">Dossiers dans le tiroir</string>
     <string name="app_drawer_recently_installed_position">Installées récemment</string>
-    <string name="app_drawer_opacity_label">Opacité du tiroir</string>
     <string name="app_drawer_preview_description">Aperçu du tiroir d\'apps</string>
     <string name="drawer_preview_folder_name">Travail</string>
     <string-array name="drawer_preview_app_labels">
@@ -1252,8 +1251,8 @@
     <string name="glass_style_off">Désactivé</string>
     <string name="glass_style_frost">Givre clair</string>
     <string name="glass_style_dark_frost">Givre sombre</string>
-    <string name="glass_style_dim">Tamisé</string>
     <string name="glass_style_bright">Brillant</string>
+    <string name="glass_style_dim">Tamisé</string>
     <string name="glass_style_clear_glass">Verre transparent</string>
     <string name="glass_style_dark_glass">Verre sombre</string>
     <string name="glass_style_accent">Accent</string>

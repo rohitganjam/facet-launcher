@@ -465,7 +465,6 @@
     <string name="app_drawer_search_bar_position">Positie van de zoekbalk</string>
     <string name="app_drawer_folders_in_drawer">Mappen in de lade</string>
     <string name="app_drawer_recently_installed_position">Recent geïnstalleerd</string>
-    <string name="app_drawer_opacity_label">Dekking van de lade</string>
     <string name="app_drawer_preview_description">Voorbeeld van de app-lade</string>
     <string name="drawer_preview_folder_name">Werk</string>
     <string-array name="drawer_preview_app_labels">
@@ -1177,8 +1176,8 @@
     <string name="glass_style_off">Uit</string>
     <string name="glass_style_frost">Lichte vorst</string>
     <string name="glass_style_dark_frost">Donkere vorst</string>
-    <string name="glass_style_dim">Gedimd</string>
     <string name="glass_style_bright">Helder</string>
+    <string name="glass_style_dim">Gedimd</string>
     <string name="glass_style_clear_glass">Helder glas</string>
     <string name="glass_style_dark_glass">Donker glas</string>
     <string name="glass_style_accent">Accent</string>

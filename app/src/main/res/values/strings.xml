@@ -516,7 +516,6 @@
     <string name="app_drawer_search_bar_position">Search bar position</string>
     <string name="app_drawer_folders_in_drawer">Folders in drawer</string>
     <string name="app_drawer_recently_installed_position">Recently installed</string>
-    <string name="app_drawer_opacity_label">Drawer opacity</string>
     <string name="app_drawer_preview_description">App drawer preview</string>
     <string name="drawer_preview_folder_name">Work</string>
     <string-array name="drawer_preview_app_labels">
@@ -1322,8 +1321,8 @@
     <string name="glass_style_off">Off</string>
     <string name="glass_style_frost">Light frost</string>
     <string name="glass_style_dark_frost">Dark frost</string>
-    <string name="glass_style_dim">Dim</string>
     <string name="glass_style_bright">Bright</string>
+    <string name="glass_style_dim">Dim</string>
     <string name="glass_style_clear_glass">Clear glass</string>
     <string name="glass_style_dark_glass">Dark glass</string>
     <string name="glass_style_accent">Accent</string>

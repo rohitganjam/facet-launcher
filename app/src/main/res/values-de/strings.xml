@@ -465,7 +465,6 @@
     <string name="app_drawer_search_bar_position">Position der Suchleiste</string>
     <string name="app_drawer_folders_in_drawer">Ordner im Drawer</string>
     <string name="app_drawer_recently_installed_position">Kürzlich installiert</string>
-    <string name="app_drawer_opacity_label">Drawer-Deckkraft</string>
     <string name="app_drawer_preview_description">Vorschau des App-Drawers</string>
     <string name="drawer_preview_folder_name">Arbeit</string>
     <string-array name="drawer_preview_app_labels">
@@ -1233,8 +1232,8 @@
     <string name="glass_style_off">Aus</string>
     <string name="glass_style_frost">Helles Milchglas</string>
     <string name="glass_style_dark_frost">Dunkles Milchglas</string>
-    <string name="glass_style_dim">Gedimmt</string>
     <string name="glass_style_bright">Hell</string>
+    <string name="glass_style_dim">Gedimmt</string>
     <string name="glass_style_clear_glass">Klarglas</string>
     <string name="glass_style_dark_glass">Dunkles Glas</string>
     <string name="glass_style_accent">Akzent</string>

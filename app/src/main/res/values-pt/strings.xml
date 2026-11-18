@@ -467,7 +467,6 @@
     <string name="app_drawer_search_bar_position">Posição da barra de busca</string>
     <string name="app_drawer_folders_in_drawer">Pastas na gaveta</string>
     <string name="app_drawer_recently_installed_position">Instalados recentemente</string>
-    <string name="app_drawer_opacity_label">Opacidade da gaveta</string>
     <string name="app_drawer_preview_description">Pré-visualização da gaveta de apps</string>
     <string name="drawer_preview_folder_name">Trabalho</string>
     <string-array name="drawer_preview_app_labels">
@@ -1252,8 +1251,8 @@
     <string name="glass_style_off">Desativado</string>
     <string name="glass_style_frost">Geada clara</string>
     <string name="glass_style_dark_frost">Geada escura</string>
-    <string name="glass_style_dim">Atenuado</string>
     <string name="glass_style_bright">Brilhante</string>
+    <string name="glass_style_dim">Atenuado</string>
     <string name="glass_style_clear_glass">Vidro transparente</string>
     <string name="glass_style_dark_glass">Vidro escuro</string>
     <string name="glass_style_accent">Destaque</string>

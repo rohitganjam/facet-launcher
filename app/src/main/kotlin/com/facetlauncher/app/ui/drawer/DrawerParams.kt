@@ -50,7 +50,6 @@ data class DrawerAppearance(
     val showIcons: Boolean = true,
     val showLabels: Boolean = true,
     val labelFontWeight: FontWeight = FontWeight.Normal,
-    val opacity: Float = 0.6f,
     val notificationBadgeStyle: NotificationBadgeStyle = NotificationBadgeStyle.DOT,
     val badgeCounts: ImmutableMap<String, Int> = persistentMapOf(),
     /** Settings → App Drawer → "Folders in drawer" — browse-mode only; search results never include folders. */

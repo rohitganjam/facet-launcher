@@ -58,7 +58,11 @@ system wallpaper shows through as before.
 
 ## Screens that dim the wallpaper
 
-Glass samples the raw wallpaper copy. The Hub draws the theme surface at 60% over the wallpaper, so it provides that colour as `LocalBackdropTint` and a glass panel on it (the native widgets) draws the tint over what it blurs before its own fill, which matches what the Hub shows. The Drawer has its own overlay and no glass panels of this kind. A screen with a different dim needs the same local.
+Glass samples the raw wallpaper copy. The Hub draws the theme surface at 60% over the wallpaper, so it provides that colour as `LocalBackdropTint` and a glass panel on it (the native widgets) draws the tint over what it blurs before its own fill, which matches what the Hub shows. A screen with a different dim needs the same local.
+
+## Frosted backing for the drawer, hub and carousel
+
+`FrostSurface` (`ui/components/FrostSurface.kt`) backs the app drawer, the widget hub and the facet carousel. With nothing to set: while a wallpaper copy is being drawn (`LocalWallpaperBackdrop` is provided, under the rules above) it is a full-screen `GlassPanel` over that copy, `DARK_FROST` in a dark theme and `FROST` in a light one, so the theme's own text and icon colours contrast with it; otherwise it is the theme tint it always was (the drawer at a fixed 70%, the hub and carousel at 60%), and Home shows through. Because it is a `GlassPanel`, glass on top of it (a widget's glass, a glass icon where icons sample the copy) blurs the copy and the frost together, so it sits on the frost's surface; it provides `LocalBackdropTint` as `null`, because the frost is the dim now and the hub's old tint must not be added again. Inside it `LocalIconGlassSamplesWallpaper` is on, so an app icon with a glass background blurs the copy and the frost together instead of drawing a plain tint over it; only icons whose glass style is on pay for a blur. The carousel's cards are opaque, so the frost shows only around them. The drawer's opacity slider and its stored setting were removed.
 
 ## Real glass on icons
 

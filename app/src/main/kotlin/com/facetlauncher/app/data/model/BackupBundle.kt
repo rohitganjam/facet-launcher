@@ -84,7 +84,6 @@ data class BackupSettings(
     val drawerPresentation: String,
     val drawerGridSize: String,
     val drawerListItemSize: String,
-    val drawerOpacity: Float,
     val notificationDotsEnabled: Boolean,
     val notificationBadgeStyle: String,
     /** Purely additive and defaulted, so no version bump. */

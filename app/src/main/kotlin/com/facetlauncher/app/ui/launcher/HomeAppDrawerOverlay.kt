@@ -306,7 +306,6 @@ private fun LauncherSettings.toDrawerAppearance(badgeCounts: ImmutableMap<String
     showIcons = showDrawerIcons,
     showLabels = showDrawerLabels,
     labelFontWeight = homeAppsFontWeight.resolve(),
-    opacity = drawerOpacity,
     notificationBadgeStyle = notificationBadgeStyle,
     badgeCounts = badgeCounts,
     folderDisplayMode = drawerFolderDisplayMode,
