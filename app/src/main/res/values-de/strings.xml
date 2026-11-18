@@ -1233,6 +1233,7 @@
     <string name="glass_style_off">Aus</string>
     <string name="glass_style_frost">Helles Milchglas</string>
     <string name="glass_style_dark_frost">Dunkles Milchglas</string>
+    <string name="glass_style_dim">Gedimmt</string>
     <string name="glass_style_bright">Hell</string>
     <string name="glass_style_clear_glass">Klarglas</string>
     <string name="glass_style_dark_glass">Dunkles Glas</string>

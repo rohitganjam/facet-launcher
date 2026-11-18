@@ -51,6 +51,7 @@ fun Modifier.glassBackground(style: GlassStyle, shape: Shape = MaterialTheme.sha
         GlassStyle.FROST -> glassPanel(shape, fill(0.22f, 0.10f), edge(0.35f, 0.08f), backdrop, FrostLook, backdropTint)
         GlassStyle.DARK_FROST -> glassPanel(shape, fill(0.42f, 0.42f, Smoke), edge(0.18f, 0.08f), backdrop, DarkFrostLook, backdropTint)
         GlassStyle.BRIGHT -> glassPanel(shape, fill(0.38f, 0.24f), edge(0.6f, 0.25f), backdrop, BrightLook, backdropTint)
+        GlassStyle.DIM -> glassPanel(shape, fill(0.50f, 0.34f, Smoke), edge(0.30f, 0.12f), backdrop, DimLook, backdropTint)
         GlassStyle.CLEAR_GLASS -> glassPanel(shape, fill(0.07f, 0.05f), ClearGlassEdge, backdrop, ClearLook, backdropTint)
         GlassStyle.DARK_GLASS -> glassPanel(shape, fill(0.42f, 0.42f, Smoke), ClearGlassEdge, backdrop, DarkGlassLook, backdropTint)
         GlassStyle.ACCENT -> glassPanel(shape, fill(0.38f, 0.18f, accent), edge(0.45f, 0.15f, accent), backdrop, AccentLook, backdropTint)
@@ -113,19 +114,22 @@ private fun Modifier.glassPanel(shape: Shape, fill: Brush, edge: Brush, backdrop
 /** What a style does to the wallpaper copy behind it: how much it blurs, how it brightens and saturates it, and (for a lighter wash than the tint alone) its own fill. */
 private class BackdropLook(val blurDp: Float, val brightness: Float = 0f, val saturation: Float = 1f, val glassFill: Brush? = null, val lens: Boolean = false)
 
-/** Milky and diffuse: the heaviest blur under a soft white wash. */
-private val FrostLook = BackdropLook(blurDp = 16f, saturation = 1.5f, lens = true)
+/** Milky and diffuse: the heaviest blur under a soft white wash, lifting the backdrop a little (Bright does it more). */
+private val FrostLook = BackdropLook(blurDp = 16f, brightness = 0.05f, saturation = 1.5f, lens = true)
 
 private val Smoke = Color(0xFF0A0C18)
 
-/** Dark and calm, with the colour kept close to natural. */
-private val DarkFrostLook = BackdropLook(blurDp = 12f, brightness = -0.04f, saturation = 1.15f, lens = true)
+/** Dark and calm, with the colour kept close to natural, darkening the backdrop a little (Dim does it more). */
+private val DarkFrostLook = BackdropLook(blurDp = 12f, brightness = -0.05f, saturation = 1.15f, lens = true)
 
 /** Clear glass, darker: the wallpaper stays sharp and bends at the rim, under a dark wash. */
 private val DarkGlassLook = BackdropLook(blurDp = 1.5f, brightness = -0.05f, glassFill = fill(0.30f, 0.30f, Smoke), lens = true)
 
 /** Crisp and luminous: a light blur, a brightened and more vivid backdrop, and only a thin wash. */
 private val BrightLook = BackdropLook(blurDp = 7f, brightness = 0.10f, saturation = 1.4f, glassFill = fill(0.12f, 0.04f), lens = true)
+
+/** Bright's counterpart: a light blur, a darkened and slightly richer backdrop, and a smoke wash. */
+private val DimLook = BackdropLook(blurDp = 7f, brightness = -0.10f, saturation = 1.2f, glassFill = fill(0.32f, 0.22f, Smoke), lens = true)
 
 private val AccentLook = BackdropLook(blurDp = 12f, saturation = 1.5f, lens = true)
 

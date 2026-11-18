@@ -1177,6 +1177,7 @@
     <string name="glass_style_off">Uit</string>
     <string name="glass_style_frost">Lichte vorst</string>
     <string name="glass_style_dark_frost">Donkere vorst</string>
+    <string name="glass_style_dim">Gedimd</string>
     <string name="glass_style_bright">Helder</string>
     <string name="glass_style_clear_glass">Helder glas</string>
     <string name="glass_style_dark_glass">Donker glas</string>

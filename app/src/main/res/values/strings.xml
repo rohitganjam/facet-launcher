@@ -1322,6 +1322,7 @@
     <string name="glass_style_off">Off</string>
     <string name="glass_style_frost">Light frost</string>
     <string name="glass_style_dark_frost">Dark frost</string>
+    <string name="glass_style_dim">Dim</string>
     <string name="glass_style_bright">Bright</string>
     <string name="glass_style_clear_glass">Clear glass</string>
     <string name="glass_style_dark_glass">Dark glass</string>

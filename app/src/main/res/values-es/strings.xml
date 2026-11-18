@@ -1252,6 +1252,7 @@
     <string name="glass_style_off">Desactivado</string>
     <string name="glass_style_frost">Escarcha clara</string>
     <string name="glass_style_dark_frost">Escarcha oscura</string>
+    <string name="glass_style_dim">Atenuado</string>
     <string name="glass_style_bright">Brillante</string>
     <string name="glass_style_clear_glass">Cristal transparente</string>
     <string name="glass_style_dark_glass">Cristal oscuro</string>

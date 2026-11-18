@@ -1252,6 +1252,7 @@
     <string name="glass_style_off">Desativado</string>
     <string name="glass_style_frost">Geada clara</string>
     <string name="glass_style_dark_frost">Geada escura</string>
+    <string name="glass_style_dim">Atenuado</string>
     <string name="glass_style_bright">Brilhante</string>
     <string name="glass_style_clear_glass">Vidro transparente</string>
     <string name="glass_style_dark_glass">Vidro escuro</string>

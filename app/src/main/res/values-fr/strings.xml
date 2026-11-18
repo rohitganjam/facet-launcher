@@ -1252,6 +1252,7 @@
     <string name="glass_style_off">Désactivé</string>
     <string name="glass_style_frost">Givre clair</string>
     <string name="glass_style_dark_frost">Givre sombre</string>
+    <string name="glass_style_dim">Tamisé</string>
     <string name="glass_style_bright">Brillant</string>
     <string name="glass_style_clear_glass">Verre transparent</string>
     <string name="glass_style_dark_glass">Verre sombre</string>
