@@ -373,7 +373,7 @@
     <string name="reset_to_default_confirm">Reset</string>
     <string name="reset_dock_subtitle">Replace this dock with your device\'s default apps</string>
     <string name="reset_dock_confirm_message">This replaces the dock of this facet with your device\'s default apps. The apps you placed here will be lost.</string>
-    <string name="settings_app_drawer_title">App Drawer</string>
+    <string name="settings_app_drawer_title">App Drawer and Search</string>
     <string name="settings_show_as">Show as %1$s</string>
     <string name="settings_search_on">On</string>
     <string name="settings_search_off">Off</string>

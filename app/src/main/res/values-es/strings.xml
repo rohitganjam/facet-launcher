@@ -334,7 +334,7 @@
     <string name="reset_to_default_confirm">Restablecer</string>
     <string name="reset_dock_subtitle">Sustituye este dock por las apps predeterminadas del dispositivo</string>
     <string name="reset_dock_confirm_message">Esto sustituye el dock de esta faceta por las apps predeterminadas del dispositivo. Las apps que colocaste aquí se perderán.</string>
-    <string name="settings_app_drawer_title">Cajón de apps</string>
+    <string name="settings_app_drawer_title">Cajón de apps y búsqueda</string>
     <string name="settings_show_as">Mostrar como %1$s</string>
     <string name="settings_search_on">Activado</string>
     <string name="settings_search_off">Desactivado</string>
