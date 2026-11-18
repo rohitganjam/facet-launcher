@@ -1,23 +1,48 @@
-# Facet Launcher 0.2.1
+# Facet Launcher 0.2.2
 
 ## New Features
-- You can now choose what each Home screen swipe (up, down, left, right) does. In Settings > Gestures, tap a swipe and pick an action: open the app drawer, open the Hub, switch facets, open the notification shade, or do nothing. Your current swipe settings carry over automatically.
-- You can put the same action on two swipes after a confirmation. The app drawer always keeps at least one swipe so you can't lose access to it.
-- Backups now save your swipe actions. Older backups still restore your previous swipe settings.
+- **Custom app icons:** Long-press an app and tap its icon (marked with a pencil) to choose a different one. Pick the app's own icon, its version from any installed icon pack, or any icon a pack offers, with search and categories. Manage them in Settings > Icons > Custom icons, with Reset and Reset all. Custom icons are included in backups.
+- **App Vault:** Hide apps behind a 4-digit PIN. Open it from the drawer's 3-dot menu, set your PIN, then see your hidden apps and open App info or remove them from the vault. Vault apps stay out of every list, and the vault is free and not included in backups.
+- **Dim glass style:** A new dark-leaning counterpart to Bright, with a light blur, a darkened backdrop and a subtle edge. It is available in every glass picker and as an icon background.
+- **Frosted panels:** The app drawer, widget hub and facet carousel now appear as frosted glass over your wallpaper (light frost in light themes, dark frost in dark themes). It turns on automatically.
+- **Wallpaper capture for foldables and rotation:** Capture your wallpaper once per screen, with a single approval covering both portrait and landscape. Foldables are supported, with a separate copy for each screen. Facet suggests a capture when a screen has none.
+- **Backup of automation rules:** Backups now include your automation rules. Restoring skips rules whose facet no longer exists and reports skipped, paused or permission-waiting rules.
+- **Play Store search:** When drawer search finds nothing, a "Search Play Store" button appears.
+- **Smarter search:** One improved search for the drawer and pickers that handles accents, capitalization, initials, partial words and multiple words, and learns the apps you pick for a query.
 
 ## Fixes
-- The facet carousel now shows your new wallpaper right away when you set one from Daily photos or your own image. Before, it kept showing the old wallpaper.
-- When you finish resizing a Hub widget, it no longer briefly jumps back to its old size before settling.
+- Pressing Home with the drawer's search open no longer makes the search panel flicker back into view over Home.
+- Wallpaper previews now match your screen's shape, so unfolded or rotated screens no longer show a tall preview.
+- Photos framed on a wide screen are no longer stretched.
+- Daily photos that would need too much enlargement are now skipped, so they no longer look blown up.
+- The pencil badge on the app menu icon is no longer clipped at its edges.
+- Pressing Enter in drawer search now opens the first contact or setting when no app matches.
+- A first-frame flash of the widget hub on startup is fixed.
 
 ## Improvements
-- Resizing a Hub widget feels smoother. The widget follows your finger exactly instead of jumping a whole cell at a time, an outline shows which cells it will fill, and when you let go it glides into place. This works in both portrait and landscape.
-- The app drawer, Hub and facet carousel now slide in from the side you swiped from, and you close them by swiping back the other way.
+- Wallpaper colours now come from Facet's own wallpaper copy using Material You, so they match what you see, and Android 11 gets wallpaper colours for the first time.
+- Home press now slides the search sheet out smoothly together with the drawer.
+- Wallpaper glass now works correctly in each screen orientation, and your wallpaper is centred properly in Facet's fit step on newer Android versions.
+- The Recently installed icon now follows your icon style, tile, glass and shape settings.
+- Light and Dark frost now slightly brighten or darken the wallpaper behind them.
+- Both Facet Pro screens now list every Pro feature, and replacing the clock with a widget is no longer listed as a Pro feature.
+- Recents, Most used and the drawer's frequent and last-used lists no longer need Usage Access permission.
+- Home shows a "Capture wallpaper for glass effects" button, and a rotation now cross-fades smoothly.
+- The Private Space and Secure Folder intro text is clearer about hiding and pausing apps and notifications.
+- The Settings entry is now called "App Drawer and Search".
+- Backups made with the old drawer opacity setting still import. The drawer's opacity slider has been removed.
+- Wallpaper notices were reworded in six languages, with a note on the wallpaper page for live wallpapers.
 
 ## Internal
-- Resize handle: read the drag delta before consuming it, so drags no longer stop short after the touch-slop jump. This fixes a regression from 22d8be52 that never shipped.
-- Resize handle reports the finger's whole travel once past touch slop, so it no longer trails the finger by about 8dp. This fixes a regression from 2134a4f3 that never shipped. The follow-the-finger test is back to the exact distance.
-- HubGestureTest: the resize-follows-finger check allowed for touch slop; this was replaced by the exact-distance check above.
-- HubGestureTest: Now playing opens its settings, and only hosted widgets lack Configure (follow-up to 25ea4129).
-- HubResizeGeometry: read Rect edges directly instead of a 4-way destructure (detekt).
-- Gestures: detekt fixes and a closing settle in the two-swipes test.
-- WallpaperRepository.homeWallpaper emits again when a new copy is stored or a new system wallpaper id is recorded. Added tests in WallpaperRepositoryTest and FacetCarouselViewModelTest.
+- Version bump to 0.2.2 and Release 0.2.1; dropped 0.1.44 What's new notes.
+- Room schema bumps: v51 (launch history, facet UUID and unique index), v52 (custom app icons), v53 export.
+- Added MediaProjection capture service; glass copies kept per view with originals streamed to disk.
+- Replaced manual screenshot flow; stale screens pruned.
+- Added WallpaperPaletteRepository (material-color-utilities 6.0.0) and LocalWallpaperPalette.
+- Added RankBySearchRelevanceUseCase and LaunchHistoryRepository; removed PACKAGE_USAGE_STATS.
+- AppStoreRepository added for Play Store search.
+- Fixed detekt/lint findings (App Vault, custom icons, smart search, carousel and hub split into smaller composables), BackupRestoreViewModelTest and migration test fixes (49→50 allowLandscape), pencil badge test using unmerged tree, LaunchHistoryRepositoryTest Mockito stubs.
+- App Vault: facet_vault DataStore with Keystore-keyed PIN hash; AppVaultCallbacks moved to its own file.
+- Pencil badge now an M3 Badge in BadgedBox.
+- Plan/docs updates: verification ticks, rule backup docs, architecture docs, PRD/design spec, test registry.
+- Backup strings translated.
