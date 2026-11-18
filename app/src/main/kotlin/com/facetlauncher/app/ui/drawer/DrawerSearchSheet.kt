@@ -48,6 +48,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
@@ -56,6 +57,7 @@ import androidx.compose.ui.unit.dp
 import com.facetlauncher.app.R
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.ContactInfo
+import com.facetlauncher.app.data.model.SettingsSearchEntry
 import com.facetlauncher.app.data.model.DrawerGridDensity
 import com.facetlauncher.app.data.model.DrawerPresentation
 import com.facetlauncher.app.data.model.Folder
@@ -150,8 +152,10 @@ internal fun DrawerSearchSheet(
                     .windowInsetsPadding(imeInsets)
                     .testTag("drawer_search_sheet"),
             ) {
-                // Enter opens the top app result, the one shown first.
-                val openTopResult: () -> Unit = { if (query.isNotBlank()) searchResultApps.firstOrNull()?.let(actions.onAppClick) }
+                // Enter opens the top result in the order the results are shown: the first app, else the first contact, else the first setting.
+                val openTopResult: () -> Unit = {
+                    openSearchResult(topSearchResult(query, searchResultApps, sources.contacts, sources.settingsEntries), actions, sources, onContactClick, focusManager)
+                }
                 val field = @Composable { SheetSearchField(query, onQueryChange, close, onSubmit = { openTopResult() }) }
                 if (!atBottom) field()
                 SheetBody(
@@ -301,5 +305,42 @@ private fun SheetSearchField(query: String, onQueryChange: (String) -> Unit, onC
                 Icon(Icons.Default.Close, contentDescription = stringResource(R.string.drawer_search_clear), tint = Muted)
             }
         }
+    }
+}
+
+/** What Enter opens in the search sheet. */
+internal sealed interface TopSearchResult {
+    data class App(val app: AppInfo) : TopSearchResult
+    data class Contact(val contact: ContactInfo) : TopSearchResult
+    data class Setting(val entry: SettingsSearchEntry) : TopSearchResult
+}
+
+/**
+ * The first result for [query] in the order the sheet shows them (apps, then contacts, then settings), or `null` for a blank query or when nothing
+ * matches, so a search that finds only a contact or a setting still opens it on Enter.
+ */
+internal fun topSearchResult(
+    query: String,
+    apps: List<AppInfo>,
+    contacts: List<ContactInfo>,
+    settings: List<SettingsSearchEntry>,
+): TopSearchResult? = when {
+    query.isBlank() -> null
+    apps.isNotEmpty() -> TopSearchResult.App(apps.first())
+    contacts.isNotEmpty() -> TopSearchResult.Contact(contacts.first())
+    settings.isNotEmpty() -> TopSearchResult.Setting(settings.first())
+    else -> null
+}
+
+/** Opens [result] through the same click path as tapping it. */
+private fun openSearchResult(result: TopSearchResult?, actions: DrawerItemActions, sources: DrawerSearchSources, onContactClick: (ContactInfo) -> Unit, focusManager: FocusManager) {
+    when (result) {
+        is TopSearchResult.App -> actions.onAppClick(result.app)
+        is TopSearchResult.Contact -> onContactClick(result.contact)
+        is TopSearchResult.Setting -> {
+            focusManager.clearFocus()
+            sources.onSettingsEntryClick(result.entry)
+        }
+        null -> Unit
     }
 }
