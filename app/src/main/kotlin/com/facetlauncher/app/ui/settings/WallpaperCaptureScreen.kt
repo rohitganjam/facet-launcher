@@ -3,6 +3,8 @@ package com.facetlauncher.app.ui.settings
 import android.app.Activity
 import android.content.Context
 import android.content.ContextWrapper
+import android.content.pm.ActivityInfo
+import android.content.res.Configuration
 import android.view.View
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -34,6 +36,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.testTag
@@ -49,10 +52,14 @@ import androidx.core.view.WindowInsetsControllerCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.withTimeoutOrNull
 import com.facetlauncher.app.R
 import com.facetlauncher.app.ui.components.PrimaryButton
 import com.facetlauncher.app.ui.components.TextActionButton
 import com.facetlauncher.app.ui.components.TonalButton
+import com.facetlauncher.app.ui.home.LocalAllowLandscape
+import com.facetlauncher.app.ui.home.homeRequestedOrientation
 import com.facetlauncher.app.ui.theme.Accent
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
 import com.facetlauncher.app.ui.theme.HideStatusBarEffect
@@ -77,13 +84,19 @@ fun WallpaperCaptureScreen(
     val context = LocalContext.current
     val view = LocalView.current
     val consent = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-        viewModel.onConsentResult(result.resultCode, result.data) { view.systemBarsHidden() }
+        viewModel.onConsentResult(result.resultCode, result.data, { view.systemBarsHidden() }, { landscape -> view.context.findHostActivity()?.turnTo(landscape) == true })
     }
+    RestoreOrientationEffect()
     val currentOnCaptured by rememberUpdatedState(onDone)
+    val allowLandscape = LocalAllowLandscape.current
+    // The way round the screen was when the capture started: after turning it for the second frame, it is turned back and settled before leaving.
+    val configuration = LocalConfiguration.current
+    val startedLandscape = remember { configuration.orientation == Configuration.ORIENTATION_LANDSCAPE }
     LaunchedEffect(viewModel) {
         viewModel.uiEvents.collect { event ->
             when (event) {
                 WallpaperCaptureUiEvent.Captured -> {
+                    view.context.findHostActivity()?.let { it.turnTo(startedLandscape); it.requestedOrientation = homeRequestedOrientation(allowLandscape) }
                     Toast.makeText(context, R.string.wallpaper_capture_done, Toast.LENGTH_SHORT).show()
                     currentOnCaptured()
                 }
@@ -262,6 +275,29 @@ private fun HideSystemBars() {
         }
     }
 }
+
+/** Puts the activity back to the orientation Home asks for when the capture screen leaves, whatever it was turned to for the second frame. */
+@Composable
+private fun RestoreOrientationEffect() {
+    val view = LocalView.current
+    val allowLandscape = LocalAllowLandscape.current
+    DisposableEffect(view, allowLandscape) {
+        val activity = view.context.findHostActivity()
+        onDispose { activity?.requestedOrientation = homeRequestedOrientation(allowLandscape) }
+    }
+}
+
+/** Turns the activity to landscape or portrait, even with rotation locked, and returns once the window is that way round; `false` if it never was. */
+private suspend fun Activity.turnTo(landscape: Boolean): Boolean {
+    requestedOrientation = if (landscape) ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE else ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+    return withTimeoutOrNull(TURN_TIMEOUT_MS) {
+        while ((resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) != landscape) delay(TURN_POLL_MS)
+        true
+    } == true
+}
+
+private const val TURN_TIMEOUT_MS = 3_000L
+private const val TURN_POLL_MS = 50L
 
 /** Whether the status and navigation bars are both hidden right now. */
 private fun View.systemBarsHidden(): Boolean {

@@ -7,6 +7,7 @@ import android.graphics.Bitmap
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.Preferences
+import com.facetlauncher.app.data.CapturedFrames
 import com.facetlauncher.app.data.ScreenCaptureRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.WallpaperCopyRepository
@@ -45,11 +46,12 @@ class WallpaperCaptureViewModelTest {
         override fun currentSystemWallpaperId() = 5
         override fun screenSize() = 50 to 100
         override suspend fun save(bitmap: Bitmap) = true
+        override suspend fun save(bitmap: Bitmap, size: com.facetlauncher.app.data.model.ScreenSize) = true
     }
 
     private class FakeCapture(private val frame: Bitmap?) : ScreenCaptureRepository(RuntimeEnvironment.getApplication()) {
         override fun consentIntent() = Intent("consent")
-        override suspend fun capture(resultCode: Int, consent: Intent, barsHidden: () -> Boolean): Bitmap? = frame
+        override suspend fun capture(resultCode: Int, consent: Intent, barsHidden: () -> Boolean, rotateTo: (suspend (landscape: Boolean) -> Boolean)?): CapturedFrames? = frame?.let { CapturedFrames(it) }
     }
 
     private fun viewModel(frame: Bitmap?): WallpaperCaptureViewModel {

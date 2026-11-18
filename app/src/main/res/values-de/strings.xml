@@ -304,7 +304,7 @@
     <string name="wallpaper_screenshot_confirm">Mein Hintergrundbild aufnehmen</string>
     <string name="wallpaper_screenshot_have_image">Ich habe schon ein Bild</string>
     <string name="wallpaper_capture_title">Hintergrundbild aufnehmen</string>
-    <string name="wallpaper_capture_body">Facet nimmt dieses Bild einmal auf und behält es auf deinem Telefon. Es wird nichts aufgezeichnet. Android bittet dich um Bestätigung.</string>
+    <string name="wallpaper_capture_body">Facet nimmt diesen Bildschirm auf, dreht ihn kurz für eine zweite Aufnahme und behält beide auf deinem Telefon. Es wird nichts aufgezeichnet. Android bittet dich um Bestätigung.</string>
     <string name="wallpaper_capture_start">Hintergrundbild aufnehmen</string>
     <string name="wallpaper_capture_manual">Stattdessen Screenshot machen</string>
     <string name="wallpaper_capture_failed_title">Aufnahme abgebrochen</string>

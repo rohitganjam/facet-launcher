@@ -344,7 +344,7 @@
     <string name="wallpaper_screenshot_confirm">Capture my wallpaper</string>
     <string name="wallpaper_screenshot_have_image">I have an image already</string>
     <string name="wallpaper_capture_title">Capture your wallpaper</string>
-    <string name="wallpaper_capture_body">Facet takes one picture of this screen and keeps it on your phone. It doesn\'t record anything. Android will ask you to confirm.</string>
+    <string name="wallpaper_capture_body">Facet takes a picture of this screen, briefly turns it to take another, and keeps both on your phone. It doesn\'t record anything. Android will ask you to confirm.</string>
     <string name="wallpaper_capture_start">Capture wallpaper</string>
     <string name="wallpaper_capture_manual">Take a screenshot instead</string>
     <string name="wallpaper_capture_failed_title">Capture cancelled</string>

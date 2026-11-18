@@ -10,6 +10,7 @@ import android.content.pm.ServiceInfo
 import android.graphics.Bitmap
 import android.graphics.PixelFormat
 import android.hardware.display.DisplayManager
+import android.hardware.display.VirtualDisplay
 import android.media.ImageReader
 import android.media.projection.MediaProjection
 import android.media.projection.MediaProjectionManager
@@ -29,7 +30,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /**
- * Takes one frame of the screen for [ScreenCaptureRepository] and stops. Android 14 and up needs this foreground service running before the
+ * Takes one frame of the screen for [ScreenCaptureRepository], or two when the repository can turn the screen, and stops. Android 14 and up needs this foreground service running before the
  * projection is created. The frame is taken after a short wait, so Android's dialog has gone and the screen shows only the wallpaper.
  */
 @AndroidEntryPoint
@@ -40,6 +41,8 @@ class ScreenCaptureService : Service() {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
     private var projection: MediaProjection? = null
     private var reader: ImageReader? = null
+    private var display: VirtualDisplay? = null
+    @Volatile private var latest: Bitmap? = null
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -52,31 +55,19 @@ class ScreenCaptureService : Service() {
             repository.deliver(null)
             stopSelf()
         } else {
-            scope.launch { repository.deliver(runCatching { takeFrame(resultCode, consent) }.getOrNull()) }
+            scope.launch { repository.deliver(runCatching { takeFrames(resultCode, consent) }.getOrNull()) }
         }
         return START_NOT_STICKY
     }
 
-    private suspend fun takeFrame(resultCode: Int, consent: Intent): Bitmap? {
-        val manager = getSystemService(MediaProjectionManager::class.java)
-        val projection = manager.getMediaProjection(resultCode, consent) ?: return null
+    private suspend fun takeFrames(resultCode: Int, consent: Intent): CapturedFrames? {
+        val projection = getSystemService(MediaProjectionManager::class.java).getMediaProjection(resultCode, consent) ?: return null
         this.projection = projection
         // Android 14 requires a callback before the display is created.
         projection.registerCallback(object : MediaProjection.Callback() {}, Handler(Looper.getMainLooper()))
-        val metrics = getSystemService(WindowManager::class.java).maximumWindowMetrics
-        val bounds = metrics.bounds
-        val bars = metrics.windowInsets.getInsets(WindowInsets.Type.systemBars() or WindowInsets.Type.displayCutout())
-        val reader = ImageReader.newInstance(bounds.width(), bounds.height(), PixelFormat.RGBA_8888, 2)
-        this.reader = reader
-        var latest: Bitmap? = null
-        // The screen only produces a frame when it changes, so keep the newest and use it once the dialog has gone.
-        reader.setOnImageAvailableListener({ source ->
-            source.acquireLatestImage()?.use { image ->
-                val plane = image.planes[0]
-                latest = frameToBitmap(plane.buffer, image.width, image.height, plane.rowStride, plane.pixelStride)
-            }
-        }, Handler(Looper.getMainLooper()))
-        projection.createVirtualDisplay(
+        val bounds = getSystemService(WindowManager::class.java).maximumWindowMetrics.bounds
+        val reader = newReader(bounds.width(), bounds.height())
+        display = projection.createVirtualDisplay(
             "facet-wallpaper",
             bounds.width(),
             bounds.height(),
@@ -86,6 +77,41 @@ class ScreenCaptureService : Service() {
             null,
             null,
         )
+        val current = settledFrame() ?: return null
+        val rotateTo = repository.rotateTo
+        val turned = rotateTo?.let { runCatching { turnedFrame(it, landscape = current.width <= current.height) }.getOrNull() }
+        return CapturedFrames(current, turned)
+    }
+
+    /** Turns the screen with [rotateTo], points the same display at its new size, and takes a frame; `null` unless it came out in the orientation asked for. */
+    private suspend fun turnedFrame(rotateTo: suspend (Boolean) -> Boolean, landscape: Boolean): Bitmap? {
+        if (!rotateTo(landscape)) return null
+        val bounds = getSystemService(WindowManager::class.java).maximumWindowMetrics.bounds
+        if ((bounds.width() > bounds.height()) != landscape) return null
+        latest = null
+        val old = reader
+        val next = newReader(bounds.width(), bounds.height())
+        display?.resize(bounds.width(), bounds.height(), resources.displayMetrics.densityDpi)
+        display?.surface = next.surface
+        old?.close()
+        return settledFrame()?.takeIf { (it.width > it.height) == landscape }
+    }
+
+    private fun newReader(width: Int, height: Int): ImageReader {
+        val created = ImageReader.newInstance(width, height, PixelFormat.RGBA_8888, 2)
+        reader = created
+        // The screen only produces a frame when it changes, so keep the newest and use it once the dialog has gone.
+        created.setOnImageAvailableListener({ source ->
+            source.acquireLatestImage()?.use { image ->
+                val plane = image.planes[0]
+                latest = frameToBitmap(plane.buffer, image.width, image.height, plane.rowStride, plane.pixelStride)
+            }
+        }, Handler(Looper.getMainLooper()))
+        return created
+    }
+
+    /** The newest frame once the dialog or the turn has settled and the system bars are gone; their rows are painted over if they never went. */
+    private suspend fun settledFrame(): Bitmap? {
         delay(SETTLE_MS)
         // Android's dialog brings the bars back; wait for the screen to hide them again, then for a frame without them.
         var barsWaited = 0L
@@ -99,12 +125,14 @@ class ScreenCaptureService : Service() {
             delay(POLL_MS)
             waited += POLL_MS
         }
-        // If the bars would not hide, they and Android's capture chip are in the frame, so they are painted over.
+        val metrics = getSystemService(WindowManager::class.java).maximumWindowMetrics
+        val bars = metrics.windowInsets.getInsets(WindowInsets.Type.systemBars() or WindowInsets.Type.displayCutout())
         return if (repository.barsHidden()) latest else latest?.withBarsFilled(bars.top, bars.bottom)
     }
 
     override fun onDestroy() {
         scope.cancel()
+        display?.release()
         reader?.close()
         projection?.stop()
         super.onDestroy()
