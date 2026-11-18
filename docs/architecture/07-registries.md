@@ -247,7 +247,7 @@ Non-use-case files in `domain/`: `FlowCombine.kt` (6/7-ary `combine`), `HubGridC
 | `BackupRestoreViewModel` | `BackupRestoreScreen` | — |
 | `WhatsNewViewModel` | `WhatsNewScreen` (opening it marks the running version's notes seen) | — |
 | `WhatsNewPillViewModel` | the What's new pill over Home (`WhatsNewPillHost`): the version to announce, and `onShown` | — |
-| `WallpaperCopyPillViewModel` | the wallpaper-copy pill over Home (`WallpaperCopyPillHost`): the offer for the view showing (its key, its orientation, and whether the other orientation is covered) when its copy is missing or out of date and some glass is on (`ObserveGlassInUseUseCase`) (`ObserveWallpaperScreensUseCase.copyNeed`), offered once per view per launch (`onShown`) | `ObserveWallpaperScreensUseCase`, `ObserveGlassInUseUseCase` |
+| `WallpaperCopyPillViewModel` | the wallpaper-copy pill over Home (`WallpaperCopyPillHost`): the offer for the view showing (its key, its orientation, and whether the other orientation is covered) when its copy is missing or out of date and some glass is on (`ObserveGlassInUseUseCase`) (`ObserveWallpaperScreensUseCase.copyNeed`), offered once per view per system wallpaper per launch (`onShown`; a new wallpaper is offered again), and never while a capture is running (`ScreenCaptureRepository.capturing`) | `ObserveWallpaperScreensUseCase`, `ObserveGlassInUseUseCase`, `ScreenCaptureRepository` |
 | `NativeWidgetConfigViewModel` | `NativeWidgetConfigSheet` | — |
 | `NativeWidgetAccessViewModel` | `HomeDrawerRoute` (through `rememberNativeWidgetAccess`) | — |
 | `LicenseTextViewModel` | `LicenseTextScreen` (one licence entry, by `licenseId`) | `licenseId` |

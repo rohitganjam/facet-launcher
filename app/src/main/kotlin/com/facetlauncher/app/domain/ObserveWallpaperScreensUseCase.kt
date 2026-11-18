@@ -38,7 +38,11 @@ class ObserveWallpaperScreensUseCase @Inject constructor(private val wallpaperCo
         val view = screens.firstOrNull { it.size == current }
         when {
             view == null || view.hasCopy || view.size.promptKey in dismissed || screens.none { it.hasCopy || it.outdated } -> null
-            else -> WallpaperCopyNeed(current, otherOrientation = screens.any { it.screen == view.screen && it.size != view.size && it.hasCopy })
+            else -> WallpaperCopyNeed(
+                current,
+                otherOrientation = screens.any { it.screen == view.screen && it.size != view.size && it.hasCopy },
+                wallpaperId = wallpaperCopyRepository.currentSystemWallpaperId(),
+            )
         }
     }.distinctUntilChanged()
 

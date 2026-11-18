@@ -27,6 +27,13 @@ class CaptureWallpaperUseCase @Inject constructor(
         consent: Intent,
         barsHidden: () -> Boolean = { false },
         rotateTo: (suspend (landscape: Boolean) -> Boolean)? = null,
+    ): Boolean = screenCapture.whileCapturing { captureAndStore(resultCode, consent, barsHidden, rotateTo) }
+
+    private suspend fun captureAndStore(
+        resultCode: Int,
+        consent: Intent,
+        barsHidden: () -> Boolean,
+        rotateTo: (suspend (landscape: Boolean) -> Boolean)?,
     ): Boolean {
         val (windowWidth, windowHeight) = wallpaperCopyRepository.windowSize()
         val view = ScreenSize(windowWidth, windowHeight)
