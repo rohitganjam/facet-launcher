@@ -25,8 +25,8 @@ android {
         applicationId = "com.facetlauncher.app"
         minSdk = 30
         targetSdk = 36
-        versionCode = 48
-        versionName = "0.2.2"
+        versionCode = 49
+        versionName = "0.2.3"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
