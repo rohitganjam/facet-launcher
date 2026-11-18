@@ -337,7 +337,7 @@
     <string name="reset_to_default_confirm">Terugzetten</string>
     <string name="reset_dock_subtitle">Vervang deze dock door de standaardapps van het apparaat</string>
     <string name="reset_dock_confirm_message">Hiermee wordt de dock van deze facet vervangen door de standaardapps van het apparaat. De apps die je hier hebt geplaatst gaan verloren.</string>
-    <string name="settings_app_drawer_title">App-lade</string>
+    <string name="settings_app_drawer_title">App-lade en zoeken</string>
     <string name="settings_show_as">Weergeven als %1$s</string>
     <string name="settings_search_on">Aan</string>
     <string name="settings_search_off">Uit</string>

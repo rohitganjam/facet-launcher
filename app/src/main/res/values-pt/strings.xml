@@ -334,7 +334,7 @@
     <string name="reset_to_default_confirm">Redefinir</string>
     <string name="reset_dock_subtitle">Substituir este dock pelos apps padrão do dispositivo</string>
     <string name="reset_dock_confirm_message">Isto substitui o dock desta faceta pelos apps padrão do dispositivo. Os apps que você colocou aqui serão perdidos.</string>
-    <string name="settings_app_drawer_title">Gaveta de apps</string>
+    <string name="settings_app_drawer_title">Gaveta de apps e pesquisa</string>
     <string name="settings_show_as">Exibir como %1$s</string>
     <string name="settings_search_on">Ativado</string>
     <string name="settings_search_off">Desativado</string>
