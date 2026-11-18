@@ -197,7 +197,7 @@ fun FolderContentsSheet(
                                         .padding(8.dp),
                                 )
                             }
-                            FolderTileGlyph(folder = folder)
+                            if (showRecencyBadge) RecentlyInstalledIcon(size = AppIconSize.scaled()) else FolderTileGlyph(folder = folder)
                             Column(modifier = Modifier.weight(1f).padding(horizontal = 16.dp)) {
                                 Text(
                                     text = folder.name,

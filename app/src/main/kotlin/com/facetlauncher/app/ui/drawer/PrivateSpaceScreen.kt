@@ -46,6 +46,7 @@ import com.facetlauncher.app.ui.components.AppIconSize
 import com.facetlauncher.app.ui.components.FolderContentsSheet
 import com.facetlauncher.app.ui.components.FolderSheetHeaderAction
 import com.facetlauncher.app.ui.components.RecencyIcon
+import com.facetlauncher.app.ui.components.RecentlyInstalledIcon
 import com.facetlauncher.app.ui.theme.PrivateSpaceTheme
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
@@ -97,7 +98,7 @@ fun PrivateSpaceScreen(
                     if (recentlyInstalledApps.isNotEmpty() && recentlyInstalledPosition == RecentlyInstalledPosition.SHOW_FIRST) {
                         item(key = "header_recently_installed") { PrivateSpaceRecentlyInstalledHeader() }
                         item(key = "recently_installed") {
-                            PrivateSpaceRecentlyInstalledRow(apps = recentlyInstalledApps, onAppClick = onAppClick)
+                            PrivateSpaceRecentlyInstalledRow(apps = recentlyInstalledApps, itemSize = listItemSize, onAppClick = onAppClick)
                         }
                     }
                     items(apps, key = { it.listKey }) { app ->
@@ -106,7 +107,7 @@ fun PrivateSpaceScreen(
                     if (recentlyInstalledApps.isNotEmpty() && recentlyInstalledPosition == RecentlyInstalledPosition.SHOW_LAST) {
                         item(key = "header_recently_installed") { PrivateSpaceRecentlyInstalledHeader() }
                         item(key = "recently_installed") {
-                            PrivateSpaceRecentlyInstalledRow(apps = recentlyInstalledApps, onAppClick = onAppClick)
+                            PrivateSpaceRecentlyInstalledRow(apps = recentlyInstalledApps, itemSize = listItemSize, onAppClick = onAppClick)
                         }
                     }
                 }
@@ -185,7 +186,7 @@ private fun PrivateSpaceRecentlyInstalledHeader(modifier: Modifier = Modifier) {
  * own no-op defaults — [PrivateSpaceScreen] doesn't wire those up for its own rows either.
  */
 @Composable
-private fun PrivateSpaceRecentlyInstalledRow(apps: ImmutableList<AppInfo>, onAppClick: (AppInfo) -> Unit, modifier: Modifier = Modifier) {
+private fun PrivateSpaceRecentlyInstalledRow(apps: ImmutableList<AppInfo>, itemSize: DrawerListItemSize, onAppClick: (AppInfo) -> Unit, modifier: Modifier = Modifier) {
     var sheetOpen by remember { mutableStateOf(false) }
     Box(modifier = modifier) {
         Row(
@@ -198,7 +199,7 @@ private fun PrivateSpaceRecentlyInstalledRow(apps: ImmutableList<AppInfo>, onApp
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            Icon(imageVector = RecencyIcon, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+            RecentlyInstalledIcon(size = AppIconSize.forRow(itemSize))
             Text(text = stringResource(R.string.drawer_recently_installed_label), color = MaterialTheme.colorScheme.onSurface)
         }
         if (sheetOpen) {

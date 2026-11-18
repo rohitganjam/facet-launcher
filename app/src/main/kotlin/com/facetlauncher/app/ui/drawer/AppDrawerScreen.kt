@@ -130,6 +130,7 @@ import com.facetlauncher.app.ui.components.SwipeTabs
 import com.facetlauncher.app.ui.components.TextActionButton
 import com.facetlauncher.app.ui.components.TonalButton
 import com.facetlauncher.app.ui.components.RecencyIcon
+import com.facetlauncher.app.ui.components.RecentlyInstalledIcon
 import com.facetlauncher.app.ui.components.ThemedDropdownMenu
 import com.facetlauncher.app.ui.components.ThemedDropdownMenuItem
 import com.facetlauncher.app.ui.components.longPressReleaseClickable
@@ -1180,7 +1181,7 @@ private fun DrawerRecentlyInstalledRow(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(14.dp),
         ) {
-            RecentlyInstalledGlyph(modifier = Modifier.size(AppIconSize.forRow(itemSize)))
+            RecentlyInstalledIcon(size = AppIconSize.forRow(itemSize))
             Text(
                 text = stringResource(R.string.drawer_recently_installed_label),
                 style = MaterialTheme.typography.bodyLarge.copy(fontWeight = appearance.labelFontWeight),
@@ -1200,38 +1201,6 @@ private fun DrawerRecentlyInstalledRow(
                 onAppInfo = actions.onAppInfo,
             )
         }
-    }
-}
-
-/** [DrawerRecentlyInstalledRow]'s leading glyph — the same [FolderTileGlyph] container treatment
- * (12dp-rounded tile with an inset vignette) so this row reads as a category alongside real
- * folder rows, with [RecencyIcon] standing in for a folder's own icon. [Ink]/[InkInverted] are
- * exact opposites of each other in both themes, so this stays high-contrast either way. */
-@Composable
-private fun RecentlyInstalledGlyph(modifier: Modifier = Modifier) {
-    Box(
-        modifier = modifier
-            .clip(RoundedCornerShape(12.dp))
-            .background(Ink)
-            .drawWithContent {
-                drawContent()
-                drawRect(
-                    brush = Brush.radialGradient(
-                        colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.18f)),
-                        center = center,
-                        radius = size.maxDimension * 0.75f,
-                    ),
-                )
-            },
-        contentAlignment = Alignment.Center,
-    ) {
-        Icon(
-            imageVector = RecencyIcon,
-            contentDescription = null,
-            tint = InkInverted,
-            // A folder tile's mini-icon proportion, so the glyph scales with the row.
-            modifier = Modifier.fillMaxSize(AppIconSize.FOLDER_MINI / AppIconSize.ICON),
-        )
     }
 }
 
