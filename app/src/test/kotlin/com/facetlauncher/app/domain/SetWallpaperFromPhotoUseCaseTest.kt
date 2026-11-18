@@ -48,6 +48,11 @@ class SetWallpaperFromPhotoUseCaseTest {
         val savedBySize = mutableMapOf<ScreenSize, Bitmap>()
         var extraScreens: List<ScreenSize> = emptyList()
         var removed = false
+        var original: ByteArray? = null
+        var originalFraming: RectF? = null
+        var originalId: Int? = null
+        var keepsOriginal = true
+        var originalUri: android.net.Uri? = null
 
         override suspend fun knownScreens(): List<ScreenSize> = (extraScreens + ScreenSize(50, 100)).sortedByDescending { it.area }
 
@@ -66,6 +71,20 @@ class SetWallpaperFromPhotoUseCaseTest {
             return save(bitmap).also { if (!saves) savedBySize.remove(size) }
         }
         override suspend fun remove() { removed = true }
+        override suspend fun saveOriginal(bytes: ByteArray, framing: RectF, systemId: Int): Boolean {
+            if (!keepsOriginal) return false
+            original = bytes
+            originalFraming = framing
+            originalId = systemId
+            return true
+        }
+        override suspend fun saveOriginal(uri: android.net.Uri, framing: RectF, systemId: Int): Boolean {
+            if (!keepsOriginal) return false
+            originalUri = uri
+            originalFraming = framing
+            originalId = systemId
+            return true
+        }
     }
 
     private fun photo() = Bitmap.createBitmap(200, 100, Bitmap.Config.ARGB_8888).also { it.eraseColor(Color.RED) }
@@ -73,46 +92,97 @@ class SetWallpaperFromPhotoUseCaseTest {
     private fun useCase(copies: FakeCopies, settings: SettingsRepository) =
         SetWallpaperFromPhotoUseCase(copies, settings, UnconfinedTestDispatcher())
 
-    @Test
-    fun `the framed part is cropped to the screen, set, stored and its system id recorded`() = runTest {
-        // Given a photo, and a system that numbers the new wallpaper 9
-        val copies = FakeCopies(systemId = 9)
-        val settings = settingsRepository()
-
-        // When setting the left half for Home only
-        val done = useCase(copies, settings)(photo(), RectF(0f, 0f, 100f, 100f), includeLock = false)
-
-        // Then the copy at screen size was set, stored (the same one), and the id recorded
-        assertTrue(done)
-        assertEquals(50, copies.setBitmap!!.width)
-        assertEquals(100, copies.setBitmap!!.height)
-        assertSame(copies.setBitmap, copies.saved)
-        assertEquals(false, copies.setIncludeLock)
-        assertEquals(9, settings.settings.first().wallpaperCopySystemId)
+    private fun halves(width: Int = 200, height: Int = 100) = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888).also { bitmap ->
+        for (x in 0 until width) for (y in 0 until height) bitmap.setPixel(x, y, if (x < width / 2) Color.RED else Color.BLUE)
     }
 
     @Test
-    fun `with a larger screen known the wallpaper is set for it and the smaller screen gets a centred part`() = runTest {
+    fun `a photo framed edge to edge is set as framed and every view gets a copy`() = runTest {
+        // Given a photo framed to the full height of the screen's shape, with no room for a square around it
+        val copies = FakeCopies(systemId = 9)
+        val settings = settingsRepository()
+
+        // When setting it for Home only
+        val done = useCase(copies, settings)(photo(), RectF(0f, 0f, 50f, 100f), includeLock = false)
+
+        // Then the framed part, at the screen's size, was set and the id recorded
+        assertTrue(done.set)
+        assertEquals(50, copies.setBitmap!!.width)
+        assertEquals(100, copies.setBitmap!!.height)
+        assertEquals(false, copies.setIncludeLock)
+        assertEquals(9, settings.settings.first().wallpaperCopySystemId)
+        // And the screen has a copy in each orientation, at the sizes of its views
+        assertEquals(setOf(ScreenSize(50, 100), ScreenSize(100, 50)), copies.savedBySize.keys)
+    }
+
+    @Test
+    fun `a photo with room is set as a square of the longest side and both orientations are cut from it`() = runTest {
+        // Given a photo, red on the left and blue on the right, framed around its middle with room for a square
+        val copies = FakeCopies()
+
+        // When setting it
+        val done = useCase(copies, settingsRepository())(halves(), RectF(75f, 0f, 125f, 100f), includeLock = false)
+
+        // Then the wallpaper is a square of the screen's longest side, red then blue
+        assertTrue(done.set)
+        assertEquals(100, copies.setBitmap!!.width)
+        assertEquals(100, copies.setBitmap!!.height)
+        assertEquals(Color.RED, copies.setBitmap!!.getPixel(5, 50))
+        assertEquals(Color.BLUE, copies.setBitmap!!.getPixel(95, 50))
+        // And the portrait and landscape views each show the middle of it, both colours
+        val portrait = copies.savedBySize[ScreenSize(50, 100)]!!
+        val landscape = copies.savedBySize[ScreenSize(100, 50)]!!
+        assertEquals(Color.RED, portrait.getPixel(1, 50))
+        assertEquals(Color.BLUE, portrait.getPixel(48, 50))
+        assertEquals(Color.RED, landscape.getPixel(1, 25))
+        assertEquals(Color.BLUE, landscape.getPixel(98, 25))
+    }
+
+    @Test
+    fun `with a larger screen known the wallpaper is set for it and every view of both screens gets a copy`() = runTest {
         // Given a foldable: the current 50 x 100 screen and a larger 100 x 80 one, and a photo that is red on the left and blue on the right
         val copies = FakeCopies().apply { extraScreens = listOf(ScreenSize(100, 80)) }
-        val photo = Bitmap.createBitmap(200, 100, Bitmap.Config.ARGB_8888).also { bitmap ->
-            for (x in 0 until 200) for (y in 0 until 100) bitmap.setPixel(x, y, if (x < 100) Color.RED else Color.BLUE)
-        }
 
         // When setting the whole photo
-        val done = useCase(copies, settingsRepository())(photo, RectF(0f, 0f, 200f, 100f), includeLock = false)
+        val done = useCase(copies, settingsRepository())(halves(), RectF(0f, 0f, 200f, 100f), includeLock = false)
 
-        // Then the system wallpaper has the larger screen's shape, and is that screen's copy
-        assertTrue(done)
+        // Then the system wallpaper keeps the framing's shape, its longer side as long as the longest screen side
+        assertTrue(done.set)
         assertEquals(100, copies.setBitmap!!.width)
-        assertEquals(80, copies.setBitmap!!.height)
-        assertSame(copies.setBitmap, copies.savedBySize[ScreenSize(100, 80)])
-        // And the smaller screen has a copy of its own size, cut from the middle so both halves show
+        assertEquals(50, copies.setBitmap!!.height)
+        // And each screen has a copy of each orientation, cut from the middle so both halves show
+        assertEquals(setOf(ScreenSize(100, 80), ScreenSize(80, 100), ScreenSize(50, 100), ScreenSize(100, 50)), copies.savedBySize.keys)
         val small = copies.savedBySize[ScreenSize(50, 100)]!!
-        assertEquals(50, small.width)
-        assertEquals(100, small.height)
         assertEquals(Color.RED, small.getPixel(1, 50))
         assertEquals(Color.BLUE, small.getPixel(48, 50))
+    }
+
+    @Test
+    fun `the original and the framing are kept when there is one`() = runTest {
+        // Given a photo picked from a file
+        val copies = FakeCopies(systemId = 9)
+        val file = byteArrayOf(1, 2, 3)
+
+        // When setting it with its original
+        useCase(copies, settingsRepository())(halves(), RectF(50f, 0f, 150f, 100f), includeLock = false, original = KeptOriginal.Bytes(file))
+
+        // Then the file is kept untouched with the framing as fractions of the photo and the system id
+        assertEquals(file.toList(), copies.original!!.toList())
+        assertEquals(RectF(0.25f, 0f, 0.75f, 1f), copies.originalFraming)
+        assertEquals(9, copies.originalId)
+    }
+
+    @Test
+    fun `no original is kept without one or when the wallpaper was refused`() = runTest {
+        // Given a photo with no file, and another whose wallpaper the system refuses
+        val kept = FakeCopies()
+        useCase(kept, settingsRepository())(photo(), RectF(0f, 0f, 50f, 100f), includeLock = false)
+        val refused = FakeCopies(systemId = WallpaperCopyRepository.NO_WALLPAPER_ID)
+        useCase(refused, settingsRepository())(photo(), RectF(0f, 0f, 50f, 100f), includeLock = false, original = KeptOriginal.Bytes(byteArrayOf(1)))
+
+        // Then neither keeps an original
+        assertNull(kept.original)
+        assertNull(refused.original)
     }
 
     @Test
@@ -137,7 +207,7 @@ class SetWallpaperFromPhotoUseCaseTest {
         val done = useCase(copies, settings)(photo(), RectF(0f, 0f, 100f, 100f), includeLock = false)
 
         // Then it failed, with no copy and no id, so glass never differs from what is set
-        assertFalse(done)
+        assertFalse(done.set)
         assertNull(copies.saved)
         assertEquals(-1, settings.settings.first().wallpaperCopySystemId)
     }
@@ -152,7 +222,7 @@ class SetWallpaperFromPhotoUseCaseTest {
         val done = useCase(copies, settings)(photo(), RectF(0f, 0f, 100f, 100f), includeLock = false)
 
         // Then it reports failure and records nothing
-        assertFalse(done)
+        assertFalse(done.set)
         assertEquals(-1, settings.settings.first().wallpaperCopySystemId)
     }
 
@@ -185,5 +255,46 @@ class SetWallpaperFromPhotoUseCaseTest {
         assertEquals(100, copy.height)
         assertEquals(Color.BLUE, copy.getPixel(2, 50))
         assertEquals(Color.BLUE, copy.getPixel(47, 50))
+    }
+
+    @Test
+    fun `a picked file is kept by its place rather than read into memory`() = runTest {
+        // Given a photo picked from a file at a uri
+        val copies = FakeCopies(systemId = 4)
+        val uri = android.net.Uri.parse("content://media/external/images/media/1")
+
+        // When setting it with that uri as its original
+        val done = useCase(copies, settingsRepository())(halves(), RectF(50f, 0f, 150f, 100f), includeLock = false, original = KeptOriginal.Picked(uri))
+
+        // Then the uri was handed on to be streamed, with the framing and id, and nothing was held as bytes
+        assertTrue(done.set)
+        assertTrue(done.originalKept)
+        assertEquals(uri, copies.originalUri)
+        assertEquals(4, copies.originalId)
+        assertNull(copies.original)
+    }
+
+    @Test
+    fun `a wallpaper whose original could not be kept is still set and says so`() = runTest {
+        // Given storage that cannot keep the original
+        val copies = FakeCopies().apply { keepsOriginal = false }
+        val settings = settingsRepository()
+
+        // When setting a wallpaper with an original
+        val done = useCase(copies, settings)(halves(), RectF(50f, 0f, 150f, 100f), includeLock = false, original = KeptOriginal.Bytes(byteArrayOf(1)))
+
+        // Then the wallpaper and its copies stand, the id is recorded, and the result says the original was not kept
+        assertTrue(done.set)
+        assertFalse(done.originalKept)
+        assertEquals(9, settings.settings.first().wallpaperCopySystemId)
+    }
+
+    @Test
+    fun `with no original to keep the result says nothing was lost`() = runTest {
+        // Given a photo with no original
+        val done = useCase(FakeCopies(), settingsRepository())(photo(), RectF(0f, 0f, 50f, 100f), includeLock = false)
+
+        // Then it counts as kept
+        assertTrue(done.originalKept)
     }
 }

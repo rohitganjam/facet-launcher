@@ -45,7 +45,9 @@ class GlassBackgroundPromptViewModelTest {
 
     private class FakeCopies(val stored: MutableStateFlow<Bitmap?>) : WallpaperCopyRepository(RuntimeEnvironment.getApplication(), mock(WallpaperManager::class.java)) {
         var systemId = 1
+        val anywhere = MutableStateFlow(false)
         override val copy: Flow<Bitmap?> get() = stored
+        override val hasCopyAnywhere: Flow<Boolean> get() = anywhere
         override fun currentSystemWallpaperId() = systemId
     }
 
@@ -130,5 +132,26 @@ class GlassBackgroundPromptViewModelTest {
         // Then it is no longer needed and the refusal is stored
         assertFalse(viewModel.needsCopy.first { !it })
         assertTrue(settings.settings.first { it.wallpaperPromptDismissed }.wallpaperPromptDismissed)
+    }
+
+    @Test
+    fun `a view without a copy while another view has one is left to Home's own prompt`() = runTest {
+        // Given no copy for the view showing, but a copy for another view
+        val copies = FakeCopies(MutableStateFlow(null)).apply { anywhere.value = true }
+        val viewModel = GlassBackgroundPromptViewModel(copies, settings())
+        viewModel.observe(this)
+
+        // Then the first-time prompt is not needed
+        assertFalse(viewModel.needsCopy.value)
+    }
+
+    @Test
+    fun `with no copy in any view the first-time prompt is still needed`() = runTest {
+        // Given no copy anywhere
+        val viewModel = GlassBackgroundPromptViewModel(FakeCopies(MutableStateFlow(null)), settings())
+        viewModel.observe(this)
+
+        // Then it is needed
+        assertTrue(viewModel.needsCopy.first { it })
     }
 }

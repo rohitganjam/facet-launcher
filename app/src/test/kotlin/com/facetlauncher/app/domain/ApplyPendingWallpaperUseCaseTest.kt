@@ -4,6 +4,7 @@ import android.graphics.Bitmap
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import com.facetlauncher.app.data.FakeEntitlementRepository
 import com.facetlauncher.app.data.SettingsRepository
+import com.facetlauncher.app.data.dailyphotos.DailyWallpaperRepository
 import com.facetlauncher.app.data.model.DailyWallpaperPhoto
 import com.facetlauncher.app.data.model.DailyWallpaperProblem
 import java.io.File
@@ -78,6 +79,40 @@ class ApplyPendingWallpaperUseCaseTest {
         assertEquals(dailyTestClock.millis(), state.currentSetAtMillis)
         assertFalse(state.applying)
         assertNull(daily.pendingBitmap)
+    }
+
+    @Test
+    fun `a square prepared photo is set as a square and the original is kept with its framing`() = runTest {
+        // Given a prepared square (the photo had room) and the photo it was cut from
+        val daily = daily().apply {
+            givenPending()
+            pendingBitmap = Bitmap.createBitmap(200, 200, Bitmap.Config.ARGB_8888)
+            pendingOriginal = DailyWallpaperRepository.PendingOriginal(byteArrayOf(5, 6), android.graphics.RectF(0.375f, 0f, 0.625f, 1f))
+        }
+
+        // When the screen turns off
+        val set = useCase(daily)()
+
+        // Then a square of the screen's longest side was set, and the file and its framing kept
+        assertTrue(set)
+        assertEquals(200, copies.setBitmap!!.width)
+        assertEquals(200, copies.setBitmap!!.height)
+        assertEquals(listOf<Byte>(5, 6), copies.keptOriginal!!.toList())
+        assertEquals(android.graphics.RectF(0.375f, 0f, 0.625f, 1f), copies.keptFraming)
+    }
+
+    @Test
+    fun `a strip with no room for a square is set as it is`() = runTest {
+        // Given a prepared strip in the screen's shape and no kept original
+        val daily = daily().apply { givenPending() }
+
+        // When applied
+        useCase(daily)()
+
+        // Then the strip is the wallpaper and nothing is kept
+        assertEquals(100, copies.setBitmap!!.width)
+        assertEquals(200, copies.setBitmap!!.height)
+        assertNull(copies.keptOriginal)
     }
 
     @Test

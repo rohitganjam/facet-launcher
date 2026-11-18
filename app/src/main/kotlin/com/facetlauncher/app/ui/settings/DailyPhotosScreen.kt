@@ -73,7 +73,7 @@ import java.time.format.DateTimeParseException
 @Composable
 fun DailyPhotosScreen(
     onBack: () -> Unit,
-    onUsePhoto: (Bitmap, String) -> Unit,
+    onUsePhoto: (Bitmap, String, ByteArray?) -> Unit,
     onChooseImage: () -> Unit,
     onOpenFacetPro: (ProReason) -> Unit,
     modifier: Modifier = Modifier,
@@ -85,7 +85,7 @@ fun DailyPhotosScreen(
     val currentOnUsePhoto by rememberUpdatedState(onUsePhoto)
     LaunchedEffect(uiState.picked) {
         uiState.picked?.let {
-            currentOnUsePhoto(it.bitmap, it.credit)
+            currentOnUsePhoto(it.bitmap, it.credit, it.original)
             viewModel.consumePicked()
         }
     }

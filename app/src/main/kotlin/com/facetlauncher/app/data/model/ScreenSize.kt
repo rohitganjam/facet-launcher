@@ -10,6 +10,9 @@ data class ScreenSize(val width: Int, val height: Int) {
 
     val area: Long get() = width.toLong() * height
 
+    /** The same screen turned a quarter: what its copy looks like in the other orientation. */
+    val turned: ScreenSize get() = ScreenSize(height, width)
+
     /** Stable text for a file name or a stored list: `1080x2092`. */
     val key: String get() = "${width}x$height"
 
@@ -24,5 +27,8 @@ data class ScreenSize(val width: Int, val height: Int) {
 /** The key under which a "no thanks" to adding a copy for this screen is remembered. */
 val ScreenSize.promptKey: String get() = "screen:$key"
 
-/** One screen Facet has run on: whether it has a wallpaper copy of its own that matches the wallpaper now, or one that is [outdated]. */
-data class ScreenCopy(val size: ScreenSize, val hasCopy: Boolean, val outdated: Boolean = false)
+/**
+ * One view of a screen Facet has run on: [size] is its pixels in one orientation (a phone has a portrait and a landscape view), [screen] its natural size.
+ * [hasCopy] is whether the view has a wallpaper copy that matches the wallpaper now, [outdated] that it has one that no longer does.
+ */
+data class ScreenCopy(val size: ScreenSize, val hasCopy: Boolean, val outdated: Boolean = false, val screen: ScreenSize = size)

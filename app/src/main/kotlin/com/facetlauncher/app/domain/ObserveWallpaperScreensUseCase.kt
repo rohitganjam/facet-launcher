@@ -5,6 +5,7 @@ import com.facetlauncher.app.data.model.OtherScreenPrompt
 import com.facetlauncher.app.data.model.OtherScreenPromptKind
 import com.facetlauncher.app.data.model.ScreenCopy
 import com.facetlauncher.app.data.model.ScreenSize
+import com.facetlauncher.app.data.model.WallpaperCopyNeed
 import com.facetlauncher.app.data.model.WallpaperScreens
 import com.facetlauncher.app.data.model.promptKey
 import javax.inject.Inject
@@ -15,27 +16,29 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 
 /**
- * The screens Facet knows and what to suggest about them, once there is a copy to complete. A screen without a copy of its own is offered
- * one (unless the user said no to that screen), which is how a capture on one screen of a foldable leads to one on the other: only the
- * screens that lack data are mentioned. When only one screen is known but the phone has a hinge sensor, the user is told to unfold it.
+ * The views Facet knows (each screen in each orientation) and what to suggest about them, once there is a copy to complete. A view without a
+ * copy of its own is offered one (unless the user said no to that view), which is how a capture on one screen of a foldable, or in one
+ * orientation, leads to one on the other: only the views that lack data are mentioned. When only one screen is known but the phone has a hinge sensor, the user is told to unfold it.
  */
 class ObserveWallpaperScreensUseCase @Inject constructor(private val wallpaperCopyRepository: WallpaperCopyRepository) {
 
     operator fun invoke(): Flow<WallpaperScreens> = combine(wallpaperCopyRepository.screens, wallpaperCopyRepository.dismissedPrompts, wallpaperCopyRepository.currentScreen) { screens, dismissed, current ->
-        WallpaperScreens(screens.map { it.size }.toImmutableList(), prompt(screens, dismissed, current))
+        WallpaperScreens(screens.map { it.screen }.distinct().toImmutableList(), prompt(screens, dismissed, current))
     }
 
     /**
-     * The screen showing now when it has no copy that matches the wallpaper while another screen has one (or had one): Home offers to
-     * update it. `null` when it is fine, there is no copy anywhere, or the user said no to that screen.
+     * The view showing now when it has no copy that matches the wallpaper while another view has one (or had one): Home offers to
+     * capture it. `null` when it is fine, there is no copy anywhere, or the user said no to that view.
      */
-    fun screenNeedingCopy(): Flow<ScreenSize?> = combine(
+    fun copyNeed(): Flow<WallpaperCopyNeed?> = combine(
         wallpaperCopyRepository.screens,
         wallpaperCopyRepository.currentScreen,
         wallpaperCopyRepository.dismissedPrompts,
     ) { screens, current, dismissed ->
-        current.takeIf { screen ->
-            screens.any { it.hasCopy || it.outdated } && screens.none { it.size == screen && it.hasCopy } && screen.promptKey !in dismissed
+        val view = screens.firstOrNull { it.size == current }
+        when {
+            view == null || view.hasCopy || view.size.promptKey in dismissed || screens.none { it.hasCopy || it.outdated } -> null
+            else -> WallpaperCopyNeed(current, otherOrientation = screens.any { it.screen == view.screen && it.size != view.size && it.hasCopy })
         }
     }.distinctUntilChanged()
 
@@ -43,8 +46,13 @@ class ObserveWallpaperScreensUseCase @Inject constructor(private val wallpaperCo
         if (screens.none { it.hasCopy }) return OtherScreenPrompt()
         val missing = screens.filter { !it.hasCopy && it.size.promptKey !in dismissed }
         return when {
-            missing.isNotEmpty() -> OtherScreenPrompt(OtherScreenPromptKind.MissingCopy, missing.map { it.size.promptKey }.toImmutableList(), thisScreen = missing.any { it.size == current })
-            screens.size == 1 && WallpaperCopyRepository.FOLDABLE_PROMPT !in dismissed && wallpaperCopyRepository.maybeFoldable() ->
+            missing.isNotEmpty() -> OtherScreenPrompt(
+                OtherScreenPromptKind.MissingCopy,
+                missing.map { it.size.promptKey }.toImmutableList(),
+                thisScreen = missing.any { it.size == current },
+                otherOrientation = missing.all { view -> screens.any { it.screen == view.screen && it.size != view.size && (it.hasCopy || it.outdated) } },
+            )
+            screens.map { it.screen }.distinct().size == 1 && WallpaperCopyRepository.FOLDABLE_PROMPT !in dismissed && wallpaperCopyRepository.maybeFoldable() ->
                 OtherScreenPrompt(OtherScreenPromptKind.FoldableUnseen, persistentListOf(WallpaperCopyRepository.FOLDABLE_PROMPT))
             else -> OtherScreenPrompt()
         }

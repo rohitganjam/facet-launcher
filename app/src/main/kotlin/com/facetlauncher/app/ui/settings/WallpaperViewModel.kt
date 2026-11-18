@@ -18,7 +18,9 @@ import kotlinx.collections.immutable.persistentListOf
 import com.facetlauncher.app.domain.NoteManualWallpaperUseCase
 import com.facetlauncher.app.domain.ObserveWallpaperScreensUseCase
 import com.facetlauncher.app.domain.RemoveWallpaperCopyUseCase
+import com.facetlauncher.app.domain.KeptOriginal
 import com.facetlauncher.app.domain.SetWallpaperFromPhotoUseCase
+import com.facetlauncher.app.domain.SetWallpaperResult
 import com.facetlauncher.app.domain.UseScreenshotAsWallpaperCopyUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -46,6 +48,10 @@ data class WallpaperUiState(
     val picked: Bitmap? = null,
     val isWorking: Boolean = false,
     val failed: Boolean = false,
+    /** The wallpaper is a live one, so a copy is only a still frame of it. */
+    val liveWallpaper: Boolean = false,
+    /** The wallpaper was set but its original could not be kept (storage), so a screen first seen later needs a capture. */
+    val originalNotKept: Boolean = false,
     /** `true` after returning from Android's wallpaper picker with a new wallpaper and no matching copy: offer to add one. */
     val offerCopy: Boolean = false,
     /** The credit of the daily photo being framed, shown as it was given; `null` for a photo the user chose. */
@@ -76,9 +82,16 @@ class WallpaperViewModel @Inject constructor(
 
     private data class Local(
         val picked: Bitmap? = null,
+        /** Where the picked image came from, so its original can be kept; `null` for a daily photo. */
+        val pickedUri: Uri? = null,
+        /** A daily photo's downloaded file, kept as its original; `null` for anything else. */
+        val pickedBytes: ByteArray? = null,
+        /** The last wallpaper was set, but its original could not be kept, so a screen first seen later needs a capture. */
+        val originalNotKept: Boolean = false,
         val working: Boolean = false,
         val failed: Boolean = false,
         val systemWallpaper: HomeWallpaper = HomeWallpaper.Unavailable,
+        val live: Boolean = false,
         /** The system wallpaper's id when Android's picker was opened; `null` when it wasn't. */
         val pickerBaseline: Int? = null,
         val offerCopy: Boolean = false,
@@ -101,6 +114,8 @@ class WallpaperViewModel @Inject constructor(
             picked = state.picked,
             isWorking = state.working,
             failed = state.failed,
+            originalNotKept = state.originalNotKept,
+            liveWallpaper = state.live,
             offerCopy = state.offerCopy,
             credit = state.credit,
             copyOnly = state.copyOnly,
@@ -122,7 +137,7 @@ class WallpaperViewModel @Inject constructor(
             val checked = local.value.pickerBaseline
             val offer = shouldOfferCopy(checked)
             // Only the starting point just checked is used up: the picker may have opened again while this was in flight.
-            local.update { it.copy(systemWallpaper = systemWallpaper, checks = it.checks + 1, pickerBaseline = it.pickerBaseline.takeUnless { current -> current == checked }, offerCopy = it.offerCopy || offer) }
+            local.update { it.copy(systemWallpaper = systemWallpaper, live = wallpaperCopyRepository.isLiveWallpaper(), checks = it.checks + 1, pickerBaseline = it.pickerBaseline.takeUnless { current -> current == checked }, offerCopy = it.offerCopy || offer) }
         }
     }
 
@@ -157,30 +172,34 @@ class WallpaperViewModel @Inject constructor(
     /** A photo was picked: decode it for the fit step. */
     fun onPicked(uri: Uri) {
         viewModelScope.launch {
-            local.update { it.copy(working = true, failed = false) }
+            local.update { it.copy(working = true, failed = false, originalNotKept = false) }
             val photo = wallpaperCopyRepository.decodePicked(uri, MAX_PICKED_SIDE)
-            local.update { it.copy(picked = photo, credit = null, fromDailyPhoto = false, working = false, failed = photo == null) }
+            local.update { it.copy(picked = photo, pickedUri = uri, pickedBytes = null, credit = null, fromDailyPhoto = false, working = false, failed = photo == null) }
         }
     }
 
     /** A daily photo was downloaded: frame it, with its [credit] shown on it. */
-    fun onPickedBitmap(photo: Bitmap, credit: String) = local.update { it.copy(picked = photo, credit = credit.ifBlank { null }, copyOnly = false, fromDailyPhoto = true, failed = false) }
+    fun onPickedBitmap(photo: Bitmap, credit: String, original: ByteArray? = null) = local.update { it.copy(picked = photo, pickedUri = null, pickedBytes = original, credit = credit.ifBlank { null }, copyOnly = false, fromDailyPhoto = true, failed = false) }
 
-    fun cancelFit() = local.update { it.copy(picked = null, credit = null, failed = false) }
+    fun cancelFit() = local.update { it.copy(picked = null, pickedUri = null, pickedBytes = null, credit = null, failed = false) }
 
-    /** The user framed [visible] of the picked photo: set it as the wallpaper and store it as the glass copy. */
+    /** The user framed [visible] of the picked photo: set it as the wallpaper, store what each screen shows of it as the glass copies, and keep the original. */
     fun confirmFit(visible: RectF, includeLock: Boolean) {
         val photo = local.value.picked ?: return
         viewModelScope.launch {
             local.update { it.copy(working = true, failed = false) }
             val copyOnly = local.value.copyOnly
-            val done = if (copyOnly) useScreenshotAsCopy(photo, visible) else setWallpaperFromPhoto(photo, visible, includeLock)
+            // The image is kept as it is (a daily photo's download too); a screenshot of the wallpaper is not.
+            val original = if (copyOnly) null else local.value.pickedBytes?.let { KeptOriginal.Bytes(it) } ?: local.value.pickedUri?.let { KeptOriginal.Picked(it) }
+            val result = if (copyOnly) SetWallpaperResult(useScreenshotAsCopy(photo, visible)) else setWallpaperFromPhoto(photo, visible, includeLock, original)
+            val done = result.set
             if (done && !copyOnly) noteManualWallpaper(fromDailyPhoto = local.value.fromDailyPhoto)
-            local.update { it.copy(picked = if (done) null else it.picked, credit = if (done) null else it.credit, working = false, failed = !done) }
+            local.update { it.copy(picked = if (done) null else it.picked, pickedUri = if (done) null else it.pickedUri, pickedBytes = if (done) null else it.pickedBytes, credit = if (done) null else it.credit, working = false, failed = !done, originalNotKept = done && !result.originalKept) }
         }
     }
 
     fun removeCopy() {
+        local.update { it.copy(originalNotKept = false) }
         viewModelScope.launch { removeWallpaperCopy() }
     }
 

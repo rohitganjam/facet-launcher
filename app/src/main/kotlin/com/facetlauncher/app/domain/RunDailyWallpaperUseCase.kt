@@ -1,9 +1,11 @@
 package com.facetlauncher.app.domain
 
 import android.graphics.Bitmap
+import android.graphics.RectF
 import com.facetlauncher.app.data.DeviceConditionsRepository
 import com.facetlauncher.app.data.EntitlementRepository
 import com.facetlauncher.app.data.WallpaperCopyRepository
+import com.facetlauncher.app.data.model.ImageRegion
 import com.facetlauncher.app.data.dailyphotos.DailyPhotoFeed
 import com.facetlauncher.app.data.dailyphotos.DailyPhotoRepository
 import com.facetlauncher.app.data.dailyphotos.DailyWallpaperRepository
@@ -111,11 +113,11 @@ class RunDailyWallpaperUseCase @Inject constructor(
         val skipped = mutableListOf<String>()
         val outcome = candidates.take(MAX_CANDIDATES).firstNotNullOfOrNull { photo ->
             val bytes = dailyPhotoRepository.originalBytes(photo)
-            val strip = bytes?.let { decodeStrip(it, screenWidth, screenHeight) }
+            val part = bytes?.let { decodePart(it, screenWidth, screenHeight) }
             when {
                 bytes == null -> failed(DailyWallpaperProblem.DOWNLOAD_FAILED)
-                strip == null -> null.also { skipped += photo.imageUrl }
-                else -> store(photo, strip, skipped, today)
+                part == null -> null.also { skipped += photo.imageUrl }
+                else -> store(photo, part, bytes, skipped, today)
             }
         }
         return outcome ?: run {
@@ -124,16 +126,36 @@ class RunDailyWallpaperUseCase @Inject constructor(
         }
     }
 
-    /** The photo's centre strip in the screen's shape, or `null` when it is too small to look sharp. */
-    private suspend fun decodeStrip(bytes: ByteArray, screenWidth: Int, screenHeight: Int): Bitmap? {
-        val crop = wallpaperCopyRepository.imageSize(bytes)?.let { (width, height) -> portraitCentreCrop(width, height, screenWidth, screenHeight) }
-        return crop?.let { wallpaperCopyRepository.decodeRegion(bytes, it.region, it.sampleSize) }
+    /** What is decoded of a photo: the part to set as the wallpaper, and the centre strip in the screen's shape chosen in the whole photo, as fractions of it. */
+    private class DailyPart(val bitmap: Bitmap, val framing: RectF)
+
+    /**
+     * The photo's centre strip in the screen's shape, widened as far as the photo has room, up to a square of its longer side (see [wallpaperRegion]),
+     * so the other orientation shows more of the photo than the strip; `null` when the strip is too small to look sharp.
+     */
+    private suspend fun decodePart(bytes: ByteArray, screenWidth: Int, screenHeight: Int): DailyPart? {
+        val (width, height) = wallpaperCopyRepository.imageSize(bytes) ?: return null
+        val crop = portraitCentreCrop(width, height, screenWidth, screenHeight) ?: return null
+        val strip = RectF(crop.region.left.toFloat(), crop.region.top.toFloat(), crop.region.right.toFloat(), crop.region.bottom.toFloat())
+        val region = wallpaperRegion(strip, width, height)
+        val sampleSize = if (region != strip) longSideSampleSize(maxOf(region.width(), region.height()).toInt(), maxOf(screenWidth, screenHeight)) else crop.sampleSize
+        val part = ImageRegion(region.left.toInt(), region.top.toInt(), region.right.toInt(), region.bottom.toInt())
+        val bitmap = wallpaperCopyRepository.decodeRegion(bytes, part, sampleSize) ?: return null
+        return DailyPart(bitmap, RectF(strip.left / width, strip.top / height, strip.right / width, strip.bottom / height))
     }
 
-    private suspend fun store(photo: DailyPhoto, strip: Bitmap, skipped: List<String>, today: LocalDate): DailyRunOutcome {
-        val saved = dailyWallpaperRepository.savePending(strip)
-        strip.recycle()
+    /** The largest power-of-two sample size that still leaves a region's longer [side] at least [longest] across. */
+    private fun longSideSampleSize(side: Int, longest: Int): Int {
+        var sampleSize = 1
+        while (side / (sampleSize * 2) >= longest) sampleSize *= 2
+        return sampleSize
+    }
+
+    private suspend fun store(photo: DailyPhoto, part: DailyPart, original: ByteArray, skipped: List<String>, today: LocalDate): DailyRunOutcome {
+        val saved = dailyWallpaperRepository.savePending(part.bitmap)
+        part.bitmap.recycle()
         if (!saved) return failed(DailyWallpaperProblem.DOWNLOAD_FAILED)
+        dailyWallpaperRepository.savePendingOriginal(original, part.framing)
         dailyWallpaperRepository.update {
             it.copy(
                 pending = DailyWallpaperPhoto(photo.imageUrl, photo.title, photo.credit),

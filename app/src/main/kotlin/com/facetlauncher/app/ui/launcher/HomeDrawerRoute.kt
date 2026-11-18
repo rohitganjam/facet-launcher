@@ -136,8 +136,8 @@ fun HomeDrawerRoute(
     onNavigateToPermissions: () -> Unit = {},
     /** Opens What's new, from the pill that announces an update. */
     onNavigateToWhatsNew: () -> Unit = {},
-    /** Opens the wallpaper page, from the pill that says this screen's wallpaper copy is out of date. */
-    onNavigateToWallpaper: () -> Unit = {},
+    /** Opens the capture screen, from the pill that says glass effects need a capture of this screen's wallpaper. */
+    onNavigateToWallpaperCapture: () -> Unit = {},
     modifier: Modifier = Modifier,
     homeViewModel: HomeViewModel = hiltViewModel(),
     whatsNewPillViewModel: WhatsNewPillViewModel = hiltViewModel(),
@@ -156,7 +156,7 @@ fun HomeDrawerRoute(
     val homeUiState by homeViewModel.uiState.collectAsStateWithLifecycle()
     val weatherUiState by weatherViewModel.uiState.collectAsStateWithLifecycle()
     val whatsNewVersion by whatsNewPillViewModel.version.collectAsStateWithLifecycle()
-    val wallpaperCopyScreen by wallpaperCopyPillViewModel.screenKey.collectAsStateWithLifecycle()
+    val wallpaperCopyOffer by wallpaperCopyPillViewModel.offer.collectAsStateWithLifecycle()
     val launcherUiState by launcherViewModel.uiState.collectAsStateWithLifecycle()
     val folders by drawerViewModel.folders.collectAsStateWithLifecycle()
     val currentOnNavigateToNotificationAccess by rememberUpdatedState(onNavigateToNotificationAccessExplanation)
@@ -641,10 +641,10 @@ fun HomeDrawerRoute(
         )
         // Same spot as the What's new pill, which goes first.
         WallpaperCopyPillHost(
-            screenKey = wallpaperCopyScreen,
+            offer = wallpaperCopyOffer,
             ready = homeUiState.firstRunPromptsDone && whatsNewVersion == null && !isDrawerOpen && !isHubOpen && !isFacetOpen,
             onShow = wallpaperCopyPillViewModel::onShown,
-            onOpen = onNavigateToWallpaper,
+            onOpen = onNavigateToWallpaperCapture,
             modifier = Modifier.align(Alignment.TopCenter)
                 .windowInsetsPadding(launcherSystemBarInsets().only(WindowInsetsSides.Top))
                 .padding(top = 12.dp),

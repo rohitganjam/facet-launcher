@@ -230,7 +230,7 @@ fun FacetNavHost(
                         onNavigateToClockAccessories = { facetId -> navController.navigate(FacetDestinations.clockAccessories(facetId)) },
                         onNavigateToPermissions = { navController.navigate(FacetDestinations.PERMISSIONS) },
                         onNavigateToWhatsNew = { navController.navigate(FacetDestinations.WHATS_NEW) },
-                        onNavigateToWallpaper = { navController.navigate(FacetDestinations.WALLPAPER) },
+                        onNavigateToWallpaperCapture = { navController.navigate(FacetDestinations.WALLPAPER_CAPTURE) },
                         onNavigateToClockStyle = { facetId -> navController.navigate(FacetDestinations.facetClockStyleGallery(facetId)) },
                         onNavigateToClockStack = { navController.navigate(FacetDestinations.clockStack()) },
                         launcherViewModel = launcherViewModel,
@@ -272,8 +272,15 @@ fun FacetNavHost(
                 WallpaperCaptureScreen(
                     onDone = { navController.popBackStackSafely() },
                     onChooseScreenshot = {
-                        navController.previousBackStackEntry?.savedStateHandle?.set(PICK_SCREENSHOT_KEY, true)
-                        navController.popBackStackSafely()
+                        // Opened from Home's pill there is no wallpaper page behind this: go to it, and ask it to open the picker.
+                        if (navController.previousBackStackEntry?.destination?.route != FacetDestinations.WALLPAPER) {
+                            navController.popBackStackSafely()
+                            navController.navigate(FacetDestinations.WALLPAPER)
+                            navController.currentBackStackEntry?.savedStateHandle?.set(PICK_SCREENSHOT_KEY, true)
+                        } else {
+                            navController.previousBackStackEntry?.savedStateHandle?.set(PICK_SCREENSHOT_KEY, true)
+                            navController.popBackStackSafely()
+                        }
                     },
                     onReturn = { navController.popBackStackSafely() },
                 )

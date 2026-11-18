@@ -1,9 +1,15 @@
 package com.facetlauncher.app
 
+import android.app.WallpaperManager
 import android.content.ComponentName
+import android.content.IntentFilter
+import android.content.Context
+import android.content.BroadcastReceiver
 import android.content.Intent
 import android.content.pm.LauncherApps
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.view.WindowManager
 import android.os.Process
 import androidx.activity.ComponentActivity
@@ -16,10 +22,12 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.core.content.ContextCompat
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import com.facetlauncher.app.data.EntitlementRepository
+import com.facetlauncher.app.data.WallpaperCopyRepository
 import com.facetlauncher.app.data.icon.StyledIconCache
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.ui.components.HomeSwipeGate
@@ -56,6 +64,8 @@ class LauncherActivity : ComponentActivity() {
     @Inject lateinit var launcherApps: LauncherApps
 
     @Inject lateinit var entitlementRepository: EntitlementRepository
+
+    @Inject lateinit var wallpaperCopyRepository: WallpaperCopyRepository
 
     @Inject lateinit var clockWidgetHost: ClockWidgetHostController
 
@@ -142,6 +152,8 @@ class LauncherActivity : ComponentActivity() {
     private var stoppedSinceResume = false
 
     override fun onStop() {
+        WallpaperManager.getInstance(this).removeOnColorsChangedListener(wallpaperChanged)
+        runCatching { unregisterReceiver(wallpaperChangedReceiver) }
         stoppedSinceResume = true
         super.onStop()
     }
@@ -149,10 +161,51 @@ class LauncherActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
         stoppedSinceResume = false
+        // Home doesn't scroll, so ask the system to centre a wallpaper wider than the screen (it otherwise shows its left edge).
+        centreWallpaper()
         // A refund, a purchase on another device or a redeemed code shows up here without a restart.
         lifecycleScope.launch { entitlementRepository.refresh() }
         viewModel.onResumed()
         wallpaperBackdropViewModel.onResumed()
+    }
+
+    override fun onConfigurationChanged(newConfig: android.content.res.Configuration) {
+        super.onConfigurationChanged(newConfig)
+        // The offset worked out for the orientation a wallpaper was framed in applies in that one only.
+        centreWallpaperAfterChange()
+    }
+
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        if (hasFocus) centreWallpaper()
+    }
+
+    override fun onStart() {
+        super.onStart()
+        // A new wallpaper starts again from the left edge, so centre it again as soon as the system has loaded it.
+        val handler = Handler(Looper.getMainLooper())
+        WallpaperManager.getInstance(this).addOnColorsChangedListener(wallpaperChanged, handler)
+        ContextCompat.registerReceiver(this, wallpaperChangedReceiver, IntentFilter(Intent.ACTION_WALLPAPER_CHANGED), ContextCompat.RECEIVER_NOT_EXPORTED)
+    }
+
+    private val wallpaperChanged = WallpaperManager.OnColorsChangedListener { _, _ -> centreWallpaperAfterChange() }
+
+    private val wallpaperChangedReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) = centreWallpaperAfterChange()
+    }
+
+    /** The system finishes loading a new wallpaper a moment after announcing it, and a load resets the offset, so it is set again a few times. */
+    private fun centreWallpaperAfterChange() {
+        val handler = Handler(Looper.getMainLooper())
+        CENTRE_RETRY_DELAYS_MS.forEach { handler.postDelayed({ if (!isDestroyed) centreWallpaper() }, it) }
+    }
+
+    private fun centreWallpaper() {
+        val token = window.decorView.windowToken ?: return
+        WallpaperManager.getInstance(this).apply {
+            setWallpaperOffsetSteps(1f, 1f)
+            setWallpaperOffsets(token, wallpaperCopyRepository.wallpaperOffsetX(), 0.5f)
+        }
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -195,5 +248,9 @@ class LauncherActivity : ComponentActivity() {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK
         }
         runCatching { startActivity(intent) }.onSuccess { viewModel.onAppLaunched(app) }
+    }
+
+    private companion object {
+        val CENTRE_RETRY_DELAYS_MS = longArrayOf(0L, 300L, 1_000L, 2_500L)
     }
 }

@@ -64,9 +64,12 @@ open class DailyPhotoRepository @Inject constructor(
     open suspend fun originalBytes(photo: DailyPhoto): ByteArray? = api.download(photo.imageUrl, MAX_ORIGINAL_BYTES)
 
     /** The original of [photo], upright and shrunk to [maxSide] on its long side; `null` when it cannot be downloaded or read. */
-    open suspend fun original(photo: DailyPhoto, maxSide: Int): Bitmap? {
+    open suspend fun original(photo: DailyPhoto, maxSide: Int): Bitmap? = originalWithBytes(photo, maxSide)?.first
+
+    /** Like [original], with the downloaded file as it came, to be kept once the photo is set as the wallpaper. */
+    open suspend fun originalWithBytes(photo: DailyPhoto, maxSide: Int): Pair<Bitmap, ByteArray>? {
         val bytes = originalBytes(photo) ?: return null
-        return wallpaperCopyRepository.decodeBytes(bytes, maxSide)
+        return wallpaperCopyRepository.decodeBytes(bytes, maxSide)?.let { it to bytes }
     }
 
     private companion object {

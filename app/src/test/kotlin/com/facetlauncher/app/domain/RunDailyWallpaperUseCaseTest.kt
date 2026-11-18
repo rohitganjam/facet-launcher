@@ -106,7 +106,7 @@ class RunDailyWallpaperUseCaseTest {
     }
 
     @Test
-    fun `only the centre strip in the screen's shape is decoded, at a reduced size`() = runTest {
+    fun `a wide photo is decoded as a centred square of its height, at a reduced size`() = runTest {
         // Given a 4000 x 2000 photo and a 100 x 200 screen
         givenBing("a")
         turnOn()
@@ -114,12 +114,47 @@ class RunDailyWallpaperUseCaseTest {
         // When it is prepared
         useCase()()
 
-        // Then the centre 1000 x 2000 strip was decoded, sampled down while still covering the screen
+        // Then the centre 2000 x 2000 square was decoded, sampled down while still as wide as the screen's longest side
         val (region, sample) = copies.decodedRegions.single()
-        assertEquals(1500, region.left)
-        assertEquals(2500, region.right)
+        assertEquals(1000, region.left)
+        assertEquals(3000, region.right)
         assertEquals(2000, region.height)
         assertEquals(8, sample)
+    }
+
+    @Test
+    fun `the photo is kept with the strip chosen in it as fractions`() = runTest {
+        // Given the same photo
+        givenBing("a")
+        turnOn()
+
+        // When it is prepared
+        useCase()()
+
+        // Then the downloaded file is kept as it came, with the centre strip's place in the whole photo
+        val kept = daily.pendingOriginal!!
+        assertEquals(photos.originals["https://img.peapix.com/a.jpg"]!!.toList(), kept.bytes.toList())
+        assertEquals(0.375f, kept.framing.left, 0.001f)
+        assertEquals(0.625f, kept.framing.right, 0.001f)
+        assertEquals(0f, kept.framing.top, 0.001f)
+        assertEquals(1f, kept.framing.bottom, 0.001f)
+    }
+
+    @Test
+    fun `a photo with no room for a square is decoded as the strip`() = runTest {
+        // Given a tall photo, 1000 x 3000, and a 100 x 200 screen
+        givenBing("a")
+        copies.sizes[1.toByte()] = 1000 to 3000
+        turnOn()
+
+        // When it is prepared
+        useCase()()
+
+        // Then the strip in the screen's shape is decoded: the full width, centred
+        val (region, _) = copies.decodedRegions.single()
+        assertEquals(0, region.left)
+        assertEquals(1000, region.right)
+        assertEquals(2000, region.height)
     }
 
     @Test

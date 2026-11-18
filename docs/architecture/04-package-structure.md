@@ -22,7 +22,7 @@ app/src/main/kotlin/com/facetlauncher/app/
 │   ├── widget/                    (3)   AppWidgetRepository + LauncherAppWidgetHost (AppWidgetHost subclass) + WidgetConfigureActivity (invisible trampoline that opens a widget's configure activity)
 │   └── FacetNotificationListenerService.kt   @AndroidEntryPoint service feeding NotificationBadgeRepository (its component is also what MediaSessionRepository reads sessions through)
 │
-├── domain/                        (98)  82 *UseCase classes in 80 files (NativeWidgetConfigUseCases.kt and LandscapeWidgetOrder.kt hold two each) + 18 helper files: FlowCombine, ScreenCover, HubGridConstants, NativeWidgetSizing, NativeWidgetOverrideResolver, BackupMapping, BackupUpgrade, AutomationRuleBackupMapping, ClockConfigResolution, ResolvedFacetStyle, HomePlacement, HomeGridPlacement, WeatherUnits, WeatherDay, WeatherCondition, RainSummary, PortraitCrop, DailyWallpaperCoordinator
+├── domain/                        (100)  83 *UseCase classes in 81 files (NativeWidgetConfigUseCases.kt and LandscapeWidgetOrder.kt hold two each) + 19 helper files: FlowCombine, ScreenCover, WallpaperRegion, HubGridConstants, NativeWidgetSizing, NativeWidgetOverrideResolver, BackupMapping, BackupUpgrade, AutomationRuleBackupMapping, ClockConfigResolution, ResolvedFacetStyle, HomePlacement, HomeGridPlacement, WeatherUnits, WeatherDay, WeatherCondition, RainSummary, PortraitCrop, DailyWallpaperCoordinator
 │                                        Composes ≥1 repositories, or pure logic (grid placement, ranking, grouping)
 │
 └── ui/
@@ -101,7 +101,7 @@ app/src/test/kotlin/com/facetlauncher/app/          JVM (JUnit4 + Robolectric + 
 │   ├── places/     3
 │   ├── weather/    6
 │   └── widget/     2
-├── domain/        76   one test class per use case or helper, for most (pure logic — no Android needed for most; the ones without are listed in 06 §5)
+├── domain/        78   one test class per use case or helper, for most (pure logic — no Android needed for most; the ones without are listed in 06 §5)
 └── ui/            98   ViewModel tests (dock, drawer, facets, home, hub, launcher, onboarding, pro, settings×9, settings/automation, settings/backup, theme) the rule editor state/formatting tests, and `ClockWidgetTouchGateTest` (Robolectric, raw `MotionEvent`s)
 
 app/src/androidTest/kotlin/com/facetlauncher/app/   Instrumented (Compose UI tests, AVD only)

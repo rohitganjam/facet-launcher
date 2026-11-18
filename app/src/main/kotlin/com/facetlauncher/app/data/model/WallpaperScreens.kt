@@ -21,10 +21,15 @@ enum class OtherScreenPromptKind {
 data class OtherScreenPrompt(
     val kind: OtherScreenPromptKind = OtherScreenPromptKind.None,
     val dismissKeys: ImmutableList<String> = persistentListOf(),
-    /** `true` when the screen showing now is the one lacking the copy, so it can be captured right here. */
+    /** `true` when the view showing now is the one lacking the copy, so it can be captured right here. */
     val thisScreen: Boolean = false,
+    /** `true` when every view lacking a copy belongs to a screen whose other orientation has one: only the turned view is missing. */
+    val otherOrientation: Boolean = false,
 )
 
-/** Every screen known, the largest first, and the prompt about them. */
+/** The view showing now when Home should offer to capture its wallpaper, and whether the screen's other orientation already has a capture. */
+data class WallpaperCopyNeed(val view: ScreenSize, val otherOrientation: Boolean)
+
+/** Every screen known in its natural orientation, the largest first, and the prompt about its views. */
 @Immutable
 data class WallpaperScreens(val sizes: ImmutableList<ScreenSize> = persistentListOf(), val prompt: OtherScreenPrompt = OtherScreenPrompt())

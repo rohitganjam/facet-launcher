@@ -9,6 +9,7 @@ import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.WallpaperCopyRepository
 import com.facetlauncher.app.data.WallpaperPaletteRepository
 import com.facetlauncher.app.data.model.WallpaperPalette
+import com.facetlauncher.app.domain.FillMissingWallpaperCopiesUseCase
 import com.facetlauncher.app.data.wallpaperPaletteFrom
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -49,7 +50,9 @@ class WallpaperBackdropViewModelTest {
 
     private class FakeCopies(copy: Flow<Bitmap?>) : WallpaperCopyRepository(org.robolectric.RuntimeEnvironment.getApplication(), mock(WallpaperManager::class.java)) {
         var systemId = 1
+        var idChecks = 0
         override val copy: Flow<Bitmap?> = copy
+        override suspend fun originalSystemId(): Int? { idChecks++; return null }
         override fun currentSystemWallpaperId() = systemId
     }
 
@@ -64,6 +67,9 @@ class WallpaperBackdropViewModelTest {
         override val systemColorChanges: Flow<Unit> = changes
     }
 
+    /** The fill-in of copies from a kept original, which has nothing to do here: no original is kept. */
+    private fun noFill() = FillMissingWallpaperCopiesUseCase(FakeCopies(MutableStateFlow(null)), UnconfinedTestDispatcher())
+
     private fun settings(): SettingsRepository {
         val dataStore: DataStore<Preferences> = PreferenceDataStoreFactory.create(produceFile = { tempFolder.newFile("t-${System.nanoTime()}.preferences_pb") })
         return SettingsRepository(dataStore)
@@ -75,7 +81,7 @@ class WallpaperBackdropViewModelTest {
     @Test
     fun `there is no copy until the repository has one`() = runTest {
         // Given a repository with no stored copy
-        val viewModel = WallpaperBackdropViewModel(FakeCopies(MutableStateFlow(null)), settings(), FakePalette())
+        val viewModel = WallpaperBackdropViewModel(FakeCopies(MutableStateFlow(null)), settings(), FakePalette(), noFill())
 
         // Then the view model shows none
         assertNull(viewModel.copy.value)
@@ -86,7 +92,7 @@ class WallpaperBackdropViewModelTest {
         // Given a repository whose copy can change and a copy recorded for the current system wallpaper
         val stored = MutableStateFlow<Bitmap?>(null)
         val settings = settings().also { it.setWallpaperCopySystemId(1) }
-        val viewModel = WallpaperBackdropViewModel(FakeCopies(stored), settings, FakePalette())
+        val viewModel = WallpaperBackdropViewModel(FakeCopies(stored), settings, FakePalette(), noFill())
         viewModel.observe(this)
         val bitmap = Bitmap.createBitmap(10, 20, Bitmap.Config.ARGB_8888)
 
@@ -106,7 +112,7 @@ class WallpaperBackdropViewModelTest {
         // Given a copy for wallpaper 1 being shown
         val copies = FakeCopies(MutableStateFlow(Bitmap.createBitmap(10, 20, Bitmap.Config.ARGB_8888)))
         val settings = settings().also { it.setWallpaperCopySystemId(1) }
-        val viewModel = WallpaperBackdropViewModel(copies, settings, FakePalette())
+        val viewModel = WallpaperBackdropViewModel(copies, settings, FakePalette(), noFill())
         viewModel.observe(this)
         assertNotNull(viewModel.copy.first { it != null })
 
@@ -124,7 +130,7 @@ class WallpaperBackdropViewModelTest {
         // Given a copy stored when the system id was 1
         val copies = FakeCopies(MutableStateFlow(Bitmap.createBitmap(10, 20, Bitmap.Config.ARGB_8888)))
         val settings = settings().also { it.setWallpaperCopySystemId(1) }
-        val viewModel = WallpaperBackdropViewModel(copies, settings, FakePalette())
+        val viewModel = WallpaperBackdropViewModel(copies, settings, FakePalette(), noFill())
         viewModel.observe(this)
         assertNotNull(viewModel.copy.first { it != null })
 
@@ -141,7 +147,7 @@ class WallpaperBackdropViewModelTest {
         // Given no copy yet
         val stored = MutableStateFlow<Bitmap?>(null)
         val palette = FakePalette()
-        val viewModel = WallpaperBackdropViewModel(FakeCopies(stored), settings(), palette)
+        val viewModel = WallpaperBackdropViewModel(FakeCopies(stored), settings(), palette, noFill())
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.palette.collect { } }
 
         // Then there is no palette of Facet's own
@@ -160,5 +166,39 @@ class WallpaperBackdropViewModelTest {
 
         // Then the palette is computed again
         assertTrue(palette.requests > before)
+    }
+
+    /** Lets the test scheduler and the main looper run until [done], since the view's flow is collected on a real display listener. */
+    private fun kotlinx.coroutines.test.TestScope.settleUntil(done: () -> Boolean) {
+        repeat(SETTLE_ATTEMPTS) {
+            testScheduler.advanceUntilIdle()
+            org.robolectric.shadows.ShadowLooper.idleMainLooper()
+            if (done()) return
+            Thread.sleep(SETTLE_SLEEP_MS)
+        }
+    }
+
+    @Test
+    fun `missing views are looked for when the view showing changes and each time the launcher resumes`() = runTest {
+        // Given a view model on a repository that counts how often the kept original is looked up
+        val copies = FakeCopies(MutableStateFlow(null))
+        val viewModel = WallpaperBackdropViewModel(copies, settings(), FakePalette(), FillMissingWallpaperCopiesUseCase(copies, UnconfinedTestDispatcher()))
+        settleUntil { copies.idChecks >= 1 }
+
+        // Then it was looked up once at the start
+        val atStart = copies.idChecks
+        assertTrue(atStart >= 1)
+
+        // When the launcher resumes
+        viewModel.onResumed()
+        settleUntil { copies.idChecks > atStart }
+
+        // Then it is looked up again
+        assertTrue(copies.idChecks > atStart)
+    }
+
+    private companion object {
+        const val SETTLE_ATTEMPTS = 100
+        const val SETTLE_SLEEP_MS = 20L
     }
 }

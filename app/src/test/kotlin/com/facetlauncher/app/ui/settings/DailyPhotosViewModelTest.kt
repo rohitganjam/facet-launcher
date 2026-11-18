@@ -71,6 +71,7 @@ class DailyPhotosViewModelTest {
             return feeds[source] ?: DailyPhotoFeed.Unavailable
         }
         override suspend fun original(photo: DailyPhoto, maxSide: Int): Bitmap? = original
+        override suspend fun originalWithBytes(photo: DailyPhoto, maxSide: Int): Pair<Bitmap, ByteArray>? = original?.let { it to byteArrayOf(7) }
         override suspend fun thumbnail(source: DailyPhotoSource, photo: DailyPhoto): Bitmap? = null
     }
 
@@ -276,6 +277,7 @@ class DailyPhotosViewModelTest {
         assertNotNull(picked)
         assertSame(bitmap, picked!!.bitmap)
         assertEquals("© a", picked.credit)
+        assertEquals(listOf<Byte>(7), picked.original!!.toList())
         assertFalse(viewModel.uiState.value.downloading)
 
         // And once handed on it is cleared

@@ -75,4 +75,35 @@ class DailyWallpaperRepositoryTest {
         // Then the first thirty remain
         assertEquals((1..30).map { n -> "https://img.peapix.com/$n.jpg" }, repository.get().history)
     }
+
+    @Test
+    fun `the pending original waits in app storage with its framing and goes with the pending photo`() = runTest {
+        // Given an original saved for the pending photo
+        val repository = repository()
+        val bytes = ByteArray(500) { (it % 200).toByte() }
+        repository.savePendingOriginal(bytes, android.graphics.RectF(0.375f, 0f, 0.625f, 1f))
+
+        // Then it is read back untouched, from app storage rather than the cache
+        val kept = repository.readPendingOriginal()!!
+        assertEquals(bytes.toList(), kept.bytes.toList())
+        assertEquals(android.graphics.RectF(0.375f, 0f, 0.625f, 1f), kept.framing)
+        assertEquals(true, File(RuntimeEnvironment.getApplication().filesDir, "daily_pending/pending_original.bin").exists())
+
+        // When the pending photo is deleted
+        repository.deletePending()
+
+        // Then the original is gone too
+        assertEquals(null, repository.readPendingOriginal())
+    }
+
+    @Test
+    fun `a later pending original replaces the earlier one`() = runTest {
+        // Given two originals saved in turn
+        val repository = repository()
+        repository.savePendingOriginal(byteArrayOf(1), android.graphics.RectF(0f, 0f, 1f, 1f))
+        repository.savePendingOriginal(byteArrayOf(2, 3), android.graphics.RectF(0.1f, 0f, 0.9f, 1f))
+
+        // Then only the later one is kept
+        assertEquals(listOf<Byte>(2, 3), repository.readPendingOriginal()!!.bytes.toList())
+    }
 }
