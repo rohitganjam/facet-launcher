@@ -82,7 +82,6 @@ class ImportBackupUseCaseTest {
         drawerPresentation = "GRID",
         drawerGridSize = "FOUR_BY_FOUR",
         drawerListItemSize = "COMPACT",
-        drawerOpacity = 0.5f,
         notificationDotsEnabled = false,
         notificationBadgeStyle = "COUNT",
         showNotificationsInAppMenu = false,

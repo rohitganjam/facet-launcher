@@ -13,6 +13,9 @@ import javax.inject.Singleton
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.withTimeoutOrNull
 
+/** What one capture session took: [current] in the orientation the screen was in, and [turned] in the other one when the session could turn the screen. */
+class CapturedFrames(val current: Bitmap, val turned: Bitmap? = null)
+
 /**
  * One frame of the screen, taken with MediaProjection after the user agrees in Android's own dialog. Used only to copy the user's wallpaper
  * from a clean screen: nothing is recorded, nothing leaves the phone, and nothing runs unless the user asked for it.
@@ -23,7 +26,10 @@ import kotlinx.coroutines.withTimeoutOrNull
 open class ScreenCaptureRepository @Inject constructor(
     @ApplicationContext private val context: Context,
 ) {
-    private var pending: CompletableDeferred<Bitmap?>? = null
+    private var pending: CompletableDeferred<CapturedFrames?>? = null
+
+    /** Turns the screen to landscape (`true`) or portrait for the second frame, and returns once it has turned (`false` when it did not); read by the service. */
+    @Volatile internal var rotateTo: (suspend (landscape: Boolean) -> Boolean)? = null
 
     /** Whether the capture screen has hidden both system bars right now; read by the service while it waits for them to go. */
     @Volatile internal var barsHidden: () -> Boolean = { false }
@@ -40,29 +46,38 @@ open class ScreenCaptureRepository @Inject constructor(
 
     /**
      * One frame of the screen once the user has agreed ([resultCode] and [consent] are the dialog's result); `null` when it could not be taken.
-     * The frame waits for [barsHidden] to be true, and the bars are painted over only if they never went.
+     * The frame waits for [barsHidden] to be true, and the bars are painted over only if they never went. With [rotateTo] the same session then
+     * turns the screen and takes a second frame in the other orientation, so one approval covers both; if that part fails only the first is returned.
      */
-    open suspend fun capture(resultCode: Int, consent: Intent, barsHidden: () -> Boolean = { false }): Bitmap? {
-        val result = CompletableDeferred<Bitmap?>()
+    open suspend fun capture(
+        resultCode: Int,
+        consent: Intent,
+        barsHidden: () -> Boolean = { false },
+        rotateTo: (suspend (landscape: Boolean) -> Boolean)? = null,
+    ): CapturedFrames? {
+        val result = CompletableDeferred<CapturedFrames?>()
         pending = result
         this.barsHidden = barsHidden
+        this.rotateTo = rotateTo
         try {
             runCatching { context.startForegroundService(ScreenCaptureService.startIntent(context, resultCode, consent)) }.onFailure { return null }
-            return withTimeoutOrNull(CAPTURE_TIMEOUT_MS) { result.await() }
+            return withTimeoutOrNull(if (rotateTo == null) CAPTURE_TIMEOUT_MS else CAPTURE_BOTH_TIMEOUT_MS) { result.await() }
         } finally {
             pending = null
             this.barsHidden = { false }
+            this.rotateTo = null
             context.stopService(Intent(context, ScreenCaptureService::class.java))
         }
     }
 
-    /** Called by the service with the frame it took, or `null` when it failed. */
-    internal fun deliver(frame: Bitmap?) {
-        pending?.complete(frame)
+    /** Called by the service with the frames it took, or `null` when it failed. */
+    internal fun deliver(frames: CapturedFrames?) {
+        pending?.complete(frames)
     }
 
     private companion object {
         const val CAPTURE_TIMEOUT_MS = 10_000L
+        const val CAPTURE_BOTH_TIMEOUT_MS = 25_000L
     }
 }
 

@@ -46,14 +46,17 @@ class WallpaperCaptureViewModel @Inject constructor(
     /** The user asked to capture: clear the card before Android's dialog opens, so the frame is clean. */
     fun onCaptureRequested() = setPhase(CapturePhase.Capturing)
 
-    /** Android's dialog closed with [resultCode] and [consent]; [barsHidden] says whether the screen has hidden the system bars. */
-    fun onConsentResult(resultCode: Int, consent: Intent?, barsHidden: () -> Boolean = { false }) {
+    /**
+     * Android's dialog closed with [resultCode] and [consent]; [barsHidden] says whether the screen has hidden the system bars, and [rotateTo] turns the
+     * screen (returning once it has) so the same approval also captures the other orientation.
+     */
+    fun onConsentResult(resultCode: Int, consent: Intent?, barsHidden: () -> Boolean = { false }, rotateTo: (suspend (landscape: Boolean) -> Boolean)? = null) {
         if (resultCode != Activity.RESULT_OK || consent == null) {
             setPhase(CapturePhase.Failed)
             return
         }
         viewModelScope.launch {
-            if (captureWallpaper(resultCode, consent, barsHidden)) events.send(WallpaperCaptureUiEvent.Captured) else setPhase(CapturePhase.Failed)
+            if (captureWallpaper(resultCode, consent, barsHidden, rotateTo)) events.send(WallpaperCaptureUiEvent.Captured) else setPhase(CapturePhase.Failed)
         }
     }
 

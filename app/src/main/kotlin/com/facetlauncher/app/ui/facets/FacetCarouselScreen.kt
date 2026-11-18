@@ -1,5 +1,6 @@
 package com.facetlauncher.app.ui.facets
 
+import com.facetlauncher.app.ui.components.FrostSurface
 import android.content.res.Configuration
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -21,6 +22,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -194,11 +196,7 @@ private fun FacetCarouselContent(
         // EnsureActiveFacetUseCase seeds the first facet on app launch — only briefly empty
         // before that resolves. Paint the translucent scrim so the overlay reads as opaque-ish
         // from the first frame of its fade-in.
-        Box(
-            modifier = modifier
-                .fillMaxSize()
-                .background(SurfaceContainer.copy(alpha = CAROUSEL_SCRIM_ALPHA)),
-        )
+        FrostSurface(SurfaceContainer.copy(alpha = CAROUSEL_SCRIM_ALPHA), modifier = modifier.fillMaxSize()) {}
         return
     }
 
@@ -211,7 +209,6 @@ private fun FacetCarouselContent(
     }
     var deletingFacet by remember { mutableStateOf<Facet?>(null) }
 
-    val config = LocalConfiguration.current
     val currentOnDismissDrag by rememberUpdatedState(onDismissDrag)
     val currentOnDismissDragEnd by rememberUpdatedState(onDismissDragEnd)
     // Rightward drags that land on the pager while it's settled on the first page have nowhere to
@@ -251,104 +248,19 @@ private fun FacetCarouselContent(
         }
     }
 
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            // Translucent overlay on Home — see CAROUSEL_SCRIM_ALPHA.
-            .background(SurfaceContainer.copy(alpha = CAROUSEL_SCRIM_ALPHA))
-            .testTag("facet_carousel_screen")
-            .nestedScroll(dismissOnSwipeBack)
-            .windowInsetsPadding(WindowInsets.systemBars),
-    ) {
-        FacetCarouselHeader(
-            facetCount = facets.size,
-            canReorder = facets.size > 1,
-            onReorderClick = onReorderFacets,
-        )
-
-        // The card mirrors the real screen at CAROUSEL_CARD_SCALE, so its width is that
-        // fraction of the screen width and the leftover half on each side is the neighbour peek.
-        val screenAspectRatio = config.screenWidthDp.toFloat() / config.screenHeightDp.toFloat()
-        // The dots and Launcher-settings row are measured first, so this box only gets what they
-        // leave; the card is shrunk to fit it (never grown past CAROUSEL_CARD_SCALE).
-        val compact = config.screenHeightDp < CAROUSEL_COMPACT_HEIGHT_BELOW_DP
-        val pageChromeHeight = if (compact) CAROUSEL_COMPACT_NAME_ROW_HEIGHT else CAROUSEL_PAGE_CHROME_HEIGHT
-        BoxWithConstraints(modifier = Modifier.fillMaxWidth().weight(1f, fill = false)) {
-            val idealCardHeight = (config.screenHeightDp * CAROUSEL_CARD_SCALE).dp
-            val cardHeight = minOf(idealCardHeight, maxHeight - pageChromeHeight)
-                .coerceAtLeast(CAROUSEL_MIN_CARD_HEIGHT)
-            val cardWidth = cardHeight * screenAspectRatio
-            val pageInset = ((maxWidth - cardWidth) / 2).coerceAtLeast(0.dp)
-        HorizontalPager(
-            state = pagerState,
-            contentPadding = PaddingValues(horizontal = pageInset),
-            pageSpacing = CAROUSEL_PAGE_SPACING,
-            // Flush against the header, no extra top gap — matches the Hub's own header-to-grid
-            // transition (HubScreen.kt's content starts exactly at headerHeight, zero padding).
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(cardHeight + pageChromeHeight)
-                .testTag("facet_carousel_pager"),
-        ) { page ->
-            if (page < facets.size) {
-                val facet = facets[page]
-                // Recent-apps style: tapping any visible card — centered or peeking —
-                // applies it immediately. Browsing (without applying) is swipe-only.
-                val locked = facet.id !in uiState.selectableFacetIds
-                FacetPreviewPage(
-                    facet = facet,
-                    isActive = facet.id == uiState.activeFacetId,
-                    locked = locked,
-                    style = uiState.style(facet.id),
-                    settings = uiState.globalSettings,
-                    content = HomeScreenContent(
-                        listItems = uiState.previewsByFacetId[facet.id]?.favorites.orEmpty(),
-                        dockItems = uiState.previewsByFacetId[facet.id]?.dockApps.orEmpty(),
-                        calendarEvents = uiState.previewsByFacetId[facet.id]?.calendarEvents.orEmpty(),
-                    ),
-                    canDelete = uiState.canDeleteFacet,
-                    onEditFacetClick = if (locked) onLockedFacetClick else ({ onEditFacet(facet.id) }),
-                    onDeleteClick = { deletingFacet = facet },
-                    onCardClick = if (locked) onLockedFacetClick else ({ onSelect(facet.id) }),
-                    homeWallpaper = uiState.homeWallpaper,
-                    screenAspectRatio = screenAspectRatio,
-                    compact = compact,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .testTag("facet_page_${facet.id}"),
-                )
-            } else {
-                AddFacetPage(
-                    onClick = onAddFacet,
-                    showProPill = !uiState.canAddFacet,
-                    compact = compact,
-                    modifier = Modifier.fillMaxSize().testTag("facet_carousel_add_page"),
-                )
-            }
-        }
-        }
-
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(top = 12.dp, bottom = 12.dp),
-            horizontalArrangement = Arrangement.Center,
-        ) {
-            facets.indices.forEach { index ->
-                val active = index == pagerState.currentPage
-                Box(
-                    modifier = Modifier
-                        .padding(horizontal = 3.dp)
-                        .size(width = if (active) 16.dp else 5.dp, height = 5.dp)
-                        .clip(RoundedCornerShape(2.5.dp))
-                        .background(if (active) Accent else Faint),
-                )
-            }
-        }
-
-        LauncherSettingsRow(
-            onClick = onNavigateToSettings,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(start = 24.dp, end = 24.dp, top = 4.dp, bottom = 20.dp),
+    // Translucent overlay on Home — see CAROUSEL_SCRIM_ALPHA — or frosted glass over the wallpaper copy.
+    FrostSurface(SurfaceContainer.copy(alpha = CAROUSEL_SCRIM_ALPHA), modifier = modifier.fillMaxSize()) {
+        FacetCarouselColumn(
+            uiState = uiState,
+            pagerState = pagerState,
+            dismissOnSwipeBack = dismissOnSwipeBack,
+            onSelect = onSelect,
+            onEditFacet = onEditFacet,
+            onAddFacet = onAddFacet,
+            onLockedFacetClick = onLockedFacetClick,
+            onReorderFacets = onReorderFacets,
+            onNavigateToSettings = onNavigateToSettings,
+            onRequestDelete = { deletingFacet = it },
         )
     }
 
@@ -360,6 +272,153 @@ private fun FacetCarouselContent(
             onConfirm = { onDeleteFacet(facet); deletingFacet = null },
             onDismiss = { deletingFacet = null },
         )
+    }
+}
+
+/** The carousel's content over its backing: the header, the pager of facet cards with its dots, and the launcher settings row. */
+@Composable
+private fun FacetCarouselColumn(
+    uiState: FacetCarouselUiState,
+    pagerState: PagerState,
+    dismissOnSwipeBack: NestedScrollConnection,
+    onSelect: (Long) -> Unit,
+    onEditFacet: (Long) -> Unit,
+    onAddFacet: () -> Unit,
+    onLockedFacetClick: () -> Unit,
+    onReorderFacets: () -> Unit,
+    onNavigateToSettings: () -> Unit,
+    onRequestDelete: (Facet) -> Unit,
+) {
+    val facets = uiState.facets
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .testTag("facet_carousel_screen")
+            .nestedScroll(dismissOnSwipeBack)
+            .windowInsetsPadding(WindowInsets.systemBars),
+    ) {
+        FacetCarouselHeader(
+            facetCount = facets.size,
+            canReorder = facets.size > 1,
+            onReorderClick = onReorderFacets,
+        )
+
+        FacetCarouselPager(
+            uiState = uiState,
+            pagerState = pagerState,
+            onSelect = onSelect,
+            onEditFacet = onEditFacet,
+            onAddFacet = onAddFacet,
+            onLockedFacetClick = onLockedFacetClick,
+            onRequestDelete = onRequestDelete,
+            modifier = Modifier.weight(1f, fill = false),
+        )
+
+        FacetCarouselDots(count = facets.size, current = pagerState.currentPage)
+
+        LauncherSettingsRow(
+            onClick = onNavigateToSettings,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 24.dp, end = 24.dp, top = 4.dp, bottom = 20.dp),
+        )
+    }
+}
+
+/** The pager of facet cards (and the add card) with the dots-and-settings chrome's height left over, sized to the screen's shape. */
+@Composable
+private fun FacetCarouselPager(
+    uiState: FacetCarouselUiState,
+    pagerState: PagerState,
+    onSelect: (Long) -> Unit,
+    onEditFacet: (Long) -> Unit,
+    onAddFacet: () -> Unit,
+    onLockedFacetClick: () -> Unit,
+    onRequestDelete: (Facet) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val facets = uiState.facets
+    val config = LocalConfiguration.current
+    // The card mirrors the real screen at CAROUSEL_CARD_SCALE, so its width is that
+    // fraction of the screen width and the leftover half on each side is the neighbour peek.
+    val screenAspectRatio = config.screenWidthDp.toFloat() / config.screenHeightDp.toFloat()
+    // The dots and Launcher-settings row are measured first, so this box only gets what they
+    // leave; the card is shrunk to fit it (never grown past CAROUSEL_CARD_SCALE).
+    val compact = config.screenHeightDp < CAROUSEL_COMPACT_HEIGHT_BELOW_DP
+    val pageChromeHeight = if (compact) CAROUSEL_COMPACT_NAME_ROW_HEIGHT else CAROUSEL_PAGE_CHROME_HEIGHT
+    BoxWithConstraints(modifier = modifier.fillMaxWidth()) {
+        val idealCardHeight = (config.screenHeightDp * CAROUSEL_CARD_SCALE).dp
+        val cardHeight = minOf(idealCardHeight, maxHeight - pageChromeHeight)
+            .coerceAtLeast(CAROUSEL_MIN_CARD_HEIGHT)
+        val cardWidth = cardHeight * screenAspectRatio
+        val pageInset = ((maxWidth - cardWidth) / 2).coerceAtLeast(0.dp)
+    HorizontalPager(
+        state = pagerState,
+        contentPadding = PaddingValues(horizontal = pageInset),
+        pageSpacing = CAROUSEL_PAGE_SPACING,
+        // Flush against the header, no extra top gap — matches the Hub's own header-to-grid
+        // transition (HubScreen.kt's content starts exactly at headerHeight, zero padding).
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(cardHeight + pageChromeHeight)
+            .testTag("facet_carousel_pager"),
+    ) { page ->
+        if (page < facets.size) {
+            val facet = facets[page]
+            // Recent-apps style: tapping any visible card — centered or peeking —
+            // applies it immediately. Browsing (without applying) is swipe-only.
+            val locked = facet.id !in uiState.selectableFacetIds
+            FacetPreviewPage(
+                facet = facet,
+                isActive = facet.id == uiState.activeFacetId,
+                locked = locked,
+                style = uiState.style(facet.id),
+                settings = uiState.globalSettings,
+                content = HomeScreenContent(
+                    listItems = uiState.previewsByFacetId[facet.id]?.favorites.orEmpty(),
+                    dockItems = uiState.previewsByFacetId[facet.id]?.dockApps.orEmpty(),
+                    calendarEvents = uiState.previewsByFacetId[facet.id]?.calendarEvents.orEmpty(),
+                ),
+                canDelete = uiState.canDeleteFacet,
+                onEditFacetClick = if (locked) onLockedFacetClick else ({ onEditFacet(facet.id) }),
+                onDeleteClick = { onRequestDelete(facet) },
+                onCardClick = if (locked) onLockedFacetClick else ({ onSelect(facet.id) }),
+                homeWallpaper = uiState.homeWallpaper,
+                screenAspectRatio = screenAspectRatio,
+                compact = compact,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .testTag("facet_page_${facet.id}"),
+            )
+        } else {
+            AddFacetPage(
+                onClick = onAddFacet,
+                showProPill = !uiState.canAddFacet,
+                compact = compact,
+                modifier = Modifier.fillMaxSize().testTag("facet_carousel_add_page"),
+            )
+        }
+    }
+    }
+}
+
+/** One dot per facet page, the current one stretched. */
+@Composable
+private fun FacetCarouselDots(count: Int, current: Int) {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(top = 12.dp, bottom = 12.dp),
+        horizontalArrangement = Arrangement.Center,
+    ) {
+        for (index in 0 until count) {
+            val active = index == current
+            Box(
+                modifier = Modifier
+                    .padding(horizontal = 3.dp)
+                    .size(width = if (active) 16.dp else 5.dp, height = 5.dp)
+                    .clip(RoundedCornerShape(2.5.dp))
+                    .background(if (active) Accent else Faint),
+            )
+        }
     }
 }
 

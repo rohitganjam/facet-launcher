@@ -84,9 +84,6 @@ class AppDrawerSettingsViewModel @Inject constructor(
         viewModelScope.launch { settingsRepository.setSearchBarPosition(position) }
     }
 
-    fun setDrawerOpacity(opacity: Float) {
-        viewModelScope.launch { settingsRepository.setDrawerOpacity(opacity) }
-    }
 
     fun setDrawerFolderDisplayMode(mode: DrawerFolderDisplayMode) {
         viewModelScope.launch { settingsRepository.setDrawerFolderDisplayMode(mode) }

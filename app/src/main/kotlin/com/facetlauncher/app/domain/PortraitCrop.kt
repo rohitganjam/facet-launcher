@@ -6,7 +6,7 @@ import com.facetlauncher.app.data.model.ImageRegion
 data class PortraitCrop(val region: ImageRegion, val sampleSize: Int)
 
 /** The most a daily photo's crop may be enlarged to fill the screen's width before it looks soft. */
-internal const val MAX_DAILY_UPSCALE = 1.35
+internal const val MAX_DAILY_UPSCALE = 1.25
 
 /**
  * The centre of an [imageWidth] x [imageHeight] photo in the screen's shape, full height for a wider photo and full width for a taller one,

@@ -4,6 +4,7 @@ import android.graphics.Bitmap
 import android.graphics.RectF
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.WallpaperCopyRepository
+import com.facetlauncher.app.data.model.ScreenSize
 import com.facetlauncher.app.data.di.DefaultDispatcher
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineDispatcher
@@ -18,11 +19,11 @@ class UseScreenshotAsWallpaperCopyUseCase @Inject constructor(
     private val settingsRepository: SettingsRepository,
     @DefaultDispatcher private val defaultDispatcher: CoroutineDispatcher,
 ) {
-    /** `true` when the copy was stored. */
-    suspend operator fun invoke(screenshot: Bitmap, visible: RectF): Boolean {
-        val (width, height) = wallpaperCopyRepository.screenSize()
+    /** `true` when the copy was stored, for [view] or, without one, the view now showing (the screen in the orientation it is in). */
+    suspend operator fun invoke(screenshot: Bitmap, visible: RectF, view: ScreenSize? = null): Boolean {
+        val (width, height) = view?.let { it.width to it.height } ?: wallpaperCopyRepository.windowSize()
         val cropped = withContext(defaultDispatcher) { screenshot.croppedTo(visible, width, height) }
-        val stored = wallpaperCopyRepository.save(cropped)
+        val stored = if (view == null) wallpaperCopyRepository.save(cropped) else wallpaperCopyRepository.save(cropped, view)
         if (stored) settingsRepository.setWallpaperCopySystemId(wallpaperCopyRepository.currentSystemWallpaperId())
         return stored
     }

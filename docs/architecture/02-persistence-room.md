@@ -517,7 +517,6 @@ erDiagram
         string drawer_presentation "DrawerPresentation, default LIST"
         string drawer_grid_size "DrawerGridDensity, default REGULAR (legacy FIVE_BY_SIX etc. still read)"
         string drawer_list_item_size "DrawerListItemSize, default REGULAR"
-        float drawer_opacity "default 0.6"
         boolean show_drawer_icons "default true"
         boolean show_drawer_labels "default true"
         string search_bar_position "SearchBarPosition, default TOP"
@@ -654,7 +653,6 @@ DataStore serialises writes and is main-safe; callers `viewModelScope.launch { }
 | `setDrawerPresentation(DrawerPresentation)` | `drawer_presentation` | set | `AppDrawerSettingsViewModel`, `OnboardingViewModel` |
 | `setDrawerGridDensity(DrawerGridDensity)` | `drawer_grid_size` | set | `AppDrawerSettingsViewModel` |
 | `setDrawerListItemSize(DrawerListItemSize)` | `drawer_list_item_size` | set | `AppDrawerSettingsViewModel` |
-| `setDrawerOpacity(Float)` | `drawer_opacity` | set | `AppDrawerSettingsViewModel` |
 | `setShowDrawerIcons(Boolean)` | `show_drawer_icons` | set | `AppDrawerSettingsViewModel` |
 | `setShowDrawerLabels(Boolean)` | `show_drawer_labels` | set | `AppDrawerSettingsViewModel` |
 | `setSearchBarPosition(SearchBarPosition)` | `search_bar_position` | set | `AppDrawerSettingsViewModel`, `OnboardingViewModel`, `ImportBackupUseCase` (restore) |
@@ -785,7 +783,6 @@ its position.
 | `drawer_presentation` | String (`DrawerPresentation`) | `drawerPresentation` | `LIST` |
 | `drawer_grid_size` | String (`DrawerGridDensity`) | `drawerGridDensity` | `REGULAR` |
 | `drawer_list_item_size` | String (`DrawerListItemSize`) | `drawerListItemSize` | `REGULAR` | a row is icon + padding each side: Compact 36 + 4, Regular 44 + 12, Spacious 44 + 16 (icons × Icon size); also sizes Private Space's rows |
-| `drawer_opacity` | Float | `drawerOpacity` | `0.6` |
 | `show_drawer_icons` | Boolean | `showDrawerIcons` | `true` |
 | `show_drawer_labels` | Boolean | `showDrawerLabels` | `true` |
 | `search_bar_position` | String (`SearchBarPosition`) | `searchBarPosition` | `TOP` |
@@ -848,7 +845,7 @@ accessibility grant, and the pair is small enough to set again after a restore.
 ### 5.5 What is deliberately *not* in DataStore
 
 Anything per-facet (Room `facets`), anything per-app placement (Room), permission *grants* (read
-live from the OS on every check), the installed-app list, and notification counts (in-memory). The glass wallpaper copies are PNGs, one per screen size (`wallpaper_copy_<w>x<h>.png`) with `wallpaper_screens.txt` listing the screens seen and `wallpaper_copy_ids.txt` the system wallpaper id each copy was stored under, in `filesDir`, owned by `WallpaperCopyRepository` and left out of backups.
+live from the OS on every check), the installed-app list, and notification counts (in-memory). The glass wallpaper copies are PNGs, one per view, a screen's size in one orientation (`wallpaper_copy_<w>x<h>.png`, so a phone has a portrait and a landscape one) with `wallpaper_screens.txt` listing the screens seen in their natural size and `wallpaper_copy_ids.txt` the system wallpaper id each copy was stored under, and `wallpaper_original.bin` with `wallpaper_original_framing.txt` the picked image as it was and its framing, in `filesDir`, owned by `WallpaperCopyRepository` and left out of backups.
 
 ### 5.6 Adding a key — the checklist
 

@@ -176,11 +176,63 @@ class WallpaperCopyRepositoryTest {
         assertTrue(width in 1..height)
     }
 
-    /** A repository on a screen the test can change, as a foldable does when it folds. */
+    @Test
+    fun `the original is kept untouched with its framing and system id and read back by a new repository`() = runTest {
+        // Given an original and the framing the user chose
+        val bytes = ByteArray(1000) { (it % 251).toByte() }
+        repository().saveOriginal(bytes, android.graphics.RectF(0.1f, 0.2f, 0.6f, 0.9f), 42)
+
+        // When a new repository reads it
+        val kept = repository().original()
+
+        // Then the bytes are exactly as given, with the framing and the id
+        assertEquals(bytes.toList(), kept!!.file.readBytes().toList())
+        assertEquals(android.graphics.RectF(0.1f, 0.2f, 0.6f, 0.9f), kept.framing)
+        assertEquals(42, kept.systemId)
+    }
+
+    @Test
+    fun `a later original replaces the earlier one`() = runTest {
+        // Given an original, then another
+        val repository = repository()
+        repository.saveOriginal(byteArrayOf(1), android.graphics.RectF(0f, 0f, 1f, 1f), 1)
+        repository.saveOriginal(byteArrayOf(2, 3), android.graphics.RectF(0.5f, 0f, 1f, 1f), 2)
+
+        // Then only the later one is kept
+        val kept = repository.original()!!
+        assertEquals(listOf<Byte>(2, 3), kept.file.readBytes().toList())
+        assertEquals(2, kept.systemId)
+    }
+
+    @Test
+    fun `there is no original until one is saved and removing the copies deletes it`() = runTest {
+        // Given nothing saved
+        val repository = repository()
+        assertNull(repository.original())
+
+        // When an original is saved and the copies removed
+        repository.saveOriginal(byteArrayOf(1), android.graphics.RectF(0f, 0f, 1f, 1f), 1)
+        assertNotNull(repository.original())
+        repository.remove()
+
+        // Then the original is gone too
+        assertNull(repository.original())
+    }
+
+    /** A repository on a screen the test can change, as a foldable does when it folds, and turn, as a phone does when it rotates. */
     private inner class FoldableRepository(start: ScreenSize) : WallpaperCopyRepository(context, wallpaperManager) {
+        /** The view showing: the window's size in the orientation it is in. */
         val screen = MutableStateFlow(start)
-        override fun screenSize() = screen.value.width to screen.value.height
+        private var rotated = false
+        override fun screenSize() = (if (rotated) screen.value.turned else screen.value).let { it.width to it.height }
+        override fun windowSize() = screen.value.width to screen.value.height
         override val currentScreen: Flow<ScreenSize> get() = screen
+
+        /** Turns the phone a quarter. */
+        fun rotate() {
+            rotated = !rotated
+            screen.value = screen.value.turned
+        }
     }
 
     private val outer = ScreenSize(1080, 2092)
@@ -235,13 +287,13 @@ class WallpaperCopyRepositoryTest {
         repository.recheck()
         repository.save(bitmap(50, 60))
 
-        // Then the outer screen is reported as lacking a copy, and shows the inner one rather than its old image
+        // Then the outer screen is reported as lacking a current copy, and its own old one is reported out of date rather than borrowing the inner one
         val screens = repository.screens.first()
         assertTrue(screens.first { it.size == inner }.hasCopy)
         assertFalse(screens.first { it.size == outer }.hasCopy)
         repository.screen.value = outer
-        assertEquals(50, repository.copy.first()!!.width)
-        assertTrue(repository.copyIsCurrent.first())
+        assertEquals(10, repository.copy.first()!!.width)
+        assertFalse(repository.copyIsCurrent.first())
     }
 
     @Test
@@ -277,7 +329,7 @@ class WallpaperCopyRepositoryTest {
     }
 
     @Test
-    fun `a screen without a copy shows the other copy closest in shape`() = runTest {
+    fun `a screen without a copy shows none even when another screen has one`() = runTest {
         // Given only the outer screen has a copy
         val repository = FoldableRepository(outer)
         repository.save(bitmap(10, 20))
@@ -285,23 +337,54 @@ class WallpaperCopyRepositoryTest {
         // When the inner screen is showing
         repository.screen.value = inner
 
-        // Then it shows the outer copy rather than nothing
-        assertEquals(10, repository.copy.first()!!.width)
+        // Then it shows nothing, rather than another screen's copy
+        assertNull(repository.copy.first())
     }
 
     @Test
-    fun `of two other copies the one closest in shape stands in`() = runTest {
-        // Given an outer-shaped and a squarer copy, and a screen shaped like the squarer one
+    fun `each orientation of a screen keeps its own copy`() = runTest {
+        // Given a portrait copy and a landscape copy of one phone
         val repository = FoldableRepository(outer)
         repository.save(bitmap(10, 20))
-        repository.screen.value = ScreenSize(1500, 1800)
-        repository.save(bitmap(50, 60))
+        repository.rotate()
+        repository.save(bitmap(30, 15))
 
-        // When a third screen near the squarer one shows
-        repository.screen.value = ScreenSize(1700, 2000)
+        // When the phone is turned back and forth
+        val landscape = repository.copy.first()
+        repository.rotate()
+        val portrait = repository.copy.first()
 
-        // Then the squarer copy stands in
-        assertEquals(50, repository.copy.first()!!.width)
+        // Then each orientation shows its own copy, as it was stored
+        assertEquals(30, landscape!!.width)
+        assertEquals(10, portrait!!.width)
+    }
+
+    @Test
+    fun `an orientation without a copy shows none while the other has one`() = runTest {
+        // Given only a portrait copy
+        val repository = FoldableRepository(outer)
+        repository.save(bitmap(10, 20))
+
+        // When the phone is turned
+        repository.rotate()
+
+        // Then there is no copy, and it is not reported as out of date
+        assertNull(repository.copy.first())
+        assertTrue(repository.copyIsCurrent.first())
+    }
+
+    @Test
+    fun `a turned view is the same screen not another one`() = runTest {
+        // Given a portrait copy and a landscape copy of one phone
+        val repository = FoldableRepository(outer)
+        repository.save(bitmap(10, 20))
+        repository.rotate()
+        repository.save(bitmap(30, 15))
+
+        // Then one screen is known, with a view in each orientation
+        assertEquals(listOf(outer), repository.knownScreens())
+        assertEquals(listOf(outer, outer.turned), repository.screens.first().map { it.size })
+        assertEquals(listOf(outer), repository.screens.first().map { it.screen }.distinct())
     }
 
     @Test
@@ -316,8 +399,16 @@ class WallpaperCopyRepositoryTest {
         // When a new repository reads them back
         val screens = FoldableRepository(outer).screens.first()
 
-        // Then both are listed, the larger first, and only the outer has a copy
-        assertEquals(listOf(ScreenCopy(inner, hasCopy = false), ScreenCopy(outer, hasCopy = true)), screens)
+        // Then both screens are listed in each orientation, the larger first, and only the outer's own view has a copy
+        assertEquals(
+            listOf(
+                ScreenCopy(inner, hasCopy = false),
+                ScreenCopy(inner.turned, hasCopy = false, screen = inner),
+                ScreenCopy(outer, hasCopy = true),
+                ScreenCopy(outer.turned, hasCopy = false, screen = outer),
+            ),
+            screens,
+        )
     }
 
     @Test
@@ -331,7 +422,7 @@ class WallpaperCopyRepositoryTest {
         repository.remove()
 
         // Then the screen is still known, without a copy
-        assertEquals(listOf(ScreenCopy(outer, hasCopy = false)), repository.screens.first())
+        assertEquals(listOf(ScreenCopy(outer, hasCopy = false), ScreenCopy(outer.turned, hasCopy = false, screen = outer)), repository.screens.first())
     }
 
     @Test
@@ -387,5 +478,130 @@ class WallpaperCopyRepositoryTest {
         assertEquals(outer, ScreenSize.parse(outer.key))
         assertNull(ScreenSize.parse("wide"))
         assertNull(ScreenSize.parse("0x10"))
+    }
+
+    @Test
+    fun `an original is streamed from its uri untouched`() = runTest {
+        // Given an image file with a uri
+        val source = File(context.cacheDir, "source.jpg").apply { writeBytes(ByteArray(5000) { (it % 97).toByte() }) }
+
+        // When it is kept from that uri
+        val kept = repository().saveOriginal(android.net.Uri.fromFile(source), android.graphics.RectF(0f, 0f, 1f, 1f), 3)
+
+        // Then the stored file is the same bytes, with its id
+        assertTrue(kept)
+        val stored = repository().original()!!
+        assertEquals(source.readBytes().toList(), stored.file.readBytes().toList())
+        assertEquals(3, stored.systemId)
+    }
+
+    @Test
+    fun `an original that cannot be read leaves the earlier one alone`() = runTest {
+        // Given an original already kept, and a uri that cannot be opened
+        val repository = repository()
+        repository.saveOriginal(byteArrayOf(9), android.graphics.RectF(0f, 0f, 1f, 1f), 1)
+
+        // When keeping the unreadable one
+        val kept = repository.saveOriginal(android.net.Uri.parse("content://missing/none"), android.graphics.RectF(0f, 0f, 1f, 1f), 2)
+
+        // Then it reports failure and the earlier original is intact
+        assertFalse(kept)
+        assertEquals(1, repository.original()!!.systemId)
+        assertEquals(listOf<Byte>(9), repository.original()!!.file.readBytes().toList())
+    }
+
+    @Test
+    fun `the original's id is read without the image and the original can be deleted alone`() = runTest {
+        // Given an original and a copy
+        val repository = repository()
+        repository.saveOriginal(byteArrayOf(1), android.graphics.RectF(0f, 0f, 1f, 1f), 11)
+        repository.save(bitmap(10, 20), ScreenSize(10, 20))
+        assertEquals(11, repository.originalSystemId())
+
+        // When only the original is deleted
+        repository.deleteOriginal()
+
+        // Then the id is gone and the copy stays
+        assertNull(repository.originalSystemId())
+        assertTrue(File(context.filesDir, "wallpaper_copy_10x20.png").exists())
+    }
+
+    @Test
+    fun `the same screen at another resolution replaces the old size and its copies`() = runTest {
+        // Given a copy for a screen at one resolution
+        val repository = FoldableRepository(ScreenSize(1080, 2400))
+        repository.save(bitmap(10, 20))
+        repository.save(bitmap(30, 15), ScreenSize(2400, 1080))
+        repository.copy.first()
+
+        // When the display size is changed, so the same shape appears at a smaller size
+        repository.screen.value = ScreenSize(720, 1600)
+        repository.copy.first()
+
+        // Then only the new size is known, and the old copies are deleted
+        assertEquals(listOf(ScreenSize(720, 1600)), repository.knownScreens())
+        assertFalse(File(context.filesDir, "wallpaper_copy_1080x2400.png").exists())
+        assertFalse(File(context.filesDir, "wallpaper_copy_2400x1080.png").exists())
+    }
+
+    @Test
+    fun `a screen of another shape is another screen not a resolution`() = runTest {
+        // Given a foldable's outer screen with a copy
+        val repository = FoldableRepository(outer)
+        repository.save(bitmap(10, 20))
+        repository.copy.first()
+
+        // When the inner screen shows
+        repository.screen.value = inner
+        repository.copy.first()
+
+        // Then both are known and the outer copy stays
+        assertEquals(setOf(outer, inner), repository.knownScreens().toSet())
+        assertTrue(File(context.filesDir, "wallpaper_copy_1080x2092.png").exists())
+    }
+
+    /** A repository on a fixed screen and wallpaper id, so the stored shape can be judged against them. */
+    private fun repositoryOn(width: Int, height: Int, systemId: Int) = object : WallpaperCopyRepository(context, wallpaperManager) {
+        override fun windowSize() = width to height
+        override fun currentSystemWallpaperId() = systemId
+    }
+
+    @Test
+    fun `the offset is the middle for a wallpaper Facet did not set`() {
+        // Given no recorded wallpaper
+        val repository = repositoryOn(1080, 2400, systemId = 7)
+
+        // Then the offset is half way
+        assertEquals(0.5f, repository.wallpaperOffsetX(), 0f)
+    }
+
+    @Test
+    fun `the offset is half way in the orientation the wallpaper was not framed in`() {
+        // Given a wallpaper framed in portrait, recorded for the current id, and a phone held sideways
+        repositoryOn(1080, 2400, systemId = 7).recordWallpaperShape(7, 2400, 2400, framedLandscape = false)
+        val sideways = repositoryOn(2400, 1080, systemId = 7)
+
+        // Then the offset is half way
+        assertEquals(0.5f, sideways.wallpaperOffsetX(), 0f)
+    }
+
+    @Test
+    fun `the offset is half way once the system wallpaper has changed since it was recorded`() {
+        // Given a recorded wallpaper for id 7 and a different id now
+        repositoryOn(1080, 2400, systemId = 7).recordWallpaperShape(7, 2400, 2400, framedLandscape = false)
+
+        // Then the offset is half way
+        assertEquals(0.5f, repositoryOn(1080, 2400, systemId = 8).wallpaperOffsetX(), 0f)
+    }
+
+    @Test
+    fun `the offset is worked out from the recorded size in the orientation it was framed in`() {
+        // Given a square wallpaper framed in portrait and the phone held upright
+        val repository = repositoryOn(1080, 2400, systemId = 7)
+        repository.recordWallpaperShape(7, 2400, 2400, framedLandscape = false)
+
+        // Then the offset is the one for that shape, whatever Android version the test runs on (before 14 it is half way)
+        val expected = com.facetlauncher.app.domain.wallpaperOffsetX(2400, 2400, 1080, 2400)
+        assertEquals(expected, repository.wallpaperOffsetX(), 0.0001f)
     }
 }

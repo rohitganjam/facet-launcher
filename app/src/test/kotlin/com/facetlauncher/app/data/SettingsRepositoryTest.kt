@@ -129,7 +129,6 @@ class SettingsRepositoryTest {
         assertEquals(DrawerListItemSize.REGULAR, settings.drawerListItemSize)
         assertEquals(IconRenderMode.SYSTEM_DEFAULT, settings.iconRenderMode)
         assertEquals(IconShape.SQUIRCLE, settings.iconShape)
-        assertEquals(0.6f, settings.drawerOpacity, 0.0001f)
         assertEquals(true, settings.notificationDotsEnabled)
         assertEquals(false, settings.homeOpensSearch)
         assertEquals(false, settings.doubleTapToLock)
@@ -293,7 +292,6 @@ class SettingsRepositoryTest {
         repository.setLauncherFontOption(LauncherFontOption.MANROPE)
         repository.setFontScaleOption(FontScaleOption.LARGE)
         repository.setAppLabelColorOption(ClockColorOption.THEME_INVERTED)
-        repository.setDrawerOpacity(0.5f)
         repository.setNotificationDotsEnabled(false)
         repository.setNotificationBadgeStyle(NotificationBadgeStyle.COUNT)
         repository.setShowMediaPlayerOnHome(true)
@@ -332,7 +330,6 @@ class SettingsRepositoryTest {
         assertEquals(LauncherFontOption.MANROPE, settings.launcherFontOption)
         assertEquals(FontScaleOption.LARGE, settings.fontScaleOption)
         assertEquals(ClockColorOption.THEME_INVERTED, settings.appLabelColorOption)
-        assertEquals(0.5f, settings.drawerOpacity, 0.0001f)
         assertEquals(false, settings.notificationDotsEnabled)
         assertEquals(NotificationBadgeStyle.COUNT, settings.notificationBadgeStyle)
         assertEquals(true, settings.showMediaPlayerOnHome)
@@ -372,18 +369,6 @@ class SettingsRepositoryTest {
         // When set above the ceiling, it's coerced down to 20
         repository.setAppsToShowCount(99)
         assertEquals(20, repository.settings.first().appsToShowCount)
-    }
-
-    @Test
-    fun `drawer opacity is coerced into the 0 to 1 range`() = runTest {
-        // Given a repository
-        val repository = createRepository()
-
-        // When an out-of-range opacity is set
-        repository.setDrawerOpacity(1.5f)
-
-        // Then it is clamped to 1.0
-        assertEquals(1f, repository.settings.first().drawerOpacity, 0.0001f)
     }
 
     @Test

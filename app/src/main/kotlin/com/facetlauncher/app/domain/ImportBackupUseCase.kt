@@ -201,7 +201,6 @@ class ImportBackupUseCase @Inject constructor(
             setDrawerPresentation(settings.drawerPresentation.toEnumOrDefault(DrawerPresentation.LIST))
             setDrawerGridDensity(DrawerGridDensity.fromStored(settings.drawerGridSize) ?: DrawerGridDensity.COMPACT)
             setDrawerListItemSize(settings.drawerListItemSize.toEnumOrDefault(DrawerListItemSize.REGULAR))
-            setDrawerOpacity(settings.drawerOpacity)
             setNotificationDotsEnabled(settings.notificationDotsEnabled)
             setNotificationBadgeStyle(settings.notificationBadgeStyle.toEnumOrDefault(NotificationBadgeStyle.DOT))
             setShowMediaPlayerOnHome(settings.showMediaPlayerOnHome)

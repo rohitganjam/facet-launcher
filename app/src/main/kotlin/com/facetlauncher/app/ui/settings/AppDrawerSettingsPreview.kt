@@ -135,7 +135,6 @@ internal fun AppDrawerSettingsPreview(
                     showIcons = settings.showDrawerIcons,
                     showLabels = settings.showDrawerLabels,
                     labelFontWeight = settings.homeAppsFontWeight.resolve(),
-                    opacity = settings.drawerOpacity,
                     notificationBadgeStyle = settings.notificationBadgeStyle,
                     folderDisplayMode = settings.drawerFolderDisplayMode,
                     recentlyInstalledPosition = settings.recentlyInstalledPosition,

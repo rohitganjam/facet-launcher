@@ -5,12 +5,15 @@ import com.facetlauncher.app.data.WallpaperCopyRepository
 import com.facetlauncher.app.data.model.OtherScreenPromptKind
 import com.facetlauncher.app.data.model.ScreenCopy
 import com.facetlauncher.app.data.model.ScreenSize
+import com.facetlauncher.app.data.model.WallpaperCopyNeed
 import com.facetlauncher.app.data.model.promptKey
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.mockito.Mockito.mock
@@ -114,7 +117,9 @@ class ObserveWallpaperScreensUseCaseTest {
         assertEquals(listOf(inner, outer), ObserveWallpaperScreensUseCase(copies)().first().sizes)
     }
 
-    private suspend fun needing(copies: FakeCopies) = ObserveWallpaperScreensUseCase(copies).screenNeedingCopy().first()
+    private suspend fun need(copies: FakeCopies) = ObserveWallpaperScreensUseCase(copies).copyNeed().first()
+
+    private suspend fun needing(copies: FakeCopies) = need(copies)?.view
 
     @Test
     fun `the screen showing is offered an update when another has the current copy`() = runTest {
@@ -173,5 +178,58 @@ class ObserveWallpaperScreensUseCaseTest {
 
         // Then the missing screen is the other one
         assertEquals(false, prompt(copies).thisScreen)
+    }
+
+    private val outerTurned = outer.turned
+
+    @Test
+    fun `a turned view without a capture is suggested when the screen's other orientation has one`() = runTest {
+        // Given the phone has a portrait capture and its landscape view has none
+        val copies = FakeCopies(listOf(ScreenCopy(outer, true), ScreenCopy(outerTurned, false, screen = outer)))
+
+        // Then the missing view is suggested, as the other orientation of a screen that has a capture
+        val result = prompt(copies)
+        assertEquals(OtherScreenPromptKind.MissingCopy, result.kind)
+        assertEquals(listOf(outerTurned.promptKey), result.dismissKeys)
+        assertTrue(result.otherOrientation)
+    }
+
+    @Test
+    fun `a missing screen is not described as an orientation`() = runTest {
+        // Given the outer screen has a capture and the inner screen, in both orientations, has none
+        val copies = FakeCopies(listOf(ScreenCopy(inner, false), ScreenCopy(inner.turned, false, screen = inner), ScreenCopy(outer, true), ScreenCopy(outerTurned, true, screen = outer)))
+
+        // Then the suggestion is about the other screen
+        assertFalse(prompt(copies).otherOrientation)
+    }
+
+    @Test
+    fun `the view showing is offered a capture by orientation when the other orientation has one`() = runTest {
+        // Given a portrait capture and the phone held sideways
+        val copies = FakeCopies(listOf(ScreenCopy(outer, true), ScreenCopy(outerTurned, false, screen = outer)))
+        copies.showing.value = outerTurned
+
+        // Then Home offers the landscape view, saying the other orientation is covered
+        assertEquals(WallpaperCopyNeed(outerTurned, otherOrientation = true), need(copies))
+    }
+
+    @Test
+    fun `the view showing is offered a capture without the orientation note when its screen has none at all`() = runTest {
+        // Given the inner screen has a capture and the outer, showing in portrait, has none in either orientation
+        val copies = FakeCopies(listOf(ScreenCopy(inner, true), ScreenCopy(outer, false), ScreenCopy(outerTurned, false, screen = outer)))
+
+        // Then Home offers the outer view, with no note about orientation
+        assertEquals(WallpaperCopyNeed(outer, otherOrientation = false), need(copies))
+    }
+
+    @Test
+    fun `an orientation the user said no to is not offered`() = runTest {
+        // Given the landscape view lacks a capture but was dismissed
+        val copies = FakeCopies(listOf(ScreenCopy(outer, true), ScreenCopy(outerTurned, false, screen = outer)))
+        copies.showing.value = outerTurned
+        copies.dismissPrompt(outerTurned.promptKey)
+
+        // Then nothing is offered
+        assertEquals(null, need(copies))
     }
 }

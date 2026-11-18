@@ -106,7 +106,7 @@ class WeatherBackupTest {
 
     private fun backupSettings() = BackupSettings(
         use24HourTime = true, dockDisplayMode = "TEXT", drawerPresentation = "GRID", drawerGridSize = "FOUR_BY_FOUR",
-        drawerListItemSize = "COMPACT", drawerOpacity = 0.5f, notificationDotsEnabled = false, notificationBadgeStyle = "COUNT",
+        drawerListItemSize = "COMPACT", notificationDotsEnabled = false, notificationBadgeStyle = "COUNT",
         showNotificationsInAppMenu = false, showDrawerIcons = false, showDrawerLabels = false, searchBarPosition = "BOTTOM",
         activeFacetIndex = null, showAllDayEvents = false, searchContactsEnabled = true, themeMode = "DARK",
         systemBarIconStyle = "LIGHT", accentFromSystem = false, customAccentSwatch = "BLUE", wallpaperAccentRole = "SECONDARY",

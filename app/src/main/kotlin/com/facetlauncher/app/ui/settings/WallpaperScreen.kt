@@ -69,6 +69,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.facetlauncher.app.R
+import com.facetlauncher.app.data.model.OtherScreenPrompt
 import com.facetlauncher.app.data.model.OtherScreenPromptKind
 import com.facetlauncher.app.data.model.ScreenSize
 import com.facetlauncher.app.domain.coverRegion
@@ -76,6 +77,7 @@ import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
 import com.facetlauncher.app.data.model.ProReason
+import com.facetlauncher.app.domain.WALLPAPER_SYSTEM_ZOOM
 import com.facetlauncher.app.ui.components.BlockingProgressOverlay
 import com.facetlauncher.app.ui.components.CardDivider
 import com.facetlauncher.app.ui.components.PillTabPair
@@ -131,7 +133,7 @@ fun WallpaperScreen(
     if (showDaily) {
         DailyPhotosScreen(
             onBack = { showDaily = false },
-            onUsePhoto = { photo, credit -> viewModel.onPickedBitmap(photo, credit) },
+            onUsePhoto = { photo, credit, original -> viewModel.onPickedBitmap(photo, credit, original) },
             onChooseImage = {
                 viewModel.onPickStarted(copyOnly = false)
                 picker.launch("image/*")
@@ -204,7 +206,7 @@ internal fun WallpaperContent(
                     item { WallpaperPreview(uiState) }
                     if (uiState.offerCopy) item { CopyOffer(onAcceptOffer, onDeclineOffer) }
                     item { WallpaperStatus(uiState) }
-                    if (uiState.otherScreenPrompt.kind != OtherScreenPromptKind.None) item { OtherScreenCard(uiState.otherScreenPrompt.kind, uiState.otherScreenPrompt.thisScreen, onTakeScreenshot, onDismissOtherScreen) }
+                    if (uiState.otherScreenPrompt.kind != OtherScreenPromptKind.None) item { OtherScreenCard(uiState.otherScreenPrompt, onTakeScreenshot, onDismissOtherScreen) }
                     item { ChoiceRows(onChooseWallpaper, onSetSystemWallpaper) }
                     item { CurrentWallpaperCard(inUse = uiState.copy != null && !uiState.stale, onTakeScreenshot, onUseScreenshot) }
                     if (uiState.copy != null) item { RemoveLink(onRemoveCopy) }
@@ -266,17 +268,25 @@ private fun CopyOffer(onAccept: () -> Unit, onDecline: () -> Unit) {
 
 /** Suggests adding a copy for another screen of a foldable: one that has none, or one Facet has not seen yet. */
 @Composable
-private fun OtherScreenCard(kind: OtherScreenPromptKind, thisScreen: Boolean, onCapture: () -> Unit, onDismiss: () -> Unit) {
-    val missing = kind == OtherScreenPromptKind.MissingCopy
+private fun OtherScreenCard(prompt: OtherScreenPrompt, onCapture: () -> Unit, onDismiss: () -> Unit) {
+    val missing = prompt.kind == OtherScreenPromptKind.MissingCopy
+    val thisScreen = prompt.thisScreen
+    val (title, body) = when {
+        !missing -> R.string.wallpaper_foldable_title to R.string.wallpaper_foldable_body
+        prompt.otherOrientation && thisScreen -> R.string.wallpaper_this_orientation_title to R.string.wallpaper_this_orientation_body
+        prompt.otherOrientation -> R.string.wallpaper_other_orientation_title to R.string.wallpaper_other_orientation_body
+        thisScreen -> R.string.wallpaper_this_screen_title to R.string.wallpaper_this_screen_body
+        else -> R.string.wallpaper_other_screen_title to R.string.wallpaper_other_screen_body
+    }
     SettingsCard {
         Column(modifier = Modifier.padding(16.dp).testTag("wallpaper_other_screen_card"), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(
-                text = stringResource(if (missing && thisScreen) R.string.wallpaper_this_screen_title else if (missing) R.string.wallpaper_other_screen_title else R.string.wallpaper_foldable_title),
+                text = stringResource(title),
                 style = MaterialTheme.typography.titleMedium,
                 color = Ink,
             )
             Text(
-                text = stringResource(if (missing && thisScreen) R.string.wallpaper_this_screen_body else if (missing) R.string.wallpaper_other_screen_body else R.string.wallpaper_foldable_body),
+                text = stringResource(body),
                 style = MaterialTheme.typography.bodyMedium,
                 color = Muted,
             )
@@ -297,6 +307,12 @@ private fun WallpaperStatus(uiState: WallpaperUiState) {
         } else {
             val status = if (uiState.copy != null) R.string.wallpaper_status_on else R.string.wallpaper_status_none
             Text(text = stringResource(status), style = MaterialTheme.typography.bodyMedium, color = Muted, modifier = Modifier.testTag("wallpaper_status"))
+        }
+        if (uiState.liveWallpaper) {
+            Text(text = stringResource(R.string.wallpaper_live_note), style = MaterialTheme.typography.bodyMedium, color = Muted, modifier = Modifier.testTag("wallpaper_live_note"))
+        }
+        if (uiState.originalNotKept) {
+            Text(text = stringResource(R.string.wallpaper_original_not_kept), style = MaterialTheme.typography.bodyMedium, color = Muted, modifier = Modifier.testTag("wallpaper_original_not_kept"))
         }
         if (uiState.failed) {
             Text(text = stringResource(R.string.wallpaper_failed), style = MaterialTheme.typography.bodyMedium, color = ErrorColor, modifier = Modifier.testTag("wallpaper_failed"))
@@ -399,7 +415,7 @@ internal fun WallpaperFitStep(
     var includeLock by remember { mutableStateOf(false) }
     var boxSize by remember { mutableStateOf(IntSize.Zero) }
     var fit by remember(photo) { mutableStateOf<WallpaperFit?>(null) }
-    val geometry = if (boxSize.width == 0 || boxSize.height == 0) null else FitGeometry(photo.width, photo.height, boxSize.width.toFloat(), boxSize.height.toFloat())
+    val geometry = if (boxSize.width == 0 || boxSize.height == 0) null else FitGeometry(photo.width, photo.height, boxSize.width.toFloat(), boxSize.height.toFloat(), systemZoom = if (copyOnly) 1f else WALLPAPER_SYSTEM_ZOOM)
     val currentFit = geometry?.let { fit ?: WallpaperFit.initial(it) }
 
     Column(
@@ -446,7 +462,7 @@ internal fun WallpaperFitStep(
             TextActionButton(text = stringResource(R.string.wallpaper_fit_cancel), onClick = onCancel, modifier = Modifier.testTag("wallpaper_fit_cancel"))
             PrimaryButton(
                 text = stringResource(if (copyOnly) R.string.wallpaper_fit_use else R.string.wallpaper_fit_set),
-                onClick = { if (geometry != null && currentFit != null) onConfirm(currentFit.visible(geometry), includeLock) },
+                onClick = { if (geometry != null && currentFit != null) onConfirm(currentFit.wallpaperPart(geometry), includeLock) },
                 enabled = !isWorking && geometry != null,
                 modifier = Modifier.testTag("wallpaper_fit_set"),
             )

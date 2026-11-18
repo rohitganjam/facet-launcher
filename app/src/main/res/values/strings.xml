@@ -268,6 +268,8 @@
     <string name="wallpaper_stale_title">Your wallpaper has changed</string>
     <string name="wallpaper_stale_body">The wallpaper copy in Facet no longer matches what is set. Capture your wallpaper again, or remove the copy.</string>
     <string name="wallpaper_failed">That didn\'t work. Try another image.</string>
+    <string name="wallpaper_original_not_kept">Your wallpaper is set, but Facet couldn\'t keep the original image, so a new screen will need a capture.</string>
+    <string name="wallpaper_live_note">Your wallpaper is a live wallpaper. A capture is one still frame of it, so glass can\'t follow it as it moves.</string>
     <string name="wallpaper_offer_title">Your wallpaper has changed</string>
     <string name="wallpaper_offer_body">Facet can\'t see wallpapers set via Android\'s picker, so glass effects are a plain tint. Let Facet capture your current wallpaper and it blurs it behind your panels.</string>
     <string name="wallpaper_offer_accept">Capture my wallpaper</string>
@@ -278,12 +280,16 @@
     <string name="wallpaper_fit_hint">Drag to move, pinch to zoom, double-tap to reset.</string>
     <string name="wallpaper_fit_other_screen">The outline shows what your second screen will show.</string>
     <string name="wallpaper_other_screen_title">We don\'t have a wallpaper copy for one of your screens</string>
-    <string name="wallpaper_other_screen_body">Facet shows a different image there, which may not line up exactly. Open Facet on that screen and capture your current wallpaper.</string>
-    <string name="wallpaper_copy_pill_title">Glass effects need a wallpaper copy</string>
+    <string name="wallpaper_other_screen_body">Glass effects use a plain tint there. Open Facet on that screen and capture your current wallpaper.</string>
+    <string name="wallpaper_copy_pill_title">Capture wallpaper for glass effects</string>
     <string name="wallpaper_copy_pill_action">Capture</string>
-    <string name="wallpaper_copy_pill_description">Glass effects need a wallpaper copy. Opens the wallpaper page</string>
+    <string name="wallpaper_copy_pill_description">Capture wallpaper for glass effects. Opens the capture screen</string>
     <string name="wallpaper_this_screen_title">We don\'t have a wallpaper copy for this screen</string>
-    <string name="wallpaper_this_screen_body">Facet shows a different image here, which may not line up exactly. Capture your current wallpaper on this screen.</string>
+    <string name="wallpaper_this_screen_body">Glass effects use a plain tint here. Capture your current wallpaper on this screen.</string>
+    <string name="wallpaper_this_orientation_title">We don\'t have a capture for this orientation</string>
+    <string name="wallpaper_this_orientation_body">Glass effects use a plain tint here. Capture your current wallpaper while your phone is held this way.</string>
+    <string name="wallpaper_other_orientation_title">We don\'t have a capture for one of your orientations</string>
+    <string name="wallpaper_other_orientation_body">Glass effects use a plain tint there. Turn your phone, open Facet, and capture your current wallpaper.</string>
     <string name="wallpaper_foldable_title">Using a foldable?</string>
     <string name="wallpaper_foldable_body">Fold or unfold your phone and open Facet on the other screen, then capture your current wallpaper there, so glass effects match on both.</string>
     <string name="wallpaper_fit_home">Home screen</string>
@@ -338,7 +344,7 @@
     <string name="wallpaper_screenshot_confirm">Capture my wallpaper</string>
     <string name="wallpaper_screenshot_have_image">I have an image already</string>
     <string name="wallpaper_capture_title">Capture your wallpaper</string>
-    <string name="wallpaper_capture_body">Facet takes one picture of this screen and keeps it on your phone. It doesn\'t record anything. Android will ask you to confirm.</string>
+    <string name="wallpaper_capture_body">Facet takes a picture of this screen, briefly turns it to take another, and keeps both on your phone. It doesn\'t record anything. Android will ask you to confirm.</string>
     <string name="wallpaper_capture_start">Capture wallpaper</string>
     <string name="wallpaper_capture_manual">Take a screenshot instead</string>
     <string name="wallpaper_capture_failed_title">Capture cancelled</string>
@@ -510,7 +516,6 @@
     <string name="app_drawer_search_bar_position">Search bar position</string>
     <string name="app_drawer_folders_in_drawer">Folders in drawer</string>
     <string name="app_drawer_recently_installed_position">Recently installed</string>
-    <string name="app_drawer_opacity_label">Drawer opacity</string>
     <string name="app_drawer_preview_description">App drawer preview</string>
     <string name="drawer_preview_folder_name">Work</string>
     <string-array name="drawer_preview_app_labels">
@@ -1317,6 +1322,7 @@
     <string name="glass_style_frost">Light frost</string>
     <string name="glass_style_dark_frost">Dark frost</string>
     <string name="glass_style_bright">Bright</string>
+    <string name="glass_style_dim">Dim</string>
     <string name="glass_style_clear_glass">Clear glass</string>
     <string name="glass_style_dark_glass">Dark glass</string>
     <string name="glass_style_accent">Accent</string>

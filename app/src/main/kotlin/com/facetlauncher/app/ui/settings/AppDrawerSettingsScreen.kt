@@ -93,7 +93,6 @@ fun AppDrawerSettingsScreen(
         },
         onSearchSettingsToggle = viewModel::setSearchSettingsEnabled,
         onSearchBarPositionChange = viewModel::setSearchBarPosition,
-        onDrawerOpacityChange = viewModel::setDrawerOpacity,
         onDrawerFolderDisplayModeChange = viewModel::setDrawerFolderDisplayMode,
         onRecentlyInstalledPositionChange = viewModel::setRecentlyInstalledPosition,
         modifier = modifier,
@@ -114,7 +113,6 @@ private fun AppDrawerSettingsContent(
     onSearchContactsToggle: (Boolean) -> Unit,
     onSearchSettingsToggle: (Boolean) -> Unit,
     onSearchBarPositionChange: (SearchBarPosition) -> Unit,
-    onDrawerOpacityChange: (Float) -> Unit,
     onDrawerFolderDisplayModeChange: (DrawerFolderDisplayMode) -> Unit,
     onRecentlyInstalledPositionChange: (RecentlyInstalledPosition) -> Unit,
     modifier: Modifier = Modifier,
@@ -146,7 +144,6 @@ private fun AppDrawerSettingsContent(
                         onSearchContactsToggle = onSearchContactsToggle,
                         onSearchSettingsToggle = onSearchSettingsToggle,
                         onSearchBarPositionChange = onSearchBarPositionChange,
-                        onDrawerOpacityChange = onDrawerOpacityChange,
                         onDrawerFolderDisplayModeChange = onDrawerFolderDisplayModeChange,
                         onRecentlyInstalledPositionChange = onRecentlyInstalledPositionChange,
                     )
@@ -167,7 +164,6 @@ private fun AppDrawerSettingsCard(
     onSearchContactsToggle: (Boolean) -> Unit,
     onSearchSettingsToggle: (Boolean) -> Unit,
     onSearchBarPositionChange: (SearchBarPosition) -> Unit,
-    onDrawerOpacityChange: (Float) -> Unit,
     onDrawerFolderDisplayModeChange: (DrawerFolderDisplayMode) -> Unit,
     onRecentlyInstalledPositionChange: (RecentlyInstalledPosition) -> Unit,
     modifier: Modifier = Modifier,
@@ -197,7 +193,6 @@ private fun AppDrawerSettingsCard(
             onSearchBarPositionChange = onSearchBarPositionChange,
             onDrawerFolderDisplayModeChange = onDrawerFolderDisplayModeChange,
             onRecentlyInstalledPositionChange = onRecentlyInstalledPositionChange,
-            onDrawerOpacityChange = onDrawerOpacityChange,
         )
     }
 }
@@ -210,7 +205,6 @@ private fun ColumnScope.DrawerSearchAndOrderRows(
     onSearchBarPositionChange: (SearchBarPosition) -> Unit,
     onDrawerFolderDisplayModeChange: (DrawerFolderDisplayMode) -> Unit,
     onRecentlyInstalledPositionChange: (RecentlyInstalledPosition) -> Unit,
-    onDrawerOpacityChange: (Float) -> Unit,
 ) {
     CardDivider()
     LabeledDropdownRow(
@@ -255,8 +249,6 @@ private fun ColumnScope.DrawerSearchAndOrderRows(
         onSelect = onRecentlyInstalledPositionChange,
         testTag = "recently_installed_position_row",
     )
-    CardDivider()
-    DrawerOpacitySlider(opacity = settings.drawerOpacity, onChange = onDrawerOpacityChange)
 }
 
 @Composable
@@ -327,27 +319,6 @@ private fun AppDrawerSettingsHeader(onBack: () -> Unit, modifier: Modifier = Mod
     }
 }
 
-@Composable
-private fun DrawerOpacitySlider(opacity: Float, onChange: (Float) -> Unit, modifier: Modifier = Modifier) {
-    Column(modifier = modifier.testTag("drawer_opacity_slider").padding(vertical = 8.dp)) {
-        Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
-            Text(text = stringResource(R.string.app_drawer_opacity_label), style = MaterialTheme.typography.bodyLarge, color = Ink)
-            Text(text = stringResource(R.string.percent_format, (opacity * 100).roundToInt()), style = MaterialTheme.typography.bodyMedium, color = Muted)
-        }
-        // Plain M3 Slider — default thumb/track shape, just this app's Accent/Hairline colors.
-        Slider(
-            value = opacity,
-            onValueChange = onChange,
-            valueRange = 0f..1f,
-            colors = SliderDefaults.colors(
-                thumbColor = Accent,
-                activeTrackColor = Accent,
-                inactiveTrackColor = Hairline,
-            ),
-        )
-    }
-}
-
 @Preview(showBackground = true, widthDp = 390, heightDp = 844)
 @Preview(name = "Dark", showBackground = true, widthDp = 390, heightDp = 844, uiMode = Configuration.UI_MODE_NIGHT_YES)
 @Composable
@@ -366,7 +337,6 @@ private fun AppDrawerSettingsScreenPreview() {
             onSearchContactsToggle = {},
             onSearchSettingsToggle = {},
             onSearchBarPositionChange = {},
-            onDrawerOpacityChange = {},
             onDrawerFolderDisplayModeChange = {},
             onRecentlyInstalledPositionChange = {},
         )

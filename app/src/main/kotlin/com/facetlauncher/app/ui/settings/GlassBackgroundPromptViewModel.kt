@@ -25,11 +25,12 @@ class GlassBackgroundPromptViewModel @Inject constructor(
     /** Bumped by [onResumed] so the check reads the system wallpaper's id again; it is also read whenever the copy or its recorded id changes. */
     private val resumes = MutableStateFlow(0)
 
-    val needsCopy: StateFlow<Boolean> = combine(wallpaperCopyRepository.copy, wallpaperCopyRepository.copyIsCurrent, settingsRepository.settings, resumes) { copy, current, settings, _ ->
+    val needsCopy: StateFlow<Boolean> = combine(wallpaperCopyRepository.copy, wallpaperCopyRepository.copyIsCurrent, settingsRepository.settings, resumes, wallpaperCopyRepository.hasCopyAnywhere) { copy, current, settings, _, anywhere ->
         val storedId = settings.wallpaperCopySystemId
         val systemId = wallpaperCopyRepository.currentSystemWallpaperId()
         val usable = copy != null && current && (storedId == WallpaperCopyRepository.NO_WALLPAPER_ID || storedId == systemId)
-        !usable && !settings.wallpaperPromptDismissed
+        // A view with no copy while another has one is a gap for Home's own prompt, not glass being set up for the first time.
+        !usable && !(copy == null && anywhere) && !settings.wallpaperPromptDismissed
     }.stateIn(viewModelScope, SharingStarted.Eagerly, false)
 
     /** Re-reads the system wallpaper id; call when the launcher comes back, since the wallpaper can change meanwhile. */

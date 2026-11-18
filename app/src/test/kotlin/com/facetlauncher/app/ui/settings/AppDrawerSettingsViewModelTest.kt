@@ -171,17 +171,6 @@ class AppDrawerSettingsViewModelTest {
     }
 
     @Test
-    fun `changing drawer opacity calls the repository setter`() = runTest {
-        val settingsRepository = mock(SettingsRepository::class.java)
-        val viewModel = createViewModel(settingsRepository = settingsRepository)
-
-        viewModel.setDrawerOpacity(0.8f)
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        verify(settingsRepository).setDrawerOpacity(0.8f)
-    }
-
-    @Test
     fun `changing drawer folder display mode calls the repository setter`() = runTest {
         val settingsRepository = mock(SettingsRepository::class.java)
         val viewModel = createViewModel(settingsRepository = settingsRepository)

@@ -263,6 +263,33 @@ class WallpaperScreenTest {
     }
 
     @Test
+    fun `the card names the orientation when the other one is captured and this one is showing`() {
+        // Given the phone is held in an orientation with no capture while the other has one
+        setContent(
+            WallpaperUiState(copy = bitmap(10, 20), otherScreenPrompt = OtherScreenPrompt(OtherScreenPromptKind.MissingCopy, persistentListOf("screen:2400x1080"), thisScreen = true, otherOrientation = true)),
+            Calls(),
+        )
+
+        // Then the card is about this orientation, and can capture right here
+        scrollTo("wallpaper_other_screen_capture")
+        composeRule.onNodeWithText("We don't have a capture for this orientation").assertIsDisplayed()
+        composeRule.onNodeWithTag("wallpaper_other_screen_capture").assertIsDisplayed()
+    }
+
+    @Test
+    fun `the card asks to turn the phone when the missing orientation is not the one showing`() {
+        // Given the other orientation lacks a capture
+        setContent(
+            WallpaperUiState(copy = bitmap(10, 20), otherScreenPrompt = OtherScreenPrompt(OtherScreenPromptKind.MissingCopy, persistentListOf("screen:2400x1080"), otherOrientation = true)),
+            Calls(),
+        )
+
+        // Then the card is about one of the orientations, with no capture button
+        composeRule.onNodeWithText("We don't have a capture for one of your orientations").assertIsDisplayed()
+        composeRule.onNodeWithTag("wallpaper_other_screen_capture").assertDoesNotExist()
+    }
+
+    @Test
     fun `the card has no capture button when the missing screen is another one`() {
         // Given a missing copy on a screen not showing
         setContent(WallpaperUiState(copy = bitmap(10, 20), otherScreenPrompt = OtherScreenPrompt(OtherScreenPromptKind.MissingCopy, persistentListOf("screen:2208x1840"))), Calls())
@@ -320,7 +347,7 @@ class WallpaperScreenTest {
         setContent(WallpaperUiState(copy = bitmap(10, 20)), calls)
 
         // Then it says glass is on
-        composeRule.onNodeWithTag("wallpaper_status").assertTextContains("Glass is on", substring = true)
+        composeRule.onNodeWithTag("wallpaper_status").assertTextContains("Glass effects are on", substring = true)
 
         // When the copy is removed
         scrollTo("wallpaper_remove_row")
@@ -348,6 +375,30 @@ class WallpaperScreenTest {
         val description = androidx.test.platform.app.InstrumentationRegistry.getInstrumentation().targetContext.getString(com.facetlauncher.app.R.string.wallpaper_preview_description)
         composeRule.onNodeWithTag("wallpaper_preview").assertExists()
         composeRule.onAllNodes(androidx.compose.ui.test.hasContentDescription(description)).assertCountEquals(0)
+    }
+
+    @Test
+    fun `a live wallpaper is noted as a still frame`() {
+        // Given a live wallpaper
+        setContent(WallpaperUiState(copy = bitmap(10, 20), liveWallpaper = true), Calls())
+
+        // Then the note shows
+        composeRule.onNodeWithTag("wallpaper_live_note").assertIsDisplayed()
+    }
+
+    @Test
+    fun `no live note for a still wallpaper`() {
+        setContent(WallpaperUiState(copy = bitmap(10, 20)), Calls())
+        composeRule.onNodeWithTag("wallpaper_live_note").assertDoesNotExist()
+    }
+
+    @Test
+    fun `a wallpaper whose original could not be kept says a new screen will need a capture`() {
+        // Given a wallpaper that was set without keeping its original
+        setContent(WallpaperUiState(copy = bitmap(10, 20), originalNotKept = true), Calls())
+
+        // Then the note shows
+        composeRule.onNodeWithTag("wallpaper_original_not_kept").assertIsDisplayed()
     }
 
     @Test

@@ -238,7 +238,6 @@ data class LauncherSettings(
     val drawerPresentation: DrawerPresentation = DrawerPresentation.LIST,
     val drawerGridDensity: DrawerGridDensity = DrawerGridDensity.REGULAR,
     val drawerListItemSize: DrawerListItemSize = DrawerListItemSize.REGULAR,
-    val drawerOpacity: Float = 0.6f,
     val notificationDotsEnabled: Boolean = true,
     /** Opt-in: pressing Home while already on bare Home opens the Drawer with search focused. */
     val homeOpensSearch: Boolean = false,

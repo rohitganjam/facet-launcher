@@ -2,6 +2,7 @@ package com.facetlauncher.app.domain
 
 import android.app.WallpaperManager
 import android.graphics.Bitmap
+import android.graphics.RectF
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import com.facetlauncher.app.data.DeviceConditionsRepository
 import com.facetlauncher.app.data.WallpaperCopyRepository
@@ -43,6 +44,7 @@ internal class FakeDailyWallpaperRepository(
     ioDispatcher = Dispatchers.Unconfined,
 ) {
     var pendingBitmap: Bitmap? = null
+    var pendingOriginal: PendingOriginal? = null
     var saves = true
 
     override suspend fun savePending(bitmap: Bitmap): Boolean {
@@ -50,7 +52,12 @@ internal class FakeDailyWallpaperRepository(
         return saves
     }
     override suspend fun readPending(): Bitmap? = pendingBitmap
-    override suspend fun deletePending() { pendingBitmap = null }
+    override suspend fun savePendingOriginal(bytes: ByteArray, framing: RectF): Boolean {
+        pendingOriginal = PendingOriginal(bytes, framing)
+        return true
+    }
+    override suspend fun readPendingOriginal(): PendingOriginal? = pendingOriginal
+    override suspend fun deletePending() { pendingBitmap = null; pendingOriginal = null }
 }
 
 internal class FakeDailyCopies : WallpaperCopyRepository(RuntimeEnvironment.getApplication(), mock(WallpaperManager::class.java)) {
@@ -60,6 +67,9 @@ internal class FakeDailyCopies : WallpaperCopyRepository(RuntimeEnvironment.getA
     var setCount = 0
     var setIncludeLock: Boolean? = null
     var saved: Bitmap? = null
+    var keptOriginal: ByteArray? = null
+    var keptFraming: RectF? = null
+    var setBitmap: Bitmap? = null
 
     /** The size each downloaded image reports, by its first byte. */
     val sizes = mutableMapOf<Byte, Pair<Int, Int>>()
@@ -78,6 +88,7 @@ internal class FakeDailyCopies : WallpaperCopyRepository(RuntimeEnvironment.getA
     override suspend fun setSystemWallpaper(bitmap: Bitmap, includeLock: Boolean): Int {
         if (!setSucceeds) return NO_WALLPAPER_ID
         setCount++
+        setBitmap = bitmap
         setIncludeLock = includeLock
         systemId++
         if (includeLock) lockId = systemId + 100
@@ -88,6 +99,11 @@ internal class FakeDailyCopies : WallpaperCopyRepository(RuntimeEnvironment.getA
         return true
     }
     override suspend fun save(bitmap: Bitmap, size: ScreenSize): Boolean = save(bitmap)
+    override suspend fun saveOriginal(bytes: ByteArray, framing: RectF, systemId: Int): Boolean {
+        keptOriginal = bytes
+        keptFraming = framing
+        return true
+    }
 }
 
 internal class FakeDailyPhotos(folder: File, copies: WallpaperCopyRepository) : DailyPhotoRepository(

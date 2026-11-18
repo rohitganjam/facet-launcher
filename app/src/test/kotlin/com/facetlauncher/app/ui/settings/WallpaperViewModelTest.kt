@@ -74,10 +74,15 @@ class WallpaperViewModelTest {
         var systemId = 1
         var decoded: Bitmap? = Bitmap.createBitmap(200, 100, Bitmap.Config.ARGB_8888)
         var setSucceeds = true
+        var live = false
+        var keepsOriginal = true
 
         override val copy: Flow<Bitmap?> get() = stored
         override fun currentSystemWallpaperId() = systemId
         override fun screenSize() = 50 to 100
+        override fun isLiveWallpaper() = live
+        override suspend fun saveOriginal(uri: Uri, framing: android.graphics.RectF, systemId: Int) = keepsOriginal
+        override suspend fun saveOriginal(bytes: ByteArray, framing: android.graphics.RectF, systemId: Int) = keepsOriginal
         override suspend fun decodePicked(uri: Uri, maxSide: Int) = decoded
         override suspend fun setSystemWallpaper(bitmap: Bitmap, includeLock: Boolean) = if (setSucceeds) systemId else NO_WALLPAPER_ID
         override suspend fun save(bitmap: Bitmap): Boolean {
@@ -412,5 +417,60 @@ class WallpaperViewModelTest {
         // Then it stays on, with today counted as done
         val daily = dailyRepository!!.state.first { it.checkedDay != null }
         assertTrue(daily.enabled)
+    }
+
+    @Test
+    fun `a live wallpaper is noted so the page can say a copy is a still frame`() = runTest {
+        // Given a live wallpaper
+        val copies = FakeCopies().apply { live = true }
+        val viewModel = viewModel(copies, settings())
+        viewModel.observe(this)
+
+        // Then the state says so once the wallpaper has been read
+        assertTrue(viewModel.uiState.first { it.systemWallpaper != HomeWallpaper.Unavailable }.liveWallpaper)
+    }
+
+    @Test
+    fun `a still wallpaper is not noted as live`() = runTest {
+        // Given a normal wallpaper
+        val viewModel = viewModel(FakeCopies(), settings())
+        viewModel.observe(this)
+
+        // Then there is no live note
+        assertFalse(viewModel.uiState.first { it.systemWallpaper != HomeWallpaper.Unavailable }.liveWallpaper)
+    }
+
+    @Test
+    fun `a wallpaper whose original could not be kept says so until the next pick or removal`() = runTest {
+        // Given storage that cannot keep the original, and a photo picked from a uri
+        val copies = FakeCopies().apply { keepsOriginal = false }
+        val viewModel = viewModel(copies, settings())
+        viewModel.observe(this)
+        viewModel.onPicked(Uri.parse("content://media/1"))
+
+        // When it is set
+        viewModel.confirmFit(android.graphics.RectF(0f, 0f, 50f, 100f), includeLock = false)
+
+        // Then it is set, and the note shows
+        val state = viewModel.uiState.first { it.originalNotKept }
+        assertFalse(state.failed)
+
+        // And picking again clears it
+        viewModel.onPicked(Uri.parse("content://media/2"))
+        assertFalse(viewModel.uiState.value.originalNotKept)
+    }
+
+    @Test
+    fun `a wallpaper whose original was kept shows no note`() = runTest {
+        // Given storage that keeps it
+        val viewModel = viewModel(FakeCopies(), settings())
+        viewModel.observe(this)
+        viewModel.onPicked(Uri.parse("content://media/1"))
+
+        // When it is set
+        viewModel.confirmFit(android.graphics.RectF(0f, 0f, 50f, 100f), includeLock = false)
+
+        // Then there is no note
+        assertFalse(viewModel.uiState.value.originalNotKept)
     }
 }

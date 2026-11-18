@@ -144,9 +144,9 @@ apps (null icons, so the tile placeholder; labels from `R.array.drawer_preview_a
 card over the system wallpaper. The drawer is laid out at the real screen width and 400dp of height, then scaled down to the
 card's width (about 350dp tall on a phone), so its columns and rows are the ones a phone gets (`DrawerGridLayout`'s
 two-row minimum lets a short viewport show Compact 3, Regular 3, Spacious 3 rows). The wallpaper is
-`AppDrawerSettingsViewModel.homeWallpaper`, so the opacity slider shows. It is fed the
+`AppDrawerSettingsViewModel.homeWallpaper`, so the drawer's own settings preview shows it. It is fed the
 current `LauncherSettings`, so presentation, grid density, list size, icons, labels, folders in drawer, recently installed,
-search bar position and opacity all show as they change. `drawerPreviewSample` builds the sample (two apps installed an hour
+search bar position all show as they change. `drawerPreviewSample` builds the sample (two apps installed an hour
 ago for the "Recently installed" row). Taps do nothing (an overlay takes them, and its vertical drags scroll the drawer's own list or grid state, passing what they can't consume on to the settings
 list), `consumeWindowInsets(systemBars)` stops the drawer padding for the status bar, and
 `clearAndSetSemantics` keeps the sample apps out of the accessibility tree.

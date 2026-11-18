@@ -1,5 +1,6 @@
 package com.facetlauncher.app.ui.hub
 
+import com.facetlauncher.app.ui.components.FrostSurface
 import com.facetlauncher.app.ui.components.LocalBackdropTint
 import androidx.compose.runtime.CompositionLocalProvider
 import com.facetlauncher.app.ui.nativewidget.NativeWidgetEnvironment
@@ -15,6 +16,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -27,7 +29,7 @@ import com.facetlauncher.app.ui.theme.launcherSystemBarInsets
 /**
  * The Launcher Hub (F5) — reached by swiping right from Home. A translucent overlay on Home:
  * [SurfaceContainer] (every settings screen's own page background, and the Switch Facets
- * carousel's) at its own fixed [opacity] — deliberately *not* tied to `drawerSettings.drawerOpacity`.
+ * carousel's) at its own fixed [opacity].
  */
 @Composable
 fun HubScreen(
@@ -83,63 +85,105 @@ private fun HubContent(
     modifier: Modifier = Modifier,
     nativeWidgets: NativeWidgetEnvironment = NativeWidgetEnvironment(),
 ) {
-    StickyHeaderLayout(
-        // Edge-to-edge is enforced unconditionally at this app's targetSdk (36) — without this,
-        // the header draws under the status bar and the grid's bottom row under the gesture/nav
-        // bar, matching HomeScreen's/AppDrawerScreen's own systemBars inset handling.
-        modifier = modifier.background(SurfaceContainer.copy(alpha = opacity)).windowInsetsPadding(launcherSystemBarInsets()),
-        header = {
-            HubHeader(
-                widgetCount = uiState.widgetCount,
-                columns = uiState.columns,
-                isAtCapacity = uiState.isAtCapacity,
-                onAddClick = onAddClick,
-            )
-        },
-        content = { headerHeight ->
-            Box(modifier = Modifier.fillMaxSize().padding(top = headerHeight)) {
-                if (uiState.isEmpty) {
-                    HubEmptyState(onAddClick = onAddClick)
+    FrostSurface(SurfaceContainer.copy(alpha = opacity), modifier = modifier) {
+        StickyHeaderLayout(
+            // Edge-to-edge is enforced unconditionally at this app's targetSdk (36) — without this,
+            // the header draws under the status bar and the grid's bottom row under the gesture/nav
+            // bar, matching HomeScreen's/AppDrawerScreen's own systemBars inset handling.
+            modifier = Modifier.fillMaxSize().windowInsetsPadding(launcherSystemBarInsets()),
+            header = {
+                HubHeader(
+                    widgetCount = uiState.widgetCount,
+                    columns = uiState.columns,
+                    isAtCapacity = uiState.isAtCapacity,
+                    onAddClick = onAddClick,
+                )
+            },
+            content = { headerHeight ->
+                HubBody(
+                    uiState = uiState,
+                    isLandscape = isLandscape,
+                    headerHeight = headerHeight,
+                    onLandscapeRowsChange = onLandscapeRowsChange,
+                    onLandscapeWidgetDrop = onLandscapeWidgetDrop,
+                    onLandscapeWidgetResize = onLandscapeWidgetResize,
+                    createHostView = createHostView,
+                    onWidgetSizeChange = onWidgetSizeChange,
+                    onAddClick = onAddClick,
+                    onManageClick = onManageClick,
+                    onRemoveOrphan = onRemoveOrphan,
+                    onKeepOrphanSpace = onKeepOrphanSpace,
+                    onWidgetDrop = onWidgetDrop,
+                    onWidgetDroppedOnTrash = onWidgetDroppedOnTrash,
+                    onWidgetResize = onWidgetResize,
+                    nativeWidgets = nativeWidgets,
+                )
+            },
+        )
+    }
+}
+
+/** What fills the hub below its header: the empty state, or the capacity strip over the portrait or landscape grid. */
+@Composable
+private fun HubBody(
+    uiState: HubUiState,
+    isLandscape: Boolean,
+    headerHeight: Dp,
+    onLandscapeRowsChange: (Int) -> Unit,
+    onLandscapeWidgetDrop: (appWidgetId: Int, dropRow: Int, dropCol: Int) -> Unit,
+    onLandscapeWidgetResize: (appWidgetId: Int, colSpan: Int, rowSpan: Int) -> Unit,
+    createHostView: (Context, Int) -> AppWidgetHostView?,
+    onWidgetSizeChange: (appWidgetId: Int, widthDp: Int, heightDp: Int) -> Unit,
+    onAddClick: () -> Unit,
+    onManageClick: () -> Unit,
+    onRemoveOrphan: (Int) -> Unit,
+    onKeepOrphanSpace: (Int) -> Unit,
+    onWidgetDrop: (appWidgetId: Int, row: Int, col: Int, colSpan: Int, rowSpan: Int) -> Unit,
+    onWidgetDroppedOnTrash: (Int) -> Unit,
+    onWidgetResize: (appWidgetId: Int, row: Int, col: Int, colSpan: Int, rowSpan: Int) -> Unit,
+    nativeWidgets: NativeWidgetEnvironment,
+) {
+    Box(modifier = Modifier.fillMaxSize().padding(top = headerHeight)) {
+        if (uiState.isEmpty) {
+            HubEmptyState(onAddClick = onAddClick)
+        } else {
+            Column(modifier = Modifier.fillMaxSize()) {
+                if (uiState.isAtCapacity) {
+                    HubAtCapacityStrip(
+                        onManageClick = onManageClick,
+                        modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
+                    )
+                }
+                if (isLandscape) {
+                    HubLandscapeGrid(
+                        widgets = uiState.landscapeWidgets,
+                        createHostView = createHostView,
+                        onWidgetSizeChange = onWidgetSizeChange,
+                        onRowsChange = onLandscapeRowsChange,
+                        onRemoveOrphan = onRemoveOrphan,
+                        onKeepOrphanSpace = onKeepOrphanSpace,
+                        onWidgetDrop = onLandscapeWidgetDrop,
+                        onWidgetDroppedOnTrash = onWidgetDroppedOnTrash,
+                        onWidgetResize = onLandscapeWidgetResize,
+                        modifier = Modifier.weight(1f),
+                        nativeWidgets = nativeWidgets,
+                    )
                 } else {
-                    Column(modifier = Modifier.fillMaxSize()) {
-                        if (uiState.isAtCapacity) {
-                            HubAtCapacityStrip(
-                                onManageClick = onManageClick,
-                                modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
-                            )
-                        }
-                        if (isLandscape) {
-                            HubLandscapeGrid(
-                                widgets = uiState.landscapeWidgets,
-                                createHostView = createHostView,
-                                onWidgetSizeChange = onWidgetSizeChange,
-                                onRowsChange = onLandscapeRowsChange,
-                                onRemoveOrphan = onRemoveOrphan,
-                                onKeepOrphanSpace = onKeepOrphanSpace,
-                                onWidgetDrop = onLandscapeWidgetDrop,
-                                onWidgetDroppedOnTrash = onWidgetDroppedOnTrash,
-                                onWidgetResize = onLandscapeWidgetResize,
-                                modifier = Modifier.weight(1f),
-                                nativeWidgets = nativeWidgets,
-                            )
-                        } else {
-                            HubGrid(
-                                widgets = uiState.widgets,
-                                columns = uiState.columns,
-                                createHostView = createHostView,
-                                onWidgetSizeChange = onWidgetSizeChange,
-                                onRemoveOrphan = onRemoveOrphan,
-                                onKeepOrphanSpace = onKeepOrphanSpace,
-                                onWidgetDrop = onWidgetDrop,
-                                onWidgetDroppedOnTrash = onWidgetDroppedOnTrash,
-                                onWidgetResize = onWidgetResize,
-                                modifier = Modifier.weight(1f),
-                                nativeWidgets = nativeWidgets,
-                            )
-                        }
-                    }
+                    HubGrid(
+                        widgets = uiState.widgets,
+                        columns = uiState.columns,
+                        createHostView = createHostView,
+                        onWidgetSizeChange = onWidgetSizeChange,
+                        onRemoveOrphan = onRemoveOrphan,
+                        onKeepOrphanSpace = onKeepOrphanSpace,
+                        onWidgetDrop = onWidgetDrop,
+                        onWidgetDroppedOnTrash = onWidgetDroppedOnTrash,
+                        onWidgetResize = onWidgetResize,
+                        modifier = Modifier.weight(1f),
+                        nativeWidgets = nativeWidgets,
+                    )
                 }
             }
-        },
-    )
+        }
+    }
 }

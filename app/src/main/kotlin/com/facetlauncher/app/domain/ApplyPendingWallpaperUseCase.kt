@@ -1,13 +1,18 @@
 package com.facetlauncher.app.domain
 
+import android.graphics.Bitmap
 import android.graphics.RectF
 import com.facetlauncher.app.data.EntitlementRepository
 import com.facetlauncher.app.data.WallpaperCopyRepository
 import com.facetlauncher.app.data.dailyphotos.DailyWallpaperRepository
 import com.facetlauncher.app.data.model.DailyWallpaperPhoto
 import com.facetlauncher.app.data.model.DailyWallpaperProblem
+import com.facetlauncher.app.data.model.ScreenSize
 import java.time.Clock
 import javax.inject.Inject
+
+/** How far a daily photo's shape may differ from the screen's and still count as the same shape. */
+private const val SAME_SHAPE = 0.02f
 
 /**
  * Sets the photo [RunDailyWallpaperUseCase] prepared, through [SetWallpaperFromPhotoUseCase] so the glass copy is the same image, and records
@@ -43,14 +48,24 @@ class ApplyPendingWallpaperUseCase @Inject constructor(
     private suspend fun apply(photo: DailyWallpaperPhoto, includeLock: Boolean): Boolean {
         val bitmap = dailyWallpaperRepository.readPending()
         if (bitmap == null) {
-            // The cache was cleared: prepare again on the next resume.
+            // The cache was cleared: prepare again on the next resume, and drop the original that waited for it.
+            dailyWallpaperRepository.deletePending()
             dailyWallpaperRepository.update { it.copy(pending = null, checkedDay = null, applying = false) }
             return false
         }
         dailyWallpaperRepository.update { it.copy(applying = true) }
-        val set = setWallpaperFromPhoto(bitmap, RectF(0f, 0f, bitmap.width.toFloat(), bitmap.height.toFloat()), includeLock)
+        val kept = dailyWallpaperRepository.readPendingOriginal()
+        val set = setWallpaperFromPhoto(bitmap, framedPart(bitmap, wallpaperCopyRepository.targetScreen()), includeLock, kept?.let { KeptOriginal.Bytes(it.bytes) }, kept?.framing).set
         if (set) recordSet(photo) else markRefused()
         return set
+    }
+
+    /** All of a strip, or the centre strip in the screen's shape of the wider part [RunDailyWallpaperUseCase] decodes when the photo had room to widen it. */
+    private fun framedPart(bitmap: Bitmap, screen: ScreenSize): RectF {
+        val whole = RectF(0f, 0f, bitmap.width.toFloat(), bitmap.height.toFloat())
+        if (screen.aspect >= 1f || bitmap.width.toFloat() / bitmap.height <= screen.aspect * (1 + SAME_SHAPE)) return whole
+        val width = bitmap.height * screen.aspect
+        return RectF((bitmap.width - width) / 2f, 0f, (bitmap.width + width) / 2f, bitmap.height.toFloat())
     }
 
     private suspend fun markRefused() {

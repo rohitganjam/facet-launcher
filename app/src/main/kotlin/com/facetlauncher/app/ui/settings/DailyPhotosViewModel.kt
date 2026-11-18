@@ -31,7 +31,8 @@ import kotlinx.coroutines.launch
 
 /** A photo the user tapped, downloaded and ready to frame, with its credit. */
 @Immutable
-data class PickedDailyPhoto(val bitmap: Bitmap, val credit: String)
+/** A daily photo ready to frame: shrunk to the size the fit step works on, with the file as it was downloaded so it can be kept. */
+class PickedDailyPhoto(val bitmap: Bitmap, val credit: String, val original: ByteArray? = null)
 
 /**
  * What the daily photos screen shows. [savedEarlier] is set when today's refresh failed and the photos are from an earlier day;
@@ -146,9 +147,9 @@ class DailyPhotosViewModel @Inject constructor(
         if (_uiState.value.downloading) return
         _uiState.update { it.copy(downloading = true, downloadFailed = false) }
         viewModelScope.launch {
-            val bitmap = repository.original(photo, MAX_PICKED_SIDE)
+            val downloaded = repository.originalWithBytes(photo, MAX_PICKED_SIDE)
             _uiState.update {
-                if (bitmap != null) it.copy(downloading = false, picked = PickedDailyPhoto(bitmap, photo.credit)) else it.copy(downloading = false, downloadFailed = true)
+                if (downloaded != null) it.copy(downloading = false, picked = PickedDailyPhoto(downloaded.first, photo.credit, downloaded.second)) else it.copy(downloading = false, downloadFailed = true)
             }
         }
     }

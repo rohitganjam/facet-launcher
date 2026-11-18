@@ -229,6 +229,8 @@
     <string name="wallpaper_stale_title">Tu fondo ha cambiado</string>
     <string name="wallpaper_stale_body">La copia del fondo en Facet ya no coincide con el que está configurado. Captura tu fondo de nuevo o elimina la copia.</string>
     <string name="wallpaper_failed">No ha funcionado. Prueba con otra imagen.</string>
+    <string name="wallpaper_original_not_kept">Tu fondo está puesto, pero Facet no pudo guardar la imagen original, así que una pantalla nueva necesitará una captura.</string>
+    <string name="wallpaper_live_note">Tu fondo es un fondo animado. Una captura es solo un fotograma, así que el cristal no puede seguirlo mientras se mueve.</string>
     <string name="wallpaper_offer_title">Tu fondo ha cambiado</string>
     <string name="wallpaper_offer_body">Facet no puede ver los fondos que se eligen en el selector de Android, así que los efectos de cristal son un simple tinte. Deja que Facet capture tu fondo actual y lo desenfocará detrás de tus paneles.</string>
     <string name="wallpaper_offer_accept">Capturar mi fondo</string>
@@ -239,12 +241,16 @@
     <string name="wallpaper_fit_hint">Arrastra para mover, pellizca para ampliar y toca dos veces para restablecer.</string>
     <string name="wallpaper_fit_other_screen">El contorno muestra lo que mostrará tu segunda pantalla.</string>
     <string name="wallpaper_other_screen_title">No tenemos una copia del fondo para una de tus pantallas</string>
-    <string name="wallpaper_other_screen_body">Facet muestra allí otra imagen, que puede no encajar exactamente. Abre Facet en esa pantalla y captura tu fondo actual.</string>
-    <string name="wallpaper_copy_pill_title">Los efectos de cristal necesitan una copia del fondo</string>
+    <string name="wallpaper_other_screen_body">Allí los efectos de cristal usan un tinte liso. Abre Facet en esa pantalla y captura tu fondo actual.</string>
+    <string name="wallpaper_copy_pill_title">Capturar el fondo para los efectos de cristal</string>
     <string name="wallpaper_copy_pill_action">Capturar</string>
-    <string name="wallpaper_copy_pill_description">Los efectos de cristal necesitan una copia del fondo. Abre la página del fondo</string>
+    <string name="wallpaper_copy_pill_description">Capturar el fondo para los efectos de cristal. Abre la pantalla de captura</string>
     <string name="wallpaper_this_screen_title">No tenemos una copia del fondo para esta pantalla</string>
-    <string name="wallpaper_this_screen_body">Facet muestra aquí otra imagen, que puede no encajar exactamente. Captura tu fondo actual en esta pantalla.</string>
+    <string name="wallpaper_this_screen_body">Aquí los efectos de cristal usan un tinte liso. Captura tu fondo actual en esta pantalla.</string>
+    <string name="wallpaper_this_orientation_title">No tenemos una captura para esta orientación</string>
+    <string name="wallpaper_this_orientation_body">Aquí los efectos de cristal usan un tinte liso. Captura tu fondo actual con el teléfono en esta posición.</string>
+    <string name="wallpaper_other_orientation_title">No tenemos una captura para una de tus orientaciones</string>
+    <string name="wallpaper_other_orientation_body">Allí los efectos de cristal usan un tinte liso. Gira el teléfono, abre Facet y captura tu fondo actual.</string>
     <string name="wallpaper_foldable_title">¿Tienes un móvil plegable?</string>
     <string name="wallpaper_foldable_body">Pliega o despliega tu móvil y abre Facet en la otra pantalla; captura allí tu fondo actual para que los efectos de cristal coincidan en ambas.</string>
     <string name="wallpaper_fit_home">Pantalla de inicio</string>
@@ -299,7 +305,7 @@
     <string name="wallpaper_screenshot_confirm">Capturar mi fondo</string>
     <string name="wallpaper_screenshot_have_image">Ya tengo una imagen</string>
     <string name="wallpaper_capture_title">Captura tu fondo</string>
-    <string name="wallpaper_capture_body">Facet captura esta pantalla una vez y la guarda en tu teléfono. No graba nada. Android te pedirá confirmación.</string>
+    <string name="wallpaper_capture_body">Facet captura esta pantalla, la gira un momento para hacer otra captura y guarda ambas en tu teléfono. No graba nada. Android te pedirá confirmación.</string>
     <string name="wallpaper_capture_start">Capturar fondo</string>
     <string name="wallpaper_capture_manual">Hacer una captura yo mismo</string>
     <string name="wallpaper_capture_failed_title">Captura cancelada</string>
@@ -461,7 +467,6 @@
     <string name="app_drawer_search_bar_position">Posición de la barra de búsqueda</string>
     <string name="app_drawer_folders_in_drawer">Carpetas en el cajón</string>
     <string name="app_drawer_recently_installed_position">Instaladas recientemente</string>
-    <string name="app_drawer_opacity_label">Opacidad del cajón</string>
     <string name="app_drawer_preview_description">Vista previa del cajón de apps</string>
     <string name="drawer_preview_folder_name">Trabajo</string>
     <string-array name="drawer_preview_app_labels">
@@ -1247,6 +1252,7 @@
     <string name="glass_style_frost">Escarcha clara</string>
     <string name="glass_style_dark_frost">Escarcha oscura</string>
     <string name="glass_style_bright">Brillante</string>
+    <string name="glass_style_dim">Atenuado</string>
     <string name="glass_style_clear_glass">Cristal transparente</string>
     <string name="glass_style_dark_glass">Cristal oscuro</string>
     <string name="glass_style_accent">Acento</string>

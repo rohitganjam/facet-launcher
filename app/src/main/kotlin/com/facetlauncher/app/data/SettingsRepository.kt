@@ -76,7 +76,6 @@ private object Keys {
     val DRAWER_PRESENTATION = stringPreferencesKey("drawer_presentation")
     val DRAWER_GRID_SIZE = stringPreferencesKey("drawer_grid_size")
     val DRAWER_LIST_ITEM_SIZE = stringPreferencesKey("drawer_list_item_size")
-    val DRAWER_OPACITY = floatPreferencesKey("drawer_opacity")
     val NOTIFICATION_DOTS_ENABLED = booleanPreferencesKey("notification_dots_enabled")
     val HOME_OPENS_SEARCH = booleanPreferencesKey("home_opens_search")
     val DOUBLE_TAP_TO_LOCK = booleanPreferencesKey("double_tap_to_lock")
@@ -176,7 +175,6 @@ class SettingsRepository @Inject constructor(
                 ?: defaults.drawerGridDensity,
             drawerListItemSize = preferences[Keys.DRAWER_LIST_ITEM_SIZE]?.let { runCatching { DrawerListItemSize.valueOf(it) }.getOrNull() }
                 ?: defaults.drawerListItemSize,
-            drawerOpacity = preferences[Keys.DRAWER_OPACITY] ?: defaults.drawerOpacity,
             notificationDotsEnabled = preferences[Keys.NOTIFICATION_DOTS_ENABLED] ?: defaults.notificationDotsEnabled,
             homeOpensSearch = preferences[Keys.HOME_OPENS_SEARCH] ?: defaults.homeOpensSearch,
             doubleTapToLock = preferences[Keys.DOUBLE_TAP_TO_LOCK] ?: defaults.doubleTapToLock,
@@ -305,9 +303,6 @@ class SettingsRepository @Inject constructor(
         dataStore.edit { it[Keys.DRAWER_LIST_ITEM_SIZE] = itemSize.name }
     }
 
-    suspend fun setDrawerOpacity(opacity: Float) {
-        dataStore.edit { it[Keys.DRAWER_OPACITY] = opacity.coerceIn(0f, 1f) }
-    }
 
     suspend fun setDrawerFolderDisplayMode(mode: DrawerFolderDisplayMode) {
         dataStore.edit { it[Keys.DRAWER_FOLDER_DISPLAY_MODE] = mode.name }

@@ -229,6 +229,8 @@
     <string name="wallpaper_stale_title">O seu papel de parede mudou</string>
     <string name="wallpaper_stale_body">A cópia do papel de parede no Facet já não corresponde ao que está definido. Capture novamente o seu papel de parede ou remova a cópia.</string>
     <string name="wallpaper_failed">Não funcionou. Tente outra imagem.</string>
+    <string name="wallpaper_original_not_kept">O seu papel de parede está definido, mas o Facet não conseguiu guardar a imagem original, por isso um novo ecrã vai precisar de uma captura.</string>
+    <string name="wallpaper_live_note">O seu papel de parede é animado. Uma captura é apenas uma imagem fixa dele, por isso o vidro não o consegue acompanhar quando se mexe.</string>
     <string name="wallpaper_offer_title">O seu papel de parede mudou</string>
     <string name="wallpaper_offer_body">O Facet não consegue ver papéis de parede escolhidos no seletor do Android, então os efeitos de vidro são só uma cor. Deixe o Facet capturar o seu papel de parede atual e ele o desfocará atrás dos seus painéis.</string>
     <string name="wallpaper_offer_accept">Capturar meu papel de parede</string>
@@ -239,12 +241,16 @@
     <string name="wallpaper_fit_hint">Arraste para mover, faça pinça para ampliar e toque duas vezes para repor.</string>
     <string name="wallpaper_fit_other_screen">O contorno mostra o que o seu segundo ecrã vai mostrar.</string>
     <string name="wallpaper_other_screen_title">Não temos uma cópia do papel de parede para um dos seus ecrãs</string>
-    <string name="wallpaper_other_screen_body">O Facet mostra aí outra imagem, que pode não encaixar na perfeição. Abra o Facet nesse ecrã e capture o seu papel de parede atual.</string>
-    <string name="wallpaper_copy_pill_title">Os efeitos de vidro precisam de uma cópia do papel de parede</string>
+    <string name="wallpaper_other_screen_body">Aí os efeitos de vidro usam uma cor lisa. Abra o Facet nesse ecrã e capture o seu papel de parede atual.</string>
+    <string name="wallpaper_copy_pill_title">Capturar o papel de parede para os efeitos de vidro</string>
     <string name="wallpaper_copy_pill_action">Capturar</string>
-    <string name="wallpaper_copy_pill_description">Os efeitos de vidro precisam de uma cópia do papel de parede. Abre a página do papel de parede</string>
+    <string name="wallpaper_copy_pill_description">Capturar o papel de parede para os efeitos de vidro. Abre o ecrã de captura</string>
     <string name="wallpaper_this_screen_title">Não temos uma cópia do papel de parede para este ecrã</string>
-    <string name="wallpaper_this_screen_body">O Facet mostra aqui outra imagem, que pode não encaixar na perfeição. Capture o seu papel de parede atual neste ecrã.</string>
+    <string name="wallpaper_this_screen_body">Aqui os efeitos de vidro usam uma cor lisa. Capture o seu papel de parede atual neste ecrã.</string>
+    <string name="wallpaper_this_orientation_title">Não temos uma captura para esta orientação</string>
+    <string name="wallpaper_this_orientation_body">Aqui os efeitos de vidro usam uma cor lisa. Capture o seu papel de parede atual com o telemóvel nesta posição.</string>
+    <string name="wallpaper_other_orientation_title">Não temos uma captura para uma das suas orientações</string>
+    <string name="wallpaper_other_orientation_body">Aí os efeitos de vidro usam uma cor lisa. Rode o telemóvel, abra o Facet e capture o seu papel de parede atual.</string>
     <string name="wallpaper_foldable_title">Tem um telemóvel dobrável?</string>
     <string name="wallpaper_foldable_body">Dobre ou desdobre o telemóvel e abra o Facet no outro ecrã; capture aí o seu papel de parede atual, para que os efeitos de vidro coincidam nos dois.</string>
     <string name="wallpaper_fit_home">Ecrã inicial</string>
@@ -299,7 +305,7 @@
     <string name="wallpaper_screenshot_confirm">Capturar meu papel de parede</string>
     <string name="wallpaper_screenshot_have_image">Já tenho uma imagem</string>
     <string name="wallpaper_capture_title">Capture seu papel de parede</string>
-    <string name="wallpaper_capture_body">O Facet captura esta tela uma vez e a guarda no seu telefone. Ele não grava nada. O Android vai pedir sua confirmação.</string>
+    <string name="wallpaper_capture_body">O Facet captura esta tela, a gira por um instante para fazer outra captura e guarda as duas no seu telefone. Ele não grava nada. O Android vai pedir sua confirmação.</string>
     <string name="wallpaper_capture_start">Capturar papel de parede</string>
     <string name="wallpaper_capture_manual">Tirar uma captura de tela</string>
     <string name="wallpaper_capture_failed_title">Captura cancelada</string>
@@ -461,7 +467,6 @@
     <string name="app_drawer_search_bar_position">Posição da barra de busca</string>
     <string name="app_drawer_folders_in_drawer">Pastas na gaveta</string>
     <string name="app_drawer_recently_installed_position">Instalados recentemente</string>
-    <string name="app_drawer_opacity_label">Opacidade da gaveta</string>
     <string name="app_drawer_preview_description">Pré-visualização da gaveta de apps</string>
     <string name="drawer_preview_folder_name">Trabalho</string>
     <string-array name="drawer_preview_app_labels">
@@ -1247,6 +1252,7 @@
     <string name="glass_style_frost">Geada clara</string>
     <string name="glass_style_dark_frost">Geada escura</string>
     <string name="glass_style_bright">Brilhante</string>
+    <string name="glass_style_dim">Atenuado</string>
     <string name="glass_style_clear_glass">Vidro transparente</string>
     <string name="glass_style_dark_glass">Vidro escuro</string>
     <string name="glass_style_accent">Destaque</string>

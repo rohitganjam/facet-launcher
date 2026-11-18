@@ -22,6 +22,9 @@ enum class GlassStyle(@param:StringRes val displayNameRes: Int) {
     /** A strong white fill with an inner highlight along the top. */
     BRIGHT(R.string.glass_style_bright),
 
+    /** Bright's counterpart for dark: a light blur, a darkened backdrop under a smoke wash, and a subtle rim. */
+    DIM(R.string.glass_style_dim),
+
     /** The launcher accent colour as the wash. */
     ACCENT(R.string.glass_style_accent),
 

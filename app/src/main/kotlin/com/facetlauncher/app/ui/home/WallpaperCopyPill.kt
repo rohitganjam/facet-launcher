@@ -53,7 +53,7 @@ private const val AUTO_HIDE_MS = 8_000L
 private const val SLIDE_MS = 320
 private const val DISMISS_DRAG_PX = 12f
 
-/** "This screen's wallpaper copy is out of date · Update": a pill hovering over Home. Tapping it opens the wallpaper page, swiping it up dismisses it. */
+/** "Capture wallpaper for glass effects · Capture": a pill hovering over Home. Tapping it opens the capture screen, swiping it up dismisses it. */
 @Composable
 internal fun WallpaperCopyPill(onClick: () -> Unit, onDismiss: () -> Unit, modifier: Modifier = Modifier) {
     val description = stringResource(R.string.wallpaper_copy_pill_description)
@@ -85,18 +85,21 @@ internal fun WallpaperCopyPill(onClick: () -> Unit, onDismiss: () -> Unit, modif
 }
 
 /**
- * Drops [WallpaperCopyPill] in from the top once [screenKey] says the screen showing needs a copy and Home is [ready]. Like the What's new
+ * Drops [WallpaperCopyPill] in from the top once [offer] says the view showing needs a capture and Home is [ready]. Like the What's new
  * pill it hovers over Home and moves nothing; it leaves on its own after a few seconds, when swiped up, or when tapped. [onShow] is
- * called with the key when it appears, so the screen is not offered again.
+ * called with the key when it appears, so the view is not offered again.
  */
 @Composable
-internal fun WallpaperCopyPillHost(screenKey: String?, ready: Boolean, onShow: (String) -> Unit, onOpen: () -> Unit, modifier: Modifier = Modifier) {
+internal fun WallpaperCopyPillHost(offer: WallpaperCopyOffer?, ready: Boolean, onShow: (String) -> Unit, onOpen: () -> Unit, modifier: Modifier = Modifier) {
     var visible by remember { mutableStateOf(false) }
+    // Kept while the pill leaves, so it does not change its words as it slides out.
+    var shown by remember { mutableStateOf(offer) }
     val currentOnShow by rememberUpdatedState(onShow)
-    LaunchedEffect(screenKey, ready) {
-        if (ready && screenKey != null && !visible) {
+    LaunchedEffect(offer, ready) {
+        if (ready && offer != null && !visible) {
+            shown = offer
             visible = true
-            currentOnShow(screenKey)
+            currentOnShow(offer.key)
         }
     }
     LaunchedEffect(visible) {
@@ -111,13 +114,15 @@ internal fun WallpaperCopyPillHost(screenKey: String?, ready: Boolean, onShow: (
         enter = slideInVertically(tween(SLIDE_MS)) { -it * 2 } + fadeIn(tween(SLIDE_MS)),
         exit = slideOutVertically(tween(SLIDE_MS)) { -it * 2 } + fadeOut(tween(SLIDE_MS)),
     ) {
-        WallpaperCopyPill(
-            onClick = {
-                visible = false
-                onOpen()
-            },
-            onDismiss = { visible = false },
-        )
+        if (shown != null) {
+            WallpaperCopyPill(
+                onClick = {
+                    visible = false
+                    onOpen()
+                },
+                onDismiss = { visible = false },
+            )
+        }
     }
 }
 

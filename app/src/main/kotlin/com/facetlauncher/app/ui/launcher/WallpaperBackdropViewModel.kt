@@ -7,6 +7,7 @@ import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.WallpaperCopyRepository
 import com.facetlauncher.app.data.WallpaperPaletteRepository
 import com.facetlauncher.app.data.model.WallpaperPalette
+import com.facetlauncher.app.domain.FillMissingWallpaperCopiesUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -17,6 +18,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 
 /**
  * The wallpaper copy the activity draws behind its content for real glass; `null` while there is none, or once the system
@@ -28,6 +30,7 @@ class WallpaperBackdropViewModel @Inject constructor(
     private val wallpaperCopyRepository: WallpaperCopyRepository,
     settingsRepository: SettingsRepository,
     private val wallpaperPaletteRepository: WallpaperPaletteRepository,
+    private val fillMissingCopies: FillMissingWallpaperCopiesUseCase,
 ) : ViewModel() {
     /** Bumped by [onResumed] so the check reads the system wallpaper's id again; it is also read whenever the copy or its recorded id changes. */
     private val resumes = MutableStateFlow(0)
@@ -37,6 +40,11 @@ class WallpaperBackdropViewModel @Inject constructor(
         val systemId = wallpaperCopyRepository.currentSystemWallpaperId()
         copy.takeIf { current && (storedId == WallpaperCopyRepository.NO_WALLPAPER_ID || storedId == systemId) }
     }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
+
+    init {
+        // A screen or orientation seen for the first time gets its copy from the kept original, when the wallpaper was set from a photo.
+        viewModelScope.launch { combine(wallpaperCopyRepository.currentScreen, resumes) { screen, _ -> screen }.collect { fillMissingCopies() } }
+    }
 
     /** `null` while there is nothing to compute from: the theme then uses the system's Material You. */
     @OptIn(ExperimentalCoroutinesApi::class)

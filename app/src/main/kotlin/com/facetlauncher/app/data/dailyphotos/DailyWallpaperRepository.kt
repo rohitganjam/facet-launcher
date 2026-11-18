@@ -3,6 +3,7 @@ package com.facetlauncher.app.data.dailyphotos
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.RectF
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.MutablePreferences
 import androidx.datastore.preferences.core.Preferences
@@ -59,6 +60,9 @@ open class DailyWallpaperRepository @Inject constructor(
 
     private val pendingFile get() = File(File(context.cacheDir, "daily_photos"), PENDING_FILE)
 
+    /** Where the pending photo's original waits: app storage, which Android does not clear like the cache. */
+    private val originalDir get() = File(context.filesDir, "daily_pending")
+
     open val state: Flow<DailyWallpaperState> = dataStore.data.map { it.toState() }
 
     open suspend fun get(): DailyWallpaperState = state.first()
@@ -83,9 +87,36 @@ open class DailyWallpaperRepository @Inject constructor(
         runCatching { pendingFile.takeIf { it.isFile }?.let { BitmapFactory.decodeFile(it.path) } }.getOrNull()
     }
 
-    open suspend fun deletePending() {
-        withContext(ioDispatcher) { pendingFile.delete() }
+    /** Keeps the photo [bytes] [savePending]'s bitmap was cut from, with the [framing] (fractions of it) the daily wallpaper chose, to be kept as the original once set. Kept in app storage, not the cache. */
+    open suspend fun savePendingOriginal(bytes: ByteArray, framing: RectF): Boolean = withContext(ioDispatcher) {
+        runCatching {
+            val dir = originalDir
+            dir.mkdirs()
+            File(dir, PENDING_ORIGINAL_FILE).writeBytes(bytes)
+            File(dir, PENDING_FRAMING_FILE).writeText("${framing.left} ${framing.top} ${framing.right} ${framing.bottom}")
+        }.isSuccess
     }
+
+    /** The photo kept by [savePendingOriginal] and its framing, or `null` when there is none (the cache was cleared). */
+    open suspend fun readPendingOriginal(): PendingOriginal? = withContext(ioDispatcher) {
+        runCatching {
+            val dir = originalDir
+            val bytes = File(dir, PENDING_ORIGINAL_FILE).takeIf { it.isFile }?.readBytes() ?: return@runCatching null
+            val values = File(dir, PENDING_FRAMING_FILE).readText().trim().split(" ").map { it.toFloat() }
+            PendingOriginal(bytes, RectF(values[0], values[1], values[2], values[3]))
+        }.getOrNull()
+    }
+
+    open suspend fun deletePending() {
+        withContext(ioDispatcher) {
+            pendingFile.delete()
+            File(originalDir, PENDING_ORIGINAL_FILE).delete()
+            File(originalDir, PENDING_FRAMING_FILE).delete()
+        }
+    }
+
+    /** The file a pending photo was cut from, and the framing it was cut with, as fractions of it. */
+    class PendingOriginal(val bytes: ByteArray, val framing: RectF)
 
     private fun Preferences.toState(): DailyWallpaperState = DailyWallpaperState(
         enabled = this[Keys.ENABLED] ?: false,
@@ -131,6 +162,8 @@ open class DailyWallpaperRepository @Inject constructor(
 
     private companion object {
         const val PENDING_FILE = "pending.jpg"
+        const val PENDING_ORIGINAL_FILE = "pending_original.bin"
+        const val PENDING_FRAMING_FILE = "pending_framing.txt"
         const val JPEG_QUALITY = 95
         const val SEPARATOR = "\n"
         const val FIELD_SEPARATOR = '\u001F'

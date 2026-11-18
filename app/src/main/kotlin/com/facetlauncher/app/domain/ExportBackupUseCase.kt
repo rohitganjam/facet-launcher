@@ -82,7 +82,6 @@ private fun LauncherSettings.toBackupSettings(activeFacetIndex: Int?): BackupSet
     drawerPresentation = drawerPresentation.name,
     drawerGridSize = drawerGridDensity.name,
     drawerListItemSize = drawerListItemSize.name,
-    drawerOpacity = drawerOpacity,
     notificationDotsEnabled = notificationDotsEnabled,
     notificationBadgeStyle = notificationBadgeStyle.name,
     showMediaPlayerOnHome = showMediaPlayerOnHome,

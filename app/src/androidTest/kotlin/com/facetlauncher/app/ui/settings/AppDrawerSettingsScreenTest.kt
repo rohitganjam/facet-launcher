@@ -102,7 +102,7 @@ class AppDrawerSettingsScreenTest {
     fun headerStaysVisibleAfterScrollingToTheBottom() {
         // Given the screen, scrolled all the way down
         setContent()
-        composeRule.onNodeWithTag("app_drawer_settings_screen").performScrollToNode(hasTestTag("drawer_opacity_slider"))
+        composeRule.onNodeWithTag("app_drawer_settings_screen").performScrollToNode(hasTestTag("recently_installed_position_row"))
 
         // Then the pinned header (title + back button) is still on screen, not scrolled away
         composeRule.onNodeWithText("App Drawer").assertIsDisplayed()
@@ -149,16 +149,6 @@ class AppDrawerSettingsScreenTest {
         composeRule.onNodeWithTag("show_drawer_labels_toggle").assertExists()
         composeRule.onNodeWithTag("show_drawer_icons_toggle").assertDoesNotExist()
         composeRule.onNodeWithTag("drawer_list_item_size_row").assertDoesNotExist()
-    }
-
-    @Test
-    fun drawerOpacitySliderShowsTheCurrentPercentage() {
-        // Given the screen with the documented 60% default, scrolled to the slider
-        setContent()
-        composeRule.onNodeWithTag("app_drawer_settings_screen").performScrollToNode(hasTestTag("drawer_opacity_slider"))
-
-        // Then the slider's label reflects it
-        composeRule.onNodeWithText("60%").assertExists()
     }
 
     @Test

@@ -232,6 +232,8 @@
     <string name="wallpaper_stale_title">Je achtergrond is gewijzigd</string>
     <string name="wallpaper_stale_body">De achtergrondkopie in Facet komt niet meer overeen met wat is ingesteld. Leg je achtergrond opnieuw vast of verwijder de kopie.</string>
     <string name="wallpaper_failed">Dat is niet gelukt. Probeer een andere afbeelding.</string>
+    <string name="wallpaper_original_not_kept">Je achtergrond is ingesteld, maar Facet kon de originele afbeelding niet bewaren. Een nieuw scherm heeft daarom een opname nodig.</string>
+    <string name="wallpaper_live_note">Je achtergrond is een live-achtergrond. Een opname is maar één stilstaand beeld ervan, dus glas kan hem niet volgen als hij beweegt.</string>
     <string name="wallpaper_offer_title">Je achtergrond is gewijzigd</string>
     <string name="wallpaper_offer_body">Facet kan achtergronden uit de Android-kiezer niet zien, dus glaseffecten blijven een gewone tint. Laat Facet je huidige achtergrond vastleggen en Facet vervaagt die achter je panelen.</string>
     <string name="wallpaper_offer_accept">Mijn achtergrond vastleggen</string>
@@ -242,12 +244,16 @@
     <string name="wallpaper_fit_hint">Sleep om te verplaatsen, knijp om te zoomen, tik twee keer om te herstellen.</string>
     <string name="wallpaper_fit_other_screen">De omtrek toont wat je tweede scherm zal tonen.</string>
     <string name="wallpaper_other_screen_title">We hebben geen achtergrondkopie voor een van je schermen</string>
-    <string name="wallpaper_other_screen_body">Facet toont daar een andere afbeelding, die misschien niet precies past. Open Facet op dat scherm en leg je huidige achtergrond vast.</string>
-    <string name="wallpaper_copy_pill_title">Glaseffecten hebben een achtergrondkopie nodig</string>
+    <string name="wallpaper_other_screen_body">Daar gebruiken glaseffecten een effen tint. Open Facet op dat scherm en leg je huidige achtergrond vast.</string>
+    <string name="wallpaper_copy_pill_title">Achtergrond vastleggen voor glaseffecten</string>
     <string name="wallpaper_copy_pill_action">Vastleggen</string>
-    <string name="wallpaper_copy_pill_description">Glaseffecten hebben een achtergrondkopie nodig. Opent de achtergrondpagina</string>
+    <string name="wallpaper_copy_pill_description">Achtergrond vastleggen voor glaseffecten. Opent het vastleggen</string>
     <string name="wallpaper_this_screen_title">We hebben geen achtergrondkopie voor dit scherm</string>
-    <string name="wallpaper_this_screen_body">Facet toont hier een andere afbeelding, die misschien niet precies past. Leg je huidige achtergrond op dit scherm vast.</string>
+    <string name="wallpaper_this_screen_body">Hier gebruiken glaseffecten een effen tint. Leg je huidige achtergrond op dit scherm vast.</string>
+    <string name="wallpaper_this_orientation_title">We hebben geen opname voor deze richting</string>
+    <string name="wallpaper_this_orientation_body">Hier gebruiken glaseffecten een effen tint. Leg je huidige achtergrond vast terwijl je telefoon zo wordt gehouden.</string>
+    <string name="wallpaper_other_orientation_title">We hebben geen opname voor een van je richtingen</string>
+    <string name="wallpaper_other_orientation_body">Daar gebruiken glaseffecten een effen tint. Draai je telefoon, open Facet en leg je huidige achtergrond vast.</string>
     <string name="wallpaper_foldable_title">Een opvouwbare telefoon?</string>
     <string name="wallpaper_foldable_body">Vouw je telefoon open of dicht en open Facet op het andere scherm. Leg daar je huidige achtergrond vast, zodat glaseffecten op beide overeenkomen.</string>
     <string name="wallpaper_fit_home">Startscherm</string>
@@ -302,7 +308,7 @@
     <string name="wallpaper_screenshot_confirm">Mijn achtergrond vastleggen</string>
     <string name="wallpaper_screenshot_have_image">Ik heb al een afbeelding</string>
     <string name="wallpaper_capture_title">Leg je achtergrond vast</string>
-    <string name="wallpaper_capture_body">Facet legt dit scherm één keer vast en bewaart het op je telefoon. Er wordt niets opgenomen. Android vraagt je om te bevestigen.</string>
+    <string name="wallpaper_capture_body">Facet legt dit scherm vast, draait het even om nog een opname te maken en bewaart beide op je telefoon. Er wordt niets opgenomen. Android vraagt je om te bevestigen.</string>
     <string name="wallpaper_capture_start">Achtergrond vastleggen</string>
     <string name="wallpaper_capture_manual">Liever zelf een screenshot maken</string>
     <string name="wallpaper_capture_failed_title">Vastleggen geannuleerd</string>
@@ -459,7 +465,6 @@
     <string name="app_drawer_search_bar_position">Positie van de zoekbalk</string>
     <string name="app_drawer_folders_in_drawer">Mappen in de lade</string>
     <string name="app_drawer_recently_installed_position">Recent geïnstalleerd</string>
-    <string name="app_drawer_opacity_label">Dekking van de lade</string>
     <string name="app_drawer_preview_description">Voorbeeld van de app-lade</string>
     <string name="drawer_preview_folder_name">Werk</string>
     <string-array name="drawer_preview_app_labels">
@@ -1172,6 +1177,7 @@
     <string name="glass_style_frost">Lichte vorst</string>
     <string name="glass_style_dark_frost">Donkere vorst</string>
     <string name="glass_style_bright">Helder</string>
+    <string name="glass_style_dim">Gedimd</string>
     <string name="glass_style_clear_glass">Helder glas</string>
     <string name="glass_style_dark_glass">Donker glas</string>
     <string name="glass_style_accent">Accent</string>

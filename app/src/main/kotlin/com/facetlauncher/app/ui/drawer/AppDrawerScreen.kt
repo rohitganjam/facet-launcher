@@ -1,5 +1,6 @@
 package com.facetlauncher.app.ui.drawer
 
+import com.facetlauncher.app.ui.components.FrostSurface
 import android.content.Intent
 import android.content.res.Configuration
 import android.provider.Settings
@@ -178,6 +179,9 @@ private const val EDGE_ZONE_WIDTH_DP = 48
  * [LazyGridState]) and the tile-rendering differ, since a flat "1 header + N per-app items"
  * sequence indexes the same way regardless of how those items are laid out visually.
  */
+/** How opaque the drawer's theme tint is while there is no wallpaper copy to frost (with one it is frosted glass instead). */
+private const val DRAWER_TINT_OPACITY = 0.7f
+
 @Composable
 fun AppDrawerScreen(
     apps: ImmutableList<AppInfo>,
@@ -227,10 +231,10 @@ fun AppDrawerScreen(
     Box(modifier = modifier.fillMaxSize()) {
         // Edge-to-edge is enforced unconditionally at this app's targetSdk (36) — without this, the
         // drawer's content (notably a TOP search bar) draws straight under the status bar/notch.
-        Column(
+        FrostSurface(SurfaceContainer.copy(alpha = DRAWER_TINT_OPACITY), modifier = Modifier.fillMaxSize()) {
+Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(SurfaceContainer.copy(alpha = appearance.opacity))
                 .windowInsetsPadding(launcherSystemBarInsets()),
         ) {
             if (searchBar.position == SearchBarPosition.TOP) DrawerSearchBar(searchBar, search.show)
@@ -255,6 +259,7 @@ fun AppDrawerScreen(
 
             if (searchBar.position == SearchBarPosition.BOTTOM) DrawerSearchBar(searchBar, search.show)
         }
+}
 
         DrawerSearchSheet(
             visible = search.isOpen,
