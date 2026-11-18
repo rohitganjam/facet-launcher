@@ -89,6 +89,13 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
 
+    <!-- These permissions make Android imply the hardware as required, which hides the app from devices without it
+         (a Wi-Fi-less tablet, a Bluetooth-less TV). Every one of them is optional here: Wi-Fi rules, named networks,
+         Bluetooth rules and weather location simply do nothing without the hardware. -->
+    <uses-feature android:name="android.hardware.wifi" android:required="false" />
+    <uses-feature android:name="android.hardware.bluetooth" android:required="false" />
+    <uses-feature android:name="android.hardware.location" android:required="false" />
+
     <!-- The weather feature (docs/architecture/18-flow-weather.md) is the only thing that uses the network: one
          request to MET Norway for a forecast, and nothing while weather is off. Play Billing's telemetry also
          merges INTERNET in, which is why this is declared explicitly. The verifyInternetPermission Gradle task
