@@ -109,7 +109,7 @@ class WallpaperScreenTest {
     }
 
     @Test
-    fun `the screenshot link explains first and offers taking one or using an image`() {
+    fun `the capture link opens the capture screen straight away`() {
         // Given no copy
         val calls = Calls()
         setContent(WallpaperUiState(), calls)
@@ -118,29 +118,24 @@ class WallpaperScreenTest {
         scrollTo("wallpaper_screenshot_link")
         composeRule.onNodeWithTag("wallpaper_screenshot_link").performClick()
 
-        // Then a dialog explains and nothing has happened yet
-        composeRule.onNodeWithTag("wallpaper_screenshot_dialog").assertIsDisplayed()
-        assertEquals(0, calls.screenshot + calls.takeScreenshot)
-
-        // And Take screenshot reports once and closes it
-        composeRule.onNodeWithTag("wallpaper_screenshot_take").performClick()
+        // Then the capture screen is requested once, with no dialog in between
         assertEquals(1, calls.takeScreenshot)
         composeRule.onNodeWithTag("wallpaper_screenshot_dialog").assertDoesNotExist()
     }
 
     @Test
-    fun `I have an image already opens the picker`() {
-        // Given the dialog is open
+    fun `upload a screenshot opens the picker`() {
+        // Given no copy
         val calls = Calls()
         setContent(WallpaperUiState(), calls)
-        scrollTo("wallpaper_screenshot_link")
-        composeRule.onNodeWithTag("wallpaper_screenshot_link").performClick()
 
-        // When the second button is tapped
-        composeRule.onNodeWithTag("wallpaper_screenshot_have_image").performClick()
+        // When the upload row is tapped
+        scrollTo("wallpaper_upload_row")
+        composeRule.onNodeWithTag("wallpaper_upload_row").performClick()
 
-        // Then the picker is requested once
+        // Then the picker is requested once and the capture screen is not
         assertEquals(1, calls.screenshot)
+        assertEquals(0, calls.takeScreenshot)
     }
 
     @Test

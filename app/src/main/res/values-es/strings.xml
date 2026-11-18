@@ -300,10 +300,9 @@
     <string name="daily_wallpaper_turn_on">Activar</string>
     <string name="daily_wallpaper_turns_off">Usar tu propia imagen desactiva el fondo diario.</string>
     <string name="daily_wallpaper_current_description">Fondo actual</string>
-    <string name="wallpaper_screenshot_title">Capturar mi fondo actual</string>
-    <string name="wallpaper_screenshot_body">Android no deja que Facet vea tu fondo de pantalla. Facet puede capturarlo una vez desde una pantalla limpia cuando confirmes en el cuadro de Android. Se queda en tu teléfono y tu fondo no cambia.</string>
     <string name="wallpaper_screenshot_confirm">Capturar mi fondo</string>
-    <string name="wallpaper_screenshot_have_image">Ya tengo una imagen</string>
+    <string name="wallpaper_upload_title">Subir una captura</string>
+    <string name="wallpaper_upload_subtitle">Elige una captura de tu fondo de pantalla de la galería</string>
     <string name="wallpaper_capture_title">Captura tu fondo</string>
     <string name="wallpaper_capture_body">Facet captura esta pantalla, la gira un momento para hacer otra captura y guarda ambas en tu teléfono. No graba nada. Android te pedirá confirmación.</string>
     <string name="wallpaper_capture_start">Capturar fondo</string>

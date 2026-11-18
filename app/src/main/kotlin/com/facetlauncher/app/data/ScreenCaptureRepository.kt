@@ -11,6 +11,8 @@ import java.nio.ByteBuffer
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.withTimeoutOrNull
 
 /** What one capture session took: [current] in the orientation the screen was in, and [turned] in the other one when the session could turn the screen. */
@@ -27,6 +29,20 @@ open class ScreenCaptureRepository @Inject constructor(
     @ApplicationContext private val context: Context,
 ) {
     private var pending: CompletableDeferred<CapturedFrames?>? = null
+    private val running = MutableStateFlow(false)
+
+    /** `true` from the user's go-ahead until the frames are stored, so Home does not offer a capture that is already being made. */
+    open val capturing: StateFlow<Boolean> get() = running
+
+    /** Runs [block] with [capturing] true, however it ends. */
+    open suspend fun <T> whileCapturing(block: suspend () -> T): T {
+        running.value = true
+        try {
+            return block()
+        } finally {
+            running.value = false
+        }
+    }
 
     /** Turns the screen to landscape (`true`) or portrait for the second frame, and returns once it has turned (`false` when it did not); read by the service. */
     @Volatile internal var rotateTo: (suspend (landscape: Boolean) -> Boolean)? = null

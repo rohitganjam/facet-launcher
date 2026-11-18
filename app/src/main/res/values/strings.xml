@@ -339,10 +339,9 @@
     <string name="daily_wallpaper_turn_on">Turn on</string>
     <string name="daily_wallpaper_turns_off">Setting your own image turns off Daily wallpaper.</string>
     <string name="daily_wallpaper_current_description">Current wallpaper</string>
-    <string name="wallpaper_screenshot_title">Capture my current wallpaper</string>
-    <string name="wallpaper_screenshot_body">Android doesn\'t let Facet see your wallpaper. Facet can capture one picture of it from a clear screen once you confirm in Android\'s dialog. It stays on your phone, and your wallpaper stays as it is.</string>
     <string name="wallpaper_screenshot_confirm">Capture my wallpaper</string>
-    <string name="wallpaper_screenshot_have_image">I have an image already</string>
+    <string name="wallpaper_upload_title">Upload a screenshot</string>
+    <string name="wallpaper_upload_subtitle">Choose a screenshot of your wallpaper from your gallery</string>
     <string name="wallpaper_capture_title">Capture your wallpaper</string>
     <string name="wallpaper_capture_body">Facet takes a picture of this screen, briefly turns it to take another, and keeps both on your phone. It doesn\'t record anything. Android will ask you to confirm.</string>
     <string name="wallpaper_capture_start">Capture wallpaper</string>

@@ -49,7 +49,7 @@ import com.facetlauncher.app.ui.theme.Ink
 import com.facetlauncher.app.ui.theme.Surface
 import kotlinx.coroutines.delay
 
-private const val AUTO_HIDE_MS = 8_000L
+private const val AUTO_HIDE_MS = 5_000L
 private const val SLIDE_MS = 320
 private const val DISMISS_DRAG_PX = 12f
 

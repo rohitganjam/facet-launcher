@@ -107,16 +107,18 @@ class WallpaperViewModel @Inject constructor(
 
     val uiState: StateFlow<WallpaperUiState> = combine(combine(wallpaperCopyRepository.copy, wallpaperCopyRepository.copyIsCurrent) { copy, current -> copy to current }, settingsRepository.settings, local, dailyWallpaperRepository.state, observeScreens()) { (copy, current), settings, state, daily, screens ->
         val storedId = settings.wallpaperCopySystemId
+        val stale = copy != null && (!current || (storedId != WallpaperCopyRepository.NO_WALLPAPER_ID && storedId != wallpaperCopyRepository.currentSystemWallpaperId()))
         WallpaperUiState(
             copy = copy,
             systemWallpaper = state.systemWallpaper,
-            stale = copy != null && (!current || (storedId != WallpaperCopyRepository.NO_WALLPAPER_ID && storedId != wallpaperCopyRepository.currentSystemWallpaperId())),
+            stale = stale,
             picked = state.picked,
             isWorking = state.working,
             failed = state.failed,
             originalNotKept = state.originalNotKept,
             liveWallpaper = state.live,
-            offerCopy = state.offerCopy,
+            // Gone as soon as a matching copy exists, however it got there (the offer's button, the capture row, the pill).
+            offerCopy = state.offerCopy && (copy == null || stale),
             credit = state.credit,
             copyOnly = state.copyOnly,
             turnsOffDailyWallpaper = daily.enabled && state.picked != null && !state.copyOnly && !state.fromDailyPhoto,

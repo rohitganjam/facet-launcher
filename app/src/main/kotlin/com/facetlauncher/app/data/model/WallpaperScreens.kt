@@ -27,8 +27,8 @@ data class OtherScreenPrompt(
     val otherOrientation: Boolean = false,
 )
 
-/** The view showing now when Home should offer to capture its wallpaper, and whether the screen's other orientation already has a capture. */
-data class WallpaperCopyNeed(val view: ScreenSize, val otherOrientation: Boolean)
+/** The view showing now when Home should offer to capture its wallpaper, whether the screen's other orientation already has a capture, and the system wallpaper's [wallpaperId] it is offered for. */
+data class WallpaperCopyNeed(val view: ScreenSize, val otherOrientation: Boolean, val wallpaperId: Int)
 
 /** Every screen known in its natural orientation, the largest first, and the prompt about its views. */
 @Immutable

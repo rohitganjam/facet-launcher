@@ -300,10 +300,9 @@
     <string name="daily_wallpaper_turn_on">Ativar</string>
     <string name="daily_wallpaper_turns_off">Usar sua própria imagem desativa o plano de fundo diário.</string>
     <string name="daily_wallpaper_current_description">Plano de fundo atual</string>
-    <string name="wallpaper_screenshot_title">Capturar o meu papel de parede atual</string>
-    <string name="wallpaper_screenshot_body">O Android não deixa o Facet ver seu papel de parede. O Facet pode capturá-lo uma vez numa tela limpa depois que você confirmar na janela do Android. Ele fica no seu telefone e seu papel de parede continua igual.</string>
     <string name="wallpaper_screenshot_confirm">Capturar meu papel de parede</string>
-    <string name="wallpaper_screenshot_have_image">Já tenho uma imagem</string>
+    <string name="wallpaper_upload_title">Enviar uma captura de tela</string>
+    <string name="wallpaper_upload_subtitle">Escolha uma captura de tela do seu papel de parede na galeria</string>
     <string name="wallpaper_capture_title">Capture seu papel de parede</string>
     <string name="wallpaper_capture_body">O Facet captura esta tela, a gira por um instante para fazer outra captura e guarda as duas no seu telefone. Ele não grava nada. O Android vai pedir sua confirmação.</string>
     <string name="wallpaper_capture_start">Capturar papel de parede</string>

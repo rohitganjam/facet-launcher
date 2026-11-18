@@ -32,6 +32,8 @@ class ObserveWallpaperScreensUseCaseTest {
         override val screens: Flow<List<ScreenCopy>> get() = screenList
         override val dismissedPrompts: Flow<Set<String>> get() = said
         val showing = MutableStateFlow(ScreenSize(1080, 2092))
+        var systemId = 7
+        override fun currentSystemWallpaperId() = systemId
         override val currentScreen: Flow<ScreenSize> get() = showing
         override suspend fun dismissPrompt(key: String) { said.value += key }
         override fun maybeFoldable() = hinge
@@ -210,7 +212,26 @@ class ObserveWallpaperScreensUseCaseTest {
         copies.showing.value = outerTurned
 
         // Then Home offers the landscape view, saying the other orientation is covered
-        assertEquals(WallpaperCopyNeed(outerTurned, otherOrientation = true), need(copies))
+        assertEquals(WallpaperCopyNeed(outerTurned, otherOrientation = true, wallpaperId = 7), need(copies))
+    }
+
+    @Test
+    fun `nothing is needed once every view has a copy for the current wallpaper`() = runTest {
+        // Given both orientations of the screen hold a copy that matches the wallpaper
+        val copies = FakeCopies(listOf(ScreenCopy(outer, true), ScreenCopy(outerTurned, true, screen = outer)))
+
+        // Then there is nothing to offer
+        assertEquals(null, need(copies))
+    }
+
+    @Test
+    fun `the need carries the id of the wallpaper it is for`() = runTest {
+        // Given an outdated copy and a new system wallpaper
+        val copies = FakeCopies(listOf(ScreenCopy(outer, false, outdated = true)))
+        copies.systemId = 9
+
+        // Then the need names that wallpaper
+        assertEquals(9, need(copies)?.wallpaperId)
     }
 
     @Test
@@ -219,7 +240,7 @@ class ObserveWallpaperScreensUseCaseTest {
         val copies = FakeCopies(listOf(ScreenCopy(inner, true), ScreenCopy(outer, false), ScreenCopy(outerTurned, false, screen = outer)))
 
         // Then Home offers the outer view, with no note about orientation
-        assertEquals(WallpaperCopyNeed(outer, otherOrientation = false), need(copies))
+        assertEquals(WallpaperCopyNeed(outer, otherOrientation = false, wallpaperId = 7), need(copies))
     }
 
     @Test

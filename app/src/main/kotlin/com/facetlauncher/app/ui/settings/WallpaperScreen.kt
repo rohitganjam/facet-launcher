@@ -27,6 +27,7 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.CheckCircle
+import androidx.compose.material.icons.outlined.FileUpload
 import androidx.compose.material.icons.outlined.PhotoLibrary
 import androidx.compose.material.icons.outlined.Screenshot
 import androidx.compose.material.icons.outlined.Wallpaper
@@ -174,8 +175,8 @@ internal fun WallpaperContent(
     uiState: WallpaperUiState,
     onBack: () -> Unit,
     onChooseWallpaper: () -> Unit,
-    onUseScreenshot: () -> Unit,
     onTakeScreenshot: () -> Unit,
+    onUseScreenshot: () -> Unit,
     onSetSystemWallpaper: () -> Unit,
     onAcceptOffer: () -> Unit,
     onDeclineOffer: () -> Unit,
@@ -341,48 +342,24 @@ private fun ChoiceRows(onChooseWallpaper: () -> Unit, onSetSystemWallpaper: () -
     }
 }
 
-/** For someone who likes their wallpaper: Facet cannot read it, so they screenshot it and choose the screenshot. Always shown; once a copy is in use it says so, and can still be redone. */
+/** For someone who likes their wallpaper: Facet cannot read it, so the first row opens the capture screen, which explains and asks before Android's own dialog, and the second picks a screenshot already taken. Always shown; once a copy is in use it says so, and can still be redone. */
 @Composable
 private fun CurrentWallpaperCard(inUse: Boolean, onTakeScreenshot: () -> Unit, onUseScreenshot: () -> Unit) {
-    var showHelp by remember { mutableStateOf(false) }
     SettingsCard(fullBleedRows = true) {
         ClickableRow(
             title = stringResource(R.string.wallpaper_screenshot_link),
             subtitle = stringResource(if (inUse) R.string.wallpaper_current_in_use else R.string.wallpaper_current_subtitle),
-            onClick = { showHelp = true },
+            onClick = onTakeScreenshot,
             testTag = "wallpaper_screenshot_link",
             leadingIcon = iconBadge(if (inUse) Icons.Outlined.CheckCircle else Icons.Outlined.Screenshot, SettingsSectionHue.APPEARANCE),
         )
-    }
-    if (showHelp) {
-        AlertDialog(
-            onDismissRequest = { showHelp = false },
-            modifier = Modifier.testTag("wallpaper_screenshot_dialog"),
-            shape = MaterialTheme.shapes.extraLarge,
-            containerColor = Surface,
-            title = { Text(text = stringResource(R.string.wallpaper_screenshot_title), style = MaterialTheme.typography.titleMedium, color = Ink) },
-            text = {
-                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Text(text = stringResource(R.string.wallpaper_screenshot_body), style = MaterialTheme.typography.bodyMedium, color = Muted)
-                    PrimaryButton(
-                        text = stringResource(R.string.wallpaper_screenshot_confirm),
-                        onClick = {
-                            showHelp = false
-                            onTakeScreenshot()
-                        },
-                        modifier = Modifier.fillMaxWidth().testTag("wallpaper_screenshot_take"),
-                    )
-                    TextActionButton(
-                        text = stringResource(R.string.wallpaper_screenshot_have_image),
-                        onClick = {
-                            showHelp = false
-                            onUseScreenshot()
-                        },
-                        modifier = Modifier.fillMaxWidth().testTag("wallpaper_screenshot_have_image"),
-                    )
-                }
-            },
-            confirmButton = {},
+        CardDivider(startInset = SettingsIconBadgeInset)
+        ClickableRow(
+            title = stringResource(R.string.wallpaper_upload_title),
+            subtitle = stringResource(R.string.wallpaper_upload_subtitle),
+            onClick = onUseScreenshot,
+            testTag = "wallpaper_upload_row",
+            leadingIcon = iconBadge(Icons.Outlined.FileUpload, SettingsSectionHue.APPEARANCE),
         )
     }
 }

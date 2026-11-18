@@ -38,12 +38,13 @@ class CaptureWallpaperUseCaseTest {
     private class FakeCopies : WallpaperCopyRepository(RuntimeEnvironment.getApplication(), mock(WallpaperManager::class.java)) {
         var saved: Bitmap? = null
         var turned = false
+        var onSave: () -> Unit = {}
         override fun currentSystemWallpaperId() = 5
         override fun screenSize() = 50 to 100
         override fun windowSize() = if (turned) 100 to 50 else 50 to 100
         val savedByView = mutableMapOf<com.facetlauncher.app.data.model.ScreenSize, Bitmap>()
         override suspend fun save(bitmap: Bitmap): Boolean { saved = bitmap; return true }
-        override suspend fun save(bitmap: Bitmap, size: com.facetlauncher.app.data.model.ScreenSize): Boolean { saved = bitmap; savedByView[size] = bitmap; return true }
+        override suspend fun save(bitmap: Bitmap, size: com.facetlauncher.app.data.model.ScreenSize): Boolean { onSave(); saved = bitmap; savedByView[size] = bitmap; return true }
     }
 
     private class FakeCapture(private val frame: Bitmap?, private val turned: Bitmap? = null) : ScreenCaptureRepository(RuntimeEnvironment.getApplication()) {
@@ -77,6 +78,23 @@ class CaptureWallpaperUseCaseTest {
         assertTrue(done)
         assertEquals(50, copies.saved?.width)
         assertEquals(100, copies.saved?.height)
+    }
+
+    @Test
+    fun `the capture counts as running until the frames are stored`() = runTest {
+        // Given a capture that was not started yet
+        val copies = FakeCopies()
+        val (capture, fake) = useCase(Bitmap.createBitmap(100, 200, Bitmap.Config.ARGB_8888), copies)
+        assertFalse(fake.capturing.value)
+        var runningWhenSaved = false
+        copies.onSave = { runningWhenSaved = fake.capturing.value }
+
+        // When it is done
+        capture(-1, Intent())
+
+        // Then it is not running any more, and it was while the copy was stored
+        assertFalse(fake.capturing.value)
+        assertTrue(runningWhenSaved)
     }
 
     @Test
