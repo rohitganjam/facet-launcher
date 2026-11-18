@@ -287,6 +287,26 @@ class WallpaperViewModelTest {
     }
 
     @Test
+    fun `the offer goes once a matching copy exists however it was made`() = runTest {
+        // Given the offer showing after a wallpaper change
+        val copies = FakeCopies()
+        val settings = settings()
+        val viewModel = viewModel(copies, settings)
+        viewModel.observe(this)
+        viewModel.onSystemPickerOpened()
+        copies.systemId = 2
+        viewModel.refresh()
+        viewModel.uiState.first { it.offerCopy }
+
+        // When a copy of the new wallpaper is captured elsewhere, not through the offer's button
+        settings.setWallpaperCopySystemId(2)
+        copies.stored.value = Bitmap.createBitmap(5, 5, Bitmap.Config.ARGB_8888)
+
+        // Then the offer is gone
+        assertFalse(viewModel.uiState.first { it.copy != null && !it.offerCopy }.offerCopy)
+    }
+
+    @Test
     fun `an unchanged wallpaper or a matching copy offers nothing`() = runTest {
         // Given the picker opened and closed without a change
         val copies = FakeCopies()
