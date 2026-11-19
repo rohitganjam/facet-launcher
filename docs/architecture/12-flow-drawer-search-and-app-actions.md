@@ -291,7 +291,7 @@ Settings → Gestures assigns an action to each swipe (`LauncherSettings.swipeAc
 An action may sit on more than one swipe (the picker warns first), and the app drawer always keeps at least one
 (`SwipeActions.canAssign`). `LauncherViewModel` feeds the mapping to `HomeSwipeController.actions`. A drag engages the
 first direction along its axis that has an action and drives that action for the whole gesture. Each panel slides in
-from the side its swipe pulls it from (`panelOffset`, applied by `Modifier.panelPlacement`, which uses the size the panel is measured at in the same layout pass: a size remembered from an earlier layout is only the 1000 x 2000 default on the first frame and the old one after a rotation, and drew the parked Hub over Home for a frame): the controller's `drawerDirection` / `hubDirection` /
+from the side its swipe pulls it from (`panelOffset`, applied by `Modifier.panelPlacement`, a `graphicsLayer` translation taken from the size the layer is drawn at, so the first frame and a rotation are right (a size remembered from an earlier layout was only the 1000 x 2000 default on the first frame and the old one after a rotation, and drew the parked Hub over Home for a frame) and the panel's cached layer slides on the render thread without being measured or redrawn, as a layout placement made it): the controller's `drawerDirection` / `hubDirection` /
 `facetDirection` are the swipe that last opened the panel, reset to its first swipe when the mapping drops that one. The
 reverse drag closes it: on its surface (`panelSurfaceDrag`), or through its scrolling content once that can scroll no
 further back (`panelCloseNestedScroll`; the drawer coming up keeps `drawerNestedScroll`). A carousel from a side is also
