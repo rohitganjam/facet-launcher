@@ -845,7 +845,7 @@ accessibility grant, and the pair is small enough to set again after a restore.
 ### 5.5 What is deliberately *not* in DataStore
 
 Anything per-facet (Room `facets`), anything per-app placement (Room), permission *grants* (read
-live from the OS on every check), the installed-app list, and notification counts (in-memory). The glass wallpaper copies are PNGs, one per view, a screen's size in one orientation (`wallpaper_copy_<w>x<h>.png`, so a phone has a portrait and a landscape one) with `wallpaper_screens.txt` listing the screens seen in their natural size and `wallpaper_copy_ids.txt` the system wallpaper id each copy was stored under, and `wallpaper_original.bin` with `wallpaper_original_framing.txt` the picked image as it was and its framing, in `filesDir`, owned by `WallpaperCopyRepository` and left out of backups.
+live from the OS on every check), the installed-app list, and notification counts (in-memory). The glass wallpaper copies are JPEGs (an older PNG is still read), one per view, a screen's size in one orientation (`wallpaper_copy_<w>x<h>.jpg`, so a phone has a portrait and a landscape one) with `wallpaper_screens.txt` listing the screens seen in their natural size and `wallpaper_copy_ids.txt` the system wallpaper id each copy was stored under, and `wallpaper_original.bin` with `wallpaper_original_framing.txt` the picked image as it was and its framing, in `filesDir`, owned by `WallpaperCopyRepository` and left out of backups.
 
 ### 5.6 Adding a key — the checklist
 

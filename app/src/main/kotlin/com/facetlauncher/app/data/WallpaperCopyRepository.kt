@@ -42,13 +42,17 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 
 private const val LEGACY_COPY_FILE = "wallpaper_copy.png"
 private const val COPY_PREFIX = "wallpaper_copy_"
-private const val COPY_SUFFIX = ".png"
+private const val COPY_SUFFIX = ".jpg"
+
+/** Copies made before they were JPEGs; still read, replaced the next time that view is saved. */
+private const val OLD_COPY_SUFFIX = ".png"
 private const val SCREENS_FILE = "wallpaper_screens.txt"
 private const val DISMISSED_FILE = "wallpaper_dismissed.txt"
 private const val IDS_FILE = "wallpaper_copy_ids.txt"
@@ -79,7 +83,17 @@ open class WallpaperCopyRepository @Inject constructor(
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) {
     private fun fileFor(size: ScreenSize) = File(context.filesDir, "$COPY_PREFIX${size.key}$COPY_SUFFIX")
+    private fun oldFileFor(size: ScreenSize) = File(context.filesDir, "$COPY_PREFIX${size.key}$OLD_COPY_SUFFIX")
     private val copies = MutableStateFlow<Map<ScreenSize, Bitmap>>(emptyMap())
+    private val finishing = MutableStateFlow(0)
+
+    /** `true` while the other views' copies of a wallpaper just set are still being stored, so a view lacking one is not suggested yet. */
+    open val isFinishingCopies: Flow<Boolean> get() = finishing.map { it > 0 }.distinctUntilChanged()
+
+    /** Marks that copies are being stored; every call is paired with a [stopFinishingCopies], by whoever ends the work. */
+    open fun startFinishingCopies() = finishing.update { it + 1 }
+
+    open fun stopFinishingCopies() = finishing.update { it - 1 }
     private val seen = MutableStateFlow<Set<ScreenSize>>(emptySet())
     private val dismissed = MutableStateFlow<Set<String>>(emptySet())
 
@@ -300,8 +314,9 @@ open class WallpaperCopyRepository @Inject constructor(
         val written = runCatching {
             val file = fileFor(size)
             val temp = File(context.filesDir, "${file.name}.tmp")
-            temp.outputStream().use { bitmap.compress(Bitmap.CompressFormat.PNG, PNG_QUALITY, it) }
+            temp.outputStream().use { bitmap.compress(Bitmap.CompressFormat.JPEG, JPEG_QUALITY, it) }
             check(temp.renameTo(file) || (file.delete() && temp.renameTo(file)))
+            oldFileFor(size).delete()
         }.isSuccess
         if (written) mutex.withLock {
             hasLoaded = true
@@ -409,7 +424,10 @@ open class WallpaperCopyRepository @Inject constructor(
         copyIds.value = copyIds.value - views
         dismissed.value = dismissed.value.filterNot { key -> views.any { it.promptKey == key } }.toSet()
         withContext(ioDispatcher) {
-            views.forEach { fileFor(it).delete() }
+            views.forEach {
+                fileFor(it).delete()
+                oldFileFor(it).delete()
+            }
             runCatching { File(context.filesDir, IDS_FILE).writeText(copyIds.value.entries.joinToString("\n") { "${it.key.key} ${it.value}" }) }
             runCatching { File(context.filesDir, DISMISSED_FILE).writeText(dismissed.value.joinToString("\n")) }
         }
@@ -432,12 +450,15 @@ open class WallpaperCopyRepository @Inject constructor(
         if (legacy.exists()) {
             BitmapFactory.decodeFile(legacy.path)?.let { bitmap ->
                 val size = ScreenSize(bitmap.width, bitmap.height)
-                if (legacy.renameTo(fileFor(size))) stored[size] = bitmap
+                if (legacy.renameTo(oldFileFor(size))) stored[size] = bitmap
             }
         }
-        context.filesDir.listFiles { file -> file.name.startsWith(COPY_PREFIX) && file.name.endsWith(COPY_SUFFIX) }?.forEach { file ->
-            val size = ScreenSize.parse(file.name.removePrefix(COPY_PREFIX).removeSuffix(COPY_SUFFIX)) ?: return@forEach
-            if (size !in stored) BitmapFactory.decodeFile(file.path)?.let { stored[size] = it }
+        // A JPEG copy first, so it wins over an old PNG of the same view.
+        listOf(COPY_SUFFIX, OLD_COPY_SUFFIX).forEach { suffix ->
+            context.filesDir.listFiles { file -> file.name.startsWith(COPY_PREFIX) && file.name.endsWith(suffix) }?.forEach { file ->
+                val size = ScreenSize.parse(file.name.removePrefix(COPY_PREFIX).removeSuffix(suffix)) ?: return@forEach
+                if (size !in stored) BitmapFactory.decodeFile(file.path)?.let { stored[size] = it }
+            }
         }
         val known = File(context.filesDir, SCREENS_FILE).takeIf { it.exists() }?.readLines()?.mapNotNull { ScreenSize.parse(it.trim()) }.orEmpty()
         val said = File(context.filesDir, DISMISSED_FILE).takeIf { it.exists() }?.readLines()?.map { it.trim() }?.filter { it.isNotEmpty() }.orEmpty()
@@ -462,7 +483,7 @@ open class WallpaperCopyRepository @Inject constructor(
         const val NO_WALLPAPER_ID = -1
         private const val SHAPE_FIELDS = 4
         private const val DEFAULT_OFFSET = 0.5f
-        private const val PNG_QUALITY = 100
+        private const val JPEG_QUALITY = 95
 
         /** How much two screens' shapes may differ and still be one screen at two resolutions. */
         private const val SAME_SHAPE_TOLERANCE = 0.01f
