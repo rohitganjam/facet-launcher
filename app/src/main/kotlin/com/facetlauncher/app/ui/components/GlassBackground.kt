@@ -136,6 +136,13 @@ private val AccentLook = BackdropLook(blurDp = 12f, saturation = 1.5f, lens = tr
 /** The wallpaper stays sharp and bends at the rim. */
 private val ClearLook = BackdropLook(blurDp = 1.5f, lens = true)
 
+/** What the full-screen frost ([FrostSurface]) does to the copy, which it does once into a picture ([frostedCopy]) instead of live: the same blur, lift and wash as [GlassStyle.FROST] or [GlassStyle.DARK_FROST]. */
+internal class FrostSpec(val blurDp: Float, val brightness: Float, val saturation: Float, val wash: Brush)
+
+internal fun frostSpec(dark: Boolean): FrostSpec =
+    if (dark) FrostSpec(DarkFrostLook.blurDp, DarkFrostLook.brightness, DarkFrostLook.saturation, fill(0.42f, 0.42f, Smoke))
+    else FrostSpec(FrostLook.blurDp, FrostLook.brightness, FrostLook.saturation, fill(0.22f, 0.10f))
+
 private const val LENS_HEIGHT_DP = 14f
 private const val LENS_AMOUNT_DP = 24f
 

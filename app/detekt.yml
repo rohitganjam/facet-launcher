@@ -45,6 +45,7 @@ Compose:
       - LocalIconGlassSamplesWallpaper
       - LocalGlassBackgroundPrompt
       - LocalBackdropTint
+      - LocalWallpaperFrost
       - LocalCustomAccentSwatch
   CompositionLocalNaming: { active: true }
   ConditionHoist: { active: true }

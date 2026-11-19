@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
@@ -19,6 +20,9 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import com.kyant.backdrop.Backdrop
 import com.kyant.backdrop.backdrops.layerBackdrop
 import com.kyant.backdrop.backdrops.rememberLayerBackdrop
@@ -54,16 +58,35 @@ fun WallpaperBackdropHost(copy: Bitmap?, modifier: Modifier = Modifier, content:
     // The copy goes into the recorded layer only; the empty box under it draws nothing on screen.
     val onDraw: ContentDrawScope.() -> Unit = remember(image) { { image?.let { drawImageCropped(it) } } }
     val backdrop = rememberLayerBackdrop(onDraw = onDraw)
+    val frost = rememberWallpaperFrost(copy.takeIf { usable })
     Box(modifier = modifier.fillMaxSize()) {
         if (usable && image != null) {
             Box(Modifier.fillMaxSize().layerBackdrop(backdrop))
         }
-        CompositionLocalProvider(LocalWallpaperBackdrop provides backdrop.takeIf { usable }) { content() }
+        CompositionLocalProvider(LocalWallpaperBackdrop provides backdrop.takeIf { usable }, LocalWallpaperFrost provides frost) { content() }
     }
 }
 
+/**
+ * The frosted pictures of [copy], made off the main thread: nothing while there is no copy, and a new pair whenever the copy changes (a
+ * different wallpaper, or a new capture). Until they are ready both pictures are `null`, which the panels read as "use the tint".
+ */
+@Composable
+private fun rememberWallpaperFrost(copy: Bitmap?): WallpaperFrost? {
+    val density = LocalDensity.current.density
+    return produceState<WallpaperFrost?>(initialValue = null, copy, density) {
+        value = copy?.let { WallpaperFrost(light = null, dark = null) }
+        value = copy?.let {
+            withContext(Dispatchers.Default) {
+                fun frosted(dark: Boolean) = frostSpec(dark).let { spec -> frostedCopy(it, spec.blurDp * density, spec.brightness, spec.saturation).asImageBitmap() }
+                WallpaperFrost(light = frosted(false), dark = frosted(true))
+            }
+        }
+    }.value
+}
+
 /** [image] scaled to cover this scope and centred, as [androidx.compose.ui.layout.ContentScale.Crop] would draw it. */
-private fun DrawScope.drawImageCropped(image: ImageBitmap) {
+internal fun DrawScope.drawImageCropped(image: ImageBitmap) {
     if (image.width <= 0 || image.height <= 0 || size.isEmpty()) return
     val scale = max(size.width / image.width, size.height / image.height)
     val srcWidth = (size.width / scale).roundToInt().coerceIn(1, image.width)
