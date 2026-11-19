@@ -70,4 +70,42 @@ class NativeWidgetSizingTest {
         assertEquals(WidgetTier.MEDIUM, NativeWidgetType.WEATHER.tierFor(219, 300))
         assertEquals(WidgetTier.LARGE, NativeWidgetType.WEATHER.tierFor(220, 140))
     }
+
+    @Test
+    fun `now playing picks a layout from the box inside the widget inset`() {
+        // Given the Hub spans less the 8dp inset on each side
+        fun layout(cols: Int, rows: Int) = nowPlayingLayoutFor(span(cols) - 16, span(rows) - 16)
+
+        // Then each span gets its own layout
+        assertEquals(NowPlayingLayout.TILE, layout(1, 1))
+        assertEquals(NowPlayingLayout.TILE, layout(1, 3))
+        assertEquals(NowPlayingLayout.COMPACT, layout(2, 1))
+        assertEquals(NowPlayingLayout.STRIP, layout(4, 1))
+        assertEquals(NowPlayingLayout.COVER_CARD, layout(2, 2))
+        assertEquals(NowPlayingLayout.CARD, layout(4, 2))
+        assertEquals(NowPlayingLayout.FULL, layout(4, 3))
+        assertEquals(NowPlayingLayout.FULL, layout(2, 3))
+    }
+
+    @Test
+    fun `now playing is a tile at 1x1 and a cover card at 2x2 whatever the cell size`() {
+        // Given the widget's outer size, less the 8dp inset on each side
+        fun layout(cell: Int, cols: Int, rows: Int) = nowPlayingLayoutFor(cell * cols + 4 * (cols - 1) - 16, cell * rows + 4 * (rows - 1) - 16)
+
+        // Then, from a 320dp phone's cells to a roomy one's, 1x1 is a tile and 2x2 a cover card
+        listOf(56, 62, 64, 72, 80).forEach { cell ->
+            assertEquals("1x1 at $cell", NowPlayingLayout.TILE, layout(cell, 1, 1))
+            assertEquals("2x2 at $cell", NowPlayingLayout.COVER_CARD, layout(cell, 2, 2))
+        }
+    }
+
+    @Test
+    fun `now playing leaves the cover card just under 116dp outside`() {
+        fun layout(outerW: Int, outerH: Int) = nowPlayingLayoutFor(outerW - 16, outerH - 16)
+
+        assertEquals(NowPlayingLayout.COVER_CARD, layout(116, 116))
+        assertEquals(NowPlayingLayout.TILE, layout(115, 116))
+        assertEquals(NowPlayingLayout.COMPACT, layout(148, 115))
+        assertEquals(NowPlayingLayout.STRIP, layout(292, 115))
+    }
 }

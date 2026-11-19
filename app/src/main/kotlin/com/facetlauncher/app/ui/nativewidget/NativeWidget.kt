@@ -93,6 +93,6 @@ private fun NativeWidgetContent(type: NativeWidgetType, tier: WidgetTier, size: 
     when (type) {
         NativeWidgetType.WEATHER -> WeatherNativeWidget(tier, inner, state.weather, onOpenWeather, state.access.locationMissing, actions.onRequestLocationAccess)
         NativeWidgetType.AGENDA -> AgendaNativeWidget(tier, state.calendar, actions.onOpenEvent, state.access.calendarMissing, actions.onRequestCalendarAccess)
-        NativeWidgetType.NOW_PLAYING -> NowPlayingNativeWidget(tier, inner, state.media, actions.media)
+        NativeWidgetType.NOW_PLAYING -> NowPlayingNativeWidget(inner, state.media, actions.media)
     }
 }

@@ -16,6 +16,8 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.swipeLeft
+import androidx.compose.ui.test.swipeRight
 import androidx.room.Room
 import androidx.test.platform.app.InstrumentationRegistry
 import com.facetlauncher.app.data.WidgetPlacementRepository
@@ -256,5 +258,22 @@ class HubLandscapeTest {
         val visibleRight = composeRule.onNodeWithTag("hub_landscape_grid").getUnclippedBoundsInRoot().right
         val lastLeft = composeRule.onNodeWithTag("hub_widget_tile_8").getUnclippedBoundsInRoot().left
         assert(lastLeft > visibleRight) { "widget 8 (left $lastLeft) should start past the visible width $visibleRight" }
+    }
+
+    @Test
+    fun aGridThatFitsTheWindowDoesNotScrollSideways() {
+        // Given one widget, so the grid is far narrower than the window
+        setContent(listOf(placement(id = 1, row = 0)))
+        val before = composeRule.onNodeWithTag("hub_widget_tile_1").getUnclippedBoundsInRoot().left
+
+        // When the grid is swiped sideways, as the swipe that pulls the Hub in does
+        composeRule.onNodeWithTag("hub_landscape_grid").performTouchInput { swipeRight() }
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("hub_landscape_grid").performTouchInput { swipeLeft() }
+        composeRule.waitForIdle()
+
+        // Then the widget has not moved off its margin
+        val after = composeRule.onNodeWithTag("hub_widget_tile_1").getUnclippedBoundsInRoot().left
+        assert(after == before) { "widget moved from $before to $after" }
     }
 }

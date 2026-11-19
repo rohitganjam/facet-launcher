@@ -62,3 +62,17 @@ private fun nowPlayingTier(w: Int, h: Int) = when {
     w >= 220 || h >= 140 -> WidgetTier.MEDIUM
     else -> WidgetTier.SMALL
 }
+
+/** The Now playing layouts, chosen from the dp box the widget draws in (inside its inset) rather than from a [WidgetTier]. */
+enum class NowPlayingLayout { TILE, COMPACT, STRIP, COVER_CARD, CARD, FULL }
+
+fun nowPlayingLayoutFor(widthDp: Int, heightDp: Int): NowPlayingLayout = when {
+    widthDp < COVER_CARD_MIN_INNER_DP -> NowPlayingLayout.TILE
+    heightDp < COVER_CARD_MIN_INNER_DP -> if (widthDp < 190) NowPlayingLayout.COMPACT else NowPlayingLayout.STRIP
+    heightDp >= 180 -> NowPlayingLayout.FULL
+    widthDp < 200 -> NowPlayingLayout.COVER_CARD
+    else -> NowPlayingLayout.CARD
+}
+
+/** A 2×2 is a cover card and a 1×1 a tile: 100dp inside the 8dp inset (116 outside) lets a 2×2 in down to a 320dp phone's 56dp cells, and keeps a 1×1 (80 outside at most) out. */
+private const val COVER_CARD_MIN_INNER_DP = 100

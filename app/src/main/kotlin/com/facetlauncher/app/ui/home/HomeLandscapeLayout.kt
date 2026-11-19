@@ -60,6 +60,9 @@ internal val HOME_LANDSCAPE_CLOCK_DOTS_BOTTOM = 8.dp
 /** Room kept between the clock and the pane's right edge, inside its width. */
 internal val HOME_LANDSCAPE_CLOCK_PANE_END_MARGIN = 16.dp
 
+/** The apps pane's right margin when no dock column sits beside it: the clock pane's left margin, mirrored. */
+internal val HOME_LANDSCAPE_APPS_END_MARGIN = HOME_LANDSCAPE_CLOCK_PANE_START_PADDING
+
 /** Width of the gap between the clock and apps panes — where the divider handle sits. */
 internal val HOME_LANDSCAPE_PANE_GAP = 24.dp
 
@@ -105,6 +108,8 @@ internal fun HomeLandscapeLayout(
             modifier = Modifier
                 .weight(1f)
                 .fillMaxHeight()
+                // With no dock column the pane runs to the screen edge, so it keeps the same margin the clock has on the left.
+                .then(if (hasDock && !dockAtBottom) Modifier else Modifier.padding(end = HOME_LANDSCAPE_APPS_END_MARGIN))
                 .onSizeChanged(onAppsPaneSizeChange)
                 .testTag(homeTag("home_apps_pane")),
             content = apps,
