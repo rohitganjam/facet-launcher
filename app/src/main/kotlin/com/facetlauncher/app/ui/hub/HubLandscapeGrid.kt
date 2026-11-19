@@ -304,7 +304,8 @@ fun HubLandscapeGrid(
         val columnsInUse = widgets.maxOfOrNull { it.col + it.colSpan } ?: 0
         val contentColumns = columnsInUse + if (gridState.isBusy) 2 else 1
         // Read here: inside the nested Box this scope's maxWidth is out of reach.
-        val contentWidth = hubLandscapeSpanSize(contentColumns, gap = HUB_GRID_GAP).coerceAtLeast(maxWidth)
+        // The side padding sits inside the scroll area, so the floor leaves it out: otherwise the grid always scrolls by twice the padding.
+        val contentWidth = hubLandscapeSpanSize(contentColumns, gap = HUB_GRID_GAP).coerceAtLeast(maxWidth - HUB_GRID_HORIZONTAL_PADDING * 2)
         Box(
             modifier = Modifier
                 .fillMaxSize()

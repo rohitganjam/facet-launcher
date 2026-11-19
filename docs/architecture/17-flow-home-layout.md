@@ -61,7 +61,7 @@ slots.
 | Media row | Under the clock, pushes the list down | Pinned to the top of the apps pane, above the list, whatever the list's Top or Bottom anchor; the list gets the height the row leaves |
 | App list | Below the clock; Top or Bottom anchor; single column, two columns or grid; a long list scrolls, or drops to Compact rows when "Shrink list to fit" is on (see 2b) | In the apps pane; same Top or Bottom anchor; single column, two columns or grid as chosen; a grid's column count follows the compact or roomy rule above (`landscapeGridColumns`); scrolls when taller than the pane |
 | Dock | A row along the bottom, honouring the dock display mode (Icons, Text, or Icons and text); never shrinks with the list | A column at the right edge, icons only, vertically centred, scrolls on overflow, inset from the edge and excluded from the system back gesture |
-| Panes | n/a | Clock pane (40% of the window until a width is saved), a 24dp gap holding the divider handle, apps pane the rest |
+| Panes | n/a | Clock pane (40% of the window until a width is saved), a 24dp gap holding the divider handle, apps pane the rest, with a 24dp right margin when no dock column sits beside it (`HOME_LANDSCAPE_APPS_END_MARGIN`, the clock's left margin mirrored) |
 | Clock adjust mode | A horizontal height handle, an alignment pill (left / center / right) and top corner scale handles | A vertical divider handle, an alignment pill (top / middle / bottom) and scale handles; see section 4 |
 
 ## 2b. Icon sizes, rows and "Shrink list to fit"

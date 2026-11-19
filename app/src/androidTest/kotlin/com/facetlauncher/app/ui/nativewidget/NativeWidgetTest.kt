@@ -236,6 +236,28 @@ class NativeWidgetTest {
     }
 
     @Test
+    fun nowPlayingDrawsItsOwnLayoutAtEachHubSize() {
+        // Given each Hub size a now-playing widget can take
+        val cases = listOf(
+            Triple(72, 72, "TILE"), Triple(148, 72, "COMPACT"), Triple(292, 72, "STRIP"),
+            Triple(148, 148, "COVER_CARD"), Triple(292, 148, "CARD"), Triple(292, 220, "FULL"),
+        )
+        var size by mutableStateOf(DpSize(72.dp, 72.dp))
+        composeRule.setContent {
+            FacetLauncherTheme { NativeWidget(NativeWidgetType.NOW_PLAYING, size, sampleState, NativeWidgetActions()) }
+        }
+
+        cases.forEach { (w, h, layout) ->
+            // When the widget is given that size
+            size = DpSize(w.dp, h.dp)
+
+            // Then its layout is drawn and play/pause is still reachable
+            composeRule.waitUntil(timeoutMillis = 3_000) { composeRule.onAllTags("now_playing_layout_$layout") }
+            composeRule.onNodeWithTag("home_media_play_pause").assertExists()
+        }
+    }
+
+    @Test
     fun nowPlayingWithNothingPlayingSaysSo() {
         composeRule.setContent {
             FacetLauncherTheme {

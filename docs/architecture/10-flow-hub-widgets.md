@@ -154,6 +154,7 @@ flowchart TB
 In a landscape-layout window (see [17](17-flow-home-layout.md) §1) the Hub shows `HubLandscapeGrid`
 instead of `HubGrid`. Same widgets, same sizes, a different arrangement:
 
+- **No idle scroll.** The grid's 16dp side padding is inside its scroll area, so the content floor is the window width less that padding; otherwise the grid scrolls by twice the padding with nothing in it, and the swipe that pulls the Hub in shifts every widget left.
 - **Fixed cells.** Each cell is `HUB_LANDSCAPE_CELL_SIZE` (64dp, 4dp gaps), so a widget has the same size
   on any window, as the app grid's cells do. The grid has as many rows as fit the height
   (`hubLandscapeRows`, at least 2) and grows to the right, scrolling sideways.

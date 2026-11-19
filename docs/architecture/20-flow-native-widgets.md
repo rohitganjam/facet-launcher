@@ -37,7 +37,7 @@ follow the room.
 |---|---|---|---|---|---|
 | Weather | icon, temperature | + condition, high/low, place | + hourly strip, then day rows as height allows | 1×1 | 2×2 |
 | Agenda | as many one-line events as fit (time then title, 4dp above and below), no headings | an "Agenda" heading, then a scrolling list of up to 20 events under a heading per day (Today, Tomorrow, then dates), each with its room under the title | larger rows | 2×1 | 3×2 |
-| Now playing | cover with play/pause | cover, title, artist, transport (wide) or stacked (square) | + progress line, large cover | 1×1 | 4×1 |
+| Now playing | six layouts from `nowPlayingLayoutFor` (the box inside the inset), not the tier: tile (width < 100dp), compact (height < 100dp, < 190dp wide: cover, title, play/pause), strip (short, wider: Home's media row, cover then title and transport on one line, the progress line under the text), cover card (at least 100 each way, i.e. 116dp outside the inset, so a 2×2 is always one and a 1×1 a tile, and < 200dp wide: cover with a title/play scrim), card (cover left, title, progress, transport right), full (≥ 180dp tall: big cover with the title beside it, or below it when the cover would pass half the width, then progress, transport) | same | same | 1×1 | 4×1 |
 
 The agenda's room line is `CalendarEvent.location` (`EVENT_LOCATION`, read with the other instance columns, no new permission),
 shortened by `roomLabel`: a Workspace room such as `BLR-Innovate-2-Marie Curie (4)` shows as `Marie Curie (4)`; a plain
