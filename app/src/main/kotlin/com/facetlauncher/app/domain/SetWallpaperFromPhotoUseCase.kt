@@ -5,9 +5,17 @@ import android.graphics.RectF
 import android.net.Uri
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.WallpaperCopyRepository
+import com.facetlauncher.app.data.di.ApplicationScope
 import com.facetlauncher.app.data.di.DefaultDispatcher
+import com.facetlauncher.app.data.model.ScreenSize
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 /** The part of this photo in [visible], scaled to [width] x [height]: the copy that is stored and set as the wallpaper. */
@@ -30,8 +38,8 @@ sealed interface KeptOriginal {
 data class SetWallpaperResult(val set: Boolean, val originalKept: Boolean = true)
 
 /**
- * Turns the part of a picked photo the user framed into the wallpaper: sets [wallpaperRegion] of it (the framing widened evenly as far as the photo has room, up to a square) as the system wallpaper (the lock screen too when asked), stores what each view of every
- * known screen shows of it, in both orientations, as that view's copy, and records the system wallpaper's id so a later change elsewhere
+ * Turns the part of a picked photo the user framed into the wallpaper: sets [wallpaperRegion] of it (the framing widened evenly as far as the photo has room, up to a square) as the system wallpaper (the lock screen too when asked), stores what the view showing now shows of it as that view's copy, and
+ * returns; every other view of every known screen, in both orientations, gets its copy in the background, all at the same time, as long as the system wallpaper is still this one. It also records the system wallpaper's id so a later change elsewhere
  * shows as a stale copy. With the photo's [original] file it also keeps that, and the framing (as fractions of the original, [originalFraming]
  * when [photo] is only a part of it), to build copies for a screen first seen later. Nothing is stored unless the system accepted the wallpaper, so the copies never differ from what is set.
  */
@@ -39,6 +47,7 @@ class SetWallpaperFromPhotoUseCase @Inject constructor(
     private val wallpaperCopyRepository: WallpaperCopyRepository,
     private val settingsRepository: SettingsRepository,
     @DefaultDispatcher private val defaultDispatcher: CoroutineDispatcher,
+    @ApplicationScope private val backgroundScope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined),
 ) {
     /** [SetWallpaperResult.set] is `true` when the wallpaper was set and the copies stored; [SetWallpaperResult.originalKept] is `false` when [original] could not be kept. */
     suspend operator fun invoke(photo: Bitmap, visible: RectF, includeLock: Boolean, original: KeptOriginal? = null, originalFraming: RectF? = null): SetWallpaperResult {
@@ -49,11 +58,43 @@ class SetWallpaperFromPhotoUseCase @Inject constructor(
         val systemId = wallpaperCopyRepository.setSystemWallpaper(wallpaper, includeLock)
         if (systemId == WallpaperCopyRepository.NO_WALLPAPER_ID) return SetWallpaperResult(set = false)
         wallpaperCopyRepository.recordWallpaperShape(systemId, wallpaper.width, wallpaper.height, region.width() > region.height())
-        val stored = screens.flatMap { listOf(it, it.turned).distinct() }.map { view ->
-            wallpaperCopyRepository.save(withContext(defaultDispatcher) { wallpaper.copyFor(view) }, view)
-        }.all { it }
-        val kept = stored && record(systemId, originalFraming ?: photo.fractionsOf(visible), original)
-        return SetWallpaperResult(set = stored, originalKept = kept || original == null)
+        val views = screens.flatMap { listOf(it, it.turned) }.distinct()
+        val (windowWidth, windowHeight) = wallpaperCopyRepository.windowSize()
+        val showing = ScreenSize(windowWidth, windowHeight).takeIf { it in views } ?: views.first()
+        // Marked from here until the last copy is stored, so a view still waiting for its copy is not suggested in the meantime.
+        wallpaperCopyRepository.startFinishingCopies()
+        var handedOver = false
+        try {
+            val stored = storeCopy(wallpaper, showing)
+            val kept = stored && record(systemId, originalFraming ?: photo.fractionsOf(visible), original)
+            if (stored) handedOver = finishInBackground(wallpaper, views - showing, systemId)
+            return SetWallpaperResult(set = stored, originalKept = kept || original == null)
+        } finally {
+            if (!handedOver) wallpaperCopyRepository.stopFinishingCopies()
+        }
+    }
+
+    private suspend fun storeCopy(wallpaper: Bitmap, view: ScreenSize) =
+        wallpaperCopyRepository.save(withContext(defaultDispatcher) { wallpaper.copyFor(view) }, view)
+
+    /**
+     * Stores the copies of the other [views] all at once in the background, each only while the system wallpaper is still [systemId]; the
+     * work is then what ends the "finishing" mark. `false` when there is nothing to do, so the caller ends the mark.
+     */
+    private fun finishInBackground(wallpaper: Bitmap, views: List<ScreenSize>, systemId: Int): Boolean {
+        if (views.isEmpty()) return false
+        backgroundScope.launch {
+            try {
+                views.map { view ->
+                    async(defaultDispatcher) {
+                        if (wallpaperCopyRepository.currentSystemWallpaperId() == systemId) storeCopy(wallpaper, view)
+                    }
+                }.awaitAll()
+            } finally {
+                wallpaperCopyRepository.stopFinishingCopies()
+            }
+        }
+        return true
     }
 
     private fun Bitmap.fractionsOf(part: RectF) = RectF(part.left / width, part.top / height, part.right / width, part.bottom / height)

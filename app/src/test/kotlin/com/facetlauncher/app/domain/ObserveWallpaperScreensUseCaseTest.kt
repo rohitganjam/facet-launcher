@@ -235,6 +235,22 @@ class ObserveWallpaperScreensUseCaseTest {
     }
 
     @Test
+    fun `nothing is suggested while the other views copies are being stored`() = runTest {
+        // Given a view lacking a copy while another has one, and copies being finished
+        val copies = FakeCopies(listOf(ScreenCopy(outer, true), ScreenCopy(outerTurned, false, screen = outer)))
+        copies.showing.value = outerTurned
+        copies.startFinishingCopies()
+
+        // Then neither the prompt nor the pill's need is shown
+        assertEquals(OtherScreenPromptKind.None, prompt(copies).kind)
+        assertEquals(null, need(copies))
+
+        // And they come back if the work ends without the copy
+        copies.stopFinishingCopies()
+        assertEquals(outerTurned, needing(copies))
+    }
+
+    @Test
     fun `the view showing is offered a capture without the orientation note when its screen has none at all`() = runTest {
         // Given the inner screen has a capture and the outer, showing in portrait, has none in either orientation
         val copies = FakeCopies(listOf(ScreenCopy(inner, true), ScreenCopy(outer, false), ScreenCopy(outerTurned, false, screen = outer)))

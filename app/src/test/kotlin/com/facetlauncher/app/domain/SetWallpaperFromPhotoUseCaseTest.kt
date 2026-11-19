@@ -10,7 +10,11 @@ import androidx.datastore.preferences.core.Preferences
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.WallpaperCopyRepository
 import com.facetlauncher.app.data.model.ScreenSize
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -57,6 +61,8 @@ class SetWallpaperFromPhotoUseCaseTest {
         override suspend fun knownScreens(): List<ScreenSize> = (extraScreens + ScreenSize(50, 100)).sortedByDescending { it.area }
 
         override fun screenSize() = 50 to 100
+        override fun windowSize() = 50 to 100
+        override fun currentSystemWallpaperId() = systemId
         override suspend fun setSystemWallpaper(bitmap: Bitmap, includeLock: Boolean): Int {
             setBitmap = bitmap
             setIncludeLock = includeLock
@@ -113,6 +119,59 @@ class SetWallpaperFromPhotoUseCaseTest {
         assertEquals(9, settings.settings.first().wallpaperCopySystemId)
         // And the screen has a copy in each orientation, at the sizes of its views
         assertEquals(setOf(ScreenSize(50, 100), ScreenSize(100, 50)), copies.savedBySize.keys)
+    }
+
+    private fun TestScope.backgroundUseCase(copies: FakeCopies) = SetWallpaperFromPhotoUseCase(
+        copies, settingsRepository(), UnconfinedTestDispatcher(testScheduler), CoroutineScope(Job() + StandardTestDispatcher(testScheduler)),
+    )
+
+    @Test
+    fun `only the view showing is stored before it returns and the others finish in the background`() = runTest {
+        // Given a screen with two views, one of them showing
+        val copies = FakeCopies(systemId = 9)
+
+        // When the wallpaper is set
+        val done = backgroundUseCase(copies)(photo(), RectF(0f, 0f, 50f, 100f), includeLock = false)
+
+        // Then it returns with the view showing stored, the other one still to come, and the copies marked as being finished
+        assertTrue(done.set)
+        assertEquals(setOf(ScreenSize(50, 100)), copies.savedBySize.keys)
+        assertTrue(copies.isFinishingCopies.first())
+
+        // And once the background work has run the other view has its copy and the mark is gone
+        testScheduler.advanceUntilIdle()
+        assertEquals(setOf(ScreenSize(50, 100), ScreenSize(100, 50)), copies.savedBySize.keys)
+        assertFalse(copies.isFinishingCopies.first())
+    }
+
+    @Test
+    fun `the others are not stored when the system wallpaper changed meanwhile`() = runTest {
+        // Given the wallpaper set and the background work not yet run
+        val copies = FakeCopies(systemId = 9)
+        backgroundUseCase(copies)(photo(), RectF(0f, 0f, 50f, 100f), includeLock = false)
+
+        // When the system wallpaper is changed elsewhere before it runs
+        copies.systemId = 10
+        testScheduler.advanceUntilIdle()
+
+        // Then no stale copy is stored for the other view, and the mark is gone
+        assertEquals(setOf(ScreenSize(50, 100)), copies.savedBySize.keys)
+        assertFalse(copies.isFinishingCopies.first())
+    }
+
+    @Test
+    fun `a failed copy for the view showing ends the finishing mark and stores nothing else`() = runTest {
+        // Given the system takes the wallpaper but the first copy cannot be stored
+        val copies = FakeCopies(saves = false)
+
+        // When it is set
+        val done = backgroundUseCase(copies)(photo(), RectF(0f, 0f, 50f, 100f), includeLock = false)
+        testScheduler.advanceUntilIdle()
+
+        // Then it fails as a whole and nothing is left marked as being finished
+        assertFalse(done.set)
+        assertTrue(copies.savedBySize.isEmpty())
+        assertFalse(copies.isFinishingCopies.first())
     }
 
     @Test

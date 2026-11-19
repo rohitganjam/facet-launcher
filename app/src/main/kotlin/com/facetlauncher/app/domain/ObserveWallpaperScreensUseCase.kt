@@ -22,8 +22,14 @@ import kotlinx.coroutines.flow.distinctUntilChanged
  */
 class ObserveWallpaperScreensUseCase @Inject constructor(private val wallpaperCopyRepository: WallpaperCopyRepository) {
 
-    operator fun invoke(): Flow<WallpaperScreens> = combine(wallpaperCopyRepository.screens, wallpaperCopyRepository.dismissedPrompts, wallpaperCopyRepository.currentScreen) { screens, dismissed, current ->
-        WallpaperScreens(screens.map { it.screen }.distinct().toImmutableList(), prompt(screens, dismissed, current))
+    operator fun invoke(): Flow<WallpaperScreens> = combine(
+        wallpaperCopyRepository.screens,
+        wallpaperCopyRepository.dismissedPrompts,
+        wallpaperCopyRepository.currentScreen,
+        wallpaperCopyRepository.isFinishingCopies,
+    ) { screens, dismissed, current, finishing ->
+        // While the other views' copies of a wallpaper just set are being stored, none is missing yet.
+        WallpaperScreens(screens.map { it.screen }.distinct().toImmutableList(), if (finishing) OtherScreenPrompt() else prompt(screens, dismissed, current))
     }
 
     /**
@@ -34,10 +40,11 @@ class ObserveWallpaperScreensUseCase @Inject constructor(private val wallpaperCo
         wallpaperCopyRepository.screens,
         wallpaperCopyRepository.currentScreen,
         wallpaperCopyRepository.dismissedPrompts,
-    ) { screens, current, dismissed ->
+        wallpaperCopyRepository.isFinishingCopies,
+    ) { screens, current, dismissed, finishing ->
         val view = screens.firstOrNull { it.size == current }
         when {
-            view == null || view.hasCopy || view.size.promptKey in dismissed || screens.none { it.hasCopy || it.outdated } -> null
+            finishing || view == null || view.hasCopy || view.size.promptKey in dismissed || screens.none { it.hasCopy || it.outdated } -> null
             else -> WallpaperCopyNeed(
                 current,
                 otherOrientation = screens.any { it.screen == view.screen && it.size != view.size && it.hasCopy },

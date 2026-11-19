@@ -7,6 +7,7 @@ import androidx.test.core.app.ApplicationProvider
 import com.facetlauncher.app.data.model.ScreenCopy
 import com.facetlauncher.app.data.model.ScreenSize
 import com.facetlauncher.app.data.model.promptKey
+import java.io.ByteArrayOutputStream
 import java.io.File
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -38,6 +39,40 @@ class WallpaperCopyRepositoryTest {
     @After
     fun cleanUp() {
         File(context.filesDir, "wallpaper_copy.png").delete()
+    }
+
+    @Test
+    fun `a copy is stored as a JPEG and an old PNG of the same view is replaced`() = runTest {
+        // Given an old PNG copy of the view
+        val size = com.facetlauncher.app.data.model.ScreenSize(40, 80)
+        val old = File(context.filesDir, "wallpaper_copy_${size.key}.png")
+        old.writeBytes(ByteArrayOutputStream().also { bitmap(40, 80).compress(Bitmap.CompressFormat.PNG, 100, it) }.toByteArray())
+
+        // When the view is saved again
+        assertTrue(repository().save(bitmap(40, 80), size))
+
+        // Then the copy is a JPEG and the PNG is gone
+        val jpeg = File(context.filesDir, "wallpaper_copy_${size.key}.jpg")
+        assertTrue(jpeg.exists())
+        assertEquals(0xFF.toByte(), jpeg.readBytes()[0])
+        assertEquals(0xD8.toByte(), jpeg.readBytes()[1])
+        assertFalse(old.exists())
+        jpeg.delete()
+    }
+
+    @Test
+    fun `an old PNG copy is still read until that view is saved again`() = runTest {
+        // Given a copy stored by an earlier version, as a PNG
+        val size = com.facetlauncher.app.data.model.ScreenSize(40, 80)
+        val old = File(context.filesDir, "wallpaper_copy_${size.key}.png")
+        old.writeBytes(ByteArrayOutputStream().also { bitmap(40, 80).compress(Bitmap.CompressFormat.PNG, 100, it) }.toByteArray())
+
+        // When a fresh repository reads its storage
+        val anywhere = repository().hasCopyAnywhere.first()
+
+        // Then the copy is there
+        assertTrue(anywhere)
+        old.delete()
     }
 
     @Test
@@ -523,7 +558,7 @@ class WallpaperCopyRepositoryTest {
 
         // Then the id is gone and the copy stays
         assertNull(repository.originalSystemId())
-        assertTrue(File(context.filesDir, "wallpaper_copy_10x20.png").exists())
+        assertTrue(File(context.filesDir, "wallpaper_copy_10x20.jpg").exists())
     }
 
     @Test
@@ -557,7 +592,7 @@ class WallpaperCopyRepositoryTest {
 
         // Then both are known and the outer copy stays
         assertEquals(setOf(outer, inner), repository.knownScreens().toSet())
-        assertTrue(File(context.filesDir, "wallpaper_copy_1080x2092.png").exists())
+        assertTrue(File(context.filesDir, "wallpaper_copy_1080x2092.jpg").exists())
     }
 
     /** A repository on a fixed screen and wallpaper id, so the stored shape can be judged against them. */
