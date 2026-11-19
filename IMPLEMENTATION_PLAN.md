@@ -4793,6 +4793,7 @@ Goal: a third way to choose a wallpaper, next to *Choose a wallpaper for Facet* 
 
 ### Findings (checked against the live feeds, 13 Nov 2026)
 - `GET https://peapix.com/bing/feed?country=<cc>&n=<n>` (Bing's photo of the day) and `GET https://peapix.com/spotlight/feed?n=<n>` (Windows Spotlight). No key, no account.
+- **Sources changed Nov 19, 2026:** Peapix's Spotlight feed stopped updating on Oct 28, so both sources now come straight from Microsoft: Bing from `https://www.bing.com/HPImageArchive.aspx?format=js&idx=0&n=7&mkt=<lang-CC>` (previews `_640x480.jpg`, originals `_UHD.jpg`) and Spotlight from `https://fd.api.iris.microsoft.com/v4/api/selection?placement=88000820&bcnt=4&fmt=json&country=<CC>&locale=<lang-CC>`, three calls merged, falling back to `en-<CC>` then `US`/`en-US` (an unknown language is refused), and to a browser User-Agent when the app's own gets nothing. Country is the phone's own, with no list. The Peapix details below are the original design. **Play data safety** still needs the same answer for Microsoft (IP address, country code and language, for app functionality), which lives in Play Console, not here.
 - **Both return at most 7 items** however high `n` is (`n=50` and `n=8` both gave 7), so the feed is a week of photos and `n` only trims it.
 - Fields: `title`, `copyright` (the credit, for example `© lightphoto/Getty Image`, sometimes cut short), `thumbUrl` (640 px, about 40 KB), `fullUrl` (1920 px, about 300 to 450 KB), `imageUrl` (the original, about 2.5 to 3.7 MB, usually above 1080p), `pageUrl`, and `date` on Bing only.
 - Bing takes `country` (au, br, ca, cn, de, fr, in, it, jp, es, gb, us) and localises titles and the photo of the day; Spotlight has no country and no date.
@@ -4855,7 +4856,7 @@ A switch at the top of Daily photos changes the wallpaper once a day to the newe
 - [x] Pro gate: `ProReason.DAILY_WALLPAPER`, a Pro pill on the switch, a Daily wallpaper row on the Facet Pro screen, run and apply do nothing without Pro. Tests: `RunDailyWallpaperUseCaseTest`, `ApplyPendingWallpaperUseCaseTest`, `DailyPhotosViewModelTest`, `DailyPhotosScreenTest`.
 - [x] Strings in en, de, es, fr, nl and pt (the Pro strings in pt-PT too).
 - [x] Docs: `01`, `02`, `03`, `04`, `07`, `16`, `21`, README, `CLAUDE.md`.
-- [ ] Privacy policy sentence in `../facet-launcher-site/build.py`: "If you turn on Daily wallpaper, the first time you open Facet each day it makes the same request to Peapix and downloads one photo, over Wi-Fi only unless you allow mobile data."
+- [x] Privacy policy sentence in `../facet-launcher-site/build.py`: "If you turn on Daily wallpaper, the first time you open Facet each day it makes the same request to Peapix and downloads one photo, over Wi-Fi only unless you allow mobile data." Done with the policy's new *Daily photos* section (Nov 19, 2026), which names Microsoft, not Peapix.
 
 ## Per-swipe gesture actions (direct request)
 

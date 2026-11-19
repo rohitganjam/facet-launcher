@@ -21,7 +21,7 @@ sealed interface DailyPhotoFeed {
 
 /**
  * The daily photos. A feed and its thumbnails are fetched at most once per calendar day and kept on disk ([DailyPhotoCache]); an original is
- * downloaded only when a photo is picked, and not kept. `open` so tests can substitute fixed values.
+ * downloaded only when a photo is opened, and kept while its feed still lists it. `open` so tests can substitute fixed values.
  */
 @Singleton
 open class DailyPhotoRepository @Inject constructor(
@@ -33,17 +33,16 @@ open class DailyPhotoRepository @Inject constructor(
     private val thumbnails = LruCache<String, Bitmap>(THUMBNAILS_IN_MEMORY)
 
     /** [source]'s photos for the phone's country: today's cache when there is one, otherwise a fetch, otherwise the last cache. */
-    open suspend fun photos(source: DailyPhotoSource): DailyPhotoFeed = photos(source, peapixCountry(Locale.getDefault()))
+    open suspend fun photos(source: DailyPhotoSource): DailyPhotoFeed = photos(source, feedCountry(Locale.getDefault()))
 
     internal suspend fun photos(source: DailyPhotoSource, country: String): DailyPhotoFeed = withContext(ioDispatcher) {
-        val key = if (source.usesCountry) country else ""
-        val saved = cache.readFeed(source, key)
-        val savedPhotos = saved?.let { parsePeapixFeed(it.json) }?.takeIf { it.isNotEmpty() }
+        val saved = cache.readFeed(source, country)
+        val savedPhotos = saved?.let { parseFeed(source, it.json) }?.takeIf { it.isNotEmpty() }
         if (saved != null && savedPhotos != null && saved.day == cache.today()) return@withContext DailyPhotoFeed.Photos(savedPhotos, savedEarlier = false)
-        val fetched = api.feedJson(source, country)?.let { json -> parsePeapixFeed(json)?.takeIf { it.isNotEmpty() }?.let { json to it } }
+        val fetched = api.feedJson(source, country)?.let { json -> parseFeed(source, json)?.takeIf { it.isNotEmpty() }?.let { json to it } }
         when {
             fetched != null -> {
-                cache.writeFeed(source, key, fetched.first, fetched.second.map { it.thumbUrl })
+                cache.writeFeed(source, country, fetched.first, fetched.second.map { it.thumbUrl }, fetched.second.map { it.imageUrl })
                 DailyPhotoFeed.Photos(fetched.second, savedEarlier = false)
             }
             savedPhotos != null -> DailyPhotoFeed.Photos(savedPhotos, savedEarlier = true)
@@ -56,12 +55,23 @@ open class DailyPhotoRepository @Inject constructor(
         thumbnails.get(photo.thumbUrl) ?: run {
             val bytes = cache.readThumbnail(source, photo.thumbUrl)
                 ?: api.download(photo.thumbUrl, MAX_THUMBNAIL_BYTES)?.also { cache.writeThumbnail(source, photo.thumbUrl, it) }
-            bytes?.let { BitmapFactory.decodeByteArray(it, 0, it.size) }?.also { thumbnails.put(photo.thumbUrl, it) }
+            bytes?.let(::decodeThumbnail)?.also { thumbnails.put(photo.thumbUrl, it) }
         }
     }
 
-    /** The original of [photo] as downloaded, not decoded; `null` when it cannot be downloaded. */
-    open suspend fun originalBytes(photo: DailyPhoto): ByteArray? = api.download(photo.imageUrl, MAX_ORIGINAL_BYTES)
+    /** [bytes] decoded at about [THUMBNAIL_MAX_SIDE] px on the long side, since Spotlight's only image is a 4K original. */
+    private fun decodeThumbnail(bytes: ByteArray): Bitmap? {
+        val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        BitmapFactory.decodeByteArray(bytes, 0, bytes.size, bounds)
+        var sample = 1
+        while (maxOf(bounds.outWidth, bounds.outHeight) / (sample * 2) >= THUMBNAIL_MAX_SIDE) sample *= 2
+        return BitmapFactory.decodeByteArray(bytes, 0, bytes.size, BitmapFactory.Options().apply { inSampleSize = sample })
+    }
+
+    /** The original of [photo] as downloaded, not decoded: the saved copy when it was opened before and is still listed, else a download; `null` when it cannot be had. */
+    open suspend fun originalBytes(photo: DailyPhoto): ByteArray? = withContext(ioDispatcher) {
+        cache.readOriginal(photo.imageUrl) ?: api.download(photo.imageUrl, MAX_ORIGINAL_BYTES)?.also { cache.writeOriginal(photo.imageUrl, it) }
+    }
 
     /** The original of [photo], upright and shrunk to [maxSide] on its long side; `null` when it cannot be downloaded or read. */
     open suspend fun original(photo: DailyPhoto, maxSide: Int): Bitmap? = originalWithBytes(photo, maxSide)?.first
@@ -74,7 +84,8 @@ open class DailyPhotoRepository @Inject constructor(
 
     private companion object {
         const val THUMBNAILS_IN_MEMORY = 16
-        const val MAX_THUMBNAIL_BYTES = 1 * 1024 * 1024
+        const val MAX_THUMBNAIL_BYTES = 3 * 1024 * 1024
+        const val THUMBNAIL_MAX_SIDE = 640
         const val MAX_ORIGINAL_BYTES = 25 * 1024 * 1024
     }
 }

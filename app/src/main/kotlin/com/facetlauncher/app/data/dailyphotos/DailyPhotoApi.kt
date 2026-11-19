@@ -6,6 +6,7 @@ import com.facetlauncher.app.data.model.DailyPhotoSource
 import java.io.ByteArrayOutputStream
 import java.net.HttpURLConnection
 import java.net.URL
+import java.util.Locale
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.CoroutineDispatcher
@@ -21,25 +22,33 @@ interface DailyPhotoApi {
 }
 
 /**
- * Peapix's feeds, which carry Bing's photo of the day and Windows Spotlight. With [MetWeatherApi][com.facetlauncher.app.data.weather.MetWeatherApi]
+ * Bing's photo of the day and Windows Spotlight, both from Microsoft's own services. With [MetWeatherApi][com.facetlauncher.app.data.weather.MetWeatherApi]
  * the only code that opens a network connection in the app, and only when the user opens Daily photos or picks a photo.
  */
 @Singleton
-class PeapixApi @Inject constructor(
+class HttpDailyPhotoApi @Inject constructor(
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
 ) : DailyPhotoApi {
 
-    override suspend fun feedJson(source: DailyPhotoSource, country: String): String? = request(feedUrl(source, country), MAX_FEED_BYTES)?.toString(Charsets.UTF_8)
+    override suspend fun feedJson(source: DailyPhotoSource, country: String): String? = withBrowserAgentFallback(USER_AGENT) { agent ->
+        when (source) {
+            DailyPhotoSource.BING -> fetchText(bingFeedUrl(country, Locale.getDefault()), agent)?.takeIf { parseBingFeed(it)?.isNotEmpty() == true }
+            DailyPhotoSource.SPOTLIGHT ->
+                fetchSpotlight(spotlightCandidates(country, Locale.getDefault()), SPOTLIGHT_CALLS, SPOTLIGHT_ENOUGH) { c, l -> fetchText(spotlightUrl(c, l), agent) }
+        }
+    }
 
-    override suspend fun download(url: String, maxBytes: Int): ByteArray? = if (isAllowedImageUrl(url)) request(url, maxBytes) else null
+    private suspend fun fetchText(address: String, userAgent: String): String? = request(address, MAX_FEED_BYTES, userAgent)?.toString(Charsets.UTF_8)
 
-    private suspend fun request(address: String, maxBytes: Int): ByteArray? = withContext(ioDispatcher) {
+    override suspend fun download(url: String, maxBytes: Int): ByteArray? = if (isAllowedImageUrl(url)) request(url, maxBytes, USER_AGENT) else null
+
+    private suspend fun request(address: String, maxBytes: Int, userAgent: String): ByteArray? = withContext(ioDispatcher) {
         runCatching {
             val connection = URL(address).openConnection() as HttpURLConnection
             try {
                 connection.connectTimeout = TIMEOUT_MS
                 connection.readTimeout = TIMEOUT_MS
-                connection.setRequestProperty("User-Agent", USER_AGENT)
+                connection.setRequestProperty("User-Agent", userAgent)
                 if (connection.responseCode != HttpURLConnection.HTTP_OK || connection.contentLength > maxBytes) return@runCatching null
                 connection.inputStream.use { readAtMost(it, maxBytes) }
             } finally {
@@ -66,14 +75,20 @@ class PeapixApi @Inject constructor(
         private const val TIMEOUT_MS = 15_000
         private const val BUFFER_BYTES = 16 * 1024
         private const val MAX_FEED_BYTES = 256 * 1024
-        private const val BASE_URL = "https://peapix.com/"
+        private const val BING_URL = "https://$BING_HOST/HPImageArchive.aspx"
+        private const val SPOTLIGHT_URL = "https://fd.api.iris.microsoft.com/v4/api/selection?placement=88000820&bcnt=4&fmt=json"
 
-        /** The feeds hold a week; asking for more returns the same seven. */
+        /** Spotlight answers a random 4 each time, so a few calls make a fuller set: asking stops at [SPOTLIGHT_ENOUGH] different photos, or after this many calls. */
+        private const val SPOTLIGHT_CALLS = 3
+        private const val SPOTLIGHT_ENOUGH = 8
+
+        /** The days of Bing's archive asked for. */
         const val FEED_COUNT = 7
 
         val USER_AGENT = "FacetLauncher/${BuildConfig.VERSION_NAME} github.com/rohitganjam/facet-launcher"
 
-        fun feedUrl(source: DailyPhotoSource, country: String): String =
-            BASE_URL + source.feedPath + "?n=$FEED_COUNT" + if (source.usesCountry) "&country=$country" else ""
+        fun spotlightUrl(country: String, locale: String): String = "$SPOTLIGHT_URL&country=$country&locale=$locale"
+
+        fun bingFeedUrl(country: String, phone: Locale): String = "$BING_URL?format=js&idx=0&n=$FEED_COUNT&mkt=${localeTag(country, phone)}"
     }
 }

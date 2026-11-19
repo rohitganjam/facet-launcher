@@ -43,11 +43,16 @@ class DailyPhotoRepositoryTest {
             lastCountry = country
             return feed
         }
-        override suspend fun download(url: String, maxBytes: Int): ByteArray? = null
+        var downloadBytes: ByteArray? = null
+        val downloads = mutableListOf<String>()
+        override suspend fun download(url: String, maxBytes: Int): ByteArray? {
+            downloads += url
+            return downloadBytes
+        }
     }
 
-    private fun feedOf(vararg names: String) = names.joinToString(prefix = "[", postfix = "]") {
-        """{"title":"$it","copyright":"© $it","thumbUrl":"https://img.peapix.com/${it}_640.jpg","imageUrl":"https://img.peapix.com/$it.jpg","date":"2026-11-12"}"""
+    private fun feedOf(vararg names: String) = names.joinToString(prefix = """{"images":[""", postfix = "]}") {
+        """{"startdate":"20261112","urlbase":"/th?id=OHR.$it","title":"$it","copyright":"$it (© $it)"}"""
     }
 
     private val clock = TestClock(Instant.parse("2026-11-12T09:00:00Z"))
@@ -125,7 +130,7 @@ class DailyPhotoRepositoryTest {
         assertEquals(DailyPhotoFeed.Unavailable, repository.photos(DailyPhotoSource.BING, "us"))
 
         // And an empty feed
-        api.feed = "[]"
+        api.feed = """{"images":[]}"""
         assertEquals(DailyPhotoFeed.Unavailable, repository.photos(DailyPhotoSource.BING, "us"))
     }
 
@@ -153,10 +158,89 @@ class DailyPhotoRepositoryTest {
         cache.writeThumbnail(DailyPhotoSource.BING, "https://img.peapix.com/keep.jpg", byteArrayOf(2))
 
         // When a feed that lists only one of them is stored
-        cache.writeFeed(DailyPhotoSource.BING, "us", "[]", listOf("https://img.peapix.com/keep.jpg"))
+        cache.writeFeed(DailyPhotoSource.BING, "us", "[]", listOf("https://img.peapix.com/keep.jpg"), emptyList())
 
         // Then the other is gone
         assertNull(cache.readThumbnail(DailyPhotoSource.BING, "https://img.peapix.com/old.jpg"))
         assertEquals(2, cache.readThumbnail(DailyPhotoSource.BING, "https://img.peapix.com/keep.jpg")!![0].toInt())
+    }
+
+    private fun photoNamed(name: String) = parseBingFeed(feedOf(name))!!.single()
+
+    private val photo get() = photoNamed("a")
+
+    @Test
+    fun `a photo opened full size is downloaded once and kept while it is listed`() = runTest {
+        // Given a download that works
+        api.downloadBytes = byteArrayOf(1, 2, 3)
+        val repository = repository()
+
+        // When the same photo is opened three times in one day
+        val first = repository.originalBytes(photo)
+        clock.now = Instant.parse("2026-11-12T23:30:00Z")
+        repository.originalBytes(photo)
+        val third = repository.originalBytes(photo)
+
+        // Then it was downloaded once and every open has the same bytes
+        assertEquals(1, api.downloads.size)
+        assertEquals(listOf<Byte>(1, 2, 3), first!!.toList())
+        assertEquals(listOf<Byte>(1, 2, 3), third!!.toList())
+    }
+
+    @Test
+    fun `a new day keeps the full size photos its feed still lists and drops the others`() = runTest {
+        // Given two photos listed and opened yesterday
+        api.feed = feedOf("a", "b")
+        api.downloadBytes = byteArrayOf(1)
+        val repository = repository()
+        repository.photos(DailyPhotoSource.BING, "us")
+        repository.originalBytes(photoNamed("a"))
+        repository.originalBytes(photoNamed("b"))
+        assertEquals(2, api.downloads.size)
+
+        // When the next day's feed lists b and a new c
+        clock.now = Instant.parse("2026-11-13T08:00:00Z")
+        api.feed = feedOf("b", "c")
+        repository.photos(DailyPhotoSource.BING, "us")
+        repository.originalBytes(photoNamed("b"))
+        repository.originalBytes(photoNamed("a"))
+
+        // Then b came from the cache and a, no longer listed, was downloaded again
+        assertEquals(3, api.downloads.size)
+        assertTrue(api.downloads.last().endsWith("OHR.a_UHD.jpg"))
+    }
+
+    @Test
+    fun `a failed download is not kept`() = runTest {
+        // Given a download that fails and then works
+        val repository = repository()
+        api.downloadBytes = null
+        assertNull(repository.originalBytes(photo))
+
+        // When it works the next time
+        api.downloadBytes = byteArrayOf(9)
+
+        // Then it is fetched, not served from a copy of the failure
+        assertEquals(listOf<Byte>(9), repository.originalBytes(photo)!!.toList())
+        assertEquals(2, api.downloads.size)
+    }
+
+    @Test
+    fun `storing one source's feed leaves the other's full size photos alone`() {
+        // Given a Bing and a Spotlight photo kept
+        val cache = DailyPhotoCache(tempFolder.newFolder("cache2"), clock)
+        val bing = "https://www.bing.com/th?id=OHR.a_UHD.jpg"
+        val spotlight = "https://res.public.onecdn.static.microsoft/creativeservice/s.jpg"
+        cache.writeOriginal(bing, byteArrayOf(1))
+        cache.writeOriginal(spotlight, byteArrayOf(2))
+        cache.writeThumbnail(DailyPhotoSource.BING, "https://www.bing.com/t.jpg", byteArrayOf(3))
+
+        // When a Bing feed that lists nothing is stored
+        cache.writeFeed(DailyPhotoSource.BING, "us", "{}", emptyList(), emptyList())
+
+        // Then Bing's thumbnail and photo go and Spotlight's photo stays
+        assertNull(cache.readThumbnail(DailyPhotoSource.BING, "https://www.bing.com/t.jpg"))
+        assertNull(cache.readOriginal(bing))
+        assertEquals(2, cache.readOriginal(spotlight)!![0].toInt())
     }
 }

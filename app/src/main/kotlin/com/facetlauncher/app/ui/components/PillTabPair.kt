@@ -25,6 +25,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
@@ -42,7 +43,7 @@ private const val PILL_TAB_TRANSITION_MS = 220
 /**
  * Two tabs in a pill track with an accent indicator that slides between them — the Apps/Folders switch
  * in the pickers, as a reusable component. Full shape (M3's segmented-control shape). Exactly two
- * options, so callers pass a boolean instead of a list.
+ * options, so callers pass a boolean instead of a list. [trackColor] is [SurfaceContainer] unless the page behind it is that colour too.
  */
 @Composable
 fun PillTabPair(
@@ -53,6 +54,7 @@ fun PillTabPair(
     startTag: String,
     endTag: String,
     modifier: Modifier = Modifier,
+    trackColor: Color = SurfaceContainer,
 ) {
     val density = LocalDensity.current
     var rowSizePx by remember { mutableStateOf(IntSize.Zero) }
@@ -61,7 +63,7 @@ fun PillTabPair(
         modifier = modifier
             .fillMaxWidth()
             .clip(CircleShape)
-            .background(SurfaceContainer)
+            .background(trackColor)
             .padding(4.dp)
             .onSizeChanged { rowSizePx = it },
     ) {

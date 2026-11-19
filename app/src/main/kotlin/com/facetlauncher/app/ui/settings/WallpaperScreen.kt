@@ -420,14 +420,7 @@ internal fun WallpaperFitStep(
             )
         }
         if (!copyOnly) {
-            PillTabPair(
-                startLabel = stringResource(R.string.wallpaper_fit_home),
-                endLabel = stringResource(R.string.wallpaper_fit_home_lock),
-                endSelected = includeLock,
-                onSelect = { includeLock = it },
-                startTag = "wallpaper_fit_home",
-                endTag = "wallpaper_fit_home_lock",
-            )
+            PillTabPair(stringResource(R.string.wallpaper_fit_home), stringResource(R.string.wallpaper_fit_home_lock), includeLock, { includeLock = it }, "wallpaper_fit_home", "wallpaper_fit_home_lock", trackColor = Surface)
         }
         if (turnsOffDailyWallpaper) {
             Text(text = stringResource(R.string.daily_wallpaper_turns_off), style = MaterialTheme.typography.bodyMedium, color = Muted, modifier = Modifier.testTag("wallpaper_fit_turns_off_daily"))

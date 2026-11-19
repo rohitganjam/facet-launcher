@@ -3,7 +3,7 @@ package com.facetlauncher.app.data.di
 import android.content.Context
 import com.facetlauncher.app.data.dailyphotos.DailyPhotoApi
 import com.facetlauncher.app.data.dailyphotos.DailyPhotoCache
-import com.facetlauncher.app.data.dailyphotos.PeapixApi
+import com.facetlauncher.app.data.dailyphotos.HttpDailyPhotoApi
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -18,7 +18,7 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 abstract class DailyPhotoBindingModule {
     @Binds
-    abstract fun bindDailyPhotoApi(api: PeapixApi): DailyPhotoApi
+    abstract fun bindDailyPhotoApi(api: HttpDailyPhotoApi): DailyPhotoApi
 }
 
 @Module

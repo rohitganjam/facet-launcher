@@ -4,13 +4,13 @@ import androidx.annotation.StringRes
 import androidx.compose.runtime.Immutable
 import com.facetlauncher.app.R
 
-/** Where the daily photos come from: one Peapix feed each. */
-enum class DailyPhotoSource(val feedPath: String, val usesCountry: Boolean, @param:StringRes val labelRes: Int) {
-    /** Bing's photo of the day, for the phone's country; every photo has a date. */
-    BING("bing/feed", true, R.string.daily_source_bing),
+/** Where the daily photos come from: Bing's photo of the day and Windows Spotlight, both from Microsoft. */
+enum class DailyPhotoSource(@param:StringRes val labelRes: Int) {
+    /** Bing's photo of the day for the phone's country, a week of them; every photo has a date. */
+    BING(R.string.daily_source_bing),
 
-    /** Windows Spotlight: one set for everyone, with no dates. */
-    SPOTLIGHT("spotlight/feed", false, R.string.daily_source_spotlight),
+    /** Windows Spotlight: a dozen random photos of its pool for the phone's country (titles in its language), with no dates. */
+    SPOTLIGHT(R.string.daily_source_spotlight),
 }
 
 /**

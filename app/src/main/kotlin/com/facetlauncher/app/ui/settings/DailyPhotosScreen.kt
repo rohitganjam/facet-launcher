@@ -60,6 +60,7 @@ import com.facetlauncher.app.ui.components.TextActionButton
 import com.facetlauncher.app.ui.theme.ErrorColor
 import com.facetlauncher.app.ui.theme.SettingsSectionHue
 import com.facetlauncher.app.ui.theme.Muted
+import com.facetlauncher.app.ui.theme.Surface
 import com.facetlauncher.app.ui.theme.SurfaceContainer
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -217,6 +218,8 @@ private fun SourceTabs(selected: DailyPhotoSource, onSelect: (DailyPhotoSource) 
             onSelect = { spotlight -> onSelect(if (spotlight) DailyPhotoSource.SPOTLIGHT else DailyPhotoSource.BING) },
             startTag = "daily_source_bing",
             endTag = "daily_source_spotlight",
+            // The page is SurfaceContainer, so the default track would vanish into it
+            trackColor = Surface,
         )
     }
 }
