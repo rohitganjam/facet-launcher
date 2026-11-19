@@ -266,7 +266,7 @@
     <string name="wallpaper_screenshot_link">Mijn huidige achtergrond vastleggen</string>
     <string name="wallpaper_current_subtitle">Maak een screenshot zodat glas het kan vervagen. Je achtergrond blijft zoals hij is.</string>
     <string name="wallpaper_current_in_use">Al in gebruik. Tik om een nieuwe screenshot te gebruiken.</string>
-    <string name="daily_photos_subtitle">Een week aan foto\'s van Bing en Windows Spotlight</string>
+    <string name="daily_photos_subtitle">Recente foto\'s van Bing en Windows Spotlight</string>
     <string name="daily_own_image_title">Je eigen afbeelding kiezen</string>
     <string name="daily_own_image_subtitle">Uit je galerij of bestanden</string>
     <string name="daily_source_bing">Bing</string>

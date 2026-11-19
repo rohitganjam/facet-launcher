@@ -263,7 +263,7 @@
     <string name="wallpaper_screenshot_link">Capturer mon fond d\'écran actuel</string>
     <string name="wallpaper_current_subtitle">Faites une capture pour que le verre puisse le flouter. Votre fond d\'écran ne change pas.</string>
     <string name="wallpaper_current_in_use">Déjà utilisé. Touchez pour utiliser une nouvelle capture.</string>
-    <string name="daily_photos_subtitle">Une semaine de photos de Bing et de Windows Spotlight</string>
+    <string name="daily_photos_subtitle">Photos récentes de Bing et de Windows Spotlight</string>
     <string name="daily_own_image_title">Choisir votre propre image</string>
     <string name="daily_own_image_subtitle">Depuis votre galerie ou vos fichiers</string>
     <string name="daily_source_bing">Bing</string>

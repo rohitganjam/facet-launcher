@@ -263,7 +263,7 @@
     <string name="wallpaper_screenshot_link">Capturar o meu papel de parede atual</string>
     <string name="wallpaper_current_subtitle">Tire uma captura para o vidro poder desfocá-lo. Seu papel de parede continua igual.</string>
     <string name="wallpaper_current_in_use">Já em uso. Toque para usar uma nova captura.</string>
-    <string name="daily_photos_subtitle">Uma semana de fotos do Bing e do Windows Spotlight</string>
+    <string name="daily_photos_subtitle">Fotos recentes do Bing e do Windows Spotlight</string>
     <string name="daily_own_image_title">Escolher sua própria imagem</string>
     <string name="daily_own_image_subtitle">Da sua galeria ou dos seus arquivos</string>
     <string name="daily_source_bing">Bing</string>

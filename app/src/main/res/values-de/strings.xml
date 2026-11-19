@@ -262,7 +262,7 @@
     <string name="wallpaper_screenshot_link">Mein aktuelles Hintergrundbild aufnehmen</string>
     <string name="wallpaper_current_subtitle">Mach einen Screenshot, damit Glas ihn weichzeichnen kann. Dein Hintergrundbild bleibt unverändert.</string>
     <string name="wallpaper_current_in_use">Bereits in Verwendung. Tippe, um einen neuen Screenshot zu verwenden.</string>
-    <string name="daily_photos_subtitle">Eine Woche Fotos von Bing und Windows Spotlight</string>
+    <string name="daily_photos_subtitle">Aktuelle Fotos von Bing und Windows Spotlight</string>
     <string name="daily_own_image_title">Eigenes Bild wählen</string>
     <string name="daily_own_image_subtitle">Aus deiner Galerie oder deinen Dateien</string>
     <string name="daily_source_bing">Bing</string>

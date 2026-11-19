@@ -302,7 +302,7 @@
     <string name="wallpaper_screenshot_link">Capture my current wallpaper</string>
     <string name="wallpaper_current_subtitle">Take a screenshot of it so glass can blur it. Your wallpaper stays as it is.</string>
     <string name="wallpaper_current_in_use">Already in use. Tap to use a new screenshot.</string>
-    <string name="daily_photos_subtitle">A week of photos from Bing and Windows Spotlight</string>
+    <string name="daily_photos_subtitle">Recent photos from Bing and Windows Spotlight</string>
     <string name="daily_own_image_title">Choose your own image</string>
     <string name="daily_own_image_subtitle">From your gallery or files</string>
     <string name="daily_source_bing">Bing</string>

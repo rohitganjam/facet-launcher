@@ -263,7 +263,7 @@
     <string name="wallpaper_screenshot_link">Capturar mi fondo actual</string>
     <string name="wallpaper_current_subtitle">Haz una captura para que el cristal pueda desenfocarlo. Tu fondo no cambia.</string>
     <string name="wallpaper_current_in_use">Ya en uso. Toca para usar una captura nueva.</string>
-    <string name="daily_photos_subtitle">Una semana de fotos de Bing y Windows Spotlight</string>
+    <string name="daily_photos_subtitle">Fotos recientes de Bing y Windows Spotlight</string>
     <string name="daily_own_image_title">Elegir tu propia imagen</string>
     <string name="daily_own_image_subtitle">De tu galería o tus archivos</string>
     <string name="daily_source_bing">Bing</string>
