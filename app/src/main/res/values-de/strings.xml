@@ -97,6 +97,9 @@
     <string name="clock_template_pill_pair">Pillenpaar</string>
     <string name="clock_template_shelf">Regal</string>
     <string name="clock_template_half_immersed">Halb eingetaucht</string>
+    <string name="clock_template_echo">Echo</string>
+    <string name="clock_template_day_line">Tageslinie</string>
+    <string name="clock_template_liquid_hour">Flüssige Stunde</string>
 
     <!-- AccentSwatch -->
     <string name="accent_swatch_blue">Blau</string>

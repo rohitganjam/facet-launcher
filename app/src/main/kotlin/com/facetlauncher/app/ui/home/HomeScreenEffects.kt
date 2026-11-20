@@ -214,6 +214,10 @@ internal fun WidgetSheet(stack: HomeClockStackState, widget: HomeClockWidgetStat
                 actions.onClockStylesClick()
             },
             onCalendarSettingsClick = { actions.onAdjustModeChange(HomeMenuMode.CALENDAR_SETTINGS) },
+            onClockAccessoriesClick = {
+                close()
+                actions.onClockAccessoriesClick()
+            },
             onWidgetSettingsClick = {
                 close()
                 widget?.takeIf { it.nativeType != null }?.let { actions.onConfigureNativeWidget(NativeWidgetRef.Home(it.itemId)) }

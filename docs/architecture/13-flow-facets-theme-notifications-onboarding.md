@@ -175,7 +175,7 @@ style `weatherIconStyle` and the weather place `weatherLocation`, `null` followi
 (`NativeWidgetConfig.clock`, [20](20-flow-native-widgets.md)) and resolved by `resolveFacetStyle` (`ResolvedFacetStyle.clock`). There is no
 launcher-wide default and no override switch: a new facet's clock starts from the built-in defaults, and a facet that existed before
 per-clock settings had the values it showed copied onto its clock in the release that introduced them (a clock with no stored settings shows the built-in defaults).
-Every edit goes through `UpdateClockConfigUseCase(facetId, change)`. Settings → Clock style → *Clock accessories* (a row after the clock options; the
+Every edit goes through `UpdateClockConfigUseCase(facetId, change)`. Long-pressing the clock → *Clock accessories* (the third row of the clock's settings card, `ClockSettingsCard`, shared by Home's widget sheet and the Widget stack's Configure; it is no longer a row on the clock style screen) edits them; the
 screen is `ClockAccessoriesScreen`, route `clockAccessories?facetId=`) edits them: card 1 alarm and battery, card 2 weather,
 card 3 Icons (while weather is on), then, while weather is on, a *Location* card with the same picker as a Weather widget (`WeatherLocationPicker`): same as Weather settings, current location, or a saved city, then a *Weather settings* row back to the launcher-wide screen. Units and location themselves are not here: they are *Weather settings*, a row in Settings → System
 (`UnitsAndLocationScreen`, route `unitsAndLocation`): the four units and the Location card, launcher-wide (`UnitsAndLocationViewModel`), so a

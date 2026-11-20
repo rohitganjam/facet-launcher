@@ -32,6 +32,8 @@ import kotlinx.coroutines.launch
 data class ClockStyleGalleryUiState(
     val facet: Facet? = null,
     val settings: LauncherSettings = LauncherSettings(),
+    /** False for the placeholder shown before the saved settings arrive, whose style is not the facet's. */
+    val loaded: Boolean = false,
 ) {
     private val clock: ClockWidgetConfig get() = effectiveClockConfig(facet, settings)
     /** Resolves [ClockFontOption.LAUNCHER_DEFAULT]'s preview. */
@@ -69,6 +71,7 @@ class ClockStyleGalleryViewModel @Inject constructor(
         ClockStyleGalleryUiState(
             facet = facets.find { it.id == facetId },
             settings = settings,
+            loaded = true,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ClockStyleGalleryUiState())
 

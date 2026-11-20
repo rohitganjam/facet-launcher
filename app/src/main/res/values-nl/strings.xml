@@ -113,6 +113,9 @@
     <string name="clock_template_pill_pair">Pillenpaar</string>
     <string name="clock_template_shelf">Plank</string>
     <string name="clock_template_half_immersed">Half ondergedompeld</string>
+    <string name="clock_template_echo">Echo</string>
+    <string name="clock_template_day_line">Daglijn</string>
+    <string name="clock_template_liquid_hour">Vloeibaar uur</string>
 
     <string name="accent_swatch_blue">Blauw</string>
     <string name="accent_swatch_indigo">Indigo</string>

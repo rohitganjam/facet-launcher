@@ -382,12 +382,8 @@ fun FacetNavHost(
             settingsComposable(
                 FacetDestinations.FACET_CLOCK_STYLE_GALLERY,
                 arguments = listOf(navArgument("facetId") { type = NavType.LongType }),
-            ) { backStackEntry ->
-                val facetId = backStackEntry.arguments?.getLong("facetId") ?: NO_ACTIVE_FACET_ID
-                ClockStyleGalleryRoute(
-                    onBack = { navController.popBackStackSafely() },
-                    onOpenClockAccessories = { navController.navigate(FacetDestinations.clockAccessories(facetId)) },
-                )
+            ) {
+                ClockStyleGalleryRoute(onBack = { navController.popBackStackSafely() })
             }
             settingsComposable(FacetDestinations.PERMISSIONS) {
                 PermissionsScreen(
@@ -480,6 +476,7 @@ fun FacetNavHost(
                     onBack = { navController.popBackStackSafely() },
                     onOpenFacetPro = { reason -> navController.navigate(FacetDestinations.facetPro(reason)) },
                     onOpenClockStyle = { facetId -> navController.navigate(FacetDestinations.facetClockStyleGallery(facetId)) },
+                    onOpenClockAccessories = { facetId -> navController.navigate(FacetDestinations.clockAccessories(facetId)) },
                 )
             }
             settingsComposable(FacetDestinations.FACET_MANAGE) {

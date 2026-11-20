@@ -213,6 +213,8 @@ data class HomeClockActions(
     val onBatteryClick: () -> Unit = {},
     /** The clock's own sheet: the full-screen clock style options, and the calendar settings. */
     val onClockStylesClick: () -> Unit = {},
+    /** Opens the facet's clock accessories (alarm, battery, weather). */
+    val onClockAccessoriesClick: () -> Unit = {},
     val onNavigateToSettings: () -> Unit = {},
     val onNavigateToFacetSettings: () -> Unit = {},
     /** Opens the facet carousel, as a swipe left does. */

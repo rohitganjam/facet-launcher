@@ -2,6 +2,7 @@ package com.facetlauncher.app.ui.home.clock
 
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
@@ -50,7 +51,10 @@ class ClockStyleGalleryScreenTest {
     @get:Rule
     val composeRule = createComposeRule()
 
-    private fun setContent(onBack: () -> Unit = {}, onOpenClockAccessories: () -> Unit = {}): Pair<SettingsRepository, FacetRepository> {
+    private fun setContent(
+        onBack: () -> Unit = {},
+        initialTemplate: ClockTemplateId? = null,
+    ): Pair<SettingsRepository, FacetRepository> {
         lateinit var settingsRepository: SettingsRepository
         lateinit var facetRepository: FacetRepository
         composeRule.setContent {
@@ -64,13 +68,12 @@ class ClockStyleGalleryScreenTest {
                     ),
                 )
                 runBlocking { facetRepository.addFacet() } // seeds id 1L with its clock page
-                ClockStyleGalleryViewModel(
-                    SavedStateHandle(mapOf("facetId" to 1L)), settingsRepository, facetRepository,
-                    UpdateClockConfigUseCase(settingsRepository, facetRepository, ClockStackRepository(database, database.clockStackItemDao())),
-                )
+                val updateClockConfig = UpdateClockConfigUseCase(settingsRepository, facetRepository, ClockStackRepository(database, database.clockStackItemDao()))
+                initialTemplate?.let { template -> runBlocking { updateClockConfig(1L) { it.copy(templateId = template) } } }
+                ClockStyleGalleryViewModel(SavedStateHandle(mapOf("facetId" to 1L)), settingsRepository, facetRepository, updateClockConfig)
             }
             FacetLauncherTheme {
-                ClockStyleGalleryRoute(onBack = onBack, onOpenClockAccessories = onOpenClockAccessories, viewModel = viewModel)
+                ClockStyleGalleryRoute(onBack = onBack, viewModel = viewModel)
             }
         }
         composeRule.waitForIdle()
@@ -83,24 +86,19 @@ class ClockStyleGalleryScreenTest {
     }
 
     @Test
-    fun clockAccessoriesRowOpensTheAccessoriesScreen() {
+    fun clockAccessoriesAreNoLongerAGalleryRowBecauseTheyLiveInTheClockSheet() {
         // Given the gallery
-        var opened = false
-        setContent(onOpenClockAccessories = { opened = true })
+        setContent()
 
-        // When tapping the Clock accessories row
-        composeRule.onNodeWithTag("clock_style_gallery_list").performScrollToNode(hasTestTag("clock_accessories_row"))
-        composeRule.onNodeWithTag("clock_accessories_row").performClick()
-
-        // Then it opens the accessories screen
-        assertEquals(true, opened)
+        // Then there is no Clock accessories row on it
+        composeRule.onAllNodesWithTag("clock_accessories_row").assertCountEquals(0)
     }
 
     @Test
     fun headerStaysVisibleAfterScrollingThePageAndTheTemplateRow() {
         // Given the gallery, scrolled all the way down the page and along to the last template card
         setContent()
-        composeRule.onNodeWithTag("clock_style_gallery_list").performScrollToNode(hasTestTag("clock_accessories_row"))
+        composeRule.onNodeWithTag("clock_style_gallery_list").performScrollToNode(hasTestTag("reset_clock_position_row"))
         composeRule.onNodeWithTag("clock_template_card_${ClockTemplateId.entries.last().name}").performScrollTo()
 
         // Then the pinned header (title + back button) is still on screen, not scrolled away
@@ -123,6 +121,31 @@ class ClockStyleGalleryScreenTest {
             val width = composeRule.onNodeWithTag("clock_template_card_${id.name}").getUnclippedBoundsInRoot().width
             assertTrue("${id.name} is ${width} wide on a $screenWidth screen", width <= screenWidth * 0.75f + 1.dp)
         }
+    }
+
+    @Test
+    fun openingTheGalleryScrollsTheTemplateRowToTheAppliedStyleAndCentresIt() {
+        // Given a clock whose applied style is a card in the middle of the row, well off screen to the right
+        val applied = ClockTemplateId.entries[ClockTemplateId.entries.size / 2]
+        setContent(initialTemplate = applied)
+        composeRule.waitForIdle()
+
+        // Then that card is on screen without any scrolling, and sits near the middle
+        val card = composeRule.onNodeWithTag("clock_template_card_${applied.name}")
+        card.assertIsDisplayed()
+        val screenWidth = composeRule.onRoot().getUnclippedBoundsInRoot().width
+        val bounds = card.getUnclippedBoundsInRoot()
+        val centre = (bounds.left + bounds.right) / 2
+        assertTrue("card centre $centre on a $screenWidth screen", kotlin.math.abs((centre - screenWidth / 2).value) < screenWidth.value * 0.2f)
+    }
+
+    @Test
+    fun theFirstStyleIsNotScrolledAwayFromWhenItIsApplied() {
+        // Given the default style, the first card
+        setContent()
+
+        // Then the row starts at its beginning and that card is on screen
+        composeRule.onNodeWithTag("clock_template_card_${ClockTemplateId.entries.first().name}").assertIsDisplayed()
     }
 
     @Test

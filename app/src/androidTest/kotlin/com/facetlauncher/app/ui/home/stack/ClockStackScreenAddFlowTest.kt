@@ -49,6 +49,7 @@ class ClockStackScreenAddFlowTest {
     private val stack = ClockStackRepository(database, database.clockStackItemDao())
     private val opened = mutableListOf<ProReason>()
     private val styleFacets = mutableListOf<Long>()
+    private val accessoriesFacets = mutableListOf<Long>()
     private var shownFacetId = 0L
 
     /** A facet with its launcher clock, active; [withClock] false removes the clock so the stack is empty. */
@@ -68,7 +69,7 @@ class ClockStackScreenAddFlowTest {
         )
         composeRule.setContent {
             FacetLauncherTheme {
-                ClockStackScreen(onBack = {}, onOpenFacetPro = { opened += it }, onOpenClockStyle = { styleFacets += it }, viewModel = viewModel)
+                ClockStackScreen(onBack = {}, onOpenFacetPro = { opened += it }, onOpenClockStyle = { styleFacets += it }, onOpenClockAccessories = { accessoriesFacets += it }, viewModel = viewModel)
             }
         }
         composeRule.waitUntil(timeoutMillis = 5_000) {
@@ -100,6 +101,22 @@ class ClockStackScreenAddFlowTest {
         // Then the style gallery opens for that facet and the sheet is gone
         composeRule.waitForIdle()
         assertEquals(listOf(shownFacetId), styleFacets)
+        composeRule.onAllNodesWithTag("clock_stack_clock_sheet").assertCountEquals(0)
+    }
+
+    @Test
+    fun `configuring the launcher clock offers clock accessories and that opens its screen`() {
+        // Given a Pro facet whose stack holds the launcher clock, with its Configure sheet open
+        show(isPro = true, withClock = true)
+        val clockId = runBlocking { stack.getAll(shownFacetId).single().id }
+        composeRule.onNodeWithTag("clock_stack_configure_$clockId").performClick()
+
+        // When Clock accessories is chosen
+        composeRule.onNodeWithTag("clock_style_sheet_accessories").performClick()
+
+        // Then the accessories screen opens for that facet and the sheet is gone
+        composeRule.waitForIdle()
+        assertEquals(listOf(shownFacetId), accessoriesFacets)
         composeRule.onAllNodesWithTag("clock_stack_clock_sheet").assertCountEquals(0)
     }
 

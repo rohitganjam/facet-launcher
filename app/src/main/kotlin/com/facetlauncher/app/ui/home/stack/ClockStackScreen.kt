@@ -106,6 +106,7 @@ fun ClockStackScreen(
     onBack: () -> Unit,
     onOpenFacetPro: (ProReason) -> Unit,
     onOpenClockStyle: (facetId: Long) -> Unit,
+    onOpenClockAccessories: (facetId: Long) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: ClockStackViewModel = hiltViewModel(),
 ) {
@@ -157,7 +158,7 @@ fun ClockStackScreen(
 
     configureRef?.let { ref -> NativeWidgetConfigSheet(ref = ref, onDismiss = { configureRef = null }) }
 
-    ClockConfigureSheets(uiState.facetId, clockSheet, onSheetChange = { clockSheet = it }, onOpenClockStyle = onOpenClockStyle)
+    ClockConfigureSheets(uiState.facetId, clockSheet, onSheetChange = { clockSheet = it }, onOpenClockStyle = onOpenClockStyle, onOpenClockAccessories = onOpenClockAccessories)
 
     if (showChooser) {
         AddChooserSheet(
@@ -207,7 +208,7 @@ private enum class ClockSheet { NONE, CONFIGURE, CALENDAR }
 
 /** The launcher clock's Configure: a sheet offering its styles (a full screen) and its calendar settings (a second sheet). */
 @Composable
-private fun ClockConfigureSheets(facetId: Long, sheet: ClockSheet, onSheetChange: (ClockSheet) -> Unit, onOpenClockStyle: (facetId: Long) -> Unit) {
+private fun ClockConfigureSheets(facetId: Long, sheet: ClockSheet, onSheetChange: (ClockSheet) -> Unit, onOpenClockStyle: (facetId: Long) -> Unit, onOpenClockAccessories: (facetId: Long) -> Unit) {
     if (sheet == ClockSheet.CONFIGURE) {
         ThemedModalBottomSheet(onDismissRequest = { onSheetChange(ClockSheet.NONE) }, skipPartiallyExpanded = true, containerColor = SurfaceContainer) {
             Column(modifier = Modifier.fillMaxWidth().padding(start = 24.dp, end = 24.dp, top = 4.dp, bottom = 16.dp).testTag("clock_stack_clock_sheet")) {
@@ -217,6 +218,10 @@ private fun ClockConfigureSheets(facetId: Long, sheet: ClockSheet, onSheetChange
                         onOpenClockStyle(facetId)
                     },
                     onCalendarSettingsClick = { onSheetChange(ClockSheet.CALENDAR) },
+                    onClockAccessoriesClick = {
+                        onSheetChange(ClockSheet.NONE)
+                        onOpenClockAccessories(facetId)
+                    },
                 )
             }
         }

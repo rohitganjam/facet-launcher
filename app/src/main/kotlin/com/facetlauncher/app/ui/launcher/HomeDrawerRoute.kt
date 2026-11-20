@@ -425,6 +425,7 @@ fun HomeDrawerRoute(
             toFacetSettings = onNavigateToFacetSettings,
             toFacetPro = onNavigateToFacetPro,
             toClockStyle = onNavigateToClockStyle,
+            toClockAccessories = onNavigateToClockAccessories,
             toClockStack = onNavigateToClockStack,
         ),
     )

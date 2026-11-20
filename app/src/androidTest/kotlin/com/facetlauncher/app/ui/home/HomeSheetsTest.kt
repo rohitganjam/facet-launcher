@@ -43,6 +43,7 @@ class HomeSheetsTest {
                     target = target,
                     onClockStylesClick = { calls += "styles" },
                     onCalendarSettingsClick = { calls += "calendar" },
+                    onClockAccessoriesClick = { calls += "accessories" },
                     onWidgetSettingsClick = { calls += "widget-settings" },
                     onAdjustClick = { calls += "adjust" },
                     onReplaceWidgetClick = { calls += "replace" },
@@ -92,18 +93,18 @@ class HomeSheetsTest {
     }
 
     @Test
-    fun theClockSheetOffersItsStylesAndCalendarThenAdjustReplaceRemoveAndTheStack() {
+    fun theClockSheetOffersItsStylesCalendarAndAccessoriesThenAdjustTheStackReplaceAndRemove() {
         // Given the widget sheet over the clock
         val calls = mutableListOf<String>()
         setWidgetSheet(WidgetSheetTarget.Clock, calls)
 
         // When every row is tapped
-        listOf("clock_style_sheet_styles", "clock_style_sheet_calendar", "widget_sheet_adjust", "widget_sheet_replace", "widget_sheet_remove", "widget_sheet_stack").forEach {
+        listOf("clock_style_sheet_styles", "clock_style_sheet_calendar", "clock_style_sheet_accessories", "widget_sheet_adjust", "widget_sheet_stack", "widget_sheet_replace", "widget_sheet_remove").forEach {
             composeRule.onNodeWithTag(it).performScrollTo().performClick()
         }
 
         // Then each reached its own callback, and the facet and launcher settings are not here
-        assertEquals(listOf("styles", "calendar", "adjust", "replace", "remove", "stack"), calls)
+        assertEquals(listOf("styles", "calendar", "accessories", "adjust", "stack", "replace", "remove"), calls)
         composeRule.onNodeWithTag("home_sheet_facet_settings").assertDoesNotExist()
         composeRule.onNodeWithTag("widget_sheet_settings").assertDoesNotExist()
     }

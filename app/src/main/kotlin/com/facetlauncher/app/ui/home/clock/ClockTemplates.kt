@@ -1,5 +1,6 @@
 package com.facetlauncher.app.ui.home.clock
 
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -28,12 +29,15 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.CompositingStrategy
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawStyle
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.text.ExperimentalTextApi
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
@@ -62,6 +66,8 @@ import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
+import kotlin.math.PI
+import kotlin.math.sin
 import com.facetlauncher.app.ui.components.HomeText
 import com.facetlauncher.app.ui.components.OnSolidFill
 
@@ -164,6 +170,9 @@ internal val ClockTemplateRenderers: Map<ClockTemplateId, @Composable ClockTempl
     put(ClockTemplateId.PILL_PAIR) { PillPairTemplate(modifier = it) }
     put(ClockTemplateId.SHELF) { ShelfTemplate(modifier = it) }
     put(ClockTemplateId.HALF_IMMERSED) { HalfImmersedTemplate(modifier = it) }
+    put(ClockTemplateId.ECHO) { EchoTemplate(modifier = it) }
+    put(ClockTemplateId.DAY_LINE) { DayLineTemplate(modifier = it) }
+    put(ClockTemplateId.LIQUID_HOUR) { LiquidHourTemplate(modifier = it) }
 }
 
 private fun timeFormatter(use24HourTime: Boolean, locale: Locale) =
@@ -204,6 +213,7 @@ private fun ClockGlyphText(
     letterSpacing: TextUnit = TextUnit.Unspecified,
     modifier: Modifier = Modifier,
     drawStyle: DrawStyle? = null,
+    shadowed: Boolean = true,
 ) {
     HomeText(
         text = text,
@@ -212,7 +222,7 @@ private fun ClockGlyphText(
             fontWeight = fontWeight,
             fontSize = fontSize,
             letterSpacing = letterSpacing,
-            shadow = homeTextShadow(),
+            shadow = if (shadowed) homeTextShadow() else null,
             drawStyle = drawStyle,
         ),
         color = color,
@@ -1754,3 +1764,134 @@ private fun ClockTemplateData.HalfImmersedTemplate(
         }
     }
 }
+
+/** How far each faded copy of [EchoTemplate] sits from the one in front of it, up and to the left. */
+private val ECHO_STEP = 8.dp
+
+/** `8a` — the time with two fading [accentColor] copies behind it, stepped up and to the left like a motion trail. No outline or glow: the copies are plain translucent text, hidden from accessibility. */
+@Composable
+private fun ClockTemplateData.EchoTemplate(
+    modifier: Modifier = Modifier,
+) {
+    val timeText = now.format(timeFormatter(use24HourTime, locale))
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(17.dp), horizontalAlignment = horizontalAlignment) {
+        Row(verticalAlignment = Alignment.Bottom) {
+            // The padding keeps the trail inside the template's own measured box, so the tap area and the resize frame cover it.
+            Box(modifier = Modifier.padding(start = ECHO_STEP * 2, top = ECHO_STEP * 2)) {
+                listOf(2 to 0.22f, 1 to 0.45f).forEach { (step, alpha) ->
+                    ClockGlyphText(
+                        timeText,
+                        accentColor.copy(alpha = alpha),
+                        80.sp,
+                        family,
+                        FontWeight.SemiBold,
+                        modifier = Modifier.offset(x = -ECHO_STEP * step, y = -ECHO_STEP * step).clearAndSetSemantics {},
+                        shadowed = false,
+                    )
+                }
+                ClockGlyphText(timeText, textColor, 80.sp, family, FontWeight.SemiBold)
+            }
+            if (meridiem != null) MeridiemText(meridiem, family, textColor, Modifier.padding(start = 7.dp, bottom = 8.dp))
+        }
+        TemplateDateText(now.format(dateFormatter(locale, dateStyle)), family, mutedTextColor)
+        ClockAccessoryRow(nextAlarmText, batteryPercent, isCharging, family, mutedTextColor, accentColor, fontSize = 19.sp)
+    }
+}
+
+/** Minutes into the day as a fraction of it: 0 at midnight, 0.5 at noon. */
+internal fun dayFraction(now: LocalDateTime): Float = (now.hour * 60 + now.minute) / MINUTES_PER_DAY.toFloat()
+
+private const val MINUTES_PER_DAY = 24 * 60
+
+/** `8b` — the time over a thin line for the day (midnight to midnight): [accentColor] for the part that has gone, a dot at now. */
+@Composable
+private fun ClockTemplateData.DayLineTemplate(
+    modifier: Modifier = Modifier,
+) {
+    val fraction = dayFraction(now)
+    // Bounded to its widest child, so the line is as long as the time and date, not the screen (see RuleMeridiemTemplate).
+    Column(modifier = modifier.width(IntrinsicSize.Max), horizontalAlignment = horizontalAlignment) {
+        Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            ClockGlyphText(now.format(timeFormatter(use24HourTime, locale)), textColor, 82.sp, family, FontWeight.Normal)
+            if (meridiem != null) MeridiemText(meridiem, family, textColor, Modifier.padding(bottom = 11.dp))
+        }
+        DayLine(fraction, accentColor, textColor, Modifier.padding(top = 18.dp).fillMaxWidth())
+        TemplateDateText(now.format(dateFormatter(locale, dateStyle)), family, mutedTextColor, modifier = Modifier.padding(top = 12.dp))
+        ClockAccessoryRow(nextAlarmText, batteryPercent, isCharging, family, mutedTextColor, accentColor, modifier = Modifier.padding(top = 8.dp), fontSize = 19.sp)
+    }
+}
+
+/** The day's line: a faint track, the elapsed part in [accent], and a dot at [fraction] of the way along. */
+@Composable
+private fun DayLine(fraction: Float, accent: Color, track: Color, modifier: Modifier = Modifier) {
+    // A Canvas, not BoxWithConstraints: the template is sized with IntrinsicSize.Max, which a subcomposing layout can't answer.
+    Canvas(modifier = modifier.height(DAY_LINE_DOT)) {
+        val dot = DAY_LINE_DOT.toPx()
+        val centreY = size.height / 2f
+        val travel = size.width - dot
+        val dotX = dot / 2f + travel * fraction
+        drawLine(track.copy(alpha = 0.25f), Offset(dot / 2f, centreY), Offset(size.width - dot / 2f, centreY), strokeWidth = 2.dp.toPx(), cap = StrokeCap.Round)
+        drawLine(accent, Offset(dot / 2f, centreY), Offset(dotX, centreY), strokeWidth = 3.dp.toPx(), cap = StrokeCap.Round)
+        drawCircle(accent, radius = dot / 2f, center = Offset(dotX, centreY))
+    }
+}
+
+private val DAY_LINE_DOT = 11.dp
+
+/** `8c` — a heavy hour that fills with [accentColor] from the bottom as the hour passes (a fraction of `minute / 60`), with a gentle static wave on top; minutes beside it. Blended into the glyph's own pixels in an offscreen layer, as in [HalfImmersedTemplate]. */
+@Composable
+private fun ClockTemplateData.LiquidHourTemplate(
+    modifier: Modifier = Modifier,
+) {
+    val hourFormatter = DateTimeFormatter.ofPattern(if (use24HourTime) "HH" else "h", locale)
+    val minute = now.minute
+    val liquid = accentColor
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(14.dp), horizontalAlignment = horizontalAlignment) {
+        Row(verticalAlignment = Alignment.Bottom) {
+            HourText(
+                now.format(hourFormatter),
+                family,
+                textColor,
+                110.sp,
+                FontWeight.Black,
+                modifier = Modifier
+                    .graphicsLayer(compositingStrategy = CompositingStrategy.Offscreen)
+                    .drawWithContent {
+                        drawContent()
+                        liquidFillPath(size, minute / 60f)?.let { drawPath(it, liquid, blendMode = BlendMode.SrcIn) }
+                    },
+            )
+            MinuteText(":" + now.format(DateTimeFormatter.ofPattern("mm", locale)), family, textColor, 110.sp, FontWeight.Light)
+            if (meridiem != null) MeridiemText(meridiem, family, textColor, Modifier.padding(start = 7.dp, bottom = 18.dp))
+        }
+        TemplateDateText(now.format(dateFormatter(locale, dateStyle)), family, mutedTextColor)
+        ClockAccessoryRow(nextAlarmText, batteryPercent, isCharging, family, mutedTextColor, accentColor, fontSize = 19.sp)
+    }
+}
+
+/**
+ * The liquid's shape inside a digit box of [size]: everything below a slightly wavy surface that is [fraction] of the way up the digits'
+ * height (which is most of the box: [LIQUID_GLYPH_TOP]..[LIQUID_GLYPH_BOTTOM]). `null` when empty, so the top of the hour shows no stray sliver.
+ */
+internal fun liquidFillPath(size: Size, fraction: Float): Path? {
+    if (fraction <= 0f) return null
+    val top = size.height * LIQUID_GLYPH_TOP
+    val bottom = size.height * LIQUID_GLYPH_BOTTOM
+    val surface = bottom - (bottom - top) * fraction.coerceAtMost(1f)
+    val amplitude = size.height * 0.02f
+    return Path().apply {
+        moveTo(0f, surface)
+        val steps = 24
+        for (i in 0..steps) {
+            val x = size.width * i / steps
+            lineTo(x, surface + amplitude * sin(2.0 * PI * 1.5 * i / steps).toFloat())
+        }
+        lineTo(size.width, size.height)
+        lineTo(0f, size.height)
+        close()
+    }
+}
+
+/** Where the digits sit inside their text box, as fractions of its height. */
+private const val LIQUID_GLYPH_TOP = 0.18f
+private const val LIQUID_GLYPH_BOTTOM = 0.80f

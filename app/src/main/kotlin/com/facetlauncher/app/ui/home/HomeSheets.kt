@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.AccessAlarm
 import androidx.compose.material.icons.outlined.AddCircleOutline
 import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.DeleteOutline
@@ -87,7 +88,7 @@ fun HomeMenuSheetContent(
 /**
  * The widget's own sheet, opened by a long-press on the widget showing (the clock, its calendar, a Facet widget or a hosted one). First
  * card: that widget's settings (the clock's styles and calendar; "<Widget> settings" for Weather and Agenda; none for the rest). Second:
- * adjust size and position (the only way into resize mode), replace or remove the widget, and the widget stack. Replacing swaps the page in
+ * adjust size and position (the only way into resize mode), the widget stack, and replace or remove the widget. Replacing swaps the page in
  * place and is never a Pro action.
  */
 @Composable
@@ -95,6 +96,7 @@ fun WidgetSheetContent(
     target: WidgetSheetTarget,
     onClockStylesClick: () -> Unit,
     onCalendarSettingsClick: () -> Unit,
+    onClockAccessoriesClick: () -> Unit,
     onWidgetSettingsClick: () -> Unit,
     onAdjustClick: () -> Unit,
     onReplaceWidgetClick: () -> Unit,
@@ -113,7 +115,7 @@ fun WidgetSheetContent(
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         when (target) {
-            WidgetSheetTarget.Clock -> ClockSettingsCard(onClockStylesClick, onCalendarSettingsClick)
+            WidgetSheetTarget.Clock -> ClockSettingsCard(onClockStylesClick, onCalendarSettingsClick, onClockAccessoriesClick)
             is WidgetSheetTarget.Native -> {
                 SettingsCard(fullBleedRows = true) {
                     AdjustRow(
@@ -136,9 +138,9 @@ fun WidgetSheetContent(
         }
         SettingsCard(fullBleedRows = true) {
             AdjustWidgetRow(onAdjustClick, testTag = "widget_sheet_adjust")
-            PageRows(onReplaceWidgetClick, onRemoveWidgetClick)
             CardDivider(startInset = SettingsIconBadgeInset)
             WidgetStackRow(stackSummary, onWidgetStackClick)
+            PageRows(onReplaceWidgetClick, onRemoveWidgetClick)
         }
     }
 }
@@ -167,9 +169,9 @@ private fun WidgetStackRow(stackSummary: String, onWidgetStackClick: () -> Unit)
     )
 }
 
-/** The clock's two settings screens: its styles, and the calendar under it. Shared by Home's widget sheet and the widget stack's Configure. */
+/** The clock's settings: its styles, the calendar under it, and its accessories (alarm, battery, weather). Shared by Home's widget sheet and the widget stack's Configure. */
 @Composable
-internal fun ClockSettingsCard(onClockStylesClick: () -> Unit, onCalendarSettingsClick: () -> Unit) {
+internal fun ClockSettingsCard(onClockStylesClick: () -> Unit, onCalendarSettingsClick: () -> Unit, onClockAccessoriesClick: () -> Unit) {
     SettingsCard(fullBleedRows = true) {
             AdjustRow(
                 icon = Icons.Outlined.Palette,
@@ -187,6 +189,15 @@ internal fun ClockSettingsCard(onClockStylesClick: () -> Unit, onCalendarSetting
                 subtitle = stringResource(R.string.clock_style_sheet_calendar_subtitle),
                 onClick = onCalendarSettingsClick,
                 testTag = "clock_style_sheet_calendar",
+            )
+            CardDivider(startInset = SettingsIconBadgeInset)
+            AdjustRow(
+                icon = Icons.Outlined.AccessAlarm,
+                hue = SettingsSectionHue.APPEARANCE,
+                label = stringResource(R.string.clock_accessories_title),
+                subtitle = stringResource(R.string.clock_accessories_summary),
+                onClick = onClockAccessoriesClick,
+                testTag = "clock_style_sheet_accessories",
             )
         }
 }
@@ -232,7 +243,7 @@ private fun HomeMenuSheetEmptyPreview() {
 @Composable
 private fun ClockWidgetSheetPreview() {
     FacetLauncherTheme {
-        WidgetSheetContent(WidgetSheetTarget.Clock, {}, {}, {}, {}, {}, {}, {}, stackSummary = "Clock", modifier = Modifier.background(SurfaceContainer))
+        WidgetSheetContent(WidgetSheetTarget.Clock, {}, {}, {}, {}, {}, {}, {}, {}, stackSummary = "Clock", modifier = Modifier.background(SurfaceContainer))
     }
 }
 
@@ -240,7 +251,7 @@ private fun ClockWidgetSheetPreview() {
 @Composable
 private fun AgendaWidgetSheetPreview() {
     FacetLauncherTheme {
-        WidgetSheetContent(WidgetSheetTarget.Native(NativeWidgetType.AGENDA), {}, {}, {}, {}, {}, {}, {}, stackSummary = "3 pages", modifier = Modifier.background(SurfaceContainer))
+        WidgetSheetContent(WidgetSheetTarget.Native(NativeWidgetType.AGENDA), {}, {}, {}, {}, {}, {}, {}, {}, stackSummary = "3 pages", modifier = Modifier.background(SurfaceContainer))
     }
 }
 
@@ -276,7 +287,7 @@ private fun SettingsRows(onSwitchFacetClick: () -> Unit, onFacetSettingsClick: (
     }
 }
 
-/** Rows that act on the page showing. Called inside the second card, after the adjust row. */
+/** Rows that act on the page showing. Called inside the second card, after the adjust and widget stack rows. */
 @Composable
 private fun PageRows(
     onReplaceWidgetClick: () -> Unit,

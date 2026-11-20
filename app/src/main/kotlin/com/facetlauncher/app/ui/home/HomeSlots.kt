@@ -48,6 +48,7 @@ import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import com.facetlauncher.app.R
 import com.facetlauncher.app.data.model.AppListLayout
@@ -209,6 +210,7 @@ private fun ClockPageContent(frame: HomeFrame, page: ClockPageSpec, scaleOriginY
     val visible = page.role == PageRole.VISIBLE
     val widgetSize = if (visible) frame.geometry.effectiveWidgetSizePx else widget?.let(frame::neighborWidgetSizePx)
     val callbacks = widgetPageCallbacks(actions, visible)
+    val boxSize = if (visible) clockBoxSize(frame) else null
     ClockBlock(
         modifier = Modifier.pageShift(frame, page.index),
         clockContentModifier = if (visible) clockTapModifier(actions.clock) else Modifier,
@@ -233,6 +235,7 @@ private fun ClockPageContent(frame: HomeFrame, page: ClockPageSpec, scaleOriginY
         clockScale = frame.geometry.effectiveScale,
         clockScaleOriginY = scaleOriginY,
         scaledFootprint = scaledFootprint,
+        clockBoxSize = boxSize,
         events = state.calendar.events,
         calendarColors = state.calendar.colors,
         calendarDisplay = state.calendar.display,
@@ -457,6 +460,18 @@ private fun UsageListHint(modifier: Modifier = Modifier) {
 
 /** Single-column rows share one width: the widest item's, but at least this fraction of the list's width, anchored by the row position. */
 private const val SINGLE_COLUMN_MIN_ROW_WIDTH_FRACTION = 0.5f
+
+/** The box the user sized the clock to, live while it is dragged, else the saved one; `null` until the clock has been sized. */
+private fun clockBoxSize(frame: HomeFrame): DpSize? {
+    val live = frame.layout.liveBoxPx
+    val width = frame.state.clock.boxWidthDp
+    val height = frame.state.clock.boxHeightDp
+    return when {
+        live != null -> with(frame.density) { DpSize(live.width.toDp(), live.height.toDp()) }
+        width != null && height != null -> DpSize(width.dp, height.dp)
+        else -> null
+    }
+}
 
 private fun nativeWidgetActions(actions: HomeScreenActions) = NativeWidgetActions(
     onOpenWeather = actions.clock.onOpenNativeWeather,

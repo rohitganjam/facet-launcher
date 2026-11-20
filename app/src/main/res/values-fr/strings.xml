@@ -97,6 +97,9 @@
     <string name="clock_template_pill_pair">Paire de pilules</string>
     <string name="clock_template_shelf">Étagère</string>
     <string name="clock_template_half_immersed">Semi-immergé</string>
+    <string name="clock_template_echo">Écho</string>
+    <string name="clock_template_day_line">Ligne du jour</string>
+    <string name="clock_template_liquid_hour">Heure liquide</string>
 
     <!-- AccentSwatch -->
     <string name="accent_swatch_blue">Bleu</string>

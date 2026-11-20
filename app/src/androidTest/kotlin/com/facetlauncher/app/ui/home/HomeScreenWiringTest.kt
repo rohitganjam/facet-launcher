@@ -281,7 +281,7 @@ class HomeScreenWiringTest {
         val calls = mutableListOf<String>()
         val actions = HomeScreenActions(
             item = HomeItemActions(onAppClick = {}),
-            clock = HomeClockActions(onClockStylesClick = { calls += "styles" }),
+            clock = HomeClockActions(onClockStylesClick = { calls += "styles" }, onClockAccessoriesClick = { calls += "accessories" }),
         )
         setHome(appState(PlacedItem.SingleApp(mail)), actions)
 

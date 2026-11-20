@@ -4954,3 +4954,20 @@ PIN-locked hidden apps. Decisions: one global vault, free and unlimited, not Pro
 - [x] Docs: `01`, `02`, `04`, `07`, `09`, `11`, `12`, new `23`, README.
 - [ ] Verified on the emulator (build, unit tests, `check`, `AppVaultScreenTest`, `AppDrawerScreenTest`, manual pass).
 - [ ] Native review of the vault strings (machine-translated; es-419 and pt-PT fall back).
+
+## Clock refresh: free-shaped box, new templates, sheet changes (direct request)
+
+The clock's size is a free width × height box instead of an aspect-locked one, with three new templates, a gallery that opens on the applied style, and accessories moved into the clock's sheet. Decisions: the text scales uniformly to the tighter side of the box (never distorted, no reflow, no font-width tricks), there is no fixed maximum scale (the room is the limit), and the box does not move the layout (the clock stays pinned at the bottom and its aligned edge, and landscape's pane width still follows the drawn text), except that a background panel follows the box; with a background panel on a centred clock the events stay left-aligned; Day Line runs midnight to midnight with no setting yet.
+
+### Steps
+- [x] Free box: `HomeClockState.boxHeightDp`, `withBoxScale` takes the smaller of width and height over the natural size, `nativeBoxDrag` (portrait and landscape) saves a free box through `onBoxSizeCommit`, `HOME_CLOCK_MAX_SCALE` removed as a cap, live box in `HomeScreenLayout.liveBoxPx`. No database change (the page's `widthDp`/`heightDp` already held both). Tests: `HomeFrameBoxScaleTest`, `HomeScreenTest`, `HomeScreenLandscapeTest`.
+- [x] A background panel follows the box the user sized, not the drawn text (`ClockBlock.clockBoxSize`, `boxFootprint`, `clockBoxSize(frame)` in `HomeSlots`; live while dragging). Tests: `ClockBlockTest`, `ScaledHomeScreenTest`.
+- [x] Calendar events stay left under a centred clock with a background panel (`calendarAlignmentFor`, `HuggingColumn`'s `tailAlignment`). Tests: `CalendarAlignmentTest`, `ClockBlockTest`.
+- [x] Templates Echo, Day Line (midnight to midnight) and Liquid Hour: ids, renderers, accent flag, names in en, de, es, fr, nl, pt. Tests: `NewClockTemplatesTest`, `ClockBlockTest`, `ClockDisplayTest`, `ClockTemplateRenderersTest`.
+- [x] The clock style gallery opens with the applied card centred in its row, once, after the saved style loads (`ClockStyleGalleryUiState.loaded`). Tests: `ClockStyleGalleryScreenTest`.
+- [x] Clock accessories moved from a gallery row to the third row of the clock's settings card (Home's widget sheet and the Widget stack's Configure); widget sheet order is now Adjust, Widget stack, Replace, Remove. Tests: `HomeSheetsTest`, `ClockStackScreenAddFlowTest`, `HomeScreenWiringTest`, `ClockStyleGalleryScreenTest`.
+- [x] Docs: `13`, `17`, `CAPABILITIES.md`, test registry.
+- [x] Verified on the emulator (unit tests, `ClockBlockTest` 56/56, `HomeScreenTest` 65/65, `HomeScreenLandscapeTest` 33/33, `ClockDisplayTest`, `ClockStyleGalleryScreenTest` 13/13, `HomeSheetsTest` 8/8, `ClockStackScreenAddFlowTest`, `HomeScreenWiringTest` 21/21, detekt clean; the clock rendered sharp at a large size on the Pixel Fold emulator, and the three new templates were rendered to images and checked).
+- [ ] Manual pass on the Pixel Fold emulator: drag the free box in portrait and landscape, open the gallery on a mid-list style, and open Clock accessories from both sheets.
+- [ ] Native review of the new template names (machine-translated).
+- [ ] Later: a "Day starts / ends" setting for Day Line; a box that claims layout space instead of only sizing the text; templates that reflow to the box shape (the earlier options A to C).

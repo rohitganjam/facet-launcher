@@ -25,6 +25,8 @@ internal class HomeNavigation(
     val toFacetPro: (ProReason) -> Unit,
     /** One facet's clock style options. */
     val toClockStyle: (facetId: Long) -> Unit,
+    /** One facet's clock accessories (alarm, battery, weather). */
+    val toClockAccessories: (facetId: Long) -> Unit,
     val toClockStack: () -> Unit,
 )
 
@@ -89,6 +91,7 @@ private fun homeClockActions(
         onWeatherClick = hooks.openWeather,
         onBatteryClick = { inputs.context.openBatterySettings() },
         onClockStylesClick = { state.activeFacet?.let { navigation.toClockStyle(it.id) } },
+        onClockAccessoriesClick = { state.activeFacet?.let { navigation.toClockAccessories(it.id) } },
         onNavigateToSettings = navigation.toSettings,
         onNavigateToFacetSettings = { state.activeFacet?.let { navigation.toFacetSettings(it.id) } },
         onOpenFacetCarousel = { inputs.coroutineScope.launch { swipe.facet.open() } },

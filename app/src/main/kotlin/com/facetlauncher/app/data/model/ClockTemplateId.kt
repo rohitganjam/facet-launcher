@@ -50,6 +50,9 @@ enum class ClockTemplateId(@param:StringRes val displayNameRes: Int) {
     PILL_PAIR(R.string.clock_template_pill_pair),
     SHELF(R.string.clock_template_shelf),
     HALF_IMMERSED(R.string.clock_template_half_immersed),
+    ECHO(R.string.clock_template_echo),
+    DAY_LINE(R.string.clock_template_day_line),
+    LIQUID_HOUR(R.string.clock_template_liquid_hour),
 }
 
 /**
@@ -76,6 +79,9 @@ val ClockTemplateId.usesAccentColor: Boolean
         ClockTemplateId.COLON_MARK,
         ClockTemplateId.PILL_PAIR,
         ClockTemplateId.HALF_IMMERSED,
+        ClockTemplateId.ECHO,
+        ClockTemplateId.DAY_LINE,
+        ClockTemplateId.LIQUID_HOUR,
         -> true
         ClockTemplateId.LIGHT_STACK,
         ClockTemplateId.RULE_MERIDIEM,

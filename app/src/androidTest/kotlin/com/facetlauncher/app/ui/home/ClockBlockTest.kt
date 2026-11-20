@@ -6,7 +6,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.center
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.down
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.junit4.createComposeRule
@@ -774,6 +776,38 @@ class ClockBlockTest {
     }
 
     @Test
+    fun echoTemplateShowsTheTimeOnceNotOncePerCopy() {
+        // Given the echo template, which draws faded copies behind the time
+        val fixedClock = Clock.fixed(Instant.parse("2026-08-27T09:05:00Z"), ZoneOffset.UTC)
+        composeRule.setContent {
+            FacetLauncherTheme { ClockBlock(clock = fixedClock, locale = Locale.US, templateId = ClockTemplateId.ECHO) }
+        }
+
+        // Then exactly one node reads as the time: the copies are hidden from accessibility
+        composeRule.onAllNodesWithText("9:05").assertCountEquals(1)
+    }
+
+    @Test
+    fun dayLineTemplateRendersTheTimeAndTheDate() {
+        val fixedClock = Clock.fixed(Instant.parse("2026-08-27T09:05:00Z"), ZoneOffset.UTC)
+        composeRule.setContent {
+            FacetLauncherTheme { ClockBlock(clock = fixedClock, locale = Locale.US, templateId = ClockTemplateId.DAY_LINE) }
+        }
+        composeRule.onNodeWithText("9:05").assertExists()
+        composeRule.onNodeWithText("Thursday, 27 August").assertExists()
+    }
+
+    @Test
+    fun liquidHourTemplateRendersTheHourAndTheMinutes() {
+        val fixedClock = Clock.fixed(Instant.parse("2026-08-27T09:05:00Z"), ZoneOffset.UTC)
+        composeRule.setContent {
+            FacetLauncherTheme { ClockBlock(clock = fixedClock, locale = Locale.US, templateId = ClockTemplateId.LIQUID_HOUR) }
+        }
+        composeRule.onNodeWithText("9").assertExists()
+        composeRule.onNodeWithText(":05").assertExists()
+    }
+
+    @Test
     fun condensedDateStyleAbbreviatesTheDayAndMonth() {
         // Given the condensed date style, on a template that renders its date through the shared
         // dateFormatter() helper
@@ -964,6 +998,32 @@ class ClockBlockTest {
         val panel = composeRule.onNodeWithTag("clock_glass_panel").getUnclippedBoundsInRoot()
         val events = composeRule.onNodeWithTag("clock_event_rows").getUnclippedBoundsInRoot()
         assertTrue("events not on the left (${events.left - panel.left})", (events.left - panel.left) < 14.dp)
+    }
+
+    @Test
+    fun aBackgroundFollowsTheBoxTheClockWasSizedToNotTheDrawnText() {
+        // Given a small drawn clock (scale 0.5) with a background, sized to a 320 x 200dp box
+        val fixedClock = Clock.fixed(Instant.parse("2026-08-27T09:05:00Z"), ZoneOffset.UTC)
+        composeRule.setContent {
+            FacetLauncherTheme {
+                ClockBlock(
+                    clock = fixedClock, locale = Locale.US, clockScale = 0.5f,
+                    glass = com.facetlauncher.app.data.model.GlassStyle.FROST,
+                    clockBoxSize = androidx.compose.ui.unit.DpSize(320.dp, 200.dp),
+                )
+            }
+        }
+        composeRule.waitForIdle()
+
+        // Then the panel is at least the box, and the time still sits inside it
+        val panel = composeRule.onNodeWithTag("clock_glass_panel").getUnclippedBoundsInRoot()
+        assertTrue("panel is ${panel.dpRectWidth} wide, expected at least 320dp", panel.dpRectWidth >= 320.dp)
+        val panelHeight = panel.bottom - panel.top
+        assertTrue("panel is $panelHeight tall, expected at least 200dp", panelHeight >= 200.dp)
+        // (drawn bounds, which include the scale layer; unclipped bounds don't)
+        val drawnPanel = composeRule.onNodeWithTag("clock_glass_panel").fetchSemanticsNode().boundsInRoot
+        val drawnTime = composeRule.onNodeWithText("9:05").fetchSemanticsNode().boundsInRoot
+        assertTrue("time outside the panel: $drawnTime vs $drawnPanel", drawnTime.left >= drawnPanel.left && drawnTime.right <= drawnPanel.right && drawnTime.top >= drawnPanel.top && drawnTime.bottom <= drawnPanel.bottom)
     }
 
     @Test

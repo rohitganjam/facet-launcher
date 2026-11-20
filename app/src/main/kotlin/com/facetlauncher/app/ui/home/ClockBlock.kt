@@ -114,6 +114,8 @@ fun ClockBlock(
     clockScaleOriginY: Float = 1f,
     /** When true the block's height follows the clock's drawn size, so the calendar sits right under it instead of under the unscaled footprint. Landscape sets this; its scale is clamped to fit. */
     scaledFootprint: Boolean = false,
+    /** The box the user sized the clock to. With a background panel the panel follows it, not the drawn text; `null` until the clock has been sized. */
+    clockBoxSize: DpSize? = null,
     /** Millis since epoch of the system's next alarm, or `null` when none is set — see [com.facetlauncher.app.domain.ObserveClockAccessoriesUseCase]. */
     nextAlarmMillis: Long? = null,
     /** `null` until the first real battery reading arrives. */
@@ -165,7 +167,13 @@ fun ClockBlock(
                 // Measure the clock at its natural width even when the column is narrower (a narrow
                 // landscape pane): otherwise the box size, which the resize maths relies on, is clamped.
                 .wrapContentWidth(align = clockAlignment.resolve(), unbounded = true)
-                .scaledFootprint((scaledFootprint || panelOn) && clockWidgetAppWidgetId == null, clockScale, clockAlignment, clockScaleOriginY)
+                .then(
+                    if (panelOn && clockBoxSize != null) {
+                        Modifier.boxFootprint(clockBoxSize, clockScale, clockAlignment, clockScaleOriginY)
+                    } else {
+                        Modifier.scaledFootprint((scaledFootprint || panelOn) && clockWidgetAppWidgetId == null, clockScale, clockAlignment, clockScaleOriginY)
+                    },
+                )
                 .then(clockBoxModifier),
         ) {
             ClockOrWidgetContent(
@@ -453,6 +461,30 @@ private fun Modifier.scaledFootprint(enabled: Boolean, scale: Float, alignment: 
         val left = scaledClockTop(placeable.width, scale, scaleOriginX(alignment))
         val top = scaledClockTop(placeable.height, scale, originY)
         layout(scaledClockHeight(placeable.width, scale), scaledClockHeight(placeable.height, scale)) { placeable.place(-left, -top) }
+    }
+
+/**
+ * Makes the wrapped box exactly [box], the size the user chose, with the scaled clock inside it where its alignment and [originY] put it
+ * (against the aligned edge, and at the top, middle or bottom). What a glass panel around the clock hugs, so the panel follows the box
+ * and not the text. Measurements taken inside this modifier still see the natural box.
+ */
+private fun Modifier.boxFootprint(box: DpSize, scale: Float, alignment: ClockAlignment, originY: Float) =
+    this.layout { measurable, constraints ->
+        val placeable = measurable.measure(constraints)
+        val drawnWidth = scaledClockHeight(placeable.width, scale)
+        val drawnHeight = scaledClockHeight(placeable.height, scale)
+        // Never smaller than the text, whatever the box says.
+        val width = maxOf(box.width.roundToPx(), drawnWidth)
+        val height = maxOf(box.height.roundToPx(), drawnHeight)
+        val originX = scaleOriginX(alignment)
+        val drawnLeft = ((width - drawnWidth) * originX).roundToInt()
+        val drawnTop = ((height - drawnHeight) * originY).roundToInt()
+        layout(width, height) {
+            placeable.place(
+                drawnLeft - scaledClockTop(placeable.width, scale, originX),
+                drawnTop - scaledClockTop(placeable.height, scale, originY),
+            )
+        }
     }
 
 @Preview(showBackground = true)

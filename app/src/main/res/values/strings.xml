@@ -128,6 +128,9 @@
     <string name="clock_template_pill_pair">Pill Pair</string>
     <string name="clock_template_shelf">Shelf</string>
     <string name="clock_template_half_immersed">Half Immersed</string>
+    <string name="clock_template_echo">Echo</string>
+    <string name="clock_template_day_line">Day Line</string>
+    <string name="clock_template_liquid_hour">Liquid Hour</string>
 
     <!-- AccentSwatch -->
     <string name="accent_swatch_blue">Blue</string>
