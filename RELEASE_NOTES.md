@@ -1,21 +1,24 @@
-# Facet Launcher 0.2.4
+# Facet Launcher 0.2.5
 
 ## New Features
-- (none)
+- Now Playing widget now adapts to its size, with six layouts: a small tile, compact, strip with a progress line, cover card, card, and full player. A 1×1 is always a tile and a 2×2 is always a cover card.
 
 ## Fixes
-- Facet now appears in the Play Store and can be installed on devices that lack Wi-Fi, Bluetooth, or location hardware, which were previously hidden from it.
-- The wallpaper copy cards no longer suggest a copy that is still being saved after you set a wallpaper.
+- Fixed the Hub in landscape sliding sideways, which shifted every widget left when you pulled the Hub in.
+- Fixed resizing a widget on the landscape Hub: the drag now stops at the widest size that can be saved, so it no longer snaps back when you let go.
+- Fixed the landscape Home screen's app list to keep the same right-side margin as the clock's left margin when there is no dock beside it.
 
 ## Improvements
-- Setting a wallpaper is noticeably faster: the confirm step dropped from about 2.7 s to about 1.9 s, and the remaining views and screens finish saving in the background.
-- Opening, scrolling, searching in, and closing the app drawer, hub, and carousel is much smoother, with far fewer stuttering frames.
-- Swiping the drawer, hub, and carousel open and closed is smoother.
+- Daily photos now come directly from Microsoft (Bing and Windows Spotlight) and follow your phone's language and region, with fallbacks if a source isn't available.
+- Photos you open in Daily photos stay saved for as long as the source still lists them.
+- The source and profile switches in Daily photos now have a visible track, making them easier to read.
+- The Daily photos subtitle now says "recent photos" instead of "a week".
+- Landscape dock icons are now spread from top to bottom, with an end icon lined up with the apps list.
 
 ## Internal
-- Wallpaper copies are now quality-95 JPEGs instead of lossless PNGs (~30 ms vs ~0.5 s each on S25 Ultra); old PNG copies are still read until that view is saved again.
-- Copies for views other than the one showing are stored in parallel in the application scope, only while the system wallpaper is still the one just set; `WallpaperCopyRepository.isFinishingCopies` drives the other-orientation card and Home's capture pill.
-- `WallpaperBackdropHost` bakes a small frosted bitmap per theme off the main thread, rebuilt whenever the copy changes; `FrostSurface` draws it as a plain image under the same wash, falling back to the theme tint until ready or with no copy. Glass icons still sample the copy and the frost together. Replaces live per-frame blur (77% → 5% janky frames, 77 ms → 7 ms median on debug S25 Ultra).
-- `panelPlacement` now slides panels via a `graphicsLayer` translation (taken from the layer's draw size so the first frame and rotation stay correct) instead of layout placement.
-- Manifest: declared `required=false` for Wi-Fi, Bluetooth, and location hardware features implied by `ACCESS_WIFI_STATE`, Bluetooth, and location permissions.
-- Release 0.2.3 version bump.
+- Added `nowPlayingLayoutFor` to select the Now Playing layout from the widget's box size.
+- Landscape Hub grid: moved side padding out of the scroll area to prevent spurious horizontal scrolling.
+- Hub landscape resize: clamp the drag at the fifth column of the portrait position to match the save validation.
+- Replaced the Peapix source with the Bing HPImageArchive API and the Windows Spotlight service, selected by locale with a fallback chain.
+- Daily photos: Spotlight requests stop at 8 photos (max 3 calls).
+- Release 0.2.4 version bump.
