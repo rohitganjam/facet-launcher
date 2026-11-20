@@ -33,6 +33,8 @@ data class HubLandscapeWidgetUi(
     val providerLabel: String?,
     val isOrphaned: Boolean,
     val nativeWidgetType: NativeWidgetType? = null,
+    /** The widest it can be saved: the Hub's columns left from its portrait column, since both orientations share the size. */
+    val maxColSpan: Int = HUB_COLUMNS,
 )
 
 data class HubUiState(

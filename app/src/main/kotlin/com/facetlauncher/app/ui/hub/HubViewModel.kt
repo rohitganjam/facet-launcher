@@ -10,6 +10,7 @@ import com.facetlauncher.app.data.local.WidgetPlacementEntity
 import com.facetlauncher.app.data.widget.AppWidgetRepository
 import com.facetlauncher.app.domain.CompactWidgetsUseCase
 import com.facetlauncher.app.domain.DeleteWidgetUseCase
+import com.facetlauncher.app.domain.HUB_COLUMNS
 import com.facetlauncher.app.domain.HubWidgetState
 import com.facetlauncher.app.domain.LandscapeHubUseCase
 import com.facetlauncher.app.domain.ObserveHubStateUseCase
@@ -72,6 +73,7 @@ class HubViewModel @Inject constructor(
                             providerLabel = widget.providerLabel,
                             isOrphaned = widget.isOrphaned,
                             nativeWidgetType = widget.nativeWidgetType,
+                            maxColSpan = (HUB_COLUMNS - widget.col).coerceAtLeast(1),
                         )
                     }
                 }.toImmutableList()

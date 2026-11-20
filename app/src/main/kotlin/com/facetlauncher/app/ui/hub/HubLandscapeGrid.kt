@@ -92,8 +92,13 @@ private class LandscapeGeometry(
     val viewportWidthPx: Float,
     val edgeZonePx: Float,
 ) {
-    /** The grid a resize works on: square cells, as many rows as show, and room to grow to the right. */
-    val resizeGrid: HubResizeGrid get() = HubResizeGrid(pitchPx - gapPx, pitchPx - gapPx, gapPx, LANDSCAPE_RESIZE_MAX_COLUMNS, rows)
+    /** The grid a resize works on: square cells and as many rows as show. */
+    val resizeGrid: HubResizeGrid get() = resizeGridFor(columns = 1)
+
+    /** A resize grid whose right limit is [widget]'s own: the saved size can't be wider than the Hub's columns allow from its portrait column. */
+    fun resizeGridFor(widget: HubLandscapeWidgetUi): HubResizeGrid = resizeGridFor(columns = widget.col + widget.maxColSpan)
+
+    private fun resizeGridFor(columns: Int) = HubResizeGrid(pitchPx - gapPx, pitchPx - gapPx, gapPx, columns, rows)
 
     /** The cell a widget dragged by [dragOffsetPx] would drop onto. */
     fun dropCellFor(widget: HubLandscapeWidgetUi, dragOffsetPx: Offset): HubCell =
@@ -110,9 +115,6 @@ private class LandscapeGeometry(
         }
     }
 }
-
-/** Landscape resizes have no right edge: the grid grows sideways. */
-private const val LANDSCAPE_RESIZE_MAX_COLUMNS = 1000
 
 /** A resize released on [colSpan] × [rowSpan] while the widget was saved on [from]. */
 private data class CommittedLandscapeResize(val appWidgetId: Int, val from: HubSpan, val colSpan: Int, val rowSpan: Int)
@@ -152,7 +154,7 @@ private class LandscapeGridState(val scrollState: ScrollState) {
     fun liveSpan(widget: HubLandscapeWidgetUi, geometry: LandscapeGeometry): HubSpan = when {
         widget.appWidgetId != resizingId && widget.appWidgetId != resizeVisualId -> widget.span
         resizeDragging && widget.appWidgetId == resizingId ->
-            geometry.resizeGrid.snappedSpan(widget.span, ResizeEdge.END, ResizeEdge.END, resizeDeltaPx, widget.minColSpan, widget.minRowSpan)
+            geometry.resizeGridFor(widget).snappedSpan(widget.span, ResizeEdge.END, ResizeEdge.END, resizeDeltaPx, widget.minColSpan, widget.minRowSpan)
         else -> committedResize?.takeIf { it.appWidgetId == widget.appWidgetId }
             ?.let { widget.span.copy(colSpan = it.colSpan, rowSpan = it.rowSpan.coerceAtMost(maxOf(1, geometry.rows - widget.row))) }
             ?: widget.span
@@ -165,7 +167,7 @@ private class LandscapeGridState(val scrollState: ScrollState) {
     /** The box under the finger while a handle is dragged, `null` otherwise. */
     fun freeRect(widget: HubLandscapeWidgetUi, geometry: LandscapeGeometry): Rect? =
         if (resizeDragging && widget.appWidgetId == resizingId) {
-            geometry.resizeGrid.freeRect(widget.span, ResizeEdge.END, ResizeEdge.END, resizeDeltaPx, widget.minColSpan, widget.minRowSpan)
+            geometry.resizeGridFor(widget).freeRect(widget.span, ResizeEdge.END, ResizeEdge.END, resizeDeltaPx, widget.minColSpan, widget.minRowSpan)
         } else {
             null
         }
