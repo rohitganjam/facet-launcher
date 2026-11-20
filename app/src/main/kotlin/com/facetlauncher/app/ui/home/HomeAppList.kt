@@ -365,7 +365,7 @@ private const val GRID_TARGET_ALPHA = 0.18f
 private val GRID_GUIDE_INSET = 4.dp
 
 /** A cell is as tall as a row of the App Drawer's grid at its regular density, whatever the display mode. */
-private fun gridCellHeight(): Dp = DrawerGridDensity.REGULAR.targetRowPitch()
+internal fun gridCellHeight(): Dp = DrawerGridDensity.REGULAR.targetRowPitch()
 
 /** One [HomeAppGrid] tile. */
 @Composable

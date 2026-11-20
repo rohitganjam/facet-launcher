@@ -3,6 +3,8 @@ package com.facetlauncher.app.ui.home
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
@@ -90,6 +92,8 @@ internal fun HomeLandscapeLayout(
     apps: @Composable BoxScope.() -> Unit,
     modifier: Modifier = Modifier,
     dockAtBottom: Boolean = false,
+    dockTopPadding: Dp = 8.dp,
+    dockBottomPadding: Dp = 8.dp,
     onAppsPaneSizeChange: (IntSize) -> Unit = {},
     onDockRowHeightChange: (Int) -> Unit = {},
     /** The whole clock pane's bounds in root coordinates, so the caller can leave its vertical drags to the pane's own scroll. */
@@ -136,18 +140,18 @@ internal fun HomeLandscapeLayout(
     Row(modifier = modifier.fillMaxSize().testTag(homeTag("home_landscape_layout"))) {
         panes()
         if (hasDock) {
-            Box(
+            BoxWithConstraints(
                 modifier = Modifier
                     .fillMaxHeight()
                     .padding(start = 12.dp, end = 16.dp)
                     .systemGestureExclusion()
                     .testTag(homeTag("home_dock_column")),
-                contentAlignment = Alignment.Center,
             ) {
+                // At least the column's full height, so the icons run from its top to its bottom with equal gaps; taller content scrolls.
                 Column(
-                    modifier = Modifier.verticalScroll(rememberScrollState()),
+                    modifier = Modifier.heightIn(min = maxHeight).verticalScroll(rememberScrollState()).padding(top = dockTopPadding, bottom = dockBottomPadding),
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    verticalArrangement = Arrangement.SpaceBetween,
                 ) { dockContent() }
             }
         }

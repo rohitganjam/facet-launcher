@@ -29,7 +29,10 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.facetlauncher.app.data.model.AppListLayout
+import com.facetlauncher.app.ui.components.AppIconSize
 import com.facetlauncher.app.data.model.GlassStyle
 import com.facetlauncher.app.data.model.landscape
 import com.facetlauncher.app.data.model.AppListVerticalAlignment
@@ -154,6 +157,8 @@ internal fun HomeLandscapeContent(frame: HomeFrame) {
     val layout = frame.layout
     val currentOnClockPaneBoundsChange by rememberUpdatedState(frame.actions.onClockPaneBoundsChange)
     DisposableEffect(Unit) { onDispose { currentOnClockPaneBoundsChange(null) } }
+    val listAligned = frame.state.list.alignment.verticalAlignment
+    val listEdgeInset = listEdgeInset(frame)
     val clockPaneAlignment = when (frame.state.clock.placement.alignment) {
         ClockAlignment.LEFT -> Alignment.TopStart
         ClockAlignment.CENTER -> Alignment.CenterStart
@@ -162,6 +167,8 @@ internal fun HomeLandscapeContent(frame: HomeFrame) {
     HomeLandscapeLayout(
         hasDock = frame.state.dock.items.isNotEmpty(),
         dockAtBottom = frame.dockAtBottom,
+        dockTopPadding = if (listAligned == AppListVerticalAlignment.TOP) listEdgeInset else DOCK_COLUMN_EDGE_PADDING,
+        dockBottomPadding = if (listAligned == AppListVerticalAlignment.BOTTOM) listEdgeInset else DOCK_COLUMN_EDGE_PADDING,
         onDockRowHeightChange = { layout.landscapeDockRowHeightPx = it.toFloat() },
         onClockPaneBoundsChange = {
             layout.landscapeClockPaneHeightPx = it.height
@@ -233,4 +240,13 @@ private fun BoxScope.LandscapeAppsPane(frame: HomeFrame) {
         Modifier.align(Alignment.BottomStart)
     }
     HomeAppListRegion(frame, with(frame.density) { (layout.contentHeightPx - reservedPx).coerceAtLeast(0f).toDp() }, listModifier)
+}
+
+private val DOCK_COLUMN_EDGE_PADDING = 8.dp
+
+/** How far the list's icons sit from the pane edge they are aligned to, so the dock's end icon can sit level with them. */
+@Composable
+private fun listEdgeInset(frame: HomeFrame): Dp = when (frame.state.list.layout) {
+    AppListLayout.GRID -> ((gridCellHeight() - AppIconSize.scaled()) / 2).coerceAtLeast(0.dp)
+    else -> if (frame.layout.useCompactAppSpacing) HOME_APP_ROW_COMPACT_VERTICAL_PADDING else HOME_APP_ROW_REGULAR_VERTICAL_PADDING
 }
