@@ -1208,6 +1208,42 @@ class HomeScreenTest {
     }
 
     @Test
+    fun longPressingTheEmptyPartOfTheSizedBoxOpensTheClockSheet() {
+        // Given a clock sized to a box much taller than its text, with room above it
+        composeRule.setContent {
+            TestHomeScreen(appListItems = apps(1), clockZoneHeightDp = 900f, clockBoxWidthDp = 150, clockBoxHeightDp = 260)
+        }
+        composeRule.waitForIdle()
+        val text = composeRule.onNodeWithTag("home_clock_block").fetchSemanticsNode().boundsInRoot
+        val aboveTheText = Offset(text.left + 10f, text.top - with(composeRule.density) { 60.dp.toPx() })
+
+        // When that empty part of the box, where nothing is drawn, is long-pressed
+        composeRule.onNodeWithTag("home_screen_root").performTouchInput { longClick(aboveTheText) }
+        composeRule.waitForIdle()
+
+        // Then the clock's sheet opens, not the Home sheet
+        composeRule.onNodeWithTag("widget_sheet").assertExists()
+        composeRule.onNodeWithTag("home_menu_sheet").assertDoesNotExist()
+    }
+
+    @Test
+    fun longPressingBeyondTheSizedBoxStillOpensTheHomeSheet() {
+        // Given the same sized clock
+        composeRule.setContent {
+            TestHomeScreen(appListItems = apps(1), clockZoneHeightDp = 900f, clockBoxWidthDp = 150, clockBoxHeightDp = 260)
+        }
+        composeRule.waitForIdle()
+
+        // When free space beside the box is long-pressed
+        longPressEmptySpace()
+        composeRule.waitForIdle()
+
+        // Then it is the Home sheet
+        composeRule.onNodeWithTag("home_menu_sheet").assertExists()
+        composeRule.onNodeWithTag("widget_sheet").assertDoesNotExist()
+    }
+
+    @Test
     fun clockScaleIsClampedToItsBounds() {
         var committedWidthPx = 0f
         var boxWidth by mutableStateOf<Int?>(null)

@@ -21,6 +21,9 @@ import com.facetlauncher.app.ui.nativewidget.NativeWidgetPage
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.layout.Layout
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.layout.layout
@@ -105,6 +108,8 @@ fun ClockBlock(
     onEventClick: (CalendarEvent) -> Unit = {},
     /** A long-press on the events under the clock; it belongs to the clock, so it opens the clock's own sheet. */
     onCalendarLongPress: () -> Unit = {},
+    /** A long-press on the background panel itself, wherever the clock and events are not: the padding and the room left in a sized box. */
+    onPanelLongPress: () -> Unit = {},
     launcherFontOption: LauncherFontOption = LauncherFontOption.SYSTEM,
     /** Settings → Clock & Calendar Style → "Clock alignment" — aligns the time/date content itself, not just this block's own position within its container (that's the caller's job, e.g. [HomeScreen]/[com.facetlauncher.app.ui.facets.FacetCarouselScreen]). Also positions [CalendarEventsBlock] now, which no longer has an alignment of its own (see chat history). */
     clockAlignment: ClockAlignment = ClockAlignment.LEFT,
@@ -213,6 +218,7 @@ fun ClockBlock(
             )
         }
     }
+    val latestPanelLongPress = rememberUpdatedState(onPanelLongPress)
     val calendarAlignment = calendarAlignmentFor(clockAlignment, panelOn)
     val eventsBlock: @Composable (Modifier) -> Unit = { alignModifier ->
         if (clockWidgetAppWidgetId == null) { // only the built-in clock carries the events list
@@ -232,7 +238,15 @@ fun ClockBlock(
     if (panelOn) {
         // The outer column keeps the block's full width; the panel hugs the wider of the clock and its events.
         Column(modifier = modifier.fillMaxWidth()) {
-            GlassPanel(style = glass, shape = MaterialTheme.shapes.large, modifier = Modifier.align(clockAlignment.resolve()).testTag("clock_glass_panel")) {
+            GlassPanel(
+                style = glass,
+                shape = MaterialTheme.shapes.large,
+                modifier = Modifier
+                    .align(clockAlignment.resolve())
+                    .testTag("clock_glass_panel")
+                    // After the children, so the time and events keep their own taps and long-presses.
+                    .pointerInput(Unit) { detectTapGestures(onLongPress = { latestPanelLongPress.value() }) },
+            ) {
                 HuggingColumn(alignment = clockAlignment, tailAlignment = calendarAlignment, spacing = CLOCK_PANEL_GAP, modifier = Modifier.padding(CLOCK_PANEL_PADDING)) {
                     clockBox(Modifier)
                     eventsBlock(Modifier)

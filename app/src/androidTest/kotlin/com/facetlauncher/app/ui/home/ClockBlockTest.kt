@@ -6,6 +6,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.testTag
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.center
 import androidx.compose.ui.test.onAllNodesWithText
@@ -15,6 +17,7 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.longClick
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.up
 import androidx.compose.foundation.layout.width
@@ -1024,6 +1027,40 @@ class ClockBlockTest {
         val drawnPanel = composeRule.onNodeWithTag("clock_glass_panel").fetchSemanticsNode().boundsInRoot
         val drawnTime = composeRule.onNodeWithText("9:05").fetchSemanticsNode().boundsInRoot
         assertTrue("time outside the panel: $drawnTime vs $drawnPanel", drawnTime.left >= drawnPanel.left && drawnTime.right <= drawnPanel.right && drawnTime.top >= drawnPanel.top && drawnTime.bottom <= drawnPanel.bottom)
+    }
+
+    @Test
+    fun longPressingTheEmptyPartOfTheBackgroundOpensTheClockSheetAndSoDoesTheTime() {
+        // Given a clock in a big box with a background, so most of the panel is empty
+        var presses = 0
+        var timePresses = 0
+        val fixedClock = Clock.fixed(Instant.parse("2026-08-27T09:05:00Z"), ZoneOffset.UTC)
+        composeRule.setContent {
+            FacetLauncherTheme {
+                ClockBlock(
+                    clock = fixedClock, locale = Locale.US, clockScale = 0.5f,
+                    glass = com.facetlauncher.app.data.model.GlassStyle.FROST,
+                    clockBoxSize = androidx.compose.ui.unit.DpSize(320.dp, 240.dp),
+                    clockContentModifier = androidx.compose.ui.Modifier.pointerInput(Unit) { detectTapGestures(onLongPress = { timePresses++ }) },
+                    onPanelLongPress = { presses++ },
+                )
+            }
+        }
+        composeRule.waitForIdle()
+
+        // When the panel's empty top corner is long-pressed
+        composeRule.onNodeWithTag("clock_glass_panel").performTouchInput { longClick(androidx.compose.ui.geometry.Offset(12f, 12f)) }
+        composeRule.waitForIdle()
+
+        // Then the panel's own long-press ran, not the time's
+        assertEquals(1, presses)
+        assertEquals(0, timePresses)
+
+        // And a long-press on the time still reaches the time's own handler, not the panel's
+        composeRule.onNodeWithText("9:05").performTouchInput { longClick() }
+        composeRule.waitForIdle()
+        assertEquals(1, timePresses)
+        assertEquals(1, presses)
     }
 
     @Test

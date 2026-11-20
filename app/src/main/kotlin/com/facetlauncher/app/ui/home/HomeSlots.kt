@@ -243,6 +243,7 @@ private fun ClockPageContent(frame: HomeFrame, page: ClockPageSpec, scaleOriginY
         appLabelColorOption = state.list.look.labelColorOption,
         onEventClick = actions.clock.onEventClick,
         onCalendarLongPress = { actions.clock.onAdjustModeChange(HomeMenuMode.WIDGET_MENU) },
+        onPanelLongPress = { actions.clock.onAdjustModeChange(HomeMenuMode.WIDGET_MENU) },
         launcherFontOption = clock.launcherFontOption,
         nextAlarmMillis = state.calendar.nextAlarmMillis,
         batteryPercent = state.calendar.batteryPercent,

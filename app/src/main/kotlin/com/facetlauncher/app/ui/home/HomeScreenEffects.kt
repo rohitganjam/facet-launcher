@@ -133,11 +133,16 @@ internal fun Modifier.homeEmptySpaceGestures(
     mode: HomeMenuMode,
     onModeChange: (HomeMenuMode) -> Unit,
     onDoubleTap: () -> Unit = {},
+    /** Whether a touch is on the clock's sized box, which is the clock's own area even where nothing is drawn: a long-press there opens the clock's sheet, not the Home sheet. */
+    inClockBox: (Offset) -> Boolean = { false },
 ): Modifier = this.then(
     when (mode) {
         HomeMenuMode.ADJUST -> Modifier.pointerInput(mode) { detectTapGestures(onTap = { onModeChange(HomeMenuMode.NONE) }) }
         HomeMenuMode.NONE -> Modifier.pointerInput(mode) {
-            detectTapGestures(onDoubleTap = { onDoubleTap() }, onLongPress = { onModeChange(HomeMenuMode.MENU) })
+            detectTapGestures(
+                onDoubleTap = { onDoubleTap() },
+                onLongPress = { at -> onModeChange(if (inClockBox(at)) HomeMenuMode.WIDGET_MENU else HomeMenuMode.MENU) },
+            )
         }
         HomeMenuMode.MENU, HomeMenuMode.WIDGET_MENU, HomeMenuMode.CALENDAR_SETTINGS -> Modifier
     },

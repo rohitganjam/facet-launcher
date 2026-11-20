@@ -79,7 +79,7 @@ fun HomeScreen(
                 layout.rootSize = it.size
                 layout.rootOriginInRoot = it.positionInRoot()
             }
-            .homeEmptySpaceGestures(clock.adjustMode, actions.clock.onAdjustModeChange, actions.onEmptySpaceDoubleTap)
+            .homeEmptySpaceGestures(clock.adjustMode, actions.clock.onAdjustModeChange, actions.onEmptySpaceDoubleTap, inClockBox = { at -> currentFrame.clockBoxContains(at) })
             .testTag(homeTag("home_screen_root")),
     ) {
         HomeLayoutContent(frame)

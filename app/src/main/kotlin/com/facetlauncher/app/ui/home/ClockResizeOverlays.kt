@@ -215,7 +215,7 @@ private fun landscapeHandleTopPx(env: ClockAdjustEnv, frame: Rect, density: Dens
 }
 
 /** 0 for a left-aligned clock, 0.5 centred, 1 right-aligned: how far across its width the clock's fixed edge sits. */
-private fun ClockAlignment.originFraction(): Float = when (this) {
+internal fun ClockAlignment.originFraction(): Float = when (this) {
     ClockAlignment.LEFT -> 0f
     ClockAlignment.CENTER -> 0.5f
     ClockAlignment.RIGHT -> 1f
