@@ -496,6 +496,32 @@ class HomeScreenLandscapeTest {
     }
 
     @Test
+    fun draggingAScaleHandleSidewaysSavesAWiderBoxWithTheSameHeight() {
+        var committed: Pair<Int, Int>? = null
+        var first: Pair<Int, Int>? = null
+        composeRule.setContent { LandscapeHome(onClockBoxSizeCommit = { w, h -> committed = w to h }) }
+        enterAdjustMode()
+        fun drag(dx: Float) = composeRule.onNodeWithTag("clock_resize_handle_right").performTouchInput {
+            down(center)
+            repeat(4) { moveBy(Offset(dx / 4f, 0f)) }
+            up()
+        }
+
+        // When the handle is dragged sideways and then sideways again
+        drag(40f)
+        composeRule.waitForIdle()
+        first = committed
+        drag(40f)
+        composeRule.waitForIdle()
+
+        // Then the box is free: it got wider while its height stayed
+        val second = committed
+        assert(first != null && second != null) { "a box should be saved" }
+        assert(second!!.first >= first!!.first) { "width should not shrink: $first -> $second" }
+        assert(second.second == first.second) { "height should stay at ${first.second}, got ${second.second}" }
+    }
+
+    @Test
     fun theClockLongPressSheetOffersAdjustInLandscapeAndFreeSpaceDoesNot() {
         composeRule.setContent { LandscapeHome() }
 

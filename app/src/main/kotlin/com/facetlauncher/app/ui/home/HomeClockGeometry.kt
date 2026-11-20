@@ -11,9 +11,9 @@ internal const val HOME_CLOCK_ZONE_MAX_FRACTION = 0.5f
 /** Where the handle (the divider above the app list) sits, as a fraction of the content height, until the user moves it. */
 internal const val HOME_CLOCK_DEFAULT_ZONE_FRACTION = 0.4f
 
-/** The clamp for the clock's scale factor, shared by the live render, the handle positioning and the committed value. */
+/** The clamp for the clock's scale factor, shared by the live render, the handle positioning and the committed value. There is no fixed maximum: how big the clock can get is the room it has. */
 internal const val HOME_CLOCK_MIN_SCALE = 0.5f
-internal const val HOME_CLOCK_MAX_SCALE = 2.0f
+internal const val HOME_CLOCK_MAX_SCALE = Float.POSITIVE_INFINITY
 
 /** The fixed measures the clock geometry works in, already in px. */
 internal data class ClockMetrics(

@@ -55,6 +55,7 @@ internal fun FlatHomeScreen(
     onClockZoneHeightCommit: (Float) -> Unit = {},
     onClockScaleCommit: (Float) -> Unit = {},
     clockBoxWidthDp: Int? = null,
+    clockBoxHeightDp: Int? = null,
     onClockBoxSizeCommit: (Int, Int) -> Unit = { _, _ -> },
     onClockAlignmentChange: (ClockAlignment) -> Unit = {},
     onAdjustModeChange: (HomeMenuMode) -> Unit = {},
@@ -90,6 +91,7 @@ internal fun FlatHomeScreen(
             clock = HomeClockState(
                 placement = ClockPlacement(clockAlignment, clockZoneHeightDp, clockScale),
                 boxWidthDp = clockBoxWidthDp,
+                boxHeightDp = clockBoxHeightDp,
                 adjustMode = homeMenuMode,
                 draggingHandle = draggingHandle,
             ),

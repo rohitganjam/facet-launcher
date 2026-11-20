@@ -38,7 +38,10 @@ internal fun HomeScreenEffects(frame: HomeFrame) {
         layout.liveHandlePx = null
         layout.liveDividerWidthPx = null
     }
-    LaunchedEffect(placement.scale) { layout.liveScale = null }
+    LaunchedEffect(placement.scale, frame.state.clock.boxWidthDp, frame.state.clock.boxHeightDp) {
+        layout.liveScale = null
+        layout.liveBoxPx = null
+    }
     LaunchedEffect(widget?.widthDp, widget?.heightDp) {
         layout.liveWidgetWidthPx = null
         layout.liveWidgetHeightPx = null

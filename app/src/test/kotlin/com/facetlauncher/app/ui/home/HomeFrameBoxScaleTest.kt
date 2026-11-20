@@ -12,10 +12,10 @@ class HomeFrameBoxScaleTest {
     private val density = Density(2f)
     private val natural = IntSize(width = 400, height = 160)
 
-    private fun state(boxWidthDp: Int?) = HomeScreenState(
+    private fun state(boxWidthDp: Int?, boxHeightDp: Int? = null) = HomeScreenState(
         list = HomeListState(items = emptyList()),
         dock = HomeDockState(items = emptyList()),
-        clock = HomeClockState(placement = ClockPlacement(ClockAlignment.LEFT, zoneHeightDp = null, scale = 0.8f), boxWidthDp = boxWidthDp),
+        clock = HomeClockState(placement = ClockPlacement(ClockAlignment.LEFT, zoneHeightDp = null, scale = 0.8f), boxWidthDp = boxWidthDp, boxHeightDp = boxHeightDp),
     )
 
     @Test
@@ -34,6 +34,24 @@ class HomeFrameBoxScaleTest {
 
         // Then the scale halves so the drawn width stays the same
         assertEquals(0.375f, shown.clock.placement.scale, 0.0001f)
+    }
+
+    @Test
+    fun `a box shorter than the clock's shape draws at its height over the natural height`() {
+        // Given a 150dp x 30dp box (300 x 60px at 2x) on a 400 x 160px clock
+        val shown = state(boxWidthDp = 150, boxHeightDp = 30).withBoxScale(natural, density)
+
+        // Then the height is the tighter side: 60 / 160, not 300 / 400
+        assertEquals(0.375f, shown.clock.placement.scale, 0.0001f)
+    }
+
+    @Test
+    fun `a box narrower than the clock's shape draws at its width over the natural width`() {
+        // Given a 150dp x 200dp box: plenty of height
+        val shown = state(boxWidthDp = 150, boxHeightDp = 200).withBoxScale(natural, density)
+
+        // Then the width is the tighter side
+        assertEquals(0.75f, shown.clock.placement.scale, 0.0001f)
     }
 
     @Test

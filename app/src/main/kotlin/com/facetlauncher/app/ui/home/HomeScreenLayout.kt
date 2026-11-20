@@ -8,6 +8,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.unit.IntSize
 import com.facetlauncher.app.data.model.MediaPlayerState
 
@@ -50,6 +51,9 @@ internal class HomeScreenLayout {
     var liveDividerWidthPx by mutableStateOf<Float?>(null)
     var liveHandlePx by mutableStateOf<Float?>(null)
     var liveScale by mutableStateOf<Float?>(null)
+
+    /** The native clock's box while it is dragged: [liveScale] is the tighter side of it. */
+    var liveBoxPx by mutableStateOf<Size?>(null)
     var liveWidgetWidthPx by mutableStateOf<Float?>(null)
     var liveWidgetHeightPx by mutableStateOf<Float?>(null)
 

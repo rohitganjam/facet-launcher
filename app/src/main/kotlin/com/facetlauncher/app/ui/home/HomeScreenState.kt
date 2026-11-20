@@ -71,6 +71,8 @@ data class HomeClockState(
     val placementFacetId: Long? = null,
     /** The clock page's saved box width in dp for this orientation; `null` until it has been resized, when the placement's scale applies. */
     val boxWidthDp: Int? = null,
+    /** The box's height in dp, set with [boxWidthDp]; the clock draws at the larger scale that fits both. */
+    val boxHeightDp: Int? = null,
     val adjustMode: HomeMenuMode = HomeMenuMode.NONE,
     /** True while a handle is being dragged, which suppresses the screen's own gestures. */
     val draggingHandle: Boolean = false,
@@ -223,7 +225,7 @@ data class HomeClockActions(
     val onEventClick: (CalendarEvent) -> Unit = {},
     val onZoneHeightCommit: (Float) -> Unit = {},
     val onScaleCommit: (Float) -> Unit = {},
-    /** Saves the clock page's box, aspect-locked, in dp; Home's frame turns a scale commit into this once the clock is measured. */
+    /** Saves the clock page's box in dp: portrait's handles commit it directly, and Home's frame turns landscape's scale commit into an aspect-locked one once the clock is measured. */
     val onBoxSizeCommit: (widthDp: Int, heightDp: Int) -> Unit = { _, _ -> },
     val onAlignmentChange: (ClockAlignment) -> Unit = {},
     val onAdjustModeChange: (HomeMenuMode) -> Unit = {},

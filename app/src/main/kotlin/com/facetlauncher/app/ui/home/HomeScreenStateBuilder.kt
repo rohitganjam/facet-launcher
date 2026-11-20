@@ -124,6 +124,8 @@ fun ResolvedFacetStyle.toHomeScreenState(
         placementFacetId = live.placementFacetId,
         boxWidthDp = shownClockPages(live).let { it.getOrNull(it.visibleIndex(live.visibleClockItemId)) }
             ?.takeIf { it.kind == ClockStackItemKind.CLOCK }?.sizeDp?.of(landscape)?.first,
+        boxHeightDp = shownClockPages(live).let { it.getOrNull(it.visibleIndex(live.visibleClockItemId)) }
+            ?.takeIf { it.kind == ClockStackItemKind.CLOCK }?.sizeDp?.of(landscape)?.second,
         adjustMode = live.adjustMode,
         draggingHandle = live.draggingHandle,
     ),

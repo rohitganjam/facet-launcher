@@ -205,6 +205,7 @@ fun ClockBlock(
             )
         }
     }
+    val calendarAlignment = calendarAlignmentFor(clockAlignment, panelOn)
     val eventsBlock: @Composable (Modifier) -> Unit = { alignModifier ->
         if (clockWidgetAppWidgetId == null) { // only the built-in clock carries the events list
             CalendarEventsBlock(
@@ -213,7 +214,7 @@ fun ClockBlock(
                 fontFamily = launcherFontOption.fontFamily,
                 textColor = appLabelColorOption.resolve(),
                 fontWeight = homeAppsFontWeight.resolve(),
-                alignment = clockAlignment,
+                alignment = calendarAlignment,
                 display = calendarDisplay,
                 onEventClick = onEventClick,
                 modifier = alignModifier.longPressFallback(onCalendarLongPress),
@@ -224,7 +225,7 @@ fun ClockBlock(
         // The outer column keeps the block's full width; the panel hugs the wider of the clock and its events.
         Column(modifier = modifier.fillMaxWidth()) {
             GlassPanel(style = glass, shape = MaterialTheme.shapes.large, modifier = Modifier.align(clockAlignment.resolve()).testTag("clock_glass_panel")) {
-                HuggingColumn(alignment = clockAlignment, spacing = CLOCK_PANEL_GAP, modifier = Modifier.padding(CLOCK_PANEL_PADDING)) {
+                HuggingColumn(alignment = clockAlignment, tailAlignment = calendarAlignment, spacing = CLOCK_PANEL_GAP, modifier = Modifier.padding(CLOCK_PANEL_PADDING)) {
                     clockBox(Modifier)
                     eventsBlock(Modifier)
                 }
@@ -238,24 +239,29 @@ fun ClockBlock(
     }
 }
 
+/** The events' alignment: the clock's, except that inside a panel a centred clock keeps its events on the left, where a ragged list reads best. */
+internal fun calendarAlignmentFor(clockAlignment: ClockAlignment, panelOn: Boolean): ClockAlignment =
+    if (panelOn && clockAlignment == ClockAlignment.CENTER) ClockAlignment.LEFT else clockAlignment
+
 private val CLOCK_PANEL_PADDING = 12.dp
 private val CLOCK_PANEL_GAP = 10.dp
 
 /**
- * A column as wide as its widest child, each child placed by [alignment] inside that width: what a panel behind the clock and its events needs,
+ * A column as wide as its widest child, the first child placed by [alignment] and the rest by [tailAlignment] inside that width: what a panel behind the clock and its events needs,
  * since the events are aligned against the clock's width and not the screen's. Measured without intrinsics, which the clock's own layouts do not offer.
  */
 @Composable
-private fun HuggingColumn(alignment: ClockAlignment, spacing: Dp, modifier: Modifier = Modifier, content: @Composable () -> Unit) {
+private fun HuggingColumn(alignment: ClockAlignment, tailAlignment: ClockAlignment, spacing: Dp, modifier: Modifier = Modifier, content: @Composable () -> Unit) {
     Layout(content = content, modifier = modifier) { measurables, constraints ->
         val gap = spacing.roundToPx()
-        val placeables = measurables.map { it.measure(constraints.copy(minWidth = 0, minHeight = 0)) }.filter { it.width > 0 || it.height > 0 }
-        val width = (placeables.maxOfOrNull { it.width } ?: 0).coerceIn(constraints.minWidth, constraints.maxWidth)
-        val height = placeables.sumOf { it.height } + gap * (placeables.size - 1).coerceAtLeast(0)
+        val placeables = measurables.mapIndexed { index, it -> index to it.measure(constraints.copy(minWidth = 0, minHeight = 0)) }
+            .filter { (_, placeable) -> placeable.width > 0 || placeable.height > 0 }
+        val width = (placeables.maxOfOrNull { it.second.width } ?: 0).coerceIn(constraints.minWidth, constraints.maxWidth)
+        val height = placeables.sumOf { it.second.height } + gap * (placeables.size - 1).coerceAtLeast(0)
         layout(width, height.coerceIn(constraints.minHeight, constraints.maxHeight)) {
             var y = 0
-            placeables.forEach { placeable ->
-                val x = when (alignment) {
+            placeables.forEach { (index, placeable) ->
+                val x = when (if (index == 0) alignment else tailAlignment) {
                     ClockAlignment.LEFT -> 0
                     ClockAlignment.CENTER -> (width - placeable.width) / 2
                     ClockAlignment.RIGHT -> width - placeable.width

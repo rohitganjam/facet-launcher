@@ -80,6 +80,7 @@ class HomeScreenTest {
         clockScale: Float = 0.8f,
         onClockScaleCommit: (Float) -> Unit = {},
         clockBoxWidthDp: Int? = null,
+        clockBoxHeightDp: Int? = null,
         onClockBoxSizeCommit: (Int, Int) -> Unit = { _, _ -> },
         onClockAlignmentChange: (ClockAlignment) -> Unit = {},
     ) {
@@ -97,6 +98,7 @@ class HomeScreenTest {
                 clockScale = clockScale,
                 onClockScaleCommit = onClockScaleCommit,
                 clockBoxWidthDp = clockBoxWidthDp,
+                clockBoxHeightDp = clockBoxHeightDp,
                 onClockBoxSizeCommit = onClockBoxSizeCommit,
                 onClockAlignmentChange = onClockAlignmentChange,
                 homeMenuMode = adjustMode,
@@ -1170,6 +1172,42 @@ class HomeScreenTest {
     }
 
     @Test
+    fun resizingTheClockBoxSavesAFreeWidthAndHeightWhileTheTextFitsTheTighterSide() {
+        // Given a clock with a saved box, with room above it to grow
+        var committed: Pair<Int, Int>? = null
+        var box by mutableStateOf(160 to 100)
+        var density = 1f
+        composeRule.setContent {
+            density = androidx.compose.ui.platform.LocalDensity.current.density
+            TestHomeScreen(
+                appListItems = apps(1),
+                clockZoneHeightDp = 900f,
+                clockBoxWidthDp = box.first,
+                clockBoxHeightDp = box.second,
+                onClockBoxSizeCommit = { w, h -> committed = w to h; box = w to h },
+            )
+        }
+        composeRule.waitForIdle()
+        enterAdjustMode()
+
+        // When the right handle is dragged out sideways only (first move captures the grab)
+        composeRule.onNodeWithTag("clock_resize_handle_right").performTouchInput {
+            down(center)
+            moveBy(Offset(20f, 0f))
+            moveBy(Offset(60f, 0f))
+            moveBy(Offset(60f, 0f))
+            up()
+        }
+        composeRule.waitForIdle()
+
+        // Then the width grew but the height did not: the box is free, not aspect-locked
+        val saved = committed
+        assertTrue("A box should have been saved, got $saved", saved != null)
+        assertTrue("width should have grown, got $saved", saved!!.first > 160)
+        assertEquals("height should be unchanged", 100f, saved.second.toFloat(), 2f)
+    }
+
+    @Test
     fun clockScaleIsClampedToItsBounds() {
         var committedWidthPx = 0f
         var boxWidth by mutableStateOf<Int?>(null)
@@ -1187,13 +1225,13 @@ class HomeScreenTest {
         // The clock's natural width, drawn at scale 1
         val natural = composeRule.onNodeWithTag("home_clock_block").fetchSemanticsNode().boundsInRoot.width
 
-        // When dragging far out, the committed width can't exceed twice the natural one (it may land
-        // lower — the real cap is whatever still fits the screen). First move captures the grab
-        // offset, the rest scale.
+        // When dragging far out, the committed width is capped only by what still fits the screen. First
+        // move captures the grab offset, the rest scale.
         enterAdjustMode()
         dragResizeHandleBy(Offset(3240f, -2170f))
         assertTrue("grew past natural", committedWidthPx > natural)
-        assertTrue("clamped at or below 2.0", committedWidthPx <= natural * 2.0f + 2f * density)
+        val rootWidth = composeRule.onRoot().fetchSemanticsNode().boundsInRoot.width
+        assertTrue("fits the screen width", committedWidthPx <= rootWidth)
 
         // When dragging far in (still in adjust mode), it clamps to the hard 0.5 floor.
         dragResizeHandleBy(Offset(-3240f, 2170f))

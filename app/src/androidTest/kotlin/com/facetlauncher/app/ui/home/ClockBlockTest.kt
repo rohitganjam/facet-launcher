@@ -943,6 +943,30 @@ class ClockBlockTest {
     }
 
     @Test
+    fun aCentredClockWithABackgroundKeepsItsEventsOnTheLeft() {
+        // Given a centred clock with an event and a background
+        val fixedClock = Clock.fixed(Instant.parse("2026-08-27T09:05:00Z"), ZoneOffset.UTC)
+        val event = CalendarEvent(
+            id = 1, calendarId = "1", title = "Standup",
+            startTimeMillis = fixedClock.millis() + 3_600_000, endTimeMillis = fixedClock.millis() + 5_400_000, isAllDay = false,
+        )
+        composeRule.setContent {
+            FacetLauncherTheme {
+                ClockBlock(
+                    clock = fixedClock, locale = Locale.US, clockAlignment = ClockAlignment.CENTER,
+                    glass = com.facetlauncher.app.data.model.GlassStyle.FROST, events = persistentListOf(event),
+                )
+            }
+        }
+        composeRule.waitForIdle()
+
+        // Then the events start at the panel's left padding, not centred
+        val panel = composeRule.onNodeWithTag("clock_glass_panel").getUnclippedBoundsInRoot()
+        val events = composeRule.onNodeWithTag("clock_event_rows").getUnclippedBoundsInRoot()
+        assertTrue("events not on the left (${events.left - panel.left})", (events.left - panel.left) < 14.dp)
+    }
+
+    @Test
     fun aBackgroundHugsAClockResizedUpAndDown() = assertBackgroundHugsResizedClock(withEvents = false)
 
     @Test
