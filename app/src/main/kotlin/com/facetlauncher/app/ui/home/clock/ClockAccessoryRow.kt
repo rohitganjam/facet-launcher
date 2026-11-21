@@ -69,10 +69,7 @@ internal fun IconAndText(icon: @Composable () -> Unit, text: @Composable () -> U
 /**
  * The battery accessory item: [BatteryIcon] plus a bare percentage, always in [mutedColor] — only
  * the icon's own glyph (see [batteryIconState]) changes with [isCharging]/[percent], not the
- * color of either the icon or the text. [accentColor] is accepted but unused here, kept purely so
- * every existing caller's argument list (`ClockAccessoryRow` and the many shape templates in
- * `ClockTemplates.kt`) keeps compiling unchanged — battery deliberately went back to a flat,
- * un-accented look (see chat history). Renders nothing when [percent] is `null` — same true-drop
+ * color of either the icon or the text — battery deliberately has a flat, un-accented look. Renders nothing when [percent] is `null` — same true-drop
  * behavior as [AlarmAccessoryContent].
  */
 @Composable
@@ -80,7 +77,6 @@ fun BatteryAccessoryContent(
     percent: Int?,
     isCharging: Boolean,
     mutedColor: Color,
-    accentColor: Color,
     family: FontFamily,
     modifier: Modifier = Modifier,
     fontSize: TextUnit = 14.sp,
@@ -109,7 +105,6 @@ fun ClockAccessoryRow(
     isCharging: Boolean,
     family: FontFamily,
     mutedColor: Color,
-    accentColor: Color,
     modifier: Modifier = Modifier,
     fontSize: TextUnit = 14.sp,
     fontWeight: FontWeight = FontWeight.Medium,
@@ -121,7 +116,7 @@ fun ClockAccessoryRow(
         if (nextAlarmText != null && batteryPercent != null) {
             AccessoryDot(family, fontWeight, fontSize, mutedColor)
         }
-        BatteryAccessoryContent(batteryPercent, isCharging, mutedColor, accentColor, family, fontSize = fontSize, fontWeight = fontWeight)
+        BatteryAccessoryContent(batteryPercent, isCharging, mutedColor, family, fontSize = fontSize, fontWeight = fontWeight)
         if ((nextAlarmText != null || batteryPercent != null) && hasWeather) {
             AccessoryDot(family, fontWeight, fontSize, mutedColor)
         }

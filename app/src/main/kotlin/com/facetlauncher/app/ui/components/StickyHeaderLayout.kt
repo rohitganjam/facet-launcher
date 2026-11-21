@@ -27,8 +27,8 @@ import androidx.compose.ui.unit.Dp
  */
 @Composable
 fun StickyHeaderLayout(
-    modifier: Modifier = Modifier,
     header: @Composable () -> Unit,
+    modifier: Modifier = Modifier,
     content: @Composable (headerHeight: Dp) -> Unit,
 ) {
     val density = LocalDensity.current

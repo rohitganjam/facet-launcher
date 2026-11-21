@@ -27,6 +27,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.testTag
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -49,8 +50,8 @@ import kotlinx.coroutines.launch
 @Composable
 internal fun HomeAppVaultOverlay(
     overlays: HomeOverlayState,
-    viewModel: AppVaultViewModel,
     onAppClick: (AppInfo) -> Unit,
+    viewModel: AppVaultViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val visible = overlays.showAppVault

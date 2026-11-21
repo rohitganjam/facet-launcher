@@ -306,8 +306,8 @@ private fun FacetReorderRow(
     onEditFacetClick: () -> Unit,
     onApplyFacetClick: () -> Unit,
     onDeleteClick: () -> Unit,
-    dragHandleModifier: Modifier,
     modifier: Modifier = Modifier,
+    dragHandleModifier: Modifier = Modifier,
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
 

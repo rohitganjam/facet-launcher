@@ -66,7 +66,7 @@ import kotlinx.coroutines.isActive
  * automatic (no user input needed to see it).
  */
 @Composable
-fun OnboardingFacetsPage(uiState: OnboardingUiState, onBack: () -> Unit, onNext: () -> Unit, modifier: Modifier = Modifier) {
+fun OnboardingFacetsPage(onBack: () -> Unit, onNext: () -> Unit, modifier: Modifier = Modifier) {
     Column(modifier = modifier.fillMaxSize().testTag("onboarding_facets_page").padding(horizontal = 24.dp)) {
         Column(modifier = Modifier.weight(1f).padding(top = 48.dp)) {
             Text(text = stringResource(R.string.onboarding_facets_headline), style = MaterialTheme.typography.headlineSmall, color = Ink)
@@ -250,6 +250,6 @@ private fun MockFacetCard(facet: MockFacet, modifier: Modifier = Modifier) {
 @Composable
 private fun OnboardingFacetsPagePreview() {
     FacetLauncherTheme {
-        OnboardingFacetsPage(uiState = OnboardingUiState(), onBack = {}, onNext = {})
+        OnboardingFacetsPage(onBack = {}, onNext = {})
     }
 }

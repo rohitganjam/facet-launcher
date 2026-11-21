@@ -42,6 +42,7 @@ fun ClockWidgetPickerScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val configureNewWidget by rememberUpdatedState(onConfigureNewWidget)
+    val currentOnDone by rememberUpdatedState(onDone)
     var failureMessage by remember { mutableStateOf<String?>(null) }
 
     val configureLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
@@ -57,10 +58,10 @@ fun ClockWidgetPickerScreen(
             when (event) {
                 is HubAddWidgetEvent.LaunchBindPermission -> bindPermissionLauncher.launch(event.intent)
                 is HubAddWidgetEvent.LaunchConfigure -> configureLauncher.launch(event.intent)
-                HubAddWidgetEvent.WidgetAdded -> onDone()
+                HubAddWidgetEvent.WidgetAdded -> currentOnDone()
                 is HubAddWidgetEvent.NativeWidgetAdded -> {
                     configureNewWidget(event.ref)
-                    onDone()
+                    currentOnDone()
                 }
                 is HubAddWidgetEvent.AddFailed -> {
                     failureMessage = when (event.reason) {

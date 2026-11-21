@@ -26,7 +26,7 @@ import com.facetlauncher.app.ui.theme.FacetLauncherTheme
  * state's own Add button is centered in the middle of the screen instead.
  */
 @Composable
-fun HubHeader(widgetCount: Int, columns: Int, isAtCapacity: Boolean, onAddClick: () -> Unit, modifier: Modifier = Modifier) {
+fun HubHeader(widgetCount: Int, isAtCapacity: Boolean, onAddClick: () -> Unit, modifier: Modifier = Modifier) {
     ScreenHeader(
         title = stringResource(R.string.hub_header_title),
         subtitle = stringResource(R.string.hub_header_subtitle, widgetCount, HUB_MAX_WIDGETS),
@@ -47,7 +47,7 @@ fun HubHeader(widgetCount: Int, columns: Int, isAtCapacity: Boolean, onAddClick:
 @Composable
 private fun HubHeaderPreview() {
     FacetLauncherTheme {
-        HubHeader(widgetCount = 6, columns = 5, isAtCapacity = false, onAddClick = {})
+        HubHeader(widgetCount = 6, isAtCapacity = false, onAddClick = {})
     }
 }
 
@@ -55,6 +55,6 @@ private fun HubHeaderPreview() {
 @Composable
 private fun HubHeaderAtCapacityPreview() {
     FacetLauncherTheme {
-        HubHeader(widgetCount = 20, columns = 5, isAtCapacity = true, onAddClick = {})
+        HubHeader(widgetCount = 20, isAtCapacity = true, onAddClick = {})
     }
 }

@@ -303,7 +303,6 @@ private fun PinKey(digit: Int, enabled: Boolean, onDigit: (Int) -> Unit) {
     }
 }
 
-@Suppress("LongMethod")
 @Composable
 private fun VaultListPage(state: AppVaultUiState, callbacks: AppVaultCallbacks) {
     var menuExpanded by remember { mutableStateOf(false) }

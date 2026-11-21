@@ -92,6 +92,7 @@ fun ClockDisplay(
     showMeridiem: Boolean,
     textColor: Color,
     mutedTextColor: Color,
+    modifier: Modifier = Modifier,
     /** See [com.facetlauncher.app.data.model.LauncherSettings.clockAccentColorOption] — only templates where [com.facetlauncher.app.data.model.usesAccentColor] is true read this. */
     accentColor: Color = textColor,
     /** Millis since epoch of the system's next alarm, or `null` when none is set — see [com.facetlauncher.app.domain.ObserveClockAccessoriesUseCase]. */
@@ -103,7 +104,6 @@ fun ClockDisplay(
     weather: ClockWeatherAccessory? = null,
     /** "Full" vs "Condensed" — see [ClockDateStyle]. */
     dateStyle: ClockDateStyle = ClockDateStyle.FULL,
-    modifier: Modifier = Modifier,
     locale: Locale = Locale.getDefault(),
     launcherFontOption: LauncherFontOption = LauncherFontOption.SYSTEM,
     /** Settings → Clock & Calendar Style → "Clock alignment" — every template aligns its own time/date content to match, not just its position within Home (see [com.facetlauncher.app.ui.home.HomeScreen]). */
@@ -209,9 +209,9 @@ private fun ClockGlyphText(
     color: Color,
     fontSize: TextUnit,
     family: FontFamily,
+    modifier: Modifier = Modifier,
     fontWeight: FontWeight = FontWeight.Normal,
     letterSpacing: TextUnit = TextUnit.Unspecified,
-    modifier: Modifier = Modifier,
     drawStyle: DrawStyle? = null,
     shadowed: Boolean = true,
 ) {
@@ -237,11 +237,11 @@ private fun HourText(
     family: FontFamily,
     color: Color,
     fontSize: TextUnit,
+    modifier: Modifier = Modifier,
     fontWeight: FontWeight = FontWeight.Normal,
     letterSpacing: TextUnit = TextUnit.Unspecified,
-    modifier: Modifier = Modifier,
     drawStyle: DrawStyle? = null,
-) = ClockGlyphText(text, color, fontSize, family, fontWeight, letterSpacing, modifier, drawStyle)
+) = ClockGlyphText(text, color, fontSize, family, modifier, fontWeight, letterSpacing, drawStyle)
 
 /** The minute digit(s) — its own part so a template can color/weight it independently of [HourText]. */
 @Composable
@@ -250,10 +250,10 @@ private fun MinuteText(
     family: FontFamily,
     color: Color,
     fontSize: TextUnit,
+    modifier: Modifier = Modifier,
     fontWeight: FontWeight = FontWeight.Normal,
     letterSpacing: TextUnit = TextUnit.Unspecified,
-    modifier: Modifier = Modifier,
-) = ClockGlyphText(text, color, fontSize, family, fontWeight, letterSpacing, modifier)
+) = ClockGlyphText(text, color, fontSize, family, modifier, fontWeight, letterSpacing)
 
 /** The `:` (or other) divider between [HourText] and [MinuteText] — its own part so it can carry a color/weight neither digit run does (see [ColumnRuleTemplate], [DigitCellsTemplate]). */
 @Composable
@@ -262,10 +262,10 @@ private fun SeparatorText(
     family: FontFamily,
     color: Color,
     fontSize: TextUnit,
+    modifier: Modifier = Modifier,
     fontWeight: FontWeight = FontWeight.Normal,
     letterSpacing: TextUnit = TextUnit.Unspecified,
-    modifier: Modifier = Modifier,
-) = ClockGlyphText(text, color, fontSize, family, fontWeight, letterSpacing, modifier)
+) = ClockGlyphText(text, color, fontSize, family, modifier, fontWeight, letterSpacing)
 
 /** The date line beneath the time — its own part purely for naming symmetry with the parts above; callers pass an already-`uppercase(locale)`d string where a template wants tracked caps, matching every other template's own convention. */
 @Composable
@@ -273,11 +273,11 @@ private fun TemplateDateText(
     text: String,
     family: FontFamily,
     color: Color,
+    modifier: Modifier = Modifier,
     fontSize: TextUnit = 19.sp,
     fontWeight: FontWeight = FontWeight.Medium,
     letterSpacing: TextUnit = TextUnit.Unspecified,
-    modifier: Modifier = Modifier,
-) = ClockGlyphText(text, color, fontSize, family, fontWeight, letterSpacing, modifier)
+) = ClockGlyphText(text, color, fontSize, family, modifier, fontWeight, letterSpacing)
 
 /**
  * Today's shipped default (README `1b`) — light 72sp time, muted date beneath. Weights are one
@@ -309,7 +309,7 @@ private fun ClockTemplateData.LightStackTemplate(
             style = TextStyle(fontFamily = family, fontWeight = FontWeight.Medium, fontSize = 22.sp, shadow = homeTextShadow()),
             color = mutedTextColor,
         )
-        ClockAccessoryRow(nextAlarmText, batteryPercent, isCharging, family, mutedTextColor, accentColor, fontSize = 22.sp)
+        ClockAccessoryRow(nextAlarmText, batteryPercent, isCharging, family, mutedTextColor, fontSize = 22.sp)
     }
 }
 
@@ -347,7 +347,7 @@ private fun ClockTemplateData.RuleMeridiemTemplate(
             modifier = Modifier.padding(top = 12.dp),
         )
         ClockAccessoryRow(
-            nextAlarmText, batteryPercent, isCharging, family, mutedTextColor, accentColor,
+            nextAlarmText, batteryPercent, isCharging, family, mutedTextColor,
             modifier = Modifier.padding(top = 8.dp),
             fontSize = 20.sp,
         )
@@ -374,7 +374,7 @@ private fun ClockTemplateData.DateForwardTemplate(
             if (meridiem != null)
                 MeridiemText(meridiem, family, mutedTextColor, Modifier.padding(bottom = 7.dp))
         }
-        ClockAccessoryRow(nextAlarmText, batteryPercent, isCharging, family, mutedTextColor, accentColor)
+        ClockAccessoryRow(nextAlarmText, batteryPercent, isCharging, family, mutedTextColor)
     }
 }
 
@@ -386,12 +386,12 @@ private fun ClockTemplateData.WeightContrastTemplate(
     val hourFormatter = DateTimeFormatter.ofPattern(if (use24HourTime) "HH" else "h", locale)
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(10.dp), horizontalAlignment = horizontalAlignment) {
         Row(verticalAlignment = Alignment.Bottom) {
-            HourText(now.format(hourFormatter), family, textColor, 84.sp, FontWeight.ExtraBold, letterSpacing = (-2.4).sp)
-            SeparatorText(now.format(DateTimeFormatter.ofPattern(":mm", locale)), family, textColor, 84.sp, FontWeight.Normal, letterSpacing = (-2.4).sp)
+            HourText(now.format(hourFormatter), family, textColor, 84.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = (-2.4).sp)
+            SeparatorText(now.format(DateTimeFormatter.ofPattern(":mm", locale)), family, textColor, 84.sp, fontWeight = FontWeight.Normal, letterSpacing = (-2.4).sp)
             if (meridiem != null) MeridiemText(meridiem, family, textColor, Modifier.padding(start = 7.dp, bottom = 10.dp))
         }
-        TemplateDateText(now.format(dateFormatter(locale, dateStyle)).uppercase(locale), family, mutedTextColor, 16.sp, FontWeight.SemiBold, letterSpacing = 1.3.sp)
-        ClockAccessoryRow(nextAlarmText, batteryPercent, isCharging, family, mutedTextColor, accentColor, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+        TemplateDateText(now.format(dateFormatter(locale, dateStyle)).uppercase(locale), family, mutedTextColor, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 1.3.sp)
+        ClockAccessoryRow(nextAlarmText, batteryPercent, isCharging, family, mutedTextColor, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
     }
 }
 
@@ -414,7 +414,7 @@ private fun ClockTemplateData.ItalicAccentTemplate(
             style = TextStyle(fontFamily = family, fontWeight = FontWeight.Medium, fontStyle = FontStyle.Italic, fontSize = 20.sp, shadow = homeTextShadow()),
             color = mutedTextColor,
         )
-        ClockAccessoryRow(nextAlarmText, batteryPercent, isCharging, family, mutedTextColor, accentColor, fontSize = 20.sp)
+        ClockAccessoryRow(nextAlarmText, batteryPercent, isCharging, family, mutedTextColor, fontSize = 20.sp)
     }
 }
 
@@ -464,7 +464,7 @@ private fun ClockTemplateData.VerticalStackTemplate(
             color = mutedTextColor,
             modifier = Modifier.padding(top = 12.dp),
         )
-        ClockAccessoryRow(nextAlarmText, batteryPercent, isCharging, family, mutedTextColor, accentColor, fontSize = 22.sp, fontWeight = if (boldHour) FontWeight.Black else FontWeight.Medium)
+        ClockAccessoryRow(nextAlarmText, batteryPercent, isCharging, family, mutedTextColor, fontSize = 22.sp, fontWeight = if (boldHour) FontWeight.Black else FontWeight.Medium)
     }
 }
 
@@ -484,7 +484,7 @@ private fun ClockTemplateData.SpelledOutTemplate(
             style = TextStyle(fontFamily = family, fontWeight = FontWeight.Medium, fontSize = 19.sp, shadow = homeTextShadow()),
             color = mutedTextColor,
         )
-        ClockAccessoryRow(nextAlarmText, batteryPercent, isCharging, family, mutedTextColor, accentColor, fontSize = 19.sp)
+        ClockAccessoryRow(nextAlarmText, batteryPercent, isCharging, family, mutedTextColor, fontSize = 19.sp)
     }
 }
 
@@ -634,7 +634,7 @@ private fun ClockTemplateData.BracketMinimalTemplate(
         if (hasAccessories) {
             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 6.dp)) {
                 HomeText(text = stringResource(R.string.clock_template_bracket_open), style = TextStyle(fontFamily = family, fontWeight = FontWeight.ExtraLight, fontSize = 17.sp, shadow = homeTextShadow()), color = mutedTextColor)
-                ClockAccessoryRow(nextAlarmText, batteryPercent, isCharging, family, mutedTextColor, accentColor, fontSize = 17.sp)
+                ClockAccessoryRow(nextAlarmText, batteryPercent, isCharging, family, mutedTextColor, fontSize = 17.sp)
                 HomeText(text = stringResource(R.string.clock_template_bracket_close), style = TextStyle(fontFamily = family, fontWeight = FontWeight.ExtraLight, fontSize = 17.sp, shadow = homeTextShadow()), color = mutedTextColor)
             }
         }
@@ -690,7 +690,7 @@ private fun ClockTemplateData.TwoLineDividerTemplate(
         )
         if (hasAccessories) {
             Box(modifier = Modifier.padding(top = 10.dp).width(48.dp).height(1.dp).background(textColor.copy(alpha = 0.4f)))
-            ClockAccessoryRow(nextAlarmText, batteryPercent, isCharging, family, mutedTextColor, accentColor, modifier = Modifier.padding(top = 10.dp), fontSize = 19.sp)
+            ClockAccessoryRow(nextAlarmText, batteryPercent, isCharging, family, mutedTextColor, modifier = Modifier.padding(top = 10.dp), fontSize = 19.sp)
         }
     }
 }
@@ -757,7 +757,7 @@ private fun ClockTemplateData.ColonAccessoryRow() {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.padding(top = 5.dp)) {
         AlarmAccessoryContent(nextAlarmText, mutedTextColor, family, fontSize = 20.sp)
         if (nextAlarmText != null && batteryPercent != null) colon()
-        BatteryAccessoryContent(batteryPercent, isCharging, mutedTextColor, accentColor, family, fontSize = 20.sp)
+        BatteryAccessoryContent(batteryPercent, isCharging, mutedTextColor, family, fontSize = 20.sp)
         if ((nextAlarmText != null || batteryPercent != null) && hasWeather) colon()
         WeatherAccessoryContent(mutedTextColor, family, fontSize = 20.sp)
     }
@@ -817,7 +817,7 @@ private fun ClockTemplateData.VariableDividerTemplate(
                 if (nextAlarmText != null && batteryPercent != null) {
                     Box(modifier = Modifier.width(1.dp).height(12.dp).background(mutedTextColor.copy(alpha = 0.5f)))
                 }
-                BatteryAccessoryContent(batteryPercent, isCharging, mutedTextColor, accentColor, family, fontSize = 22.sp)
+                BatteryAccessoryContent(batteryPercent, isCharging, mutedTextColor, family, fontSize = 22.sp)
                 if ((nextAlarmText != null || batteryPercent != null) && hasWeather) {
                     Box(modifier = Modifier.width(1.dp).height(12.dp).background(mutedTextColor.copy(alpha = 0.5f)))
                 }
@@ -897,7 +897,7 @@ private fun ClockTemplateData.FluidStackTemplate(
                     if (nextAlarmText != null && batteryPercent != null) {
                         HomeText(text = stringResource(R.string.clock_accessory_separator_dot), style = TextStyle(fontFamily = family, fontWeight = FontWeight.Medium, fontSize = 19.sp, shadow = homeTextShadow()), color = mutedTextColor)
                     }
-                    BatteryAccessoryContent(batteryPercent, isCharging, mutedTextColor, accentColor, family, fontSize = 19.sp)
+                    BatteryAccessoryContent(batteryPercent, isCharging, mutedTextColor, family, fontSize = 19.sp)
                     if ((nextAlarmText != null || batteryPercent != null) && hasWeather) {
                         HomeText(text = stringResource(R.string.clock_accessory_separator_dot), style = TextStyle(fontFamily = family, fontWeight = FontWeight.Medium, fontSize = 19.sp, shadow = homeTextShadow()), color = mutedTextColor)
                     }
@@ -906,7 +906,7 @@ private fun ClockTemplateData.FluidStackTemplate(
             }
         } else {
             // `8m`/`8n` — shares the date's own light, quiet block under the digits.
-            ClockAccessoryRow(nextAlarmText, batteryPercent, isCharging, family, mutedTextColor, accentColor, fontSize = 19.sp, fontWeight = FontWeight.Light, modifier = Modifier.padding(top = 16.dp))
+            ClockAccessoryRow(nextAlarmText, batteryPercent, isCharging, family, mutedTextColor, fontSize = 19.sp, fontWeight = FontWeight.Light, modifier = Modifier.padding(top = 16.dp))
         }
     }
 }
@@ -940,7 +940,7 @@ private fun ClockTemplateData.RobotoFlexWideTemplate(
             ),
             color = mutedTextColor
         )
-        ClockAccessoryRow(nextAlarmText, batteryPercent, isCharging, family, mutedTextColor, accentColor, fontSize = 17.sp)
+        ClockAccessoryRow(nextAlarmText, batteryPercent, isCharging, family, mutedTextColor, fontSize = 17.sp)
     }
 }
 
@@ -998,7 +998,7 @@ private fun ClockTemplateData.RobotoFlexNarrowTemplate(
                 modifier = Modifier.padding(top = 7.dp),
             ) {
                 AlarmAccessoryContent(nextAlarmText, mutedTextColor, family, fontSize = 19.sp)
-                BatteryAccessoryContent(batteryPercent, isCharging, mutedTextColor, accentColor, family, fontSize = 19.sp)
+                BatteryAccessoryContent(batteryPercent, isCharging, mutedTextColor, family, fontSize = 19.sp)
                 WeatherAccessoryContent(mutedTextColor, family, fontSize = 19.sp)
             }
         }
@@ -1058,7 +1058,7 @@ private fun ClockTemplateData.TechDistortedTemplate(
             color = mutedTextColor,
             modifier = Modifier.padding(start = 2.4.dp)
         )
-        ClockAccessoryRow(nextAlarmText, batteryPercent, isCharging, TechDistorted, mutedTextColor, accentColor, modifier = Modifier.padding(start = 2.4.dp), fontSize = 24.sp)
+        ClockAccessoryRow(nextAlarmText, batteryPercent, isCharging, TechDistorted, mutedTextColor, modifier = Modifier.padding(start = 2.4.dp), fontSize = 24.sp)
     }
 }
 
@@ -1077,8 +1077,8 @@ private fun ClockTemplateData.AccentContrastTemplate(
     val hourFormatter = DateTimeFormatter.ofPattern(if (use24HourTime) "HH" else "h", locale)
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(10.dp), horizontalAlignment = horizontalAlignment) {
         Row(verticalAlignment = Alignment.Bottom) {
-            HourText(now.format(hourFormatter), family, accentColor, 84.sp, FontWeight.Black, letterSpacing = (-2.4).sp)
-            SeparatorText(now.format(DateTimeFormatter.ofPattern(":mm", locale)), family, textColor, 84.sp, FontWeight.Light, letterSpacing = (-2.4).sp)
+            HourText(now.format(hourFormatter), family, accentColor, 84.sp, fontWeight = FontWeight.Black, letterSpacing = (-2.4).sp)
+            SeparatorText(now.format(DateTimeFormatter.ofPattern(":mm", locale)), family, textColor, 84.sp, fontWeight = FontWeight.Light, letterSpacing = (-2.4).sp)
             if (meridiem != null) MeridiemText(meridiem, family, textColor, Modifier.padding(start = 7.dp, bottom = 10.dp))
         }
         TemplateDateText(
@@ -1095,7 +1095,7 @@ private fun ClockTemplateData.AccentContrastTemplate(
                 if (nextAlarmText != null && batteryPercent != null) {
                     HomeText(text = stringResource(R.string.clock_accessory_separator_dot), style = TextStyle(fontFamily = family, fontWeight = FontWeight.SemiBold, fontSize = 16.sp, shadow = homeTextShadow()), color = mutedTextColor)
                 }
-                BatteryAccessoryContent(batteryPercent, isCharging, mutedTextColor, accentColor, family, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+                BatteryAccessoryContent(batteryPercent, isCharging, mutedTextColor, family, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
                 if ((nextAlarmText != null || batteryPercent != null) && hasWeather) {
                     HomeText(text = stringResource(R.string.clock_accessory_separator_dot), style = TextStyle(fontFamily = family, fontWeight = FontWeight.SemiBold, fontSize = 16.sp, shadow = homeTextShadow()), color = mutedTextColor)
                 }
@@ -1120,10 +1120,10 @@ private fun ClockTemplateData.AccentFieldTemplate(
                     .background(accentColor, RoundedCornerShape(22.dp))
                     .padding(start = 19.dp, end = 19.dp, top = 7.dp, bottom = 12.dp),
             ) {
-                OnSolidFill { HourText(now.format(hourFormatter), family, Surface, 77.sp, FontWeight.SemiBold) }
+                OnSolidFill { HourText(now.format(hourFormatter), family, Surface, 77.sp, fontWeight = FontWeight.SemiBold) }
             }
             // Same 12dp as the block's bottom padding (and the meridiem below) — the hour sits that far above the row's bottom edge, so the minute must too or its baseline lands lower.
-            MinuteText(now.format(minuteFormatter), family, textColor, 77.sp, FontWeight.ExtraLight, modifier = Modifier.padding(bottom = 12.dp))
+            MinuteText(now.format(minuteFormatter), family, textColor, 77.sp, fontWeight = FontWeight.ExtraLight, modifier = Modifier.padding(bottom = 12.dp))
             if (meridiem != null) MeridiemText(meridiem, family, textColor, Modifier.padding(bottom = 12.dp))
         }
         TemplateDateText(now.format(dateFormatter(locale, dateStyle)), family, mutedTextColor)
@@ -1135,7 +1135,7 @@ private fun ClockTemplateData.AccentFieldTemplate(
                         modifier = Modifier.clip(RoundedCornerShape(7.dp)).background(accentColor, RoundedCornerShape(7.dp)).padding(horizontal = 10.dp, vertical = 4.dp),
                     )
                 }
-                BatteryAccessoryContent(batteryPercent, isCharging, mutedTextColor, accentColor, family)
+                BatteryAccessoryContent(batteryPercent, isCharging, mutedTextColor, family)
                 WeatherAccessoryContent(mutedTextColor, family)
             }
         }
@@ -1159,9 +1159,9 @@ private fun ClockTemplateData.HourTileTemplate(
                     .padding(17.dp),
                 contentAlignment = Alignment.Center,
             ) {
-                OnSolidFill { HourText(now.format(hourFormatter), family, tileContentColor, 55.sp, FontWeight.SemiBold) }
+                OnSolidFill { HourText(now.format(hourFormatter), family, tileContentColor, 55.sp, fontWeight = FontWeight.SemiBold) }
             }
-            MinuteText(now.format(minuteFormatter), family, textColor, 72.sp, FontWeight.Light)
+            MinuteText(now.format(minuteFormatter), family, textColor, 72.sp, fontWeight = FontWeight.Light)
             if (meridiem != null) MeridiemText(meridiem, family, textColor)
         }
         TemplateDateText(now.format(dateFormatter(locale, dateStyle)).uppercase(locale), family, mutedTextColor, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 1.3.sp)
@@ -1173,7 +1173,7 @@ private fun ClockTemplateData.HourTileTemplate(
                 if (nextAlarmText != null && batteryPercent != null) {
                     Box(modifier = Modifier.width(40.dp).height(1.dp).background(Hairline))
                 }
-                BatteryAccessoryContent(batteryPercent, isCharging, mutedTextColor, accentColor, family, fontSize = 14.sp, iconAtEnd = iconAtEnd)
+                BatteryAccessoryContent(batteryPercent, isCharging, mutedTextColor, family, fontSize = 14.sp, iconAtEnd = iconAtEnd)
                 if ((nextAlarmText != null || batteryPercent != null) && hasWeather) {
                     Box(modifier = Modifier.width(40.dp).height(1.dp).background(Hairline))
                 }
@@ -1200,7 +1200,7 @@ private fun ClockTemplateData.ChipTemplate(
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 Box(modifier = Modifier.size(10.dp).clip(CircleShape).background(accentColor)) {}
-                ClockGlyphText(now.format(timeFormatter(use24HourTime, locale)), textColor, 36.sp, family, FontWeight.Medium)
+                ClockGlyphText(now.format(timeFormatter(use24HourTime, locale)), textColor, 36.sp, family, fontWeight = FontWeight.Medium)
                 if (meridiem != null) MeridiemText(meridiem, family, mutedTextColor)
             }
         }
@@ -1210,7 +1210,7 @@ private fun ClockTemplateData.ChipTemplate(
             OnSolidFill {
                 Row(horizontalArrangement = Arrangement.spacedBy(7.dp)) {
                     AlarmAccessoryContent(nextAlarmText, mutedTextColor, family, fontSize = 14.sp, modifier = pillModifier)
-                    BatteryAccessoryContent(batteryPercent, isCharging, mutedTextColor, accentColor, family, fontSize = 14.sp, modifier = pillModifier)
+                    BatteryAccessoryContent(batteryPercent, isCharging, mutedTextColor, family, fontSize = 14.sp, modifier = pillModifier)
                     WeatherAccessoryContent(mutedTextColor, family, fontSize = 14.sp, modifier = pillModifier)
                 }
             }
@@ -1227,8 +1227,8 @@ private fun ClockTemplateData.DuotoneOverlapTemplate(
     val minuteFormatter = DateTimeFormatter.ofPattern("mm", locale)
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(14.dp), horizontalAlignment = horizontalAlignment) {
         Row(verticalAlignment = Alignment.Bottom) {
-            HourText(now.format(hourFormatter), family, accentColor, 100.sp, FontWeight.Black)
-            MinuteText(now.format(minuteFormatter), family, textColor, 100.sp, FontWeight.Light, modifier = Modifier.offset(x = (-17).dp))
+            HourText(now.format(hourFormatter), family, accentColor, 100.sp, fontWeight = FontWeight.Black)
+            MinuteText(now.format(minuteFormatter), family, textColor, 100.sp, fontWeight = FontWeight.Light, modifier = Modifier.offset(x = (-17).dp))
             if (meridiem != null) MeridiemText(meridiem, family, textColor, Modifier.padding(start = 5.dp, bottom = 17.dp))
         }
         TemplateDateText(now.format(dateFormatter(locale, dateStyle)), family, mutedTextColor)
@@ -1238,7 +1238,7 @@ private fun ClockTemplateData.DuotoneOverlapTemplate(
                 if (nextAlarmText != null && batteryPercent != null) {
                     HomeText(text = stringResource(R.string.clock_accessory_separator_dot), style = TextStyle(fontFamily = family, fontWeight = FontWeight.Medium, fontSize = 19.sp, shadow = homeTextShadow()), color = mutedTextColor)
                 }
-                BatteryAccessoryContent(batteryPercent, isCharging, mutedTextColor, accentColor, family, fontSize = 19.sp)
+                BatteryAccessoryContent(batteryPercent, isCharging, mutedTextColor, family, fontSize = 19.sp)
                 if ((nextAlarmText != null || batteryPercent != null) && hasWeather) {
                     HomeText(text = stringResource(R.string.clock_accessory_separator_dot), style = TextStyle(fontFamily = family, fontWeight = FontWeight.Medium, fontSize = 19.sp, shadow = homeTextShadow()), color = mutedTextColor)
                 }
@@ -1268,7 +1268,7 @@ private fun ClockTemplateData.CornerFrameTemplate(
                 .padding(19.dp),
         ) {
             Row(verticalAlignment = Alignment.Bottom) {
-                ClockGlyphText(now.format(timeFormatter(use24HourTime, locale)), textColor, 70.sp, family, FontWeight.Light)
+                ClockGlyphText(now.format(timeFormatter(use24HourTime, locale)), textColor, 70.sp, family, fontWeight = FontWeight.Light)
                 if (meridiem != null) MeridiemText(meridiem, family, textColor, Modifier.padding(start = 7.dp, bottom = 7.dp))
             }
         }
@@ -1282,7 +1282,7 @@ private fun ClockTemplateData.CornerFrameTemplate(
                         drawLine(frameColor, Offset(0f, size.height), Offset(size.width * 0.65f, size.height), strokeWidth)
                     },
                 )
-                ClockAccessoryRow(nextAlarmText, batteryPercent, isCharging, family, mutedTextColor, accentColor, fontSize = 19.sp)
+                ClockAccessoryRow(nextAlarmText, batteryPercent, isCharging, family, mutedTextColor, fontSize = 19.sp)
             }
         }
     }
@@ -1321,7 +1321,7 @@ private fun ClockTemplateData.StubCard() {
                     .background(accentColor, RoundedCornerShape(2.4.dp)),
             ) {}
             Column(modifier = Modifier.padding(start = 17.dp, end = 17.dp)) {
-                ClockGlyphText(now.format(timeFormatter(use24HourTime, locale)), textColor, 48.sp, family, FontWeight.Light)
+                ClockGlyphText(now.format(timeFormatter(use24HourTime, locale)), textColor, 48.sp, family, fontWeight = FontWeight.Light)
                 val meridiemDayLine = now.format(DateTimeFormatter.ofPattern("EEEE", locale)).let { dayName ->
                     if (meridiem != null) "$meridiem · $dayName" else dayName
                 }
@@ -1344,7 +1344,7 @@ private fun ClockTemplateData.StubCard() {
             ) {}
             Column(modifier = Modifier.padding(start = 17.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                 TemplateDateText(now.format(DateTimeFormatter.ofPattern("MMM", locale)).uppercase(locale), family, mutedTextColor, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 1.2.sp)
-                ClockGlyphText(now.format(DateTimeFormatter.ofPattern("d", locale)), textColor, 31.sp, family, FontWeight.Light)
+                ClockGlyphText(now.format(DateTimeFormatter.ofPattern("d", locale)), textColor, 31.sp, family, fontWeight = FontWeight.Light)
             }
         }
         if (hasAccessories) StubAccessoryRow()
@@ -1367,7 +1367,7 @@ private fun ClockTemplateData.StubAccessoryRow() {
     ) {
         AlarmAccessoryContent(nextAlarmText, mutedTextColor, family)
         WeatherAccessoryContent(mutedTextColor, family)
-        BatteryAccessoryContent(batteryPercent, isCharging, mutedTextColor, accentColor, family)
+        BatteryAccessoryContent(batteryPercent, isCharging, mutedTextColor, family)
     }
 }
 
@@ -1384,7 +1384,7 @@ private fun ClockTemplateData.HaloTemplate(
                 textColor,
                 70.sp,
                 family,
-                FontWeight.Light,
+                fontWeight = FontWeight.Light,
                 modifier = Modifier.drawBehind {
                     val radius = maxOf(size.width, size.height) / 2f + 29.dp.toPx()
                     drawCircle(color = haloColor, radius = radius, style = Stroke(width = 1.8.dp.toPx()))
@@ -1393,7 +1393,7 @@ private fun ClockTemplateData.HaloTemplate(
             if (meridiem != null) MeridiemText(meridiem, family, textColor, Modifier.padding(start = 7.dp, bottom = 7.dp))
         }
         TemplateDateText(now.format(dateFormatter(locale, dateStyle)), family, mutedTextColor)
-        ClockAccessoryRow(nextAlarmText, batteryPercent, isCharging, family, mutedTextColor, accentColor, fontSize = 19.sp)
+        ClockAccessoryRow(nextAlarmText, batteryPercent, isCharging, family, mutedTextColor, fontSize = 19.sp)
     }
 }
 
@@ -1407,7 +1407,7 @@ private fun ClockTemplateData.DigitCellsTemplate(
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(17.dp), horizontalAlignment = horizontalAlignment) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(7.dp)) {
             hourDigits.forEach { digit -> DigitCell(digit.toString(), family, textColor) }
-            SeparatorText(stringResource(R.string.clock_template_colon), family, accentColor, 38.sp, FontWeight.Bold)
+            SeparatorText(stringResource(R.string.clock_template_colon), family, accentColor, 38.sp, fontWeight = FontWeight.Bold)
             minuteDigits.forEach { digit -> DigitCell(digit.toString(), family, textColor) }
             if (meridiem != null) MeridiemText(meridiem, family, textColor, Modifier.padding(start = 7.dp))
         }
@@ -1417,7 +1417,7 @@ private fun ClockTemplateData.DigitCellsTemplate(
             OnSolidFill {
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     AlarmAccessoryContent(nextAlarmText, mutedTextColor, family, fontSize = 14.sp, modifier = cellModifier)
-                    BatteryAccessoryContent(batteryPercent, isCharging, mutedTextColor, accentColor, family, fontSize = 14.sp, modifier = cellModifier)
+                    BatteryAccessoryContent(batteryPercent, isCharging, mutedTextColor, family, fontSize = 14.sp, modifier = cellModifier)
                     WeatherAccessoryContent(mutedTextColor, family, fontSize = 14.sp, modifier = cellModifier)
                 }
             }
@@ -1435,7 +1435,7 @@ private fun DigitCell(digit: String, family: FontFamily, color: Color, modifier:
             .padding(horizontal = 12.dp, vertical = 7.dp),
         contentAlignment = Alignment.Center,
     ) {
-        OnSolidFill { ClockGlyphText(digit, color, 41.sp, family, FontWeight.Light) }
+        OnSolidFill { ClockGlyphText(digit, color, 41.sp, family, fontWeight = FontWeight.Light) }
     }
 }
 
@@ -1454,7 +1454,7 @@ private fun ClockTemplateData.NegativePanelTemplate(
             horizontalAlignment = horizontalAlignment,
         ) {
             Row(verticalAlignment = Alignment.Bottom) {
-                ClockGlyphText(now.format(timeFormatter(use24HourTime, locale)), panelContentColor, 55.sp, family, FontWeight.Light)
+                ClockGlyphText(now.format(timeFormatter(use24HourTime, locale)), panelContentColor, 55.sp, family, fontWeight = FontWeight.Light)
                 if (meridiem != null) MeridiemText(meridiem, family, panelContentColor, Modifier.padding(start = 7.dp, bottom = 7.dp))
             }
             TemplateDateText(
@@ -1466,7 +1466,7 @@ private fun ClockTemplateData.NegativePanelTemplate(
                 letterSpacing = 1.3.sp,
                 modifier = Modifier.padding(top = 10.dp),
             )
-            ClockAccessoryRow(nextAlarmText, batteryPercent, isCharging, family, panelContentColor.copy(alpha = 0.62f), accentColor, modifier = Modifier.padding(top = 8.dp), fontSize = 14.sp)
+            ClockAccessoryRow(nextAlarmText, batteryPercent, isCharging, family, panelContentColor.copy(alpha = 0.62f), modifier = Modifier.padding(top = 8.dp), fontSize = 14.sp)
         }
     }
 }
@@ -1486,10 +1486,10 @@ private fun ClockTemplateData.HollowHourTemplate(
                 family,
                 textColor,
                 100.sp,
-                FontWeight.Black,
+                fontWeight = FontWeight.Black,
                 drawStyle = Stroke(width = with(density) { 1.9.dp.toPx() }),
             )
-            MinuteText(now.format(minuteFormatter), family, textColor, 100.sp, FontWeight.Normal)
+            MinuteText(now.format(minuteFormatter), family, textColor, 100.sp, fontWeight = FontWeight.Normal)
             if (meridiem != null) MeridiemText(meridiem, family, textColor, Modifier.padding(start = 7.dp, bottom = 17.dp))
         }
         TemplateDateText(now.format(dateFormatter(locale, dateStyle)), family, mutedTextColor)
@@ -1497,7 +1497,7 @@ private fun ClockTemplateData.HollowHourTemplate(
             val boxModifier = Modifier.clip(RoundedCornerShape(9.dp)).border(1.dp, Hairline, RoundedCornerShape(9.dp)).padding(horizontal = 11.dp, vertical = 5.dp)
             Row(horizontalArrangement = Arrangement.spacedBy(7.dp)) {
                 AlarmAccessoryContent(nextAlarmText, mutedTextColor, family, fontSize = 14.sp, modifier = boxModifier)
-                BatteryAccessoryContent(batteryPercent, isCharging, mutedTextColor, accentColor, family, fontSize = 14.sp, modifier = boxModifier)
+                BatteryAccessoryContent(batteryPercent, isCharging, mutedTextColor, family, fontSize = 14.sp, modifier = boxModifier)
                 WeatherAccessoryContent(mutedTextColor, family, fontSize = 14.sp, modifier = boxModifier)
             }
         }
@@ -1517,7 +1517,7 @@ private fun ClockTemplateData.HighlighterTemplate(
                 textColor,
                 70.sp,
                 family,
-                FontWeight.Light,
+                fontWeight = FontWeight.Light,
                 modifier = Modifier.drawBehind {
                     val bandTop = size.height * 0.55f
                     drawRoundRect(
@@ -1538,7 +1538,7 @@ private fun ClockTemplateData.HighlighterTemplate(
             }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 AlarmAccessoryContent(nextAlarmText, mutedTextColor, family, modifier = bandModifier, fontSize = 19.sp)
-                BatteryAccessoryContent(batteryPercent, isCharging, mutedTextColor, accentColor, family, modifier = bandModifier, fontSize = 19.sp)
+                BatteryAccessoryContent(batteryPercent, isCharging, mutedTextColor, family, modifier = bandModifier, fontSize = 19.sp)
                 WeatherAccessoryContent(mutedTextColor, family, fontSize = 19.sp, modifier = bandModifier)
             }
         }
@@ -1570,7 +1570,7 @@ private fun ClockTemplateData.ColumnRuleTemplate(
             letterSpacing = 1.3.sp,
             modifier = Modifier.padding(top = 12.dp),
         )
-        ClockAccessoryRow(nextAlarmText, batteryPercent, isCharging, family, mutedTextColor, accentColor, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(top = 6.dp))
+        ClockAccessoryRow(nextAlarmText, batteryPercent, isCharging, family, mutedTextColor, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(top = 6.dp))
     }
 }
 
@@ -1580,9 +1580,9 @@ private fun ClockTemplateData.ColumnRuleDigits() {
     val hourFormatter = DateTimeFormatter.ofPattern(if (use24HourTime) "HH" else "h", locale)
     val minuteFormatter = DateTimeFormatter.ofPattern("mm", locale)
     Column(verticalArrangement = Arrangement.spacedBy((-24).dp)) {
-        HourText(now.format(hourFormatter), family, textColor, 74.sp, FontWeight.Light, letterSpacing = (-2.4).sp)
+        HourText(now.format(hourFormatter), family, textColor, 74.sp, fontWeight = FontWeight.Light, letterSpacing = (-2.4).sp)
         Row(verticalAlignment = Alignment.CenterVertically) {
-            MinuteText(now.format(minuteFormatter), family, textColor, 74.sp, FontWeight.Normal, letterSpacing = (-2.4).sp)
+            MinuteText(now.format(minuteFormatter), family, textColor, 74.sp, fontWeight = FontWeight.Normal, letterSpacing = (-2.4).sp)
             if (meridiem != null) MeridiemText(meridiem, family, textColor, Modifier.padding(start = 7.dp))
         }
     }
@@ -1597,7 +1597,7 @@ private fun ClockTemplateData.ColonMarkTemplate(
     val minuteFormatter = DateTimeFormatter.ofPattern("mm", locale)
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(14.dp), horizontalAlignment = horizontalAlignment) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            HourText(now.format(hourFormatter), family, textColor, 72.sp, FontWeight.Light)
+            HourText(now.format(hourFormatter), family, textColor, 72.sp, fontWeight = FontWeight.Light)
             Box(
                 modifier = Modifier
                     .padding(horizontal = 10.dp)
@@ -1606,9 +1606,9 @@ private fun ClockTemplateData.ColonMarkTemplate(
                     .padding(7.dp),
                 contentAlignment = Alignment.Center,
             ) {
-                OnSolidFill { SeparatorText(stringResource(R.string.clock_template_colon), family, Surface, 26.sp, FontWeight.Bold) }
+                OnSolidFill { SeparatorText(stringResource(R.string.clock_template_colon), family, Surface, 26.sp, fontWeight = FontWeight.Bold) }
             }
-            MinuteText(now.format(minuteFormatter), family, textColor, 72.sp, FontWeight.Light)
+            MinuteText(now.format(minuteFormatter), family, textColor, 72.sp, fontWeight = FontWeight.Light)
             if (meridiem != null) MeridiemText(meridiem, family, textColor, Modifier.padding(start = 7.dp))
         }
         TemplateDateText(now.format(dateFormatter(locale, dateStyle)), family, mutedTextColor)
@@ -1618,7 +1618,7 @@ private fun ClockTemplateData.ColonMarkTemplate(
                 if (nextAlarmText != null && batteryPercent != null) {
                     Box(modifier = Modifier.size(4.dp).clip(RoundedCornerShape(1.dp)).background(accentColor))
                 }
-                BatteryAccessoryContent(batteryPercent, isCharging, mutedTextColor, accentColor, family, fontSize = 19.sp)
+                BatteryAccessoryContent(batteryPercent, isCharging, mutedTextColor, family, fontSize = 19.sp)
                 if ((nextAlarmText != null || batteryPercent != null) && hasWeather) {
                     Box(modifier = Modifier.size(4.dp).clip(RoundedCornerShape(1.dp)).background(accentColor))
                 }
@@ -1646,7 +1646,7 @@ private fun ClockTemplateData.PillPairTemplate(
                         .background(accentColor, CircleShape)
                         .padding(horizontal = 14.dp, vertical = 7.dp),
                 ) {
-                    OnSolidFill { ClockGlyphText(meridiem, Surface, 16.sp, family, FontWeight.SemiBold, letterSpacing = 1.sp) }
+                    OnSolidFill { ClockGlyphText(meridiem, Surface, 16.sp, family, fontWeight = FontWeight.SemiBold, letterSpacing = 1.sp) }
                 }
             }
         }
@@ -1656,7 +1656,7 @@ private fun ClockTemplateData.PillPairTemplate(
             OnSolidFill {
                 Row(horizontalArrangement = Arrangement.spacedBy(7.dp)) {
                     AlarmAccessoryContent(nextAlarmText, mutedTextColor, family, fontSize = 14.sp, modifier = pillModifier)
-                    BatteryAccessoryContent(batteryPercent, isCharging, mutedTextColor, accentColor, family, fontSize = 14.sp, modifier = pillModifier)
+                    BatteryAccessoryContent(batteryPercent, isCharging, mutedTextColor, family, fontSize = 14.sp, modifier = pillModifier)
                     WeatherAccessoryContent(mutedTextColor, family, fontSize = 14.sp, modifier = pillModifier)
                 }
             }
@@ -1673,7 +1673,7 @@ private fun TimePill(text: String, family: FontFamily, color: Color, modifier: M
             .border(1.dp, Hairline, CircleShape)
             .padding(horizontal = 19.dp, vertical = 10.dp),
     ) {
-        OnSolidFill { ClockGlyphText(text, color, 46.sp, family, FontWeight.Light) }
+        OnSolidFill { ClockGlyphText(text, color, 46.sp, family, fontWeight = FontWeight.Light) }
     }
 }
 
@@ -1704,12 +1704,12 @@ private fun ClockTemplateData.ShelfCard(modifier: Modifier = Modifier) {
             horizontalArrangement = Arrangement.spacedBy(34.dp),
         ) {
             Row(verticalAlignment = Alignment.Bottom) {
-                ClockGlyphText(now.format(timeFormatter(use24HourTime, locale)), textColor, 55.sp, family, FontWeight.Light)
+                ClockGlyphText(now.format(timeFormatter(use24HourTime, locale)), textColor, 55.sp, family, fontWeight = FontWeight.Light)
                 if (meridiem != null) MeridiemText(meridiem, family, textColor, Modifier.padding(start = 5.dp, bottom = 5.dp))
             }
             Column(horizontalAlignment = Alignment.End) {
                 TemplateDateText(now.format(DateTimeFormatter.ofPattern("EEE", locale)).uppercase(locale), family, mutedTextColor, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 1.3.sp)
-                ClockGlyphText(now.format(DateTimeFormatter.ofPattern("d", locale)), textColor, 26.sp, family, FontWeight.Light)
+                ClockGlyphText(now.format(DateTimeFormatter.ofPattern("d", locale)), textColor, 26.sp, family, fontWeight = FontWeight.Light)
             }
         }
         if (hasAccessories) {
@@ -1720,7 +1720,7 @@ private fun ClockTemplateData.ShelfCard(modifier: Modifier = Modifier) {
             ) {
                 AlarmAccessoryContent(nextAlarmText, mutedTextColor, family)
                 WeatherAccessoryContent(mutedTextColor, family)
-                BatteryAccessoryContent(batteryPercent, isCharging, mutedTextColor, accentColor, family)
+                BatteryAccessoryContent(batteryPercent, isCharging, mutedTextColor, family)
             }
         }
     }
@@ -1739,7 +1739,7 @@ private fun ClockTemplateData.HalfImmersedTemplate(
                 textColor,
                 77.sp,
                 family,
-                FontWeight.Normal,
+                fontWeight = FontWeight.Normal,
                 modifier = Modifier
                     .graphicsLayer(compositingStrategy = CompositingStrategy.Offscreen)
                     .drawWithContent {
@@ -1759,7 +1759,7 @@ private fun ClockTemplateData.HalfImmersedTemplate(
         if (hasAccessories) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 Box(modifier = Modifier.size(width = 10.dp, height = 3.dp).clip(RoundedCornerShape(2.dp)).background(accentColor))
-                ClockAccessoryRow(nextAlarmText, batteryPercent, isCharging, family, mutedTextColor, accentColor, fontSize = 19.sp)
+                ClockAccessoryRow(nextAlarmText, batteryPercent, isCharging, family, mutedTextColor, fontSize = 19.sp)
             }
         }
     }
@@ -1784,17 +1784,17 @@ private fun ClockTemplateData.EchoTemplate(
                         accentColor.copy(alpha = alpha),
                         80.sp,
                         family,
-                        FontWeight.SemiBold,
+                        fontWeight = FontWeight.SemiBold,
                         modifier = Modifier.offset(x = -ECHO_STEP * step, y = -ECHO_STEP * step).clearAndSetSemantics {},
                         shadowed = false,
                     )
                 }
-                ClockGlyphText(timeText, textColor, 80.sp, family, FontWeight.SemiBold)
+                ClockGlyphText(timeText, textColor, 80.sp, family, fontWeight = FontWeight.SemiBold)
             }
             if (meridiem != null) MeridiemText(meridiem, family, textColor, Modifier.padding(start = 7.dp, bottom = 8.dp))
         }
         TemplateDateText(now.format(dateFormatter(locale, dateStyle)), family, mutedTextColor)
-        ClockAccessoryRow(nextAlarmText, batteryPercent, isCharging, family, mutedTextColor, accentColor, fontSize = 19.sp)
+        ClockAccessoryRow(nextAlarmText, batteryPercent, isCharging, family, mutedTextColor, fontSize = 19.sp)
     }
 }
 
@@ -1812,12 +1812,12 @@ private fun ClockTemplateData.DayLineTemplate(
     // Bounded to its widest child, so the line is as long as the time and date, not the screen (see RuleMeridiemTemplate).
     Column(modifier = modifier.width(IntrinsicSize.Max), horizontalAlignment = horizontalAlignment) {
         Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            ClockGlyphText(now.format(timeFormatter(use24HourTime, locale)), textColor, 82.sp, family, FontWeight.Normal)
+            ClockGlyphText(now.format(timeFormatter(use24HourTime, locale)), textColor, 82.sp, family, fontWeight = FontWeight.Normal)
             if (meridiem != null) MeridiemText(meridiem, family, textColor, Modifier.padding(bottom = 11.dp))
         }
         DayLine(fraction, accentColor, textColor, Modifier.padding(top = 18.dp).fillMaxWidth())
         TemplateDateText(now.format(dateFormatter(locale, dateStyle)), family, mutedTextColor, modifier = Modifier.padding(top = 12.dp))
-        ClockAccessoryRow(nextAlarmText, batteryPercent, isCharging, family, mutedTextColor, accentColor, modifier = Modifier.padding(top = 8.dp), fontSize = 19.sp)
+        ClockAccessoryRow(nextAlarmText, batteryPercent, isCharging, family, mutedTextColor, modifier = Modifier.padding(top = 8.dp), fontSize = 19.sp)
     }
 }
 
@@ -1853,7 +1853,7 @@ private fun ClockTemplateData.LiquidHourTemplate(
                 family,
                 textColor,
                 110.sp,
-                FontWeight.Black,
+                fontWeight = FontWeight.Black,
                 modifier = Modifier
                     .graphicsLayer(compositingStrategy = CompositingStrategy.Offscreen)
                     .drawWithContent {
@@ -1861,11 +1861,11 @@ private fun ClockTemplateData.LiquidHourTemplate(
                         liquidFillPath(size, minute / 60f)?.let { drawPath(it, liquid, blendMode = BlendMode.SrcIn) }
                     },
             )
-            MinuteText(":" + now.format(DateTimeFormatter.ofPattern("mm", locale)), family, textColor, 110.sp, FontWeight.Light)
+            MinuteText(":" + now.format(DateTimeFormatter.ofPattern("mm", locale)), family, textColor, 110.sp, fontWeight = FontWeight.Light)
             if (meridiem != null) MeridiemText(meridiem, family, textColor, Modifier.padding(start = 7.dp, bottom = 18.dp))
         }
         TemplateDateText(now.format(dateFormatter(locale, dateStyle)), family, mutedTextColor)
-        ClockAccessoryRow(nextAlarmText, batteryPercent, isCharging, family, mutedTextColor, accentColor, fontSize = 19.sp)
+        ClockAccessoryRow(nextAlarmText, batteryPercent, isCharging, family, mutedTextColor, fontSize = 19.sp)
     }
 }
 

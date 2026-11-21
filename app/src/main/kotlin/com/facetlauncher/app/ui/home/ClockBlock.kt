@@ -334,7 +334,7 @@ private fun ClockOrWidgetContent(
     onClockWidgetLeftoverScroll: (dxPx: Float, dyPx: Float) -> Unit,
     onClockWidgetNestedScrollStop: () -> Unit,
     onClockWidgetLeftoverFling: (velocityXPx: Float, velocityYPx: Float) -> Unit,
-    clockContentModifier: Modifier,
+    clockContentModifier: Modifier = Modifier,
 ) {
     if (nativeWidget != null && clockWidgetWidthDp != null && clockWidgetHeightDp != null) {
         NativeWidget(

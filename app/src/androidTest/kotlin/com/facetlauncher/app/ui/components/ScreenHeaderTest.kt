@@ -59,7 +59,7 @@ class ScreenHeaderTest {
             FacetLauncherTheme {
                 ink = Ink
                 muted = Muted
-                HubHeader(widgetCount = 3, columns = 5, isAtCapacity = false, onAddClick = {})
+                HubHeader(widgetCount = 3, isAtCapacity = false, onAddClick = {})
             }
         }
 

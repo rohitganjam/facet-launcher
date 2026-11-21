@@ -62,7 +62,7 @@ fun batteryIconState(percent: Int, isCharging: Boolean): BatteryIconState = when
  * while [BatteryIconState.CHARGING], otherwise a fill from near-full down to a thin sliver.
  */
 @Composable
-fun BatteryIcon(tint: Color, state: BatteryIconState = BatteryIconState.FULL, modifier: Modifier = Modifier) {
+fun BatteryIcon(tint: Color, modifier: Modifier = Modifier, state: BatteryIconState = BatteryIconState.FULL) {
     Canvas(modifier = modifier) {
         val sx = size.width / 16f
         val sy = size.height / 11f

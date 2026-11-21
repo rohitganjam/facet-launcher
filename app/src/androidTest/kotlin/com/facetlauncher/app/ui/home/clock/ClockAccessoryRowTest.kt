@@ -29,7 +29,6 @@ class ClockAccessoryRowTest {
                     isCharging = isCharging,
                     family = FontFamily.Default,
                     mutedColor = Muted,
-                    accentColor = Accent,
                 )
             }
         }
@@ -90,7 +89,6 @@ class ClockAccessoryRowTest {
                         isCharging = false,
                         family = FontFamily.Default,
                         mutedColor = Muted,
-                        accentColor = Accent,
                     )
                 }
             }
@@ -117,7 +115,6 @@ class ClockAccessoryRowTest {
                         isCharging = false,
                         family = FontFamily.Default,
                         mutedColor = Muted,
-                        accentColor = Accent,
                     )
                 }
             }

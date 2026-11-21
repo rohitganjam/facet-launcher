@@ -94,7 +94,6 @@ private fun HubContent(
             header = {
                 HubHeader(
                     widgetCount = uiState.widgetCount,
-                    columns = uiState.columns,
                     isAtCapacity = uiState.isAtCapacity,
                     onAddClick = onAddClick,
                 )
