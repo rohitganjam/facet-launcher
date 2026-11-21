@@ -47,7 +47,6 @@ import kotlinx.coroutines.launch
  * can never leave Home permanently blank, since unlike an ordinary app there is no "force quit and
  * reopen" for the actual home screen.
  */
-@Suppress("TooManyFunctions")
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val observeHomeScreenState: ObserveHomeScreenStateUseCase,

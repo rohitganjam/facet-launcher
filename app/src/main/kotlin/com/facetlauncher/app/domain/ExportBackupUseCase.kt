@@ -75,7 +75,6 @@ class ExportBackupUseCase @Inject constructor(
 }
 
 // One setting per line, so it grows with every setting; splitting it would only scatter the list.
-@Suppress("LongMethod")
 private fun LauncherSettings.toBackupSettings(activeFacetIndex: Int?): BackupSettings = BackupSettings(
     use24HourTime = use24HourTime,
     dockDisplayMode = dockDisplayMode.name,

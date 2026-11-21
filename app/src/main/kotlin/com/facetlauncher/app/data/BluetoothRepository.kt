@@ -1,6 +1,5 @@
 package com.facetlauncher.app.data
 
-import android.annotation.SuppressLint
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothManager
@@ -69,17 +68,20 @@ class BluetoothRepository @Inject constructor(
     }.distinctUntilChanged()
 
     /** Paired devices, by name. Empty without the permission or without Bluetooth. */
-    @SuppressLint("MissingPermission") // guarded by permissionGranted()
     suspend fun pairedDevices(): List<PairedBluetoothDevice> = withContext(ioDispatcher) {
         val adapter = bluetoothManager?.adapter?.takeIf { permissionGranted() }
-        adapter?.bondedDevices.orEmpty()
-            .map { PairedBluetoothDevice(address = it.address, name = it.name?.takeIf(String::isNotBlank) ?: it.address) }
-            .sortedBy { it.name.lowercase() }
+        try {
+            adapter?.bondedDevices.orEmpty()
+                .map { PairedBluetoothDevice(address = it.address, name = it.name?.takeIf(String::isNotBlank) ?: it.address) }
+                .sortedBy { it.name.lowercase() }
+        } catch (_: SecurityException) {
+            // The permission was taken away between the check and the call: no list.
+            emptyList()
+        }
     }
 }
 
 /** Mutable bookkeeping for one subscription. Everything is called from the main thread (broadcasts and profile callbacks). */
-@SuppressLint("MissingPermission") // only constructed after the permission check
 private class BluetoothConnectionTracker(
     private val context: Context,
     private val adapter: BluetoothAdapter,
@@ -116,7 +118,11 @@ private class BluetoothConnectionTracker(
             markKnown()
             return
         }
-        manager?.getConnectedDevices(BluetoothProfile.GATT)?.forEach { connected += it.address }
+        try {
+            manager?.getConnectedDevices(BluetoothProfile.GATT)?.forEach { connected += it.address }
+        } catch (_: SecurityException) {
+            // The permission was taken away since the check: no GATT links to report.
+        }
         QUERIED_PROFILES.forEach { profile ->
             val listener = object : BluetoothProfile.ServiceListener {
                 override fun onServiceConnected(profileId: Int, proxy: BluetoothProfile) {

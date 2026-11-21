@@ -19,6 +19,7 @@ import android.os.IBinder
 import android.os.Looper
 import android.view.WindowInsets
 import android.view.WindowManager
+import androidx.core.content.IntentCompat
 import com.facetlauncher.app.R
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
@@ -48,8 +49,7 @@ class ScreenCaptureService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         val resultCode = intent?.getIntExtra(EXTRA_RESULT_CODE, 0) ?: 0
-        @Suppress("DEPRECATION") // The typed overload needs API 33; minSdk is 30.
-        val consent: Intent? = intent?.getParcelableExtra(EXTRA_CONSENT)
+        val consent: Intent? = intent?.let { IntentCompat.getParcelableExtra(it, EXTRA_CONSENT, Intent::class.java) }
         startForeground(NOTIFICATION_ID, notification(), ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION)
         if (consent == null) {
             repository.deliver(null)

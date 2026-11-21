@@ -32,7 +32,6 @@ import kotlinx.coroutines.flow.first
  * membership live in [FolderRepository], this repository only owns *whether* a folder occupies a slot.
  */
 // One API over one table pair; it replaces four repositories that each had these same methods.
-@Suppress("TooManyFunctions")
 @Singleton
 class PlacementRepository @Inject constructor(
     private val appPlacementDao: AppPlacementDao,

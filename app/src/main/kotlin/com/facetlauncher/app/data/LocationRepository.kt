@@ -55,7 +55,6 @@ class LocationRepository @Inject constructor(
         }
     }
 
-    @Suppress("MissingPermission") // checked by isPermissionGranted() before any call; a revoked grant is caught below
     private suspend fun fresh(manager: LocationManager): Location? =
         if (!manager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)) {
             null
@@ -76,7 +75,7 @@ class LocationRepository @Inject constructor(
             }
         }
 
-    @Suppress("MissingPermission") // checked by isPermissionGranted() before any call
+    @Suppress("MissingPermission") // checked by isPermissionGranted() before any call; runCatching handles a revoked grant
     private fun lastKnown(manager: LocationManager): Location? =
         listOf(LocationManager.NETWORK_PROVIDER, LocationManager.PASSIVE_PROVIDER)
             .mapNotNull { provider -> runCatching { manager.getLastKnownLocation(provider) }.getOrNull() }

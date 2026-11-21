@@ -7,6 +7,7 @@ import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothManager
 import android.bluetooth.BluetoothProfile
 import android.content.Context
+import android.content.ContextWrapper
 import android.content.Intent
 import android.os.Looper
 import androidx.test.core.app.ApplicationProvider
@@ -14,6 +15,7 @@ import com.facetlauncher.app.data.model.PairedBluetoothDevice
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runCurrent
@@ -214,5 +216,50 @@ class BluetoothRepositoryTest {
         shadowOf(context as Application).denyPermissions(Manifest.permission.BLUETOOTH_CONNECT)
 
         assertEquals(emptyList<PairedBluetoothDevice>(), repository.pairedDevices())
+    }
+
+    // --- the permission is revoked between the check and the call ---
+
+    /** A context whose Bluetooth service is [adapter], which throws `SecurityException` from the calls that need the permission. */
+    private fun revokedContext(adapter: BluetoothAdapter): Context {
+        val manager = mock(BluetoothManager::class.java).also { `when`(it.adapter).thenReturn(adapter) }
+        return object : ContextWrapper(context) {
+            override fun getSystemService(name: String): Any? = if (name == Context.BLUETOOTH_SERVICE) manager else super.getSystemService(name)
+        }
+    }
+
+    @Test
+    fun `no paired devices are listed when the permission is revoked mid-call`() = runTest {
+        // Given the permission check passes but the adapter then refuses the call
+        val adapter = mock(BluetoothAdapter::class.java)
+        `when`(adapter.bondedDevices).thenThrow(SecurityException("revoked"))
+        val repository = BluetoothRepository(revokedContext(adapter), UnconfinedTestDispatcher(testScheduler))
+
+        // Then the list is empty rather than the call crashing
+        assertEquals(emptyList<PairedBluetoothDevice>(), repository.pairedDevices())
+    }
+
+    @Test
+    fun `connections still become known when the permission is revoked during the GATT query`() = runTest {
+        // Given the permission check passes, bluetooth is on, and the GATT query is refused
+        val adapter = mock(BluetoothAdapter::class.java)
+        `when`(adapter.isEnabled).thenReturn(true)
+        val manager = mock(BluetoothManager::class.java)
+        `when`(manager.adapter).thenReturn(adapter)
+        `when`(manager.getConnectedDevices(BluetoothProfile.GATT)).thenThrow(SecurityException("revoked"))
+        val repository = BluetoothRepository(
+            object : ContextWrapper(context) {
+                override fun getSystemService(name: String): Any? = if (name == Context.BLUETOOTH_SERVICE) manager else super.getSystemService(name)
+            },
+        )
+
+        // When observing connections
+        val results = mutableListOf<Set<String>?>()
+        val job = launch { repository.observeConnectedAddresses().collect { results.add(it) } }
+        idle()
+        job.cancel()
+
+        // Then the flow carries on: unknown first, then known with nothing connected, and it never fails
+        assertEquals(listOf(null, emptySet<String>()), results)
     }
 }

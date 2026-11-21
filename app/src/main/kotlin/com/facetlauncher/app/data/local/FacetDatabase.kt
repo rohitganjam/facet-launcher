@@ -29,7 +29,6 @@ import androidx.room.TypeConverters
 )
 @TypeConverters(Converters::class)
 // One abstract accessor per DAO, so the count grows with every table.
-@Suppress("TooManyFunctions")
 abstract class FacetDatabase : RoomDatabase() {
     abstract fun facetDao(): FacetDao
     abstract fun appPlacementDao(): AppPlacementDao

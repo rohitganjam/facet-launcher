@@ -20,6 +20,7 @@ import android.os.UserHandle
 import android.os.UserManager
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.core.content.ContextCompat
+import androidx.core.content.IntentCompat
 import androidx.core.graphics.drawable.toBitmap
 import com.facetlauncher.app.data.di.ApplicationScope
 import com.facetlauncher.app.data.di.DefaultDispatcher
@@ -518,12 +519,7 @@ class AppRepository @Inject constructor(
         val receiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context?, intent: Intent?) {
                 if (intent?.action != Intent.ACTION_MANAGED_PROFILE_REMOVED) return
-                val user = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                    intent.getParcelableExtra(Intent.EXTRA_USER, UserHandle::class.java)
-                } else {
-                    @Suppress("DEPRECATION")
-                    intent.getParcelableExtra(Intent.EXTRA_USER) as? UserHandle
-                }
+                val user = IntentCompat.getParcelableExtra(intent, Intent.EXTRA_USER, UserHandle::class.java)
                 user?.let { trySend(it) }
             }
         }

@@ -38,8 +38,7 @@ class EnsureCalendarColorsUseCaseTest {
 
     private suspend fun recordSaves() {
         `when`(settings.setCalendarColors(anyMap())).thenAnswer {
-            @Suppress("UNCHECKED_CAST")
-            saved = it.arguments[0] as Map<String, String>
+            saved = it.getArgument<Map<String, String>>(0)
             Unit
         }
     }

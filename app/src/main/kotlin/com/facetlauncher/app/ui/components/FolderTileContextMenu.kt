@@ -20,6 +20,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -63,9 +64,10 @@ fun FolderTileContextMenu(
 ) {
     var showRenameDialog by remember { mutableStateOf(false) }
     var quickAddState by remember(folder.id) { mutableStateOf(QuickAddState()) }
+    val currentRequestQuickAddState by rememberUpdatedState(onRequestQuickAddState)
 
     LaunchedEffect(expanded, folder.id) {
-        if (expanded) quickAddState = onRequestQuickAddState(folder)
+        if (expanded) quickAddState = currentRequestQuickAddState(folder)
     }
 
     LaunchedEffect(expanded) {

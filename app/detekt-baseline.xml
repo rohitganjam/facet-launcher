@@ -2,65 +2,23 @@
 <SmellBaseline>
   <ManuallySuppressedIssues/>
   <CurrentIssues>
-    <ID>ComposableNestingDepth:ContactConnectionsSheet.kt:@Composable fun ContactConnectionsSheet</ID>
-    <ID>ComposableNestingDepth:FacetCarouselScreen.kt:@Composable private fun AddFacetPage</ID>
-    <ID>ComposableNestingDepth:FacetCarouselScreen.kt:@Composable private fun FacetPreviewPage</ID>
-    <ID>ComposableNestingDepth:FolderContentsSheet.kt:@Composable fun FolderContentsSheet</ID>
     <ID>ComposableNestingDepth:HubGrid.kt:@Composable fun HubGrid</ID>
-    <ID>ComposableNestingDepth:HubWidgetPickerScreen.kt:@Composable internal fun HubWidgetPickerContent</ID>
-    <ID>ComposableParamOrder:ClockAccessoryIcons.kt:@Composable fun BatteryIcon</ID>
-    <ID>ComposableParamOrder:ClockTemplates.kt:@Composable fun ClockDisplay</ID>
-    <ID>ComposableParamOrder:ClockTemplates.kt:@Composable private fun ClockGlyphText</ID>
-    <ID>ComposableParamOrder:ClockTemplates.kt:@Composable private fun HourText</ID>
-    <ID>ComposableParamOrder:ClockTemplates.kt:@Composable private fun MinuteText</ID>
-    <ID>ComposableParamOrder:ClockTemplates.kt:@Composable private fun SeparatorText</ID>
-    <ID>ComposableParamOrder:ClockTemplates.kt:@Composable private fun TemplateDateText</ID>
-    <ID>ComposableParamOrder:HomeDrawerRoute.kt:@Composable fun HomeDrawerRoute</ID>
-    <ID>ComposableParamOrder:StickyHeaderLayout.kt:@Composable fun StickyHeaderLayout</ID>
-    <ID>CyclomaticComplexMethod:HomeDrawerRoute.kt:@Composable fun HomeDrawerRoute</ID>
     <ID>CyclomaticComplexMethod:HubGrid.kt:@Composable fun HubGrid</ID>
-    <ID>CyclomaticComplexMethod:ImportBackupUseCase.kt:ImportBackupUseCase$suspend operator fun invoke: ImportBackupResult</ID>
-    <ID>CyclomaticComplexMethod:OnboardingScreen.kt:@Composable fun OnboardingScreen</ID>
-    <ID>LambdaParameterInRestartableEffect:AppPickerScreen.kt:onResume: () -&gt; Unit = {}</ID>
-    <ID>LambdaParameterInRestartableEffect:ClockWidgetPickerScreen.kt:onDone: () -&gt; Unit</ID>
-    <ID>LambdaParameterInRestartableEffect:FolderTileContextMenu.kt:onRequestQuickAddState: suspend (Folder) -&gt; QuickAddState = { QuickAddState() }</ID>
-    <ID>LambdaParameterInRestartableEffect:HubWidgetPickerScreen.kt:onDone: () -&gt; Unit</ID>
-    <ID>LambdaParameterInRestartableEffect:NotificationAccessExplanationScreen.kt:onBack: () -&gt; Unit</ID>
-    <ID>LambdaParameterInRestartableEffect:UsageAccessExplanationScreen.kt:onBack: () -&gt; Unit</ID>
-    <ID>LongMethod:AppPickerScreen.kt:@Composable fun AppPickerScreen</ID>
-    <ID>LongMethod:AppSortControl.kt:@Composable fun AppSortControl</ID>
-    <ID>LongMethod:ContactConnectionsSheet.kt:@Composable fun ContactConnectionsSheet</ID>
-    <ID>LongMethod:FacetCarouselScreen.kt:@Composable private fun FacetCarouselContent</ID>
-    <ID>LongMethod:FacetCarouselScreen.kt:@Composable private fun FacetPreviewPage</ID>
-    <ID>LongMethod:FolderContentsSheet.kt:@Composable fun FolderContentsSheet</ID>
-    <ID>LongMethod:FolderTileContextMenu.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun FolderTileContextMenu</ID>
     <ID>LongMethod:HomeDrawerRoute.kt:@Composable fun HomeDrawerRoute</ID>
-    <ID>LongMethod:HomeSurfacePreview.kt:@Composable fun HomeSurfacePreview</ID>
     <ID>LongMethod:HubGrid.kt:@Composable fun HubGrid</ID>
-    <ID>LongMethod:OnboardingFacetsPage.kt:@Composable private fun FacetSwitchDemo</ID>
-    <ID>LongMethod:OnboardingScreen.kt:@Composable fun OnboardingScreen</ID>
     <ID>LoopWithTooManyJumpStatements:WidgetGrabGesture.kt:while</ID>
     <ID>MatchingDeclarationName:FacetNavHost.kt:FacetDestinations</ID>
     <ID>MatchingDeclarationName:FolderContentsSheet.kt:FolderSheetHeaderAction</ID>
     <ID>MatchingDeclarationName:OnboardingScreen.kt:OnboardingStep</ID>
-    <ID>ModifierNaming:ClockBlock.kt:clockContentModifier: Modifier</ID>
-    <ID>ModifierWithoutDefault:ClockBlock.kt:clockContentModifier: Modifier</ID>
-    <ID>ModifierWithoutDefault:ManageFacetsScreen.kt:dragHandleModifier: Modifier</ID>
+    <ID>ModifierNaming:ClockBlock.kt:clockContentModifier: Modifier = Modifier</ID>
     <ID>ReturnCount:DragReorderState.kt:DragReorderState$private fun onDrag</ID>
     <ID>ReturnCount:WallpaperRepository.kt:WallpaperRepository$private fun Drawable.toBitmapOrNull: Bitmap?</ID>
-    <ID>SwallowedException:LauncherAppWidgetHost.kt:LauncherAppWidgetHost$e: Exception</ID>
-    <ID>TooGenericExceptionCaught:LauncherAppWidgetHost.kt:LauncherAppWidgetHost$e: Exception</ID>
-    <ID>TooManyFunctions:AppearanceSettingsViewModel.kt:AppearanceSettingsViewModel : ViewModel</ID>
     <ID>UnstableCollections:DragReorderState.kt:List&lt;T&gt;</ID>
     <ID>UnstableCollections:LabeledDropdownRow.kt:List&lt;T&gt;</ID>
-    <ID>UnusedParameter:ClockAccessoryRow.kt:accentColor: Color</ID>
-    <ID>UnusedParameter:HubHeader.kt:columns: Int</ID>
-    <ID>UnusedParameter:OnboardingFacetsPage.kt:uiState: OnboardingUiState</ID>
     <ID>ViewModelForwarding:FacetNavHost.kt:HomeDrawerRoute( apps = apps, onAppClick = onAppClick, onNavigateToSettings = { navController.navigate(FacetDestinations.SETTINGS) }, onNavigateToFacetSettings = { facetId -&gt; navController.navigate(FacetDestinations.facetSettings(facetId)) }, onNavigateToManageFacets = { navController.navigate(FacetDestinations.FACET_MANAGE) }, onNavigateToFacetPro = { reason -&gt; navController.navigate(FacetDestinations.facetPro(reason)) }, onNavigateToNotificationAccessExplanation = { navController.navigate(FacetDestinations.NOTIFICATION_ACCESS_EXPLANATION) }, onNavigateToUnitsAndLocation = { navController.navigate(FacetDestinations.UNITS_AND_LOCATION) }, onNavigateToClockAccessories = { facetId -&gt; navController.navigate(FacetDestinations.clockAccessories(facetId)) }, onNavigateToPermissions = { navController.navigate(FacetDestinations.PERMISSIONS) }, onNavigateToWhatsNew = { navController.navigate(FacetDestinations.WHATS_NEW) }, onNavigateToWallpaperCapture = { navController.navigate(FacetDestinations.WALLPAPER_CAPTURE) }, onNavigateToClockStyle = { facetId -&gt; navController.navigate(FacetDestinations.facetClockStyleGallery(facetId)) }, onNavigateToClockStack = { navController.navigate(FacetDestinations.clockStack()) }, launcherViewModel = launcherViewModel, )</ID>
-    <ID>ViewModelForwarding:HomeDrawerRoute.kt:HomeAppVaultOverlay( overlays = overlays, viewModel = appVaultViewModel, onAppClick = { app -&gt; onAppClick(app) overlays.showAppVault = false coroutineScope.launch { swipe.drawer.close() } }, )</ID>
-    <ID>ViewModelForwarding:HomeDrawerRoute.kt:ClockWidgetPickerScreen( target = target, onDone = { overlays.showClockWidgetPicker = false }, viewModel = clockWidgetPickerViewModel, onConfigureNewWidget = { overlays.configureRef = it }, clockAvailable = homeUiState.clockStack.none { it.kind == ClockStackItemKind.CLOCK }, )</ID>
-    <ID>ViewModelForwarding:HomeDrawerRoute.kt:FacetCarouselScreen( isOpen = isFacetOpen, onFacetApply = { coroutineScope.launch { swipe.facet.close() } }, onEditFacet = onNavigateToFacetSettings, onReorderFacets = onNavigateToManageFacets, onNavigateToSettings = onNavigateToSettings, onOpenFacetPro = onNavigateToFacetPro, pagerDismissEdge = facetPagerDismissEdge, onDismissDrag = { deltaPx -&gt; swipe.facet.dragBy(deltaPx * facetDirection.fingerSign) }, onDismissDragEnd = { swipe.facet.settle() }, modifier = Modifier.fillMaxSize(), viewModel = facetViewModel, )</ID>
-    <ID>ViewModelForwarding:HomeDrawerRoute.kt:HubScreen( onAddClick = { overlays.showWidgetPicker = true }, onManageClick = {}, // wired once there's a dedicated manage flow modifier = Modifier.fillMaxSize().testTag("hub_screen"), viewModel = hubViewModel, nativeWidgets = NativeWidgetEnvironment( state = homeScreenState.nativeWidgets, actions = NativeWidgetActions( onOpenWeather = screenActions.clock.onOpenNativeWeather, onConfigure = screenActions.clock.onConfigureNativeWidget, onOpenEvent = screenActions.clock.onEventClick, media = screenActions.media, onRequestCalendarAccess = widgetAccess.requestCalendar, onRequestLocationAccess = widgetAccess.requestLocation, ), ), )</ID>
-    <ID>ViewModelForwarding:HomeDrawerRoute.kt:HubWidgetPickerScreen(onDone = { overlays.showWidgetPicker = false }, viewModel = widgetPickerViewModel, onConfigureNewWidget = { overlays.configureRef = it })</ID>
+    <ID>ViewModelInjection:HomeDrawerRoute.kt:val appVaultViewModel: AppVaultViewModel = hiltViewModel()</ID>
+    <ID>ViewModelInjection:HomeDrawerRoute.kt:val clockWidgetPickerViewModel: ClockWidgetPickerViewModel = hiltViewModel()</ID>
+    <ID>ViewModelInjection:HomeDrawerRoute.kt:val hubViewModel: HubViewModel = hiltViewModel()</ID>
+    <ID>ViewModelInjection:HomeDrawerRoute.kt:val widgetPickerViewModel: HubWidgetPickerViewModel = hiltViewModel()</ID>
   </CurrentIssues>
 </SmellBaseline>

@@ -5,13 +5,16 @@ import com.facetlauncher.app.data.model.LandscapeOverrides
 import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers
 
+/** A captor for a Kotlin lambda argument; the erased `Function1` class is the only thing Mockito can be given, hence the one cast. */
+@Suppress("UNCHECKED_CAST")
+private fun <T : Any> functionCaptor(): ArgumentCaptor<T> = ArgumentCaptor.forClass(Function1::class.java) as ArgumentCaptor<T>
+
 /**
  * Captures the transform handed to an `updateLandscape` call. Mockito's own `capture()` and `eq()` return null,
  * which Kotlin refuses for a non-null parameter, so these register the matcher and hand back a non-null stand-in.
  */
 class LandscapeTransformCaptor {
-    @Suppress("UNCHECKED_CAST")
-    private val captor = ArgumentCaptor.forClass(Function1::class.java) as ArgumentCaptor<(LandscapeOverrides) -> LandscapeOverrides>
+    private val captor = functionCaptor<(LandscapeOverrides) -> LandscapeOverrides>()
 
     /** Use inside `verify(...)`, in place of the transform argument. */
     fun capture(): (LandscapeOverrides) -> LandscapeOverrides {
@@ -35,8 +38,7 @@ fun <T> eqOf(value: T): T {
 
 /** The same stand-in for a clock placement change: register it in `verify(...)`, then apply what was captured. */
 class PlacementChangeCaptor {
-    @Suppress("UNCHECKED_CAST")
-    private val captor = ArgumentCaptor.forClass(Function1::class.java) as ArgumentCaptor<(ClockPlacement) -> ClockPlacement>
+    private val captor = functionCaptor<(ClockPlacement) -> ClockPlacement>()
 
     /** Use inside `verify(...)`, in place of the change argument. */
     fun capture(): (ClockPlacement) -> ClockPlacement {

@@ -477,8 +477,7 @@ class ImportBackupUseCaseTest {
         // Then the first keeps it, the second gets another, and "same" points at the first
         assertEquals("same", restored[0].uuid)
         assertTrue(restored[1].uuid.isNotBlank() && restored[1].uuid != "same")
-        @Suppress("UNCHECKED_CAST")
-        val facetIdByUuid = restoreCalls.single()[1] as Map<String, Long>
+        val facetIdByUuid = restoreCalls.single()[1] as Map<*, *>
         assertEquals(1L, facetIdByUuid["same"])
         assertEquals(2, facetIdByUuid.size)
     }
