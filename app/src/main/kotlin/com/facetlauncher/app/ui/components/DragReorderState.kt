@@ -65,8 +65,7 @@ class DragReorderState<T> internal constructor(
     private fun onDrag(key: Any, delta: Float) {
         dragOffset += delta
         val slot = slotSizePx.value
-        if (slot <= 0f) return
-        val shift = (dragOffset / slot).roundToInt()
+        val shift = if (slot > 0f) (dragOffset / slot).roundToInt() else 0
         if (shift == 0) return
         val list = items.value
         val currentIndex = list.indexOfFirst { itemKey(it) == key }

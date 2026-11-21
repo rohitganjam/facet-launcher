@@ -40,28 +40,33 @@ suspend fun PointerInputScope.detectGrabOrResizeGesture(
         var grabbed = false
         var accumulated = Offset.Zero
         var completedCleanly = true
-        while (true) {
+        var finished = false
+        while (!finished) {
             // Intercept every subsequent event in the Initial pass once long-press is achieved.
             val event = awaitPointerEvent(PointerEventPass.Initial)
             val change = event.changes.firstOrNull { it.id == longPress.id }
-            if (change == null) {
-                completedCleanly = false
-                break
-            }
-            if (change.changedToUpIgnoreConsumed()) {
-                change.consume()
-                break
-            }
-            val delta = change.positionChange()
-            change.consume()
-            if (grabbed) {
-                onDrag(delta)
-            } else {
-                accumulated += delta
-                if (accumulated.getDistance() > slop) {
-                    grabbed = true
-                    onDragStart()
-                    onDrag(accumulated)
+            when {
+                change == null -> {
+                    completedCleanly = false
+                    finished = true
+                }
+                change.changedToUpIgnoreConsumed() -> {
+                    change.consume()
+                    finished = true
+                }
+                else -> {
+                    val delta = change.positionChange()
+                    change.consume()
+                    if (grabbed) {
+                        onDrag(delta)
+                    } else {
+                        accumulated += delta
+                        if (accumulated.getDistance() > slop) {
+                            grabbed = true
+                            onDragStart()
+                            onDrag(accumulated)
+                        }
+                    }
                 }
             }
         }

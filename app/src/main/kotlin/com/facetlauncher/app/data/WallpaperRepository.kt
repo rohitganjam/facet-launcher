@@ -89,11 +89,9 @@ open class WallpaperRepository @Inject constructor(
         return copy.takeIf { matches }
     }
 
-    private fun Drawable.toBitmapOrNull(): Bitmap? {
-        (this as? BitmapDrawable)?.bitmap?.let { return it }
-        if (intrinsicWidth <= 0 || intrinsicHeight <= 0) return null
-        return runCatching { toBitmap() }.getOrNull()
-    }
+    private fun Drawable.toBitmapOrNull(): Bitmap? =
+        (this as? BitmapDrawable)?.bitmap
+            ?: if (intrinsicWidth > 0 && intrinsicHeight > 0) runCatching { toBitmap() }.getOrNull() else null
 
     private fun Bitmap.downscaled(): Bitmap {
         val longest = maxOf(width, height)
