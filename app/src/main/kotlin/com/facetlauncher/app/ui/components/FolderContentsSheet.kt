@@ -177,81 +177,25 @@ fun FolderContentsSheet(
                             .heightIn(min = minHeight, max = maxSheetHeight),
                     ) {
                         AppContextMenuDragHandle()
-                        Row(
-                            modifier = Modifier.fillMaxWidth().padding(
-                                start = if (headerAction is FolderSheetHeaderAction.AddHere) 12.dp else MENU_SIDE_PADDING,
-                                end = MENU_SIDE_PADDING - 12.dp,
-                                top = 8.dp,
-                                bottom = 8.dp,
-                            ),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            if (headerAction is FolderSheetHeaderAction.AddHere) {
-                                Icon(
-                                    imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
-                                    contentDescription = stringResource(R.string.content_description_back),
-                                    tint = Ink,
-                                    modifier = Modifier
-                                        .testTag("folder_contents_sheet_back")
-                                        .clickable(onClick = headerAction.onBack)
-                                        .padding(8.dp),
-                                )
-                            }
-                            if (showRecencyBadge) RecentlyInstalledIcon(size = AppIconSize.scaled()) else FolderTileGlyph(folder = folder)
-                            Column(modifier = Modifier.weight(1f).padding(horizontal = 16.dp)) {
-                                Text(
-                                    text = folder.name,
-                                    style = MaterialTheme.typography.titleLarge,
-                                    color = Ink,
-                                    maxLines = 2,
-                                    overflow = TextOverflow.Ellipsis,
-                                )
-                                Text(
-                                    text = pluralStringResource(R.plurals.folder_app_count, folder.apps.size, folder.apps.size),
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = Muted,
-                                )
-                            }
-                            when (headerAction) {
-                                is FolderSheetHeaderAction.Rename -> MenuIconButton(
-                                    icon = Icons.Outlined.DriveFileRenameOutline,
-                                    contentDescription = stringResource(R.string.action_rename),
-                                    tint = Muted,
-                                    onClick = { showRenameDialog = true },
-                                    modifier = Modifier.testTag("folder_contents_sheet_rename"),
-                                )
-                                is FolderSheetHeaderAction.AddHere -> TextActionButton(
-                                    text = stringResource(R.string.folder_add_to_folder),
-                                    onClick = headerAction.onAdd,
-                                    modifier = Modifier.testTag("folder_contents_sheet_add"),
-                                )
-                                FolderSheetHeaderAction.None -> Unit
-                            }
-                        }
+                        FolderSheetHeader(
+                            folder = folder,
+                            headerAction = headerAction,
+                            showRecencyBadge = showRecencyBadge,
+                            onRenameClick = { showRenameDialog = true },
+                        )
                         CardDivider()
-                        if (folder.apps.isEmpty()) {
-                            FolderContentsEmptyState()
-                        } else if (presentation == DrawerPresentation.GRID) {
-                            FolderContentsGrid(
-                                folder = folder,
-                                columns = gridColumns,
-                                displayMode = gridDisplayMode,
-                                onAppClick = { app -> onDismissRequest(); onAppClick(app) },
-                                appMenuNotifications = appMenuNotifications,
-                                onAppInfo = onAppInfo,
-                                onRemoveFromFolder = { app -> onRemoveFromFolder(folder.id, app) },
-                            )
-                        } else {
-                            FolderContentsList(
-                                folder = folder,
-                                onAppClick = { app -> onDismissRequest(); onAppClick(app) },
-                                appMenuNotifications = appMenuNotifications,
-                                onAppInfo = onAppInfo,
-                                onRemoveFromFolder = { app -> onRemoveFromFolder(folder.id, app) },
-                                showRecencyBadge = showRecencyBadge,
-                                onReorderApps = onReorderApps,
-                            )
-                        }
+                        FolderSheetBody(
+                            folder = folder,
+                            presentation = presentation,
+                            gridColumns = gridColumns,
+                            gridDisplayMode = gridDisplayMode,
+                            appMenuNotifications = appMenuNotifications,
+                            showRecencyBadge = showRecencyBadge,
+                            onAppClick = { app -> onDismissRequest(); onAppClick(app) },
+                            onAppInfo = onAppInfo,
+                            onRemoveFromFolder = { app -> onRemoveFromFolder(folder.id, app) },
+                            onReorderApps = onReorderApps,
+                        )
                     }
                 }
             }
@@ -269,6 +213,106 @@ fun FolderContentsSheet(
                 renameAction?.onRename?.invoke(folder.id, name)
             },
             onDismiss = { showRenameDialog = false },
+        )
+    }
+}
+
+/** The sheet's title row: an optional back chevron, the folder's glyph, name and app count, and the trailing rename or add action. */
+@Composable
+private fun FolderSheetHeader(
+    folder: Folder,
+    headerAction: FolderSheetHeaderAction,
+    showRecencyBadge: Boolean,
+    onRenameClick: () -> Unit,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(
+            start = if (headerAction is FolderSheetHeaderAction.AddHere) 12.dp else MENU_SIDE_PADDING,
+            end = MENU_SIDE_PADDING - 12.dp,
+            top = 8.dp,
+            bottom = 8.dp,
+        ),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        if (headerAction is FolderSheetHeaderAction.AddHere) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+                contentDescription = stringResource(R.string.content_description_back),
+                tint = Ink,
+                modifier = Modifier
+                    .testTag("folder_contents_sheet_back")
+                    .clickable(onClick = headerAction.onBack)
+                    .padding(8.dp),
+            )
+        }
+        if (showRecencyBadge) RecentlyInstalledIcon(size = AppIconSize.scaled()) else FolderTileGlyph(folder = folder)
+        Column(modifier = Modifier.weight(1f).padding(horizontal = 16.dp)) {
+            Text(
+                text = folder.name,
+                style = MaterialTheme.typography.titleLarge,
+                color = Ink,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Text(
+                text = pluralStringResource(R.plurals.folder_app_count, folder.apps.size, folder.apps.size),
+                style = MaterialTheme.typography.bodyMedium,
+                color = Muted,
+            )
+        }
+        when (headerAction) {
+            is FolderSheetHeaderAction.Rename -> MenuIconButton(
+                icon = Icons.Outlined.DriveFileRenameOutline,
+                contentDescription = stringResource(R.string.action_rename),
+                tint = Muted,
+                onClick = onRenameClick,
+                modifier = Modifier.testTag("folder_contents_sheet_rename"),
+            )
+            is FolderSheetHeaderAction.AddHere -> TextActionButton(
+                text = stringResource(R.string.folder_add_to_folder),
+                onClick = headerAction.onAdd,
+                modifier = Modifier.testTag("folder_contents_sheet_add"),
+            )
+            FolderSheetHeaderAction.None -> Unit
+        }
+    }
+}
+
+/** What's under the header: the empty-state message, or the apps as a grid or a list. */
+@Composable
+private fun FolderSheetBody(
+    folder: Folder,
+    presentation: DrawerPresentation,
+    gridColumns: Int,
+    gridDisplayMode: AppListGridDisplayMode,
+    appMenuNotifications: AppMenuNotifications,
+    showRecencyBadge: Boolean,
+    onAppClick: (AppInfo) -> Unit,
+    onAppInfo: (AppInfo) -> Unit,
+    onRemoveFromFolder: (AppInfo) -> Unit,
+    onReorderApps: ((List<AppInfo>) -> Unit)?,
+) {
+    if (folder.apps.isEmpty()) {
+        FolderContentsEmptyState()
+    } else if (presentation == DrawerPresentation.GRID) {
+        FolderContentsGrid(
+            folder = folder,
+            columns = gridColumns,
+            displayMode = gridDisplayMode,
+            onAppClick = onAppClick,
+            appMenuNotifications = appMenuNotifications,
+            onAppInfo = onAppInfo,
+            onRemoveFromFolder = onRemoveFromFolder,
+        )
+    } else {
+        FolderContentsList(
+            folder = folder,
+            onAppClick = onAppClick,
+            appMenuNotifications = appMenuNotifications,
+            onAppInfo = onAppInfo,
+            onRemoveFromFolder = onRemoveFromFolder,
+            showRecencyBadge = showRecencyBadge,
+            onReorderApps = onReorderApps,
         )
     }
 }

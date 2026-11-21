@@ -32,6 +32,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -108,14 +109,25 @@ fun AppPickerScreen(
 ) {
     // Local, not persisted — purely which section of this one visit is on screen.
     var selectedTab by remember { mutableStateOf(AppPickerTab.APPS) }
-    val lifecycleOwner = LocalLifecycleOwner.current
-
-    DisposableEffect(lifecycleOwner) {
-        val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_RESUME) onResume()
-        }
-        lifecycleOwner.lifecycle.addObserver(observer)
-        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    OnResumeEffect(onResume)
+    val appsList: @Composable (Modifier) -> Unit = { listModifier ->
+        AppPickerAppsList(
+            query = query,
+            selectedResults = selectedResults,
+            otherResults = otherResults,
+            selectedComponents = selectedComponents,
+            canAddMore = canAddMore,
+            canRemove = canRemove,
+            sortOption = sortOption,
+            sortDirection = sortDirection,
+            selectedSectionLabel = selectedSectionLabel,
+            tagPrefix = tagPrefix,
+            onQueryChange = onQueryChange,
+            onSortOptionChange = onSortOptionChange,
+            onSortDirectionToggle = onSortDirectionToggle,
+            onToggleApp = onToggleApp,
+            modifier = listModifier,
+        )
     }
 
     StickyHeaderLayout(
@@ -146,22 +158,7 @@ fun AppPickerScreen(
                         modifier = Modifier.weight(1f).fillMaxWidth(),
                     ) { key ->
                         if (key == AppPickerTab.APPS.name) {
-                            AppPickerAppsList(
-                                query = query,
-                                selectedResults = selectedResults,
-                                otherResults = otherResults,
-                                selectedComponents = selectedComponents,
-                                canAddMore = canAddMore,
-                                canRemove = canRemove,
-                                sortOption = sortOption,
-                                sortDirection = sortDirection,
-                                selectedSectionLabel = selectedSectionLabel,
-                                tagPrefix = tagPrefix,
-                                onQueryChange = onQueryChange,
-                                onSortOptionChange = onSortOptionChange,
-                                onSortDirectionToggle = onSortDirectionToggle,
-                                onToggleApp = onToggleApp,
-                            )
+                            appsList(Modifier)
                         } else {
                             AppPickerFoldersList(
                                 folders = folders,
@@ -174,27 +171,25 @@ fun AppPickerScreen(
                         }
                     }
                 } else {
-                    AppPickerAppsList(
-                        query = query,
-                        selectedResults = selectedResults,
-                        otherResults = otherResults,
-                        selectedComponents = selectedComponents,
-                        canAddMore = canAddMore,
-                        canRemove = canRemove,
-                        sortOption = sortOption,
-                        sortDirection = sortDirection,
-                        selectedSectionLabel = selectedSectionLabel,
-                        tagPrefix = tagPrefix,
-                        onQueryChange = onQueryChange,
-                        onSortOptionChange = onSortOptionChange,
-                        onSortDirectionToggle = onSortDirectionToggle,
-                        onToggleApp = onToggleApp,
-                        modifier = Modifier.weight(1f),
-                    )
+                    appsList(Modifier.weight(1f))
                 }
             }
         },
     )
+}
+
+/** Runs [onResume] each time the screen comes back to the foreground, always with the latest callback. */
+@Composable
+private fun OnResumeEffect(onResume: () -> Unit) {
+    val lifecycleOwner = LocalLifecycleOwner.current
+    val currentOnResume by rememberUpdatedState(onResume)
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) currentOnResume()
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
 }
 
 @Composable

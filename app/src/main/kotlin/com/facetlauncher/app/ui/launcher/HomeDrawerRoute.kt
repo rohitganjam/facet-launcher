@@ -1,109 +1,53 @@
 package com.facetlauncher.app.ui.launcher
 
-import com.facetlauncher.app.data.model.SwipeDirection
-import com.facetlauncher.app.ui.facets.PagerDismissEdge
 import androidx.activity.compose.LocalActivity
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.only
-import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.unit.dp
-import com.facetlauncher.app.ui.home.ClockPagerState
-import com.facetlauncher.app.ui.home.HomeLayoutMode
-import com.facetlauncher.app.ui.home.HomeLiveState
-import com.facetlauncher.app.ui.home.HomeScreenContent
-import com.facetlauncher.app.ui.home.HomeWidgetSizing
-import com.facetlauncher.app.data.model.ClockStackItemKind
-import com.facetlauncher.app.data.model.NativeWidgetRef
 import com.facetlauncher.app.ui.nativewidget.NativeWidgetAccessControls
-import com.facetlauncher.app.ui.nativewidget.NativeWidgetActions
-import com.facetlauncher.app.ui.nativewidget.NativeWidgetEnvironment
-import com.facetlauncher.app.ui.nativewidget.config.NativeWidgetConfigSheet
-import com.facetlauncher.app.ui.settings.CalendarSettingsSheet
 import com.facetlauncher.app.ui.nativewidget.rememberNativeWidgetAccess
-import com.facetlauncher.app.ui.nativewidget.withWeatherOverride
-import com.facetlauncher.app.ui.home.WallpaperCopyPillHost
 import com.facetlauncher.app.ui.home.WallpaperCopyPillViewModel
-import com.facetlauncher.app.ui.home.WhatsNewPillHost
 import com.facetlauncher.app.ui.home.WhatsNewPillViewModel
-import com.facetlauncher.app.ui.home.toHomeScreenState
-import com.facetlauncher.app.ui.home.visibleIndex
-import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.Animatable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
-import androidx.compose.runtime.withFrameNanos
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.scale
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.platform.LocalLifecycleOwner
-import androidx.compose.ui.platform.testTag
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.facetlauncher.app.data.model.AppInfo
 import com.facetlauncher.app.data.model.ProReason
-import com.facetlauncher.app.ui.components.AppMenuNotifications
 import com.facetlauncher.app.ui.components.LocalHomeSwipeGate
 import com.facetlauncher.app.ui.components.LocalIconGlassSamplesWallpaper
 import com.facetlauncher.app.ui.drawer.DrawerViewModel
 import com.facetlauncher.app.ui.drawer.PrivateSpaceViewModel
 import com.facetlauncher.app.ui.vault.AppVaultViewModel
-import com.facetlauncher.app.ui.facets.FacetCarouselScreen
-import com.facetlauncher.app.ui.facets.FacetCarouselViewModel
 import com.facetlauncher.app.ui.home.HomeMenuMode
-import com.facetlauncher.app.ui.home.ClockWidgetHostCache
-import com.facetlauncher.app.ui.home.HomeItemActions
 import com.facetlauncher.app.ui.home.HomeScreen
 import com.facetlauncher.app.ui.home.HomeViewModel
 import com.facetlauncher.app.ui.home.rememberHomeLandscapeSpace
 import com.facetlauncher.app.ui.home.rememberHomeLayoutMode
-import com.facetlauncher.app.ui.home.weather.WeatherSheet
 import com.facetlauncher.app.ui.home.weather.WeatherViewModel
-import com.facetlauncher.app.ui.home.widget.ClockWidgetPickerScreen
-import com.facetlauncher.app.ui.home.widget.ClockWidgetPickerTarget
 import com.facetlauncher.app.ui.home.widget.ClockWidgetPickerViewModel
-import com.facetlauncher.app.ui.hub.HubScreen
 import com.facetlauncher.app.ui.hub.HubViewModel
-import com.facetlauncher.app.ui.hub.picker.HubWidgetPickerScreen
 import com.facetlauncher.app.ui.hub.picker.HubWidgetPickerViewModel
 import com.facetlauncher.app.ui.launcher.HomeDrawerRoute
 import com.facetlauncher.app.ui.launcher.LauncherViewModel
-import com.facetlauncher.app.ui.theme.SystemBarsBackdrop
-import com.facetlauncher.app.ui.theme.LocalSystemBarsState
-import com.facetlauncher.app.ui.theme.SystemBarsBackdropEffect
-import com.facetlauncher.app.ui.theme.launcherSystemBarInsets
 import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.launch
 
 /**
  * Home with the Drawer, Hub and Switch Facets over it, as one route rather than NavHost
@@ -125,6 +69,8 @@ fun HomeDrawerRoute(
     onNavigateToFacetSettings: (facetId: Long) -> Unit,
     onNavigateToManageFacets: () -> Unit,
     onNavigateToFacetPro: (ProReason) -> Unit,
+    launcherViewModel: LauncherViewModel,
+    modifier: Modifier = Modifier,
     /** Opens one facet's clock style options, and the calendar settings of its clock. */
     onNavigateToClockStyle: (facetId: Long) -> Unit = { _ -> },
     onNavigateToClockStack: () -> Unit = {},
@@ -138,36 +84,24 @@ fun HomeDrawerRoute(
     onNavigateToWhatsNew: () -> Unit = {},
     /** Opens the capture screen, from the pill that says glass effects need a capture of this screen's wallpaper. */
     onNavigateToWallpaperCapture: () -> Unit = {},
-    modifier: Modifier = Modifier,
     homeViewModel: HomeViewModel = hiltViewModel(),
     whatsNewPillViewModel: WhatsNewPillViewModel = hiltViewModel(),
     wallpaperCopyPillViewModel: WallpaperCopyPillViewModel = hiltViewModel(),
     weatherViewModel: WeatherViewModel = hiltViewModel(),
     drawerViewModel: DrawerViewModel = hiltViewModel(),
     privateSpaceViewModel: PrivateSpaceViewModel = hiltViewModel(),
-    appVaultViewModel: AppVaultViewModel = hiltViewModel(),
-    hubViewModel: HubViewModel = hiltViewModel(),
     widgetAccess: NativeWidgetAccessControls = rememberNativeWidgetAccess(),
-    widgetPickerViewModel: HubWidgetPickerViewModel = hiltViewModel(),
-    clockWidgetPickerViewModel: ClockWidgetPickerViewModel = hiltViewModel(),
-    facetViewModel: FacetCarouselViewModel = hiltViewModel(),
-    launcherViewModel: LauncherViewModel,
 ) {
+    // Resolved here, not passed in: the screens below resolve the same instances, since they share this destination's store.
+    val appVaultViewModel: AppVaultViewModel = hiltViewModel()
+    val hubViewModel: HubViewModel = hiltViewModel()
+    val widgetPickerViewModel: HubWidgetPickerViewModel = hiltViewModel()
+    val clockWidgetPickerViewModel: ClockWidgetPickerViewModel = hiltViewModel()
     val homeUiState by homeViewModel.uiState.collectAsStateWithLifecycle()
     val weatherUiState by weatherViewModel.uiState.collectAsStateWithLifecycle()
-    val whatsNewVersion by whatsNewPillViewModel.version.collectAsStateWithLifecycle()
-    val wallpaperCopyOffer by wallpaperCopyPillViewModel.offer.collectAsStateWithLifecycle()
     val launcherUiState by launcherViewModel.uiState.collectAsStateWithLifecycle()
     val folders by drawerViewModel.folders.collectAsStateWithLifecycle()
-    val currentOnNavigateToNotificationAccess by rememberUpdatedState(onNavigateToNotificationAccessExplanation)
-    val appMenuNotifications = remember(drawerViewModel) {
-        AppMenuNotifications(
-            observe = drawerViewModel::observeAppNotifications,
-            onOpen = drawerViewModel::openNotification,
-            onDismiss = drawerViewModel::dismissNotifications,
-            onEnableAccess = { currentOnNavigateToNotificationAccess() },
-        )
-    }
+    val appMenuNotifications = rememberAppMenuNotifications(drawerViewModel, onNavigateToNotificationAccessExplanation)
 
     if (homeUiState.isLoading) {
         // Real Home state (dock/app list, theme-driven colors and fonts) hasn't loaded yet —
@@ -177,249 +111,48 @@ fun HomeDrawerRoute(
         return
     }
 
-    // Recents and Most used change while you're in other apps, so Home re-reads them whenever it resumes.
-    val lifecycleOwner = LocalLifecycleOwner.current
-    // Counts resumes so the orphaned-widget check re-runs: the app can be uninstalled while Home is away.
-    var resumeCount by remember { mutableIntStateOf(0) }
-    val hubHasWeather by hubViewModel.hasNativeWeather.collectAsStateWithLifecycle()
-    val weatherShown by rememberUpdatedState(homeUiState.style.clock.showWeather || homeUiState.showsNativeWeather || hubHasWeather)
-    DisposableEffect(lifecycleOwner) {
-        val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_RESUME) {
-                homeViewModel.refresh()
-                resumeCount++
-                weatherViewModel.onHomeResumed(weatherShown)
-            }
-        }
-        lifecycleOwner.lifecycle.addObserver(observer)
-        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
-    }
-    val coroutineScope = rememberCoroutineScope()
-    val focusManager = LocalFocusManager.current
-
-    var containerHeightPx by remember { mutableFloatStateOf(2000f) }
-    var containerWidthPx by remember { mutableFloatStateOf(1000f) }
-
-    val overlays = remember { HomeOverlayState() }
-    var homeMenuMode by remember { mutableStateOf(HomeMenuMode.NONE) }
-    // Landscape only: the clock pane scrolls its own content, so swiping up to open the drawer works on the apps side only.
-    var clockPaneBoundsInHomeRoot by remember { mutableStateOf<Rect?>(null) }
-    // Portrait only: everything above the divider. A horizontal drag in it or in the landscape clock pane turns the clock stack's pages.
-    var clockZoneBoundsInHomeRoot by remember { mutableStateOf<Rect?>(null) }
-    val currentHomeUiState by rememberUpdatedState(homeUiState)
-    val systemBarsState = LocalSystemBarsState.current
-    val swipe = remember {
-        HomeSwipeController(
-            containerHeightPx = { containerHeightPx },
-            containerWidthPx = { containerWidthPx },
-            coroutineScope = coroutineScope,
-            endClockAdjust = { homeMenuMode = HomeMenuMode.NONE },
-            // A hidden status bar comes back first; the next swipe-down (bar showing) opens the shade.
-            expandNotificationShade = {
-                if (systemBarsState?.revealStatusBar() != true) homeViewModel.expandNotificationShade()
-            },
-            clockPager = ClockPagerState(
-                pageCount = { currentHomeUiState.clockStack.size },
-                pageIndex = { currentHomeUiState.clockStack.visibleIndex(currentHomeUiState.visibleClockItemId) },
-                onPageChange = { index -> currentHomeUiState.clockStack.getOrNull(index)?.let { homeViewModel.onClockPageChange(it.id) } },
-                // The pane in landscape, where the clock page is the pane's width.
-                widthPx = { clockPaneBoundsInHomeRoot?.width ?: containerWidthPx },
-                coroutineScope = coroutineScope,
-            ),
-            isInClockZone = { position -> clockZoneBoundsInHomeRoot?.contains(position) == true || clockPaneBoundsInHomeRoot?.contains(position) == true },
-        )
-    }
-    LaunchedEffect(launcherUiState.swipeActions) { swipe.actions = launcherUiState.swipeActions }
-    // What's behind the system bars: wallpaper, except while an opaque picker or the always-dark Private Space covers it.
-    SystemBarsBackdropEffect(
-        when {
-            overlays.showPrivateSpace -> SystemBarsBackdrop.DARK_SURFACE
-            overlays.showWidgetPicker || overlays.showClockWidgetPicker || overlays.showAppVault -> SystemBarsBackdrop.THEME_SURFACE
-            else -> SystemBarsBackdrop.WALLPAPER
-        },
+    val state = rememberHomeRouteState()
+    val overlays = state.overlays
+    val swipe = rememberHomeSwipeController(
+        state = state,
+        expandNotificationShade = homeViewModel::expandNotificationShade,
+        onClockPageChange = homeViewModel::onClockPageChange,
+        homeUiState = homeUiState,
+        swipeActions = launcherUiState.swipeActions,
     )
-    var searchFocusRequest by remember { mutableIntStateOf(0) }
-    val homeSwipeGate = LocalHomeSwipeGate.current
-    LaunchedEffect(launcherViewModel) {
-        launcherViewModel.homePressedEvent.collect {
-            val onBareHome = launcherViewModel.homePressedWhileResumed && launcherViewModel.uiState.value.homeOpensSearch &&
-                homeSwipeGate?.isBlocked != true &&
-                swipe.drawer.progress.value == 0f && swipe.hub.progress.value == 0f && swipe.facet.progress.value == 0f &&
-                homeMenuMode == HomeMenuMode.NONE && !overlays.showWidgetPicker &&
-                !overlays.showClockWidgetPicker && !overlays.showPrivateSpace && !overlays.showAppVault
-            focusManager.clearFocus()
-            homeMenuMode = HomeMenuMode.NONE
-            overlays.showClockWidgetPicker = false
-            // Each close in its own job: a drag that interrupts one animation throws a
-            // CancellationException, which must end that job only — inline, it escaped `collect`
-            // and silently unsubscribed this collector, so Home stopped closing anything.
-            coroutineScope.launch { swipe.drawer.close() }
-            coroutineScope.launch { swipe.hub.close() }
-            coroutineScope.launch { swipe.facet.close() }
-            if (onBareHome) {
-                searchFocusRequest++
-                coroutineScope.launch { swipe.drawer.open() }
-            }
-        }
-    }
-    var draggingHandle by remember { mutableStateOf(false) }
-    // PRD F15 — reported by HomeScreen's own onClockWidgetBoundsChange; see its doc and
-    // detectHomeSwipeGestures' own shouldClaim param for why this exists.
-    var clockWidgetBoundsInHomeRoot by remember { mutableStateOf<Rect?>(null) }
-    // Reported by HomeScreen's own onAppListBoundsChange — same reasoning as
-    // clockWidgetBoundsInHomeRoot above, for the favorites/recents/most-used list's own scroll.
-    var appListBoundsInHomeRoot by remember { mutableStateOf<Rect?>(null) }
+    val open = rememberPanelsOpen(swipe)
+    val hubHasWeather by hubViewModel.hasNativeWeather.collectAsStateWithLifecycle()
+    val weatherShown = homeUiState.style.clock.showWeather || homeUiState.showsNativeWeather || hubHasWeather
+    HomeRouteEffects(
+        state = state,
+        swipe = swipe,
+        open = open,
+        hooks = HomeRouteEffectHooks(
+            onResume = {
+                homeViewModel.refresh()
+                state.resumeCount++
+                weatherViewModel.onHomeResumed(weatherShown)
+            },
+            homePresses = launcherViewModel.homePressedEvent,
+            homePressOpensSearch = { launcherViewModel.homePressedWhileResumed && launcherViewModel.uiState.value.homeOpensSearch },
+            onVaultBack = appVaultViewModel::onBack,
+        ),
+    )
     // A long-press sheet (app/folder context menu) is open — Home's swipes must not act on the
     // still-down finger that opened it, or on anything else, until it closes (back still works).
-    val homeSwipeBlocked = LocalHomeSwipeGate.current?.isBlocked == true
-    val context = LocalContext.current
-    val activity = LocalActivity.current
-
-    val isDrawerOpen by remember { derivedStateOf { swipe.drawer.progress.value > 0f } }
-    val isHubOpen by remember { derivedStateOf { swipe.hub.progress.value > 0f } }
-    val isFacetOpen by remember { derivedStateOf { swipe.facet.progress.value > 0f } }
-
-    val clockWidgetNeedsListening = homeUiState.clockStackWidgetIds.isNotEmpty()
-
-    // Clear focus whenever the drawer, hub, or facet carousel starts moving via a drag.
-    LaunchedEffect(swipe.drawer.dragActive, swipe.hub.dragActive, swipe.facet.dragActive) {
-        if (swipe.drawer.dragActive || swipe.hub.dragActive || swipe.facet.dragActive) {
-            focusManager.clearFocus()
-        }
-    }
-
-    // Cancel clock adjustment when navigating away from Home.
-    LaunchedEffect(isDrawerOpen, isHubOpen, isFacetOpen) {
-        if (isDrawerOpen || isHubOpen || isFacetOpen) {
-            homeMenuMode = HomeMenuMode.NONE
-        }
-    }
-
-    BackHandler(enabled = isDrawerOpen || isHubOpen || isFacetOpen || overlays.showWidgetPicker || overlays.showClockWidgetPicker || overlays.showPrivateSpace || overlays.showAppVault) {
-        focusManager.clearFocus()
-        when {
-            overlays.showClockWidgetPicker -> overlays.showClockWidgetPicker = false
-            overlays.showWidgetPicker -> overlays.showWidgetPicker = false
-            overlays.showAppVault -> if (!appVaultViewModel.onBack()) overlays.showAppVault = false
-            overlays.showPrivateSpace -> overlays.showPrivateSpace = false
-            isDrawerOpen -> coroutineScope.launch { swipe.drawer.close() }
-            isHubOpen -> coroutineScope.launch { swipe.hub.close() }
-            isFacetOpen -> coroutineScope.launch { swipe.facet.close() }
-        }
-    }
-
-    // Resolved once per widget id of the stack (getAppWidgetInfo is a real system query), so a neighboring page is sized like the visible one.
-    val stackWidgetIds = homeUiState.clockStackWidgetIds
-    val widgetHost = homeViewModel.clockWidgetHost
-    val widgetDefaultSizesDp = remember(stackWidgetIds) { stackWidgetIds.associateWith { widgetHost.defaultSizeDp(it) } }
-    val widgetResizeFloorsDp = remember(stackWidgetIds) { stackWidgetIds.associateWith { widgetHost.resizeFloorDp(context, it) } }
-    val widgetOrphans = remember(stackWidgetIds, resumeCount) { stackWidgetIds.associateWith { widgetHost.isOrphaned(it) } }
-    // Every widget page stays built, so a swipe re-attaches a view instead of inflating one.
-    val widgetHosts = remember { ClockWidgetHostCache { viewContext, id -> homeViewModel.clockWidgetHost.createHostView(viewContext, id) } }
-    LaunchedEffect(stackWidgetIds) {
-        widgetHosts.retainOnly(stackWidgetIds.toSet())
-        // One per frame, so building them never lands inside a swipe.
-        stackWidgetIds.filterNot(widgetHosts::has).forEach {
-            widgetHosts.get(context, it)
-            withFrameNanos { }
-        }
-    }
-    DisposableEffect(widgetHosts) { onDispose { widgetHosts.clear() } }
-    // The persisted size (once the user has actually resized) wins over the provider's own default.
-    // The layout mode, and everything that differs between orientations, resolved once: landscape's own
-    // values where saved, the portrait ones otherwise.
+    val homeSwipeGate = LocalHomeSwipeGate.current
+    val homeSwipeBlocked = homeSwipeGate?.isBlocked == true
     val homeLayoutMode = rememberHomeLayoutMode()
-    val homeLandscapeSpace = rememberHomeLandscapeSpace()
-
-    val appListNestedScroll = remember(swipe, homeSwipeBlocked) { swipe.appListNestedScroll(homeSwipeBlocked) }
-
-    val itemActions = HomeItemActions(
-        onAppClick = onAppClick,
-        onAppInfo = drawerViewModel::openAppInfo,
-        onRequestQuickAddState = { app -> homeViewModel.quickAddStateForApp(app) },
-        onFavoritesAction = drawerViewModel::onFavoritesAction,
-        onDockAction = drawerViewModel::onDockAction,
-        onRequestFolderQuickAddState = { folder -> homeViewModel.quickAddStateForFolder(folder) },
-        onFolderFavoritesAction = drawerViewModel::onFolderFavoritesAction,
-        onFolderDockAction = drawerViewModel::onFolderDockAction,
-        onCreateFolder = drawerViewModel::createFolder,
-        onAddToFolder = drawerViewModel::addToFolder,
-        onRemoveFromFolder = drawerViewModel::removeFromFolder,
-        onRenameFolder = drawerViewModel::renameFolder,
-        onReorderList = drawerViewModel::onReorderList,
-        onMoveGridItems = drawerViewModel::onMoveGridItems,
-        onReorderFolderApps = drawerViewModel::onReorderFolderApps,
-    )
-    val drawerState = rememberHomeDrawerState(drawerViewModel, appMenuNotifications)
-        .copy(apps = apps, workProfiles = launcherUiState.workProfiles, folders = folders)
-    val drawerActions = remember(drawerViewModel) { homeDrawerActions(drawerViewModel) }
-    val privateSpaceState = rememberHomePrivateSpaceState(
-        privateSpaceViewModel,
-        drawerState.privateSpaceState,
-        drawerState.settings.recentlyInstalledPosition,
-        drawerState.settings.drawerListItemSize,
-    )
-
-    val styledHomeScreenState = homeUiState.style.toHomeScreenState(
-        landscape = homeLayoutMode == HomeLayoutMode.LANDSCAPE,
-        settings = homeUiState.settings,
-        content = HomeScreenContent(
-            listItems = homeUiState.appListItems,
-            listCells = homeUiState.favoriteCells,
-            dockItems = homeUiState.dockApps,
-            calendarEvents = homeUiState.calendarEvents,
-            badgeCounts = homeUiState.badgeCounts,
-            appMenuNotifications = appMenuNotifications,
-            folderCandidates = folders,
-            showUsageListHint = homeUiState.showUsageListHint,
-            clockAccessories = homeUiState.clockAccessories,
-            mediaPlayer = homeUiState.mediaPlayer,
-            weather = weatherUiState.weather,
-            weatherRefreshing = weatherUiState.isRefreshing,
-        ),
-        widgetSizing = HomeWidgetSizing(
-            defaultSizeDp = { widgetDefaultSizesDp[it] },
-            resizeFloorDp = { widgetResizeFloorsDp[it] },
-            isOrphaned = { widgetOrphans[it] == true },
-        ),
-        live = HomeLiveState(
-            adjustMode = homeMenuMode,
-            draggingHandle = draggingHandle,
-            placementFacetId = homeUiState.activeFacet?.id,
-            visibleClockItemId = homeUiState.visibleClockItemId,
-            isPro = homeUiState.isPro,
-        ),
-    )
-    // Read by the swipe detector when a touch comes down, so it must not restart that detector.
-    val clockWidgetIsNative by rememberUpdatedState(styledHomeScreenState.widget?.nativeType != null)
-    val homeScreenState = styledHomeScreenState.copy(nativeWidgets = styledHomeScreenState.nativeWidgets.copy(access = widgetAccess.access, overrides = widgetAccess.overrides))
-    val openWeatherSheet: (NativeWidgetRef?) -> Unit = { ref ->
-        overlays.weatherSheetRef = ref
-        overlays.showWeatherSheet = true
-        weatherViewModel.refresh(userInitiated = false)
-    }
-    val builtScreenActions = homeScreenActions(
-        viewModel = homeViewModel,
-        inputs = HomeActionsInputs(homeUiState, homeLayoutMode, context, coroutineScope, widgetHosts),
+    val widgetData = rememberClockWidgetRouteData(homeUiState.clockStackWidgetIds.toImmutableList(), homeViewModel.clockWidgetHost, state.resumeCount)
+    val itemActions = homeItemActions(drawerViewModel, homeViewModel, onAppClick)
+    val stateInputs = HomeRouteStateInputs(homeUiState, weatherUiState, folders, appMenuNotifications, widgetData, homeLayoutMode, widgetAccess)
+    val homeScreenState = homeScreenState(stateInputs, state)
+    val screenActions = homeRouteScreenActions(
+        homeViewModel = homeViewModel,
+        weatherViewModel = weatherViewModel,
+        stateInputs = stateInputs,
         itemActions = itemActions,
         swipe = swipe,
-        hooks = HomeRouteHooks(
-            setAdjustMode = { homeMenuMode = it },
-            setDraggingHandle = { draggingHandle = it },
-            setClockWidgetBounds = { clockWidgetBoundsInHomeRoot = it },
-            setAppListBounds = { appListBoundsInHomeRoot = it },
-            setClockPaneBounds = { clockPaneBoundsInHomeRoot = it },
-            setClockZoneBounds = { clockZoneBoundsInHomeRoot = it },
-            openClockWidgetPicker = { itemId ->
-                overlays.clockWidgetPickerTarget = ClockWidgetPickerTarget.Replace(itemId)
-                overlays.showClockWidgetPicker = true
-            },
-            openAddClockWidgetPicker = { facetId ->
-                overlays.clockWidgetPickerTarget = ClockWidgetPickerTarget.Add(facetId)
-                overlays.showClockWidgetPicker = true
-            },
-            openWeather = { openWeatherSheet(null) },
-        ),
         navigation = HomeNavigation(
             toSettings = onNavigateToSettings,
             toFacetSettings = onNavigateToFacetSettings,
@@ -428,22 +161,24 @@ fun HomeDrawerRoute(
             toClockAccessories = onNavigateToClockAccessories,
             toClockStack = onNavigateToClockStack,
         ),
+        context = LocalContext.current,
+        coroutineScope = rememberCoroutineScope(),
+        state = state,
     )
-    val screenActions = builtScreenActions.copy(
-        clock = builtScreenActions.clock.copy(
-            onOpenNativeWeather = openWeatherSheet,
-            onConfigureNativeWidget = { overlays.configureRef = it },
-            onRequestCalendarAccess = widgetAccess.requestCalendar,
-            onRequestLocationAccess = widgetAccess.requestLocation,
-        ),
-    )
+    // Read by the swipe detector when a touch comes down, so it must not restart that detector.
+    val clockWidgetIsNative by rememberUpdatedState(homeScreenState.widget?.nativeType != null)
+    val appListNestedScroll = remember(swipe, homeSwipeBlocked) { swipe.appListNestedScroll(homeSwipeBlocked) }
+    val drawerState = rememberHomeDrawerState(drawerViewModel, appMenuNotifications)
+        .copy(apps = apps, workProfiles = launcherUiState.workProfiles, folders = folders)
+    val drawerActions = remember(drawerViewModel) { homeDrawerActions(drawerViewModel) }
+    val activity = LocalActivity.current
 
     Box(
         modifier = modifier
             .fillMaxSize()
             .onSizeChanged {
-                containerHeightPx = it.height.toFloat()
-                containerWidthPx = it.width.toFloat()
+                state.containerHeightPx = it.height.toFloat()
+                state.containerWidthPx = it.width.toFloat()
             },
     ) {
         CompositionLocalProvider(LocalIconGlassSamplesWallpaper provides true) {
@@ -451,7 +186,7 @@ fun HomeDrawerRoute(
                 state = homeScreenState,
                 actions = screenActions,
                 layoutMode = homeLayoutMode,
-                landscapeSpace = homeLandscapeSpace,
+                landscapeSpace = rememberHomeLandscapeSpace(),
                 // Marks the app as fully drawn once Home has faded in, so startup timing covers what the user sees.
                 onFullyReveal = { activity?.reportFullyDrawn() },
                 modifier = Modifier
@@ -459,8 +194,7 @@ fun HomeDrawerRoute(
                     .graphicsLayer {
                         // Home gives way to whichever panel (Drawer, Hub, Switch Facets) is opening, the same
                         // way for all three: fades out and shrinks slightly, leaving only the wallpaper and
-                        // the panel's own scrim.
-                        // The shade pull-down fades Home like the Drawer does.
+                        // the panel's own scrim. The shade pull-down fades Home like the Drawer does.
                         val fade = homeLayerFade(maxOf(swipe.drawer.progress.value, swipe.shade.progress.value), swipe.hub.progress.value, swipe.facet.progress.value)
                         alpha = fade.alpha
                         scaleX = fade.scale
@@ -468,187 +202,85 @@ fun HomeDrawerRoute(
                     }
                     // Receives the app list's own leftover vertical scroll once it bottoms/tops out.
                     .nestedScroll(appListNestedScroll)
-                    .pointerInput(draggingHandle, homeMenuMode, homeSwipeBlocked) {
+                    .homeSwipeInput(
+                        swipe = swipe,
+                        homeMenuMode = state.homeMenuMode,
                         // Suppress screen-wide gestures while dragging a handle or with a long-press sheet open.
-                        if (draggingHandle || homeSwipeBlocked) return@pointerInput
-                        if (homeMenuMode == HomeMenuMode.ADJUST) {
-                            // Only the clock pages turn. This runs after the handles in the pointer chain, so a handle keeps its own drags.
-                            detectHorizontalDragGestures(
-                                onDragStart = swipe::onAdjustDragStart,
-                                onDragEnd = swipe::onAdjustDragEnd,
-                                onDragCancel = swipe::onAdjustDragCancel,
-                                onHorizontalDrag = swipe::onAdjustDrag,
-                            )
-                            return@pointerInput
-                        }
-                        if (homeMenuMode != HomeMenuMode.NONE) return@pointerInput
-
-                        val claimAt = { position: Offset ->
-                            homeTouchClaim(position, clockWidgetBoundsInHomeRoot, clockWidgetIsNative, appListBoundsInHomeRoot, clockPaneBoundsInHomeRoot)
-                        }
-                        detectHomeSwipeGestures(
-                            isBlocked = { homeSwipeGate?.isBlocked == true },
-                            shouldClaim = { claimAt(it) == HomeTouchClaim.ALL },
-                            claimHorizontalOnly = { claimAt(it) == HomeTouchClaim.HORIZONTAL_ONLY },
-                            onDragStart = swipe::onPointerDragStart,
-                            onDragEnd = swipe::onPointerDragEnd,
-                            onDragCancel = swipe::cancel,
-                            onDrag = swipe::onPointerDrag,
-                        )
-                    },
+                        suppressed = state.draggingHandle || homeSwipeBlocked,
+                        isBlocked = { homeSwipeGate?.isBlocked == true },
+                        claimAt = { position ->
+                            homeTouchClaim(position, state.clockWidgetBounds, clockWidgetIsNative, state.appListBounds, state.clockPaneBounds)
+                        },
+                    ),
             )
         }
 
-        HomeHubOverlay(
-            hub = swipe.hub,
-            direction = swipe.hubDirection,
-            isHubOpen = isHubOpen,
-            clockWidgetNeedsListening = clockWidgetNeedsListening,
+        HomePanelOverlays(
+            swipe = swipe,
             overlays = overlays,
+            homeScreenState = homeScreenState,
+            screenActions = screenActions,
+            widgetAccess = widgetAccess,
+            drawerState = drawerState,
+            drawerActions = drawerActions,
+            itemActions = itemActions,
+            open = open,
+            searchFocusRequest = state.searchFocusRequest,
+            clockWidgetNeedsListening = homeUiState.clockStackWidgetIds.isNotEmpty(),
             onHubShow = hubViewModel::onHubVisible,
             onHubHide = hubViewModel::onHubHidden,
-        ) {
-            HubScreen(
-                onAddClick = { overlays.showWidgetPicker = true },
-                onManageClick = {}, // wired once there's a dedicated manage flow
-                modifier = Modifier.fillMaxSize().testTag("hub_screen"),
-                viewModel = hubViewModel,
-                nativeWidgets = NativeWidgetEnvironment(
-                    state = homeScreenState.nativeWidgets,
-                    actions = NativeWidgetActions(
-                        onOpenWeather = screenActions.clock.onOpenNativeWeather,
-                        onConfigure = screenActions.clock.onConfigureNativeWidget,
-                        onOpenEvent = screenActions.clock.onEventClick,
-                        media = screenActions.media,
-                        onRequestCalendarAccess = widgetAccess.requestCalendar,
-                        onRequestLocationAccess = widgetAccess.requestLocation,
-                    ),
-                ),
-            )
-        }
-        HomeAppDrawerOverlay(
-            state = drawerState,
-            actions = drawerActions,
-            itemActions = itemActions,
-            drawer = swipe.drawer,
-            direction = swipe.drawerDirection,
-            isDrawerOpen = isDrawerOpen,
-            overlays = overlays,
             onNavigateToSettings = onNavigateToSettings,
-            searchFocusRequest = searchFocusRequest,
         )
-        HomePrivateSpaceOverlay(
+        HomePickerOverlays(
+            swipe = swipe,
             overlays = overlays,
-            state = privateSpaceState,
-            onQueryChange = privateSpaceViewModel::onQueryChange,
-            onAppClick = { app ->
-                onAppClick(app)
-                overlays.showPrivateSpace = false
-                coroutineScope.launch { swipe.drawer.close() }
-            },
+            privateSpaceState = rememberHomePrivateSpaceState(
+                privateSpaceViewModel,
+                drawerState.privateSpaceState,
+                drawerState.settings.recentlyInstalledPosition,
+                drawerState.settings.drawerListItemSize,
+            ),
+            onAppClick = onAppClick,
+            onPrivateSpaceQueryChange = privateSpaceViewModel::onQueryChange,
+            onWidgetPickerReset = widgetPickerViewModel::reset,
         )
-        HomeAppVaultOverlay(
+        HomeFacetCarousel(
+            swipe = swipe,
+            isOpen = open.facet,
+            onNavigateToSettings = onNavigateToSettings,
+            onNavigateToFacetSettings = onNavigateToFacetSettings,
+            onNavigateToManageFacets = onNavigateToManageFacets,
+            onNavigateToFacetPro = onNavigateToFacetPro,
+        )
+        HomeClockWidgetPicker(overlays, homeUiState, onReset = clockWidgetPickerViewModel::reset)
+        HomeSheetOverlays(
             overlays = overlays,
-            viewModel = appVaultViewModel,
-            onAppClick = { app ->
-                onAppClick(app)
-                overlays.showAppVault = false
-                coroutineScope.launch { swipe.drawer.close() }
-            },
+            homeUiState = homeUiState,
+            weatherUiState = weatherUiState,
+            widgetAccess = widgetAccess,
+            homeMenuMode = state.homeMenuMode,
+            onCloseCalendarSettings = { state.homeMenuMode = HomeMenuMode.NONE },
+            onRefreshWeather = { weatherViewModel.refresh() },
+            onNavigateToClockAccessories = onNavigateToClockAccessories,
+            onNavigateToUnitsAndLocation = onNavigateToUnitsAndLocation,
+            onNavigateToPermissions = onNavigateToPermissions,
         )
-        HomeWidgetPickerOverlay(overlays, onReset = widgetPickerViewModel::reset) {
-            HubWidgetPickerScreen(onDone = { overlays.showWidgetPicker = false }, viewModel = widgetPickerViewModel, onConfigureNewWidget = { overlays.configureRef = it })
-        }
-        val facetDirection = swipe.facetDirection
-        // A carousel that came in from a side is dismissed by its pager's edge page; one from above or below by its surface.
-        val facetPagerDismissEdge = when (facetDirection) {
-            SwipeDirection.LEFT -> PagerDismissEdge.FIRST
-            SwipeDirection.RIGHT -> PagerDismissEdge.LAST
-            else -> null
-        }
-        HomeFacetCarouselOverlay(swipe.facet, facetDirection, isOpen = isFacetOpen) {
-            FacetCarouselScreen(
-                isOpen = isFacetOpen,
-                onFacetApply = { coroutineScope.launch { swipe.facet.close() } },
-                onEditFacet = onNavigateToFacetSettings,
-                onReorderFacets = onNavigateToManageFacets,
-                onNavigateToSettings = onNavigateToSettings,
-                onOpenFacetPro = onNavigateToFacetPro,
-                pagerDismissEdge = facetPagerDismissEdge,
-                onDismissDrag = { deltaPx -> swipe.facet.dragBy(deltaPx * facetDirection.fingerSign) },
-                onDismissDragEnd = { swipe.facet.settle() },
-                modifier = Modifier.fillMaxSize(),
-                viewModel = facetViewModel,
-            )
-        }
-        HomeClockWidgetPickerOverlay(overlays, onReset = clockWidgetPickerViewModel::reset) { target ->
-            ClockWidgetPickerScreen(
-                target = target,
-                onDone = { overlays.showClockWidgetPicker = false },
-                viewModel = clockWidgetPickerViewModel,
-                onConfigureNewWidget = { overlays.configureRef = it },
-                clockAvailable = homeUiState.clockStack.none { it.kind == ClockStackItemKind.CLOCK },
-            )
-        }
-        if (overlays.showWeatherSheet) {
-            val sheetRef = overlays.weatherSheetRef
-            WeatherSheet(
-                uiState = weatherUiState.copy(iconStyle = homeUiState.style.clock.weatherIconStyle).withWeatherOverride(sheetRef?.let { widgetAccess.overrides[it] }),
-                onConfigure = if (sheetRef != null) {
-                    {
-                        overlays.showWeatherSheet = false
-                        overlays.configureRef = sheetRef
-                    }
-                } else {
-                    // The clock's own weather: its settings are the active facet's Clock accessories.
-                    {
-                        overlays.showWeatherSheet = false
-                        onNavigateToClockAccessories(homeUiState.activeFacet?.id)
-                    }
-                },
-                onRefresh = { weatherViewModel.refresh() },
-                onDismiss = { overlays.showWeatherSheet = false },
-                onChooseCity = {
-                    overlays.showWeatherSheet = false
-                    onNavigateToUnitsAndLocation()
-                },
-                onOpenPermissions = {
-                    overlays.showWeatherSheet = false
-                    onNavigateToPermissions()
-                },
-            )
-        }
-        if (homeMenuMode == HomeMenuMode.CALENDAR_SETTINGS) {
-            homeUiState.activeFacet?.let { facet -> CalendarSettingsSheet(facetId = facet.id, onDismiss = { homeMenuMode = HomeMenuMode.NONE }) }
-        }
-        overlays.configureRef?.let { ref -> NativeWidgetConfigSheet(ref = ref, onDismiss = { overlays.configureRef = null }) }
-        HomeOneTimePrompts(
-            showSetDefaultPrompt = homeUiState.showSetDefaultPrompt,
-            showGestureHint = homeUiState.showGestureHint,
-            homeAtRest = !isDrawerOpen && !isHubOpen && !isFacetOpen,
-            requestDefaultLauncherIntent = homeViewModel::requestDefaultLauncherIntent,
-            onFinishSetDefault = homeViewModel::dismissSetDefaultPrompt,
-            onDismissGestureHint = homeViewModel::dismissGestureHint,
-        )
-        // Hovers over Home, below the status bar, without moving anything; waits for the first-run prompts and a resting Home.
-        WhatsNewPillHost(
-            version = whatsNewVersion,
-            ready = homeUiState.firstRunPromptsDone && !isDrawerOpen && !isHubOpen && !isFacetOpen,
-            onShow = whatsNewPillViewModel::onShown,
-            onOpen = onNavigateToWhatsNew,
-            modifier = Modifier.align(Alignment.TopCenter)
-                .windowInsetsPadding(launcherSystemBarInsets().only(WindowInsetsSides.Top))
-                .padding(top = 12.dp),
-        )
-        // Same spot as the What's new pill, which goes first.
-        WallpaperCopyPillHost(
-            offer = wallpaperCopyOffer,
-            ready = homeUiState.firstRunPromptsDone && whatsNewVersion == null && !isDrawerOpen && !isHubOpen && !isFacetOpen,
-            onShow = wallpaperCopyPillViewModel::onShown,
-            onOpen = onNavigateToWallpaperCapture,
-            modifier = Modifier.align(Alignment.TopCenter)
-                .windowInsetsPadding(launcherSystemBarInsets().only(WindowInsetsSides.Top))
-                .padding(top = 12.dp),
+        val whatsNewVersion by whatsNewPillViewModel.version.collectAsStateWithLifecycle()
+        val wallpaperCopyOffer by wallpaperCopyPillViewModel.offer.collectAsStateWithLifecycle()
+        HomePromptOverlays(
+            homeUiState = homeUiState,
+            open = open,
+            whatsNewVersion = whatsNewVersion,
+            wallpaperCopyOffer = wallpaperCopyOffer,
+            prompts = HomePromptActions(
+                requestDefaultLauncherIntent = homeViewModel::requestDefaultLauncherIntent,
+                onFinishSetDefault = homeViewModel::dismissSetDefaultPrompt,
+                onDismissGestureHint = homeViewModel::dismissGestureHint,
+                onWhatsNewShown = whatsNewPillViewModel::onShown,
+                onOpenWhatsNew = onNavigateToWhatsNew,
+                onWallpaperCopyShown = wallpaperCopyPillViewModel::onShown,
+                onOpenWallpaperCapture = onNavigateToWallpaperCapture,
+            ),
         )
     }
 }

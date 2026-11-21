@@ -4,6 +4,8 @@ import android.content.Intent
 import android.content.res.Configuration
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.ContentTransform
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -124,99 +126,130 @@ fun ContactConnectionsSheet(
 
             AnimatedContent(
                 targetState = disambiguating,
-                transitionSpec = {
-                    if (targetState != null) {
-                        (slideInHorizontally(animationSpec = tween(280)) { it } + fadeIn())
-                            .togetherWith(slideOutHorizontally(animationSpec = tween(280)) { -it } + fadeOut())
-                    } else {
-                        (slideInHorizontally(animationSpec = tween(280)) { -it } + fadeIn())
-                            .togetherWith(slideOutHorizontally(animationSpec = tween(280)) { it } + fadeOut())
-                    }
-                },
+                transitionSpec = { connectionsPageTransition() },
                 label = "contact_connections_sheet_page",
             ) { target ->
                 if (target == null) {
-                    Column(modifier = Modifier.onSizeChanged { mainContentHeightPx = it.height }) {
-                        Text(
-                            text = contactName,
-                            style = MaterialTheme.typography.titleMedium,
-                            color = Ink,
-                            modifier = Modifier.padding(start = 24.dp, end = 24.dp, bottom = 4.dp),
-                        )
-                        Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
-                            ConnectionRow(
-                                icon = Icons.Default.Person,
-                                iconBitmap = null,
-                                label = stringResource(R.string.contact_connections_view_contact),
-                                subtitle = null,
-                                onClick = onViewContactClick,
-                                testTag = "contact_connection_view_contact",
-                            )
-                            connections.forEach { connection ->
-                                CardDivider(modifier = Modifier.padding(horizontal = 24.dp))
-                                ConnectionRow(
-                                    icon = connection.type.fallbackIcon(),
-                                    iconBitmap = connection.icon,
-                                    label = connection.label,
-                                    subtitle = when (val detail = connection.detail) {
-                                        is ConnectionDetail.Single -> detail.subtitle()
-                                        is ConnectionDetail.Multiple -> stringResource(R.string.contact_connections_multiple_options)
-                                    },
-                                    onClick = {
-                                        when (val detail = connection.detail) {
-                                            is ConnectionDetail.Single -> onConnectionClick(detail.intent)
-                                            is ConnectionDetail.Multiple -> disambiguating = connection
-                                        }
-                                    },
-                                    testTag = "contact_connection_${connection.type.name.lowercase()}_${connection.label.lowercase()}",
-                                )
-                            }
-                            Box(modifier = Modifier.padding(bottom = 24.dp))
-                        }
-                    }
+                    ConnectionsMainPage(
+                        contactName = contactName,
+                        connections = connections,
+                        onViewContactClick = onViewContactClick,
+                        onConnectionClick = onConnectionClick,
+                        onDisambiguate = { disambiguating = it },
+                        modifier = Modifier.onSizeChanged { mainContentHeightPx = it.height },
+                    )
                 } else {
-                    val options = (target.detail as? ConnectionDetail.Multiple)?.options.orEmpty()
-                    Column {
-                        Row(
-                            modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
-                                contentDescription = stringResource(R.string.content_description_back),
-                                tint = Ink,
-                                modifier = Modifier
-                                    .testTag("contact_connections_back")
-                                    .clickable(onClick = { disambiguating = null })
-                                    .padding(8.dp),
-                            )
-                            Text(
-                                text = target.label,
-                                style = MaterialTheme.typography.titleMedium,
-                                color = Ink,
-                                modifier = Modifier.padding(start = 4.dp),
-                            )
-                        }
-                        Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
-                            options.forEachIndexed { index, option ->
-                                if (index > 0) CardDivider(modifier = Modifier.padding(horizontal = 24.dp))
-                                ConnectionRow(
-                                    icon = target.type.fallbackIcon(),
-                                    iconBitmap = target.icon,
-                                    // The type (Mobile/Home/Work/...) is what actually tells two
-                                    // options apart at a glance — the raw number/address is the
-                                    // subtitle, same relationship as the main list's rows.
-                                    label = option.typeLabel ?: stringResource(R.string.contact_connections_other),
-                                    subtitle = option.value,
-                                    onClick = { onConnectionClick(option.intent) },
-                                    testTag = "contact_connection_option_${index}",
-                                )
-                            }
-                            Box(modifier = Modifier.padding(bottom = 24.dp))
-                        }
-                    }
+                    ConnectionsOptionsPage(
+                        target = target,
+                        onBack = { disambiguating = null },
+                        onConnectionClick = onConnectionClick,
+                    )
                 }
             }
+        }
+    }
+}
+
+/** Slides toward the disambiguation page when it opens and back the other way when it closes. */
+private fun AnimatedContentTransitionScope<ContactConnection?>.connectionsPageTransition(): ContentTransform =
+    if (targetState != null) {
+        (slideInHorizontally(animationSpec = tween(280)) { it } + fadeIn())
+            .togetherWith(slideOutHorizontally(animationSpec = tween(280)) { -it } + fadeOut())
+    } else {
+        (slideInHorizontally(animationSpec = tween(280)) { -it } + fadeIn())
+            .togetherWith(slideOutHorizontally(animationSpec = tween(280)) { it } + fadeOut())
+    }
+
+/** The main list: the contact's name, "View contact", and one row per connection. */
+@Composable
+private fun ConnectionsMainPage(
+    contactName: String,
+    connections: ImmutableList<ContactConnection>,
+    onViewContactClick: () -> Unit,
+    onConnectionClick: (Intent) -> Unit,
+    onDisambiguate: (ContactConnection) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(modifier = modifier) {
+        Text(
+            text = contactName,
+            style = MaterialTheme.typography.titleMedium,
+            color = Ink,
+            modifier = Modifier.padding(start = 24.dp, end = 24.dp, bottom = 4.dp),
+        )
+        Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+            ConnectionRow(
+                icon = Icons.Default.Person,
+                iconBitmap = null,
+                label = stringResource(R.string.contact_connections_view_contact),
+                subtitle = null,
+                onClick = onViewContactClick,
+                testTag = "contact_connection_view_contact",
+            )
+            connections.forEach { connection ->
+                CardDivider(modifier = Modifier.padding(horizontal = 24.dp))
+                ConnectionRow(
+                    icon = connection.type.fallbackIcon(),
+                    iconBitmap = connection.icon,
+                    label = connection.label,
+                    subtitle = when (val detail = connection.detail) {
+                        is ConnectionDetail.Single -> detail.subtitle()
+                        is ConnectionDetail.Multiple -> stringResource(R.string.contact_connections_multiple_options)
+                    },
+                    onClick = {
+                        when (val detail = connection.detail) {
+                            is ConnectionDetail.Single -> onConnectionClick(detail.intent)
+                            is ConnectionDetail.Multiple -> onDisambiguate(connection)
+                        }
+                    },
+                    testTag = "contact_connection_${connection.type.name.lowercase()}_${connection.label.lowercase()}",
+                )
+            }
+            Box(modifier = Modifier.padding(bottom = 24.dp))
+        }
+    }
+}
+
+/** The disambiguation page: a back chevron and the connection's name, then one row per phone number or address. */
+@Composable
+private fun ConnectionsOptionsPage(target: ContactConnection, onBack: () -> Unit, onConnectionClick: (Intent) -> Unit) {
+    val options = (target.detail as? ConnectionDetail.Multiple)?.options.orEmpty()
+    Column {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+                contentDescription = stringResource(R.string.content_description_back),
+                tint = Ink,
+                modifier = Modifier
+                    .testTag("contact_connections_back")
+                    .clickable(onClick = onBack)
+                    .padding(8.dp),
+            )
+            Text(
+                text = target.label,
+                style = MaterialTheme.typography.titleMedium,
+                color = Ink,
+                modifier = Modifier.padding(start = 4.dp),
+            )
+        }
+        Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+            options.forEachIndexed { index, option ->
+                if (index > 0) CardDivider(modifier = Modifier.padding(horizontal = 24.dp))
+                ConnectionRow(
+                    icon = target.type.fallbackIcon(),
+                    iconBitmap = target.icon,
+                    // The type (Mobile/Home/Work/...) is what actually tells two options apart at a glance;
+                    // the raw number or address is the subtitle, as in the main list's rows.
+                    label = option.typeLabel ?: stringResource(R.string.contact_connections_other),
+                    subtitle = option.value,
+                    onClick = { onConnectionClick(option.intent) },
+                    testTag = "contact_connection_option_$index",
+                )
+            }
+            Box(modifier = Modifier.padding(bottom = 24.dp))
         }
     }
 }

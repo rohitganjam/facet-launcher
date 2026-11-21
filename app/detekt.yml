@@ -107,7 +107,8 @@ potential-bugs:
   UnsafeCallOnNullableType: { active: true }
 complexity:
   active: true
-  LongMethod: { active: true }
+  # 80 lines (detekt's default is 60): a Compose screen that lays out its sections inline reads fine at that length.
+  LongMethod: { active: true, allowedLines: 80 }
   # Private helpers don't count, and the limit is 20 (not 11): a screen file or class that reads well can hold that many. The data
   # repositories and `Converters` are exempt: one setter per setting or column is their design (SettingsRepository has ~80).
   TooManyFunctions:

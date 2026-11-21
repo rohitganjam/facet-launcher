@@ -25,6 +25,7 @@ import androidx.compose.ui.input.pointer.PointerInputScope
 import androidx.compose.ui.input.pointer.changedToUpIgnoreConsumed
 import androidx.compose.ui.input.pointer.positionChange
 import androidx.compose.ui.unit.dp
+import com.facetlauncher.app.ui.home.HomeMenuMode
 import com.facetlauncher.app.ui.theme.FACET_TRANSITION_DURATION_MS
 import com.facetlauncher.app.ui.theme.FacetTransitionEasing
 import kotlin.math.abs
@@ -302,3 +303,37 @@ internal fun panelCloseNestedScroll(panel: SwipeAxisState, direction: SwipeDirec
             return if (direction.isVertical) Velocity(0f, available.y) else Velocity(available.x, 0f)
         }
     }
+
+/**
+ * The screen-wide Home swipes. Off while a handle is being dragged or a long-press sheet is open. In adjust mode only the clock pages
+ * turn, and in any other menu mode nothing does. [claimAt] says, for a touch that comes down, which of the gestures that spot gives up.
+ */
+internal fun Modifier.homeSwipeInput(
+    swipe: HomeSwipeController,
+    homeMenuMode: HomeMenuMode,
+    suppressed: Boolean,
+    isBlocked: () -> Boolean,
+    claimAt: (Offset) -> HomeTouchClaim,
+): Modifier = pointerInput(suppressed, homeMenuMode) {
+    if (suppressed) return@pointerInput
+    if (homeMenuMode == HomeMenuMode.ADJUST) {
+        // Only the clock pages turn. This runs after the handles in the pointer chain, so a handle keeps its own drags.
+        detectHorizontalDragGestures(
+            onDragStart = swipe::onAdjustDragStart,
+            onDragEnd = swipe::onAdjustDragEnd,
+            onDragCancel = swipe::onAdjustDragCancel,
+            onHorizontalDrag = swipe::onAdjustDrag,
+        )
+        return@pointerInput
+    }
+    if (homeMenuMode != HomeMenuMode.NONE) return@pointerInput
+    detectHomeSwipeGestures(
+        isBlocked = isBlocked,
+        shouldClaim = { claimAt(it) == HomeTouchClaim.ALL },
+        claimHorizontalOnly = { claimAt(it) == HomeTouchClaim.HORIZONTAL_ONLY },
+        onDragStart = swipe::onPointerDragStart,
+        onDragEnd = swipe::onPointerDragEnd,
+        onDragCancel = swipe::cancel,
+        onDrag = swipe::onPointerDrag,
+    )
+}

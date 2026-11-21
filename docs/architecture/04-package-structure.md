@@ -36,9 +36,10 @@ app/src/main/kotlin/com/facetlauncher/app/
     │                                    SettingsSectionHeader, SettingsIconBadge — and the buttons PrimaryButton,
     │                                    TonalButton, SurfaceButton, TextActionButton, …)
     ├── navigation/                (1)   FacetNavHost + FacetDestinations (34 routes) + popBackStackSafely
-    ├── launcher/                  (11)  CalendarEventOpener, LauncherViewModel (app-lifetime state), HomeDrawerRoute (wires Home and the panels over it), HomeSwipeController +
+    ├── launcher/                  (17)  CalendarEventOpener, LauncherViewModel (app-lifetime state), HomeDrawerRoute (wires Home and the panels over it), HomeSwipeController +
     │                                    HomeSwipeGestures (the three swipe axes, settle rules, drag detector), HomeOverlays / HomeAppDrawerOverlay / HomeOverlayState
-    │                                    (the Hub, drawer, Private Space, pickers, carousel and one-time prompts), HomeScreenActionsBuilder, LauncherLocals
+    │                                    (the Hub, drawer, Private Space, pickers, carousel and one-time prompts), HomeScreenActionsBuilder, LauncherLocals,
+    │                                    HomeRouteState / HomeRouteEffects / HomeRouteModel / HomeRouteOverlays / ClockWidgetRouteData (the route split: its state, effects, Home's state and actions, overlays, clock widget data)
     ├── home/                      (44)  HomeScreen (thin dispatcher) / HomeFrame / HomeContent / HomeSlots / HomeScreenEffects / HomeClockGeometry / HomeScreenLayout (measurements) / ClockAdjustControls / ClockResizeOverlays / HomeScreenState (its state and action groups) / HomeViewModel / HomeUiState, ClockBlock, clock handles, HomeSheets /
     │                                    ClockAdjustToolbar / `HomeMenuMode`, hosted-clock-widget controllers/tile, `ClockStackPager` (`ClockPagerState` and the page dots), `ClockWidgetHostCache`, TimeTick, MediaPlayerRow, `ScaledHomeScreen` (the real Home scaled down, for previews), `HomeScreenStateBuilder` and `HomeTags`;
     │                                    the list and tiles `HomeAppList` (two-column list, column, grid), `AppRow`, `FolderRow`, `DockIcon`, with `HomeItemSpec`
