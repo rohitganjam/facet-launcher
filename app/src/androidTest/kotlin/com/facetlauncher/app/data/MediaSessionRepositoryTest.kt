@@ -16,6 +16,8 @@ import android.os.ParcelFileDescriptor
 import androidx.test.platform.app.InstrumentationRegistry
 import com.facetlauncher.app.data.model.MediaPlayerState
 import com.facetlauncher.app.data.model.NotificationInfo
+import dagger.hilt.android.testing.HiltAndroidRule
+import dagger.hilt.android.testing.HiltAndroidTest
 import java.io.File
 import java.io.FileOutputStream
 import java.util.concurrent.CountDownLatch
@@ -36,6 +38,7 @@ import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 
 /**
@@ -43,7 +46,12 @@ import org.junit.Test
  * notification-listener grant, which a test can only give through the shell — and must always take away again, since
  * other tests (e.g. `PermissionsScreenTest`) assume this device has never granted it.
  */
+// Hilt: the system starts the real listener service, which injects itself from the test application's component.
+@HiltAndroidTest
 class MediaSessionRepositoryTest {
+
+    @get:Rule
+    val hiltRule = HiltAndroidRule(this)
 
     private val instrumentation = InstrumentationRegistry.getInstrumentation()
     private val context: Context = instrumentation.targetContext
@@ -62,6 +70,7 @@ class MediaSessionRepositoryTest {
 
     @Before
     fun setUp() {
+        hiltRule.inject()
         shell("cmd notification disallow_listener $listenerComponent")
     }
 

@@ -27,7 +27,7 @@ android {
         targetSdk = 36
         versionCode = 51
         versionName = "0.2.5"
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner = "com.facetlauncher.app.HiltTestRunner"
     }
 
     signingConfigs {
@@ -212,6 +212,8 @@ dependencies {
     androidTestImplementation("androidx.navigation:navigation-testing:2.10.2")
     androidTestImplementation("org.mockito:mockito-android:5.24.0")
     androidTestImplementation("androidx.room:room-testing:2.8.5")
+    androidTestImplementation("com.google.dagger:hilt-android-testing:2.60.1")
+    kspAndroidTest("com.google.dagger:hilt-compiler:2.60.1")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
     androidTestUtil("androidx.test:orchestrator:1.6.1")
 }

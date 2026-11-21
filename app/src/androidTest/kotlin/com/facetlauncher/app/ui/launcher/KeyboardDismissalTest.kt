@@ -13,11 +13,14 @@ import com.facetlauncher.app.ui.drawer.DrawerListUseCases
 import android.appwidget.AppWidgetManager
 import android.content.pm.LauncherApps
 import android.os.UserManager
+import com.facetlauncher.app.debug.HiltTestActivity
+import dagger.hilt.android.testing.HiltAndroidRule
+import dagger.hilt.android.testing.HiltAndroidTest
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.assertIsNotFocused
-import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onRoot
@@ -113,6 +116,7 @@ import java.io.File
 import java.time.Clock
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.flow.flowOf
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import com.facetlauncher.app.data.PlacementRepository
@@ -124,10 +128,17 @@ import com.facetlauncher.app.domain.ResolveActivePlacementTargetUseCase
 import org.mockito.Mockito.`when`
 import org.mockito.Mockito.mock
 
+@HiltAndroidTest
 class KeyboardDismissalTest {
 
-    @get:Rule
-    val composeRule = createComposeRule()
+    @get:Rule(order = 0)
+    val hiltRule = HiltAndroidRule(this)
+
+    @get:Rule(order = 1)
+    val composeRule = createAndroidComposeRule<HiltTestActivity>()
+
+    @Before
+    fun injectHilt() = hiltRule.inject()
 
     private val apps = listOf(
         AppInfo(packageName = "com.example.a", activityName = ".Main", label = "A App", icon = null)
@@ -386,25 +397,23 @@ class KeyboardDismissalTest {
             val whatsNewPillViewModel = remember { WhatsNewPillViewModel(extraSettings, ReleaseNotesRepository(context), AppVersion()) }
 
             FacetLauncherTheme {
-                HomeDrawerRoute(
-                    apps = apps.toImmutableList(),
-                    onAppClick = {},
-                    onNavigateToSettings = {},
-                    onNavigateToFacetSettings = {},
-                    onNavigateToManageFacets = {},
-                    onNavigateToFacetPro = {},
-                    homeViewModel = homeViewModel,
-                    weatherViewModel = weatherViewModel,
-                        widgetAccess = NativeWidgetAccessControls(NativeWidgetAccess(), {}, {}),
-                    whatsNewPillViewModel = whatsNewPillViewModel,
-                    drawerViewModel = drawerViewModel,
-                    privateSpaceViewModel = privateSpaceViewModel,
-                    hubViewModel = hubViewModel,
-                    widgetPickerViewModel = widgetPickerViewModel,
-                    clockWidgetPickerViewModel = clockWidgetPickerViewModel,
-                    facetViewModel = facetViewModel,
-                    launcherViewModel = launcherViewModel,
-                )
+                ProvideViewModels(hubViewModel, widgetPickerViewModel, clockWidgetPickerViewModel, facetViewModel) {
+                    HomeDrawerRoute(
+                        apps = apps.toImmutableList(),
+                        onAppClick = {},
+                        onNavigateToSettings = {},
+                        onNavigateToFacetSettings = {},
+                        onNavigateToManageFacets = {},
+                        onNavigateToFacetPro = {},
+                        homeViewModel = homeViewModel,
+                        weatherViewModel = weatherViewModel,
+                            widgetAccess = NativeWidgetAccessControls(NativeWidgetAccess(), {}, {}),
+                        whatsNewPillViewModel = whatsNewPillViewModel,
+                        drawerViewModel = drawerViewModel,
+                        privateSpaceViewModel = privateSpaceViewModel,
+                        launcherViewModel = launcherViewModel,
+                    )
+                }
             }
         }
         // HomeDrawerRoute renders nothing at all until HomeViewModel's first real state emission

@@ -6,8 +6,13 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
@@ -39,13 +44,14 @@ class WallpaperBackdropHostTest {
             Box(Modifier.fillMaxSize().background(Color.Blue).testTag("screen")) {
                 WallpaperBackdropHost(copy) {
                     val backdrop = LocalWallpaperBackdrop.current
-                    var coordinates: LayoutCoordinates? = null
-                    // Stands in for a glass panel: draws whatever the backdrop holds behind it.
+                    var coordinates by remember { mutableStateOf<LayoutCoordinates?>(null) }
+                    // Stands in for a glass panel: draws whatever the backdrop holds behind it, inside its own bounds like a real panel.
                     Box(
                         Modifier
                             .align(Alignment.Center)
                             .size(48.dp)
                             .testTag("panel")
+                            .clipToBounds()
                             .onGloballyPositioned { coordinates = it }
                             .drawBehind { backdrop?.run { drawBackdrop(this@drawBehind, coordinates, null) } },
                     )

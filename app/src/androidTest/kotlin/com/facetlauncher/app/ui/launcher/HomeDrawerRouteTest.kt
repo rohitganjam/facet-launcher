@@ -14,6 +14,9 @@ import android.appwidget.AppWidgetManager
 import android.content.pm.LauncherApps
 import android.os.Process
 import android.os.UserManager
+import com.facetlauncher.app.debug.HiltTestActivity
+import dagger.hilt.android.testing.HiltAndroidRule
+import dagger.hilt.android.testing.HiltAndroidTest
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.ui.geometry.Offset
@@ -27,7 +30,7 @@ import androidx.compose.ui.test.center
 import androidx.compose.ui.test.click
 import androidx.compose.ui.test.down
 import androidx.compose.ui.test.hasText
-import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.longClick
 import androidx.compose.ui.test.moveTo
 import androidx.compose.ui.test.onAllNodesWithTag
@@ -148,6 +151,7 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.mockito.Mockito.`when`
@@ -168,10 +172,17 @@ import com.facetlauncher.app.domain.ResolveActivePlacementTargetUseCase
  * the ViewModels rather than Hilt, matching how other ViewModel tests in this codebase
  * construct their dependencies directly.
  */
+@HiltAndroidTest
 class HomeDrawerRouteTest {
 
-    @get:Rule
-    val composeRule = createComposeRule()
+    @get:Rule(order = 0)
+    val hiltRule = HiltAndroidRule(this)
+
+    @get:Rule(order = 1)
+    val composeRule = createAndroidComposeRule<HiltTestActivity>()
+
+    @Before
+    fun injectHilt() = hiltRule.inject()
 
     private lateinit var launcherViewModel: LauncherViewModel
 
@@ -506,25 +517,23 @@ class HomeDrawerRouteTest {
                 LocalHomePressedEvent provides launcherViewModel.homePressedEvent,
             ) {
                 FacetLauncherTheme {
-                    HomeDrawerRoute(
-                        apps = apps.toImmutableList(),
-                        onAppClick = {},
-                        onNavigateToSettings = {},
-                        onNavigateToFacetSettings = onNavigateToFacetSettings,
-                        onNavigateToManageFacets = onNavigateToManageFacets,
-                        onNavigateToFacetPro = onNavigateToFacetPro,
-                        homeViewModel = homeViewModel,
-                        weatherViewModel = weatherViewModel,
-                        widgetAccess = NativeWidgetAccessControls(NativeWidgetAccess(), {}, {}),
-                        whatsNewPillViewModel = whatsNewPillViewModel,
-                        drawerViewModel = drawerViewModel,
-                        privateSpaceViewModel = privateSpaceViewModel,
-                        hubViewModel = hubViewModel,
-                        widgetPickerViewModel = widgetPickerViewModel,
-                        clockWidgetPickerViewModel = clockWidgetPickerViewModel,
-                        facetViewModel = facetViewModel,
-                        launcherViewModel = launcherViewModel,
-                    )
+                    ProvideViewModels(hubViewModel, widgetPickerViewModel, clockWidgetPickerViewModel, facetViewModel) {
+                        HomeDrawerRoute(
+                            apps = apps.toImmutableList(),
+                            onAppClick = {},
+                            onNavigateToSettings = {},
+                            onNavigateToFacetSettings = onNavigateToFacetSettings,
+                            onNavigateToManageFacets = onNavigateToManageFacets,
+                            onNavigateToFacetPro = onNavigateToFacetPro,
+                            homeViewModel = homeViewModel,
+                            weatherViewModel = weatherViewModel,
+                            widgetAccess = NativeWidgetAccessControls(NativeWidgetAccess(), {}, {}),
+                            whatsNewPillViewModel = whatsNewPillViewModel,
+                            drawerViewModel = drawerViewModel,
+                            privateSpaceViewModel = privateSpaceViewModel,
+                            launcherViewModel = launcherViewModel,
+                        )
+                    }
                 }
             }
         }

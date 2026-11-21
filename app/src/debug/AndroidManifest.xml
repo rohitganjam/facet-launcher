@@ -10,4 +10,9 @@
          READ_CALENDAR entry). -->
     <uses-permission android:name="android.permission.WRITE_CALENDAR" />
 
+    <application>
+        <!-- Host for Hilt-aware Compose tests (createAndroidComposeRule), so hiltViewModel() works under test. -->
+        <activity android:name="com.facetlauncher.app.debug.HiltTestActivity" android:exported="false" />
+    </application>
+
 </manifest>

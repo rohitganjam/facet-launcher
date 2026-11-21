@@ -196,12 +196,12 @@ class MediaPlayerRowTest {
 
     /**
      * Number of pixel rows containing a drawn pixel in the progress line: the wave's vertical extent. The captured
-     * image has an opaque window background, so "drawn" means differing from the background (its top-left pixel,
-     * which the line never reaches), not just having alpha.
+     * image has an opaque window background, so "drawn" means differing from the background (its bottom-right pixel:
+     * the wave starts at the top-left and the track sits mid-height, so neither reaches that corner), not just having alpha.
      */
     private fun progressInkHeightPx(): Int {
         val pixels = composeRule.onNodeWithTag("home_media_progress").captureToImage().toPixelMap()
-        val background = pixels[0, 0]
+        val background = pixels[pixels.width - 1, pixels.height - 1]
         fun isInk(color: Color) =
             abs(color.red - background.red) + abs(color.green - background.green) + abs(color.blue - background.blue) > INK_THRESHOLD
         return (0 until pixels.height).count { y -> (0 until pixels.width).any { x -> isInk(pixels[x, y]) } }
