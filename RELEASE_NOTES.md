@@ -1,24 +1,25 @@
-# Facet Launcher 0.2.5
+# Facet Launcher 0.2.6
 
 ## New Features
-- Now Playing widget now adapts to its size, with six layouts: a small tile, compact, strip with a progress line, cover card, card, and full player. A 1×1 is always a tile and a 2×2 is always a cover card.
+- Three new clock styles: Echo, Day Line (runs midnight to midnight) and Liquid Hour. They support accent colors and have names in six languages.
+- You can long-press anywhere inside the clock's resized area to open the clock's settings. Without a background panel, this used to open the Home settings instead.
 
 ## Fixes
-- Fixed the Hub in landscape sliding sideways, which shifted every widget left when you pulled the Hub in.
-- Fixed resizing a widget on the landscape Hub: the drag now stops at the widest size that can be saved, so it no longer snaps back when you let go.
-- Fixed the landscape Home screen's app list to keep the same right-side margin as the clock's left margin when there is no dock beside it.
+- Bluetooth no longer causes problems if the app's Bluetooth permission has been revoked. The app now handles that case.
+- With a background panel on a centered clock, calendar events now stay aligned to the left.
 
 ## Improvements
-- Daily photos now come directly from Microsoft (Bing and Windows Spotlight) and follow your phone's language and region, with fallbacks if a source isn't available.
-- Photos you open in Daily photos stay saved for as long as the source still lists them.
-- The source and profile switches in Daily photos now have a visible track, making them easier to read.
-- The Daily photos subtitle now says "recent photos" instead of "a week".
-- Landscape dock icons are now spread from top to bottom, with an end icon lined up with the apps list.
+- You can now resize the clock to any width and height, in both portrait and landscape. The text scales to fit the tighter side, and there is no longer a maximum size.
+- With a background panel, the panel now matches the area you sized the clock to and follows live as you drag. Before, it followed the drawn text.
+- The clock style gallery opens with your current style centered.
+- Clock accessories are now in the clock's settings card, not in the gallery. You can reach them from Home's widget sheet and from the Widget stack's Configure option.
+- The widget sheet options now appear in this order: Adjust, Widget stack, Replace, Remove.
 
 ## Internal
-- Added `nowPlayingLayoutFor` to select the Now Playing layout from the widget's box size.
-- Landscape Hub grid: moved side padding out of the scroll area to prevent spurious horizontal scrolling.
-- Hub landscape resize: clamp the drag at the fifth column of the portrait position to match the save validation.
-- Replaced the Peapix source with the Bing HPImageArchive API and the Windows Spotlight service, selected by locale with a fallback chain.
-- Daily photos: Spotlight requests stop at 8 photos (max 3 calls).
-- Release 0.2.4 version bump.
+- Release 0.2.5 version bump; 0.2.6 version and What's New notes are pending in the working tree.
+- Clock: free-shaped resize box with uniform text scale. Long-press hit area is now the sized box. Docs, test registry and IMPLEMENTATION_PLAN updated.
+- Bluetooth paired-device and GATT queries catch SecurityException (with tests). IntentCompat replaces deprecated extras reads.
+- Instrumented tests now run on HiltTestApplication with a debug-only HiltTestActivity and ProvideViewModels. This works around hilt-navigation-compose 1.4.0 building a Hilt factory on every hiltViewModel(), which throws on a plain ComponentActivity. Also fixed the WallpaperBackdropHost stand-in panel and MediaPlayerRow ink sampling.
+- Compose lint: screens resolve their own ViewModel, modifier params follow the compose-rules order, and unused parameters are removed.
+- Split the longest composables (AppPickerScreen, ContactConnectionsSheet, FolderContentsSheet, OnboardingScreen, HomeDrawerRoute). Route state, effects, screen model and overlays moved to their own files. LongMethod limit set to 80.
+- Detekt baseline trimmed and unneeded suppressions dropped. FacetDestinations, FolderSheetHeaderAction and OnboardingStep moved to their own files. DragReorderState.onDrag and WallpaperRepository.toBitmapOrNull simplified. Widget grab loop now ends via a flag instead of two breaks.

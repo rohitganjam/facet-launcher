@@ -25,8 +25,8 @@ android {
         applicationId = "com.facetlauncher.app"
         minSdk = 30
         targetSdk = 36
-        versionCode = 51
-        versionName = "0.2.5"
+        versionCode = 52
+        versionName = "0.2.6"
         testInstrumentationRunner = "com.facetlauncher.app.HiltTestRunner"
     }
 
