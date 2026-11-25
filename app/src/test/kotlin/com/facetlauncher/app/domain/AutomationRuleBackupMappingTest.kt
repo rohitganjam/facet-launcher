@@ -30,6 +30,8 @@ class AutomationRuleBackupMappingTest {
             AutomationTrigger.Wifi(ssid = null),
             AutomationTrigger.Wifi(ssid = "Office", negated = true),
             AutomationTrigger.Headphones(negated = true),
+            AutomationTrigger.Location("Office", 12.9716, 77.5946, 800),
+            AutomationTrigger.Location("Home", -33.8688, 151.2093, 300, negated = true),
             AutomationTrigger.Battery(whileCharging = true, level = BatteryLevelCondition(BatteryDirection.ABOVE, 80)),
             AutomationTrigger.Battery(whileCharging = false, level = BatteryLevelCondition(BatteryDirection.BELOW, 20)),
         )
@@ -76,7 +78,7 @@ class AutomationRuleBackupMappingTest {
 
     @Test
     fun `a trigger or ending from a newer app is skipped as unsupported`() {
-        assertEquals(RestoredRule.Skipped(SkippedRuleReason.UNSUPPORTED, null), backupRule(triggerType = "LOCATION").toRestoredRule(newIdByUuid))
+        assertEquals(RestoredRule.Skipped(SkippedRuleReason.UNSUPPORTED, null), backupRule(triggerType = "GEOFENCE").toRestoredRule(newIdByUuid))
         assertEquals(RestoredRule.Skipped(SkippedRuleReason.UNSUPPORTED, null), backupRule(end = "SWITCH_BACK_LATER").toRestoredRule(newIdByUuid))
     }
 

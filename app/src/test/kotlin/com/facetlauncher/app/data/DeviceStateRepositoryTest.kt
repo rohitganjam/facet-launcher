@@ -47,12 +47,13 @@ class DeviceStateRepositoryTest {
             `when`(it.observeWifiState(false)).thenReturn(wifi)
         }
         val bluetoothRepository = mock(BluetoothRepository::class.java).also { `when`(it.observeConnectedAddresses()).thenReturn(bluetooth) }
+        val locationRepository = mock(LocationRepository::class.java)
 
         /** Every source in use by default, as if a rule read each one; tests narrow it. */
         val rules = MutableStateFlow(listOf(batteryRule, headphonesRule, wifiRule(ssid = "Home"), bluetoothRule))
         val ruleRepository = mock(AutomationRuleRepository::class.java).also { `when`(it.observeRules()).thenReturn(rules) }
 
-        val repository = DeviceStateRepository(batteryRepository, headphonesRepository, wifiRepository, bluetoothRepository, ruleRepository, scope)
+        val repository = DeviceStateRepository(batteryRepository, headphonesRepository, wifiRepository, bluetoothRepository, locationRepository, ruleRepository, scope)
     }
 
     private fun TestScope.start(fixture: Fixture) {
@@ -85,6 +86,38 @@ class DeviceStateRepositoryTest {
             ),
             fixture.repository.current(),
         )
+    }
+
+    private val locationRule = rule(5, AutomationTrigger.Location("Gym", 59.9, 10.7, 500))
+
+    @Test
+    fun `a location rule reads one position on refresh and keeps it when a later fix is missed`() = runTest {
+        val fixture = Fixture(backgroundScope)
+        fixture.rules.value = listOf(locationRule)
+        start(fixture)
+        `when`(fixture.locationRepository.currentLocation()).thenReturn(DeviceLocation(59.9, 10.7, null))
+
+        fixture.repository.refreshLocation()
+        runCurrent()
+        assertEquals(DeviceLocation(59.9, 10.7, null), fixture.repository.current().location)
+
+        `when`(fixture.locationRepository.currentLocation()).thenReturn(null)
+        fixture.repository.refreshLocation()
+        runCurrent()
+        assertEquals(DeviceLocation(59.9, 10.7, null), fixture.repository.current().location)
+    }
+
+    @Test
+    fun `without an enabled location rule no position is requested`() = runTest {
+        val fixture = Fixture(backgroundScope)
+        fixture.rules.value = listOf(headphonesRule, rule(5, locationRule.trigger, enabled = false))
+        start(fixture)
+
+        fixture.repository.refreshLocation()
+        runCurrent()
+
+        verify(fixture.locationRepository, never()).currentLocation()
+        assertEquals(null, fixture.repository.current().location)
     }
 
     @Test

@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
@@ -32,6 +33,7 @@ private data class SourceNeeds(
     val headphones: Boolean = false,
     val wifi: WifiNeed = WifiNeed.NONE,
     val bluetooth: Boolean = false,
+    val location: Boolean = false,
 )
 
 private fun List<AutomationRule>.toSourceNeeds(): SourceNeeds {
@@ -45,12 +47,13 @@ private fun List<AutomationRule>.toSourceNeeds(): SourceNeeds {
             else -> WifiNeed.NONE
         },
         bluetooth = triggers.any { it is AutomationTrigger.Bluetooth },
+        location = triggers.any { it is AutomationTrigger.Location },
     )
 }
 
 /**
- * One shared, hot [DeviceState] for facet automation, combining the battery, headphones, Wi-Fi and
- * Bluetooth sources. It stays hot while anything collects it — [com.facetlauncher.app.domain.RunFacetAutomationUseCase]
+ * One shared, hot [DeviceState] for facet automation, combining the battery, headphones, Wi-Fi,
+ * Bluetooth and location sources. It stays hot while anything collects it — [com.facetlauncher.app.domain.RunFacetAutomationUseCase]
  * does for the whole process — so [current] is a cheap read, not a fresh set of receivers (which would
  * also reset Bluetooth to "unknown" on every sample).
  *
@@ -69,10 +72,13 @@ class DeviceStateRepository @Inject constructor(
     headphonesRepository: HeadphonesRepository,
     wifiRepository: WifiRepository,
     bluetoothRepository: BluetoothRepository,
-    ruleRepository: AutomationRuleRepository,
+    private val locationRepository: LocationRepository,
+    private val ruleRepository: AutomationRuleRepository,
     @ApplicationScope scope: CoroutineScope,
 ) {
     private val permissionEpoch = MutableStateFlow(0)
+
+    private val lastLocation = MutableStateFlow<DeviceLocation?>(null)
 
     private val needs: Flow<SourceNeeds> = ruleRepository.observeRules().map { it.toSourceNeeds() }
 
@@ -91,12 +97,22 @@ class DeviceStateRepository @Inject constructor(
             }
         },
         gated({ it.bluetooth }, null) { permissionEpoch.flatMapLatest { bluetoothRepository.observeConnectedAddresses() } },
-    ) { battery, headphones, wifi, bluetooth ->
-        DeviceState(battery = battery, headphonesPluggedIn = headphones, wifi = wifi, connectedBluetoothAddresses = bluetooth)
+        gated({ it.location }, null) { lastLocation },
+    ) { battery, headphones, wifi, bluetooth, location ->
+        DeviceState(battery = battery, headphonesPluggedIn = headphones, wifi = wifi, connectedBluetoothAddresses = bluetooth, location = location)
     }.stateIn(scope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), DeviceState())
 
     /** The latest known state; the "nothing known yet" default until the sources have first answered. */
     fun current(): DeviceState = deviceState.value
+
+    /**
+     * Takes one approximate fix for the location rules, when one is enabled. A missed fix (no permission, location off, no answer in time) keeps
+     * the last position rather than guessing. Never continuous: the callers are Home coming to the front.
+     */
+    suspend fun refreshLocation() {
+        if (ruleRepository.observeRules().first().none { it.enabled && it.trigger is AutomationTrigger.Location }) return
+        locationRepository.currentLocation()?.let { lastLocation.value = it }
+    }
 
     /** Call after a permission is granted so the sources that were blocked by it start reading. */
     fun onPermissionsChanged() {

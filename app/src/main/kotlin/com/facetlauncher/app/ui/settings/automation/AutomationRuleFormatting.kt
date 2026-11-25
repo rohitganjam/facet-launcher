@@ -44,6 +44,8 @@ internal fun AutomationTrigger.titleText(): String = when (this) {
         )
         stringResource(R.string.automation_schedule_title, daysLabel, minuteText(startMinute), minuteText(endMinute))
     }
+    is AutomationTrigger.Location ->
+        stringResource(if (negated) R.string.automation_location_away_title else R.string.automation_location_at_title, name)
     is AutomationTrigger.Bluetooth -> connectionText(deviceName, negated)
     is AutomationTrigger.Wifi -> connectionText(ssid ?: stringResource(R.string.automation_wifi_any), negated)
     is AutomationTrigger.Headphones ->

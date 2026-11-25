@@ -25,6 +25,8 @@ import androidx.room.TypeConverters
         AutoMigration(from = 50, to = 51),
         // 51→52: per-app custom icons.
         AutoMigration(from = 51, to = 52),
+        // 53→54: a location trigger's four nullable columns on automation_rules.
+        AutoMigration(from = 53, to = 54),
     ],
 )
 @TypeConverters(Converters::class)
@@ -44,7 +46,7 @@ abstract class FacetDatabase : RoomDatabase() {
     companion object {
         // A named constant, not a magic number scattered across DatabaseModule/Migrations/tests —
         // see Migrations.kt for what bumping this requires from here on.
-        const val VERSION = 53
+        const val VERSION = 54
     }
 }
 

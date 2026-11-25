@@ -5,11 +5,14 @@ import com.facetlauncher.app.data.DeviceStateRepository
 import com.facetlauncher.app.data.EntitlementRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.WakeEventsRepository
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.merge
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 /**
@@ -19,7 +22,8 @@ import javax.inject.Inject
  *
  * Triggers: screen on / unlock / clock change, a Home press ([homePresses]), any rule change, a
  * change of the active facet (which also covers the first launch, once a facet exists), and any change
- * in the device state (battery, headphones, Wi-Fi, Bluetooth) or in the Pro entitlement. Collecting the device state also keeps
+ * in the device state (battery, headphones, Wi-Fi, Bluetooth, position) or in the Pro entitlement. The position of a location rule is read on
+ * wake, Home press and rule change only. Collecting the device state also keeps
  * its receivers registered for the whole process. One sequential
  * collector, with bursts coalesced, so passes never overlap and no lock is needed. There are no
  * alarms: a schedule is applied when the user looks at the phone, never underneath them.
@@ -32,7 +36,12 @@ class RunFacetAutomationUseCase @Inject constructor(
     private val deviceStateRepository: DeviceStateRepository,
     private val entitlementRepository: EntitlementRepository,
 ) {
-    suspend operator fun invoke(homePresses: Flow<Unit>) {
+    suspend operator fun invoke(homePresses: Flow<Unit>) = coroutineScope {
+        // A fix can take seconds, so it never holds up a pass: the position it finds changes the device state, which runs the next one.
+        launch {
+            merge(wakeEventsRepository.observeWakeEvents(), homePresses, ruleRepository.observeRules().map { })
+                .collectLatest { deviceStateRepository.refreshLocation() }
+        }
         merge(
             wakeEventsRepository.observeWakeEvents(),
             homePresses,

@@ -61,6 +61,8 @@ class AutomationRuleRepositoryTest {
             AutomationTrigger.Wifi(ssid = null),
             AutomationTrigger.Wifi(ssid = "HomeNet-5G", negated = true),
             AutomationTrigger.Headphones(),
+            AutomationTrigger.Location("Gym", 59.9139, 10.7522, 300),
+            AutomationTrigger.Location("Home", -33.8688, 151.2093, 5000, negated = true),
             AutomationTrigger.Battery(whileCharging = false, level = BatteryLevelCondition(BatteryDirection.BELOW, 20)),
             AutomationTrigger.Battery(whileCharging = false, level = BatteryLevelCondition(BatteryDirection.ABOVE, 80)),
             AutomationTrigger.Battery(whileCharging = true, level = BatteryLevelCondition(BatteryDirection.BELOW, 100)),

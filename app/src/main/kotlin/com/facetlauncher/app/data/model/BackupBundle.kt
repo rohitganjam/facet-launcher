@@ -378,9 +378,9 @@ data class BackupAutomationRule(
     /** `RETURN_TO_BASELINE`, `SWITCH_TO` (with [endFacetUuid]) or `STAY`. */
     val endBehavior: String,
     val endFacetUuid: String? = null,
-    /** `SCHEDULE`, `BLUETOOTH`, `WIFI`, `HEADPHONES` or `BATTERY`; only that trigger's fields below are read. */
+    /** `SCHEDULE`, `BLUETOOTH`, `WIFI`, `HEADPHONES`, `BATTERY` or `LOCATION`; only that trigger's fields below are read. */
     val triggerType: String,
-    /** Bluetooth, Wi-Fi and headphones: "while not". */
+    /** Bluetooth, Wi-Fi, headphones and location: "while not". */
     val negated: Boolean = false,
     /** Schedule: `DayOfWeek` names. */
     val scheduleDays: List<String> = emptyList(),
@@ -394,6 +394,11 @@ data class BackupAutomationRule(
     /** Battery: `BELOW` or `ABOVE`. */
     val batteryDirection: String? = null,
     val batteryThreshold: Int? = null,
+    /** Location: all four are read together; [negated] means "while away". Additive, so no version bump: an older app skips a `LOCATION` rule as unsupported. */
+    val locationName: String? = null,
+    val locationLatitude: Double? = null,
+    val locationLongitude: Double? = null,
+    val locationRadiusM: Int? = null,
 )
 
 /**

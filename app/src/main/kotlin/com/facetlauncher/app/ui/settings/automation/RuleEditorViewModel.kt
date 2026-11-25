@@ -9,6 +9,7 @@ import com.facetlauncher.app.data.DeviceStateRepository
 import com.facetlauncher.app.data.EntitlementRepository
 import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.SettingsRepository
+import com.facetlauncher.app.data.LocationRepository
 import com.facetlauncher.app.data.WifiRepository
 import com.facetlauncher.app.data.model.AutomationPermission
 import com.facetlauncher.app.data.model.AutomationTrigger
@@ -45,6 +46,7 @@ class RuleEditorViewModel @Inject constructor(
     private val wifiRepository: WifiRepository,
     private val permissionRepository: AutomationPermissionRepository,
     private val deviceStateRepository: DeviceStateRepository,
+    private val locationRepository: LocationRepository,
     private val entitlementRepository: EntitlementRepository,
     private val canUseTrigger: CanUseTriggerUseCase,
     private val saveAutomationRule: SaveAutomationRuleUseCase,
@@ -133,6 +135,21 @@ class RuleEditorViewModel @Inject constructor(
         viewModelScope.launch {
             ruleRepository.delete(editing.ruleId)
             _editor.value = null
+        }
+    }
+
+    /** Takes a fix and makes it the location's position; a blank name becomes [defaultName]. */
+    fun useCurrentLocation(defaultName: String) {
+        viewModelScope.launch {
+            val fix = locationRepository.currentLocation()
+            _editor.update { editing ->
+                val location = editing?.trigger as? AutomationTrigger.Location ?: return@update editing
+                if (fix == null) {
+                    editing.copy(locationUnavailable = true)
+                } else {
+                    editing.edited { copy(trigger = location.copy(name = location.name.ifBlank { defaultName }, latitude = fix.latitude, longitude = fix.longitude)) }
+                }
+            }
         }
     }
 

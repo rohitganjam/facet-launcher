@@ -13,10 +13,11 @@ import java.time.DayOfWeek
 
 enum class EndKind { RETURN, SWITCH, STAY }
 
-enum class TriggerKind { SCHEDULE, BLUETOOTH, WIFI, HEADPHONES, BATTERY }
+enum class TriggerKind { SCHEDULE, LOCATION, BLUETOOTH, WIFI, HEADPHONES, BATTERY }
 
 fun AutomationTrigger.kind(): TriggerKind = when (this) {
     is AutomationTrigger.Schedule -> TriggerKind.SCHEDULE
+    is AutomationTrigger.Location -> TriggerKind.LOCATION
     is AutomationTrigger.Bluetooth -> TriggerKind.BLUETOOTH
     is AutomationTrigger.Wifi -> TriggerKind.WIFI
     is AutomationTrigger.Headphones -> TriggerKind.HEADPHONES
@@ -27,12 +28,15 @@ private val DEFAULT_DAYS = setOf(DayOfWeek.MONDAY, DayOfWeek.TUESDAY, DayOfWeek.
 private const val DEFAULT_START_MINUTE = 9 * 60
 private const val DEFAULT_END_MINUTE = 18 * 60
 private const val DEFAULT_LOW_BATTERY_PERCENT = 20
+private const val DEFAULT_LOCATION_RADIUS_M = 500
 
 private val DEFAULT_SCHEDULE = AutomationTrigger.Schedule(DEFAULT_DAYS, DEFAULT_START_MINUTE, DEFAULT_END_MINUTE)
 
 /** A blank device or "named network" with no name is deliberately invalid until the user picks one. */
 private fun TriggerKind.defaultTrigger(): AutomationTrigger = when (this) {
     TriggerKind.SCHEDULE -> DEFAULT_SCHEDULE
+    // NaN is "no position yet": it fails validation until the user takes one.
+    TriggerKind.LOCATION -> AutomationTrigger.Location(name = "", latitude = Double.NaN, longitude = Double.NaN, radiusM = DEFAULT_LOCATION_RADIUS_M)
     TriggerKind.BLUETOOTH -> AutomationTrigger.Bluetooth(deviceAddress = "", deviceName = "")
     TriggerKind.WIFI -> AutomationTrigger.Wifi()
     TriggerKind.HEADPHONES -> AutomationTrigger.Headphones()
@@ -56,6 +60,8 @@ data class RuleEditorState(
     val permissionDenied: AutomationPermission? = null,
     /** Set when a free user tried something Pro (a locked trigger, or a save the free plan doesn't allow); the screen shows the upgrade sheet. */
     val proRequired: ProReason? = null,
+    /** "Use my location now" found no position (location off, or no answer in time). */
+    val locationUnavailable: Boolean = false,
 ) {
     val isNew: Boolean get() = ruleId == 0L
 
@@ -73,7 +79,7 @@ data class RuleEditorState(
 
     /** Edits clear the last save's complaints, so a message never outlives the field it was about. */
     fun edited(transform: RuleEditorState.() -> RuleEditorState): RuleEditorState =
-        transform().copy(errors = emptyList(), facetMissing = false, permissionDenied = null, proRequired = null)
+        transform().copy(errors = emptyList(), facetMissing = false, permissionDenied = null, proRequired = null, locationUnavailable = false)
 
     private fun withSchedule(transform: (AutomationTrigger.Schedule) -> AutomationTrigger.Schedule): RuleEditorState = edited {
         (trigger as? AutomationTrigger.Schedule)?.let { copy(trigger = transform(it)) } ?: this

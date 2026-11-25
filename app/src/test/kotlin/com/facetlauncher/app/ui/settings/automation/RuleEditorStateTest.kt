@@ -123,6 +123,17 @@ class RuleEditorStateTest {
     }
 
     @Test
+    fun `a fresh location rule cannot be saved until it has a position and a name`() {
+        val fresh = RuleEditorState.forNew(facets, personal.id).withKind(TriggerKind.LOCATION)
+        val location = fresh.trigger as AutomationTrigger.Location
+
+        assertEquals(listOf(AutomationRuleError.INVALID_LOCATION), fresh.toRule().validationErrors())
+        assertEquals(500, location.radiusM)
+        val located = fresh.withTrigger(location.copy(name = "Gym", latitude = 59.9, longitude = 10.7))
+        assertTrue(located.toRule().validationErrors().isEmpty())
+    }
+
+    @Test
     fun `any network is valid and a named network needs a name`() {
         val any = RuleEditorState.forNew(facets, personal.id).withKind(TriggerKind.WIFI)
         val named = any.withWifiScope(named = true)

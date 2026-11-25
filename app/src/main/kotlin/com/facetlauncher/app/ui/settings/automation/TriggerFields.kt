@@ -7,6 +7,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
@@ -17,6 +19,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.facetlauncher.app.R
+import com.facetlauncher.app.data.model.AutomationLimits
 import com.facetlauncher.app.data.model.AutomationPermission
 import com.facetlauncher.app.data.model.AutomationRuleError
 import com.facetlauncher.app.data.model.AutomationTrigger
@@ -29,14 +32,17 @@ import com.facetlauncher.app.ui.components.ProPill
 import com.facetlauncher.app.ui.components.TextActionButton
 import com.facetlauncher.app.ui.theme.Accent
 import com.facetlauncher.app.ui.theme.Hairline
+import com.facetlauncher.app.ui.theme.Ink
 import com.facetlauncher.app.ui.theme.Muted
 
 private const val BATTERY_STEP_PERCENT = 5
+private const val LOCATION_RADIUS_STEP_M = 100
 
 @Composable
 private fun TriggerKind.label(): String = stringResource(
     when (this) {
         TriggerKind.SCHEDULE -> R.string.automation_trigger_schedule
+        TriggerKind.LOCATION -> R.string.automation_trigger_location
         TriggerKind.BLUETOOTH -> R.string.automation_trigger_bluetooth
         TriggerKind.WIFI -> R.string.automation_trigger_wifi
         TriggerKind.HEADPHONES -> R.string.automation_trigger_headphones
@@ -55,6 +61,7 @@ internal fun TriggerFields(
     isPro: Boolean,
     onChange: ((RuleEditorState) -> RuleEditorState) -> Unit,
     onChangeTrigger: (RuleEditorState) -> Unit,
+    onUseLocation: (defaultName: String) -> Unit,
 ) {
     Column {
         LabeledDropdownRow(
@@ -62,13 +69,14 @@ internal fun TriggerFields(
             options = TriggerKind.entries,
             selected = state.trigger.kind(),
             label = { it.label() },
-            optionTrailing = if (isPro) null else { kind -> if (kind != TriggerKind.SCHEDULE) ProPill() },
+            optionTrailing = if (isPro) null else { kind -> if (kind != TriggerKind.SCHEDULE && kind != TriggerKind.LOCATION) ProPill() },
             onSelect = { onChangeTrigger(state.withKind(it)) },
             testTag = "rule_editor_when",
         )
         state.permissionDenied?.let { PermissionNote(it) }
         when (val trigger = state.trigger) {
             is AutomationTrigger.Schedule -> ScheduleFields(state, onChange)
+            is AutomationTrigger.Location -> LocationFields(state, trigger, onChange, onUseLocation)
             is AutomationTrigger.Bluetooth -> BluetoothFields(state, trigger, choices, onChange)
             is AutomationTrigger.Wifi -> WifiFields(state, trigger, choices, onChange, onChangeTrigger)
             is AutomationTrigger.Headphones -> PolarityTabs(
@@ -234,5 +242,74 @@ private fun BatteryFields(trigger: AutomationTrigger.Battery, onChange: ((RuleEd
             colors = SliderDefaults.colors(thumbColor = Accent, activeTrackColor = Accent, inactiveTrackColor = Hairline),
             modifier = Modifier.testTag("rule_editor_battery_slider"),
         )
+    }
+}
+
+@Composable
+private fun LocationFields(
+    state: RuleEditorState,
+    trigger: AutomationTrigger.Location,
+    onChange: ((RuleEditorState) -> RuleEditorState) -> Unit,
+    onUseLocation: (defaultName: String) -> Unit,
+) {
+    val hasPosition = !trigger.latitude.isNaN() && !trigger.longitude.isNaN()
+    val defaultName = stringResource(R.string.automation_location_default_name)
+    val range = AutomationLimits.LOCATION_RADIUS_RANGE_M
+    Column {
+        PolarityTabs(
+            negated = trigger.negated,
+            positive = stringResource(R.string.automation_location_at),
+            negative = stringResource(R.string.automation_location_away),
+            tag = "rule_editor_polarity",
+            onSelect = { onChange { s -> s.withTrigger(trigger.copy(negated = it)) } },
+        )
+        OutlinedTextField(
+            value = trigger.name,
+            onValueChange = { name -> onChange { s -> s.withTrigger(trigger.copy(name = name)) } },
+            label = { Text(stringResource(R.string.automation_location_name)) },
+            singleLine = true,
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedTextColor = Ink,
+                unfocusedTextColor = Ink,
+                focusedBorderColor = Accent,
+                unfocusedBorderColor = Hairline,
+                focusedLabelColor = Accent,
+                unfocusedLabelColor = Muted,
+                cursorColor = Accent,
+            ),
+            modifier = Modifier.fillMaxWidth().testTag("rule_editor_location_name"),
+        )
+        Text(
+            text = if (hasPosition) stringResource(R.string.automation_location_position, trigger.latitude, trigger.longitude) else stringResource(R.string.automation_location_no_position),
+            style = MaterialTheme.typography.bodyMedium,
+            color = Muted,
+            modifier = Modifier.padding(top = 8.dp).testTag("rule_editor_location_position"),
+        )
+        TextActionButton(
+            text = stringResource(R.string.automation_location_use_current),
+            onClick = { onUseLocation(defaultName) },
+            style = MaterialTheme.typography.bodyMedium,
+            modifier = Modifier.testTag("rule_editor_location_use_current"),
+        )
+        if (state.locationUnavailable) ErrorText(stringResource(R.string.automation_location_unavailable), "rule_editor_error_location_unavailable")
+        Text(
+            text = stringResource(R.string.automation_location_radius, trigger.radiusM),
+            style = MaterialTheme.typography.bodyLarge,
+            color = Accent,
+            modifier = Modifier.padding(top = 8.dp).testTag("rule_editor_location_radius_value"),
+        )
+        Slider(
+            value = trigger.radiusM.toFloat().coerceIn(range.first.toFloat(), range.last.toFloat()),
+            onValueChange = { raw ->
+                val snapped = (Math.round(raw / LOCATION_RADIUS_STEP_M) * LOCATION_RADIUS_STEP_M).coerceIn(range.first, range.last)
+                onChange { s -> s.withTrigger(trigger.copy(radiusM = snapped)) }
+            },
+            valueRange = range.first.toFloat()..range.last.toFloat(),
+            steps = (range.last - range.first) / LOCATION_RADIUS_STEP_M - 1,
+            colors = SliderDefaults.colors(thumbColor = Accent, activeTrackColor = Accent, inactiveTrackColor = Hairline),
+            modifier = Modifier.testTag("rule_editor_location_radius_slider"),
+        )
+        Text(text = stringResource(R.string.automation_location_hint), style = MaterialTheme.typography.bodySmall, color = Muted)
+        if (AutomationRuleError.INVALID_LOCATION in state.errors) ErrorText(stringResource(R.string.automation_error_location), "rule_editor_error_location")
     }
 }

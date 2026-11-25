@@ -6,6 +6,7 @@ import com.facetlauncher.app.data.model.AutomationTrigger
 import com.facetlauncher.app.data.model.BatteryDirection
 import com.facetlauncher.app.data.model.BatteryLevelCondition
 import com.facetlauncher.app.data.model.RuleEndBehavior
+import com.facetlauncher.app.data.model.locationTriggerOrNull
 import java.time.DayOfWeek
 
 private const val END_RETURN = "RETURN_TO_BASELINE"
@@ -17,6 +18,7 @@ private const val TRIGGER_BLUETOOTH = "BLUETOOTH"
 private const val TRIGGER_WIFI = "WIFI"
 private const val TRIGGER_HEADPHONES = "HEADPHONES"
 private const val TRIGGER_BATTERY = "BATTERY"
+private const val TRIGGER_LOCATION = "LOCATION"
 
 internal fun AutomationRule.toEntity(position: Int): AutomationRuleEntity {
     val endFacetId = (endBehavior as? RuleEndBehavior.SwitchTo)?.facetId
@@ -48,6 +50,14 @@ internal fun AutomationRule.toEntity(position: Int): AutomationRuleEntity {
         )
         is AutomationTrigger.Wifi -> base.copy(triggerType = TRIGGER_WIFI, negated = t.negated, wifiSsid = t.ssid)
         is AutomationTrigger.Headphones -> base.copy(triggerType = TRIGGER_HEADPHONES, negated = t.negated)
+        is AutomationTrigger.Location -> base.copy(
+            triggerType = TRIGGER_LOCATION,
+            negated = t.negated,
+            locationName = t.name,
+            locationLatitude = t.latitude,
+            locationLongitude = t.longitude,
+            locationRadiusM = t.radiusM,
+        )
         is AutomationTrigger.Battery -> base.copy(
             triggerType = TRIGGER_BATTERY,
             negated = !t.whileCharging,
@@ -69,6 +79,10 @@ internal fun AutomationRuleEntity.toRule(): AutomationRule? {
     return AutomationRule(id = id, targetFacetId = targetFacetId, trigger = trigger, endBehavior = end, enabled = enabled)
 }
 
+/** A location row needs all four of its columns. */
+private fun AutomationRuleEntity.toLocation(): AutomationTrigger? =
+    locationTriggerOrNull(locationName, locationLatitude, locationLongitude, locationRadiusM, negated)
+
 /** Both the threshold and a known direction are required; a row missing either can't be interpreted. */
 private fun AutomationRuleEntity.toBattery(): AutomationTrigger? {
     val direction = batteryDirection?.let { runCatching { BatteryDirection.valueOf(it) }.getOrNull() }
@@ -89,5 +103,6 @@ private fun AutomationRuleEntity.toTrigger(): AutomationTrigger? = when (trigger
     TRIGGER_WIFI -> AutomationTrigger.Wifi(wifiSsid, negated)
     TRIGGER_HEADPHONES -> AutomationTrigger.Headphones(negated)
     TRIGGER_BATTERY -> toBattery()
+    TRIGGER_LOCATION -> toLocation()
     else -> null
 }

@@ -11,6 +11,7 @@ import com.facetlauncher.app.data.DeviceStateRepository
 import com.facetlauncher.app.data.EntitlementRepository
 import com.facetlauncher.app.data.FacetRepository
 import com.facetlauncher.app.data.HeadphonesRepository
+import com.facetlauncher.app.data.LocationRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.WakeEventsRepository
 import com.facetlauncher.app.data.WifiRepository
@@ -49,6 +50,7 @@ fun testDeviceStateRepository(
     HeadphonesRepository(context),
     WifiRepository(context),
     BluetoothRepository(context),
+    LocationRepository(context, Dispatchers.IO),
     rules,
     CoroutineScope(SupervisorJob() + Dispatchers.Default),
 )

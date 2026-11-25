@@ -129,6 +129,7 @@ as "this id's condition is met"; the evaluator never reads it.
 | `Bluetooth` | `deviceAddress`, `deviceName`, `negated` |
 | `Wifi` | `ssid` (null = any network), `negated` |
 | `Headphones` | `negated` |
+| `Location` | `name`, `latitude`, `longitude`, `radiusM` (300–5000 m), `negated` (= "while away"); `isInside(position)` is a haversine distance `<= radiusM`, so on the radius counts as inside |
 | `Battery` | `whileCharging` (false = "Not charging"), required `level: BatteryLevelCondition`; `isMetBy(charging, levelPercent)` |
 
 `BatteryLevelCondition` is `direction` (`BELOW` / `ABOVE`) plus `thresholdPercent`. `negated` on the other
@@ -145,6 +146,8 @@ is therefore not expressible; the closest are "charging, below 100%" (charging a
 the charging state matches and the level satisfies the condition. In storage it is one row type,
 `BATTERY`, with the existing `negated` (Not charging), `batteryThreshold` and `batteryDirection` columns;
 a battery row missing a threshold or a known direction is skipped on read.
+
+**Location (shown as "Location" in the UI) is a free trigger, evaluated on Home coming to the front.** It reads `DeviceState.location`, the approximate fix `LocationRepository.currentLocation()` takes (network provider, else last known; the same fix weather uses, no new permission beyond the fine location a named Wi-Fi rule already asks for). `DeviceStateRepository.refreshLocation()` takes it only while an enabled location rule exists, and `RunFacetAutomationUseCase` calls it from a separate collector on wake, Home press and rule change, never from a device-state change (that would loop), and never inside the pass, since a fix can take 10 s. The new position changes the device state, which runs the next pass. A missed fix keeps the last position; with no position at all the rule is not met, negated or not. Nothing runs in the background, so a rule switches the next time Home opens, not on arrival or departure; the editor says so. In storage it is `LOCATION`, with `locationName`, `locationLatitude`, `locationLongitude`, `locationRadiusM` (nullable columns, all four required on read) and the existing `negated`. The editor starts a new location at no position (NaN, invalid) until "Use my location now" is tapped (`RuleEditorViewModel.useCurrentLocation`); there is no map.
 
 ## 3a. Rule storage (built)
 
@@ -198,7 +201,7 @@ shared by the repository and the editor. It rejects:
 | `Invalid(errors)` | The rule failed one of the checks above |
 | `FacetMissing` | The target facet, or a "switch to" facet, no longer exists. A no-op, never an exception |
 
-So a bad rule cannot be stored whatever calls it. Headphones has nothing to validate.
+So a bad rule cannot be stored whatever calls it. Headphones has nothing to validate. A location needs a non-blank name, a position on the globe and a radius in `AutomationLimits.LOCATION_RADIUS_RANGE_M` (`INVALID_LOCATION`).
 There are deliberately **no format or length checks** on Bluetooth addresses or network names, because
 the user never types them: devices come from the paired list and networks from the current connection
 and the latest scan. The consequence is that a Wi-Fi network can only be chosen while it is in range,
@@ -345,6 +348,7 @@ Every trigger's truth is one pure function, `AutomationTrigger.isMetBy(state: De
 | `headphonesPluggedIn` | `HeadphonesRepository` (`AudioDeviceCallback`) | wired headphones/headset, USB headset, Bluetooth A2DP/SCO, BLE headset. Android can't tell headphones from other Bluetooth audio, so a car stereo counts too; a Bluetooth rule matches one device precisely |
 | `wifi: WifiState` | `WifiRepository` (network callbacks with location info) | connected flag, and the network name when readable |
 | `connectedBluetoothAddresses: Set<String>?` | `BluetoothRepository` | **null until the first query answers**; see below |
+| `location: DeviceLocation?` | `LocationRepository` through `DeviceStateRepository.refreshLocation()` | only while an enabled location rule exists; null until the first fix, kept across a missed one |
 
 **Missing readings never fire a rule, negated or not.** An unknown Bluetooth state, a battery with no
 reading, and a *named* Wi-Fi network whose name is unreadable (no location permission, or location
@@ -426,7 +430,7 @@ unavailable row in the list requests its permission when tapped; only a refusal 
 **Pro states (free user).** `ObserveFacetAutomationUseCase` marks rules outside
 `CanUseTriggerUseCase.entitledRuleIds` as `NEEDS_PRO` (ahead of a missing permission): the row is dimmed
 with a lock and "Paused. Needs Pro", its switch is off, and tapping it opens the Facet Pro screen. The *When*
-dropdown shows a Pro pill on each device trigger; picking one sets `RuleEditorState.proRequired` instead of
+dropdown shows a Pro pill on each device trigger (not Schedule or Location); picking one sets `RuleEditorState.proRequired` instead of
 asking for a permission. At the free limit the "Add rule" row carries a Pro pill and opens the same sheet,
 and a dashed strip under the Rules card ("Free includes 2 schedule rules…" + Upgrade to Pro, right-aligned) shows once a free user has reached the 2-rule limit
 (not before). The shared Facet Pro screen (`ui/pro/FacetProScreen`, also used by the facet limits and Settings) explains what Pro gives and holds Buy and Restore; it replaced an earlier bottom sheet. The editor sends the user there through `onOpenFacetPro` and keeps the draft; the billing plan added
@@ -444,6 +448,7 @@ usability is built (§5c) and so is the Pro half (entitlement, below). An unusab
 | Trigger | Condition | Permission (requested when the type is chosen) |
 |---|---|---|
 | Schedule (free) | day of week and time window, to the minute (§3b); an Until before From means overnight | none |
+| Location (free) | within the radius of a saved spot, or away from it; approximate, evaluated when Home opens (§3) | `ACCESS_FINE_LOCATION` (asked when the type is chosen) |
 | Bluetooth device | connected, or not connected | `BLUETOOTH_CONNECT` (runtime, asked when chosen) |
 | Wi-Fi | "Any network" or "Named network" (a separate Network field picks it); connected or not | `ACCESS_NETWORK_STATE` (normal, no prompt) for any network; location, requested on choosing "Named network", to read and pick a network name |
 | Headphones | plugged in or not | none |
@@ -455,12 +460,12 @@ indistinguishable from exact timing, and nothing switches under the user mid-use
 (Bluetooth, charging) is also read at startup because a killed process misses broadcasts. The cost is
 sampling: a connection that came and went while the screen was off is never seen.
 
-**Pro gating (built).** `EntitlementRepository.isPro` is the single seam, answered by Google Play ([16](16-flow-billing.md)). Free users get schedule rules only, and at most 2 rules in total (`AutomationLimits`,
+**Pro gating (built).** `EntitlementRepository.isPro` is the single seam, answered by Google Play ([16](16-flow-billing.md)). Free users get schedule and location rules only, and at most 2 rules in total (`AutomationLimits`,
 §3b); device triggers and more rules are Pro.
 
 | Where | What it does |
 |---|---|
-| `CanUseTriggerUseCase` | `invoke(trigger, isPro)`: schedule is free, every device trigger is Pro. `entitledRuleIds(rules, isPro)`: Pro keeps every rule; free keeps the first two *schedule* rules in list order. |
+| `CanUseTriggerUseCase` | `invoke(trigger, isPro)`: schedule and location are free (`AutomationTrigger.isFree()`), every device trigger is Pro. `entitledRuleIds(rules, isPro)`: Pro keeps every rule; free keeps the first two *free-trigger* rules (schedule or location) in list order. |
 | `RefreshAutomationStateUseCase` | A rule is in `conditionsMet` only if it is entitled, its permission is granted, and its condition holds. A paused rule is therefore treated by the evaluator like a rule that stopped being true (its end behavior runs), never deleted. |
 | `RunFacetAutomationUseCase` | Runs a pass when `isPro` changes, so a lapse or purchase takes effect without waiting for a wake event. |
 | `SaveAutomationRuleUseCase` | Refuses a Pro trigger for a free user (`ProRequired(TRIGGER)`), then a *new* rule past the free limit (`ProRequired(RULE_LIMIT)`); only then validates and writes. Editing never counts as adding. |
@@ -537,5 +542,5 @@ These hold for the built code and are covered by `CanUseTriggerUseCaseTest`, `Sa
 | UI | `ui/settings/automation/` (`FacetAutomationScreen`, `RuleEditorSheet`, `RuleEditorState`, `RuleEditorViewModel`, `TriggerFields`, `ScheduleFields`, `ui/pro/FacetProScreen` and `ProPill` in `ui/components/`), `domain/ObserveFacetAutomationUseCase.kt`, `ui/navigation/FacetNavHost.kt` (`FACET_AUTOMATION`) |
 | Single switch choke point | `domain/ActivateFacetByIdUseCase.kt` |
 | State persistence | `data/AutomationStateRepository.kt`, `data/di/DataStoreModule.kt`, `data/di/AutomationDataStore.kt` |
-| Tests | `domain/EvaluateFacetAutomationUseCaseTest.kt`, `data/model/AutomationStateTest.kt`, `domain/ActivateFacetByIdUseCaseTest.kt`, `data/AutomationStateRepositoryTest.kt`, `data/AutomationRuleRepositoryTest.kt`, `data/local/AutomationRuleDaoTest.kt`, `data/model/AutomationTriggerTest.kt`, `data/model/AutomationRuleValidationTest.kt`, `data/model/DeviceStateTest.kt`, `data/HeadphonesRepositoryTest.kt`, `data/WifiRepositoryTest.kt`, `data/BluetoothRepositoryTest.kt`, `data/DeviceStateRepositoryTest.kt`, `data/AutomationPermissionRepositoryTest.kt`, instrumented `FacetDatabaseMigrationTest.migration25To26…` |
+| Tests | `domain/EvaluateFacetAutomationUseCaseTest.kt`, `data/model/AutomationStateTest.kt`, `domain/ActivateFacetByIdUseCaseTest.kt`, `data/AutomationStateRepositoryTest.kt`, `data/AutomationRuleRepositoryTest.kt`, `data/local/AutomationRuleDaoTest.kt`, `data/model/AutomationTriggerTest.kt`, `data/model/AutomationRuleValidationTest.kt`, `data/model/DeviceStateTest.kt` (location radius, negation, no fix), `data/HeadphonesRepositoryTest.kt`, `data/WifiRepositoryTest.kt`, `data/BluetoothRepositoryTest.kt`, `data/DeviceStateRepositoryTest.kt`, `data/AutomationPermissionRepositoryTest.kt`, instrumented `FacetDatabaseMigrationTest.migration25To26…` and `migration53To54AddsLocationColumnsAndKeepsExistingRules` |
 | Design and phased plan | `IMPLEMENTATION_PLAN.md` ("Facet automation rules"), `…/design_handoff_minimal_launcher/facet-automation.html` |

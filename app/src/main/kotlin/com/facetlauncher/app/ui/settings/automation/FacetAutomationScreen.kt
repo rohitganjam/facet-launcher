@@ -24,6 +24,7 @@ import androidx.compose.material.icons.filled.BatteryStd
 import androidx.compose.material.icons.filled.Bluetooth
 import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.Headphones
+import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Wifi
@@ -55,6 +56,7 @@ import com.facetlauncher.app.R
 import com.facetlauncher.app.data.model.AutomationPermission
 import com.facetlauncher.app.data.model.AutomationTrigger
 import com.facetlauncher.app.data.model.ProReason
+import com.facetlauncher.app.data.model.isFree
 import com.facetlauncher.app.domain.AutomationRuleItem
 import com.facetlauncher.app.domain.FacetAutomationScreenState
 import com.facetlauncher.app.domain.RuleAvailability
@@ -126,6 +128,7 @@ fun FacetAutomationScreen(
             onOpenFacetPro = onOpenFacetPro,
             onChange = { transform -> editorViewModel.editRule { transform(this) } },
             onChangeTrigger = { candidate -> editorViewModel.changeTrigger(candidate, requestPermission) },
+            onUseLocation = editorViewModel::useCurrentLocation,
             onSave = editorViewModel::saveRule,
             onDelete = editorViewModel::deleteRule,
             onDismiss = editorViewModel::closeEditor,
@@ -269,15 +272,16 @@ private fun AddRuleRow(showProPill: Boolean, onClick: () -> Unit, modifier: Modi
 
 private fun AutomationTrigger.icon(): ImageVector = when (this) {
     is AutomationTrigger.Schedule -> Icons.Default.Schedule
+    is AutomationTrigger.Location -> Icons.Default.LocationOn
     is AutomationTrigger.Bluetooth -> Icons.Default.Bluetooth
     is AutomationTrigger.Wifi -> Icons.Default.Wifi
     is AutomationTrigger.Headphones -> Icons.Default.Headphones
     is AutomationTrigger.Battery -> Icons.Default.BatteryStd
 }
 
-/** A schedule rule is paused only by the free limit; anything else, by its Pro trigger. */
+/** A schedule or location rule is paused only by the free limit; anything else, by its Pro trigger. */
 private fun AutomationRuleItem.upgradeReason(): ProReason =
-    if (rule.trigger is AutomationTrigger.Schedule) ProReason.RULE_LIMIT else ProReason.TRIGGER
+    if (rule.trigger.isFree()) ProReason.RULE_LIMIT else ProReason.TRIGGER
 
 private fun AutomationRuleItem.missingPermission(): AutomationPermission? = when (availability) {
     RuleAvailability.AVAILABLE, RuleAvailability.NEEDS_PRO -> null

@@ -64,11 +64,14 @@ per-permission text below explains *why* each one is accessed, for use in whiche
 
 ## Location — `ACCESS_FINE_LOCATION` / `ACCESS_COARSE_LOCATION` (runtime permission, requested only when needed)
 
-> Used only to read the name (SSID) of a Wi-Fi network, which Android makes available to apps
-> only if they hold a location permission. It is requested only when the user creates a facet
-> automation rule for a *named* Wi-Fi network, to list networks in range and to notice when the
-> device connects to the chosen one. The app never reads, stores or transmits the device's
-> location. A rule for "any Wi-Fi network" does not need it.
+> Used for two facet automation rules, and requested only when the user creates one. (1) A
+> *named* Wi-Fi network rule: Android makes the network name (SSID) available only to apps that
+> hold a location permission, so it is needed to list networks in range and to notice when the
+> device connects to the chosen one. (2) A *location* rule: the app takes one approximate position
+> when the home screen comes to the front, only while such a rule exists, and compares it on the
+> device with the place the user saved (name, position and radius, kept on the device and in
+> backups the user makes). The position is never stored or transmitted, and nothing runs in the
+> background. A rule for "any Wi-Fi network" does not need it.
 
 ## Network and Wi-Fi state — `ACCESS_NETWORK_STATE`, `ACCESS_WIFI_STATE` (normal permissions)
 

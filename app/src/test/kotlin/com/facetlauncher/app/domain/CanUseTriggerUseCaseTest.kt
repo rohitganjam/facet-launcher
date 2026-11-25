@@ -24,6 +24,19 @@ class CanUseTriggerUseCaseTest {
     }
 
     @Test
+    fun `a location is free like a schedule`() {
+        assertTrue(canUse(AutomationTrigger.Location("Gym", 59.9, 10.7, 500), isPro = false))
+    }
+
+    @Test
+    fun `free shares its two rules between schedule and location rules`() {
+        val location = AutomationTrigger.Location("Gym", 59.9, 10.7, 500)
+        val rules = listOf(rule(1, schedule), rule(2, location), rule(3, location), rule(4, schedule))
+
+        assertEquals(setOf(1L, 2L), canUse.entitledRuleIds(rules, isPro = false))
+    }
+
+    @Test
     fun `a pro user can use every trigger`() {
         assertTrue(canUse(AutomationTrigger.Bluetooth("AA", "Car"), isPro = true))
         assertTrue(canUse(AutomationTrigger.Wifi(), isPro = true))

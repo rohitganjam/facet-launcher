@@ -58,6 +58,7 @@ internal fun RuleEditorSheet(
     onSave: () -> Unit,
     onDelete: () -> Unit,
     onDismiss: () -> Unit,
+    onUseLocation: (defaultName: String) -> Unit = {},
 ) {
     var confirmingDelete by remember { mutableStateOf(false) }
     ThemedModalBottomSheet(onDismissRequest = onDismiss, skipPartiallyExpanded = true) {
@@ -67,6 +68,7 @@ internal fun RuleEditorSheet(
             isPro = isPro,
             onChange = onChange,
             onChangeTrigger = onChangeTrigger,
+            onUseLocation = onUseLocation,
             onSave = onSave,
             onCancel = onDismiss,
             onDeleteClick = { confirmingDelete = true },
@@ -104,6 +106,7 @@ internal fun RuleEditorContent(
     onCancel: () -> Unit,
     onDeleteClick: () -> Unit,
     modifier: Modifier = Modifier,
+    onUseLocation: (defaultName: String) -> Unit = {},
 ) {
     Column(
         modifier = modifier
@@ -128,7 +131,7 @@ internal fun RuleEditorContent(
             onSelect = { facet -> onChange { it.copy(targetFacetId = facet.id) } },
             testTag = "rule_editor_target",
         )
-        TriggerFields(state, choices, isPro, onChange, onChangeTrigger)
+        TriggerFields(state, choices, isPro, onChange, onChangeTrigger, onUseLocation)
         EndBehaviorFields(state, onChange)
         if (state.facetMissing) ErrorText(stringResource(R.string.automation_error_facet_missing), "rule_editor_error_facet")
         EditorButtons(state.isNew, onSave = onSave, onCancel = onCancel, onDelete = onDeleteClick)

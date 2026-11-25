@@ -6,6 +6,7 @@ import com.facetlauncher.app.data.model.BackupAutomationRule
 import com.facetlauncher.app.data.model.BatteryDirection
 import com.facetlauncher.app.data.model.BatteryLevelCondition
 import com.facetlauncher.app.data.model.RuleEndBehavior
+import com.facetlauncher.app.data.model.locationTriggerOrNull
 import com.facetlauncher.app.data.model.validationErrors
 import java.time.DayOfWeek
 
@@ -18,6 +19,7 @@ private const val TRIGGER_BLUETOOTH = "BLUETOOTH"
 private const val TRIGGER_WIFI = "WIFI"
 private const val TRIGGER_HEADPHONES = "HEADPHONES"
 private const val TRIGGER_BATTERY = "BATTERY"
+private const val TRIGGER_LOCATION = "LOCATION"
 
 /** Why a backed-up rule was left out of a restore. */
 enum class SkippedRuleReason {
@@ -70,6 +72,14 @@ fun AutomationRule.toBackupRule(uuidByFacetId: Map<Long, String>): BackupAutomat
         )
         is AutomationTrigger.Wifi -> base.copy(triggerType = TRIGGER_WIFI, negated = t.negated, wifiSsid = t.ssid)
         is AutomationTrigger.Headphones -> base.copy(triggerType = TRIGGER_HEADPHONES, negated = t.negated)
+        is AutomationTrigger.Location -> base.copy(
+            triggerType = TRIGGER_LOCATION,
+            negated = t.negated,
+            locationName = t.name,
+            locationLatitude = t.latitude,
+            locationLongitude = t.longitude,
+            locationRadiusM = t.radiusM,
+        )
         is AutomationTrigger.Battery -> base.copy(
             triggerType = TRIGGER_BATTERY,
             batteryWhileCharging = t.whileCharging,
@@ -97,7 +107,7 @@ fun BackupAutomationRule.toRestoredRule(facetIdByUuid: Map<String, Long>): Resto
     return if (rule.validationErrors().isEmpty()) RestoredRule.Restored(rule) else RestoredRule.Skipped(SkippedRuleReason.INVALID, trigger)
 }
 
-private val KNOWN_TRIGGERS = setOf(TRIGGER_SCHEDULE, TRIGGER_BLUETOOTH, TRIGGER_WIFI, TRIGGER_HEADPHONES, TRIGGER_BATTERY)
+private val KNOWN_TRIGGERS = setOf(TRIGGER_SCHEDULE, TRIGGER_BLUETOOTH, TRIGGER_WIFI, TRIGGER_HEADPHONES, TRIGGER_BATTERY, TRIGGER_LOCATION)
 private val KNOWN_ENDINGS = setOf(END_RETURN, END_SWITCH_TO, END_STAY)
 
 /** Null when a required field is missing or unreadable. An unknown day name makes the whole schedule unreadable. */
@@ -108,14 +118,17 @@ private fun BackupAutomationRule.toTrigger(): AutomationTrigger? = when (trigger
     TRIGGER_BLUETOOTH -> bluetoothAddress?.let { AutomationTrigger.Bluetooth(it, bluetoothName ?: it, negated) }
     TRIGGER_WIFI -> AutomationTrigger.Wifi(wifiSsid, negated)
     TRIGGER_HEADPHONES -> AutomationTrigger.Headphones(negated)
-    TRIGGER_BATTERY -> {
-        val direction = batteryDirection?.toEnumOrNull<BatteryDirection>()
-        val threshold = batteryThreshold
-        if (direction != null && threshold != null) {
-            AutomationTrigger.Battery(batteryWhileCharging, BatteryLevelCondition(direction, threshold))
-        } else {
-            null
-        }
-    }
+    TRIGGER_LOCATION -> locationTriggerOrNull(locationName, locationLatitude, locationLongitude, locationRadiusM, negated)
+    TRIGGER_BATTERY -> toBattery()
     else -> null
+}
+
+private fun BackupAutomationRule.toBattery(): AutomationTrigger? {
+    val direction = batteryDirection?.toEnumOrNull<BatteryDirection>()
+    val threshold = batteryThreshold
+    return if (direction != null && threshold != null) {
+        AutomationTrigger.Battery(batteryWhileCharging, BatteryLevelCondition(direction, threshold))
+    } else {
+        null
+    }
 }

@@ -4971,3 +4971,67 @@ The clock's size is a free width × height box instead of an aspect-locked one, 
 - [ ] Manual pass on the Pixel Fold emulator: drag the free box in portrait and landscape, open the gallery on a mid-list style, and open Clock accessories from both sheets.
 - [ ] Native review of the new template names (machine-translated).
 - [ ] Later: a "Day starts / ends" setting for Day Line; a box that claims layout space instead of only sizing the text; templates that reflow to the box shape (the earlier options A to C).
+
+## Pro growth ideas: location trigger, focus, facet templates, metered limits (ideas, not approved)
+
+Why: a look at the market (Niagara, One4Home, Mango, Lawnchair) found that launchers sell on one clear hook and a generous free core; Facet's hook is automation, so Pro should deepen it. Nothing here is decided. App Vault stays free and unlimited (decided above), and glass stays free. Not-yet-answered questions are marked **Open**.
+
+### 1. Location trigger (a new `AutomationTrigger`)
+- A rule that holds while the device is at a saved **place** (name, latitude, longitude, radius), or away from it (`negated`, like Headphones). Places are stored on the device only and never sent anywhere.
+- **Foreground only, no background location.** Home already takes one approximate fix when it comes to the front (`LocationRepository`, `ACCESS_COARSE_LOCATION`, for weather). The trigger reuses that fix: it is evaluated when Home is shown, not while the phone sits in a pocket. A geofence would need `ACCESS_BACKGROUND_LOCATION`, which means a Play review, a new permission disclosure and a privacy-policy change; keep that as a later option, not part of this.
+- Consequences to state in the UI: approximate, so the smallest radius is about 300 m, and it switches the next time Home opens, not the moment the user arrives. Wi-Fi network names still cover "home" and "office" more precisely; location is for places with no Wi-Fi (gym, a trip, the car park).
+- **Free (Rohit's decision).** Location is a free trigger, like Schedule, and not a Pro device trigger. It counts toward the same total automation limit as every other rule: free keeps 2 rules in all (schedule and location together), Pro is unlimited. No separate limit on saved places. Today's rule is "the first two schedule rules"; it becomes "the first two rules whose trigger is free", so `CanUseTriggerUseCase` and the pause-on-lapse filter need to treat Place as a free trigger.
+- Touches: `AutomationTrigger.Place`, `AutomationRule` mapping (DB migration, backup bundle field), `DeviceState` (a position and its age), `LocationRepository` (reuse, no new permission), the rule editor (a place picker: "Use my location now", name, radius slider; no map in v1), `AutomationPermissionRepository`, Settings → Permissions copy, `15`, `02`, `09`. Tests per the usual tiers, including "no fix, stale fix, exactly on the radius, negated".
+
+### 2. Focus mode (per facet)
+**What it is:** a facet can carry a list of *distracting apps*. While that facet is active, those apps are quieter on Home and in the drawer, and opening one asks first. It is friction, not enforcement: Android lets a launcher shape its own surfaces only, so the same app can still be opened from a notification or Recents, and the plan says so in the UI. No Accessibility or Usage-access blocking, to keep Facet's permission story as small as it is.
+- Hidden from Home's list and dock for that facet, dimmed in the drawer (the drawer search can still find them), notification badges suppressed.
+- Opening one from the launcher shows a short pause card ("Focus is on. Open anyway?") with a 10 s wait and a "Take a 5 min break" button; a break turns the focus off for that facet for 5 minutes, then it returns by itself.
+- A facet switch (by hand or by an automation rule) switches focus with it, so "Work" and "Sleep" get it for free and no new trigger is needed.
+- Build on what exists: the hiding filter that `AppRepository` already applies for the vault, the badge repository, and `ActivateFacetByIdUseCase`. A new `facet_focus` table (facet id, package) or a column on `app_placements`; **Open:** which of the two.
+- **Free vs Pro:** free gets focus on one facet; Pro gets it per facet, plus the break length and pause-card options. **Open:** whether to include "Focus ends at" (an automatic end time), which would need its own schedule.
+- Not in v1: usage limits ("30 min a day"), website blocking, a streak or stats screen.
+
+### 3. Facet templates (ideas)
+A template is a ready-made facet: name, clock style and stack, list mode and layout, dock, accent, and an optional suggested automation rule. Apps are chosen by **role** (maps, music, calendar, messages, camera, browser), resolved to whatever the user has installed or set as default, never by a hard-coded package. A template is applied as a new facet, so it counts against the facet cap and the user can edit it afterwards.
+
+| Template | Looks like | Suggested rule |
+|---|---|---|
+| Work | Calendar events under the clock, Most used list, agenda widget | Weekdays 09:00–18:00 |
+| Commute | Large text list: maps, music, phone, podcasts; now-playing widget | Car Bluetooth connects |
+| Focus | Few apps, text only, Day Line clock, no badges, focus on | Schedule, or by hand |
+| Night | Dim accent, big clock, alarm, only clock/alarm/music apps | 22:00–07:00, or charging |
+| Weekend | Photos, music, weather, family messaging, relaxed list | Sat–Sun |
+| Gym | Music and timers, now-playing widget | Headphones connect |
+| Travel | Weather and a world clock, maps, tickets, translate | Away from the home place (location trigger) |
+| Minimal | One page, text only, five apps, no dock | None |
+
+- **Free:** 3 templates (Work, Night, Minimal), matching the 3-facet cap. **Pro:** the rest, plus ones added over time. Backup and restore of an applied template is unchanged, since it is an ordinary facet.
+- **Sharing (later):** export a facet as a small file or `facetlauncher://` link and import one; reuse the backup bundle's facet mapping. Open question whether a shared facet may carry its automation rule.
+- **Open:** bundled as assets and applied through the backup import path (preferred, no new storage), or built in code. Needs a check that the import path can add one facet without replacing everything.
+
+### 4. Metered limits instead of a trial
+Play offers free trials for subscriptions only, not for a one-time product like `facet_pro` (promo codes are the only substitute). So instead of a time trial, every capability gets a **free allowance** that shows what it is, and Pro raises it. This also matches the existing gates (facets 3 → 10, widget-stack pages 1 → 5, rules 2 → unlimited).
+
+| Capability | Free | Pro |
+|---|---|---|
+| Facets | 3 | 10 |
+| Automation: rules in total (schedule and location, both free triggers) | 2 | Unlimited |
+| Automation: device triggers (Wi-Fi, Bluetooth, headphones, battery) | None | All |
+| Widget stack pages | 1 | 5 |
+| Facet templates | 3 | All |
+| Focus: facets with focus on | 1 | All |
+| Daily wallpaper | Off | On |
+| App Vault, glass, icon packs, backup | Free, unlimited | Same |
+
+- Each limit is read in one place (`FacetLimits`-style pure function taking `isPro`), shown as "2 of 3 used" where the user hits it, and opens the Facet Pro screen with a reason. Only *adding* is gated; nothing the user already made is ever deleted on a lapse (same rule as today).
+- The Facet Pro screen lists every limit and what Pro changes (it already lists every `ProFeature`; add rows with the new ones).
+- **Open:** whether the price should rise with the added list; the current note is about $10 once.
+
+### Steps (nothing started)
+- [ ] Decide the Open items above and the order: location, then focus, then templates, then the limits table and Pro-screen rows.
+- [x] Location trigger (free, shares the 2-rule limit): model, migration, editor, permission copy, the free-trigger gate in `CanUseTriggerUseCase` and `RefreshAutomationStateUseCase`, Pro-screen copy, docs `02`, `09`, `15`, `16`, tests including a mix of schedule and location rules against the limit.
+- [ ] Focus mode: storage, filter in `AppRepository`, pause card, facet-switch wiring, badges, docs `12`, `13`, tests.
+- [ ] Templates: role-to-app resolver, bundled templates, apply path, picker UI, tests.
+- [ ] Limits: one table of limits, "x of y" copy, `ProFeature` rows, `16`, `PRD.md`.
+- [ ] Play listing and privacy policy: location is used for places (on device only); update `play-store-assets/permission-disclosures.md` if the permission set changes.

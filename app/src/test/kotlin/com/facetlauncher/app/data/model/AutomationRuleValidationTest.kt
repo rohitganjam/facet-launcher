@@ -11,6 +11,28 @@ class AutomationRuleValidationTest {
     private fun schedule(startMinute: Int, endMinute: Int, days: Set<DayOfWeek> = setOf(DayOfWeek.MONDAY)) =
         rule(AutomationTrigger.Schedule(days, startMinute, endMinute))
 
+    private fun location(name: String = "Gym", latitude: Double = 59.9, longitude: Double = 10.7, radiusM: Int = 500) =
+        rule(AutomationTrigger.Location(name, latitude, longitude, radiusM))
+
+    @Test
+    fun `a named location with a position and a radius in range is valid, at both ends of the range`() {
+        assertEquals(emptyList<AutomationRuleError>(), location().validationErrors())
+        assertEquals(emptyList<AutomationRuleError>(), location(radiusM = 300).validationErrors())
+        assertEquals(emptyList<AutomationRuleError>(), location(radiusM = 5000).validationErrors())
+    }
+
+    @Test
+    fun `a location with no name, no position or a radius out of range is rejected`() {
+        val invalid = listOf(AutomationRuleError.INVALID_LOCATION)
+
+        assertEquals(invalid, location(name = " ").validationErrors())
+        assertEquals(invalid, location(latitude = Double.NaN, longitude = Double.NaN).validationErrors())
+        assertEquals(invalid, location(latitude = 91.0).validationErrors())
+        assertEquals(invalid, location(longitude = -181.0).validationErrors())
+        assertEquals(invalid, location(radiusM = 299).validationErrors())
+        assertEquals(invalid, location(radiusM = 5001).validationErrors())
+    }
+
     @Test
     fun `a normal schedule has no errors`() {
         assertEquals(emptyList<AutomationRuleError>(), schedule(540, 1080).validationErrors())

@@ -16,6 +16,9 @@ enum class AutomationRuleError {
 
     /** A battery level condition whose threshold isn't one of [BatteryLevelCondition.stopsFor] its direction. */
     INVALID_BATTERY_THRESHOLD,
+
+    /** A location with no name, a position off the globe, or a radius outside [AutomationLimits.LOCATION_RADIUS_RANGE_M]. */
+    INVALID_LOCATION,
 }
 
 private const val MINUTES_PER_DAY = 24 * 60
@@ -33,6 +36,11 @@ fun AutomationRule.validationErrors(): List<AutomationRuleError> = when (val t =
         listOfNotNull(AutomationRuleError.NO_BLUETOOTH_DEVICE.takeIf { t.deviceAddress.isBlank() || t.deviceName.isBlank() })
     is AutomationTrigger.Battery -> listOfNotNull(
         AutomationRuleError.INVALID_BATTERY_THRESHOLD.takeIf { t.level.thresholdPercent !in BatteryLevelCondition.stopsFor(t.level.direction) },
+    )
+    is AutomationTrigger.Location -> listOfNotNull(
+        AutomationRuleError.INVALID_LOCATION.takeIf {
+            t.name.isBlank() || t.latitude !in -90.0..90.0 || t.longitude !in -180.0..180.0 || t.radiusM !in AutomationLimits.LOCATION_RADIUS_RANGE_M
+        },
     )
     is AutomationTrigger.Headphones -> emptyList()
 }
@@ -53,6 +61,9 @@ sealed interface SaveRuleResult {
 /** What free users get; Pro has no cap yet. */
 object AutomationLimits {
     const val FREE_MAX_RULES = 2
+
+    /** A network fix is good to a few hundred metres, so a smaller radius would flicker. */
+    val LOCATION_RADIUS_RANGE_M = 300..5000
 
     /** Counts every saved rule, enabled or not. Editing an existing rule never counts as adding one. */
     fun canAddRule(savedRuleCount: Int, isPro: Boolean): Boolean = isPro || savedRuleCount < FREE_MAX_RULES

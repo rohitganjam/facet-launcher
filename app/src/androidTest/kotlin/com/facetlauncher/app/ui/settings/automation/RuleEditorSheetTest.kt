@@ -13,6 +13,7 @@ import androidx.compose.ui.test.onLast
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTextInput
 import com.facetlauncher.app.data.model.Facet
 import com.facetlauncher.app.data.model.AutomationRuleError
 import com.facetlauncher.app.data.model.AutomationPermission
@@ -256,6 +257,57 @@ class RuleEditorSheetTest {
         assertEquals(BatteryDirection.ABOVE, battery.level.direction)
         assertEquals(true, battery.whileCharging)
         assertEquals(20, battery.level.thresholdPercent)
+    }
+
+    @Test
+    fun aNewLocationRuleAsksForALocationAndANameAndShowsItsRadius() {
+        showAs(TriggerKind.LOCATION)
+
+        composeRule.onNodeWithTag("rule_editor_polarity_on").assertIsSelected()
+        composeRule.onNodeWithTag("rule_editor_location_position").assertTextEquals("No position yet")
+        composeRule.onNodeWithTag("rule_editor_location_radius_value").assertTextEquals("Within 500 m")
+        composeRule.onNodeWithTag("rule_editor_location_radius_slider").assertExists()
+    }
+
+    @Test
+    fun usingMyLocationReportsBackWithTheDefaultName() {
+        var requested: String? = null
+        current = current.withKind(TriggerKind.LOCATION)
+        composeRule.setContent {
+            FacetLauncherTheme {
+                RuleEditorSheet(
+                    state = current, choices = choices, isPro = pro, onOpenFacetPro = {}, onChange = {}, onChangeTrigger = {},
+                    onSave = {}, onDelete = {}, onDismiss = {}, onUseLocation = { requested = it },
+                )
+            }
+        }
+
+        composeRule.onNodeWithTag("rule_editor_location_use_current").performClick()
+
+        composeRule.waitForIdle()
+        assertEquals("Here", requested)
+    }
+
+    @Test
+    fun typingALocationNameUpdatesTheRule() {
+        showAs(TriggerKind.LOCATION)
+
+        composeRule.onNodeWithTag("rule_editor_location_name").performTextInput("Gym")
+
+        composeRule.waitForIdle()
+        assertEquals("Gym", (current.trigger as AutomationTrigger.Location).name)
+    }
+
+    @Test
+    fun aFreeUserCanPickALocationWithoutAProPill() {
+        pro = false
+        show()
+
+        composeRule.onNodeWithTag("rule_editor_when").performClick()
+        composeRule.onNodeWithText("Location").performClick()
+
+        composeRule.waitForIdle()
+        assertEquals(TriggerKind.LOCATION, changedTrigger!!.trigger.kind())
     }
 
     @Test

@@ -1490,6 +1490,37 @@ class FacetDatabaseMigrationTest {
     }
 
     @Test
+    fun migration53To54AddsLocationColumnsAndKeepsExistingRules() {
+        // Given a v53 database with a facet and a headphones rule
+        val db53 = helper.createDatabase(TEST_DB, 53)
+        db53.execSQL(
+            "INSERT INTO facets (id, name, position, clockPlacementOwn, clockAlignment, appRowPosition, appRowPresentation, listContentMode, " +
+                "appsToShowCount, appListVerticalAlignment, appListLayout, appListColumnAlignment, appListGridColumns, appListGridDisplayMode, " +
+                "appListShrinkToFit, dockDisplayMode, dockGlass, appsListGlass, allowLandscape, uuid) VALUES (2, 'Work', 1, 0, 'LEFT', 'LEFT', " +
+                "'ICON_AND_TEXT', 'FAVORITES', 6, 'BOTTOM', 'SINGLE_COLUMN', 'BOTH_LEFT', 'FOUR', 'ICONS', 'OFF', 'ICONS', 'OFF', 'OFF', 1, 'work-uuid')",
+        )
+        db53.execSQL("INSERT INTO automation_rules (id, position, enabled, targetFacetId, endBehavior, triggerType, negated, scheduleDays, scheduleStartMinute, scheduleEndMinute) VALUES (1, 0, 1, 2, 'STAY', 'HEADPHONES', 0, 0, 0, 0)")
+        db53.close()
+
+        // When migrating to v54 (Room validates the result against the exported v54 schema)
+        val db54 = helper.runMigrationsAndValidate(TEST_DB, 54, true)
+
+        // Then the rule is kept with empty location columns, and a location rule can be written
+        db54.query("SELECT triggerType, locationName, locationRadiusM FROM automation_rules WHERE id = 1").use {
+            assertTrue(it.moveToFirst())
+            assertEquals("HEADPHONES", it.getString(0))
+            assertTrue(it.isNull(1))
+            assertTrue(it.isNull(2))
+        }
+        db54.execSQL("UPDATE automation_rules SET triggerType = 'LOCATION', locationName = 'Gym', locationLatitude = 59.9, locationLongitude = 10.7, locationRadiusM = 500 WHERE id = 1")
+        db54.query("SELECT locationName, locationRadiusM FROM automation_rules WHERE id = 1").use {
+            assertTrue(it.moveToFirst())
+            assertEquals("Gym", it.getString(0))
+            assertEquals(500, it.getInt(1))
+        }
+    }
+
+    @Test
     fun migration51To52AddsEmptyIconOverridesAndKeepsLaunchHistory() {
         // Given a v51 database with a recorded launch
         val db51 = helper.createDatabase(TEST_DB, 51)

@@ -1,5 +1,6 @@
 package com.facetlauncher.app.data.model
 
+import com.facetlauncher.app.data.DeviceLocation
 import java.time.LocalDateTime
 
 /** The connected Wi-Fi network, if any. [ssid] is null while connected but unreadable (no location permission, or location off). */
@@ -18,18 +19,21 @@ data class DeviceState(
     val wifi: WifiState = WifiState(),
     /** Null until the first Bluetooth query answers, so a "not connected" rule never fires on a guess. */
     val connectedBluetoothAddresses: Set<String>? = null,
+    /** The latest approximate position, read only while a location rule is enabled; null until the first fix, and kept across a missed one. */
+    val location: DeviceLocation? = null,
 )
 
 /** A runtime permission a trigger needs before it can work. */
 enum class AutomationPermission { BLUETOOTH_CONNECT, LOCATION }
 
 /**
- * Null when the trigger needs none. Wi-Fi only needs location to read a *named* network; "any
+ * Null when the trigger needs none. A location needs it for the position. Wi-Fi only needs location to read a *named* network; "any
  * network" runs on the normal `ACCESS_NETWORK_STATE`.
  */
 fun AutomationTrigger.requiredPermission(): AutomationPermission? = when (this) {
     is AutomationTrigger.Bluetooth -> AutomationPermission.BLUETOOTH_CONNECT
     is AutomationTrigger.Wifi -> AutomationPermission.LOCATION.takeIf { ssid != null }
+    is AutomationTrigger.Location -> AutomationPermission.LOCATION
     is AutomationTrigger.Schedule, is AutomationTrigger.Headphones, is AutomationTrigger.Battery -> null
 }
 
@@ -43,6 +47,7 @@ fun AutomationTrigger.isMetBy(state: DeviceState, now: LocalDateTime): Boolean =
     is AutomationTrigger.Bluetooth -> state.connectedBluetoothAddresses?.let { (deviceAddress in it) != negated } ?: false
     is AutomationTrigger.Wifi -> isWifiMet(state.wifi)
     is AutomationTrigger.Headphones -> state.headphonesPluggedIn != negated
+    is AutomationTrigger.Location -> state.location?.let { isInside(it) != negated } ?: false
     is AutomationTrigger.Battery -> state.battery?.let { isMetBy(charging = it.isCharging, levelPercent = it.percent) } ?: false
 }
 

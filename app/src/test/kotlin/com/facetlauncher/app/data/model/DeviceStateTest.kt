@@ -1,5 +1,6 @@
 package com.facetlauncher.app.data.model
 
+import com.facetlauncher.app.data.DeviceLocation
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -20,6 +21,55 @@ class DeviceStateTest {
 
         assertTrue(met(monday, DeviceState()))
         assertFalse(met(monday.copy(days = setOf(DayOfWeek.TUESDAY)), DeviceState()))
+    }
+
+    // --- Location ---
+
+    private val gym = AutomationTrigger.Location("Gym", 59.9139, 10.7522, radiusM = 500)
+
+    // About 0.001 degrees of latitude is 111 m
+    private fun at(latitudeOffset: Double) = DeviceState(location = DeviceLocation(59.9139 + latitudeOffset, 10.7522, null))
+
+    @Test
+    fun `a location is met inside its radius and not outside it`() {
+        assertTrue(met(gym, at(0.0)))
+        assertTrue(met(gym, at(0.004)))
+        assertFalse(met(gym, at(0.006)))
+    }
+
+    @Test
+    fun `a negated location is met outside its radius`() {
+        assertFalse(met(gym.copy(negated = true), at(0.0)))
+        assertTrue(met(gym.copy(negated = true), at(0.006)))
+    }
+
+    @Test
+    fun `a location switches at its radius`() {
+        // 0.001 degrees of latitude is 111.19 m
+        assertFalse(met(gym.copy(radiusM = 111), at(0.001)))
+        assertTrue(met(gym.copy(radiusM = 112), at(0.001)))
+        assertFalse(met(gym.copy(radiusM = 112, negated = true), at(0.001)))
+    }
+
+    @Test
+    fun `a location is never met without a position, negated or not`() {
+        assertFalse(met(gym, DeviceState()))
+        assertFalse(met(gym.copy(negated = true), DeviceState()))
+    }
+
+    @Test
+    fun `a location needs location permission and the others still need none`() {
+        assertEquals(AutomationPermission.LOCATION, gym.requiredPermission())
+        assertNull(AutomationTrigger.Headphones().requiredPermission())
+    }
+
+    @Test
+    fun `distance between two points is the great-circle distance`() {
+        // Oslo to Stockholm is about 415 km
+        val metres = distanceMeters(59.9139, 10.7522, 59.3293, 18.0686)
+
+        assertEquals(415_000.0, metres, 5_000.0)
+        assertEquals(0.0, distanceMeters(1.0, 2.0, 1.0, 2.0), 0.001)
     }
 
     // --- Bluetooth ---

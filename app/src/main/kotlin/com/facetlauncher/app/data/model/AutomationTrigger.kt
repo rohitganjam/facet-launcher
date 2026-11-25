@@ -1,5 +1,6 @@
 package com.facetlauncher.app.data.model
 
+import com.facetlauncher.app.data.DeviceLocation
 import java.time.DayOfWeek
 import java.time.LocalDateTime
 
@@ -52,6 +53,23 @@ sealed interface AutomationTrigger {
     data class Headphones(val negated: Boolean = false) : AutomationTrigger
 
     /**
+     * True while the device is within [radiusM] metres of a saved spot, or farther than that when [negated]. The position is the
+     * approximate fix Home takes when it comes to the front, so this switches then, not the moment the user arrives or leaves.
+     */
+    data class Location(
+        val name: String,
+        val latitude: Double,
+        val longitude: Double,
+        val radiusM: Int,
+        val negated: Boolean = false,
+    ) : AutomationTrigger {
+
+        /** On the radius counts as inside. */
+        fun isInside(position: DeviceLocation): Boolean =
+            distanceMeters(latitude, longitude, position.latitude, position.longitude) <= radiusM
+    }
+
+    /**
      * "While charging", or "while not charging" when [whileCharging] is false, with the battery
      * strictly below or above a threshold ([level], always required). The level check therefore works
      * in both states: "not charging, below 20%" and "charging, above 80%" are both rules.
@@ -83,4 +101,21 @@ data class BatteryLevelCondition(
             BatteryDirection.ABOVE -> 5..95 step 5
         }
     }
+}
+
+/** The trigger from stored or backed-up fields, or null when any of the four is missing. */
+fun locationTriggerOrNull(name: String?, latitude: Double?, longitude: Double?, radiusM: Int?, negated: Boolean): AutomationTrigger.Location? =
+    name?.let { n -> latitude?.let { la -> longitude?.let { lo -> radiusM?.let { r -> AutomationTrigger.Location(n, la, lo, r, negated) } } } }
+
+/** Schedule and location rules are free (sharing [AutomationLimits.FREE_MAX_RULES]); every device trigger is Pro. */
+fun AutomationTrigger.isFree(): Boolean = this is AutomationTrigger.Schedule || this is AutomationTrigger.Location
+
+private const val EARTH_RADIUS_M = 6_371_000.0
+
+/** Great-circle distance in metres (haversine). */
+fun distanceMeters(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {
+    val dLat = Math.toRadians(lat2 - lat1)
+    val dLon = Math.toRadians(lon2 - lon1)
+    val a = Math.sin(dLat / 2).let { it * it } + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2)) * Math.sin(dLon / 2).let { it * it }
+    return 2 * EARTH_RADIUS_M * Math.asin(Math.sqrt(a))
 }

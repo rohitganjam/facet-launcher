@@ -38,8 +38,10 @@ class RunFacetAutomationUseCaseTest {
         private val ruleRepository = mock(AutomationRuleRepository::class.java).also { `when`(it.observeRules()).thenReturn(rules) }
         private val wakeEvents = mock(WakeEventsRepository::class.java).also { `when`(it.observeWakeEvents()).thenReturn(wake) }
         private val settingsRepository = mock(SettingsRepository::class.java).also { `when`(it.settings).thenReturn(settings) }
-        private val deviceStateRepository = mock(DeviceStateRepository::class.java).also { `when`(it.deviceState).thenReturn(deviceState) }
+        val deviceStateRepository = mock(DeviceStateRepository::class.java).also { `when`(it.deviceState).thenReturn(deviceState) }
         val useCase = RunFacetAutomationUseCase(apply, ruleRepository, wakeEvents, settingsRepository, deviceStateRepository, entitlement)
+
+        fun locationReads(): Int = mockingDetails(deviceStateRepository).invocations.count { it.method.name == "refreshLocation" }
 
         fun passes(): Int = mockingDetails(apply).invocations.count { it.method.name == "invoke" }
     }
@@ -59,6 +61,34 @@ class RunFacetAutomationUseCaseTest {
         start(fixture)
 
         assertTrue("expected at least one pass at start, got ${fixture.passes()}", fixture.passes() >= 1)
+    }
+
+    @Test
+    fun `the position is read on wake, a Home press and a rule change`() = runTest {
+        val fixture = Fixture()
+        start(fixture)
+        val atStart = fixture.locationReads()
+
+        fixture.wake.tryEmit(Unit)
+        runCurrent()
+        fixture.homePresses.tryEmit(Unit)
+        runCurrent()
+        fixture.rules.value = listOf(rule)
+        runCurrent()
+
+        assertEquals(atStart + 3, fixture.locationReads())
+    }
+
+    @Test
+    fun `a device state change runs a pass without reading the position again`() = runTest {
+        val fixture = Fixture()
+        start(fixture)
+        val reads = fixture.locationReads()
+
+        fixture.deviceState.value = DeviceState(headphonesPluggedIn = true)
+        runCurrent()
+
+        assertEquals(reads, fixture.locationReads())
     }
 
     @Test

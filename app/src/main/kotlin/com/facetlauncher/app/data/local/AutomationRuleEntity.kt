@@ -50,4 +50,9 @@ data class AutomationRuleEntity(
     val batteryThreshold: Int? = null,
     /** Battery: `BELOW` or `ABOVE` the threshold (plain string). Required, with [batteryThreshold], for a battery rule. */
     val batteryDirection: String? = null,
+    /** Location: all four are set together; [negated] means "while away". */
+    val locationName: String? = null,
+    val locationLatitude: Double? = null,
+    val locationLongitude: Double? = null,
+    val locationRadiusM: Int? = null,
 )

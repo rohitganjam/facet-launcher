@@ -4,7 +4,10 @@ import com.facetlauncher.app.data.AutomationPermissionRepository
 import com.facetlauncher.app.data.AutomationRuleRepository
 import com.facetlauncher.app.data.BluetoothRepository
 import com.facetlauncher.app.data.DeviceStateRepository
+import com.facetlauncher.app.data.model.validationErrors
+import com.facetlauncher.app.data.DeviceLocation
 import com.facetlauncher.app.data.FacetRepository
+import com.facetlauncher.app.data.LocationRepository
 import com.facetlauncher.app.data.FakeEntitlementRepository
 import com.facetlauncher.app.data.SettingsRepository
 import com.facetlauncher.app.data.WifiRepository
@@ -66,6 +69,7 @@ class RuleEditorViewModelTest {
         val bluetoothRepository = mock(BluetoothRepository::class.java).also { runBlocking { `when`(it.pairedDevices()).thenReturn(listOf(car)) } }
         val wifiRepository = mock(WifiRepository::class.java).also { runBlocking { `when`(it.nearbyNetworkNames("Home")).thenReturn(listOf("Home", "Cafe")) } }
         val deviceStateRepository = mock(DeviceStateRepository::class.java)
+        val locationRepository = mock(LocationRepository::class.java)
         val entitlement = FakeEntitlementRepository()
         private val facetRepository = mock(FacetRepository::class.java).also { `when`(it.observeFacets()).thenReturn(flowOf(listOf(personal, work))) }
         private val permissionRepository = mock(AutomationPermissionRepository::class.java).also {
@@ -74,7 +78,7 @@ class RuleEditorViewModelTest {
         }
         val viewModel = RuleEditorViewModel(
             ruleRepository, facetRepository, settingsRepository, bluetoothRepository, wifiRepository, permissionRepository, deviceStateRepository,
-            entitlement, CanUseTriggerUseCase(), SaveAutomationRuleUseCase(ruleRepository, CanUseTriggerUseCase()),
+            locationRepository, entitlement, CanUseTriggerUseCase(), SaveAutomationRuleUseCase(ruleRepository, CanUseTriggerUseCase()),
         )
     }
 
@@ -307,5 +311,48 @@ class RuleEditorViewModelTest {
         assertEquals(true, fixture.viewModel.isPro.value)
         fixture.entitlement.proFlow.value = false
         assertEquals(false, fixture.viewModel.isPro.value)
+    }
+
+    private fun Fixture.openLocation() {
+        openNew()
+        viewModel.editRule { withKind(TriggerKind.LOCATION) }
+    }
+
+    @Test
+    fun `using my location fills the position and names a blank location`() = runTest {
+        val fixture = fixture().apply { openLocation() }
+        `when`(fixture.locationRepository.currentLocation()).thenReturn(DeviceLocation(59.9, 10.7, null))
+
+        fixture.viewModel.useCurrentLocation("Here")
+        dispatcher.scheduler.advanceUntilIdle()
+
+        val location = fixture.viewModel.editor.value!!.trigger as AutomationTrigger.Location
+        assertEquals(Triple("Here", 59.9, 10.7), Triple(location.name, location.latitude, location.longitude))
+        assertTrue(fixture.viewModel.editor.value!!.toRule().validationErrors().isEmpty())
+    }
+
+    @Test
+    fun `using my location keeps a name the user already typed`() = runTest {
+        val fixture = fixture().apply { openLocation() }
+        fixture.viewModel.editRule { withTrigger((trigger as AutomationTrigger.Location).copy(name = "Gym")) }
+        `when`(fixture.locationRepository.currentLocation()).thenReturn(DeviceLocation(59.9, 10.7, null))
+
+        fixture.viewModel.useCurrentLocation("Here")
+        dispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals("Gym", (fixture.viewModel.editor.value!!.trigger as AutomationTrigger.Location).name)
+    }
+
+    @Test
+    fun `no fix says so and leaves the location as it was`() = runTest {
+        val fixture = fixture().apply { openLocation() }
+        `when`(fixture.locationRepository.currentLocation()).thenReturn(null)
+
+        fixture.viewModel.useCurrentLocation("Here")
+        dispatcher.scheduler.advanceUntilIdle()
+
+        val editor = fixture.viewModel.editor.value!!
+        assertTrue(editor.locationUnavailable)
+        assertTrue((editor.trigger as AutomationTrigger.Location).latitude.isNaN())
     }
 }

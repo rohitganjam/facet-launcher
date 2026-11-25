@@ -86,7 +86,7 @@ sequenceDiagram
   folder FK cascade and `deleteAllFacets` clears every per-facet row through the facet FK cascade, so nothing else is wiped.
   Exports no longer write the launcher-wide lists (`BackupBundle.dockApps`, `defaultFavoriteApps` and the two folder-placement lists are
   legacy: read from older files by `upgradedToCurrent`, never written, never restored by themselves).
-- **Automation rules.** `RestoreAutomationRulesUseCase` maps each `BackupAutomationRule` through
+- **Automation rules.** (A `LOCATION` rule carries `locationName`, `locationLatitude`, `locationLongitude`, `locationRadiusM`: defaulted fields, no version bump; an older app skips it as `UNSUPPORTED`.) `RestoreAutomationRulesUseCase` maps each `BackupAutomationRule` through
   `toRestoredRule(facetIdByUuid)`: a rule whose target or "switch to" facet isn't in the backup is
   skipped (`FACET_MISSING`), an unknown trigger or ending from a newer app is `UNSUPPORTED`, and one the
   rule editor would refuse is `INVALID`. The rest replace every rule in order with no plan limit (the
