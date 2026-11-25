@@ -10,6 +10,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotDisplayed
@@ -48,6 +49,7 @@ import com.facetlauncher.app.data.model.DockDisplayMode
 import com.facetlauncher.app.data.model.Folder
 import com.facetlauncher.app.data.model.PlacedItem
 import com.facetlauncher.app.ui.theme.FacetLauncherTheme
+import com.facetlauncher.app.ui.theme.launcherSystemBarInsets
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -396,6 +398,24 @@ class HomeScreenTest {
 
         // Then the dock row isn't rendered at all
         composeRule.onNodeWithTag("home_dock_row").assertDoesNotExist()
+    }
+
+    @Test
+    fun withAnEmptyDockTheAppListRunsDownToTheBottomMargin() {
+        // Given no dock apps and a bottom-aligned list
+        var insetBottomPx = 0
+        composeRule.setContent {
+            FacetLauncherTheme {
+                insetBottomPx = launcherSystemBarInsets().getBottom(LocalDensity.current)
+                FlatHomeScreen(appListItems = apps(3).map { PlacedItem.SingleApp(it) }, dockApps = emptyList(), onAppClick = {})
+            }
+        }
+
+        // Then the list ends at Home's 22dp bottom margin, with no dock spacer left above it
+        val rootBottom = composeRule.onRoot().fetchSemanticsNode().boundsInRoot.bottom
+        val listBottom = composeRule.onNodeWithTag("home_app_list_scroll_region").fetchSemanticsNode().boundsInRoot.bottom
+        val maxGapPx = insetBottomPx + with(composeRule.density) { 23.dp.toPx() }
+        assertTrue("gap ${rootBottom - listBottom}px exceeds ${maxGapPx}px", rootBottom - listBottom <= maxGapPx)
     }
 
     @Test

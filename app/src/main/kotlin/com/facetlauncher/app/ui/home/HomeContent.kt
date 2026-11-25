@@ -69,8 +69,8 @@ internal fun HomePortraitContent(frame: HomeFrame) {
         ) {
             PortraitClockZone(frame)
         }
-        Spacer(modifier = Modifier.height(16.dp))
         if (frame.state.dock.items.isNotEmpty()) {
+            Spacer(modifier = Modifier.height(16.dp))
             GlassPanel(
                 style = frame.state.dock.glass,
                 shape = MaterialTheme.shapes.large,
