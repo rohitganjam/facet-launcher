@@ -96,6 +96,26 @@ class HubWidgetPickerScreenTest {
     }
 
     @Test
+    fun aSpinnerShowsInPlaceOfTheListWhileWidgetsLoad() {
+        // Given the picker content while the installed widgets are still being read
+        composeRule.setContent {
+            FacetLauncherTheme {
+                HubWidgetPickerContent(
+                    uiState = HubWidgetPickerUiState(loading = true),
+                    onQueryChange = {},
+                    onProviderSelect = {},
+                    onBack = {},
+                )
+            }
+        }
+
+        // Then the search field and a spinner show, with no "none found" message
+        composeRule.onNodeWithTag("hub_widget_picker_search").assertIsDisplayed()
+        composeRule.onNodeWithTag("hub_widget_picker_loading").assertIsDisplayed()
+        composeRule.onNodeWithText(androidx.test.platform.app.InstrumentationRegistry.getInstrumentation().targetContext.getString(com.facetlauncher.app.R.string.hub_widget_picker_none_found)).assertDoesNotExist()
+    }
+
+    @Test
     fun aFailedAddShowsAnErrorMessageInsteadOfSilentlyDoingNothing() {
         // Given the picker content rendered with a failure message set (as it would be right
         // after AddFailed — e.g. the provider's own configure activity was canceled/incomplete)

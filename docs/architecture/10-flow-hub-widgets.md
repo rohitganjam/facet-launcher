@@ -89,6 +89,8 @@ sequenceDiagram
     Note over VM,AWR: any failure path → failAndRelease: deleteAppWidgetId(id) + AddFailed(reason)
 ```
 
+**Listing.** The picker opens at once with its header and search field and a spinner (`HubWidgetPickerUiState.loading`) in place of the list. The first collection of `uiState` starts one `loadPickerOptions` call on `@IoDispatcher`, which reads every installed provider's label, span and preview (`AppWidgetRepository.getWidgetProviderOptions()`) and drops vaulted apps. The result is cached while the picker is open and dropped by `refresh()`, which the overlay calls on each open, so installs and uninstalls show up and the list is read behind the spinner, never during the slide-out (`reset()` on close clears only the search and tab). `ClockWidgetPickerViewModel` shares the same loader and state.
+
 **Configure** always goes through `WidgetConfigureActivity`, an invisible in-app trampoline: the only public way to open a
 provider's configure activity is `AppWidgetHost.startAppWidgetConfigureActivityForResult`, which needs an Activity and a
 request code, and it is the only way that reaches a Work Profile provider or an unexported configure activity. The trampoline

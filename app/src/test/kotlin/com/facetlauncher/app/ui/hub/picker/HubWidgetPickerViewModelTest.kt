@@ -70,7 +70,7 @@ class HubWidgetPickerViewModelTest {
         `when`(appWidgetRepository.userIdForWidget(1)).thenReturn(0)
         `when`(placeWidget.invoke(emptyList(), 2, 1)).thenReturn(PlaceWidgetResult.Placed(row = 0, col = 0))
 
-        val viewModel = HubWidgetPickerViewModel(appWidgetRepository, widgetPlacementRepository, placeWidget)
+        val viewModel = HubWidgetPickerViewModel(appWidgetRepository, widgetPlacementRepository, placeWidget, ioDispatcher = testDispatcher)
         val events = mutableListOf<HubAddWidgetEvent>()
         val job = launch { viewModel.events.collect { events.add(it) } }
         // uiState is WhileSubscribed(5_000) — onProviderSelect reads its .value, so it must
@@ -111,7 +111,7 @@ class HubWidgetPickerViewModelTest {
         `when`(appWidgetRepository.userIdForWidget(1)).thenReturn(10)
         `when`(placeWidget.invoke(emptyList(), 2, 1)).thenReturn(PlaceWidgetResult.Placed(row = 0, col = 0))
 
-        val viewModel = HubWidgetPickerViewModel(appWidgetRepository, widgetPlacementRepository, placeWidget)
+        val viewModel = HubWidgetPickerViewModel(appWidgetRepository, widgetPlacementRepository, placeWidget, ioDispatcher = testDispatcher)
         val uiStateJob = launch { viewModel.uiState.collect {} }
         testDispatcher.scheduler.advanceUntilIdle()
 
@@ -135,7 +135,7 @@ class HubWidgetPickerViewModelTest {
         val bindIntent = Intent("bind")
         `when`(appWidgetRepository.createBindIntent(1, provider, option.userHandle)).thenReturn(bindIntent)
 
-        val viewModel = HubWidgetPickerViewModel(appWidgetRepository, widgetPlacementRepository, placeWidget)
+        val viewModel = HubWidgetPickerViewModel(appWidgetRepository, widgetPlacementRepository, placeWidget, ioDispatcher = testDispatcher)
         val events = mutableListOf<HubAddWidgetEvent>()
         val job = launch { viewModel.events.collect { events.add(it) } }
         // uiState is WhileSubscribed(5_000) — onProviderSelect reads its .value, so it must
@@ -162,7 +162,7 @@ class HubWidgetPickerViewModelTest {
         `when`(appWidgetRepository.bindAppWidgetIdIfAllowed(1, provider, option.userHandle)).thenReturn(false)
         `when`(appWidgetRepository.createBindIntent(1, provider, option.userHandle)).thenReturn(Intent("bind"))
 
-        val viewModel = HubWidgetPickerViewModel(appWidgetRepository, widgetPlacementRepository, placeWidget)
+        val viewModel = HubWidgetPickerViewModel(appWidgetRepository, widgetPlacementRepository, placeWidget, ioDispatcher = testDispatcher)
         val events = mutableListOf<HubAddWidgetEvent>()
         val job = launch { viewModel.events.collect { events.add(it) } }
         // uiState is WhileSubscribed(5_000) — onProviderSelect reads its .value, so it must
@@ -198,7 +198,7 @@ class HubWidgetPickerViewModelTest {
         val configureIntent = Intent("configure")
         `when`(appWidgetRepository.createConfigureIntent(1, info)).thenReturn(configureIntent)
 
-        val viewModel = HubWidgetPickerViewModel(appWidgetRepository, widgetPlacementRepository, placeWidget)
+        val viewModel = HubWidgetPickerViewModel(appWidgetRepository, widgetPlacementRepository, placeWidget, ioDispatcher = testDispatcher)
         val events = mutableListOf<HubAddWidgetEvent>()
         val job = launch { viewModel.events.collect { events.add(it) } }
         // uiState is WhileSubscribed(5_000) — onProviderSelect reads its .value, so it must
@@ -224,7 +224,7 @@ class HubWidgetPickerViewModelTest {
         }
         `when`(widgetPlacementRepository.observeAll()).thenReturn(flowOf(fullPlacements))
 
-        val viewModel = HubWidgetPickerViewModel(appWidgetRepository, widgetPlacementRepository, placeWidget)
+        val viewModel = HubWidgetPickerViewModel(appWidgetRepository, widgetPlacementRepository, placeWidget, ioDispatcher = testDispatcher)
         val events = mutableListOf<HubAddWidgetEvent>()
         val job = launch { viewModel.events.collect { events.add(it) } }
         // uiState is WhileSubscribed(5_000) — onProviderSelect reads its .value, so it must
@@ -242,6 +242,31 @@ class HubWidgetPickerViewModelTest {
     }
 
     @Test
+    fun `picker reports loading until the installed widgets have been read`() = runTest {
+        // Given
+        val appWidgetRepository = mock(AppWidgetRepository::class.java)
+        val widgetPlacementRepository = mock(WidgetPlacementRepository::class.java)
+        `when`(widgetPlacementRepository.observeAll()).thenReturn(flowOf(emptyList()))
+        `when`(appWidgetRepository.getWidgetProviderOptions()).thenReturn(
+            listOf(WidgetProviderOption(ComponentName("pkg1", ".W1"), "App One", "Widget A", 2, 2)),
+        )
+        val viewModel = HubWidgetPickerViewModel(appWidgetRepository, widgetPlacementRepository, mock(PlaceWidgetUseCase::class.java), ioDispatcher = testDispatcher)
+
+        // When
+        val states = mutableListOf<HubWidgetPickerUiState>()
+        val job = launch { viewModel.uiState.collect { states.add(it) } }
+        testDispatcher.scheduler.runCurrent()
+        val first = states.first()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Then
+        assertEquals(true, first.loading)
+        assertEquals(false, states.last().loading)
+        assertEquals(listOf("App One"), states.last().groups.map { it.appLabel })
+        job.cancel()
+    }
+
+    @Test
     fun `query filtering only matches app label, not widget label`() = runTest {
         val appWidgetRepository = mock(AppWidgetRepository::class.java)
         val widgetPlacementRepository = mock(WidgetPlacementRepository::class.java)
@@ -254,7 +279,7 @@ class HubWidgetPickerViewModelTest {
         )
         `when`(appWidgetRepository.getWidgetProviderOptions()).thenReturn(options)
 
-        val viewModel = HubWidgetPickerViewModel(appWidgetRepository, widgetPlacementRepository, placeWidget)
+        val viewModel = HubWidgetPickerViewModel(appWidgetRepository, widgetPlacementRepository, placeWidget, ioDispatcher = testDispatcher)
 
         // Subscribe to uiState to trigger loading
         val uiStateItems = mutableListOf<HubWidgetPickerUiState>()
@@ -288,7 +313,7 @@ class HubWidgetPickerViewModelTest {
                 WidgetProviderOption(ComponentName("p.bee", ".W2"), "bee", "Calendar", 2, 2),
             ),
         )
-        val viewModel = HubWidgetPickerViewModel(appWidgetRepository, widgetPlacementRepository, placeWidget)
+        val viewModel = HubWidgetPickerViewModel(appWidgetRepository, widgetPlacementRepository, placeWidget, ioDispatcher = testDispatcher)
 
         // When the picker loads
         val states = mutableListOf<HubWidgetPickerUiState>()
@@ -311,7 +336,7 @@ class HubWidgetPickerViewModelTest {
         `when`(widgetPlacementRepository.observeAll()).thenReturn(flowOf(emptyList()))
         `when`(appWidgetRepository.getWidgetProviderOptions()).thenReturn(emptyList())
 
-        val viewModel = HubWidgetPickerViewModel(appWidgetRepository, widgetPlacementRepository, placeWidget)
+        val viewModel = HubWidgetPickerViewModel(appWidgetRepository, widgetPlacementRepository, placeWidget, ioDispatcher = testDispatcher)
 
         val uiStateJob = launch { viewModel.uiState.collect {} }
         testDispatcher.scheduler.advanceUntilIdle()
@@ -329,14 +354,14 @@ class HubWidgetPickerViewModelTest {
     }
 
     @Test
-    fun `options are cached until reset is called`() = runTest {
+    fun `options are cached until refresh is called and reset keeps them`() = runTest {
         val appWidgetRepository = mock(AppWidgetRepository::class.java)
         val widgetPlacementRepository = mock(WidgetPlacementRepository::class.java)
         val placeWidget = mock(PlaceWidgetUseCase::class.java)
         `when`(widgetPlacementRepository.observeAll()).thenReturn(flowOf(emptyList()))
         `when`(appWidgetRepository.getWidgetProviderOptions()).thenReturn(emptyList())
 
-        val viewModel = HubWidgetPickerViewModel(appWidgetRepository, widgetPlacementRepository, placeWidget)
+        val viewModel = HubWidgetPickerViewModel(appWidgetRepository, widgetPlacementRepository, placeWidget, ioDispatcher = testDispatcher)
 
         val uiStateJob = launch { viewModel.uiState.collect {} }
         testDispatcher.scheduler.advanceUntilIdle()
@@ -350,11 +375,14 @@ class HubWidgetPickerViewModelTest {
         // Should have called repository only once
         verify(appWidgetRepository).getWidgetProviderOptions()
 
-        // Reset
+        // Closing the picker keeps the list
         viewModel.reset()
         testDispatcher.scheduler.advanceUntilIdle()
+        verify(appWidgetRepository).getWidgetProviderOptions()
 
-        // Call again
+        // Opening it again reads the widgets afresh
+        viewModel.refresh()
+        testDispatcher.scheduler.advanceUntilIdle()
         viewModel.onQueryChange("c")
         testDispatcher.scheduler.advanceUntilIdle()
 
@@ -372,7 +400,7 @@ class HubWidgetPickerViewModelTest {
         `when`(widgetPlacementRepository.observeAll()).thenReturn(flowOf(emptyList()))
         `when`(widgetPlacementRepository.nextNativeId()).thenReturn(-1)
         `when`(placeWidget.invoke(emptyList(), 3, 2)).thenReturn(PlaceWidgetResult.Placed(row = 1, col = 0))
-        val viewModel = HubWidgetPickerViewModel(appWidgetRepository, widgetPlacementRepository, placeWidget)
+        val viewModel = HubWidgetPickerViewModel(appWidgetRepository, widgetPlacementRepository, placeWidget, ioDispatcher = testDispatcher)
         val events = mutableListOf<HubAddWidgetEvent>()
         val job = launch { viewModel.events.collect { events.add(it) } }
         testDispatcher.scheduler.advanceUntilIdle()
@@ -396,7 +424,7 @@ class HubWidgetPickerViewModelTest {
         val placeWidget = mock(PlaceWidgetUseCase::class.java)
         val full = List(HUB_MAX_WIDGETS) { WidgetPlacementEntity(it + 1, "p", "c", row = it, col = 0, colSpan = 1, rowSpan = 1) }
         `when`(widgetPlacementRepository.observeAll()).thenReturn(flowOf(full))
-        val viewModel = HubWidgetPickerViewModel(appWidgetRepository, widgetPlacementRepository, placeWidget)
+        val viewModel = HubWidgetPickerViewModel(appWidgetRepository, widgetPlacementRepository, placeWidget, ioDispatcher = testDispatcher)
         val events = mutableListOf<HubAddWidgetEvent>()
         val job = launch { viewModel.events.collect { events.add(it) } }
         testDispatcher.scheduler.advanceUntilIdle()
@@ -419,7 +447,7 @@ class HubWidgetPickerViewModelTest {
         `when`(widgetPlacementRepository.nextNativeId()).thenReturn(-1)
         val span = NativeWidgetType.NOW_PLAYING.defaultSpan()
         `when`(placeWidget.invoke(emptyList(), span.cols, span.rows)).thenReturn(PlaceWidgetResult.Placed(row = 0, col = 0))
-        val viewModel = HubWidgetPickerViewModel(appWidgetRepository, widgetPlacementRepository, placeWidget)
+        val viewModel = HubWidgetPickerViewModel(appWidgetRepository, widgetPlacementRepository, placeWidget, ioDispatcher = testDispatcher)
         val events = mutableListOf<HubAddWidgetEvent>()
         val job = launch { viewModel.events.collect { events.add(it) } }
         testDispatcher.scheduler.advanceUntilIdle()

@@ -4,9 +4,15 @@ import android.content.Intent
 import com.facetlauncher.app.data.model.NativeWidgetRef
 import com.facetlauncher.app.data.model.AppProfile
 import com.facetlauncher.app.data.model.WidgetProviderOption
+import com.facetlauncher.app.data.AppVaultRepository
+import com.facetlauncher.app.data.model.withoutVaulted
+import com.facetlauncher.app.data.widget.AppWidgetRepository
 import com.facetlauncher.app.domain.matchesSearch
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withContext
 
 data class WidgetProviderGroup(
     val appLabel: String,
@@ -18,6 +24,12 @@ fun List<WidgetProviderOption>.toSortedGroups(): List<WidgetProviderGroup> =
     groupBy { it.appLabel }
         .map { (appLabel, options) -> WidgetProviderGroup(appLabel, options.sortedBy { it.widgetLabel.lowercase() }) }
         .sortedBy { it.appLabel.lowercase() }
+
+/** Reads every installed widget (labels, previews, spans) on [io], so opening the picker never blocks the main thread. */
+suspend fun loadPickerOptions(repository: AppWidgetRepository, vault: AppVaultRepository?, io: CoroutineDispatcher): List<WidgetProviderOption> =
+    withContext(io) {
+        repository.getWidgetProviderOptions().withoutVaulted(vault?.vaultedKeys?.first().orEmpty())
+    }
 
 /** The profile a picker list is split by: a Work Profile's widgets are kept apart from the personal ones. */
 enum class WidgetPickerTab { PERSONAL, WORK }
@@ -51,6 +63,8 @@ data class HubWidgetPickerUiState(
     val groupsByTab: Map<WidgetPickerTab, List<WidgetProviderGroup>> = emptyMap(),
     /** `null` hides the header's "N left" counter entirely — used by PRD F15's clock widget picker, which has no capacity concept (a facet has exactly 0 or 1 clock widget, not up to [com.facetlauncher.app.domain.HUB_MAX_WIDGETS]). */
     val remaining: Int? = 0,
+    /** The installed widgets are still being read; the list shows a spinner instead of an empty-results message. */
+    val loading: Boolean = false,
 )
 
 enum class AddFailureReason { HUB_FULL, SETUP_CANCELLED }

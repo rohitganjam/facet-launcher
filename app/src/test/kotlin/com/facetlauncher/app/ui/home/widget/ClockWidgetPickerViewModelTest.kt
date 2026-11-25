@@ -51,7 +51,7 @@ class ClockWidgetPickerViewModelTest {
     private val replaceClockStackItem = mock(ReplaceClockStackItemUseCase::class.java)
     private val addClockStackItem = mock(AddClockStackItemUseCase::class.java)
 
-    private fun viewModel() = ClockWidgetPickerViewModel(appWidgetRepository, replaceClockStackItem, addClockStackItem)
+    private fun viewModel() = ClockWidgetPickerViewModel(appWidgetRepository, replaceClockStackItem, addClockStackItem, ioDispatcher = testDispatcher)
 
     private fun infoWithoutConfigure(appWidgetId: Int): AppWidgetProviderInfo {
         val info = AppWidgetProviderInfo()

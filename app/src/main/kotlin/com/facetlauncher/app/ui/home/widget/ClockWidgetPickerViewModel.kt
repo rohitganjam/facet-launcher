@@ -3,7 +3,6 @@ package com.facetlauncher.app.ui.home.widget
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.facetlauncher.app.data.AppVaultRepository
-import com.facetlauncher.app.data.model.withoutVaulted
 import com.facetlauncher.app.data.model.WidgetProviderOption
 import com.facetlauncher.app.data.model.NativeWidgetRef
 import com.facetlauncher.app.data.model.NativeWidgetType
@@ -19,8 +18,13 @@ import com.facetlauncher.app.ui.hub.picker.HubWidgetPickerUiState
 import com.facetlauncher.app.ui.hub.picker.WidgetPickerTab
 import com.facetlauncher.app.ui.hub.picker.pickerState
 import com.facetlauncher.app.ui.hub.picker.toSortedGroups
+import com.facetlauncher.app.data.di.IoDispatcher
+import com.facetlauncher.app.ui.hub.picker.loadPickerOptions
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -28,7 +32,6 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -51,10 +54,12 @@ class ClockWidgetPickerViewModel @Inject constructor(
     private val addClockStackItem: AddClockStackItemUseCase,
     // Defaulted so tests that don't cover the vault needn't build one; Hilt always supplies it.
     private val appVaultRepository: AppVaultRepository? = null,
+    @IoDispatcher private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) : ViewModel() {
 
     private val query = MutableStateFlow("")
     private val allOptions = MutableStateFlow<List<WidgetProviderOption>?>(null)
+    private var loadJob: Job? = null
     private val _events = MutableSharedFlow<HubAddWidgetEvent>(extraBufferCapacity = 1)
     val events: SharedFlow<HubAddWidgetEvent> = _events.asSharedFlow()
 
@@ -67,11 +72,18 @@ class ClockWidgetPickerViewModel @Inject constructor(
     private val tab = MutableStateFlow(WidgetPickerTab.PERSONAL)
 
     val uiState: StateFlow<HubWidgetPickerUiState> = combine(query, tab, allOptions) { currentQuery, currentTab, options ->
-        val currentOptions = options ?: appWidgetRepository.getWidgetProviderOptions()
-            .withoutVaulted(appVaultRepository?.vaultedKeys?.first().orEmpty())
-            .also { allOptions.value = it }
-        pickerState(currentOptions, currentQuery, currentTab, remaining = null)
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), HubWidgetPickerUiState(remaining = null))
+        if (options == null) {
+            ensureLoaded()
+            HubWidgetPickerUiState(query = currentQuery, remaining = null, loading = true)
+        } else {
+            pickerState(options, currentQuery, currentTab, remaining = null)
+        }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), HubWidgetPickerUiState(remaining = null, loading = true))
+
+    private fun ensureLoaded() {
+        if (loadJob?.isActive == true) return
+        loadJob = viewModelScope.launch { allOptions.value = loadPickerOptions(appWidgetRepository, appVaultRepository, ioDispatcher) }
+    }
 
     fun onTabChange(newTab: WidgetPickerTab) {
         tab.value = newTab
@@ -85,6 +97,11 @@ class ClockWidgetPickerViewModel @Inject constructor(
     fun reset() {
         query.value = ""
         tab.value = WidgetPickerTab.PERSONAL
+    }
+
+    /** Called as the picker opens: drops the cached widgets so the list is read afresh (installs and uninstalls show up), behind a spinner. */
+    fun refresh() {
+        loadJob?.cancel()
         allOptions.value = null
     }
 

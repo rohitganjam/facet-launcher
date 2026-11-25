@@ -243,6 +243,7 @@ fun HomeDrawerRoute(
             onAppClick = onAppClick,
             onPrivateSpaceQueryChange = privateSpaceViewModel::onQueryChange,
             onWidgetPickerReset = widgetPickerViewModel::reset,
+            onWidgetPickerOpen = widgetPickerViewModel::refresh,
         )
         HomeFacetCarousel(
             swipe = swipe,
@@ -252,7 +253,7 @@ fun HomeDrawerRoute(
             onNavigateToManageFacets = onNavigateToManageFacets,
             onNavigateToFacetPro = onNavigateToFacetPro,
         )
-        HomeClockWidgetPicker(overlays, homeUiState, onReset = clockWidgetPickerViewModel::reset)
+        HomeClockWidgetPicker(overlays, homeUiState, onReset = clockWidgetPickerViewModel::reset, onOpen = clockWidgetPickerViewModel::refresh)
         HomeSheetOverlays(
             overlays = overlays,
             homeUiState = homeUiState,

@@ -146,6 +146,7 @@ internal fun HomePickerOverlays(
     onAppClick: (AppInfo) -> Unit,
     onPrivateSpaceQueryChange: (String) -> Unit,
     onWidgetPickerReset: () -> Unit,
+    onWidgetPickerOpen: () -> Unit,
 ) {
     val coroutineScope = rememberCoroutineScope()
     HomePrivateSpaceOverlay(
@@ -166,15 +167,15 @@ internal fun HomePickerOverlays(
             coroutineScope.launch { swipe.drawer.close() }
         },
     )
-    HomeWidgetPickerOverlay(overlays, onReset = onWidgetPickerReset) {
+    HomeWidgetPickerOverlay(overlays, onReset = onWidgetPickerReset, onOpen = onWidgetPickerOpen) {
         HubWidgetPickerScreen(onDone = { overlays.showWidgetPicker = false }, onConfigureNewWidget = { overlays.configureRef = it })
     }
 }
 
 /** The picker that adds or replaces a clock-stack page; whether the plain clock is still available comes from [homeUiState]. */
 @Composable
-internal fun HomeClockWidgetPicker(overlays: HomeOverlayState, homeUiState: HomeUiState, onReset: () -> Unit) {
-    HomeClockWidgetPickerOverlay(overlays, onReset = onReset) { target ->
+internal fun HomeClockWidgetPicker(overlays: HomeOverlayState, homeUiState: HomeUiState, onReset: () -> Unit, onOpen: () -> Unit) {
+    HomeClockWidgetPickerOverlay(overlays, onReset = onReset, onOpen = onOpen) { target ->
         ClockWidgetPickerScreen(
             target = target,
             onDone = { overlays.showClockWidgetPicker = false },

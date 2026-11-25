@@ -71,11 +71,12 @@ internal fun HomeHubOverlay(
 
 /** The Hub's add-widget picker, sliding in over the Hub the way a NavHost push would, though the Hub never leaves composition. */
 @Composable
-internal fun HomeWidgetPickerOverlay(overlays: HomeOverlayState, onReset: () -> Unit, content: @Composable () -> Unit) {
+internal fun HomeWidgetPickerOverlay(overlays: HomeOverlayState, onReset: () -> Unit, onOpen: () -> Unit, content: @Composable () -> Unit) {
     val currentOnReset by rememberUpdatedState(onReset)
-    // Clear its search whenever the picker goes out of view, including when only it closes under an open Hub.
+    val currentOnOpen by rememberUpdatedState(onOpen)
+    // Clear its search whenever the picker goes out of view, including when only it closes under an open Hub, and read the widgets afresh on each open.
     LaunchedEffect(overlays.showWidgetPicker) {
-        if (!overlays.showWidgetPicker) currentOnReset()
+        if (overlays.showWidgetPicker) currentOnOpen() else currentOnReset()
     }
     AnimatedVisibility(
         visible = overlays.showWidgetPicker,
@@ -116,11 +117,13 @@ internal fun HomeFacetCarouselOverlay(
 
 /** The clock widget picker, over everything else: reached from the Home sheet, not from the Hub. */
 @Composable
-internal fun HomeClockWidgetPickerOverlay(overlays: HomeOverlayState, onReset: () -> Unit, content: @Composable (target: ClockWidgetPickerTarget) -> Unit) {
+internal fun HomeClockWidgetPickerOverlay(overlays: HomeOverlayState, onReset: () -> Unit, onOpen: () -> Unit, content: @Composable (target: ClockWidgetPickerTarget) -> Unit) {
     val currentOnReset by rememberUpdatedState(onReset)
-    // Clear its search and target page whenever its panel closes.
+    val currentOnOpen by rememberUpdatedState(onOpen)
+    // Clear its search and target page whenever its panel closes, and read the widgets afresh on each open.
     LaunchedEffect(overlays.showClockWidgetPicker) {
-        if (!overlays.showClockWidgetPicker) {
+        if (overlays.showClockWidgetPicker) currentOnOpen()
+        else {
             currentOnReset()
             overlays.clockWidgetPickerTarget = null
         }

@@ -34,6 +34,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -71,6 +72,7 @@ import com.facetlauncher.app.ui.components.ProfileTabRow
 import com.facetlauncher.app.ui.components.SwipeTabs
 import com.facetlauncher.app.data.model.NativeWidgetType
 import com.facetlauncher.app.ui.nativewidget.NativeWidgetPickerSection
+import com.facetlauncher.app.ui.theme.Accent
 import com.facetlauncher.app.ui.theme.ErrorColor
 import com.facetlauncher.app.ui.theme.Hairline
 import com.facetlauncher.app.ui.theme.Ink
@@ -252,10 +254,14 @@ private fun WidgetPickerList(
         if (uiState.query.isBlank() && tab == WidgetPickerTab.PERSONAL) {
             item { NativeWidgetPickerSection(types = native.types, tileWidth = tileWidth, onSelect = native.onSelect, showClock = native.showClock, onClockSelect = native.onClockSelect) }
         }
-        items(groups, key = { it.appLabel }) { group ->
-            WidgetProviderGroupRow(group = group, tileWidth = tileWidth, onProviderSelect = onProviderSelect)
+        if (uiState.loading) {
+            item { WidgetsLoading() }
+        } else {
+            items(groups, key = { it.appLabel }) { group ->
+                WidgetProviderGroupRow(group = group, tileWidth = tileWidth, onProviderSelect = onProviderSelect)
+            }
+            if (groups.isEmpty()) item { NoWidgetsFound() }
         }
-        if (groups.isEmpty()) item { NoWidgetsFound() }
     }
 }
 
@@ -274,6 +280,14 @@ private fun WidgetPickerTabRow(uiState: HubWidgetPickerUiState, onTabChange: (Wi
         tagPrefix = "hub_widget_picker_tab_",
         modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
     )
+}
+
+/** Shown while the installed widgets are read, after the picker has already opened. */
+@Composable
+private fun WidgetsLoading() {
+    Box(Modifier.fillMaxWidth().padding(top = 48.dp).testTag("hub_widget_picker_loading"), contentAlignment = Alignment.TopCenter) {
+        CircularProgressIndicator(color = Accent, strokeWidth = 2.dp)
+    }
 }
 
 @Composable
