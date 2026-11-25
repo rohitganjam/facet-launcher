@@ -41,13 +41,13 @@
     <string name="automation_while_plugged_in">Mientras estén conectados</string>
     <string name="automation_while_not_plugged_in">Mientras no estén conectados</string>
     <string name="automation_permission_bluetooth_off">El acceso a Bluetooth está desactivado, así que este disparador no se puede usar. Permítelo en Configuración.</string>
-    <string name="automation_permission_location_off">El acceso a la ubicación está desactivado. Android lo necesita para leer los nombres de las redes Wi-Fi. Permítelo en Configuración.</string>
+    <string name="automation_permission_location_off">El acceso a la ubicación está desactivado. Android lo necesita para las reglas de ubicación y para leer los nombres de las redes Wi-Fi. Permítelo en Configuración.</string>
     <string name="automation_open_settings">Abrir configuración</string>
-    <string name="automation_free_strip">El plan gratuito incluye 2 reglas de horario. Pro agrega más reglas y disparadores para Bluetooth, Wi-Fi, carga, audífonos y batería.</string>
+    <string name="automation_free_strip">El plan gratuito incluye 2 reglas, de horario o de ubicación. Pro agrega más reglas y disparadores para Bluetooth, Wi-Fi, carga, audífonos y batería.</string>
     <string name="automation_no_paired_devices">No hay dispositivos vinculados. Vincula uno primero en la configuración de Bluetooth.</string>
     <string name="pro_hero_trigger_car">Auto</string>
     <string name="pro_add_facet">Agregar una faceta</string>
-    <string name="pro_feature_automation_body">Cambia de faceta con Wi-Fi, Bluetooth, audífonos o batería, no solo con un horario. El plan gratuito incluye 2 reglas de horario.</string>
+    <string name="pro_feature_automation_body">Cambia de faceta con Wi-Fi, Bluetooth, audífonos o batería, no solo con un horario o una ubicación. El plan gratuito incluye 2 reglas, de horario o de ubicación.</string>
     <string name="pro_owned_automation_body">Wi-Fi, Bluetooth, audífonos y batería</string>
     <string name="pro_feature_future_body">Todo lo que se agregue a Pro más adelante es tuyo.</string>
     <string name="pro_upgrade_trigger">Las reglas que reaccionan al Bluetooth, al Wi-Fi, a los audífonos o a la batería forman parte de Pro.</string>
