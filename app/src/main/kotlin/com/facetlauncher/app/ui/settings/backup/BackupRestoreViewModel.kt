@@ -14,8 +14,12 @@ import com.facetlauncher.app.domain.ImportBackupUseCase
 import com.facetlauncher.app.domain.PlaceWidgetResult
 import com.facetlauncher.app.domain.PlaceWidgetUseCase
 import com.facetlauncher.app.domain.toEnumOrDefault
+import com.facetlauncher.app.data.di.IoDispatcher
+import com.facetlauncher.app.ui.hub.picker.loadPickerOptions
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -47,6 +51,7 @@ class BackupRestoreViewModel @Inject constructor(
     private val appWidgetRepository: AppWidgetRepository,
     private val widgetPlacementRepository: WidgetPlacementRepository,
     private val placeWidget: PlaceWidgetUseCase,
+    @IoDispatcher private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(BackupRestoreUiState())
@@ -77,7 +82,7 @@ class BackupRestoreViewModel @Inject constructor(
             _uiState.update { it.copy(isBusy = true, message = null, automationReview = null) }
             when (val result = importBackup(uri)) {
                 is ImportBackupResult.Success -> {
-                    val options = appWidgetRepository.getWidgetProviderOptions()
+                    val options = loadPickerOptions(appWidgetRepository, vault = null, io = ioDispatcher)
                     val pending = result.pendingWidgetPlacements.map { placement ->
                         val match = options.firstOrNull {
                             it.provider.packageName == placement.providerPackageName && it.provider.className == placement.providerClassName

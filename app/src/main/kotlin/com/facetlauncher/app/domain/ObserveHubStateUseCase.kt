@@ -4,11 +4,15 @@ import com.facetlauncher.app.data.model.NativeWidgetType
 import com.facetlauncher.app.data.local.isNative
 import com.facetlauncher.app.data.WidgetPlacementRepository
 import com.facetlauncher.app.data.widget.AppWidgetRepository
+import com.facetlauncher.app.data.di.IoDispatcher
 import dagger.hilt.android.scopes.ViewModelScoped
 import javax.inject.Inject
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 
@@ -41,6 +45,7 @@ data class HubDomainState(
 class ObserveHubStateUseCase @Inject constructor(
     private val widgetPlacementRepository: WidgetPlacementRepository,
     private val appWidgetRepository: AppWidgetRepository,
+    @IoDispatcher private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) {
     // Orphan status/provider labels aren't captured by the placements Flow itself — this forces
     // a re-resolution against the live AppWidgetManager whenever a bound provider's app updates
@@ -76,6 +81,6 @@ class ObserveHubStateUseCase @Inject constructor(
                     )
                 },
             )
-        }
+        }.flowOn(ioDispatcher) // the per-widget provider lookups are binder calls
     }
 }

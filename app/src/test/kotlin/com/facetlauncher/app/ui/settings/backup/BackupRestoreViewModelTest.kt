@@ -62,7 +62,7 @@ class BackupRestoreViewModelTest {
     private val widgetPlacementRepository = mock(WidgetPlacementRepository::class.java)
     private val placeWidget = mock(PlaceWidgetUseCase::class.java)
 
-    private val viewModel = BackupRestoreViewModel(exportBackup, importBackup, appRepository, appWidgetRepository, widgetPlacementRepository, placeWidget)
+    private val viewModel = BackupRestoreViewModel(exportBackup, importBackup, appRepository, appWidgetRepository, widgetPlacementRepository, placeWidget, ioDispatcher = testDispatcher)
 
     private val provider = ComponentName("com.example.widgets", ".Provider")
     private val placement = BackupWidgetPlacement("com.example.widgets", ".Provider", row = 1, col = 2, colSpan = 2, rowSpan = 1, landscapeOrder = 7)
