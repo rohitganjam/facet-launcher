@@ -158,10 +158,13 @@ internal fun OutlookRow(day: WeatherDay, isToday: Boolean, unit: com.facetlaunch
     val label = if (isToday) {
         stringResource(R.string.weather_sheet_today)
     } else {
-        day.date.dayOfWeek.getDisplayName(DateTextStyle.SHORT, LocalConfiguration.current.locales[0]) + " " + day.date.dayOfMonth
+        day.date.let { date ->
+            val locale = LocalConfiguration.current.locales[0]
+            date.dayOfWeek.getDisplayName(DateTextStyle.SHORT, locale) + " " + date.dayOfMonth + " " + date.month.getDisplayName(DateTextStyle.SHORT, locale)
+        }
     }
     Row(modifier = Modifier.fillMaxWidth().padding(vertical = 10.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        Text(label, style = MaterialTheme.typography.bodyMedium, color = Ink, modifier = Modifier.width(72.dp))
+        Text(label, style = MaterialTheme.typography.bodyMedium, color = Ink, modifier = Modifier.width(100.dp))
         WeatherIcon(weatherIconKind(condition, night = false), Ink, Modifier.size(HOUR_ICON_SIZE), iconStyle)
         Spacer(Modifier.weight(1f))
         Text(temperatureText(day.lowC, unit), style = MaterialTheme.typography.bodyMedium, color = Muted)

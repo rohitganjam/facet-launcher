@@ -45,8 +45,9 @@ import com.facetlauncher.app.ui.theme.Muted
 import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle as DateTextStyle
 
-private val HOUR_COLUMN_WIDTH = 52.dp
+private val HOUR_COLUMN_WIDTH = 58.dp
 private val DAY_ROW_HEIGHT = 30.dp
+private val DAY_DATE_MIN_WIDTH = 240.dp
 
 /** Weather in the box it is given: the icon and temperature, then the condition and range, then the hours and the days ahead. */
 @Composable
@@ -95,7 +96,7 @@ private fun MediumWeather(weather: WeatherState, ui: WeatherUiState, size: DpSiz
 private fun LargeWeather(weather: WeatherState, ui: WeatherUiState, size: DpSize) {
     val hoursShown = (size.width / HOUR_COLUMN_WIDTH).toInt().coerceIn(1, weather.hourly.size.coerceAtLeast(1))
     val daysShown = ((size.height - 150.dp) / DAY_ROW_HEIGHT).toInt().coerceIn(0, weather.days.size)
-    val pattern = if (ui.use24HourTime) "HH" else "ha"
+    val pattern = if (ui.use24HourTime) "HH:mm" else "h:mm a"
     val locale = LocalConfiguration.current.locales[0]
     val hourFormat = remember(pattern, weather.zone, locale) { DateTimeFormatter.ofPattern(pattern, locale).withZone(weather.zone) }
     Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -110,7 +111,8 @@ private fun LargeWeather(weather: WeatherState, ui: WeatherUiState, size: DpSize
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             weather.hourly.take(hoursShown).forEachIndexed { index, hour -> HourCell(hour, isNow = index == 0, hourFormat, ui) }
         }
-        weather.days.take(daysShown).forEach { DayRow(it, ui) }
+        val withDate = size.width >= DAY_DATE_MIN_WIDTH
+        weather.days.take(daysShown).forEach { DayRow(it, ui, withDate) }
     }
 }
 
@@ -149,11 +151,12 @@ private fun HourCell(hour: WeatherHour, isNow: Boolean, format: DateTimeFormatte
 }
 
 @Composable
-private fun DayRow(day: WeatherDay, ui: WeatherUiState) {
+private fun DayRow(day: WeatherDay, ui: WeatherUiState, withDate: Boolean) {
     val condition = conditionOf(day.symbolCode, day.precipitationMm)
     val locale = LocalConfiguration.current.locales[0]
     Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-        Text(day.date.dayOfWeek.getDisplayName(DateTextStyle.SHORT, locale), style = MaterialTheme.typography.bodySmall, color = Ink, modifier = Modifier.width(44.dp), maxLines = 1)
+        val weekday = day.date.dayOfWeek.getDisplayName(DateTextStyle.SHORT, locale)
+        Text(if (withDate) "$weekday ${day.date.dayOfMonth} ${day.date.month.getDisplayName(DateTextStyle.SHORT, locale)}" else weekday, style = MaterialTheme.typography.bodySmall, color = Ink, modifier = Modifier.width(if (withDate) 88.dp else 44.dp), maxLines = 1)
         WeatherIcon(weatherIconKind(condition, night = false), Ink, Modifier.size(20.dp), ui.iconStyle)
         Spacer(Modifier.weight(1f))
         Text(
