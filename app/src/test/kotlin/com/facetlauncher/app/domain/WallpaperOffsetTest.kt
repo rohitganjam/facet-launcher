@@ -19,7 +19,7 @@ class WallpaperOffsetTest {
         val offset = wallpaperOffsetX(2400, 2400, 1080, 2400, sdk = 36)
 
         // Then the middle needs about two thirds, since the system's pan range starts at the left edge
-        assertEquals(0.657f, offset, 0.01f)
+        assertEquals(0.609f, offset, 0.01f)
     }
 
     @Test

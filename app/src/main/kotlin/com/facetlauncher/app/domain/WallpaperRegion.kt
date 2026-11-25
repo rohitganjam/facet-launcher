@@ -27,5 +27,5 @@ internal fun wallpaperSize(region: RectF, screens: List<ScreenSize>): Pair<Int, 
     return if (region.width() >= region.height()) longest to (region.height() * scale).toInt().coerceAtLeast(1) else (region.width() * scale).toInt().coerceAtLeast(1) to longest
 }
 
-/** What [view] shows of this wallpaper, once the system has covered the view with it, centred and magnified: the glass copy for that view. */
-internal fun Bitmap.copyFor(view: ScreenSize): Bitmap = croppedTo(view.coverRegion(width, height, WALLPAPER_SYSTEM_ZOOM), view.width, view.height)
+/** What [view] shows of this wallpaper, once the system has covered the view with it, centred: the glass copy for that view. */
+internal fun Bitmap.copyFor(view: ScreenSize): Bitmap = croppedTo(view.coverRegion(width, height), view.width, view.height)

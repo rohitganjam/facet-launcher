@@ -101,70 +101,14 @@ class WallpaperFitTest {
         assertEquals(1080f, visible.width(), 1f)
     }
 
-    // The same, for a wallpaper the system will magnify by 1.1 about its middle once set.
-    private val zoomed = FitGeometry(imageWidth = 4000, imageHeight = 3000, boxWidth = 1000f, boxHeight = 2000f, systemZoom = 1.1f)
-
-    @Test
-    fun `with the system's zoom the window starts zoomed in by the same amount`() {
-        // When nothing has been moved
-        val fit = WallpaperFit.initial(zoomed)
-
-        // Then it is 1.1 times closer than the part that just covers the photo, and still centred
-        assertEquals(1.1f, fit.zoom, 0.0001f)
-        assertEquals(2000f, fit.visible(zoomed).centerX(), 0.01f)
-    }
-
-    @Test
-    fun `pinching out stops at the system's zoom`() {
-        // When pinched far out
-        val fit = WallpaperFit.initial(zoomed).zoomed(0.1f, 500f, 1000f, zoomed)
-
-        // Then it does not go further out than the system's zoom
-        assertEquals(1.1f, fit.zoom, 0.0001f)
-    }
-
-    @Test
-    fun `the part the system hides stays inside the photo wherever the window is dragged`() {
-        // Given a window dragged a very long way to each side
-        val left = WallpaperFit.initial(zoomed).panned(100000f, 0f, zoomed)
-        val right = WallpaperFit.initial(zoomed).panned(-100000f, 0f, zoomed)
-
-        // Then the larger part to set, which the system will magnify back to the window, is inside the photo on both sides
-        assertTrue(left.wallpaperPart(zoomed).left >= -0.01f)
-        assertTrue(right.wallpaperPart(zoomed).right <= 4000.01f)
-    }
-
-    @Test
-    fun `the part to set is the window grown by the system's zoom about its centre`() {
-        // Given a zoomed-in window
-        val fit = WallpaperFit.initial(zoomed).zoomed(2f, 500f, 1000f, zoomed)
-        val shown = fit.visible(zoomed)
-
-        // Then the part to set has the same centre and is 1.1 times larger each way
-        val part = fit.wallpaperPart(zoomed)
-        assertEquals(shown.centerX(), part.centerX(), 0.01f)
-        assertEquals(shown.centerY(), part.centerY(), 0.01f)
-        assertEquals(shown.width() * 1.1f, part.width(), 0.01f)
-        assertEquals(shown.height() * 1.1f, part.height(), 0.01f)
-    }
-
-    @Test
-    fun `without the system's zoom the part to set is the window itself`() {
-        // Given a screenshot, which is already as shown
-        val fit = WallpaperFit.initial(geometry).zoomed(2f, 500f, 1000f, geometry)
-
-        // Then the part to set is what is in the window
-        assertEquals(fit.visible(geometry), fit.wallpaperPart(geometry))
-    }
-
     @Test
     fun `a scheduled daily photo is set as the framing step starts, so the two show the same`() {
         // Given a wide photo and a portrait screen, framed untouched and cut the way the scheduled daily wallpaper cuts it
-        val geometry = FitGeometry(imageWidth = 4000, imageHeight = 2000, boxWidth = 1000f, boxHeight = 2000f, systemZoom = 1.1f)
-        val framed = WallpaperFit.initial(geometry).wallpaperPart(geometry)
+        val geometry = FitGeometry(imageWidth = 4000, imageHeight = 2000, boxWidth = 1000f, boxHeight = 2000f)
+        val framed = WallpaperFit.initial(geometry).visible(geometry)
         val strip = com.facetlauncher.app.domain.portraitCentreCrop(4000, 2000, 1000, 2000)!!.region
 
-        // Then the part set is the same centre strip, so the system's zoom leaves the same view in both
+        // Then the part set is the same centre strip, so both show the same view
         assertEquals(strip.left.toFloat(), framed.left, 0.5f)
         assertEquals(strip.right.toFloat(), framed.right, 0.5f)
         assertEquals(strip.top.toFloat(), framed.top, 0.5f)

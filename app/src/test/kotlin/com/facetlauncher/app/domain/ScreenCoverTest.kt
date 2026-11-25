@@ -56,16 +56,4 @@ class ScreenCoverTest {
             assertEquals(true, region.left >= -0.01f && region.top >= -0.01f && region.right <= w + 0.01f && region.bottom <= h + 0.01f)
         }
     }
-
-    @Test
-    fun `the system zoom shrinks the part a screen shows`() {
-        // Given a portrait screen over a square image
-        val plain = ScreenSize(1000, 2000).coverRegion(2000, 2000)
-        val zoomed = ScreenSize(1000, 2000).coverRegion(2000, 2000, zoom = 1.1f)
-
-        // Then the zoomed part is a tenth smaller, around the same centre
-        assertEquals(plain.width() / 1.1f, zoomed.width(), 0.5f)
-        assertEquals(plain.height() / 1.1f, zoomed.height(), 0.5f)
-        assertEquals(plain.centerX(), zoomed.centerX(), 0.5f)
-    }
 }

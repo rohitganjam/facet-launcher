@@ -78,7 +78,6 @@ import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
 import com.facetlauncher.app.data.model.ProReason
-import com.facetlauncher.app.domain.WALLPAPER_SYSTEM_ZOOM
 import com.facetlauncher.app.ui.components.BlockingProgressOverlay
 import com.facetlauncher.app.ui.components.CardDivider
 import com.facetlauncher.app.ui.components.PillTabPair
@@ -392,7 +391,7 @@ internal fun WallpaperFitStep(
     var includeLock by remember { mutableStateOf(false) }
     var boxSize by remember { mutableStateOf(IntSize.Zero) }
     var fit by remember(photo) { mutableStateOf<WallpaperFit?>(null) }
-    val geometry = if (boxSize.width == 0 || boxSize.height == 0) null else FitGeometry(photo.width, photo.height, boxSize.width.toFloat(), boxSize.height.toFloat(), systemZoom = if (copyOnly) 1f else WALLPAPER_SYSTEM_ZOOM)
+    val geometry = if (boxSize.width == 0 || boxSize.height == 0) null else FitGeometry(photo.width, photo.height, boxSize.width.toFloat(), boxSize.height.toFloat())
     val currentFit = geometry?.let { fit ?: WallpaperFit.initial(it) }
 
     Column(
@@ -432,7 +431,7 @@ internal fun WallpaperFitStep(
             TextActionButton(text = stringResource(R.string.wallpaper_fit_cancel), onClick = onCancel, modifier = Modifier.testTag("wallpaper_fit_cancel"))
             PrimaryButton(
                 text = stringResource(if (copyOnly) R.string.wallpaper_fit_use else R.string.wallpaper_fit_set),
-                onClick = { if (geometry != null && currentFit != null) onConfirm(currentFit.wallpaperPart(geometry), includeLock) },
+                onClick = { if (geometry != null && currentFit != null) onConfirm(currentFit.visible(geometry), includeLock) },
                 enabled = !isWorking && geometry != null,
                 modifier = Modifier.testTag("wallpaper_fit_set"),
             )
